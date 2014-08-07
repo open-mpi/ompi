@@ -136,7 +136,6 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     /* header is completely sent */
                     msg->hdr_sent = true;
-                    opal_output(0, "pmix_usock_peer_send_handler: header sent to server");
                     /* setup to send the data */
                     if (NULL == msg->data) {
                         /* this was a zero-byte msg - nothing more to do */
@@ -168,7 +167,6 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
             if (msg->hdr_sent) {
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     // message is complete
-                    opal_output(0, "pmix_usock_peer_send_handler: msg sent to server");
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
                     goto next;

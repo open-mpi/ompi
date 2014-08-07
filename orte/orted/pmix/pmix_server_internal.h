@@ -128,6 +128,16 @@ typedef struct {
 } pmix_server_peer_t;
 OBJ_CLASS_DECLARATION(pmix_server_peer_t);
 
+/* object for tracking remote modex requests so we can
+ * correctly route the eventual reply */
+typedef struct {
+    opal_list_item_t super;
+    pmix_server_peer_t *peer;
+    opal_identifier_t target;
+    uint32_t tag;
+} pmix_server_dmx_req_t;
+OBJ_CLASS_DECLARATION(pmix_server_dmx_req_t);
+
 /* queue a message to be sent by one of our procs - must
  * provide the following params:
  *
@@ -196,6 +206,7 @@ extern opal_hash_table_t *pmix_server_peers;
 extern int pmix_server_verbosity;
 extern int pmix_server_output;
 extern int pmix_server_local_handle, pmix_server_remote_handle, pmix_server_global_handle;
+extern opal_list_t pmix_server_pending_dmx_reqs;
 
 END_C_DECLS
 

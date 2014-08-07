@@ -118,6 +118,12 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
 static void pmix_server_release(int status, orte_process_name_t* sender,
                                 opal_buffer_t *buffer,
                                 orte_rml_tag_t tag, void *cbdata);
+static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
+                                  opal_buffer_t *buffer,
+                                  orte_rml_tag_t tg, void *cbdata);
+static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
+                                  opal_buffer_t *buffer,
+                                  orte_rml_tag_t tg, void *cbdata);
 
 char *pmix_server_mode = NULL;
 bool pmix_server_distribute_data = false;
@@ -127,6 +133,7 @@ int pmix_server_output = -1;
 int pmix_server_local_handle = -1;
 int pmix_server_remote_handle = -1;
 int pmix_server_global_handle = -1;
+opal_list_t pmix_server_pending_dmx_reqs;
 static bool initialized = false;
 static struct sockaddr_un address;
 static int pmix_server_listener_socket = -1;
@@ -175,6 +182,7 @@ int pmix_server_init(void)
     pmix_server_peers = OBJ_NEW(opal_hash_table_t);
     opal_hash_table_init(pmix_server_peers, 32);
     OBJ_CONSTRUCT(&collectives, opal_list_t);
+    OBJ_CONSTRUCT(&pmix_server_pending_dmx_reqs, opal_list_t);
 
     if (NULL != pmix_server_mode && 0 == (strcmp(pmix_server_mode, "group"))) {
         pmix_server_distribute_data = true;
@@ -230,6 +238,14 @@ int pmix_server_init(void)
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE,
                             ORTE_RML_PERSISTENT, pmix_server_release, NULL);
 
+    /* setup recv for direct modex requests */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,
+                            ORTE_RML_PERSISTENT, pmix_server_dmdx_recv, NULL);
+
+    /* setup recv for replies to direct modex requests */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX_RESP,
+                            ORTE_RML_PERSISTENT, pmix_server_dmdx_resp, NULL);
+
     /* start listening for connection requests */
     if (ORTE_SUCCESS != (rc = pmix_server_start_listening(&address))) {
         OBJ_DESTRUCT(&pmix_server_peers);
@@ -259,6 +275,8 @@ void pmix_server_finalize(void)
     /* stop receives */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLL);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX_RESP);
 
     /* cleanup the dstore handles */
     (void)opal_dstore.close(pmix_server_local_handle);
@@ -270,6 +288,7 @@ void pmix_server_finalize(void)
 
     /* cleanup collectives */
     OPAL_LIST_DESTRUCT(&collectives);
+    OPAL_LIST_DESTRUCT(&pmix_server_pending_dmx_reqs);
 
     /* cleanup all peers */
     if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(pmix_server_peers, &ui64,
@@ -596,6 +615,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     uint32_t tag;
     opal_buffer_t *reply;
     int32_t sd;
+    orte_vpid_t nprocs;
 
     opal_output_verbose(2, pmix_server_output,
                         "%s pmix:server:recv msg recvd from %s",
@@ -771,12 +791,50 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     }
 
     /* unpack the number of procs reported in this message */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
 
     /* increment nprocs reported for collective */
+    trk->nprocs_reported += nprocs;
 
     /* if all procs reported */
     if (trk->nprocs_reqd == trk->nprocs_reported) {
+        reply = OBJ_NEW(opal_buffer_t);
+        /* pack the id of the sender in case the signature is NULL */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            if (NULL != sig) {
+                free(sig);
+            }
+            return;
+        }
+        /* pack the size of the signature */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sz, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            if (NULL != sig) {
+                free(sig);
+            }
+            return;
+        }
+        if (0 < sz) {
+            /* pack the signature, if given */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, sig, sz, OPAL_UINT64))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                free(sig);
+                return;
+            }
+            free(sig);
+        }
         /* send the release via xcast */
+        (void)orte_grpcomm.xcast((orte_process_name_t*)sig, sz,
+                                 ORTE_RML_TAG_COLL_RELEASE, reply);
+        OBJ_RELEASE(reply);
     }
 }
 
@@ -853,6 +911,203 @@ static void pmix_server_release(int status, orte_process_name_t* sender,
     /* release the tracker */
     opal_list_remove_item(&collectives, &trk->super);
     OBJ_RELEASE(trk);
+}
+
+static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
+                                  opal_buffer_t *buffer,
+                                  orte_rml_tag_t tg, void *cbdata)
+{
+    int rc, ret;
+    int32_t cnt;
+    opal_buffer_t *reply, *bptr, buf;
+    opal_value_t *kvp, *kvp2;
+    opal_identifier_t idreq;
+    orte_process_name_t name;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+    opal_list_t values;
+    bool found;
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s dmdx:recv request from proc %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
+
+    /* unpack the id of the proc whose data is being requested */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &idreq, &cnt, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    /* is this proc one of mine? */
+    memcpy((char*)&name, (char*)&idreq, sizeof(orte_process_name_t));
+    if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return;
+    }
+    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return;
+    }
+    if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
+        kvp = NULL;
+        kvp2 = NULL;
+        found = false;
+        /* retrieve the REMOTE blob for that proc */
+        OBJ_CONSTRUCT(&values, opal_list_t);
+        if (OPAL_SUCCESS == opal_dstore.fetch(pmix_server_remote_handle, &idreq, "modex", &values)) {
+            kvp = (opal_value_t*)opal_list_remove_first(&values);
+            found = true;
+        }
+        OPAL_LIST_DESTRUCT(&values);
+        /* retrieve the global blob for that proc */
+        OBJ_CONSTRUCT(&values, opal_list_t);
+        if (OPAL_SUCCESS == opal_dstore.fetch(pmix_server_global_handle, &idreq, "modex", &values)) {
+            kvp2 = (opal_value_t*)opal_list_remove_first(&values);
+            found = true;
+        }
+        OPAL_LIST_DESTRUCT(&values);
+        /* return it */
+        reply = OBJ_NEW(opal_buffer_t);
+        /* pack the id of the requested proc */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            return;
+        }
+        /* pack the status */
+        if (found) {
+            ret = OPAL_SUCCESS;
+        } else {
+            ret = OPAL_ERR_NOT_FOUND;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            return;
+        }
+        /* remote blob */
+        if (NULL != kvp) {
+            opal_output_verbose(2, pmix_server_output,
+                                "%s passing remote blob of size %d from proc %s to proc %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (int)kvp->data.bo.size,
+                                ORTE_NAME_PRINT(&name),
+                                ORTE_NAME_PRINT(sender));
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
+            /* protect the data */
+            kvp->data.bo.bytes = NULL;
+            kvp->data.bo.size = 0;
+            bptr = &buf;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            OBJ_DESTRUCT(&buf);
+            OBJ_RELEASE(kvp);
+        }
+        /* global blob */
+        if (NULL != kvp2) {
+            opal_output_verbose(2, pmix_server_output,
+                                "%s passing global blob of size %d from proc %s to proc %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (int)kvp2->data.bo.size,
+                                ORTE_NAME_PRINT(&name),
+                                ORTE_NAME_PRINT(sender));
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            opal_dss.load(&buf, kvp2->data.bo.bytes, kvp2->data.bo.size);
+            /* protect the data */
+            kvp2->data.bo.bytes = NULL;
+            kvp2->data.bo.size = 0;
+            bptr = &buf;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            OBJ_DESTRUCT(&buf);
+            OBJ_RELEASE(kvp2);
+        }
+        /* send the response */
+        orte_rml.send_buffer_nb(sender, reply,
+                                ORTE_RML_TAG_DIRECT_MODEX_RESP,
+                                orte_rml_send_callback, NULL);
+        return;
+    }
+}
+
+static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
+                                  opal_buffer_t *buffer,
+                                  orte_rml_tag_t tg, void *cbdata)
+{
+    pmix_server_dmx_req_t *req, *nxt;
+    int rc, ret;
+    int32_t cnt;
+    opal_buffer_t *reply, xfer;
+    opal_identifier_t target;
+    opal_value_t kv;
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s dmdx:recv response from proc %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
+
+    /* unpack the id of the target whose info we just received */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &cnt, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* unpack the status */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ret, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* prep the reply */
+    reply = OBJ_NEW(opal_buffer_t);
+    /* pack the returned status */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(reply);
+        return;
+    }
+
+    /* pass across any returned blobs */
+    opal_dss.copy_payload(reply, buffer);
+
+    /* if we got something, store the blobs locally so we can
+     * meet any further requests without doing a remote fetch.
+     * This must be done as a single blob for later retrieval */
+    if (ORTE_SUCCESS == ret) {
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup("modex");
+        kv.type = OPAL_BYTE_OBJECT;
+        OBJ_CONSTRUCT(&xfer, opal_buffer_t);
+        opal_dss.copy_payload(&xfer, buffer);
+        opal_dss.unload(&xfer, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+        opal_dstore.store(pmix_server_remote_handle, &target, &kv);
+        OBJ_DESTRUCT(&kv);
+        OBJ_DESTRUCT(&xfer);
+    }
+
+    /* check ALL reqs to see who requested this target - due to
+     * async behavior, we may have requests from more than one
+     * process */
+    OPAL_LIST_FOREACH_SAFE(req, nxt, &pmix_server_pending_dmx_reqs, pmix_server_dmx_req_t) {
+        if (target == req->target) {
+            OBJ_RETAIN(reply);
+            PMIX_SERVER_QUEUE_SEND(req->peer, req->tag, reply);
+            opal_list_remove_item(&pmix_server_pending_dmx_reqs, &req->super);
+            OBJ_RELEASE(req);
+        }
+    }
 }
 
 
@@ -941,3 +1196,17 @@ static void pdes(pmix_server_peer_t *p)
 OBJ_CLASS_INSTANCE(pmix_server_peer_t,
                    opal_object_t,
                    pcon, pdes);
+
+static void rqcon(pmix_server_dmx_req_t *p)
+{
+    p->peer = NULL;
+}
+static void rqdes(pmix_server_dmx_req_t *p)
+{
+    if (NULL != p->peer) {
+        OBJ_RELEASE(p->peer);
+    }
+}
+OBJ_CLASS_INSTANCE(pmix_server_dmx_req_t,
+                   opal_list_item_t,
+                   rqcon, rqdes);

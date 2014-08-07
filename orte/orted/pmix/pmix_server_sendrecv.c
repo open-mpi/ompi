@@ -569,6 +569,8 @@ static void process_message(pmix_server_peer_t *peer)
     uint32_t tag;
     opal_pmix_scope_t scope;
     int handle;
+    pmix_server_dmx_req_t *req;
+    bool found;
 
     /* xfer the message to a buffer for unpacking */
     OBJ_CONSTRUCT(&xfer, opal_buffer_t);
@@ -837,31 +839,87 @@ static void process_message(pmix_server_peer_t *peer)
             OBJ_DESTRUCT(&xfer);
             return;
         }
-        /* no - see who is hosting this proc */
+        OBJ_DESTRUCT(&xfer);  // done with this
+        /* no - see if I already have it */
+        OBJ_CONSTRUCT(&values, opal_list_t);
+        if (OPAL_SUCCESS == (ret = opal_dstore.fetch(pmix_server_remote_handle, &idreq, "modex", &values))) {
+            kvp = (opal_value_t*)opal_list_remove_first(&values);
+            OPAL_LIST_DESTRUCT(&values);
+            opal_output_verbose(2, pmix_server_output,
+                                "%s passing blob of size %d from remote proc %s to proc %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (int)kvp->data.bo.size,
+                                ORTE_NAME_PRINT(&name),
+                                ORTE_NAME_PRINT(&peer->name));
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
+            /* protect the data */
+            kvp->data.bo.bytes = NULL;
+            kvp->data.bo.size = 0;
+            OBJ_RELEASE(kvp);
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the status */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&xfer);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            /* xfer the data - the blobs are in the buffer,
+             * so don't repack them */
+            opal_dss.copy_payload(reply, &buf);
+            OBJ_DESTRUCT(&buf);
+            PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
+            OBJ_DESTRUCT(&xfer);
+           return;
+        }
+        OPAL_LIST_DESTRUCT(&values);
+        /* nope - who is hosting this proc */
         if (NULL == proc->node || NULL == proc->node->daemon) {
             /* we are hosed - pack an error and return it */
             reply = OBJ_NEW(opal_buffer_t);
             ret = ORTE_ERR_NOT_FOUND;
-           if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&xfer);
                 return;
             }
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
-            OBJ_DESTRUCT(&xfer);
             return;
         }
-        /* setup the request */
-        reply = OBJ_NEW(opal_buffer_t);
-        /* pack the cmd */
-        /* pack the proc we want info about */
-        /* send the request - the recv will come back elsewhere
-         * and reply to the original requestor */
-        orte_rml.send_buffer_nb(&proc->node->daemon->name, reply,
-                                ORTE_RML_TAG_DAEMON_COLL,
-                                orte_rml_send_callback, NULL);
-        OBJ_DESTRUCT(&xfer);
+        /* have we already requested it? */
+        found = false;
+        OPAL_LIST_FOREACH(req, &pmix_server_pending_dmx_reqs, pmix_server_dmx_req_t) {
+            if (idreq == req->target) {
+                /* yes, so we don't need to send another request, but
+                 * we do need to track that this process also wants
+                 * a copy */
+                found = true;
+                break;
+            }
+        }
+        /* track the request */
+        req = OBJ_NEW(pmix_server_dmx_req_t);
+        OBJ_RETAIN(peer);  // just to be safe
+        req->peer = peer;
+        req->target = idreq;
+        req->tag = tag;
+        opal_list_append(&pmix_server_pending_dmx_reqs, &req->super);
+        if (!found) {
+            /* setup the request */
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the proc we want info about */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
+            /* send the request - the recv will come back elsewhere
+             * and reply to the original requestor */
+            orte_rml.send_buffer_nb(&proc->node->daemon->name, reply,
+                                    ORTE_RML_TAG_DIRECT_MODEX,
+                                    orte_rml_send_callback, NULL);
+        }
         return;
 
     case PMIX_GETATTR_CMD:

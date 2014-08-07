@@ -744,23 +744,17 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
                 OBJ_RETAIN(kp);
                 lclpeers = kp;
-                opal_output(0, "%s LCLPEERS %s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                            (NULL == kp->data.string) ? "NULL" : kp->data.string);
             } else if (0 == strcmp(PMIX_UNIV_SIZE, kp->key)) {
                 usize = kp->data.uint32;
-                opal_output(0, "%s UNIV SIZE %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), usize);
             } else if (0 == strcmp(PMIX_JOBID, kp->key)) {
                 native_pname.jid = kp->data.uint32;
-                opal_output(0, "%s JOBID %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->data.uint32);
             } else if (0 == strcmp(PMIX_RANK, kp->key)) {
                 native_pname.vid = kp->data.uint32;
-                opal_output(0, "%s RANK %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->data.uint32);
             }
             if (0 == strcmp(attr, kp->key)) {
                 OBJ_RETAIN(kp);
                 *kv = kp;
                 found = true;
-                opal_output(0, "%s found attr %s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
             }
             OBJ_RELEASE(kp);
             cnt = 1;
