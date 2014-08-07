@@ -224,7 +224,7 @@ static int s2_init(void)
     opal_proc_set_name((opal_process_name_t*)&s2_pname);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s2: assigned tmp name",
-                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s2_name));
+                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s2_pname));
 
     char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
