@@ -35,7 +35,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/dss/dss_types.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 

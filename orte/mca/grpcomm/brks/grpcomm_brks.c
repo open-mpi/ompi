@@ -35,7 +35,7 @@ static int init(void);
 static void finalize(void);
 static int xcast(orte_vpid_t *vpids,
                  size_t nprocs,
-                 opal_buffer_t *buf);
+                 opal_buffer_t *msg);
 static int allgather(orte_vpid_t *vpids,
                      size_t nprocs,
                      opal_buffer_t *buf,
@@ -68,7 +68,7 @@ static void finalize(void)
 
 static int xcast(orte_vpid_t *vpids,
                  size_t nprocs,
-                 opal_buffer_t *buf)
+                 opal_buffer_t *msg)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

@@ -24,4 +24,4 @@ headers += \
 libmca_grpcomm_la_SOURCES += \
         base/grpcomm_base_select.c \
         base/grpcomm_base_frame.c \
-        base/grpcomm_base_xcast.c
+        base/grpcomm_base_stubs.c

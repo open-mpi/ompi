@@ -70,20 +70,16 @@ typedef struct {
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
 
-ORTE_DECLSPEC int orte_grpcomm_base_xcast(orte_jobid_t job,
-                                          opal_buffer_t *buffer,
-                                          orte_rml_tag_t tag);
-
-/* comm support */
-ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);
-ORTE_DECLSPEC void orte_grpcomm_base_comm_stop(void);
-ORTE_DECLSPEC void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
-                                                opal_buffer_t* buffer, orte_rml_tag_t tag,
-                                                void* cbdata);
-ORTE_DECLSPEC int orte_grpcomm_base_pack_xcast(orte_jobid_t job,
-                                               opal_buffer_t *buffer,
-                                               opal_buffer_t *message,
-                                               orte_rml_tag_t tag);
+/* Public API stubs */
+ORTE_DECLSPEC int orte_grpcomm_API_xcast(orte_process_name_t *procs,
+                                         size_t nprocs,
+                                         orte_rml_tag_t tag,
+                                         opal_buffer_t *buf);
+ORTE_DECLSPEC int orte_grpcomm_API_allgather(orte_process_name_t *procs,
+                                             size_t nprocs,
+                                             opal_buffer_t *buf,
+                                             orte_grpcomm_cbfunc_t cbfunc,
+                                             void *cbdata);
 
 END_C_DECLS
 #endif

@@ -463,6 +463,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     int rc;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_timer_t *timer;
+    orte_process_name_t target;
 
     /* convenience */
     jdata = caddy->jdata;
@@ -501,9 +502,10 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
         return;
     }
     
-    /* send the command to the daemons */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid,
-                                                      buffer, ORTE_RML_TAG_DAEMON))) {
+    /* goes to all daemons */
+    target.jobid = ORTE_PROC_MY_NAME->jobid;
+    target.vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&target, 1, ORTE_RML_TAG_DAEMON, buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);

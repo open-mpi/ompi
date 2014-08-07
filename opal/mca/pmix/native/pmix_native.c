@@ -729,9 +729,9 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                     } else {
                         hwloc_topology_destroy(topo);
                     }
+                    cnt = 1;
+                    continue;
                 }
-                cnt = 1;
-                continue;
             }
 #endif
             if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
@@ -751,13 +751,16 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                 opal_output(0, "%s UNIV SIZE %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), usize);
             } else if (0 == strcmp(PMIX_JOBID, kp->key)) {
                 native_pname.jid = kp->data.uint32;
+                opal_output(0, "%s JOBID %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->data.uint32);
             } else if (0 == strcmp(PMIX_RANK, kp->key)) {
                 native_pname.vid = kp->data.uint32;
+                opal_output(0, "%s RANK %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->data.uint32);
             }
             if (0 == strcmp(attr, kp->key)) {
                 OBJ_RETAIN(kp);
                 *kv = kp;
                 found = true;
+                opal_output(0, "%s found attr %s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
             }
             OBJ_RELEASE(kp);
             cnt = 1;

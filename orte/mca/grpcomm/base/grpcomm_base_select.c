@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +24,9 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 
@@ -77,9 +81,13 @@ int orte_grpcomm_base_select(void)
                                 component->mca_component_name );
             continue;
         }
-
-        /* If we got a module, keep it */
         nmodule = (orte_grpcomm_base_module_t*) module;
+
+        /* if the module fails to init, skip it */
+        if (NULL == nmodule->init || ORTE_SUCCESS != nmodule->init()) {
+            continue;
+        }
+
         /* add to the list of selected modules */
         newmodule = OBJ_NEW(orte_grpcomm_base_active_t);
         newmodule->pri = priority;

@@ -803,6 +803,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
     int32_t numbytes;
     int rc;
     opal_buffer_t chunk;
+    orte_process_name_t target;
 
     /* flag that event has fired */
     rev->pending = false;
@@ -869,9 +870,10 @@ static void send_chunk(int fd, short argc, void *cbdata)
         }
     }
 
-    /* xcast this chunk to all daemons */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid,
-                                                      &chunk, ORTE_RML_TAG_FILEM_BASE))) {
+    /* goes to all daemons */
+    target.jobid = ORTE_PROC_MY_NAME->jobid;
+    target.vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&target, 1, ORTE_RML_TAG_FILEM_BASE, &chunk))) {
         ORTE_ERROR_LOG(rc);
         close(fd);
         return;

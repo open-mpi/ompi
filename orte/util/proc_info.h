@@ -45,8 +45,6 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/proc.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
-
 BEGIN_C_DECLS
 
 #define ORTE_MAX_HOSTNAME_SIZE  512

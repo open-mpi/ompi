@@ -29,17 +29,11 @@ static int s1_fini(void);
 static bool s1_initialized(void);
 static int s1_abort(int flag, const char msg[]);
 static int s1_fence(opal_process_name_t *procs, size_t nprocs);
-static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                       opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv);
-static void s1_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata);
 static int s1_publish(const char service_name[],
                       opal_list_t *info,
                       const char port[]);
@@ -49,9 +43,6 @@ static int s1_lookup(const char service_name[],
 static int s1_unpublish(const char service_name[],
                         opal_list_t *info);
 static bool s1_get_attr(const char *attr, opal_value_t **kv);
-static int s1_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata);
 static int s1_spawn(int count, const char * cmds[],
                     int argcs[], const char ** argvs[],
                     const int maxprocs[],
@@ -68,15 +59,15 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     s1_initialized,
     s1_abort,
     s1_fence,
-    s1_fence_nb,
+    NULL,
     s1_put,
     s1_get,
-    s1_get_nb,
+    NULL,
     s1_publish,
     s1_lookup,
     s1_unpublish,
     s1_get_attr,
-    s1_get_attr_nb,
+    NULL,
     s1_spawn,
     s1_job_connect,
     s1_job_disconnect
@@ -149,7 +140,6 @@ static int s1_init(void)
     int i;
     char *pmix_id, *tmp;
     uint32_t jobfam, stepid;
-    opal_proc_t *proc;
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
@@ -220,15 +210,12 @@ static int s1_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    proc = opal_proc_local_get();
-    if (OPAL_NAME_INVALID == proc->proc_name) {
-        s1_pname.jid = s1_jobid;
-        s1_pname.vid = s1_rank;
-        memcpy(&proc->proc_name, &s1_pname, sizeof(opal_identifier_t));
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "%s pmix:s1: assigned tmp name",
-                            OPAL_NAME_PRINT(proc->proc_name));
-    }
+    s1_pname.jid = s1_jobid;
+    s1_pname.vid = s1_rank;
+    opal_proc_set_name((opal_process_name_t*)&s1_pname);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1: assigned tmp name",
+                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s1_pname));
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
@@ -447,7 +434,6 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
      * for every process in the job */
     if (!got_modex_data) {
         got_modex_data = true;
-        memcpy(&s1_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s1_nlranks; i++) {
@@ -495,12 +481,6 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
-static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                       opal_pmix_cbfunc_t cbfunc, void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 static int s1_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv)
@@ -519,14 +499,6 @@ static int s1_get(const opal_identifier_t *id,
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key);
 
    return rc;
-}
-
-static void s1_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata)
-{
-    return;
 }
 
 static int s1_publish(const char service_name[],

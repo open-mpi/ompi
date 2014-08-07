@@ -56,7 +56,7 @@ static int rcd_register(void)
     /* make the priority adjustable so users can select
      * rcd for use by apps without affecting daemons
      */
-    my_priority = 1;
+    my_priority = 50;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm rcd component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

@@ -45,8 +45,6 @@
 
 #include "orte/mca/rml/rml_types.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
-
 BEGIN_C_DECLS
 
 /*
@@ -63,14 +61,12 @@ typedef void (*orte_grpcomm_base_module_finalize_fn_t)(void);
 
 /* Scalably send a message. Caller will provide an array
  * of daemon vpids that are to receive the message. A NULL
- * pointer indicates that all daemons are participating.
- * The message is to be sent to the ORTE_RML_DAEMON tag
- * on each daemon for processing. */
+ * pointer indicates that all daemons are participating. */
 typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_vpid_t *vpids,
                                                    size_t nprocs,
-                                                   opal_buffer_t *buf);
+                                                   opal_buffer_t *msg);
 
-/* allgather - gather data from all procs. Barrier operations
+/* allgather - gather data from all specified daemons. Barrier operations
  * will provide a zero-byte buffer. Caller will provide an array
  * of daemon vpids that are participating in the allgather. A NULL
  * pointer indicates that all daemons are participating.
@@ -84,18 +80,49 @@ typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_vpid_t *vpids,
                                                        void *cbdata);
 
 /*
- * Ver 3.0
+ * Ver 3.0 - internal modules
  */
-struct orte_grpcomm_base_module_2_0_0_t {
+typedef struct {
     orte_grpcomm_base_module_init_fn_t           init;
     orte_grpcomm_base_module_finalize_fn_t       finalize;
     /* collective operations */
     orte_grpcomm_base_module_xcast_fn_t          xcast;
     orte_grpcomm_base_module_allgather_fn_t      allgather;
-};
+} orte_grpcomm_base_module_t;
 
-typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;
-typedef orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_t;
+/* the Public APIs */
+/* Scalably send a message. Caller will provide an array
+ * of process names that are to receive the message. A NULL
+ * pointer indicates that all known procs are to receive
+ * the message. A pointer to a name that includes ORTE_VPID_WILDCARD
+ * will send the message to all procs in the specified jobid.
+ * The message will be sent to the daemons hosting the specified
+ * procs for processing and relay. */
+typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_process_name_t *procs,
+                                                size_t nprocs,
+                                                orte_rml_tag_t tag,
+                                                opal_buffer_t *msg);
+
+/* allgather - gather data from all specified procs. Barrier operations
+ * will provide a zero-byte buffer. Caller will provide an array
+ * of daemon vpids that are participating in the allgather. A NULL
+ * pointer indicates that all known procs are participating. A pointer
+ * to a name that includes ORTE_VPID_WILDCARD indicates that all procs
+ * in the specified jobid are contributing.
+ *
+ * NOTE: this is a non-blocking call. The cbfunc will pass back
+ * the collected data buffer and the provided cbdata upon completion. */
+typedef int (*orte_grpcomm_base_API_allgather_fn_t)(orte_process_name_t *procs,
+                                                    size_t nprocs,
+                                                    opal_buffer_t *buf,
+                                                    orte_grpcomm_cbfunc_t cbfunc,
+                                                    void *cbdata);
+typedef struct {
+    /* collective operations */
+    orte_grpcomm_base_API_xcast_fn_t             xcast;
+    orte_grpcomm_base_API_allgather_fn_t         allgather;
+} orte_grpcomm_API_module_t;
+
 
 /*
  * the standard component data structure
@@ -118,9 +145,8 @@ typedef orte_grpcomm_base_component_3_0_0_t orte_grpcomm_base_component_t;
   /* grpcomm v3.0 */ \
   "grpcomm", 3, 0, 0
 
-/* Global structure for accessing name server functions
- */
-ORTE_DECLSPEC extern orte_grpcomm_base_module_t orte_grpcomm;  /* holds selected module's function pointers */
+/* Global structure for accessing grpcomm functions */
+ORTE_DECLSPEC extern orte_grpcomm_API_module_t orte_grpcomm;
 
 END_C_DECLS
 
