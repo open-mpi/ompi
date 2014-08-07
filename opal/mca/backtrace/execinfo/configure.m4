@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -33,9 +33,9 @@ AC_DEFUN([MCA_opal_backtrace_execinfo_CONFIG],[
 
     AC_CHECK_HEADERS([execinfo.h])
     # FreeBSD has backtrace in -lexecinfo, usually in libc
-    OPAL_CHECK_FUNC_LIB([backtrace], [execinfo],
-                        [backtrace_execinfo_happy="yes"],
-                        [backtrace_execinfo_happy="no"])
+    OPAL_SEARCH_LIBS_COMPONENT([backtrace_execinfo], [backtrace], [execinfo],
+                   [backtrace_execinfo_happy="yes"],
+                   [backtrace_execinfo_happy="no"])
 
     AS_IF([test "$backtrace_execinfo_happy" = "yes"], 
           [$1], [$2])
