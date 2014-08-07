@@ -156,9 +156,9 @@ The usnic BTL failed to initialize the rtnetlink query subsystem.
 #
 [connectivity error: small ok, large bad]
 The Open MPI usNIC BTL was unable to establish full connectivity
-between at least one pair of servers in the MPI job.  Specifically,
-small UDP messages seem to flow between the servers, but large UDP
-messages do not.
+between at least one pair of interfaces on servers in the MPI job.
+Specifically, small UDP messages seem to flow between the interfaces,
+but large UDP messages do not.
 
 Your MPI job is going to abort now.
 
@@ -174,15 +174,15 @@ Your MPI job is going to abort now.
   Large message size: %u
 
 Note that this behavior usually indicates that the MTU of some network
-link is too small between these two servers.  You should verify that
+link is too small between these two interfaces.  You should verify that
 UDP traffic with payloads up to the "large message size" listed above
-can flow between these two servers.
+can flow between the specified interfaces on these servers.
 #
 [connectivity error: small bad, large ok]
 The Open MPI usNIC BTL was unable to establish full connectivity
-between at least one pair of servers in the MPI job.  Specifically,
-large UDP messages seem to flow between the servers, but small UDP
-messages do not.
+between at least one pair of interfaces on servers in the MPI job.
+Specifically, large UDP messages seem to flow between the interfaces,
+but small UDP messages do not.
 
 Your MPI job is going to abort now.
 
@@ -201,12 +201,13 @@ This is a very strange network error, and should not occur in most
 situations.  You may be experiencing high amounts of congestion, or
 this may indicate some kind of network misconfiguration.  You should
 verify that UDP traffic with payloads up to the "large message size"
-listed above can flow between these two servers.
+listed above can flow between the specified interfaces on these
+servers.
 #
 [connectivity error: small bad, large bad]
 The Open MPI usNIC BTL was unable to establish any connectivity
-between at least one pair of servers in the MPI job.  Specifically,
-no UDP messages seemed to flow between these two servers.
+between at least one pair of interfaces on servers in the MPI job.
+Specifically, no UDP messages seemed to flow between the interfaces.
 
 Your MPI job is going to abort now.
 
@@ -223,8 +224,8 @@ Your MPI job is going to abort now.
 
 Note that this behavior usually indicates some kind of network
 misconfiguration.  You should verify that UDP traffic with payloads up
-to the "large message size" listed above can flow between these two
-servers.
+to the "large message size" listed above can flow between the
+specified interfaces on these servers.
 #
 [ibv_create_ah timeout]
 The usnic BTL failed to create addresses for remote peers within the
