@@ -437,14 +437,20 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
                 if (NULL != endpoint &&
                         endpoint->endpoint_module == module) {
 
-                    /* If no pending ACKs needed, all done with endpoint */
-                    if (ENDPOINT_DRAINED(endpoint)) {
-                        OBJ_RELEASE(endpoint);
-
-                    /* still some ACKs needed, mark endpoint as "exiting" */
-                    } else {
-                        endpoint->endpoint_exiting = true;
+                    /* This call to usnic_del_procs is actually an
+                     * implicit ACK of every packet we have ever sent
+                     * ***because it is only ever invoked after an
+                     * OOB/grpcomm barrier (in MPI_COMM_DISCONNECT and
+                     * MPI_FINALIZE)***, so call handle_ack (via
+                     * flush_endpoint) to do all the ACK processing
+                     * and release all the data that needs
+                     * releasing. */
+                    if (!ENDPOINT_DRAINED(endpoint)) {
+                        ompi_btl_usnic_flush_endpoint(endpoint);
                     }
+
+                    /* We're all done with this endpoint */
+                    OBJ_RELEASE(endpoint);
 
                     break;  /* done once we found match */
                 }
@@ -1109,8 +1115,23 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
 {
     int i;
     int rc;
-    ompi_btl_usnic_proc_t *proc;
     ompi_btl_usnic_module_t* module = (ompi_btl_usnic_module_t*)btl;
+
+    /**** JMS BEGIN DIFFERENCE ****/
+    /* Starting with v1.9, usnic_del_procs() is called automatically
+       by the PML.  In the v1.7/v1.8 series, it is not -- so we call
+       it here right away in usnic_finalize() to simulate/pretend that
+       it has already been called by the PML.  In this way, we can
+       make the rest of the usnic module teardown as similar as
+       possible between trunk/v1.9 and v1.8. */
+    ompi_btl_usnic_proc_t *proc;
+    for (i = 0; i < opal_pointer_array_get_size(&module->all_procs); ++i) {
+        proc = opal_pointer_array_get_item(&module->all_procs, i);
+        if (NULL != proc) {
+            usnic_del_procs(&module->super, 1, &proc->proc_ompi, NULL);
+        }
+    }
+    /**** JMS END DIFFERENCE ****/
 
     if (module->device_async_event_active) {
         opal_event_del(&(module->device_async_event));
@@ -1125,31 +1146,10 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     /* Shutdown the stats on this module */
     ompi_btl_usnic_stats_finalize(module);
 
-    /* Empty the all_endpoints list so that we can destroy endpoints
-     * (i.e., so that their super/opal_list_item_t member isn't still
-     * in use) 
-     * This call to usnic_finalize is actually an implicit ACK of
-     * every packet we have ever sent, so call handle_ack (via
-     * flush_endpoint) to do all the ACK processing and release all the
-     * data that needs releasing.
-     *
-     * If we don't care about releasing data, we could just set:
-     *   endpoint->endpoint_ack_seq_rcvd =
-     *    endpoint->endpoint_next_seq_to_send-1;
-     * as the main point is to make usnic_del_procs() happy to release
-     * the proc/endpoint.
-     */
+    /* Note that usnic_del_procs will have been called for *all* procs
+       by this point, so the module->all_endpoints list will be empty.
+       Destruct it. */
     opal_mutex_lock(&module->all_endpoints_lock);
-    while (!opal_list_is_empty(&(module->all_endpoints))) {
-        opal_list_item_t *item;
-        ompi_btl_usnic_endpoint_t *endpoint;
-        item = opal_list_remove_first(&module->all_endpoints);
-        endpoint = container_of(item, mca_btl_base_endpoint_t,
-                                endpoint_endpoint_li);
-        if (!ENDPOINT_DRAINED(endpoint)) {
-            ompi_btl_usnic_flush_endpoint(endpoint);
-        }
-    }
     OBJ_DESTRUCT(&(module->all_endpoints));
     module->all_endpoints_constructed = false;
     opal_mutex_unlock(&module->all_endpoints_lock);
@@ -1166,16 +1166,9 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     }
     OBJ_DESTRUCT(&module->endpoints_that_need_acks);
 
-    /* 
-     * Use usnic_del_procs to remove each proc from this module.
-     * This is done to prevent duplicating the proc deletion code
-     */
-    for (i = 0; i < opal_pointer_array_get_size(&module->all_procs); ++i) {
-        proc = opal_pointer_array_get_item(&module->all_procs, i);
-        if (NULL != proc) {
-            usnic_del_procs(&module->super, 1, &proc->proc_ompi, NULL);
-        }
-    }
+    /* Note that usnic_del_procs will have been called for *all* procs
+       by this point, so the module->all_procs list will be empty.
+       Destruct it. */
     OBJ_DESTRUCT(&module->all_procs);
 
     for (i = module->first_pool; i <= module->last_pool; ++i) {

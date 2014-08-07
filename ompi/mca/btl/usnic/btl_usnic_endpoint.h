@@ -174,6 +174,7 @@ typedef struct mca_btl_base_endpoint_t {
     uint32_t                        endpoint_rfstart;
 
     bool                            endpoint_connectivity_checked;
+    bool                            endpoint_on_all_endpoints;
 } mca_btl_base_endpoint_t;
 
 typedef mca_btl_base_endpoint_t ompi_btl_usnic_endpoint_t;
