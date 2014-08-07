@@ -52,7 +52,8 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
 {
     opal_buffer_t *buf;
     int rc;
-    
+    orte_process_name_t tgt;
+
     /* if the host is a daemon and we are in the process of aborting,
      * then ignore this request. We leave it alone if the host is not
      * a daemon because it might be a tool that wants to watch the
@@ -97,7 +98,9 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     if (ORTE_PROC_MY_NAME->jobid == host->jobid &&
         ORTE_VPID_WILDCARD == host->vpid) {
         /* xcast this to everyone - the local daemons will know how to handle it */
-        orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, buf, ORTE_RML_TAG_IOF_PROXY);
+        tgt.jobid = ORTE_PROC_MY_NAME->jobid;
+        tgt.vpid = ORTE_VPID_WILDCARD;
+        (void)orte_grpcomm.xcast(&tgt, 1, ORTE_RML_TAG_IOF_PROXY, buf);
         OBJ_RELEASE(buf);
         return ORTE_SUCCESS;
     }

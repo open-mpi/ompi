@@ -189,8 +189,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
-    opal_byte_object_t *bo;
-    int8_t flag;
     int32_t n;
     orte_proc_t *pptr, *dmn;
     opal_buffer_t *bptr;
@@ -202,39 +200,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
     *job = ORTE_JOBID_INVALID;
     
-    /* extract the byte object holding the daemon map - we dealt with it
-     * during the xcast, so we can ignore it here
-     */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    if (NULL != bo->bytes) {
-        free(bo->bytes);
-    }
-    free(bo);
-
-    /* unpack the wireup info flag */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* if it was given, unpack and discard it */
-    if (0 != flag) {
-        /* unpack the byte object */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-        if (0 < bo->size) {
-            free(bo->bytes);
-        }
-        free(bo);
-    }
-
     /* unpack the job we are to launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata, &cnt, ORTE_JOB))) {

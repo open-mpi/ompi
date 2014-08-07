@@ -46,15 +46,9 @@ static int s2_spawn(int count, const char * cmds[],
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s2_fence(opal_process_name_t *procs, size_t nprocs);
-static int s2_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                       opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s2_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv);
-static void s2_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata);
 static int s2_publish(const char service_name[],
                       opal_list_t *info,
                       const char port[]);
@@ -64,31 +58,8 @@ static int s2_lookup(const char service_name[],
 static int s2_unpublish(const char service_name[],
                         opal_list_t *info);
 static bool s2_get_attr(const char *attr, opal_value_t **kv);
-static int s2_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata);
 static int s2_job_connect(const char jobId[]);
 static int s2_job_disconnect(const char jobId[]);
-static int s2_get_node_attr(const char name[],
-                            char value[],
-                            int valuelen,
-                            int *found,
-                            int waitfor);
-static int s2_get_node_attr_array(const char name[],
-                                  int array[],
-                                  int arraylen,
-                                  int *outlen,
-                                  int *found);
-static int s2_put_node_attr(const char name[], const char value[]);
-static int s2_get_job_attr(const char name[],
-                           char value[],
-                           int valuelen,
-                           int *found);
-static int s2_get_job_attr_array(const char name[],
-                                 int array[],
-                                 int arraylen,
-                                 int *outlen,
-                                 int *found);
 
 const opal_pmix_base_module_t opal_pmix_s2_module = {
     s2_init,
@@ -96,15 +67,15 @@ const opal_pmix_base_module_t opal_pmix_s2_module = {
     s2_initialized,
     s2_abort,
     s2_fence,
-    s2_fence_nb,
+    NULL,
     s2_put,
     s2_get,
-    s2_get_nb,
+    NULL,
     s2_publish,
     s2_lookup,
     s2_unpublish,
     s2_get_attr,
-    s2_get_attr_nb,
+    NULL,
     s2_spawn,
     s2_job_connect,
     s2_job_disconnect
@@ -180,7 +151,6 @@ static int s2_init(void)
     int my_node;
     char *tmp;
     uint32_t jobfam, stepid;
-    opal_proc_t *proc;
     int i;
 
     /* if we can't startup PMI, we can't be used */
@@ -216,9 +186,9 @@ static int s2_init(void)
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
-         PMI2_Finalize();
-         ret = OPAL_ERR_OUT_OF_RESOURCE;
-         goto err_exit;
+        PMI2_Finalize();
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto err_exit;
     }
     rc = PMI2_Job_GetId(pmix_kvs_name, pmix_kvslen_max);
     if( PMI2_SUCCESS != rc ) {
@@ -249,15 +219,12 @@ static int s2_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    proc = opal_proc_local_get();
-    if (OPAL_NAME_INVALID == proc->proc_name) {
-        s2_pname.jid = s2_jobid;
-        s2_pname.vid = s2_rank;
-        memcpy(&proc->proc_name, &s2_pname, sizeof(opal_identifier_t));
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "%s pmix:s2: assigned tmp name",
-                            OPAL_NAME_PRINT(proc->proc_name));
-    }
+    s2_pname.jid = s2_jobid;
+    s2_pname.vid = s2_rank;
+    opal_proc_set_name((opal_process_name_t*)&s2_pname);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s2: assigned tmp name",
+                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s2_name));
 
     char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
@@ -291,7 +258,7 @@ static int s2_init(void)
     }
 
     return OPAL_SUCCESS;
-err_exit:
+ err_exit:
     PMI2_Finalize();
     return ret;
 }
@@ -458,7 +425,6 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
      * for every process in the job */
     if (!got_modex_data) {
         got_modex_data = true;
-        memcpy(&s2_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s2_nlranks; i++) {
@@ -506,12 +472,6 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
-static int s2_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                       opal_pmix_cbfunc_t cbfunc, void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 static int s2_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv)
@@ -522,86 +482,6 @@ static int s2_get(const opal_identifier_t *id,
         return OPAL_ERROR;
     }
     return rc;
-}
-
-static void s2_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata)
-{
-    return;
-}
-
-static int s2_get_node_attr(const char name[],
-                            char value[],
-                            int valuelen,
-                            int *found,
-                            int waitfor)
-{
-    int rc;
-    rc = PMI2_Info_GetNodeAttr(name, value, valuelen, found, waitfor);
-    if( PMI2_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI2_Info_GetNodeAttr");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
-}
-
-static int s2_get_node_attr_array(const char name[],
-                                  int array[],
-                                  int arraylen,
-                                  int *outlen,
-                                  int *found)
-{
-    int rc;
-    rc = PMI2_Info_GetNodeAttrIntArray(name, array, arraylen, outlen, found);
-    if( PMI2_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI2_Info_GetNodeAttrIntArray");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
-}
-
-static int s2_put_node_attr(const char name[], const char value[])
-{
-    int rc;
-    rc = PMI2_Info_PutNodeAttr(name, value);
-    if( PMI2_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI2_Info_PutNodeAttr");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
-}
-
-static int s2_get_job_attr(const char name[],
-                           char value[],
-                           int valuelen,
-                           int *found)
-{
-    int rc;
-    rc = PMI2_Info_GetJobAttr(name, value, valuelen, found);
-    if( 0 == *found || PMI2_SUCCESS != rc ) {
-        /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-        OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttr");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
-}
-
-static int s2_get_job_attr_array(const char name[],
-                                 int array[],
-                                 int arraylen,
-                                 int *outlen,
-                                 int *found)
-{
-    int rc;
-    PMI2_Info_GetJobAttrIntArray(name, array, arraylen, outlen, found);
-    if( 0 == *found || PMI2_SUCCESS != rc ) {
-        /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-        OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttrIntArray");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
 }
 
 static int s2_publish(const char service_name[],
@@ -711,13 +591,6 @@ static bool s2_get_attr(const char *attr, opal_value_t **kv)
     }
 
     return false;
-}
-
-static int s2_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static char* pmix_error(int pmix_err)

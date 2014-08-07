@@ -40,8 +40,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
-
 #include "orte/mca/routed/routed_types.h"
 
 BEGIN_C_DECLS

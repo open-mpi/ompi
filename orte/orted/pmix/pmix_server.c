@@ -58,7 +58,7 @@
 #include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
@@ -721,7 +721,8 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
             } else {
                 if (trk->nprocs_reqd == trk->nprocs_reported) {
                     /* send the release via xcast */
-                    orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, reply, ORTE_RML_TAG_COLL_RELEASE);
+                    (void)orte_grpcomm.xcast((orte_process_name_t*)sig, sz,
+                                             ORTE_RML_TAG_COLL_RELEASE, reply);
                     OBJ_RELEASE(reply);
                 }
             }

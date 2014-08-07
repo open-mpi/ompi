@@ -51,15 +51,9 @@ static int cray_job_connect(const char jobId[]);
 static int cray_job_disconnect(const char jobId[]);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
 static int cray_fence(opal_process_name_t *procs, size_t nprocs);
-static int cray_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                         opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int cray_get(const opal_identifier_t *id,
                     const char *key,
                     opal_value_t **kv);
-static void cray_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata);
 static int cray_publish(const char service_name[],
                       opal_list_t *info,
                       const char port[]);
@@ -69,9 +63,6 @@ static int cray_lookup(const char service_name[],
 static int cray_unpublish(const char service_name[],
                           opal_list_t *info);
 static bool cray_get_attr(const char *attr, opal_value_t **kv);
-static int cray_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata);
 static int kvs_get(const char key[], char value [], int maxvalue);
 #if 0
 static int cray_get_jobid(char jobId[], int jobIdSize);
@@ -88,15 +79,15 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     cray_initialized,
     cray_abort,
     cray_fence,
-    cray_fence_nb,
+    NULL,
     cray_put,
     cray_get,
-    cray_get_nb,
+    NULL,
     cray_publish,
     cray_lookup,
     cray_unpublish,
     cray_get_attr,
-    cray_get_attr_nb,
+    NULL,
     cray_spawn,
     cray_job_connect,
     cray_job_disconnect
@@ -470,12 +461,6 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
 }
 #endif
 
-static int cray_fence_nb(opal_process_name_t *procs, size_t nprocs,
-                         opal_pmix_cbfunc_t cbfunc, void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 static int kvs_get(const char key[], char value [], int maxvalue)
 {
     int rc;
@@ -498,15 +483,6 @@ static int cray_get(const opal_identifier_t *id, const char *key, opal_value_t *
     }
     return rc;
 }
-
-static void cray_get_nb(const opal_identifier_t *id,
-                      const char *key,
-                      opal_pmix_cbfunc_t cbfunc,
-                      void *cbdata)
-{
-    return;
-}
-
 
 static int cray_publish(const char service_name[],
                         opal_list_t *info,
@@ -644,14 +620,6 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv)
 
     return OPAL_SUCCESS;
 }
-
-static int cray_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 
 
 #if 0

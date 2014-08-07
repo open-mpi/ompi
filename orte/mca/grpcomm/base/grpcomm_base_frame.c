@@ -46,7 +46,10 @@
  */
 orte_grpcomm_base_t orte_grpcomm_base;
 
-orte_grpcomm_base_module_t orte_grpcomm = {0};
+orte_grpcomm_API_module_t orte_grpcomm = {
+    orte_grpcomm_API_xcast,
+    orte_grpcomm_API_allgather
+};
 
 static bool recv_issued = false;
 
@@ -78,13 +81,6 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&orte_grpcomm_base.actives, opal_list_t);
 
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                ORTE_RML_TAG_XCAST,
-                                ORTE_RML_PERSISTENT,
-                                orte_grpcomm_base_xcast_recv, NULL);
-        recv_issued = true;
-    }
     return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
 

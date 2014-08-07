@@ -93,6 +93,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/ras/ras.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
