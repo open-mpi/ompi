@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -33,8 +33,6 @@
 #include "opal/util/proc.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/mpool/mpool.h"
-
-#include "ompi/group/group.h"
 
 BEGIN_C_DECLS
 
