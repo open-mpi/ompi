@@ -440,6 +440,7 @@ int mca_common_cuda_stage_one_init(void)
         errmsg = opal_argv_join(errmsgs, '\n');
         opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
                        errmsg);
+        ompi_mpi_cuda_support = 0;
     }
     opal_argv_free(errmsgs);
     free(errmsg);
