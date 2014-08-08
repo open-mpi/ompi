@@ -27,6 +27,8 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include \
 
 MOSTLYCLEANFILES = *.mod
 
+CLEANFILES += *.i90
+
 lib_LTLIBRARIES = libmpi_usempif08.la
 
 module_sentinel_file = \

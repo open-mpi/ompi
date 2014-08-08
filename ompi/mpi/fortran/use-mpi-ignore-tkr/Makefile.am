@@ -41,6 +41,7 @@ nodist_libmpi_usempi_ignore_tkr_la_SOURCES = \
 #
 
 MOSTLYCLEANFILES = *.mod
+CLEANFILES += *.i90
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(
