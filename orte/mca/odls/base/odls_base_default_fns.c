@@ -1876,6 +1876,14 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                                  ORTE_NAME_PRINT(&proc->name)));
             state = ORTE_PROC_STATE_CALLED_ABORT;
             free(abortfile);
+            /* since we are going down a different code path, we need to
+             * flag that this proc has had its waitpid fired */
+            ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_WAITPID);
+            /* if IOF_COMPLETE has already been recvd, then we need
+             * to mark this proc as no longer alive */
+            if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_IOF_COMPLETE)) {
+                ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_ALIVE);
+            }
             goto MOVEON;
         }
         free(abortfile);
