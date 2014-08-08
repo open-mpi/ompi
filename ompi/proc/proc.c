@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
@@ -751,7 +751,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 OBJ_RELEASE(plist[i]->super.proc_convertor);
                 plist[i]->super.proc_convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
 #else
-                opal_show_help("help-mpi-runtime",
+                opal_show_help("help-mpi-runtime.txt",
                                "heterogeneous-support-unavailable",
                                true, ompi_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :

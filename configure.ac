@@ -860,22 +860,22 @@ AC_CACHE_SAVE
 opal_show_title "Library and Function tests"
 
 # Darwin doesn't need -lutil, as it's something other than this -lutil.
-OPAL_CHECK_FUNC_LIB([openpty], [util])
+OPAL_SEARCH_LIBS_CORE([openpty], [util])
 
-AC_CHECK_LIB([nsl], [gethostbyname])
+OPAL_SEARCH_LIBS_CORE([gethostbyname], [nsl])
 
-AC_CHECK_LIB([socket], [socket])
+OPAL_SEARCH_LIBS_CORE([socket], [socket])
 
 # Solaris has sched_yield in -lrt, usually in libc
-OPAL_CHECK_FUNC_LIB([sched_yield], [rt])
+OPAL_SEARCH_LIBS_CORE([sched_yield], [rt])
 
 # IRIX has dirname in -lgen, usually in libc
-OPAL_CHECK_FUNC_LIB([dirname], [gen])
+OPAL_SEARCH_LIBS_CORE([dirname], [gen])
 
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
-OPAL_CHECK_FUNC_LIB([ceil], [m])
+OPAL_SEARCH_LIBS_CORE([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo dbopen dbm_open statfs statvfs setpgid])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
 if test $ac_cv_func_statfs = no -a $ac_cv_func_statvfs = no; then
@@ -1332,7 +1332,7 @@ m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
 #
 # Aggregate MCA parameters directory
 #
-AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(ompidatadir)/amca-param-sets'])
+AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(opaldatadir)/amca-param-sets'])
 
 ############################################################################
 # final wrapper compiler config

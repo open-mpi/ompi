@@ -168,6 +168,10 @@ MPI developers.
 The library attempted to open the following supporting CUDA libraries, 
 but each of them failed.  CUDA-aware support is disabled.
 %s
+If you are not interested in CUDA-aware support, then run with 
+--mca mpi_cuda_support 0 to suppress this message.  If you are interested
+in CUDA-aware support, then try setting LD_LIBRARY_PATH to the location
+of libcuda.so.1 to get passed this issue.
 #
 [dlsym failed]
 An error occurred while trying to map in the address of a function.

@@ -20,7 +20,7 @@ release=0
 # it will be appended to the version number.  It does not have to be
 # numeric.  Common examples include a1 (alpha release 1),
 # b1 (beta release 1), sc2005 (Super Computing 2005 release).  The
-# only requirement is that it must be entirely printable ASCII 
+# only requirement is that it must be entirely printable ASCII
 # characters and have no white space.
 
 greek=a1
@@ -31,10 +31,10 @@ greek=a1
 want_repo_rev=1
 
 # If repo_rev=-1, then the repository version number will be obtained
-# dynamically at run time, either: 
+# dynamically at run time, either:
 #
 # 1) via the "svnversion" command (if this is a Subversion checkout)
-#    in the form "r<svn_r>", or 
+#    in the form "r<svn_r>", or
 # 2) via the "hg -v -R tip" command (if this is a Mercurial clone)
 #    in the form of "hg<hash>", using the hash tag at the tip
 # 3) via the "git log -1" command (if this is a Git clone) in the form

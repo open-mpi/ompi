@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -793,7 +793,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        Otherwise, if we got some other failure, fall through to print
        a generic message. */
     if (OMPI_ERR_UNREACH == ret) {
-        opal_show_help("help-mpi-runtime",
+        opal_show_help("help-mpi-runtime.txt",
                        "mpi_init:startup:pml-add-procs-fail", true);
         error = NULL;
         goto error;
@@ -962,7 +962,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         /* Only print a message if one was not already printed */
         if (NULL != error) {
             const char *err_msg = opal_strerror(ret);
-            opal_show_help("help-mpi-runtime",
+            opal_show_help("help-mpi-runtime.txt",
                            "mpi_init:startup:internal-failure", true,
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }

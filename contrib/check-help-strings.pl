@@ -157,7 +157,8 @@ foreach my $info (@help_files) {
         if (m/^\s*\[(.+?)\]\s*$/) {
             my $topic = $1;
             verbose("  Topic: $topic\n");
-            $help_topics->{$info->{short}}->{$topic} = 0;
+            $help_topics->{$info->{short}}->{topic}->{$topic} = 0;
+            $help_topics->{$info->{short}}->{full} = $info->{full};
             ++$num_topics;
         }
     }
@@ -165,7 +166,7 @@ foreach my $info (@help_files) {
 
     if (0 == $num_topics) {
         print "*** WARNING: Empty help file (no topics)
-  Help file: $info->{short}\n";
+  Help file: $info->{full}\n";
         ++$num_warnings;
     }
 }
@@ -193,10 +194,11 @@ sub check_file_topic {
     }
 
     # Do we have a topic in that help file for this?
-    elsif (!exists($help_topics->{$file}->{$topic})) {
+    elsif (!exists($help_topics->{$file}->{topic}->{$topic})) {
         print "*** ERROR: Source-referenced help topic does not exist
   Source file: $info->{relative}
   Help file referenced: $file
+              which is: $help_topics->{$file}->{full}
   Help topic referenced: $topic\n";
         ++$num_errors;
     }
@@ -204,7 +206,7 @@ sub check_file_topic {
     # Yes, we do have a topic in that help file for this.
     # Increase its ref count.
     else {
-        ++$help_topics->{$file}->{$topic};
+        ++$help_topics->{$file}->{topic}->{$topic};
     }
 }
 
@@ -260,10 +262,10 @@ print "Checking for stale help messages / files...\n";
 
 foreach my $file (sort(keys(%{$help_topics}))) {
     my $num_used = 0;
-    foreach my $topic (sort(keys(%{$help_topics->{$file}}))) {
-        if (0 == $help_topics->{$file}->{$topic}) {
+    foreach my $topic (sort(keys(%{$help_topics->{$file}->{topic}}))) {
+        if (0 == $help_topics->{$file}->{topic}->{$topic}) {
             print "*** WARNING: Possibly unused help topic
-  Help file: $file
+  Help file: $help_topics->{$file}->{full}
   Help topic: $topic\n";
             ++$num_warnings;
         } else {
@@ -274,7 +276,7 @@ foreach my $file (sort(keys(%{$help_topics}))) {
     # Were no topics used in this file at all?
     if (0 == $num_used) {
             print "*** WARNING: Possibly unused help file (no topics used from this file)
-  Help file: $file\n";
+  Help file: $help_topics->{$file}->{full}\n";
             ++$num_warnings;
     }
 }

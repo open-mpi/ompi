@@ -279,34 +279,42 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
         p->data.pid = src->data.pid;
         break;
     case OPAL_INT:
-        p->data.integer = src->data.integer;
+        /* to avoid alignment issues */
+        memcpy(&p->data.integer, &src->data.integer, sizeof(int));
         break;
     case OPAL_INT8:
         p->data.int8 = src->data.int8;
         break;
     case OPAL_INT16:
-        p->data.int16 = src->data.int16;
+        /* to avoid alignment issues */
+        memcpy(&p->data.int16, &src->data.int16, 2);
         break;
     case OPAL_INT32:
-        p->data.int32 = src->data.int32;
+        /* to avoid alignment issues */
+        memcpy(&p->data.int32, &src->data.int32, 4);
         break;
     case OPAL_INT64:
-        p->data.int64 = src->data.int64;
+        /* to avoid alignment issues */
+        memcpy(&p->data.int64, &src->data.int64, 8);
         break;
     case OPAL_UINT:
-        p->data.uint = src->data.uint;
+        /* to avoid alignment issues */
+        memcpy(&p->data.uint, &src->data.uint, sizeof(unsigned int));
         break;
     case OPAL_UINT8:
         p->data.uint8 = src->data.uint8;
         break;
     case OPAL_UINT16:
-        p->data.uint16 = src->data.uint16;
+        /* to avoid alignment issues */
+        memcpy(&p->data.uint16, &src->data.uint16, 2);
         break;
     case OPAL_UINT32:
-        p->data.uint32 = src->data.uint32;
+        /* to avoid alignment issues */
+        memcpy(&p->data.uint32, &src->data.uint32, 4);
         break;
     case OPAL_UINT64:
-        p->data.uint64 = src->data.uint64;
+        /* to avoid alignment issues */
+        memcpy(&p->data.uint64, &src->data.uint64, 8);
         break;
     case OPAL_BYTE_OBJECT:
         if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
