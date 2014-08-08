@@ -862,7 +862,7 @@ opal_show_title "Library and Function tests"
 # Darwin doesn't need -lutil, as it's something other than this -lutil.
 OPAL_SEARCH_LIBS_CORE([openpty], [util])
 
-OPAL_SEARCH_LIBS_CORE([nsl], [gethostbyname])
+OPAL_SEARCH_LIBS_CORE([gethostbyname], [nsl])
 
 OPAL_SEARCH_LIBS_CORE([socket], [socket])
 
