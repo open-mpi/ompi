@@ -16,6 +16,7 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/memoryhooks/memory.h"
+#include "opal/runtime/opal_params.h"
 #include "ompi/runtime/params.h"
 
 static int btl_ugni_component_register(void);
@@ -286,7 +287,7 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     int rc;
 
     /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
-    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+    if (opal_using_threads() && !mca_btl_base_thread_multiple_override) {
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "btl:ugni: MPI_THREAD_MULTIPLE not supported; skipping this component");
         return NULL;

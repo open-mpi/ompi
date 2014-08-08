@@ -156,7 +156,7 @@ static int opal_common_ugni_device_fini (opal_common_ugni_device_t *dev)
  * Send local device information and other information
  * required for setup
  */
-static int opal_common_ugni_send_modex (int my_rank)
+static int opal_common_ugni_send_modex (int my_cdm_id)
 {
     uint32_t modex_size, total_msg_size, msg_offset;
     struct opal_common_ugni_modex_t modex;
@@ -178,7 +178,7 @@ static int opal_common_ugni_send_modex (int my_rank)
         opal_common_ugni_device_t *dev = opal_common_ugni_module.devices + i;
 
         modex.addr = dev->dev_addr;
-        modex.id   = my_rank;
+        modex.id   = my_cdm_id;
 
         memcpy ((void *)((uintptr_t) modex_msg + msg_offset),
                 (void *)&modex, modex_size);
@@ -228,9 +228,11 @@ int opal_common_ugni_fini (void)
 
 int opal_common_ugni_init (void)
 {
+#if 0
     opal_proc_t *my_proc;
+#endif
     int modes, rc, i;
-    uint32_t my_rank, *ptr;
+    uint32_t my_cdm_id, *ptr;
 
     opal_common_ugni_module_ref_count ++;
 
@@ -238,9 +240,10 @@ int opal_common_ugni_init (void)
         return OPAL_SUCCESS;
     }
 
-    my_proc = opal_proc_get_local ();
-
     /* get a unique id from the runtime */
+    /* the code below is unnecessary.  The cdm_id only needs to be unique
+       within a node for a given ptag/cookie tuple */
+#if 0
 #if defined(OMPI_DB_GLOBAL_RANK)
     {
         opal_list_t myvals;
@@ -265,6 +268,9 @@ int opal_common_ugni_init (void)
 #else
     my_rank = my_proc->proc_name.vpid;
 #endif
+#else
+    my_cdm_id = getpid();   /*TODO: eventually need something else for thread-hot support */
+#endif
 
     /* pull settings from ugni btl */
     opal_common_ugni_module.rdma_max_retries =
@@ -286,7 +292,7 @@ int opal_common_ugni_init (void)
     }
 
     /* create a communication domain */
-    rc = GNI_CdmCreate (my_rank, opal_common_ugni_module.ptag,
+    rc = GNI_CdmCreate (my_cdm_id, opal_common_ugni_module.ptag,
                         opal_common_ugni_module.cookie, modes,
                         &opal_common_ugni_module.cd_handle);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
@@ -308,7 +314,7 @@ int opal_common_ugni_init (void)
     }
 
     /* send ugni modex */
-    opal_common_ugni_send_modex (my_rank);
+    opal_common_ugni_send_modex (my_cdm_id);
 
     return OPAL_SUCCESS;
 }

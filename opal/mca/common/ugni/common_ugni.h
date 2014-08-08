@@ -13,6 +13,7 @@
 #include "opal_config.h"
 
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/class/opal_list.h"
 #include "opal/include/opal/prefetch.h"
 #include "opal_stdint.h"
