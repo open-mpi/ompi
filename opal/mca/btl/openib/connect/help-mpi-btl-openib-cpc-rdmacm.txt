@@ -10,14 +10,6 @@
 # This is the US/English help file for Open MPI's OpenFabrics RDMA CM
 # support (the openib BTL).
 #
-[no valid ip]
-It appears that an OpenFabrics device does not have an IP address
-associated with it.  The OpenFabrics RDMA CM connection scheme
-*requires* IP addresses to be setup in order to function properly.
-
-  Local host:   %s
-  Local device: %s
-#
 [could not find matching endpoint]
 The OpenFabrics device in an MPI process received an RDMA CM connect
 request for a peer that it could not identify as part of this MPI job.
@@ -36,6 +28,13 @@ an illegal TCP port value.  TCP ports must be between 0 and 65536
   TCP port: %d
 
 This value was ignored.
+#
+[illegal retry count]
+The btl_openib_connect_rdmacm_retry_count MCA parameter was used to specify
+an illegal retry count.
+
+  Retry count: %d
+
 #
 [illegal timeout]
 The btl_openib_connect_rdmacm_resolve_timeout parameter was used to

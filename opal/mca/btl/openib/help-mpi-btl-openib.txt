@@ -515,29 +515,6 @@ for this run.
   Local host: %s
   btl_openib_receive_queues: %s
 #
-[XRC with wrong OOB]
-WARNING: You must use the "xoob" OpenFabrics (openib) connection
-manager when XRC ("X") queues are specified in the
-btl_openib_receive_queues MCA parameter.  Either remove the X queues
-from btl_openib_receive_queues or ensure to use the "xoob" connection
-manager by setting btl_openib_connect to "xoob".  The OpenFabrics BTL
-will therefore be deactivated for this run.
-
-  Local host:        %s
-  Number of XRC RQs: %d
-#
-[SRQ or PP with wrong OOB]
-WARNING: You must use the "oob" OpenFabrics (openib) connection
-manager when PP ("P") or SRQ ("S") queues are specified in the
-btl_openib_receive_queues MCA parameter.  Either remove the P or S
-queues from btl_openib_receive_queues or ensure to use the "oob"
-connection manager by setting btl_openib_connect to "oob".  The
-OpenFabrics BTL will therefore be deactivated for this run.
-
-  Local host:      %s
-  Number of SRQs:  %d
-  Number of PPRQs: %d
-#
 [non optimal rd_win]
 WARNING: rd_win specification is non optimal. For maximum performance it is
 advisable to configure rd_win bigger than (rd_num - rd_low), but currently
@@ -661,20 +638,6 @@ Such mixed network trasport configuration is not supported by Open MPI.
   Remote host:           %s
   Remote Adapter:        (vendor 0x%x, part ID %d)
   Remote transport type: %s
-#
-[mem-reg-fail]
-The OpenFabrics (openib) BTL failed to register memory in the driver.
-Please check /var/log/messages or dmesg for driver specific failure
-reason.
-The failure occured here:
-
-  Local host:    %s
-  Device:        %s
-  Function:      %s()
-  Errno says:    %s (errno=%d)
-
-You may need to consult with your system administrator to get this
-problem fixed.
 #
 [gid index too large]
 Open MPI tried to use a GID index that was too large for an
