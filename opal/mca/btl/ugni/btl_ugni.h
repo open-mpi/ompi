@@ -29,6 +29,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/ompi_free_list.h"
 #include "opal/mca/common/ugni/common_ugni.h"
 
@@ -288,9 +289,9 @@ OPAL_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
 OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
 
 /* Get a unique 64-bit id for the process name */
-static inline uint64_t mca_btl_ugni_proc_name_to_id (ompi_process_name_t name) {
+static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
     /* Throw away the top bit of the jobid for the datagram type */
-    return ((uint64_t) (name.jobid & 0x7fffffff) << 32 | (uint64_t) name.vpid);
+    return ((uint64_t) (opal_process_name_jobid(name) & 0x7fffffff) << 32 | opal_process_name_vpid(name));
 }
 
 #endif

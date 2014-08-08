@@ -37,7 +37,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     }
 
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
-                 opal_process_name_vpid(OPAL_PROC_MY_NAME, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
+                 opal_process_name_vpid(OPAL_PROC_MY_NAME), endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
 
     /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
     frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
