@@ -871,6 +871,9 @@ NETWORKING SUPPORT / OPTIONS
   look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
+--with-usnic
+  Abort configure if Cisco usNIC support cannot be built.
+
 --with-verbs=<directory>
   Specify the directory where the verbs (also know as OpenFabrics, and
   previously known as OpenIB) libraries and header files are located.
