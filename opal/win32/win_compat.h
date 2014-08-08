@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -246,8 +247,6 @@ typedef unsigned int uint;
 #define HAVE_DECL___FUNC__ 1
 #endif
 
-/* Microsoft claim that strdup is deprecated and that we should use _strdup. */
-/*#define strdup _strdup*/
 /*#define strncpy strncpy_s*/
 /*#define sprintf sprintf_s*/
 
