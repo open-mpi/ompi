@@ -21,15 +21,17 @@ dnl
 # calls OPAL_WRAPPER_FLAGS_ADD -- see big comment in
 # opal_setup_wrappers.m4 for an explanation of why this is bad).
 AC_DEFUN([OPAL_SEARCH_LIBS_CORE],[
-    OPAL_VAR_SCOPE_PUSH(LIBS_save add)
+    m4_ifdef([mca_component_configure_active],
+        [m4_fatal([*** OPAL_SEARCH_LIBS_CORE cannot be called from a component configure.m4])])
+
+    OPAL_VAR_SCOPE_PUSH([LIBS_save add])
     LIBS_save=$LIBS
 
     AC_SEARCH_LIBS([$1], [$2],
         [ # Found it!  See if anything was added to LIBS
-         add=`echo $LIBS | sed -e "s/$LIBS_save$//"`
-         if test "x$add" != "x"; then
-             OPAL_WRAPPER_FLAGS_ADD([LIBS], [$add])
-         fi
+         add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
+         AS_IF([test -n "$add"],
+             [OPAL_WRAPPER_FLAGS_ADD([LIBS], [$add])])
          $3],
         [$4], [$5])
 
@@ -45,15 +47,17 @@ AC_DEFUN([OPAL_SEARCH_LIBS_CORE],[
 # variable (i.e., $prefix is usually "framework_component", such as
 # "fbtl_posix").
 AC_DEFUN([OPAL_SEARCH_LIBS_COMPONENT],[
-    OPAL_VAR_SCOPE_PUSH(LIBS_save add)
+    m4_ifndef([mca_component_configure_active],
+        [m4_fatal([*** OPAL_SEARCH_LIBS_COMPONENT can only be called from a component configure.m4])])
+
+    OPAL_VAR_SCOPE_PUSH([LIBS_save add])
     LIBS_save=$LIBS
 
     AC_SEARCH_LIBS([$2], [$3],
         [ # Found it!  See if anything was added to LIBS
-         add=`echo $LIBS | sed -e "s/$LIBS_save$//"`
-         if test "x$add" != "x"; then
-             OPAL_FLAGS_APPEND_UNIQ($1_LIBS, [$add])
-         fi
+         add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
+         AS_IF([test -n "$add"],
+             [OPAL_FLAGS_APPEND_UNIQ($1_LIBS, [$add])])
          $4],
         [$5], [$6])
 
