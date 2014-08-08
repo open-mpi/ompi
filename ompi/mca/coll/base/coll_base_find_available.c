@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -92,7 +92,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
     if (opal_list_get_size(&ompi_coll_base_framework.framework_components) == 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:find_available: no coll components available!");
-        opal_show_help("help-mca-base", "find-available:none-found", true,
+        opal_show_help("help-mca-base.txt", "find-available:none-found", true,
                        "coll");
         return OMPI_ERROR;
     }

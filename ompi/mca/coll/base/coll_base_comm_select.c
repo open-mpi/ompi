@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Lawrence Livermore National Security, LLC.  All
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -121,7 +121,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
        collective modules available, then print error and return. */
     if (NULL == selectable) {
         /* There's no modules available */
-        opal_show_help("help-mca-coll-base",
+        opal_show_help("help-mca-coll-base.txt",
                        "comm-select:none-available", true);
         return OMPI_ERROR;
     }
