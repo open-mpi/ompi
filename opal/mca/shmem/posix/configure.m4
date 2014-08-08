@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -35,7 +35,7 @@ AC_DEFUN([MCA_opal_shmem_posix_CONFIG],[
           [AC_MSG_RESULT([no])
            shmem_posix_sm_build_posix=0],
           [AC_MSG_RESULT([yes])
-           AC_SEARCH_LIBS([shm_open], [rt],
+           OPAL_SEARCH_LIBS_COMPONENT([shmem_posix], [shm_open], [rt],
                   [shmem_posix_sm_build_posix=1],
                   [shmem_posix_sm_build_posix=0])])
     AS_IF([test "$enable_posix_shmem" = "yes" -a "$shmem_posix_sm_build_posix" = "0"],
