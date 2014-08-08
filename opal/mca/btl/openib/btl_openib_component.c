@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -3396,12 +3396,24 @@ error:
             ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
 
         if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status) {
-            opal_show_help("help-mpi-btl-openib.txt",
-                           BTL_OPENIB_QP_TYPE_PP(qp) ?
-                           "pp rnr retry exceeded" :
-                           "srq rnr retry exceeded", true,
-                           opal_proc_local_get()->proc_hostname, device_name,
-                           peer_hostname);
+            // The show_help checker script gets confused if the topic
+            // is an inline logic check, so separate it into two calls
+            // to show_help.
+            if (BTL_OPENIB_QP_TYPE_PP(qp)) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "pp rnr retry exceeded",
+                               true,
+                               opal_proc_local_get()->proc_hostname,
+                               device_name,
+                               peer_hostname);
+            } else {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "srq rnr retry exceeded",
+                               true,
+                               opal_proc_local_get()->proc_hostname,
+                               device_name,
+                               peer_hostname);
+            }
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "pp retry exceeded", true,
