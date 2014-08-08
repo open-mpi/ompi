@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -853,9 +853,9 @@ mca_btl_sm_component_init(int *num_btls,
                     malloc(sizeof(mca_btl_sm_frag_t *) *
                            mca_btl_sm_component.knem_max_simultaneous);
                 if (NULL == mca_btl_sm.knem_frag_array) {
-                    opal_show_help("help-mpi-btl-sm.txt", "knem init fail",
-                                   true, opal_proc_local_get()->proc_hostname, "malloc",
-                                   errno, strerror(errno));
+                    opal_show_help("help-mpi-btl-sm.txt", "sys call fail",
+                                   true, "malloc",
+                                   strerror(errno), errno);
                     goto no_knem;
                 }
             }
