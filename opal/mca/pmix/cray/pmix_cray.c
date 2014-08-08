@@ -34,7 +34,7 @@
 typedef struct {
     uint32_t jid;
     uint32_t vid;
-} cray_pname_t;
+} pmix_pname_t;
 
 static int cray_init(void);
 static int cray_fini(void);
@@ -111,7 +111,8 @@ static int pmix_appnum = 0;
 static int pmix_usize = 0;
 static char *pmix_kvs_name = NULL;
 static int *pmix_lranks = NULL;
-static cray_pname_t cray_pname;
+static pmix_pname_t pmix_pname;
+static uint32_t pmix_jobid = -1;
 
 
 static char* pmix_packed_data = NULL;
@@ -132,8 +133,9 @@ static int cray_init(void)
     int i, spawned, size, rank, appnum, my_node;
     int rc, ret = OPAL_ERROR;
     char *pmapping = NULL;
-    char buf[16];
+    char buf[PMI2_MAX_ATTRVALUE];
     int found;
+    uint32_t jobfam;
 
     /* if we can't startup PMI, we can't be used */
     if ( PMI2_Initialized () ) {
@@ -177,6 +179,26 @@ static int cray_init(void)
         OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
         goto err_exit;
     }
+
+    rc = sscanf(pmix_kvs_name,"kvs_%u",&jobfam);
+    if (rc != 1) {
+        OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
+        rc = OPAL_ERROR;
+        goto err_exit;
+    }
+
+    pmix_jobid = jobfam << 16;
+
+    /* store our name in the opal_proc_t so that
+     * debug messages will make sense - an upper
+     * layer will eventually overwrite it, but that
+     * won't do any harm */
+    pmix_pname.jid = pmix_jobid;
+    pmix_pname.vid = pmix_rank;
+    opal_proc_set_name((opal_process_name_t*)&pmix_pname);
+    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray: assigned tmp name %d %d pmix_kvs_name %s",
+                        OPAL_NAME_PRINT(*(opal_process_name_t*)&pmix_pname),pmix_pname.jid,pmix_pname.vid,pmix_kvs_name);
 
     pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
@@ -300,7 +322,7 @@ static int kvs_put(const char key[], const char value[])
 
     int rc;
 
-    opal_output_verbose(4, opal_pmix_base_framework.framework_output,
+    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray kvs_put key %s  value %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key, value);
 
@@ -319,6 +341,11 @@ static int cray_put(opal_pmix_scope_t scope,
     char* buffer_to_put;
     int rem_offset = 0;
     int data_to_put = 0;
+
+    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray cray_put my name is %ld\n",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_proc_local_get()->proc_name);
+
     if (OPAL_SUCCESS != (rc = pmix_store_encoded (kv->key, (void*)&kv->data, kv->type, 
                                                   &pmix_packed_data, &pmix_packed_data_offset))) {
         OPAL_ERROR_LOG(rc);
@@ -365,7 +392,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     opal_value_t *kp, kvn;
     opal_hwloc_locality_t locality;
 
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray called fence",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
@@ -382,7 +409,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
         return OPAL_ERROR;
     }
 
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray kvs_fence complete",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
@@ -391,12 +418,11 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
      * for every process in the job */
     if (!pmix_got_modex_data) {
         pmix_got_modex_data = true;
-        memcpy(&cray_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < pmix_nlranks; i++) {
-            cray_pname.vid = i;
-            rc = cache_keys_locally((opal_identifier_t*)&cray_pname, OPAL_DSTORE_CPUSET,
+            pmix_pname.vid = i;
+            rc = cache_keys_locally((opal_identifier_t*)&pmix_pname, OPAL_DSTORE_CPUSET,
                                     &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
@@ -424,14 +450,14 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s2 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&cray_pname),
+                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&pmix_pname),
                                  opal_hwloc_base_print_locality(locality)));
 
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&cray_pname, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&pmix_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -527,18 +553,12 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv)
 {
     int rc, i;
     opal_value_t *kp;
-    char jobId[PMI2_MAX_ATTRVALUE];
 
     if (0 == strcmp(PMIX_JOBID, attr)) {
-        rc  = PMI2_Job_GetId(jobId,sizeof(jobId));
-        if(PMI_SUCCESS != rc) {
-            OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
-            return false;
-        }
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
-        kp->type = OPAL_STRING;
-        kp->data.string = strdup(jobId);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = pmix_jobid;
         *kv = kp;
         return true;
     }
