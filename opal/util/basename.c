@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,9 +25,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#ifdef HAVE__STRDUP
-char * _strdup (const char *);
-#endif /* HAVE__STRDUP */
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
 #endif  /* HAVE_LIBGEN_H */
@@ -133,10 +130,6 @@ char* opal_dirname(const char* filename)
             break;  /* return the duplicate of "." */
         }
     }
-#ifdef HAVE__STRDUP
-    return _strdup(".");
-#else
     return strdup(".");
-#endif
 #endif  /* defined(HAVE_DIRNAME) */
 }
