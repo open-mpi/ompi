@@ -1158,7 +1158,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
         return OMPI_ERROR;
     }
 
-    spec->job_id = ompi_proc_local()->proc_name.jobid;
+    spec->job_id = opal_process_name_jobid(opal_proc_local_get()->proc_name);
     spec->rank_id = ompi_comm_rank(MPI_COMM_WORLD);
     spec->progress.func = mca_coll_fca_progress_cb;
     spec->progress.arg = NULL;
@@ -1416,7 +1416,7 @@ static int fca_register(void)
             OPAL_INFO_LVL_3,
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_fca_component.compiletime_version);
-    mca_coll_fca_component.runtime_version = fca_get_version_string();
+    mca_coll_fca_component.runtime_version = (char *)fca_get_version_string();
     (void) mca_base_component_var_register(c,
             MCA_RUNTIME_VER,
             "Version of the libfca library with which Open MPI is running",
