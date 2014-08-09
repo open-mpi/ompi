@@ -30,8 +30,6 @@
 
 #include "btl_usnic_hwloc.h"
 
-#include "ompi/mca/rte/rte.h"
-
 /*
  * Local variables
  */

@@ -25,7 +25,6 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
                                       uint32_t flags)
 {
     mca_btl_ugni_base_frag_t *frag = NULL;
-    int rc;
 
     (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
     if (OPAL_UNLIKELY(NULL == frag)) {

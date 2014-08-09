@@ -276,7 +276,7 @@ static int parse_file(char *filename)
                 /* Warn that there is no current section, and ignore
                    this parameter */
                 if (!showed_no_section_warning) {
-                    show_help("ini file:not in a section");
+                    opal_show_help("help-mpi-btl-openib.txt", "ini file:not in a section", true);
                     showed_no_section_warning = true;
                 }
                 /* Parse it and then dump it */
@@ -290,7 +290,7 @@ static int parse_file(char *filename)
         default:
             /* anything else is an error */
             if (!showed_unexpected_tokens_warning) {
-                show_help("ini file:unexpected token");
+                opal_show_help("help-mpi-btl-openib.txt", "ini file:unexpected token", true);
                 showed_unexpected_tokens_warning = true;
             }
             break;
@@ -338,7 +338,7 @@ static int parse_line(parsed_section_values_t *sv)
     /* The first thing we have to see is an "=" */
     val = btl_openib_ini_yylex();
     if (btl_openib_ini_parse_done || BTL_OPENIB_INI_PARSE_EQUAL != val) {
-        show_help("ini file:expected equals");
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:expected equals", true);
         return OPAL_ERROR;
     }
 
@@ -352,7 +352,7 @@ static int parse_line(parsed_section_values_t *sv)
         val = btl_openib_ini_yylex();
         if (BTL_OPENIB_INI_PARSE_NEWLINE != val &&
             BTL_OPENIB_INI_PARSE_DONE != val) {
-            show_help("ini file:expected newline");
+            opal_show_help("help-mpi-btl-openib.txt", "ini file:expected newline", true);
             free(value);
             return OPAL_ERROR;
         }
@@ -361,7 +361,7 @@ static int parse_line(parsed_section_values_t *sv)
     /* If we did not get EOL or EOF, something is wrong */
     else if (BTL_OPENIB_INI_PARSE_DONE != val &&
              BTL_OPENIB_INI_PARSE_NEWLINE != val) {
-        show_help("ini file:expected newline");
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:expected newline", true);
         return OPAL_ERROR;
     }
 
@@ -424,7 +424,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            opal_show_help("help-mpi-btl-openib.txt",
+            opal_show_help("help-mpi-btl-openib.txt", 
                            "ini file:unknown field", true,
                            ini_filename, btl_openib_ini_yynewlines,
                            key_buffer);
@@ -693,7 +693,7 @@ int opal_btl_openib_ini_intify_list(char *value, uint32_t **values, int *len)
 }
 
 /*
- * Trival helper function
+ * Trival helper function -don't use this, it confuses check-help-strings.pl tool
  */
 static inline void show_help(const char *topic)
 {

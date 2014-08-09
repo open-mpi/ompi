@@ -35,7 +35,7 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     mca_btl_ugni_module_t *ugni_module = ep->btl;
     ompi_free_list_item_t *mbox;
 
-    OPAL_FREE_LIST_GET_MT(&ugni_module->smsg_mboxes, mbox);
+    OMPI_FREE_LIST_GET_MT(&ugni_module->smsg_mboxes, mbox);
     if (OPAL_UNLIKELY(NULL == mbox)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

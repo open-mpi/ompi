@@ -31,11 +31,14 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t **peers,
                            opal_bitmap_t *reachable) {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
-    opal_proc_t *my_proc = ompi_proc_local ();
+    opal_proc_t *my_proc = opal_proc_local_get();
     size_t ntotal_procs, i;
     int rc;
 
     if (false == ugni_module->initialized) {
+
+        /* TODO: fix me don't do this now that btl has moved in to opal */
+
         ntotal_procs = ompi_comm_size ((ompi_communicator_t *) MPI_COMM_WORLD);
 
         rc = opal_pointer_array_init (&ugni_module->endpoints, ntotal_procs, 1 << 24, 512);
@@ -233,6 +236,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     }
 
     /* determine how many procs are in the job (might want to check universe size here) */
+    /* TODO: need to fix this with something else now that btl is in opal */
     nprocs = ompi_comm_size ((ompi_communicator_t *) MPI_COMM_WORLD);
 
     rc = mca_btl_ugni_smsg_setup (nprocs);

@@ -72,6 +72,7 @@ noinst_LTLIBRARIES = $(flibs)
 #
 
 MOSTLYCLEANFILES = *.mod
+CLEANFILES += *.i90
 
 #
 # Install the generated .mod files.  Unfortunately, each F90 compiler
