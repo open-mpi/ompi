@@ -383,13 +383,16 @@ ompi/mpi/fortran/base/*.mod
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
 ompi/mpi/fortran/mpiext/*.mod
+ompi/mpi/fortran/mpiext/*.i90
 ompi/mpi/fortran/mpif-h/profile/p*.c
 ompi/mpi/fortran/use-mpi-f08/constants.h
 ompi/mpi/fortran/use-mpi-f08/*.mod
+ompi/mpi/fortran/use-mpi-f08/*.i90
 ompi/mpi/fortran/use-mpi-f08-desc/*.mod
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/*.mod
+ompi/mpi/fortran/use-mpi-ignore-tkr/*.i90
 ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
 ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
 ompi/mpi/fortran/use-mpi-tkr/mpi.mod
