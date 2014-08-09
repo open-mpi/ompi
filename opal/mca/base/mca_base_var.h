@@ -704,7 +704,7 @@ typedef enum {
     /* Dump easily parsable strings */
     MCA_BASE_VAR_DUMP_PARSABLE = 1,
     /* Dump simple name=value string */
-    MCA_BASE_VAR_DUMP_SIMPLE   = 2,
+    MCA_BASE_VAR_DUMP_SIMPLE   = 2
 } mca_base_var_dump_type_t;
 
 /**
