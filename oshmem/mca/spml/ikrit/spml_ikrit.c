@@ -504,8 +504,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     proc_self = oshmem_proc_group_find(oshmem_group_all, my_rank);
     /* identify local processes and change transport to SHM */
     for (i = 0; i < nprocs; i++) {
-        if (procs[i]->proc_name.jobid != proc_self->proc_name.jobid||
-        !OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
+        if (opal_process_name_jobid(procs[i]->super.proc_name) != opal_process_name_jobid(proc_self->super.proc_name) ||
+        !OPAL_PROC_ON_LOCAL_NODE(procs[i]->super.proc_flags)) {
             continue;
         }
         if (procs[i] == proc_self)
@@ -611,7 +611,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-                     oshmem_proc_local_proc->proc_name.vpid, i, addr, (unsigned long long)size,
+                     opal_process_name_vpid(oshmem_proc_local_proc->super.proc_name), i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
     }
