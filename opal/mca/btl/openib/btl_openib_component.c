@@ -85,8 +85,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/pmix/pmix.h"
 
-#include "ompi/mca/rte/rte.h"
-
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h"
