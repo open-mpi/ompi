@@ -150,7 +150,7 @@ int mca_scoll_fca_get_fca_lib(struct oshmem_group_t *group)
                   mca_scoll_fca_component.fca_spec_file);
         return OSHMEM_ERROR;
     }
-    spec->job_id = oshmem_proc_local()->proc_name.jobid;
+    spec->job_id = opal_process_name_jobid(oshmem_proc_local()->super.proc_name);
     spec->rank_id = oshmem_proc_pe(oshmem_proc_local());
     spec->progress.func = mca_scoll_fca_progress_cb;
     spec->progress.arg = NULL;
