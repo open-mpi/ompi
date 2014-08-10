@@ -24,7 +24,7 @@
 #include "oshmem/mca/spml/base/spml_base_getreq.h"
 
 #include "ompi/mca/bml/base/base.h" 
-#include "ompi/class/ompi_free_list.h" 
+#include "opal/class/ompi_free_list.h" 
 #include "opal/class/opal_list.h"
 
 #include "orte/runtime/orte_globals.h"
