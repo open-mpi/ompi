@@ -314,7 +314,7 @@ int ompi_mtl_mxm_module_init(void)
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags)) {
-            mxlr = max(mxlr, procs[proc]->proc_name.vpid);
+            mxlr = max(mxlr, opal_process_name_vpid(procs[proc]->super.proc_name));
         }
     }
 
