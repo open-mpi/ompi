@@ -5,6 +5,8 @@
 #                         Corporation.  All rights reserved.
 #
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,6 +18,16 @@
 [usage]
 ompi-migrate PID_OF_MPIRUN
   Open MPI Process Migration Tool
+
+%s
+#
+[usage-no-cr]
+This build of Open MPI does *not* include Checkpoint/Restart functionality.
+If you require this functionality re-configure Open MPI with the proper
+Checkpoint/Restart options.
+
+ompi-migrate PID_OF_MPIRUN
+  Open MPI Migrage Tool
 
 %s
 #
@@ -40,6 +52,15 @@ Error: Unable to connect to the Head Node Process to initiate the
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't migratable
         - The application with this PID isn't an Open MPI application.
+#
+[non-ckptable]
+Error: The job with pid %d is not checkpointable.
+       This could be caused by one of the following:
+        - The application is using unsupported components.
+        - Your application did not select to be checkpointable
+To enable checkpointing in an application use the following AMCA parameter
+argument to mpirun:
+       -am ft-enable-cr
 #
 [not_impl]
 The following feature was requested, but is not currently implemented.

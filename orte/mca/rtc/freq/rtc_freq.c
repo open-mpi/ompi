@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -280,7 +282,7 @@ static int init(void)
     if (0 == opal_list_get_size(&tracking)) {
         /* nothing to read */
         if (0 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
-            orte_show_help("help-orcm-sensor-freq.txt", "no-cores-found",
+            orte_show_help("help-rtc-freq.txt", "no-cores-found",
                            true, orte_process_info.nodename);
         }
         OPAL_LIST_DESTRUCT(&tracking);

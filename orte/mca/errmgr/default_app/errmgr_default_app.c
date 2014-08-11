@@ -9,6 +9,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,7 +120,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == caddy->proc_state) {
         /* we can't send a message - print a message */
         nodename = orte_get_proc_hostname(&caddy->name);
-        orte_show_help("help-errmgr-base",
+        orte_show_help("help-errmgr-base.txt",
                        "undeliverable-msg",
                        true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        orte_process_info.nodename,
