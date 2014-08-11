@@ -14,6 +14,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -214,9 +216,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         orte_odls.kill_local_procs(NULL);
         /* whack any session directories */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    } else {
-        /* cleanup my session directory */
-        orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     }
 
     /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
