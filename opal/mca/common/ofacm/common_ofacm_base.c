@@ -4,6 +4,8 @@
  *
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -284,7 +286,7 @@ int opal_common_ofacm_base_register(mca_base_component_t *base)
                 }
             }
             if (NULL == all[i]) {
-                opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
+                opal_show_help("help-mpi-common-ofacm-base.txt",
                                "cpc name not found", true,
                                "include", opal_proc_local_get()->proc_hostname,
                                "include", opal_common_ofacm_cpc_include, temp[j], 
@@ -310,7 +312,7 @@ int opal_common_ofacm_base_register(mca_base_component_t *base)
                 }
             }
             if (NULL == all[i]) {
-                opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
+                opal_show_help("help-mpi-common-ofacm-base.txt",
                                "cpc name not found", true,
                                "exclude", opal_proc_local_get()->proc_hostname,
                                "exclude", opal_common_ofacm_cpc_exclude, temp[j], 
@@ -464,7 +466,7 @@ int opal_common_ofacm_base_select_for_local_port(opal_common_ofacm_base_dev_desc
 
     /* If we got an empty array, then no CPCs were eligible.  Doh! */
     if (0 == cpc_index) {
-        opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
+        opal_show_help("help-mpi-common-ofacm-base.txt",
                        "no cpcs for port", true,
                        opal_proc_local_get()->proc_hostname,
                        ibv_get_device_name(dev->ib_dev),

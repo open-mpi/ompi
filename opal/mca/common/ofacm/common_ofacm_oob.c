@@ -16,6 +16,8 @@
  * Copyright (c) 2008-2012 Mellanox Technologies.  All rights reserved.
  *
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -584,7 +586,7 @@ static int qp_create_one(opal_common_ofacm_base_local_connection_context_t *cont
 
     if (init_attr.cap.max_inline_data < req_inline) {
         context->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
-        opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
+        opal_show_help("help-mpi-common-ofacm-base.txt",
                        "inline truncated", true, opal_proc_local_get()->proc_hostname,
                        req_inline, init_attr.cap.max_inline_data);
     } else {

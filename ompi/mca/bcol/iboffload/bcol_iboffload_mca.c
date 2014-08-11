@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,60 +142,60 @@ static int reg_bool(const char* param_name,
 int mca_bcol_iboffload_verify_params(void)
 {
     if (mca_bcol_iboffload_component.min_rnr_timer > 31) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_min_rnr_timer > 31",
                        "bcol_iboffload_ib_min_rnr_timer reset to 31");
         mca_bcol_iboffload_component.min_rnr_timer = 31;
     } else if (mca_bcol_iboffload_component.min_rnr_timer < 0){
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_min_rnr_timer < 0",
                    "bcol_iboffload_ib_min_rnr_timer reset to 0");
         mca_bcol_iboffload_component.min_rnr_timer = 0;
     }
 
     if (mca_bcol_iboffload_component.timeout > 31) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_timeout > 31",
                        "bcol_iboffload_ib_timeout reset to 31");
         mca_bcol_iboffload_component.timeout = 31;
     } else if (mca_bcol_iboffload_component.timeout < 0) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_timeout < 0",
                    "bcol_iboffload_ib_timeout reset to 0");
         mca_bcol_iboffload_component.timeout = 0;
     }
 
     if (mca_bcol_iboffload_component.retry_count > 7) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_retry_count > 7",
                        "bcol_iboffload_ib_retry_count reset to 7");
         mca_bcol_iboffload_component.retry_count = 7;
     } else if (mca_bcol_iboffload_component.retry_count < 0) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_retry_count < 0",
                    "bcol_iboffload_ib_retry_count reset to 0");
         mca_bcol_iboffload_component.retry_count = 0;
     }
 
     if (mca_bcol_iboffload_component.max_rdma_dst_ops > 7) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_rnr_retry > 7",
                        "bcol_iboffload_ib_rnr_retry reset to 7");
         mca_bcol_iboffload_component.max_rdma_dst_ops = 7;
     } else if (mca_bcol_iboffload_component.max_rdma_dst_ops < 0) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_rnr_retry < 0",
                    "bcol_iboffload_ib_rnr_retry reset to 0");
         mca_bcol_iboffload_component.max_rdma_dst_ops = 0;
     }
 
     if (mca_bcol_iboffload_component.service_level > 15) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_service_level > 15",
                        "bcol_iboffload_ib_service_level reset to 15");
         mca_bcol_iboffload_component.service_level = 15;
     } else if (mca_bcol_iboffload_component.service_level < 0) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_service_level < 0",
                    "bcol_iboffload_ib_service_level reset to 0");
         mca_bcol_iboffload_component.service_level = 0;
@@ -201,7 +203,7 @@ int mca_bcol_iboffload_verify_params(void)
  
     if(mca_bcol_iboffload_component.buffer_alignment <= 1 ||
        (mca_bcol_iboffload_component.buffer_alignment & (mca_bcol_iboffload_component.buffer_alignment - 1))) {
-        opal_show_help("help-mpi-bcol-iboffload.txt", "wrong buffer alignment",
+        opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
                 true, mca_bcol_iboffload_component.buffer_alignment, ompi_process_info.nodename, 64);
         mca_bcol_iboffload_component.buffer_alignment = 64;
     }

@@ -5,6 +5,8 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -319,7 +321,7 @@ static int iboffload_load_devices(void)
     if (0 == num_devs || NULL == cm->ib_devs) {
         IBOFFLOAD_ERROR(("No IB devices found"));
         /* No hca error*/
-        opal_show_help("help-mpi-btl-openib.txt", "no-nics", true);
+        opal_show_help("help-mpi-btl-base.txt", "btl:no-nics", true);
         return OMPI_ERROR;
     }
 
