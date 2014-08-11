@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -314,7 +316,7 @@ int orte_ess_base_proc_binding(void)
 
  error:
     if (ORTE_ERR_SILENT != ret) {
-        orte_show_help("help-orte-runtime",
+        orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
