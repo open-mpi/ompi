@@ -154,7 +154,7 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        opal_show_help("help-mca-base.txt", "find-available:none-found", true,
+        opal_show_help("help-mca-base.txt", "find-available:not-valid", true,
                        "btl");
         return OPAL_ERROR;
     }
