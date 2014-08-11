@@ -50,9 +50,11 @@ static int pack_xcast(orte_process_name_t *procs,
                       opal_buffer_t *buffer,
                       opal_buffer_t *message,
                       orte_rml_tag_t tag);
-static int create_dmns(orte_process_name_t *procs,
-                       size_t nprocs,
-                       orte_vpid_t **ds, size_t *nds);
+static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
+                                        size_t nprocs);
+
+static int create_dmns(orte_process_name_t *procs, size_t nprocs,
+                       orte_vpid_t **dmns, size_t *ndmns);
 
 int orte_grpcomm_API_xcast(orte_process_name_t *procs,
                            size_t nprocs,
@@ -69,6 +71,9 @@ int orte_grpcomm_API_xcast(orte_process_name_t *procs,
                          "%s grpcomm:base:xcast sending to tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)tag));
     
+    /* this function does not access any framework-global data, and
+     * so it does not require us to push it into the event library */
+
     /* if there is no message to send, then just return ok */
     if (NULL == msg) {
         return ORTE_SUCCESS;
@@ -117,56 +122,97 @@ int orte_grpcomm_API_allgather(orte_process_name_t *procs,
 {
     int rc;
     orte_grpcomm_base_active_t *active;
-    orte_vpid_t *dmns;
-    size_t ndmns;
+    orte_grpcomm_coll_t *coll;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* create the array of participating daemons */
-    if (ORTE_SUCCESS != (rc = create_dmns(procs, nprocs, &dmns, &ndmns))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    /* must push this into the event library to ensure we can
+     * access framework-global data safely */
+
+    /* retrieve an existing tracker, create it if not
+     * already found. The allgather module is responsible
+     * for releasing it upon completion of the collective */
+    coll = get_tracker(procs, nprocs);
 
     /* cycle thru the actives and see who can process it */
     OPAL_LIST_FOREACH(active, &orte_grpcomm_base.actives, orte_grpcomm_base_active_t) {
         if (NULL != active->module->allgather) {
-            if (ORTE_SUCCESS == (rc = active->module->allgather(dmns, ndmns, buf, cbfunc, cbdata))) {
+            if (ORTE_SUCCESS == (rc = active->module->allgather(coll, buf, cbfunc, cbdata))) {
                 break;
             }
         }
     }
-    if (NULL != dmns) {
-        free(dmns);
-    }
     return rc;
 }
 
-static int create_dmns(orte_process_name_t *procs, size_t nprocs,
-                       orte_vpid_t **ds, size_t *nds)
+static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
+                                        size_t nprocs)
 {
-    orte_vpid_t *dmns;
-    size_t ndmns, n;
+    orte_grpcomm_coll_t *coll;
+    int rc;
+
+    /* search the existing tracker list to see if this already exists */
+    OPAL_LIST_FOREACH(coll, &orte_grpcomm_base.ongoing, orte_grpcomm_coll_t) {
+        if (NULL == procs) {
+            if (NULL == coll->signature) {
+                /* only one collective can operate at a time
+                 * across every process in the system */
+                return coll;
+            }
+            /* if only one is NULL, then we can't possibly match */
+            break;
+        }
+        /* if the size doesn't match, then they can't be the same */
+        if (nprocs != coll->sz) {
+            continue;
+        }
+        if (0 == memcmp(procs, coll->signature, coll->sz)) {
+            return coll;
+        }
+    }
+    /* if we get here, then this is a new collective - so create
+     * the tracker for it */
+    coll = OBJ_NEW(orte_grpcomm_coll_t);
+    coll->signature = (orte_process_name_t*)malloc(nprocs * sizeof(orte_process_name_t));
+    memcpy(coll->signature, procs, nprocs * sizeof(orte_process_name_t));
+    coll->sz = nprocs;
+    opal_list_append(&orte_grpcomm_base.ongoing, &coll->super);
+
+    /* now get the daemons involved */
+    if (ORTE_SUCCESS != (rc = create_dmns(procs, nprocs, &coll->dmns, &coll->ndmns))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(coll);
+        return NULL;
+    }
+    return coll;
+}
+
+static int create_dmns(orte_process_name_t *procs, size_t nprocs,
+                       orte_vpid_t **dmns, size_t *ndmns)
+{
+    size_t n;
     orte_job_t *jdata;
     orte_proc_t *proc;
     orte_node_t *node;
     int i;
-    opal_list_t coll;
+    opal_list_t ds;
     orte_namelist_t *nm;
     orte_vpid_t vpid;
     bool found;
-
-    /* set defaults */
-    *ds = NULL;
-    *nds = 0;
+    size_t nds;
+    orte_vpid_t *dns;
 
     /* if NULL == procs, then all daemons are participating */
     if (NULL == procs) {
+        *ndmns = orte_process_info.num_procs;
+        *dmns = NULL;
         return ORTE_SUCCESS;
-    } else if (ORTE_VPID_WILDCARD == procs[0].vpid) {
-        /* all daemons hosting this jobid are participting */
+    }
+
+    if (ORTE_VPID_WILDCARD == procs[0].vpid) {
+        /* all daemons hosting this jobid are participating */
         if (NULL == (jdata = orte_get_job_data_object(procs[0].jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
@@ -176,43 +222,43 @@ static int create_dmns(orte_process_name_t *procs, size_t nprocs,
             return ORTE_ERR_NOT_FOUND;
         }
         /* get the array */
-        dmns = (orte_vpid_t*)malloc(jdata->map->num_nodes * sizeof(vpid));
-        ndmns = 0;
-        for (i=0; i < jdata->map->nodes->size && (int)ndmns < jdata->map->num_nodes; i++) {
+        dns = (orte_vpid_t*)malloc(jdata->map->num_nodes * sizeof(vpid));
+        nds = 0;
+        for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
             if (NULL == (node = opal_pointer_array_get_item(jdata->map->nodes, i))) {
                 continue;
             }
             if (NULL == node->daemon) {
                 /* should never happen */
                 ORTE_ERROR_LOG(ORTE_ERROR);
-                free(dmns);
+                free(dns);
                 return ORTE_ERROR;
             }
-            dmns[ndmns++] = node->daemon->name.vpid;
+            dns[nds++] = node->daemon->name.vpid;
         }
     } else {
         /* lookup the daemon for each proc and add it to the list, checking to
          * ensure any daemon only gets added once. Yes, this isn't a scalable
          * algo - someone can come up with something better! */
-        OBJ_CONSTRUCT(&coll, opal_list_t);
+        OBJ_CONSTRUCT(&ds, opal_list_t);
         for (n=0; n < nprocs; n++) {
             if (NULL == (jdata = orte_get_job_data_object(procs[n].jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OPAL_LIST_DESTRUCT(&coll);
+                OPAL_LIST_DESTRUCT(&ds);
                 return ORTE_ERR_NOT_FOUND;
             }
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, procs[n].vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OPAL_LIST_DESTRUCT(&coll);
+                OPAL_LIST_DESTRUCT(&ds);
                 return ORTE_ERR_NOT_FOUND;
             }
             if (NULL == proc->node || NULL == proc->node->daemon) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OPAL_LIST_DESTRUCT(&coll);
+                OPAL_LIST_DESTRUCT(&ds);
                 return ORTE_ERR_NOT_FOUND;
             }
             vpid = proc->node->daemon->name.vpid;
-            OPAL_LIST_FOREACH(nm, &coll, orte_namelist_t) {
+            OPAL_LIST_FOREACH(nm, &ds, orte_namelist_t) {
                 if (nm->name.vpid == vpid) {
                     found = true;
                     break;
@@ -221,24 +267,24 @@ static int create_dmns(orte_process_name_t *procs, size_t nprocs,
             if (!found) {
                 nm = OBJ_NEW(orte_namelist_t);
                 nm->name.vpid = vpid;
-                opal_list_append(&coll, &nm->super);
+                opal_list_append(&ds, &nm->super);
             }
         }
-        if (0 == opal_list_get_size(&coll)) {
+        if (0 == opal_list_get_size(&ds)) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            OPAL_LIST_DESTRUCT(&coll);
+            OPAL_LIST_DESTRUCT(&ds);
             return ORTE_ERR_BAD_PARAM;
         }
-        dmns = (orte_vpid_t*)malloc(opal_list_get_size(&coll) * sizeof(orte_vpid_t));
-        ndmns = 0;
-        while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&coll))) {
-            dmns[ndmns++] = nm->name.vpid;
+        dns = (orte_vpid_t*)malloc(opal_list_get_size(&ds) * sizeof(orte_vpid_t));
+        nds = 0;
+        while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&ds))) {
+            dns[nds++] = nm->name.vpid;
             OBJ_RELEASE(nm);
         }
-        OPAL_LIST_DESTRUCT(&coll);
+        OPAL_LIST_DESTRUCT(&ds);
     }
-    *ds = dmns;
-    *nds = ndmns;
+    *dmns = dns;
+    *ndmns = nds;
     return ORTE_SUCCESS;
 }
 

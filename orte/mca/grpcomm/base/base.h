@@ -66,9 +66,21 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_base_active_t);
 
 typedef struct {
     opal_list_t actives;
+    opal_list_t ongoing;
 } orte_grpcomm_base_t;
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
+
+/* define an event caddy for shifting allgather calls
+ * into the event library as they must access
+ * framework-global data */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_grpcomm_signature_t *sig;
+    opal_buffer_t *buf;
+} orte_grpcomm_caddy_t;
+OBJ_CLASS_DECLARATION(orte_grpcomm_caddy_t);
 
 /* Public API stubs */
 ORTE_DECLSPEC int orte_grpcomm_API_xcast(orte_process_name_t *procs,

@@ -47,6 +47,31 @@
 
 BEGIN_C_DECLS
 
+/* Define a collective signature so we don't need to
+ * track global collective id's */
+typedef struct {
+    opal_object_t super;
+    orte_process_name_t *signature;
+    size_t size;
+} orte_grpcomm_signature_t;
+OBJ_CLASS_DECLARATION(orte_grpcomm_signature_t);
+
+/* Internal component object for tracking ongoing
+ * allgather operations */
+typedef struct {
+    opal_list_item_t super;
+    /* collective's signature */
+    orte_grpcomm_signature_t *sig;
+    /* collection bucket */
+    opal_buffer_t bucket;
+    /* participating daemons */
+    orte_vpid_t *dmns;
+    size_t ndmns;
+    /* number reported in */
+    size_t nreported;
+} orte_grpcomm_coll_t;
+OBJ_CLASS_DECLARATION(orte_grpcomm_coll_t);
+
 /*
  * Component functions - all MUST be provided!
  */
@@ -68,16 +93,14 @@ typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_vpid_t *vpids,
 
 /* allgather - gather data from all specified daemons. Barrier operations
  * will provide a zero-byte buffer. Caller will provide an array
- * of daemon vpids that are participating in the allgather. A NULL
- * pointer indicates that all daemons are participating.
+ * of daemon vpids that are participating in the allgather via the
+ * orte_grpcomm_coll_t object. A NULL pointer indicates that all daemons
+ * are participating.
  *
- * NOTE: this is a non-blocking call. The cbfunc will pass back
- * the collected data buffer and the provided cbdata upon completion. */
-typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_vpid_t *vpids,
-                                                       size_t nprocs,
-                                                       opal_buffer_t *buf,
-                                                       orte_grpcomm_cbfunc_t cbfunc,
-                                                       void *cbdata);
+ * NOTE: this is a non-blocking call. An xcast will be sent to
+ * all participating daemons upon completion. */
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_grpcomm_coll_t *coll,
+                                                       opal_buffer_t *buf);
 
 /*
  * Ver 3.0 - internal modules
@@ -110,13 +133,11 @@ typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_process_name_t *procs,
  * to a name that includes ORTE_VPID_WILDCARD indicates that all procs
  * in the specified jobid are contributing.
  *
- * NOTE: this is a non-blocking call. The cbfunc will pass back
- * the collected data buffer and the provided cbdata upon completion. */
+ * NOTE: this is a non-blocking call. An xcast will be sent to
+ * all participating daemons upon completion. */
 typedef int (*orte_grpcomm_base_API_allgather_fn_t)(orte_process_name_t *procs,
                                                     size_t nprocs,
-                                                    opal_buffer_t *buf,
-                                                    orte_grpcomm_cbfunc_t cbfunc,
-                                                    void *cbdata);
+                                                    opal_buffer_t *buf);
 typedef struct {
     /* collective operations */
     orte_grpcomm_base_API_xcast_fn_t             xcast;
