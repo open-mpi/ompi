@@ -17,7 +17,7 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/include/opal/align.h"
-#include "ompi/communicator/communicator.h"
+#define INITIAL_GNI_EPS 10000
 
 static int
 mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module);
@@ -32,16 +32,14 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            opal_bitmap_t *reachable) {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     opal_proc_t *my_proc = opal_proc_local_get();
-    size_t ntotal_procs, i;
+    size_t i;
     int rc;
 
     if (false == ugni_module->initialized) {
 
-        /* TODO: fix me don't do this now that btl has moved in to opal */
+        /* TODO: need to think of something more elegant than this max array */
 
-        ntotal_procs = ompi_comm_size ((ompi_communicator_t *) MPI_COMM_WORLD);
-
-        rc = opal_pointer_array_init (&ugni_module->endpoints, ntotal_procs, 1 << 24, 512);
+        rc = opal_pointer_array_init (&ugni_module->endpoints, INITIAL_GNI_EPS, 1 << 24, 512);
         if (OPAL_SUCCESS != rc) {
             BTL_ERROR(("error inializing the endpoint array. rc = %d", rc));
             return rc;
@@ -237,7 +235,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 
     /* determine how many procs are in the job (might want to check universe size here) */
     /* TODO: need to fix this with something else now that btl is in opal */
-    nprocs = ompi_comm_size ((ompi_communicator_t *) MPI_COMM_WORLD);
+    nprocs = 512;
 
     rc = mca_btl_ugni_smsg_setup (nprocs);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
