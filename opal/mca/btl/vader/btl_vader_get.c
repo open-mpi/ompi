@@ -71,8 +71,8 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
     ssize_t ret;
 
     ret = process_vm_readv (endpoint->seg_ds.seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
-    if (ret != size) {
-        fprintf (stderr, "Read %d, expected %u, errno = %d\n", ret, size, errno);
+    if (ret != (ssize_t)size) {
+        opal_output(0, "Read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
         return OPAL_ERROR;
     }
 

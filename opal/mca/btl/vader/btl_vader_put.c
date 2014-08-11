@@ -74,8 +74,8 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     ssize_t ret;
 
     ret = process_vm_writev (endpoint->seg_ds.seg_cpid, &src_iov, 1, &dst_iov, 1, 0);
-    if (ret != size) {
-        fprintf (stderr, "Wrote %d, expected %u\n", ret, size);
+    if (ret != (ssize_t)size) {
+        opal_output(0, "Wrote %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
         return OPAL_ERROR;
     }
 
