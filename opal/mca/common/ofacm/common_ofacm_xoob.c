@@ -5,6 +5,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -829,7 +831,7 @@ static int xoob_send_qp_create
 
     if (init_attr.cap.max_inline_data < req_inline) {
         context->qps[0].ib_inline_max = init_attr.cap.max_inline_data;
-        opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
+        opal_show_help("help-mpi-common-ofacm-base.txt",
                        "inline truncated", true, opal_proc_local_get()->proc_hostname,
                        req_inline, init_attr.cap.max_inline_data);
     } else {
