@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -144,7 +146,7 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
                 nm->name.vpid = ORTE_VPID_WILDCARD;
             } else if (rank < 0) {
                 /* error out on bozo case */
-                orte_show_help("help-odls-base.txt",
+                orte_show_help("help-orte-odls-base.txt",
                                "orte-odls-base:xterm-neg-rank",
                                true, rank);
                 return ORTE_ERROR;

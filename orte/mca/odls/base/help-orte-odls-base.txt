@@ -4,6 +4,8 @@
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -43,6 +45,15 @@ Will continue attempting to launch the process.
 [orte-odls-base:xterm-rank-out-of-bounds]
 The xterm option was asked to display a rank that is larger
 than the number of procs in the job:
+
+Rank:      %d
+Num procs: %d
+
+Note that ranks start with 0, not 1, and must be specified
+accordingly.
+#
+[orte-odls-base:xterm-neg-rank]
+The xterm option was asked to display a rank that is negative:
 
 Rank:      %d
 Num procs: %d
