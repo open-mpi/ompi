@@ -109,7 +109,6 @@ orte_plm_base_module_t orte_plm_tm_module = {
 
 /* Local functions */
 static int plm_tm_connect(void);
-static void failed_start(int fd, short event, void *arg);
 static void launch_daemons(int fd, short args, void *cbdata);
 static void poll_spawns(int fd, short args, void *cbdata);
 
@@ -460,21 +459,6 @@ static void poll_spawns(int fd, short args, void *cbdata)
     }
     failed_launch = false;
 
-#if 0
-    /* set a timer to tell us if one or more daemon's fails to start - use the
-     * millisec/daemon timeout provided by the user to compute time
-     */
-    if (0 < orte_startup_timeout) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
-                             "%s plm:tm: setting startup timer for %d milliseconds",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             orte_startup_timeout));
-        ORTE_DETECT_TIMEOUT(map->num_new_daemons,
-                            orte_startup_timeout*1000,
-                            -1, failed_start, state->jdata);
-    }
-#endif
-    
  cleanup:
     /* cleanup */
     OBJ_RELEASE(state);
@@ -553,7 +537,7 @@ static int plm_tm_connect(void)
          * don't hammer the cpu while we wait
          */
         nanosleep(&tp, NULL);
-#if HAVE_SCHED_YIELD
+#ifdef HAVE_SCHED_H
         sched_yield();
 #endif
     }
