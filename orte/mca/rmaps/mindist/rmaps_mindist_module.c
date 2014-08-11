@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -149,7 +151,7 @@ static int mindist_map(orte_job_t *jdata)
          * all available slots. We'll double-check the single app_context rule first
          */
         if (0 == app->num_procs && 1 < jdata->num_apps) {
-            orte_show_help("help-orte-rmaps-mindist.txt", "multi-apps-and-zero-np",
+            orte_show_help("help-orte-rmaps-md.txt", "multi-apps-and-zero-np",
                            true, jdata->num_apps, NULL);
             rc = ORTE_ERR_SILENT;
             goto error;
