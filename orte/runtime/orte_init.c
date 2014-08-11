@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -197,7 +199,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     
  error:
     if (ORTE_ERR_SILENT != ret) {
-        orte_show_help("help-orte-runtime",
+        orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }

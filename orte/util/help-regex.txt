@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,7 +31,7 @@ We do not know how to parse this character - please contact the
 Open MPI help list for assistance.
 
 #
-[regex:regex:end-range-missing]
+[regex:end-range-missing]
 While trying to parse a regular expression to extract a list
 of node names, the regex parser could not find the end of a range:
 
