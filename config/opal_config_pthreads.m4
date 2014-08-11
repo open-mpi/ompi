@@ -11,6 +11,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -338,7 +340,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_C], [
 # C compiler
 #
 if test "$opal_pthread_c_success" = "0"; then
-  for pf in $pflags; do
+  for pf in "" $pflags; do
     AC_MSG_CHECKING([if C compiler and POSIX threads work with $pf])
     CFLAGS="$orig_CFLAGS $pf"
     AC_LANG_PUSH(C)
@@ -364,7 +366,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX], [
 # C++ compiler
 #
 if test "$opal_pthread_cxx_success" = "0"; then
-  for pf in $pflags; do
+  for pf in "" $pflags; do
     AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $pf])
     CXXFLAGS="$orig_CXXFLAGS $pf"
     AC_LANG_PUSH(C++)
@@ -390,7 +392,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 # Fortran compiler
 #
 if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
-  for pf in $pflags; do
+  for pf in "" $pflags; do
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
     FCFLAGS="$orig_FCFLAGS $pf"
     AC_LANG_PUSH(C)
