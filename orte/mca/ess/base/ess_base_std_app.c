@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -469,7 +471,11 @@ void orte_ess_base_app_abort(int status, bool report)
     if (report && orte_routing_is_enabled && orte_create_session_dirs) {
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
         fd = open(myfile, O_CREAT, S_IRUSR);
-        close(fd);
+        /* FIXME if file creation fails, it is likely orte_process_info.proc_session_dir
+         * has been previously deleted */
+        if (fd >= 0) {
+            close(fd);
+        }
         /* now introduce a short delay to allow any pending
          * messages (e.g., from a call to "show_help") to
          * have a chance to be sent */
