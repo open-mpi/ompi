@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -136,7 +138,7 @@ int mca_spml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
     /* Finished querying all components.  Check for the bozo case. */
 
     if (NULL == best_component) {
-        opal_show_help("help-shmem-mca.txt",
+        opal_show_help("help-oshmem-memheap.txt",
                        "find-available:none-found",
                        true,
                        "spml");
