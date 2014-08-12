@@ -17,7 +17,9 @@ with_ugni=/opt/cray/ugni/4.0-1.0401.5928.9.5.gem
 with_ugni_includedir=/opt/cray/gni-headers/default/include
 
 # enable the udreg mpool
-with_udreg=/opt/cray/udreg/2.3.2-1.0401.5929.3.3.gem
+# deprecated, no longer needed (non-default udreg can be selected via PKG_CONFIG_PATH env variable).
+#
+#with_udreg=/opt/cray/udreg/2.3.2-1.0401.5929.3.3.gem
 
 if test -e /opt/cray/alps/default ; then
    # use default location for CLE4

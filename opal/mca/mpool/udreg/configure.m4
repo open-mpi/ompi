@@ -24,25 +24,22 @@
 AC_DEFUN([MCA_opal_mpool_udreg_CONFIG],[
     AC_CONFIG_FILES([opal/mca/mpool/udreg/Makefile])
 
-    AC_ARG_WITH([udreg], [AC_HELP_STRING([--with-udreg(=DIR)],
-		[Build support for Cray udreg support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OPAL_CHECK_WITHDIR([udreg], [$with_udreg], [.])
+    AC_ARG_WITH([udreg], [AC_HELP_STRING([--with-udreg],
+		[Build support for Cray udreg support. Set PKG_CONFIG_PATH env. variable to specify alternate path.])])
 
     mpool_udreg_happy="no"
 
-    if test "$with_udreg" != "no" ; then
-	if test -n "$with_udreg" -a "$with_udreg" != "yes" ; then
-	    opal_check_udreg_dir="$with_udreg"
-	else
-	    opal_check_udreg_dir=""
-	fi
-
-	OPAL_CHECK_PACKAGE([mpool_udreg], [udreg_pub.h], [udreg], [UDREG_CacheCreate],
-	                   [], [$opal_check_udreg_dir], ["$opal_check_udreg_dir/lib64"],
-			   [mpool_udreg_happy="yes"], [mpool_udreg_happy="no"])
-    fi
+    AS_IF([test "$with_udreg" = "no"],
+          [mpool_udreg_happy="no"],
+          [PKG_CHECK_MODULES([CRAY_UDREG], [cray-udreg],
+                      [mpool_udreg_LDFLAGS="$CRAY_UDREG_LIBS"
+                       mpool_udreg_CPPFLAGS="$CRAY_UDREG_CFLAGS"
+                       mpool_udreg_happy="yes"],
+                      [AC_MSG_RESULT([no])
+                       mpool_udreg_happ="no"])])
 
     AS_IF([test "$mpool_udreg_happy" = "yes"], [$1], [$2])
+
 
     # substitute in the things needed to build ugni
     AC_SUBST([mpool_udreg_CPPFLAGS])
