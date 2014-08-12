@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -60,6 +60,9 @@
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/mca/common/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 
 static int mca_btl_sm_component_open(void);
 static int mca_btl_sm_component_close(void);
@@ -355,6 +358,10 @@ static int mca_btl_sm_component_close(void)
 #endif
 
 CLEANUP:
+    
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* return */
     return return_value;
@@ -877,6 +884,10 @@ mca_btl_sm_component_init(int *num_btls,
         mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
     }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_stage_one_init();
+#endif /* OPAL_CUDA_SUPPORT */
 
     return btls;
 
