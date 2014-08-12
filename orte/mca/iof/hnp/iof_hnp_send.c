@@ -37,7 +37,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/iof/iof.h"
@@ -52,7 +52,7 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
 {
     opal_buffer_t *buf;
     int rc;
-    orte_process_name_t tgt;
+    orte_grpcomm_signature_t *sig;
 
     /* if the host is a daemon and we are in the process of aborting,
      * then ignore this request. We leave it alone if the host is not
@@ -98,10 +98,13 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     if (ORTE_PROC_MY_NAME->jobid == host->jobid &&
         ORTE_VPID_WILDCARD == host->vpid) {
         /* xcast this to everyone - the local daemons will know how to handle it */
-        tgt.jobid = ORTE_PROC_MY_NAME->jobid;
-        tgt.vpid = ORTE_VPID_WILDCARD;
-        (void)orte_grpcomm.xcast(&tgt, 1, ORTE_RML_TAG_IOF_PROXY, buf);
+        sig = OBJ_NEW(orte_grpcomm_signature_t);
+        sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+        sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+        sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+        (void)orte_grpcomm.xcast(sig, ORTE_RML_TAG_IOF_PROXY, buf);
         OBJ_RELEASE(buf);
+        OBJ_RELEASE(sig);
         return ORTE_SUCCESS;
     }
     

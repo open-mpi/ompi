@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "opal/dss/dss.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -57,7 +58,6 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 static void allgather_recv(int status, orte_process_name_t* sender,
                            opal_buffer_t* buffer, orte_rml_tag_t tag,
                            void* cbdata);
-static allgather_trk_t* get_trk(oorte_grpcomm_coll_t *coll);
 
 /* internal variables */
 static opal_list_t tracker;
@@ -114,22 +114,39 @@ static int xcast(orte_vpid_t *vpids,
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *buf)
 {
+    int rc;
+    opal_buffer_t *relay;
+
     /* the base functions pushed us into the event library
      * before calling us, so we can safely access global data
      * at this point */
 
+    relay = OBJ_NEW(opal_buffer_t);
+    /* pack the signature */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &coll->sig, 1, ORTE_SIGNATURE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(relay);
+        return rc;
+    }
+    /* pass along the payload */
+    opal_dss.copy_payload(relay, buf);
+
     /* if we are the HNP and nobody else is participating,
      * then just execute the xcast */
     if (ORTE_PROC_IS_HNP && 1 == coll->ndmns) {
-        xcast(coll->dmns, coll->ndmns, buf);
+        orte_grpcomm.xcast(coll->sig, ORTE_RML_TAG_COLL_RELEASE, relay);
+        OBJ_RELEASE(relay);
         opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
         OBJ_RELEASE(coll);
         return ORTE_SUCCESS;
     }
+    /* otherwise, we need to send this to the HNP for
+     * processing */
     /* send the info to the HNP for tracking */
-    OBJ_RETAIN(buf);
-    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_ALLGATHER,
-                            buf, orte_rml_send_callback, NULL);
+    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, relay,
+                                 ORTE_RML_TAG_ALLGATHER,
+                                 orte_rml_send_callback, NULL);
+    return rc;
 }
 
 static void allgather_recv(int status, orte_process_name_t* sender,
@@ -137,98 +154,48 @@ static void allgather_recv(int status, orte_process_name_t* sender,
                            void* cbdata)
 {
     int32_t cnt;
-    uint64_t id;
     int rc;
-    orte_process_name_t name;
-    size_t sz;
-    opal_identifier_t *sig = NULL;
-    orte_vpid_t nprocs;
+    orte_grpcomm_signature_t *sig;
     opal_buffer_t *reply;
+    orte_grpcomm_coll_t *coll;
 
-    /* unpack the id of the proc involved in case the signature is NULL*/
+    /* unpack the signature */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    memcpy(&name, &id, sizeof(orte_process_name_t));
 
-    /* unpack the #procs in this collective - if it's a zero, then
-     * that means everyone in the job is participating. If nonzero,
-     * then we have an array of proc names that are involved */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sz, &cnt, OPAL_SIZE))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    if (0 < sz) {
-        /* allocate space for the array */
-        sig = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
-        /* unpack the array - the array is our signature for the collective */
-        cnt = sz;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, OPAL_UINT64))) {
-            ORTE_ERROR_LOG(rc);
-            if (NULL != sig) {
-                free(sig);
-            }
-            return;
-        }
-    }
     /* check for the tracker and create it if not found */
-    if (NULL == (trk = get_trk(name.jobid, sig, sz))) {
+    if (NULL == (coll = orte_grpcomm_base_get_tracker(sig))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        if (NULL != sig) {
-            free(sig);
-        }
-        return;
-    }
-
-    /* unpack the number of procs reported in this message */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sig);
         return;
     }
 
     /* increment nprocs reported for collective */
-    trk->nprocs_reported += nprocs;
+    coll->nreported++;
+    /* capture any provided content */
+    opal_dss.copy_payload(&coll->bucket, buffer);
 
-    /* if all procs reported */
-    if (trk->nprocs_reqd == trk->nprocs_reported) {
+    /* if all participating daemons have reported */
+    if (coll->ndmns == coll->nreported) {
         reply = OBJ_NEW(opal_buffer_t);
-        /* pack the id of the sender in case the signature is NULL */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+        /* pack the signature */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
-            if (NULL != sig) {
-                free(sig);
-            }
+            OBJ_RELEASE(sig);
             return;
         }
-        /* pack the size of the signature */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sz, 1, OPAL_SIZE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            if (NULL != sig) {
-                free(sig);
-            }
-            return;
-        }
-        if (0 < sz) {
-            /* pack the signature, if given */
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, sig, sz, OPAL_UINT64))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                free(sig);
-                return;
-            }
-            free(sig);
-        }
+        /* transfer the collected bucket */
+        opal_dss.copy_payload(reply, &coll->bucket);
+
         /* send the release via xcast */
-        (void)orte_grpcomm.xcast((orte_process_name_t*)sig, sz,
-                                 ORTE_RML_TAG_COLL_RELEASE, reply);
+        (void)orte_grpcomm.xcast(sig, ORTE_RML_TAG_COLL_RELEASE, reply);
         OBJ_RELEASE(reply);
     }
+    OBJ_RELEASE(sig);
 }
 
 static void xcast_recv(int status, orte_process_name_t* sender,
@@ -246,8 +213,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_proc_t *rec;
     opal_list_t coll;
-    size_t nprocs;
-    orte_process_name_t *targets;
+    orte_grpcomm_signature_t *sig;
     orte_rml_tag_t tag;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
@@ -259,22 +225,14 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     rly = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(rly, buffer);
 
-    /* get the number of target procs */
+    /* get the signature */
     cnt=1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_SIZE))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(ret);
         ORTE_FORCED_TERMINATE(ret);
         return;
     }
-    if (0 < nprocs) {
-        targets = (orte_process_name_t*)malloc(nprocs * sizeof(orte_process_name_t));
-        cnt=nprocs;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, targets, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            ORTE_FORCED_TERMINATE(ret);
-            return;
-        }
-    }
+
     /* get the target tag */
     cnt=1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &tag, &cnt, ORTE_RML_TAG))) {
@@ -435,63 +393,4 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(relay);
     }
-}
-
-static allgather_trk_t* get_trk(orte_jobid_t jobid,
-                                opal_identifier_t *sig,
-                                size_t sz)
-{
-    allgather_trk_t *trk;
-    orte_job_t *jdata;
-    orte_proc_t *proc;
-    orte_process_name_t name;
-
-    OPAL_LIST_FOREACH(trk, &tracker, allgather_trk_t) {
-        if (NULL == sig) {
-            /* see if the jobid matches */
-            if (jobid == trk->jobid) {
-                /* got it */
-                opal_output_verbose(2, pmix_server_output,
-                                    "%s direct:allgather found tracker for job %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_JOBID_PRINT(jobid));
-                return trk;
-            }
-        } else if (sz == trk->nprocs_reqd) {
-            if (0 == memcmp(sig, trk->signature, sz)) {
-                /* got it */
-                opal_output_verbose(2, pmix_server_output,
-                                    "%s direct:allgather found tracker for signature",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return trk;
-            }
-        }
-    }
-
-    opal_output_verbose(2, pmix_server_output,
-                        "%s direct:allgather adding new tracker for job %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_JOBID_PRINT(jobid));
-
-    /* get here if tracker not found */
-    trk = OBJ_NEW(pmix_server_trk_t);
-    trk->jobid = jobid;
-    opal_list_append(&tracker, &trk->super);
-    if (NULL != sig) {
-        trk->signature = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
-        memcpy(trk->signature, sig, sz * sizeof(opal_identifier_t));
-        trk->nprocs_reqd = sz;
-    } else {
-        /* get the job object */
-        if (NULL == (jdata = orte_get_job_data_object(jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return NULL;
-        }
-        trk->nprocs_reqd = jdata->num_procs;
-    }
-    opal_output_verbose(2, pmix_server_output,
-                        "%s direct:allgather tracker requires %s procs",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_VPID_PRINT(trk->nprocs_reqd));
-    return trk;
 }

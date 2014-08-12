@@ -36,11 +36,8 @@ static void finalize(void);
 static int xcast(orte_vpid_t *vpids,
                  size_t nprocs,
                  opal_buffer_t *msg);
-static int allgather(orte_vpid_t *vpids,
-                     size_t nprocs,
-                     opal_buffer_t *buf,
-                     orte_grpcomm_cbfunc_t cbfunc,
-                     void *cbdata);
+static int allgather(orte_grpcomm_coll_t *coll,
+                     opal_buffer_t *buf);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_brks_module = {
@@ -73,11 +70,8 @@ static int xcast(orte_vpid_t *vpids,
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int allgather(orte_vpid_t *vpids,
-                     size_t nprocs,
-                     opal_buffer_t *buf,
-                     orte_grpcomm_cbfunc_t cbfunc,
-                     void *cbdata)
+static int allgather(orte_grpcomm_coll_t *coll,
+                     opal_buffer_t *buf)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

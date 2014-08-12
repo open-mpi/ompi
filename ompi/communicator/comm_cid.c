@@ -162,7 +162,7 @@ int ompi_comm_cid_init (void)
     for ( i=0; i<numprocs; i++ ) {
         thisproc = procs[i];
 
-        OPAL_MODEX_RECV_STRING(ret, "MPI_THREAD_LEVEL", thisproc, (uint8_t**)&tlpointer, &size);
+        OPAL_MODEX_RECV_STRING(ret, "MPI_THREAD_LEVEL", &thisproc->super, (uint8_t**)&tlpointer, &size);
         if (OMPI_SUCCESS == ret) {
             thread_level = *((uint8_t *) tlpointer);
             if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {

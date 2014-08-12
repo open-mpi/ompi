@@ -52,7 +52,7 @@ BEGIN_C_DECLS
 typedef struct {
     opal_object_t super;
     orte_process_name_t *signature;
-    size_t size;
+    size_t sz;
 } orte_grpcomm_signature_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_signature_t);
 
@@ -121,8 +121,7 @@ typedef struct {
  * will send the message to all procs in the specified jobid.
  * The message will be sent to the daemons hosting the specified
  * procs for processing and relay. */
-typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_process_name_t *procs,
-                                                size_t nprocs,
+typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_grpcomm_signature_t *sig,
                                                 orte_rml_tag_t tag,
                                                 opal_buffer_t *msg);
 
@@ -135,8 +134,7 @@ typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_process_name_t *procs,
  *
  * NOTE: this is a non-blocking call. An xcast will be sent to
  * all participating daemons upon completion. */
-typedef int (*orte_grpcomm_base_API_allgather_fn_t)(orte_process_name_t *procs,
-                                                    size_t nprocs,
+typedef int (*orte_grpcomm_base_API_allgather_fn_t)(orte_grpcomm_signature_t *sig,
                                                     opal_buffer_t *buf);
 typedef struct {
     /* collective operations */

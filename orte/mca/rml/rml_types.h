@@ -102,6 +102,7 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_COLLECTIVE             30
 #define ORTE_RML_TAG_COLL_RELEASE           31
 #define ORTE_RML_TAG_DAEMON_COLL            32
+#define ORTE_RML_TAG_ALLGATHER              33
 
 /* show help */
 #define ORTE_RML_TAG_SHOW_HELP              34

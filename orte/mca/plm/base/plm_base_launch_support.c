@@ -463,7 +463,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     int rc;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_timer_t *timer;
-    orte_process_name_t target;
+    orte_grpcomm_signature_t *sig;
 
     /* convenience */
     jdata = caddy->jdata;
@@ -503,15 +503,20 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     }
     
     /* goes to all daemons */
-    target.jobid = ORTE_PROC_MY_NAME->jobid;
-    target.vpid = ORTE_VPID_WILDCARD;
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&target, 1, ORTE_RML_TAG_DAEMON, buffer))) {
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
+        OBJ_RELEASE(sig);
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
+    /* maintain accounting */
+    OBJ_RELEASE(sig);
 
     /* track that we automatically are considered to have reported - used
      * only to report launch progress

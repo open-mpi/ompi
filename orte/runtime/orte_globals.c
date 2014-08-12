@@ -435,6 +435,18 @@ int orte_dt_init(void)
         return rc;
     }
     
+    tmp = ORTE_SIGNATURE;
+    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_sig,
+                                                     orte_dt_unpack_sig,
+                                                     (opal_dss_copy_fn_t)orte_dt_copy_sig,
+                                                     (opal_dss_compare_fn_t)orte_dt_compare_sig,
+                                                     (opal_dss_print_fn_t)orte_dt_print_sig,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "ORTE_SIGNATURE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     return ORTE_SUCCESS;    
 }
 

@@ -64,6 +64,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
@@ -560,17 +561,17 @@ static void process_message(pmix_server_peer_t *peer)
     pmix_cmd_t cmd;
     opal_buffer_t *reply, xfer, *bptr, buf;
     opal_value_t kv, *kvp, *kvp2;
-    opal_identifier_t id, idreq, *sig=NULL;
+    opal_identifier_t id, idreq;
     orte_process_name_t name;
     orte_job_t *jdata;
     orte_proc_t *proc;
     opal_list_t values;
-    size_t nprocs;
     uint32_t tag;
     opal_pmix_scope_t scope;
     int handle;
     pmix_server_dmx_req_t *req;
     bool found;
+    orte_grpcomm_signature_t *sig;
 
     /* xfer the message to a buffer for unpacking */
     OBJ_CONSTRUCT(&xfer, opal_buffer_t);
@@ -605,24 +606,27 @@ static void process_message(pmix_server_peer_t *peer)
         opal_output_verbose(2, pmix_server_output,
                             "%s recvd FENCE",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* setup a signature object */
+        sig = OBJ_NEW(orte_grpcomm_signature_t);
         /* get the number of procs in this fence collective */
         cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &nprocs, &cnt, OPAL_SIZE))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &sig->sz, &cnt, OPAL_SIZE))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(sig);
             goto reply_fence;
         }
         /* if a signature was provided, get it */
-        if (0 < nprocs) {
-            sig = (opal_identifier_t*)malloc(nprocs * sizeof(opal_identifier_t));
-            cnt = nprocs;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, sig, &cnt, OPAL_UINT64))) {
+        if (0 < sig->sz) {
+            sig->signature = (orte_process_name_t*)malloc(sig->sz * sizeof(orte_process_name_t));
+            cnt = sig->sz;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &sig->signature, &cnt, OPAL_UINT64))) {
                 ORTE_ERROR_LOG(rc);
-                free(sig);
+                OBJ_RELEASE(sig);
                 goto reply_fence;
             }
         }
         /* if data was given, unpack and store it in the pmix dstore - it is okay
-         * if there was no data, it's just a fence*/
+         * if there was no data, it's just a fence */
         cnt = 1;
         while (OPAL_SUCCESS == (rc = opal_dss.unpack(&xfer, &scope, &cnt, PMIX_SCOPE_T))) {
             /* unpack the buffer */
@@ -630,7 +634,7 @@ static void process_message(pmix_server_peer_t *peer)
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&xfer);
-                free(sig);
+                OBJ_RELEASE(sig);
                 return;
             }
             /* prep the value_t */
@@ -670,7 +674,7 @@ static void process_message(pmix_server_peer_t *peer)
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
                 OBJ_DESTRUCT(&xfer);
-                free(sig);
+                OBJ_RELEASE(sig);
                 return;
             }
             OBJ_DESTRUCT(&kv);
@@ -685,43 +689,31 @@ static void process_message(pmix_server_peer_t *peer)
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
-            free(sig);
+            OBJ_RELEASE(sig);
             goto reply_fence;
         }
         /* pack the socket of the sender */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &peer->sd, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
-            free(sig);
+            OBJ_RELEASE(sig);
             goto reply_fence;
         }
         /* pass the tag that this sender is sitting on */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &tag, 1, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
-            free(sig);
+            OBJ_RELEASE(sig);
             goto reply_fence;
         }
-        /* pack the number of procs */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_SIZE))) {
+        /* pack the signature */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
-            free(sig);
+            OBJ_RELEASE(sig);
             goto reply_fence;
         }
-        if (0 < nprocs) {
-            /* pack the signature, if given - if not, then the signature will
-             * be NULL to indicate that the entire job is involved */
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, sig, nprocs, OPAL_UINT64))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                free(sig);
-                goto reply_fence;
-            }
-        }
-        if (NULL != sig) {
-            free(sig);
-        }
+        OBJ_RELEASE(sig);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, reply,
                                 ORTE_RML_TAG_DAEMON_COLL,
                                 orte_rml_send_callback, NULL);

@@ -45,19 +45,25 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
 
-static int pack_xcast(orte_process_name_t *procs,
-                      size_t nprocs,
+static int pack_xcast(orte_grpcomm_signature_t *sig,
                       opal_buffer_t *buffer,
                       opal_buffer_t *message,
                       orte_rml_tag_t tag);
-static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
-                                        size_t nprocs);
 
-static int create_dmns(orte_process_name_t *procs, size_t nprocs,
+static int create_dmns(orte_grpcomm_signature_t *sig,
                        orte_vpid_t **dmns, size_t *ndmns);
 
-int orte_grpcomm_API_xcast(orte_process_name_t *procs,
-                           size_t nprocs,
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_grpcomm_signature_t *sig;
+    opal_buffer_t *buf;
+} orte_grpcomm_caddy_t;
+static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
+                          opal_object_t,
+                          NULL, NULL);
+
+int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                            orte_rml_tag_t tag,
                            opal_buffer_t *msg)
 {
@@ -68,29 +74,25 @@ int orte_grpcomm_API_xcast(orte_process_name_t *procs,
     size_t ndmns;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:base:xcast sending to tag %ld",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)tag));
+                         "%s grpcomm:base:xcast sending %u bytes to tag %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == msg) ? 0 : (unsigned int)msg->bytes_used, (long)tag));
     
     /* this function does not access any framework-global data, and
      * so it does not require us to push it into the event library */
 
-    /* if there is no message to send, then just return ok */
-    if (NULL == msg) {
-        return ORTE_SUCCESS;
-    }
-    
     /* prep the output buffer */
     buf = OBJ_NEW(opal_buffer_t);
     
     /* create the array of participating daemons */
-    if (ORTE_SUCCESS != (rc = create_dmns(procs, nprocs, &dmns, &ndmns))) {
+    if (ORTE_SUCCESS != (rc = create_dmns(sig, &dmns, &ndmns))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
     }
 
     /* setup the payload */
-    if (ORTE_SUCCESS != (rc = pack_xcast(procs, nprocs, buf, msg, tag))) {
+    if (ORTE_SUCCESS != (rc = pack_xcast(sig, buf, msg, tag))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         if (NULL != dmns) {
@@ -114,15 +116,33 @@ int orte_grpcomm_API_xcast(orte_process_name_t *procs,
     return rc;
 }
 
-int orte_grpcomm_API_allgather(orte_process_name_t *procs,
-                               size_t nprocs,
-                               opal_buffer_t *buf,
-                               orte_grpcomm_cbfunc_t cbfunc,
-                               void *cbdata)
+static void allgather_stub(int fd, short args, void *cbdata)
 {
+    orte_grpcomm_caddy_t *cd = (orte_grpcomm_caddy_t*)cbdata;
     int rc;
     orte_grpcomm_base_active_t *active;
     orte_grpcomm_coll_t *coll;
+
+    /* retrieve an existing tracker, create it if not
+     * already found. The allgather module is responsible
+     * for releasing it upon completion of the collective */
+    coll = orte_grpcomm_base_get_tracker(cd->sig);
+
+    /* cycle thru the actives and see who can process it */
+    OPAL_LIST_FOREACH(active, &orte_grpcomm_base.actives, orte_grpcomm_base_active_t) {
+        if (NULL != active->module->allgather) {
+            if (ORTE_SUCCESS == (rc = active->module->allgather(coll, cd->buf))) {
+                break;
+            }
+        }
+    }
+    OBJ_RELEASE(cd);
+}
+
+int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
+                               opal_buffer_t *buf)
+{
+    orte_grpcomm_caddy_t *cd;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather",
@@ -130,33 +150,27 @@ int orte_grpcomm_API_allgather(orte_process_name_t *procs,
 
     /* must push this into the event library to ensure we can
      * access framework-global data safely */
-
-    /* retrieve an existing tracker, create it if not
-     * already found. The allgather module is responsible
-     * for releasing it upon completion of the collective */
-    coll = get_tracker(procs, nprocs);
-
-    /* cycle thru the actives and see who can process it */
-    OPAL_LIST_FOREACH(active, &orte_grpcomm_base.actives, orte_grpcomm_base_active_t) {
-        if (NULL != active->module->allgather) {
-            if (ORTE_SUCCESS == (rc = active->module->allgather(coll, buf, cbfunc, cbdata))) {
-                break;
-            }
-        }
-    }
-    return rc;
+    cd = OBJ_NEW(orte_grpcomm_caddy_t);
+    /* ensure the data doesn't go away */
+    OBJ_RETAIN(sig);
+    OBJ_RETAIN(buf);
+    cd->sig = sig;
+    cd->buf = buf;
+    opal_event_set(orte_event_base, &cd->ev, -1, OPAL_EV_WRITE, allgather_stub, cd);
+    opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);
+    opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);
+    return ORTE_SUCCESS;
 }
 
-static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
-                                        size_t nprocs)
+orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig)
 {
     orte_grpcomm_coll_t *coll;
     int rc;
 
     /* search the existing tracker list to see if this already exists */
     OPAL_LIST_FOREACH(coll, &orte_grpcomm_base.ongoing, orte_grpcomm_coll_t) {
-        if (NULL == procs) {
-            if (NULL == coll->signature) {
+        if (NULL == sig->signature) {
+            if (NULL == coll->sig->signature) {
                 /* only one collective can operate at a time
                  * across every process in the system */
                 return coll;
@@ -165,23 +179,22 @@ static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
             break;
         }
         /* if the size doesn't match, then they can't be the same */
-        if (nprocs != coll->sz) {
+        if (sig->sz != coll->sig->sz) {
             continue;
         }
-        if (0 == memcmp(procs, coll->signature, coll->sz)) {
+        if (0 == memcmp(sig->signature, coll->sig->signature, coll->sig->sz)) {
             return coll;
         }
     }
     /* if we get here, then this is a new collective - so create
      * the tracker for it */
     coll = OBJ_NEW(orte_grpcomm_coll_t);
-    coll->signature = (orte_process_name_t*)malloc(nprocs * sizeof(orte_process_name_t));
-    memcpy(coll->signature, procs, nprocs * sizeof(orte_process_name_t));
-    coll->sz = nprocs;
+    OBJ_RETAIN(sig);
+    coll->sig = sig;
     opal_list_append(&orte_grpcomm_base.ongoing, &coll->super);
 
     /* now get the daemons involved */
-    if (ORTE_SUCCESS != (rc = create_dmns(procs, nprocs, &coll->dmns, &coll->ndmns))) {
+    if (ORTE_SUCCESS != (rc = create_dmns(sig, &coll->dmns, &coll->ndmns))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(coll);
         return NULL;
@@ -189,7 +202,7 @@ static orte_grpcomm_coll_t* get_tracker(orte_process_name_t *procs,
     return coll;
 }
 
-static int create_dmns(orte_process_name_t *procs, size_t nprocs,
+static int create_dmns(orte_grpcomm_signature_t *sig,
                        orte_vpid_t **dmns, size_t *ndmns)
 {
     size_t n;
@@ -205,15 +218,15 @@ static int create_dmns(orte_process_name_t *procs, size_t nprocs,
     orte_vpid_t *dns;
 
     /* if NULL == procs, then all daemons are participating */
-    if (NULL == procs) {
+    if (NULL == sig->signature) {
         *ndmns = orte_process_info.num_procs;
         *dmns = NULL;
         return ORTE_SUCCESS;
     }
 
-    if (ORTE_VPID_WILDCARD == procs[0].vpid) {
+    if (ORTE_VPID_WILDCARD == sig->signature[0].vpid) {
         /* all daemons hosting this jobid are participating */
-        if (NULL == (jdata = orte_get_job_data_object(procs[0].jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
@@ -241,13 +254,13 @@ static int create_dmns(orte_process_name_t *procs, size_t nprocs,
          * ensure any daemon only gets added once. Yes, this isn't a scalable
          * algo - someone can come up with something better! */
         OBJ_CONSTRUCT(&ds, opal_list_t);
-        for (n=0; n < nprocs; n++) {
-            if (NULL == (jdata = orte_get_job_data_object(procs[n].jobid))) {
+        for (n=0; n < sig->sz; n++) {
+            if (NULL == (jdata = orte_get_job_data_object(sig->signature[n].jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
                 return ORTE_ERR_NOT_FOUND;
             }
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, procs[n].vpid))) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, sig->signature[n].vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
                 return ORTE_ERR_NOT_FOUND;
@@ -288,25 +301,17 @@ static int create_dmns(orte_process_name_t *procs, size_t nprocs,
     return ORTE_SUCCESS;
 }
 
-static int pack_xcast(orte_process_name_t *procs,
-                      size_t nprocs,
+static int pack_xcast(orte_grpcomm_signature_t *sig,
                       opal_buffer_t *buffer,
                       opal_buffer_t *message,
                       orte_rml_tag_t tag)
 {
     int rc;
 
-    /* pass along the number of target procs */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &nprocs, 1, OPAL_SIZE))) {
+    /* pass along the signature */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &sig, 1, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
-    }
-    /* pass along the names of the targets */
-    if (0 < nprocs) {
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, procs, nprocs, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
     }
     /* pass the final tag */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tag, 1, ORTE_RML_TAG))) {

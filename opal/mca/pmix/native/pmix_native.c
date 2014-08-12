@@ -646,7 +646,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     bool found=false;
     opal_hwloc_locality_t locality;
     pmix_cb_t *cb;
-    uint32_t i, usize, myrank;
+    uint32_t i, myrank;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native get_attr called",
@@ -744,8 +744,6 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
                 OBJ_RETAIN(kp);
                 lclpeers = kp;
-            } else if (0 == strcmp(PMIX_UNIV_SIZE, kp->key)) {
-                usize = kp->data.uint32;
             } else if (0 == strcmp(PMIX_JOBID, kp->key)) {
                 native_pname.jid = kp->data.uint32;
             } else if (0 == strcmp(PMIX_RANK, kp->key)) {

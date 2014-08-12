@@ -202,7 +202,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 
 /* Attribute */
 #define    ORTE_ATTRIBUTE           (OPAL_DSS_ID_DYNAMIC + 21)
-
+/* Grpcomm signature */
+#define    ORTE_SIGNATURE           (OPAL_DSS_ID_DYNAMIC + 22)
 
 /* provide a boundary for others to use */
 #define    ORTE_DSS_ID_DYNAMIC      (OPAL_DSS_ID_DYNAMIC + 50)

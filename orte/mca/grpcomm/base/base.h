@@ -71,27 +71,15 @@ typedef struct {
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
 
-/* define an event caddy for shifting allgather calls
- * into the event library as they must access
- * framework-global data */
-typedef struct {
-    opal_object_t super;
-    opal_event_t ev;
-    orte_grpcomm_signature_t *sig;
-    opal_buffer_t *buf;
-} orte_grpcomm_caddy_t;
-OBJ_CLASS_DECLARATION(orte_grpcomm_caddy_t);
-
 /* Public API stubs */
-ORTE_DECLSPEC int orte_grpcomm_API_xcast(orte_process_name_t *procs,
-                                         size_t nprocs,
+ORTE_DECLSPEC int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                                          orte_rml_tag_t tag,
                                          opal_buffer_t *buf);
-ORTE_DECLSPEC int orte_grpcomm_API_allgather(orte_process_name_t *procs,
-                                             size_t nprocs,
-                                             opal_buffer_t *buf,
-                                             orte_grpcomm_cbfunc_t cbfunc,
-                                             void *cbdata);
+
+ORTE_DECLSPEC int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
+                                             opal_buffer_t *buf);
+
+ORTE_DECLSPEC orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig);
 
 END_C_DECLS
 #endif
