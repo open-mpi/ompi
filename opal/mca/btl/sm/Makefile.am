@@ -51,7 +51,7 @@ mca_btl_sm_la_LDFLAGS = -module -avoid-version
 mca_btl_sm_la_LIBADD = \
     $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
 if OPAL_cuda_support
-mca_btl_sm_la_LIBADD = \
+mca_btl_sm_la_LIBADD += \
     $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 mca_btl_sm_la_CPPFLAGS = $(btl_sm_CPPFLAGS)
