@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -380,6 +380,10 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif /* OPAL_CUDA_SUPPORT */
 
     return OPAL_SUCCESS;
 }

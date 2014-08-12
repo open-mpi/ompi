@@ -288,6 +288,10 @@ static int mca_btl_smcuda_component_close(void)
 
 CLEANUP:
 
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif /* OPAL_CUDA_SUPPORT */
+
     /* return */
     return return_value;
 }
@@ -931,6 +935,7 @@ mca_btl_smcuda_component_init(int *num_btls,
     /* Register a smcuda control function to help setup IPC support */
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbfunc = btl_smcuda_control;
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbdata = NULL;
+    mca_common_cuda_stage_one_init();
 #endif /* OPAL_CUDA_SUPPORT */
 
     return btls;
