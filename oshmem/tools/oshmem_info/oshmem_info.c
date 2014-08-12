@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 
     /* Initialize the argv parsing handle */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
-        opal_show_help("help-opal_info.txt", "lib-call-fail", true,
+        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true,
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
     }
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     info_cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (NULL == info_cmd_line) {
         ret = errno;
-        opal_show_help("help-opal_info.txt", "lib-call-fail", true,
+        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true,
                        "opal_cmd_line_create", __FILE__, __LINE__, NULL);
         exit(ret);
     }
