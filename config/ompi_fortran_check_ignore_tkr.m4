@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -76,6 +76,12 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
          [TYPE(*), DIMENSION(*)],
          [happy=1], [happy=0])
 
+    # GCC compilers
+    AS_IF([test $happy -eq 0],
+          [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
+              [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],
+              [!GCC\$ ATTRIBUTES NO_ARG_CHECK],
+              [happy=1], [happy=0])])
     # Intel compilers
     AS_IF([test $happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
