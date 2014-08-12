@@ -51,6 +51,8 @@ if PROJECT_OSHMEM
 # Only build/install the binary and man pages if we're building oshmem
 bin_PROGRAMS += oshmem_info
 nodist_man_MANS += $(man_pages)
+dist_ompidata_DATA = \
+     help-oshmem-info.txt
 endif
 
 
@@ -58,7 +60,6 @@ endif
 # changes; a "good enough" way to know if configure was run again (and
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
-
 
 oshmem_info_SOURCES = \
         oshmem_info.h \
