@@ -676,4 +676,4 @@ series) and by setting the MCA parameter "mca_base_env_list".
 Open MPI does not support mixing these two methods.  Please choose one
 method and try launching your job again.
 
-You job will now abort.
+Your job will now abort.
