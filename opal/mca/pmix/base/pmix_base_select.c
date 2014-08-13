@@ -42,10 +42,14 @@ int opal_pmix_base_select(void)
 
     /* Initialize the winner */
     if (OPAL_SUCCESS != (ret = opal_pmix.init()) ) {
-        exit_status = ret;
-        goto cleanup;
+        /* connection not available is okay - just means
+         * that a server hasn't already been defined */
+        if (OPAL_ERR_SERVER_NOT_AVAIL == ret) {
+            exit_status = OPAL_SUCCESS;
+        } else {
+            exit_status = ret;
+        }
     }
     
- cleanup:
     return exit_status;
 }

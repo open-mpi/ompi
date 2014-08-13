@@ -28,6 +28,7 @@
 
 opal_pmix_base_module_t opal_pmix;
 bool opal_pmix_use_collective = false;
+bool opal_pmix_base_allow_delayed_server = false;
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {

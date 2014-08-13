@@ -28,9 +28,12 @@
 
 BEGIN_C_DECLS
 
-int pmix_server_init(void);
-void pmix_server_finalize(void);
-void pmix_server_register(void);
+ORTE_DECLSPEC int pmix_server_init(void);
+ORTE_DECLSPEC void pmix_server_finalize(void);
+ORTE_DECLSPEC void pmix_server_register(void);
+
+/* provide access to the pmix server uri */
+ORTE_DECLSPEC extern char *pmix_server_uri;
 
 END_C_DECLS
 

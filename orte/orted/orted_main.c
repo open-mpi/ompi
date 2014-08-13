@@ -99,6 +99,7 @@
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/orted/orted.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 /*
  * Globals
@@ -582,9 +583,9 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
-        /* create a string that contains our uri + sysinfo */
+        /* create a string that contains our uri + sysinfo + PMIx server URI */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, sysinfo);
+        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, pmix_server_uri);
 	free(sysinfo);
 
         /* pass that info to the singleton */

@@ -39,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -180,6 +181,10 @@ static int rte_init(void)
      * stale directories laying around
      */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+
+    /* tell the pmix framework to allow delayed connection to a server
+     * in case we need one */
+    opal_pmix_base_allow_delayed_server = true;
 
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {

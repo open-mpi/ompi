@@ -95,14 +95,20 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
     /* see if a PMIx server is present */
     if (NULL == (t = getenv("PMIX_SERVER_URI")) ||
         NULL == (id = getenv("PMIX_ID"))) {
-        *module = NULL;
-        return OPAL_ERROR;
+        /* we still have to be considered because this might
+         * be a singleton, and even a singleton requires some
+         * degree of support. So set us at a very low priority
+         * so the other components can be selected it they
+         * are in a better position to run */
+        *priority = 1;
+        mca_pmix_native_component.uri = NULL;
+    } else {
+        /* if PMIx is present, then we need to use it */
+        mca_pmix_native_component.uri = strdup(t);
+        mca_pmix_native_component.id = strtoul(id, NULL, 10);
+        opal_proc_set_name(&mca_pmix_native_component.id);
+        *priority = 100;
     }
-    /* if PMIx is present, then we need to use it */
-    mca_pmix_native_component.uri = strdup(t);
-    mca_pmix_native_component.id = strtoul(id, NULL, 10);
-    opal_proc_set_name(&mca_pmix_native_component.id);
-    *priority = 100;
     *module = (mca_base_module_t *)&opal_pmix_native_module;
     return OPAL_SUCCESS;
 }

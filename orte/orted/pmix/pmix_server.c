@@ -124,6 +124,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
                                   orte_rml_tag_t tg, void *cbdata);
 
+char *pmix_server_uri = NULL;
 char *pmix_server_mode = NULL;
 bool pmix_server_distribute_data = false;
 opal_hash_table_t *pmix_server_peers = NULL;
@@ -170,7 +171,6 @@ void pmix_server_register(void)
 int pmix_server_init(void)
 {
     int rc;
-    char *uri;
 
     if (initialized) {
         return ORTE_SUCCESS;
@@ -206,12 +206,11 @@ int pmix_server_init(void)
              ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "pmix");
 
     /* add it to our launch environment so our children get it */
-    (void)asprintf(&uri, "%"PRIu64":%s", *(opal_identifier_t*)&orte_process_info.my_name, address.sun_path);
+    (void)asprintf(&pmix_server_uri, "%"PRIu64":%s", *(opal_identifier_t*)&orte_process_info.my_name, address.sun_path);
     opal_output_verbose(2, pmix_server_output,
                         "%s PMIX server uri: %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uri);
-    opal_setenv("PMIX_SERVER_URI", uri, true, &orte_launch_environ);
-    free(uri);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmix_server_uri);
+    opal_setenv("PMIX_SERVER_URI", pmix_server_uri, true, &orte_launch_environ);
 
     /* setup the datastore handles */
     if (0 > (pmix_server_local_handle = opal_dstore.open("pmix-local"))) {
@@ -282,6 +281,9 @@ void pmix_server_finalize(void)
 
     /* delete the rendezvous file */
     unlink(address.sun_path);
+    if (NULL != pmix_server_uri) {
+        free(pmix_server_uri);
+    }
 
     /* cleanup collectives */
     OPAL_LIST_DESTRUCT(&collectives);

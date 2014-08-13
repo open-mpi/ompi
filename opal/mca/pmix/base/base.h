@@ -29,6 +29,7 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_pmix_base_framework;
  */
 OPAL_DECLSPEC int opal_pmix_base_select(void);
 
+OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 END_C_DECLS
 
 #endif

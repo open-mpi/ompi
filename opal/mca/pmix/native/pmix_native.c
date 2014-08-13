@@ -116,44 +116,67 @@ static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
 
 static int native_init(void)
 {
-    char **uri;
+    char **uri, *srv;
 
     ++init_cntr;
     if (1 < init_cntr) {
         return OPAL_SUCCESS;
     }
 
-    /* construct the component fields */
-    mca_pmix_native_component.cache_local = NULL;
-    mca_pmix_native_component.cache_remote = NULL;
-    mca_pmix_native_component.cache_global = NULL;
-    mca_pmix_native_component.sd = -1;
-    mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
-    mca_pmix_native_component.tag = 0;
-    OBJ_CONSTRUCT(&mca_pmix_native_component.send_queue, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pmix_native_component.posted_recvs, opal_list_t);
-    mca_pmix_native_component.send_msg = NULL;
-    mca_pmix_native_component.recv_msg = NULL;
-    mca_pmix_native_component.send_ev_active = false;
-    mca_pmix_native_component.recv_ev_active = false;
-    mca_pmix_native_component.timer_ev_active = false;
-
-    /* setup the path to the daemon rendezvous point */
-    memset(&mca_pmix_native_component.address, 0, sizeof(struct sockaddr_un));
-    mca_pmix_native_component.address.sun_family = AF_UNIX;
-    uri = opal_argv_split(mca_pmix_native_component.uri, ':');
-    if (2 != opal_argv_count(uri)) {
-        return OPAL_ERROR;
+    /* if we don't have a path to the daemon rendezvous point,
+     * then we need to return an error UNLESS we have been directed
+     * to allow init prior to having an identified server. This is
+     * needed for singletons as they will start without a server
+     * to support them, but may have one assigned at a later time */
+    if (NULL == mca_pmix_native_component.uri) {
+        if (!opal_pmix_base_allow_delayed_server) {
+            /* not ready yet, so decrement our init_cntr so we can come thru
+             * here again */
+            --init_cntr;
+            /* let the caller know that the server isn't available yet */
+            return OPAL_ERR_SERVER_NOT_AVAIL;
+        }
+        if (NULL == (srv = getenv("PMIX_SERVER_URI"))) {
+            /* error out - should have been here, but isn't */
+            return OPAL_ERROR;
+        }
+        mca_pmix_native_component.uri = strdup(srv);
+        mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
     }
-    mca_pmix_native_component.server = strtoul(uri[0], NULL, 10);
-    snprintf(mca_pmix_native_component.address.sun_path,
-             sizeof(mca_pmix_native_component.address.sun_path)-1,
-             "%s", uri[1]);
-    opal_argv_free(uri);
 
-    /* create an event base and progress thread for us */
-    if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
-        return OPAL_ERROR;
+    /* if we have it, setup the path to the daemon rendezvous point */
+    if (NULL != mca_pmix_native_component.uri) {
+        /* construct the component fields */
+        mca_pmix_native_component.cache_local = NULL;
+        mca_pmix_native_component.cache_remote = NULL;
+        mca_pmix_native_component.cache_global = NULL;
+        mca_pmix_native_component.sd = -1;
+        mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
+        mca_pmix_native_component.tag = 0;
+        OBJ_CONSTRUCT(&mca_pmix_native_component.send_queue, opal_list_t);
+        OBJ_CONSTRUCT(&mca_pmix_native_component.posted_recvs, opal_list_t);
+        mca_pmix_native_component.send_msg = NULL;
+        mca_pmix_native_component.recv_msg = NULL;
+        mca_pmix_native_component.send_ev_active = false;
+        mca_pmix_native_component.recv_ev_active = false;
+        mca_pmix_native_component.timer_ev_active = false;
+
+        memset(&mca_pmix_native_component.address, 0, sizeof(struct sockaddr_un));
+        mca_pmix_native_component.address.sun_family = AF_UNIX;
+        uri = opal_argv_split(mca_pmix_native_component.uri, ':');
+        if (2 != opal_argv_count(uri)) {
+            return OPAL_ERROR;
+        }
+        mca_pmix_native_component.server = strtoul(uri[0], NULL, 10);
+        snprintf(mca_pmix_native_component.address.sun_path,
+                 sizeof(mca_pmix_native_component.address.sun_path)-1,
+                 "%s", uri[1]);
+        opal_argv_free(uri);
+
+        /* create an event base and progress thread for us */
+        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
+            return OPAL_ERROR;
+        }
     }
 
     /* we will connect on first send */
@@ -177,6 +200,11 @@ static int native_fini(void)
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native finalize called",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    if (NULL == mca_pmix_native_component.uri) {
+        /* nothing was setup, so return */
+        return OPAL_SUCCESS;
+    }
 
     if (PMIX_USOCK_CONNECTED == mca_pmix_native_component.state) {
         /* setup a cmd message to notify the PMIx
@@ -238,6 +266,11 @@ static int native_abort(int flag, const char msg[])
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native abort called",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    if (NULL == mca_pmix_native_component.uri) {
+        /* no server available, so just return */
+        return OPAL_SUCCESS;
+    }
 
     /* create a buffer to hold the message */
     bfr = OBJ_NEW(opal_buffer_t);
@@ -336,6 +369,11 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
                         "%s pmix:native executing fence",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
+    if (NULL == mca_pmix_native_component.uri) {
+        /* no server available, so just return */
+        return OPAL_SUCCESS;
+    }
+
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the fence cmd */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
@@ -429,6 +467,14 @@ static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
     int rc;
     pmix_cb_t *cb;
     opal_pmix_scope_t scope;
+
+    if (NULL == mca_pmix_native_component.uri) {
+        /* no server available, so just execute the callback */
+        if (NULL != cbfunc) {
+            cbfunc(OPAL_SUCCESS, NULL, cbdata);
+        }
+        return OPAL_SUCCESS;
+    }
 
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the fence cmd */
@@ -531,6 +577,11 @@ static int native_get(const opal_identifier_t *id,
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
         OPAL_LIST_DESTRUCT(&vals);
         return OPAL_SUCCESS;
+    }
+
+    if (NULL == mca_pmix_native_component.uri) {
+        /* no server available, so just return */
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* nope - see if we can get it */
@@ -658,6 +709,11 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
         OPAL_LIST_DESTRUCT(&vals);
         return true;
+    }
+
+    if (NULL == mca_pmix_native_component.uri) {
+        /* no server available, so just return */
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* if the value isn't yet available, then we should try to retrieve

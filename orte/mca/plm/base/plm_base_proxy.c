@@ -27,6 +27,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/util/argv.h"
 
 #include "orte/util/name_fns.h"
@@ -35,6 +36,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/orted/pmix/pmix_server.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -205,7 +207,7 @@ int orte_plm_base_fork_hnp(void)
     char *cmd;
     char **argv = NULL;
     int argc;
-    char *param;
+    char *param, *cptr, *pmix_uri;
     sigset_t sigs;
     int buffer_length, num_chars_read, chunk;
     char *orted_uri;
@@ -377,23 +379,31 @@ int orte_plm_base_fork_hnp(void)
             return ORTE_ERR_HNP_COULD_NOT_START;
         }
         
-        if (']' != orted_uri[strlen(orted_uri)-1]) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            free(orted_uri);
-            return ORTE_ERR_COMM_FAILURE;
-        }
+        /* ensure it is null-terminated */
         orted_uri[strlen(orted_uri)-1] = '\0';
+        opal_output(0, "RECEIVED %s", orted_uri);
 
 	/* parse the sysinfo from the returned info */
-        if (NULL == (param = strrchr(orted_uri, '['))) {
+        if (NULL == (param = strchr(orted_uri, '['))) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             free(orted_uri);
             return ORTE_ERR_COMM_FAILURE;
         }
         *param = '\0'; /* terminate the uri string */
+        ++param;  /* point to the start of the sysinfo */
 
+        /* find the end of the sysinfo */
+        if (NULL == (cptr = strchr(param, ']'))) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            free(orted_uri);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        *cptr = '\0';  /* terminate the sysinfo string */
+        ++cptr;  /* point to the start of the pmix uri */
+
+        /* convert the sysinfo string */
         if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_sysinfo(&orte_local_cpu_type,
-								      &orte_local_cpu_model, ++param))) {
+								      &orte_local_cpu_model, param))) {
             ORTE_ERROR_LOG(rc);
             free(orted_uri);
             return rc;
@@ -410,6 +420,15 @@ int orte_plm_base_fork_hnp(void)
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
         
+        /* push the pmix_uri into our environment - need to protect it */
+        (void)asprintf(&pmix_uri, "PMIX_SERVER_URI=%s", cptr);
+        putenv(pmix_uri);
+        /* now re-init the pmix framework so we can connect when required */
+        if (OPAL_SUCCESS != (rc = opal_pmix.init())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;
