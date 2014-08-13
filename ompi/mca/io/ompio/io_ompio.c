@@ -437,28 +437,30 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     int i = 0;
     int k = 0;
 
-    /* starting offset of the current copy of the filew view */
-    fh->f_offset = (fh->f_view_extent * 
-		    ((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
-
-
-    /* number of bytes used within the current copy of the file view */
-    fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-    i = fh->f_total_bytes;
-
-
-    /* Initialize the block id and the starting offset of the current block 
-       within the current copy of the file view to zero */
-    fh->f_index_in_file_view = 0;
-    fh->f_position_in_file_view = 0;
-
-    /* determine block id that the offset is located in and
-       the starting offset of that block */
-    k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-    while (i >= k) {
-        fh->f_position_in_file_view = k;
-        fh->f_index_in_file_view++;
-        k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+    if ( fh->f_view_size  > 0 ) {
+	/* starting offset of the current copy of the filew view */
+	fh->f_offset = (fh->f_view_extent * 
+			((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
+	
+	
+	/* number of bytes used within the current copy of the file view */
+	fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
+	i = fh->f_total_bytes;
+	
+	
+	/* Initialize the block id and the starting offset of the current block 
+	   within the current copy of the file view to zero */
+	fh->f_index_in_file_view = 0;
+	fh->f_position_in_file_view = 0;
+	
+	/* determine block id that the offset is located in and
+	   the starting offset of that block */
+	k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	while (i >= k) {
+	    fh->f_position_in_file_view = k;
+	    fh->f_index_in_file_view++;
+	    k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	}
     }
 
     return OMPI_SUCCESS;
@@ -1070,6 +1072,14 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                                            fh->f_comm,
                                            fh->f_comm->c_coll.coll_allreduce_module);
         */
+	fh->f_comm->c_coll.coll_allreduce (&bytes_per_proc,
+					   &max_bytes_per_proc,
+					   1,
+					   MPI_LONG,
+					   MPI_MAX,
+					   fh->f_comm,
+					   fh->f_comm->c_coll.coll_allreduce_module);
+
         if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
             OMPI_MPI_OFFSET_TYPE *start_offsets = NULL;
             OMPI_MPI_OFFSET_TYPE stride = 0;
@@ -1109,17 +1119,9 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                                            fh->f_comm->c_coll.coll_bcast_module);
 
             fh->f_procs_per_group = i;
-            max_bytes_per_proc = bytes_per_proc;
-        }
+         }
         else {
             fh->f_procs_per_group = 1;
-            fh->f_comm->c_coll.coll_allreduce (&bytes_per_proc,
-                                               &max_bytes_per_proc,
-                                               1,
-                                               MPI_LONG,
-                                               MPI_MAX,
-                                               fh->f_comm,
-                                               fh->f_comm->c_coll.coll_allreduce_module);
         }
         /*
         printf ("BEFORE ADJUSTMENT: %d ---> procs_per_group = %d\n", 
