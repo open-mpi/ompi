@@ -573,16 +573,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
      */
     cnt = opal_argv_count(orted_cmd_line);    
     for (i=0; i < cnt; i+=3) {
-        if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+        if (NULL == strchr(orted_cmd_line[i+2], ' ')) {
             continue;
         }
-        /* protect the value with quotes */
-        (void)asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-        /* now pass it along */
         opal_argv_append(&argc, &argv, orted_cmd_line[i]);
         opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
-        opal_argv_append(&argc, &argv, param);
-        free(param);
+        opal_argv_append(&argc, &argv, orted_cmd_line[i+2]);
     }
     
     /* unless told otherwise... */
@@ -611,22 +607,32 @@ static int setup_launch(int *argcptr, char ***argvptr,
                     }
                 }
                 if (!found) {
-                    char *p2;
                     /* add it */
                     opal_argv_append(&argc, &argv, "-mca");
                     opal_argv_append(&argc, &argv, param);
-                    /* there could be multi-word values here, or
-                     * values with special characters, so protect
-                     * the value with quotes */
-                    (void)asprintf(&p2, "\"%s\"", value);
-                    opal_argv_append(&argc, &argv, p2);
-                    free(p2);
+                    opal_argv_append(&argc, &argv, value);
                 }
                 free(param);
             }
         }
     }
     
+   /* in the rsh environment, we can append multi-word arguments
+    * by enclosing them in quotes. Check for any multi-word
+    * mca params passed to mpirun and protect them
+    */
+    for (i=0; NULL != argv[i]; i++) {
+        if (0 != strcmp("-mca", argv[i])) {
+            continue;
+        }
+        if (NULL == strchr(argv[i+2], ' ')) {
+            continue;
+        }
+        (void)asprintf(&param, "\"%s\"", argv[i+2]);
+        free(argv[i+2]);
+        argv[i+2] = param;
+    }
+
     value = opal_argv_join(argv, ' ');
     if (sysconf(_SC_ARG_MAX) < (int)strlen(value)) {
         orte_show_help("help-plm-rsh.txt", "cmd-line-too-long",

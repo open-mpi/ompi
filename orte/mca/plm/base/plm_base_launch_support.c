@@ -1083,14 +1083,26 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* check for debug flags */
     if (orte_debug_flag) {
-        opal_argv_append(argc, argv, "--debug");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_file_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons-file");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons_file");
+        opal_argv_append(argc, argv, "1");
     }
+    if (orte_leave_session_attached) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_leave_session_attached");
+        opal_argv_append(argc, argv, "1");
+    }
+
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
     }
@@ -1302,15 +1314,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                 }
             }
             if (!ignore) {
-                /* even if it is a single word, we have to try and quote it
-                 * because it could contain a special character like a colon
-                 * or semicolon */
-                (void)asprintf(&tmp_force, "\"%s\"", orted_cmd_line[i+2]);
                 /* pass it along */
                 opal_argv_append(argc, argv, orted_cmd_line[i]);
                 opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-                opal_argv_append(argc, argv, tmp_force);
-                free(tmp_force);
+                opal_argv_append(argc, argv, orted_cmd_line[i+2]);
             }
         }
     }
