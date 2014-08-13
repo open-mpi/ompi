@@ -2004,7 +2004,6 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
             if (proc->iof_complete) {
                 proc->alive = false;
             }
-            free(abortfile);
             goto MOVEON;
         }
         free(abortfile);
