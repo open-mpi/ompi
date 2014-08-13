@@ -1314,10 +1314,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                 }
             }
             if (!ignore) {
+                /* even if it is a single word, we have to try and quote it
+                 * because it could contain a special character like a colon
+                 * or semicolon */
+                (void)asprintf(&tmp_force, "\"%s\"", orted_cmd_line[i+2]);
                 /* pass it along */
                 opal_argv_append(argc, argv, orted_cmd_line[i]);
                 opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-                opal_argv_append(argc, argv, orted_cmd_line[i+2]);
+                opal_argv_append(argc, argv, tmp_force);
+                free(tmp_force);
             }
         }
     }
