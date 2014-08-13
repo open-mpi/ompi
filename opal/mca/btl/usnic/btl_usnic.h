@@ -203,6 +203,10 @@ typedef struct opal_btl_usnic_component_t {
     /* ibv_create_ah() (i.e., ARP) timeout */
     int arp_timeout;
 
+    /** how many short packets have to be received before outputting
+        the "received short packets" warning? */
+    uint32_t max_short_packets;
+
     /* Prefix for the connectivity map filename (map will be output if
        the prefix is non-NULL) */
     char *connectivity_map_prefix;

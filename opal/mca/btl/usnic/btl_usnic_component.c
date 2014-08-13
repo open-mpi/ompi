@@ -991,10 +991,22 @@ static int usnic_handle_completion(
             if (cwc->byte_len <
                  (OPAL_BTL_USNIC_PROTO_HDR_SZ +
                   sizeof(opal_btl_usnic_btl_header_t))) {
-                BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d",
-                   ibv_get_device_name(module->device),
-                   channel->chan_index, cwc->status, cwc->wr_id,
-                   cwc->vendor_err, cwc->byte_len));
+                uint32_t m = mca_btl_usnic_component.max_short_packets;
+                ++module->num_short_packets;
+                if (OPAL_UNLIKELY(0 != m &&
+                                  module->num_short_packets >= m)) {
+                    opal_show_help("help-mpi-btl-usnic.txt",
+                                   "received too many short packets",
+                                   true,
+                                   opal_process_info.nodename,
+                                   ibv_get_device_name(module->device),
+                                   module->if_name,
+                                   module->num_short_packets);
+
+                    /* Reset so that we only show this warning once
+                       per MPI process */
+                    mca_btl_usnic_component.max_short_packets = 0;
+                }
             } else {
                 /* silently count CRC errors */
                 ++module->stats.num_crc_errors;
@@ -1003,10 +1015,17 @@ static int usnic_handle_completion(
             channel->repost_recv_head = &rseg->rs_recv_desc;
             return 0;
         } else {
-            BTL_ERROR(("%s: error polling CQ[%d] with status %d for wr_id %" PRIx64 " opcode %d, vend_err %d",
-                   ibv_get_device_name(module->device), channel->chan_index,
-                   cwc->status, cwc->wr_id, cwc->opcode,
-                   cwc->vendor_err));
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "non-receive completion error",
+                           true,
+                           opal_process_info.nodename,
+                           ibv_get_device_name(module->device),
+                           module->if_name,
+                           channel->chan_index,
+                           cwc->status,
+                           (void*) cwc->wr_id,
+                           cwc->opcode,
+                           cwc->vendor_err);
 
             /* mark error on this channel */
             channel->chan_error = true;

@@ -163,6 +163,7 @@ int opal_btl_usnic_component_register(void)
     static int eager_limit;
     static int rndv_eager_limit;
     static int pack_lazy_threshold;
+    static int max_short_packets;
 
 #define CHECK(expr) do {\
         tmp = (expr); \
@@ -256,6 +257,11 @@ int opal_btl_usnic_component_register(void)
     CHECK(reg_int("arp_timeout", "Timeout, in seconds, for the maximum delay between ARP replies when using the usNIC/UDP transport (ignored when using the usNIC/L2 transport, must be >=1)",
                   10, &mca_btl_usnic_component.arp_timeout,
                   REGINT_GE_ONE, OPAL_INFO_LVL_6));
+
+    CHECK(reg_int("max_short_packets", "Number of abnormally-short packets received before outputting a warning (0 = never show the warning)",
+                  25, &max_short_packets,
+                  REGINT_GE_ZERO, OPAL_INFO_LVL_5));
+    mca_btl_usnic_component.max_short_packets = max_short_packets;
 
     /* Default to bandwidth auto-detection */
     opal_btl_usnic_module_template.super.btl_bandwidth = 0;
