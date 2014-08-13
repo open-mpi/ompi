@@ -56,6 +56,22 @@ included in the vX.Y.Z section and be denoted as:
 1.8.2
 -----
 
+- Fix cascading/over-quoting in some cases with the rsh/ssh-based
+  launcher.  Thanks to multiple users for raising the issue.
+- Properly add support for gfortran 4.9 ignore TKR pragma (it was
+  erroneously only partially added in v1.7.5).  Thanks to Marcus
+  Daniels for raising the issue.
+- Update/improve help messages in the usnic BTL.
+- Resolve a race condition in MPI_Abort.
+- Fix obscure cases where static linking from wrapper compilers would
+  fail.
+- Clarify the configure --help message about when OpenSHMEM is
+  enabled/disabled by default.  Thanks to Paul Hargrove for the
+  suggestion.
+- Align pages properly where relevant.  Thanks to Paul Hargrove for
+  identifying the issue.
+- Various compiler warning and minor fixes for OpenBSD, FreeBSD, and
+  Solaris/SPARC.  Thanks to Paul Hargrove for the patches.
 - Properly pass function pointers from Fortran to C in the mpi_f08
   module, thereby now supporting gfortran 4.9.  Thanks to Tobias
   Burnus for assistance and testing with this issue.
