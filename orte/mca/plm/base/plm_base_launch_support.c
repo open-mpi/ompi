@@ -1069,14 +1069,26 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* check for debug flags */
     if (orte_debug_flag) {
-        opal_argv_append(argc, argv, "--debug");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_file_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons-file");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons_file");
+        opal_argv_append(argc, argv, "1");
     }
+    if (orte_leave_session_attached) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_leave_session_attached");
+        opal_argv_append(argc, argv, "1");
+    }
+
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
     }
