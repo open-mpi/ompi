@@ -282,12 +282,12 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 
     /* Get the epids for all the processes from modex */
     for (i = 0; i < (int) nprocs; i++) {
-	rc = ompi_modex_recv(&mca_mtl_psm_component.super.mtl_version, 
-				     procs[i], (void**)&epid, &size);
-	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
-	  return OMPI_ERROR;
-	}
-	epids_in[i] = *epid;
+        OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version,
+                &procs[i]->super, (void**)&epid, &size);
+        if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
+            return OMPI_ERROR;
+        }
+        epids_in[i] = *epid;
     }
 
     timeout_in_secs = max(ompi_mtl_psm.connect_timeout, 0.5 * nprocs);
