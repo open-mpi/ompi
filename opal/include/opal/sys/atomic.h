@@ -162,8 +162,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #include "opal/sys/powerpc/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64
 #include "opal/sys/powerpc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARC
-#include "opal/sys/sparc/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_32
 #include "opal/sys/sparcv9/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
