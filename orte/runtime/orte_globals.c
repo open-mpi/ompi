@@ -519,7 +519,9 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
         }
         return proct->node->name;
     }
-
+    opal_output(0, "%s GETTING HOSTNAME FOR %s",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                ORTE_NAME_PRINT(proc));
     /* if we are an app, get the data from the modex db */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,

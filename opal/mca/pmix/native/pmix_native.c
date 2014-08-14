@@ -98,8 +98,6 @@ static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     int status=OPAL_SUCCESS;
 
-    cb->active = false;
-
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native recv callback activated with %d bytes",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -112,6 +110,7 @@ static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
     if (NULL != cb->cbfunc) {
         cb->cbfunc(status, NULL, cb->cbdata);
     }
+    cb->active = false;
 }
 
 static int native_init(void)
@@ -366,8 +365,8 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     opal_pmix_scope_t scope;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:native executing fence",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                        "%s pmix:native executing fence on %u procs",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), (unsigned int)nprocs);
 
     if (NULL == mca_pmix_native_component.uri) {
         /* no server available, so just return */
@@ -567,8 +566,9 @@ static int native_get(const opal_identifier_t *id,
     opal_value_t *kp;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:native getting value for key %s",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key);
+                        "%s pmix:native getting value for proc %s key %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(*id), key);
 
     /* first see if we already have the info in our dstore */
     OBJ_CONSTRUCT(&vals, opal_list_t);
@@ -576,6 +576,9 @@ static int native_get(const opal_identifier_t *id,
                                           key, &vals)) {
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
         OPAL_LIST_DESTRUCT(&vals);
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native value retrieved from dstore",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         return OPAL_SUCCESS;
     }
 

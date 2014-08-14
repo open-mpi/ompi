@@ -44,6 +44,7 @@
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -73,6 +74,7 @@ static int rte_init(void)
     uint16_t jobfam;
     uint32_t hash32;
     uint32_t bias;
+    opal_value_t kvn;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
@@ -201,6 +203,57 @@ static int rte_init(void)
     putenv("OMPI_FIRST_RANKS=0");
     putenv("OMPI_APP_CTX_NUM_PROCS=1");
     putenv("OMPI_MCA_orte_ess_num_procs=1");
+
+    /* push some required info to our local datastore */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(orte_process_info.nodename);
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* construct the RTE string */
+    param = orte_rml.get_contact_info();
+    /* push it out for others to use */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_URI);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(param);
+    free(param);
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* push our local rank */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
+    kvn.type = OPAL_UINT16;
+    kvn.data.uint16 = orte_process_info.my_local_rank;
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* push our node rank */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_NODERANK);
+    kvn.type = OPAL_UINT16;
+    kvn.data.uint16 = orte_process_info.my_node_rank;
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
 
     return ORTE_SUCCESS;
 }

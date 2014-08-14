@@ -619,12 +619,13 @@ static void process_message(pmix_server_peer_t *peer)
         if (0 < sig->sz) {
             sig->signature = (orte_process_name_t*)malloc(sig->sz * sizeof(orte_process_name_t));
             cnt = sig->sz;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &sig->signature, &cnt, OPAL_UINT64))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, sig->signature, &cnt, OPAL_UINT64))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(sig);
                 goto reply_fence;
             }
         }
+
         /* if data was given, unpack and store it in the pmix dstore - it is okay
          * if there was no data, it's just a fence */
         cnt = 1;
@@ -683,6 +684,7 @@ static void process_message(pmix_server_peer_t *peer)
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             OPAL_ERROR_LOG(rc);
         }
+
         /* send notification to myself */
         reply = OBJ_NEW(opal_buffer_t);
         /* pack the id of the sender */

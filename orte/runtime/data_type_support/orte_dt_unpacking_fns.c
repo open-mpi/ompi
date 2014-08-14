@@ -970,7 +970,7 @@ int orte_dt_unpack_sig(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
             ptr[i]->signature = (orte_process_name_t*)malloc(ptr[i]->sz * sizeof(orte_process_name_t));
             /* unpack the array - the array is our signature for the collective */
             cnt = ptr[i]->sz;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ptr[i]->signature, &cnt, ORTE_NAME))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, ptr[i]->signature, &cnt, ORTE_NAME))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ptr[i]);
                 return rc;

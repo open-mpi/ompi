@@ -541,8 +541,9 @@ static pmix_server_trk_t* get_trk(opal_identifier_t *id,
     }
 
     opal_output_verbose(2, pmix_server_output,
-                        "%s pmix:server adding new tracker",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        "%s pmix:server adding new tracker of sig size %u",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (unsigned int)sig->sz);
 
     /* get here if tracker not found */
     trk = OBJ_NEW(pmix_server_trk_t);

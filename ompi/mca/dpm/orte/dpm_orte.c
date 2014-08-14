@@ -458,7 +458,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             memcpy(&ids[i++], &nm->name, sizeof(opal_identifier_t));
         }
         OPAL_LIST_DESTRUCT(&all_procs);
-
         /* perform it */
         opal_pmix.fence(ids, i);
         free(ids);
@@ -601,7 +600,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
 static int construct_peers(ompi_group_t *group, opal_list_t *peers)
 {
     int i;
-    orte_namelist_t *nm;
+    orte_namelist_t *nm, *n2;
     ompi_proc_t *proct;
 
     if (OMPI_GROUP_IS_DENSE(group)) {
@@ -620,7 +619,19 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
                                  ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
             nm->name = *(orte_process_name_t*)&proct->super.proc_name;
-            opal_list_append(peers, &nm->super);
+            /* need to maintain an ordered list to ensure the tracker signatures
+             * match across all procs */
+            OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
+                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                    opal_list_insert_pos(peers, &n2->super, &nm->super);
+                    nm = NULL;
+                    break;
+                }
+            }
+            if (NULL != nm) {
+                /* append to the end */
+                opal_list_append(peers, &nm->super);
+            }
         }
     } else {
         for (i=0; i < group->grp_proc_count; i++) {
@@ -636,7 +647,19 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
                                  ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
             nm->name = *(orte_process_name_t*)&proct->super.proc_name;
-            opal_list_append(peers, &nm->super);
+            /* need to maintain an ordered list to ensure the tracker signatures
+             * match across all procs */
+            OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
+                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                    opal_list_insert_pos(peers, &n2->super, &nm->super);
+                    nm = NULL;
+                    break;
+                }
+            }
+            if (NULL != nm) {
+                /* append to the end */
+                opal_list_append(peers, &nm->super);
+            }
         }
     }
     return ORTE_SUCCESS;
@@ -686,9 +709,8 @@ static int disconnect(ompi_communicator_t *comm)
     OPAL_LIST_DESTRUCT(&coll);
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                         "%s dpm:orte:disconnect calling barrier on comm_cid %d ith %d participants",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid,
-                         (int)opal_list_get_size(&coll)));
+                         "%s dpm:orte:disconnect calling barrier on comm_cid %d with %d participants",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, i));
     opal_pmix.fence(ids, i);
     free(ids);
 
