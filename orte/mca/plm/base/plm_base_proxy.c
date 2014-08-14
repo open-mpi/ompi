@@ -381,7 +381,6 @@ int orte_plm_base_fork_hnp(void)
         
         /* ensure it is null-terminated */
         orted_uri[strlen(orted_uri)-1] = '\0';
-        opal_output(0, "RECEIVED %s", orted_uri);
 
 	/* parse the sysinfo from the returned info */
         if (NULL == (param = strchr(orted_uri, '['))) {
