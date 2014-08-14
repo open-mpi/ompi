@@ -329,14 +329,17 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pwin_get_group_f.c \
         pwin_get_name_f.c \
         pwin_lock_f.c \
+        pwin_lock_all_f.c \
         pwin_post_f.c \
         pwin_set_attr_f.c \
         pwin_set_errhandler_f.c \
         pwin_set_name_f.c \
         pwin_shared_query_f.c \
         pwin_start_f.c \
+        pwin_sync_f.c \
         pwin_test_f.c \
         pwin_unlock_f.c \
+        pwin_unlock_all_f.c \
         pwin_wait_f.c \
         pwin_flush_f.c \
         pwin_flush_all_f.c \

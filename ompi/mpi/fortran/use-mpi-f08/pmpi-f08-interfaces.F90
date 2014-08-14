@@ -3213,6 +3213,16 @@ subroutine PMPI_Win_lock_f08(lock_type,rank,assert,win,ierror)
 end subroutine PMPI_Win_lock_f08
 end interface  PMPI_Win_lock
 
+interface  PMPI_Win_lock_all
+subroutine PMPI_Win_lock_all_f08(assert,win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   INTEGER, INTENT(IN) :: assert
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_lock_all_f08
+end interface  PMPI_Win_lock_all
+
 interface  PMPI_Win_post
 subroutine PMPI_Win_post_f08(group,assert,win,ierror)
    use :: mpi_f08_types, only : MPI_Group, MPI_Win
@@ -3235,6 +3245,15 @@ subroutine PMPI_Win_start_f08(group,assert,win,ierror)
 end subroutine PMPI_Win_start_f08
 end interface  PMPI_Win_start
 
+interface  PMPI_Win_sync
+subroutine PMPI_Win_sync_f08(win,ierror)
+   use :: mpi_f08_types, only : MPI_Group, MPI_Win
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_sync_f08
+end interface  PMPI_Win_sync
+
 interface  PMPI_Win_test
 subroutine PMPI_Win_test_f08(win,flag,ierror)
    use :: mpi_f08_types, only : MPI_Win
@@ -3254,6 +3273,15 @@ subroutine PMPI_Win_unlock_f08(rank,win,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Win_unlock_f08
 end interface  PMPI_Win_unlock
+
+interface  PMPI_Win_unlock_all
+subroutine PMPI_Win_unlock_all_f08(win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_unlock_all_f08
+end interface  PMPI_Win_unlock_all
 
 interface  PMPI_Win_wait
 subroutine PMPI_Win_wait_f08(win,ierror)
