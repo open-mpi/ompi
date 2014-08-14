@@ -364,6 +364,7 @@
 #define ompi_win_get_group_f pompi_win_get_group_f
 #define ompi_win_get_name_f pompi_win_get_name_f
 #define ompi_win_lock_f pompi_win_lock_f
+#define ompi_win_lock_all_f pompi_win_lock_all_f
 #define ompi_win_post_f pompi_win_post_f
 #define ompi_win_set_attr_f pompi_win_set_attr_f
 #define ompi_win_set_errhandler_f pompi_win_set_errhandler_f
@@ -371,8 +372,10 @@
 #define ompi_win_shared_query_f pompi_win_shared_query_f
 #define ompi_win_shared_query_cptr_f pompi_win_shared_query_cptr_f
 #define ompi_win_start_f pompi_win_start_f
+#define ompi_win_sync_f pompi_win_sync_f
 #define ompi_win_test_f pompi_win_test_f
 #define ompi_win_unlock_f pompi_win_unlock_f
+#define ompi_win_unlock_all_f pompi_win_unlock_all_f
 #define ompi_win_wait_f pompi_win_wait_f
 #define ompi_wtick_f pompi_wtick_f
 #define ompi_wtime_f pompi_wtime_f
