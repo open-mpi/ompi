@@ -174,7 +174,7 @@ int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
     
-    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_read (fh,
@@ -308,8 +308,7 @@ int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    
-    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_iread (fh,
@@ -386,6 +385,8 @@ int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
 				     ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = fh->f_fcoll->fcoll_file_read_all (fh,
@@ -393,6 +394,8 @@ int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
                                             count,
                                             datatype,
                                             status);
+
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
@@ -556,20 +559,28 @@ int mca_io_ompio_file_read_at_all_begin (ompi_file_t *fh,
     return ret;
 }
 
-int ompio_io_ompio_file_read_at_all_begin (mca_io_ompio_file_t *ompio_fh,
+int ompio_io_ompio_file_read_at_all_begin (mca_io_ompio_file_t *fh,
 					   OMPI_MPI_OFFSET_TYPE offset,
 					   void *buf,
 					   int count,
 					   struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (ompio_fh, offset);
-    ret = ompio_fh->f_fcoll->fcoll_file_read_all_begin (ompio_fh,
-                                                        buf,
-                                                        count,
-                                                        datatype);
-
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+    ret = fh->f_fcoll->fcoll_file_read_all_begin (fh,
+						  buf,
+						  count,
+						  datatype);
+    
+    /* It is OK to reset the position already here, althgouth 
+    ** the operation might still be pending/ongoing, since
+    ** the entire array of <offset, length, memaddress> have 
+    ** already been constructed in the file_read_all_begin operation
+    */
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 

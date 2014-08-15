@@ -169,7 +169,7 @@ int ompio_io_ompio_file_write_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_write (fh,
@@ -297,7 +297,7 @@ int ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_iwrite (fh,
@@ -498,6 +498,8 @@ int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
 				      ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = fh->f_fcoll->fcoll_file_write_all (fh,
@@ -505,6 +507,8 @@ int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
                                              count,
                                              datatype,
                                              status);
+
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
@@ -640,6 +644,8 @@ int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
 					    struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = fh->f_fcoll->fcoll_file_write_all_begin (fh,
@@ -647,6 +653,12 @@ int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
                                                    count,
                                                    datatype);
 
+    /* It is OK to reset the position already here, althgouth 
+    ** the operation might still be pending/ongoing, since
+    ** the entire array of <offset, length, memaddress> have 
+    ** already been constructed in the file_write_all_begin operation
+    */
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
