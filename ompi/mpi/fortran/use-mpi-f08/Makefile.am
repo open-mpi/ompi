@@ -96,6 +96,7 @@ mpi_api_files = \
         comm_spawn_f08.F90 \
         comm_spawn_multiple_f08.F90 \
         comm_split_f08.F90 \
+        comm_split_type_f08.F90 \
         comm_test_inter_f08.F90 \
         compare_and_swap_f08.F90 \
         dist_graph_create_adjacent_f08.F90 \
@@ -301,14 +302,17 @@ mpi_api_files = \
         win_get_group_f08.F90 \
         win_get_name_f08.F90 \
         win_lock_f08.F90 \
+        win_lock_all_f08.F90 \
         win_post_f08.F90 \
         win_set_attr_f08.F90 \
         win_set_errhandler_f08.F90 \
         win_set_name_f08.F90 \
         win_shared_query_f08.F90 \
         win_start_f08.F90 \
+        win_sync_f08.F90 \
         win_test_f08.F90 \
         win_unlock_f08.F90 \
+        win_unlock_all_f08.F90 \
         win_wait_f08.F90
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
@@ -438,6 +442,7 @@ pmpi_api_files = \
         profile/pcomm_spawn_f08.F90 \
         profile/pcomm_spawn_multiple_f08.F90 \
         profile/pcomm_split_f08.F90 \
+        profile/pcomm_split_type_f08.F90 \
         profile/pcomm_test_inter_f08.F90 \
         profile/pcompare_and_swap_f08.F90 \
         profile/pdims_create_f08.F90 \
@@ -643,14 +648,17 @@ pmpi_api_files = \
         profile/pwin_get_group_f08.F90 \
         profile/pwin_get_name_f08.F90 \
         profile/pwin_lock_f08.F90 \
+        profile/pwin_lock_all_f08.F90 \
         profile/pwin_post_f08.F90 \
         profile/pwin_set_attr_f08.F90 \
         profile/pwin_set_errhandler_f08.F90 \
         profile/pwin_set_name_f08.F90 \
         profile/pwin_shared_query_f08.F90 \
         profile/pwin_start_f08.F90 \
+        profile/pwin_sync_f08.F90 \
         profile/pwin_test_f08.F90 \
         profile/pwin_unlock_f08.F90 \
+        profile/pwin_unlock_all_f08.F90 \
         profile/pwin_wait_f08.F90
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
