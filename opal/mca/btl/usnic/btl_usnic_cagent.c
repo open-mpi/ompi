@@ -1157,7 +1157,11 @@ int opal_btl_usnic_connectivity_agent_init(void)
         /* Will not return */
     }
 
-    if (listen(ipc_accept_fd, 5) != 0) {
+    /* Give an arbitrarily large backlog number so that connecting
+       clients will never be backlogged (note for Future Jeff: please
+       don't laugh at Past Jeff if 256 has become a trivially small
+       number of on-server procs in a single job). */
+    if (listen(ipc_accept_fd, 256) != 0) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("listen() failed");
         /* Will not return */
