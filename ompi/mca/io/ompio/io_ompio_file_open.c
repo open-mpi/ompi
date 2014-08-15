@@ -637,20 +637,31 @@ int
 mca_io_ompio_file_get_position (ompi_file_t *fd,
                                 OMPI_MPI_OFFSET_TYPE *offset)
 {
+    int ret=OMPI_SUCCESS;
     mca_io_ompio_data_t *data=NULL;
     mca_io_ompio_file_t *fh=NULL;
-    OMPI_MPI_OFFSET_TYPE off;
-
+    
     data = (mca_io_ompio_data_t *) fd->f_io_selected_data;
     fh = &data->ompio_fh;
+    
+    ret = ompio_io_ompio_file_get_position (fh, offset);
+    
+    return ret;
+}
 
-    /* No of copies of the entire file view */
+int
+ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
+                                OMPI_MPI_OFFSET_TYPE *offset)
+{
+    OMPI_MPI_OFFSET_TYPE off;
+    
+    /* No. of copies of the entire file view */
     off = (fh->f_offset - fh->f_disp)/fh->f_view_extent;
 
-    /* No of elements per view */
+    /* No. of elements per view */
     off *= (fh->f_view_size / fh->f_etype_size);
 
-    /* No of bytes used in the current copy of the view */
+    /* No of elements used in the current copy of the view */
     off += fh->f_total_bytes / fh->f_etype_size;
 
     *offset = off;

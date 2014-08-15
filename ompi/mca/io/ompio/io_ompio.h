@@ -328,6 +328,10 @@ OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all_end (mca_io_ompio_file_t *ompi
                                                        ompi_status_public_t * status);
 OMPI_DECLSPEC int ompio_io_ompio_file_get_size (mca_io_ompio_file_t *fh,
                                                 OMPI_MPI_OFFSET_TYPE *size);
+
+OMPI_DECLSPEC int ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
+						    OMPI_MPI_OFFSET_TYPE *offset);
+
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
