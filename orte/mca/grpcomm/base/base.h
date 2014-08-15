@@ -77,9 +77,11 @@ ORTE_DECLSPEC int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                                          opal_buffer_t *buf);
 
 ORTE_DECLSPEC int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
-                                             opal_buffer_t *buf);
+                                             opal_buffer_t *buf,
+                                             orte_grpcomm_cbfunc_t cbfunc,
+                                             void *cbdata);
 
-ORTE_DECLSPEC orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig);
+ORTE_DECLSPEC orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig, bool create);
 
 END_C_DECLS
 #endif

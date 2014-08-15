@@ -35,6 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/orted/pmix/pmix_server.h"
 #include "orte/runtime/orte_globals.h"
@@ -381,6 +382,7 @@ int orte_plm_base_fork_hnp(void)
         
         /* ensure it is null-terminated */
         orted_uri[strlen(orted_uri)-1] = '\0';
+        opal_output(0, "GOT %s BACK", orted_uri);
 
 	/* parse the sysinfo from the returned info */
         if (NULL == (param = strchr(orted_uri, '['))) {
@@ -415,19 +417,31 @@ int orte_plm_base_fork_hnp(void)
          * if/when we attempt to send to it
          */
         orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                           ORTE_PROC_MY_DAEMON, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
-        
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                           ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* push the pmix_uri into our environment - need to protect it */
         (void)asprintf(&pmix_uri, "PMIX_SERVER_URI=%s", cptr);
         putenv(pmix_uri);
+        opal_output(0, "SET SERVER %s", pmix_uri);
         /* now re-init the pmix framework so we can connect when required */
         if (OPAL_SUCCESS != (rc = opal_pmix.init())) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        opal_output(0, "FINISHED PROXY");
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;

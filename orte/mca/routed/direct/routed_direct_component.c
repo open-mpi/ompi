@@ -51,7 +51,8 @@ static int orte_routed_direct_component_query(mca_base_module_t **module, int *p
 {
     /* if we are an app and no daemon URI has been provided, then
      * we must be chosen */
-    if (ORTE_PROC_IS_APP && NULL == orte_process_info.my_daemon_uri) {
+    if (ORTE_PROC_IS_APP && !ORTE_PROC_IS_SINGLETON &&
+        NULL == orte_process_info.my_daemon_uri) {
         /* we are direct launched, so set some arbitrary value
          * for the daemon name */
         ORTE_PROC_MY_DAEMON->jobid = 0;

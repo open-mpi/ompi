@@ -58,6 +58,9 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 static void allgather_recv(int status, orte_process_name_t* sender,
                            opal_buffer_t* buffer, orte_rml_tag_t tag,
                            void* cbdata);
+static void barrier_release(int status, orte_process_name_t* sender,
+                            opal_buffer_t* buffer, orte_rml_tag_t tag,
+                            void* cbdata);
 
 /* internal variables */
 static opal_list_t tracker;
@@ -78,6 +81,11 @@ static int init(void)
                             ORTE_RML_TAG_ALLGATHER,
                             ORTE_RML_PERSISTENT,
                             allgather_recv, NULL);
+    /* setup recv for barrier release */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_COLL_RELEASE,
+                            ORTE_RML_PERSISTENT,
+                            barrier_release, NULL);
 
     return OPAL_SUCCESS;
 }
@@ -114,7 +122,7 @@ static int xcast(orte_vpid_t *vpids,
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *buf)
 {
-    int rc;
+    int rc, ret;
     opal_buffer_t *relay;
 
     /* the base functions pushed us into the event library
@@ -128,18 +136,28 @@ static int allgather(orte_grpcomm_coll_t *coll,
         OBJ_RELEASE(relay);
         return rc;
     }
-    /* pass along the payload */
-    opal_dss.copy_payload(relay, buf);
 
     /* if we are the HNP and nobody else is participating,
      * then just execute the xcast */
     if (ORTE_PROC_IS_HNP && 1 == coll->ndmns) {
+         /* pack the status - success since the allgather completed. This
+         * would be an error if we timeout instead */
+        ret = ORTE_SUCCESS;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &ret, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(relay);
+            return rc;
+        }
+        /* pass along the payload */
+        opal_dss.copy_payload(relay, buf);
         orte_grpcomm.xcast(coll->sig, ORTE_RML_TAG_COLL_RELEASE, relay);
         OBJ_RELEASE(relay);
-        opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
-        OBJ_RELEASE(coll);
         return ORTE_SUCCESS;
     }
+
+    /* pass along the payload */
+    opal_dss.copy_payload(relay, buf);
+
     /* otherwise, we need to send this to the HNP for
      * processing */
     /* send the info to the HNP for tracking */
@@ -154,7 +172,7 @@ static void allgather_recv(int status, orte_process_name_t* sender,
                            void* cbdata)
 {
     int32_t cnt;
-    int rc;
+    int rc, ret;
     orte_grpcomm_signature_t *sig;
     opal_buffer_t *reply;
     orte_grpcomm_coll_t *coll;
@@ -167,7 +185,7 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     }
 
     /* check for the tracker and create it if not found */
-    if (NULL == (coll = orte_grpcomm_base_get_tracker(sig))) {
+    if (NULL == (coll = orte_grpcomm_base_get_tracker(sig, true))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         OBJ_RELEASE(sig);
         return;
@@ -183,6 +201,15 @@ static void allgather_recv(int status, orte_process_name_t* sender,
         reply = OBJ_NEW(opal_buffer_t);
         /* pack the signature */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_RELEASE(sig);
+            return;
+        }
+        /* pack the status - success since the allgather completed. This
+         * would be an error if we timeout instead */
+        ret = ORTE_SUCCESS;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             OBJ_RELEASE(sig);
@@ -394,3 +421,46 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         OBJ_RELEASE(relay);
     }
 }
+
+static void barrier_release(int status, orte_process_name_t* sender,
+                            opal_buffer_t* buffer, orte_rml_tag_t tag,
+                            void* cbdata)
+{
+    int32_t cnt;
+    int rc, ret;
+    orte_grpcomm_signature_t *sig;
+    orte_grpcomm_coll_t *coll;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:direct: barrier release called",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* unpack the signature */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* unpack the return status */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ret, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* check for the tracker and error if not found */
+    if (NULL == (coll = orte_grpcomm_base_get_tracker(sig, false))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_RELEASE(sig);
+        return;
+    }
+
+    /* execute the callback */
+    if (NULL != coll->cbfunc) {
+        coll->cbfunc(ret, buffer, coll->cbdata);
+    }
+    opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
+    OBJ_RELEASE(coll);
+}
+

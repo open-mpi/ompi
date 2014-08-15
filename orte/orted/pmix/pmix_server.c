@@ -114,9 +114,9 @@ static int pmix_server_start_listening(struct sockaddr_un *address);
 static void pmix_server_recv(int status, orte_process_name_t* sender,
                              opal_buffer_t *buffer,
                              orte_rml_tag_t tg, void *cbdata);
-static void pmix_server_release(int status, orte_process_name_t* sender,
+static void pmix_server_release(int status,
                                 opal_buffer_t *buffer,
-                                orte_rml_tag_t tag, void *cbdata);
+                                void *cbdata);
 static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
                                   orte_rml_tag_t tg, void *cbdata);
@@ -229,10 +229,6 @@ int pmix_server_init(void)
     /* setup recv for collecting local barriers */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLL,
                             ORTE_RML_PERSISTENT, pmix_server_recv, NULL);
-
-    /* setup recv for barrier release */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE,
-                            ORTE_RML_PERSISTENT, pmix_server_release, NULL);
 
     /* setup recv for direct modex requests */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,
@@ -674,7 +670,8 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     /* if locally complete, pass it to the allgather */
     if (trk->nlocal == opal_list_get_size(&trk->locals)) {
         /* pass along any data that was collected locally */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(sig, &trk->bucket))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(sig, &trk->bucket,
+                                                         pmix_server_release, trk))) {
             ORTE_ERROR_LOG(rc);
         }
     }
@@ -683,36 +680,18 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     OBJ_RELEASE(sig);
 }
 
-static void pmix_server_release(int status, orte_process_name_t* sender,
+static void pmix_server_release(int status,
                                 opal_buffer_t *buffer,
-                                orte_rml_tag_t tag, void *cbdata)
+                                void *cbdata)
 {
-    orte_grpcomm_signature_t *sig;
-    pmix_server_trk_t *trk;
+    pmix_server_trk_t *trk = (pmix_server_trk_t*)cbdata;
     pmix_server_local_t *lcl;
     pmix_server_peer_t *peer;
     opal_buffer_t *reply;
-    int32_t cnt;
-    int rc;
 
     opal_output_verbose(2, pmix_server_output,
                         "%s pmix:server:release coll release recvd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* unpack the signature */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-
-    /* check for the tracker and create it if not found */
-    if (NULL == (trk = get_trk((opal_identifier_t*)sender, sig))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        OBJ_RELEASE(sig);
-        return;
-    }
-    OBJ_RELEASE(sig);
 
     /* for each local process, send the data */
     reply = OBJ_NEW(opal_buffer_t);

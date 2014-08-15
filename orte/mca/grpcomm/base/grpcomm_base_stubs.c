@@ -58,6 +58,8 @@ typedef struct {
     opal_event_t ev;
     orte_grpcomm_signature_t *sig;
     opal_buffer_t *buf;
+    orte_grpcomm_cbfunc_t cbfunc;
+    void *cbdata;
 } orte_grpcomm_caddy_t;
 static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                           opal_object_t,
@@ -126,7 +128,9 @@ static void allgather_stub(int fd, short args, void *cbdata)
     /* retrieve an existing tracker, create it if not
      * already found. The allgather module is responsible
      * for releasing it upon completion of the collective */
-    coll = orte_grpcomm_base_get_tracker(cd->sig);
+    coll = orte_grpcomm_base_get_tracker(cd->sig, true);
+    coll->cbfunc = cd->cbfunc;
+    coll->cbdata = cd->cbdata;
 
     /* cycle thru the actives and see who can process it */
     OPAL_LIST_FOREACH(active, &orte_grpcomm_base.actives, orte_grpcomm_base_active_t) {
@@ -140,7 +144,9 @@ static void allgather_stub(int fd, short args, void *cbdata)
 }
 
 int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
-                               opal_buffer_t *buf)
+                               opal_buffer_t *buf,
+                               orte_grpcomm_cbfunc_t cbfunc,
+                               void *cbdata)
 {
     orte_grpcomm_caddy_t *cd;
 
@@ -156,13 +162,15 @@ int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
     OBJ_RETAIN(buf);
     cd->sig = sig;
     cd->buf = buf;
+    cd->cbfunc = cbfunc;
+    cd->cbdata = cbdata;
     opal_event_set(orte_event_base, &cd->ev, -1, OPAL_EV_WRITE, allgather_stub, cd);
     opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);
     opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);
     return ORTE_SUCCESS;
 }
 
-orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig)
+orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig, bool create)
 {
     orte_grpcomm_coll_t *coll;
     int rc;
@@ -188,6 +196,9 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
     }
     /* if we get here, then this is a new collective - so create
      * the tracker for it */
+    if (!create) {
+        return NULL;
+    }
     coll = OBJ_NEW(orte_grpcomm_coll_t);
     OBJ_RETAIN(sig);
     coll->sig = sig;

@@ -122,6 +122,7 @@ static int native_init(void)
         return OPAL_SUCCESS;
     }
 
+    opal_output(0, "PMIX INIT");
     /* if we don't have a path to the daemon rendezvous point,
      * then we need to return an error UNLESS we have been directed
      * to allow init prior to having an identified server. This is
@@ -137,6 +138,7 @@ static int native_init(void)
         }
         if (NULL == (srv = getenv("PMIX_SERVER_URI"))) {
             /* error out - should have been here, but isn't */
+            opal_output(0, "DID NOT FIND URI");
             return OPAL_ERROR;
         }
         mca_pmix_native_component.uri = strdup(srv);
@@ -145,7 +147,8 @@ static int native_init(void)
 
     /* if we have it, setup the path to the daemon rendezvous point */
     if (NULL != mca_pmix_native_component.uri) {
-        /* construct the component fields */
+     opal_output(0, "DEFINING CONNECTION");
+       /* construct the component fields */
         mca_pmix_native_component.cache_local = NULL;
         mca_pmix_native_component.cache_remote = NULL;
         mca_pmix_native_component.cache_global = NULL;

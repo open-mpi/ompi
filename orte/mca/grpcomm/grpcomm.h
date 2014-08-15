@@ -47,6 +47,10 @@
 
 BEGIN_C_DECLS
 
+/* define a callback function to be invoked upon
+ * collective completion */
+typedef void (*orte_grpcomm_cbfunc_t)(int status, opal_buffer_t *buf, void *cbdata);
+
 /* Define a collective signature so we don't need to
  * track global collective id's */
 typedef struct {
@@ -69,6 +73,10 @@ typedef struct {
     size_t ndmns;
     /* number reported in */
     size_t nreported;
+    /* callback function */
+    orte_grpcomm_cbfunc_t cbfunc;
+    /* user-provided callback data */
+    void *cbdata;
 } orte_grpcomm_coll_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_coll_t);
 
@@ -76,7 +84,6 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_coll_t);
  * Component functions - all MUST be provided!
  */
 
-typedef void (*orte_grpcomm_cbfunc_t)(opal_buffer_t *buf, void *cbdata);
 
 /* initialize the selected module */
 typedef int (*orte_grpcomm_base_module_init_fn_t)(void);
@@ -97,8 +104,8 @@ typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_vpid_t *vpids,
  * orte_grpcomm_coll_t object. A NULL pointer indicates that all daemons
  * are participating.
  *
- * NOTE: this is a non-blocking call. An xcast will be sent to
- * all participating daemons upon completion. */
+ * NOTE: this is a non-blocking call. The callback function cached in
+ * the orte_grpcomm_coll_t will be invoked upon completion. */
 typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_grpcomm_coll_t *coll,
                                                        opal_buffer_t *buf);
 
@@ -132,10 +139,12 @@ typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_grpcomm_signature_t *sig,
  * to a name that includes ORTE_VPID_WILDCARD indicates that all procs
  * in the specified jobid are contributing.
  *
- * NOTE: this is a non-blocking call. An xcast will be sent to
- * all participating daemons upon completion. */
+ * NOTE: this is a non-blocking call. The provided callback function
+ * will be invoked upon completion. */
 typedef int (*orte_grpcomm_base_API_allgather_fn_t)(orte_grpcomm_signature_t *sig,
-                                                    opal_buffer_t *buf);
+                                                    opal_buffer_t *buf,
+                                                    orte_grpcomm_cbfunc_t cbfunc,
+                                                    void *cbdata);
 typedef struct {
     /* collective operations */
     orte_grpcomm_base_API_xcast_fn_t             xcast;
