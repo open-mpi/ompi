@@ -10,7 +10,7 @@ CONTINUED DEVELOPER SUPPORT.
 ***************************************************************************
 
 This version of Open MPI provides support for Java-based
-MPI applications. 
+MPI applications.
 
 The rest of this document provides step-by-step instructions on
 building OMPI with Java bindings, and compiling and running
@@ -33,7 +33,7 @@ for Open MPI Java bindings, but they were later totally rewritten.
 
 ============================================================================
 
-Building Java Bindings 
+Building Java Bindings
 
 If this software was obtained as a developer-level
 checkout as opposed to a tarball, you will need to start your build by
@@ -124,28 +124,28 @@ be invoked by all MPI Java applications. The following example illustrates
 these concepts:
 
 import mpi.*;
- 
+
 class ComputePi {
 
     public static void main(String args[]) throws MPIException {
 
         MPI.Init(args);
-    
+
         int rank = MPI.COMM_WORLD.getRank(),
             size = MPI.COMM_WORLD.getSize(),
             nint = 100; // Intervals.
         double h = 1.0/(double)nint, sum = 0.0;
-    
+
         for(int i=rank+1; i<=nint; i+=size) {
             double x = h * ((double)i - 0.5);
             sum += (4.0 / (1.0 + x * x));
         }
-    
+
         double sBuf[] = { h * sum },
                rBuf[] = new double[1];
-    
+
         MPI.COMM_WORLD.reduce(sBuf, rBuf, 1, MPI.DOUBLE, MPI.SUM, 0);
-    
+
         if(rank == 0) System.out.println("PI: " + rBuf[0]);
         MPI.Finalize();
     }
