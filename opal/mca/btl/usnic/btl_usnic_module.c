@@ -1123,9 +1123,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
         module->device_async_event_active = false;
     }
 
-    if (mca_btl_usnic_component.connectivity_enabled) {
-        opal_btl_usnic_connectivity_unlisten(module);
-    }
+    opal_btl_usnic_connectivity_unlisten(module);
 
     opal_btl_usnic_channel_finalize(module,
             &module->mod_channels[USNIC_DATA_CHANNEL]);
