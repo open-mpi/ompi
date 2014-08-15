@@ -56,6 +56,8 @@ included in the vX.Y.Z section and be denoted as:
 1.8.2
 -----
 
+- Add missing Fortran bindings for MPI_WIN_LOCK_ALL,
+  MPI_WIN_UNLOCK_ALL, and MPI_WIN_SYNC.
 - Fix cascading/over-quoting in some cases with the rsh/ssh-based
   launcher.  Thanks to multiple users for raising the issue.
 - Properly add support for gfortran 4.9 ignore TKR pragma (it was
