@@ -172,6 +172,9 @@ int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
 				 ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    
+    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_read (fh,
@@ -179,6 +182,12 @@ int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
 				    count,
 				    datatype,
 				    status);
+
+    // An explicit offset file operation is not suppsed to modify
+    // the internal file pointer. So reset the pointer
+    // to the previous value
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+
     return ret;
 }
 
@@ -298,6 +307,9 @@ int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 				  ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    
+    mca_io_ompio_file_get_position (fh->f_fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
     ret = ompio_io_ompio_file_iread (fh,
@@ -305,6 +317,17 @@ int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 				    count,
 				    datatype,
 				    request);
+
+    /* An explicit offset file operation is not suppsed to modify
+    ** the internal file pointer. So reset the pointer
+    ** to the previous value
+    ** It is OK to reset the position already here, althgouth 
+    ** the operation might still be pending/ongoing, since
+    ** the entire array of <offset, length, memaddress> have 
+    ** already been constructed in the file_iread operation
+    */
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+
     return ret;
 }
 
