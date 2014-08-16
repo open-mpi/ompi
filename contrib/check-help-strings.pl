@@ -23,16 +23,16 @@ my $VERBOSE = 0;
 my $HELP = 0;
 
 GetOptions(
-    "help" => \$HELP,
-    "verbose" => \$VERBOSE,
+    "help|h" => \$HELP,
+    "verbose|v" => \$VERBOSE,
 ) or die "unable to parse options, aborted";
 
 if ($HELP) {
     print <<EOF;
 %0 [options]
 
---help | -h          This help message
---verbose | -v       Be verbose in output
+--help | h          This help message
+--verbose | v       Be verbose in output
 EOF
     exit(0);
 }
@@ -51,12 +51,28 @@ sub DebugDump {
     print $s;
 }
 
+sub isTopDir {
+    my ($d) = @_;
+
+    # trunk
+    if (-f "$d/Makefile.ompi-rules") {
+        return 1;
+    }
+
+    # v1.8
+    if (-f "$d/Makefile.man-page-rules") {
+        return 1;
+    }
+
+    return 0;
+}
+
 ###########################################################################
 
 # Find the top-level OMPI source tree dir
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/Makefile.ompi-rules") {
+while (!isTopDir($top)) {
     chdir("..");
     $top = cwd();
     die "Can't find top-level Open MPI directory"
