@@ -60,3 +60,9 @@ The process that invoked fork was:
 If you are *absolutely sure* that your application will successfully
 and correctly survive a call to fork(), you may disable this warning
 by setting the mpi_warn_on_fork MCA parameter to 0.
+#
+[mpi-params:leave-pinned-and-pipeline-selected]
+WARNING: Cannot set both the MCA parameters opal_leave_pinned (a.k.a.,
+mpi_leave_pinned) and opal_leave_pinned_pipeline (a.k.a.,
+mpi_leave_pinned_pipeline) to "true".  Defaulting to mpi_leave_pinned
+ONLY.

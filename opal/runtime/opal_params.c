@@ -219,7 +219,7 @@ int opal_register_params(void)
 
     if (opal_leave_pinned > 0 && opal_leave_pinned_pipeline) {
         opal_leave_pinned_pipeline = 0;
-        opal_show_help("help-mpi-runtime.txt",
+        opal_show_help("help-opal-runtime.txt",
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
