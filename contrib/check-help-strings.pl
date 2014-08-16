@@ -117,7 +117,11 @@ sub match_files {
 
 # Find all source and help files
 print "Searching for source and help files...\n";
-print "Starting in: $start\n";
+my $startrel = $start;
+if ($top ne $start) {
+    $startrel =~ s/^$top//;
+    $startrel =~ s/^\///;
+}
 find(\&match_files, ".");
 
 ###########################################################################
@@ -126,7 +130,7 @@ find(\&match_files, ".");
 my $help_topics;
 my $help_file_refs;
 
-print "Indexing help files...\n";
+print "Indexing help files (from entire source tree)...\n";
 
 foreach my $info (@help_files) {
     verbose("Indexing help: $info->{full}\n");
@@ -175,7 +179,11 @@ foreach my $info (@help_files) {
 
 # Search source files for calls to opal_show_help and (o)rte_show_help
 
-print "Searching source files...\n";
+if ($start eq $top) {
+    print "Searching source files (from entire source tree)...\n";
+} else {
+    print "Searching source files (under $startrel)...\n";
+}
 
 # Helper: for a given filename/topic, see if it exists
 sub check_file_topic {
@@ -234,6 +242,10 @@ sub check_name {
 # Check to ensure helpfile/topic combos exist
 foreach my $info (@source_files) {
     verbose("Searching source: $info->{full}\n");
+
+    # If this source file is not in the target area, then skip it
+    next
+        if ($info->{relative} != /^$startrel/);
 
     my $src;
     open(FH, $info->{full}) || die "Can't open $info->{full}";
