@@ -384,8 +384,10 @@ int orte_plm_base_fork_hnp(void)
         orted_uri[strlen(orted_uri)-1] = '\0';
         opal_output(0, "GOT %s BACK", orted_uri);
 
-	/* parse the sysinfo from the returned info */
-        if (NULL == (param = strchr(orted_uri, '['))) {
+	/* parse the sysinfo from the returned info - must
+         * start from the end of the string as the uri itself
+         * can contain brackets */
+        if (NULL == (param = strrchr(orted_uri, '['))) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             free(orted_uri);
             return ORTE_ERR_COMM_FAILURE;

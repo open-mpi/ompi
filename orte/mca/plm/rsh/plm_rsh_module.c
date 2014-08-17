@@ -1057,7 +1057,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * doing this.
      */
     app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, 0);
-    orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING);
+    if (!orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING)) {
+        /* check to see if enable-orterun-prefix-by-default was given - if
+         * this is being done by a singleton, then orterun will not be there
+         * to put the prefix in the app. So make sure we check to find it */
+        if ((bool)ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT) {
+            prefix_dir = strdup(opal_install_dirs.prefix);
+        }
+    }
     /* we also need at least one node name so we can check what shell is
      * being used, if we have to
      */

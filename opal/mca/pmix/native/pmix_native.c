@@ -122,6 +122,10 @@ static int native_init(void)
         return OPAL_SUCCESS;
     }
 
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:native init called",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
     /* if we don't have a path to the daemon rendezvous point,
      * then we need to return an error UNLESS we have been directed
      * to allow init prior to having an identified server. This is
@@ -145,7 +149,11 @@ static int native_init(void)
 
     /* if we have it, setup the path to the daemon rendezvous point */
     if (NULL != mca_pmix_native_component.uri) {
-       /* construct the component fields */
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native constructing component fields with server %s",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                            mca_pmix_native_component.uri);
+        /* construct the component fields */
         mca_pmix_native_component.cache_local = NULL;
         mca_pmix_native_component.cache_remote = NULL;
         mca_pmix_native_component.cache_global = NULL;

@@ -176,7 +176,8 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
     do {                                                                \
         pmix_usock_sr_t *ms;                                            \
         opal_output_verbose(5, opal_pmix_base_framework.framework_output, \
-                            "[%s:%d] post send to server",              \
+                            "%s [%s:%d] post send to server",           \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
         ms = OBJ_NEW(pmix_usock_sr_t);                                  \
         ms->bfr = (b);                                                  \
@@ -191,7 +192,8 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
 #define PMIX_ACTIVATE_POST_MSG(ms)                                      \
     do {                                                                \
         opal_output_verbose(5, opal_pmix_base_framework.framework_output, \
-                            "[%s:%d] post msg",                         \
+                            "%s [%s:%d] post msg",                      \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
         opal_event_set(mca_pmix_native_component.evbase, &ms->ev, -1,   \
                        OPAL_EV_WRITE,                                   \

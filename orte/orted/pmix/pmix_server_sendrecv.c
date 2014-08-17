@@ -1299,8 +1299,8 @@ int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
     }
 
     if (hdr.type != PMIX_USOCK_IDENT) {
-        opal_output(0, "tcp_peer_recv_connect_ack: invalid header type: %d\n", 
-                    hdr.type);
+        opal_output(0, "%s tcp_peer_recv_connect_ack: invalid header type: %d\n", 
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr.type);
         if (NULL != peer) {
             peer->state = PMIX_SERVER_FAILED;
         }

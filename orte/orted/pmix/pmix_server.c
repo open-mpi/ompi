@@ -920,7 +920,8 @@ void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg)
     int nodelay,flags;
 
     if ((flags = fcntl(peer->sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "usock_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",
+        opal_output(0, "%s usock_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }
@@ -928,7 +929,8 @@ void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg)
 #if defined(USOCK_NODELAY)
     optlen = sizeof(nodelay);
     if (getsockopt(peer->sd, IPPROTO_USOCK, USOCK_NODELAY, (char *)&nodelay, &optlen) < 0) {
-        opal_output(0, "usock_peer_dump: USOCK_NODELAY option: %s (%d)\n", 
+        opal_output(0, "%s usock_peer_dump: USOCK_NODELAY option: %s (%d)\n", 
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }

@@ -87,7 +87,8 @@ static int send_bytes(pmix_usock_send_t *msg)
                 return OPAL_ERR_WOULD_BLOCK;
             }
             /* we hit an error and cannot progress this message */
-            opal_output(0, "pmix_usock_msg_send_bytes: write failed: %s (%d) [sd = %d]", 
+            opal_output(0, "%s pmix_usock_msg_send_bytes: write failed: %s (%d) [sd = %d]",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
                         strerror(opal_socket_errno),
                         opal_socket_errno,
                         mca_pmix_native_component.sd);
@@ -111,7 +112,8 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
     int rc;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "usock:send_handler called to send to server");
+                        "%s usock:send_handler called to send to server",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     switch (mca_pmix_native_component.state) {
     case PMIX_USOCK_CONNECTING:
@@ -130,7 +132,8 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
         break;
     case PMIX_USOCK_CONNECTED:
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock:send_handler SENDING TO SERVER");
+                            "%s usock:send_handler SENDING TO SERVER",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         if (NULL != msg) {
             if (!msg->hdr_sent) {
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
@@ -154,7 +157,8 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                     return;
                 } else {
                     // report the error
-                    opal_output(0, "pmix_usock_peer_send_handler: unable to send message ON SOCKET %d",
+                    opal_output(0, "%s pmix_usock_peer_send_handler: unable to send message ON SOCKET %d",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 mca_pmix_native_component.sd);
                     opal_event_del(&mca_pmix_native_component.send_event);
                     mca_pmix_native_component.send_ev_active = false;
@@ -176,7 +180,8 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                     return;
                 } else {
                     // report the error
-                    opal_output(0, "pmix_usock_peer_send_handler: unable to send message ON SOCKET %d",
+                    opal_output(0, "%s pmix_usock_peer_send_handler: unable to send message ON SOCKET %d",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 mca_pmix_native_component.sd);
                     opal_event_del(&mca_pmix_native_component.send_event);
                     mca_pmix_native_component.send_ev_active = false;
@@ -206,7 +211,8 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
         break;
 
     default:
-        opal_output(0, "pmix_usock_peer_send_handler: invalid connection state (%d) on socket %d",
+        opal_output(0, "%s pmix_usock_peer_send_handler: invalid connection state (%d) on socket %d",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     mca_pmix_native_component.state, mca_pmix_native_component.sd);
         if (mca_pmix_native_component.send_ev_active) {
             opal_event_del(&mca_pmix_native_component.send_event);
@@ -244,7 +250,8 @@ static int read_bytes(pmix_usock_recv_t* recv)
              * to abort this message
              */
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "pmix_usock_msg_recv: readv failed: %s (%d)", 
+                                "%s pmix_usock_msg_recv: readv failed: %s (%d)",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
             return OPAL_ERR_COMM_FAILURE;
@@ -253,7 +260,8 @@ static int read_bytes(pmix_usock_recv_t* recv)
              * and let the caller know
              */
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "pmix_usock_msg_recv: peer closed connection");
+                                "%s pmix_usock_msg_recv: peer closed connection",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             /* stop all events */
             if (mca_pmix_native_component.recv_ev_active) {
                 opal_event_del(&mca_pmix_native_component.recv_event);
@@ -293,13 +301,15 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
     int rc;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "usock:recv:handler called");
+                        "%s usock:recv:handler called",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     switch (mca_pmix_native_component.state) {
     case PMIX_USOCK_CONNECT_ACK:
         if (OPAL_SUCCESS == (rc = usock_recv_connect_ack())) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "usock:recv:handler starting send/recv events");
+                                "%s usock:recv:handler starting send/recv events",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             /* we connected! Start the send/recv events */
             if (!mca_pmix_native_component.recv_ev_active) {
                 opal_event_add(&mca_pmix_native_component.recv_event, 0);
@@ -321,7 +331,8 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             mca_pmix_native_component.state = PMIX_USOCK_CONNECTED;
         } else {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "UNABLE TO COMPLETE CONNECT ACK WITH SERVER");
+                                "%s UNABLE TO COMPLETE CONNECT ACK WITH SERVER",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             opal_event_del(&mca_pmix_native_component.recv_event);
             mca_pmix_native_component.recv_ev_active = false;
             return;
@@ -329,14 +340,17 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
         break;
     case PMIX_USOCK_CONNECTED:
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock:recv:handler CONNECTED");
+                            "%s usock:recv:handler CONNECTED",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         /* allocate a new message and setup for recv */
         if (NULL == mca_pmix_native_component.recv_msg) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "usock:recv:handler allocate new recv msg");
+                                "%s usock:recv:handler allocate new recv msg",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             mca_pmix_native_component.recv_msg = OBJ_NEW(pmix_usock_recv_t);
             if (NULL == mca_pmix_native_component.recv_msg) {
-                opal_output(0, "usock_recv_handler: unable to allocate recv message\n");
+                opal_output(0, "%s usock_recv_handler: unable to allocate recv message\n",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 return;
             }
             /* start by reading the header */
@@ -353,14 +367,16 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                 /* if this is a zero-byte message, then we are done */
                 if (0 == mca_pmix_native_component.recv_msg->hdr.nbytes) {
                     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                        "RECVD ZERO-BYTE MESSAGE FROM SERVER for tag %d",
+                                        "%s RECVD ZERO-BYTE MESSAGE FROM SERVER for tag %d",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                         mca_pmix_native_component.recv_msg->hdr.tag);
                     mca_pmix_native_component.recv_msg->data = NULL;  // make sure
                     mca_pmix_native_component.recv_msg->rdptr = NULL;
                     mca_pmix_native_component.recv_msg->rdbytes = 0;
                 } else {
                     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                        "usock:recv:handler allocate data region of size %lu",
+                                        "%s usock:recv:handler allocate data region of size %lu",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                         (unsigned long)mca_pmix_native_component.recv_msg->hdr.nbytes);
                     /* allocate the data region */
                     mca_pmix_native_component.recv_msg->data = (char*)malloc(mca_pmix_native_component.recv_msg->hdr.nbytes);
@@ -376,7 +392,8 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             } else {
                 /* close the connection */
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                    "usock:recv:handler error reading bytes - closing connection");
+                                    "%s usock:recv:handler error reading bytes - closing connection",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
                 return;
             }
@@ -390,7 +407,8 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             if (OPAL_SUCCESS == (rc = read_bytes(mca_pmix_native_component.recv_msg))) {
                 /* we recvd all of the message */
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                    "RECVD COMPLETE MESSAGE FROM SERVER OF %d BYTES FOR TAG %d",
+                                    "%s RECVD COMPLETE MESSAGE FROM SERVER OF %d BYTES FOR TAG %d",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                     (int)mca_pmix_native_component.recv_msg->hdr.nbytes,
                                     mca_pmix_native_component.recv_msg->hdr.tag);
                 /* post it for delivery */
@@ -403,7 +421,8 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             return;
         } else {
             // report the error
-            opal_output(0, "usock_peer_recv_handler: unable to recv message");
+            opal_output(0, "%s usock_peer_recv_handler: unable to recv message",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             /* turn off the recv event */
             opal_event_del(&mca_pmix_native_component.recv_event);
             mca_pmix_native_component.recv_ev_active = false;
@@ -412,7 +431,8 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
         }
         break;
     default: 
-        opal_output(0, "usock_peer_recv_handler: invalid socket state(%d)", 
+        opal_output(0, "%s usock_peer_recv_handler: invalid socket state(%d)",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
                     mca_pmix_native_component.state);
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
         break;
@@ -428,7 +448,8 @@ static bool usock_recv_blocking(char *data, size_t size)
     size_t cnt = 0;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "waiting for connect ack from server");
+                        "%s waiting for connect ack from server",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     while (cnt < size) {
         int retval = recv(mca_pmix_native_component.sd, (char *)data+cnt, size-cnt, 0);
@@ -436,7 +457,8 @@ static bool usock_recv_blocking(char *data, size_t size)
         /* remote closed connection */
         if (retval == 0) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "usock_recv_blocking: server closed connection: state %d",
+                                "%s usock_recv_blocking: server closed connection: state %d",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 mca_pmix_native_component.state);
             mca_pmix_native_component.state = PMIX_USOCK_CLOSED;
             CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -464,13 +486,15 @@ static bool usock_recv_blocking(char *data, size_t size)
                        recv_connect_ack, who will try to establish the
                        connection again */
                     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                        "connect ack received error %s from server",
+                                        "%s connect ack received error %s from server",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                         strerror(opal_socket_errno));
                     return false;
                 } else {
                     opal_output(0, 
-                                "usock_recv_blocking: "
+                                "%s usock_recv_blocking: "
                                 "recv() failed for server: %s (%d)\n",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
                     mca_pmix_native_component.state = PMIX_USOCK_FAILED;
@@ -484,7 +508,8 @@ static bool usock_recv_blocking(char *data, size_t size)
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "connect ack received from server");
+                        "%s connect ack received from server",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return true;
 }
 
@@ -503,7 +528,8 @@ static int usock_recv_connect_ack(void)
     pmix_usock_hdr_t hdr;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "RECV CONNECT ACK FROM SERVER ON SOCKET %d",
+                        "%s RECV CONNECT ACK FROM SERVER ON SOCKET %d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                         mca_pmix_native_component.sd);
 
     /* ensure all is zero'd */
@@ -515,7 +541,8 @@ static int usock_recv_connect_ack(void)
          */
         if (mca_pmix_native_component.state != PMIX_USOCK_CONNECT_ACK) {
             /* handshake broke down - abort this connection */
-            opal_output(0, "RECV CONNECT BAD HANDSHAKE FROM SERVER ON SOCKET %d",
+            opal_output(0, "%s RECV CONNECT BAD HANDSHAKE FROM SERVER ON SOCKET %d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                         mca_pmix_native_component.sd);
             mca_pmix_native_component.state = PMIX_USOCK_FAILED;
             CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -524,18 +551,21 @@ static int usock_recv_connect_ack(void)
     } else {
         /* unable to complete the recv */
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "unable to complete recv of connect-ack from server ON SOCKET %d",
+                            "%s unable to complete recv of connect-ack from server ON SOCKET %d",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                             mca_pmix_native_component.sd);
         return OPAL_ERR_UNREACH;
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "connect-ack recvd from server");
+                        "%s connect-ack recvd from server",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* compare the servers name to the expected value */
     if (hdr.id != mca_pmix_native_component.server) {
         opal_output(0, "usock_peer_recv_connect_ack: "
-                    "received unexpected process identifier %"PRIu64" from server: expected %"PRIu64"",
+                    "%s received unexpected process identifier %"PRIu64" from server: expected %"PRIu64"",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     hdr.id, mca_pmix_native_component.server);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -543,7 +573,8 @@ static int usock_recv_connect_ack(void)
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "connect-ack header from server is okay");
+                        "%s connect-ack header from server is okay",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* get the authentication and version payload */
     if (NULL == (msg = (char*)malloc(hdr.nbytes))) {
@@ -554,7 +585,8 @@ static int usock_recv_connect_ack(void)
     if (!usock_recv_blocking(msg, hdr.nbytes)) {
         /* unable to complete the recv */
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "unable to complete recv of connect-ack from server ON SOCKET %d",
+                            "%s unable to complete recv of connect-ack from server ON SOCKET %d",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                             mca_pmix_native_component.sd);
         free(msg);
         return OPAL_ERR_UNREACH;
@@ -564,7 +596,8 @@ static int usock_recv_connect_ack(void)
     version = (char*)(msg);
     if (0 != strcmp(version, opal_version_string)) {
         opal_output(0, "usock_peer_recv_connect_ack: "
-                    "received different version from server: %s instead of %s",
+                    "%s received different version from server: %s instead of %s",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     version, opal_version_string);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -573,7 +606,8 @@ static int usock_recv_connect_ack(void)
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "connect-ack version from server matches ours");
+                        "%s connect-ack version from server matches ours",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check security token */
     creds.credential = (char*)(msg + strlen(version) + 1);
@@ -584,7 +618,8 @@ static int usock_recv_connect_ack(void)
     free(msg);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "connect-ack from server authenticated");
+                        "%s connect-ack from server authenticated",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* connected */
     mca_pmix_native_component.state = PMIX_USOCK_CONNECTED;
@@ -615,12 +650,14 @@ static void usock_complete_connect(void)
     opal_socklen_t so_length = sizeof(so_error);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "usock:complete_connect called for server on socket %d",
+                        "%s usock:complete_connect called for server on socket %d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                         mca_pmix_native_component.sd);
 
     /* check connect completion status */
     if (getsockopt(mca_pmix_native_component.sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        opal_output(0, "usock_peer_complete_connect: getsockopt() to server failed: %s (%d)\n", 
+        opal_output(0, "%s usock_peer_complete_connect: getsockopt() to server failed: %s (%d)\n",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
@@ -630,11 +667,13 @@ static void usock_complete_connect(void)
 
     if (so_error == EINPROGRESS) {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock:send:handler still in progress");
+                            "%s usock:send:handler still in progress",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         return;
     } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock_peer_complete_connect: connection to server failed: %s (%d)",
+                            "%s usock_peer_complete_connect: connection to server failed: %s (%d)",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                             strerror(so_error),
                             so_error);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
@@ -645,8 +684,9 @@ static void usock_complete_connect(void)
            at this point, and if an error did occur a message has already been
            printed for the user */
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock_peer_complete_connect: "
+                            "%s usock_peer_complete_connect: "
                             "connection to server failed with error %d",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                             so_error);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -654,19 +694,22 @@ static void usock_complete_connect(void)
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "usock_peer_complete_connect: sending ack to server");
+                        "%s usock_peer_complete_connect: sending ack to server",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     if (usock_send_connect_ack() == OPAL_SUCCESS) {
         mca_pmix_native_component.state = PMIX_USOCK_CONNECT_ACK;
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "usock_peer_complete_connect: setting read event on connection to server");
+                            "%s usock_peer_complete_connect: setting read event on connection to server",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         
         if (!mca_pmix_native_component.recv_ev_active) {
             opal_event_add(&mca_pmix_native_component.recv_event, 0);
             mca_pmix_native_component.recv_ev_active = true;
         }
     } else {
-        opal_output(0, "usock_complete_connect: unable to send connect ack to server");
+        opal_output(0, "%s usock_complete_connect: unable to send connect ack to server",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
     }
