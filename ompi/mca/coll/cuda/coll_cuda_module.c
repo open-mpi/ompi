@@ -148,7 +148,7 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
     if (good) {
         return OMPI_SUCCESS;
     } else {
-        orte_show_help("help-coll-cuda.txt", "missing collective", true,
+        orte_show_help("help-mpi-coll-cuda.txt", "missing collective", true,
                        orte_process_info.nodename, 
                        mca_coll_cuda_component.priority, msg);
         return OMPI_ERR_NOT_FOUND;
