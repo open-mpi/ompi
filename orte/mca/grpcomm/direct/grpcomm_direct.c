@@ -380,7 +380,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                              "%s grpcomm:direct:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&nm->name)));
-        OBJ_RETAIN(relay);
+        OBJ_RETAIN(rly);
         /* check the state of the recipient - no point
          * sending to someone not alive
          */
@@ -398,23 +398,23 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                                  "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&nm->name)));
-            OBJ_RELEASE(relay);
+            OBJ_RELEASE(rly);
             continue;
         }
         if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST,
                                                            orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(relay);
+            OBJ_RELEASE(rly);
             continue;
         }
     }
-    OBJ_RELEASE(relay);  // maintain accounting
+    OBJ_RELEASE(rly);  // retain accounting
 
  CLEANUP:
     /* cleanup */
     OBJ_DESTRUCT(&coll);
 
-    /* now send the rly buffer to myself for processing */
+    /* now send the relay buffer to myself for processing */
     if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay, tag,
                                                        orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
