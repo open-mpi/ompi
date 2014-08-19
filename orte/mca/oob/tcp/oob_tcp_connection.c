@@ -801,6 +801,14 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
     /* release the socket */
     close(peer->sd);
 
+    /* if we were CONNECTING, then we need to mark the address as
+     * failed and cycle back to try the next address */
+    if (MCA_OOB_TCP_CONNECTING == peer->state) {
+        peer->active_addr->state = MCA_OOB_TCP_FAILED;
+        ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
+        return;
+    }
+
     /* inform the component-level that we have lost a connection so
      * it can decide what to do about it.
      */
