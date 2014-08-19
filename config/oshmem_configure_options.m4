@@ -4,6 +4,8 @@ dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
+dnl Copyright (c) 2014      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -105,9 +107,13 @@ AC_ARG_ENABLE(oshmem-profile,
                    [enable OSHMEM profiling (default: enabled)]))
 if test "$enable_oshmem" != "no" -a "$enable_oshmem_profile" != "no"; then
     _OPAL_C_WEAK_SYMBOLS([
-        AC_MSG_RESULT([yes])
-        oshmem_profiling_support=1
-        ], [
+        _OPAL_C_MACRO_WEAK_SYMBOLS([
+            AC_MSG_RESULT([yes])
+            oshmem_profiling_support=1],[
+            AC_MSG_RESULT([no])
+            AC_MSG_WARN([Macro defined weak symbols not supported by compiler.
+                         Profiling will be disabled.])
+            oshmem_profiling_support=0])], [
         AC_MSG_RESULT([no])
         AC_MSG_WARN([Weak symbols not supported by compiler.
                      Profiling will be disabled.])
