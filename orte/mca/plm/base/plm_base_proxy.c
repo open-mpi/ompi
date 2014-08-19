@@ -379,10 +379,6 @@ int orte_plm_base_fork_hnp(void)
             free(orted_uri);
             return ORTE_ERR_HNP_COULD_NOT_START;
         }
-        
-        /* ensure it is null-terminated */
-        orted_uri[strlen(orted_uri)-1] = '\0';
-        opal_output(0, "GOT %s BACK", orted_uri);
 
 	/* parse the sysinfo from the returned info - must
          * start from the end of the string as the uri itself
@@ -437,13 +433,17 @@ int orte_plm_base_fork_hnp(void)
         /* push the pmix_uri into our environment - need to protect it */
         (void)asprintf(&pmix_uri, "PMIX_SERVER_URI=%s", cptr);
         putenv(pmix_uri);
-        opal_output(0, "SET SERVER %s", pmix_uri);
         /* now re-init the pmix framework so we can connect when required */
         if (OPAL_SUCCESS != (rc = opal_pmix.init())) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        opal_output(0, "FINISHED PROXY");
+        /* now call fence to push our own modex data into the
+         * newly-launched HNP in case someone else needs it */
+        if (OPAL_SUCCESS != (rc = opal_pmix.fence(NULL, 0))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;

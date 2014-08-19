@@ -747,6 +747,11 @@ static void process_message(pmix_server_peer_t *peer)
         }
         /* is this proc one of mine? */
         memcpy((char*)&name, (char*)&idreq, sizeof(orte_process_name_t));
+        opal_output_verbose(2, pmix_server_output,
+                            "%s recvd GET FROM PROC %s FOR PROC %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT((orte_process_name_t*)&id),
+                            ORTE_NAME_PRINT(&name));
         if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
@@ -758,6 +763,10 @@ static void process_message(pmix_server_peer_t *peer)
             return;
         }
         if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
+            opal_output_verbose(2, pmix_server_output,
+                                "%s recvd GET PROC %s IS LOCAL",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&name));
             kvp = NULL;
             kvp2 = NULL;
             /* retrieve the local blob for that proc */
@@ -833,6 +842,11 @@ static void process_message(pmix_server_peer_t *peer)
             OBJ_DESTRUCT(&xfer);
             return;
         }
+
+        opal_output_verbose(2, pmix_server_output,
+                            "%s recvd GET PROC %s IS NON-LOCAL",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&name));
         OBJ_DESTRUCT(&xfer);  // done with this
         /* no - see if I already have it */
         OBJ_CONSTRUCT(&values, opal_list_t);
@@ -866,7 +880,7 @@ static void process_message(pmix_server_peer_t *peer)
             OBJ_DESTRUCT(&buf);
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
             OBJ_DESTRUCT(&xfer);
-           return;
+            return;
         }
         OPAL_LIST_DESTRUCT(&values);
         /* nope - who is hosting this proc */

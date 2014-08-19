@@ -12,7 +12,12 @@
 #include "opal/constants.h"
 #include "opal/types.h"
 
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
@@ -153,26 +158,16 @@ static int native_init(void)
                             "%s pmix:native constructing component fields with server %s",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                             mca_pmix_native_component.uri);
-        /* construct the component fields */
-        mca_pmix_native_component.cache_local = NULL;
-        mca_pmix_native_component.cache_remote = NULL;
-        mca_pmix_native_component.cache_global = NULL;
-        mca_pmix_native_component.sd = -1;
-        mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
-        mca_pmix_native_component.tag = 0;
-        OBJ_CONSTRUCT(&mca_pmix_native_component.send_queue, opal_list_t);
-        OBJ_CONSTRUCT(&mca_pmix_native_component.posted_recvs, opal_list_t);
-        mca_pmix_native_component.send_msg = NULL;
-        mca_pmix_native_component.recv_msg = NULL;
-        mca_pmix_native_component.send_ev_active = false;
-        mca_pmix_native_component.recv_ev_active = false;
-        mca_pmix_native_component.timer_ev_active = false;
 
         memset(&mca_pmix_native_component.address, 0, sizeof(struct sockaddr_un));
         mca_pmix_native_component.address.sun_family = AF_UNIX;
         uri = opal_argv_split(mca_pmix_native_component.uri, ':');
         if (2 != opal_argv_count(uri)) {
             return OPAL_ERROR;
+        }
+        /* if the rendezvous file doesn't exist, that's an error */
+        if (0 != access(uri[1], R_OK)) {
+            return OPAL_ERR_NOT_FOUND;
         }
         mca_pmix_native_component.server = strtoul(uri[0], NULL, 10);
         snprintf(mca_pmix_native_component.address.sun_path,
@@ -250,8 +245,6 @@ static int native_fini(void)
     if (0 <= mca_pmix_native_component.sd) {
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
     }
-    OPAL_LIST_DESTRUCT(&mca_pmix_native_component.send_queue);
-    OPAL_LIST_DESTRUCT(&mca_pmix_native_component.posted_recvs);
 
     return OPAL_SUCCESS;
 }

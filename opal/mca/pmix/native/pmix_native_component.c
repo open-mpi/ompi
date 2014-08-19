@@ -75,7 +75,23 @@ opal_pmix_native_component_t mca_pmix_native_component = {
 
 static int pmix_native_open(void)
 {
+    /* construct the component fields */
     mca_pmix_native_component.uri = NULL;
+    mca_pmix_native_component.id = 0;
+    mca_pmix_native_component.cache_local = NULL;
+    mca_pmix_native_component.cache_remote = NULL;
+    mca_pmix_native_component.cache_global = NULL;
+    mca_pmix_native_component.sd = -1;
+    mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
+    mca_pmix_native_component.tag = 0;
+    OBJ_CONSTRUCT(&mca_pmix_native_component.send_queue, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_native_component.posted_recvs, opal_list_t);
+    mca_pmix_native_component.send_msg = NULL;
+    mca_pmix_native_component.recv_msg = NULL;
+    mca_pmix_native_component.send_ev_active = false;
+    mca_pmix_native_component.recv_ev_active = false;
+    mca_pmix_native_component.timer_ev_active = false;
+
     return OPAL_SUCCESS;
 }
 
@@ -84,6 +100,8 @@ static int pmix_native_close(void)
     if (NULL != mca_pmix_native_component.uri) {
         free(mca_pmix_native_component.uri);
     }
+    OPAL_LIST_DESTRUCT(&mca_pmix_native_component.send_queue);
+    OPAL_LIST_DESTRUCT(&mca_pmix_native_component.posted_recvs);
     return OPAL_SUCCESS;
 }
 
