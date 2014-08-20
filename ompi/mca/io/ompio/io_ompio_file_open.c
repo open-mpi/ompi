@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2013 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -32,7 +32,9 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 #include <unistd.h>
+#include <math.h>
 #include "io_ompio.h"
+#include "ompi/mca/topo/topo.h"
 
 int
 mca_io_ompio_file_open (ompi_communicator_t *comm,
@@ -50,6 +52,8 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         return  OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    
+
     ret = ompio_io_ompio_file_open(comm,filename,amode,info,&data->ompio_fh,use_sharedfp);
 
     if ( OMPI_SUCCESS == ret ) {
@@ -58,8 +62,10 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         data->ompio_fh.f_fh = fh;
     }
 
-    return ret;
 
+
+
+    return ret;
 }
 
 int
@@ -71,6 +77,7 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 {
     int ret = OMPI_SUCCESS;
     int remote_arch;
+    
 
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
@@ -96,6 +103,7 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     if ( ret != OMPI_SUCCESS )  {
 	goto fn_fail;
     }
+
 
     ompio_fh->f_fstype = NONE;
     ompio_fh->f_amode  = amode;
@@ -154,12 +162,24 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 	opal_output(1, "mca_sharedfp_base_file_select() failed\n");
 	goto fn_fail;
     }
-
+    
+     /*Determine topology information if set*/
+    if (ompio_fh->f_comm->c_flags & OMPI_COMM_CART){
+        ret = mca_io_ompio_cart_based_grouping(ompio_fh);
+	if(OMPI_SUCCESS != ret ){
+	    ret = MPI_ERR_FILE;
+	}
+    }
+    
     ret = ompio_fh->f_fs->fs_file_open (comm,
 					filename,
 					amode,
 					info,
 					ompio_fh);
+    
+
+    
+    
     if ( OMPI_SUCCESS != ret ) {
 	ret = MPI_ERR_FILE;
         goto fn_fail;
@@ -200,12 +220,14 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
         ompi_io_ompio_set_explicit_offset (ompio_fh, current_size);
     }
     
+
+
     return OMPI_SUCCESS;
 
- fn_fail:
-    /* no need to free resources here, since the destructor
-      is calling mca_io_ompio_file_close, which actually gets 
-      rid of all allocated memory items */
+    fn_fail:
+        /* no need to free resources here, since the destructor
+	 * is calling mca_io_ompio_file_close, which actually gets 
+	 *rid of all allocated memory items */
 
     return ret;
 }
@@ -280,6 +302,10 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_io_array = NULL;
     }
 
+    if (NULL != ompio_fh->f_init_procs_in_group) {
+        free (ompio_fh->f_init_procs_in_group);
+        ompio_fh->f_init_procs_in_group = NULL;
+    }
     if (NULL != ompio_fh->f_procs_in_group) {
         free (ompio_fh->f_procs_in_group);
         ompio_fh->f_procs_in_group = NULL;
@@ -300,6 +326,7 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_datarep = NULL;
     }
 
+  
     if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
         ompi_datatype_destroy (&ompio_fh->f_iov_type);
     }
@@ -315,6 +342,7 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompi_info_free (&ompio_fh->f_info);
     }
     */
+    
     
     return ret;
 }
@@ -725,4 +753,97 @@ mca_io_ompio_file_get_position_shared (ompi_file_t *fh,
 {
     int ret = MPI_ERR_OTHER;
     return ret;
+}
+
+int
+mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
+{
+    int k = 0;
+    int j = 0;
+    int n = 0;
+    int tmp_rank = 0;
+    int coords_tmp[2] = { 0 };
+
+    cart_topo_components cart_topo;
+    
+    ompio_fh->f_comm->c_topo->topo.cart.cartdim_get(ompio_fh->f_comm, &cart_topo.ndims);
+
+    cart_topo.dims = (int*)malloc (cart_topo.ndims * sizeof(int));
+    if (NULL == cart_topo.dims) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    cart_topo.periods = (int*)malloc (cart_topo.ndims * sizeof(int));
+    if (NULL == cart_topo.periods) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    cart_topo.coords = (int*)malloc (cart_topo.ndims * sizeof(int));
+    if (NULL == cart_topo.coords) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ompio_fh->f_comm->c_topo->topo.cart.cart_get(ompio_fh->f_comm,
+                                                 cart_topo.ndims,
+	                                         cart_topo.dims,
+	                                         cart_topo.periods,
+  	                                         cart_topo.coords);
+ 
+    ompio_fh->f_init_procs_per_group = cart_topo.dims[1]; //number of elements per row
+    ompio_fh->f_init_num_aggrs = cart_topo.dims[0];  //number of rows
+
+    //Make an initial list of potential aggregators
+    ompio_fh->f_init_aggr_list = (int *) malloc (ompio_fh->f_init_num_aggrs * sizeof(int));
+    if (NULL == ompio_fh->f_init_aggr_list) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+ 
+    for(k = 0; k < cart_topo.dims[0]; k++){
+        coords_tmp[0] = k;
+        coords_tmp[1] = k * cart_topo.dims[1];
+        ompio_fh->f_comm->c_topo->topo.cart.cart_rank (ompio_fh->f_comm,coords_tmp,&tmp_rank);
+        ompio_fh->f_init_aggr_list[k] = tmp_rank; //change this to use get rank
+    }
+
+    //Initial Grouping 
+    ompio_fh->f_init_procs_in_group = (int*)malloc (ompio_fh->f_init_procs_per_group * sizeof(int));
+    if (NULL == ompio_fh->f_init_procs_in_group) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+                                                                                                                                                              for (j=0 ; j< ompio_fh->f_size ; j++) {
+        ompio_fh->f_comm->c_topo->topo.cart.cart_coords (ompio_fh->f_comm, j, cart_topo.ndims, coords_tmp);
+	if (coords_tmp[0]  == cart_topo.coords[0]) {
+           if ((coords_tmp[1]/ompio_fh->f_init_procs_per_group) == 
+	       (cart_topo.coords[1]/ompio_fh->f_init_procs_per_group)) {
+	        
+	       ompio_fh->f_init_procs_in_group[n] = j;
+	       n++;
+	   }
+        }
+    }
+
+    /*print original group */
+    /*printf("RANK%d Initial distribution \n",ompio_fh->f_rank);
+    for(k = 0; k < ompio_fh->f_init_procs_per_group; k++){
+       printf("%d,", ompio_fh->f_init_procs_in_group[k]);
+    }
+    printf("\n");*/
+
+    if (NULL != cart_topo.dims) {
+       free (cart_topo.dims);
+       cart_topo.dims = NULL;
+    }
+    if (NULL != cart_topo.periods) {
+       free (cart_topo.periods);
+       cart_topo.periods = NULL;
+    }
+    if (NULL != cart_topo.coords) {
+       free (cart_topo.coords);
+       cart_topo.coords = NULL;
+    }
+						                                 
+    return OMPI_SUCCESS;
 }
