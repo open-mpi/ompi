@@ -181,6 +181,9 @@ Compiler Notes
   source directory path names that was resolved in 9.0-4 (9.0-3 is
   known to be broken in this regard).
 
+- IBM's xlf compilers: NO known good version that can build/link 
+  the MPI f08 bindings or build/link the OSHMEM Fortran bindings.
+
 - On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
   libtool misidentifies properties of f95/g95, leading to obscure
   compile-time failures if used to build Open MPI.  You can work
@@ -1288,7 +1291,9 @@ OSHMEM FUNCTIONALITY
   enabled).
 
 --disable-oshmem-fortran
-  Disable building only the Fortran OSHMEM bindings.
+  Disable building only the Fortran OSHMEM bindings. Please see 
+  the "Compiler Notes" section herein which contains further 
+  details on known issues with various Fortran compilers.
 
 MISCELLANEOUS FUNCTIONALITY
 
