@@ -113,9 +113,9 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     int rc;
     ompi_btl_usnic_proc_t *proc;
 
-    /* We should not get here for an endpoint that is on the ACK list,
-       so it should be safe to unconditionally destruct the ack_li */
-    OBJ_DESTRUCT(&(endpoint->endpoint_ack_li));
+    if (endpoint->endpoint_ack_needed) { 
+        ompi_btl_usnic_remove_from_endpoints_needing_ack(endpoint); 
+    } 
 
     /* Remove the endpoint from the all_endpoints list */
     ompi_btl_usnic_module_t *module = endpoint->endpoint_module;
