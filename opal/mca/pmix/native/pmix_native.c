@@ -532,6 +532,79 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
+static void fencenb_cbfunc(opal_buffer_t *buf, void *cbdata)
+{
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    opal_buffer_t *msg, *bptr;
+    int rc, ret;
+    opal_pmix_scope_t scope;
+    int32_t cnt;
+    opal_value_t *kp;
+    opal_identifier_t id;
+    size_t i;
+    uint32_t np;
+
+    /* get the number of contributors */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &np, &cnt, OPAL_UINT64))) {
+        OPAL_ERROR_LOG(rc);
+        return;
+    }
+
+    /* if data was returned, unpack and store it */
+    for (i=0; i < np; i++) {
+        /* get the buffer that contains the data for the next proc */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &msg, &cnt, OPAL_BUFFER))) {
+            if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+                break;
+            }
+            OPAL_ERROR_LOG(rc);
+            return;
+        }
+        /* extract the id of the contributor from the blob */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            return;
+        }
+        /* extract all blobs from this proc, starting with the scope */
+        cnt = 1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(msg, &scope, &cnt, PMIX_SCOPE_T))) {
+            /* extract the blob for this scope */
+            cnt = 1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &bptr, &cnt, OPAL_BUFFER))) {
+                OPAL_ERROR_LOG(rc);
+                return;
+            }
+            /* now unpack and store the values - everything goes into our internal store */
+            cnt = 1;
+            while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+                if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, &id, kp))) {
+                    OPAL_ERROR_LOG(ret);
+                }
+                OBJ_RELEASE(kp);
+                cnt = 1;
+            }
+            OBJ_RELEASE(bptr);
+            cnt = 1;
+        }
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            OPAL_ERROR_LOG(rc);
+        }
+        OBJ_RELEASE(msg);
+    }
+    if (OPAL_SUCCESS != rc && OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        OPAL_ERROR_LOG(rc);
+    }
+
+    /* if a callback was provided, execute it */
+    if (NULL != cb && NULL != cb->cbfunc) {
+        cb->cbfunc(rc, NULL, cb->cbdata);
+    }
+    OBJ_RELEASE(cb);
+}
+
 static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
                            opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
@@ -622,7 +695,7 @@ static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(msg, wait_cbfunc, cb);
+    PMIX_ACTIVATE_SEND_RECV(msg, fencenb_cbfunc, cb);
 
     return OPAL_SUCCESS;
 }

@@ -631,9 +631,11 @@ static void process_message(pmix_server_peer_t *peer)
         OBJ_DESTRUCT(&xfer);
         return;
     case PMIX_FENCE_CMD:
+    case PMIX_FENCENB_CMD:
         opal_output_verbose(2, pmix_server_output,
-                            "%s recvd FENCE",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                            "%s recvd %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE");
         /* setup a signature object */
         sig = OBJ_NEW(orte_grpcomm_signature_t);
         /* get the number of procs in this fence collective */
@@ -769,16 +771,18 @@ static void process_message(pmix_server_peer_t *peer)
                                 orte_rml_send_callback, NULL);
         return;
     reply_fence:
-        /* send a release message back to the sender so they don't hang */
-        reply = OBJ_NEW(opal_buffer_t);
-        /* pack the tag */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &tag, 1, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            OBJ_DESTRUCT(&xfer);
-            return;
+        if (PMIX_FENCE_CMD == cmd) {
+            /* send a release message back to the sender so they don't hang */
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the tag */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &tag, 1, OPAL_UINT32))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&xfer);
+                return;
+            }
+            PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
         }
-        PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
         OBJ_DESTRUCT(&xfer);
         return;
 
