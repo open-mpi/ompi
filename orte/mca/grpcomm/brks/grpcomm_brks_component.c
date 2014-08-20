@@ -82,5 +82,5 @@ static int brks_query(mca_base_module_t **module, int *priority)
     /* not implemented yet */
     *priority = my_priority;
     *module = (mca_base_module_t *)&orte_grpcomm_brks_module;
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }

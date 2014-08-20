@@ -125,8 +125,6 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                                   orte_rml_tag_t tg, void *cbdata);
 
 char *pmix_server_uri = NULL;
-char *pmix_server_mode = NULL;
-bool pmix_server_distribute_data = false;
 opal_hash_table_t *pmix_server_peers = NULL;
 int pmix_server_verbosity = -1;
 int pmix_server_output = -1;
@@ -143,15 +141,6 @@ static opal_list_t collectives;
 
 void pmix_server_register(void)
 {
-    /* register a variable to control how we distribute and/or
-     * retrieve data pushed to PMIX */
-    pmix_server_mode = "direct";
-    (void) mca_base_var_register ("orte", "pmix", NULL, "server_mode",
-                                  "Operating mode for PMIx server: direct=obtain info upon demand[default], group=distribute via collective at startup",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
-                                  &pmix_server_mode);
-
     /* register a verbosity */
     pmix_server_verbosity = -1;
     (void) mca_base_var_register ("orte", "pmix", NULL, "server_verbose",
@@ -182,10 +171,6 @@ int pmix_server_init(void)
     opal_hash_table_init(pmix_server_peers, 32);
     OBJ_CONSTRUCT(&collectives, opal_list_t);
     OBJ_CONSTRUCT(&pmix_server_pending_dmx_reqs, opal_list_t);
-
-    if (NULL != pmix_server_mode && 0 == (strcmp(pmix_server_mode, "group"))) {
-        pmix_server_distribute_data = true;
-    }
 
     /* if the session directory has not already been setup, do so */
     if (NULL == orte_process_info.top_session_dir) {
@@ -701,8 +686,9 @@ static void pmix_server_release(int status,
     OPAL_LIST_FOREACH(lcl, &trk->locals, pmix_server_local_t) {
         OBJ_RETAIN(reply);
         opal_output_verbose(2, pmix_server_output,
-                            "%s pmix:server:recv sending allgather release to %s",
+                            "%s pmix:server:recv sending allgather release of size %lu to %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (unsigned long)buffer->bytes_used,
                             ORTE_NAME_PRINT(&lcl->name));
         peer = pmix_server_peer_lookup(lcl->sd);
         PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);

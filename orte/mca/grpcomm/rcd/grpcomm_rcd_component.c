@@ -82,5 +82,5 @@ static int rcd_query(mca_base_module_t **module, int *priority)
     /* not implemented yet */
     *priority = my_priority;
     *module = (mca_base_module_t *)&orte_grpcomm_rcd_module;
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }

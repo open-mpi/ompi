@@ -124,6 +124,8 @@ static int allgather(orte_grpcomm_coll_t *coll,
 {
     int rc, ret;
     opal_buffer_t *relay;
+    orte_job_t *jdata;
+    uint64_t nprocs;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:direct: allgather",
@@ -148,6 +150,24 @@ static int allgather(orte_grpcomm_coll_t *coll,
          * would be an error if we timeout instead */
         ret = ORTE_SUCCESS;
         if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &ret, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(relay);
+            return rc;
+        }
+        /* pack the number of procs involved in the collective
+         * so the recipients can unpack any collected data */
+        if (1 == coll->sig->sz) {
+            /* get the job object for this entry */
+            if (NULL == (jdata = orte_get_job_data_object(coll->sig->signature[0].jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                OBJ_RELEASE(relay);
+                return ORTE_ERR_NOT_FOUND;
+            }
+            nprocs = jdata->num_procs;
+        } else {
+            nprocs = coll->sig->sz;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &nprocs, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(relay);
             return rc;
@@ -184,6 +204,8 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     orte_grpcomm_signature_t *sig;
     opal_buffer_t *reply;
     orte_grpcomm_coll_t *coll;
+    orte_job_t *jdata;
+    uint64_t nprocs;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:direct allgather recvd from %s",
@@ -228,6 +250,26 @@ static void allgather_recv(int status, orte_process_name_t* sender,
          * would be an error if we timeout instead */
         ret = ORTE_SUCCESS;
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_RELEASE(sig);
+            return;
+        }
+        /* pack the number of procs involved in the collective
+         * so the recipients can unpack any collected data */
+        if (1 == sig->sz) {
+            /* get the job object for this entry */
+            if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                OBJ_RELEASE(reply);
+                OBJ_RELEASE(sig);
+                return;
+            }
+            nprocs = jdata->num_procs;
+        } else {
+            nprocs = sig->sz;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             OBJ_RELEASE(sig);
@@ -467,9 +509,10 @@ static void barrier_release(int status, orte_process_name_t* sender,
         return;
     }
 
-    /* check for the tracker and error if not found */
+    /* check for the tracker - it is not an error if not
+     * found as that just means we wre not involved
+     * in the collective */
     if (NULL == (coll = orte_grpcomm_base_get_tracker(sig, false))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         OBJ_RELEASE(sig);
         return;
     }

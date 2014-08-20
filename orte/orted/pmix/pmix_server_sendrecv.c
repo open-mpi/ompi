@@ -625,11 +625,20 @@ static void process_message(pmix_server_peer_t *peer)
                 goto reply_fence;
             }
         }
-
+        /* if we are in a group collective mode, then we need to prep
+         * the data as it should be included in the modex */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        if (sig->sz < orte_full_modex_cutoff) {
+            /* need to include the id of the sender for later unpacking */
+            opal_dss.pack(&buf, &id, 1, OPAL_UINT64);
+            opal_dss.copy_payload(&buf, &xfer);
+        }
         /* if data was given, unpack and store it in the pmix dstore - it is okay
          * if there was no data, it's just a fence */
         cnt = 1;
+        found = false;
         while (OPAL_SUCCESS == (rc = opal_dss.unpack(&xfer, &scope, &cnt, PMIX_SCOPE_T))) {
+            found = true;  // at least one block of data is present
             /* unpack the buffer */
             cnt = 1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
@@ -716,6 +725,17 @@ static void process_message(pmix_server_peer_t *peer)
             goto reply_fence;
         }
         OBJ_RELEASE(sig);
+        /* include any data that is to be globally shared */
+        if (found) {
+            bptr = &buf;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                goto reply_fence;
+            }
+        }
+        OBJ_DESTRUCT(&buf);
+        /* send it to myself for processing */
         orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, reply,
                                 ORTE_RML_TAG_DAEMON_COLL,
                                 orte_rml_send_callback, NULL);

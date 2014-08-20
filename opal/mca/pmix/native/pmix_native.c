@@ -361,11 +361,16 @@ static int native_put(opal_pmix_scope_t scope,
 
 static int native_fence(opal_process_name_t *procs, size_t nprocs)
 {
-    opal_buffer_t *msg;
+    opal_buffer_t *msg, *bptr;
     pmix_cmd_t cmd = PMIX_FENCE_CMD;
     pmix_cb_t *cb;
-    int rc;
+    int rc, ret;
     opal_pmix_scope_t scope;
+    int32_t cnt;
+    opal_value_t *kp;
+    opal_identifier_t id;
+    size_t i;
+    uint32_t np;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native executing fence on %u procs",
@@ -452,6 +457,63 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
 
     /* wait for the fence to complete */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
+
+    /* get the number of contributors */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &np, &cnt, OPAL_UINT64))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* if data was returned, unpack and store it */
+    for (i=0; i < np; i++) {
+        /* get the buffer that contains the data for the next proc */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &msg, &cnt, OPAL_BUFFER))) {
+            if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+                break;
+            }
+            OPAL_ERROR_LOG(rc);
+            return rc;
+        }
+        /* extract the id of the contributor from the blob */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            return rc;
+        }
+        /* extract all blobs from this proc, starting with the scope */
+        cnt = 1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(msg, &scope, &cnt, PMIX_SCOPE_T))) {
+            /* extract the blob for this scope */
+            cnt = 1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &bptr, &cnt, OPAL_BUFFER))) {
+                OPAL_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now unpack and store the values - everything goes into our internal store */
+            cnt = 1;
+            while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+                if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, &id, kp))) {
+                    OPAL_ERROR_LOG(ret);
+                }
+                OBJ_RELEASE(kp);
+                cnt = 1;
+            }
+            OBJ_RELEASE(bptr);
+            cnt = 1;
+        }
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            OPAL_ERROR_LOG(rc);
+        }
+        OBJ_RELEASE(msg);
+    }
+    if (OPAL_SUCCESS != rc && OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        OPAL_ERROR_LOG(rc);
+    } else {
+        rc = OPAL_SUCCESS;
+    }
+
     OBJ_RELEASE(cb);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,

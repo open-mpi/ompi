@@ -118,7 +118,6 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 
 typedef struct {
     ompi_rte_component_t super;
-    bool direct_modex;
     opal_mutex_t lock;
     opal_list_t modx_reqs;
 } ompi_rte_orte_component_t;
@@ -137,6 +136,9 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
     return (orte_process_name_t *)name;
 }
 #endif
+
+#define ompi_hostname_cutoff orte_full_modex_cutoff
+
 END_C_DECLS
 
 #endif /* MCA_OMPI_RTE_ORTE_H */

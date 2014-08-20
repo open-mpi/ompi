@@ -27,8 +27,6 @@
 #include "ompi/mca/rte/rte.h"
 #include "rte_orte.h"
 
-bool ompi_rte_orte_direct_modex;
-
 /*
  * Public string showing the component version number
  */
@@ -40,7 +38,6 @@ const char *ompi_rte_orte_component_version_string =
  */
 static int rte_orte_open(void);
 static int rte_orte_close(void);
-static int rte_orte_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -65,7 +62,7 @@ ompi_rte_orte_component_t mca_rte_orte_component = {
             rte_orte_open,
             rte_orte_close,
             NULL,
-            rte_orte_register
+            NULL
         },
         {
             /* The component is checkpoint ready */
@@ -88,17 +85,6 @@ static int rte_orte_close(void)
     OPAL_LIST_DESTRUCT(&mca_rte_orte_component.modx_reqs);
     OBJ_DESTRUCT(&mca_rte_orte_component.lock);
 
-    return OMPI_SUCCESS;
-}
-
-static int rte_orte_register(void)
-{
-    mca_rte_orte_component.direct_modex = false;
-    (void) mca_base_component_var_register (&mca_rte_orte_component.super.base_version,
-                                            "direct_modex", "Enable direct modex (default: false)",
-                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_rte_orte_component.direct_modex);
     return OMPI_SUCCESS;
 }
 
