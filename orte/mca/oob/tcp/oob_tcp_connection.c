@@ -795,6 +795,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
 
     /* release the socket */
     close(peer->sd);
+    peer->sd = -1;
 
     /* if we were CONNECTING, then we need to mark the address as
      * failed and cycle back to try the next address */
