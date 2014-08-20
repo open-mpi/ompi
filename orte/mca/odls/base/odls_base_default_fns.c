@@ -1481,7 +1481,6 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
     int i;
     orte_job_t *jobdat;
     orte_proc_state_t state=ORTE_PROC_STATE_WAITPID_FIRED;
-    char *abortfile, *jobfam, *job, *vpidstr;
     orte_proc_t *cptr;
 
     opal_output_verbose(5, orte_odls_base_framework.framework_output,
@@ -1532,58 +1531,9 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
     
     /* determine the state of this process */
     if (WIFEXITED(proc->exit_code)) {
-        /* set the exit status appropriately */
-        proc->exit_code = WEXITSTATUS(proc->exit_code);
-
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s odls:waitpid_fired child %s exit code %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name), proc->exit_code));
-
-        /* provide a default state */
-        state = ORTE_PROC_STATE_WAITPID_FIRED;
-
-        /* check for the abort marker */
-        if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->name.jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            goto MOVEON;
-        }
-            
-        if (0 > asprintf(&job, "%d", ORTE_LOCAL_JOBID(proc->name.jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            free(jobfam);
-            goto MOVEON;
-        }
-            
-        if (ORTE_SUCCESS != orte_util_convert_vpid_to_string(&vpidstr, proc->name.vpid)) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            free(jobfam);
-            free(job);
-            goto MOVEON;
-        }
-            
-        abortfile = opal_os_path(false, orte_process_info.tmpdir_base,
-                                 orte_process_info.top_session_dir,
-                                 jobfam, job, vpidstr, "aborted", NULL);
-        if (NULL == abortfile ) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            free(jobfam);
-            free(job);
-            free(vpidstr);
-            goto MOVEON;
-        }
-        free(jobfam);
-        free(job);
-        free(vpidstr);
-
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s odls:waitpid_fired checking abort file %s for child %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abortfile,
-                             ORTE_NAME_PRINT(&proc->name)));
-
-        if (0 == access(abortfile, F_OK)) {
-            unlink(abortfile);
-            ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ABORT);
+        /* if the proc called "abort", then we just need to flag that it
+         * came thru here */
+        if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ABORT)) {
             /* even though the process exited "normally", it happened
              * via an orte_abort call
              */
@@ -1592,7 +1542,6 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             state = ORTE_PROC_STATE_CALLED_ABORT;
-            free(abortfile);
             /* since we are going down a different code path, we need to
              * flag that this proc has had its waitpid fired */
             ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_WAITPID);
@@ -1603,7 +1552,17 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
             }
             goto MOVEON;
         }
-        free(abortfile);
+
+        /* set the exit status appropriately */
+        proc->exit_code = WEXITSTATUS(proc->exit_code);
+
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                             "%s odls:waitpid_fired child %s exit code %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name), proc->exit_code));
+
+        /* provide a default state */
+        state = ORTE_PROC_STATE_WAITPID_FIRED;
 
         /* check to see if a sync was required and if it was received */
         if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_REG)) {

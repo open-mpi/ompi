@@ -264,6 +264,7 @@ static int native_abort(int flag, const char msg[])
     opal_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_ABORT_CMD;
     int rc;
+    pmix_cb_t *cb;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native abort called",
@@ -295,9 +296,17 @@ static int native_abort(int flag, const char msg[])
         return rc;
     }
 
-    /* push it into our event base to send to the server - we don't
-     * need/expect a return message for this send */
-    PMIX_ACTIVATE_SEND_RECV(bfr, NULL, NULL);
+    /* create a callback object as we need to pass it to the
+     * recv routine so we know which callback to use when
+     * the return message is recvd */
+    cb = OBJ_NEW(pmix_cb_t);
+    cb->active = true;
+
+    /* push the message into our event base to send to the server */
+    PMIX_ACTIVATE_SEND_RECV(bfr, wait_cbfunc, cb);
+
+    /* wait for the release */
+    PMIX_WAIT_FOR_COMPLETION(cb->active);
 
     return OPAL_SUCCESS;
 }

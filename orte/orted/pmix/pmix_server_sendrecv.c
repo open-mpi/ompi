@@ -597,9 +597,37 @@ static void process_message(pmix_server_peer_t *peer)
                             "%s recvd ABORT",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* unpack the status */
-        /* unpack the message */
-        /* report abort request to errmgr */
-        ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)&id, ORTE_PROC_STATE_CALLED_ABORT);
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &ret, &cnt, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&xfer);
+            return;
+        }
+        /* don't bother to unpack the message - we ignore this for now as the
+         * proc should have emitted it for itself */
+        memcpy(&name, &id, sizeof(orte_process_name_t));
+        /* go find the proc structure for this process */
+        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        } else {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            } else {
+                proc->exit_code = ret;
+                ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ABORT);
+            }
+        }
+        /* we will let the ODLS report this to errmgr when the proc exits, so
+         * send the release so the proc can depart */
+        reply = OBJ_NEW(opal_buffer_t);
+        /* pack the tag */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &tag, 1, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_DESTRUCT(&xfer);
+            return;
+        }
+        PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
         OBJ_DESTRUCT(&xfer);
         return;
     case PMIX_FENCE_CMD:
