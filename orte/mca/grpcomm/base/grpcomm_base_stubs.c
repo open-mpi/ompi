@@ -125,6 +125,10 @@ static void allgather_stub(int fd, short args, void *cbdata)
     orte_grpcomm_base_active_t *active;
     orte_grpcomm_coll_t *coll;
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:base:allgather stub",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* retrieve an existing tracker, create it if not
      * already found. The allgather module is responsible
      * for releasing it upon completion of the collective */
@@ -191,14 +195,25 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
             continue;
         }
         if (0 == memcmp(sig->signature, coll->sig->signature, coll->sig->sz)) {
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                                 "%s grpcomm:base:returning existing collective",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
             return coll;
         }
     }
     /* if we get here, then this is a new collective - so create
      * the tracker for it */
     if (!create) {
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:base: not creating new coll",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         return NULL;
     }
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:base: creating new coll",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     coll = OBJ_NEW(orte_grpcomm_coll_t);
     OBJ_RETAIN(sig);
     coll->sig = sig;

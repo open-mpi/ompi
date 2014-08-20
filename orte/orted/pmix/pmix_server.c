@@ -526,6 +526,17 @@ static pmix_server_trk_t* get_trk(opal_identifier_t *id,
     size_t i;
     orte_process_name_t name;
 
+    /* deal with a null signature here */
+    if (NULL == sig->signature) {
+        memcpy(&name, id, sizeof(orte_process_name_t));
+        /* create a signature indicating that all procs in this one's
+         * jobid are participating */
+        sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+        name.vpid = ORTE_VPID_WILDCARD;
+        memcpy(sig->signature, &name, sizeof(orte_process_name_t));
+        sig->sz = 1;
+    }
+
     OPAL_LIST_FOREACH(trk, &collectives, pmix_server_trk_t) {
         if (OPAL_EQUAL == opal_dss.compare(sig, trk->sig, ORTE_SIGNATURE)) {
             /* got it */
@@ -559,15 +570,6 @@ static pmix_server_trk_t* get_trk(opal_identifier_t *id,
             trk->nlocal = jdata->num_local_procs;
             goto done;
         }
-    } else if (NULL == sig->signature) {
-        memcpy(&name, id, sizeof(orte_process_name_t));
-        /* get the job object */
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return NULL;
-        }
-        trk->nlocal = jdata->num_local_procs;
-        goto done;
     }
 
     /* count how many of these procs are local to us */
@@ -955,7 +957,7 @@ static void scon(pmix_server_send_t *p)
 static void dcon(pmix_server_send_t *p)
 {
     if (NULL != p->data) {
-        free(p->data);
+        OBJ_RELEASE(p->data);
     }
 }
 OBJ_CLASS_INSTANCE(pmix_server_send_t,

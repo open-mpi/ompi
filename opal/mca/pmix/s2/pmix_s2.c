@@ -78,7 +78,9 @@ const opal_pmix_base_module_t opal_pmix_s2_module = {
     NULL,
     s2_spawn,
     s2_job_connect,
-    s2_job_disconnect
+    s2_job_disconnect,
+    NULL,
+    NULL
 };
 
 // usage accounting
@@ -354,7 +356,7 @@ static int s2_put(opal_pmix_scope_t scope,
             "%s pmix:s2 put for key %s",
             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key);
 
-    if (OPAL_SUCCESS != (rc = pmix_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
         OPAL_ERROR_LOG(rc);
         return rc;
     }
@@ -377,7 +379,7 @@ static int s2_put(opal_pmix_scope_t scope,
     buffer_to_put = (char*)malloc(data_to_put);
     memcpy(buffer_to_put, pmix_packed_data, data_to_put);
 
-    pmix_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
+    opal_pmix_base_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
 
     free(buffer_to_put);
     pmix_packed_data_offset = rem_offset;
@@ -405,7 +407,7 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
 
     /* check if there is partially filled meta key and put them */
     if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
+        opal_pmix_base_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
         pmix_packed_data_offset = 0;
         free(pmix_packed_data);
         pmix_packed_data = NULL;
@@ -429,8 +431,8 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
          * equates to "non-local" */
         for (i=0; i < s2_nlranks; i++) {
             s2_pname.vid = i;
-            rc = cache_keys_locally((opal_identifier_t*)&s2_pname, OPAL_DSTORE_CPUSET,
-                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
+            rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&s2_pname, OPAL_DSTORE_CPUSET,
+                                                   &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
                 return rc;
@@ -477,7 +479,7 @@ static int s2_get(const opal_identifier_t *id,
                   opal_value_t **kv)
 {
     int rc;
-    rc = cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     if (NULL == *kv) {
         return OPAL_ERROR;
     }

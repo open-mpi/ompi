@@ -28,6 +28,7 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -69,6 +70,11 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
+static void pmix_error(int error)
+{
+    /* push it into our event base */
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_ERR_COMM_FAILURE);
+}
 
 /************************
  * API Definitions
@@ -78,11 +84,21 @@ static int init(void)
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
+    /* register an errhandler with the PMIx framework so
+     * we can know of loss of connection to the server */
+    if (NULL != opal_pmix.register_errhandler) {
+        opal_pmix.register_errhandler(pmix_error);
+    }
+
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
+    if (NULL != opal_pmix.deregister_errhandler) {
+        opal_pmix.deregister_errhandler();
+    }
+
     return ORTE_SUCCESS;
 }
 

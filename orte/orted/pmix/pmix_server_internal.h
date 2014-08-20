@@ -86,7 +86,7 @@ typedef struct {
 typedef struct {
     opal_list_item_t super;
     pmix_server_hdr_t hdr;
-    char *data;
+    opal_buffer_t *data;
     bool hdr_sent;
     char *sdptr;
     size_t sdbytes;
@@ -159,8 +159,8 @@ OBJ_CLASS_DECLARATION(pmix_server_dmx_req_t);
         msg->hdr.type = PMIX_USOCK_USER;                                \
         msg->hdr.tag = (t);                                             \
         msg->hdr.nbytes = (b)->bytes_used;                              \
-        /* point to the actual message */                               \
-        msg->data = (b)->base_ptr;                                      \
+        /* point to the buffer */                                       \
+        msg->data = (b);                                                \
         /* start the send with the header */                            \
         msg->sdptr = (char*)&msg->hdr;                                  \
         msg->sdbytes = sizeof(pmix_server_hdr_t);                     \

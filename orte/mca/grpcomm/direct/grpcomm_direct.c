@@ -125,6 +125,10 @@ static int allgather(orte_grpcomm_coll_t *coll,
     int rc, ret;
     opal_buffer_t *relay;
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:direct: allgather",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* the base functions pushed us into the event library
      * before calling us, so we can safely access global data
      * at this point */
@@ -140,7 +144,7 @@ static int allgather(orte_grpcomm_coll_t *coll,
     /* if we are the HNP and nobody else is participating,
      * then just execute the xcast */
     if (ORTE_PROC_IS_HNP && 1 == coll->ndmns) {
-         /* pack the status - success since the allgather completed. This
+        /* pack the status - success since the allgather completed. This
          * would be an error if we timeout instead */
         ret = ORTE_SUCCESS;
         if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &ret, 1, OPAL_INT))) {
@@ -160,6 +164,10 @@ static int allgather(orte_grpcomm_coll_t *coll,
 
     /* otherwise, we need to send this to the HNP for
      * processing */
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:direct:allgather sending to HNP",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* send the info to the HNP for tracking */
     rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, relay,
                                  ORTE_RML_TAG_ALLGATHER,
@@ -176,6 +184,11 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     orte_grpcomm_signature_t *sig;
     opal_buffer_t *reply;
     orte_grpcomm_coll_t *coll;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:direct allgather recvd from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
 
     /* unpack the signature */
     cnt = 1;
@@ -195,6 +208,11 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     coll->nreported++;
     /* capture any provided content */
     opal_dss.copy_payload(&coll->bucket, buffer);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:direct allgather recv ndmns %d nrep %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)coll->ndmns, (int)coll->nreported));
 
     /* if all participating daemons have reported */
     if (coll->ndmns == coll->nreported) {

@@ -32,12 +32,31 @@
 
 #define OPAL_PMI_PAD  10
 
+static opal_pmix_errhandler_fn_t errhandler = NULL;
+
+void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
+{
+    errhandler = err;
+}
+
+void opal_pmix_base_errhandler(int error)
+{
+    if (NULL != errhandler) {
+        errhandler(error);
+    }
+}
+
+void opal_pmix_base_deregister_handler(void)
+{
+    errhandler = NULL;
+}
+
 static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);
 static uint8_t *pmi_decode (const char *data, size_t *retlen);
 
-int pmix_store_encoded(const char *key, const void *data,
-        opal_data_type_t type, char** buffer, int* length)
+int opal_pmix_base_store_encoded(const char *key, const void *data,
+                                 opal_data_type_t type, char** buffer, int* length)
 {
     opal_byte_object_t *bo;
     size_t data_len = 0;
@@ -104,12 +123,17 @@ int pmix_store_encoded(const char *key, const void *data,
     return OPAL_SUCCESS;
 }
 
-int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* pack_key, kvs_put_fn fn)
+int opal_pmix_base_commit_packed( char* buffer_to_put, int data_to_put,
+                                  int vallen, int* pack_key, kvs_put_fn fn)
 {
     int rc, left;
     char *pmikey = NULL, *tmp;
     char tmp_key[32], save;
     char *encoded_data;
+    int pkey;
+
+    pkey = *pack_key;
+
     if (NULL == (encoded_data = pmi_encode(buffer_to_put, data_to_put))) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -132,6 +156,7 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
 
         rc = fn(pmikey, tmp);
         if (OPAL_SUCCESS != rc) {
+            *pack_key = pkey;
             return rc;
         }
 
@@ -144,7 +169,7 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
         tmp += value_size;
         left -= value_size;
 
-        *pack_key ++;
+         pkey++;
 
         rc = OPAL_SUCCESS;
     }
@@ -152,11 +177,12 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
     if (encoded_data) {
         free(encoded_data);
     }
+    *pack_key = pkey;
     return OPAL_SUCCESS;
 }
 
-int pmix_get_packed(const opal_identifier_t* proc, char **packed_data,
-                    size_t *len, int vallen, kvs_get_fn fn)
+int opal_pmix_base_get_packed(const opal_identifier_t* proc, char **packed_data,
+                              size_t *len, int vallen, kvs_get_fn fn)
 {
     char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
     int remote_key, size;
@@ -227,9 +253,9 @@ int pmix_get_packed(const opal_identifier_t* proc, char **packed_data,
     return rc;
 }
 
-int cache_keys_locally(const opal_identifier_t* id, const char* key,
-                       opal_value_t **out_kv, char* kvs_name,
-                       int vallen, kvs_get_fn fn)
+int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* key,
+                                      opal_value_t **out_kv, char* kvs_name,
+                                      int vallen, kvs_get_fn fn)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
@@ -259,7 +285,7 @@ int cache_keys_locally(const opal_identifier_t* id, const char* key,
                          "pmix: get all keys for proc %" PRIu64 " in KVS %s",
                          *id, kvs_name));
 
-    rc = pmix_get_packed(id, &tmp_val, &len, vallen, fn);
+    rc = opal_pmix_base_get_packed(id, &tmp_val, &len, vallen, fn);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }

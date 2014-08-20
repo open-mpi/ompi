@@ -163,7 +163,7 @@ void pmix_server_send_handler(int sd, short flags, void *cbdata)
                         peer->send_msg = NULL;
                         goto next;
                     } else {
-                        msg->sdptr = msg->data;
+                        msg->sdptr = msg->data->base_ptr;
                         msg->sdbytes = msg->hdr.nbytes;
                     }
                     /* fall thru and let the send progress */

@@ -249,6 +249,8 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
         }                                                               \
     } while(0);
 
+/* callback handler for errors */
+typedef void (*opal_pmix_errhandler_fn_t)(int error);
 
 /****    DEFINE THE PUBLIC API'S                          ****
  ****    NOTE THAT WE DO NOT HAVE A 1:1 MAPPING OF APIs   ****
@@ -366,6 +368,11 @@ typedef int (*opal_pmix_base_module_job_connect_fn_t)(const char jobId[]);
 typedef int (*opal_pmix_base_module_job_disconnect_fn_t)(const char jobId[]);
 
 
+/* register an errhandler to report loss of connection to the server */
+typedef void (*opal_pmix_base_module_register_fn_t)(opal_pmix_errhandler_fn_t errhandler);
+
+/* deregister the errhandler */
+typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
 
 /*
  * the standard public API data structure
@@ -390,6 +397,9 @@ typedef struct {
     opal_pmix_base_module_spawn_fn_t                  spawn;
     opal_pmix_base_module_job_connect_fn_t            job_connect;
     opal_pmix_base_module_job_disconnect_fn_t         job_disconnect;
+    /* register the errhandler */
+    opal_pmix_base_module_register_fn_t               register_errhandler;
+    opal_pmix_base_module_deregister_fn_t             deregister_errhandler;
 } opal_pmix_base_module_t;
 
 typedef struct {

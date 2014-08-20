@@ -87,7 +87,9 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
     native_get_attr_nb,
     native_spawn,
     native_job_connect,
-    native_job_disconnect
+    native_job_disconnect,
+    opal_pmix_base_register_handler,
+    opal_pmix_base_deregister_handler
 };
 
 // local variables

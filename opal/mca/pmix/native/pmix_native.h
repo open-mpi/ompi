@@ -23,7 +23,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/proc.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -202,10 +202,12 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
         opal_event_active(&ms->ev, OPAL_EV_WRITE, 1);                   \
     } while(0);
 
-#define CLOSE_THE_SOCKET(socket)    \
-    do {                            \
-        shutdown(socket, 2);        \
-        close(socket);              \
+#define CLOSE_THE_SOCKET(socket)                                \
+    do {                                                        \
+        shutdown(socket, 2);                                    \
+        close(socket);                                          \
+        /* notify the error handler */                          \
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);       \
     } while(0)
 
 

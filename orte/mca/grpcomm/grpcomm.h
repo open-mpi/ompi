@@ -134,7 +134,7 @@ typedef int (*orte_grpcomm_base_API_xcast_fn_t)(orte_grpcomm_signature_t *sig,
 
 /* allgather - gather data from all specified procs. Barrier operations
  * will provide a zero-byte buffer. Caller will provide an array
- * of daemon vpids that are participating in the allgather. A NULL
+ * of application proc vpids that are participating in the allgather. A NULL
  * pointer indicates that all known procs are participating. A pointer
  * to a name that includes ORTE_VPID_WILDCARD indicates that all procs
  * in the specified jobid are contributing.

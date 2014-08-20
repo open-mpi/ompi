@@ -195,7 +195,9 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
 
 static int usock_create_socket(void)
 {
-     if (mca_pmix_native_component.sd > 0) {
+   int flags;
+
+   if (mca_pmix_native_component.sd > 0) {
         return OPAL_SUCCESS;
     }
 
@@ -211,6 +213,21 @@ static int usock_create_socket(void)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         return OPAL_ERR_UNREACH;
+    }
+
+     /* setup the socket as non-blocking */
+    if ((flags = fcntl(mca_pmix_native_component.sd, F_GETFL, 0)) < 0) {
+        opal_output(0, "%s usock_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    } else {
+        flags |= O_NONBLOCK;
+        if(fcntl(mca_pmix_native_component.sd, F_SETFL, flags) < 0)
+            opal_output(0, "%s usock_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
     }
 
     /* setup event callbacks */
@@ -241,7 +258,6 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
 {
     int rc;
     opal_socklen_t addrlen = 0;
-   int flags;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s usock_peer_try_connect: attempting to connect to server",
@@ -302,21 +318,6 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                         "%s sock_peer_try_connect: Connection across to server succeeded",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
  
-     /* setup the socket as non-blocking */
-    if ((flags = fcntl(mca_pmix_native_component.sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "%s usock_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n",
-                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
-    } else {
-        flags |= O_NONBLOCK;
-        if(fcntl(mca_pmix_native_component.sd, F_SETFL, flags) < 0)
-            opal_output(0, "%s usock_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-    }
-
    /* setup our recv to catch the return ack call */
     if (!mca_pmix_native_component.recv_ev_active) {
         opal_event_add(&mca_pmix_native_component.recv_event, 0);
