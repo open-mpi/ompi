@@ -306,18 +306,6 @@ static void process_set_peer(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
-    /* do we already have this address? */
-    OPAL_LIST_FOREACH(maddr, &peer->addrs, mca_oob_tcp_addr_t) {
-        /* require only that the subnet be the same */
-        if (opal_net_samenetwork(&inaddr, (struct sockaddr*)&maddr->addr, 24)) {
-            /* yes - can ignore this address */
-            opal_output_verbose(20, orte_oob_base_framework.framework_output,
-	                        "%s SAME NETWORK",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            goto cleanup;
-        }
-    }
-
     opal_output_verbose(20, orte_oob_base_framework.framework_output,
                         "%s set_peer: peer %s is listening on net %s port %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
