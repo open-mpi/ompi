@@ -282,6 +282,8 @@ static void process_set_peer(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     if (AF_INET != pop->af_family) {
+            opal_output_verbose(20, orte_oob_base_framework.framework_output,
+	                        "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         goto cleanup;
     }
 
@@ -302,14 +304,6 @@ static void process_set_peer(int fd, short args, void *cbdata)
     if ((rc = parse_uri(pop->af_family, pop->net, pop->port, (struct sockaddr*) &inaddr)) != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
-    }
-
-    /* do we already have this address? */
-    OPAL_LIST_FOREACH(maddr, &peer->addrs, mca_oob_tcp_addr_t) {
-        if (opal_net_samenetwork(&inaddr, (struct sockaddr*)&maddr->addr, 0)) {
-            /* yes - can ignore this address */
-            goto cleanup;
-        }
     }
 
     opal_output_verbose(20, orte_oob_base_framework.framework_output,
