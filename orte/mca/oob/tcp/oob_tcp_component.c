@@ -982,7 +982,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&mop->snd->hdr.dst),
                     ORTE_NAME_PRINT(&mop->hop));
-        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
         OBJ_RELEASE(mop);
         return;
     }
@@ -996,7 +996,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
         opal_output(0, "%s ERROR: message to %s requires routing and the OOB has no knowledge of this process",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&mop->snd->hdr.dst));
-        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
         OBJ_RELEASE(mop);
         return;
     }

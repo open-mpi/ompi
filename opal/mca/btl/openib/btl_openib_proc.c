@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "opal_config.h"
 
 #include "opal/util/arch.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_openib.h"
 #include "btl_openib_proc.h"
@@ -145,10 +147,8 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
     module_proc->proc_opal = proc;
 
     /* query for the peer address info */
-    rc = opal_modex_recv(&mca_btl_openib_component.super.btl_version,
-                         proc,
-                         &message,
-                         &msg_size);
+    OPAL_MODEX_RECV(rc, &mca_btl_openib_component.super.btl_version,
+                    proc, &message, &msg_size);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("[%s:%d] opal_modex_recv failed for peer %s",
                    __FILE__, __LINE__,

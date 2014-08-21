@@ -35,7 +35,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/dss/dss_types.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -126,10 +125,6 @@ ORTE_DECLSPEC int
 orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                         orte_odls_base_kill_local_fn_t kill_local,
                                         orte_odls_base_child_died_fn_t child_died);
-
-ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
-                                                      opal_buffer_t *buffer,
-                                                      bool drop_nidmap);
 
 ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_proc_t *child,
                                                       orte_odls_base_fork_local_proc_fn_t fork_local);

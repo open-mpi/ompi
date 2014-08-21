@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #define MCA_BTL_SCIF_ENDPOINT_H
 
 #include "btl_scif.h"
+#include "opal/mca/pmix/pmix.h"
 
 typedef enum mca_btl_scif_endpoint_state_t {
     MCA_BTL_SCIF_EP_STATE_INIT,
@@ -78,8 +80,8 @@ static inline int mca_btl_scif_ep_init (mca_btl_scif_endpoint_t *endpoint,
     OBJ_CONSTRUCT(endpoint, mca_btl_scif_endpoint_t);
     endpoint->state = MCA_BTL_SCIF_EP_STATE_INIT;
 
-    rc = opal_modex_recv (&mca_btl_scif_component.super.btl_version, peer_proc,
-                          (void **) &modex, &msg_size);
+    OPAL_MODEX_RECV(rc, &mca_btl_scif_component.super.btl_version,
+                    peer_proc, (void **) &modex, &msg_size);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }

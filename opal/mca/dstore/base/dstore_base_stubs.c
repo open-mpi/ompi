@@ -28,8 +28,8 @@ int opal_dstore_base_open(const char *name)
     int index;
     opal_dstore_base_module_t *mod;
 
-    /* create the module  */
-    if (NULL != (mod = opal_dstore_base.active->create_handle())) {
+    /* ask the storage component for a module */
+    if (NULL != (mod = opal_dstore_base.storage_component->create_handle())) {
         /* have our module, so create a new dstore_handle */
         hdl = OBJ_NEW(opal_dstore_handle_t);
         if (NULL != name) {
@@ -98,35 +98,13 @@ int opal_dstore_base_store(int dstorehandle,
     return hdl->module->store((struct opal_dstore_base_module_t*)hdl->module, id, kv);
 }
 
-void opal_dstore_base_commit(int dstorehandle,
-                             const opal_identifier_t *id)
-{
-    opal_dstore_handle_t *hdl;
-
-    if (dstorehandle < 0) {
-        OPAL_ERROR_LOG(OPAL_ERR_NOT_INITIALIZED);
-        return;
-    }
-
-    if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
-        OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
-        return;
-    }
-
-    if (NULL != hdl->module->commit) {
-        opal_output_verbose(1, opal_dstore_base_framework.framework_output,
-                            "committing data in %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
-        hdl->module->commit((struct opal_dstore_base_module_t*)hdl->module, id);
-    }
-}
-
-
 int opal_dstore_base_fetch(int dstorehandle,
                            const opal_identifier_t *id,
                            const char *key,
                            opal_list_t *kvs)
 {
     opal_dstore_handle_t *hdl;
+    int rc;
 
     if (dstorehandle < 0) {
         return OPAL_ERR_NOT_INITIALIZED;
@@ -140,7 +118,17 @@ int opal_dstore_base_fetch(int dstorehandle,
     opal_output_verbose(1, opal_dstore_base_framework.framework_output,
                         "fetching data from %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
 
-    return hdl->module->fetch((struct opal_dstore_base_module_t*)hdl->module, id, key, kvs);
+    if (OPAL_SUCCESS == (rc = hdl->module->fetch((struct opal_dstore_base_module_t*)hdl->module, id, key, kvs))) {
+        /* found the data, so we can just return it */
+        return rc;
+    }
+
+    /* if the storage module didn't find it, then let the backfill module try
+     * to retrieve it if we have one */
+    if (NULL != opal_dstore_base.backfill_module) {
+        rc = opal_dstore_base.backfill_module->fetch((struct opal_dstore_base_module_t*)opal_dstore_base.backfill_module, id, key, kvs);
+    }
+    return rc;
 }
 
 int opal_dstore_base_remove_data(int dstorehandle,

@@ -36,10 +36,12 @@
 
 BEGIN_C_DECLS
 
-/* declare a pair of global handles until such time
+/* declare a global handle until such time
  * as someone figures out how to separate the various
  * datastore channels
  */
+OPAL_DECLSPEC extern int opal_dstore_internal;
+
 OPAL_DECLSPEC extern int opal_dstore_peer;
 OPAL_DECLSPEC extern int opal_dstore_internal;
 OPAL_DECLSPEC extern int opal_dstore_nonpeer;
@@ -77,13 +79,6 @@ typedef int (*opal_dstore_base_API_store_fn_t)(int dstorehandle,
                                                opal_value_t *kv);
 
 /*
- * Commit data to the database - action depends on implementation within
- * each active component
- */
-typedef void (*opal_dstore_base_API_commit_fn_t)(int dstorehandle,
-                                                 const opal_identifier_t *id);
-
-/*
  * Retrieve data
  *
  * Retrieve data for the given primary key associated with the specified key. Wildcards
@@ -112,7 +107,6 @@ typedef struct {
     opal_dstore_base_API_open_fn_t           open;
     opal_dstore_base_API_close_fn_t          close;
     opal_dstore_base_API_store_fn_t          store;
-    opal_dstore_base_API_commit_fn_t         commit;
     opal_dstore_base_API_fetch_fn_t          fetch;
     opal_dstore_base_API_remove_fn_t         remove;
 } opal_dstore_base_API_t;
@@ -146,10 +140,6 @@ typedef int (*opal_dstore_base_module_store_fn_t)(struct opal_dstore_base_module
                                                   const opal_identifier_t *id,
                                                   opal_value_t *kv);
 
-/* commit data */
-typedef void (*opal_dstore_base_module_commit_fn_t)(struct opal_dstore_base_module_t *mod,
-                                                    const opal_identifier_t *id);
-
 /* fetch data from the module */
 typedef int (*opal_dstore_base_module_fetch_fn_t)(struct opal_dstore_base_module_t *mod,
                                                   const opal_identifier_t *id,
@@ -168,7 +158,6 @@ typedef struct {
     opal_dstore_base_module_init_fn_t            init;
     opal_dstore_base_module_finalize_fn_t        finalize;
     opal_dstore_base_module_store_fn_t           store;
-    opal_dstore_base_module_commit_fn_t          commit;
     opal_dstore_base_module_fetch_fn_t           fetch;
     opal_dstore_base_module_remove_fn_t          remove;
 } opal_dstore_base_module_t;
@@ -176,11 +165,6 @@ typedef struct {
 /*
  * the component data structure
  */
-/* function to determine if this component is available for use.
- * Note that we do not use the standard component open
- * function as we do not want/need return of a module.
- */
-typedef bool (*mca_dstore_base_component_avail_fn_t)(void);
 
 /* create and return a datastore module */
 typedef opal_dstore_base_module_t* (*mca_dstore_base_component_create_hdl_fn_t)(void);
@@ -191,8 +175,6 @@ typedef void (*mca_dstore_base_component_finalize_fn_t)(void);
 typedef struct {
     mca_base_component_t                      base_version;
     mca_base_component_data_t                 base_data;
-    int                                       priority;
-    mca_dstore_base_component_avail_fn_t      available;
     mca_dstore_base_component_create_hdl_fn_t create_handle;
     mca_dstore_base_component_finalize_fn_t   finalize;
 } opal_dstore_base_component_t;

@@ -25,6 +25,8 @@
 
 #include <sys/types.h>
 
+#include "orte/mca/grpcomm/grpcomm.h"
+
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
 int orte_dt_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, opal_data_type_t type)
@@ -273,4 +275,21 @@ int orte_dt_compare_attr(orte_attribute_t *value1, orte_attribute_t *value2, opa
     }
 
     return OPAL_EQUAL;
+}
+
+/* ORTE_SIGNATURE */
+int orte_dt_compare_sig(orte_grpcomm_signature_t *value1, orte_grpcomm_signature_t *value2, opal_data_type_t type)
+{
+    if (value1->sz > value2->sz) {
+        return OPAL_VALUE1_GREATER;
+    }
+    if (value2->sz > value1->sz) {
+        return OPAL_VALUE2_GREATER;
+    }
+    /* same size - check contents */
+    if (0 == memcmp(value1->signature, value2->signature, value1->sz)) {
+        return OPAL_EQUAL;
+    }
+
+    return OPAL_VALUE2_GREATER;
 }

@@ -130,15 +130,7 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
 
 /* define some common keys used in ORTE */
-#define ORTE_DB_HOSTNAME     "orte.hostname"
 #define ORTE_DB_DAEMON_VPID  "orte.daemon.vpid"
-#define ORTE_DB_NODERANK     "orte.node.rank"
-#define ORTE_DB_ARCH         "orte.arch"
-#define ORTE_DB_NPROCS       "orte.nprocs"
-#define ORTE_DB_NPROC_OFFSET "orte.nproc.offset"
-#define ORTE_DB_RMLURI       "orte.rmluri"
-#define ORTE_DB_HOSTID       "orte.hostid"
-#define ORTE_DB_GLOBAL_RANK  "orte.global.rank"
 
 /* State Machine lists */
 ORTE_DECLSPEC extern opal_list_t orte_job_states;
@@ -318,7 +310,8 @@ typedef struct {
     opal_list_item_t super;
     /* jobid for this job */
     orte_jobid_t jobid;
-    /* offset to the total number of procs */
+    /* offset to the total number of procs so shared memory
+     * components can potentially connect to any spawned jobs*/
     orte_vpid_t offset;
     /* app_context array for this job */
     opal_pointer_array_t *apps;
@@ -586,6 +579,9 @@ ORTE_DECLSPEC extern char *orte_base_user_debugger;
  * to certain cores
  */
 ORTE_DECLSPEC extern char *orte_daemon_cores;
+
+/* cutoff for collective modex */
+ORTE_DECLSPEC extern uint32_t orte_full_modex_cutoff;
 
 END_C_DECLS
 

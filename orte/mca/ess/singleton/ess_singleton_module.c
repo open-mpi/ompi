@@ -39,14 +39,15 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 
 #include "orte/mca/ess/ess.h"
@@ -73,6 +74,7 @@ static int rte_init(void)
     uint16_t jobfam;
     uint32_t hash32;
     uint32_t bias;
+    opal_value_t kvn;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
@@ -182,23 +184,16 @@ static int rte_init(void)
      */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
+    /* tell the pmix framework to allow delayed connection to a server
+     * in case we need one */
+    opal_pmix_base_allow_delayed_server = true;
+
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* if one was provided, build my nidmap */
-    if (ORTE_SUCCESS != (rc = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* set the collective ids */
-    orte_process_info.peer_modex = 0;
-    orte_process_info.peer_init_barrier = 1;
-    orte_process_info.peer_fini_barrier = 2;
-
     /* to the best of our knowledge, we are alone */
     orte_process_info.my_node_rank = 0;
     orte_process_info.my_local_rank = 0;
@@ -209,16 +204,64 @@ static int rte_init(void)
     putenv("OMPI_APP_CTX_NUM_PROCS=1");
     putenv("OMPI_MCA_orte_ess_num_procs=1");
 
+    /* push some required info to our local datastore */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(orte_process_info.nodename);
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* construct the RTE string */
+    param = orte_rml.get_contact_info();
+    /* push it out for others to use */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_URI);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(param);
+    free(param);
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* push our local rank */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
+    kvn.type = OPAL_UINT16;
+    kvn.data.uint16 = orte_process_info.my_local_rank;
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* push our node rank */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_NODERANK);
+    kvn.type = OPAL_UINT16;
+    kvn.data.uint16 = orte_process_info.my_node_rank;
+    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kvn);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kvn);
+
     return ORTE_SUCCESS;
 }
 
 static int rte_finalize(void)
 {
     int ret;
-    
-    /* deconstruct my nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
-    
+        
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);

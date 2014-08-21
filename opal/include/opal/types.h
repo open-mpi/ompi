@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +44,11 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 #endif
+
+/* define an RTE-agnostic process identifier */
+typedef uint64_t opal_identifier_t;
+#define OPAL_ID_T OPAL_UINT64
+#define OPAL_ID_INVALID UINT64_MAX
 
 
 /*

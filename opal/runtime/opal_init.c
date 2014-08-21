@@ -235,6 +235,12 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_AUTHENTICATION_FAILED:
         retval = "Authentication failed";
         break;
+    case OPAL_ERR_COMM_FAILURE:
+        retval = "Comm failure";
+        break;
+    case OPAL_ERR_SERVER_NOT_AVAIL:
+        retval = "Server not available";
+        break;
     default:
         retval = NULL;
     }
@@ -616,5 +622,3 @@ void opal_warn_fork(void)
     }
 #endif
 }
-
-

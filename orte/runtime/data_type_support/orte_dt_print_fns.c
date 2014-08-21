@@ -30,6 +30,7 @@
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "opal/dss/dss.h"
 #include "orte/util/name_fns.h"
@@ -888,6 +889,11 @@ int orte_dt_print_attr(char **output, char *prefix,
         break;
     }
     free(prefx);
+    return ORTE_SUCCESS;
+}
+
+int orte_dt_print_sig(char **output, char *prefix, orte_grpcomm_signature_t *src, opal_data_type_t type)
+{
     return ORTE_SUCCESS;
 }
 

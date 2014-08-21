@@ -28,20 +28,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_ring_buffer.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/event/event.h"
-
-#include "orte/mca/plm/plm_types.h"
-#include "orte/mca/grpcomm/grpcomm_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
-#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
@@ -63,8 +50,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 9
 #define ORTE_DAEMON_MESSAGE_LOCAL_PROCS     (orte_daemon_cmd_flag_t) 10
 #define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 11
-#define ORTE_DAEMON_SYNC_BY_PROC            (orte_daemon_cmd_flag_t) 12
-#define ORTE_DAEMON_SYNC_WANT_NIDMAP        (orte_daemon_cmd_flag_t) 13
 
 /* commands for use by tools */
 #define ORTE_DAEMON_REPORT_JOB_INFO_CMD     (orte_daemon_cmd_flag_t) 14

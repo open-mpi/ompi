@@ -45,7 +45,7 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -53,7 +53,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
@@ -80,18 +79,15 @@ static bool app_init_complete=false;
 
 static int rte_init(void)
 {
-    int ret, i, j, procs;
-    char *error = NULL, *localj;
-    int32_t jobfam, stepid;
+    int ret;
+    char *error = NULL;
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *cs_env, *string_key;
-    char *pmi_id=NULL;
-    int *ranks=NULL;
     orte_jobid_t jobid;
     char *rmluri;
-    orte_process_name_t ldr;
-    opal_value_t kv;
+    opal_value_t *kv, kvn;
+    opal_list_t vals;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -128,13 +124,28 @@ static int rte_init(void)
             goto error;
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
-        /* get our rank from PMI */
-        i = mca_common_pmi_rank();
-        ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
-        /* get the number of procs from PMI */
-        i = mca_common_pmi_universe();
-        orte_process_info.num_procs = i + 1;  /* compensate for orterun */
+        /* if we weren't given it, get our global rank from PMI */
+        if (NULL == orte_ess_base_vpid) {
+            if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
+                error = "getting rank";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
+        }
+
+        /* if we weren't given it, get universe size */
+        if (orte_ess_base_num_procs < 0) {
+            if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
+                error = "getting univ size";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
+        }
 
         /* complete setup */
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
@@ -146,52 +157,73 @@ static int rte_init(void)
 
     }
 
-    /* we are a direct-launched MPI process */
-    if( OPAL_SUCCESS != (ret = mca_common_pmi_id(&pmi_id, &error)) ){
+    /****   THE FOLLOWING ARE REQUIRED VALUES   ***/
+    /* get our jobid from PMI */
+    if (!opal_pmix.get_attr(PMIX_JOBID, &kv)) {
+        error = "getting jobid";
+        ret = ORTE_ERR_NOT_FOUND;
         goto error;
     }
+    ORTE_PROC_MY_NAME->jobid = kv->data.uint32;
+    OBJ_RELEASE(kv);
 
-    /* PMI is very nice to us - the domain id is an integer followed
-     * by a '.', followed by essentially a stepid. The first integer
-     * defines an overall job number. The second integer is the number of
-     * individual jobs we have run within that allocation. So we translate
-     * this as the overall job number equating to our job family, and
-     * the individual number equating to our local jobid
-     */
-    jobfam = strtol(pmi_id, &localj, 10);
-    if (NULL == localj) {
-        /* hmmm - no '.', so let's just use zero */
-        stepid = 0;
-    } else {
-        localj++; /* step over the '.' */
-        stepid = strtol(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
+    /* get our global rank from PMI */
+    if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
+        error = "getting rank";
+        ret = ORTE_ERR_NOT_FOUND;
+        goto error;
     }
-    free(pmi_id);
+    ORTE_PROC_MY_NAME->vpid = kv->data.uint32;
+    OBJ_RELEASE(kv);
 
-    /* now build the jobid */
-    ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
+    /* get our local rank from PMI */
+    if (!opal_pmix.get_attr(PMIX_LOCAL_RANK, &kv)) {
+        error = "getting local rank";
+        ret = ORTE_ERR_NOT_FOUND;
+        goto error;
+    }
+    orte_process_info.my_local_rank = (orte_local_rank_t)kv->data.uint16;
+    OBJ_RELEASE(kv);
 
-    /* get our rank */
-    i = mca_common_pmi_rank();
-    ORTE_PROC_MY_NAME->vpid = i;
-    /* get the number of procs from PMI */
-    // FIX ME: What do we need here - size or universe?
-    i = mca_common_pmi_universe();
-    orte_process_info.num_procs = i;
+    /* get our node rank from PMI */
+    if (!opal_pmix.get_attr(PMIX_NODE_RANK, &kv)) {
+        error = "getting node rank";
+        ret = ORTE_ERR_NOT_FOUND;
+        goto error;
+    }
+    orte_process_info.my_node_rank = (orte_local_rank_t)kv->data.uint16;
+
+    /* get universe size */
+    if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
+        error = "getting univ size";
+        ret = ORTE_ERR_NOT_FOUND;
+        goto error;
+    }
+    orte_process_info.num_procs = kv->data.uint32;
+    OBJ_RELEASE(kv);
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
-    asprintf(&ev1, "OMPI_MCA_orte_ess_num_procs=%d", i);
+    asprintf(&ev1, "OMPI_MCA_orte_ess_num_procs=%d", orte_process_info.num_procs);
     putenv(ev1);
-    asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", i);
+    asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
     putenv(ev2);
+
+
+    /* get our app number from PMI - ok if not found */
+    if (opal_pmix.get_attr(PMIX_APPNUM, &kv)) {
+        orte_process_info.app_num = kv->data.uint32;
+        OBJ_RELEASE(kv);
+    } else {
+        orte_process_info.app_num = 0;
+    }
 
     /* setup transport keys in case the MPI layer needs them -
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
      */
-    unique_key[0] = (uint64_t)jobfam;
-    unique_key[1] = (uint64_t)stepid;
+    unique_key[0] = (uint64_t)(((ORTE_PROC_MY_NAME->jobid & 0xffff0000))) >> 32;
+    unique_key[1] = (uint64_t)(((ORTE_PROC_MY_NAME->jobid & 0x0000ffff))) >> 32;
     if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -206,64 +238,17 @@ static int rte_init(void)
     free(cs_env);
     free(string_key);
 
-    /* our app_context number can only be 0 as we don't support
-     * dynamic spawns
-     */
-    orte_process_info.app_num = 0;
+    /* we don't need to force the routed system to pick the
+     * "direct" component as that should happen automatically
+     * in those cases where we are direct launched (i.e., no
+     * HNP is defined in the environment */
 
-    /* setup my daemon's name - arbitrary, since we don't route
-     * messages
-     */
-    ORTE_PROC_MY_DAEMON->jobid = 0;
-    ORTE_PROC_MY_DAEMON->vpid = 0;
-
-    /* ensure we pick the correct critical components */
-    putenv("OMPI_MCA_grpcomm=pmi");
-    putenv("OMPI_MCA_db_pmi_store_priority=100");
-    putenv("OMPI_MCA_routed=direct");
-    
     /* now use the default procedure to finish my setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
         goto error;
     }
-
-    ret = mca_common_pmi_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
-    if( OPAL_SUCCESS != ret ){
-        goto error;
-    }
-    /* store the number of local peers - remember, we want the number
-     * of peers that share the node WITH ME, so we have to subtract
-     * ourselves from that number
-     */
-    orte_process_info.num_local_peers = procs - 1;
-    /* The clique ranks are returned in rank order, so
-     * cycle thru the array and update the local/node
-     * rank info
-     */
-    for (j=0; j < procs; j++) {
-        if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
-            orte_process_info.my_local_rank = (orte_local_rank_t)j;
-            orte_process_info.my_node_rank = (orte_node_rank_t)j;
-            break;
-        }
-    }
-    /* store the name of the local leader */
-    ldr.jobid = ORTE_PROC_MY_NAME->jobid;
-    ldr.vpid = ranks[0];
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_LOCALLDR);
-    kv.type = OPAL_ID_T;
-    kv.data.uint64 = *(opal_identifier_t*)&ldr;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "storing local leader";
-        OBJ_DESTRUCT(&kv);
-        goto error;
-    }
-    OBJ_DESTRUCT(&kv);
-    free(ranks);
 
     /* setup process binding */
     if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
@@ -279,69 +264,77 @@ static int rte_init(void)
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
-    /* construct the PMI RTE string */
-    rmluri = orte_rml.get_contact_info();
+    /***  PUSH DATA FOR OTHERS TO FIND   ***/
 
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_RMLURI);
-    kv.type = OPAL_STRING;
-    kv.data.string = strdup(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "db store uri";
-        OBJ_DESTRUCT(&kv);
-        goto error;
+    /* if our URI was not provided by the system, then
+     * push our URI so others can find us */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+                                          OPAL_DSTORE_URI, &vals)) {
+        /* construct the RTE string */
+        rmluri = orte_rml.get_contact_info();
+        /* push it out for others to use */
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_URI);
+        kvn.type = OPAL_STRING;
+        kvn.data.string = strdup(rmluri);
+        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+            error = "db store uri";
+            OBJ_DESTRUCT(&kvn);
+            goto error;
+        }
+        OBJ_DESTRUCT(&kvn);
+        free(rmluri);
     }
-    OBJ_DESTRUCT(&kv);
-    free(rmluri);
+    OPAL_LIST_DESTRUCT(&vals);
 
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_HOSTNAME);
-    kv.type = OPAL_STRING;
-    kv.data.string = strdup(orte_process_info.nodename);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    /* push our hostname so others can find us, if they need to */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(orte_process_info.nodename);
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
         error = "db store hostname";
-        OBJ_DESTRUCT(&kv);
+        OBJ_DESTRUCT(&kvn);
         goto error;
     }
-    OBJ_DESTRUCT(&kv);
+    OBJ_DESTRUCT(&kvn);
 
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_CPUSET);
-    kv.type = OPAL_STRING;
-    kv.data.string = strdup(orte_process_info.cpuset);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "db store cpuset";
-        OBJ_DESTRUCT(&kv);
-        goto error;
+    /* if our local rank was not provided by the system, then
+     * push our local rank so others can access it */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+                                          OPAL_DSTORE_LOCALRANK, &vals)) {
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = orte_process_info.my_local_rank;
+        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+            error = "db store local rank";
+            OBJ_DESTRUCT(&kvn);
+            goto error;
+        }
+        OBJ_DESTRUCT(&kvn);
     }
-    OBJ_DESTRUCT(&kv);
+    OPAL_LIST_DESTRUCT(&vals);
 
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_LOCALRANK);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = orte_process_info.my_local_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "db store local rank";
-        OBJ_DESTRUCT(&kv);
-        goto error;
+    /* if our node rank was not provided by the system, then
+     * push our node rank so others can access it */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+                                          OPAL_DSTORE_NODERANK, &vals)) {
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_NODERANK);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = orte_process_info.my_node_rank;
+        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+            error = "db store node rank";
+            OBJ_DESTRUCT(&kvn);
+            goto error;
+        }
+        OBJ_DESTRUCT(&kvn);
     }
-    OBJ_DESTRUCT(&kv);
-
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_NODERANK);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = orte_process_info.my_node_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "db store node rank";
-        OBJ_DESTRUCT(&kv);
-        goto error;
-    }
-    OBJ_DESTRUCT(&kv);
+    OPAL_LIST_DESTRUCT(&vals);
 
     /* if we are an ORTE app - and not an MPI app - then
      * we need to exchange our connection info here.
@@ -354,22 +347,12 @@ static int rte_init(void)
      * in the job won't be executing this step, so we would hang
      */
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
-        orte_grpcomm_collective_t coll;
-        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_process_info.peer_modex;
-        coll.active = true;
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte modex";
-            goto error;
-        }
-        ORTE_WAIT_FOR_COMPLETION(coll.active);
-        OBJ_DESTRUCT(&coll);
+        opal_pmix.fence(NULL, 0);
     }
 
     /* flag that we completed init */
     app_init_complete = true;
-    
+
     return ORTE_SUCCESS;
 
  error:
@@ -378,7 +361,6 @@ static int rte_init(void)
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
-
     return ret;
 }
 
@@ -394,12 +376,13 @@ static int rte_finalize(void)
                 return ret;
             }
         } else {
+            /* mark us as finalized */
+            opal_pmix.finalize();
+
             /* remove the envars that we pushed into environ
              * so we leave that structure intact
              */
-            unsetenv("OMPI_MCA_grpcomm");
             unsetenv("OMPI_MCA_routed");
-            unsetenv("OMPI_MCA_db_pmi_store_priority");
             unsetenv("OMPI_MCA_orte_precondition_transports");
             unsetenv("OMPI_MCA_orte_ess_num_procs");
             unsetenv("OMPI_APP_CTX_NUM_PROCS");
@@ -411,18 +394,6 @@ static int rte_finalize(void)
         }
     }
     
-    /* deconstruct my nidmap and jobmap arrays - this
-     * function protects itself from being called
-     * before things were initialized
-     */
-    orte_util_nidmap_finalize();
-
-#if OPAL_HAVE_HWLOC
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-#endif
     return ORTE_SUCCESS;
 }
 
@@ -436,7 +407,7 @@ static void rte_abort(int status, bool report)
     /* PMI doesn't like NULL messages, but our interface
      * doesn't provide one - so rig one up here
      */
-    mca_common_pmi_abort(status, "N/A");
+    opal_pmix.abort(status, "N/A");
 
     /* - Clean out the global structures 
      * (not really necessary, but good practice) */

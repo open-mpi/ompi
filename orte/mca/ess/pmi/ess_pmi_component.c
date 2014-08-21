@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +20,7 @@
 #include "orte/constants.h"
 
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/proc_info.h"
 
@@ -66,7 +67,8 @@ static int pmi_component_open(void)
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* we are available anywhere PMI is available, but not for HNP itself */
-    if (!ORTE_PROC_IS_HNP && OPAL_SUCCESS == mca_common_pmi_init(opal_pmi_version)) {
+    if (!ORTE_PROC_IS_HNP && NULL != opal_pmix.init &&
+        OPAL_SUCCESS == opal_pmix.init()) {
         /* if PMI is available, use it */
         *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
@@ -82,8 +84,9 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
 
 static int pmi_component_close(void)
 {
-    mca_common_pmi_finalize ();
-
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();  // balances query
+    }
     return ORTE_SUCCESS;
 }
 

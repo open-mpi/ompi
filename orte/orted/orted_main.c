@@ -99,6 +99,7 @@
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/orted/orted.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 /*
  * Globals
@@ -529,9 +530,6 @@ int orte_daemon(int argc, char *argv[])
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
         int32_t ljob;
-        orte_grpcomm_collective_t *coll;
-        orte_namelist_t *nm;
-        orte_grpcomm_coll_id_t id;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -585,52 +583,9 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
-        /* account for the collectives in its modex/barriers */
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_PEER_MODX_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_INIT_BAR_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_FINI_BAR_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-
-#if OPAL_ENABLE_FT_CR == 1
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-#endif
-
-        /* create a string that contains our uri + sysinfo */
+        /* create a string that contains our uri + sysinfo + PMIx server URI */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, sysinfo);
+        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, pmix_server_uri);
 	free(sysinfo);
 
         /* pass that info to the singleton */

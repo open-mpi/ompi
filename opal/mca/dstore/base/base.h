@@ -36,9 +36,23 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_dstore_base_framework;
  */
 OPAL_DECLSPEC int opal_dstore_base_select(void);
 
+/* DSTORE is an oddball framework in that it:
+ *
+ * has an active storage component that issues handle-specific
+ * modules. This is done to provide separate storage areas that
+ * are isolated from each other, and thus don't have to worry
+ * about overlapping keys
+ *
+ * a backfill module used to attempt to retrieve data that has
+ * been requested, but that the handle-specific storage module
+ * does not contain. This is used in situations where data has
+ * not been provided at startup, and we need to retrieve it
+ * solely on-demand
+ */
 typedef struct {
-    opal_dstore_base_component_t *active;  // active component
-    opal_pointer_array_t handles;          // array of open datastore handles
+    opal_dstore_base_component_t *storage_component;
+    opal_dstore_base_module_t *backfill_module;
+    opal_pointer_array_t handles;   // array of open datastore handles
 } opal_dstore_base_t;
 
 OPAL_DECLSPEC extern opal_dstore_base_t opal_dstore_base;
@@ -70,8 +84,6 @@ OPAL_DECLSPEC int opal_dstore_base_close(int dstorehandle);
 OPAL_DECLSPEC int opal_dstore_base_store(int dstorehandle,
                                          const opal_identifier_t *id,
                                          opal_value_t *kv);
-OPAL_DECLSPEC void opal_dstore_base_commit(int dstorehandle,
-                                           const opal_identifier_t *id);
 OPAL_DECLSPEC int opal_dstore_base_fetch(int dstorehandle,
                                          const opal_identifier_t *id,
                                          const char *key,

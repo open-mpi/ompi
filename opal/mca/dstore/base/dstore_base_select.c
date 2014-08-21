@@ -26,8 +26,11 @@ int
 opal_dstore_base_select(void)
 {
     mca_base_component_list_item_t *cli;
-    opal_dstore_base_component_t *component, *best=NULL;
-    int pri = -1000;
+    mca_base_component_t *cmp;
+    mca_base_module_t *md;
+    int priority, cmp_pri, mod_pri;
+    opal_dstore_base_module_t *mod=NULL;
+    opal_dstore_base_component_t *comp=NULL;
 
     if (selected) {
         /* ensure we don't do this twice */
@@ -36,48 +39,62 @@ opal_dstore_base_select(void)
     selected = true;
     
     /* Query all available components and ask if they have a module */
+    cmp_pri = -100000;
+    mod_pri = -100000;
     OPAL_LIST_FOREACH(cli, &opal_dstore_base_framework.framework_components, mca_base_component_list_item_t) {
-        component = (opal_dstore_base_component_t*)cli->cli_component;
+        cmp = (mca_base_component_t*)cli->cli_component;
 
         opal_output_verbose(5, opal_dstore_base_framework.framework_output,
                             "mca:dstore:select: checking available component %s",
-                            component->base_version.mca_component_name);
+                            cmp->mca_component_name);
 
         /* If there's no query function, skip it */
-        if (NULL == component->available) {
+        if (NULL == cmp->mca_query_component) {
             opal_output_verbose(5, opal_dstore_base_framework.framework_output,
                                 "mca:dstore:select: Skipping component [%s]. It does not implement a query function",
-                                component->base_version.mca_component_name );
+                                cmp->mca_component_name );
             continue;
         }
 
         /* Query the component */
-       opal_output_verbose(5, opal_dstore_base_framework.framework_output,
+        opal_output_verbose(5, opal_dstore_base_framework.framework_output,
                             "mca:dstore:select: Querying component [%s]",
-                            component->base_version.mca_component_name);
+                            cmp->mca_component_name);
 
-        /* If the component is not available, then skip it as
-         * it has no available interfaces
-         */
-        if (!component->available()) {
+        /* If the component reports failure, then skip component - however,
+         * it is okay to return a NULL module */
+        if (OPAL_SUCCESS != cmp->mca_query_component(&md, &priority)) {
             opal_output_verbose(5, opal_dstore_base_framework.framework_output,
                                 "mca:dstore:select: Skipping component [%s] - not available",
-                                component->base_version.mca_component_name );
+                                cmp->mca_component_name );
             continue;
         }
 
-        /* keep only the highest priority component */
-        if (pri < component->priority) {
-            best = component;
-            pri = component->priority;
+        /* track the highest priority component that returned a NULL module - this
+         * will become our storage element */
+        if (NULL == md) {
+            if (0 < priority && priority > cmp_pri) {
+                comp = (opal_dstore_base_component_t*)cmp;
+                cmp_pri = priority;
+            }
+        } else {
+            /* track the highest priority module that was returned - this
+             * will become our backfill element */
+            if (priority > mod_pri) {
+                mod = (opal_dstore_base_module_t*)md;
+                mod_pri = priority;
+            }
         }
     }
 
-    /* if no components are available, that is an error */
-    if (NULL == best) {
-        return OPAL_ERR_NOT_FOUND;
+    if (NULL == comp) {
+        /* no components available - that's bad */
+        return OPAL_ERROR;
     }
+    opal_dstore_base.storage_component = comp;
 
-    opal_dstore_base.active = best;
+    /* it's okay not to have a backfill module */
+    opal_dstore_base.backfill_module = mod;
+
     return OPAL_SUCCESS;;
 }

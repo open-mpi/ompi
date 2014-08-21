@@ -13,8 +13,6 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -295,28 +293,26 @@ int orte_ess_base_proc_binding(void)
         }
     }
     hwloc_bitmap_free(mycpus);
-    /* store our cpuset for exchange with non-peers
-     * so that other procs in a comm_spawn can know it
-     */
+    /* push our cpuset so others can calculate our locality */
     if (NULL != orte_process_info.cpuset) {
-        OBJ_CONSTRUCT(&kv, opal_value_t);
+         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(OPAL_DSTORE_CPUSET);
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.cpuset);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_nonpeer,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                     &kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);
             goto error;
         }
+        /* and store a copy locally */
+        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
     }
     return ORTE_SUCCESS;
 
  error:
     if (ORTE_ERR_SILENT != ret) {
-        orte_show_help("help-orte-runtime.txt",
+        orte_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }

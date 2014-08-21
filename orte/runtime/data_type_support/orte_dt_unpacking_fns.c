@@ -739,6 +739,13 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* unpack the number of nodes involved in the job */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->num_nodes), &n, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     return ORTE_SUCCESS;
@@ -943,3 +950,39 @@ int orte_dt_unpack_attr(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
     return OPAL_SUCCESS;
 }
 
+int orte_dt_unpack_sig(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
+                       opal_data_type_t type)
+{
+    orte_grpcomm_signature_t **ptr;
+    int32_t i, n, cnt;
+    int rc;
+
+    ptr = (orte_grpcomm_signature_t **) dest;
+    n = *num_vals;
+    
+    for (i = 0; i < n; ++i) {
+        /* allocate the new object */
+        ptr[i] = OBJ_NEW(orte_grpcomm_signature_t);
+        if (NULL == ptr[i]) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        /* unpack the #procs */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ptr[i]->sz, &cnt, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 < ptr[i]->sz) {
+            /* allocate space for the array */
+            ptr[i]->signature = (orte_process_name_t*)malloc(ptr[i]->sz * sizeof(orte_process_name_t));
+            /* unpack the array - the array is our signature for the collective */
+            cnt = ptr[i]->sz;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, ptr[i]->signature, &cnt, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ptr[i]);
+                return rc;
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}

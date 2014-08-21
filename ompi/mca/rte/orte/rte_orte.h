@@ -28,7 +28,6 @@ struct opal_proc_t;
 
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
@@ -73,13 +72,6 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
 #define OMPI_CAST_RTE_NAME(a) ((orte_process_name_t*)(a))
 #endif
 
-/* Collective objects and operations */
-#define ompi_rte_collective_t orte_grpcomm_collective_t
-typedef orte_grpcomm_coll_id_t ompi_rte_collective_id_t;
-OMPI_DECLSPEC int ompi_rte_modex(ompi_rte_collective_t *coll);
-#define ompi_rte_barrier(a) orte_grpcomm.barrier(a)
-OMPI_DECLSPEC orte_grpcomm_coll_id_t ompi_rte_get_collective_id(const struct ompi_communicator_t *comm);
-
 /* Process info struct and values */
 typedef orte_node_rank_t ompi_node_rank_t;
 typedef orte_local_rank_t ompi_local_rank_t;
@@ -103,12 +95,6 @@ typedef orte_error_t ompi_rte_error_report_t;
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-/* Database operations */
-OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *nm, const char* key,
-                                    const void *data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
-                                    const char *key,
-                                    void **data, opal_data_type_t type);
 #define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
 #define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
 #define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK
@@ -132,7 +118,6 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 
 typedef struct {
     ompi_rte_component_t super;
-    bool direct_modex;
     opal_mutex_t lock;
     opal_list_t modx_reqs;
 } ompi_rte_orte_component_t;
@@ -151,6 +136,9 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
     return (orte_process_name_t *)name;
 }
 #endif
+
+#define ompi_hostname_cutoff orte_full_modex_cutoff
+
 END_C_DECLS
 
 #endif /* MCA_OMPI_RTE_ORTE_H */

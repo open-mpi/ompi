@@ -39,7 +39,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -126,7 +128,6 @@ typedef struct {
     bool event_active;
     uint32_t id;
     uint32_t cid;
-    orte_grpcomm_coll_id_t disconnectid;
     orte_rml_tag_t tag;
     ompi_dpm_base_paccept_connect_callback_fn_t cbfunc;
     void *cbdata;
@@ -181,12 +182,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     int32_t i,j, new_proc_len;
     ompi_group_t *new_group_pointer;
 
-    orte_grpcomm_coll_id_t id[2];
-    orte_grpcomm_collective_t modex;
     orte_namelist_t *nm;
     orte_rml_recv_cb_t xfer;
     orte_process_name_t carport;
-    orte_dpm_prequest_t *preq;
 
     OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept with port %s %s",
@@ -226,82 +224,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     }
     
     if ( rank == root ) {
-        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
-        if (send_first) {
-            /* Get a collective id for the modex we need later on - we
-             * have to get a globally unique id for this purpose as
-             * multiple threads can do simultaneous connect/accept, 
-             * and the same processes can be engaged in multiple
-             * connect/accepts at the same time. Only one side
-             * needs to do this, so have it be send_first
-             */
-            nbuf = OBJ_NEW(opal_buffer_t);
-            if (NULL == nbuf) {
-                return OMPI_ERROR;
-            }
-            /* tell the HNP how many id's we need - we need one for
-             * executing the connect_accept, and another when we
-             * disconnect
-             */
-            i = 2;
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &i, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(nbuf);
-                return OMPI_ERROR;
-            }
-            /* send the request */
-            rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, nbuf,
-                                         ORTE_RML_TAG_COLL_ID_REQ,
-                                         orte_rml_send_callback, NULL);
-            /* wait for the id's */
-            xfer.active = true;
-            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_ID,
-                                    ORTE_RML_NON_PERSISTENT,
-                                    orte_rml_recv_callback, &xfer);
-            /* wait for response */
-            OMPI_WAIT_FOR_COMPLETION(xfer.active);
-            /* create a buffer to send to the other side */
-            nbuf = OBJ_NEW(opal_buffer_t);
-            if (NULL == nbuf) {
-                return OMPI_ERROR;
-            }
-            /* unpack the id's */
-            i=2;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&xfer);
-                return OMPI_ERROR;
-            }
-            /* send them to my peer on the other side */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(nbuf, id, 2, ORTE_GRPCOMM_COLL_ID_T))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&xfer);
-                return OMPI_ERROR;
-            }
-            OBJ_DESTRUCT(&xfer);  // done with the received data
-            rc = orte_rml.send_buffer_nb(&port, nbuf, tag, orte_rml_send_callback, NULL);
-        } else {
-            /* wait to recv the collective id's */
-            xfer.active = true;
-            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
-                                    ORTE_RML_NON_PERSISTENT,
-                                    orte_rml_recv_callback, &xfer);
-            /* wait for response */
-            OMPI_WAIT_FOR_COMPLETION(xfer.active);
-            /* unpack the id's */
-            i=2;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&xfer);
-                return OMPI_ERROR;
-            }
-            OBJ_DESTRUCT(&xfer);
-        }
-
-        OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:orte:connect_accept working with new collective ids %u %u",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id[0], id[1]));
-
         /* Generate the message buffer containing the number of processes and the list of
            participating processes */
         nbuf = OBJ_NEW(opal_buffer_t);
@@ -309,11 +231,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             return OMPI_ERROR;
         }
         
-        /* pass the collective id's so we can all use them */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(nbuf, id, 2, ORTE_GRPCOMM_COLL_ID_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto exit;
-        }
         if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
@@ -453,19 +370,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         ORTE_ERROR_LOG(rc);
         goto exit;
     }
-
-    /* unload collective id's */
-    num_vals = 2;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(nrbuf, id, &num_vals, ORTE_GRPCOMM_COLL_ID_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto exit;
-    }
     num_vals = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(nrbuf, &rsize, &num_vals, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         goto exit;
     }
-
     rc = ompi_proc_unpack(nrbuf, rsize, &rprocs, false, &new_proc_len, &new_proc_list);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -480,6 +389,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     if (new_proc_len > 0) {
         opal_list_t all_procs;
         orte_namelist_t *name;
+        opal_identifier_t *ids;
+        opal_list_t myvals;
+        opal_value_t *kv;
 
         /* we first need to give the wireup info to our routed module.
          * Not every routed module will need it, but some do require
@@ -539,43 +451,34 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
         /* setup the modex */
-        OBJ_CONSTRUCT(&modex, orte_grpcomm_collective_t);
-        modex.id = id[0];
-        modex.active = true;
-
+        ids = (opal_identifier_t*)malloc(opal_list_get_size(&all_procs) * sizeof(opal_identifier_t));
         /* copy across the list of participants */
+        i=0;
         OPAL_LIST_FOREACH(nm, &all_procs, orte_namelist_t) {
-            name = OBJ_NEW(orte_namelist_t);
-            name->name = nm->name;
-            opal_list_append(&modex.participants, &name->super);
+            memcpy(&ids[i++], &nm->name, sizeof(opal_identifier_t));
         }
-
+        OPAL_LIST_DESTRUCT(&all_procs);
         /* perform it */
-        if (OMPI_SUCCESS != (rc = orte_grpcomm.modex(&modex))) {
-            ORTE_ERROR_LOG(rc);
-            goto exit;
-        }
-        OMPI_WAIT_FOR_COMPLETION(modex.active);
-        OBJ_DESTRUCT(&modex);
-
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:orte:connect_accept modex complete",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-        /*
-          while (NULL != (item = opal_list_remove_first(&all_procs))) {
-          OBJ_RELEASE(item);
-          }
-          OBJ_DESTRUCT(&all_procs);
-        */
+        opal_pmix.fence(ids, i);
+        free(ids);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        /* set the locality of the new procs */
+        /* set the locality of the new procs - the required info should
+         * have been included in the data exchange */
         for (j=0; j < new_proc_len; j++) {
-            ompi_proc_set_locality(new_proc_list[j]);
+            OBJ_CONSTRUCT(&myvals, opal_list_t);
+            if (OMPI_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                         (opal_identifier_t*)&new_proc_list[j]->super.proc_name,
+                                                         OPAL_DSTORE_LOCALITY, &myvals))) {
+                new_proc_list[j]->super.proc_flags = OPAL_PROC_NON_LOCAL;
+            } else {
+                kv = (opal_value_t*)opal_list_get_first(&myvals);
+                new_proc_list[j]->super.proc_flags = kv->data.uint16;
+            }
+            OPAL_LIST_DESTRUCT(&myvals);
         }
 
         if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(new_proc_list, new_proc_len)))) {
@@ -651,12 +554,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    /* track this communicator's disconnect collective id */
-    preq = OBJ_NEW(orte_dpm_prequest_t);
-    preq->cid = newcomp->c_contextid;
-    preq->disconnectid = id[1];
-    opal_list_append(&dynamics, &preq->super);
-
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept activate comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -703,7 +600,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
 static int construct_peers(ompi_group_t *group, opal_list_t *peers)
 {
     int i;
-    orte_namelist_t *nm;
+    orte_namelist_t *nm, *n2;
     ompi_proc_t *proct;
 
     if (OMPI_GROUP_IS_DENSE(group)) {
@@ -722,7 +619,19 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
                                  ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
             nm->name = *(orte_process_name_t*)&proct->super.proc_name;
-            opal_list_append(peers, &nm->super);
+            /* need to maintain an ordered list to ensure the tracker signatures
+             * match across all procs */
+            OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
+                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                    opal_list_insert_pos(peers, &n2->super, &nm->super);
+                    nm = NULL;
+                    break;
+                }
+            }
+            if (NULL != nm) {
+                /* append to the end */
+                opal_list_append(peers, &nm->super);
+            }
         }
     } else {
         for (i=0; i < group->grp_proc_count; i++) {
@@ -738,7 +647,19 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
                                  ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
             nm->name = *(orte_process_name_t*)&proct->super.proc_name;
-            opal_list_append(peers, &nm->super);
+            /* need to maintain an ordered list to ensure the tracker signatures
+             * match across all procs */
+            OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
+                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                    opal_list_insert_pos(peers, &n2->super, &nm->super);
+                    nm = NULL;
+                    break;
+                }
+            }
+            if (NULL != nm) {
+                /* append to the end */
+                opal_list_append(peers, &nm->super);
+            }
         }
     }
     return ORTE_SUCCESS;
@@ -746,10 +667,11 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
 
 static int disconnect(ompi_communicator_t *comm)
 {
-    int ret;
-    ompi_rte_collective_t *coll;
-    orte_dpm_prequest_t *req, *preq;
+    int ret, i;
     ompi_group_t *group;
+    opal_list_t coll;
+    orte_namelist_t *nm;
+    opal_identifier_t *ids;
 
     /* Note that we explicitly use an RTE-based barrier (vs. an MPI
        barrier).  See a lengthy comment in
@@ -760,62 +682,41 @@ static int disconnect(ompi_communicator_t *comm)
                          "%s dpm:orte:disconnect comm_cid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid));
 
-    /* find this communicator's conn-accept request */
-    req = NULL;
-    OPAL_LIST_FOREACH(preq, &dynamics, orte_dpm_prequest_t) {
-        if (preq->cid == comm->c_contextid) {
-            req = preq;
-            break;
-        }
-    }
-    if (NULL == req) {
-        /* we are hosed */
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:orte:disconnect collective tracker for comm_cid %d NOT FOUND",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid));
-        return OMPI_ERROR;
-    }
     /* setup the collective */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = req->disconnectid;
-    /* the daemons will have no knowledge of this collective, so
-     * it must be done across the peers in the communicator.
-     * RHC: assuming for now that this must flow across all
+    OBJ_CONSTRUCT(&coll, opal_list_t);
+    /* RHC: assuming for now that this must flow across all
      * local and remote group members */
     group = comm->c_local_group;
-    if (ORTE_SUCCESS != (ret = construct_peers(group, &coll->participants))) {
+    if (ORTE_SUCCESS != (ret = construct_peers(group, &coll))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(coll);
+        OPAL_LIST_DESTRUCT(&coll);
         return ret;
     }
     /* do the same for the remote group */
     group = comm->c_remote_group;
-    if (ORTE_SUCCESS != (ret = construct_peers(group, &coll->participants))) {
+    if (ORTE_SUCCESS != (ret = construct_peers(group, &coll))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(coll);
-        return ret;
-    }
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                         "%s dpm:orte:disconnect calling barrier on comm_cid %d using id %d with %d participants",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, (int)coll->id,
-                         (int)opal_list_get_size(&coll->participants)));
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-        OMPI_ERROR_LOG(ret);
+        OPAL_LIST_DESTRUCT(&coll);
         return ret;
     }
 
-    /* wait for barrier to complete */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    /* setup the ids */
+    ids = (opal_identifier_t*)malloc(opal_list_get_size(&coll) * sizeof(opal_identifier_t));
+    i=0;
+    OPAL_LIST_FOREACH(nm, &coll, orte_namelist_t) {
+        memcpy(&ids[i++], &nm->name, sizeof(opal_identifier_t));
+    }
+    OPAL_LIST_DESTRUCT(&coll);
+
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
+                         "%s dpm:orte:disconnect calling barrier on comm_cid %d with %d participants",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, i));
+    opal_pmix.fence(ids, i);
+    free(ids);
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:disconnect barrier complete for comm_cid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid));
-
-    /* release this tracker */
-    opal_list_remove_item(&dynamics, &req->super);
-    OBJ_RELEASE(req);
 
     return OMPI_SUCCESS;
 }
@@ -1511,7 +1412,6 @@ static void process_request(orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:pconprocess: process modex",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        orte_grpcomm_base_store_modex(buffer, NULL);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:pconprocess: adding procs",

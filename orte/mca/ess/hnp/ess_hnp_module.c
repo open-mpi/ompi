@@ -76,6 +76,8 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
 
+#include "orte/orted/pmix/pmix_server.h"
+
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -83,7 +85,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/util/comm/comm.h"
-#include "orte/util/nidmap.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -379,9 +380,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* init the nidmap - just so we register that verbosity */
-    orte_util_nidmap_init(NULL);
-
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
@@ -462,38 +460,6 @@ static int rte_init(void)
         goto error;
     }
     
-    /* datastore - ensure we don't pickup the pmi component, but
-     * don't override anything set by user
-     */
-    if (NULL == getenv("OMPI_MCA_dstore")) {
-        putenv("OMPI_MCA_dstore=^pmi");
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_dstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_dstore_base_select";
-        goto error;
-    }
-    /* create the handles */
-    if (0 > (opal_dstore_peer = opal_dstore.open("PEER"))) {
-        error = "opal dstore global";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
-        error = "opal dstore internal";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-    if (0 > (opal_dstore_nonpeer = opal_dstore.open("NONPEER"))) {
-        error = "opal dstore nonpeer";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
 
     /*
      * Group communications
@@ -696,6 +662,13 @@ static int rte_init(void)
         free(contact_path);
     }
 
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
+
     /* setup the routed info - the selected routed component
      * will know what to do. 
      */
@@ -844,6 +817,9 @@ static int rte_finalize(void)
         }
         signals_set = false;
     }
+
+    /* shutdown the pmix server */
+    pmix_server_finalize();
 
     /* close the dfs */
     (void) mca_base_framework_close(&orte_dfs_base_framework);

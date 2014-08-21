@@ -41,13 +41,8 @@ BEGIN_C_DECLS
 #define ORTE_CONTIG_NODE_CMD        0x01
 #define ORTE_NON_CONTIG_NODE_CMD    0x02
 
-ORTE_DECLSPEC int orte_util_nidmap_init(opal_buffer_t *buffer);
-ORTE_DECLSPEC void orte_util_nidmap_finalize(void);
-
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update);
 ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo);
-
-ORTE_DECLSPEC int orte_util_encode_app_pidmap(opal_byte_object_t *boptr);
 
 #if ORTE_ENABLE_STATIC_PORTS
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);

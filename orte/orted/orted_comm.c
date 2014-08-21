@@ -112,9 +112,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     orte_std_cntr_t num_procs, num_new_procs = 0, p;
     orte_proc_t *cur_proc = NULL, *prev_proc = NULL;
     bool found = false;
-    orte_grpcomm_collective_t *coll;
-    orte_namelist_t *nm;
-    orte_grpcomm_coll_id_t id;
 
     /* unpack the command */
     n = 1;
@@ -234,51 +231,13 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             opal_output(0, "%s orted_cmd: received add_local_procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
+
         /* launch the processes */
         if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s orted:comm:add_procs failed to launch on error %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
         }
-        break;
-
-    case ORTE_DAEMON_NEW_COLL_ID:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_cmd: received new_coll_id",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-        /* unpack the jobid of the involved party */
-        n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        /* unpack the new collective id */
-        n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &id, &n, ORTE_GRPCOMM_COLL_ID_T))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        /* setup a new collective for it - will return the
-         * existing coll if already present */
-        coll = orte_grpcomm_base_setup_collective(id);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = job;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_prepend(&coll->participants, &nm->super);
-        /* pass it down to any local procs from that jobid */
-        relay_msg = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(relay_msg, &id, 1, ORTE_GRPCOMM_COLL_ID_T))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(relay_msg);
-            goto CLEANUP;
-        }
-        if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, relay_msg, ORTE_RML_TAG_FULL_COLL_ID))) {
-            ORTE_ERROR_LOG(ret);
-        }
-        OBJ_RELEASE(relay_msg);
-        /* progress any pending collectives */
-        orte_grpcomm_base_progress_collectives();
         break;
 
     case ORTE_DAEMON_ABORT_PROCS_CALLED:
@@ -943,31 +902,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         ret = ORTE_ERR_NOT_IMPLEMENTED;
         break;
             
-        /****    SYNC FROM LOCAL PROC    ****/
-    case ORTE_DAEMON_SYNC_BY_PROC:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_recv: received sync from local proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(sender));
-        }
-        if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, false))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        break;
-            
-    case ORTE_DAEMON_SYNC_WANT_NIDMAP:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_recv: received sync+nidmap from local proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(sender));
-        }
-        if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, true))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        break;
-        
         /****     TOP COMMAND     ****/
     case ORTE_DAEMON_TOP_CMD:
         /* setup the answer */
@@ -1171,10 +1105,6 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_REPORT_PROC_INFO_CMD");
     case ORTE_DAEMON_HEARTBEAT_CMD:
         return strdup("ORTE_DAEMON_HEARTBEAT_CMD");
-    case ORTE_DAEMON_SYNC_BY_PROC:
-        return strdup("ORTE_DAEMON_SYNC_BY_PROC");
-    case ORTE_DAEMON_SYNC_WANT_NIDMAP:
-        return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
     case ORTE_DAEMON_TOP_CMD:
         return strdup("ORTE_DAEMON_TOP_CMD");
     case ORTE_DAEMON_ABORT_PROCS_CALLED:

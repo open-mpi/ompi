@@ -26,6 +26,7 @@
 #include "opal/dss/dss_types.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/dstore/base/base.h"
@@ -48,7 +49,6 @@ mca_dstore_hash_module_t opal_dstore_hash_module = {
         init,
         finalize,
         store,
-        NULL,
         fetch,
         remove_data
     }
@@ -112,14 +112,15 @@ static int store(struct opal_dstore_base_module_t *imod,
     memcpy(&id, uid, sizeof(opal_identifier_t));
 
     opal_output_verbose(1, opal_dstore_base_framework.framework_output,
-                        "dstore:hash:store storing data for proc %" PRIu64 "", id);
+                        "%s dstore:hash:store storing data for proc %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(id));
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->hash_data, id))) {
         /* unrecoverable error */
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                             "dstore:hash:store: storing data for proc %" PRIu64 " unrecoverably failed",
-                             id));
+                             "%s dstore:hash:store: storing data for proc %s unrecoverably failed",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(id)));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -130,9 +131,10 @@ static int store(struct opal_dstore_base_module_t *imod,
 #if OPAL_ENABLE_DEBUG
     char *_data_type = opal_dss.lookup_data_type(val->type);
     OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                         "dstore:hash:store: %s key %s[%s] for proc %" PRIu64 "",
+                         "%s dstore:hash:store: %s key %s[%s] for proc %s",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                          (NULL == kv ? "storing" : "updating"),
-                         val->key, _data_type, id));
+                         val->key, _data_type, OPAL_NAME_PRINT(id)));
     free (_data_type);
 #endif
 
@@ -166,13 +168,16 @@ static int fetch(struct opal_dstore_base_module_t *imod,
     memcpy(&id, uid, sizeof(opal_identifier_t));
 
     OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                         "dstore:hash:fetch: searching for key %s on proc %" PRIu64 "",
-                         (NULL == key) ? "NULL" : key, id));
+                         "%s dstore:hash:fetch: searching for key %s on proc %s",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                         (NULL == key) ? "NULL" : key, OPAL_NAME_PRINT(id)));
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->hash_data, id))) {
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                             "dstore_hash:fetch data for proc %" PRIu64 " not found", id));
+                             "%s dstore_hash:fetch data for proc %s not found",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                             OPAL_NAME_PRINT(id)));
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -185,8 +190,11 @@ static int fetch(struct opal_dstore_base_module_t *imod,
                 return rc;
             }
             OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                                 "dstore:hash:fetch: adding data for key %s on proc %" PRIu64 "",
-                                 (NULL == kv->key) ? "NULL" : kv->key, id));
+                                 "%s dstore:hash:fetch: adding data for key %s on proc %s",
+                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                 (NULL == kv->key) ? "NULL" : kv->key,
+                                 OPAL_NAME_PRINT(id)));
+
             /* add it to the output list */
             opal_list_append(kvs, &knew->super);
         }
@@ -196,8 +204,10 @@ static int fetch(struct opal_dstore_base_module_t *imod,
     /* find the value */
     if (NULL == (kv = opal_dstore_base_lookup_keyval(proc_data, key))) {
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
-                             "dstore_hash:fetch key %s for proc %" PRIu64 " not found",
-                             (NULL == key) ? "NULL" : key, id));
+                             "%s dstore_hash:fetch key %s for proc %s not found",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                             (NULL == key) ? "NULL" : key,
+                             OPAL_NAME_PRINT(id)));
         return OPAL_ERR_NOT_FOUND;
     }
 

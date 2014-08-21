@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 
 #include "opal/util/output.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
@@ -215,6 +217,7 @@ static int mca_btl_base_vader_modex_send (void)
 {
     struct vader_modex_t modex;
     int modex_size;
+    int rc;
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     modex.seg_id = mca_btl_vader_component.my_seg_id;
@@ -226,7 +229,10 @@ static int mca_btl_base_vader_modex_send (void)
     memmove (&modex.seg_ds, &mca_btl_vader_component.seg_ds, modex_size);
 #endif
 
-    return opal_modex_send(&mca_btl_vader_component.super.btl_version, &modex, modex_size);
+    OPAL_MODEX_SEND(rc, PMIX_ASYNC_RDY, PMIX_LOCAL,
+                    &mca_btl_vader_component.super.btl_version,
+                    &modex, modex_size);
+    return rc;
 }
 
 /*

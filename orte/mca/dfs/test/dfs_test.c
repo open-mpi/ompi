@@ -484,7 +484,7 @@ static void process_opens(int fd, short args, void *cbdata)
         OBJ_CONSTRUCT(&myvals, opal_list_t);
         if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                     (opal_identifier_t*)&daemon,
-                                                    ORTE_DB_HOSTNAME, &myvals))) {
+                                                    OPAL_DSTORE_HOSTNAME, &myvals))) {
             ORTE_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&myvals);
             goto complete;

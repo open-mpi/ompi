@@ -15,6 +15,9 @@
 
 #include "opal/mca/base/base.h"
 
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/proc_info.h"
+
 #include "orte/mca/routed/base/base.h"
 #include "routed_direct.h"
 
@@ -46,8 +49,19 @@ orte_routed_component_t mca_routed_direct_component = {
 
 static int orte_routed_direct_component_query(mca_base_module_t **module, int *priority)
 {
-    /* allow selection only when specifically requested */
-    *priority = 0;
+    /* if we are an app and no daemon URI has been provided, then
+     * we must be chosen */
+    if (ORTE_PROC_IS_APP && !ORTE_PROC_IS_SINGLETON &&
+        NULL == orte_process_info.my_daemon_uri) {
+        /* we are direct launched, so set some arbitrary value
+         * for the daemon name */
+        ORTE_PROC_MY_DAEMON->jobid = 0;
+        ORTE_PROC_MY_DAEMON->vpid = 0;
+        *priority = 100;
+    } else {
+        /* allow selection only when specifically requested */
+        *priority = 0;
+    }
     *module = (mca_base_module_t *) &orte_routed_direct_module;
     return ORTE_SUCCESS;
 }

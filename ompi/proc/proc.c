@@ -35,11 +35,11 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/params.h"
 
 static opal_list_t  ompi_proc_list;
@@ -115,7 +115,9 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            if (OMPI_SUCCESS != (ret = ompi_modex_send_key_value("OMPI_ARCH", &proc->super.proc_arch, OPAL_UINT32))) {
+            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, OPAL_DSTORE_ARCH,
+                                   &proc->super.proc_arch, OPAL_UINT32);
+            if (OPAL_SUCCESS != ret) {
                 return ret;
             }
 #endif
@@ -125,124 +127,6 @@ int ompi_proc_init(void)
     return OMPI_SUCCESS;
 }
 
-int ompi_proc_set_locality(ompi_proc_t *proc)
-{
-    opal_hwloc_locality_t locality;
-    ompi_vpid_t vpid;
-    int ret;
-    opal_list_t myvals;
-    opal_value_t *kv, kvn;
-
-    /* get the locality information - do not use modex recv for
-     * this request as that will automatically cause the hostname
-     * to be loaded as well
-     */
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (OMPI_SUCCESS == opal_dstore.fetch(opal_dstore_internal,
-                                          (opal_identifier_t*)&proc->super.proc_name,
-                                          OPAL_DSTORE_LOCALITY, &myvals)) {
-        kv = (opal_value_t*)opal_list_get_first(&myvals);
-        proc->super.proc_flags = kv->data.uint16;
-        OPAL_LIST_DESTRUCT(&myvals);
-        return OMPI_SUCCESS;
-    }
-    OPAL_LIST_DESTRUCT(&myvals);
-
-    /* if we don't already have it, compute and save it for future use */
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                 (opal_identifier_t*)&proc->super.proc_name,
-                                                 OMPI_RTE_NODE_ID, &myvals))) {
-        if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_peer,
-                                                     (opal_identifier_t*)&proc->super.proc_name,
-                                                     OMPI_RTE_NODE_ID, &myvals))) {
-            OPAL_LIST_DESTRUCT(&myvals);
-            return ret;
-        }
-    }
-    kv = (opal_value_t*)opal_list_get_first(&myvals);
-    vpid = kv->data.uint32;
-    OPAL_LIST_DESTRUCT(&myvals);
-
-    /* if we are on different nodes, then we are probably non-local */
-    if (vpid != OMPI_RTE_MY_NODEID) {
-        locality = OPAL_PROC_NON_LOCAL;
-#ifdef OMPI_RTE_HOST_ID
-        /* see if coprocessors were detected - if the hostid isn't
-         * present, then no coprocessors were detected and we can
-         * ignore this test
-         */
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-        if (OMPI_SUCCESS == opal_dstore.fetch(opal_dstore_internal,
-                                              (opal_identifier_t*)&proc->super.proc_name,
-                                              OMPI_RTE_HOST_ID, &myvals)) {
-            kv = (opal_value_t*)opal_list_get_first(&myvals);
-            vpid = kv->data.uint32;
-            /* if this matches my host id, then we are on the same host,
-             * but not on the same board
-             */
-            if (vpid == ompi_process_info.my_hostid) {
-                locality = OPAL_PROC_ON_HOST;
-            } else {
-                locality = OPAL_PROC_NON_LOCAL;
-            }
-        }
-        OPAL_LIST_DESTRUCT(&myvals);
-#endif
-    } else {
-#if OPAL_HAVE_HWLOC
-        {
-            char *cpu_bitmap;
-
-            /* retrieve the binding for the other proc */
-            OBJ_CONSTRUCT(&myvals, opal_list_t);
-            if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
-                                                         (opal_identifier_t*)&proc->super.proc_name,
-                                                         OPAL_DSTORE_CPUSET, &myvals))) {
-                /* check the nonpeer data in case of comm_spawn */
-                if (OMPI_SUCCESS != ( ret = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                              (opal_identifier_t*)&proc->super.proc_name,
-                                                              OPAL_DSTORE_CPUSET, &myvals))) {
-                    ret = opal_dstore.fetch(opal_dstore_peer,
-                                            (opal_identifier_t*)&proc->super.proc_name,
-                                            OPAL_DSTORE_CPUSET, &myvals);
-                }
-            }
-            if (OMPI_SUCCESS != ret) {
-                /* we don't know their cpuset, so nothing more we can say */
-                locality = OPAL_PROC_ON_NODE;
-            } else {
-                kv = (opal_value_t*)opal_list_get_first(&myvals);
-                cpu_bitmap = kv->data.string;
-                if (NULL == cpu_bitmap || NULL == ompi_process_info.cpuset) {
-                    /* one or both of us is not bound, so all we can say is we are on the
-                     * same node
-                     */
-                    locality = OPAL_PROC_ON_NODE;
-                } else {
-                    /* we share a node - see what else we share */
-                    locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                     ompi_process_info.cpuset,
-                                                                     cpu_bitmap);
-                }
-            }
-            OPAL_LIST_DESTRUCT(&myvals);
-        }
-#else
-        /* all we know is that we share this node */
-        locality = OPAL_PROC_ON_NODE;
-#endif
-    }
-    OBJ_CONSTRUCT(&kvn, opal_value_t);
-    kvn.key = strdup(OPAL_DSTORE_LOCALITY);
-    kvn.type = OPAL_HWLOC_LOCALITY_T;
-    kvn.data.uint16 = locality;
-    ret = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&proc->super.proc_name, &kvn);
-    OBJ_DESTRUCT(&kvn);
-    /* set the proc's local value as well */
-    proc->super.proc_flags = locality;
-    return ret;
-}
 
 /**
  * The process creation is split into two steps. The second step
@@ -255,24 +139,31 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
  */
 int ompi_proc_complete_init(void)
 {
-    ompi_proc_t *proc = NULL;
-    opal_list_item_t *item = NULL;
+    ompi_proc_t *proc;
     int ret, errcode = OMPI_SUCCESS;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
-    for( item  = opal_list_get_first(&ompi_proc_list);
-         item != opal_list_get_end(&ompi_proc_list);
-         item  = opal_list_get_next(item)) {
-        proc = (ompi_proc_t*)item;
-
+    OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid != OMPI_PROC_MY_NAME->vpid) {
-            /* get the locality information */
-            ret = ompi_proc_set_locality(proc);
-            if (OMPI_SUCCESS != ret) {
-                errcode = ret;
-                break;
+            /* get the locality information - do not use modex recv for
+             * this request as that will automatically cause the hostname
+             * to be loaded as well. All RTEs are required to provide this
+             * information at startup for procs on our node. Thus, not
+             * finding the info indicates that the proc is non-local.
+             */
+            OBJ_CONSTRUCT(&myvals, opal_list_t);
+            if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
+                                                         (opal_identifier_t*)&proc->super.proc_name,
+                                                         OPAL_DSTORE_LOCALITY, &myvals))) {
+                proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
+            } else {
+                kv = (opal_value_t*)opal_list_get_first(&myvals);
+                proc->super.proc_flags = kv->data.uint16;
             }
+            OPAL_LIST_DESTRUCT(&myvals);
 
             if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                 /* IF the number of procs falls below the specified cutoff,
@@ -281,8 +172,9 @@ int ompi_proc_complete_init(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                ret = ompi_modex_recv_key_value(OMPI_DB_HOSTNAME, proc, (void**)&(proc->super.proc_hostname), OPAL_STRING);
-                if (OMPI_SUCCESS != ret) {
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, (opal_proc_t*)&proc->super,
+                                      (char**)&(proc->super.proc_hostname), OPAL_STRING);
+                if (OPAL_SUCCESS != ret) {
                     errcode = ret;
                     break;
                 }
@@ -297,12 +189,14 @@ int ompi_proc_complete_init(void)
                 proc->super.proc_hostname = NULL;
             }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-            /* get the remote architecture */
+            /* get the remote architecture - this might force a modex except
+             * for those environments where the RM provides it */
             {
                 uint32_t *ui32ptr;
                 ui32ptr = &(proc->super.proc_arch);
-                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&ui32ptr, OPAL_UINT32);
-                if (OMPI_SUCCESS == ret) {
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_ARCH, (opal_proc_t*)&proc->super,
+                                      (void**)&ui32ptr, OPAL_UINT32);
+                if (OPAL_SUCCESS == ret) {
                     /* if arch is different than mine, create a new convertor for this proc */
                     if (proc->super.proc_arch != opal_local_arch) {
                         OBJ_RELEASE(proc->super.proc_convertor);
@@ -499,6 +393,8 @@ int ompi_proc_refresh(void)
     opal_list_item_t *item = NULL;
     ompi_vpid_t i = 0;
     int ret=OMPI_SUCCESS;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -520,11 +416,23 @@ int ompi_proc_refresh(void)
             proc->super.proc_arch = opal_local_arch;
             opal_proc_local_set(&proc->super);
         } else {
-            /* get the locality information */
-            ret = ompi_proc_set_locality(proc);
-            if (OMPI_SUCCESS != ret) {
-                break;
+            /* get the locality information - do not use modex recv for
+             * this request as that will automatically cause the hostname
+             * to be loaded as well. All RTEs are required to provide this
+             * information at startup for procs on our node. Thus, not
+             * finding the info indicates that the proc is non-local.
+             */
+            OBJ_CONSTRUCT(&myvals, opal_list_t);
+            if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
+                                                         (opal_identifier_t*)&proc->super.proc_name,
+                                                         OPAL_DSTORE_LOCALITY, &myvals))) {
+                proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
+            } else {
+                kv = (opal_value_t*)opal_list_get_first(&myvals);
+                proc->super.proc_flags = kv->data.uint16;
             }
+            OPAL_LIST_DESTRUCT(&myvals);
+
             if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                 /* IF the number of procs falls below the specified cutoff,
                  * then we assume the job is small enough that retrieving
@@ -532,7 +440,8 @@ int ompi_proc_refresh(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                ret = ompi_modex_recv_key_value(OMPI_DB_HOSTNAME, proc, (void**)&(proc->super.proc_hostname), OPAL_STRING);
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, (opal_proc_t*)&proc->super,
+                                      (char**)&(proc->super.proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }
@@ -550,7 +459,8 @@ int ompi_proc_refresh(void)
             {
                 /* get the remote architecture */
                 uint32_t* uiptr = &(proc->super.proc_arch);
-                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_ARCH, (opal_proc_t*)&proc->super,
+                                      (void**)&uiptr, OPAL_UINT32);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }
@@ -605,30 +515,21 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             opal_value_t *kv;
             opal_list_t data;
 
-            /* fetch all global info we know about the peer - while
+            /* fetch all info we know about the peer - while
              * the remote procs may already know some of it, we cannot
              * be certain they do. So we must include a full dump of
-             * everything we know about this proc, excluding INTERNAL
-             * data that each process computes about its peers
+             * everything we know about this proc
              */
             OBJ_CONSTRUCT(&data, opal_list_t);
-            rc = opal_dstore.fetch(opal_dstore_peer,
+            rc = opal_dstore.fetch(opal_dstore_internal,
                                    (opal_identifier_t*)&proclist[i]->super.proc_name,
                                    NULL, &data);
             if (OPAL_SUCCESS != rc) {
                 OMPI_ERROR_LOG(rc);
                 num_entries = 0;
             } else {
-                rc = opal_dstore.fetch(opal_dstore_nonpeer,
-                                       (opal_identifier_t*)&proclist[i]->super.proc_name,
-                                       NULL, &data);
-                if (OPAL_SUCCESS != rc) {
-                    OMPI_ERROR_LOG(rc);
-                    num_entries = 0;
-                } else {
-                    /* count the number of entries we will send */
-                    num_entries = opal_list_get_size(&data);
-                }
+                /* count the number of entries we will send */
+                num_entries = opal_list_get_size(&data);
             }
 
             /* put the number of entries into the buffer */
@@ -799,18 +700,19 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                                    OMPI_PROC_MY_NAME, &new_name)) {
                         /* store it in the database */
-                        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_peer,
+                        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                                     (opal_identifier_t*)&new_name, kv))) {
                             OMPI_ERROR_LOG(rc);
                         }
                     }
                     OBJ_RELEASE(kv);
                 }
+                /* RHC: compute locality */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_CONSTRUCT(&myvals, opal_list_t);
-                rc = opal_dstore.fetch(opal_dstore_peer,
+                rc = opal_dstore.fetch(opal_dstore_internal,
                                        (opal_identifier_t*)&new_name,
-                                       "OMPI_ARCH", &myvals);
+                                       OPAL_DSTORE_ARCH, &myvals);
                 if( OPAL_SUCCESS == rc ) {
                     kv = (opal_value_t*)opal_list_get_first(&myvals);
                     new_arch = kv->data.uint32;
@@ -824,9 +726,9 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                     /* retrieve the hostname */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
-                    rc = opal_dstore.fetch(opal_dstore_peer,
+                    rc = opal_dstore.fetch(opal_dstore_internal,
                                            (opal_identifier_t*)&new_name,
-                                           OMPI_DB_HOSTNAME, &myvals);
+                                           OPAL_DSTORE_HOSTNAME, &myvals);
                     if( OPAL_SUCCESS == rc ) {
                         kv = (opal_value_t*)opal_list_get_first(&myvals);
                         new_hostname = strdup(kv->data.string);

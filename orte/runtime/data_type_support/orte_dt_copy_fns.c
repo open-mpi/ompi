@@ -359,3 +359,22 @@ int orte_dt_copy_attr(orte_attribute_t **dest, orte_attribute_t *src, opal_data_
     
     return ORTE_SUCCESS;
 }
+
+int orte_dt_copy_sig(orte_grpcomm_signature_t **dest, orte_grpcomm_signature_t *src, opal_data_type_t type)
+{
+    *dest = OBJ_NEW(orte_grpcomm_signature_t);
+    if (NULL == *dest) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    (*dest)->sz = src->sz;
+    (*dest)->signature = (orte_process_name_t*)malloc(src->sz * sizeof(orte_process_name_t));
+    if (NULL == (*dest)->signature) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(*dest);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    memcpy(&(*dest)->signature, &src->signature, src->sz * sizeof(orte_process_name_t));
+    
+    return ORTE_SUCCESS;
+}

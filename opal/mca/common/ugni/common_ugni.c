@@ -14,9 +14,9 @@
 
 #include "common_ugni.h"
 
-#include "opal/mca/dstore/dstore.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 /* NTH: we need some options from the btl */
 #include "opal/mca/btl/ugni/btl_ugni.h"
@@ -186,8 +186,9 @@ static int opal_common_ugni_send_modex (int my_cdm_id)
         msg_offset += modex_size;
     }
 
-    rc = opal_modex_send(&opal_common_ugni_component,
-                         modex_msg, total_msg_size);
+    OPAL_MODEX_SEND(rc, PMIX_ASYNC_RDY, PMIX_REMOTE,
+                    &opal_common_ugni_component,
+                    modex_msg, total_msg_size);
 
     free(modex_msg);
 
@@ -246,23 +247,12 @@ int opal_common_ugni_init (void)
 #if 0
 #if defined(OMPI_DB_GLOBAL_RANK)
     {
-        opal_list_t myvals;
-        opal_value_t *kv;
-
         ptr = &my_rank;
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-        rc = opal_dstore.fetch (opal_dstore_internal,
-                                (opal_identifier_t *)&my_proc->proc_name,
-                                OMPI_DB_GLOBAL_RANK,
-                                &myvals);
-        if (OPAL_SUCCESS == rc) {
-            kv = (opal_value_t*)opal_list_get_first(&myvals);
-            if (OPAL_SUCCESS != opal_value_unload(kv, (void**)&ptr, OPAL_UINT32)) {
-                my_rank = my_proc->proc_name.vpid;
-            }
-        } else {
+        OPAL_MODEX_RECV_VALUE(rc, (opal_identifier_t *)&my_proc->proc_name,
+                              OMPI_DB_GLOBAL_RANK, (void**)&ptr, OPAL_UINT32);
+        if (OPAL_SUCCESS != rc) {
             my_rank = my_proc->proc_name.vpid;
-        }
+        } 
         OPAL_LIST_DESTRUCT(&myvals);
     }
 #else

@@ -518,9 +518,9 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     case ORTE_PROC_STATE_CALLED_ABORT:
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
-                             "%s errmgr:hnp: proc %s called abort",
+                             "%s errmgr:hnp: proc %s called abort with exit code %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
+                             ORTE_NAME_PRINT(proc), pptr->exit_code));
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
             jdata->state = ORTE_JOB_STATE_CALLED_ABORT;
             /* point to the first proc to cause the problem */
