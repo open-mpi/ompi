@@ -50,11 +50,6 @@ You may wish to try to narrow down the problem;
 WARNING: The MCA parameter mpi_param_check has been set to true, but
 parameter checking has been compiled out of Open MPI.  The
 mpi_param_check value has therefore been ignored.
-[mpi-params:leave-pinned-and-pipeline-selected]
-WARNING: Cannot set both the MCA parameters mpi_leave_pinned and
-mpi_leave_pinned_pipeline to "true".  Defaulting to mpi_leave_pinned
-ONLY.
-#
 [mpi_finalize:invoked_multiple_times]
 The function MPI_FINALIZE was invoked multiple times in a single
 process on host %s, PID %d.  

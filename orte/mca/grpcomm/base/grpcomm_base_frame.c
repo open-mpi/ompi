@@ -115,6 +115,8 @@ static void ccon(orte_grpcomm_coll_t *p)
     p->dmns = NULL;
     p->ndmns = 0;
     p->nreported = 0;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
 }
 static void cdes(orte_grpcomm_coll_t *p)
 {

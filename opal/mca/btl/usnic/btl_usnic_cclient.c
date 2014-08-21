@@ -248,6 +248,44 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
 
 
 /*
+ * Send an unlisten command to the agent
+ */
+int opal_btl_usnic_connectivity_unlisten(opal_btl_usnic_module_t *module)
+{
+    /* If connectivity checking is not enabled, do nothing */
+    if (!mca_btl_usnic_component.connectivity_enabled) {
+        return OPAL_SUCCESS;
+    }
+    /* Only the MPI process who is also the agent will send the
+       UNLISTEN command */
+    if (0 != opal_process_info.my_local_rank) {
+        return OPAL_SUCCESS;
+    }
+
+    /* Send the UNLISTEN command */
+    int id = CONNECTIVITY_AGENT_CMD_UNLISTEN;
+    if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(id), &id)) {
+        OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
+        ABORT("usnic connectivity client IPC write failed");
+        /* Will not return */
+    }
+
+    /* Send the UNLISTEN command parameters */
+    opal_btl_usnic_connectivity_cmd_unlisten_t cmd = {
+        .ipv4_addr = module->local_addr.ipv4_addr,
+    };
+
+    if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
+        OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
+        ABORT("usnic connectivity client IPC write failed");
+        /* Will not return */
+    }
+
+    return OPAL_SUCCESS;
+}
+
+
+/*
  * Shut down the connectivity client
  */
 int opal_btl_usnic_connectivity_client_finalize(void)

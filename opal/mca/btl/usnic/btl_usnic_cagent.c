@@ -176,6 +176,16 @@ static void udp_port_listener_constructor(agent_udp_port_listener_t *obj)
 
 static void udp_port_listener_destructor(agent_udp_port_listener_t *obj)
 {
+    /* Find any pings that are pending on this listener and delete
+       them */
+    agent_ping_t *ap, *apnext;
+    OPAL_LIST_FOREACH_SAFE(ap, apnext, &pings_pending, agent_ping_t) {
+        if (ap->src_ipv4_addr == obj->ipv4_addr) {
+            opal_list_remove_item(&pings_pending, &ap->super);
+            OBJ_RELEASE(ap);
+        }
+    }
+
     if (-1 != obj->fd) {
         close(obj->fd);
     }
@@ -926,6 +936,35 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
 }
 
 /*
+ * Receive and process the rest of an UNLISTEN command from a local IPC
+ * client.
+ */
+static void agent_thread_cmd_unlisten(agent_ipc_listener_t *ipc_listener)
+{
+    /* Read the rest of the UNLISTEN command from the IPC socket */
+    int ret;
+    opal_btl_usnic_connectivity_cmd_unlisten_t cmd;
+    ret = opal_fd_read(ipc_listener->client_fd, sizeof(cmd), &cmd);
+    if (OPAL_SUCCESS != ret) {
+        OPAL_ERROR_LOG(ret);
+        ABORT("usnic connectivity agent IPC UNLISTEN read failed");
+        /* Will not return */
+    }
+
+    /* If we are listening on this address (and we should be), then
+       stop listening on it. */
+    uint32_t udp_port;
+    agent_udp_port_listener_t *udp_listener;
+    udp_listener = agent_thread_find_listener(cmd.ipv4_addr, &udp_port);
+    if (NULL != udp_listener) {
+        OBJ_RELEASE(udp_listener);
+    }
+
+    /* All done! */
+    return;
+}
+
+/*
  * Called when we get an incoming IPC message
  */
 static void agent_thread_ipc_receive(int fd, short flags, void *context)
@@ -947,7 +986,8 @@ static void agent_thread_ipc_receive(int fd, short flags, void *context)
     }
 
     assert(CONNECTIVITY_AGENT_CMD_LISTEN == command ||
-           CONNECTIVITY_AGENT_CMD_PING == command);
+           CONNECTIVITY_AGENT_CMD_PING == command ||
+           CONNECTIVITY_AGENT_CMD_UNLISTEN == command);
 
     switch (command) {
     case CONNECTIVITY_AGENT_CMD_LISTEN:
@@ -955,6 +995,9 @@ static void agent_thread_ipc_receive(int fd, short flags, void *context)
         break;
     case CONNECTIVITY_AGENT_CMD_PING:
         agent_thread_cmd_ping(ipc_listener);
+        break;
+    case CONNECTIVITY_AGENT_CMD_UNLISTEN:
+        agent_thread_cmd_unlisten(ipc_listener);
         break;
     default:
         ABORT("Unexpected connectivity agent command");
@@ -1114,7 +1157,11 @@ int opal_btl_usnic_connectivity_agent_init(void)
         /* Will not return */
     }
 
-    if (listen(ipc_accept_fd, 5) != 0) {
+    /* Give an arbitrarily large backlog number so that connecting
+       clients will never be backlogged (note for Future Jeff: please
+       don't laugh at Past Jeff if 256 has become a trivially small
+       number of on-server procs in a single job). */
+    if (listen(ipc_accept_fd, 256) != 0) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("listen() failed");
         /* Will not return */

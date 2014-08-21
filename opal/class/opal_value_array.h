@@ -22,6 +22,9 @@
 #include "opal_config.h"
 
 #include <string.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif /* HAVE_STRINGS_H */
 
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG

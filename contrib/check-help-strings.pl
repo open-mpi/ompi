@@ -23,16 +23,16 @@ my $VERBOSE = 0;
 my $HELP = 0;
 
 GetOptions(
-    "help" => \$HELP,
-    "verbose" => \$VERBOSE,
+    "help|h" => \$HELP,
+    "verbose|v" => \$VERBOSE,
 ) or die "unable to parse options, aborted";
 
 if ($HELP) {
     print <<EOF;
 %0 [options]
 
---help | -h          This help message
---verbose | -v       Be verbose in output
+--help | h          This help message
+--verbose | v       Be verbose in output
 EOF
     exit(0);
 }
@@ -51,12 +51,28 @@ sub DebugDump {
     print $s;
 }
 
+sub isTopDir {
+    my ($d) = @_;
+
+    # trunk
+    if (-f "$d/Makefile.ompi-rules") {
+        return 1;
+    }
+
+    # v1.8
+    if (-f "$d/Makefile.man-page-rules") {
+        return 1;
+    }
+
+    return 0;
+}
+
 ###########################################################################
 
 # Find the top-level OMPI source tree dir
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/Makefile.ompi-rules") {
+while (!isTopDir($top)) {
     chdir("..");
     $top = cwd();
     die "Can't find top-level Open MPI directory"
@@ -117,7 +133,11 @@ sub match_files {
 
 # Find all source and help files
 print "Searching for source and help files...\n";
-print "Starting in: $start\n";
+my $startrel = $start;
+if ($top ne $start) {
+    $startrel =~ s/^$top//;
+    $startrel =~ s/^\///;
+}
 find(\&match_files, ".");
 
 ###########################################################################
@@ -126,7 +146,7 @@ find(\&match_files, ".");
 my $help_topics;
 my $help_file_refs;
 
-print "Indexing help files...\n";
+print "Indexing help files (from entire source tree)...\n";
 
 foreach my $info (@help_files) {
     verbose("Indexing help: $info->{full}\n");
@@ -175,7 +195,11 @@ foreach my $info (@help_files) {
 
 # Search source files for calls to opal_show_help and (o)rte_show_help
 
-print "Searching source files...\n";
+if ($start eq $top) {
+    print "Searching source files (from entire source tree)...\n";
+} else {
+    print "Searching source files (under $startrel)...\n";
+}
 
 # Helper: for a given filename/topic, see if it exists
 sub check_file_topic {
@@ -234,6 +258,10 @@ sub check_name {
 # Check to ensure helpfile/topic combos exist
 foreach my $info (@source_files) {
     verbose("Searching source: $info->{full}\n");
+
+    # If this source file is not in the target area, then skip it
+    next
+        if ($info->{relative} != /^$startrel/);
 
     my $src;
     open(FH, $info->{full}) || die "Can't open $info->{full}";

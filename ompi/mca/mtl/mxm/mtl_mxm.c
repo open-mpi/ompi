@@ -1,6 +1,6 @@
 /*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -189,7 +189,7 @@ static int ompi_mtl_mxm_send_ep_address(void *address, size_t address_len)
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
         modex_cur_size = (modex_buf_size < modex_max_size) ? modex_buf_size : modex_max_size;
         OPAL_MODEX_SEND_STRING(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
-                            modex_name, modex_buf_ptr, modex_cur_size);
+                               modex_name, modex_buf_ptr, modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
             goto bail;
@@ -228,7 +228,9 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
 
     /* Receive address length */
     sprintf(modex_name, "%s-len", modex_component_name);
-    OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super, (void**)&address_len_buf_ptr, &modex_cur_size);
+    OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super,
+                           (char**)&address_len_buf_ptr,
+                           &modex_cur_size);
     if (OMPI_SUCCESS != rc) {
         MXM_ERROR("Failed to receive ep address length");
         goto bail;
@@ -247,7 +249,9 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     modex_buf_size = 0;
     while (modex_buf_size < *address_len_p) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
-        OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super, (unsigned char**)&modex_buf_ptr, &modex_cur_size);
+        OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super,
+                               (char**)&modex_buf_ptr,
+                               &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
             goto bail;

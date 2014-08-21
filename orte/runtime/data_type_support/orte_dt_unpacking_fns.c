@@ -739,6 +739,13 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* unpack the number of nodes involved in the job */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->num_nodes), &n, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     return ORTE_SUCCESS;

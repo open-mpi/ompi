@@ -793,13 +793,24 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
                         ORTE_NAME_PRINT(&(peer->name)),
                         peer->sd, mca_oob_tcp_state_print(peer->state));
 
+    /* release the socket */
+    close(peer->sd);
+    peer->sd = -1;
+
+    /* if we were CONNECTING, then we need to mark the address as
+     * failed and cycle back to try the next address */
+    if (MCA_OOB_TCP_CONNECTING == peer->state) {
+        if (NULL != peer->active_addr) {
+            peer->active_addr->state = MCA_OOB_TCP_FAILED;
+        }
+        ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
+        return;
+    }
+
     peer->state = MCA_OOB_TCP_CLOSED;
     if (NULL != peer->active_addr) {
         peer->active_addr->state = MCA_OOB_TCP_CLOSED;
     }
-
-    /* release the socket */
-    close(peer->sd);
 
     /* inform the component-level that we have lost a connection so
      * it can decide what to do about it.

@@ -61,9 +61,16 @@ typedef struct {
     orte_grpcomm_cbfunc_t cbfunc;
     void *cbdata;
 } orte_grpcomm_caddy_t;
+static void gccon(orte_grpcomm_caddy_t *p)
+{
+    p->sig = NULL;
+    p->buf = NULL;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
+}
 static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                           opal_object_t,
-                          NULL, NULL);
+                          gccon, NULL);
 
 int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                            orte_rml_tag_t tag,

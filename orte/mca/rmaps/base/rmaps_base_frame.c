@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -427,10 +429,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (orte_rmaps_base_pernode) {
-        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--pernode, -pernode", "--map-by ppr:1:node",
-                       "rmaps_base_pernode, rmaps_ppr_pernode",
-                       "rmaps_base_mapping_policy=ppr:1:node");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
@@ -447,10 +445,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (0 < orte_rmaps_base_n_pernode) {
-        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--npernode, -npernode", "--map-by ppr:N:node",
-                       "rmaps_base_n_pernode, rmaps_ppr_n_pernode",
-                       "rmaps_base_mapping_policy=ppr:N:node");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
@@ -467,10 +461,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (0 < orte_rmaps_base_n_persocket) {
-        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--npersocket, -npersocket", "--map-by ppr:N:socket",
-                       "rmaps_base_n_persocket, rmaps_ppr_n_persocket",
-                       "rmaps_base_mapping_policy=ppr:N:socket");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
@@ -855,7 +845,7 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
                 ORTE_SET_RANKING_DIRECTIVE(tmp, ORTE_RANKING_FILL);
             } else {
                 /* unrecognized modifier */
-                orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "ranking", ck[1]);
+                orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, ck[1]);
                 opal_argv_free(ck);
                 return ORTE_ERR_SILENT;
             }

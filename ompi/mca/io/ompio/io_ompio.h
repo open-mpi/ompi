@@ -88,6 +88,21 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define WRITE_PRINT_QUEUE 1809
 #define READ_PRINT_QUEUE 2178
 /*---------------------------*/
+
+
+/*AGGREGATOR GROUPING DECISIONS*/
+#define OMPIO_GROUPING_OPTION           1 
+#define DATA_VOLUME                     1
+#define UNIFORM_DISTRIBUTION            2
+#define OMPIO_UNIFORM_DIST_THRESHOLD  0.5
+#define CONTIGUITY                      3
+#define OMPIO_CONTG_THRESHOLD     1048576
+#define OPTIMIZE_GROUPING               4
+#define OMPIO_PROCS_PER_GROUP_TAG       0
+#define OMPIO_PROCS_IN_GROUP_TAG        1
+
+/*---------------------------*/
+
 BEGIN_C_DECLS
 
 enum ompio_fs_type
@@ -144,6 +159,20 @@ typedef struct {
     int count;
 } print_queue;
 
+typedef struct {
+	int ndims;
+	int *dims;
+	int *periods;
+	int *coords;
+	int reorder;
+} cart_topo_components;
+
+
+typedef struct{
+        OMPI_MPI_OFFSET_TYPE contg_chunk_size;
+        int *procs_in_contg_group;
+	int procs_per_contg_group;
+} contg;
 
 /**
  * Back-end structure for MPI_File
@@ -214,6 +243,15 @@ struct mca_io_ompio_file_t {
     struct ompi_errhandler_t *error_handler;
     ompi_errhandler_type_t errhandler_type;
     */
+
+    /*initial list of aggregators and groups*/
+    int *f_init_aggr_list;
+    int  f_init_num_aggrs;
+
+    int f_init_procs_per_group;
+    int *f_init_procs_in_group;
+
+   
 };
 typedef struct mca_io_ompio_file_t mca_io_ompio_file_t;
 
@@ -230,6 +268,11 @@ OMPI_DECLSPEC extern print_queue *coll_read_time;
 OMPI_DECLSPEC void mca_io_ompio_get_num_aggregators ( int *num_aggregators);
 OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
+
+OMPI_DECLSPEC int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles, 
+						size_t bpc, int max_data, uint32_t iov_count, 
+						struct iovec *decoded_iov, int *ii, int *jj, 
+						size_t *tbw ); 
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
@@ -284,6 +327,12 @@ OMPI_DECLSPEC int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
                                               struct ompi_datatype_t *datatype,
                                               ompi_request_t **request);
 
+OMPI_DECLSPEC int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
+					     void *buf,
+					     int count,
+					     struct ompi_datatype_t *datatype,
+					     ompi_request_t **request);
+
 OMPI_DECLSPEC int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
                                             void *buf,
                                             int count,
@@ -317,6 +366,10 @@ OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all_end (mca_io_ompio_file_t *ompi
                                                        ompi_status_public_t * status);
 OMPI_DECLSPEC int ompio_io_ompio_file_get_size (mca_io_ompio_file_t *fh,
                                                 OMPI_MPI_OFFSET_TYPE *size);
+
+OMPI_DECLSPEC int ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
+						    OMPI_MPI_OFFSET_TYPE *offset);
+
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
@@ -359,10 +412,41 @@ OMPI_DECLSPEC int ompi_io_ompio_generate_groups (mca_io_ompio_file_t *fh,
                                                  int num_aggregators,
                                                  int *root,
                                                  int *procs_per_group,
-                                                 int **ranks);
+						 int **ranks);
+
+/*Aggregator selection methods*/
 OMPI_DECLSPEC int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                                                       int num_aggregators,
                                                       size_t bytes_per_proc);
+
+OMPI_DECLSPEC int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
+		                             size_t bytes_per_proc);
+
+OMPI_DECLSPEC int mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh);
+
+OMPI_DECLSPEC int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
+		                                    int *num_groups,
+						    contg *contg_groups);
+
+OMPI_DECLSPEC int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
+		                                         int num_groups,
+							 contg *contg_groups);
+
+OMPI_DECLSPEC int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
+		                          OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
+			                  OMPI_MPI_OFFSET_TYPE *end_offsets,
+		                          int size_new_group,
+			                  OMPI_MPI_OFFSET_TYPE *max_cci,
+			                  OMPI_MPI_OFFSET_TYPE *min_cci,
+			                  int *num_groups,
+			                  int *size_smallest_group);
+
+int mca_io_ompio_distribute_group(mca_io_ompio_file_t *fh,
+                                  int size_old_group,
+				  int size_new_group,
+				  int size_last_group);
+
+/*end of aggregator selection methods*/
 
 
 OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
@@ -445,6 +529,7 @@ OMPI_DECLSPEC int ompi_io_ompio_allgather_array (void *sbuf,
                                                  int *procs_in_group,
                                                  int procs_per_group,
                                                  ompi_communicator_t *comm);
+						 
 OMPI_DECLSPEC int ompi_io_ompio_allgatherv_array (void *sbuf, 
                                                   int scount,
                                                   ompi_datatype_t *sdtype, 

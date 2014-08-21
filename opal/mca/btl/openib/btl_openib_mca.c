@@ -267,7 +267,7 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_int("want_fork_support", NULL,
                   "Whether fork support is desired or not "
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
-                  OPAL_HAVE_IBV_FORK_INIT ? -1 : 0, &mca_btl_openib_component.want_fork_support, 0));
+                  0, &mca_btl_openib_component.want_fork_support, 0));
 
     asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.opaldatadir);
@@ -725,7 +725,7 @@ int btl_openib_verify_mca_params (void)
     }
 
 #if !HAVE_IBV_FORK_INIT
-    if (0 != mca_btl_openib_component.want_fork_support) {
+    if (1 == mca_btl_openib_component.want_fork_support) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
                        opal_proc_local_get()->proc_hostname);

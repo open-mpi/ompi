@@ -358,14 +358,17 @@ libmpi_mpifh_la_SOURCES += \
         win_get_group_f.c \
         win_get_name_f.c \
         win_lock_f.c \
+        win_lock_all_f.c \
         win_post_f.c \
         win_set_attr_f.c \
         win_set_errhandler_f.c \
         win_set_name_f.c \
         win_shared_query_f.c \
         win_start_f.c \
+        win_sync_f.c \
         win_test_f.c \
         win_unlock_f.c \
+        win_unlock_all_f.c \
         win_wait_f.c \
         win_flush_f.c \
         win_flush_all_f.c \

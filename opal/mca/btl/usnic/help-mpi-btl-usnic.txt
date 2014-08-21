@@ -323,3 +323,45 @@ connectivity map file will not be written.
   Output map file:   %s
   Working directory: %s
   Error:             %s (%d)
+#
+[received too many short packets]
+WARNING: The usnic BTL received a significant number of abnormally
+short packets on a single network interface.  This may be due to
+corruption or congestion in the network fabric.  It may be helpful to
+enable no-drop functionality in the fabric.  It may also be useful to
+run a physical/layer 0 diagnostic.
+
+Your job will continue, but if this poor network behavior continues,
+you may experience lower-than-expected performance due to overheads
+caused by higher-than-usual retransmission rates (to compensate for
+the corrupted received packets).
+
+  Local server:       %s
+  usNIC interface:    %s (which is %s)
+  # of short packets
+     received so far: %d
+
+You will only receive this warning once per MPI process per job.
+
+If you know that your network environment is lossy/heavily congested
+such that short/corrupted packets are expected, you can disable this
+warning by setting the btl_usnic_max_short_packets MCA parameter to 0.
+#
+[non-receive completion error]
+WARNING: The usnic BTL has detected an error in the completion of a
+non-receive event.  This is highly unusual, and may indicate an error
+in the usNIC subsystem on this server.
+
+Your MPI job will continue, but you should monitor the job and ensure
+that it behaves correctly.
+
+  Local server:       %s
+  usNIC interface:    %s (which is %s)
+  Channel index:      %d
+  Completion status:  %d
+  Work request ID:    %p
+  Opcode:             %d
+  Vendor error:       %d
+
+If this error keeps happening, you should contact Cisco technical
+support.

@@ -2417,6 +2417,14 @@ subroutine ompi_win_lock_f(lock_type,rank,assert,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_lock_f
 
+subroutine ompi_win_lock_all_f(assert,win,ierror) &
+   BIND(C, name="ompi_win_lock_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: assert
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_lock_all_f
+
 subroutine ompi_win_post_f(group,assert,win,ierror) &
    BIND(C, name="ompi_win_post_f")
    implicit none
@@ -2447,6 +2455,13 @@ subroutine ompi_win_start_f(group,assert,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_start_f
 
+subroutine ompi_win_sync_f(win,ierror) &
+   BIND(C, name="ompi_win_sync_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_sync_f
+
 subroutine ompi_win_unlock_f(rank,win,ierror) &
    BIND(C, name="ompi_win_unlock_f")
    implicit none
@@ -2454,6 +2469,13 @@ subroutine ompi_win_unlock_f(rank,win,ierror) &
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_unlock_f
+
+subroutine ompi_win_unlock_all_f(win,ierror) &
+   BIND(C, name="ompi_win_unlock_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_unlock_all_f
 
 subroutine ompi_win_wait_f(win,ierror) &
    BIND(C, name="ompi_win_wait_f")

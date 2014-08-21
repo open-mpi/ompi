@@ -174,10 +174,12 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ompi_mtl_psm.epid = epid;
     ompi_mtl_psm.mq   = mq;
 
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
                     &mca_mtl_psm_component.super.mtl_version, 
-                    &ompi_mtl_psm.epid, sizeof(psm_epid_t));
-    if (OPAL_SUCCESS != rc) {
+                    &ompi_mtl_psm.epid, 
+                    sizeof(psm_epid_t));
+
+    if (OMPI_SUCCESS != rc) {
 	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
 	return OMPI_ERROR;
     }
@@ -282,12 +284,12 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 
     /* Get the epids for all the processes from modex */
     for (i = 0; i < (int) nprocs; i++) {
-        OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version,
-                &procs[i]->super, (void**)&epid, &size);
-        if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
-            return OMPI_ERROR;
-        }
-        epids_in[i] = *epid;
+        OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version, 
+                        &procs[i]->super, (void**)&epid, &size);
+	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
+	  return OMPI_ERROR;
+	}
+	epids_in[i] = *epid;
     }
 
     timeout_in_secs = max(ompi_mtl_psm.connect_timeout, 0.5 * nprocs);

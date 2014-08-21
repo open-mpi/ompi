@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -514,7 +516,7 @@ static int ibnet_load_devices(void)
     if(0 == num_devs || NULL == ib_devs) {
         IBNET_VERBOSE(10, ("No ib devices found"));
         /* No hca error*/
-        opal_show_help("help-mpi-sbgp-ibnet.txt", "no-nics", true);
+        opal_show_help("help-mpi-btl-base.txt", "btl:no-nics", true);
         return OMPI_ERROR;
     }
 

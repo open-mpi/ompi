@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,7 +269,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_REMOTE,
+    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, OPAL_PMIX_GLOBAL,
                     &mca_mtl_portals4_component.mtl_version,
                     &id, sizeof(id));
     if (OMPI_SUCCESS != ret) {

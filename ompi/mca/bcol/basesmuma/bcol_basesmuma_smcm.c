@@ -86,7 +86,7 @@ static void bcol_basesmuma_smcm_mmap_construct (bcol_basesmuma_smcm_mmap_t *smcm
 static void bcol_basesmuma_smcm_mmap_destruct (bcol_basesmuma_smcm_mmap_t *smcm_mmap)
 {
     if (smcm_mmap->map_seg) {
-        munmap (smcm_mmap->map_seg, smcm_mmap->map_size);
+        munmap ((void *)smcm_mmap->map_seg, smcm_mmap->map_size);
         smcm_mmap->map_seg = NULL;
     }
 
@@ -441,7 +441,7 @@ static bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr, i
             opal_output (ompi_bcol_base_framework.framework_output, "mca_bcol_basesmuma_sm_alloc_mmap: memory region too small len %lu add %p",
                         (unsigned long) length, myaddr);
             OBJ_RELEASE(map);
-            munmap (seg, length);
+            munmap ((void *)seg, length);
             return NULL;
         }
 

@@ -573,7 +573,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
      */
     cnt = opal_argv_count(orted_cmd_line);    
     for (i=0; i < cnt; i+=3) {
-        if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+        if (NULL == strchr(orted_cmd_line[i+2], ' ')) {
             continue;
         }
         /* protect the value with quotes */
@@ -615,9 +615,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
                     /* add it */
                     opal_argv_append(&argc, &argv, "-mca");
                     opal_argv_append(&argc, &argv, param);
-                    /* there could be multi-word values here, or
-                     * values with special characters, so protect
-                     * the value with quotes */
                     (void)asprintf(&p2, "\"%s\"", value);
                     opal_argv_append(&argc, &argv, p2);
                     free(p2);

@@ -46,10 +46,14 @@ Initialization of MXM library failed.
 
   Error: %s
 
-[error polling network]
-Error %s occurred in attempting to make network progress (mxm_mq_ipeek).
-
 [error posting receive]
+Unable to post application receive buffer
+
+  Error:      %s
+  Buffer:     %p
+  Length:     %d
+
+[error posting message receive]
 Unable to post application receive buffer
 
   Error:      %s
@@ -61,7 +65,3 @@ Unable to post application send buffer
 
   Error:      %s
 
-[error while waiting in send]
-Error while waiting in send
-
-  Error:      %s

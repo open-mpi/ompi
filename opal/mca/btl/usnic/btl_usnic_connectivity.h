@@ -94,6 +94,7 @@ struct opal_btl_usnic_module_t;
 enum {
     CONNECTIVITY_AGENT_CMD_LISTEN = 17,
     CONNECTIVITY_AGENT_CMD_PING,
+    CONNECTIVITY_AGENT_CMD_UNLISTEN,
     CONNECTIVITY_AGENT_CMD_MAX
 };
 
@@ -124,6 +125,14 @@ typedef struct {
     char usnic_name[CONNECTIVITY_IFNAME_LEN];
     uint8_t mac[6];
 } opal_btl_usnic_connectivity_cmd_listen_t;
+
+/*
+ * Fields for the UNLISTEN command.  This struct is sent down the IPC
+ * socket from the cclient to the cagent.
+ */
+typedef struct {
+    uint32_t ipv4_addr;
+} opal_btl_usnic_connectivity_cmd_unlisten_t;
 
 /*
  * Command+fields for the reply to the LISTEN command.  This struct is
@@ -169,7 +178,7 @@ int opal_btl_usnic_connectivity_client_init(void);
  * @returns OPAL_SUCCESS or an OPAL error code.
  *
  * The module contains the local interface addressing information,
- * which tells the agent one which interface to listen.
+ * which tells the agent on which interface to listen.
  *
  * This routine will request the new listen from the agent, and wait
  * for the agent to reply with the UDP port that is being used/was
@@ -212,6 +221,21 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
                                      uint32_t dest_cidrmask, int dest_port,
                                      uint8_t *dest_mac, char *dest_nodename,
                                      size_t mtu);
+
+/**
+ * Tell the agent to stop listening on the given IP address.
+ *
+ * @params[in] module The module that is requesting the unlisten.
+ *
+ * @returns OPAL_SUCCESS or an OPAL error code.
+ *
+ * The module contains the local interface addressing information,
+ * which tells the agent on which interface to stop listening.
+ *
+ * It is safe to call this function even if the connectivity check is
+ * disabled; it will be a no-op in this case.
+ */
+int opal_btl_usnic_connectivity_unlisten(struct opal_btl_usnic_module_t *module);
 
 /**
  * Shut down the connectivity service client.

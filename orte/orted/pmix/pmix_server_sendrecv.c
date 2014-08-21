@@ -572,6 +572,7 @@ static void process_message(pmix_server_peer_t *peer)
     pmix_server_dmx_req_t *req;
     bool found;
     orte_grpcomm_signature_t *sig;
+    char *local_uri;
 
     /* xfer the message to a buffer for unpacking */
     OBJ_CONSTRUCT(&xfer, opal_buffer_t);
@@ -655,6 +656,19 @@ static void process_message(pmix_server_peer_t *peer)
                 OBJ_RELEASE(sig);
                 goto reply_fence;
             }
+        }
+        /* get the URI for this process */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &local_uri, &cnt, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(sig);
+            goto reply_fence;
+        }
+        /* if not NULL, then update our connection info as we might need
+         * to send this proc a message at some point */
+        if (NULL != local_uri) {
+            orte_rml.set_contact_info(local_uri);
+            free(local_uri);
         }
         /* if we are in a group collective mode, then we need to prep
          * the data as it should be included in the modex */

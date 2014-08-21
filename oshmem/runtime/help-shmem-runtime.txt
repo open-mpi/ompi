@@ -21,13 +21,6 @@ developer):
   %s
   --> Returned "%s" (%d) instead of "Success" (0)
 #
-[shmem_finalize:invoked_multiple_times]
-The function SHMEM_FINALIZE was invoked multiple times in a single
-process on host %s, PID %d.  
-
-This indicates an erroneous SHMEM program; SHMEM_FINALIZE is only allowed
-to be invoked exactly once in a process.
-#
 [heterogeneous-support-unavailable]
 This installation of Open SHMEM was configured without support for
 heterogeneous architectures, but at least one node in the allocation
@@ -37,23 +30,6 @@ Node: %s
 
 In order to operate in a heterogeneous environment, please reconfigure
 Open SHMEM with --enable-heterogeneous.
-#
-[shmem_init:warn-fork]
-A SHMEM process has executed an operation involving a call to the
-"fork()" system call to create a child process.  Open SHMEM is currently
-operating in a condition that could result in memory corruption or
-other system errors; your SHMEM job may hang, crash, or produce silent
-data corruption.  The use of fork() (or system() or other calls that
-create child processes) is strongly discouraged.  
-
-The process that invoked fork was:
-
-  Local host:          %s (PID %d)
-  My PE:               %d
-
-If you are *absolutely sure* that your application will successfully
-and correctly survive a call to fork(), you may disable this warning
-by setting the mpi_warn_on_fork MCA parameter to 0.
 #
 [oshmem shmem abort:cannot guarantee all killed]
 A SHMEM process is aborting at a time when it cannot guarantee that all
