@@ -14,8 +14,6 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -34,6 +32,8 @@
 #include <unistd.h>
 #endif
 
+#include "opal/mca/dstore/base/base.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -47,6 +47,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -168,6 +169,42 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
+    /* setup the dstore framework */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_dstore_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_dstore_base_select";
+        goto error;
+    }
+    /* create the handle */
+    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
+        error = "opal dstore internal";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
+
+    if (ORTE_PROC_IS_APP) {
+        /* we must have the pmix framework setup prior to opening/selecting ESS
+         * as some of those components may depend on it */
+        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_pmix_base_open";
+            goto error;
+        }
+        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_pmix_base_select";
+            goto error;
+        }
+    } else {
+        /* let the pmix server register params */
+        pmix_server_register();
+    }
+
     /* open the ESS and select the correct module for this environment */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_ess_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -199,7 +236,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     
  error:
     if (ORTE_ERR_SILENT != ret) {
-        orte_show_help("help-orte-runtime.txt",
+        orte_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }

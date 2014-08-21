@@ -51,7 +51,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/filem/filem.h"
@@ -803,6 +803,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
     int32_t numbytes;
     int rc;
     opal_buffer_t chunk;
+    orte_grpcomm_signature_t *sig;
 
     /* flag that event has fired */
     rev->pending = false;
@@ -869,14 +870,18 @@ static void send_chunk(int fd, short argc, void *cbdata)
         }
     }
 
-    /* xcast this chunk to all daemons */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid,
-                                                 &chunk, ORTE_RML_TAG_FILEM_BASE))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_FILEM_BASE, &chunk))) {
         ORTE_ERROR_LOG(rc);
         close(fd);
         return;
     }
     OBJ_DESTRUCT(&chunk);
+    OBJ_RELEASE(sig);
     rev->nchunk++;
 
     /* if num_bytes was zero, then we need to terminate the event

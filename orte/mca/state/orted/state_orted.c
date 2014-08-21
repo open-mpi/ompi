@@ -62,7 +62,6 @@ orte_state_base_module_t orte_state_orted_module = {
 static void track_jobs(int fd, short argc, void *cbdata);
 static void track_procs(int fd, short argc, void *cbdata);
 static int pack_state_update(opal_buffer_t *buf, orte_job_t *jdata);
-static int pack_child_contact_info(orte_jobid_t jobid, opal_buffer_t *buf);
 
 /* defined default state machines */
 static orte_job_state_t job_states[] = {
@@ -204,8 +203,6 @@ static void track_procs(int fd, short argc, void *cbdata)
     opal_buffer_t *alert;
     int rc, i;
     orte_plm_cmd_flag_t cmd;
-    orte_vpid_t null=ORTE_VPID_INVALID;
-    int8_t flag;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -230,18 +227,15 @@ static void track_procs(int fd, short argc, void *cbdata)
         pdata->state = state;
         jdata->num_reported++;
         if (jdata->num_reported == jdata->num_local_procs) {
-            /* once everyone registers, send their contact info to
-             * the HNP so it is available to debuggers and anyone
-             * else that needs it
-             */
+            /* once everyone registers, notify the HNP */
 
             OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
-                                 "%s state:orted: sending contact info to HNP",
+                                 "%s state:orted: notifying HNP all local registered",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
             alert = OBJ_NEW(opal_buffer_t);
-            /* pack init routes command */
-            cmd = ORTE_PLM_INIT_ROUTES_CMD;
+            /* pack registered command */
+            cmd = ORTE_PLM_REGISTERED_CMD;
             if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -261,27 +255,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
-                    if (ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_AS_MPI)) {
-                        flag = 1;
-                    } else {
-                        flag = 0;
-                    }
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &flag, 1, OPAL_INT8))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
                 }
-            }
-            /* pack an invalid marker */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            /* add in contact info for all procs in the job */
-            if (ORTE_SUCCESS != (rc = pack_child_contact_info(proc->jobid, alert))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&alert);
-                goto cleanup;
             }
             /* send it */
             if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
@@ -449,30 +423,6 @@ static int pack_state_update(opal_buffer_t *alert, orte_job_t *jdata)
     if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }
-
-    return ORTE_SUCCESS;
-}
-
-static int pack_child_contact_info(orte_jobid_t jobid, opal_buffer_t *buf)
-{
-    int i, rc;
-    orte_proc_t *pptr;
-
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        if (jobid == pptr->name.jobid) {
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &pptr->name.vpid, 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &pptr->rml_uri, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
     }
 
     return ORTE_SUCCESS;

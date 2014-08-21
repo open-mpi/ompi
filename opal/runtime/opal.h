@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008	   Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #define OPAL_H
 
 #include "opal_config.h"
+#include "opal/types.h"
 
 BEGIN_C_DECLS
 

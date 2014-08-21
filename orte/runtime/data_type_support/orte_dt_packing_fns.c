@@ -661,6 +661,12 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* pack the number of nodes involved in the job */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->num_nodes), 1, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
     }
     
     return ORTE_SUCCESS;
@@ -854,4 +860,34 @@ int orte_dt_pack_attr(opal_buffer_t *buffer, const void *src, int32_t num_vals,
     }
 
     return OPAL_SUCCESS;
+}
+
+/*
+ * ORTE_SIGNATURE
+ */
+int orte_dt_pack_sig(opal_buffer_t *buffer, const void *src, int32_t num_vals,
+                     opal_data_type_t type)
+{
+    orte_grpcomm_signature_t **ptr;
+    int32_t i;
+    int rc;
+
+    ptr = (orte_grpcomm_signature_t **) src;
+    
+    for (i = 0; i < num_vals; ++i) {
+        /* pack the #procs */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &ptr[i]->sz, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 < ptr[i]->sz) {
+            /* pack the array */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, ptr[i]->signature, ptr[i]->sz, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+
+    return ORTE_SUCCESS;
 }

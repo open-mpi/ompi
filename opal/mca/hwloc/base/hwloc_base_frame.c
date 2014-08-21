@@ -296,6 +296,13 @@ static int opal_hwloc_base_close(void)
             hwloc_bitmap_free(opal_hwloc_my_cpuset);
             opal_hwloc_my_cpuset = NULL;
         }
+
+        /* destroy the topology */
+        if (NULL != opal_hwloc_topology) {
+            opal_hwloc_base_free_topology(opal_hwloc_topology);
+            opal_hwloc_topology = NULL;
+        }
+
     }
 #endif
 

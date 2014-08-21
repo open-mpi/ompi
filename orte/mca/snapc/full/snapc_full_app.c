@@ -1208,17 +1208,6 @@ int app_coord_ft_event(int state) {
             exit_status = ret;
             goto cleanup;
         }
-        /*
-         * Since this process is interacting with an 'old' daemon, we must make
-         * sure to sync twice.
-         * JJH: This assumes that we only move whole nodes, this may be wrong
-         * JJH: when interacting with partial migration
-         */
-        if( currently_all_migrating && !currently_migrating ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                                 "App) ft_event(RESTART): Not a migrating process, so re-sync"));
-            orte_routed_base_register_sync(false);
-        }
 
         /*
          * JJH: Optionally the non-migrating processes can wait here in stage_2

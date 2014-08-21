@@ -81,12 +81,6 @@ typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, opal
                                                           orte_rml_tag_t tag);
 
 /**
- * Register to require sync before termination
- */
-typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc,
-                                                       opal_buffer_t *buffer,
-                                                       bool drop_nidmap);
-/**
  * Restart a local process
  */
 typedef int (*orte_odls_base_module_restart_proc_fn_t)(orte_proc_t *child);
@@ -100,7 +94,6 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t         signal_local_procs;
     orte_odls_base_module_deliver_message_fn_t              deliver_message;
-    orte_odls_base_module_require_sync_fn_t                 require_sync;
     orte_odls_base_module_restart_proc_fn_t                 restart_proc;
 };
 

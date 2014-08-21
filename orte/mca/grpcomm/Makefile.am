@@ -22,8 +22,7 @@ noinst_LTLIBRARIES = libmca_grpcomm.la
 libmca_grpcomm_la_SOURCES =
 
 # local files
-headers = grpcomm.h \
-          grpcomm_types.h
+headers = grpcomm.h
 
 libmca_grpcomm_la_SOURCES += $(headers)
 

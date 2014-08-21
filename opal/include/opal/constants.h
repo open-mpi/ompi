@@ -77,7 +77,9 @@ enum {
     OPAL_ERR_PROC_ENTRY_NOT_FOUND           = (OPAL_ERR_BASE - 47),
     OPAL_ERR_DATA_VALUE_NOT_FOUND           = (OPAL_ERR_BASE - 48),
     OPAL_ERR_CONNECTION_FAILED              = (OPAL_ERR_BASE - 49),
-    OPAL_ERR_AUTHENTICATION_FAILED          = (OPAL_ERR_BASE - 50)
+    OPAL_ERR_AUTHENTICATION_FAILED          = (OPAL_ERR_BASE - 50),
+    OPAL_ERR_COMM_FAILURE                   = (OPAL_ERR_BASE - 51),
+    OPAL_ERR_SERVER_NOT_AVAIL               = (OPAL_ERR_BASE - 52)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

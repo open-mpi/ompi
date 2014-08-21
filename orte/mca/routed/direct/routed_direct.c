@@ -40,8 +40,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static void update_routing_plan(void);
-static void get_routing_list(orte_grpcomm_coll_t type,
-                             orte_grpcomm_collective_t *coll);
+static void get_routing_list(opal_list_t *coll);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 static size_t num_routes(void);
@@ -235,14 +234,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            /* register ourselves -this sends a message to the daemon (warming up that connection)
-             * and sends our contact info to the HNP when all local procs have reported
-             */
-            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* no answer is expected or coming */
         }
         return ORTE_SUCCESS;
     }
@@ -289,8 +280,7 @@ static void update_routing_plan(void)
     return;
 }
 
-static void get_routing_list(orte_grpcomm_coll_t type,
-                             orte_grpcomm_collective_t *coll)
+static void get_routing_list(opal_list_t *coll)
 {
     orte_namelist_t *nm;
     int32_t i;
@@ -304,53 +294,38 @@ static void get_routing_list(orte_grpcomm_coll_t type,
         return;
     }
     
-    if (ORTE_GRPCOMM_XCAST == type) {
-        /* daemons don't route */
-        if (ORTE_PROC_IS_DAEMON) {
-            return;
+    /* daemons don't route */
+    if (ORTE_PROC_IS_DAEMON) {
+        return;
+    }
+    /* HNP sends direct to each daemon */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return;
+    }
+    for (i=1; i < jdata->procs->size; i++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
         }
-        /* HNP sends direct to each daemon */
-        if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return;
-        }
-        for (i=1; i < jdata->procs->size; i++) {
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
-                continue;
-            }
-            if( proc->state <= ORTE_PROC_STATE_UNTERMINATED &&
-                NULL != proc->rml_uri ) {
-                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                                     "%s get_routing_tree: Adding process %s state %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&(proc->name)),
-                                     orte_proc_state_to_str(proc->state)));
+        if( proc->state <= ORTE_PROC_STATE_UNTERMINATED &&
+            NULL != proc->rml_uri ) {
+            OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
+                                 "%s get_routing_tree: Adding process %s state %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&(proc->name)),
+                                 orte_proc_state_to_str(proc->state)));
 
-                nm = OBJ_NEW(orte_namelist_t);
-                nm->name.jobid = proc->name.jobid;
-                nm->name.vpid = proc->name.vpid;
-                opal_list_append(&coll->targets, &nm->super);
-            } else {
-                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                                     "%s get_routing_tree: Skipped process %15s state %s (non functional daemon)",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&(proc->name)),
-                                     orte_proc_state_to_str(proc->state)));
-            }
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = proc->name.jobid;
+            nm->name.vpid = proc->name.vpid;
+            opal_list_append(coll, &nm->super);
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
+                                 "%s get_routing_tree: Skipped process %15s state %s (non functional daemon)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&(proc->name)),
+                                 orte_proc_state_to_str(proc->state)));
         }
-    } else if (ORTE_GRPCOMM_COLL_RELAY == type) {
-        orte_routed_base_coll_relay_routing(coll);
-    } else if (ORTE_GRPCOMM_COLL_COMPLETE == type) {
-        orte_routed_base_coll_complete_routing(coll);
-    } else if (ORTE_GRPCOMM_COLL_PEERS == type) {
-        if (ORTE_PROC_IS_DAEMON) {
-            return;
-        }
-        /* HNP receives from all */
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->targets, &nm->super);
     }
 }
 

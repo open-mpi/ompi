@@ -40,8 +40,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/mca/grpcomm/grpcomm_types.h"
-
 #include "orte/mca/routed/routed_types.h"
 
 BEGIN_C_DECLS
@@ -199,14 +197,13 @@ typedef int (*orte_routed_module_get_wireup_info_fn_t)(opal_buffer_t *buf);
 typedef void (*orte_routed_module_update_routing_plan_fn_t)(void);
 
 /*
- * Get the routing list for the specified collective
+ * Get the routing list for an xcast collective
  *
- * Fills the target list with names for the given collective so that
- * the grpcomm framework will know who to send the collective to
+ * Fills the target list with orte_namelist_t so that
+ * the grpcomm framework will know who to send xcast to
  * next
  */
-typedef void (*orte_routed_module_get_routing_list_fn_t)(orte_grpcomm_coll_t type,
-                                                         orte_grpcomm_collective_t *coll);
+typedef void (*orte_routed_module_get_routing_list_fn_t)(opal_list_t *coll);
 
 /*
  * Set lifeline process

@@ -51,6 +51,7 @@
 #include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -94,7 +95,6 @@ int ompi_mpi_finalize(void)
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
-    ompi_rte_collective_t *coll;
     ompi_proc_t** procs;
     size_t nprocs;
 
@@ -227,17 +227,7 @@ int ompi_mpi_finalize(void)
        del_procs behavior around May of 2014 (see
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_fini_barrier;
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-        OMPI_ERROR_LOG(ret);
-        return ret;
-    }
-
-    /* wait for barrier to complete */
-    OMPI_LAZY_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    opal_pmix.fence(NULL, 0);
 
     /* check for timing request - get stop time and report elapsed
      time if so */

@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/proc.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_portals4.h"
 #include "btl_portals4_recv.h"
@@ -86,8 +88,8 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
             continue;
         }
 
-        ret = opal_modex_recv(&mca_btl_portals4_component.super.btl_version,
-                              curr_proc, (void**) &id, &size);
+        OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
+                        curr_proc, (void**) &id, &size);
 
         if (OPAL_SUCCESS != ret) {
             opal_output_verbose(0, opal_btl_base_framework.framework_output,

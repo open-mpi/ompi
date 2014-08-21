@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -301,11 +301,6 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
 
-
-/**
- * Set the locality of a proc relative to me
- */
-OMPI_DECLSPEC int ompi_proc_set_locality(ompi_proc_t *proc);
 
 END_C_DECLS
 

@@ -51,10 +51,6 @@ typedef struct {
     uint8_t *bytes;
 } opal_byte_object_t;
 
-/* define an RTE-agnostic process identifier */
-typedef uint64_t opal_identifier_t;
-#define OPAL_ID_T OPAL_UINT64
-
 /* Type defines for packing and unpacking */
 #define    OPAL_UNDEF               (opal_data_type_t)    0 /**< type hasn't been defined yet */
 #define    OPAL_BYTE                (opal_data_type_t)    1 /**< a byte of data */

@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,7 +26,6 @@ headers += \
         runtime/mpiruntime.h \
 	runtime/ompi_cr.h \
         runtime/params.h \
-	runtime/ompi_module_exchange.h \
 	runtime/ompi_info_support.h
 
 libmpi_la_SOURCES += \
@@ -35,5 +35,4 @@ libmpi_la_SOURCES += \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_cr.c \
-	runtime/ompi_module_exchange.c \
 	runtime/ompi_info_support.c

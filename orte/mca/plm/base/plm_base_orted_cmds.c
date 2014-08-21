@@ -35,7 +35,7 @@
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/odls/odls_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
@@ -74,6 +74,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     int rc;
     opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t cmmnd;
+    orte_grpcomm_signature_t *sig;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
@@ -102,11 +103,17 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
         OBJ_RELEASE(cmd);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, cmd))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(cmd);
-    
+    OBJ_RELEASE(sig);
+
 #if 0
     /* if we are abnormally ordering the termination, then
      * set a timeout in case it never finishes
@@ -124,7 +131,7 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
     opal_pointer_array_t procs;
     orte_proc_t proc;
     int rc;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_terminate job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -151,7 +158,8 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_KILL_LOCAL_PROCS;
     int v;
     orte_proc_t *proc;
-    
+    orte_grpcomm_signature_t *sig;
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -177,11 +185,17 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
             }
         }
     }
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, cmd))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(cmd);
-    
+    OBJ_RELEASE(sig);
+
     /* we're done! */
     return rc;
 }
@@ -192,7 +206,8 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     int rc;
     opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SIGNAL_LOCAL_PROCS;
-    
+    orte_grpcomm_signature_t *sig;
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending signal_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -220,12 +235,17 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
         return rc;
     }
     
-    /* send it! */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &cmd, ORTE_RML_TAG_DAEMON))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, &cmd))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&cmd);
-    
+    OBJ_RELEASE(sig);
+
     /* we're done! */
     return ORTE_SUCCESS;
 }

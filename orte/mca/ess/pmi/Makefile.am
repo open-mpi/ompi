@@ -2,6 +2,7 @@
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,8 +33,7 @@ mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_pmi_la_SOURCES = $(sources)
 mca_ess_pmi_la_LDFLAGS = -module -avoid-version $(ess_pmi_LDFLAGS)
-mca_ess_pmi_la_LIBADD = $(ess_pmi_LIBS) \
-	$(ORTE_TOP_BUILDDIR)/opal/mca/common/pmi/libmca_common_pmi.la
+mca_ess_pmi_la_LIBADD = $(ess_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ess_pmi_la_SOURCES =$(sources)

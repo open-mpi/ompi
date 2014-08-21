@@ -199,6 +199,9 @@ opal_thread_t orte_progress_thread;
 /* user debugger */
 char *orte_base_user_debugger = NULL;
 
+/* modex cutoff */
+uint32_t orte_full_modex_cutoff = UINT32_MAX;
+
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
@@ -435,6 +438,18 @@ int orte_dt_init(void)
         return rc;
     }
     
+    tmp = ORTE_SIGNATURE;
+    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_sig,
+                                                     orte_dt_unpack_sig,
+                                                     (opal_dss_copy_fn_t)orte_dt_copy_sig,
+                                                     (opal_dss_compare_fn_t)orte_dt_compare_sig,
+                                                     (opal_dss_print_fn_t)orte_dt_print_sig,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "ORTE_SIGNATURE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     return ORTE_SUCCESS;    
 }
 
@@ -512,7 +527,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                 (opal_identifier_t*)proc,
-                                                ORTE_DB_HOSTNAME,
+                                                OPAL_DSTORE_HOSTNAME,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&myvals);
@@ -548,7 +563,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                 (opal_identifier_t*)proc,
-                                                ORTE_DB_NODERANK,
+                                                OPAL_DSTORE_NODERANK,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&myvals);

@@ -25,9 +25,8 @@
 #include "opal/mca/dstore/base/base.h"
 #include "dstore_hash.h"
 
-static int dstore_hash_component_register(void);
-static bool component_avail(void);
 static opal_dstore_base_module_t *component_create(void);
+static int dstore_hash_query(mca_base_module_t **module, int *priority);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -46,37 +45,23 @@ opal_dstore_base_component_t mca_dstore_hash_component = {
         /* Component open and close functions */
         NULL,
         NULL,
-        NULL,
-        dstore_hash_component_register
+        dstore_hash_query,
+        NULL
     },
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    1,
-    component_avail,
     component_create,
     NULL
 };
 
-static int dstore_hash_component_register(void)
+static int dstore_hash_query(mca_base_module_t **module, int *priority)
 {
-    mca_base_component_t *c = &mca_dstore_hash_component.base_version;
-
-    mca_dstore_hash_component.priority = 1;
-    (void) mca_base_component_var_register(c, "priority",
-                                           "Priority dictating order in which components will be considered",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_dstore_hash_component.priority);
+    /* we are always available, but only as storage */
+    *priority = 80;
+    *module = NULL;
     return OPAL_SUCCESS;
-}
-
-static bool component_avail(void)
-{
-    /* we are always available */
-    return true;
 }
 
 static opal_dstore_base_module_t *component_create(void)

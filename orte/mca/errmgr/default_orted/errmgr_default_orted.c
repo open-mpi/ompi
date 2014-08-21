@@ -93,8 +93,6 @@ orte_errmgr_base_module_t orte_errmgr_default_orted_module = {
 static bool any_live_children(orte_jobid_t job);
 static int pack_state_update(opal_buffer_t *alert, orte_job_t *jobdat);
 static int pack_state_for_proc(opal_buffer_t *alert, orte_proc_t *child);
-static bool all_children_registered(orte_jobid_t job);
-static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf);
 static void failed_start(orte_job_t *jobdat);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
 
@@ -217,7 +215,6 @@ static void proc_errors(int fd, short args, void *cbdata)
     opal_buffer_t *alert;
     orte_plm_cmd_flag_t cmd;
     int rc=ORTE_SUCCESS;
-    orte_vpid_t null=ORTE_VPID_INVALID;
     int i;
 
     OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
@@ -503,63 +500,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
-    if (ORTE_PROC_STATE_REGISTERED == state) {
-        /* see if everyone in this job has registered */
-        if (all_children_registered(proc->jobid)) {
-            /* once everyone registers, send their contact info to
-             * the HNP so it is available to debuggers and anyone
-             * else that needs it
-             */
-
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
-                                 "%s errmgr:default_orted: sending contact info to HNP",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
-            alert = OBJ_NEW(opal_buffer_t);
-            /* pack init routes command */
-            cmd = ORTE_PLM_INIT_ROUTES_CMD;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            /* pack the jobid */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &proc->jobid, 1, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            /* pack all the local child vpids */
-            for (i=0; i < orte_local_children->size; i++) {
-                if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-                    continue;
-                }
-                if (ptr->name.jobid == proc->jobid) {
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &ptr->name.vpid, 1, ORTE_VPID))) {
-                        ORTE_ERROR_LOG(rc);
-                        return;
-                    }
-                }
-            }
-            /* pack an invalid marker */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return;
-            }
-            /* add in contact info for all procs in the job */
-            if (ORTE_SUCCESS != (rc = pack_child_contact_info(proc->jobid, alert))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&alert);
-                return;
-            }
-            /* send it */
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                  ORTE_RML_TAG_PLM,
-                                                  orte_rml_send_callback, NULL))) {
-                ORTE_ERROR_LOG(rc);
-            }
-        }        
-        return;
-    }
-
     /* only other state is terminated - see if anyone is left alive */
     if (!any_live_children(proc->jobid)) {
         alert = OBJ_NEW(opal_buffer_t);
@@ -713,70 +653,6 @@ static int pack_state_update(opal_buffer_t *alert, orte_job_t *jobdat)
     }
 
     return ORTE_SUCCESS;
-}
-
-static bool all_children_registered(orte_jobid_t job)
-{
-    int i;
-    orte_proc_t *child;
-
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        /* is this child part of the specified job? */
-        if (job == child->name.jobid || ORTE_JOBID_WILDCARD == job) {
-            /* if this child has terminated, we consider it as having
-             * registered for the purposes of this function. If it never
-             * did register, then we will send a NULL rml_uri back to
-             * the HNP, which will then know that the proc did not register.
-             * If other procs did register, then the HNP can declare an
-             * abnormal termination
-             */
-            if (ORTE_PROC_STATE_UNTERMINATED < child->state) {
-                /* this proc has terminated somehow - consider it
-                 * as registered for now
-                 */
-                continue;
-            }
-            /* if this child has *not* registered yet, return false */
-            if (!ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_REG)) {
-                return false;
-            }
-        }
-    }
-
-    /* if we get here, then everyone in the job has registered */
-    return true;
-
-}
-
-static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
-{
-    orte_proc_t *child;
-    int rc, i;
-
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        /* is this child part of the specified job? */
-        if (job == child->name.jobid || ORTE_JOBID_WILDCARD == job) {
-            /* pack the child's vpid - must be done in case rml_uri is NULL */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &(child->name.vpid), 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }            
-            /* pack the contact info */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &child->rml_uri, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-    }
-
-    return ORTE_SUCCESS;
-
 }
 
 static void failed_start(orte_job_t *jobdat)

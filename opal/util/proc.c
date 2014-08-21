@@ -14,6 +14,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/arch.h"
 #include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 opal_process_info_t opal_process_info = {
     .nodename = "not yet named",
@@ -29,7 +30,7 @@ opal_process_info_t opal_process_info = {
 static opal_proc_t opal_local_proc = {
     { .opal_list_next = NULL,
       .opal_list_prev = NULL},
-    0x1122334455667788,
+    OPAL_NAME_INVALID,
     0,
     0,
     NULL,
@@ -88,6 +89,15 @@ int opal_proc_local_set(opal_proc_t* proc)
     return OPAL_SUCCESS;
 }
 
+/* this function is used to temporarily set the local
+ * name while OPAL and upper layers are initializing,
+ * thus allowing debug messages to be more easily
+ * understood */
+void opal_proc_set_name(opal_process_name_t *name)
+{
+    opal_local_proc.proc_name = *name;
+}
+
 /**
  * The following functions are surrogates for the RTE functionality, and are not supposed
  * to be called. Instead, the corresponding function pointer should be set by the upper layer
@@ -109,113 +119,4 @@ opal_process_name_vpid_should_never_be_called(const opal_process_name_t unused)
 char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_print_should_never_be_called;
 uint32_t (*opal_process_name_vpid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
 uint32_t (*opal_process_name_jobid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
-
-static int
-opal_modex_send_internal(const mca_base_component_t *source_component,
-                         const void *data, size_t size)
-{
-    int rc;
-    char *key;
-    opal_byte_object_t bo;
-    opal_value_t kv;
-    const opal_proc_t *proc = opal_proc_local_get();
-
-    key = mca_base_component_to_string(source_component);
-    if (NULL == key) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    bo.bytes = (uint8_t *)data;
-    bo.size = size;
-
-    /* the store API makes a copy of the provided data */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = key;
-    if (OPAL_SUCCESS != (rc = opal_value_load(&kv, (void*)&bo, OPAL_BYTE_OBJECT))) {
-        OBJ_DESTRUCT(&kv);
-        free(key);
-        return rc;
-    }
-
-    /* MPI connection data is to be shared with ALL other processes */
-    rc = opal_dstore.store(opal_dstore_peer, (opal_identifier_t*)&proc->proc_name, &kv);
-    OBJ_DESTRUCT(&kv);
-    return rc;
-}
-
-static int
-opal_modex_recv_internal(const mca_base_component_t *component,
-                         const opal_proc_t *proc,
-                         void **buffer, size_t *size)
-{
-    int rc;
-    opal_list_t myvals;
-    opal_value_t *kv;
-    char *key;
-    opal_byte_object_t *boptr;
-
-    key = mca_base_component_to_string(component);
-    if (NULL == key) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, 0, "%s fetch data from %s for %s",
-                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                         OPAL_NAME_PRINT(proc->proc_name), key));
-
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    /* the peer dstore contains our own data that will be shared
-     * with our peers - the nonpeer dstore contains data we received
-     * that would only be shared with nonpeer procs
-     */
-    if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                (opal_identifier_t*)(&proc->proc_name),
-                                                key, &myvals))) {
-        /* see if we can find it in the internal dstore */
-        OPAL_OUTPUT_VERBOSE((2, 0, "%s searching nonpeer dstore for %s",
-                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key));
-        if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                    (opal_identifier_t*)(&proc->proc_name),
-                                                    key, &myvals))) {
-            /* try one last place - the peer dstore in case it got stuck there for some reason */
-            OPAL_OUTPUT_VERBOSE((2, 0, "%s searching internal dstore for %s",
-                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key));
-            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_peer,
-                                                        (opal_identifier_t*)(&proc->proc_name),
-                                                        key, &myvals))) {
-                OPAL_LIST_DESTRUCT(&myvals);
-                free(key);
-                return rc;
-            }
-        }
-    }
-    /* only one value should have been returned */
-    kv = (opal_value_t*)opal_list_get_first(&myvals);
-    if (NULL == kv) {
-        free(key);
-        return OPAL_ERROR;
-    }
-    opal_value_unload(kv, (void**)&boptr, OPAL_BYTE_OBJECT);
-    OPAL_LIST_DESTRUCT(&myvals);
-
-    if (OPAL_SUCCESS == rc) {
-        /* xfer the data - it was allocated in the call */
-        *buffer = (void*)boptr->bytes;
-        *size = boptr->size;
-        /* we no longer require the struct itself since all we
-         * wanted was the data inside it
-         */
-        free(boptr);
-    }
-    free(key);
-    return OPAL_SUCCESS;
-}
-
-int
-(*opal_modex_send)(const mca_base_component_t *source_component,
-                   const void *data, size_t size) = opal_modex_send_internal;
-int
-(*opal_modex_recv)(const mca_base_component_t *component,
-                   const opal_proc_t *proc,
-                   void **buffer, size_t *size) = opal_modex_recv_internal;
 

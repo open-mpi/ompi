@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/include/opal/align.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "opal/mca/base/mca_base_pvar.h"
 
@@ -209,10 +211,15 @@ static void mca_btl_scif_autoset_leave_pinned (void) {
 static int mca_btl_scif_modex_send (void)
 {
     mca_btl_scif_modex_t modex;
+    int rc;
+
     memset(&modex, 0, sizeof(mca_btl_scif_modex_t));
     modex.port_id = mca_btl_scif_module.port_id;
 
-    return opal_modex_send (&mca_btl_scif_component.super.btl_version, &modex, sizeof (modex));
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_LOCAL,
+                    &mca_btl_scif_component.super.btl_version,
+                    &modex, sizeof (modex));
+    return rc;
 }
 
 

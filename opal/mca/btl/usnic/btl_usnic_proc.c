@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_proc.h"
@@ -191,9 +192,8 @@ static int create_proc(opal_proc_t *opal_proc,
     proc->proc_opal = opal_proc;
 
     /* query for the peer address info */
-    rc = opal_modex_recv(&mca_btl_usnic_component.super.btl_version,
-                         opal_proc, (void*)&proc->proc_modex,
-                         &size);
+    OPAL_MODEX_RECV(rc, &mca_btl_usnic_component.super.btl_version,
+                    opal_proc, (uint8_t**)&proc->proc_modex, &size);
 
     /* If this proc simply doesn't have this key, then they're not
        running the usnic BTL -- just ignore them.  Otherwise, show an

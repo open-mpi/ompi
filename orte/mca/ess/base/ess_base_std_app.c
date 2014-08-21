@@ -13,8 +13,6 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -181,34 +179,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
-    /* data store */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_dstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dstore_base_select";
-        goto error;
-    }
-    /* create the handles */
-    if (0 > (opal_dstore_peer = opal_dstore.open("PEER"))) {
-        error = "opal dstore global";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
-        error = "opal dstore internal";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-    if (0 > (opal_dstore_nonpeer = opal_dstore.open("NONPEER"))) {
-        error = "opal dstore nonpeer";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-
     /*
      * Group communications
      */
@@ -471,11 +441,7 @@ void orte_ess_base_app_abort(int status, bool report)
     if (report && orte_routing_is_enabled && orte_create_session_dirs) {
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
         fd = open(myfile, O_CREAT, S_IRUSR);
-        /* FIXME if file creation fails, it is likely orte_process_info.proc_session_dir
-         * has been previously deleted */
-        if (fd >= 0) {
-            close(fd);
-        }
+        close(fd);
         /* now introduce a short delay to allow any pending
          * messages (e.g., from a call to "show_help") to
          * have a chance to be sent */

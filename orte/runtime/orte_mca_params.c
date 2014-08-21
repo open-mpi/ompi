@@ -64,7 +64,7 @@ int orte_register_params(void)
         return ORTE_SUCCESS;
     }
     passed_thru = true;
-    
+
     /* get a clean output channel too - need to do this here because
      * we use it below, and orterun and some other tools call this
      * function prior to calling orte_init
@@ -117,15 +117,15 @@ int orte_register_params(void)
      */
     if (NULL != orte_tmpdir_base &&
         (NULL != orte_local_tmpdir_base || NULL != orte_remote_tmpdir_base)) {
-            opal_output(orte_clean_output,
-                        "------------------------------------------------------------------\n"
-                        "The MCA param orte_tmpdir_base was specified, which sets the base\n"
-                        "of the temporary directory tree for all procs. However, values for\n"
-                        "the local and/or remote tmpdir base were also given. This can lead\n"
-                        "to confusion and is therefore not allowed. Please specify either a\n"
-                        "global tmpdir base OR a local/remote tmpdir base value\n"
-                        "------------------------------------------------------------------");
-            exit(1);
+        opal_output(orte_clean_output,
+                    "------------------------------------------------------------------\n"
+                    "The MCA param orte_tmpdir_base was specified, which sets the base\n"
+                    "of the temporary directory tree for all procs. However, values for\n"
+                    "the local and/or remote tmpdir base were also given. This can lead\n"
+                    "to confusion and is therefore not allowed. Please specify either a\n"
+                    "global tmpdir base OR a local/remote tmpdir base value\n"
+                    "------------------------------------------------------------------");
+        exit(1);
     }
      
     if (NULL != orte_tmpdir_base) {
@@ -534,17 +534,17 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_fork_agent_string);
 
-   if (NULL != orte_fork_agent_string) {
+    if (NULL != orte_fork_agent_string) {
         orte_fork_agent = opal_argv_split(orte_fork_agent_string, ' ');
     }
 
     /* whether or not to require RM allocation */
-   orte_allocation_required = false;
-   (void) mca_base_var_register ("orte", "orte", NULL, "allocation_required",
-                                 "Whether or not an allocation by a resource manager is required [default: no]",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &orte_allocation_required);
+    orte_allocation_required = false;
+    (void) mca_base_var_register ("orte", "orte", NULL, "allocation_required",
+                                  "Whether or not an allocation by a resource manager is required [default: no]",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_allocation_required);
 
     /* whether or not to map stddiag to stderr */
     orte_map_stddiag_to_stderr = false;
@@ -554,13 +554,13 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_map_stddiag_to_stderr);
 
-   /* generate new terminal windows to display output from specified ranks */
-   orte_xterm = NULL;
-   (void) mca_base_var_register ("orte", "orte", NULL, "xterm",
-                                 "Create a new xterm window and display output from the specified ranks there [default: none]",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &orte_xterm);
+    /* generate new terminal windows to display output from specified ranks */
+    orte_xterm = NULL;
+    (void) mca_base_var_register ("orte", "orte", NULL, "xterm",
+                                  "Create a new xterm window and display output from the specified ranks there [default: none]",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_xterm);
     if (NULL != orte_xterm) {
         /* if an xterm request is given, we have to leave any ssh
          * sessions attached so the xterm window manager can get
@@ -774,6 +774,16 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_daemon_cores);
 
+    /* cutoff for full modex */
+    orte_full_modex_cutoff = UINT32_MAX;
+    id = mca_base_var_register ("orte", "orte", NULL, "full_modex_cutoff",
+                                "If the number of processes in the application exceeds the provided value,"
+                                "modex will be done upon demand [default: UINT32_MAX]",
+                                MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                &orte_full_modex_cutoff);
+    /* register a synonym for old name */
+    mca_base_var_register_synonym (id, "ompi", "hostname", "cutoff", NULL, MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     return ORTE_SUCCESS;
 }

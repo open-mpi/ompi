@@ -131,7 +131,6 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     orte_process_name_t name;
     pid_t pid;
     bool running;
-    int8_t flag;
     int i;
     char **env;
     char *prefix_dir;
@@ -340,7 +339,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
         break;
                 
-    case ORTE_PLM_INIT_ROUTES_CMD:
+    case ORTE_PLM_REGISTERED_CMD:
         count=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
@@ -355,36 +354,9 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
         count=1;
         while (ORTE_SUCCESS == opal_dss.unpack(buffer, &vpid, &count, ORTE_VPID)) {
-            if (ORTE_VPID_INVALID == vpid) {
-                break;
-            }
             name.vpid = vpid;
-            /* unpack the mpi proc flag */
-            count=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &count, OPAL_INT8))) {
-                ORTE_ERROR_LOG(rc);
-                goto DEPART;
-            }
-            /* get the proc data object */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                rc = ORTE_ERR_NOT_FOUND;
-                goto DEPART;
-            }
-            if (1 == flag) {
-                ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_AS_MPI);
-            } else {
-                ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_AS_MPI);
-            }
             ORTE_ACTIVATE_PROC_STATE(&name, ORTE_PROC_STATE_REGISTERED);
             count=1;
-        }
-        /* pass the remainder of the buffer to the active module's
-         * init_routes API
-         */
-        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, buffer))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         }
         break;
 

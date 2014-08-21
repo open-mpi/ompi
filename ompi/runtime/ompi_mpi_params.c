@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,7 +63,6 @@ bool ompi_mpi_keep_fqdn_hostnames = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
-uint32_t ompi_hostname_cutoff = UINT32_MAX;
 bool ompi_mpi_yield_when_idle = true;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
@@ -303,15 +302,6 @@ int ompi_mpi_register_params(void)
     }
     mca_base_var_register_synonym(value, "opal", "opal", NULL, "cuda_support",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-
-    /* cutoff for retrieving hostnames */
-    ompi_hostname_cutoff = UINT32_MAX;
-    (void) mca_base_var_register ("ompi", "ompi", NULL, "hostname_cutoff",
-                                  "If the number of processes in the application exceeds the provided value,"
-                                  "hostnames for remote processes will not be retrieved by applications [default: UINT32_MAX]",
-                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &ompi_hostname_cutoff);
 
 
     return OMPI_SUCCESS;

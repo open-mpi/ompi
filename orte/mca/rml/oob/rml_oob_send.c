@@ -168,7 +168,7 @@ static void send_msg(int fd, short args, void *cbdata)
                 memcpy(ptr, req->post.iov[i].iov_base, req->post.iov[i].iov_len);
                 ptr += req->post.iov[i].iov_len;
             }
-        } else {
+        } else if (0 < req->post.buffer->bytes_used) {
             rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(req->post.buffer->bytes_used);
             memcpy(rcv->iov.iov_base, req->post.buffer->base_ptr, req->post.buffer->bytes_used);
             rcv->iov.iov_len = req->post.buffer->bytes_used;
