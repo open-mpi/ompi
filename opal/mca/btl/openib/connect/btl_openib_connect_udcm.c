@@ -1265,7 +1265,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     }
 
     /* Setup meta data on the endpoint */
-    lcl_ep->qps[qp].qp->lcl_psn = udcm_random ();
+    lcl_ep->qps[qp].qp->lcl_psn = udcm_random () & 0x00ffffff;
     lcl_ep->qps[qp].credit_frag = NULL;
 
     rc = udcm_rc_qp_to_init (lcl_ep->qps[qp].qp->lcl_qp, m->btl);
@@ -2470,7 +2470,7 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     }
 
     /* Setup meta data on the endpoint */
-    *psn = udcm_random ();
+    *psn = udcm_random () & 0x00ffffff;
 
     /* Now that all the qp's are created locally, post some receive
        buffers, setup credits, etc. */
