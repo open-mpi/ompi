@@ -209,6 +209,7 @@ static void mca_btl_scif_autoset_leave_pinned (void) {
 static int mca_btl_scif_modex_send (void)
 {
     mca_btl_scif_modex_t modex;
+    memset(&modex, 0, sizeof(mca_btl_scif_modex_t));
     modex.port_id = mca_btl_scif_module.port_id;
 
     return opal_modex_send (&mca_btl_scif_component.super.btl_version, &modex, sizeof (modex));
