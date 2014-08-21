@@ -615,6 +615,7 @@ static void process_message(pmix_server_peer_t *peer)
             } else {
                 proc->exit_code = ret;
                 ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ABORT);
+                ORTE_UPDATE_EXIT_STATUS(ret);
             }
         }
         /* we will let the ODLS report this to errmgr when the proc exits, so
