@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -308,6 +310,7 @@ opal_hash_table_remove_elt_at(opal_hash_table_t * ht, size_t ii)
             }
         }
     }
+    ht->ht_size -= 1;
     return OPAL_SUCCESS;
 }
 
