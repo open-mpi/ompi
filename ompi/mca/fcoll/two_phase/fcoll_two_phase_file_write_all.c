@@ -251,8 +251,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
   if ( OMPI_SUCCESS != ret ){
     goto exit;
   }
-  
-  
+
   ret = fh->f_comm->c_coll.coll_allreduce (&max_data,
 					   &total_bytes,
 					   1,
@@ -265,8 +264,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     goto exit;
   }
   
-  
-    
   if (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
     
     /* This datastructre translates between OMPIO->ROMIO its a little hacky!*/
