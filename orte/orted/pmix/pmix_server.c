@@ -763,6 +763,23 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(reply);
             return;
         }
+        /* always make sure to pass the hostname */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_DESTRUCT(&buf);
+            return;
+        }
+        /* pack the blob */
+        bptr = &buf;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_DESTRUCT(&buf);
+            return;
+        }
+        OBJ_DESTRUCT(&buf);
         /* pack the status */
         if (found) {
             ret = OPAL_SUCCESS;
