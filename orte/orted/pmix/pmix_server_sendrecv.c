@@ -478,7 +478,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
             tmp = NULL;
             if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
                 /* add the name of the proc */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&name, 1, OPAL_UINT64))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&pptr->name, 1, OPAL_UINT64))) {
                     ORTE_ERROR_LOG(rc);
                     opal_argv_free(list);
                     return rc;
@@ -924,7 +924,7 @@ static void process_message(pmix_server_peer_t *peer)
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(PMIX_HOSTNAME);
             kv.type = OPAL_STRING;
-            kv.data.string = strdup(proc->node->name);
+            kv.data.string = strdup(orte_process_info.nodename);
             kp = &kv;
             if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
                 ORTE_ERROR_LOG(rc);
@@ -1025,7 +1025,6 @@ static void process_message(pmix_server_peer_t *peer)
             if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&xfer);
                 OBJ_DESTRUCT(&buf);
                 return;
             }
@@ -1038,7 +1037,6 @@ static void process_message(pmix_server_peer_t *peer)
             if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&xfer);
                 OBJ_DESTRUCT(&buf);
                 return;
             }
@@ -1047,13 +1045,11 @@ static void process_message(pmix_server_peer_t *peer)
             if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&xfer);
                 OBJ_DESTRUCT(&buf);
                 return;
             }
             OBJ_DESTRUCT(&buf);
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
-            OBJ_DESTRUCT(&xfer);
             return;
         }
         OPAL_LIST_DESTRUCT(&values);

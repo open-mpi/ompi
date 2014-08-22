@@ -708,7 +708,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     int rc, ret;
     int32_t cnt;
     opal_buffer_t *reply, *bptr, buf;
-    opal_value_t *kvp, *kvp2;
+    opal_value_t *kvp, *kvp2, kv, *kp;
     opal_identifier_t idreq;
     orte_process_name_t name;
     orte_job_t *jdata;
@@ -763,23 +763,6 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(reply);
             return;
         }
-        /* always make sure to pass the hostname */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            OBJ_DESTRUCT(&buf);
-            return;
-        }
-        /* pack the blob */
-        bptr = &buf;
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            OBJ_DESTRUCT(&buf);
-            return;
-        }
-        OBJ_DESTRUCT(&buf);
         /* pack the status */
         if (found) {
             ret = OPAL_SUCCESS;
@@ -791,6 +774,30 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(reply);
             return;
         }
+        /* always pass the hostname */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_HOSTNAME);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.nodename);
+        kp = &kv;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_DESTRUCT(&buf);
+            OBJ_DESTRUCT(&kv);
+            return;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* pack the blob */
+        bptr = &buf;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(reply);
+            OBJ_DESTRUCT(&buf);
+            return;
+        }
+        OBJ_DESTRUCT(&buf);
         /* remote blob */
         if (NULL != kvp) {
             opal_output_verbose(2, pmix_server_output,
@@ -852,7 +859,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     pmix_server_dmx_req_t *req, *nxt;
     int rc, ret;
     int32_t cnt;
-    opal_buffer_t *reply, xfer;
+    opal_buffer_t *reply, xfer, *bptr;
     opal_identifier_t target;
     opal_value_t kv;
 
@@ -875,14 +882,30 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
         return;
     }
 
+    /* unpack the hostname blob */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
     /* prep the reply */
     reply = OBJ_NEW(opal_buffer_t);
     /* pack the returned status */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
+        OBJ_RELEASE(bptr);
         return;
     }
+    /* pack the hostname blob */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(reply);
+        OBJ_RELEASE(bptr);
+        return;
+    }
+    OBJ_RELEASE(bptr);
 
     /* pass across any returned blobs */
     opal_dss.copy_payload(reply, buffer);
