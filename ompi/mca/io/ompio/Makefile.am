@@ -51,4 +51,5 @@ sources = \
         io_ompio_file_open.c \
         io_ompio_file_write.c \
         io_ompio_file_read.c \
+        io_ompio_request.c \
 	io_ompio_nbc.c
