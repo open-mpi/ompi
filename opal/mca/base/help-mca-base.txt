@@ -30,6 +30,17 @@ Host:      %s
 Framework: %s
 Component: %s
 #
+[find-available:none found]
+No components were able to be opened in the %s framework.
+
+This typically means that either no components of this type were
+installed, or none of the installed componnets can be loaded.
+Sometimes this means that shared libraries required by these
+components are unable to be found/loaded.
+
+  Host:      %s
+  Framework: %s
+#
 [framework-param:too-many-negates]
 MCA framework parameters can only take a single negation operator
 ("^"), and it must be at the beginning of the value.  The following
