@@ -806,8 +806,10 @@ static int native_get(const opal_identifier_t *id,
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&cb->data, &bptr, &cnt, OPAL_BUFFER))) {
         while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "%s pmix:native retrieved %s from server",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
+                                "%s pmix:native retrieved %s (%s) from server for proc %s",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key,
+                                (OPAL_STRING == kp->type) ? kp->data.string : "NS",
+                                OPAL_NAME_PRINT(*id));
             if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
                 OPAL_ERROR_LOG(ret);
             }
@@ -984,6 +986,9 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 #endif
             /* if this is the local cpuset blob, then unpack and store its contents */
             if (0 == strcmp(PMIX_LOCAL_CPUSETS, kp->key)) {
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "%s received local cpusets",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 /* transfer the byte object for unpacking */
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
                 opal_dss.load(&buf, kp->data.bo.bytes, kp->data.bo.size);
@@ -999,6 +1004,11 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                         cnt = 1;
                         continue;
                     }
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s saving cpuset %s for local peer %s",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                        (NULL == cpuset) ? "NULL" : cpuset,
+                                        OPAL_NAME_PRINT(id));
                     OBJ_CONSTRUCT(&kvn, opal_value_t);
                     kvn.key = strdup(OPAL_DSTORE_CPUSET);
                     kvn.type = OPAL_STRING;
@@ -1060,7 +1070,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 
     /* if the list of local peers wasn't included, then we are done */
     if (NULL == lclpeers) {
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+        opal_output_verbose(0, opal_pmix_base_framework.framework_output,
                             "%s no local peers reported",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         return found;

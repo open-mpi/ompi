@@ -413,8 +413,8 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                                (NULL != ompi_proc_local_proc->super.proc_hostname ?
                                 ompi_proc_local_proc->super.proc_hostname : "unknown!"),
                                OMPI_NAME_PRINT(&(proc->super.proc_name)),
-                               (NULL != ompi_proc_local_proc->super.proc_hostname ?
-                                ompi_proc_local_proc->super.proc_hostname : "unknown!"),
+                               (NULL != proc->super.proc_hostname ?
+                                proc->super.proc_hostname : "unknown!"),
                                btl_names);
             }
             break;
