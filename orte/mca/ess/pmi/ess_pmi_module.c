@@ -257,7 +257,9 @@ static int rte_init(void)
     }
 
     /* this needs to be set to enable debugger use when direct launched */
-    orte_standalone_operation = true;
+    if (NULL == orte_process_info.my_daemon_uri) {
+        orte_standalone_operation = true;
+    }
 
     /* set max procs */
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
