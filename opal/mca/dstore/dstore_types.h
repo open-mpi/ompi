@@ -50,6 +50,7 @@ BEGIN_C_DECLS
 #define OPAL_DSTORE_NODE_SIZE     PMIX_NODE_SIZE
 #define OPAL_DSTORE_MAX_PROCS     PMIX_MAX_PROCS
 #define OPAL_DSTORE_NPROC_OFFSET  PMIX_NPROC_OFFSET
+#define OPAL_DSTORE_HOSTNAME      PMIX_HOSTNAME
 
 /* some OPAL-appropriate key definitions */
 #define OPAL_DSTORE_LOCALITY      "opal.locality"          // (uint16_t) relative locality of a peer
@@ -57,7 +58,6 @@ BEGIN_C_DECLS
 #define OPAL_DSTORE_JOB_SDIR      "opal.job.session.dir"  // (char*) job-level session dir
 #define OPAL_DSTORE_MY_SDIR       "opal.my.session.dir"   // (char*) session dir for this proc
 #define OPAL_DSTORE_URI           "opal.uri"              // (char*) uri of specified proc
-#define OPAL_DSTORE_HOSTNAME      "opal.hostname"         // (char*) hostname of specified proc
 #define OPAL_DSTORE_ARCH          "opal.arch"             // (uint32_t) arch for specified proc
 #define OPAL_DSTORE_HOSTID        "opal.hostid"           // (uint32_t) hostid of specified proc
 #define OPAL_DSTORE_NODEID        "opal.nodeid"           // (uint32_t) nodeid of specified proc
