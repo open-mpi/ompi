@@ -592,7 +592,6 @@ syntax: glob
 ./opal/mca/common/Makefile.in
 ./opal/mca/common/cuda/Makefile.in
 ./opal/mca/common/ofacm/Makefile.in
-./opal/mca/common/pmi/Makefile.in
 ./opal/mca/common/sm/Makefile.in
 ./opal/mca/common/ugni/Makefile.in
 ./opal/mca/common/verbs/Makefile.in
@@ -609,7 +608,6 @@ syntax: glob
 ./opal/mca/crs/self/Makefile.in
 ./opal/mca/dstore/Makefile.in
 ./opal/mca/dstore/hash/Makefile.in
-./opal/mca/dstore/pmi/Makefile.in
 ./opal/mca/event/Makefile.in
 ./opal/mca/event/external/Makefile.in
 ./opal/mca/event/libevent2021/Makefile.in
@@ -665,6 +663,13 @@ syntax: glob
 ./opal/mca/mpool/rgpusm/Makefile.in
 ./opal/mca/mpool/sm/Makefile.in
 ./opal/mca/mpool/udreg/Makefile.in
+./opal/mca/pmix/Makefile.in
+./opal/mca/pmix/*.obj
+./opal/mca/pmix/base/*.obj
+./opal/mca/pmix/cray/Makefile.in
+./opal/mca/pmix/native/Makefile.in
+./opal/mca/pmix/s1/Makefile.in
+./opal/mca/pmix/s2/Makefile.in
 ./opal/mca/pstat/Makefile.in
 ./opal/mca/pstat/*.obj
 ./opal/mca/pstat/base/*.obj
@@ -750,10 +755,10 @@ syntax: glob
 ./orte/mca/filem/base/Makefile.in
 ./orte/mca/filem/raw/Makefile.in
 ./orte/mca/grpcomm/Makefile.in
-./orte/mca/grpcomm/bad/Makefile.in
 ./orte/mca/grpcomm/base/Makefile.in
-./orte/mca/grpcomm/hier/Makefile.in
-./orte/mca/grpcomm/pmi/Makefile.in
+./orte/mca/grpcomm/brks/Makefile.in
+./orte/mca/grpcomm/direct/Makefile.in
+./orte/mca/grpcomm/rcd/Makefile.in
 ./orte/mca/iof/Makefile.in
 ./orte/mca/iof/hnp/Makefile.in
 ./orte/mca/iof/mr_hnp/Makefile.in

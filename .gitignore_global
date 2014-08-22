@@ -493,6 +493,8 @@ opal/mca/hwloc/hwloc172/hwloc/include/private/autogen/stamp-*
 opal/mca/installdirs/config/install_dirs.h
 opal/mca/memory/vc70.pdb
 opal/mca/memory/base/*.obj
+opal/mca/pmix/*.obj
+opal/mca/pmix/base/*.obj
 opal/mca/pstat/*.obj
 opal/mca/pstat/base/*.obj
 opal/mca/timer/vc70.pdb
