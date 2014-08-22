@@ -2086,19 +2086,6 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
                         "btl:usnic: not sorting devices by NUMA distance (topology support not included)");
 #endif
 
-    /* Setup a connectivity listener */
-    if (mca_btl_usnic_component.connectivity_enabled) {
-        rc = opal_btl_usnic_connectivity_listen(module);
-        if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
-            ABORT("Failed to notify connectivity agent to listen");
-        }
-    } else {
-        /* If we're not doing a connectivity check, just set the port
-           to 0 */
-        module->local_addr.connectivity_udp_port = 0;
-    }
-
     /* Setup the pointer array for the procs that will be used by this
        module */
     OBJ_CONSTRUCT(&module->all_procs, opal_pointer_array_t);
@@ -2287,6 +2274,19 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
 
     /* Initialize stats on this module */
     opal_btl_usnic_stats_init(module);
+
+    /* Setup a connectivity listener */
+    if (mca_btl_usnic_component.connectivity_enabled) {
+        rc = opal_btl_usnic_connectivity_listen(module);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            ABORT("Failed to notify connectivity agent to listen");
+        }
+    } else {
+        /* If we're not doing a connectivity check, just set the port
+           to 0 */
+        module->local_addr.connectivity_udp_port = 0;
+    }
 
     return OPAL_SUCCESS;
 
