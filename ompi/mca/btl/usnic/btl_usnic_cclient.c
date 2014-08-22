@@ -117,7 +117,13 @@ int ompi_btl_usnic_connectivity_listen(ompi_btl_usnic_module_t *module)
        agent to be able to print a show_help() message, if
        necessary. */
     PACK_INT32(msg, CONNECTIVITY_AGENT_CMD_LISTEN);
-    PACK_UINT64(msg, (uint64_t) module);
+    /* Only the MPI process who is also the agent will send the
+       pointer value (it doesn't make sense otherwise) */
+    if (0 == ompi_process_info.my_local_rank) {
+        PACK_UINT64(msg, (uint64_t) module);
+    } else {
+        PACK_UINT64(msg, (uint64_t) NULL);
+    }
     PACK_UINT32(msg, module->local_addr.ipv4_addr);
     PACK_UINT32(msg, module->local_addr.cidrmask);
     PACK_UINT32(msg, module->local_addr.mtu);
