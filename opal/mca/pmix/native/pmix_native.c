@@ -866,6 +866,9 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     opal_hwloc_locality_t locality;
     pmix_cb_t *cb;
     uint32_t i, myrank;
+    opal_identifier_t id;
+    char *cpuset;
+    opal_buffer_t buf;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native get_attr called",
@@ -932,8 +935,10 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 #if OPAL_HAVE_HWLOC
             {
                 hwloc_topology_t topo;
-                opal_buffer_t buf;
                 if (0 == strcmp(PMIX_LOCAL_TOPO, kp->key)) {
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s saving topology",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     /* transfer the byte object for unpacking */
                     OBJ_CONSTRUCT(&buf, opal_buffer_t);
                     opal_dss.load(&buf, kp->data.bo.bytes, kp->data.bo.size);
@@ -958,6 +963,43 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                 }
             }
 #endif
+            /* if this is the local cpuset blob, then unpack and store its contents */
+            if (0 == strcmp(PMIX_LOCAL_CPUSETS, kp->key)) {
+                /* transfer the byte object for unpacking */
+                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                opal_dss.load(&buf, kp->data.bo.bytes, kp->data.bo.size);
+                kp->data.bo.bytes = NULL;  // protect the data region
+                kp->data.bo.size = 0;
+                OBJ_RELEASE(kp);
+                cnt=1;
+                while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &id, &cnt, OPAL_UINT64))) {
+                    cnt=1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &cpuset, &cnt, OPAL_STRING))) {
+                        OPAL_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&buf);
+                        cnt = 1;
+                        continue;
+                    }
+                    OBJ_CONSTRUCT(&kvn, opal_value_t);
+                    kvn.key = strdup(OPAL_DSTORE_CPUSET);
+                    kvn.type = OPAL_STRING;
+                    kvn.data.string = cpuset;
+                    if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &id, &kvn))) {
+                        OPAL_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&kvn);
+                        cnt = 1;
+                        continue;
+                    }
+                    OBJ_DESTRUCT(&kvn);
+                }
+                OBJ_DESTRUCT(&buf);
+                if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+                    OPAL_ERROR_LOG(rc);
+                    return false;
+                }
+                cnt=1;
+                continue;
+            }
             if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(kp);
@@ -968,6 +1010,9 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
                 OBJ_RETAIN(kp);
                 lclpeers = kp;
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "%s saving local peers %s",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), lclpeers->data.string);
             } else if (0 == strcmp(PMIX_JOBID, kp->key)) {
                 native_pname.jid = kp->data.uint32;
             } else if (0 == strcmp(PMIX_RANK, kp->key)) {
@@ -1016,22 +1061,29 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         OBJ_CONSTRUCT(&vals, opal_list_t);
         if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)&native_pname,
                                                     OPAL_DSTORE_CPUSET, &vals))) {
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s cpuset for local proc %s not found",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
             OPAL_LIST_DESTRUCT(&vals);
-            continue;
-        }
-        kp = (opal_value_t*)opal_list_get_first(&vals);
-        if (NULL == kp->data.string) {
-            /* if we share a node, but we don't know anything more, then
-             * mark us as on the node as this is all we know
-             */
+            /* even though the cpuset wasn't found, we at least know it is
+             * on the same node with us */
             locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
         } else {
-            /* determine relative location on our node */
-            locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                             opal_process_info.cpuset,
-                                                             kp->data.string);
+            kp = (opal_value_t*)opal_list_get_first(&vals);
+            if (NULL == kp->data.string) {
+                /* if we share a node, but we don't know anything more, then
+                 * mark us as on the node as this is all we know
+                 */
+                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            } else {
+                /* determine relative location on our node */
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 opal_process_info.cpuset,
+                                                                 kp->data.string);
+            }
+            OPAL_LIST_DESTRUCT(&vals);
         }
-        OPAL_LIST_DESTRUCT(&vals);
 #else
         /* all we know is we share a node */
         locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
