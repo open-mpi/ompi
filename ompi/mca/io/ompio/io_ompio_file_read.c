@@ -30,7 +30,9 @@
 #include "ompi/mca/fbtl/base/base.h"
 
 #include "io_ompio.h"
+#include "io_ompio_request.h"
 #include "math.h"
+#include <unistd.h>
 
 /* Read and write routines are split into two interfaces. 
 **   The 
@@ -215,6 +217,17 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 			       ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
+    mca_ompio_request_t *ompio_req=NULL;
+
+    ompio_req = OBJ_NEW(mca_ompio_request_t);
+    ompio_req->req_type = MCA_OMPIO_REQUEST_READ;
+
+    if ( 0 == count ) {
+	ompi_request_complete (&ompio_req->req_ompi, 0);
+	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+	ompio_req->req_ompi.req_status._ucount = 0;
+	return OMPI_SUCCESS;
+    }
 
     if ( NULL != fh->f_fbtl->fbtl_ipreadv ) {
 	// This fbtl has support for non-blocking operations
@@ -226,13 +239,6 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 	size_t max_data = 0; 
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
-	
-	if ( 0 == count ) {
-//	    if ( MPI_STATUS_IGNORE != status ) {
-//		status->_ucount = 0;
-//	    }
-//	    return ret;
-	}
 	
 	ompi_io_ompio_decode_datatype (fh, 
 				       datatype, 
@@ -270,16 +276,18 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 	    free (decoded_iov);
 	    decoded_iov = NULL;
 	}
-	
-//	if ( MPI_STATUS_IGNORE != status ) {
-//	    status->_ucount = max_data;
-//	}
     }
     else {
 	// This fbtl does not  support non-blocking operations
-	ompio_io_ompio_file_read (fh, buf, count, datatype, MPI_STATUS_IGNORE);
+	ompi_status_public_t status;
+	ret = ompio_io_ompio_file_read (fh, buf, count, datatype, &status);
+
+	ompi_request_complete (&ompio_req->req_ompi, 0);
+	ompio_req->req_ompi.req_status.MPI_ERROR = ret;
+	ompio_req->req_ompi.req_status._ucount = status._ucount;
     }
 
+    *request = (ompi_request_t *) ompio_req;
     return ret;
 }
 

@@ -34,12 +34,13 @@
  * *******************************************************************
  */
 static mca_fbtl_base_module_1_0_0_t pvfs2 =  {
-    mca_fbtl_pvfs2_module_init, /* initalise after being selected */
+    mca_fbtl_pvfs2_module_init,     /* initalise after being selected */
     mca_fbtl_pvfs2_module_finalize, /* close a module on a communicator */
-    mca_fbtl_pvfs2_preadv,
-    mca_fbtl_pvfs2_ipreadv,
-    mca_fbtl_pvfs2_pwritev,
-    mca_fbtl_pvfs2_ipwritev
+    mca_fbtl_pvfs2_preadv,          /* blocking read */
+    NULL,                           /* non-blocking read */
+    mca_fbtl_pvfs2_pwritev,         /* blocking write */
+    NULL,                           /* non-blocking write */
+    NULL                            /* module specific progress */
 };
 /*
  * *******************************************************************
