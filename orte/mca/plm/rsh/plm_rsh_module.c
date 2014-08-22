@@ -335,7 +335,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char *orted_cmd, *orted_prefix, *final_cmd;
     int orted_index;
     int rc;
-    int cnt, i, j;
+    int i, j;
     bool found;
     
     /* Figure out the basenames for the libdir and bindir.  This
@@ -566,25 +566,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     opal_argv_append_nosize(&argv, "plm");
     opal_argv_append_nosize(&argv, "rsh");
     
-    /* in the rsh environment, we can append multi-word arguments
-     * by enclosing them in quotes. Check for any multi-word
-     * mca params passed to mpirun and include them - they were
-     * excluded in append_basic_args
-     */
-    cnt = opal_argv_count(orted_cmd_line);    
-    for (i=0; i < cnt; i+=3) {
-        if (NULL == strchr(orted_cmd_line[i+2], ' ')) {
-            continue;
-        }
-        /* protect the value with quotes */
-        (void)asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-        /* now pass it along */
-        opal_argv_append(&argc, &argv, orted_cmd_line[i]);
-        opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
-        opal_argv_append(&argc, &argv, param);
-        free(param);
-    }
-    
     /* unless told otherwise... */
     if (mca_plm_rsh_component.pass_environ_mca_params) {
         /* now check our local environment for MCA params - add them
@@ -611,19 +592,32 @@ static int setup_launch(int *argcptr, char ***argvptr,
                     }
                 }
                 if (!found) {
-                    char *p2;
                     /* add it */
                     opal_argv_append(&argc, &argv, "-mca");
                     opal_argv_append(&argc, &argv, param);
-                    (void)asprintf(&p2, "\"%s\"", value);
-                    opal_argv_append(&argc, &argv, p2);
-                    free(p2);
+                    opal_argv_append(&argc, &argv, value);
                 }
                 free(param);
             }
         }
     }
-    
+
+    /* in the rsh environment, we need to protect args in quotes
+     * as they can contain spaces or special characters */
+    for (i=0; NULL != argv[i]; i++) {
+        if (0 != strcmp(argv[i], "-mca")) {
+            continue;
+        }
+        /* protect the value with quotes if not already
+         * quoted */
+        if ('\"' == argv[i+2][0]) {
+            continue;
+        }
+        (void)asprintf(&param, "\"%s\"", argv[i+2]);
+        free(argv[i+2]);
+        argv[i+2] = param;
+    }
+
     value = opal_argv_join(argv, ' ');
     if (sysconf(_SC_ARG_MAX) < (int)strlen(value)) {
         orte_show_help("help-plm-rsh.txt", "cmd-line-too-long",
