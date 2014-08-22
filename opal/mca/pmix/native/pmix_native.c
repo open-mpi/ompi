@@ -308,7 +308,7 @@ static int native_abort(int flag, const char msg[])
 
     /* wait for the release */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
-
+    OBJ_RELEASE(cb);
     return OPAL_SUCCESS;
 }
 
