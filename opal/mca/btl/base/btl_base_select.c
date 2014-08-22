@@ -15,6 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -154,7 +155,10 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        opal_show_help("help-mca-base.txt", "find-available:not-valid", true,
+        opal_show_help("help-mca-base.txt", "find-available:none found",
+                       true,
+                       "btl",
+                       opal_process_info.nodename,
                        "btl");
         return OPAL_ERROR;
     }
