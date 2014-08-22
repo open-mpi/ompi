@@ -282,7 +282,7 @@ static void track_procs(int fd, short argc, void *cbdata)
         if (NULL != orte_iof.close) {
             orte_iof.close(proc, ORTE_IOF_STDIN);
         }
-        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_COMPLETE) &&
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID) &&
             !ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_RECORDED)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
@@ -292,7 +292,7 @@ static void track_procs(int fd, short argc, void *cbdata)
          * successful launch for short-lived procs
          */
         ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_WAITPID);
-        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_COMPLETE) &&
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_IOF_COMPLETE) &&
             !ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_RECORDED)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }

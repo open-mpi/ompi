@@ -396,7 +396,8 @@ static void proc_errors(int fd, short args, void *cbdata)
             orte_set_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
         }
         /* if the proc has terminated, notify the state machine */
-        if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_COMPLETE) &&
+        if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
+            ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_WAITPID) &&
             !ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_RECORDED)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
@@ -493,7 +494,8 @@ static void proc_errors(int fd, short args, void *cbdata)
             orte_set_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
         }
         /* if the proc has terminated, notify the state machine */
-        if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_COMPLETE) &&
+        if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
+            ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_WAITPID) &&
             !ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_RECORDED)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }

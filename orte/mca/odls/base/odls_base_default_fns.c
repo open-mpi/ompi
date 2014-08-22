@@ -1873,7 +1873,8 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* check for everything complete - this will remove
              * the child object from our local list
              */
-            if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_COMPLETE)) {
+            if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
+                ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_WAITPID)) {
                 ORTE_ACTIVATE_PROC_STATE(&child->name, child->state);
             }
         }

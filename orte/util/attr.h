@@ -134,7 +134,6 @@ typedef uint16_t orte_proc_flags_t;
 #define ORTE_PROC_FLAG_AS_MPI        0x0080  // proc is MPI process
 #define ORTE_PROC_FLAG_IOF_COMPLETE  0x0100  // IOF has completed
 #define ORTE_PROC_FLAG_WAITPID       0x0200  // waitpid fired
-#define ORTE_PROC_FLAG_COMPLETE      0x0300  // both IOF and waitpid have been reported
 #define ORTE_PROC_FLAG_RECORDED      0x0400  // termination has been recorded
 
 
