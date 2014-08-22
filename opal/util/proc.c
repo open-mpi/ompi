@@ -20,7 +20,7 @@ opal_process_info_t opal_process_info = {
     .nodename = "not yet named",
     .job_session_dir = "not yet defined",
     .proc_session_dir = "not yet defined",
-    .num_local_peers = 1,  /* I'm the only process around here */
+    .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
 #if OPAL_HAVE_HWLOC
     .cpuset = NULL,

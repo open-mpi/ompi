@@ -329,12 +329,34 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     int i;
     char **list;
     orte_process_name_t name;
+    opal_buffer_t buf;
 
     /* convenience def */
     node = proc->node;
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
     kp = &kv;
 
+    /* pass the local topology for the app so it doesn't
+     * have to discover it for itself */
+    if (NULL != opal_hwloc_topology) {
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            return rc;
+        }
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_LOCAL_TOPO);
+        kv.type = OPAL_BYTE_OBJECT;
+        opal_dss.unload(&buf, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+        OBJ_DESTRUCT(&buf);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+    }
     /* cpuset */
     tmp = NULL;
     if (orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
@@ -441,6 +463,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     list = NULL;
     name.jobid = jdata->jobid;
     name.vpid = 0;
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
     for (i=0; i < node->procs->size; i++) {
         if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
@@ -450,8 +473,41 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
             if (pptr->name.vpid < name.vpid) {
                 name.vpid = pptr->name.vpid;
             }
+            /* note that we have to pass the cpuset for each local
+             * peer so locality can be computed */
+            tmp = NULL;
+            if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
+                /* add the name of the proc */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&name, 1, OPAL_UINT64))) {
+                    ORTE_ERROR_LOG(rc);
+                    opal_argv_free(list);
+                    return rc;
+                }
+                /* add its cpuset */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &tmp, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    opal_argv_free(list);
+                    return rc;
+                }
+            }
         }
     }
+    /* pass the blob containing the cpusets for all local peers - note
+     * that the cpuset of the proc we are responding to will be included,
+     * so we don't need to send it separately */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(PMIX_LOCAL_CPUSETS);
+    kv.type = OPAL_BYTE_OBJECT;
+    opal_dss.unload(&buf, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+    OBJ_DESTRUCT(&buf);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        opal_argv_free(list);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kv);
+    /* construct the list of peers for transmission */
     tmp = opal_argv_join(list, ',');
     opal_argv_free(list);
     /* pass the local ldr */

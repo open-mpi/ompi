@@ -95,6 +95,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 /* proc location-related info */
 #define PMIX_PROC_MAP        "pmix.map"         // (byte_object) packed map of proc locations within this job
 #define PMIX_LOCAL_PEERS     "pmix.lpeers"      // (char*) comma-delimited string of ranks on this node within this job
+#define PMIX_LOCAL_CPUSETS   "pmix.lcpus"       // (byte_object) packed names and cpusets of local peers
 /* size info */
 #define PMIX_UNIV_SIZE       "pmix.univ.size"   // (uint32_t) #procs in this namespace
 #define PMIX_JOB_SIZE        "pmix.job.size"    // (uint32_t) #procs in this job
