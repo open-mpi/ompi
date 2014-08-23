@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -207,6 +207,7 @@ typedef struct
         mqs_type *type;
         int size;
         struct {
+            int mtc;
             struct {
                 int ndims;
                 int dims;
