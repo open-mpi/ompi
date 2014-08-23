@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -334,7 +334,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
                           qh_type, ompi_communicator_t, c_keyhash);
     }
     {
-        mqs_type* qh_type, *cg_union_type, *cart_type, *graph_type, *dist_graph_type;
+        mqs_type* qh_type, *cart_type, *graph_type, *dist_graph_type;
         int offset = 0;
 
         missing_in_action = "mca_topo_base_module_t";
@@ -345,19 +345,12 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         i_info->mca_topo_base_module_t.type = qh_type;
         i_info->mca_topo_base_module_t.size = mqs_sizeof(qh_type);
 
-        /* There is a union of 3 structs in this struct -- get the
-           offsets for fields of all of them. */
-        ompi_field_offset(offset, qh_type, 
-                          mca_topo_base_module_t, mtc);
-
-        /* Union type. This offset will be added to all the union structure
-	   fields to make sure they are correctly positionned.
-	*/
-        missing_in_action = "mca_topo_base_comm_cgd_union_t";
-        cg_union_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
-        if (!cg_union_type) {
-            goto type_missing;
-        }
+        /* The topo module contains multiple unions.  These fields are
+           outside those unions. */
+        ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc,
+                          qh_type, mca_topo_base_module_t, mtc);
+        ompi_field_offset(i_info->mca_topo_base_module_t.offset.reorder,
+                          qh_type, mca_topo_base_module_t, reorder);
 
         /* By definition, the base offsets are 0 in the union.
 	   Above we've got the base union offset, so now look up the
@@ -434,10 +427,6 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.weighted,
                           dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           weighted);
-
-        /* These fields are outside of the union */
-        ompi_field_offset(i_info->mca_topo_base_module_t.offset.reorder,
-                          qh_type, mca_topo_base_module_t, reorder);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_group_t", mqs_lang_c );
