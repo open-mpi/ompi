@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -123,7 +125,7 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
     } else {
         /* if PMIx is present, then we need to use it */
         mca_pmix_native_component.uri = strdup(t);
-        mca_pmix_native_component.id = strtoul(id, NULL, 10);
+        mca_pmix_native_component.id = strtoull(id, NULL, 10);
         opal_proc_set_name(&mca_pmix_native_component.id);
         *priority = 100;
     }
