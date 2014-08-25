@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -172,7 +174,7 @@ static int native_init(void)
         if (0 != access(uri[1], R_OK)) {
             return OPAL_ERR_NOT_FOUND;
         }
-        mca_pmix_native_component.server = strtoul(uri[0], NULL, 10);
+        mca_pmix_native_component.server = strtoull(uri[0], NULL, 10);
         snprintf(mca_pmix_native_component.address.sun_path,
                  sizeof(mca_pmix_native_component.address.sun_path)-1,
                  "%s", uri[1]);

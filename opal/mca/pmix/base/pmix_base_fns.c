@@ -3,6 +3,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -348,7 +350,7 @@ int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* k
                 kv->data.uint32 = strtoul(tmp3, NULL, 10);
                 break;
             case OPAL_UINT64:
-                kv->data.uint64 = strtoul(tmp3, NULL, 10);
+                kv->data.uint64 = strtoull(tmp3, NULL, 10);
                 break;
             case OPAL_BYTE_OBJECT:
                 if (size == 0xffff) {
