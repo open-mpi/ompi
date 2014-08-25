@@ -25,10 +25,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t 
-mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *file,
-                        int *sorted,
-                        ompi_request_t **request)
+size_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *file,
+			       ompi_request_t **request)
 {
     printf ("POSIX IPREADV\n");
     return OMPI_SUCCESS;

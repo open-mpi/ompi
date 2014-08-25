@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,15 +45,11 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_compo
  * ******************************************************************
  */ 
 
-size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *file,
-                              int *sorted);
-size_t mca_fbtl_posix_pwritev (mca_io_ompio_file_t *file,
-                               int *sorted);
+size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *file );
+size_t mca_fbtl_posix_pwritev (mca_io_ompio_file_t *file );
 size_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *file,
-                               int *sorted,
                                ompi_request_t **request);
 size_t mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *file,
-                                int *sorted,
                                 ompi_request_t **request);
 
 /*
