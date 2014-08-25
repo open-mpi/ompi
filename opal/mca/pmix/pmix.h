@@ -79,6 +79,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 
 #define PMIX_CPUSET          "pmix.cpuset"      // (char*) hwloc bitmap applied to proc upon launch
 #define PMIX_CREDENTIAL      "pmix.cred"        // (opal_byte_object*) security credential assigned to proc
+#define PMIX_HOSTNAME        "pmix.hname"       // (char*) name of the host this proc is on
 /* scratch directory locations for use by applications */
 #define PMIX_TMPDIR          "pmix.tmpdir"      // (char*) top-level tmp dir assigned to session
 /* information about relative ranks as assigned */
@@ -95,6 +96,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 /* proc location-related info */
 #define PMIX_PROC_MAP        "pmix.map"         // (byte_object) packed map of proc locations within this job
 #define PMIX_LOCAL_PEERS     "pmix.lpeers"      // (char*) comma-delimited string of ranks on this node within this job
+#define PMIX_LOCAL_CPUSETS   "pmix.lcpus"       // (byte_object) packed names and cpusets of local peers
 /* size info */
 #define PMIX_UNIV_SIZE       "pmix.univ.size"   // (uint32_t) #procs in this namespace
 #define PMIX_JOB_SIZE        "pmix.job.size"    // (uint32_t) #procs in this job

@@ -34,12 +34,13 @@
  * *******************************************************************
  */
 static mca_fbtl_base_module_1_0_0_t posix =  {
-    mca_fbtl_posix_module_init, /* initalise after being selected */
+    mca_fbtl_posix_module_init,     /* initalise after being selected */
     mca_fbtl_posix_module_finalize, /* close a module on a communicator */
-    mca_fbtl_posix_preadv,
-    mca_fbtl_posix_ipreadv,
-    mca_fbtl_posix_pwritev,
-    mca_fbtl_posix_ipwritev
+    mca_fbtl_posix_preadv,          /* blocking read */
+    NULL,                           /* non-blocking read */
+    mca_fbtl_posix_pwritev,         /* blocking write */
+    NULL,                           /* non-blocking write */
+    NULL                            /* module specific progress */
 };
 /*
  * *******************************************************************

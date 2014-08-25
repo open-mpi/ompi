@@ -329,12 +329,34 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     int i;
     char **list;
     orte_process_name_t name;
+    opal_buffer_t buf;
 
     /* convenience def */
     node = proc->node;
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
     kp = &kv;
 
+    /* pass the local topology for the app so it doesn't
+     * have to discover it for itself */
+    if (NULL != opal_hwloc_topology) {
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            return rc;
+        }
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_LOCAL_TOPO);
+        kv.type = OPAL_BYTE_OBJECT;
+        opal_dss.unload(&buf, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+        OBJ_DESTRUCT(&buf);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+    }
     /* cpuset */
     tmp = NULL;
     if (orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
@@ -441,6 +463,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     list = NULL;
     name.jobid = jdata->jobid;
     name.vpid = 0;
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
     for (i=0; i < node->procs->size; i++) {
         if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
@@ -450,8 +473,41 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
             if (pptr->name.vpid < name.vpid) {
                 name.vpid = pptr->name.vpid;
             }
+            /* note that we have to pass the cpuset for each local
+             * peer so locality can be computed */
+            tmp = NULL;
+            if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
+                /* add the name of the proc */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&pptr->name, 1, OPAL_UINT64))) {
+                    ORTE_ERROR_LOG(rc);
+                    opal_argv_free(list);
+                    return rc;
+                }
+                /* add its cpuset */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &tmp, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    opal_argv_free(list);
+                    return rc;
+                }
+            }
         }
     }
+    /* pass the blob containing the cpusets for all local peers - note
+     * that the cpuset of the proc we are responding to will be included,
+     * so we don't need to send it separately */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(PMIX_LOCAL_CPUSETS);
+    kv.type = OPAL_BYTE_OBJECT;
+    opal_dss.unload(&buf, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+    OBJ_DESTRUCT(&buf);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        opal_argv_free(list);
+        return rc;
+    }
+    OBJ_DESTRUCT(&kv);
+    /* construct the list of peers for transmission */
     tmp = opal_argv_join(list, ',');
     opal_argv_free(list);
     /* pass the local ldr */
@@ -560,7 +616,7 @@ static void process_message(pmix_server_peer_t *peer)
     int32_t cnt;
     pmix_cmd_t cmd;
     opal_buffer_t *reply, xfer, *bptr, buf;
-    opal_value_t kv, *kvp, *kvp2;
+    opal_value_t kv, *kvp, *kvp2, *kp;
     opal_identifier_t id, idreq;
     orte_process_name_t name;
     orte_job_t *jdata;
@@ -829,6 +885,12 @@ static void process_message(pmix_server_peer_t *peer)
             OBJ_DESTRUCT(&xfer);
             return;
         }
+        /* regardless of where this proc is located, we need to ensure
+         * that the hostname it is on is *always* returned. Otherwise,
+         * the non-blocking fence operation will cause us to fail if
+         * the number of procs is below the cutoff as we will immediately
+         * attempt to retrieve the hostname for each proc, but they may
+         * not have posted their data by that time */
         if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
             opal_output_verbose(2, pmix_server_output,
                                 "%s recvd GET PROC %s IS LOCAL",
@@ -857,6 +919,32 @@ static void process_message(pmix_server_peer_t *peer)
                 OBJ_DESTRUCT(&xfer);
                 return;
             }
+            /* pass the hostname */
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            OBJ_CONSTRUCT(&kv, opal_value_t);
+            kv.key = strdup(PMIX_HOSTNAME);
+            kv.type = OPAL_STRING;
+            kv.data.string = strdup(orte_process_info.nodename);
+            kp = &kv;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&xfer);
+                OBJ_DESTRUCT(&buf);
+                OBJ_DESTRUCT(&kv);
+                return;
+            }
+            OBJ_DESTRUCT(&kv);
+            /* pack the blob */
+            bptr = &buf;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&xfer);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            OBJ_DESTRUCT(&buf);
             /* local blob */
             if (NULL != kvp) {
                 opal_output_verbose(2, pmix_server_output,
@@ -937,7 +1025,6 @@ static void process_message(pmix_server_peer_t *peer)
             if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&xfer);
                 OBJ_DESTRUCT(&buf);
                 return;
             }
@@ -945,8 +1032,24 @@ static void process_message(pmix_server_peer_t *peer)
              * so don't repack them */
             opal_dss.copy_payload(reply, &buf);
             OBJ_DESTRUCT(&buf);
+            /* pass the hostname */
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            /* pack the blob */
+            bptr = &buf;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
+            OBJ_DESTRUCT(&buf);
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
-            OBJ_DESTRUCT(&xfer);
             return;
         }
         OPAL_LIST_DESTRUCT(&values);

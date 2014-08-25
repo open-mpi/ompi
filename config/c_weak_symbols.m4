@@ -6,16 +6,17 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2014      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -45,10 +46,10 @@ EOF
 # Try the compile
 OPAL_LOG_COMMAND(
     [$CC $CFLAGS  -c conftest_weak.c],
-    OPAL_LOG_COMMAND(
+    [OPAL_LOG_COMMAND(
         [$CC $CFLAGS  conftest.c conftest_weak.o -o conftest $LDFLAGS $LIBS],
         [opal_c_weak_symbols_happy=1],
-	[opal_c_weak_symbols_happy=0]),
+        [opal_c_weak_symbols_happy=0])],
     [opal_c_weak_symbols_happy=0])
 
     AS_IF([test "$opal_c_weak_symbols_happy" = "1"], [$1], [$2])
@@ -57,6 +58,21 @@ OPAL_LOG_COMMAND(
     rm -f conftest_weak.h conftest_weak.c conftest.c conftest
 ])
 
+
+# OPAL_C_WEAK_SYMBOLS()
+# ---------------------
+# sets OPAL_C_HAVE_WEAK_SYMBOLS=1 if C compiler has support for weak symbols
+AC_DEFUN([OPAL_C_WEAK_SYMBOLS],[
+    AC_CACHE_CHECK([for weak symbol support],
+                   [opal_cv_c_weak_symbols],
+                   [_OPAL_C_WEAK_SYMBOLS([opal_cv_c_weak_symbols="yes"],
+                                         [opal_cv_c_weak_symbols="no"])])
+
+    AS_IF([test "$opal_cv_c_weak_symbols" = "yes"],
+          [OPAL_C_HAVE_WEAK_SYMBOLS=1], [OPAL_C_HAVE_WEAK_SYMBOLS=0])
+]) dnl
+
+########################################################################
 
 # _OPAL_C_MACRO_WEAK_SYMBOLS(action_if_found, [action_if_not_found])
 # ------------------------------------------------------------
@@ -90,10 +106,10 @@ EOF
 # Try the compile
 OPAL_LOG_COMMAND(
     [$CC $CFLAGS  -c conftest_weak.c],
-    OPAL_LOG_COMMAND(
+    [OPAL_LOG_COMMAND(
         [$CC $CFLAGS  conftest.c conftest_weak.o -o conftest $LDFLAGS $LIBS],
         [opal_c_macro_weak_symbols_happy=1],
-	[opal_c_macro_weak_symbols_happy=0]),
+        [opal_c_macro_weak_symbols_happy=0])],
     [opal_c_macro_weak_symbols_happy=0])
 
     AS_IF([test "$opal_c_macro_weak_symbols_happy" = "1"], [$1], [$2])
@@ -102,15 +118,17 @@ OPAL_LOG_COMMAND(
     rm -f conftest_weak.h conftest_weak.c conftest.c conftest
 ])
 
-# OPAL_C_WEAK_SYMBOLS()
+# OPAL_C_MACRO_WEAK_SYMBOLS
 # ---------------------
-# sets OPAL_C_WEAK_SYMBOLS=1 if C compiler has support for weak symbols
-AC_DEFUN([OPAL_C_WEAK_SYMBOLS],[
-    AC_CACHE_CHECK([for weak symbol support],
-                   [opal_cv_c_weak_symbols],
-                   [_OPAL_C_WEAK_SYMBOLS([opal_cv_c_weak_symbols="yes"],
-                                         [opal_cv_c_weak_symbols="no"])])
+# Sets OPAL_C_HAVE_MACRO_WEAK_SYMBOLS=1 if C compiler has support for weak
+# symbols
+AC_DEFUN([OPAL_C_MACRO_WEAK_SYMBOLS],[
+    AC_CACHE_CHECK([for macro weak symbol support],
+                   [opal_cv_c_macro_weak_symbols],
+                   [_OPAL_C_MACRO_WEAK_SYMBOLS([opal_cv_c_macro_weak_symbols="yes"],
+                                               [opal_cv_c_macro_weak_symbols="no"])])
 
-    AS_IF([test "$opal_cv_c_weak_symbols" = "yes"],
-          [OPAL_C_HAVE_WEAK_SYMBOLS=1], [OPAL_C_HAVE_WEAK_SYMBOLS=0])
+    AS_IF([test "$opal_cv_c_macro_weak_symbols" = "yes"],
+          [OPAL_C_HAVE_MACRO_WEAK_SYMBOLS=1],
+          [OPAL_C_HAVE_MACRO_WEAK_SYMBOLS=0])
 ]) dnl

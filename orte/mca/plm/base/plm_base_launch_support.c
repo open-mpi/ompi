@@ -1173,19 +1173,18 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (ORTE_PROC_IS_HNP) {
         rml_uri = orte_rml.get_contact_info();
     } else {
-        asprintf(&param, "\"%s\"", orte_rml.get_contact_info() );
+        rml_uri = orte_rml.get_contact_info();
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "orte_parent_uri");
-        opal_argv_append(argc, argv, param);
-        free(param);
+        opal_argv_append(argc, argv, rml_uri);
+        free(rml_uri);
     
-        rml_uri = orte_process_info.my_hnp_uri;
+        rml_uri = strdup(orte_process_info.my_hnp_uri);
     }
-    asprintf(&param, "\"%s\"", rml_uri);
     opal_argv_append(argc, argv, "-mca");
     opal_argv_append(argc, argv, "orte_hnp_uri");
-    opal_argv_append(argc, argv, param);
-    free(param);
+    opal_argv_append(argc, argv, rml_uri);
+    free(rml_uri);
 
     /* if we have static ports, pass the node list */
     if (orte_static_ports && NULL != nodes) {
@@ -1304,15 +1303,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                 }
             }
             if (!ignore) {
-                /* even if it is a single word, we have to try and quote it
-                 * because it could contain a special character like a colon
-                 * or semicolon */
-                (void)asprintf(&tmp_force, "\"%s\"", orted_cmd_line[i+2]);
                 /* pass it along */
                 opal_argv_append(argc, argv, orted_cmd_line[i]);
                 opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-                opal_argv_append(argc, argv, tmp_force);
-                free(tmp_force);
+                opal_argv_append(argc, argv, orted_cmd_line[i+2]);
             }
         }
     }

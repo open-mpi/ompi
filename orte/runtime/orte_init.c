@@ -200,7 +200,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
             error = "opal_pmix_base_select";
             goto error;
         }
-    } else {
+    } else if (!ORTE_PROC_IS_TOOL) {
         /* let the pmix server register params */
         pmix_server_register();
     }

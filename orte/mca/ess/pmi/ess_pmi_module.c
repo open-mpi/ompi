@@ -218,6 +218,15 @@ static int rte_init(void)
         orte_process_info.app_num = 0;
     }
 
+    /* get the number of local peers - required for wireup of
+     * shared memory BTL */
+    if (opal_pmix.get_attr(PMIX_LOCAL_SIZE, &kv)) {
+        orte_process_info.num_local_peers = kv->data.uint32 - 1;  // want number besides ourselves
+        OBJ_RELEASE(kv);
+    } else {
+        orte_process_info.num_local_peers = 0;
+    }
+
     /* setup transport keys in case the MPI layer needs them -
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
@@ -257,7 +266,9 @@ static int rte_init(void)
     }
 
     /* this needs to be set to enable debugger use when direct launched */
-    orte_standalone_operation = true;
+    if (NULL == orte_process_info.my_daemon_uri) {
+        orte_standalone_operation = true;
+    }
 
     /* set max procs */
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
