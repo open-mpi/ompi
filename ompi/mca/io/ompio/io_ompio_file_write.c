@@ -123,7 +123,7 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
 					 &total_bytes_written);
 
         if (fh->f_num_of_io_entries) {
-            fh->f_fbtl->fbtl_pwritev (fh, NULL);
+            fh->f_fbtl->fbtl_pwritev (fh);
         }
 
         fh->f_num_of_io_entries = 0;
@@ -251,7 +251,7 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 				      &total_bytes_written);
 	
         if (fh->f_num_of_io_entries) {
-            fh->f_fbtl->fbtl_ipwritev (fh, NULL, request);
+            fh->f_fbtl->fbtl_ipwritev (fh, request);
         }
 	
         fh->f_num_of_io_entries = 0;

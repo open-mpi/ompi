@@ -46,16 +46,12 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_plfs_compon
  * ******************************************************************
  */ 
 
-size_t mca_fbtl_plfs_preadv (mca_io_ompio_file_t *file,
-                              int *sorted);
-size_t mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *file,
-                               int *sorted);
+size_t mca_fbtl_plfs_preadv (mca_io_ompio_file_t *file );
+size_t mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *file );
 size_t mca_fbtl_plfs_ipreadv (mca_io_ompio_file_t *file,
-                               int *sorted,
-                               ompi_request_t **request);
+			      ompi_request_t **request);
 size_t mca_fbtl_plfs_ipwritev (mca_io_ompio_file_t *file,
-                                int *sorted,
-                                ompi_request_t **request);
+			       ompi_request_t **request);
 
 /*
  * ******************************************************************
