@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,8 +32,8 @@ AC_DEFUN([OSHMEM_SETUP_PROFILING],[
                        [AC_MSG_WARN([Macro weak symbols not supported by compiler])])
                   AC_MSG_WARN([OpenSHMEM profiling is disabled.])
 
-                  AS_IF(["$enable_oshmem_profile" = "yes" -a
-                         $oshmem_profiling_support -eq 0],
+                  AS_IF([test "$enable_oshmem_profile" = "yes" && \
+                         test "$oshmem_profiling_support" -eq 0],
                         [AC_MSG_WARN([OpenSHMEM profiling requested but cannot be enabled])
                          AC_MSG_ERROR([Cannot continue])])
                  ])
