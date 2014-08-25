@@ -287,7 +287,7 @@ int orte_dt_compare_sig(orte_grpcomm_signature_t *value1, orte_grpcomm_signature
         return OPAL_VALUE2_GREATER;
     }
     /* same size - check contents */
-    if (0 == memcmp(value1->signature, value2->signature, value1->sz)) {
+    if (0 == memcmp(value1->signature, value2->signature, value1->sz*sizeof(orte_process_name_t))) {
         return OPAL_EQUAL;
     }
 
