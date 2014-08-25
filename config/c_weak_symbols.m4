@@ -125,8 +125,8 @@ OPAL_LOG_COMMAND(
 AC_DEFUN([OPAL_C_MACRO_WEAK_SYMBOLS],[
     AC_CACHE_CHECK([for macro weak symbol support],
                    [opal_cv_c_macro_weak_symbols],
-                   [_OPAL_C_WEAK_SYMBOLS([opal_cv_c_macro_weak_symbols="yes"],
-                                         [opal_cv_c_macro_weak_symbols="no"])])
+                   [_OPAL_C_MACRO_WEAK_SYMBOLS([opal_cv_c_macro_weak_symbols="yes"],
+                                               [opal_cv_c_macro_weak_symbols="no"])])
 
     AS_IF([test "$opal_cv_c_macro_weak_symbols" = "yes"],
           [OPAL_C_HAVE_MACRO_WEAK_SYMBOLS=1],
