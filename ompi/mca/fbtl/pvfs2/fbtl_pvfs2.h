@@ -62,7 +62,7 @@ size_t mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *file);
 size_t mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
                                ompi_request_t **request);
 size_t mca_fbtl_pvfs2_ipwritev (mca_io_ompio_file_t *file,
-                               omp_request_t **request);
+                               ompi_request_t **request);
 
 /*
  * ******************************************************************
