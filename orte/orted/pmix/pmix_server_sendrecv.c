@@ -336,6 +336,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
     kp = &kv;
 
+#if OPAL_HAVE_HWLOC
     /* pass the local topology for the app so it doesn't
      * have to discover it for itself */
     if (NULL != opal_hwloc_topology) {
@@ -357,6 +358,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
         }
         OBJ_DESTRUCT(&kv);
     }
+#endif /* OPAL_HAVE_HWLOC */
     /* cpuset */
     tmp = NULL;
     if (orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
