@@ -845,9 +845,10 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
 
     offset = get_displacement(module, target) * target_disp;
 
-    if (!ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count) ||
-        !ompi_datatype_is_contiguous_memory_layout(result_dt, result_count) ||
-        !ompi_datatype_is_contiguous_memory_layout(target_dt, target_count)) {
+    /* we don't support non-contiguous buffers.  but if the count is 0, we don't care if buffer is non-contiguous. */
+    if ((origin_count > 0 && !ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count)) ||
+        (result_count > 0 && !ompi_datatype_is_contiguous_memory_layout(result_dt, result_count)) ||
+        (target_count > 0 && !ompi_datatype_is_contiguous_memory_layout(target_dt, target_count))) {
         opal_output(ompi_osc_base_framework.framework_output,
                     "MPI_Get_accumulate: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
