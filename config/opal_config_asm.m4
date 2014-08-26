@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -963,7 +963,7 @@ AC_MSG_ERROR([Can not continue.])
 
     result="OMPI_$ompi_cv_asm_arch"
     OPAL_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
-    AC_MSG_CHECKING([for asssembly architecture])
+    AC_MSG_CHECKING([for assembly architecture])
     AC_MSG_RESULT([$ompi_cv_asm_arch])
     AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
         [Architecture type of assembly to use for atomic operations and CMA])
