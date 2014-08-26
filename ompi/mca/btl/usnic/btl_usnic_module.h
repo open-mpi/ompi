@@ -185,6 +185,7 @@ typedef struct ompi_btl_usnic_module_t {
     ompi_btl_usnic_channel_t mod_channels[USNIC_NUM_CHANNELS];
 
     uint32_t qp_max_inline;
+    uint32_t num_short_packets;
 
     /* Performance / debugging statistics */
     ompi_btl_usnic_module_stats_t stats;
