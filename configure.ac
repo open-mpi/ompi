@@ -517,6 +517,7 @@ if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
     AC_C_RESTRICT
 fi
 OMPI_C_WEAK_SYMBOLS
+OMPI_C_MACRO_WEAK_SYMBOLS
 if test "$GCC" = "yes"; then
     CFLAGS=$CFLAGS_save
 fi
@@ -548,14 +549,15 @@ fi
 
 OPAL_CHECK_OFFSETOF
 
-# Setup OMPI bindings (if we're building the OMPI project).  Note that
-# opal_wrapper.c has a hard-coded use of the OMPI_ENABLE_MPI_PROFILING
-# macro, so we need to define it (to 0) even if we're not building the
-# OMPI project.
+# Setup profiling bindings (if we're building the relevant projects).
+# Note that opal_wrapper.c has a hard-coded use of the
+# OMPI_ENABLE_MPI_PROFILING macro, so we need to define it (to 0) even
+# if we're not building the OMPI project.
 
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
                          [AC_DEFINE([OMPI_ENABLE_MPI_PROFILING], [0],
                                     [We are not building OMPI, so no profiling])])
+m4_ifdef([project_oshmem], [OSHMEM_SETUP_PROFILING])
 
 
 ##################################
