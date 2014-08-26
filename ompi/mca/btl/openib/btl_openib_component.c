@@ -233,6 +233,10 @@ static int btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
     mca_btl_openib_component.memory_registration_verbose = -1;
 
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_stage_one_init();
+#endif /* OPAL_CUDA_SUPPORT */
+
     return OMPI_SUCCESS;
 }
 
@@ -289,6 +293,10 @@ static int btl_openib_component_close(void)
 
     /* close memory registration debugging output */
     opal_output_close (mca_btl_openib_component.memory_registration_verbose);
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif /* OPAL_CUDA_SUPPORT */
 
     return rc;
 }

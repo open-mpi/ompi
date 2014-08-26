@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +74,7 @@ OMPI_DECLSPEC int mca_common_cuda_get_device(int *devicenum);
 OMPI_DECLSPEC int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2);
 OMPI_DECLSPEC int mca_common_cuda_stage_one_init(void);
 OMPI_DECLSPEC int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base);
+OPAL_DECLSPEC void mca_common_cuda_fini(void);
 #if OPAL_CUDA_GDR_SUPPORT
 OMPI_DECLSPEC bool mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg);
 OMPI_DECLSPEC void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg);

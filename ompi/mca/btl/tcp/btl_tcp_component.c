@@ -446,6 +446,10 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
 
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif /* OPAL_CUDA_SUPPORT */
+
     return OMPI_SUCCESS;
 }
 

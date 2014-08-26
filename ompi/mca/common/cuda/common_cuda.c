@@ -97,11 +97,12 @@ struct cudaFunctionTable {
     int (*cuCtxSetCurrent)(CUcontext);
     int (*cuEventSynchronize)(CUevent);
     int (*cuStreamSynchronize)(CUstream);
+    int (*cuStreamDestroy)(CUstream);
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
 
-static bool stage_one_init_complete = false;
+static int stage_one_init_ref_count = 0;
 static bool stage_three_init_complete = false;
 static bool common_cuda_initialized = false;
 static int mca_common_cuda_verbose;
@@ -145,15 +146,15 @@ static int mca_common_cuda_cumemcpy_timing;
 
 /* Array of CUDA events to be queried for IPC stream, sending side and
  * receiving side. */
-CUevent *cuda_event_ipc_array;
-CUevent *cuda_event_dtoh_array;
-CUevent *cuda_event_htod_array;
+CUevent *cuda_event_ipc_array = NULL;
+CUevent *cuda_event_dtoh_array = NULL;
+CUevent *cuda_event_htod_array = NULL;
 
 /* Array of fragments currently being moved by cuda async non-blocking
  * operations */
-struct mca_btl_base_descriptor_t **cuda_event_ipc_frag_array;
-struct mca_btl_base_descriptor_t **cuda_event_dtoh_frag_array;
-struct mca_btl_base_descriptor_t **cuda_event_htod_frag_array;
+struct mca_btl_base_descriptor_t **cuda_event_ipc_frag_array = NULL;
+struct mca_btl_base_descriptor_t **cuda_event_dtoh_frag_array = NULL;
+struct mca_btl_base_descriptor_t **cuda_event_htod_frag_array = NULL;
 
 /* First free/available location in cuda_event_status_array */
 int cuda_event_ipc_first_avail, cuda_event_dtoh_first_avail, cuda_event_htod_first_avail;
@@ -171,7 +172,7 @@ static int cuda_event_dtoh_most = 0;
 static int cuda_event_htod_most = 0;
 
 /* Handle to libcuda.so */
-opal_lt_dlhandle libcuda_handle;
+opal_lt_dlhandle libcuda_handle = NULL;
 
 #define CUDA_COMMON_TIMING 0
 #if OPAL_ENABLE_DEBUG
@@ -224,8 +225,9 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 
 /**
  * This is the first stage of initialization.  This function is
- * triggered when there are memory registration requests from various
- * BTLs.  This function will register some mca variables and then open
+ * called explicitly by any BTLs that can support CUDA-aware.
+ * It is called during the component open phase of initialization.
+ * This function will register some mca variables and then open
  * and load the symbols needed from the CUDA driver library. Look for
  * the SONAME of the library which is libcuda.so.1.  In most cases,
  * this will result in the library found.  However, there are some
@@ -245,10 +247,13 @@ int mca_common_cuda_stage_one_init(void)
     int errsize;
     bool stage_one_init_passed = false;
 
-    if (true == stage_one_init_complete) {
-        return 0;
+    stage_one_init_ref_count++;
+    if (stage_one_init_ref_count > 1) {
+        opal_output_verbose(10, mca_common_cuda_output,
+                            "CUDA: stage_one_init_ref_count is now %d, no need to init",
+                            stage_one_init_ref_count);
+        return OPAL_SUCCESS;
     }
-    stage_one_init_complete = true;
 
     /* Set different levels of verbosity in the cuda related code. */
     mca_common_cuda_verbose = 0;
@@ -322,6 +327,10 @@ int mca_common_cuda_stage_one_init(void)
     mca_common_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_common_cuda_output, mca_common_cuda_verbose);
 
+    opal_output_verbose(10, mca_common_cuda_output,
+                        "CUDA: stage_one_init_ref_count is now %d, initializing",
+                        stage_one_init_ref_count);
+
     /* First check if the support is enabled.  In the case that the user has
      * turned it off, we do not need to continue with any CUDA specific
      * initialization.  Do this after MCA parameter registration. */
@@ -360,7 +369,7 @@ int mca_common_cuda_stage_one_init(void)
      * paths from the system.  For the second loop, set /usr/lib64 to
      * the search path and try again.  This is done to handle the case
      * where we have both 32 and 64 bit libcuda.so libraries installed.
-     * Even when running in 64-bit mode, the /usr/lib direcotry
+     * Even when running in 64-bit mode, the /usr/lib directory
      * is searched first and we may find a 32-bit libcuda.so.1 library.
      * Loading of this library will fail as libtool does not handle having
      * the wrong ABI in the search path (unlike ld or ld.so).  Note that
@@ -492,6 +501,7 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxSetCurrent);
     OMPI_CUDA_DLSYM(libcuda_handle, cuEventSynchronize);
     OMPI_CUDA_DLSYM(libcuda_handle, cuStreamSynchronize);
+    OMPI_CUDA_DLSYM(libcuda_handle, cuStreamDestroy);
     return 0;
 }
 
@@ -500,7 +510,8 @@ int mca_common_cuda_stage_one_init(void)
  * This is the last phase of initialization.  This is triggered when we examine
  * a buffer pointer and determine it is a GPU buffer.  We then assume the user
  * has selected their GPU and we can go ahead with all the CUDA related 
- * initializations. 
+ * initializations.   If we get an error, just return.  Cleanup of resources
+ * will happen when fini is called.
  */
 static int mca_common_cuda_stage_three_init(void)
 {
@@ -570,8 +581,6 @@ static int mca_common_cuda_stage_three_init(void)
 #if OPAL_CUDA_SUPPORT_41
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding IPC async copy events */
-        cuda_event_ipc_array = NULL;
-        cuda_event_ipc_frag_array = NULL;
         cuda_event_ipc_num_used = 0;
         cuda_event_ipc_first_avail = 0;
         cuda_event_ipc_first_used = 0;
@@ -608,8 +617,6 @@ static int mca_common_cuda_stage_three_init(void)
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding async dtoh events.  Used on the
          * sending side for asynchronous copies. */
-        cuda_event_dtoh_array = NULL;
-        cuda_event_dtoh_frag_array = NULL;
         cuda_event_dtoh_num_used = 0;
         cuda_event_dtoh_first_avail = 0;
         cuda_event_dtoh_first_used = 0;
@@ -643,8 +650,6 @@ static int mca_common_cuda_stage_three_init(void)
 
         /* Set up an array to store outstanding async htod events.  Used on the
          * receiving side for asynchronous copies. */
-        cuda_event_htod_array = NULL;
-        cuda_event_htod_frag_array = NULL;
         cuda_event_htod_num_used = 0;
         cuda_event_htod_first_avail = 0;
         cuda_event_htod_first_used = 0;
@@ -742,6 +747,90 @@ static int mca_common_cuda_stage_three_init(void)
     return OMPI_SUCCESS;
 }
 
+/**
+ * Cleanup all CUDA resources.
+ *
+ * Note: Still figuring out how to get cuMemHostUnregister called from the smcuda sm
+ * mpool.  Looks like with the memory pool from openib (grdma), the unregistering is 
+ * called as the free list is destructed.  Not true for the sm mpool.  This means we
+ * are currently still leaking some host memory we registered with CUDA.
+ */
+void mca_common_cuda_fini(void)
+{
+    int i;
+    
+    if (0 == stage_one_init_ref_count) {
+        opal_output_verbose(20, mca_common_cuda_output,
+                            "CUDA: mca_common_cuda_fini, ref_count=%d, fini is already complete",
+                            stage_one_init_ref_count);
+        return;
+    }
+
+    if (1 == stage_one_init_ref_count) {
+        opal_output_verbose(20, mca_common_cuda_output,
+                            "CUDA: mca_common_cuda_fini, ref_count=%d, cleaning up",
+                            stage_one_init_ref_count);
+      
+        if (NULL != cuda_event_ipc_array) {
+            for (i = 0; i < cuda_event_max; i++) {
+                if (NULL != cuda_event_ipc_array[i]) {
+                    cuFunc.cuEventDestroy(cuda_event_ipc_array[i]);
+                }
+            } 
+            free(cuda_event_ipc_array);
+        }
+        if (NULL != cuda_event_htod_array) {
+            for (i = 0; i < cuda_event_max; i++) {
+                if (NULL != cuda_event_htod_array[i]) {
+                    cuFunc.cuEventDestroy(cuda_event_htod_array[i]);
+                }
+            }
+            free(cuda_event_htod_array);
+        }
+
+        if (NULL != cuda_event_dtoh_array) {
+            for (i = 0; i < cuda_event_max; i++) {
+                if (NULL != cuda_event_dtoh_array[i]) {
+                    cuFunc.cuEventDestroy(cuda_event_dtoh_array[i]);
+                }
+            }
+            free(cuda_event_dtoh_array);
+        }
+
+        if (NULL != cuda_event_ipc_frag_array) {
+            free(cuda_event_ipc_frag_array);
+        }
+        if (NULL != cuda_event_htod_frag_array) {
+            free(cuda_event_htod_frag_array);
+        }
+        if (NULL != cuda_event_dtoh_frag_array) {
+            free(cuda_event_dtoh_frag_array);
+        }
+        if (NULL != ipcStream) {
+            cuFunc.cuStreamDestroy(ipcStream);
+        }
+        if (NULL != dtohStream) {
+            cuFunc.cuStreamDestroy(dtohStream);
+        }
+        if (NULL != htodStream) {
+            cuFunc.cuStreamDestroy(htodStream);
+        }
+        if (NULL != memcpyStream) {
+            cuFunc.cuStreamDestroy(memcpyStream);
+        }
+        if (NULL != libcuda_handle) {
+            opal_lt_dlclose(libcuda_handle);
+            opal_lt_dlexit();
+        }
+        opal_output_close(mca_common_cuda_output);
+
+    } else {
+        opal_output_verbose(20, mca_common_cuda_output,
+                            "CUDA: mca_common_cuda_fini, ref_count=%d, cuda still in use",
+                            stage_one_init_ref_count);
+    }
+    stage_one_init_ref_count--;
+}    
 
 /**
  * Call the CUDA register function so we pin the memory in the CUDA
@@ -753,17 +842,6 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
     /* Always first check if the support is enabled.  If not, just return */
     if (!ompi_mpi_cuda_support)
         return;
-
-    /* Registering memory during BTL initialization will be the first call
-     * into the cuda common code, so this is where we do the first
-     * initialization function. If the first stage fails, then disable
-     * support and return. */
-    if (!stage_one_init_complete) {
-        if (0 != mca_common_cuda_stage_one_init()) {
-            ompi_mpi_cuda_support = 0;
-            return;
-        }
-    }
 
     if (!common_cuda_initialized) {
         common_cuda_mem_regs_t *regptr;
