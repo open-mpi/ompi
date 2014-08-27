@@ -676,6 +676,13 @@ static void pmix_server_release(int status,
     pmix_server_peer_t *peer;
     opal_buffer_t *reply;
 
+    if (2 < opal_output_get_verbosity(pmix_server_output)) {
+        char *tmp=NULL;
+        (void)opal_dss.print(&tmp, NULL, trk->sig, ORTE_SIGNATURE);
+        opal_output(0, "%s pmix_server release called on tracker %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+        free(tmp);
+    }
     opal_output_verbose(2, pmix_server_output,
                         "%s pmix:server:release coll release recvd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

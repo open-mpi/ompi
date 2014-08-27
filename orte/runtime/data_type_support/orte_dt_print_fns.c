@@ -895,6 +895,36 @@ int orte_dt_print_attr(char **output, char *prefix,
 
 int orte_dt_print_sig(char **output, char *prefix, orte_grpcomm_signature_t *src, opal_data_type_t type)
 {
+    char *prefx;
+    size_t i;
+    char *tmp, *tmp2;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = strdup(prefix);
+    
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: ORTE_SIG\tValue: NULL pointer", prefx);
+        free(prefx);
+        return OPAL_SUCCESS;
+    }
+
+    if (NULL == src->signature) {
+        asprintf(output, "%sORTE_SIG\tValue: NULL", prefx);
+        free(prefx);
+        return ORTE_SUCCESS;
+    }
+
+    /* there must be at least one */
+    asprintf(&tmp, "%sORTE_SIG\tValue: ", prefx);
+
+    for (i=0; i < src->sz; i++) {
+        asprintf(&tmp2, "%s%s", tmp, ORTE_NAME_PRINT(&src->signature[i]));
+        free(tmp);
+        tmp = tmp2;
+    }
+    *output = tmp;
     return ORTE_SUCCESS;
 }
 

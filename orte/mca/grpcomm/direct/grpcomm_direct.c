@@ -437,8 +437,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         nm = (orte_namelist_t*)item;
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:direct:send_relay sending relay msg to %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             "%s grpcomm:direct:send_relay sending relay msg of %d bytes to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)rly->bytes_used,
                              ORTE_NAME_PRINT(&nm->name)));
         OBJ_RETAIN(rly);
         /* check the state of the recipient - no point
