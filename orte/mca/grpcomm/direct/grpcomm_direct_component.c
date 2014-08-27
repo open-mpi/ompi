@@ -33,7 +33,7 @@ static int direct_register(void);
 orte_grpcomm_base_component_t mca_grpcomm_direct_component = {
     {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
-        
+
         "direct", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */
         ORTE_MINOR_VERSION,  /* MCA module minor version */
@@ -57,7 +57,7 @@ static int direct_register(void)
      * direct for use by apps without affecting daemons - set
      * it to be first for now until the others are fixed
      */
-    my_priority = 80;
+    my_priority = 10;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm direct component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
