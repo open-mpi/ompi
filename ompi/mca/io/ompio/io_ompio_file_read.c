@@ -128,7 +128,7 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
 				      &total_bytes_read);
 	
         if (fh->f_num_of_io_entries) {
-            fh->f_fbtl->fbtl_preadv (fh, NULL);
+            fh->f_fbtl->fbtl_preadv (fh);
         }
 
         fh->f_num_of_io_entries = 0;
@@ -263,7 +263,7 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 				      &total_bytes_read);
 	    
 	if (fh->f_num_of_io_entries) {
-	    fh->f_fbtl->fbtl_ipreadv (fh, NULL, request);
+	    fh->f_fbtl->fbtl_ipreadv (fh, request);
 	}
 	
 	fh->f_num_of_io_entries = 0;

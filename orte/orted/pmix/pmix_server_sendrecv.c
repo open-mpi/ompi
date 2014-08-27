@@ -336,6 +336,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
     kp = &kv;
 
+#if OPAL_HAVE_HWLOC
     /* pass the local topology for the app so it doesn't
      * have to discover it for itself */
     if (NULL != opal_hwloc_topology) {
@@ -357,6 +358,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
         }
         OBJ_DESTRUCT(&kv);
     }
+#endif /* OPAL_HAVE_HWLOC */
     /* cpuset */
     tmp = NULL;
     if (orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
@@ -1029,25 +1031,9 @@ static void process_message(pmix_server_peer_t *peer)
                 return;
             }
             /* xfer the data - the blobs are in the buffer,
-             * so don't repack them */
+             * so don't repack them. They will include the remote
+             * hostname, so don't add it again */
             opal_dss.copy_payload(reply, &buf);
-            OBJ_DESTRUCT(&buf);
-            /* pass the hostname */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&buf);
-                return;
-            }
-            /* pack the blob */
-            bptr = &buf;
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&buf);
-                return;
-            }
             OBJ_DESTRUCT(&buf);
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
             return;

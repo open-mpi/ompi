@@ -205,7 +205,6 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:returning existing collective",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
             return coll;
         }
     }
@@ -250,6 +249,11 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
     size_t nds;
     orte_vpid_t *dns;
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:base:create_dmns called with %s signature",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == sig->signature) ? "NULL" : "NON-NULL"));
+
     /* if NULL == procs, then all daemons are participating */
     if (NULL == sig->signature) {
         *ndmns = orte_process_info.num_procs;
@@ -258,6 +262,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
     }
 
     if (ORTE_VPID_WILDCARD == sig->signature[0].vpid) {
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:base:create_dmns called for all procs in job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(sig->signature[0].jobid)));
         /* all daemons hosting this jobid are participating */
         if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -280,6 +288,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 free(dns);
                 return ORTE_ERROR;
             }
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                                 "%s grpcomm:base:create_dmns adding daemon %s to array",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
             dns[nds++] = node->daemon->name.vpid;
         }
     } else {
@@ -324,6 +336,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
         dns = (orte_vpid_t*)malloc(opal_list_get_size(&ds) * sizeof(orte_vpid_t));
         nds = 0;
         while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&ds))) {
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                                 "%s grpcomm:base:create_dmns adding daemon %s to array",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&nm->name)));
             dns[nds++] = nm->name.vpid;
             OBJ_RELEASE(nm);
         }

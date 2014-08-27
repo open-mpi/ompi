@@ -117,18 +117,14 @@ typedef int (*mca_fbtl_base_module_finalize_1_0_0_fn_t)
 
 
 typedef size_t (*mca_fbtl_base_module_preadv_fn_t)
-    (struct mca_io_ompio_file_t *file,
-     int *sorted);
+    (struct mca_io_ompio_file_t *file );
 typedef size_t (*mca_fbtl_base_module_pwritev_fn_t)
-    (struct mca_io_ompio_file_t *file,
-     int *sorted);
+    (struct mca_io_ompio_file_t *file );
 typedef size_t (*mca_fbtl_base_module_ipreadv_fn_t)
     (struct mca_io_ompio_file_t *file,
-     int *sorted,
      ompi_request_t **request);
 typedef size_t (*mca_fbtl_base_module_ipwritev_fn_t)
     (struct mca_io_ompio_file_t *file,
-     int *sorted,
      ompi_request_t **request);
 typedef bool (*mca_fbtl_base_module_progress_fn_t)
     ( struct mca_ompio_request_t *request);
