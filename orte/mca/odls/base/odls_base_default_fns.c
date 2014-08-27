@@ -189,10 +189,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
-    int32_t n;
+    int32_t n, k;
     orte_proc_t *pptr, *dmn;
     opal_buffer_t *bptr;
     orte_app_context_t *app;
+    bool found;
+    orte_node_t *node;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
@@ -312,9 +314,28 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         }
         OBJ_RETAIN(dmn->node);
         pptr->node = dmn->node;
+        /* add proc to node - note that num_procs for the
+         * node was already correctly unpacked, so don't
+         * increment it here */
         OBJ_RETAIN(pptr);
         opal_pointer_array_add(dmn->node->procs, pptr);
-        dmn->node->num_procs++;
+
+        /* add the node to the map, if not already there */
+        found = false;
+        for (k=0; k < jdata->map->nodes->size; k++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, k))) {
+                continue;
+            }
+            if (node->daemon == dmn) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            OBJ_RETAIN(dmn->node);
+            opal_pointer_array_add(jdata->map->nodes, dmn->node);
+            jdata->map->num_nodes++;
+        }
 
         /* see if it belongs to us */
         if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
