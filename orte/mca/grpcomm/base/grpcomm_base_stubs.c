@@ -197,11 +197,7 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
             /* if only one is NULL, then we can't possibly match */
             break;
         }
-        /* if the size doesn't match, then they can't be the same */
-        if (sig->sz != coll->sig->sz) {
-            continue;
-        }
-        if (0 == memcmp(sig->signature, coll->sig->signature, coll->sig->sz)) {
+        if (OPAL_EQUAL == opal_dss.compare(sig, coll->sig, ORTE_SIGNATURE)) {
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:returning existing collective",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -217,9 +213,13 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
 
         return NULL;
     }
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:base: creating new coll",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    if (1 < opal_output_get_verbosity(orte_grpcomm_base_framework.framework_output)) {
+        char *tmp=NULL;
+        (void)opal_dss.print(&tmp, NULL, sig, ORTE_SIGNATURE);
+        opal_output(0, "%s grpcomm:base: creating new coll for procs %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+        free(tmp);
+    }
     coll = OBJ_NEW(orte_grpcomm_coll_t);
     OBJ_RETAIN(sig);
     coll->sig = sig;

@@ -715,6 +715,14 @@ static void process_message(pmix_server_peer_t *peer)
                 goto reply_fence;
             }
         }
+        if (4 < opal_output_get_verbosity(pmix_server_output)) {
+            char *tmp=NULL;
+            (void)opal_dss.print(&tmp, NULL, sig, ORTE_SIGNATURE);
+            opal_output(0, "%s %s called with procs %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE", tmp);
+            free(tmp);
+        }
         /* get the URI for this process */
         cnt = 1;
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &local_uri, &cnt, OPAL_STRING))) {
