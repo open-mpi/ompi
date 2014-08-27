@@ -504,7 +504,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
             char tmp1[1024], tmp2[1024];
             char *str=NULL, *cpu_bitmap=NULL;
 ;
-            if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING)) {
+            if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
+                NULL != src->node->topology) {
                 mycpus = hwloc_bitmap_alloc();
                 hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
                 if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology, mycpus)) {
