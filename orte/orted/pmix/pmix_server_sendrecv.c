@@ -1031,25 +1031,9 @@ static void process_message(pmix_server_peer_t *peer)
                 return;
             }
             /* xfer the data - the blobs are in the buffer,
-             * so don't repack them */
+             * so don't repack them. They will include the remote
+             * hostname, so don't add it again */
             opal_dss.copy_payload(reply, &buf);
-            OBJ_DESTRUCT(&buf);
-            /* pass the hostname */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node->name, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&buf);
-                return;
-            }
-            /* pack the blob */
-            bptr = &buf;
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(reply);
-                OBJ_DESTRUCT(&buf);
-                return;
-            }
             OBJ_DESTRUCT(&buf);
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
             return;
