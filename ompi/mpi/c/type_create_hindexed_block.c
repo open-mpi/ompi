@@ -69,7 +69,7 @@ int MPI_Type_create_hindexed_block(int count,
     }
     {
         const int* a_i[2] = {&count, &blocklength};
-        ompi_datatype_set_args( *newtype, 2 + count, a_i, count, array_of_displacements, 1, &oldtype,
+        ompi_datatype_set_args( *newtype, 2, a_i, count, array_of_displacements, 1, &oldtype,
                                 MPI_COMBINER_HINDEXED_BLOCK );
     }
 
