@@ -240,8 +240,8 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
     size_t n;
     orte_job_t *jdata;
     orte_proc_t *proc;
-    //orte_node_t *node;
-    //int i;
+    orte_node_t *node;
+    int i;
     opal_list_t ds;
     orte_namelist_t *nm;
     orte_vpid_t vpid;
