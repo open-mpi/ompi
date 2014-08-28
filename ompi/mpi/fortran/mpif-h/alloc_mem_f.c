@@ -45,6 +45,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM,
                            pompi_alloc_mem_f,
                            (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
                            (size, info, baseptr, ierr) )
+
+OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM_CPTR,
+                           pmpi_alloc_mem_cptr,
+                           pmpi_alloc_mem_cptr_,
+                           pmpi_alloc_mem_cptr__,
+                           pompi_alloc_mem_f,
+                           (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
+                           (size, info, baseptr, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
