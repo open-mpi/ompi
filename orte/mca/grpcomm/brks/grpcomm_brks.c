@@ -80,11 +80,11 @@ static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *sendbuf)
 {
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:bruck algo employed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s grpcomm:coll:bruck algo employed for %d processes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
 
     /* if we only have one proc participating, just copy the data across and return */
-    if (coll->ndmns * (coll->ndmns - 1)) {
+    if ((coll->ndmns != 0) && ((coll->ndmns & (coll->ndmns - 1)) == 0)) {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s grpcomm:coll:bruck number of participating daemons (%d) is power 2",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int) coll->ndmns ));
@@ -134,7 +134,7 @@ static int brks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_vpid_t dista
             return ORTE_ERR_NOT_FOUND;
         }
         /* first send my current contents */
-        nv = (rank - distance + coll->ndmns) % coll->ndmns;
+        nv = (coll->ndmns + rank - distance) % coll->ndmns;
         peer_send.vpid = coll->dmns[nv];
 
         /* now setup to recv from my other partner */
@@ -206,6 +206,10 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
     orte_grpcomm_coll_t *coll;
     orte_vpid_t distance, new_distance;
 
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:coll:recdub received data",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* unpack the signature */
     cnt = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
@@ -261,12 +265,27 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
 }
 
 static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
+    opal_buffer_t *reply;
+    int rc;
+
+    reply = OBJ_NEW(opal_buffer_t);
+
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &coll->nreported, 1, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(reply);
+        return rc;
+    }
+    /* transfer the collected bucket */
+    opal_dss.copy_payload(reply, &coll->bucket);
+
     /* execute the callback */
     if (NULL != coll->cbfunc) {
-        coll->cbfunc(ret, &coll->bucket, coll->cbdata);
+        coll->cbfunc(ret, reply, coll->cbdata);
     }
 
     opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
+
+    OBJ_RELEASE(reply);
 
     return ORTE_SUCCESS;
 }
