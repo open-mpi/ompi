@@ -86,13 +86,13 @@ int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                          "%s grpcomm:base:xcast sending %u bytes to tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == msg) ? 0 : (unsigned int)msg->bytes_used, (long)tag));
-    
+
     /* this function does not access any framework-global data, and
      * so it does not require us to push it into the event library */
 
     /* prep the output buffer */
     buf = OBJ_NEW(opal_buffer_t);
-    
+
     /* create the array of participating daemons */
     if (ORTE_SUCCESS != (rc = create_dmns(sig, &dmns, &ndmns))) {
         ORTE_ERROR_LOG(rc);
@@ -316,6 +316,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 return ORTE_ERR_NOT_FOUND;
             }
             vpid = proc->node->daemon->name.vpid;
+            found = false;
             OPAL_LIST_FOREACH(nm, &ds, orte_namelist_t) {
                 if (nm->name.vpid == vpid) {
                     found = true;
@@ -367,7 +368,7 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    
+
     /* copy the payload into the new buffer - this is non-destructive, so our
      * caller is still responsible for releasing any memory in the buffer they
      * gave to us
@@ -376,7 +377,7 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    
+
 CLEANUP:
     return ORTE_SUCCESS;
 }

@@ -33,7 +33,7 @@ static int brks_register(void);
 orte_grpcomm_base_component_t mca_grpcomm_brks_component = {
     {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
-        
+
         "brks", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */
         ORTE_MINOR_VERSION,  /* MCA module minor version */
@@ -56,7 +56,7 @@ static int brks_register(void)
     /* make the priority adjustable so users can select
      * brks for use by apps without affecting daemons
      */
-    my_priority = 10;
+    my_priority = 50;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm brks component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
