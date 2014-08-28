@@ -81,7 +81,7 @@ static int allgather(orte_grpcomm_coll_t *coll,
 {
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:coll:bruck algo employed for %d processes",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), coll->ndmns));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
 
     /* if we only have one proc participating, just copy the data across and return */
     if ((coll->ndmns != 0) && ((coll->ndmns & (coll->ndmns - 1)) == 0)) {
