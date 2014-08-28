@@ -38,56 +38,44 @@
 # --with-ugni=/opt/cray/ugni/default --with-ugni-includedir=/opt/cray/gni-headers/default/include
 
 AC_DEFUN([OPAL_CHECK_UGNI], [
-    AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni(=DIR)],
-        [Build GNI (Cray Gemini) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
+    AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni],
+        [Build support for Cray GNI. Set PKG_CONFIG_PATH env. variable to specify alternate path.])])
 
-    dnl does the path exist?
-    OPAL_CHECK_WITHDIR([ugni], [$with_ugni], [.])
+    opal_check_ugni_happy="no"
 
-    AC_ARG_WITH([ugni-libdir], [AC_HELP_STRING([--with-ugni-libdir=DIR],
-         [Search for GNI (Cray Gemini) libraries in DIR])])
-    OPAL_CHECK_WITHDIR([ugni-libdir], [$with_ugni_libdir], [libugni.*])
-
-    AC_ARG_WITH([ugni-includedir], 
-         [AC_HELP_STRING([--with-ugni-includedir=DIR],
-         [Search for GNI (Cray Gemini) headers in DIR])])
-    OPAL_CHECK_WITHDIR([ugni-includedir], [$with_ugni_includedir], [gni_pub.h])
-
-    AS_IF([test "$with_ugni_includedir" != "" -a "$with_ugni_includedir" != "yes" -a "$with_ugni_includedir" != "no"],
-          [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_ugni_includedir"])
+    AS_IF([test "$with_ugni" = "no"],
+          [opal_check_ugni_happy="no"],
+          [PKG_CHECK_MODULES([CRAY_UGNI], [cray-ugni],
+                      [$1_LDFLAGS="$CRAY_UGNI_LIBS"
+                       $1_CPPFLAGS="$CRAY_UGNI_CFLAGS"
+                       opal_check_ugni_happy="yes"],
+                      [AC_MSG_RESULT([no])
+                       opal_check_ugni_happy="no"])])
 
     opal_check_ugni_$1_save_CPPFLAGS="$CPPFLAGS"
     opal_check_ugni_$1_save_LDFLAGS="$LDFLAGS"
     opal_check_ugni_$1_save_LIBS="$LIBS"
 
-    AS_IF([test "$with_ugni" != "no"], [
-        AS_IF([test ! -z "$with_ugni" -a "$with_ugni" != "yes"], [
-            opal_check_ugni_dir="$with_ugni"])
-        AS_IF([test ! -z "$with_ugni_libdir" -a "$with_ugni_libdir" != "yes"], [
-            opal_check_ugni_libdir="$with_ugni_libdir"])
-
-        OPAL_CHECK_PACKAGE([$1],
-            [ugni.h],
-            [ugni],
-            [GNI_CdmCreate],
-            [],
-            [$opal_check_ugni_dir],
-            [$opal_check_ugni_libdir],
-            [opal_check_ugni_happy="yes"],
-            [opal_check_ugni_happy="no"])],
-          [opal_check_ugni_happy="no"])
-
-    LIBS="$LIBS $$1_LIBS"
+    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
     LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+#    echo "+++++++++++++++++++++++CPPFLAGS",$CPPFLAGS
+#    echo "+++++++++++++++++++++++LDFLAGSS",$LDFLAGS
+#    echo "+++++++++++++++++++++++1_CPPFLAGS",$$1_CPPFLAGS
+#    echo "+++++++++++++++++++++++1_LDFLAGSS",$$1_LDFLAGS
+
+#   sanity checks
 
     AS_IF([test "$opal_check_ugni_happy" = "yes"],
-          [AC_CHECK_FUNCS([GNI_GetJobResInfo])])
+          [AC_CHECK_HEADER([gni_pub.h],[],AC_MSG_ERROR(['gni_pub.h not found.']))
+           AC_CHECK_FUNCS([GNI_GetJobResInfo])])
+
+#    AS_IF([test "$opal_check_ugni_happy" = "yes"],
+#           [AC_CHECK_FUNCS([GNI_GetJobResInfo])])
 
     CPPFLAGS="$opal_check_ugni_$1_save_CPPFLAGS"
     LDFLAGS="$opal_check_ugni_$1_save_LDFLAGS"
     LIBS="$opal_check_ugni_$1_save_LIBS"
 
-    dnl XXX not sure if this is true, but will assume so...
     AS_IF([test "$opal_check_ugni_happy" = "yes" -a "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([GNI driver does not currently support progress threads.  Disabling.])
            opal_check_ugni_happy="no"])
@@ -97,4 +85,5 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
           [AS_IF([test ! -z "$with_ugni" -a "$with_ugni" != "no"],
                  [AC_MSG_ERROR([GNI support requested but not found.  Cannot continue.])])
            $3])
+
 ])

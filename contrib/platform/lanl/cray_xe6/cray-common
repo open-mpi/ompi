@@ -13,8 +13,10 @@ with_xpmem=/opt/cray/xpmem/0.1-2.0400.30792.5.6.gem
 with_pmi=/opt/cray/pmi/2.1.4-1.0000.8596.8.9.gem
 
 # enable ugni btl
-with_ugni=/opt/cray/ugni/4.0-1.0401.5928.9.5.gem
-with_ugni_includedir=/opt/cray/gni-headers/default/include
+# deprecated, no longer needed (non-default ugni/gni-headers can be selected via PKG_CONFIG_PATH env variable).
+#
+#with_ugni=/opt/cray/ugni/4.0-1.0401.5928.9.5.gem
+#with_ugni_includedir=/opt/cray/gni-headers/default/include
 
 # enable the udreg mpool
 # deprecated, no longer needed (non-default udreg can be selected via PKG_CONFIG_PATH env variable).
