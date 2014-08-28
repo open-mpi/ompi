@@ -327,8 +327,7 @@ connectivity map file will not be written.
 [received too many short packets]
 WARNING: The usnic BTL received a significant number of abnormally
 short packets on a single network interface.  This may be due to
-corruption or congestion in the network fabric.  It may be helpful to
-enable no-drop functionality in the fabric.  It may also be useful to
+corruption or congestion in the network fabric.  It may be useful to
 run a physical/layer 0 diagnostic.
 
 Your job will continue, but if this poor network behavior continues,
