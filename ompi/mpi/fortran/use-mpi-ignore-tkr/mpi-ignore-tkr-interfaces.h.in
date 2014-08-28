@@ -269,6 +269,15 @@ subroutine PMPI_Alloc_mem(size, info, baseptr, ierror)
   integer, intent(out) :: ierror
 end subroutine PMPI_Alloc_mem
 
+subroutine PMPI_Alloc_mem_cptr(size, info, baseptr, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: info
+  type(c_ptr), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine PMPI_Alloc_mem_cptr
+
 end interface
 
 
