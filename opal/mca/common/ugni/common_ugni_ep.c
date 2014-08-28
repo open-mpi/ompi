@@ -34,7 +34,7 @@ int opal_common_ugni_endpoint_for_proc (opal_common_ugni_device_t *dev, opal_pro
 
     /* Receive the modex */
     OPAL_MODEX_RECV(rc, &opal_common_ugni_component,
-                    peer_proc, (void *) &modex, &msg_size);
+                    peer_proc, &modex, &msg_size);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OPAL_OUTPUT((-1, "btl/ugni error receiving modex"));
         return rc;
