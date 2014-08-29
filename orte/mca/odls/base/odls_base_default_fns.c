@@ -1509,28 +1509,9 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&proc->name), (long)proc->pid);
     
-    /* if the proc called "abort", then we just need to flag that it
-     * came thru here */
-    if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ABORT)) {
-        /* even though the process exited "normally", it happened
-         * via an orte_abort call
-         */
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s odls:waitpid_fired child %s died by call to abort",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name)));
-        state = ORTE_PROC_STATE_CALLED_ABORT;
-        /* since we are going down a different code path, we need to
-         * flag that this proc has had its waitpid fired */
-        ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_WAITPID);
-        /* if IOF_COMPLETE has already been recvd, then we need
-         * to mark this proc as no longer alive */
-        if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_IOF_COMPLETE)) {
-            ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_ALIVE);
-        }
-        goto MOVEON;
-    }
-
+    /* regardless of our eventual code path, we need to
+     * flag that this proc has had its waitpid fired */
+    ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_WAITPID);
     /* if the child was previously flagged as dead, then just
      * update its exit status and
      * ensure that its exit state gets reported to avoid hanging
@@ -1545,6 +1526,29 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
         } else {
             proc->exit_code = WTERMSIG(proc->exit_code) + 128;
         }
+        goto MOVEON;
+    }
+
+    /* if IOF_COMPLETE has already been recvd, then we need
+     * to mark this proc as no longer alive - we do this
+     * here because some code paths go thru the errmgr
+     * instead of the state machine. There is no harm
+     * if this gets done again later */
+    if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_IOF_COMPLETE)) {
+        ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_ALIVE);
+    }
+
+    /* if the proc called "abort", then we just need to flag that it
+     * came thru here */
+    if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ABORT)) {
+        /* even though the process exited "normally", it happened
+         * via an orte_abort call
+         */
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                             "%s odls:waitpid_fired child %s died by call to abort",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name)));
+        state = ORTE_PROC_STATE_CALLED_ABORT;
         goto MOVEON;
     }
 
