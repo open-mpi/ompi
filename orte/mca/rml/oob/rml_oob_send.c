@@ -160,13 +160,15 @@ static void send_msg(int fd, short args, void *cbdata)
                 bytes += req->post.iov[i].iov_len;
             }
             /* get the required memory allocation */
-            rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(bytes);
-            rcv->iov.iov_len = bytes;
-            /* transfer the bytes */
-            ptr =  (char*)rcv->iov.iov_base;
-            for (i = 0 ; i < req->post.count ; ++i) {
-                memcpy(ptr, req->post.iov[i].iov_base, req->post.iov[i].iov_len);
-                ptr += req->post.iov[i].iov_len;
+            if (0 < bytes) {
+                rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(bytes);
+                rcv->iov.iov_len = bytes;
+                /* transfer the bytes */
+                ptr =  (char*)rcv->iov.iov_base;
+                for (i = 0 ; i < req->post.count ; ++i) {
+                    memcpy(ptr, req->post.iov[i].iov_base, req->post.iov[i].iov_len);
+                    ptr += req->post.iov[i].iov_len;
+                }
             }
         } else if (0 < req->post.buffer->bytes_used) {
             rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(req->post.buffer->bytes_used);
