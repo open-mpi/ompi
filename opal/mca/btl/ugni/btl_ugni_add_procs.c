@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,8 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/include/opal/align.h"
+#include "opal/mca/dstore/dstore.h"
+
 #define INITIAL_GNI_EPS 10000
 
 static int
@@ -226,6 +229,8 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     unsigned int mbox_increment, nprocs;
     const char *mpool_name;
     int rc;
+    opal_list_t vals;
+    opal_value_t *kv;
 
     rc = opal_pointer_array_init (&ugni_module->pending_smsg_frags_bb, 0,
                                   1 << 30, 32768);
@@ -234,8 +239,16 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     }
 
     /* determine how many procs are in the job (might want to check universe size here) */
-    /* TODO: need to fix this with something else now that btl is in opal */
-    nprocs = 512;
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+                                          OPAL_DSTORE_UNIV_SIZE, &vals)) {
+        /* the number of procs in the job is in the uint32 field */
+        kv = (opal_value_t*)opal_list_get_first(&vals);
+        nprocs = kv->data.uint32;
+    } else {
+        nprocs = 512;
+    }
+    OPAL_LIST_DESTRUCT(&vals);
 
     rc = mca_btl_ugni_smsg_setup (nprocs);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
