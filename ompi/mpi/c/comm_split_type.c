@@ -75,7 +75,12 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_comm_split_type ( (ompi_communicator_t*)comm, split_type, key, info, 
-                          (ompi_communicator_t**)newcomm);
+    if( (MPI_COMM_SELF == comm) && (MPI_UNDEFINED == split_type) ) {
+        *newcomm = MPI_COMM_NULL;
+        rc = MPI_SUCCESS;
+    } else {
+        rc = ompi_comm_split_type( (ompi_communicator_t*)comm, split_type, key, info, 
+                                   (ompi_communicator_t**)newcomm);
+    }
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }
