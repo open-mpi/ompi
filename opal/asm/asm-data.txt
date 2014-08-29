@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -109,9 +110,6 @@ POWERPC64	aix-.csect .text[PR]-.globl-:-.-L--0-1-0-1-0	powerpc64-aix
 # SPARC / UltraSPARC (Scalalable Processor ARChitecture)
 #
 ######################################################################
-
-# default compile mode on Solaris.  Evil.  equiv to about Sparc v8
-SPARC	default-.text-.globl-:--.L-#-1-0-1-0-0	sparc-solaris
 
 # Usually compiled with -xarch=v8plus.  Basically Sparc V9, but with
 # sizeof(void*) == 4 instead of 8.  Different from V9_64 because still
