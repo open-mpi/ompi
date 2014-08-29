@@ -217,7 +217,6 @@ static int btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.devices, opal_pointer_array_t);
     mca_btl_openib_component.devices_count = 0;
     mca_btl_openib_component.cpc_explicitly_defined = false;
-    mca_btl_openib_component.default_recv_qps = NULL;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
