@@ -217,9 +217,6 @@ int mca_base_component_find(const char *directory, const char *type,
         ret = OPAL_SUCCESS;
     }
 
-
-    ret = OPAL_SUCCESS;
-
 component_find_out:
 
     if (NULL != requested_component_names) {
