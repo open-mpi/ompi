@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +81,7 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static long default_min = 67108864;
+static long default_min = 134217728;
 static unsigned long long ompi_mpool_sm_min_size;
 static int ompi_mpool_sm_verbose;
 
