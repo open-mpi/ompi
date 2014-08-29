@@ -809,7 +809,13 @@ static void recv_data(int fd, short args, void *cbdata)
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
             return;
         }
-        if (idx < 0 || NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
+        if (idx < 0) {
+            orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
+            opal_argv_free(alloc);
+            return;
+        }
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
             orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
             opal_argv_free(alloc);
