@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +45,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM,
                            pompi_alloc_mem_f,
                            (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
                            (size, info, baseptr, ierr) )
+
+OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM_CPTR,
+                           pmpi_alloc_mem_cptr,
+                           pmpi_alloc_mem_cptr_,
+                           pmpi_alloc_mem_cptr__,
+                           pompi_alloc_mem_f,
+                           (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
+                           (size, info, baseptr, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -66,6 +76,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM,
                            mpi_alloc_mem,
                            mpi_alloc_mem_,
                            mpi_alloc_mem__,
+                           ompi_alloc_mem_f,
+                           (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
+                           (size, info, baseptr, ierr) )
+
+OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM_CPTR,
+                           mpi_alloc_mem_cptr,
+                           mpi_alloc_mem_cptr_,
+                           mpi_alloc_mem_cptr__,
                            ompi_alloc_mem_f,
                            (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
                            (size, info, baseptr, ierr) )
