@@ -565,6 +565,15 @@ static bool s2_get_attr(const char *attr, opal_value_t **kv)
         return true;
     }
 
+    if (0 == strcmp(PMIX_LOCAL_SIZE, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = s2_nlranks;
+        *kv = kp;
+        return true;
+    }
+
     if (0 == strcmp(PMIX_APPNUM, attr)) {
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
