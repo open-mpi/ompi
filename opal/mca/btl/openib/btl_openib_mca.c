@@ -16,6 +16,8 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -219,7 +221,7 @@ static int reg_bool(const char* param_name,
 int btl_openib_register_mca_params(void)
 {
     mca_base_var_enum_t *new_enum;
-    char default_qps[100];
+    char *default_qps;
     uint32_t mid_qp_size;
     char *msg, *str;
     int ret, tmp;
@@ -652,12 +654,15 @@ int btl_openib_register_mca_params(void)
         mid_qp_size = 1024;
     }
 
-    snprintf(default_qps, 100,
+    asprintf(&default_qps,
             "P,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
-
+    if (NULL == default_qps) {
+        /* Don't try to recover from this */
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     mca_btl_openib_component.default_recv_qps = default_qps;
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
