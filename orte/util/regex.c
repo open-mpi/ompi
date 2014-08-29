@@ -244,36 +244,6 @@ int orte_regex_create(char *nodelist, char **regexp)
             OBJ_RELEASE(ndreg);
             continue;
         }
-        /* if there is only one range, and it has only one node in it,
-         * then we don't want to use bracket notation - so treat that
-         * case separately
-         */
-        if (1 == opal_list_get_size(&ndreg->ranges)) {
-            /* must be at least one */
-            range = (orte_regex_range_t*)opal_list_get_first(&ndreg->ranges);
-            /* if there is only one node in the range, then
-             * just add its name
-             */
-            if (1 == range->cnt) {
-                if (NULL != ndreg->suffix) {
-                    if (NULL != ndreg->prefix) {
-                        asprintf(&tmp, "%s%d%s", ndreg->prefix, range->start, ndreg->suffix);
-                    } else {
-                        asprintf(&tmp, "%d%s", range->start, ndreg->suffix);
-                    }
-                } else {
-                    if (NULL != ndreg->prefix) {
-                        asprintf(&tmp, "%s%d", ndreg->prefix, range->start);
-                    } else {
-                        asprintf(&tmp, "%d", range->start);
-                    }
-                }
-                opal_argv_append_nosize(&regexargs, tmp);
-                free(tmp);
-                OBJ_RELEASE(ndreg);
-                continue;
-            }
-        }
         /* start the regex for this nodeid with the prefix */
         if (NULL != ndreg->prefix) {
             asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
