@@ -246,6 +246,7 @@ OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
 static void recv_cons(orte_rml_recv_t *ptr)
 {
     ptr->iov.iov_base = NULL;
+    ptr->iov.iov_len = 0;
 }
 static void recv_des(orte_rml_recv_t *ptr)
 {

@@ -75,6 +75,16 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
         free(buffer->base_ptr);
     }
 
+    /* if it's a NULL payload, just set things and return */
+    if (NULL == payload) {
+        buffer->base_ptr = NULL;
+        buffer->pack_ptr = buffer->base_ptr;
+        buffer->unpack_ptr = buffer->base_ptr;
+        buffer->bytes_used = 0;
+        buffer->bytes_allocated = 0;
+        return OPAL_SUCCESS;
+    }
+
     /* populate the buffer */
     buffer->base_ptr = (char*)payload; 
 
