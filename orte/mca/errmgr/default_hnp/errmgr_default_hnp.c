@@ -603,7 +603,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             break;
         }
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
-             /* abnormal termination - abort, but only do it once
+            /* abnormal termination - abort, but only do it once
              * to avoid creating a lot of confusion */
             default_hnp_abort(jdata);
         }

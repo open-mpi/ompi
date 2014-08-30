@@ -1304,22 +1304,22 @@ void pmix_server_recv_handler(int sd, short flags, void *cbdata)
                                     peer->recv_msg->hdr.tag);
                 /* process the message */
                 process_message(peer);
+            } else if (ORTE_ERR_RESOURCE_BUSY == rc ||
+                       ORTE_ERR_WOULD_BLOCK == rc) {
+                /* exit this event and let the event lib progress */
+                return;
+            } else {
+                // report the error
+                opal_output(0, "%s-%s pmix_server_peer_recv_handler: unable to recv message",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&(peer->name)));
+                /* turn off the recv event */
+                opal_event_del(&peer->recv_event);
+                peer->recv_ev_active = false;
+                peer->state = PMIX_SERVER_CLOSED;
+                CLOSE_THE_SOCKET(peer->sd);
+                return;
             }
-        } else if (ORTE_ERR_RESOURCE_BUSY == rc ||
-                   ORTE_ERR_WOULD_BLOCK == rc) {
-            /* exit this event and let the event lib progress */
-            return;
-        } else {
-            // report the error
-            opal_output(0, "%s-%s pmix_server_peer_recv_handler: unable to recv message",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)));
-            /* turn off the recv event */
-            opal_event_del(&peer->recv_event);
-            peer->recv_ev_active = false;
-            peer->state = PMIX_SERVER_CLOSED;
-            CLOSE_THE_SOCKET(peer->sd);
-            return;
         }
         break;
     default: 

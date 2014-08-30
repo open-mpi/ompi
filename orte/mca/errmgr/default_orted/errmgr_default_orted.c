@@ -354,9 +354,6 @@ static void proc_errors(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_TERM_NON_ZERO == state) {
         /* update the state */
         child->state = state;
-        /* the odls will not have flagged the waitpid as
-         * fired as it leaves that for us to do */
-        ORTE_FLAG_SET(child, ORTE_PROC_FLAG_WAITPID);
         /* report this as abnormal termination to the HNP, unless we already have
          * done so for this job */
         if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FAIL_NOTIFIED, NULL, OPAL_BOOL)) {

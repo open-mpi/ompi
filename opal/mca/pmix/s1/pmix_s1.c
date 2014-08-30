@@ -142,6 +142,7 @@ static int s1_init(void)
     int i;
     char *pmix_id, *tmp;
     uint32_t jobfam, stepid;
+    opal_value_t kv;
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
@@ -263,6 +264,17 @@ static int s1_init(void)
         OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
         goto err_exit;
     }
+    /* push this into the dstore for subsequent fetches */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_UNIV_SIZE);
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = s1_usize;
+    if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, &kv))) {
+        OPAL_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&kv);
+        goto err_exit;
+    }
+    OBJ_DESTRUCT(&kv);
 
     /* get job size */
     ret = PMI_Get_size(&s1_jsize);
@@ -581,6 +593,15 @@ static bool s1_get_attr(const char *attr, opal_value_t **kv)
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
         kp->data.uint32 = s1_jsize;
+        *kv = kp;
+        return true;
+    }
+
+    if (0 == strcmp(PMIX_LOCAL_SIZE, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = s1_nlranks;
         *kv = kp;
         return true;
     }

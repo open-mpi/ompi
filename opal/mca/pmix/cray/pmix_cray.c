@@ -640,7 +640,16 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv)
         return true;
     }
 
-    return OPAL_SUCCESS;
+    if (0 == strcmp(PMIX_LOCAL_SIZE, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = pmix_nlranks;
+        *kv = kp;
+        return true;
+    }
+
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 

@@ -414,20 +414,20 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                 /* post it for delivery */
                 PMIX_ACTIVATE_POST_MSG(mca_pmix_native_component.recv_msg);
                 mca_pmix_native_component.recv_msg = NULL;
+            } else if (OPAL_ERR_RESOURCE_BUSY == rc ||
+                       OPAL_ERR_WOULD_BLOCK == rc) {
+                /* exit this event and let the event lib progress */
+                return;
+            } else {
+                // report the error
+                opal_output(0, "%s usock_peer_recv_handler: unable to recv message",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                /* turn off the recv event */
+                opal_event_del(&mca_pmix_native_component.recv_event);
+                mca_pmix_native_component.recv_ev_active = false;
+                CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+                return;
             }
-        } else if (OPAL_ERR_RESOURCE_BUSY == rc ||
-                   OPAL_ERR_WOULD_BLOCK == rc) {
-            /* exit this event and let the event lib progress */
-            return;
-        } else {
-            // report the error
-            opal_output(0, "%s usock_peer_recv_handler: unable to recv message",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            /* turn off the recv event */
-            opal_event_del(&mca_pmix_native_component.recv_event);
-            mca_pmix_native_component.recv_ev_active = false;
-            CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
-            return;
         }
         break;
     default: 

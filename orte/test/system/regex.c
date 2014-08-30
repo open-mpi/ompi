@@ -35,7 +35,7 @@ main(int argc, char **argv)
         if (ORTE_SUCCESS != (rc = orte_regex_extract_node_names(argv[1], &nodes))) {
             ORTE_ERROR_LOG(rc);
         }
-        for (i=0; NULL != nodes; i++) {
+        for (i=0; NULL != nodes[i]; i++) {
             fprintf(stderr, "%s\n", nodes[i]);
         }
         opal_argv_free(nodes);

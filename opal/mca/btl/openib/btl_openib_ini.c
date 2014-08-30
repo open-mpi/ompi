@@ -14,6 +14,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -601,7 +603,7 @@ static int save_section(parsed_section_values_t *s)
                    here instead. */
                 memcpy(&h->values, &s->values, sizeof(s->values));
                 /* Need to strdup the string, though */
-                if (NULL != h->values.receive_queues) {
+                if (NULL != s->values.receive_queues) {
                     h->values.receive_queues = strdup(s->values.receive_queues);
                 }
                 opal_list_append(&devices, &h->super);
