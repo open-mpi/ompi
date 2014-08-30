@@ -231,8 +231,8 @@ static int rte_init(void)
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
      */
-    unique_key[0] = (uint64_t)(((ORTE_PROC_MY_NAME->jobid & 0xffff0000))) >> 32;
-    unique_key[1] = (uint64_t)(((ORTE_PROC_MY_NAME->jobid & 0x0000ffff))) >> 32;
+    unique_key[0] = ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid);
+    unique_key[1] = ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
     if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
