@@ -132,12 +132,19 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
         break;
     case PMIX_USOCK_CONNECTED:
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "%s usock:send_handler SENDING TO SERVER",
-                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                            "%s usock:send_handler SENDING TO SERVER with %s msg",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                            (NULL == msg) ? "NULL" : "NON-NULL");
         if (NULL != msg) {
             if (!msg->hdr_sent) {
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "%s usock:send_handler SENDING HEADER",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     /* header is completely sent */
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s usock:send_handler HEADER SENT",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     msg->hdr_sent = true;
                     /* setup to send the data */
                     if (NULL == msg->data) {
@@ -154,6 +161,9 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 } else if (OPAL_ERR_RESOURCE_BUSY == rc ||
                            OPAL_ERR_WOULD_BLOCK == rc) {
                     /* exit this event and let the event lib progress */
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s usock:send_handler RES BUSY OR WOULD BLOCK",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     return;
                 } else {
                     // report the error
@@ -169,14 +179,23 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
             }
 
             if (msg->hdr_sent) {
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "%s usock:send_handler SENDING BODY OF MSG",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     // message is complete
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s usock:send_handler BODY SENT",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
                     goto next;
                 } else if (OPAL_ERR_RESOURCE_BUSY == rc ||
                            OPAL_ERR_WOULD_BLOCK == rc) {
                     /* exit this event and let the event lib progress */
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s usock:send_handler RES BUSY OR WOULD BLOCK",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     return;
                 } else {
                     // report the error
