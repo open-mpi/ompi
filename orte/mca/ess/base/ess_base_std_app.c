@@ -133,6 +133,58 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
 
+    /* setup my session directory */
+    if (orte_create_session_dirs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+        
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+        
+        /* Once the session directory location has been established, set
+           the opal_output env file location to be in the
+           proc-specific session directory. */
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
+
+        /* store the session directory location in the database */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_JOB_SDIR);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.job_session_dir);
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     &kv))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_DESTRUCT(&kv);
+            error = "opal dstore store";
+            goto error;
+        }
+        OBJ_DESTRUCT(&kv);
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_MY_SDIR);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.proc_session_dir);
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     &kv))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_DESTRUCT(&kv);
+            error = "opal dstore store";
+            goto error;
+        }
+        OBJ_DESTRUCT(&kv);
+    }
+
     /* Setup the communication infrastructure */
     /*
      * OOB Layer
@@ -220,58 +272,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
-    /* setup my session directory */
-    if (orte_create_session_dirs) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
-                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                             orte_process_info.nodename));
-        
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir";
-            goto error;
-        }
-        
-        /* Once the session directory location has been established, set
-           the opal_output env file location to be in the
-           proc-specific session directory. */
-        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                         "output-", NULL, NULL);
-
-        /* store the session directory location in the database */
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_JOB_SDIR);
-        kv.type = OPAL_STRING;
-        kv.data.string = strdup(orte_process_info.job_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                     &kv))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&kv);
-            error = "opal dstore store";
-            goto error;
-        }
-        OBJ_DESTRUCT(&kv);
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_MY_SDIR);
-        kv.type = OPAL_STRING;
-        kv.data.string = strdup(orte_process_info.proc_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                     &kv))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&kv);
-            error = "opal dstore store";
-            goto error;
-        }
-        OBJ_DESTRUCT(&kv);
-    }
-
     /* setup the routed info  */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);

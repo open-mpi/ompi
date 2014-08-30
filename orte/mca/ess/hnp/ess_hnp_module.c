@@ -314,6 +314,41 @@ static int rte_init(void)
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);
 
+    /* setup my session directory here as the OOB may need it */
+    if (orte_create_session_dirs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+        
+        /* take a pass thru the session directory code to fillin the
+         * tmpdir names - don't create anything yet
+         */
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir define";
+            goto error;
+        }
+        /* clear the session directory just in case there are
+         * stale directories laying around
+         */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+
+        /* now actually create the directory tree */
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+    }
+
     /* Setup the communication infrastructure */
     
     /*
@@ -599,43 +634,9 @@ static int rte_init(void)
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                             ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
 
-    /* setup my session directory */
     if (orte_create_session_dirs) {
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                             orte_process_info.nodename));
-        
-        /* take a pass thru the session directory code to fillin the
-         * tmpdir names - don't create anything yet
-         */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir define";
-            goto error;
-        }
-        /* clear the session directory just in case there are
-         * stale directories laying around
-         */
-        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
-        /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir";
-            goto error;
-        }
-        
-        /* Once the session directory location has been established, set
-           the opal_output hnp file location to be in the
-           proc-specific session directory. */
+        /* set the opal_output hnp file location to be in the
+         * proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
         
