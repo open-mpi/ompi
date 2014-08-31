@@ -139,7 +139,6 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
     mca_oob_usock_peer_t *peer = op->peer;
     int rc;
     opal_socklen_t addrlen = 0;
-    mca_oob_usock_send_t *snd;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_usock_peer_try_connect: "
