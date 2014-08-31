@@ -13,11 +13,25 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 
 #define MY_TAG 12345
 #define MAX_COUNT 3
 
 static bool msg_recvd;
+static volatile bool msg_active;
+
+static void send_callback(int status, orte_process_name_t *peer,
+                          opal_buffer_t* buffer, orte_rml_tag_t tag,
+                          void* cbdata)
+
+{
+    OBJ_RELEASE(buffer);
+    if (ORTE_SUCCESS != status) {
+        exit(1);
+    }
+    msg_active = false;
+}
 
 
 int
@@ -90,7 +104,9 @@ main(int argc, char *argv[]){
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            msg_active = true;
+            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, send_callback, NULL);
+            ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
 

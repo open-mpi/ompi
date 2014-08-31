@@ -51,6 +51,7 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
@@ -138,8 +139,6 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
     mca_oob_usock_peer_t *peer = op->peer;
     int rc;
     opal_socklen_t addrlen = 0;
-    mca_oob_usock_send_t *snd;
-    bool connected = false;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_usock_peer_try_connect: "
@@ -211,40 +210,28 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
                 /* We were unsuccessful in establishing this connection, and are
                  * not likely to suddenly become successful,
                  */
+                opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s orte_usock_peer_try_connect: "
+                                    "Connection across unix domain socket to local proc %s failed",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&peer->name));
                 peer->state = MCA_OOB_USOCK_FAILED;
-                connected = false;
+                CLOSE_THE_SOCKET(peer->sd);
+                /* let the USOCK component know that this module failed to make
+                 * the connection so it can try other modules, and/or fail back
+                 * to the OOB level so another component can try. This will activate
+                 * an event in the component event base, and so it will fire async
+                 * from us if we are in our own progress thread
+                 */
+                ORTE_ACTIVATE_USOCK_CMP_OP(peer, mca_oob_usock_component_failed_to_connect);
+                OBJ_RELEASE(op);
+                return;
             }
         }
-    } else {
-        /* connection succeeded */
-        peer->retries = 0;
-        connected = true;
     }
 
-    if (!connected) {
-        /* we cannot reach this peer */
-        peer->state = MCA_OOB_USOCK_FAILED;
-        opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s orte_usock_peer_try_connect: "
-                            "Connection across unix domain socket to local proc %s failed",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        /* let the USOCK component know that this module failed to make
-         * the connection so it can try other modules, and/or fail back
-         * to the OOB level so another component can try. This will activate
-         * an event in the component event base, and so it will fire async
-         * from us if we are in our own progress thread
-         */
-        ORTE_ACTIVATE_USOCK_CMP_OP(peer, mca_oob_usock_component_failed_to_connect);
-        /* FIXME: post any messages in the send queue back to the OOB
-         * level for reassignment
-         */
-        if (NULL != peer->send_msg) {
-        }
-        while (NULL != (snd = (mca_oob_usock_send_t*)opal_list_remove_first(&peer->send_queue))) {
-        }
-        goto cleanup;
-    }
+    /* connection succeeded */
+    peer->retries = 0;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_usock_peer_try_connect: "
@@ -271,7 +258,6 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
         ORTE_FORCED_TERMINATE(1);
     }
 
- cleanup:
     OBJ_RELEASE(op);
 }
 
@@ -295,7 +281,8 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
     hdr.tag = 0;
 
     /* get our security credential*/
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential((opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
+                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

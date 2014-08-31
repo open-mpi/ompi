@@ -486,10 +486,10 @@ opal/mca/event/libevent2021/libevent/m4/libtool.m4
 opal/mca/event/libevent2021/libevent/m4/ltversion.m4
 opal/mca/event/libevent2021/libevent/m4/lt~obsolete.m4
 opal/mca/event/libevent2021/libevent/m4/ltoptions.m4
-opal/mca/hwloc/hwloc172/hwloc/include/hwloc/autogen/stamp-*
-opal/mca/hwloc/hwloc172/hwloc/include/hwloc/autogen/config.h
-opal/mca/hwloc/hwloc172/hwloc/include/private/autogen/config.h
-opal/mca/hwloc/hwloc172/hwloc/include/private/autogen/stamp-*
+opal/mca/hwloc/hwloc191/hwloc/include/hwloc/autogen/config.h
+opal/mca/hwloc/hwloc191/hwloc/include/hwloc/autogen/stamp-*
+opal/mca/hwloc/hwloc191/hwloc/include/private/autogen/config.h
+opal/mca/hwloc/hwloc191/hwloc/include/private/autogen/stamp-*
 opal/mca/installdirs/config/install_dirs.h
 opal/mca/memory/vc70.pdb
 opal/mca/memory/base/*.obj

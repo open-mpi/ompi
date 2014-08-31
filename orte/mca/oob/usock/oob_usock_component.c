@@ -192,16 +192,6 @@ static int component_startup(void)
                         "%s USOCK STARTUP",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* if the session directory has not already been setup, do so */
-    if (NULL == orte_process_info.top_session_dir) {
-        if (ORTE_SUCCESS != (rc = orte_session_dir(true,
-                                                   orte_process_info.tmpdir_base,
-                                                   orte_process_info.nodename, NULL,
-                                                   ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
     /* setup the path to the daemon rendezvous point */
     memset(&mca_oob_usock_component.address, 0, sizeof(struct sockaddr_un));
     mca_oob_usock_component.address.sun_family = AF_UNIX;
@@ -219,6 +209,14 @@ static int component_startup(void)
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         if (ORTE_SUCCESS != (rc = orte_oob_usock_start_listening())) {
             ORTE_ERROR_LOG(rc);
+        }
+    } else {
+        /* if the rendezvous point isn't there, then that's an error */
+        /* if the rendezvous file doesn't exist, that's an error */
+        if (0 != access(mca_oob_usock_component.address.sun_path, R_OK)) {
+            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                                "SUNPATH: %s NOT READABLE", mca_oob_usock_component.address.sun_path);
+            return OPAL_ERR_NOT_FOUND;
         }
     }
 
@@ -263,7 +261,7 @@ static int component_send(orte_rml_send_t *msg)
         if (NULL == (proc = orte_get_proc_object(&msg->dst))) {
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
-        if (!proc->local_proc) {
+        if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
     }
@@ -308,8 +306,15 @@ static int component_set_addr(orte_process_name_t *peer,
             pr = OBJ_NEW(mca_oob_usock_peer_t);
             pr->name = *peer;
             opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
-            return ORTE_SUCCESS;
         }
+        if (ORTE_PROC_MY_DAEMON->jobid == peer->jobid) {
+            /* we have to initiate the connection because otherwise the
+             * daemon has no way to communicate to us via this component
+             * as the app doesn't have a listening port */
+            pr->state = MCA_OOB_USOCK_CONNECTING;
+            ORTE_ACTIVATE_USOCK_CONN_STATE(pr, mca_oob_usock_peer_try_connect);
+        }
+        return ORTE_SUCCESS;
     }
 
     /* if I am a daemon or HNP, I can only reach my
@@ -320,7 +325,7 @@ static int component_set_addr(orte_process_name_t *peer,
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (NULL == (proc = orte_get_proc_object(peer)) ||
-        !proc->local_proc) {
+        !ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     /* indicate that this peer is addressable by this component */
@@ -478,7 +483,7 @@ static bool component_is_reachable(orte_process_name_t *peer)
         return false;
     }
     if (NULL == (proc = orte_get_proc_object(peer)) ||
-        !proc->local_proc) {
+        !ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
         return false;
     }
     /* indicate that this peer is reachable by this component */
@@ -526,6 +531,7 @@ static void peer_cons(mca_oob_usock_peer_t *peer)
 {
     peer->sd = -1;
     peer->state = MCA_OOB_USOCK_UNCONNECTED;
+    peer->retries = 0;
     OBJ_CONSTRUCT(&peer->send_queue, opal_list_t);
     peer->send_msg = NULL;
     peer->recv_msg = NULL;

@@ -693,9 +693,10 @@ static void process_message(pmix_server_peer_t *peer)
     case PMIX_FENCE_CMD:
     case PMIX_FENCENB_CMD:
         opal_output_verbose(2, pmix_server_output,
-                            "%s recvd %s",
+                            "%s recvd %s FROM PROC %s ON TAG %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE");
+                            (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE",
+                            OPAL_NAME_PRINT(id), tag);
         /* setup a signature object */
         sig = OBJ_NEW(orte_grpcomm_signature_t);
         /* get the number of procs in this fence collective */

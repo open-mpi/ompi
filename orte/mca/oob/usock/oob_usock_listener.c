@@ -82,6 +82,11 @@ int orte_oob_usock_start_listening(void)
     opal_socklen_t addrlen;
     int sd = -1;
 
+    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s START USOCK LISTENING ON %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        mca_oob_usock_component.address.sun_path);
+
     /* create a listen socket for incoming connection attempts */
     sd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (sd < 0) {
