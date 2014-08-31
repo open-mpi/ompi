@@ -38,7 +38,7 @@
 #define MCA_MPOOL_FLAGS_SO_MEM            0x10
 #define MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM 0x20
 
-struct ompi_info_t;
+struct opal_info_t;
 
 #define MCA_MPOOL_FLAGS_CUDA_GPU_MEM      0x40
 
@@ -225,7 +225,7 @@ typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
  * @retval pointer to the allocated memory
  * @retval NULL on failure
  */
-OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct ompi_info_t * info);
+OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info);
 
 /**
  * Function to free memory previously allocated by mca_mpool_base_alloc
