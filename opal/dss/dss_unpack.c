@@ -670,6 +670,7 @@ static int unpack_disk_stats(opal_buffer_t *buffer, opal_node_stats_t *ns)
     /* unpack them */
     for (i=0; i < n; i++) {
         dk = OBJ_NEW(opal_diskstats_t);
+        assert(dk);
         m=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &dk->disk, &m, OPAL_STRING))) {
             OPAL_ERROR_LOG(ret);
@@ -774,6 +775,7 @@ static int unpack_net_stats(opal_buffer_t *buffer, opal_node_stats_t *ns)
     /* unpack them */
     for (i=0; i < n; i++) {
         net = OBJ_NEW(opal_netstats_t);
+        assert(net);
         m=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &net->net_interface, &m, OPAL_STRING))) {
             OPAL_ERROR_LOG(ret);
@@ -1057,6 +1059,294 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
             break;
         case OPAL_TIMEVAL:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.tv, &m, OPAL_TIMEVAL))) {
+                return ret;
+            }
+            break;
+        case OPAL_FLOAT_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.fval_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.fval_array.data,
+                                              &ptr[i]->data.fval_array.size,
+                                              OPAL_FLOAT))) {
+                return ret;
+            }
+            break;
+        case OPAL_DOUBLE_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.dval_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.dval_array.data,
+                                              &ptr[i]->data.dval_array.size,
+                                              OPAL_DOUBLE))) {
+                return ret;
+            }
+            break;
+        case OPAL_STRING_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.string_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.string_array.data,
+                                              &ptr[i]->data.string_array.size,
+                                              OPAL_STRING))) {
+                return ret;
+            }
+            break;
+        case OPAL_BOOL_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.flag_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.flag_array.data,
+                                              &ptr[i]->data.flag_array.size,
+                                              OPAL_BOOL))) {
+                return ret;
+            }
+            break;
+        case OPAL_SIZE_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.size_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.size_array.data,
+                                              &ptr[i]->data.size_array.size,
+                                              OPAL_SIZE))) {
+                return ret;
+            }
+            break;
+        case OPAL_BYTE_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.byte_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.byte_array.data,
+                                              &ptr[i]->data.byte_array.size,
+                                              OPAL_BYTE))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.integer_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.integer_array.data,
+                                              &ptr[i]->data.integer_array.size,
+                                              OPAL_INT))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT8_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.int8_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.int8_array.data,
+                                              &ptr[i]->data.int8_array.size,
+                                              OPAL_INT8))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT16_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.int16_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.int16_array.data,
+                                              &ptr[i]->data.int16_array.size,
+                                              OPAL_INT16))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT32_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.int32_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.int32_array.data,
+                                              &ptr[i]->data.int32_array.size,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT64_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.int64_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.int64_array.data,
+                                              &ptr[i]->data.int64_array.size,
+                                              OPAL_INT64))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.uint_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.uint_array.data,
+                                              &ptr[i]->data.uint_array.size,
+                                              OPAL_UINT))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT8_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.uint8_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.uint8_array.data,
+                                              &ptr[i]->data.uint8_array.size,
+                                              OPAL_UINT8))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT16_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.uint16_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.uint16_array.data,
+                                              &ptr[i]->data.uint16_array.size,
+                                              OPAL_UINT16))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT32_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.uint32_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.uint32_array.data,
+                                              &ptr[i]->data.uint32_array.size,
+                                              OPAL_UINT32))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT64_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.uint64_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.uint64_array.data,
+                                              &ptr[i]->data.uint64_array.size,
+                                              OPAL_UINT64))) {
+                return ret;
+            }
+            break;
+        case OPAL_PID_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.pid_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.pid_array.data,
+                                              &ptr[i]->data.pid_array.size,
+                                              OPAL_PID))) {
+                return ret;
+            }
+            break;
+        case OPAL_TIMEVAL_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.tv_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.tv_array.data,
+                                              &ptr[i]->data.tv_array.size,
+                                              OPAL_TIMEVAL))) {
                 return ret;
             }
             break;
