@@ -46,6 +46,7 @@ DISTCHECK_MAKE_FLAGS=-j4
 # tarballs; but higher-than-expected versions are ok for
 # non-distribution tarballs.
 dirty_ok=0
+gnu_version_ignore=0
 dist_target=distcheck
 distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
 if test "`basename $0`" = "make_tarball"; then
@@ -74,6 +75,8 @@ while test "$1" != ""; do
         -distdir) distdir=$2; shift ;;
         --distdir) distdir=$2; shift ;;
         --dirtyok) dirty_ok=1; shift ;;
+        --verok) gnu_version_ignore=1;;
+        -verok) gnu_version_ignore=1;;
         *)
             cat <<EOF
 Unrecognized argument: $1
@@ -85,6 +88,7 @@ Valid arguments:
   --autogen-args  Arguments to pass to autogen
   --distdir       Move the tarball(s) to this directory when done
   --dirtyok       Ok if the source tree is dirty
+  --verok         Ignore result of autotools version checking
 EOF
             exit 1
             ;;
@@ -169,7 +173,9 @@ Either change this script to match the found version, or install
 the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
-        exit 1
+        if test "$gnu_version_ignore" = "0"; then 
+            exit 1
+        fi
 
     elif test "$result" = "high"; then
         if test "$highok" = "0"; then
@@ -190,7 +196,9 @@ Either change this script to match the found version, or install
 the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
+        if test "$gnu_version_ignore" = "0"; then 
             exit 1
+        fi
         else
             cat <<EOF
 ----------------------------------------------------------------------
@@ -230,7 +238,9 @@ Either change this script to match the found version, or install
 the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
-        exit 1
+        if test "$gnu_version_ignore" = "0"; then 
+            exit 1
+        fi
     fi
 
 }
