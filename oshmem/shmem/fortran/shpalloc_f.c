@@ -2,6 +2,8 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,12 +37,15 @@ void shpalloc_f(FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MP
     *errcode = 0;
     /*current shmem spec implies that the length parameter to SHPALLOC function is the number of 32-bit words to allocate*/
     uint32_t *address;
+    if (*length <= 0) {
+        *errcode = -1;
+    }
     address = shmalloc(*length*4);
     
     *addr = (FORTRAN_POINTER_T)(uintptr_t)address;
     if (!(*addr))
     {
-        *errcode = -1;
+        *errcode = -2;
         SHMEM_API_ERROR("could not allocate %i bytes in symmetric heap",*length*4);
         if (*abort)
         {
