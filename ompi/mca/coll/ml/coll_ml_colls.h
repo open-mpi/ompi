@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -424,9 +426,19 @@ do {                                                                            
         /* release potentially may trigger ML module distraction and having */  \
         /* the element not on the list may cause memory leak.               */  \
         if (OPAL_UNLIKELY(is_coll_sync)) {                                      \
-            OBJ_RELEASE(comm);                                                  \
-            /* After this point it is UNSAFE to touch ml module */              \
-            /* or communicator */                                               \
+            if (OMPI_COMM_IS_INTRINSIC(comm)) {                                 \
+                opal_show_help("help-mpi-coll-ml.txt",                          \
+                               "coll-ml-check-fatal-error", true,               \
+                               comm->c_name);                                   \
+                ompi_mpi_abort(comm, 6);                                        \
+            } else {                                                            \
+                opal_show_help("help-mpi-coll-ml.txt",                          \
+                               "coll-ml-check-error", true,                     \
+                               comm->c_name);                                   \
+                /* After this point it is UNSAFE to touch ml module */          \
+                /* or communicator */                                           \
+                OBJ_RELEASE(comm);                                              \
+            }                                                                   \
         }                                                                       \
     }                                                                           \
 } while (0)
