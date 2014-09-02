@@ -38,11 +38,19 @@ libmca_hwloc_hwloc191_la_DEPENDENCIES = \
 headers += \
         hwloc/include/hwloc.h \
         hwloc/include/hwloc/bitmap.h \
-        hwloc/include/hwloc/helper.h \
-        hwloc/include/hwloc/myriexpress.h \
-        hwloc/include/hwloc/openfabrics-verbs.h \
         hwloc/include/hwloc/cuda.h \
         hwloc/include/hwloc/cudart.h \
+        hwloc/include/hwloc/deprecated.h \
+        hwloc/include/hwloc/diff.h \
+        hwloc/include/hwloc/gl.h \
+        hwloc/include/hwloc/helper.h \
+        hwloc/include/hwloc/inlines.h \
+        hwloc/include/hwloc/intel-mic.h \
+        hwloc/include/hwloc/myriexpress.h \
+        hwloc/include/hwloc/nvml.h \
+        hwloc/include/hwloc/opencl.h \
+        hwloc/include/hwloc/openfabrics-verbs.h \
+        hwloc/include/hwloc/plugins.h \
         hwloc/include/hwloc/rename.h \
         hwloc/include/private/private.h \
         hwloc/include/private/debug.h \
