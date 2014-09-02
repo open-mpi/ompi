@@ -198,8 +198,15 @@ static int tcp_component_close(void)
 }
 #if ORTE_ENABLE_STATIC_PORTS
 static char *static_port_string;
+#if OPAL_ENABLE_IPV6
+static char *static_port_string6;
 #endif
+#endif
+
 static char *dyn_port_string;
+#if OPAL_ENABLE_IPV6
+static char *dyn_port_string6;
+#endif
 
 static int tcp_component_register(void)
 {
@@ -291,17 +298,17 @@ static int tcp_component_register(void)
     }
 
 #if OPAL_ENABLE_IPV6
-    static_port_string = NULL;
+    static_port_string6 = NULL;
     (void)mca_base_component_var_register(component, "static_ipv6_ports", 
                                           "Static ports for daemons and procs (IPv6)",
                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                          &static_port_string);
+                                          &static_port_string6);
 
     /* if ports were provided, parse the provided range */
-    if (NULL != static_port_string) {
-        orte_util_parse_range_options(static_port_string, &mca_oob_tcp_component.tcp6_static_ports);
+    if (NULL != static_port_string6) {
+        orte_util_parse_range_options(static_port_string6, &mca_oob_tcp_component.tcp6_static_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp6_static_ports[0], "-1")) {
             opal_argv_free(mca_oob_tcp_component.tcp6_static_ports);
             mca_oob_tcp_component.tcp6_static_ports = NULL;
@@ -345,15 +352,15 @@ static int tcp_component_register(void)
     }
 
 #if OPAL_ENABLE_IPV6
-    dyn_port_string = NULL;
+    dyn_port_string6 = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv6_ports",
                                           "Range of ports to be dynamically used by daemons and procs (IPv6)",
                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                          &dyn_port_string);
+                                          &dyn_port_string6);
     /* if ports were provided, parse the provided range */
-    if (NULL != dyn_port_string) {
+    if (NULL != dyn_port_string6) {
         /* can't have both static and dynamic ports! */
         if (orte_static_ports) {
             char *err4=NULL, *err6=NULL;
@@ -366,7 +373,7 @@ static int tcp_component_register(void)
             opal_show_help("help-oob-tcp.txt", "static-and-dynamic-ipv6", true,
                            (NULL == err4) ? "N/A" : err4,
                            (NULL == err6) ? "N/A" : err6,
-                           dyn_port_string);
+                           dyn_port_string6);
             if (NULL != err4) {
                 free(err4);
             }
@@ -375,7 +382,7 @@ static int tcp_component_register(void)
             }
             return ORTE_ERROR;
         }
-        orte_util_parse_range_options(dyn_port_string, &mca_oob_tcp_component.tcp6_dyn_ports);
+        orte_util_parse_range_options(dyn_port_string6, &mca_oob_tcp_component.tcp6_dyn_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp6_dyn_ports[0], "-1")) {
             opal_argv_free(mca_oob_tcp_component.tcp6_dyn_ports);
             mca_oob_tcp_component.tcp6_dyn_ports = NULL;
