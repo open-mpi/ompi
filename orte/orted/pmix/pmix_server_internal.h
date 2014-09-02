@@ -133,6 +133,7 @@ OBJ_CLASS_DECLARATION(pmix_server_peer_t);
 typedef struct {
     opal_list_item_t super;
     pmix_server_peer_t *peer;
+    orte_proc_t *proxy;
     opal_identifier_t target;
     uint32_t tag;
 } pmix_server_dmx_req_t;
