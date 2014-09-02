@@ -74,7 +74,7 @@ AC_DEFUN([ORTE_CHECK_LSF],[
                               [lsf/lsbatch.h],
                               [bat],
                               [lsb_launch],
-                              [-llsf],
+                              [-llsf -lnsl],
                               [$orte_check_lsf_dir],
                               [$orte_check_lsf_libdir],
                               [orte_check_lsf_happy="yes"],
