@@ -379,7 +379,6 @@ static void proc_errors(int fd, short args, void *cbdata)
      */
     if (pptr->state < ORTE_PROC_STATE_TERMINATED) {
         pptr->state = state;
-        jdata->num_terminated++;
     }
 
     /* if we were ordered to terminate, mark this proc as dead and see if
@@ -620,6 +619,10 @@ static void proc_errors(int fd, short args, void *cbdata)
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
         }
         break;
+    }
+    /* if the waitpid fired, be sure to let the state machine know */
+    if (ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_WAITPID)) {
+        ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
     }
 
  cleanup:
