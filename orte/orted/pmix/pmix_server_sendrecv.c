@@ -752,7 +752,7 @@ static void process_message(pmix_server_peer_t *peer)
         /* if we are in a group collective mode, then we need to prep
          * the data as it should be included in the modex */
         OBJ_CONSTRUCT(&save, opal_buffer_t);
-        if (sig->sz < orte_full_modex_cutoff) {
+        if (orte_process_info.num_procs < orte_full_modex_cutoff) {
             /* need to include the id of the sender for later unpacking */
             opal_dss.pack(&save, &id, 1, OPAL_UINT64);
             opal_dss.copy_payload(&save, &xfer);
@@ -1019,7 +1019,7 @@ static void process_message(pmix_server_peer_t *peer)
         }
         OBJ_RELEASE(sig);
         /* include any data that is to be globally shared */
-        if (found) {
+        if (found && 0 < save.bytes_used) {
             bptr = &save;
             if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
