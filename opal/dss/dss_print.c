@@ -57,10 +57,16 @@ int opal_dss_print_byte(char **output, char *prefix, uint8_t *src, opal_data_typ
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_BYTE\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_BYTE\tValue: %x", prefix, *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -76,10 +82,16 @@ int opal_dss_print_string(char **output, char *prefix, char *src, opal_data_type
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_STRING\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_STRING\tValue: %s", prefx, src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -95,10 +107,16 @@ int opal_dss_print_size(char **output, char *prefix, size_t *src, opal_data_type
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_SIZE\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_SIZE\tValue: %lu", prefx, (unsigned long) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -114,11 +132,16 @@ int opal_dss_print_pid(char **output, char *prefix, pid_t *src, opal_data_type_t
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_PID\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_PID\tValue: %lu", prefx, (unsigned long) *src);
-
+    if (prefx != prefix) {
+        free(prefx);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -133,10 +156,16 @@ int opal_dss_print_bool(char **output, char *prefix, bool *src, opal_data_type_t
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_BOOL\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_BOOL\tValue: %s", prefx, *src ? "TRUE" : "FALSE");
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -152,10 +181,16 @@ int opal_dss_print_int(char **output, char *prefix, int *src, opal_data_type_t t
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_INT\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_INT\tValue: %ld", prefx, (long) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -171,10 +206,16 @@ int opal_dss_print_uint(char **output, char *prefix, int *src, opal_data_type_t 
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_UINT\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_UINT\tValue: %lu", prefx, (unsigned long) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -190,10 +231,16 @@ int opal_dss_print_uint8(char **output, char *prefix, uint8_t *src, opal_data_ty
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_UINT8\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_UINT8\tValue: %u", prefx, (unsigned int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -209,10 +256,16 @@ int opal_dss_print_uint16(char **output, char *prefix, uint16_t *src, opal_data_
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_UINT16\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_UINT16\tValue: %u", prefx, (unsigned int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -228,10 +281,16 @@ int opal_dss_print_uint32(char **output, char *prefix, uint32_t *src, opal_data_
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_UINT32\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_UINT32\tValue: %u", prefx, (unsigned int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -247,10 +306,16 @@ int opal_dss_print_int8(char **output, char *prefix, int8_t *src, opal_data_type
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_INT8\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_INT8\tValue: %d", prefx, (int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -266,10 +331,16 @@ int opal_dss_print_int16(char **output, char *prefix, int16_t *src, opal_data_ty
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_INT16\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_INT16\tValue: %d", prefx, (int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -285,10 +356,16 @@ int opal_dss_print_int32(char **output, char *prefix, int32_t *src, opal_data_ty
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_INT32\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_INT32\tValue: %d", prefx, (int) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -309,6 +386,9 @@ int opal_dss_print_uint64(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_UINT64\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
@@ -317,15 +397,18 @@ int opal_dss_print_uint64(char **output, char *prefix,
 #else
     asprintf(output, "%sData type: OPAL_UINT64\tValue: unsupported", prefx);
 #endif  /* HAVE_INT64_T */
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
 
 int opal_dss_print_int64(char **output, char *prefix,
 #ifdef HAVE_INT64_T
-                          int64_t *src,
+                         int64_t *src,
 #else
-                          void *src,
+                         void *src,
 #endif  /* HAVE_INT64_T */
                          opal_data_type_t type)
 {
@@ -338,6 +421,9 @@ int opal_dss_print_int64(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_INT64\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
@@ -346,12 +432,15 @@ int opal_dss_print_int64(char **output, char *prefix,
 #else
     asprintf(output, "%sData type: OPAL_INT64\tValue: unsupported", prefx);
 #endif  /* HAVE_INT64_T */
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
 
 int opal_dss_print_float(char **output, char *prefix,
-                          float *src, opal_data_type_t type)
+                         float *src, opal_data_type_t type)
 {
     char *prefx;
 
@@ -362,10 +451,16 @@ int opal_dss_print_float(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_FLOAT\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_FLOAT\tValue: %f", prefx, *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -382,10 +477,16 @@ int opal_dss_print_double(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_DOUBLE\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_DOUBLE\tValue: %f", prefx, *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -403,6 +504,9 @@ int opal_dss_print_time(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_TIME\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
@@ -410,12 +514,15 @@ int opal_dss_print_time(char **output, char *prefix,
     t[strlen(t)-1] = '\0';  // remove trailing newline
 
     asprintf(output, "%sData type: OPAL_TIME\tValue: %s", prefx, t);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
 
 int opal_dss_print_timeval(char **output, char *prefix,
-                          struct timeval *src, opal_data_type_t type)
+                           struct timeval *src, opal_data_type_t type)
 {
     char *prefx;
 
@@ -426,11 +533,17 @@ int opal_dss_print_timeval(char **output, char *prefix,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_TIMEVAL\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_TIMEVAL\tValue: %ld.%06ld", prefx,
              (long)src->tv_sec, (long)src->tv_usec);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -446,10 +559,16 @@ int opal_dss_print_null(char **output, char *prefix, void *src, opal_data_type_t
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_NULL\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_NULL", prefx);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -471,10 +590,16 @@ int opal_dss_print_data_type(char **output, char *prefix, opal_data_type_t *src,
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_DATA_TYPE\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_DATA_TYPE\tValue: %lu", prefx, (unsigned long) *src);
+    if (prefx != prefix) {
+        free(prefx);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -492,10 +617,16 @@ int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_BYTE_OBJECT\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_BYTE_OBJECT\tSize: %lu", prefx, (unsigned long) src->size);
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -514,6 +645,9 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
     asprintf(output, "%sOPAL_PSTATS SAMPLED AT: %ld.%06ld\n%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
@@ -521,7 +655,10 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
              prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,
              prefx, src->node, src->rank, src->pid, src->cmd, src->state[0], src->priority, src->num_threads, src->processor,
              prefx, (long)src->time.tv_sec, (long)src->time.tv_usec, src->percent_cpu, src->vsize, src->peak_vsize, src->rss);
-    
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -539,15 +676,21 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_NODE_STATS\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
     asprintf(output, "%sOPAL_NODE_STATS SAMPLED AT: %ld.%06ld\n%sTotal Mem: %5.2f Free Mem: %5.2f Buffers: %5.2f Cached: %5.2f\n"
-                     "%sSwapCached: %5.2f SwapTotal: %5.2f SwapFree: %5.2f Mapped: %5.2f\n"
-                     "%s\tla: %5.2f\tla5: %5.2f\tla15: %5.2f\n",
+             "%sSwapCached: %5.2f SwapTotal: %5.2f SwapFree: %5.2f Mapped: %5.2f\n"
+             "%s\tla: %5.2f\tla5: %5.2f\tla15: %5.2f\n",
              prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,
              prefx, src->total_mem, src->free_mem, src->buffers, src->cached,
              prefx, src->swap_cached, src->swap_total, src->swap_free, src->mapped,
              prefx, src->la, src->la5, src->la15);
+    if (prefx != prefix) {
+        free(prefx);
+    }
     
     return OPAL_SUCCESS;
 }
@@ -557,20 +700,27 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
  */
 int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type)
 {
-    char *prefx;
+    char *prefx, *t2;
+    int i;
 
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
-    else prefx = strdup(prefix);
+    else prefx = prefix;
     
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_VALUE\tValue: NULL pointer", prefx);
-        free(prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
         return OPAL_SUCCESS;
     }
     
     switch (src->type) {
+    case OPAL_BOOL:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BOOL\tKey: %s\tValue: %s",
+                 prefx, src->key, src->data.flag ? "true" : "false");
+        break;
     case OPAL_BYTE:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE\tKey: %s\tValue: %x",
                  prefx, src->key, src->data.byte);
@@ -637,7 +787,7 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
         break;
     case OPAL_BYTE_OBJECT:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE_OBJECT\tKey: %s\tData: %s\tSize: %lu",
-            prefx, src->key, (NULL == src->data.bo.bytes) ? "NULL" : "NON-NULL", (unsigned long)src->data.bo.size);
+                 prefx, src->key, (NULL == src->data.bo.bytes) ? "NULL" : "NON-NULL", (unsigned long)src->data.bo.size);
         break;
     case OPAL_TIMEVAL:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
@@ -646,12 +796,189 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     case OPAL_PTR:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PTR\tKey: %s", prefx, src->key);
         break;
+    case OPAL_FLOAT_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.fval_array.size);
+        for (i = 0; i < src->data.fval_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%f", *output, prefx, src->data.fval_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_DOUBLE_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_DOUBLE_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.dval_array.size);
+        for (i = 0; i < src->data.dval_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%f", *output, prefx, src->data.dval_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_STRING_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.string_array.size);
+        for (i = 0; i < src->data.string_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%s", *output, prefx, src->data.string_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_BOOL_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BOOL_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.flag_array.size);
+        for (i = 0; i < src->data.flag_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%s", *output, prefx, src->data.flag_array.data[i] ? "true" : "false");
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_SIZE_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_SIZE_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.size_array.size);
+        for (i = 0; i < src->data.size_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%lu", *output, prefx, (unsigned long)src->data.size_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_BYTE_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.byte_array.size);
+        for (i = 0; i < src->data.byte_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%x", *output, prefx, (uint8_t)src->data.byte_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_INT_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.integer_array.size);
+        for (i = 0; i < src->data.integer_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%d", *output, prefx, src->data.integer_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_INT8_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT8_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.int8_array.size);
+        for (i = 0; i < src->data.int8_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%d", *output, prefx, (int)src->data.int8_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_INT16_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT16_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.int16_array.size);
+        for (i = 0; i < src->data.int16_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%d", *output, prefx, (int)src->data.int16_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_INT32_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT32_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.int32_array.size);
+        for (i = 0; i < src->data.int32_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%d", *output, prefx, src->data.int32_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_INT64_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT64_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.int64_array.size);
+        for (i = 0; i < src->data.int64_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%ld", *output, prefx, (long)src->data.int64_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_UINT_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.uint_array.size);
+        for (i = 0; i < src->data.uint_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%u", *output, prefx, src->data.uint_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_UINT8_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT8_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.uint8_array.size);
+        for (i = 0; i < src->data.uint8_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%u", *output, prefx, (unsigned int)src->data.uint8_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_UINT16_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT16_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.uint16_array.size);
+        for (i = 0; i < src->data.uint16_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%u", *output, prefx, (unsigned int)src->data.uint16_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_UINT32_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT32_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.uint32_array.size);
+        for (i = 0; i < src->data.uint32_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%u", *output, prefx, (unsigned int)src->data.uint32_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_UINT64_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT64_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.uint64_array.size);
+        for (i = 0; i < src->data.uint64_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%lu", *output, prefx, (unsigned long)src->data.uint64_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_BYTE_OBJECT_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE_OBJECT_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.bo_array.size);
+        for (i = 0; i < src->data.bo_array.size; i++) {
+            asprintf(&t2, "%s\n%s\tData: %s\tSize: %lu ", *output, prefx,
+                     (NULL == src->data.bo_array.data[i].bytes) ? "NULL" : "NON-NULL",
+                     (unsigned long)src->data.bo_array.data[i].size);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_PID_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PID_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.pid_array.size);
+        for (i = 0; i < src->data.pid_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%u", *output, prefx, (unsigned int)src->data.pid_array.data[i]);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_TIMEVAL_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.tv_array.size);
+        for (i = 0; i < src->data.tv_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t%ld.%06ld", *output, prefx,
+                     (long)src->data.tv_array.data[i].tv_sec,
+                     (long)src->data.tv_array.data[i].tv_usec);
+            free(*output);
+            *output = t2;
+        }
+        break;
     default:
         asprintf(output, "%sOPAL_VALUE: Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
                  prefx, src->key);
         break;
     }
-    free(prefx);
+    if (prefx != prefix) {
+        free(prefx);
+    }
     return OPAL_SUCCESS;
 }
 

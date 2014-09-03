@@ -86,13 +86,126 @@ typedef struct {
 #define    OPAL_VALUE               (opal_data_type_t)   26 /**< opal value structure */
 #define    OPAL_BUFFER              (opal_data_type_t)   27 /**< pack the remaining contents of a buffer as an object */
 #define    OPAL_PTR                 (opal_data_type_t)   28 /**< pointer to void* */
-
+    /* OPAL Dynamic */
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
+    /* OPAL Array types */
+#define    OPAL_FLOAT_ARRAY         (opal_data_type_t)   31
+#define    OPAL_DOUBLE_ARRAY        (opal_data_type_t)   32
+#define    OPAL_STRING_ARRAY        (opal_data_type_t)   33
+#define    OPAL_BOOL_ARRAY          (opal_data_type_t)   34
+#define    OPAL_SIZE_ARRAY          (opal_data_type_t)   35
+#define    OPAL_BYTE_ARRAY          (opal_data_type_t)   36
+#define    OPAL_INT_ARRAY           (opal_data_type_t)   37
+#define    OPAL_INT8_ARRAY          (opal_data_type_t)   38
+#define    OPAL_INT16_ARRAY         (opal_data_type_t)   39
+#define    OPAL_INT32_ARRAY         (opal_data_type_t)   40
+#define    OPAL_INT64_ARRAY         (opal_data_type_t)   41
+#define    OPAL_UINT_ARRAY          (opal_data_type_t)   42
+#define    OPAL_UINT8_ARRAY         (opal_data_type_t)   43
+#define    OPAL_UINT16_ARRAY        (opal_data_type_t)   44
+#define    OPAL_UINT32_ARRAY        (opal_data_type_t)   45
+#define    OPAL_UINT64_ARRAY        (opal_data_type_t)   46
+#define    OPAL_BYTE_OBJECT_ARRAY   (opal_data_type_t)   47
+#define    OPAL_PID_ARRAY           (opal_data_type_t)   48
+#define    OPAL_TIMEVAL_ARRAY       (opal_data_type_t)   49
+
 
 /* define the results values for comparisons so we can change them in only one place */
 #define OPAL_VALUE1_GREATER  +1
 #define OPAL_VALUE2_GREATER  -1
 #define OPAL_EQUAL            0
+
+/* List types for opal_value_t, needs number of elements and a pointer */
+/* float array object */
+typedef struct {
+    int32_t size;
+    float *data;
+} opal_float_array_t;
+/* double array object */
+typedef struct {
+    int32_t size;
+    double *data;
+} opal_double_array_t;
+/* string array object */
+typedef struct {
+    int32_t size;
+    char **data;
+} opal_string_array_t;
+/* bool array object */
+typedef struct {
+    int32_t size;
+    bool *data;
+} opal_bool_array_t;
+/* size array object */
+typedef struct {
+    int32_t size;
+    size_t *data;
+} opal_size_array_t;
+/* opal byte object array object */
+typedef struct {
+    int32_t size;
+    opal_byte_object_t *data;
+} opal_byte_object_array_t;
+/* int array object */
+typedef struct {
+    int32_t size;
+    int *data;
+} opal_int_array_t;
+/* int8 array object */
+typedef struct {
+    int32_t size;
+    int8_t *data;
+} opal_int8_array_t;
+/* int16 array object */
+typedef struct {
+    int32_t size;
+    int16_t *data;
+} opal_int16_array_t;
+/* int32 array object */
+typedef struct {
+    int32_t size;
+    int32_t *data;
+} opal_int32_array_t;
+/* int64 array object */
+typedef struct {
+    int32_t size;
+    int64_t *data;
+} opal_int64_array_t;
+/* uint array object */
+typedef struct {
+    int32_t size;
+    unsigned int *data;
+} opal_uint_array_t;
+/* uint8 array object */
+typedef struct {
+    int32_t size;
+    uint8_t *data;
+} opal_uint8_array_t;
+/* uint16 array object */
+typedef struct {
+    int32_t size;
+    uint16_t *data;
+} opal_uint16_array_t;
+/* uint32 array object */
+typedef struct {
+    int32_t size;
+    uint32_t *data;
+} opal_uint32_array_t;
+/* uint64 array object */
+typedef struct {
+    int32_t size;
+    uint64_t *data;
+} opal_uint64_array_t;
+/* pid array object */
+typedef struct {
+    int32_t size;
+    pid_t *data;
+} opal_pid_array_t;
+/* timeval array object */
+typedef struct {
+    int32_t size;
+    struct timeval *data;
+} opal_timeval_array_t;
 
 /* Data value object */
 typedef struct {
@@ -119,6 +232,25 @@ typedef struct {
         float fval;
         double dval;
         struct timeval tv;
+        opal_bool_array_t flag_array;
+        opal_uint8_array_t byte_array;
+        opal_string_array_t string_array;
+        opal_size_array_t size_array;
+        opal_int_array_t integer_array;
+        opal_int8_array_t int8_array;
+        opal_int16_array_t int16_array;
+        opal_int32_array_t int32_array;
+        opal_int64_array_t int64_array;
+        opal_uint_array_t uint_array;
+        opal_uint8_array_t uint8_array;
+        opal_uint16_array_t uint16_array;
+        opal_uint32_array_t uint32_array;
+        opal_uint64_array_t uint64_array;
+        opal_byte_object_array_t bo_array;
+        opal_float_array_t fval_array;
+        opal_double_array_t dval_array;
+        opal_pid_array_t pid_array;
+        opal_timeval_array_t tv_array;
         void *ptr;  // never packed or passed anywhere
     } data;
 } opal_value_t;
