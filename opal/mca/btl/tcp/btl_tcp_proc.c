@@ -686,26 +686,28 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_t* btl_endpoint)
 {
     size_t i;
-    OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    for(i = 0; i < btl_proc->proc_endpoint_count; i++) {
-        if(btl_proc->proc_endpoints[i] == btl_endpoint) {
-            memmove(btl_proc->proc_endpoints+i, btl_proc->proc_endpoints+i+1,
-                (btl_proc->proc_endpoint_count-i-1)*sizeof(mca_btl_base_endpoint_t*));
-            if(--btl_proc->proc_endpoint_count == 0) {
-                OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-                OBJ_RELEASE(btl_proc);
-                return OPAL_SUCCESS;
+    if (NULL != btl_proc) {
+        OPAL_THREAD_LOCK(&btl_proc->proc_lock);
+        for(i = 0; i < btl_proc->proc_endpoint_count; i++) {
+            if(btl_proc->proc_endpoints[i] == btl_endpoint) {
+                memmove(btl_proc->proc_endpoints+i, btl_proc->proc_endpoints+i+1,
+                        (btl_proc->proc_endpoint_count-i-1)*sizeof(mca_btl_base_endpoint_t*));
+                if(--btl_proc->proc_endpoint_count == 0) {
+                    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+                    OBJ_RELEASE(btl_proc);
+                    return OPAL_SUCCESS;
+                }
+                /* The endpoint_addr may still be NULL if this enpoint is
+                   being removed early in the wireup sequence (e.g., if it
+                   is unreachable by all other procs) */
+                if (NULL != btl_endpoint->endpoint_addr) {
+                    btl_endpoint->endpoint_addr->addr_inuse--;
+                }
+                break;
             }
-            /* The endpoint_addr may still be NULL if this enpoint is
-               being removed early in the wireup sequence (e.g., if it
-               is unreachable by all other procs) */
-            if (NULL != btl_endpoint->endpoint_addr) {
-                btl_endpoint->endpoint_addr->addr_inuse--;
-            }
-            break;
         }
+        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
     }
-    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
     return OPAL_SUCCESS;
 }
 
