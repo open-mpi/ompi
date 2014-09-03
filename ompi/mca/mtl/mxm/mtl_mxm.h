@@ -43,7 +43,8 @@ BEGIN_C_DECLS
 /* MTL interface functions */
 extern int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t* mtl,
                                   size_t nprocs, struct ompi_proc_t** procs);
-
+extern int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
+                                  struct ompi_proc_t* procs);
 extern int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t* mtl,
                                   size_t nprocs, struct ompi_proc_t** procs);
 

@@ -49,7 +49,6 @@ mca_mtl_mxm_module_t ompi_mtl_mxm = {
     NULL
 };
 
-
 #if MXM_API < MXM_VERSION(2,0)
 static uint32_t ompi_mtl_mxm_get_job_id(void)
 {
@@ -70,7 +69,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
         return 0;
     }
 
-    /* 
+    /*
      * decode OMPI_MCA_orte_precondition_transports that looks as
      * 000003ca00000000-0000000100000000
      * jobfam-stepid
@@ -373,7 +372,7 @@ int ompi_mtl_mxm_module_init(void)
 #if MXM_API >= MXM_VERSION(2,0)
     free(ep_address);
 #endif
-     
+
     /* Register the MXM progress function */
     opal_progress_register(ompi_mtl_mxm_progress);
 
@@ -413,6 +412,14 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     mca_mtl_mxm_endpoint_t *endpoint;
 
     assert(mtl == &ompi_mtl_mxm.super);
+
+    char *envvar = getenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM");
+    if ((envvar != NULL) && (strlen(envvar) > 0) &&
+        ((strcmp(envvar, "yes") == 0 || strcmp(envvar, "true") == 0 || strcmp(envvar, "1") == 0)))
+    {
+        MXM_VERBOSE(80, "Set endpoint connection on first communication. Skip it now.");
+        return OMPI_SUCCESS;
+    }
 
 #if MXM_API < MXM_VERSION(2,0)
     /* Allocate connection requests */
@@ -504,6 +511,76 @@ bail:
     return rc;
 }
 
+int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
+                             struct ompi_proc_t* procs)
+{
+    void *ep_address;
+    size_t ep_address_len;
+    mxm_error_t err;
+    int rc;
+    mca_mtl_mxm_endpoint_t *endpoint;
+
+    assert(mtl == &ompi_mtl_mxm.super);
+
+    if (NULL != procs->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]) {
+       return OMPI_SUCCESS;
+    }
+    rc = ompi_mtl_mxm_recv_ep_address(procs, &ep_address, &ep_address_len);
+    if (rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+#if MXM_API < MXM_VERSION(2,0)
+    ompi_mtl_mxm_ep_conn_info_t ep_info;
+    mxm_conn_req_t conn_req;
+
+    if (ep_address_len != sizeof(ep_info)) {
+        MXM_ERROR("Invalid endpoint address length");
+        return OMPI_ERROR;
+    }
+
+    memcpy(&ep_info, ep_address, ep_address_len);
+    conn_req.ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SELF]);
+    conn_req.ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SHM]);
+    conn_req.ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_RDMA]);
+
+    /* Connect to remote peers */
+    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_req, 1, -1);
+    if (MXM_OK != err) {
+        MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
+        if (MXM_OK != conn_req.error) {
+            MXM_ERROR("MXM EP connect to %s error: %s\n",
+                      (NULL == procs->super.proc_hostname) ?
+                       "unknown" : procs->proc_hostname,
+                      mxm_error_string(conn_reqs.error));
+        }
+        return OMPI_ERROR;
+    }
+
+    /* Save returned connections */
+    endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
+    endpoint->mtl_mxm_module = &ompi_mtl_mxm;
+    endpoint->mxm_conn = conn_reqs.conn;
+    procs->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
+#else
+    endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
+    endpoint->mtl_mxm_module = &ompi_mtl_mxm;
+    err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
+    if (err != MXM_OK) {
+        MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
+        return OMPI_ERROR;
+    }
+    procs->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
+#endif
+
+#if MXM_API >= MXM_VERSION(3,1)
+    if (ompi_mtl_mxm.bulk_connect) {
+        mxm_ep_wireup(ompi_mtl_mxm.ep);
+    }
+#endif
+    return OMPI_SUCCESS;
+}
+
 int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                            struct ompi_proc_t** procs)
 {
@@ -527,8 +604,10 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     for (i = 0; i < nprocs; ++i) {
         mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*)
             procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
-        mxm_ep_disconnect(endpoint->mxm_conn);
-        OBJ_RELEASE(endpoint);
+        if (endpoint) {
+            mxm_ep_disconnect(endpoint->mxm_conn);
+            OBJ_RELEASE(endpoint);
+        }
     }
     return OMPI_SUCCESS;
 }
