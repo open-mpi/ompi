@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,11 +39,14 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
                                 OPAL_INFO_LVL_9,
                                 MCA_BASE_VAR_SCOPE_READONLY,
                                 &opal_pmix_use_collective);
+    if (opal_pmix_use_collective)
+        setenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM", "true", 0);
     return OPAL_SUCCESS;
 }
 
 static int opal_pmix_base_frame_close(void)
 {
+    unsetenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM");
     return mca_base_framework_components_close(&opal_pmix_base_framework, NULL);
 }
 

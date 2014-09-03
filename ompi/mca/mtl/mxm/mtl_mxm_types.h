@@ -16,12 +16,12 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/communicator/communicator.h"
-#include "mtl_mxm_endpoint.h" 
+#include "mtl_mxm_endpoint.h"
 
 
 BEGIN_C_DECLS
 
-/** 
+/**
  * MTL Module Interface
  */
 typedef struct mca_mtl_mxm_module_t {
@@ -64,6 +64,15 @@ OMPI_DECLSPEC mca_mtl_mxm_component_t mca_mtl_mxm_component;
 static inline mxm_conn_h ompi_mtl_mxm_conn_lookup(struct ompi_communicator_t* comm, int rank) {
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(comm, rank);
     mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+
+    if (endpoint != NULL) {
+        return  endpoint->mxm_conn;
+    }
+
+    MXM_VERBOSE(80, "First communication with [%s:%s]: set endpoint connection.",
+                ompi_proc->super.proc_hostname, OPAL_NAME_PRINT(ompi_proc->super.proc_name));
+    ompi_mtl_add_single_proc(ompi_mtl, ompi_proc);
+    endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
 
     return endpoint->mxm_conn;
 }
