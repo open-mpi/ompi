@@ -139,6 +139,8 @@ static int cray_init(void)
     int found;
     uint32_t jobfam;
 
+    ++pmix_init_count;
+
     /* if we can't startup PMI, we can't be used */
     if ( PMI2_Initialized () ) {
         return OPAL_SUCCESS;
@@ -240,6 +242,7 @@ err_exit:
 }
 
 static int cray_fini(void) {
+
     if (0 == pmix_init_count) {
         return OPAL_SUCCESS;
     }
@@ -423,7 +426,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < pmix_nlranks; i++) {
-            pmix_pname.vid = i;
+            pmix_pname.vid = pmix_lranks[i];
             rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&pmix_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
