@@ -886,7 +886,7 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                     OBJ_DESTRUCT(&kv);
-                    /* pack the blob */
+                    /* pack the hostname blob */
                     bptr = &buf;
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
@@ -931,7 +931,7 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                     OBJ_DESTRUCT(&kv);
-                    /* pack the blob */
+                    /* pack the hostname blob */
                     bptr = &buf;
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
