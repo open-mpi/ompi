@@ -636,13 +636,6 @@ static bool s1_get_attr(const char *attr, opal_value_t **kv)
     return false;
 }
 
-static int s1_get_attr_nb(const char *attr,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 static int s1_job_connect(const char jobId[])
 {
     return OPAL_ERR_NOT_SUPPORTED;

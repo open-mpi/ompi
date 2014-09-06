@@ -788,14 +788,6 @@ static void process_message(pmix_server_peer_t *peer)
                                     ORTE_NAME_PRINT(&peer->name));
                 handle = pmix_server_local_handle;
                 /* local procs will want this data */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&blocal, &scope, 1, PMIX_SCOPE_T))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
-                    OBJ_RELEASE(sig);
-                    OBJ_DESTRUCT(&blocal);
-                    OBJ_DESTRUCT(&bremote);
-                    return;
-                }
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&blocal, &bptr, 1, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&xfer);
@@ -813,14 +805,6 @@ static void process_message(pmix_server_peer_t *peer)
                                     ORTE_NAME_PRINT(&peer->name));
                 handle = pmix_server_remote_handle;
                 /* remote procs will want this data */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&bremote, &scope, 1, PMIX_SCOPE_T))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
-                    OBJ_RELEASE(sig);
-                    OBJ_DESTRUCT(&blocal);
-                    OBJ_DESTRUCT(&bremote);
-                    return;
-                }
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&bremote, &bptr, 1, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&xfer);
@@ -838,14 +822,6 @@ static void process_message(pmix_server_peer_t *peer)
                                     ORTE_NAME_PRINT(&peer->name));
                 handle = pmix_server_global_handle;
                 /* local procs will want this data */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&blocal, &scope, 1, PMIX_SCOPE_T))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
-                    OBJ_RELEASE(sig);
-                    OBJ_DESTRUCT(&blocal);
-                    OBJ_DESTRUCT(&bremote);
-                    return;
-                }
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&blocal, &bptr, 1, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&xfer);
@@ -855,14 +831,6 @@ static void process_message(pmix_server_peer_t *peer)
                     return;
                 }
                 /* remote procs will want this data */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&bremote, &scope, 1, PMIX_SCOPE_T))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
-                    OBJ_RELEASE(sig);
-                    OBJ_DESTRUCT(&blocal);
-                    OBJ_DESTRUCT(&bremote);
-                    return;
-                }
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&bremote, &bptr, 1, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&xfer);
@@ -918,7 +886,7 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                     OBJ_DESTRUCT(&kv);
-                    /* pack the blob */
+                    /* pack the hostname blob */
                     bptr = &buf;
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
@@ -963,7 +931,7 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                     OBJ_DESTRUCT(&kv);
-                    /* pack the blob */
+                    /* pack the hostname blob */
                     bptr = &buf;
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
