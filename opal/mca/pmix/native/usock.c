@@ -172,7 +172,9 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
             if (NULL != rcv->cbfunc) {
                 /* construct and load the buffer */
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
-                opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
+                if (NULL != msg->data) {
+                    opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
+                }
                 msg->data = NULL;  // protect the data region
                 if (NULL != rcv->cbfunc) {
                     rcv->cbfunc(&buf, rcv->cbdata);
