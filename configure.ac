@@ -871,7 +871,7 @@ OPAL_SEARCH_LIBS_CORE([socket], [socket])
 # Solaris has sched_yield in -lrt, usually in libc
 OPAL_SEARCH_LIBS_CORE([sched_yield], [rt])
 
-# IRIX has dirname in -lgen, usually in libc
+# IRIX and CentOS have dirname in -lgen, usually in libc
 OPAL_SEARCH_LIBS_CORE([dirname], [gen])
 
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
