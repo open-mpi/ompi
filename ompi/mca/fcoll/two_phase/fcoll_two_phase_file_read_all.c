@@ -706,7 +706,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
       fh->f_num_of_io_entries = 1;
       
       if (fh->f_num_of_io_entries){
-	if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh)) {
+	if ( 0 > fh->f_fbtl->fbtl_preadv (fh)) {
 	  opal_output(1, "READ FAILED\n");
 	  return OMPI_ERROR;
 	}

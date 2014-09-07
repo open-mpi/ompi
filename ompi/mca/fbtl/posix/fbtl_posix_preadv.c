@@ -32,7 +32,9 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
     struct iovec *iov = NULL;
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
-
+    ssize_t bytes_read=0, ret_code=0;
+    size_t ret=0;
+    
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
     }
@@ -79,12 +81,18 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    perror ("fseek");
 	    return OMPI_ERROR;
 	}
-	if (-1 == readv (fh->fd, iov, iov_count)) {
+	ret_code = readv (fh->fd, iov, iov_count);
+	if ( 0 < ret_code ) {
+	    bytes_read+=ret_code;
+	}
+	else if ( ret_code == -1 ) {
 	    perror ("readv");
 	    return OMPI_ERROR;
 	}
-	else {
+	else if ( 0 == ret_code ){
+	    /* end of file reached, no point in continue reading; */
 	    iov_count = 0;
+	    break;
 	}
     }
 
@@ -93,5 +101,6 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
         iov = NULL;
     }
     
-    return OMPI_SUCCESS;
+    ret = (size_t) bytes_read;
+    return ret;
 }
