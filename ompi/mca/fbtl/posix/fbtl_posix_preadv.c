@@ -91,9 +91,9 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	}
 	else if ( 0 == ret_code ){
 	    /* end of file reached, no point in continue reading; */
-	    iov_count = 0;
 	    break;
 	}
+	iov_count = 0;
     }
 
     if (NULL != iov) {
