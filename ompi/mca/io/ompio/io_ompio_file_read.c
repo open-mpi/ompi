@@ -80,7 +80,7 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
     uint32_t iov_count = 0;
     struct iovec *decoded_iov = NULL;
 
-    size_t max_data = 0; 
+    size_t max_data=0, ret_code=0, real_bytes_read=0;
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file vie iovec */
 
@@ -128,7 +128,10 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
 				      &total_bytes_read);
 	
         if (fh->f_num_of_io_entries) {
-            fh->f_fbtl->fbtl_preadv (fh);
+            ret_code = fh->f_fbtl->fbtl_preadv (fh);
+	    if ( 0<= ret_code ) {
+		real_bytes_read+=ret_code;
+	    }
         }
 
         fh->f_num_of_io_entries = 0;
@@ -144,7 +147,7 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
     }
 
     if ( MPI_STATUS_IGNORE != status ) {
-	status->_ucount = max_data;
+	status->_ucount = real_bytes_read;
     }
 
     return ret;

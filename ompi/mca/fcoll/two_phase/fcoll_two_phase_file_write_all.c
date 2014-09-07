@@ -809,7 +809,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
             #endif
 
 	    if (fh->f_num_of_io_entries){
-		if (OMPI_SUCCESS != fh->f_fbtl->fbtl_pwritev (fh)) {
+		if ( 0 > fh->f_fbtl->fbtl_pwritev (fh)) {
 		    opal_output(1, "WRITE FAILED\n");
 		    return OMPI_ERROR;
 		}
@@ -1050,7 +1050,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		fh->f_io_array[0].length = size;
 		fh->f_io_array[0].memory_address = write_buf;
 		if (fh->f_num_of_io_entries){
-		    if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh)) {
+		    if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
 			opal_output(1, "READ FAILED\n");
 			return OMPI_ERROR;
 		    }

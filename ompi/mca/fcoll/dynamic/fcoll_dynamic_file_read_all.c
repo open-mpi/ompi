@@ -617,7 +617,7 @@
  #endif
 
 	 if (fh->f_num_of_io_entries) {
-	   if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh)) {
+	   if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
 	     opal_output (1, "READ FAILED\n");
 	     ret = OMPI_ERROR;
 	     goto exit;
