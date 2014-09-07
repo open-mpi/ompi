@@ -134,9 +134,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 #if TIME_BREAKDOWN
   print_entry nentry;  
 #endif
-  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-    fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
-  }
+//  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
+//    fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
+//  }
   
   if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
     ret =   ompi_io_ompio_decode_datatype (fh,

@@ -485,7 +485,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
     size_t remaining_length = 0;
     uint32_t i;
     uint32_t temp_count;
-    struct iovec * temp_iov;
+    struct iovec *temp_iov=NULL;
     size_t temp_data;
     
 
@@ -553,10 +553,12 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
 #endif
     *iovec_count = *iovec_count + temp_count;
     *max_data = *max_data + temp_data;
-    *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
-    if (NULL == *iov) {
-        opal_output(1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if ( temp_count > 0 ) {
+	*iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
+	if (NULL == *iov) {
+	    opal_output(1, "OUT OF MEMORY\n");
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
     }
     for (i=0 ; i<temp_count ; i++) {
         (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
@@ -564,9 +566,9 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
     }
 
     remaining_length -= temp_data;
-    #if 0
-    if (0 == fh->f_rank) {
 
+#if 0
+    if (0 == fh->f_rank) {
         printf ("%d Entries: \n",*iovec_count);
         for (i=0 ; i<*iovec_count ; i++) {
             printf ("\t{%p, %d}\n", 
@@ -574,7 +576,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
                     (*iov)[i].iov_len);
         }
     }
-    #endif
+#endif
     if (remaining_length != 0) {
         printf( "Not all raw description was been extracted (%lu bytes missing)\n",
                 (unsigned long) remaining_length );
