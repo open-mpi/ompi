@@ -109,7 +109,7 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
     cycles = ceil((float)max_data/bytes_per_cycle);
 
 #if 0
-    printf ("Bytes per Cycle: %d   Cycles: %d\n",bytes_per_cycle, cycles);
+	printf ("Bytes per Cycle: %d   Cycles: %d max_data:%d \n",bytes_per_cycle, cycles, max_data);
 #endif
 
     j = fh->f_index_in_file_view;

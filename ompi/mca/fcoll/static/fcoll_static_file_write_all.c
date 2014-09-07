@@ -99,13 +99,13 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #endif
 
   
-  #if DEBUG_ON
+#if DEBUG_ON
     MPI_Aint gc_in;
-  #endif
+#endif
   
-  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-    fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-  }
+//  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
+//    fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
+//  }
   
   /* In case the data is not contigous in memory, decode it into an iovec */
   if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {

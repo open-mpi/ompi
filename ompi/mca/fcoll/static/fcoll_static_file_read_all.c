@@ -104,9 +104,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     MPI_Aint gc_in;
 #endif
 
-  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-    fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-  }
+//  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
+//   fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
+//  }
 
   
   /* In case the data is not contigous in memory, decode it into an iovec */
