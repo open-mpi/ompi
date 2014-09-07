@@ -117,10 +117,10 @@ static int hwloc_append_diff_obj_attr_uint64(hwloc_obj_t obj,
 	newdiff->obj_attr.type = HWLOC_TOPOLOGY_DIFF_OBJ_ATTR;
 	newdiff->obj_attr.obj_depth = obj->depth;
 	newdiff->obj_attr.obj_index = obj->logical_index;
-	newdiff->obj_attr.diff.uint64.type = type;
-	newdiff->obj_attr.diff.uint64.index = index;
-	newdiff->obj_attr.diff.uint64.oldvalue = oldvalue;
-	newdiff->obj_attr.diff.uint64.newvalue = newvalue;
+	newdiff->obj_attr.diff.ui64.type = type;
+	newdiff->obj_attr.diff.ui64.index = index;
+	newdiff->obj_attr.diff.ui64.oldvalue = oldvalue;
+	newdiff->obj_attr.diff.ui64.newvalue = newvalue;
 	hwloc_append_diff(newdiff, firstdiffp, lastdiffp);
 	return 0;
 }
@@ -316,8 +316,8 @@ hwloc_apply_diff_one(hwloc_topology_t topology,
 		switch (obj_attr->diff.generic.type) {
 		case HWLOC_TOPOLOGY_DIFF_OBJ_ATTR_SIZE: {
 			hwloc_obj_t tmpobj;
-			hwloc_uint64_t oldvalue = reverse ? obj_attr->diff.uint64.newvalue : obj_attr->diff.uint64.oldvalue;
-			hwloc_uint64_t newvalue = reverse ? obj_attr->diff.uint64.oldvalue : obj_attr->diff.uint64.newvalue;
+			hwloc_uint64_t oldvalue = reverse ? obj_attr->diff.ui64.newvalue : obj_attr->diff.ui64.oldvalue;
+			hwloc_uint64_t newvalue = reverse ? obj_attr->diff.ui64.oldvalue : obj_attr->diff.ui64.newvalue;
 			hwloc_uint64_t valuediff = newvalue - oldvalue;
 			if (obj->memory.local_memory != oldvalue)
 				return -1;

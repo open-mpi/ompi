@@ -683,8 +683,8 @@ hwloc__xml_import_diff_one(hwloc__xml_import_state_t state,
 
       switch (atoi(obj_attr_type_s)) {
       case HWLOC_TOPOLOGY_DIFF_OBJ_ATTR_SIZE:
-	diff->obj_attr.diff.uint64.oldvalue = strtoull(obj_attr_oldvalue_s, NULL, 0);
-	diff->obj_attr.diff.uint64.newvalue = strtoull(obj_attr_newvalue_s, NULL, 0);
+	diff->obj_attr.diff.ui64.oldvalue = strtoull(obj_attr_oldvalue_s, NULL, 0);
+	diff->obj_attr.diff.ui64.newvalue = strtoull(obj_attr_newvalue_s, NULL, 0);
 	break;
       case HWLOC_TOPOLOGY_DIFF_OBJ_ATTR_INFO:
 	diff->obj_attr.diff.string.name = strdup(obj_attr_name_s);
@@ -1154,11 +1154,11 @@ hwloc__xml_export_diff(hwloc__xml_export_state_t parentstate, hwloc_topology_dif
 
       switch (diff->obj_attr.diff.generic.type) {
       case HWLOC_TOPOLOGY_DIFF_OBJ_ATTR_SIZE:
-	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.uint64.index);
+	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.ui64.index);
 	state.new_prop(&state, "obj_attr_index", tmp);
-	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.uint64.oldvalue);
+	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.ui64.oldvalue);
 	state.new_prop(&state, "obj_attr_oldvalue", tmp);
-	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.uint64.newvalue);
+	sprintf(tmp, "%llu", (unsigned long long) diff->obj_attr.diff.ui64.newvalue);
 	state.new_prop(&state, "obj_attr_newvalue", tmp);
 	break;
       case HWLOC_TOPOLOGY_DIFF_OBJ_ATTR_NAME:
