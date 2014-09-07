@@ -585,8 +585,8 @@ int opal_init_test(void)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = mca_base_framework_register(&opal_event_base_framework, 0))) {
-        error = "opal_event_register";
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_event_base_framework, 0))) {
+        error = "opal_event_base_open";
         goto return_error;
     }
 
