@@ -201,12 +201,7 @@ static int bind_upwards(orte_job_t *jdata,
                                        data->num_bound, ncpus);
                         return ORTE_ERR_SILENT;
                     } else {
-                        /* if we have the default binding policy, emit a warning
-                         * that we won't be binding-by-default and include a statement
-                         * that setting overload allowed will silence the warning */
-                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                                       opal_hwloc_base_print_binding(map->binding), node->name,
-                                       data->num_bound, ncpus);
+                        /* if we have the default binding policy, then just don't bind */
                         OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_NONE);
                         unbind_procs(jdata);
                         return ORTE_SUCCESS;
@@ -337,12 +332,7 @@ static int bind_downwards(orte_job_t *jdata,
                     hwloc_bitmap_free(totalcpuset);
                     return ORTE_ERR_SILENT;
                 } else {
-                    /* if we have the default binding policy, emit a warning
-                     * that we won't be binding-by-default and include a statement
-                     * that setting overload allowed will silence the warning */
-                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                                   opal_hwloc_base_print_binding(map->binding), node->name,
-                                   data->num_bound, ncpus);
+                    /* if we have the default binding policy, then just don't bind */
                     OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_NONE);
                     unbind_procs(jdata);
                     hwloc_bitmap_zero(totalcpuset);
@@ -548,12 +538,7 @@ static int bind_in_place(orte_job_t *jdata,
                                            data->num_bound, ncpus);
                             return ORTE_ERR_SILENT;
                         } else {
-                            /* if we have the default binding policy, emit a warning
-                             * that we won't be binding-by-default and include a statement
-                             * that setting overload allowed will silence the warning */
-                            orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                                           opal_hwloc_base_print_binding(map->binding), node->name,
-                                           data->num_bound, ncpus);
+                            /* if we have the default binding policy, then just don't bind */
                             OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_NONE);
                             unbind_procs(jdata);
                             return ORTE_SUCCESS;
