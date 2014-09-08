@@ -194,6 +194,10 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
              */
             node->oversubscribed = true;
         }
+        /* if we have mapped everything, then we are done */
+        if (nprocs_mapped == app->num_procs) {
+            break;
+        }
     }
     return ORTE_SUCCESS;
 }
