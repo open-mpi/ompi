@@ -19,6 +19,10 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#else
+#ifdef HAVE_CTYPE_H
+#include <ctype.h>
+#endif
 #endif
 
 /* Compile-time assertion */
