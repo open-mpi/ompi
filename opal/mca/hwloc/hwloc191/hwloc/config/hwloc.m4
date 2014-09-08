@@ -353,6 +353,7 @@ EOF])
     AC_CHECK_HEADERS([unistd.h])
     AC_CHECK_HEADERS([dirent.h])
     AC_CHECK_HEADERS([strings.h])
+    AC_CHECK_HEADERS([ctype.h])
     
     AC_CHECK_FUNCS([strncasecmp], [
       _HWLOC_CHECK_DECL([strncasecmp], [
