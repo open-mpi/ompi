@@ -131,6 +131,7 @@ OPAL_DECLSPEC int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
 OPAL_DECLSPEC int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                                  char ***app_env,
                                                  char ***global_env);
+OPAL_DECLSPEC void mca_base_cmd_line_wrap_args(char **args);
 
 /* mca_base_component_compare.c */
 

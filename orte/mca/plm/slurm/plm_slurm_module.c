@@ -52,6 +52,7 @@
 #include <fcntl.h>
 #endif
 
+#include "opal/mca/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -400,6 +401,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
             free(app_prefix_dir);
         }
     }
+
+    /* protect the args in case someone has a script wrapper around srun */
+    mca_base_cmd_line_wrap_args(argv);
 
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);

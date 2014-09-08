@@ -136,17 +136,25 @@ static int process_arg(const char *param, const char *value,
                        char ***params, char ***values)
 {
     int i;
-    char *new_str;
+    char *p1;
+
+    /* check for quoted value */
+    if ('\"' == value[0] && '\"' == value[strlen(value)-1]) {
+        p1 = strdup(&value[1]);
+        p1[strlen(p1)-1] = '\0';
+    } else {
+        p1 = strdup(value);
+    }
 
     /* Look to see if we've already got an -mca argument for the same
        param.  Check against the list of MCA param's that we've
-       already saved arguments for. */
+       already saved arguments for - if found, REPLACE the old
+       argument with the new value. */
 
     for (i = 0; NULL != *params && NULL != (*params)[i]; ++i) {
         if (0 == strcmp(param, (*params)[i])) {
-            asprintf(&new_str, "%s,%s", (*values)[i], value);
             free((*values)[i]);
-            (*values)[i] = new_str;
+            (*values)[i] = p1;
             
             return OPAL_SUCCESS;
         }
@@ -156,7 +164,8 @@ static int process_arg(const char *param, const char *value,
        this one away */
   
     opal_argv_append_nosize(params, param);
-    opal_argv_append_nosize(values, value);
+    opal_argv_append_nosize(values, p1);
+    free(p1);
 
     return OPAL_SUCCESS;
 }
@@ -174,5 +183,21 @@ static void add_to_env(char **params, char **values, char ***env)
         (void) mca_base_var_env_name (params[i], &name);
         opal_setenv(name, values[i], true, env);
         free(name);
+    }
+}
+
+void mca_base_cmd_line_wrap_args(char **args)
+{
+    int i;
+    char *tstr;
+
+    for (i=0; NULL != args && NULL != args[i]; i++) {
+        if (0 == strcmp(args[i], "-mca") ||
+            0 == strcmp(args[i], "--mca")) {
+            i += 2;
+            asprintf(&tstr, "\"%s\"", args[i]);
+            free(args[i]);
+            args[i] = tstr;
+        }
     }
 }
