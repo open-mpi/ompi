@@ -2,6 +2,8 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -123,6 +125,8 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_int8_inc_f.c \
                     shmem_quiet_f.c \
                     shmem_fence_f.c
+
+AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 endif
 
 if PROJECT_OSHMEM
