@@ -66,6 +66,7 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
@@ -602,21 +603,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
         }
     }
 
-    /* in the rsh environment, we need to protect args in quotes
-     * as they can contain spaces or special characters */
-    for (i=0; NULL != argv[i]; i++) {
-        if (0 != strcmp(argv[i], "-mca")) {
-            continue;
-        }
-        /* protect the value with quotes if not already
-         * quoted */
-        if ('\"' == argv[i+2][0]) {
-            continue;
-        }
-        (void)asprintf(&param, "\"%s\"", argv[i+2]);
-        free(argv[i+2]);
-        argv[i+2] = param;
-    }
+    /* protect the params */
+    mca_base_cmd_line_wrap_args(argv);
 
     value = opal_argv_join(argv, ' ');
     if (sysconf(_SC_ARG_MAX) < (int)strlen(value)) {
@@ -634,10 +622,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
     
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
-                             "%s plm:rsh: final template argv:\n\t%s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == param) ? "NULL" : param));
+        opal_output(0, "%s plm:rsh: final template argv:\n\t%s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (NULL == param) ? "NULL" : param);
         if (NULL != param) free(param);
     }
     
