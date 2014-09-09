@@ -407,6 +407,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
 {
     int rc = OSHMEM_SUCCESS;
     openib_device_t *device = &memheap_device;
+    int i;
 
     assert(ds_buf);
 
@@ -420,12 +421,12 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
     );
 
     if (device) {
-        if (opal_value_array_get_size(&device->ib_mr_array)) {
+        if (0 < (i = opal_value_array_get_size(&device->ib_mr_array))) {
             struct ibv_mr** array;
             struct ibv_mr* ib_mr = NULL;
             array = OPAL_VALUE_ARRAY_GET_BASE(&device->ib_mr_array, struct ibv_mr *);
-            while (opal_value_array_get_size(&device->ib_mr_array) > 0) {
-                ib_mr = array[0];
+            for (i--;i >= 0; i--) {
+                ib_mr = array[i];
                 if(ibv_dereg_mr(ib_mr)) {
                     OPAL_OUTPUT_VERBOSE(
                         (5, oshmem_sshmem_base_framework.framework_output,
@@ -434,7 +435,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
                         );
                     rc = OSHMEM_ERROR;
                 }
-                opal_value_array_remove_item(&device->ib_mr_array, 0);
+                opal_value_array_remove_item(&device->ib_mr_array, i);
             }
 
             if (!rc && device->ib_mr_shared) {

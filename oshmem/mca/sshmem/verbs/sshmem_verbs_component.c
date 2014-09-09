@@ -206,14 +206,15 @@ verbs_runtime_query(mca_base_module_t **module,
 
 out:
     if (device) {
-        if (opal_value_array_get_size(&device->ib_mr_array)) {
+        if (0 < (i = opal_value_array_get_size(&device->ib_mr_array))) {
             struct ibv_mr** array;
             struct ibv_mr* ib_mr = NULL;
             array = OPAL_VALUE_ARRAY_GET_BASE(&device->ib_mr_array, struct ibv_mr *);
-            while (opal_value_array_get_size(&device->ib_mr_array) > 0) {
-                ib_mr = array[0];
+            /* destruct shared_mr first in order to avoid proc fs race */
+            for (i--;i >= 0; i--) {
+                ib_mr = array[i];
                 ibv_dereg_mr(ib_mr);
-                opal_value_array_remove_item(&device->ib_mr_array, 0);
+                opal_value_array_remove_item(&device->ib_mr_array, i);
             }
 
             if (device->ib_mr_shared) {
