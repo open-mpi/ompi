@@ -142,32 +142,50 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     goto exit;
   }
 
-  local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
-  if ( NULL == local_iov_array){
-    ret = OMPI_ERR_OUT_OF_RESOURCE;
-    goto exit;
-  }
+  if ( iov_size > 0 ) {
+      local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
+      if ( NULL == local_iov_array){
+	  ret = OMPI_ERR_OUT_OF_RESOURCE;
+	  goto exit;
+      }
   
 
-  for (j=0; j < iov_size; j++){
-    local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
-      iov[j].iov_base;
-    local_iov_array[j].length = (size_t)iov[j].iov_len;
-    local_iov_array[j].process_id = fh->f_rank;
+      for (j=0; j < iov_size; j++){
+	  local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
+	      iov[j].iov_base;
+	  local_iov_array[j].length = (size_t)iov[j].iov_len;
+	  local_iov_array[j].process_id = fh->f_rank;
     
+      }
   }
-  /* io_array datatype  for using in communication*/
-  types[0] = &ompi_mpi_long.dt;
-  types[1] = &ompi_mpi_long.dt;
-  types[2] = &ompi_mpi_int.dt;
+  else {
+      /* Allocate at least one element to correctly create the derived
+	 data type */
+      local_iov_array = (local_io_array *)malloc (sizeof(local_io_array));
+      if ( NULL == local_iov_array){
+	  ret = OMPI_ERR_OUT_OF_RESOURCE;
+	  goto exit;
+      }
   
+
+      local_iov_array[0].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t) 0;
+      local_iov_array[0].length = (size_t) 0;
+      local_iov_array[0].process_id = fh->f_rank;
+  }
+
   d[0] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0];
   d[1] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0].length;
   d[2] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0].process_id;
   base = d[0];
   for (i=0 ; i<3 ; i++) {
-    d[i] -= base;
+      d[i] -= base;
   }
+
+  /* io_array datatype  for using in communication*/
+  types[0] = &ompi_mpi_long.dt;
+  types[1] = &ompi_mpi_long.dt;
+  types[2] = &ompi_mpi_int.dt;
+  
   ompi_datatype_create_struct (3,
 			       blocklen,
 			       d,
@@ -283,7 +301,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   }
 
   
-  if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+  if ( (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) && 
+       (global_iov_count >  0 )) {
     global_iov_array = (local_io_array *) malloc (global_iov_count *
 						  sizeof(local_io_array));
     if (NULL == global_iov_array){
@@ -315,7 +334,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     local_iov_array = NULL;
   }
   
-  if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+  if ( ( fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) && 
+       ( global_iov_count > 0 )) {
     sorted = (int *)malloc (global_iov_count * sizeof(int));
     if (NULL == sorted) {
       opal_output (1, "OUT OF MEMORY\n");
@@ -968,6 +988,10 @@ int read_local_heap_sort (local_io_array *io_array,
   unsigned char done = 0;
   int* temp_arr = NULL;
   
+  if ( 0 == num_entries ) {
+      return OMPI_SUCCESS;
+  }
+
   temp_arr = (int*)malloc(num_entries*sizeof(int));
   if (NULL == temp_arr) {
     opal_output (1, "OUT OF MEMORY\n");
