@@ -388,14 +388,16 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
          */
         if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             if (opal_hwloc_use_hwthreads_as_cpus) {
-                if (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+                if (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) &&
+                    OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                     orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
                                    orte_rmaps_base.cpus_per_rank, "use-hwthreads-as-cpus",
                                    opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
                                    "bind-to hwthread");
                     return ORTE_ERR_SILENT;
                 }
-            } else if (OPAL_BIND_TO_CORE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+            } else if (OPAL_BIND_TO_CORE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) &&
+                       OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
                                orte_rmaps_base.cpus_per_rank, "cores as cpus",
                                opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
