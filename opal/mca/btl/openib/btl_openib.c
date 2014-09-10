@@ -974,7 +974,10 @@ int mca_btl_openib_add_procs(
 #endif
 
         if(NULL == (ib_proc = mca_btl_openib_proc_create(proc))) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
+            /* if we don't have connection info for this process, it's
+             * okay because some other method might be able to reach it,
+             * so just mark it as unreachable by us */
+            continue;
         }
 
         /* check if the remote proc has any ports that:
