@@ -12,8 +12,6 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,8 +74,12 @@ int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Cou
         return MPI_SUCCESS;
     }
 
-    ompi_datatype_type_size( datatype, &size );
-    status->_ucount = count * size;
-
+    if( ompi_datatype_is_predefined(datatype) ) {
+        ompi_datatype_type_size( datatype, &size );
+        status->_ucount = count * size;
+    } else {
+        ompi_datatype_set_element_count( datatype, count, &size );
+        status->_ucount = size;
+    }
     return MPI_SUCCESS;
 }
