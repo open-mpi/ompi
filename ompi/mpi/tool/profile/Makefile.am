@@ -48,9 +48,11 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	pcategory_get_categories.c \
 	pcategory_get_cvars.c \
 	pcategory_get_info.c \
+	pcategory_get_index.c \
 	pcategory_get_num.c \
 	pcategory_get_pvars.c \
 	pcvar_get_info.c \
+	pcvar_get_index.c \
 	pcvar_get_num.c \
 	pcvar_handle_alloc.c \
 	pcvar_handle_free.c \
@@ -61,6 +63,7 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	pfinalize.c \
 	pinit_thread.c \
 	ppvar_get_info.c \
+	ppvar_get_index.c \
 	ppvar_get_num.c \
 	ppvar_handle_alloc.c \
 	ppvar_handle_free.c \

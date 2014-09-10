@@ -33,9 +33,11 @@
 #define MPI_T_category_get_categories PMPI_T_category_get_categories
 #define MPI_T_category_get_cvars PMPI_T_category_get_cvars
 #define MPI_T_category_get_info PMPI_T_category_get_info
+#define MPI_T_category_get_index PMPI_T_category_get_index
 #define MPI_T_category_get_num PMPI_T_category_get_num
 #define MPI_T_category_get_pvars PMPI_T_category_get_pvars
 #define MPI_T_cvar_get_info PMPI_T_cvar_get_info
+#define MPI_T_cvar_get_index PMPI_T_cvar_get_index
 #define MPI_T_cvar_get_num PMPI_T_cvar_get_num
 #define MPI_T_cvar_handle_alloc PMPI_T_cvar_handle_alloc
 #define MPI_T_cvar_handle_free PMPI_T_cvar_handle_free
@@ -46,6 +48,7 @@
 #define MPI_T_finalize PMPI_T_finalize
 #define MPI_T_init_thread PMPI_T_init_thread
 #define MPI_T_pvar_get_info PMPI_T_pvar_get_info
+#define MPI_T_pvar_get_index PMPI_T_pvar_get_index
 #define MPI_T_pvar_get_num PMPI_T_pvar_get_num
 #define MPI_T_pvar_handle_alloc PMPI_T_pvar_handle_alloc
 #define MPI_T_pvar_handle_free PMPI_T_pvar_handle_free
