@@ -36,7 +36,7 @@ size_t  mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *fh )
     int i;
     int merge = 0;
     int ret;
-    size_t k;
+    size_t k,rret;
     char *merge_buf = NULL;
     size_t merge_length = 0;
     OMPI_MPI_OFFSET_TYPE merge_offset = 0;
@@ -44,6 +44,7 @@ size_t  mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *fh )
     PVFS_Request file_req;
     PVFS_Request mem_req;
     mca_fs_pvfs2 *pvfs2_fs;
+    int total_bytes_written=0;
 
     pvfs2_fs = (mca_fs_pvfs2 *)fh->f_fs_ptr;
 
@@ -110,6 +111,7 @@ size_t  mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *fh )
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
+	    total_bytes_written += (int)resp_io.total_completed;
 	    
 	    merge = 0;
 	    merge_offset = 0;
@@ -146,8 +148,11 @@ size_t  mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *fh )
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
+	    total_bytes_written += (int)resp_io.total_completed;
+
 	}
     }
-
-    return OMPI_SUCCESS;
+    
+    rret = (size_t) total_bytes_written;
+    return rret;
 }
