@@ -78,7 +78,7 @@ static int init(void)
                             ORTE_RML_PERSISTENT,
                             xcast_recv, NULL);
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                            ORTE_RML_TAG_ALLGATHER,
+                            ORTE_RML_TAG_ALLGATHER_DIRECT,
                             ORTE_RML_PERSISTENT,
                             allgather_recv, NULL);
     /* setup recv for barrier release */
@@ -190,7 +190,7 @@ static int allgather(orte_grpcomm_coll_t *coll,
 
     /* send the info to the HNP for tracking */
     rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, relay,
-                                 ORTE_RML_TAG_ALLGATHER,
+                                 ORTE_RML_TAG_ALLGATHER_DIRECT,
                                  orte_rml_send_callback, NULL);
     return rc;
 }
