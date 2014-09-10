@@ -57,6 +57,11 @@ orte_grpcomm_base_module_t orte_grpcomm_rcd_module = {
  */
 static int init(void)
 {
+    /* setup recv for distance data */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_ALLGATHER_RCD,
+                            ORTE_RML_PERSISTENT,
+                            rcd_allgather_recv_dist, NULL);
     return OPAL_SUCCESS;
 }
 
@@ -65,6 +70,8 @@ static int init(void)
  */
 static void finalize(void)
 {
+    /* cancel the recv */
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_RCD);
     return;
 }
 
@@ -164,7 +171,7 @@ static int rcd_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_vpid_t distan
 
 
     if (0 > (rc = orte_rml.send_buffer_nb(&peer, send_buf,
-                                          -ORTE_RML_TAG_ALLGATHER,
+                                          ORTE_RML_TAG_ALLGATHER_RCD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(send_buf);
@@ -175,12 +182,6 @@ static int rcd_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_vpid_t distan
                              "%s grpcomm:coll:recdub receiving from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&peer)));
-
-    /* setup recv for distance data */
-    orte_rml.recv_buffer_nb(&peer,
-                            -ORTE_RML_TAG_ALLGATHER,
-                            ORTE_RML_NON_PERSISTENT,
-                            rcd_allgather_recv_dist, NULL);
 
     return ORTE_SUCCESS;
 }

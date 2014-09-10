@@ -102,55 +102,54 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_COLLECTIVE             30
 #define ORTE_RML_TAG_COLL_RELEASE           31
 #define ORTE_RML_TAG_DAEMON_COLL            32
-#define ORTE_RML_TAG_ALLGATHER              33
+#define ORTE_RML_TAG_ALLGATHER_DIRECT       33
+#define ORTE_RML_TAG_ALLGATHER_BRKS         34
+#define ORTE_RML_TAG_ALLGATHER_RCD          35
 
 /* show help */
-#define ORTE_RML_TAG_SHOW_HELP              34
+#define ORTE_RML_TAG_SHOW_HELP              36
 
 /* debugger release */
-#define ORTE_RML_TAG_DEBUGGER_RELEASE       35
+#define ORTE_RML_TAG_DEBUGGER_RELEASE       37
 
 /* bootstrap */
-#define ORTE_RML_TAG_BOOTSTRAP              36
+#define ORTE_RML_TAG_BOOTSTRAP              38
 
 /* report a missed msg */
-#define ORTE_RML_TAG_MISSED_MSG             37
+#define ORTE_RML_TAG_MISSED_MSG             39
 
 /* tag for receiving ack of abort msg */
-#define ORTE_RML_TAG_ABORT                  38
+#define ORTE_RML_TAG_ABORT                  40
 
 /* tag for receiving heartbeats */
-#define ORTE_RML_TAG_HEARTBEAT              39
+#define ORTE_RML_TAG_HEARTBEAT              41
 
 /* Process Migration Tool Tag */
-#define ORTE_RML_TAG_MIGRATE                40
+#define ORTE_RML_TAG_MIGRATE                42
 
 /* For SStore Framework */
-#define ORTE_RML_TAG_SSTORE                 41
-#define ORTE_RML_TAG_SSTORE_INTERNAL        42
+#define ORTE_RML_TAG_SSTORE                 43
+#define ORTE_RML_TAG_SSTORE_INTERNAL        44
 
-#define ORTE_RML_TAG_SUBSCRIBE              43
+#define ORTE_RML_TAG_SUBSCRIBE              45
 
 
 /* Notify of failed processes */
-#define ORTE_RML_TAG_FAILURE_NOTICE         44
+#define ORTE_RML_TAG_FAILURE_NOTICE         46
 
 /* distributed file system */
-#define ORTE_RML_TAG_DFS_CMD                45
-#define ORTE_RML_TAG_DFS_DATA               46
+#define ORTE_RML_TAG_DFS_CMD                47
+#define ORTE_RML_TAG_DFS_DATA               48
 
 /* sensor data */
-#define ORTE_RML_TAG_SENSOR_DATA            47
+#define ORTE_RML_TAG_SENSOR_DATA            49
 
 /* direct modex support */
-#define ORTE_RML_TAG_DIRECT_MODEX           48
-#define ORTE_RML_TAG_DIRECT_MODEX_RESP      49
+#define ORTE_RML_TAG_DIRECT_MODEX           50
+#define ORTE_RML_TAG_DIRECT_MODEX_RESP      51
 
 /* notifier support */
-#define ORTE_RML_TAG_NOTIFIER_HNP           50
-
-/* global collective ID request */
-#define ORTE_RML_TAG_FULL_COLL_ID           51
+#define ORTE_RML_TAG_NOTIFIER_HNP           52
 
 #define ORTE_RML_TAG_MAX                   100
 
