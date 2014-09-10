@@ -22,6 +22,7 @@
 
 #include "mpi.h"
 #include <unistd.h>
+#include <limits.h>
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
@@ -65,9 +66,10 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	}
 	
 	if (fh->f_num_of_io_entries != i+1) {
-	    if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
-		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
-		(OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset) {                    
+	    if (((((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
+		   (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
+		  (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset)) && 
+		(iov_count < IOV_MAX ) ){                    
                     iov[iov_count].iov_base = 
                         fh->f_io_array[i+1].memory_address;
                     iov[iov_count].iov_len = fh->f_io_array[i+1].length;
