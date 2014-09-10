@@ -45,12 +45,14 @@ DISTCHECK_MAKE_FLAGS=-j4
 # Default to requiring *exact* versions if we're making distribution
 # tarballs; but higher-than-expected versions are ok for
 # non-distribution tarballs.
+dirty_ok=0
 dist_target=distcheck
 distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
 if test "`basename $0`" = "make_tarball"; then
     dist_target=dist
     distcheck_flags=
     highok=1
+    dirty_ok=1
 else
     highok=0
 fi
@@ -71,8 +73,19 @@ while test "$1" != ""; do
         --autogen-args) autogen_args=$2; shift ;;
         -distdir) distdir=$2; shift ;;
         --distdir) distdir=$2; shift ;;
+        --dirtyok) dirty_ok=1; shift ;;
         *)
-            echo Unrecognized argument: $1
+            cat <<EOF
+Unrecognized argument: $1
+
+Valid arguments:
+  --greekonly     Only build the greek tarball (vs. both tarballs)
+  --highok        Ok if Autotools versions are too high
+  --no-ompi       Don't build the OMPI or OSHMEM layers
+  --autogen-args  Arguments to pass to autogen
+  --distdir       Move the tarball(s) to this directory when done
+  --dirtyok       Ok if the source tree is dirty
+EOF
             exit 1
             ;;
     esac
@@ -330,7 +343,7 @@ if test -d .svn; then
         exit 1
     fi
     echo "*** Getting svn r number..."
-    svn_r="r`svnversion .`"
+    repo_rev="r`svnversion .`"
 elif test -d .hg; then
     echo "*** Removing old VERSION file..."
     rm -f VERSION
@@ -343,22 +356,48 @@ elif test -d .hg; then
         exit 1
     fi
     echo "*** Getting hg version number..."
-    svn_r=hg`hg tip | grep ^changeset: | head -n 1 | cut -d: -f3`
+    repo_rev=hg`hg tip | grep ^changeset: | head -n 1 | cut -d: -f3`
 elif test -d .git; then
     echo "*** Removing old VERSION file..."
     rm -f VERSION
     echo "*** Restoring pristine VERSION file..."
     git checkout VERSION
     echo "*** Getting git version number..."
-    svn_r=git`git log -1 --oneline | head -1 | cut -d' ' -f1`
+    repo_rev=git`git log -1 --oneline | head -1 | cut -d' ' -f1`
 fi
-echo "    Repo rev number: $svn_r"
-if test "$svn_r" = ""; then
+echo "    Repo rev number: $repo_rev"
+
+# Sanity checks
+if test "$repo_rev" = ""; then
     echo "Somehow the repo rev number is empty.  Abort!"
     exit 1
-elif test "`echo $svn_r | grep ' '`" != ""; then
+elif test "`echo $repo_rev | grep ' '`" != ""; then
     echo "Somehow the repo rev number has a space in it -- bad!"
     exit 1
+fi
+
+# Ensure we have a clean repo
+if test $dirty_ok -eq 0; then
+    echo "*** Checking if source tree is dirty..."
+    dirty=0
+    if test -d .svn; then
+        if test "`echo $repo_rev | grep M`" != ""; then
+            dirty=1
+        fi
+    elif test -d .hg; then
+        if test "`hg status | egrep -v '^\$ '`" != ""; then
+            dirty=1
+        fi
+    elif test -d .git; then
+        if test "`git status | grep 'Changes not staged for commit'`" = ""; then
+            dirty=1
+        fi
+    fi
+
+    if test $dirty -eq 1; then
+        echo "    Source tree is dirty.  Cannot continue."
+        exit 1
+    fi
 fi
 
 #
@@ -371,7 +410,7 @@ echo "    Release date: $release_date"
 for file in $version_files; do
     echo " - $file"
     sed -e 's/^want_repo_rev=.*/want_repo_rev=0/' \
-        -e 's/^repo_rev=.*/'repo_rev=$svn_r/ \
+        -e 's/^repo_rev=.*/'repo_rev=$repo_rev/ \
         -e "s/^date=.*/date=\"$release_date\"/" \
         $file > $file.new
     cp -f $file.new $file
