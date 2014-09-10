@@ -25,7 +25,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
+ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 {
     /*int *fp = NULL;*/
     int i, block=1;
@@ -33,7 +33,6 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
     ssize_t bytes_read=0, ret_code=0;
-    size_t ret=0;
     
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
@@ -101,6 +100,6 @@ size_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
         iov = NULL;
     }
     
-    ret = (size_t) bytes_read;
-    return ret;
+
+    return bytes_read;
 }

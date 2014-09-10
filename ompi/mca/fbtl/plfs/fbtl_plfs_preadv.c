@@ -25,12 +25,13 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
+ssize_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
 {
 
     Plfs_fd *pfd = NULL;
     plfs_error_t plfs_ret;
     pfd = fh->f_fs_ptr;
+    ssize_t total_bytes_read=0;
 
     int i, block=1;
     struct iovec *iov = NULL;
@@ -102,7 +103,7 @@ size_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
 	
 	if (bytes_read < 0)
 	    return OMPI_ERROR;
-	
+	total_bytes_read += bytes_read;
 	// Copy the data from BUFFER into the memory specified by IOV
 	bytes = bytes_read;
 	for (int i = 0; i < iov_count; ++i) {
@@ -115,11 +116,16 @@ size_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
 	    }
 	}
 	iov_count = 0;
+	if ( NULL != buffer ) {
+	    free (buffer);
+	    buffer=NULL;
+	}
     }
+
     if (NULL != iov) {
 	free (iov);
 	iov = NULL;
     }
 
-    return OMPI_SUCCESS;
+    return total_bytes_read;
 }
