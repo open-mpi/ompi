@@ -321,7 +321,8 @@ int opal_dss_unpack_int16(opal_buffer_t *buffer, void *dest,
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
         memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
-        desttmp[i] = ntohs(tmp);
+        tmp = ntohs(tmp);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
         buffer->unpack_ptr += sizeof(tmp);
     }
 
@@ -343,7 +344,8 @@ int opal_dss_unpack_int32(opal_buffer_t *buffer, void *dest,
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
         memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
-        desttmp[i] = ntohl(tmp);
+        tmp = ntohl(tmp);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
         buffer->unpack_ptr += sizeof(tmp);
     }
 
@@ -365,7 +367,8 @@ int opal_dss_unpack_int64(opal_buffer_t *buffer, void *dest,
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
         memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
-        desttmp[i] = ntoh64(tmp);
+        tmp = ntoh64(tmp);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
         buffer->unpack_ptr += sizeof(tmp);
     }
 
@@ -403,7 +406,7 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type)
 {
     int32_t i, n;
-    float *desttmp = (float*) dest;
+    float *desttmp = (float*) dest, tmp;
     int ret;
     char *convert;
 
@@ -419,7 +422,8 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
             return ret;
         }
-        desttmp[i] = strtof(convert, NULL);
+        tmp = strtof(convert, NULL);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
         free(convert);
     }
     return OPAL_SUCCESS;
@@ -429,7 +433,7 @@ int opal_dss_unpack_double(opal_buffer_t *buffer, void *dest,
                            int32_t *num_vals, opal_data_type_t type)
 {
     int32_t i, n;
-    double *desttmp = (double*) dest;
+    double *desttmp = (double*) dest, tmp;
     int ret;
     char *convert;
 
@@ -445,7 +449,8 @@ int opal_dss_unpack_double(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
             return ret;
         }
-        desttmp[i] = strtod(convert, NULL);
+        tmp = strtod(convert, NULL);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
         free(convert);
     }
     return OPAL_SUCCESS;
@@ -456,7 +461,7 @@ int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
 {
     int32_t i, n;
     int64_t tmp[2];
-    struct timeval *desttmp = (struct timeval *) dest;
+    struct timeval *desttmp = (struct timeval *) dest, tt;
     int ret;
 
    OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack_timeval * %d\n", (int)*num_vals ) );
@@ -471,8 +476,9 @@ int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_int64(buffer, tmp, &n, OPAL_INT64))) {
             return ret;
         }
-        desttmp[i].tv_sec = tmp[0];
-        desttmp[i].tv_usec = tmp[1];
+        tt.tv_sec = tmp[0];
+        tt.tv_usec = tmp[1];
+        memcpy(&desttmp[i], &tt, sizeof(tt));
     }
     return OPAL_SUCCESS;
 }
@@ -481,7 +487,7 @@ int opal_dss_unpack_time(opal_buffer_t *buffer, void *dest,
                          int32_t *num_vals, opal_data_type_t type)
 {
     int32_t i, n;
-    time_t *desttmp = (time_t *) dest;
+    time_t *desttmp = (time_t *) dest, tmp;
     int ret;
     uint64_t ui64;
 
@@ -501,7 +507,8 @@ int opal_dss_unpack_time(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_int64(buffer, &ui64, &n, OPAL_UINT64))) {
             return ret;
         }
-        desttmp[i] = (time_t)ui64;
+        tmp = (time_t)ui64;
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
     }
     return OPAL_SUCCESS;
 }
