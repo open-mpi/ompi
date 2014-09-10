@@ -27,14 +27,13 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
+ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 {
     /*int *fp = NULL;*/
     int i, block = 1;
     struct iovec *iov = NULL;
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
-    size_t ret=0;
     ssize_t ret_code=0, bytes_written=0;
 
     if (NULL == fh->f_io_array) {
@@ -111,6 +110,5 @@ exit:
         iov = NULL;
     }
 
-    ret = (size_t) bytes_written;
-    return ret;
+    return bytes_written;
 }

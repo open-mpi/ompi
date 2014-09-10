@@ -25,8 +25,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_plfs_ipwritev (mca_io_ompio_file_t *fh,
-				ompi_request_t **request)
+ssize_t  mca_fbtl_plfs_ipwritev (mca_io_ompio_file_t *fh,
+				 ompi_request_t **request)
 {
     printf ("PLFS IPWRITEV\n");
     return OMPI_ERROR;

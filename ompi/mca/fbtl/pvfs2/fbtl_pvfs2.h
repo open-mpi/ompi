@@ -57,11 +57,11 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_compo
  * ******************************************************************
  */ 
 
-size_t mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *file);
-size_t mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *file);
-size_t mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
                                ompi_request_t **request);
-size_t mca_fbtl_pvfs2_ipwritev (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_pvfs2_ipwritev (mca_io_ompio_file_t *file,
                                ompi_request_t **request);
 
 /*

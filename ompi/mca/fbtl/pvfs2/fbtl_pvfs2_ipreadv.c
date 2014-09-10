@@ -25,7 +25,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
+ssize_t  mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
 				ompi_request_t **request)
 {
     printf ("PVFS2 IPREADV\n");

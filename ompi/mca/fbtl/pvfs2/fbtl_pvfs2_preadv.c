@@ -30,11 +30,11 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
+ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 {
     int i;
     int ret;
-    size_t k,rret=0;
+    size_t k;
     int merge = 0;
     char *merge_buf = NULL;
     size_t merge_length = 0;
@@ -43,7 +43,7 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
     PVFS_Request file_req;
     PVFS_Request mem_req;
     mca_fs_pvfs2 *pvfs2_fs;
-    int total_bytes_read=0;
+    ssize_t total_bytes_read=0;
 
     pvfs2_fs = (mca_fs_pvfs2 *)fh->f_fs_ptr;
 
@@ -94,7 +94,7 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
-	    total_bytes_read += (int)resp_io.total_completed;
+	    total_bytes_read += (ssize_t)resp_io.total_completed;
 
 	    k = 0;
 	    while (merge >= 0) {
@@ -139,10 +139,9 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
-	    total_bytes_read += (int)resp_io.total_completed;
+	    total_bytes_read += (ssize_t)resp_io.total_completed;
 	}
     }
 
-    rret = (size_t) total_bytes_read;
-    return rret;
+    return total_bytes_read;
 }
