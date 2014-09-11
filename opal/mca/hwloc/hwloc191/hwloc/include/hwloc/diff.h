@@ -91,7 +91,7 @@ union hwloc_topology_diff_obj_attr_u {
     hwloc_uint64_t index; /* not used for SIZE */
     hwloc_uint64_t oldvalue;
     hwloc_uint64_t newvalue;
-  } ui64;
+  } uint64;
 
   /** \brief String attribute modification with an optional name */
   struct hwloc_topology_diff_obj_attr_string_s {
