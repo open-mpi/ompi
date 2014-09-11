@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -661,15 +661,20 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
 
         if (MCA_BASE_VAR_TYPE_INT == var->mbv_type ||
             MCA_BASE_VAR_TYPE_UNSIGNED_INT == var->mbv_type) {
-            dst->intval = (int) int_value;
+            int *castme = (int*) var->mbv_storage;
+            *castme = int_value;
         } else if (MCA_BASE_VAR_TYPE_UNSIGNED_LONG == var->mbv_type) {
-            dst->ulval = (unsigned long) int_value;
+            unsigned long *castme = (unsigned long*) var->mbv_storage;
+            *castme = (unsigned long) int_value;
         } else if (MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG == var->mbv_type) {
-            dst->ullval = (unsigned long long) int_value;
+            unsigned long long *castme = (unsigned long long*) var->mbv_storage;
+            *castme = (unsigned long long) int_value;
         } else if (MCA_BASE_VAR_TYPE_SIZE_T == var->mbv_type) {
-            dst->sizetval = (size_t) int_value;
+            size_t *castme = (size_t*) var->mbv_storage;
+            *castme = (size_t) int_value;
         } else if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
-            dst->boolval = !!int_value;
+            bool *castme = (bool*) var->mbv_storage;
+            *castme = !!int_value;
         }
 
         return ret;
@@ -1204,6 +1209,43 @@ static int register_variable (const char *project_name, const char *framework_na
 
     /* Developer error. Storage can not be NULL and type must exist */
     assert (((flags & MCA_BASE_VAR_FLAG_SYNONYM) || NULL != storage) && type >= 0 && type < MCA_BASE_VAR_TYPE_MAX);
+
+#if OPAL_ENABLE_DEBUG
+    /* Developer error: check for alignments */
+    uintptr_t align = 0;
+    switch (type) {
+    case MCA_BASE_VAR_TYPE_INT:
+        align = OPAL_ALIGNMENT_INT;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
+        align = OPAL_ALIGNMENT_INT;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
+        align = OPAL_ALIGNMENT_LONG;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
+        align = OPAL_ALIGNMENT_LONG_LONG;
+        break;
+    case MCA_BASE_VAR_TYPE_SIZE_T:
+        align = OPAL_ALIGNMENT_SIZE_T;
+        break;
+    case MCA_BASE_VAR_TYPE_BOOL:
+        align = OPAL_ALIGNMENT_BOOL;
+        break;
+    case MCA_BASE_VAR_TYPE_DOUBLE:
+        align = OPAL_ALIGNMENT_DOUBLE;
+        break;
+    case MCA_BASE_VAR_TYPE_VERSION_STRING:
+    case MCA_BASE_VAR_TYPE_STRING:
+    default:
+        align = 0;
+        break;
+    }
+
+    if (0 != align) {
+        assert(((uintptr_t) storage) % align == 0);
+    }
+#endif
 
     /* There are data holes in the var struct */
     OPAL_DEBUG_ZERO(var);
