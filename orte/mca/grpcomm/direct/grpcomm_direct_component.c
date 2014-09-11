@@ -57,7 +57,7 @@ static int direct_register(void)
      * direct for use by apps without affecting daemons - set
      * it to be first for now until the others are fixed
      */
-    my_priority = 10;
+    my_priority = 1000;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm direct component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
