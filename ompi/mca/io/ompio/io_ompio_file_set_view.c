@@ -212,7 +212,7 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     fh->f_comm->c_coll.coll_allreduce (avg,
                                        global_avg,
                                        3,
-                                       MPI_LONG,
+                                       OMPI_OFFSET_DATATYPE,
                                        MPI_SUM,
                                        fh->f_comm,
                                        fh->f_comm->c_coll.coll_allreduce_module);
@@ -287,10 +287,10 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
     //Gather start offsets across processes in a group on aggregator
     fh->f_comm->c_coll.coll_gather (start_offset_len,
                                     3,
-                                    MPI_LONG,
+                                    OMPI_OFFSET_DATATYPE, 
                                     start_offsets_lens,
                                     3,
-                                    MPI_LONG,
+                                    OMPI_OFFSET_DATATYPE,
                                     OMPIO_ROOT,
                                     fh->f_comm,
                                     fh->f_comm->c_coll.coll_gather_module);
