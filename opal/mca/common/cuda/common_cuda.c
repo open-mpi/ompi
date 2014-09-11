@@ -184,6 +184,7 @@ static int cuda_event_htod_most = 0;
 opal_lt_dlhandle libcuda_handle = NULL;
 
 #define CUDA_COMMON_TIMING 0
+#define OPAL_CHECK_MANAGED_MEMORY 0
 #if OPAL_ENABLE_DEBUG
 /* Some timing support structures.  Enable this to help analyze
  * internal performance issues. */
@@ -1711,6 +1712,35 @@ static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
 
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
+#if OPAL_CHECK_MANAGED_MEMORY
+/**
+ * Function to determine if a GPU buffer is a managed buffer.
+ */
+static int mca_common_cuda_is_managed_buffer(const void *pUserBuf)
+{
+    int res;
+    CUmemorytype isManaged;
+    CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
+
+    res = cuFunc.cuPointerGetAttribute(&isManaged,
+                                       CU_POINTER_ATTRIBUTE_IS_MANAGED, dbuf);
+
+    if (res != CUDA_SUCCESS) {
+        /* If we cannot determine if is managed,
+         * just assume it is not. */
+        return 0;
+    } else if (1 == isManaged) {
+        /* Yes, managed memory */
+        opal_output(-1, "CUDA: cuPointerGetAttribute: "
+                    "res=%d, ptr=%p, isManaged=%d", res, pUserBuf, isManaged);
+        return 1;
+    } else {
+        /* Nope, not managed */
+        return 0;
+    }
+}
+#endif /* OPAL_CHECK_MANANGED_MEMORY */
+
 /* Routines that get plugged into the opal datatype code */
 static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
 {
@@ -1767,6 +1797,15 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
             return OPAL_ERROR;
         }
     }
+
+#if OPAL_CHECK_MANAGED_MEMORY
+    /* Currently cannot support managed memory */
+    if (1 == mca_common_cuda_is_managed_buffer(pUserBuf)) {
+        opal_output(0, "CUDA: ptr=%p: CUDA-aware Open MPI detected managed memory but there "
+                    "is no support for it.  Result will be unpredictable.", pUserBuf);
+        return OPAL_ERROR;
+    }
+#endif /* OPAL_CHECK_MANAGED_MEMORY */
 
     /* First access on a device pointer finalizes CUDA support initialization.
      * If initialization fails, disable support. */
