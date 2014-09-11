@@ -377,7 +377,7 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
 
     data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
                                               1,
-                                              MPI_LONG_LONG,
+                                              OMPI_OFFSET_DATATYPE,
                                               OMPIO_ROOT,
                                               data->ompio_fh.f_comm,
                                               data->ompio_fh.f_comm->c_coll.coll_bcast_module);
@@ -468,7 +468,7 @@ mca_io_ompio_file_set_size (ompi_file_t *fh,
 
     data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
                                               1,
-                                              MPI_LONG_LONG,
+                                              OMPI_OFFSET_DATATYPE,
                                               OMPIO_ROOT,
                                               data->ompio_fh.f_comm,
                                               data->ompio_fh.f_comm->c_coll.coll_bcast_module);
