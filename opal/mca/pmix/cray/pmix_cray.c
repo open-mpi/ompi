@@ -257,6 +257,7 @@ static int cray_fini(void) {
     }
 
     if (NULL != pmix_lranks) {
+        pmix_lranks = NULL;
         free(pmix_lranks);
     }
 
