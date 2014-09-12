@@ -543,6 +543,10 @@ int mca_io_ompio_file_write_shared (ompi_file_t *fp,
 
     /*get the shared fp module associated with this file*/
     shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
     ret = shared_fp_base_module->sharedfp_write(fh,buf,count,datatype,status);
 
     return ret;
@@ -564,6 +568,10 @@ int mca_io_ompio_file_iwrite_shared (ompi_file_t *fp,
 
     /*get the shared fp module associated with this file*/
     shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
     ret = shared_fp_base_module->sharedfp_iwrite(fh,buf,count,datatype,request);
 
     return ret;
@@ -585,6 +593,10 @@ int mca_io_ompio_file_write_ordered (ompi_file_t *fp,
 
     /*get the shared fp module associated with this file*/
     shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0,"No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
     ret = shared_fp_base_module->sharedfp_write_ordered(fh,buf,count,datatype,status);
 
     return ret;
@@ -605,6 +617,10 @@ int mca_io_ompio_file_write_ordered_begin (ompi_file_t *fp,
 
     /*get the shared fp module associated with this file*/
     shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+	return OMPI_ERROR;
+    }
     ret = shared_fp_base_module->sharedfp_write_ordered_begin(fh,buf,count,datatype);
 
     return ret;
@@ -624,6 +640,10 @@ int mca_io_ompio_file_write_ordered_end (ompi_file_t *fp,
 
     /*get the shared fp module associated with this file*/
     shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+	return OMPI_ERROR;
+    }
     ret = shared_fp_base_module->sharedfp_write_ordered_end(fh,buf,status);
 
     return ret;
