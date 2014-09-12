@@ -28,7 +28,6 @@ AC_DEFUN([OPAL_SEARCH_LIBS_CORE],[
     OPAL_VAR_SCOPE_PUSH([LIBS_save add uppername])
     LIBS_save=$LIBS
 
-    AC_MSG_CHECKING([for $1 in lib $2])
     AC_SEARCH_LIBS([$1], [$2],
         [ # Found it!  See if anything was added to LIBS
          add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
@@ -37,10 +36,8 @@ AC_DEFUN([OPAL_SEARCH_LIBS_CORE],[
          uppername=m4_toupper($1)
          AC_DEFINE_UNQUOTED([OPAL_HAVE_$uppername], [1],
              [whether $1 is found and available])
-         AC_MSG_RESULT([found...and set OPAL_HAVE_$uppername])
          $3],
-        [AC_MSG_RESULT([not found])
-         $4], [$5])
+        [$4], [$5])
 
     OPAL_VAR_SCOPE_POP
 ])dnl
@@ -57,7 +54,7 @@ AC_DEFUN([OPAL_SEARCH_LIBS_COMPONENT],[
     m4_ifndef([mca_component_configure_active],
         [m4_fatal([*** OPAL_SEARCH_LIBS_COMPONENT can only be called from a component configure.m4])])
 
-    OPAL_VAR_SCOPE_PUSH([LIBS_save add])
+    OPAL_VAR_SCOPE_PUSH([LIBS_save add uppername])
     LIBS_save=$LIBS
 
     AC_SEARCH_LIBS([$2], [$3],
@@ -65,6 +62,9 @@ AC_DEFUN([OPAL_SEARCH_LIBS_COMPONENT],[
          add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
          AS_IF([test -n "$add"],
              [OPAL_FLAGS_APPEND_UNIQ($1_LIBS, [$add])])
+         uppername=m4_toupper($1)
+         AC_DEFINE_UNQUOTED([OPAL_HAVE_$uppername], [1],
+             [whether $1 is found and available])
          $4],
         [$5], [$6])
 
