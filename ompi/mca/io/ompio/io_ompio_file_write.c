@@ -83,7 +83,8 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
     struct iovec *decoded_iov = NULL;
     size_t bytes_per_cycle=0;
     size_t total_bytes_written = 0;
-    size_t max_data=0, ret_code=0, real_bytes_written=0; 
+    size_t max_data=0, real_bytes_written=0; 
+    ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file view iovec */
 
@@ -125,7 +126,7 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
         if (fh->f_num_of_io_entries) {
             ret_code =fh->f_fbtl->fbtl_pwritev (fh);
 	    if ( 0<= ret_code ) {
-		real_bytes_written+=ret_code;
+		real_bytes_written+= (size_t)ret_code;
 	    }
         }
 
