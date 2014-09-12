@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/constants.h"
 
@@ -82,50 +84,54 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                    char ***context_env, char ***global_env)
 {
-  int i, num_insts;
-  char **params;
-  char **values;
+    int i, num_insts, rc;
+    char **params;
+    char **values;
 
-  /* If no relevant parameters were given, just return */
+    /* If no relevant parameters were given, just return */
 
-  if (!opal_cmd_line_is_taken(cmd, "mca") &&
-      !opal_cmd_line_is_taken(cmd, "gmca")) {
-      return OPAL_SUCCESS;
-  }
+    if (!opal_cmd_line_is_taken(cmd, "mca") &&
+        !opal_cmd_line_is_taken(cmd, "gmca")) {
+        return OPAL_SUCCESS;
+    }
 
-  /* Handle app context-specific parameters */
+    /* Handle app context-specific parameters */
 
-  num_insts = opal_cmd_line_get_ninsts(cmd, "mca");
-  params = values = NULL;
-  for (i = 0; i < num_insts; ++i) {
-      process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
-                  opal_cmd_line_get_param(cmd, "mca", i, 1),
-                  &params, &values);
-  }
-  if (NULL != params) {
-      add_to_env(params, values, context_env);
-      opal_argv_free(params);
-      opal_argv_free(values);
-  }
+    num_insts = opal_cmd_line_get_ninsts(cmd, "mca");
+    params = values = NULL;
+    for (i = 0; i < num_insts; ++i) {
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
+                                              opal_cmd_line_get_param(cmd, "mca", i, 1),
+                                              &params, &values))) {
+            return rc;
+        }
+    }
+    if (NULL != params) {
+        add_to_env(params, values, context_env);
+        opal_argv_free(params);
+        opal_argv_free(values);
+    }
 
-  /* Handle global parameters */
+    /* Handle global parameters */
 
-  num_insts = opal_cmd_line_get_ninsts(cmd, "gmca");
-  params = values = NULL;
-  for (i = 0; i < num_insts; ++i) {
-      process_arg(opal_cmd_line_get_param(cmd, "gmca", i, 0), 
-                  opal_cmd_line_get_param(cmd, "gmca", i, 1),
-                  &params, &values);
-  }
-  if (NULL != params) {
-      add_to_env(params, values, global_env);
-      opal_argv_free(params);
-      opal_argv_free(values);
-  }
+    num_insts = opal_cmd_line_get_ninsts(cmd, "gmca");
+    params = values = NULL;
+    for (i = 0; i < num_insts; ++i) {
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "gmca", i, 0), 
+                                              opal_cmd_line_get_param(cmd, "gmca", i, 1),
+                                              &params, &values))) {
+            return rc;
+        }
+    }
+    if (NULL != params) {
+        add_to_env(params, values, global_env);
+        opal_argv_free(params);
+        opal_argv_free(values);
+    }
 
-  /* All done */
+    /* All done */
 
-  return OPAL_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -148,15 +154,23 @@ static int process_arg(const char *param, const char *value,
 
     /* Look to see if we've already got an -mca argument for the same
        param.  Check against the list of MCA param's that we've
-       already saved arguments for - if found, REPLACE the old
-       argument with the new value. */
+       already saved arguments for - if found, return an error. */
 
     for (i = 0; NULL != *params && NULL != (*params)[i]; ++i) {
         if (0 == strcmp(param, (*params)[i])) {
-            free((*values)[i]);
-            (*values)[i] = p1;
-            
-            return OPAL_SUCCESS;
+            /* cannot use show_help here as it may not get out prior
+             * to the process exiting */
+            fprintf(stderr,
+                    "---------------------------------------------------------------------------\n"
+                    "The following MCA parameter has been listed multiple times on the"
+                    "cmd line:\n\n"
+                    "  MCA param:   %s\n\n"
+                    "MCA parameters can only be listed once on a cmd line to ensure there\n"
+                    "is no ambiguity as to its value. Please correct the situation and\n"
+                    "try again.\n"
+                    "---------------------------------------------------------------------------\n",
+                    param);
+            return OPAL_ERROR;
         }
     }
 
