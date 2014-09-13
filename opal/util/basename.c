@@ -12,6 +12,7 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,7 +101,7 @@ char *opal_basename(const char *filename)
 
 char* opal_dirname(const char* filename)
 {
-#if defined(HAVE_DIRNAME)
+#if defined(HAVE_DIRNAME) || OPAL_HAVE_DIRNAME
     char* safe_tmp = strdup(filename), *result;
     result = strdup(dirname(safe_tmp));
     free(safe_tmp);
@@ -131,5 +132,5 @@ char* opal_dirname(const char* filename)
         }
     }
     return strdup(".");
-#endif  /* defined(HAVE_DIRNAME) */
+#endif  /* defined(HAVE_DIRNAME) || OPAL_HAVE_DIRNAME */
 }

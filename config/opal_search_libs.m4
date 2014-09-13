@@ -1,6 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -32,8 +33,13 @@ AC_DEFUN([OPAL_SEARCH_LIBS_CORE],[
          add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
          AS_IF([test -n "$add"],
              [OPAL_WRAPPER_FLAGS_ADD([LIBS], [$add])])
+         opal_have_$1=1
          $3],
-        [$4], [$5])
+        [opal_have_$1=0
+         $4], [$5])
+
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_]m4_toupper($1), [$opal_have_$1],
+         [whether $1 is found and available])
 
     OPAL_VAR_SCOPE_POP
 ])dnl
@@ -58,8 +64,12 @@ AC_DEFUN([OPAL_SEARCH_LIBS_COMPONENT],[
          add=`printf '%s\n' "$LIBS" | sed -e "s/$LIBS_save$//"`
          AS_IF([test -n "$add"],
              [OPAL_FLAGS_APPEND_UNIQ($1_LIBS, [$add])])
+         $1_have_$2=1
          $4],
-        [$5], [$6])
+        [$1_have_$2=0
+         $5], [$6])
 
+        AC_DEFINE_UNQUOTED([OPAL_HAVE_]m4_toupper($1), [$$1_have_$2],
+            [whether $1 is found and available])
     OPAL_VAR_SCOPE_POP
 ])dnl
