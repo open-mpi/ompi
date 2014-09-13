@@ -208,6 +208,12 @@ void mca_base_cmd_line_wrap_args(char **args)
     for (i=0; NULL != args && NULL != args[i]; i++) {
         if (0 == strcmp(args[i], "-mca") ||
             0 == strcmp(args[i], "--mca")) {
+            if (NULL == args[i+1] || NULL == args[i+2]) {
+                /* this should be impossible as the error would
+                 * have been detected well before here, but just
+                 * be safe */
+                return;
+            }
             i += 2;
             asprintf(&tstr, "\"%s\"", args[i]);
             free(args[i]);
