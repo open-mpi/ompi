@@ -108,8 +108,10 @@ char* opal_dirname(const char* filename)
     return result;
 #else
     const char* p = opal_find_last_path_separator(filename, strlen(filename));
+    /* NOTE: p will be NULL if no path separator was in the filename - i.e.,
+     * if filename is just a local file */
 
-    for( ; p != filename; p-- ) {
+    for( ; NULL != p && p != filename; p-- ) {
         if( (*p == '\\') || (*p == '/') ) {
             /* If there are several delimiters remove them all */
             for( --p; p != filename; p-- ) {
