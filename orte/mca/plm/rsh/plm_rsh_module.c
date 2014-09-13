@@ -622,7 +622,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
     
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
-        opal_output(0, "%s plm:rsh: final template argv:\n\t%s",
+        opal_output(orte_plm_base_framework.framework_output,
+                    "%s plm:rsh: final template argv:\n\t%s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     (NULL == param) ? "NULL" : param);
         if (NULL != param) free(param);
