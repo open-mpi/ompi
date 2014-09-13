@@ -101,7 +101,7 @@ char *opal_basename(const char *filename)
 
 char* opal_dirname(const char* filename)
 {
-#if defined(HAVE_DIRNAME) || defined(OPAL_HAVE_DIRNAME)
+#if defined(HAVE_DIRNAME) || OPAL_HAVE_DIRNAME
     char* safe_tmp = strdup(filename), *result;
     result = strdup(dirname(safe_tmp));
     free(safe_tmp);
@@ -134,5 +134,5 @@ char* opal_dirname(const char* filename)
         }
     }
     return strdup(".");
-#endif  /* defined(HAVE_DIRNAME) */
+#endif  /* defined(HAVE_DIRNAME) || OPAL_HAVE_DIRNAME */
 }
