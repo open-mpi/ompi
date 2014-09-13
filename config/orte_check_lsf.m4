@@ -65,16 +65,49 @@ AC_DEFUN([ORTE_CHECK_LSF],[
     orte_check_lsf_$1_save_LDFLAGS="$LDFLAGS"
     orte_check_lsf_$1_save_LIBS="$LIBS"
 
+    # liblsf requires yp_all, yp_get_default_domain, and ypprot_err
+    # on Linux, Solaris, NEC, and Sony NEWSs these are found in libnsl
+    # on AIX it should be in libbsd
+    # on HP-UX it should be in libBSD
+    # on IRIX < 6 it should be in libsun (IRIX 6 and later it is in libc)
+    OPAL_SEARCH_LIBS_COMPONENT([yp_all_nsl], [yp_all], [nsl bsd BSD sun],
+                   [yp_all_nsl_happy="yes"],
+                   [yp_all_nsl_happy="no"])
+
+    AS_IF([test "$yp_all_nsl_happy" = "no"],
+          [orte_check_lsf_happy="no"],
+          [orte_check_lsf_happy="yes"])
+
+    # liblsb requires liblsf - using ls_info as a test for liblsf presence
+    OMPI_CHECK_PACKAGE([ls_info_lsf], 
+                       [lsf/lsf.h], 
+		       [lsf], 
+		       [ls_info], 
+		       [$yp_all_nsl_LIBS], 
+		       [$orte_check_lsf_dir],
+		       [$orte_check_lsf_libdir],
+		       [ls_info_lsf_happy="yes"],
+		       [ls_info_lsf_happy="no"])
+
+    AS_IF([test "$ls_info_lsf_happy" = "no"],
+          [orte_check_lsf_happy="no"],
+          [orte_check_lsf_happy="yes"])
+
+    # test function of liblsb LSF package
     AS_IF([test "$orte_check_lsf_happy" = "yes"], 
           [AC_MSG_CHECKING([for LSF dir])
            AC_MSG_RESULT([$orte_check_lsf_dir_msg])
            AC_MSG_CHECKING([for LSF library dir])
            AC_MSG_RESULT([$orte_check_lsf_libdir_msg])
+	   AC_MSG_CHECKING([for liblsf function])
+	   AC_MSG_RESULT([$ls_info_lsf_happy])
+	   AC_MSG_CHECKING([for liblsf yp requirements])
+	   AC_MSG_RESULT([$yp_all_nsl_happy])
            OMPI_CHECK_PACKAGE([$1],
                               [lsf/lsbatch.h],
                               [bat],
                               [lsb_launch],
-                              [-llsf],
+                              [$ls_info_lsf_LIBS $yp_all_nsl_LIBS],
                               [$orte_check_lsf_dir],
                               [$orte_check_lsf_libdir],
                               [orte_check_lsf_happy="yes"],
