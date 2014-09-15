@@ -88,6 +88,8 @@ extern char* ompi_coll_tuned_dynamic_rules_filename;
 extern int   ompi_coll_tuned_init_tree_fanout;
 extern int   ompi_coll_tuned_init_chain_fanout;
 extern int   ompi_coll_tuned_init_max_requests;
+extern int   ompi_coll_tuned_alltoall_small_msg;
+extern int   ompi_coll_tuned_alltoall_intermediate_msg;
 
 /* forced algorithm choices */
 /* this structure is for storing the indexes to the forced algorithm mca params... */

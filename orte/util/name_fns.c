@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -182,8 +184,8 @@ char* orte_util_print_jobids(const orte_jobid_t job)
     } else if (ORTE_JOBID_WILDCARD == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[WILDCARD]");
     } else {
-        tmp1 = ((unsigned long)job & 0xffff0000) >> 16;
-        tmp2 = (unsigned long)job & 0x0000ffff;
+        tmp1 = ORTE_JOB_FAMILY((unsigned long)job);
+        tmp2 = ORTE_LOCAL_JOBID((unsigned long)job);
         snprintf(ptr->buffers[ptr->cntr++], 
                  ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
                  "[%lu,%lu]", tmp1, tmp2);
@@ -213,7 +215,7 @@ char* orte_util_print_job_family(const orte_jobid_t job)
     } else if (ORTE_JOBID_WILDCARD == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
     } else {
-        tmp1 = ((unsigned long)job & 0xffff0000) >> 16;
+        tmp1 = ORTE_JOB_FAMILY((unsigned long)job);
         snprintf(ptr->buffers[ptr->cntr++], 
                  ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
                  "%lu", tmp1);

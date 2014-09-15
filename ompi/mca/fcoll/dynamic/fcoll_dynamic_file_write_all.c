@@ -107,9 +107,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 #endif
 
 
-    if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-        fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-    }
+//    if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
+//        fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
+//    }
 
     /**************************************************************************
      ** In case the data is not contigous in memory, decode it into an iovec **
@@ -926,7 +926,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 
 	  if (fh->f_num_of_io_entries) {
-	    if (OMPI_SUCCESS != fh->f_fbtl->fbtl_pwritev (fh)) {
+	    if ( 0 >  fh->f_fbtl->fbtl_pwritev (fh)) {
 	      opal_output (1, "WRITE FAILED\n");
 	      ret = OMPI_ERROR;
 	      goto exit;

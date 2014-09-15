@@ -389,7 +389,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       /* Binding options */
     { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Policy for binding processes [none | hwthread | core (default) | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)" },
+      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported" },
 
     /* backward compatiblity */
     { "hwloc_base_bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
@@ -667,7 +667,9 @@ int orterun(int argc, char *argv[])
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
-    mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
+    if (OPAL_SUCCESS != mca_base_cmd_line_process_args(&cmd_line, &environ, &environ)) {
+        exit(1);
+    }
     
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
@@ -1714,12 +1716,6 @@ static int create_app(int argc, char* argv[],
     if (NULL != ompi_server) {
         opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
     }
-
-    /* when launching this way, ensure the app doesn't
-     * pickup the pmi datastore component unless specifically
-     * directed otherwise
-     */
-    opal_setenv("OMPI_MCA_dstore", "^pmi", false, &app->env);
 
     /* Did the user request to export any environment variables on the cmd line? */
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {

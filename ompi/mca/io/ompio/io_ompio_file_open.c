@@ -22,6 +22,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "ompi/file/file.h"
+#include "ompi/mca/io/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
@@ -159,8 +160,13 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_sharedfp_data      = NULL; /*data*/
 
     if (OMPI_SUCCESS != (ret = mca_sharedfp_base_file_select (ompio_fh, NULL))) {
-	opal_output(1, "mca_sharedfp_base_file_select() failed\n");
-	goto fn_fail;
+        opal_output ( ompi_io_base_framework.framework_output, 
+		     "mca_sharedfp_base_file_select() failed\n");
+	ompio_fh->f_sharedfp           = NULL; /*module*/
+	/* Its ok to not have a shared file pointer module as long as the shared file
+	** pointer operations are not used. However, the first call to any file_read/write_shared
+	** function will return an error code.
+	*/
     }
     
      /*Determine topology information if set*/
@@ -195,7 +201,8 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ** For this, the first operation has to be collective which we can 
     ** not guarantuee outside of the MPI_File_open operation.
     */
-    if ( true == use_sharedfp && 
+    if ( NULL != ompio_fh->f_sharedfp &&  
+	 true == use_sharedfp && 
 	 (!mca_io_ompio_sharedfp_lazy_open || 
 	  !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
 		  "addproc")               )) {
@@ -377,7 +384,7 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
 
     data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
                                               1,
-                                              MPI_LONG_LONG,
+                                              OMPI_OFFSET_DATATYPE,
                                               OMPIO_ROOT,
                                               data->ompio_fh.f_comm,
                                               data->ompio_fh.f_comm->c_coll.coll_bcast_module);
@@ -468,7 +475,7 @@ mca_io_ompio_file_set_size (ompi_file_t *fh,
 
     data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
                                               1,
-                                              MPI_LONG_LONG,
+                                              OMPI_OFFSET_DATATYPE,
                                               OMPIO_ROOT,
                                               data->ompio_fh.f_comm,
                                               data->ompio_fh.f_comm->c_coll.coll_bcast_module);

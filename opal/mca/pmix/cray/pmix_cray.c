@@ -258,6 +258,7 @@ static int cray_fini(void) {
 
     if (NULL != pmix_lranks) {
         free(pmix_lranks);
+        pmix_lranks = NULL;
     }
 
     return OPAL_SUCCESS;

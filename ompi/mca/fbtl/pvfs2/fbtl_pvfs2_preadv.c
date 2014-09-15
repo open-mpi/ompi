@@ -30,7 +30,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
+ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 {
     int i;
     int ret;
@@ -43,6 +43,7 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
     PVFS_Request file_req;
     PVFS_Request mem_req;
     mca_fs_pvfs2 *pvfs2_fs;
+    ssize_t total_bytes_read=0;
 
     pvfs2_fs = (mca_fs_pvfs2 *)fh->f_fs_ptr;
 
@@ -93,7 +94,8 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
-	    
+	    total_bytes_read += (ssize_t)resp_io.total_completed;
+
 	    k = 0;
 	    while (merge >= 0) {
 		memcpy (fh->f_io_array[i-merge].memory_address,
@@ -137,8 +139,9 @@ size_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 		perror("PVFS_sys_write() error");
 		return OMPI_ERROR;
 	    }
+	    total_bytes_read += (ssize_t)resp_io.total_completed;
 	}
     }
 
-    return OMPI_SUCCESS;
+    return total_bytes_read;
 }

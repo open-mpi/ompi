@@ -150,7 +150,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
     OPAL_MODEX_RECV(rc, &mca_btl_openib_component.super.btl_version,
                     proc, &message, &msg_size);
     if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("[%s:%d] opal_modex_recv failed for peer %s",
+        BTL_VERBOSE(("[%s:%d] opal_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
                    OPAL_NAME_PRINT(proc->proc_name)));
         OBJ_RELEASE(module_proc);

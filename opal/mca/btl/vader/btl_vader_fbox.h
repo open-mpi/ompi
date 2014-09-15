@@ -49,7 +49,7 @@ typedef struct mca_btl_vader_fbox_t {
 #define MCA_BTL_VADER_FBOX_IN_PTR(ep, fbox) ((ep)->fbox_in + (fbox))
 #define MCA_BTL_VADER_NEXT_FBOX(fbox) (((fbox) + 1) & MCA_BTL_VADER_LAST_FBOX)
 
-static inline mca_btl_vader_fbox_t * restrict mca_btl_vader_reserve_fbox (struct mca_btl_base_endpoint_t *ep, const size_t size)
+static inline mca_btl_vader_fbox_t * mca_btl_vader_reserve_fbox (struct mca_btl_base_endpoint_t *ep, const size_t size)
 {
     const int next_fbox = ep->next_fbox_out;
     mca_btl_vader_fbox_t * restrict fbox = MCA_BTL_VADER_FBOX_OUT_PTR(ep, next_fbox);

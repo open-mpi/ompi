@@ -26,11 +26,12 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-size_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
+ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 {
     Plfs_fd *pfd = NULL;
     plfs_error_t plfs_ret;
     pfd = fh->f_fs_ptr;
+    ssize_t total_bytes_written=0;
 
     int i, block = 1;
     struct iovec *iov = NULL;
@@ -86,7 +87,7 @@ size_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	}
 	
 	// Allocate a temporary buffer to hold the data
-	char *buffer;
+	char *buffer=NULL;
 	buffer = (char *) malloc (bytes);
 	if (buffer == NULL) {
 	    return OMPI_ERROR;
@@ -112,7 +113,12 @@ size_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	    opal_output(0, "fbtl_plfs_pwritev: Error in plfs_write:\n%s\n", strplfserr(plfs_ret));
 	    return OMPI_ERROR;
 	}
+	total_bytes_written += bytes_written;
 	iov_count = 0;
+	if ( NULL != buffer ) {
+	    free ( buffer );
+	    buffer=NULL;
+	}
     }
     
     if (NULL != iov) {
@@ -120,5 +126,5 @@ size_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	iov = NULL;
     }
     
-    return OMPI_SUCCESS;
+    return total_bytes_written;
 }
