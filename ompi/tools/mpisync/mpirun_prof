@@ -1,0 +1,25 @@
+#!/bin/sh
+
+ompi_instdir=`dirname $0`
+syncfile="ompi_clock_sync_data.$$"
+tmp_timings=mpirun_prof_timings.out
+tmp_out=mpirun_prof.out
+
+timing_bkp=$OMPI_MCA_opal_timing_file
+export OMPI_MCA_opal_timing_file=$tmp_timings
+${ompi_instdir}/mpirun --npernode 1 ${ompi_instdir}/mpisync -o $syncfile >$tmp_out 2>&1
+
+export OMPI_MCA_opal_timing_file=$timing_bkp
+export OMPI_MCA_opal_clksync_file=$syncfile
+
+# Remove old output
+rm -f $OMPI_MCA_opal_timing_file
+
+# Run a program of interest
+${ompi_instdir}/mpirun $@
+
+# Cleanup
+rm -f $syncfile
+rm -f $tmp_timings
+rm -f $tmp_out
+

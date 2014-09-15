@@ -56,6 +56,7 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/timings.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -386,8 +387,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    struct timeval ompistart, ompistop;
     char *cmd=NULL, *av=NULL;
+    OPAL_TIMING_DECLARE(tm);
+    OPAL_TIMING_INIT(&tm);
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -448,9 +450,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
-    if (ompi_enable_timing) {
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"Start"));
 
     /* if we were not externally started, then we need to setup
      * some envars so the MPI_INFO_ENV can get the cmd name
@@ -484,14 +484,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_rte_initialized = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of rte_init %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"rte_init complete"));
 
 #if OPAL_HAVE_HWLOC
     /* if hwloc is available but didn't get setup for some
@@ -638,15 +631,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from completion of rte_init to modex %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
-    
+    OPAL_TIMING_EVENT((&tm,"Start modex"));
+
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
      * in our job, so no proc array is passed. If a barrier is required,
@@ -654,14 +640,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      */
     OPAL_FENCE(NULL, 0, NULL, NULL);
 
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"End modex"));
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
@@ -819,14 +798,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from modex to first barrier %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"Start barrier"));
 
     /* wait for everyone to reach this point - this is a hard
      * barrier requirement at this time, though we hope to relax
@@ -835,14 +807,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time to execute barrier %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"End barrier"));
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
@@ -989,13 +954,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from barrier to complete mpi_init %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-    }
+    OPAL_TIMING_EVENT((&tm,"Finish"));
+    OPAL_TIMING_REPORT(ompi_enable_timing, &tm,"MPI Init");
+    OPAL_TIMING_RELEASE(&tm);
 
     return MPI_SUCCESS;
 }

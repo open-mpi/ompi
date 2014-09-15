@@ -31,6 +31,12 @@ extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 extern int opal_pmi_version;
 
+#if OPAL_ENABLE_TIMING
+extern char *opal_clksync_file;
+extern char *opal_timing_file;
+extern bool opal_timing_account_overhead;
+#endif
+
 OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
 /**

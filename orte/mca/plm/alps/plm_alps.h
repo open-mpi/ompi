@@ -30,7 +30,6 @@ struct orte_plm_alps_component_t {
     orte_plm_base_component_t super;
     int priority;
     bool debug;
-    bool timing;
     char *aprun_cmd;
     char *custom_args;
 };

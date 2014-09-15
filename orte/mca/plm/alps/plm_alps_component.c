@@ -128,8 +128,6 @@ static int plm_alps_register(void)
 
 static int plm_alps_open(void)
 {
-    mca_plm_alps_component.timing = orte_timing;
-
     return ORTE_SUCCESS;
 }
 
