@@ -85,17 +85,20 @@ static int xcast(orte_vpid_t *vpids,
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *sendbuf)
 {
+    /* check the number of involved daemons - if it is not a power of two,
+     * then we cannot do it */
+    if (0 == ((coll->ndmns != 0) && !(coll->ndmns & (coll->ndmns - 1)))) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:recdub algo employed for %d processes",
+                         "%s grpcomm:coll:recdub algo employed for %d daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
 
-    /* if we only have one proc participating, just copy the data across and return */
-    if (!((coll->ndmns != 0) && ((coll->ndmns & (coll->ndmns - 1)) == 0))) {
-        OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
-                     "%s grpcomm:coll:recdub number of participating daemons (%d) is not power 2",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns ));
-        return ORTE_ERROR;
-    }
+    /* mark the collective as locally complete */
+    coll->locally_complete = true;
+    /* record that we contributed */
+    coll->nreported += 1;
 
     /* start by seeding the collection with our own data */
     opal_dss.copy_payload(&coll->bucket, sendbuf);
@@ -151,7 +154,7 @@ static int rcd_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_vpid_t distan
         OBJ_RELEASE(send_buf);
         return rc;
     }
-    /* pack the number of reported processes */
+    /* pack the number of daemons whose data we are including in this message */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(send_buf, &coll->nreported, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(send_buf);
@@ -178,11 +181,6 @@ static int rcd_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_vpid_t distan
         return rc;
     };
 
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:coll:recdub receiving from %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&peer)));
-
     return ORTE_SUCCESS;
 }
 
@@ -197,8 +195,9 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
     orte_vpid_t distance, new_distance;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:coll:recdub received data",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s grpcomm:coll:recdub received data from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
 
     /* unpack the signature */
     cnt = 1;
@@ -241,11 +240,26 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
         return;
     }
 
+    /* we only receive contributions if we are participating in the
+     * collective, which means we must have local procs that are
+     * involved. See if we heard from all of them - if not, then we
+     * need to delay our participation until we do */
+    if (!coll->locally_complete) {
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:coll:recdub not locally complete - delaying",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_RELEASE(sig);
+        return;
+    }
+
     //update distance and send
     new_distance = distance <<= 1;
     if (new_distance < coll->ndmns) {
         rcd_allgather_send_dist(coll, new_distance);
-    } else {
+    }
+
+    /* if we are done, then complete things */
+    if (coll->nreported == coll->ndmns) {
         rcd_finalize_coll(coll, ORTE_SUCCESS);
     }
 
@@ -257,6 +271,10 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
 static int rcd_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
     opal_buffer_t *reply;
     int rc;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:coll:recdub declared collective complete",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     reply = OBJ_NEW(opal_buffer_t);
 

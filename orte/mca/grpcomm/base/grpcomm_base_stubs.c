@@ -268,6 +268,8 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                              ORTE_JOBID_PRINT(sig->signature[0].jobid)));
         /* all daemons hosting this jobid are participating */
         if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
+            /* TODO: this is hitting us prior to our having received the launch message. We
+             * need to delay processing it until after that time */
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }

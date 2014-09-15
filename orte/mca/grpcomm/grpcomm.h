@@ -73,6 +73,8 @@ typedef struct {
     size_t ndmns;
     /* number reported in */
     size_t nreported;
+    /* whether or not the local procs have participated */
+    bool locally_complete;
     /* callback function */
     orte_grpcomm_cbfunc_t cbfunc;
     /* user-provided callback data */
