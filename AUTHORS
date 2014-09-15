@@ -18,7 +18,7 @@ angskun       Thara Angskun               UTK
 Anya          Anya Tatashina              Sun
 apant         Avneesh Pant                QLogic
 artpol        Artem Polyakov              Individual
-bbenton       Brad Benton                 IBM
+bbenton       Brad Benton                 IBM, AMD
 bosilca       George Bosilca              UTK
 bouteill      Aurelien Bouteiller         UTK
 brbarret      Brian Barrett               IU, LANL, SNL
@@ -124,6 +124,7 @@ yuw           Weikuan Yu                  LANL, OSU
 Affiliation abbreviations:
 --------------------------
 
+AMD = Advanced Micro Devices, Inc.
 Chelsio = Chelsio Communications, Inc.
 Cisco = Cisco Systems, Inc.
 HE = Hochschule Esslingen
