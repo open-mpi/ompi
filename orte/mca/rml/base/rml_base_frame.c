@@ -37,6 +37,7 @@
 
 orte_rml_module_t orte_rml;
 orte_rml_base_t   orte_rml_base;
+OPAL_TIMING_DECLARE(tm_rml)
 
 orte_rml_component_t *orte_rml_component = NULL;
 
@@ -61,6 +62,15 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
                                    &orte_rml_base_wrapper);
     (void) mca_base_var_register_synonym(var_id, "orte", "rml",NULL,"wrapper", 0);
 
+#if OPAL_ENABLE_TIMING
+    orte_rml_base.timing = false;
+    (void) mca_base_var_register ("orte", "rml", "base", "timing",
+                                  "Enable RML timings",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_rml_base.timing);
+#endif
+
     return ORTE_SUCCESS;
 }
 
@@ -73,6 +83,8 @@ static int orte_rml_base_close(void)
     }
     OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
 
+    OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml, "RML");
+
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
 
@@ -81,7 +93,7 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
-    
+    OPAL_TIMING_INIT(&tm_rml);
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
 }

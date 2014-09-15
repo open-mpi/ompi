@@ -168,6 +168,26 @@ else
     AC_MSG_RESULT([no])
     WANT_DEBUG=0
 fi
+
+
+AC_MSG_CHECKING([if want to developer-level timing framework])
+AC_ARG_ENABLE(timing, 
+    AC_HELP_STRING([--enable-timing],
+                   [enable developer-level timing code (not for general MPI users!) (default: disabled)]))
+if test "$enable_timing" = "yes"; then
+    AC_MSG_RESULT([yes])
+    WANT_TIMING=1
+else
+    AC_MSG_RESULT([no])
+    WANT_TIMING=0
+fi
+
+AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
+    [Whether we want developer-level timing framework or not])
+
+AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" -a "$enable_binaries" != "no"])
+
+
 #################### Early development override ####################
 if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$OPAL_DEVEL" = 1; then
     WANT_DEBUG=1

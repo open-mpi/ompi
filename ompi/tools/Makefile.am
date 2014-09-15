@@ -21,8 +21,10 @@
 
 SUBDIRS += \
 	tools/ompi_info \
-	tools/wrappers
+	tools/wrappers \
+	tools/mpisync
 
 DIST_SUBDIRS += \
 	tools/ompi_info \
-	tools/wrappers
+	tools/wrappers \
+	tools/mpisync

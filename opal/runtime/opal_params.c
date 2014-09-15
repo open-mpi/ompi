@@ -42,11 +42,18 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/dss/dss.h"
 #include "opal/util/show_help.h"
+#include "opal/util/timings.h"
 
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
 int opal_pmi_version = 0;
+
+#if OPAL_ENABLE_TIMING
+char *opal_clksync_file = NULL;
+char *opal_timing_file = NULL;
+bool opal_timing_account_overhead = true;
+#endif
 
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support;
@@ -233,6 +240,30 @@ int opal_register_params(void)
                                   &opal_pmi_version);
 #else
     opal_pmi_version = 1;
+#endif
+
+
+#if OPAL_ENABLE_TIMING
+    (void) mca_base_var_register ("opal", "opal", NULL, "clksync_file",
+                                  "Mapping of clock offsets from HNP node",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &opal_clksync_file);
+    if( opal_timing_clksync_read(opal_clksync_file) ){
+        opal_output(0, "Cannot read file %s containing clock synchronisation information\n", opal_clksync_file);
+    }
+
+    (void) mca_base_var_register ("opal", "opal", NULL, "timing_file",
+                                  "OPAL Timing framework output file",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &opal_timing_file);
+
+    (void) mca_base_var_register ("opal", "opal", NULL, "timing_overhead",
+                                  "Whether account measured timing overhead or not (default: true)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &opal_timing_account_overhead);
 #endif
 
     opal_warn_on_fork = true;

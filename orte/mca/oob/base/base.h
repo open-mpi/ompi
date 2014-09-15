@@ -40,12 +40,15 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/timings.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/oob/oob.h"
 
 BEGIN_C_DECLS
+
+OPAL_TIMING_DECLARE_EXT(ORTE_DECLSPEC, tm_oob)
 
 /*
  * Convenience Typedef
@@ -58,6 +61,9 @@ typedef struct {
     int max_uri_length;
     opal_hash_table_t peers;
     bool use_module_threads;
+#if OPAL_ENABLE_TIMING
+    bool timing;
+#endif
 } orte_oob_base_t;
 ORTE_DECLSPEC extern orte_oob_base_t orte_oob_base;
 
