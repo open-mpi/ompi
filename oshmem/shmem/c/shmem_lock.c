@@ -72,7 +72,7 @@ static int shmem_lock_pack_pe_next(void *lock,
 static void shmem_lock_increment_counter(void *lock, int lock_size);
 static int shmem_lock_decrement_counter(void *lock, int lock_size);
 
-static int shmem_lock_get_server(const void *lock);
+static int shmem_lock_get_server(void *lock);
 static int shmem_lock_is_mine(void *lock, int lock_size);
 
 static int shmem_lock_get_ticket(void *lock);
@@ -166,9 +166,10 @@ int shmem_lock_finalize()
     return OSHMEM_SUCCESS;
 }
 
-static int shmem_lock_get_server(const void *lock)
+static int shmem_lock_get_server(void *lock)
 {
-    return (int) (((uintptr_t) lock) / 8) % shmem_n_pes();
+    uint64_t offset =  MCA_MEMHEAP_CALL(find_offset(shmem_my_pe(), 0, lock, lock));
+    return (offset / 8) % shmem_n_pes();
 }
 
 static uint64_t get_lock_value(const void *lock, int lock_size)
