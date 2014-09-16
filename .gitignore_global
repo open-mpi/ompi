@@ -415,6 +415,9 @@ ompi/mpiext/example/tests/progress_mpifh
 ompi/mpiext/example/tests/progress_usempi
 ompi/mpiext/example/tests/progress_usempif08
 ompi/mpiext/example/use-mpi-f08/*.mod
+ompi/tools/mpisync/mpisync
+ompi/tools/mpisync/mpirun_prof
+ompi/tools/mpisync/ompi_timing_post
 ompi/tools/ompi_info/ompi_info
 ompi/tools/ompi_info/*.ii
 ompi/tools/ompi_info/*.ti

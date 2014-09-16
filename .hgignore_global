@@ -512,6 +512,10 @@ syntax: glob
 ./ompi/mpiext/example/use-mpi/Makefile.in
 ./ompi/mpiext/example/use-mpi-f08/Makefile.in
 ./ompi/mpiext/example/use-mpi-f08/*.mod
+./ompi/tools/mpisync/Makefile.in
+./ompi/tools/mpisync/mpisync
+./ompi/tools/mpisync/mpirun_prof
+./ompi/tools/mpisync/ompi_timing_post
 ./ompi/tools/ompi_info/Makefile.in
 ./ompi/tools/ompi_info/ompi_info
 ./ompi/tools/ompi_info/*.ii
