@@ -64,16 +64,3 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
-#
-[firewall]
-A process or daemon is unable to complete a TCP connection
-to another process:
-
-  Local host:    %s
-  Local proc:    %s
-  Remote host:   %s
-  Remote proc:   %s
-
-This is usually caused by a firewall on the remote host. Please
-check that any firewall (e.g., iptables) has been disabled and
-try again.
