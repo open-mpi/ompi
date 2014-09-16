@@ -2,6 +2,8 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +40,7 @@ ompi_fortran_integer4_t shmem_int4_cswap_f(FORTRAN_POINTER_T target, MPI_Fint *c
 
     MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target), 
         (void *)&out_value, 
-        (const void*)(&OMPI_FINT_2_INT(*cond)), 
+        (const void*)(OMPI_PFINT_2_PINT(cond)), 
         FPTR_2_VOID_PTR(value), 
         sizeof(out_value), 
         OMPI_FINT_2_INT(*pe)));
