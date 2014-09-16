@@ -455,7 +455,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_uint("max_lmc", NULL, "Maximum number of LIDs to use for each device port "
                    "(must be >= 0, where 0 = use all available)",
-                   0, &mca_btl_openib_component.max_lmc, 0));
+                   1, &mca_btl_openib_component.max_lmc, 0));
 
 #if OPAL_HAVE_THREADS
     CHECK(reg_int("enable_apm_over_lmc", NULL, "Maximum number of alternative paths for each device port "
