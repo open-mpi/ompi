@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -267,7 +267,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                     "check that any firewall (e.g., iptables) has been disabled and\n"
                     "try again.\n"
                     "------------------------------------------------------------",
-                    orte_process_info.nodename, (NULL == host) ? "NULL" : host);
+                    orte_process_info.nodename,
+                    (NULL == host) ? "<unknown>" : host);
         /* let the TCP component know that this module failed to make
          * the connection so it can do some bookkeeping and fail back
          * to the OOB level so another component can try. This will activate
