@@ -507,14 +507,15 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     opal_list_t myvals;
     opal_value_t *kv;
 
+    /* don't bother error logging any not-found situations
+     * as the layer above us will have something to say
+     * about it */
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
         if (NULL == (proct = orte_get_proc_object(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return NULL;
         }
         if (NULL == proct->node || NULL == proct->node->name) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return NULL;
         }
         return proct->node->name;
@@ -526,7 +527,6 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
                                                 (opal_identifier_t*)proc,
                                                 OPAL_DSTORE_HOSTNAME,
                                                 &myvals))) {
-        ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&myvals);
         return NULL;
     }
