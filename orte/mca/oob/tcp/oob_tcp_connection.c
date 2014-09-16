@@ -60,6 +60,7 @@
 #include "opal/mca/event/event.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -254,12 +255,11 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
         /* no address succeeded, so we cannot reach this peer */
         peer->state = MCA_OOB_TCP_FAILED;
         host = orte_get_proc_hostname(&(peer->name));
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s orte_tcp_peer_try_connect: "
-                            "Connection to proc %s on node %s failed",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name),
-                            (NULL == host) ? "NULL" : host);
+        orte_show_help("help-oob-tcp.txt", "firewall",
+                       orte_process_info.nodename,
+                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                       (NULL == host) ? "NULL" : host,
+                       ORTE_NAME_PRINT(&peer->name));
         /* let the TCP component know that this module failed to make
          * the connection so it can do some bookkeeping and fail back
          * to the OOB level so another component can try. This will activate
