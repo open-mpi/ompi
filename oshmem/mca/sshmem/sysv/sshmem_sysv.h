@@ -13,6 +13,8 @@
 
 #include "oshmem_config.h"
 
+#include "opal/util/sys_limits.h"
+
 #include "oshmem/mca/sshmem/sshmem.h"
 
 BEGIN_C_DECLS
@@ -35,6 +37,8 @@ typedef struct mca_sshmem_sysv_module_t {
     mca_sshmem_base_module_t super;
 } mca_sshmem_sysv_module_t;
 extern mca_sshmem_sysv_module_t mca_sshmem_sysv_module;
+
+OSHMEM_MODULE_DECLSPEC extern size_t sshmem_sysv_gethugepagesize(void);
 
 END_C_DECLS
 

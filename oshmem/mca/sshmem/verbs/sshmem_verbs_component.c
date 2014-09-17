@@ -176,7 +176,7 @@ verbs_runtime_query(mca_base_module_t **module,
         }
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-        if (!rc) {
+        if (!rc && (0 != mca_sshmem_verbs_component.has_shared_mr)) {
             struct ibv_exp_reg_shared_mr_in in_smr;
 
             access_flag = IBV_ACCESS_LOCAL_WRITE |
@@ -190,14 +190,17 @@ verbs_runtime_query(mca_base_module_t **module,
             if (NULL == ib_mr) {
                 if (mca_sshmem_verbs_component.has_shared_mr == 1)
                     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
-
                 mca_sshmem_verbs_component.has_shared_mr = 0;
-                rc = OSHMEM_ERR_OUT_OF_RESOURCE;
             } else {
                 opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
                 mca_sshmem_verbs_component.has_shared_mr = 1;
             }
         }
+#else
+        if (!rc && mca_sshmem_verbs_component.has_shared_mr == 1) {
+            rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        }
+        mca_sshmem_verbs_component.has_shared_mr = 0;
 #endif /* MPAGE_ENABLE */
     }
 
@@ -307,6 +310,15 @@ verbs_register(void)
                                          "mr_interleave_factor",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
+
+    mca_sshmem_verbs_component.has_shared_mr = -1;
+    index = mca_base_component_var_register (&mca_sshmem_verbs_component.super.base_version,
+                                           "shared_mr", "Shared memory region usage "
+                                           "[0 - off, 1 - on, -1 - auto] (default: -1)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_sshmem_verbs_component.has_shared_mr);
 
     return OSHMEM_SUCCESS;
 }
