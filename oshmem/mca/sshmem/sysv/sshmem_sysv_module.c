@@ -189,6 +189,7 @@ segment_create(map_segment_t *ds_buf,
     flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;
 #if defined (SHM_HUGETLB)
     flags |= (mca_sshmem_sysv_component.use_hp ? SHM_HUGETLB : 0);
+    size = ((size + oshmem_gethugepagesize() - 1) / oshmem_gethugepagesize()) * oshmem_gethugepagesize();
 #endif
 
     /* Create a new shared memory segment and save the shmid. */
@@ -206,7 +207,7 @@ segment_create(map_segment_t *ds_buf,
         return OSHMEM_ERROR;
     }
 
-    /* Attach to the sement */
+    /* Attach to the segment */
     addr = shmat(shmid, (void *) mca_sshmem_base_start_address, 0);
     if (addr == (void *) -1L) {
         opal_show_help("help-oshmem-sshmem.txt",

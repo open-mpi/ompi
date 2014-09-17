@@ -13,6 +13,8 @@
 
 #include "oshmem_config.h"
 
+#include "opal/util/sys_limits.h"
+
 #include "oshmem/mca/sshmem/sshmem.h"
 
 BEGIN_C_DECLS
@@ -36,6 +38,36 @@ typedef struct mca_sshmem_sysv_module_t {
 } mca_sshmem_sysv_module_t;
 extern mca_sshmem_sysv_module_t mca_sshmem_sysv_module;
 
+/*
+ * Get current huge page size
+ */
+static size_t oshmem_gethugepagesize(void)
+{
+    static size_t huge_page_size = 0;
+    char buf[256];
+    int size_kb;
+    FILE *f;
+
+    /* Cache the huge page size value */
+    if (huge_page_size == 0) {
+        f = fopen("/proc/meminfo", "r");
+        if (f != NULL) {
+            while (fgets(buf, sizeof(buf), f)) {
+                if (sscanf(buf, "Hugepagesize: %d kB", &size_kb) == 1) {
+                    huge_page_size = size_kb * 1024L;
+                    break;
+                }
+            }
+            fclose(f);
+        }
+
+        if (huge_page_size == 0) {
+            huge_page_size = 2 * 1024L *1024L;
+        }
+    }
+
+    return huge_page_size;
+}
 END_C_DECLS
 
 #endif /* MCA_SSHMEM_SYSV_EXPORT_H */

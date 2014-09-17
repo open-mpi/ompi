@@ -196,8 +196,8 @@ segment_create(map_segment_t *ds_buf,
     if (MAP_FAILED == addr) {
         opal_show_help("help-oshmem-sshmem.txt",
                 "create segment failure",
-                "mmap",
                 true,
+                "mmap",
                 orte_process_info.nodename, (unsigned long long) size,
                 strerror(errno), errno);
         opal_show_help("help-oshmem-sshmem-mmap.txt",

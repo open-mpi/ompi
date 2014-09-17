@@ -13,7 +13,7 @@
 #
 [create segment failure]
 The OpenSHMEM "(%s)" plugin in the "sshmem" framework failed to
-allocate a shared memory segment via the %s system call.  This
+allocate a shared memory segment via the system call.  This
 usually means that there are not enough resources available to memory subsystem on your server.
 
 Your OpenSHMEM job will now abort.

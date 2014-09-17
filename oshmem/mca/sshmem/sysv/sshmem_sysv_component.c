@@ -111,15 +111,30 @@ sysv_runtime_query(mca_base_module_t **module,
     /* if we are here, then let the run-time test games begin */
 
 #if defined (SHM_HUGETLB)
-    mca_sshmem_sysv_component.use_hp = 1;
-    flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR | SHM_HUGETLB;
-    if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(opal_getpagesize()), flags))) {
-        mca_sshmem_sysv_component.use_hp = 0;
+    if (mca_sshmem_sysv_component.use_hp > 0) {
+         flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR | SHM_HUGETLB;
+        if (-1 == (shmid = shmget(IPC_PRIVATE, oshmem_gethugepagesize(), flags))) {
+            if (mca_sshmem_sysv_component.use_hp == 1) {
+                mca_sshmem_sysv_component.use_hp = 0;
+                goto out;
+            }
+            mca_sshmem_sysv_component.use_hp = 0;
+        }
+        else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
+            shmctl(shmid, IPC_RMID, NULL);
+            if (mca_sshmem_sysv_component.use_hp == 1) {
+                mca_sshmem_sysv_component.use_hp = 0;
+                goto out;
+            }
+            mca_sshmem_sysv_component.use_hp = 0;
+        }
     }
-    else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
-        shmctl(shmid, IPC_RMID, NULL );
+#else
+    if (mca_sshmem_sysv_component.use_hp == 1) {
         mca_sshmem_sysv_component.use_hp = 0;
+        goto out;
     }
+    mca_sshmem_sysv_component.use_hp = 0;
 #endif
 
     if (0 == mca_sshmem_sysv_component.use_hp) {
@@ -128,7 +143,7 @@ sysv_runtime_query(mca_base_module_t **module,
             goto out;
         }
         else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
-            shmctl(shmid, IPC_RMID, NULL );
+            shmctl(shmid, IPC_RMID, NULL);
             goto out;
         }
     }
@@ -171,7 +186,14 @@ sysv_register(void)
                                            MCA_BASE_VAR_SCOPE_ALL_EQ,
                                            &mca_sshmem_sysv_component.priority);
 
-    mca_sshmem_sysv_component.use_hp = 0;
+    mca_sshmem_sysv_component.use_hp = 2;
+    mca_base_component_var_register (&mca_sshmem_sysv_component.super.base_version,
+                                           "use_hp", "Huge pages usage "
+                                           "[0 - off, 1 - on, 2 - auto] (default: 2)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_sshmem_sysv_component.use_hp);
 
     return OSHMEM_SUCCESS;
 }
