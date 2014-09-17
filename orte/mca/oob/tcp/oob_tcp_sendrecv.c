@@ -407,7 +407,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)cbdata;
     int rc;
     orte_rml_send_t *snd;
+#if OPAL_ENABLE_TIMING
     bool timing_same_as_hdr = false;
+#endif
 
     if (orte_abnormal_term_ordered) {
         return;
@@ -485,7 +487,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
             int to_recv = peer->recv_msg->rdbytes;
 #endif
             if (ORTE_SUCCESS == (rc = read_bytes(peer))) {
+#if OPAL_ENABLE_TIMING
                 timing_same_as_hdr = true;
+#endif
                 OPAL_TIMING_EVENT((&tm_oob, "from %s %d bytes [header]",
                                    ORTE_NAME_PRINT(&(peer->name)), to_recv));
                 /* completed reading the header */
