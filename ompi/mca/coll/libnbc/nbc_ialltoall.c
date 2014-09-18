@@ -6,6 +6,7 @@
  *                         rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -108,7 +109,11 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
     }
 
     /* phase 1 - rotate n data blocks upwards into the tmpbuffer */
+#if OPAL_CUDA_SUPPORT
+    if(NBC_Type_intrinsic(sendtype) && !(opal_cuda_check_bufs((char *)sendbuf, (char *)recvbuf))) {
+#else
     if(NBC_Type_intrinsic(sendtype)) {
+#endif /* OPAL_CUDA_SUPPORT */
       /* contiguous - just copy (1st copy) */
       memcpy(handle->tmpbuf, (char*)sendbuf+datasize*rank, datasize*(p-rank));
       if(rank != 0) memcpy((char*)handle->tmpbuf+datasize*(p-rank), sendbuf, datasize*(rank));
