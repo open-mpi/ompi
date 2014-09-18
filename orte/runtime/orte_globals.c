@@ -484,14 +484,15 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     char *hostname;
     int rc;
 
+    /* don't bother error logging any not-found situations
+     * as the layer above us will have something to say
+     * about it */
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
         if (NULL == (proct = orte_get_proc_object(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return NULL;
         }
         if (NULL == proct->node || NULL == proct->node->name) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return NULL;
         }
         return proct->node->name;
@@ -501,7 +502,6 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc,
                                                     ORTE_DB_HOSTNAME,
                                                     (void**)&hostname, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
         return NULL;
     }
     return hostname;
