@@ -110,7 +110,7 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
 
     /* phase 1 - rotate n data blocks upwards into the tmpbuffer */
 #if OPAL_CUDA_SUPPORT
-    if(NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
+    if(NBC_Type_intrinsic(sendtype) && !(opal_cuda_check_bufs((char *)sendbuf, (char *)recvbuf))) {
 #else
     if(NBC_Type_intrinsic(sendtype)) {
 #endif /* OPAL_CUDA_SUPPORT */
