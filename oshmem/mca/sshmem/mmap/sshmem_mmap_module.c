@@ -185,7 +185,7 @@ segment_create(map_segment_t *ds_buf,
     addr = mmap((void *)mca_sshmem_base_start_address,
                 size,
                 PROT_READ | PROT_WRITE,
-                MAP_SHARED |
+                MAP_PRIVATE |
 #if defined(MAP_ANONYMOUS)
                 MAP_ANONYMOUS |
 #endif
