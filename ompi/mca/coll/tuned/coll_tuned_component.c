@@ -50,8 +50,8 @@ char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
 int   ompi_coll_tuned_init_max_requests = 128;
-int   ompi_coll_tuned_alltoall_small_msg = 1000;
-int   ompi_coll_tuned_alltoall_intermediate_msg = 2000;
+int   ompi_coll_tuned_alltoall_small_msg = 200;
+int   ompi_coll_tuned_alltoall_intermediate_msg = 3000;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
@@ -150,7 +150,7 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_init_chain_fanout);
 
-    ompi_coll_tuned_alltoall_small_msg = 1000;
+    ompi_coll_tuned_alltoall_small_msg = 200;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_small_msg",
                                            "threshold (if supported) to decide if small MSGs alltoall algorithm will be used",
@@ -159,7 +159,7 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_alltoall_small_msg);
 
-    ompi_coll_tuned_alltoall_intermediate_msg = 2000;
+    ompi_coll_tuned_alltoall_intermediate_msg = 3000;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_intermediate_msg",
                                            "threshold (if supported) to decide if intermediate MSGs alltoall algorithm will be used",
