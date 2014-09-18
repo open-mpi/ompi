@@ -931,7 +931,7 @@ EOF])
                 [AC_CHECK_HEADERS([X11/keysym.h],
                     [AC_DEFINE([HWLOC_HAVE_X11_KEYSYM], [1], [Define to 1 if X11 headers including Xutil.h and keysym.h are available.])])
                      AC_SUBST([HWLOC_X11_LIBS], ["-lX11"])
-                ])
+                ], [], [#include <X11/Xlib.h>])
             ])
          ])
     CPPFLAGS=$CPPFLAGS_save
