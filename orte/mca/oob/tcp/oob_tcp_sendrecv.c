@@ -435,7 +435,10 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
             }
             /* update our state */
             peer->state = MCA_OOB_TCP_CONNECTED;
-        } else {
+        } else if (ORTE_ERR_UNREACH != rc) {
+            /* we get an unreachable error returned if a connection
+             * completes but is rejected - otherwise, we don't want
+             * to terminate as we might be retrying the connection */
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s UNABLE TO COMPLETE CONNECT ACK WITH %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
