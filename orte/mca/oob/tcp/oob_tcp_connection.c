@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -865,6 +867,16 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
     peer->state = MCA_OOB_TCP_CLOSED;
     if (NULL != peer->active_addr) {
         peer->active_addr->state = MCA_OOB_TCP_CLOSED;
+    }
+
+    /* unregister active events */
+    if (peer->recv_ev_active) {
+        opal_event_del(&peer->recv_event);
+        peer->recv_ev_active = false;
+    }
+    if (peer->send_ev_active) {
+        opal_event_del(&peer->send_event);
+        peer->send_ev_active = false;
     }
 
     /* inform the component-level that we have lost a connection so
