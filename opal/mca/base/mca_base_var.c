@@ -14,6 +14,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1164,7 +1166,6 @@ static int register_variable (const char *project_name, const char *framework_na
     case MCA_BASE_VAR_TYPE_DOUBLE:
         align = OPAL_ALIGNMENT_DOUBLE;
         break;
-    case MCA_BASE_VAR_TYPE_VERSION_STRING:
     case MCA_BASE_VAR_TYPE_STRING:
     default:
         align = 0;
