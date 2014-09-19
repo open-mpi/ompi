@@ -87,6 +87,8 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_f08_assumed_rank;
     char *fortran_build_f08_subarrays;
     char *fortran_have_optional_args;
+    char *fortran_have_interface;
+    char *fortran_have_iso_fortran_env;
     char *fortran_have_bind_c;
     char *fortran_have_iso_c_binding;
     char *fortran_have_bind_c_sub;
@@ -98,6 +100,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
+    char *fortran_build_sizeof;
     char *java;
     char *heterogeneous;
     char *memprofile;
@@ -166,6 +169,9 @@ void ompi_info_do_config(bool want_all)
         "yes" : "no";
     fortran_have_optional_args = OMPI_FORTRAN_HAVE_OPTIONAL_ARGS ?
         "yes" : "no";
+    fortran_have_interface = OMPI_FORTRAN_HAVE_INTERFACE ? "yes" : "no";
+    fortran_have_iso_fortran_env = OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV ?
+        "yes" : "no";
     fortran_have_bind_c = OMPI_FORTRAN_HAVE_BIND_C ? "yes" : "no";
     fortran_have_iso_c_binding = OMPI_FORTRAN_HAVE_ISO_C_BINDING ?
         "yes" : "no";
@@ -180,6 +186,8 @@ void ompi_info_do_config(bool want_all)
     fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
     fortran_08_using_wrappers_for_choice_buffer_functions = 
         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES ? "yes" : "no";
+    fortran_build_sizeof = OMPI_FORTRAN_BUILD_SIZEOF ?
+        "yes" : "no";
 
     /* Build a string describing what level of compliance the mpi_f08
        module has */
@@ -376,6 +384,12 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort optional args", 
                   "compiler:fortran:optional_arguments",
                   fortran_have_optional_args);
+    opal_info_out("Fort INTERFACE",
+                  "compiler:fortran:interface",
+                  fortran_have_interface);
+    opal_info_out("Fort ISO_FORTRAN_ENV",
+                  "compiler:fortran:iso_fortran_env",
+                  fortran_have_iso_fortran_env);
     opal_info_out("Fort BIND(C) (all)", 
                   "compiler:fortran:bind_c",
                   fortran_have_bind_c);
@@ -409,6 +423,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort f08 using wrappers", 
                   "compiler:fortran:08_wrappers",
                   fortran_08_using_wrappers_for_choice_buffer_functions);
+    opal_info_out("Fort MPI_SIZEOF",
+                  "compiler:fortran:mpi_sizeof",
+                  fortran_build_sizeof);
     
     if (want_all) {
         

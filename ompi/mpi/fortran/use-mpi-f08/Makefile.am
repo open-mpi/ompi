@@ -15,6 +15,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 # This Makefile is only relevant if we're building the "use mpi_f08"
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
@@ -35,6 +37,45 @@ module_sentinel_file = \
         libforce_usempif08_internal_modules_to_be_built.la
 
 noinst_LTLIBRARIES = $(module_sentinel_file)
+
+mpi-f08.lo: $(module_sentinel_file)
+mpi-f08.lo: mpi-f08.F90
+mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
+mpi-f08.lo: attr-fn-f08-callback-interfaces.h
+mpi-f08.lo: conversion-fn-null-f08-interface.h
+
+#
+# *sizeof_f08.* are generated based on some results from
+# configure tests.
+#
+
+sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+
+sizeof_f08.h: $(top_builddir)/config.status
+sizeof_f08.h: $(sizeof_pl)
+sizeof_f08.h:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --header=$@ --ierror=optional \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+sizeof_f08.f90: $(top_builddir)/config.status
+sizeof_f08.f90: $(sizeof_pl)
+sizeof_f08.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=optional --mpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+profile/psizeof_f08.f90: $(top_builddir)/config.status
+profile/psizeof_f08.f90: $(sizeof_pl)
+profile/psizeof_f08.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=optional --pmpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+CLEANFILES += sizeof_f08.h sizeof_f08.f90 profile/psizeof_f08.f90
 
 mpi_api_files = \
         abort_f08.F90 \
@@ -731,8 +772,22 @@ libmpi_usempif08_la_SOURCES = \
         attr-fn-f08-callback-interfaces.h \
         conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
+        mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
+        attr-fn-f08-callback-interfaces.h \
+        conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c
+
+# These are generated; do not ship them
+nodist_libmpi_usempif08_la_SOURCES =
+
+if BUILD_FORTRAN_SIZEOF
+SIZEOF_H = sizeof_f08.h
+nodist_libmpi_usempif08_la_SOURCES += \
+        sizeof_f08.h \
+        sizeof_f08.f90 \
+        profile/psizeof_f08.f90
+endif
 
 #
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
@@ -756,11 +811,7 @@ pmpi_api_lo_files = $(pmpi_api_files:.F90=.lo)
 $(mpi_api_lo_files): mpi-f08.lo
 $(pmpi_api_lo_files): mpi-f08.lo
 
-mpi-f08-sizeof.lo: mpi-f08-sizeof.F90
-
-mpi-f08.lo: $(module_sentinel_file)
-mpi-f08.lo: mpi-f08-sizeof.lo
-mpi-f08.lo: mpi-f08.F90
+mpi-f08.lo: $(module_sentinel_file) $(SIZEOF_H)
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 mpi-f08.lo: attr-fn-f08-callback-interfaces.h
 mpi-f08.lo: conversion-fn-null-f08-interface.h
@@ -773,7 +824,6 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-types.F90 \
         mpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90 \
-        mpi-f08-sizeof.F90 \
         pmpi-f08-interfaces.F90
 
 config_h = \

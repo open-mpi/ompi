@@ -47,3 +47,7 @@ ompi__v_LN_S_0 = @echo "  LN_S    " `basename $@`;
 OMPI_V_MKDIR = $(ompi__v_MKDIR_$V)
 ompi__v_MKDIR_ = $(ompi__v_MKDIR_$AM_DEFAULT_VERBOSITY)
 ompi__v_MKDIR_0 = @echo "  MKDIR   " $@;
+
+OMPI_V_GEN = $(ompi__v_GEN_$V)
+ompi__v_GEN_ = $(ompi__v_GEN_$AM_DEFAULT_VERBOSITY)
+ompi__v_GEN_0 = @echo "  GENERATE" $@;
