@@ -1,3 +1,13 @@
+/*
+ * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdarg.h>
