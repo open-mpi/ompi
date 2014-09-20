@@ -118,7 +118,7 @@ mpi-tkr-sizeof.f90:
 # Clean up all F90 module files and all generated files
 #
 
-CLEANFILES = mpi-tkr-sizeof.h mpi-tkr-sizeof.f90
+CLEANFILES += mpi-tkr-sizeof.h mpi-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
 DISTCLEANFILES = $(nodist_libmpi_usempi_la_SOURCES)
 
