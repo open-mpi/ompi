@@ -46,11 +46,14 @@ my $ok = Getopt::Long::GetOptions("header=s" => \$header_arg,
 die "Must specify header and/or impl filenames to output"
     if (!defined($header_arg) && !defined($impl_arg));
 die "ierror handling must be optional or mandatory"
-    if (lc($ierror_arg) ne "optional" && lc($ierror_arg) ne "mandatory");
+    if (defined($generate_arg) && $generate_arg &&
+        (lc($ierror_arg) ne "optional" && lc($ierror_arg) ne "mandatory"));
 die "max array rank must be >= 4 and <=15"
-    if (!defined($maxrank_arg) || $maxrank_arg < 4 || $maxrank_arg > 15);
+    if (defined($generate_arg) && $generate_arg &&
+        (!defined($maxrank_arg) || $maxrank_arg < 4 || $maxrank_arg > 15));
 die "Must specify --pmpi and/or --mpi if --impl is specified"
-    if (defined($impl_arg) && !defined($mpi_arg) && !defined($pmpi_arg));
+    if (defined($generate_arg) && $generate_arg &&
+        (defined($impl_arg) && !defined($mpi_arg) && !defined($pmpi_arg)));
 
 #############################################################################
 
