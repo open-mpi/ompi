@@ -29,7 +29,6 @@
 extern char *opal_signal_string;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
-extern int opal_pmi_version;
 
 #if OPAL_ENABLE_TIMING
 extern char *opal_clksync_file;
