@@ -47,7 +47,6 @@
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
-int opal_pmi_version = 0;
 
 #if OPAL_ENABLE_TIMING
 char *opal_clksync_file = NULL;
@@ -231,18 +230,6 @@ int opal_register_params(void)
                        true);
     }
 
-    opal_pmi_version = 0;
-#ifdef WANT_PMI2_SUPPORT
-    (void) mca_base_var_register ("opal", "opal", NULL, "pmi_version",
-                                  "Set preferred PMI version: 0 => auto detect, 1 = PMIv1, 2 = PMIv2",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
-                                  &opal_pmi_version);
-#else
-    opal_pmi_version = 1;
-#endif
-
-
 #if OPAL_ENABLE_TIMING
     (void) mca_base_var_register ("opal", "opal", NULL, "clksync_file",
                                   "Mapping of clock offsets from HNP node",
@@ -294,7 +281,6 @@ int opal_deregister_params(void)
     opal_signal_string = NULL;
     opal_net_private_ipv4 = NULL;
     opal_set_max_sys_limits = NULL;
-    opal_pmi_version = 0;
     opal_register_done = false;
 
     return OPAL_SUCCESS;
