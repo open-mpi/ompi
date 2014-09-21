@@ -270,6 +270,17 @@ verbs_register(void)
                                          "hca_name",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
+    /* allow user specify hca port, extract hca name
+     * ex: mlx_4_0:1 is allowed
+     */
+    if (mca_sshmem_verbs_component.hca_name) {
+        char *p;
+
+        p = strchr(mca_sshmem_verbs_component.hca_name, ':');
+        if (p)
+            *p = 0;
+    }
+
 
     mca_sshmem_verbs_component.mr_interleave_factor = 2;
     index = mca_base_component_var_register (&mca_sshmem_verbs_component.super.base_version,
