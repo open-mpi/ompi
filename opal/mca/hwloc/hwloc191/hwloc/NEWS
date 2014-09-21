@@ -21,6 +21,8 @@ Version 1.9.2
 -------------
 * Fix some build failures in private/misc.h.
   Thanks to Pavan Balaji and Ralph Castain for the reports.
+* Fix failures to detect X11/Xutil.h on some Solaris platforms.
+  Thanks to Siegmar Gross for reporting the failure.
 
 
 Version 1.9.1
