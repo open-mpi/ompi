@@ -205,7 +205,7 @@ verbs_runtime_query(mca_base_module_t **module,
 #endif /* MPAGE_ENABLE */
     }
 
-#ifndef MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS
+#if !MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS
     /* disqualify ourselves if we can not alloc contig
      * pages at fixed address
      */
