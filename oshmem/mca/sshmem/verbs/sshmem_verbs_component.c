@@ -188,6 +188,9 @@ verbs_runtime_query(mca_base_module_t **module,
             mca_sshmem_verbs_fill_shared_mr(&in_smr, device->ib_pd, device->ib_mr_shared->handle,  addr, access_flag);
             ib_mr = ibv_exp_reg_shared_mr(&in_smr);
             if (NULL == ib_mr) {
+                if (mca_sshmem_verbs_component.has_shared_mr == 1)
+                    rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+
                 mca_sshmem_verbs_component.has_shared_mr = 0;
                 rc = OSHMEM_ERR_OUT_OF_RESOURCE;
             } else {
@@ -197,6 +200,14 @@ verbs_runtime_query(mca_base_module_t **module,
         }
 #endif /* MPAGE_ENABLE */
     }
+
+#if !MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS
+    /* disqualify ourselves if we can not alloc contig
+     * pages at fixed address
+     */
+    if (mca_sshmem_verbs_component.has_shared_mr == 0)
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+#endif
 
     /* all is well - rainbows and butterflies */
     if (!rc) {
