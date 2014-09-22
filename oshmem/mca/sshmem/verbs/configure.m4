@@ -80,6 +80,13 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
                     )],
                 [],
                 [#include <infiniband/verbs_exp.h>])
+
+              AC_CHECK_MEMBER([struct ibv_exp_reg_mr_in.create_flags],
+                [AC_DEFINE_UNQUOTED(MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS, 1,
+                    [create_flags field is part of ibv_exp_reg_mr_in]
+                    )],
+                [],
+                [#include <infiniband/verbs_exp.h>])
          ])
 
     AS_IF([test "$enable_verbs_sshmem" = "yes" -a "$oshmem_verbs_sm_build_verbs" = "0"],

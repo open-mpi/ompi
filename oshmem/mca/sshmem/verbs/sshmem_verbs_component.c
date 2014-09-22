@@ -190,6 +190,7 @@ verbs_runtime_query(mca_base_module_t **module,
             if (NULL == ib_mr) {
                 if (mca_sshmem_verbs_component.has_shared_mr == 1)
                     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+
                 mca_sshmem_verbs_component.has_shared_mr = 0;
             } else {
                 opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
@@ -203,6 +204,14 @@ verbs_runtime_query(mca_base_module_t **module,
         mca_sshmem_verbs_component.has_shared_mr = 0;
 #endif /* MPAGE_ENABLE */
     }
+
+#ifndef MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS
+    /* disqualify ourselves if we can not alloc contig
+     * pages at fixed address
+     */
+    if (mca_sshmem_verbs_component.has_shared_mr == 0)
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+#endif
 
     /* all is well - rainbows and butterflies */
     if (!rc) {
