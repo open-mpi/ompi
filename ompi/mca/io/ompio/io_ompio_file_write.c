@@ -255,7 +255,14 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 				      &total_bytes_written);
 	
         if (fh->f_num_of_io_entries) {
-            fh->f_fbtl->fbtl_ipwritev (fh, request);
+	  fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
+        }
+	
+	if ( false == mca_io_ompio_progress_is_registered ) {
+	    // Lazy initialization of progress function to minimize impact
+	    // on other ompi functionality in case its not used.
+	    opal_progress_register (mca_io_ompio_component_progress);
+	    mca_io_ompio_progress_is_registered=true;
         }
 	
         fh->f_num_of_io_entries = 0;
