@@ -217,52 +217,10 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
 
 static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
-
-#if OPAL_BTL_VADER_HAVE_XPMEM
-    if (ep->rcache) {
-        /* clean out the registration cache */
-        const int nregs = 100;
-        mca_mpool_base_registration_t *regs[nregs];
-        int reg_cnt;
-
-        do {
-            reg_cnt = ep->rcache->rcache_find_all(ep->rcache, 0, (size_t)-1,
-                                                      regs, nregs);
-
-            for (int i = 0 ; i < reg_cnt ; ++i) {
-                /* otherwise dereg will fail on assert */
-                regs[i]->ref_count = 0;
-                OBJ_RELEASE(regs[i]);
-            }
-        } while (reg_cnt == nregs);
-
-        ep->rcache = NULL;
+    /* check if the endpoint is initialized. avoids a double-destruct */
+    if (ep->fifo) {
+        OBJ_DESTRUCT(ep);
     }
-
-    if (ep->segment_base) {
-        xpmem_release (ep->apid);
-        ep->apid = 0;
-    }
-#else
-    if (ep->seg_ds) {
-        opal_shmem_ds_t seg_ds;
-
-        /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
-         * stomp past the end of the seg_ds if it is too small (which
-         * ep->seg_ds probably is) */
-        memcpy (&seg_ds, ep->seg_ds, opal_shmem_sizeof_shmem_ds (ep->seg_ds));
-        free (ep->seg_ds);
-        ep->seg_ds = NULL;
-
-        /* disconnect from the peer's segment */
-        opal_shmem_segment_detach (&seg_ds);
-    }
-#endif
-
-    ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;
-    ep->segment_base = NULL;
-
-    OBJ_DESTRUCT(ep);
 
     return OPAL_SUCCESS;
 }
@@ -624,11 +582,57 @@ static int vader_ft_event (int state)
 static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
+    ep->fifo = NULL;
 }
 
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
+
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (ep->rcache) {
+        /* clean out the registration cache */
+        const int nregs = 100;
+        mca_mpool_base_registration_t *regs[nregs];
+        int reg_cnt;
+
+        do {
+            reg_cnt = ep->rcache->rcache_find_all(ep->rcache, 0, (size_t)-1,
+                                                      regs, nregs);
+
+            for (int i = 0 ; i < reg_cnt ; ++i) {
+                /* otherwise dereg will fail on assert */
+                regs[i]->ref_count = 0;
+                OBJ_RELEASE(regs[i]);
+            }
+        } while (reg_cnt == nregs);
+
+        ep->rcache = NULL;
+    }
+
+    if (ep->segment_base) {
+        xpmem_release (ep->apid);
+        ep->apid = 0;
+    }
+#else
+    if (ep->seg_ds) {
+        opal_shmem_ds_t seg_ds;
+
+        /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
+         * stomp past the end of the seg_ds if it is too small (which
+         * ep->seg_ds probably is) */
+        memcpy (&seg_ds, ep->seg_ds, opal_shmem_sizeof_shmem_ds (ep->seg_ds));
+        free (ep->seg_ds);
+        ep->seg_ds = NULL;
+
+        /* disconnect from the peer's segment */
+        opal_shmem_segment_detach (&seg_ds);
+    }
+#endif
+
+    ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;
+    ep->segment_base = NULL;
+    ep->fifo = NULL;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_endpoint_t, opal_list_item_t, mca_btl_vader_endpoint_constructor, mca_btl_vader_endpoint_destructor);
