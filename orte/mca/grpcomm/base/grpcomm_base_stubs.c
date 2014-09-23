@@ -128,9 +128,11 @@ int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
 static void allgather_stub(int fd, short args, void *cbdata)
 {
     orte_grpcomm_caddy_t *cd = (orte_grpcomm_caddy_t*)cbdata;
+    int ret = OPAL_SUCCESS;
     int rc;
     orte_grpcomm_base_active_t *active;
     orte_grpcomm_coll_t *coll;
+    void *seq_number;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather stub",
@@ -139,6 +141,28 @@ static void allgather_stub(int fd, short args, void *cbdata)
     /* retrieve an existing tracker, create it if not
      * already found. The allgather module is responsible
      * for releasing it upon completion of the collective */
+    ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), &seq_number);
+    if (OPAL_ERR_NOT_FOUND == ret) {
+        cd->sig->seq_num = 0;
+    } else if (OPAL_SUCCESS == ret) {
+        cd->sig->seq_num = *((uint32_t *)(seq_number)) + 1;
+    } else {
+        OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
+                     "%s rpcomm:base:allgather can't not get signature from hash table",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cd);
+        return;
+    }
+    ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)&cd->sig->seq_num);
+    if (OPAL_SUCCESS != ret) {
+        OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
+                     "%s rpcomm:base:allgather can't not add new signature to hash table",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cd);
+        return;
+    }
     coll = orte_grpcomm_base_get_tracker(cd->sig, true);
     coll->cbfunc = cd->cbfunc;
     coll->cbdata = cd->cbdata;
@@ -169,9 +193,8 @@ int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
      * access framework-global data safely */
     cd = OBJ_NEW(orte_grpcomm_caddy_t);
     /* ensure the data doesn't go away */
-    OBJ_RETAIN(sig);
     OBJ_RETAIN(buf);
-    cd->sig = sig;
+    opal_dss.copy((void **)&cd->sig, (void *)sig, ORTE_SIGNATURE);
     cd->buf = buf;
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
@@ -197,7 +220,7 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
             /* if only one is NULL, then we can't possibly match */
             break;
         }
-        if (OPAL_EQUAL == opal_dss.compare(sig, coll->sig, ORTE_SIGNATURE)) {
+        if (OPAL_EQUAL == (rc = opal_dss.compare(sig, coll->sig, ORTE_SIGNATURE))) {
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:returning existing collective",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -213,16 +236,17 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
 
         return NULL;
     }
+    coll = OBJ_NEW(orte_grpcomm_coll_t);
+    opal_dss.copy((void **)&coll->sig, (void *)sig, ORTE_SIGNATURE);
+
     if (1 < opal_output_get_verbosity(orte_grpcomm_base_framework.framework_output)) {
         char *tmp=NULL;
-        (void)opal_dss.print(&tmp, NULL, sig, ORTE_SIGNATURE);
+        (void)opal_dss.print(&tmp, NULL, coll->sig, ORTE_SIGNATURE);
         opal_output(0, "%s grpcomm:base: creating new coll for procs %s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
         free(tmp);
     }
-    coll = OBJ_NEW(orte_grpcomm_coll_t);
-    OBJ_RETAIN(sig);
-    coll->sig = sig;
+
     opal_list_append(&orte_grpcomm_base.ongoing, &coll->super);
 
     /* now get the daemons involved */

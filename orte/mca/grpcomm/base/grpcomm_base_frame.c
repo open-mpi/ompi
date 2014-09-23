@@ -70,6 +70,7 @@ static int orte_grpcomm_base_close(void)
     }
     OPAL_LIST_DESTRUCT(&orte_grpcomm_base.actives);
     OPAL_LIST_DESTRUCT(&orte_grpcomm_base.ongoing);
+    OBJ_DESTRUCT(&orte_grpcomm_base.sig_table);
 
     return mca_base_framework_components_close(&orte_grpcomm_base_framework, NULL);
 }
@@ -82,6 +83,8 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&orte_grpcomm_base.actives, opal_list_t);
     OBJ_CONSTRUCT(&orte_grpcomm_base.ongoing, opal_list_t);
+    OBJ_CONSTRUCT(&orte_grpcomm_base.sig_table, opal_hash_table_t);
+    opal_hash_table_init(&orte_grpcomm_base.sig_table, 128);
 
     return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
@@ -97,6 +100,7 @@ static void scon(orte_grpcomm_signature_t *p)
 {
     p->signature = NULL;
     p->sz = 0;
+    p->seq_num = 0;
 }
 static void sdes(orte_grpcomm_signature_t *p)
 {
@@ -115,9 +119,11 @@ static void ccon(orte_grpcomm_coll_t *p)
     p->dmns = NULL;
     p->ndmns = 0;
     p->nreported = 0;
-    p->locally_complete = false;
+    p->distance_send = 0;
+    p->distance_mask_recv = 0;
     p->cbfunc = NULL;
     p->cbdata = NULL;
+    OBJ_CONSTRUCT(&p->buckets_recv, opal_list_t);
 }
 static void cdes(orte_grpcomm_coll_t *p)
 {
@@ -128,7 +134,21 @@ static void cdes(orte_grpcomm_coll_t *p)
     if (NULL != p->dmns) {
         free(p->dmns);
     }
+    OBJ_DESTRUCT(&p->buckets_recv);
 }
 OBJ_CLASS_INSTANCE(orte_grpcomm_coll_t,
                    opal_list_item_t,
                    ccon, cdes);
+
+static void dcon(orte_grpcomm_data_t *p)
+{
+    p->distance = 0;
+    OBJ_CONSTRUCT(&p->bucket, opal_buffer_t);
+}
+static void ddes(orte_grpcomm_data_t *p)
+{
+    OBJ_DESTRUCT(&p->bucket);
+}
+OBJ_CLASS_INSTANCE(orte_grpcomm_data_t,
+                   opal_list_item_t,
+                   dcon, ddes);
