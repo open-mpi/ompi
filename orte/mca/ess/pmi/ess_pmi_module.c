@@ -418,6 +418,8 @@ static int rte_finalize(void)
 
 static void rte_abort(int status, bool report)
 {
+    struct timespec tp = {0, 100000};
+
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "%s ess:pmi:abort: abort with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -428,10 +430,10 @@ static void rte_abort(int status, bool report)
      */
     opal_pmix.abort(status, "N/A");
 
-    /* - Clean out the global structures 
-     * (not really necessary, but good practice) */
-    orte_proc_info_finalize();
-    
+    /* provide a little delay for the PMIx thread to
+     * get the info out */
+    nanosleep(&tp, NULL);
+
     /* Now Exit */
-    exit(status);
+    _exit(status);
 }
