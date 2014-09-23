@@ -42,12 +42,23 @@ AM_CFLAGS = \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
 
-#if (OPAL_INSTALL_BINARIES && OPAL_ENABLE_TIMING)
+include $(top_srcdir)/Makefile.ompi-rules
 
 if OPAL_INSTALL_TIMING_BINARIES
 
 bin_PROGRAMS = mpisync 
 bin_SCRIPTS = mpirun_prof ompi_timing_post
+
+man_pages = mpisync.1
+EXTRA_DIST = $(man_pages:.1=.1in)
+
+nodist_man_MANS = $(man_pages)
+
+$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
+
+install-data-hook:
+	(cd $(DESTDIR)$(mandir)/man1; rm -f mpirun_prof.1; $(LN_S) mpisync.1 mpirun_prof.1)
+	(cd $(DESTDIR)$(mandir)/man1; rm -f ompi_timing_post.1; $(LN_S) mpisync.1 ompi_timing_post.1)
 
 endif
 

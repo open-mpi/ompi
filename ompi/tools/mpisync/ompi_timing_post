@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+# Copyright (c) 2014      Artem Polyakov <artpol84@gmail.com>
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
 
 #####################################################################
 # Evaluate a floating point number expression.
@@ -18,16 +25,17 @@ function float_eval(){
     return $stat
 }
 
-if [ -z "$1" ]; then
-    echo "Need the name of a timing file"
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Need the name of a timing file and the output file"
     exit 0
 fi
 
 thefile=$1
+postfile=$2
 sed '/^$/d' $thefile > ${thefile}_tmp
-sort  ${thefile}_tmp > ${thefile}
+sort  ${thefile}_tmp > ${postfile}
 
-read line < ${thefile}
+read line < ${postfile}
 first_ts=`echo $line | awk '{ print $1 }' | sed -e 's/s//'`
 prev_ts=$first_ts
 echo $first_ts
@@ -39,8 +47,8 @@ while read line ; do
     newline=`echo $line | sed -e "s/$cur_ts/$dif1:$dif2/"`
     prev_ts=$cur_ts
     echo $newline
-done <  ${thefile} > ${thefile}_tmp
+done <  ${postfile} > ${thefile}_tmp
 
-cat ${thefile}_tmp > ${thefile}
+cat ${thefile}_tmp > ${postfile}
 
 rm -f ${thefile}_tmp

@@ -21,10 +21,16 @@
 
 SUBDIRS += \
 	tools/ompi_info \
-	tools/wrappers \
-	tools/mpisync
+	tools/wrappers
+
+if OPAL_COMPILE_TIMING
+SUBDIRS += tools/mpisync
+endif
 
 DIST_SUBDIRS += \
 	tools/ompi_info \
-	tools/wrappers \
-	tools/mpisync
+	tools/wrappers
+
+if OPAL_COMPILE_TIMING
+DIST_SUBDIRS += tools/mpisync
+endif
