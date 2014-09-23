@@ -418,7 +418,7 @@ void orte_ess_base_app_abort(int status, bool report)
 {
     int fd;
     char *myfile;
-    struct timespec tp = {0, 100000};           \
+    struct timespec tp = {0, 100000};
 
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
@@ -445,7 +445,7 @@ void orte_ess_base_app_abort(int status, bool report)
         /* now introduce a short delay to allow any pending
          * messages (e.g., from a call to "show_help") to
          * have a chance to be sent */
-        nanosleep(&tp, NULL);                                           \
+        nanosleep(&tp, NULL);
     }
     
     /* - Clean out the global structures 
@@ -453,7 +453,7 @@ void orte_ess_base_app_abort(int status, bool report)
     orte_proc_info_finalize();
     
     /* Now Exit */
-    exit(status);
+    _exit(status);
 }
 
 static void* orte_progress_thread_engine(opal_object_t *obj)
