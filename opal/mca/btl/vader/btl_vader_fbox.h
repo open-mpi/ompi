@@ -147,16 +147,16 @@ static inline void mca_btl_vader_fbox_send (unsigned char * restrict fbox, unsig
     MCA_BTL_VADER_FBOX_HDR ((intptr_t) fbox)[-1].data.tag = tag;
 }
 
-static inline int mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, char tag,
-                                            void * restrict header, const size_t header_size,
-                                            void * restrict payload, const size_t payload_size)
+static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, char tag,
+                                             void * restrict header, const size_t header_size,
+                                             void * restrict payload, const size_t payload_size)
 {
     const size_t total_size = header_size + payload_size;
     unsigned char * restrict fbox;
 
     fbox = mca_btl_vader_reserve_fbox(ep, total_size);
     if (OPAL_UNLIKELY(NULL == fbox)) {
-        return 0;
+        return false;
     }
 
     memcpy (fbox, header, header_size);
@@ -169,7 +169,7 @@ static inline int mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, char ta
     mca_btl_vader_fbox_send (fbox, tag);
 
     /* send complete */
-    return 1;
+    return true;
 }
 
 static inline bool mca_btl_vader_check_fboxes (void)
