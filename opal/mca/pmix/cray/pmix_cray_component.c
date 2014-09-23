@@ -30,6 +30,7 @@ const char *opal_pmix_cray_component_version_string =
  * Local function
  */
 static int pmix_cray_component_query(mca_base_module_t **module, int *priority);
+static int pmix_cray_component_close(void);
 
 
 /*
@@ -58,7 +59,7 @@ const opal_pmix_base_component_t mca_pmix_cray_component = {
         /* Component open and close functions */
 
         NULL,
-        NULL,
+        pmix_cray_component_close,
         pmix_cray_component_query,
         NULL
     },
@@ -85,7 +86,11 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
         rc = OPAL_ERROR;
     } else {
         tmp = fgets(string, sizeof(string), fd);
-        if (tmp) {   /* okay we're in a PAGG container, got non-null output from job device */
+        if (tmp && (getenv("ALPS_APP_DEPTH") != NULL)) {   /* okay we're in a PAGG container, 
+                                                              got non-null output from job device.
+                                                              The check for ALPS_APP_DEPTH is required
+                                                              since on systems using MOM nodes, the
+                                                              mpirun/orte is actually in a PAGG */
             *priority = 90;
             *module = (mca_base_module_t *)&opal_pmix_cray_module;
             rc = OPAL_SUCCESS;
@@ -96,4 +101,12 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
     return rc;
 }
 
+static int pmix_cray_component_close(void)
+{
+    int ret = OPAL_SUCCESS;
+
+    ret = opal_pmix_cray_module.finalize();  
+
+    return ret;
+}
 

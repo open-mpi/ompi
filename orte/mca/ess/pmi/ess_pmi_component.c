@@ -21,6 +21,7 @@
 
 #include "opal/runtime/opal_params.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/proc_info.h"
 
@@ -58,9 +59,17 @@ orte_ess_base_component_t mca_ess_pmi_component = {
     }
 };
 
-
 static int pmi_component_open(void)
 {
+
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_pmix_base_framework, 0)) {
+        return ORTE_ERROR;
+    }
+
+    if (OPAL_SUCCESS != opal_pmix_base_select()) {
+        return ORTE_ERROR;
+    }
+
     return ORTE_SUCCESS;
 }
 
@@ -87,6 +96,6 @@ static int pmi_component_close(void)
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();  // balances query
     }
-    return ORTE_SUCCESS;
+    return mca_base_framework_close(&opal_pmix_base_framework);
 }
 
