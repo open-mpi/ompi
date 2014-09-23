@@ -8,18 +8,16 @@
  * $HEADER$
  */
 
-#define _GNU_SOURCE
+#include "opal_config.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include "opal_config.h"
-
-// TODO : restore ifdefs
-//#ifdef HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
-//#endif
+#endif
 
 #include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -40,9 +38,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/timings.h"
 #include "opal/util/output.h"
-
-#if OPAL_ENABLE_TIMING
-
 
 static void debug_hang(int i)
 {
@@ -65,10 +60,9 @@ opal_mutex_t tm_lock;
 static char *nodename = NULL;
 static char *jobid = "";
 static double hnp_offs = 0;
-// TODO use RTT to estimate precise of measurement
 static double hnp_rtt = 0;
 
-int opal_timing_clksync_read(char *fname)
+int opal_timing_clocksync_read(char *fname)
 {
     int rc = 0;
     FILE *fp = NULL;
@@ -79,9 +73,8 @@ int opal_timing_clksync_read(char *fname)
 
     char hname[1024];
     if( gethostname(hname, 1024) ){
-        rc = -1;
-        opal_output(0, "opal_timing_clksync_read(%s): Cannot gethostname\n",fname);
-        return -1;
+        opal_output(0, "opal_timing_clocksync_read(%s): Cannot gethostname\n",fname);
+        return OPAL_ERROR;
     }
     nodename = strdup(hname);
     ptr = strchr(nodename,'.');
@@ -95,8 +88,8 @@ int opal_timing_clksync_read(char *fname)
 
     fp = fopen(fname,"r");
     if( fp == NULL ){
-        opal_output(0, "opal_timing_clksync_read(%s): Cannot open the file\n",fname);
-        return -1;
+        opal_output(0, "opal_timing_clocksync_read(%s): Cannot open the file\n",fname);
+        return OPAL_ERROR;
     }
 
     while( getline(&line,&n,fp) > 0 ){
@@ -118,8 +111,8 @@ int opal_timing_clksync_read(char *fname)
     }
 
     if( !found ){
-        opal_output(0,"opal_timing_clksync_read: Can't find my host %s in %s\n", hname, fname);
-        rc = -1;
+        opal_output(0,"opal_timing_clocksync_read: Can't find my host %s in %s\n", hname, fname);
+        rc = OPAL_ERROR;
     }
 
 err_exit:
@@ -138,7 +131,7 @@ int opal_timing_set_jobid(char *jid)
 {
     jobid = strdup(jid);
     if( jobid == NULL ){
-        return -1;
+        return OPAL_ERROR;
     }
     return 0;
 }
@@ -159,7 +152,8 @@ opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
 
         t->buffer = malloc(sizeof(opal_timing_event_t)*t->buffer_size);
         if( t->buffer == NULL ){
-            // TODO: out of memory error process
+            opal_output(0, "opal_timing_event_alloc: Out of memory!\n");
+            return NULL;
         }
         memset(t->buffer, 0, sizeof(opal_timing_event_t)*t->buffer_size);
 
@@ -193,6 +187,10 @@ void opal_timing_init(opal_timing_t *t)
 opal_timing_prep_t opal_timing_prep_ev(opal_timing_t *t, const char *fmt, ...)
 {
     opal_timing_event_t *ev = opal_timing_event_alloc(t);
+    if( ev == NULL ){
+        opal_timing_prep_t p = { t, NULL, OPAL_ERR_OUT_OF_RESOURCE };
+        return p;
+    }
     OBJ_CONSTRUCT(ev, opal_timing_event_t);
     ev->ts = opal_timing_get_ts();
     va_list args;
@@ -200,18 +198,20 @@ opal_timing_prep_t opal_timing_prep_ev(opal_timing_t *t, const char *fmt, ...)
     vsnprintf(ev->descr, OPAL_TIMING_DESCR_MAX - 1, fmt, args);
     ev->descr[OPAL_TIMING_DESCR_MAX-1] = '\0';
     va_end( args );
-    opal_timing_prep_t p = { t, ev };
+    opal_timing_prep_t p = { t, ev, 0 };
     return p;
 }
 
 void opal_timing_add_step(opal_timing_prep_t p,
                           const char *func, const char *file, int line)
 {
-    p.ev->func = func;
-    p.ev->file = file;
-    p.ev->line = line;
-    p.ev->type = TEVENT;
-    opal_list_append(p.t->events, (opal_list_item_t*)p.ev);
+    if( !p.errcode ) {
+        p.ev->func = func;
+        p.ev->file = file;
+        p.ev->line = line;
+        p.ev->type = TEVENT;
+        opal_list_append(p.t->events, (opal_list_item_t*)p.ev);
+    }
 }
 
 int opal_timing_report(opal_timing_t *t, bool account_overhead, const char *prefix, char *fname)
@@ -221,14 +221,14 @@ int opal_timing_report(opal_timing_t *t, bool account_overhead, const char *pref
     FILE *fp = NULL;
     char *buf = NULL;
     int buf_size = 0;
-    int rc = 0;
+    int rc = OPAL_SUCCESS;
 
     debug_hang(0);
 
     if( fname != NULL ){
         fp = fopen(fname,"a");
         if( fp == NULL ){
-            // TODO: log error
+            opal_output(0, "opal_timing_report: Cannot open %s file for writing timing information!\n",fname);
             rc = OPAL_ERROR;
             goto err_exit;
         }
@@ -237,8 +237,8 @@ int opal_timing_report(opal_timing_t *t, bool account_overhead, const char *pref
     
     buf = malloc(OPAL_TIMING_OUTBUF_SIZE+1);
     if( buf == NULL ){
-        // TODO: log error
-        rc = OPAL_ERROR;
+        opal_output(0, "opal_timing_report: Out of memory!\n");
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
         goto err_exit;
     }
     buf[0] = '\0';
@@ -269,14 +269,16 @@ int opal_timing_report(opal_timing_t *t, bool account_overhead, const char *pref
                               ev->descr, nodename, jobid, ev->func, file_name, ev->line);
             }
             if( rc < 0 ){
-                // TODO: log mem allocation problems
+                opal_output(0, "opal_timing_report: Cannot asprintf!\n");
+                rc = OPAL_ERR_OUT_OF_RESOURCE;
                 goto err_exit;
             }
             rc = 0;
 
             if( strlen(line) > OPAL_TIMING_OUTBUF_SIZE ){
-                // TODO: log buffer overflow
+                opal_output(0, "opal_timing_report: timing output buffer overflow!\n");
                 free(line);
+                rc = OPAL_ERR_OUT_OF_RESOURCE;
                 goto err_exit;
             }
             if( buf_size + strlen(line) > OPAL_TIMING_OUTBUF_SIZE ){
@@ -313,6 +315,7 @@ err_exit:
         free(buf);
     }
     if( fp != NULL ){
+        fflush(fp);
         fclose(fp);
     }
     return rc;
@@ -346,5 +349,3 @@ void opal_timing_release(opal_timing_t *t)
     OBJ_RELEASE(t->events);
     t->events = NULL;
 }
-
-#endif

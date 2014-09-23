@@ -31,9 +31,9 @@ extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 
 #if OPAL_ENABLE_TIMING
-extern char *opal_clksync_file;
-extern char *opal_timing_file;
-extern bool opal_timing_account_overhead;
+extern char *opal_timing_sync_file;
+extern char *opal_timing_output;
+extern bool opal_timing_overhead;
 #endif
 
 OPAL_DECLSPEC extern int opal_initialized;

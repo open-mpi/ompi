@@ -185,6 +185,7 @@ fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
     [Whether we want developer-level timing framework or not])
 
+AM_CONDITIONAL([OPAL_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
 AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" -a "$enable_binaries" != "no"])
 
 
