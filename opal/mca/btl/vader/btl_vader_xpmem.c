@@ -9,6 +9,8 @@
  * $HEADER$
  */
 
+#include "btl_vader.h"
+
 #include "opal/include/opal/align.h"
 #include "btl_vader_xpmem.h"
 #include "opal/mca/memchecker/base/base.h"

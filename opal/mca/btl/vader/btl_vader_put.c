@@ -56,6 +56,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     /* always call the callback function */
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
+    frag->endpoint = endpoint;
     mca_btl_vader_frag_complete (frag);
 
     return OPAL_SUCCESS;
@@ -79,6 +80,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
         return OPAL_ERROR;
     }
 
+    frag->endpoint = endpoint;
     mca_btl_vader_frag_complete (frag);
 
     return OPAL_SUCCESS;

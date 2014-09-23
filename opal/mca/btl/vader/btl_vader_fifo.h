@@ -70,10 +70,20 @@
 typedef struct vader_fifo_t {
     volatile fifo_value_t fifo_head;
     volatile fifo_value_t fifo_tail;
+    volatile int32_t      fbox_available;
 } vader_fifo_t;
 
 /* large enough to ensure the fifo is on its own cache line */
 #define MCA_BTL_VADER_FIFO_SIZE 128
+
+/***
+ * One or more FIFO components may be a pointer that must be
+ * accessed by multiple processes.  Since the shared region may
+ * be mmapped differently into each process's address space,
+ * these pointers will be relative to some base address.  Here,
+ * we define inline functions to translate between relative
+ * addresses and virtual addresses.
+ */
 
 /* This only works for finding the relative address for a pointer within my_segment */
 static inline fifo_value_t virtual2relative (char *addr)
@@ -91,18 +101,26 @@ static inline void *relative2virtual (fifo_value_t offset)
     return (void *)(intptr_t)((offset & MCA_BTL_VADER_OFFSET_MASK) + mca_btl_vader_component.endpoints[offset >> MCA_BTL_VADER_OFFSET_BITS].segment_base);
 }
 
+#include "btl_vader_fbox.h"
+
+/**
+ * vader_fifo_read:
+ *
+ * @brief reads a single fragment from a local fifo
+ *
+ * @param[inout]   fifo - FIFO to read from
+ * @param[out]     ep   - returns the endpoint the fifo element was read from
+ *
+ * @returns a fragment header or NULL
+ *
+ * This function does not currently support multiple readers.
+ */
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct mca_btl_base_endpoint_t **ep)
 {
     mca_btl_vader_hdr_t *hdr;
     fifo_value_t value;
-    static volatile int32_t lock = 0;
-
-    if (opal_atomic_swap_32 (&lock, 1)) {
-        return NULL;
-    }
 
     if (VADER_FIFO_FREE == fifo->fifo_head) {
-        lock = 0;
         return NULL;
     }
 
@@ -113,13 +131,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
     *ep = &mca_btl_vader_component.endpoints[value >> MCA_BTL_VADER_OFFSET_BITS];
     hdr = (mca_btl_vader_hdr_t *) relative2virtual (value);
 
-    if (OPAL_UNLIKELY(!(hdr->flags & MCA_BTL_VADER_FLAG_COMPLETE) && ((*ep)->expected_sequence != hdr->seqn))) {
-        lock = 0;
-        return NULL;
-    }
-
     fifo->fifo_head = VADER_FIFO_FREE;
-    ++(*ep)->expected_sequence;
 
     assert (hdr->next != value);
 
@@ -138,16 +150,14 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
     }
 
     opal_atomic_wmb ();
-    lock = 0;
     return hdr; 
 }
 
-static inline int vader_fifo_init (vader_fifo_t *fifo)
+static inline void vader_fifo_init (vader_fifo_t *fifo)
 {
     fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE;
+    fifo->fbox_available = mca_btl_vader_component.fbox_max;
     mca_btl_vader_component.my_fifo = fifo;
-
-    return OPAL_SUCCESS;
 }
 
 static inline void vader_fifo_write (vader_fifo_t *fifo, fifo_value_t value)
@@ -170,15 +180,44 @@ static inline void vader_fifo_write (vader_fifo_t *fifo, fifo_value_t value)
     opal_atomic_wmb ();
 }
 
-/* write a frag (relative to this process' base) to another rank's fifo */
-static inline void vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+/**
+ * vader_fifo_write_ep:
+ *
+ * @brief write a frag (relative to this process' base) to another rank's fifo
+ *
+ * @param[in]  hdr - fragment header to write
+ * @param[in]  ep  - endpoint to write the fragment to
+ *
+ * This function is used to send a fragment to a remote peer. {hdr} must belong
+ * to the current process.
+ */
+static inline bool vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
+    fifo_value_t rhdr = virtual2relative ((char *) hdr);
+    if (ep->fbox_out.buffer) {
+        /* if there is a fast box for this peer then use the fast box to send the fragment header.
+         * this is done to ensure fragment ordering */
+        opal_atomic_wmb ();
+        return mca_btl_vader_fbox_sendi (ep, 0xfe, &rhdr, sizeof (rhdr), NULL, 0);
+    }
+    mca_btl_vader_try_fbox_setup (ep, hdr);
     hdr->next = VADER_FIFO_FREE;
-    hdr->seqn = ep->next_sequence++;
-    vader_fifo_write (ep->fifo, virtual2relative ((char *) hdr));
+    vader_fifo_write (ep->fifo, rhdr);
+
+    return true;
 }
 
-/* write a frag (relative to the remote process' base) to the remote fifo. note the remote peer must own hdr */
+/**
+ * vader_fifo_write_back:
+ *
+ * @brief write a frag (relative to the remote process' base) to the remote fifo
+ *
+ * @param[in]  hdr - fragment header to write
+ * @param[in]  ep  - endpoint the fragment belongs to
+ *
+ * This function is used to return a fragment to the sending process. It differs from vader_fifo_write_ep
+ * in that it uses the {ep} to produce the relative address.
+ */
 static inline void vader_fifo_write_back (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
     hdr->next = VADER_FIFO_FREE;
