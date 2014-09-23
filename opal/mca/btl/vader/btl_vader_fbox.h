@@ -198,8 +198,8 @@ static inline bool mca_btl_vader_check_fboxes (void)
             /* force all prior reads to complete before continuing */
             opal_atomic_rmb ();
 
-            BTL_VERBOSE(("got frag with header {.tag = %d, .size = %d} from offset %u", hdr.data.tag,
-                         hdr.data.size, start));
+            BTL_VERBOSE(("got frag from %d with header {.tag = %d, .size = %d, .seq = %u} from offset %u",
+                         ep->peer_smp_rank, hdr.data.tag, hdr.data.size, hdr.data.seq, start));
 
             /* the 0xff tag indicates we should skip the rest of the buffer */
             if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
@@ -250,13 +250,13 @@ static inline bool mca_btl_vader_check_fboxes (void)
 
 static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mca_btl_vader_hdr_t *hdr)
 {
-    if (NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_max > mca_btl_vader_component.fbox_count &&
-        mca_btl_vader_component.fbox_threshold <= ++ep->send_count) {
+    if (NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_threshold == ++ep->send_count) {
 
         /* protect access to mca_btl_vader_component.segment_offset */
         OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
 
-        if (mca_btl_vader_component.segment_size >= mca_btl_vader_component.segment_offset + mca_btl_vader_component.fbox_size) {
+        if (mca_btl_vader_component.segment_size >= mca_btl_vader_component.segment_offset + mca_btl_vader_component.fbox_size &&
+            mca_btl_vader_component.fbox_max > mca_btl_vader_component.fbox_count) {
             /* verify the remote side will accept another fbox */
             if (0 <= opal_atomic_add_32 (&ep->fifo->fbox_available, -1)) {
                 void *fbox_base = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
@@ -272,6 +272,8 @@ static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mc
             } else {
                 opal_atomic_add_32 (&ep->fifo->fbox_available, 1);
             }
+
+            opal_atomic_wmb ();
         }
 
         OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);

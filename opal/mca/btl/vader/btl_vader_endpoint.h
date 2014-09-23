@@ -99,7 +99,6 @@ static inline void mca_btl_vader_endpoint_setup_fbox_recv (struct mca_btl_base_e
 {
     endpoint->fbox_in.buffer = base;
     endpoint->fbox_in.startp = (uint32_t *) base;
-    endpoint->fbox_in.startp[0] = MCA_BTL_VADER_FBOX_ALIGNMENT;
     endpoint->fbox_in.start = MCA_BTL_VADER_FBOX_ALIGNMENT;
     endpoint->fbox_in.seq = 0;
 }
@@ -110,6 +109,7 @@ static inline void mca_btl_vader_endpoint_setup_fbox_send (struct mca_btl_base_e
     endpoint->fbox_out.start = MCA_BTL_VADER_FBOX_ALIGNMENT;
     endpoint->fbox_out.end = MCA_BTL_VADER_FBOX_ALIGNMENT;
     endpoint->fbox_out.startp = (uint32_t *) base;
+    endpoint->fbox_out.startp[0] = MCA_BTL_VADER_FBOX_ALIGNMENT;
     endpoint->fbox_out.seq = 0;
 
     /* zero out the first header in the fast box */
