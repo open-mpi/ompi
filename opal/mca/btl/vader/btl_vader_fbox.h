@@ -147,7 +147,7 @@ static inline void mca_btl_vader_fbox_send (unsigned char * restrict fbox, unsig
     MCA_BTL_VADER_FBOX_HDR ((intptr_t) fbox)[-1].data.tag = tag;
 }
 
-static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, char tag,
+static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, unsigned char tag,
                                              void * restrict header, const size_t header_size,
                                              void * restrict payload, const size_t payload_size)
 {
