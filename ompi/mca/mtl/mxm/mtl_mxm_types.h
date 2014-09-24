@@ -69,8 +69,8 @@ static inline mxm_conn_h ompi_mtl_mxm_conn_lookup(struct ompi_communicator_t* co
         return  endpoint->mxm_conn;
     }
 
-    MXM_VERBOSE(80, "First communication with [%s:%s]: set endpoint connection.",
-                ompi_proc->super.proc_hostname, OPAL_NAME_PRINT(ompi_proc->super.proc_name));
+    MXM_VERBOSE(80, "%s MXM first communication with %s",
+                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(ompi_proc->super.proc_name));
     ompi_mtl_add_single_proc(ompi_mtl, ompi_proc);
     endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
 

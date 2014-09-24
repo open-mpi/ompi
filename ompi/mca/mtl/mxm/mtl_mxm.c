@@ -172,7 +172,7 @@ static int ompi_mtl_mxm_send_ep_address(void *address, size_t address_len)
 
     /* Send address length */
     sprintf(modex_name, "%s-len", modex_component_name);
-    OPAL_MODEX_SEND_STRING(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND_STRING(rc, PMIX_ASYNC_RDY, PMIX_GLOBAL,
                            modex_name, &address_len, sizeof(address_len));
     if (OMPI_SUCCESS != rc) {
         MXM_ERROR("failed to send address length");
@@ -187,7 +187,7 @@ static int ompi_mtl_mxm_send_ep_address(void *address, size_t address_len)
     while (modex_buf_size) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
         modex_cur_size = (modex_buf_size < modex_max_size) ? modex_buf_size : modex_max_size;
-        OPAL_MODEX_SEND_STRING(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+        OPAL_MODEX_SEND_STRING(rc, PMIX_ASYNC_RDY, PMIX_GLOBAL,
                                modex_name, modex_buf_ptr, modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -234,7 +234,6 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
         MXM_ERROR("Failed to receive ep address length");
         goto bail;
     }
-
     /* Allocate buffer to hold the address */
     *address_len_p = *address_len_buf_ptr;
     *address_p = malloc(*address_len_p);
@@ -399,116 +398,9 @@ int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl)
 int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                            struct ompi_proc_t** procs)
 {
-#if MXM_API < MXM_VERSION(2,0)
-    ompi_mtl_mxm_ep_conn_info_t *ep_info;
-    mxm_conn_req_t *conn_reqs;
-    size_t ep_index = 0;
-#endif
-    void *ep_address;
-    size_t ep_address_len;
-    mxm_error_t err;
-    size_t i;
-    int rc;
-    mca_mtl_mxm_endpoint_t *endpoint;
-
-    assert(mtl == &ompi_mtl_mxm.super);
-
-    char *envvar = getenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM");
-    if ((envvar != NULL) && (strlen(envvar) > 0) &&
-        ((strcmp(envvar, "yes") == 0 || strcmp(envvar, "true") == 0 || strcmp(envvar, "1") == 0)))
-    {
-        MXM_VERBOSE(80, "Set endpoint connection on first communication. Skip it now.");
-        return OMPI_SUCCESS;
-    }
-
-#if MXM_API < MXM_VERSION(2,0)
-    /* Allocate connection requests */
-    conn_reqs = calloc(nprocs, sizeof(mxm_conn_req_t));
-    ep_info   = calloc(nprocs, sizeof(ompi_mtl_mxm_ep_conn_info_t));
-    if (NULL == conn_reqs || NULL == ep_info) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto bail;
-    }
-#endif
-
-    /* Get the EP connection requests for all the processes from modex */
-    for (i = 0; i < nprocs; ++i) {
-        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]) {
-           continue; /* already connected to this endpoint */
-        }
-        rc = ompi_mtl_mxm_recv_ep_address(procs[i], &ep_address, &ep_address_len);
-        if (rc != OMPI_SUCCESS) {
-            goto bail;
-        }
-
-#if MXM_API < MXM_VERSION(2,0)
-        if (ep_address_len != sizeof(ep_info[i])) {
-            MXM_ERROR("Invalid endpoint address length");
-            rc = OMPI_ERROR;
-            goto bail;
-        }
-
-        memcpy(&ep_info[i], ep_address, ep_address_len);
-        conn_reqs[ep_index].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
-        conn_reqs[ep_index].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
-        conn_reqs[ep_index].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
-        ep_index++;
-
-#else
-        endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
-        endpoint->mtl_mxm_module = &ompi_mtl_mxm;
-        err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
-        if (err != MXM_OK) {
-            MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
-            rc = OMPI_ERROR;
-            goto bail;
-        }
-        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
-#endif
-        free(ep_address);
-    }
-
-#if MXM_API < MXM_VERSION(2,0)
-    /* Connect to remote peers */
-    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_reqs, ep_index, -1);
-    if (MXM_OK != err) {
-        MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
-        for (i = 0; i < ep_index; ++i) {
-            if (MXM_OK != conn_reqs[i].error) {
-                MXM_ERROR("MXM EP connect to %s error: %s\n",
-                          (NULL == procs[i]->super.proc_hostname) ?
-                           "unknown" : procs[i]->proc_hostname,
-                          mxm_error_string(conn_reqs[i].error));
-            }
-        }
-        rc = OMPI_ERROR;
-        goto bail;
-    }
-
-    /* Save returned connections */
-    for (i = 0; i < ep_index; ++i) {
-        endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
-        endpoint->mtl_mxm_module = &ompi_mtl_mxm;
-        endpoint->mxm_conn = conn_reqs[i].conn;
-        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
-    }
-
-#endif
-
-#if MXM_API >= MXM_VERSION(3,1)
-    if (ompi_mtl_mxm.bulk_connect) {
-        mxm_ep_wireup(ompi_mtl_mxm.ep);
-    }
-#endif
-
-    rc = OMPI_SUCCESS;
-
-bail:
-#if MXM_API < MXM_VERSION(2,0)
-    free(conn_reqs);
-    free(ep_info);
-#endif
-    return rc;
+    MXM_VERBOSE(80, "%s MXM add procs: set endpoint connection on first communication. Skip it now.",
+                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+    return OMPI_SUCCESS;
 }
 
 int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
