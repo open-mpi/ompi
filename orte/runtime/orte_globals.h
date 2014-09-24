@@ -581,7 +581,7 @@ ORTE_DECLSPEC extern char *orte_base_user_debugger;
 ORTE_DECLSPEC extern char *orte_daemon_cores;
 
 /* cutoff for collective modex */
-ORTE_DECLSPEC extern uint32_t orte_full_modex_cutoff;
+ORTE_DECLSPEC extern uint32_t orte_direct_modex_cutoff;
 
 END_C_DECLS
 

@@ -165,7 +165,7 @@ int ompi_proc_complete_init(void)
             }
             OPAL_LIST_DESTRUCT(&myvals);
 
-            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
+            if (ompi_process_info.num_procs < ompi_direct_modex_cutoff) {
                 /* IF the number of procs falls below the specified cutoff,
                  * then we assume the job is small enough that retrieving
                  * the hostname (which will typically cause retrieval of
@@ -433,7 +433,7 @@ int ompi_proc_refresh(void)
             }
             OPAL_LIST_DESTRUCT(&myvals);
 
-            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
+            if (ompi_process_info.num_procs < ompi_direct_modex_cutoff) {
                 /* IF the number of procs falls below the specified cutoff,
                  * then we assume the job is small enough that retrieving
                  * the hostname (which will typically cause retrieval of
@@ -723,7 +723,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #else
                 new_arch = opal_local_arch;
 #endif
-                if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
+                if (ompi_process_info.num_procs < ompi_direct_modex_cutoff) {
                     /* retrieve the hostname */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
                     rc = opal_dstore.fetch(opal_dstore_internal,

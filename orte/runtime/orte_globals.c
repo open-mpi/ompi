@@ -200,7 +200,7 @@ opal_thread_t orte_progress_thread;
 char *orte_base_user_debugger = NULL;
 
 /* modex cutoff */
-uint32_t orte_full_modex_cutoff = UINT32_MAX;
+uint32_t orte_direct_modex_cutoff = UINT32_MAX;
 
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;

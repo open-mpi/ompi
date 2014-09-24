@@ -126,7 +126,7 @@ OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
 /*
  * Cutoff point for retrieving hostnames
  */
-OMPI_DECLSPEC extern uint32_t ompi_hostname_cutoff;
+OMPI_DECLSPEC extern uint32_t ompi_direct_modex_cutoff;
 
 /**
  * Register MCA parameters used by the MPI layer.

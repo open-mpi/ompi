@@ -775,15 +775,15 @@ int orte_register_params(void)
                                   &orte_daemon_cores);
 
     /* cutoff for full modex */
-    orte_full_modex_cutoff = UINT32_MAX;
-    id = mca_base_var_register ("orte", "orte", NULL, "full_modex_cutoff",
+    orte_direct_modex_cutoff = UINT32_MAX;
+    id = mca_base_var_register ("orte", "orte", NULL, "direct_modex_cutoff",
                                 "If the number of processes in the application exceeds the provided value,"
                                 "modex will be done upon demand [default: UINT32_MAX]",
                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                &orte_full_modex_cutoff);
+                                &orte_direct_modex_cutoff);
     /* register a synonym for old name */
-    mca_base_var_register_synonym (id, "ompi", "hostname", "cutoff", NULL, MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    mca_base_var_register_synonym (id, "ompi", "direct_modex", "cutoff", NULL, MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     return ORTE_SUCCESS;
 }
