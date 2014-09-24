@@ -43,6 +43,7 @@ mpi-f08.lo: mpi-f08.F90
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 mpi-f08.lo: attr-fn-f08-callback-interfaces.h
 mpi-f08.lo: conversion-fn-null-f08-interface.h
+mpi-f08.lo: sizeof_f08.h
 
 #
 # *sizeof_f08.* are generated based on some results from
