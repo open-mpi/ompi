@@ -61,6 +61,27 @@ Trunk (not on release branches yet)
   via --enable-mpi-cxx.
 
 
+1.8.3
+-----
+
+- Fixed application abort bug to ensure that MPI_Abort exits appropriately
+  and returns the provided exit status
+- Fixed some alignment (not all) issues identified by Clang
+- Allow CUDA-aware to work with nonblocking collectives. Forces packing to
+  happen when using GPU buffers.
+- Fixed configure test issue with Intel 2015 Fortran compiler
+- Fixed some PGI-related errors
+- Provide better help message when encountering a firewall
+- Fixed MCA parameter quoting to protect multi-word params and params
+  that contain special characters
+- Improved the bind-to help message to clarify the defaults
+- Add new MPI-3.1 tools interface
+- Several performance optimizations and memory leak cleanups
+- Turn off the coll/ml plugin unless specifically requested as it
+  remains in an experimental state
+- Fix LSF support by adding required libraries for the latest LSF releases
+
+
 1.8.2
 -----
 
