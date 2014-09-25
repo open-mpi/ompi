@@ -948,9 +948,9 @@ static void process_message(pmix_server_peer_t *peer)
                                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                                             orte_rml_send_callback, NULL);
                 }
+                opal_list_remove_item(&pmix_server_pending_dmx_reqs, &req->super);
+                OBJ_RELEASE(req);
             }
-            opal_list_remove_item(&pmix_server_pending_dmx_reqs, &req->super);
-            OBJ_RELEASE(req);
         }
         OBJ_DESTRUCT(&blocal);
         OBJ_DESTRUCT(&bremote);
