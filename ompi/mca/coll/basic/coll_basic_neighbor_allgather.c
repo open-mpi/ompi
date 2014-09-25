@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -46,6 +46,12 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
     ompi_request_t **reqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, dim, nreqs;
+
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, cart->ndims * 4);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
@@ -124,6 +130,12 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
 
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
 
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, degree * 2);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
     edges = graph->edges;
     if (rank > 0) {
         edges += graph->index[rank - 1];
@@ -170,6 +182,12 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
 
     indegree = dist_graph->indegree;
     outdegree = dist_graph->outdegree;
+
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, indegree + outdegree);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;
