@@ -43,6 +43,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     OMPI_FORTRAN_HAVE_BIND_C=0
     OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=0
+    OMPI_FORTRAN_HAVE_STORAGE_SIZE=0
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
     OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
@@ -258,8 +259,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Fortran mpif.h MPI bindings
     #--------------------------------------------------------
 
-    OMPI_FORTRAN_CHECK_INTERFACE([OMPI_FORTRAN_HAVE_INTERFACE=1], [])
-
     AC_MSG_CHECKING([if building Fortran mpif.h bindings])
     AS_IF([test $ompi_fortran_happy -eq 1],
           [AC_MSG_RESULT([yes])
@@ -280,10 +279,19 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=0])])
     AC_SUBST(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV)
 
-    # We need both INTERFACE and iso_fortran_env to build MPI_SIZEOF
-    # support
+    # Ensure that the fortran compiler supports STORAGE_SIZE for
+    # enough relevant types.
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_STORAGE_SIZE(
+               [OMPI_FORTRAN_HAVE_STORAGE_SIZE=1],
+               [OMPI_FORTRAN_HAVE_STORAGE_SIZE=0])])
+    AC_SUBST(OMPI_FORTRAN_HAVE_STORAGE_SIZE)
+
+    # We need INTERFACE, ISO_FORTRAN_ENV, and STORAGE_SIZE() support
+    # to build MPI_SIZEOF support
     AS_IF([test $OMPI_FORTRAN_HAVE_INTERFACE -eq 1 && \
-           test $OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV -eq 1],
+           test $OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_STORAGE_SIZE -eq 1],
           [OMPI_FORTRAN_BUILD_SIZEOF=1],
           [OMPI_FORTRAN_BUILD_SIZEOF=0])
     AC_SUBST(OMPI_FORTRAN_BUILD_SIZEOF)
@@ -557,6 +565,9 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV],
                        [$OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV],
                        [Whether the compiler supports ISO_FORTRAN_ENV or not])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_STORAGE_SIZE],
+                       [$OMPI_FORTRAN_HAVE_STORAGE_SIZE],
+                       [Whether the compiler supports STORAGE_SIZE on relevant types])
 
     # This conditional is used to determine whether we compile the
     # various .f90 files that contain MPI_SIZEOF implementations.

@@ -89,6 +89,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_optional_args;
     char *fortran_have_interface;
     char *fortran_have_iso_fortran_env;
+    char *fortran_have_storage_size;
     char *fortran_have_bind_c;
     char *fortran_have_iso_c_binding;
     char *fortran_have_bind_c_sub;
@@ -172,6 +173,7 @@ void ompi_info_do_config(bool want_all)
     fortran_have_interface = OMPI_FORTRAN_HAVE_INTERFACE ? "yes" : "no";
     fortran_have_iso_fortran_env = OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV ?
         "yes" : "no";
+    fortran_have_storage_size = OMPI_FORTRAN_HAVE_STORAGE_SIZE ? "yes" : "no";
     fortran_have_bind_c = OMPI_FORTRAN_HAVE_BIND_C ? "yes" : "no";
     fortran_have_iso_c_binding = OMPI_FORTRAN_HAVE_ISO_C_BINDING ?
         "yes" : "no";
@@ -390,6 +392,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort ISO_FORTRAN_ENV",
                   "compiler:fortran:iso_fortran_env",
                   fortran_have_iso_fortran_env);
+    opal_info_out("Fort STORAGE_SIZE",
+                  "compiler:fortran:storage_size",
+                  fortran_have_storage_size);
     opal_info_out("Fort BIND(C) (all)", 
                   "compiler:fortran:bind_c",
                   fortran_have_bind_c);
