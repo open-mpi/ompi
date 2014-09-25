@@ -203,11 +203,12 @@ sub output_file {
 ! Sad panda.
 !
 ! This compiler does not support the Right Stuff to enable MPI_SIZEOF.
-! Specifically: we need support for the INTERFACE keyword and
-! ISO_FORTRAN_ENV.  Apparently, this compiler does not support both of
-! those things, so this file will be blank (i.e., we didn't bother
-! generating the necessary stuff for MPI_SIZEOF because the compiler
-! doesn't support it).
+! Specifically: we need support for the INTERFACE keyword,
+! ISO_FORTRAN_ENV, and the STORAGE_SIZE() intrinsic on all types.
+! Apparently, this compiler does not support both of those things, so
+! this file will be blank (i.e., we didn't bother generating the
+! necessary stuff for MPI_SIZEOF because the compiler doesn't support
+! it).
 !
 ! If you want support for MPI_SIZEOF, please use a different Fortran
 ! compiler to build Open MPI.\n\n";
