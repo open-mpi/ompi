@@ -74,7 +74,7 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
     struct iovec dst_iov = {.iov_base = dst->seg_addr.pval, .iov_len = size};
     ssize_t ret;
 
-    ret = process_vm_readv (endpoint->seg_ds.seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
+    ret = process_vm_readv (endpoint->seg_ds->seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
     if (ret != (ssize_t)size) {
         opal_output(0, "Read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
         return OPAL_ERROR;
