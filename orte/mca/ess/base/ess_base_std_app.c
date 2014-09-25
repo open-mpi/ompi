@@ -426,12 +426,8 @@ void orte_ess_base_app_abort(int status, bool report)
         nanosleep(&tp, NULL);                                           \
     }
     
-    /* - Clean out the global structures 
-     * (not really necessary, but good practice) */
-    orte_proc_info_finalize();
-    
     /* Now Exit */
-    exit(status);
+    _exit(status);
 }
 
 static void* orte_progress_thread_engine(opal_object_t *obj)
