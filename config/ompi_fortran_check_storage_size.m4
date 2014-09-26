@@ -30,7 +30,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_STORAGE_SIZE],[
     AC_CACHE_CHECK([if Fortran compiler supports STORAGE_SIZE for relevant types],
        fortran_storage_size_var,
        [AC_LANG_PUSH([Fortran])
-        AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program check_for_storage_size
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[program check_for_storage_size
     USE, INTRINSIC :: iso_fortran_env, ONLY: REAL32, INT32
     integer size
     complex(real32) :: c32
