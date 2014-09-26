@@ -197,6 +197,7 @@ static void* shmem_opal_thread(void* argc)
 #endif
 
 int inGlobalExit;
+int inGlobalExit_Status;
 
 static void sighandler__SIGUSR1(int signum)
 {
