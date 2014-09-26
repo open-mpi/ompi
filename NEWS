@@ -79,7 +79,9 @@ Trunk (not on release branches yet)
 - Several performance optimizations and memory leak cleanups
 - Turn off the coll/ml plugin unless specifically requested as it
   remains in an experimental state
-- Fix LSF support by adding required libraries for the latest LSF releases
+- Fix LSF support by adding required libraries for the latest LSF
+  releases.  Thanks to Joshua Randal for supplying the initial
+  patches.
 
 
 1.8.2
