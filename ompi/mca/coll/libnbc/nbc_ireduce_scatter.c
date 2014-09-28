@@ -69,9 +69,12 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   redbuf = ((char*)handle->tmpbuf)+(ext*count);
 
   /* copy data to redbuf if we only have a single node */
-  if((p==1) && !inplace) {
-    res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
-    if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+  if(p==1) {
+    if(!inplace) {
+      res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+      if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+    }
+    goto submit_and_return;
   }
   
   firstred = 1;
@@ -136,6 +139,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
   }
 
+submit_and_return:
   /*NBC_PRINT_SCHED(*schedule);*/
   
   res = NBC_Sched_commit(schedule);
