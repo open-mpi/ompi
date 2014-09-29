@@ -61,15 +61,6 @@ typedef struct {
 } orte_grpcomm_signature_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_signature_t);
 
-/* Struct for temporary storage received during collective data*/
-typedef struct {
-    opal_list_item_t super;
-    uint32_t distance;
-    size_t nreported;
-    opal_buffer_t bucket;
-}orte_grpcomm_data_t;
-OBJ_CLASS_DECLARATION(orte_grpcomm_data_t);
-
 /* Internal component object for tracking ongoing
  * allgather operations */
 typedef struct {
@@ -83,12 +74,10 @@ typedef struct {
     size_t ndmns;
     /* number reported in */
     size_t nreported;
-    /* last reported distance */
-    uint32_t distance_send;
     /* distance masks for receive */
     uint32_t distance_mask_recv;
     /* received buckets */
-    opal_list_t buckets_recv;
+    opal_buffer_t ** buffers;
     /* callback function */
     orte_grpcomm_cbfunc_t cbfunc;
     /* user-provided callback data */

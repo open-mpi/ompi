@@ -119,11 +119,10 @@ static void ccon(orte_grpcomm_coll_t *p)
     p->dmns = NULL;
     p->ndmns = 0;
     p->nreported = 0;
-    p->distance_send = 0;
     p->distance_mask_recv = 0;
     p->cbfunc = NULL;
     p->cbdata = NULL;
-    OBJ_CONSTRUCT(&p->buckets_recv, opal_list_t);
+    p->buffers = NULL;
 }
 static void cdes(orte_grpcomm_coll_t *p)
 {
@@ -134,21 +133,8 @@ static void cdes(orte_grpcomm_coll_t *p)
     if (NULL != p->dmns) {
         free(p->dmns);
     }
-    OBJ_DESTRUCT(&p->buckets_recv);
+    free(p->buffers);
 }
 OBJ_CLASS_INSTANCE(orte_grpcomm_coll_t,
                    opal_list_item_t,
                    ccon, cdes);
-
-static void dcon(orte_grpcomm_data_t *p)
-{
-    p->distance = 0;
-    OBJ_CONSTRUCT(&p->bucket, opal_buffer_t);
-}
-static void ddes(orte_grpcomm_data_t *p)
-{
-    OBJ_DESTRUCT(&p->bucket);
-}
-OBJ_CLASS_INSTANCE(orte_grpcomm_data_t,
-                   opal_list_item_t,
-                   dcon, ddes);
