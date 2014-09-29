@@ -56,6 +56,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     /* always call the callback function */
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
+    frag->endpoint = endpoint;
     mca_btl_vader_frag_complete (frag);
 
     return OPAL_SUCCESS;
@@ -73,12 +74,13 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     struct iovec dst_iov = {.iov_base = dst->seg_addr.pval, .iov_len = size};
     ssize_t ret;
 
-    ret = process_vm_writev (endpoint->seg_ds.seg_cpid, &src_iov, 1, &dst_iov, 1, 0);
+    ret = process_vm_writev (endpoint->seg_ds->seg_cpid, &src_iov, 1, &dst_iov, 1, 0);
     if (ret != (ssize_t)size) {
         opal_output(0, "Wrote %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
         return OPAL_ERROR;
     }
 
+    frag->endpoint = endpoint;
     mca_btl_vader_frag_complete (frag);
 
     return OPAL_SUCCESS;

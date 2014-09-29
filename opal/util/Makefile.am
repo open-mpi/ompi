@@ -67,7 +67,8 @@ headers = \
         stacktrace.h \
         strncpy.h \
         sys_limits.h \
-		uri.h
+        timings.h \
+        uri.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -102,7 +103,11 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         strncpy.c \
         sys_limits.c \
-	uri.c
+        uri.c
+
+if OPAL_COMPILE_TIMING
+libopalutil_la_SOURCES += timings.c
+endif
 
 libopalutil_la_LIBADD = \
         keyval/libopalutilkeyval.la

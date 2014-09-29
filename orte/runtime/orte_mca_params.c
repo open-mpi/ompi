@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -45,7 +45,6 @@
 
 static bool passed_thru = false;
 static int orte_progress_thread_debug_level = -1;
-static char *orte_timing_file = NULL;
 static char *orte_xml_file = NULL;
 static char *orte_fork_agent_string = NULL;
 static char *orte_tmpdir_base = NULL;
@@ -321,47 +320,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_startup_timeout);
  
-    /* check for timing requests */
-    orte_timing_details = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "timing_details",
-                                  "Request that detailed timing data by reported",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_timing_details);
-
-    /* ensure the timing flag is set too */
-    orte_timing = orte_timing_details;
-
-    (void) mca_base_var_register ("orte", "orte", NULL, "timing",
-                                  "Request that critical timing loops be measured",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_timing);
-
-    
-    if (ORTE_PROC_IS_HNP) {
-        orte_timing_file = NULL;
-        (void) mca_base_var_register ("orte", "orte", NULL, "timing_file",
-                                      "Name of the file where timing data is to be written (relative or absolute path)",
-                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                      OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                      &orte_timing_file);
-        if (orte_timing && NULL == orte_timing_file) {
-            /* send the timing output to stdout */
-            orte_timing_output = stdout;
-        } else if (NULL != orte_timing_file) {
-            /* make sure the timing flag is set */
-            orte_timing = true;
-            /* send the output to the indicated file */
-            orte_timing_output = fopen(orte_timing_file,  "w");
-            if (NULL == orte_timing_output) {
-                /* couldn't be opened */
-                opal_output(0, "File %s could not be opened", orte_timing_file);
-                orte_timing_output = stderr;
-            }
-        }        
-    }
-    
     /* User-level debugger info string */
     orte_base_user_debugger = "totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@";
     (void) mca_base_var_register ("orte", "orte", NULL, "base_user_debugger",

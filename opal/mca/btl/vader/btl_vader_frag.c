@@ -42,12 +42,18 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
 void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) item;
-    unsigned int frag_size = (unsigned int)(uintptr_t) ctx;
-    unsigned int data_size = frag_size - sizeof (mca_btl_vader_hdr_t);
+    unsigned int data_size = (unsigned int)(uintptr_t) ctx;
+    unsigned int frag_size = data_size + sizeof (mca_btl_vader_hdr_t);
 
     assert (data_size > 0);
 
+    /* ensure next fragment is aligned on a cache line */
+    frag_size = (frag_size + 63) & ~63;
+
+    OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
+
     if (mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
+        OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
         item->ptr = NULL;
         return;
     }
@@ -68,6 +74,8 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
 
     item->ptr = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
     mca_btl_vader_component.segment_offset += frag_size;
+
+    OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 
     mca_btl_vader_frag_constructor ((mca_btl_vader_frag_t *) item);
 }

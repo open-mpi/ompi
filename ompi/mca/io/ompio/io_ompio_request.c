@@ -23,10 +23,14 @@
 static void mca_io_ompio_request_construct(mca_ompio_request_t* req);
 static void mca_io_ompio_request_destruct(mca_ompio_request_t *req);
 
+bool mca_io_ompio_progress_is_registered=false;
 
 static int mca_io_ompio_request_free ( struct ompi_request_t **req)
 {
     mca_ompio_request_t *ompio_req = ( mca_ompio_request_t *)*req;
+    if ( NULL != ompio_req->req_free_fn ) {
+	ompio_req->req_free_fn (ompio_req );
+    }
     opal_list_remove_item (&mca_io_ompio_pending_requests, &ompio_req->req_item);
 
     OBJ_RELEASE (*req);
@@ -49,6 +53,7 @@ void mca_io_ompio_request_construct(mca_ompio_request_t* req)
     req->req_ompi.req_cancel = mca_io_ompio_request_cancel;
     req->req_data            = NULL;
     req->req_progress_fn     = NULL;
+    req->req_free_fn         = NULL;
 
     OBJ_CONSTRUCT(&req->req_item, opal_list_item_t);
     opal_list_append (&mca_io_ompio_pending_requests, &req->req_item);
@@ -63,4 +68,30 @@ void mca_io_ompio_request_destruct(mca_ompio_request_t* req)
     }
 
     return;
+}
+
+int mca_io_ompio_component_progress ( void )
+{
+    mca_ompio_request_t *req=NULL;
+    opal_list_item_t *litem=NULL;
+    int completed=0;
+
+    OPAL_LIST_FOREACH(litem, &mca_io_ompio_pending_requests, opal_list_item_t) {
+        req = GET_OMPIO_REQ_FROM_ITEM(litem);
+	if ( true == req->req_ompi.req_complete ) {
+	    continue;
+	}
+        if ( NULL != req->req_progress_fn ) {
+            if ( req->req_progress_fn(req) ) {
+                completed++;
+                ompi_request_complete (&req->req_ompi, 1);
+                /* The fbtl progress function is expected to set the 
+		** status elements 
+		*/
+            }
+        }
+        
+    }
+
+    return completed;
 }

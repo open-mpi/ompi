@@ -30,19 +30,30 @@ enum {
     MCA_BTL_VADER_FLAG_INLINE      = 0,
     MCA_BTL_VADER_FLAG_SINGLE_COPY = 1,
     MCA_BTL_VADER_FLAG_COMPLETE    = 2,
+    MCA_BTL_VADER_FLAG_SETUP_FBOX  = 4,
 };
 
 struct mca_btl_vader_frag_t;
 struct mca_btl_vader_fbox_t;
 
+/**
+ * FIFO fragment header
+ */
 struct mca_btl_vader_hdr_t {
-    volatile intptr_t next; /* next item in fifo. many peers may touch this */
+    /** next item in fifo. many peers may touch this */
+    volatile intptr_t next;
+    /** pointer back the the fragment */
     struct mca_btl_vader_frag_t *frag;
-    mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
-    uint8_t flags;          /* vader send flags */
-    uint16_t seqn;
-    int32_t len;            /* length of data following this header */
-    struct iovec sc_iov;    /* io vector containing pointer to single-copy data */
+    /** tag associated with this fragment (used to lookup callback) */
+    mca_btl_base_tag_t tag;
+    /** vader send flags (inline, complete, setup fbox, etc) */
+    uint8_t flags;
+    /** length of data following this header */
+    int32_t len;
+    /** io vector containing pointer to single-copy data */
+    struct iovec sc_iov;
+    /** if the fragment indicates to setup a fast box the base is stored here */
+    intptr_t fbox_base;
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
 
@@ -50,11 +61,17 @@ typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
  * shared memory send fragment derived type.
  */
 struct mca_btl_vader_frag_t {
+    /** base object */
     mca_btl_base_descriptor_t base;
+    /** storage for segment data (max 2) */
     mca_btl_base_segment_t segments[2];
+    /** endpoint this fragment is active on */
     struct mca_btl_base_endpoint_t *endpoint;
-    struct mca_btl_vader_fbox_t *fbox;
-    mca_btl_vader_hdr_t *hdr; /* in the shared memory region */
+    /** fast box in use (or NULL) */
+    unsigned char * restrict fbox;
+    /** fragment header (in the shared memory region) */
+    mca_btl_vader_hdr_t *hdr;
+    /** free list this fragment was allocated within */
     ompi_free_list_t *my_list;
 };
 

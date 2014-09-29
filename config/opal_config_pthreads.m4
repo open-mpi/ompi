@@ -178,43 +178,17 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_C], [
 #
 if test "$opal_pthread_c_success" = "0"; then
   AC_MSG_CHECKING([if C compiler and POSIX threads work as is])
-  if test "$HAVE_POSIX_THREADS" = "1" ; then
-    run_this_test=1
-  else
-    case "${host_cpu}-${host_os}" in
-      *solaris*)
-        AC_MSG_RESULT([no - Solaris, not checked])
-        run_this_test=0
-      ;;
-      *-aix* | *-freebsd*)
-        if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTHREAD_CPPFLAGS="-D_THREAD_SAFE"
-          CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
-        fi
-        run_this_test=1
-      ;;
-      *)
-        if test "`echo $CPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-          PTHREAD_CPPFLAGS="-D_REENTRANT"
-          CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
-        fi
-        run_this_test=1
-      ;;
-    esac
-  fi
 
-  if test "$run_this_test" = "1" ; then
-    AC_LANG_PUSH(C)
-    OPAL_INTL_PTHREAD_TRY_LINK(opal_pthread_c_success=1,
-                              opal_pthread_c_success=0)
-    AC_LANG_POP(C)
-    if test "$opal_pthread_c_success" = "1"; then
-      AC_MSG_RESULT([yes])
-    else
-      PTHREAD_CPPFLAGS=
-      CPPFLAGS="$orig_CPPFLAGS"
-      AC_MSG_RESULT([no])
-    fi
+  AC_LANG_PUSH(C)
+  OPAL_INTL_PTHREAD_TRY_LINK(opal_pthread_c_success=1,
+                            opal_pthread_c_success=0)
+  AC_LANG_POP(C)
+  if test "$opal_pthread_c_success" = "1"; then
+    AC_MSG_RESULT([yes])
+  else
+    PTHREAD_CPPFLAGS=
+    CPPFLAGS="$orig_CPPFLAGS"
+    AC_MSG_RESULT([no])
   fi
 fi
 ])dnl
@@ -226,43 +200,17 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_CXX], [
 #
 if test "$opal_pthread_cxx_success" = "0"; then
   AC_MSG_CHECKING([if C++ compiler and POSIX threads work as is])
-  if test "$HAVE_POSIX_THREADS" = "1" ; then
-    run_this_test=1
-  else
-    case "${host_cpu}-${host_os}" in
-      *solaris*)
-        AC_MSG_RESULT([no - Solaris, not checked])
-        run_this_test=0
-      ;;
-      *-aix* | *-freebsd*)
-        if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-        fi
-        run_this_test=1
-      ;;
-      *)
-        if test "`echo $CXXCPPFLAGS | $GREP 'D_REENTRANT'`" = ""; then
-          PTHREAD_CXXCPPFLAGS="-D_REENTRANT"
-          CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
-        fi
-        run_this_test=1
-      ;;
-    esac
-  fi
 
-  if test "$run_this_test" = "1" ; then
-    AC_LANG_PUSH(C++)
-    OPAL_INTL_PTHREAD_TRY_LINK(opal_pthread_cxx_success=1, 
-                              opal_pthread_cxx_success=0)
-    AC_LANG_POP(C++)
-    if test "$opal_pthread_cxx_success" = "1"; then
-      AC_MSG_RESULT([yes])
-    else
-      PTHREAD_CXXCPPFLAGS=
-      CXXCPPFLAGS="$orig_CXXCPPFLAGS"
-      AC_MSG_RESULT([no])
-    fi
+  AC_LANG_PUSH(C++)
+  OPAL_INTL_PTHREAD_TRY_LINK(opal_pthread_cxx_success=1, 
+                            opal_pthread_cxx_success=0)
+  AC_LANG_POP(C++)
+  if test "$opal_pthread_cxx_success" = "1"; then
+    AC_MSG_RESULT([yes])
+  else
+    PTHREAD_CXXCPPFLAGS=
+    CXXCPPFLAGS="$orig_CXXCPPFLAGS"
+    AC_MSG_RESULT([no])
   fi
 fi
 ])dnl
@@ -274,30 +222,15 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_FC], [
 #
 if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
   AC_MSG_CHECKING([if Fortran compiler and POSIX threads work as is])
-  if test "$HAVE_POSIX_THREADS" = "1" ; then
-    run_this_test=1
-  else
-    case "${host_cpu}-${host_os}" in
-      *solaris*)
-        AC_MSG_RESULT([no - Solaris, not checked])
-        run_this_test=0
-      ;;
-      *)
-        run_this_test=1
-      ;;
-    esac
-  fi
 
-  if test "$run_this_test" = "1" ; then
-    AC_LANG_PUSH(C)
-    OPAL_INTL_PTHREAD_TRY_LINK_FORTRAN(opal_pthread_fortran_success=1, 
-                                       opal_pthread_fortran_success=0)
-    AC_LANG_POP(C)
-    if test "$opal_pthread_fortran_success" = "1"; then
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-    fi
+  AC_LANG_PUSH(C)
+  OPAL_INTL_PTHREAD_TRY_LINK_FORTRAN(opal_pthread_fortran_success=1, 
+                                     opal_pthread_fortran_success=0)
+  AC_LANG_POP(C)
+  if test "$opal_pthread_fortran_success" = "1"; then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
   fi
 fi
 ])dnl
@@ -340,7 +273,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_C], [
 # C compiler
 #
 if test "$opal_pthread_c_success" = "0"; then
-  for pf in "" $pflags; do
+  for pf in $pflags; do
     AC_MSG_CHECKING([if C compiler and POSIX threads work with $pf])
     CFLAGS="$orig_CFLAGS $pf"
     AC_LANG_PUSH(C)
@@ -366,7 +299,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX], [
 # C++ compiler
 #
 if test "$opal_pthread_cxx_success" = "0"; then
-  for pf in "" $pflags; do
+  for pf in $pflags; do
     AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $pf])
     CXXFLAGS="$orig_CXXFLAGS $pf"
     AC_LANG_PUSH(C++)
@@ -392,7 +325,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 # Fortran compiler
 #
 if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
-  for pf in "" $pflags; do
+  for pf in $pflags; do
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
     FCFLAGS="$orig_FCFLAGS $pf"
     AC_LANG_PUSH(C)

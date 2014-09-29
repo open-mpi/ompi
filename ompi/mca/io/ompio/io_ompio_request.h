@@ -29,6 +29,7 @@
 BEGIN_C_DECLS
 
 extern opal_list_t mca_io_ompio_pending_requests;
+extern bool mca_io_ompio_progress_is_registered;
 
 /**
  * Type of request.
@@ -45,22 +46,20 @@ typedef enum {
  * Main structure for OMPIO requests
  */
 struct mca_ompio_request_t {
-    ompi_request_t                               req_ompi;
-    mca_ompio_request_type_t                     req_type;
-    void                                        *req_data;
-    opal_list_item_t                             req_item;
-    mca_fbtl_base_module_progress_fn_t   *req_progress_fn;
+    ompi_request_t                                 req_ompi;
+    mca_ompio_request_type_t                       req_type;
+    void                                          *req_data;
+    opal_list_item_t                               req_item;
+    mca_fbtl_base_module_progress_fn_t      req_progress_fn;
+    mca_fbtl_base_module_request_free_fn_t      req_free_fn;
 };
 typedef struct mca_ompio_request_t mca_ompio_request_t;
 OBJ_CLASS_DECLARATION(mca_ompio_request_t);
 
-#define container_of(ptr, type, member) ({ \
-    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-    (type *)( (char *)__mptr - offsetof(type,member) );})
+#define GET_OMPIO_REQ_FROM_ITEM(ITEM) ((mca_ompio_request_t *)((char *)ITEM - offsetof(struct mca_ompio_request_t,req_item)))
+ 
 
-#define GET_OMPIO_REQ_FROMM_ITEM(ITEM)  container_of((ITEM), mca_ompio_request_t, req_item)
-
-
+OMPI_DECLSPEC int mca_io_ompio_component_progress ( void);
 
 END_C_DECLS
 

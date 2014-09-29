@@ -108,6 +108,7 @@ static void send_msg(int fd, short args, void *cbdata)
                          "%s rml_send_msg to peer %s at tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer), tag));
+    OPAL_TIMING_EVENT((&tm_rml, "to %s", ORTE_NAME_PRINT(peer)));
 
     /* if this is a message to myself, then just post the message
      * for receipt - no need to dive into the oob

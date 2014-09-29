@@ -9,6 +9,8 @@
  * $HEADER$
  */
 
+#include "btl_vader.h"
+
 #include "opal/include/opal/align.h"
 #include "btl_vader_xpmem.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -17,17 +19,20 @@
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
-mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *ep, void *rem_ptr,
 						      size_t size, int flags, void **local_ptr)
 {
-    struct mca_rcache_base_module_t *rcache = endpoint->rcache;
+    struct mca_rcache_base_module_t *rcache = ep->rcache;
     mca_mpool_base_registration_t *regs[10], *reg = NULL;
     xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
     int rc, i;
 
+    /* protect rcache access */
+    OPAL_THREAD_LOCK(&ep->lock);
+
     /* use btl/self for self communication */
-    assert (endpoint->peer_smp_rank != MCA_BTL_VADER_LOCAL_RANK);
+    assert (ep->peer_smp_rank != MCA_BTL_VADER_LOCAL_RANK);
 
     base = (uintptr_t) down_align_addr(rem_ptr, mca_btl_vader_component.log_attach_align);
     bound = (uintptr_t) up_align_addr((void *)((uintptr_t) rem_ptr + size - 1),
@@ -80,14 +85,15 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
         reg->flags = flags;
 
 #if defined(HAVE_SN_XPMEM_H)
-        xpmem_addr.id     = endpoint->apid;
+        xpmem_addr.id     = ep->apid;
 #else
-        xpmem_addr.apid   = endpoint->apid;
+        xpmem_addr.apid   = ep->apid;
 #endif
         xpmem_addr.offset = base;
 
         reg->alloc_base = xpmem_attach (xpmem_addr, bound - base, NULL);
         if (OPAL_UNLIKELY((void *)-1 == reg->alloc_base)) {
+            OPAL_THREAD_UNLOCK(&ep->lock);
             OBJ_RELEASE(reg);
             return NULL;
         }
@@ -102,16 +108,23 @@ reg_found:
     *local_ptr = (void *) ((uintptr_t) reg->alloc_base +
                            (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
 
+    OPAL_THREAD_UNLOCK(&ep->lock);
+
     return reg;
 }
 
-void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
+void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
 {
-    struct mca_rcache_base_module_t *rcache = endpoint->rcache;
+    struct mca_rcache_base_module_t *rcache = ep->rcache;
+    int32_t ref_count;
 
-    opal_atomic_add (&reg->ref_count, -1);
-    if (OPAL_UNLIKELY(0 == reg->ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
+    ref_count = opal_atomic_add_32 (&reg->ref_count, -1);
+    if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
+        /* protect rcache access */
+        OPAL_THREAD_LOCK(&ep->lock);
         rcache->rcache_delete (rcache, reg);
+        OPAL_THREAD_UNLOCK(&ep->lock);
+
         opal_memchecker_base_mem_noaccess (reg->alloc_base, (uintptr_t)(reg->bound - reg->base));
         (void)xpmem_detach (reg->alloc_base);
         OBJ_RELEASE (reg);

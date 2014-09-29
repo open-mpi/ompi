@@ -103,7 +103,7 @@ static int plm_alps_register(void)
         mca_plm_alps_component.debug = orte_debug_flag;
     }
 
-    mca_plm_alps_component.priority = 75;
+    mca_plm_alps_component.priority = 100;
     (void) mca_base_component_var_register (comp, "priority", "Default selection priority",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                             OPAL_INFO_LVL_9,
@@ -128,8 +128,6 @@ static int plm_alps_register(void)
 
 static int plm_alps_open(void)
 {
-    mca_plm_alps_component.timing = orte_timing;
-
     return ORTE_SUCCESS;
 }
 

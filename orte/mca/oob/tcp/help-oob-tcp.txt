@@ -64,4 +64,3 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
-  

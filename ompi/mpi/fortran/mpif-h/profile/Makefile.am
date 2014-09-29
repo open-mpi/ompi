@@ -47,7 +47,7 @@ endif
 headers = \
     defines.h
 
-nodist_libmpi_mpifh_pmpi_la_SOURCES = \
+linked_files = \
         pabort_f.c \
         padd_error_class_f.c \
         padd_error_code_f.c \
@@ -348,7 +348,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
 
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
-nodist_libmpi_mpifh_pmpi_la_SOURCES += \
+linked_files += \
         pfile_call_errhandler_f.c \
         pfile_close_f.c \
         pfile_create_errhandler_f.c \
@@ -410,11 +410,29 @@ endif
 #
 # Sym link in the sources from the real MPI directory
 #
-$(nodist_libmpi_mpifh_pmpi_la_SOURCES):
+$(linked_files):
 	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 	    pname=`echo $@ | cut -b '2-'` ; \
 	    $(LN_S) $(top_srcdir)/ompi/mpi/fortran/mpif-h/$$pname $@ ; \
 	fi
+
+# psizeof_f.f90 is generated based on some results from configure tests.
+CLEANFILES += psizeof_f.f90
+sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+psizeof_f.f90: $(top_builddir)/config.status
+psizeof_f.f90: $(sizeof_pl)
+psizeof_f.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=mandatory --pmpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+#
+# The library itself
+#
+nodist_libmpi_mpifh_pmpi_la_SOURCES = \
+        psizeof_f.f90 \
+        $(linked_files)
 
 # Conditionally install the header files
 

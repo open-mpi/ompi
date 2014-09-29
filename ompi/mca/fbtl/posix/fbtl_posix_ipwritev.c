@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,97 +20,65 @@
 #include "ompi_config.h"
 #include "fbtl_posix.h"
 
-#include "mpi.h"
 #include <unistd.h>
 #include <sys/uio.h>
+#if HAVE_AIO_H
 #include <aio.h>
+#endif
+
+#include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
 ssize_t  mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
-				 ompi_request_t **request)
+				 ompi_request_t *request)
 {
-    int i;
-    int num_req = 0;
-    int merge = 0;
-    size_t k;
-    char *merge_buf = NULL;
-    size_t merge_length = 0;
-    OMPI_MPI_OFFSET_TYPE merge_offset = 0;
-    struct aiocb *aiocbp;
+#if defined(FBTL_POSIX_HAVE_AIO)
+    mca_fbtl_posix_request_data_t *data;
+    mca_ompio_request_t *req = (mca_ompio_request_t *) request;
+    int i=0;
 
-    aiocbp = (struct aiocb *) malloc (sizeof(struct aiocb) * 
-                                      fh->f_num_of_io_entries);
-    if (NULL == aiocbp) {
+    data = (mca_fbtl_posix_request_data_t *) malloc ( sizeof (mca_fbtl_posix_request_data_t));
+    if ( NULL == data ) {
+        opal_output (1,"could not allocate memory\n");
+        return 0;
+    }
+    
+    data->aio_req_count = fh->f_num_of_io_entries;
+    data->aio_open_reqs = fh->f_num_of_io_entries;
+    data->aio_total_len = 0;
+    data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) * 
+                                              fh->f_num_of_io_entries);
+    if (NULL == data->aio_reqs) {
         opal_output(1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return 0;
     }
 
-    for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
-	if (fh->f_num_of_io_entries != i+1) {
-	    if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
-		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
-		(OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset) {
-		if (!merge) {
-		    merge_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
-			fh->f_io_array[i].offset;
-		    merge_length = fh->f_io_array[i].length;
-		}
-		merge_length += fh->f_io_array[i+1].length;
-		merge++;
-		continue;
-	    }
-	}
-	
-	if (merge) {
-	    merge_buf = malloc (merge_length);
-	    if (NULL == merge_buf) {
-		opal_output(1, "OUT OF MEMORY\n");
-		return OMPI_ERR_OUT_OF_RESOURCE;
-	    }
-	    k = 0;
-	    while (merge >= 0) {
-		memcpy (merge_buf + k, 
-			fh->f_io_array[i-merge].memory_address,
-			fh->f_io_array[i-merge].length);
-		k += fh->f_io_array[i-merge].length;
-		merge --;
-	    }
-	    aiocbp[num_req].aio_offset  = merge_offset;
-	    aiocbp[num_req].aio_buf     = merge_buf;
-	    aiocbp[num_req].aio_nbytes  = merge_length;
-	    aiocbp[num_req].aio_fildes  = fh->fd;
-	    aiocbp[num_req].aio_reqprio = 0;
-	    aiocbp[num_req].aio_sigevent.sigev_notify = SIGEV_NONE;
-	    
-	    if (-1 == aio_write(&aiocbp[num_req])) {
-		perror("aio_write() error");
-		return OMPI_ERROR;
-	    }
-	    merge = 0;
-	    merge_offset = 0;
-	    merge_length = 0;
-	    if (NULL != merge_buf) {
-		free (merge_buf);
-		merge_buf = NULL;
-	    }
-	}
-	else {
-	    aiocbp[num_req].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
-                    fh->f_io_array[i].offset;
-	    aiocbp[num_req].aio_buf     = fh->f_io_array[i].memory_address;
-	    aiocbp[num_req].aio_nbytes  = fh->f_io_array[i].length;
-	    aiocbp[num_req].aio_fildes  = fh->fd;
-	    aiocbp[num_req].aio_reqprio = 0;
-	    aiocbp[num_req].aio_sigevent.sigev_notify = SIGEV_NONE;
-	    
-	    if (-1 == aio_write(&aiocbp[num_req])) {
-		perror("aio_write() error");
-		return OMPI_ERROR;
-	    }
-	}
-	num_req ++;
+    data->aio_req_status = (int *) malloc (sizeof(int) * fh->f_num_of_io_entries);
+    if (NULL == data->aio_req_status) {
+        opal_output(1, "OUT OF MEMORY\n");
+        return 0;
     }
 
+    for ( i=0; i<fh->f_num_of_io_entries; i++ ) {
+        data->aio_reqs[i].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
+            fh->f_io_array[i].offset;
+        data->aio_reqs[i].aio_buf     = fh->f_io_array[i].memory_address;
+        data->aio_reqs[i].aio_nbytes  = fh->f_io_array[i].length;
+        data->aio_reqs[i].aio_fildes  = fh->fd;
+        data->aio_reqs[i].aio_reqprio = 0;
+        data->aio_reqs[i].aio_sigevent.sigev_notify = SIGEV_NONE;
+	data->aio_req_status[i]        = EINPROGRESS;
+        
+        if (-1 == aio_write(&data->aio_reqs[i])) {
+            perror("aio_write() error");
+            return OMPI_ERROR;
+        }
+    }
+
+    req->req_data = data;
+    req->req_progress_fn = mca_fbtl_posix_progress;
+    req->req_free_fn     = mca_fbtl_posix_request_free;
+#endif
     return OMPI_SUCCESS;
 }

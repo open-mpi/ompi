@@ -52,6 +52,7 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/timings.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -94,9 +95,11 @@ int ompi_mpi_finalize(void)
     int ret;
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
-    struct timeval ompistart, ompistop;
     ompi_proc_t** procs;
     size_t nprocs;
+    OPAL_TIMING_DECLARE(tm);
+    OPAL_TIMING_INIT(&tm);
+
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -148,9 +151,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* check to see if we want timing information */
-    if (ompi_enable_timing != 0 && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistart, NULL);
-    }
+    OPAL_TIMING_EVENT((&tm,"Start barrier"));
 
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
@@ -231,13 +232,9 @@ int ompi_mpi_finalize(void)
 
     /* check for timing request - get stop time and report elapsed
      time if so */
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_finalize[%ld]: time to execute barrier %ld usec",
-                    (long)OMPI_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-    }
+    OPAL_TIMING_EVENT((&tm,"Finish barrier"));
+    OPAL_TIMING_REPORT(ompi_enable_timing, &tm, "MPI_Finish");
+    OPAL_TIMING_RELEASE(&tm);
 
     /*
      * Shutdown the Checkpoint/Restart Mech.

@@ -36,6 +36,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
+#include "opal/util/timings.h"
 #include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -163,6 +164,9 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                          (int)msg->iov.iov_len,
                          ORTE_NAME_PRINT(&msg->sender),
                          msg->tag));
+
+    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
+                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
 
     /* see if we have a waiting recv for this message */
     OPAL_LIST_FOREACH(post, &orte_rml_base.posted_recvs, orte_rml_posted_recv_t) {

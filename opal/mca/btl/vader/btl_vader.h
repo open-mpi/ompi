@@ -64,9 +64,11 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/util/proc.h"
-
 #include "btl_vader_endpoint.h"
+
+#include "opal/mca/pmix/pmix.h"
 
 BEGIN_C_DECLS
 
@@ -97,30 +99,39 @@ struct mca_btl_vader_component_t {
     mca_btl_base_component_2_0_0_t super;   /**< base BTL component */
     int vader_free_list_num;                /**< initial size of free lists */
     int vader_free_list_max;                /**< maximum size of free lists */
-    int vader_free_list_inc;                /**< number of elements to alloc
-                                             * when growing free lists */
+    int vader_free_list_inc;                /**< number of elements to alloc when growing free lists */
 #if OPAL_BTL_VADER_HAVE_XPMEM
-    xpmem_segid_t my_seg_id;                /* this rank's xpmem segment id */
+    xpmem_segid_t my_seg_id;                /**< this rank's xpmem segment id */
 #else
-    opal_shmem_ds_t seg_ds;                 /* this rank's shared memory segment */
+    opal_shmem_ds_t seg_ds;                 /**< this rank's shared memory segment */
 #endif
 
-    char *my_segment;                       /* this rank's base pointer */
-    size_t segment_size;                    /* size of my_segment */
-    size_t segment_offset;                  /* start of unused portion of my_segment */
+    opal_mutex_t lock;                      /**< lock to protect concurrent updates to this structure's members */
+    char *my_segment;                       /**< this rank's base pointer */
+    size_t segment_size;                    /**< size of my_segment */
+    size_t segment_offset;                  /**< start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
     ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
 #if !OPAL_BTL_VADER_HAVE_XPMEM
-    ompi_free_list_t vader_frags_max_send;
+    ompi_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
 #endif
     ompi_free_list_t vader_frags_user;      /**< free list of vader put/get frags */
 
-    int memcpy_limit;                       /** Limit where we switch from memmove to memcpy */
-    int log_attach_align;                   /** Log of the alignment for xpmem segments */
-    unsigned int max_inline_send;           /** Limit for copy-in-copy-out fragments */
+    unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
+    unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */
+    unsigned int fbox_size;                 /**< size of each peer fast box allocation */
+    unsigned int fbox_count;                /**< number of send fast boxes allocated  */
 
-    struct mca_btl_base_endpoint_t *endpoints;
-    struct vader_fifo_t *my_fifo;
+    int memcpy_limit;                       /**< Limit where we switch from memmove to memcpy */
+    int log_attach_align;                   /**< Log of the alignment for xpmem segments */
+    unsigned int max_inline_send;           /**< Limit for copy-in-copy-out fragments */
+
+    mca_btl_base_endpoint_t *endpoints;     /**< array of local endpoints (one for each local peer including myself) */
+    mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
+    unsigned int num_fbox_in_endpoints;     /**< number of fast boxes to poll */
+    struct vader_fifo_t *my_fifo;           /**< pointer to the local fifo */
+
+    opal_list_t pending_endpoints;          /**< list of endpoints with pending fragments */
 };
 typedef struct mca_btl_vader_component_t mca_btl_vader_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_vader_component_t mca_btl_vader_component;
@@ -135,16 +146,6 @@ struct mca_btl_vader_t {
 };
 typedef struct mca_btl_vader_t mca_btl_vader_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
-
-/***
- * One or more FIFO components may be a pointer that must be
- * accessed by multiple processes.  Since the shared region may
- * be mmapped differently into each process's address space,
- * these pointers will be relative to some base address.  Here,
- * we define macros to translate between relative addresses and
- * virtual addresses.
- */
-
 
 /* number of peers on the node (not including self) */
 #define MCA_BTL_VADER_NUM_LOCAL_PEERS opal_process_info.num_local_peers

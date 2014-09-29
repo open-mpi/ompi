@@ -100,6 +100,9 @@ struct cudaFunctionTable {
     int (*cuEventSynchronize)(CUevent);
     int (*cuStreamSynchronize)(CUstream);
     int (*cuStreamDestroy)(CUstream);
+#if OPAL_CUDA_GET_ATTRIBUTES
+    int (*cuPointerGetAttributes)(unsigned int, CUpointer_attribute *, void **, CUdeviceptr);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -184,7 +187,6 @@ static int cuda_event_htod_most = 0;
 opal_lt_dlhandle libcuda_handle = NULL;
 
 #define CUDA_COMMON_TIMING 0
-#define OPAL_CHECK_MANAGED_MEMORY 0
 #if OPAL_ENABLE_DEBUG
 /* Some timing support structures.  Enable this to help analyze
  * internal performance issues. */
@@ -495,6 +497,9 @@ int mca_common_cuda_stage_one_init(void)
     OPAL_CUDA_DLSYM(libcuda_handle, cuEventSynchronize);
     OPAL_CUDA_DLSYM(libcuda_handle, cuStreamSynchronize);
     OPAL_CUDA_DLSYM(libcuda_handle, cuStreamDestroy);
+#if OPAL_CUDA_GET_ATTRIBUTES
+    OPAL_CUDA_DLSYM(libcuda_handle, cuPointerGetAttributes);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
     return 0;
 }
 
@@ -1712,43 +1717,36 @@ static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
 
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
-#if OPAL_CHECK_MANAGED_MEMORY
-/**
- * Function to determine if a GPU buffer is a managed buffer.
- */
-static int mca_common_cuda_is_managed_buffer(const void *pUserBuf)
-{
-    int res;
-    CUmemorytype isManaged;
-    CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
-
-    res = cuFunc.cuPointerGetAttribute(&isManaged,
-                                       CU_POINTER_ATTRIBUTE_IS_MANAGED, dbuf);
-
-    if (res != CUDA_SUCCESS) {
-        /* If we cannot determine if is managed,
-         * just assume it is not. */
-        return 0;
-    } else if (1 == isManaged) {
-        /* Yes, managed memory */
-        opal_output(-1, "CUDA: cuPointerGetAttribute: "
-                    "res=%d, ptr=%p, isManaged=%d", res, pUserBuf, isManaged);
-        return 1;
-    } else {
-        /* Nope, not managed */
-        return 0;
-    }
-}
-#endif /* OPAL_CHECK_MANANGED_MEMORY */
-
 /* Routines that get plugged into the opal datatype code */
 static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
 {
     int res;
-    CUmemorytype memType;
+    CUmemorytype memType = 0;
     CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
     CUcontext ctx = NULL;
+#if OPAL_CUDA_GET_ATTRIBUTES
+    uint32_t isManaged = 0;
+    /* With CUDA 7.0, we can get multiple attributes with a single call */
+    CUpointer_attribute attributes[3] = {CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
+                                         CU_POINTER_ATTRIBUTE_CONTEXT,
+                                         CU_POINTER_ATTRIBUTE_IS_MANAGED};
+    void *attrdata[] = {(void *)&memType, (void *)&ctx, (void *)&isManaged};
 
+    res = cuFunc.cuPointerGetAttributes(3, attributes, attrdata, dbuf);
+    if (res != CUDA_SUCCESS) {
+        /* If we cannot determine it is device pointer,
+         * just assume it is not. */
+        return 0;
+    } else if (memType == CU_MEMORYTYPE_HOST) {
+        /* Host memory, nothing to do here */
+        return 0;
+    } else if (memType == 0) {
+        /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
+        return 0;
+    }
+    /* Must be a device pointer */
+    assert(memType == CU_MEMORYTYPE_DEVICE);
+#else /* OPAL_CUDA_GET_ATTRIBUTES */
     res = cuFunc.cuPointerGetAttribute(&memType,
                                        CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (res != CUDA_SUCCESS) {
@@ -1771,6 +1769,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
      * and set the current context to that.  It is rare that we will not
      * have a context. */
     res = cuFunc.cuCtxGetCurrent(&ctx);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
     if (OPAL_UNLIKELY(NULL == ctx)) {
         if (CUDA_SUCCESS == res) {
             res = cuFunc.cuPointerGetAttribute(&ctx,
@@ -1798,14 +1797,14 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
         }
     }
 
-#if OPAL_CHECK_MANAGED_MEMORY
-    /* Currently cannot support managed memory */
-    if (1 == mca_common_cuda_is_managed_buffer(pUserBuf)) {
+#if OPAL_CUDA_GET_ATTRIBUTES
+    if (1 == isManaged) {
+        /* Currently cannot support managed memory */
         opal_output(0, "CUDA: ptr=%p: CUDA-aware Open MPI detected managed memory but there "
                     "is no support for it.  Result will be unpredictable.", pUserBuf);
         return OPAL_ERROR;
     }
-#endif /* OPAL_CHECK_MANAGED_MEMORY */
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
 
     /* First access on a device pointer finalizes CUDA support initialization.
      * If initialization fails, disable support. */

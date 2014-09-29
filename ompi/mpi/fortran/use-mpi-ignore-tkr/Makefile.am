@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 # This Makefile is only relevant if we're building the ignore-TKR "use
 # mpi" MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS
@@ -27,19 +29,51 @@ mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/attr-fn-int-callback-inte
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/conversion-fn-null-int-interface.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.f90
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
 
 libmpi_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr.F90
-# These files are generated; do not distribute them
 nodist_libmpi_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
         mpi-ignore-tkr-file-interfaces.h
 
+if BUILD_FORTRAN_SIZEOF
+# These files are generated; do not distribute them
+nodist_libmpi_usempi_ignore_tkr_la_SOURCES += \
+        mpi-ignore-tkr-sizeof.h \
+        mpi-ignore-tkr-sizeof.f90
+endif
+
 #
-# Clean up all module files
+# mpi-ignore-tkr-sizeof.* are generated based on some results from
+# configure tests.
 #
 
+sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+
+mpi-ignore-tkr-sizeof.h: $(top_builddir)/config.status
+mpi-ignore-tkr-sizeof.h: $(sizeof_pl)
+mpi-ignore-tkr-sizeof.h:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --header=$@ --ierror=mandatory \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+mpi-ignore-tkr-sizeof.f90: $(top_builddir)/config.status
+mpi-ignore-tkr-sizeof.f90: $(sizeof_pl)
+mpi-ignore-tkr-sizeof.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=mandatory --mpi --pmpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+#
+# Clean up generated and module files
+#
+
+CLEANFILES += mpi-ignore-tkr-sizeof.h mpi-ignore-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
 CLEANFILES += *.i90
 

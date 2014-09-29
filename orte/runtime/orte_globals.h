@@ -435,9 +435,6 @@ ORTE_DECLSPEC orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc
 ORTE_DECLSPEC orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job);
 
 /* global variables used by RTE - instanced in orte_globals.c */
-ORTE_DECLSPEC extern bool orte_timing;
-ORTE_DECLSPEC extern FILE *orte_timing_output;
-ORTE_DECLSPEC extern bool orte_timing_details;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag;
 ORTE_DECLSPEC extern bool orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;

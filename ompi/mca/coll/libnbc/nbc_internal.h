@@ -8,6 +8,7 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  *
  */
 #ifndef __NBC_INTERNAL_H__
@@ -20,6 +21,10 @@
 #include "mpi.h"
 
 #include "coll_libnbc.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_datatype_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -483,7 +488,11 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
   OPAL_PTRDIFF_TYPE ext, lb;
   void *packbuf;
 
+#if OPAL_CUDA_SUPPORT
+  if((srctype == tgttype) && NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
+#else
   if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
+#endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent(srctype, &lb, &ext);
@@ -511,7 +520,11 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
   int size, pos, res;
   OPAL_PTRDIFF_TYPE ext, lb;
 
+#if OPAL_CUDA_SUPPORT
+  if(NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
+#else
   if(NBC_Type_intrinsic(srctype)) {
+#endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent (srctype, &lb, &ext);

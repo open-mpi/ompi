@@ -41,6 +41,7 @@
 
 #include "opal/dss/dss_types.h"
 #include "opal/mca/mca.h"
+#include "opal/util/timings.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -48,6 +49,7 @@
 
 BEGIN_C_DECLS
 
+OPAL_TIMING_DECLARE_EXT(ORTE_DECLSPEC, tm_rml)
 
 /*
  * MCA Framework
@@ -81,6 +83,9 @@ ORTE_DECLSPEC void orte_rml_base_comm_stop(void);
 typedef struct {
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
+#if OPAL_ENABLE_TIMING
+    bool timing;
+#endif
 } orte_rml_base_t;
 ORTE_DECLSPEC extern orte_rml_base_t orte_rml_base;
 

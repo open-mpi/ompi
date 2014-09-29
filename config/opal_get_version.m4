@@ -104,7 +104,7 @@ m4_define([OPAL_GET_VERSION],[
                     # can find the "git" command.
                     git --version > /dev/null 2>&1
                     if test $? = 0; then
-                        $2_REPO_REV=git`git log -1 "$srcdir" | grep ^commit | awk '{ print $2 }'`
+                        $2_REPO_REV=git`git log --pretty=format:'%h' -1`
                     else
                         # The following is too long for Fortran
                         # $2_REPO_REV="unknown hg version (hg not found); $d"

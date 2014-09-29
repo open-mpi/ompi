@@ -24,8 +24,6 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/pmix/pmix.h"
-
 #include "btl_vader.h"
 #include "btl_vader_endpoint.h"
 #include "btl_vader_fifo.h"
@@ -105,8 +103,13 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     /* generate the endpoints */
     component->endpoints = (struct mca_btl_base_endpoint_t *) calloc (n + 1, sizeof (struct mca_btl_base_endpoint_t));
     component->endpoints[n].peer_smp_rank = -1;
+    component->fbox_in_endpoints = calloc (n + 1, sizeof (void *));
 
-    component->segment_offset = (n - 1) * MCA_BTL_VADER_FBOX_PEER_SIZE + MCA_BTL_VADER_FIFO_SIZE;
+    if (NULL == component->endpoints || NULL == component->fbox_in_endpoints) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    component->segment_offset = MCA_BTL_VADER_FIFO_SIZE;
 
     /* initialize fragment descriptor free lists */
     /* initialize free list for put/get/single copy/inline fragments */
@@ -118,8 +121,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
                                     component->vader_free_list_max,
                                     component->vader_free_list_inc,
                                     NULL, mca_btl_vader_frag_init,
-                                    (void *) (sizeof(mca_btl_vader_hdr_t) +
-                                              mca_btl_vader_component.max_inline_send));
+                                    (void *)(intptr_t) mca_btl_vader_component.max_inline_send);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -133,8 +135,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
                                     component->vader_free_list_max,
                                     component->vader_free_list_inc,
                                     NULL, mca_btl_vader_frag_init,
-                                    (void *) (sizeof (mca_btl_vader_hdr_t) +
-                                              mca_btl_vader.super.btl_eager_limit));
+                                    (void *)(intptr_t) mca_btl_vader.super.btl_eager_limit);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -149,8 +150,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
                                     component->vader_free_list_max,
                                     component->vader_free_list_inc,
                                     NULL, mca_btl_vader_frag_init,
-                                    (void *) (sizeof (mca_btl_vader_hdr_t) +
-                                              mca_btl_vader.super.btl_max_send_size));
+                                    (void *)(intptr_t) mca_btl_vader.super.btl_max_send_size);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -164,18 +164,17 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
 
 static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_proc_t *proc, int remote_rank) {
-    const int fbox_in_offset = MCA_BTL_VADER_LOCAL_RANK - (MCA_BTL_VADER_LOCAL_RANK > remote_rank);
-    const int fbox_out_offset = remote_rank - (MCA_BTL_VADER_LOCAL_RANK < remote_rank);
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     struct vader_modex_t *modex;
     size_t msg_size;
     int rc;
 
+    OBJ_CONSTRUCT(ep, mca_btl_vader_endpoint_t);
+
     ep->peer_smp_rank = remote_rank;
 
     if (remote_rank != MCA_BTL_VADER_LOCAL_RANK) {
-        OPAL_MODEX_RECV(rc, &component->super.btl_version,
-                        proc, (uint8_t**)&modex, &msg_size);
+        OPAL_MODEX_RECV(rc, &component->super.btl_version, proc, (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
@@ -189,24 +188,23 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
                                       MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
 #else
         msg_size -= offsetof (struct vader_modex_t, seg_ds);
-        memcpy (&ep->seg_ds, &modex->seg_ds, msg_size);
-        ep->segment_base = opal_shmem_segment_attach (&ep->seg_ds);
+
+        /* store a copy of the segment information for detach */
+        ep->seg_ds = malloc (msg_size);
+        if (NULL == ep->seg_ds) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        memcpy (ep->seg_ds, &modex->seg_ds, msg_size);
+
+        ep->segment_base = opal_shmem_segment_attach (ep->seg_ds);
         if (NULL == ep->segment_base) {
             return rc;
         }
 #endif
+        OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
 
         free (modex);
-
-        ep->next_fbox_out = 0;
-        ep->next_fbox_in  = 0;
-        ep->next_sequence = 0;
-        ep->expected_sequence = 0;
-
-        ep->fbox_in  = (struct mca_btl_vader_fbox_t * restrict) (ep->segment_base + MCA_BTL_VADER_FIFO_SIZE +
-                                                                 fbox_in_offset * MCA_BTL_VADER_FBOX_PEER_SIZE);
-        ep->fbox_out = (struct mca_btl_vader_fbox_t * restrict) (component->my_segment + MCA_BTL_VADER_FIFO_SIZE +
-                                                                 fbox_out_offset * MCA_BTL_VADER_FBOX_PEER_SIZE);
     } else {
         /* set up the segment base so we can calculate a virtual to real for local pointers */
         ep->segment_base = component->my_segment;
@@ -219,36 +217,10 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
 
 static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
-
-    if (NULL != ep->fbox_out) {
-#if OPAL_BTL_VADER_HAVE_XPMEM
-        if (ep->rcache) {
-            /* clean out the registration cache */
-            const int nregs = 100;
-            mca_mpool_base_registration_t *regs[nregs];
-            int reg_cnt;
-
-            do {
-                reg_cnt = ep->rcache->rcache_find_all(ep->rcache, 0, (size_t)-1,
-                                                      regs, nregs);
-
-                for (int i = 0 ; i < reg_cnt ; ++i) {
-                    /* otherwise dereg will fail on assert */
-                    regs[i]->ref_count = 0;
-                    OBJ_RELEASE(regs[i]);
-                }
-            } while (reg_cnt == nregs);
-
-            ep->rcache = NULL;
-        }
-        xpmem_release (ep->apid);
-#else
-        opal_shmem_segment_detach (&ep->seg_ds);
-#endif
+    /* check if the endpoint is initialized. avoids a double-destruct */
+    if (ep->fifo) {
+        OBJ_DESTRUCT(ep);
     }
-
-    ep->fbox_in = ep->fbox_out = NULL;
-    ep->segment_base = NULL;
 
     return OPAL_SUCCESS;
 }
@@ -378,7 +350,12 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
     }
 
     free (component->endpoints);
+    component->endpoints = NULL;
+
     vader_btl->btl_inited = false;
+
+    free (component->fbox_in_endpoints);
+    component->fbox_in_endpoints = NULL;
 
 #if !OPAL_BTL_VADER_HAVE_XPMEM
     opal_shmem_unlink (&mca_btl_vader_component.seg_ds);
@@ -488,8 +465,8 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                                                             uint32_t flags)
 {
     const size_t total_size = reserve + *size;
-    mca_btl_vader_fbox_t *fbox;
     mca_btl_vader_frag_t *frag;
+    unsigned char *fbox;
     void *data_ptr;
     int rc;
 
@@ -562,15 +539,14 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                      * fragment does not belong to the caller */
                     fbox = mca_btl_vader_reserve_fbox (endpoint, total_size);
                     if (OPAL_LIKELY(fbox)) {
-                        frag->segments[0].seg_addr.pval = fbox->data;
+                        frag->segments[0].seg_addr.pval = fbox;
                     }
 
                     frag->fbox = fbox;
                 }
 
                 /* NTH: the covertor adds some latency so we bypass it here */
-                vader_memmove ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve),
-                               data_ptr, *size);
+                memcpy ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve), data_ptr, *size);
                 frag->segments[0].seg_len = total_size;
 #if OPAL_BTL_VADER_HAVE_XPMEM
             }
@@ -602,3 +578,61 @@ static int vader_ft_event (int state)
 {
     return OPAL_SUCCESS;
 }
+
+static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
+{
+    OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
+    ep->fifo = NULL;
+}
+
+static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
+{
+    OBJ_DESTRUCT(&ep->pending_frags);
+
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (ep->rcache) {
+        /* clean out the registration cache */
+        const int nregs = 100;
+        mca_mpool_base_registration_t *regs[nregs];
+        int reg_cnt;
+
+        do {
+            reg_cnt = ep->rcache->rcache_find_all(ep->rcache, 0, (size_t)-1,
+                                                      regs, nregs);
+
+            for (int i = 0 ; i < reg_cnt ; ++i) {
+                /* otherwise dereg will fail on assert */
+                regs[i]->ref_count = 0;
+                OBJ_RELEASE(regs[i]);
+            }
+        } while (reg_cnt == nregs);
+
+        ep->rcache = NULL;
+    }
+
+    if (ep->segment_base) {
+        xpmem_release (ep->apid);
+        ep->apid = 0;
+    }
+#else
+    if (ep->seg_ds) {
+        opal_shmem_ds_t seg_ds;
+
+        /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
+         * stomp past the end of the seg_ds if it is too small (which
+         * ep->seg_ds probably is) */
+        memcpy (&seg_ds, ep->seg_ds, opal_shmem_sizeof_shmem_ds (ep->seg_ds));
+        free (ep->seg_ds);
+        ep->seg_ds = NULL;
+
+        /* disconnect from the peer's segment */
+        opal_shmem_segment_detach (&seg_ds);
+    }
+#endif
+
+    ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;
+    ep->segment_base = NULL;
+    ep->fifo = NULL;
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_vader_endpoint_t, opal_list_item_t, mca_btl_vader_endpoint_constructor, mca_btl_vader_endpoint_destructor);

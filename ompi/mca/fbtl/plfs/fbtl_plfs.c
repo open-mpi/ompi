@@ -40,7 +40,8 @@ static mca_fbtl_base_module_1_0_0_t plfs =  {
     NULL,                          /* non-blocking read */
     mca_fbtl_plfs_pwritev,         /* blocking write */
     NULL,                          /* non-blocking write */
-    NULL                           /* module specific progress */
+    NULL,                          /* module specific progress */
+    NULL                           /* free module specific data items on the request */
 };
 /*
  * *******************************************************************

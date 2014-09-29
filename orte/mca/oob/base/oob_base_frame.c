@@ -48,6 +48,7 @@
  * Global variables
  */
 orte_oob_base_t orte_oob_base;
+OPAL_TIMING_DECLARE(tm_oob)
 
 static int orte_oob_base_register(mca_base_register_flag_t flags)
 {
@@ -58,6 +59,15 @@ static int orte_oob_base_register(mca_base_register_flag_t flags)
                                 MCA_BASE_VAR_SCOPE_READONLY,
                                 &orte_oob_base.use_module_threads);
 
+#if OPAL_ENABLE_TIMING
+    /* Detailed timing setup */
+    orte_oob_base.timing = false;
+    (void) mca_base_var_register ("orte", "oob", "base", "timing",
+                                  "Enable OOB timings",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_oob_base.timing);
+#endif
     return ORTE_SUCCESS;
 }
 
@@ -95,6 +105,10 @@ static int orte_oob_base_close(void)
 
     OBJ_DESTRUCT(&orte_oob_base.peers);
 
+
+    OPAL_TIMING_EVENT((&tm_oob, "Finish"));
+    OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob, "COMM");
+
     return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
 }
 
@@ -116,6 +130,8 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     orte_state.add_job_state(ORTE_JOB_STATE_FT_CONTINUE, orte_oob_base_ft_event, ORTE_ERROR_PRI);
     orte_state.add_job_state(ORTE_JOB_STATE_FT_RESTART, orte_oob_base_ft_event, ORTE_ERROR_PRI);
 #endif
+
+    OPAL_TIMING_INIT(&tm_oob);
 
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_oob_base_framework, flags);

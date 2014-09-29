@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,13 +21,65 @@
 #include "ompi_config.h"
 #include "fbtl_posix.h"
 
+#include <unistd.h>
+#include <sys/uio.h>
+#if HAVE_AIO_H
+#include <aio.h>
+#endif
+
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *file,
-			       ompi_request_t **request)
+ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
+			       ompi_request_t *request)
 {
-    printf ("POSIX IPREADV\n");
+#if defined (FBTL_POSIX_HAVE_AIO)
+    mca_fbtl_posix_request_data_t *data;
+    mca_ompio_request_t *req = (mca_ompio_request_t *) request;
+    int i=0;
+
+    data = (mca_fbtl_posix_request_data_t *) malloc ( sizeof (mca_fbtl_posix_request_data_t));
+    if ( NULL == data ) {
+        opal_output (1,"could not allocate memory\n");
+        return 0;
+    }
+    
+    data->aio_req_count = fh->f_num_of_io_entries;
+    data->aio_open_reqs = fh->f_num_of_io_entries;
+    data->aio_total_len = 0;
+    data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) * 
+                                              fh->f_num_of_io_entries);
+    if (NULL == data->aio_reqs) {
+        opal_output(1, "OUT OF MEMORY\n");
+        return 0;
+    }
+
+    data->aio_req_status = (int *) malloc (sizeof(int) * fh->f_num_of_io_entries);
+    if (NULL == data->aio_req_status) {
+        opal_output(1, "OUT OF MEMORY\n");
+        return 0;
+    }
+
+    for ( i=0; i<fh->f_num_of_io_entries; i++ ) {
+        data->aio_reqs[i].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
+            fh->f_io_array[i].offset;
+        data->aio_reqs[i].aio_buf     = fh->f_io_array[i].memory_address;
+        data->aio_reqs[i].aio_nbytes  = fh->f_io_array[i].length;
+        data->aio_reqs[i].aio_fildes  = fh->fd;
+        data->aio_reqs[i].aio_reqprio = 0;
+        data->aio_reqs[i].aio_sigevent.sigev_notify = SIGEV_NONE;
+	data->aio_req_status[i]        = EINPROGRESS;
+        
+        if (-1 == aio_read(&data->aio_reqs[i])) {
+            perror("aio_read() error");
+            return OMPI_ERROR;
+        }
+    }
+
+    req->req_data = data;
+    req->req_progress_fn = mca_fbtl_posix_progress;
+    req->req_free_fn     = mca_fbtl_posix_request_free;
+#endif
     return OMPI_SUCCESS;
 }
