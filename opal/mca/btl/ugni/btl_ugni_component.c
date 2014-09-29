@@ -17,7 +17,6 @@
 
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_params.h"
-#include "ompi/runtime/params.h"
 
 static int btl_ugni_component_register(void);
 static int btl_ugni_component_open(void);
