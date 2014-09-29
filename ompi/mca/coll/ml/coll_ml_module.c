@@ -2896,7 +2896,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
         return NULL;
     }
 
-    if (opal_using_threads()) {
+    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
         ML_VERBOSE(10, ("coll:ml: MPI_THREAD_MULTIPLE not suppported; skipping this component"));
         *priority = -1;
         return NULL;
