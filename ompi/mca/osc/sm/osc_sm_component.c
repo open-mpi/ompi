@@ -323,7 +323,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 #if HAVE_PTHREAD_CONDATTR_SETPSHARED && HAVE_PTHREAD_MUTEXATTR_SETPSHARED
         pthread_mutexattr_t mattr;
         pthread_condattr_t cattr;
-        bool blocking_fence;
+        bool blocking_fence=false;
         int flag;
 
         if (OMPI_SUCCESS != ompi_info_get_bool(info, "blocking_fence",
