@@ -186,7 +186,6 @@ int orte_ess_base_proc_binding(void)
                         goto error;
                     }
                     hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
-                    hwloc_bitmap_free(cpus);
                     OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                          "%s Process bound to core",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -231,12 +230,11 @@ int orte_ess_base_proc_binding(void)
                                 goto error;
                             }
                             hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
-                            hwloc_bitmap_free(cpus);
                             orte_proc_is_bound = true;
                             OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
-                                                 "%s Process bound to %s",
+                                                 "%s Process bound to %p %s",
                                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                 hwloc_obj_type_string(target)));
+                                                 cpus, hwloc_obj_type_string(target)));
                             break;
                         }
                     }
