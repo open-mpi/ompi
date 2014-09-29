@@ -230,7 +230,7 @@ static int cray_init(void)
     for (i=0; i < pmix_nlranks; i++) {
         if (pmix_rank == pmix_lranks[i]) {
             pmix_lrank = i;
-            pmix_nrank = my_node;
+            pmix_nrank = i;
             break;
         }
     }
