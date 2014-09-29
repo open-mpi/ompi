@@ -16,7 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+dnl Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -69,6 +69,11 @@ AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
                             opal_cuda_incdir="$with_cuda/include"
                             AC_MSG_RESULT([found ($opal_cuda_incdir/cuda.h)])])])])])
 
+# We cannot have CUDA support without dlopen support.  Check for that and
+# error out if the user has also set --disable-dlopen.
+AS_IF([test "$enable_dlopen" = "no" -a "$opal_check_cuda_happy" = "yes"],
+    [AC_MSG_ERROR([--with-cuda cannot be used with --disable-dlopen.  Remove one of them and reconfigure.])])
+
 # If we have CUDA support, check to see if we have CUDA 4.1 support
 AS_IF([test "$opal_check_cuda_happy"="yes"],
     AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved], [CUDA_SUPPORT_41=1], [CUDA_SUPPORT_41=0],
@@ -102,7 +107,7 @@ AS_IF([test "$opal_check_cuda_happy"="yes"],
 
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
-    AC_MSG_RESULT([yes (-I$with_cuda)])
+    AC_MSG_RESULT([yes (-I$opal_cuda_incdir)])
     CUDA_SUPPORT=1
     opal_datatype_cuda_CPPFLAGS="-I$opal_cuda_incdir"
     AC_SUBST([opal_datatype_cuda_CPPFLAGS])
