@@ -232,9 +232,9 @@ int orte_ess_base_proc_binding(void)
                             hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                             orte_proc_is_bound = true;
                             OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
-                                                 "%s Process bound to %p %s",
+                                                 "%s Process bound to %s",
                                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                 cpus, hwloc_obj_type_string(target)));
+                                                 hwloc_obj_type_string(target)));
                             break;
                         }
                     }
