@@ -480,9 +480,6 @@ static int s2_get(const opal_identifier_t *id,
 {
     int rc;
     rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
-    if (NULL == *kv) {
-        return OPAL_ERROR;
-    }
     return rc;
 }
 

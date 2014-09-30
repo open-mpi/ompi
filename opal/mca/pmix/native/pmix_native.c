@@ -841,9 +841,17 @@ static int native_get(const opal_identifier_t *id,
     if (found) {
         return OPAL_SUCCESS;
     }
+    /* we didn't find the requested data - pass back a
+     * status that indicates the source of the problem,
+     * either during the data fetch, message unpacking,
+     * or not found */
     *kv = NULL;
     if (OPAL_SUCCESS == rc) {
-        rc = ret;
+        if (OPAL_SUCCESS == ret) {
+            rc = OPAL_ERR_NOT_FOUND;
+        } else {
+            rc = ret;
+        }
     }
     return rc;
 }

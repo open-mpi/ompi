@@ -176,7 +176,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
         opal_value_t *kv;                                               \
         if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,       \
                                                  (s), &kv))) {          \
-            OPAL_ERROR_LOG((r));                                        \
+            *(d) = NULL;                                                \
         } else {                                                        \
             (r) = opal_value_unload(kv, (void**)(d), (t));              \
             OBJ_RELEASE(kv);                                            \
@@ -206,6 +206,9 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
             *(sz) = kv->data.bo.size;                                   \
             kv->data.bo.bytes = NULL; /* protect the data */            \
             OBJ_RELEASE(kv);                                            \
+        } else {                                                        \
+            *(d) = NULL;                                                \
+            *(sz) = 0;                                                  \
         }                                                               \
     } while(0);
 

@@ -264,8 +264,10 @@ int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* k
     size_t len, offset;
     int rc, size;
     opal_value_t *kv, *knew;
-    *out_kv = NULL;
     opal_list_t values;
+
+    /* set the default */
+    *out_kv = NULL;
 
     /* first try to fetch data from data storage */
     OBJ_CONSTRUCT(&values, opal_list_t);
@@ -383,6 +385,12 @@ int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* k
         }
     }
     free (tmp_val);
+    /* if there was no issue with unpacking the message, but
+     * we didn't find the requested info, then indicate that
+     * the info wasn't found */
+    if (OPAL_SUCCESS == rc && NULL == *out_kv) {
+        return OPAL_ERR_NOT_FOUND;
+    }
     return rc;
 }
 
