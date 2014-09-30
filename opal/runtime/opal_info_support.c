@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
@@ -1099,14 +1099,8 @@ char *opal_info_make_version_str(const char *scope,
     temp[BUFSIZ - 1] = '\0';
     if (0 == strcmp(scope, opal_info_ver_full) ||
         0 == strcmp(scope, opal_info_ver_all)) {
-        snprintf(temp, BUFSIZ - 1, "%d.%d", major, minor);
+        snprintf(temp, BUFSIZ - 1, "%d.%d.%d", major, minor, release);
         str = strdup(temp);
-        if (release > 0) {
-            snprintf(temp, BUFSIZ - 1, ".%d", release);
-            asprintf(&tmp, "%s%s", str, temp);
-            free(str);
-            str = tmp;
-        }
         if (NULL != greek) {
             asprintf(&tmp, "%s%s", str, greek);
             free(str);
