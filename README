@@ -124,7 +124,7 @@ General notes
   - PBS Pro, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - Cray XT-3, XT-4, and XT-5
+  - Cray XE and XC
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
 
 - Systems that have been tested are:
@@ -688,7 +688,7 @@ Network Support
 
 - The Myrinet MX BTL has been removed; MX support is now only
   available through the MX MTL.  Please use a prior version of Open
-  MPI is you need the MX BTL support.
+  MPI if you need the MX BTL support.
 
 - Linux "knem" support is used when the "sm" (shared memory) BTL is
   compiled with knem support (see the --with-knem configure option)
@@ -980,9 +980,6 @@ RUN-TIME SYSTEM SUPPORT
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
 
---with-cray-pmi-ext
-  Include Cray PMI2 extensions.
-
 --with-loadleveler
   Force the building of LoadLeveler scheduler support.  If LoadLeveler
   support cannot be found, configure will abort.
@@ -1008,9 +1005,10 @@ RUN-TIME SYSTEM SUPPORT
   most cases.  This option is only needed for special configurations.
 
 --with-pmi
-  Build PMI support (by default, it is not built).  If the pmi2.h
-  header is found in addition to pmi.h, then support for PMI2 will be
-  built.
+  Build PMI support (by default on non-Cray XE/XC systems, it is not built).
+  On Cray XE/XC systems, the location of pmi is detected automatically as
+  part of the configure process.  For non-Cray systems, if the pmi2.h header
+  is found in addition to pmi.h, then support for PMI2 will be built.
 
 --with-slurm
   Force the building of SLURM scheduler support.
