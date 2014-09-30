@@ -2029,19 +2029,19 @@ static int create_app(int argc, char* argv[],
                 /* yep - but does it include the path to the mpi libs? */
                 found = true;
                 /* check if mpi.jar exists - if so, add it */
-                value = opal_os_path(opal_install_dirs.libdir, "mpi.jar", NULL);
+                value = opal_os_path(false, opal_install_dirs.libdir, "mpi.jar", NULL);
                 if (access(value, F_OK ) != -1) {
                     set_classpath_jar_file(app, i+1, "mpi.jar");
                 }
                 free(value);
                 /* check for oshmem support */
-                value = opal_os_path(opal_install_dirs.libdir, "shmem.jar", NULL);
+                value = opal_os_path(false, opal_install_dirs.libdir, "shmem.jar", NULL);
                 if (access(value, F_OK ) != -1) {
                     set_classpath_jar_file(app, i+1, "shmem.jar");
                 }
                 free(value);
                 /* always add the local directory */
-                asprintf(&value, "%s:%s", app->argv[i+1], app->cwd);
+                asprintf(&value, "%s:%s", app->cwd, app->argv[i+1]);
                 free(app->argv[i+1]);
                 app->argv[i+1] = value;
                 break;
@@ -2049,15 +2049,26 @@ static int create_app(int argc, char* argv[],
         }
         if (!found) {
             /* check to see if CLASSPATH is in the environment */
+            found = false;  // just to be pedantic
             for (i=0; NULL != environ[i]; i++) {
                 if (0 == strncmp(environ[i], "CLASSPATH", strlen("CLASSPATH"))) {
                     value = strchr(environ[i], '=');
                     ++value; /* step over the = */
                     opal_argv_insert_element(&app->argv, 1, value);
-                    set_classpath_jar_file(app, 1, "mpi.jar");
-                    set_classpath_jar_file(app, 1, "shmem.jar");
+                    /* check for mpi.jar */
+                    value = opal_os_path(false, opal_install_dirs.libdir, "mpi.jar", NULL);
+                    if (access(value, F_OK ) != -1) {
+                        set_classpath_jar_file(app, 1, "mpi.jar");
+                    }
+                    free(value);
+                    /* check for shmem.jar */
+                    value = opal_os_path(false, opal_install_dirs.libdir, "shmem.jar", NULL);
+                    if (access(value, F_OK ) != -1) {
+                        set_classpath_jar_file(app, 1, "shmem.jar");
+                    }
+                    free(value);
                     /* always add the local directory */
-                    asprintf(&value, "%s:%s", app->cwd, app->argv[1]);
+                    (void)asprintf(&value, "%s:%s", app->cwd, app->argv[1]);
                     free(app->argv[1]);
                     app->argv[1] = value;
                     opal_argv_insert_element(&app->argv, 1, "-cp");
@@ -2067,13 +2078,30 @@ static int create_app(int argc, char* argv[],
             }
             if (!found) {
                 /* need to add it right after the java command - have
-                 * to include the current directory and trust that
+                 * to include the working directory and trust that
                  * the user set cwd if necessary
                  */
-                asprintf(&value, "%s:%s/mpi.jar:%s/shmem.jar",
-                         app->cwd, opal_install_dirs.libdir, opal_install_dirs.libdir);
-                opal_argv_insert_element(&app->argv, 1, value);
+                char *str, *str2;
+                /* always start with the working directory */
+                str = strdup(app->cwd);
+                /* check for mpi.jar */
+                value = opal_os_path(false, opal_install_dirs.libdir, "mpi.jar", NULL);
+                if (access(value, F_OK ) != -1) {
+                    (void)asprintf(&str2, "%s:%s", str, value);
+                    free(str);
+                    str = str2;
+                }
                 free(value);
+                /* check for shmem.jar */
+                value = opal_os_path(false, opal_install_dirs.libdir, "shmem.jar", NULL);
+                if (access(value, F_OK ) != -1) {
+                    asprintf(&str2, "%s:%s", str, value);
+                    free(str);
+                    str = str2;
+                }
+                free(value);
+                opal_argv_insert_element(&app->argv, 1, str);
+                free(str);
                 opal_argv_insert_element(&app->argv, 1, "-cp");
             }
         }
