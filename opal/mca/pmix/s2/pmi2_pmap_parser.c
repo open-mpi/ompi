@@ -12,9 +12,6 @@
  */
 
 #include "pmi2_pmap_parser.h"
-#ifdef STANDALONE_TEST
-#define WANT_PMI2_SUPPORT 1
-#endif
 
 /**
  pmi2 process mapping is returned as a 

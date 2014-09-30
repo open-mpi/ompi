@@ -28,27 +28,13 @@
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
 
-    # set defaults
-    opal_have_pmi1=0
-    opal_enable_pmi2=0
-
     PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
                       [$1_LDFLAGS="$CRAY_PMI_LIBS"
                        $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
                        $1_LIBS="$1_LDFLAGS"
-                        opal_have_pmi1=1
-                        opal_enable_pmi2=1
                         $2],
                        [AC_MSG_RESULT([no])
                         $3])
-   AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
-                      [$opal_enable_pmi],
-                      [Whether we want PMI support])
-   AC_DEFINE_UNQUOTED([WANT_PMI2_SUPPORT],
-                      [$opal_have_pmi2],
-                      [Whether we have PMI2 support])
-   AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
-   AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
 ])
 
 
@@ -166,13 +152,4 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     CPPFLAGS="$opal_check_pmi_$1_save_CPPFLAGS"
     LDFLAGS="$opal_check_pmi_$1_save_LDFLAGS"
     LIBS="$opal_check_pmi_$1_save_LIBS"
-
-   AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
-                      [$opal_enable_pmi],
-                      [Whether we want PMI support])
-   AC_DEFINE_UNQUOTED([WANT_PMI2_SUPPORT],
-                      [$opal_have_pmi2],
-                      [Whether we have PMI2 support])
-   AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
-   AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
 ])
