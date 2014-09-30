@@ -1045,14 +1045,8 @@ char *opal_info_make_version_str(const char *scope,
     temp[BUFSIZ - 1] = '\0';
     if (0 == strcmp(scope, opal_info_ver_full) ||
         0 == strcmp(scope, opal_info_ver_all)) {
-        snprintf(temp, BUFSIZ - 1, "%d.%d", major, minor);
+        snprintf(temp, BUFSIZ - 1, "%d.%d.%d", major, minor, release);
         str = strdup(temp);
-        if (release > 0) {
-            snprintf(temp, BUFSIZ - 1, ".%d", release);
-            asprintf(&tmp, "%s%s", str, temp);
-            free(str);
-            str = tmp;
-        }
         if (NULL != greek) {
             asprintf(&tmp, "%s%s", str, greek);
             free(str);

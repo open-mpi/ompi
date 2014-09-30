@@ -59,12 +59,7 @@ m4_define([OPAL_GET_VERSION],[
 	p" < "$1"`
 	[eval] "$ompi_vers"
 
-        # Only print release version if it isn't 0
-        if test $$2_RELEASE_VERSION -ne 0 ; then
-            $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION.$$2_RELEASE_VERSION"
-        else
-            $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION"
-        fi
+        $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION.$$2_RELEASE_VERSION"
         $2_VERSION="${$2_VERSION}${$2_GREEK_VERSION}"
 
         if test "$$2_TARBALL_VERSION" = ""; then
