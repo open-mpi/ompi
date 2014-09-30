@@ -224,7 +224,7 @@ int ompi_mpi_register_params(void)
                                 /* If we do not have stack trace
                                    capability, make this a constant
                                    MCA variable */
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
                                  0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
