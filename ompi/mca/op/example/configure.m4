@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,7 +31,7 @@
 # but it cannot be built.  If it *not* a catastropic error if your
 # component cannot be built (but was not specifically requested).
 
-# See https://svn.open-mpi.org/trac/ompi/wiki/devel/CreateComponent
+# See https://github.com/open-mpi/ompi/wiki/devel-CreateComponent
 # for more details on how to make Open MPI components.
 
 # MCA_op_example_CONFIG([action-if-found], [action-if-not-found])

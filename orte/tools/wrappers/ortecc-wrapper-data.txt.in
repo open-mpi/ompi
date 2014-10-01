@@ -2,7 +2,7 @@
 # compiler flags (using the compiler_args key to chose which block
 # should be activated.  This can be useful for multilib builds.  See the
 # multilib page at:
-#    https://svn.open-mpi.org/trac/ompi/wiki/compilerwrapper3264 
+#    https://github.com/open-mpi/ompi/wiki/compilerwrapper3264
 # for more information.
 
 project=Open Run-Time Environment (ORTE)

@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
@@ -29,13 +29,10 @@ Debugging vs. Optimized Builds
 
 If you are building Open MPI from a Subversion checkout, the default
 build includes a lot of debugging features.  This happens
-automatically when when configure detects the hidden ".svn" Subversion
-meta directory (that is present in all Subversion checkouts) in your
-source tree, and therefore activates a number of developer-only
-debugging features in the Open MPI code base.  
-
-The same debugging features are activated if you build in a Git or
-Mercurial clone (with the hidden ".git" or ".hg" meta directory).
+automatically when when configure detects the hidden ".git" Git meta
+directory (that is present in all Git clones) in your source tree, and
+therefore activates a number of developer-only debugging features in
+the Open MPI code base.
 
 By definition, debugging builds will perform [much] slower than
 optimized builds of Open MPI.  You should *NOT* conduct timing tests
@@ -47,7 +44,7 @@ developer's checkout, you have three main options:
 1. Use the "--with-platform=optimized" switch to configure.  This is
    the preferred (and probably easiest) method.  For example:
 
-     shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
+     shell$ git clone git@github.com:open-mpi/ompi.git
      shell$ cd ompi
      shell$ ./autogen.pl
      shell$ mkdir build
@@ -57,10 +54,10 @@ developer's checkout, you have three main options:
      shell$ make all install
 
 2. Use a VPATH build.  Simply build Open MPI from a different
-   directory than the source tree -- one where the .svn / .git / .hg
-   subdirectory is not present.  For example:
+   directory than the source tree -- one where the .git subdirectory
+   is not present.  For example:
 
-     shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
+     shell$ git clone git@github.com:open-mpi/ompi.git
      shell$ cd ompi
      shell$ ./autogen.pl
      shell$ mkdir build
@@ -99,7 +96,7 @@ required depend on if you are using the trunk or a release branch (and
 which release branch you are using).  The specific versions can be
 found at:
 
-  http://www.open-mpi.org/svn/building.php
+  http://www.open-mpi.org/source/building.php
 
 You can check what versions of the autotools you have installed with
 the following:
@@ -111,7 +108,7 @@ shell$ libtoolize --version
 
 Required version levels for all the OMPI releases can be found here:
 
-http://www.open-mpi.org/svn/building.php
+http://www.open-mpi.org/source/building.php
 
 To strengthen the above point: the core Open MPI developers typically
 use very, very recent versions of the GNU tools.  There are known bugs

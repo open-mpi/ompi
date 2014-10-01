@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,7 +21,7 @@
 # example of how to integrate into Open MPI's Automake-based build
 # system.
 #
-# See https://svn.open-mpi.org/trac/ompi/wiki/devel/CreateComponent
+# See https://github.com/open-mpi/ompi/wiki/devel-CreateComponent
 # for more details on how to make Open MPI components.
 
 # First, list all .h and .c sources.  It is necessary to list all .h
