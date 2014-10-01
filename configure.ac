@@ -183,7 +183,7 @@ m4_ifdef([project_oshmem],
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
 # before running configure :(.  We only use the base version number
-# (ie, no svn r numbers) for the version set in AC_INIT.  This will
+# (i.e., no git hash) for the version set in AC_INIT.  This will
 # always match reality because we add the VERSION file (the only way
 # to change the major.minor.release{greek}) into the configure
 # dependencies.  PACKAGE_VERSION the AC_DEFINE doesn't change once set

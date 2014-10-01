@@ -10,13 +10,16 @@
 results_addr=testing@open-mpi.org
 
 # svn repository uri
-code_uri=http://svn.open-mpi.org/svn/ompi
+master_code_uri=https://github.com/open-mpi/ompi.git
+master_raw_uri=https://raw.github.com/open-mpi/ompi
+release_code_uri=https://github.com/open-mpi/ompi.git
+release_raw_uri=https://raw.github.com/open-mpi/ompi
 
 # where to put built tarballs
 outputroot=/l/osl/www/www.open-mpi.org/nightly
 
 # where to find the build script
-create_script=/contrib/nightly/create_tarball.sh
+script_uri=contrib/nightly/create_tarball.sh
 
 # helper scripts dir
 script_dir=/u/mpiteam/scripts
@@ -24,7 +27,7 @@ script_dir=/u/mpiteam/scripts
 # The tarballs to make
 if [ $# -eq 0 ] ; then
     # We're no longer ever checking the 1.0 - 1.4 branches anymore
-    dirs="/trunk /branches/v1.7 /branches/v1.6"
+    branches="master v1.8 v1.6"
 else
     dirs=$@
 fi
@@ -41,8 +44,6 @@ export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 #
 #####
 
-script=`basename $create_script`
-
 # load the modules configuration
 . /etc/profile.d/modules.sh
 module use ~/modules
@@ -53,27 +54,42 @@ cd $build_root
 
 # Loop making the tarballs
 module unload autotools
-for dir in $dirs; do
-    ver=`basename $dir`
-
-    module load "autotools/ompi-$ver"
-
-    script_uri="$code_uri$dir/$create_script"
-    script_exec="$build_root/$ver/$script"
-    echo "=== Getting script from: $script_uri"
-    wget --quiet --no-check-certificate --tries=10 $script_uri -O "$script_exec"
-    if test ! $? -eq 0 ; then
-        echo "wget of Open MPI nightly $ver tarball create script failed."
-        exit 1
+for branch in $branches; do
+    if test "$branch" = "master"; then
+        code_uri=$master_code_uri
+        raw_uri=$master_raw_uri
+    else
+        code_uri=$release_code_uri
+        raw_uri=$release_raw_uri
     fi
 
+    # Form a URL-specific script name
+    script=$branch-`basename $script_uri`
+
+    echo "=== Getting script from: $raw_uri"
+    wget --quiet --no-check-certificate --tries=10 $raw_uri/$branch/$script_uri -O $script
+    if test ! $? -eq 0 ; then
+        echo "wget of OMPI nightly tarball create script failed."
+        if test -f $script ; then
+            echo "Using older version of $script for this run."
+        else
+            echo "No build script available.  Aborting."
+            exit 1
+        fi
+    fi
+    chmod +x $script
+
+    module load "autotools/ompi-$branch"
+
     echo "=== Running script..."
-    chmod +x "$script_exec"
-	"$script_exec" \
-		$build_root/$ver \
-		$results_addr \
-		$code_uri/$dir \
-		$outputroot/$ver
+    ./$script \
+        $build_root/$branch \
+        $results_addr \
+        $outputroot/$branch \
+        $code_uri \
+        $branch \
+        >/dev/null 2>&1
+
     module unload autotools
     echo "=== Done running script"
 
@@ -81,5 +97,5 @@ for dir in $dirs; do
     # in here and clean up the old failed builds, we can accumulate
     # many over time.  So remove any old failed bbuilds that are over
     # 4 weeks old.
-    ${script_dir}/remove-old.pl 28 $build_root/$ver
+    ${script_dir}/remove-old.pl 28 $build_root/$branch
 done

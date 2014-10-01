@@ -28,19 +28,16 @@ at the moment, so this brief README will have to do for now.
   # ...etc.
 
 - crontab.txt: the cron jobs that are running as "mpiteam" on
-  eddie.osl.iu.edu as of 8 Aug 2012.  They show the CLI options to
+  mtt.open-mpi.org as of 1 Oct 2014.  They show the CLI options to
   several of these scripts.
 
 - openmpi-nightly-tarball.sh: script used to make the nightly tarballs
   and copy them to the live web tree
 
 - openmpi-update-www.open-mpi.org.sh: this is the script fired by
-  cron to basically run "svn up" on the live www.open-mpi.org web
+  cron to basically run "git pull" on the live www.open-mpi.org web
   site, in local directory /l/osl/www/www.open-mpi.org (this is a
   network mount, actually)
-
-- openmpi-test-tarball.sh: I don't remember what this is.  I suspect
-  it isn't used anymore.
 
 - openmpi-release.sh: use this script to make official Open MPI
   tarball releases.  Give it the path in the OMPI SVN repo to make the
@@ -60,13 +57,3 @@ at the moment, so this brief README will have to do for now.
   of these old directories.  It's set to fire by
   openmpi-nightly-tarball.sh, and removes any busted nightly build
   directories older than 28 days.
-
-- openmpi-nightly-test-build.sh: I don't remember what this is.  I
-  suspect it isn't used anymore.
-
-- openmpi-nightly-tmpbranch-tarball.sh: I don't remember what this is.
-  I suspect it isn't used anymore.
-
-- openmpi-ft-cr-tarball.sh: I suspect this was used by Josh to make
-  tarballs of his FT work when it was off on a branch.  I suspect it
-  isn't used anymore.

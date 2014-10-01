@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -34,7 +34,7 @@ opal_show_subtitle "OPAL Configuration options"
 # Is this a developer copy?
 #
 
-if test -d .svn -o -d .hg -o -d .git; then
+if test -d .git; then
     OPAL_DEVEL=1
 else
     OPAL_DEVEL=0
