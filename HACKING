@@ -4,7 +4,7 @@ Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 Copyright (c) 2004-2005 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
@@ -21,18 +21,18 @@ Overview
 
 This file is here for those who are building/exploring OMPI in its
 source code form, most likely through a developer's tree (i.e., a
-Subversion or Mercurial checkout).
+Git clone).
 
 
 Debugging vs. Optimized Builds
 ==============================
 
-If you are building Open MPI from a Subversion checkout, the default
-build includes a lot of debugging features.  This happens
-automatically when when configure detects the hidden ".git" Git meta
-directory (that is present in all Git clones) in your source tree, and
-therefore activates a number of developer-only debugging features in
-the Open MPI code base.
+If you are building Open MPI from a Git clone, the default build
+includes a lot of debugging features.  This happens automatically when
+when configure detects the hidden ".git" Git meta directory (that is
+present in all Git clones) in your source tree, and therefore
+activates a number of developer-only debugging features in the Open
+MPI code base.
 
 By definition, debugging builds will perform [much] slower than
 optimized builds of Open MPI.  You should *NOT* conduct timing tests
