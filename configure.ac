@@ -36,8 +36,7 @@
 
 # Load in everything found by autogen.pl
 m4_include([config/autogen_found_items.m4])
-# Load the version code.  Because this is also used directly as a
-# shell script, no ac_defun
+# Load the version number code
 m4_include([config/opal_get_version.m4])
 AC_LANG([C])
 
@@ -49,7 +48,7 @@ AC_LANG([C])
 # was set during autogen.pl.
 
 AC_INIT([project_name_long],
-        [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --base]))],
+        [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --tarball]))],
         [http://www.open-mpi.org/community/help/], [project_name_short])
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
@@ -179,21 +178,6 @@ m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADER([oshmem/include/shmem.h])])
-
-# override/fixup the version numbers set by AC_INIT, since on
-# developer builds, there's no good way to know what the version is
-# before running configure :(.  We only use the base version number
-# (i.e., no git hash) for the version set in AC_INIT.  This will
-# always match reality because we add the VERSION file (the only way
-# to change the major.minor.release{greek}) into the configure
-# dependencies.  PACKAGE_VERSION the AC_DEFINE doesn't change once set
-# the first time -- AC_INIT's input (so it doesn't have an r number in
-# it).  PACKAGE_VERSION the AC_SUBST can be rewritten along the way,
-# and we'd like it to have the r number in it so that it shows up in
-# the tarball name, so it is set to the full version here.
-PACKAGE_VERSION="$OPAL_VERSION"
-PACKAGE_STRING="${PACKAGE_NAME} ${PACKAGE_VERSION}"
-VERSION="${PACKAGE_VERSION}"
 
 opal_show_subtitle "Initialization, setup"
 

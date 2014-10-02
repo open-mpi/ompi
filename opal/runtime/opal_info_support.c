@@ -999,15 +999,15 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
     mca_version = opal_info_make_version_str(scope, component->mca_major_version,
                                              component->mca_minor_version,
                                              component->mca_release_version, "",
-                                             false, "");
+                                             "");
     api_version = opal_info_make_version_str(scope, component->mca_type_major_version,
                                              component->mca_type_minor_version,
                                              component->mca_type_release_version, "",
-                                             false, "");
+                                             "");
     component_version = opal_info_make_version_str(scope, component->mca_component_major_version,
                                                    component->mca_component_minor_version,
                                                    component->mca_component_release_version, 
-                                                   "", false, "");
+                                                   "", "");
     if (opal_info_pretty) {
         asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
@@ -1090,8 +1090,8 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
 
 char *opal_info_make_version_str(const char *scope,
                                  int major, int minor, int release,
-                                 const char *greek, 
-                                 bool want_repo_rev, const char *repo)
+                                 const char *greek,
+                                 const char *repo)
 {
     char *str = NULL, *tmp;
     char temp[BUFSIZ];
@@ -1103,11 +1103,6 @@ char *opal_info_make_version_str(const char *scope,
         str = strdup(temp);
         if (NULL != greek) {
             asprintf(&tmp, "%s%s", str, greek);
-            free(str);
-            str = tmp;
-        }
-        if (want_repo_rev && NULL != repo) {
-            asprintf(&tmp, "%s%s", str, repo);
             free(str);
             str = tmp;
         }
@@ -1139,7 +1134,7 @@ void opal_info_show_opal_version(const char *scope)
                                       OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
                                       OPAL_RELEASE_VERSION, 
                                       OPAL_GREEK_VERSION,
-                                      OPAL_WANT_REPO_REV, OPAL_REPO_REV);
+                                      OPAL_REPO_REV);
     opal_info_out("OPAL", tmp, tmp2);
     free(tmp);
     free(tmp2);

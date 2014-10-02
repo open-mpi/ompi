@@ -14,7 +14,7 @@ m4_divert_push([SCRIPT])dnl
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -66,14 +66,14 @@ case "$option" in
     --repo-rev)
 	echo $OPAL_REPO_REV
 	;;
-    --base)
-        echo $OPAL_BASE_VERSION
+    --tarball)
+        echo $OPAL_TARBALL_VERSION
         ;;
     --release-date)
         echo $OPAL_RELEASE_DATE
         ;;
     --all)
-        echo ${OPAL_VERSION} ${OPAL_MAJOR_VERSION} ${OPAL_MINOR_VERSION} ${OPAL_RELEASE_VERSION} ${OPAL_GREEK_VERSION} ${OPAL_REPO_REV}
+        echo ${OPAL_VERSION} : ${OPAL_MAJOR_VERSION} : ${OPAL_MINOR_VERSION} : ${OPAL_RELEASE_VERSION} : ${OPAL_GREEK_VERSION} : ${OPAL_REPO_REV} : ${OPAL_TARBALL_VERSION}
         ;;
     -h|--help)
 	cat <<EOF
@@ -86,9 +86,9 @@ $0 <srcfile> [<option>]
     --minor        - Minor version number
     --release      - Release version number
     --greek        - Greek (alpha, beta, etc) version number
-    --repo-rev     - Repository version number
+    --repo-rev     - Repository version
+    --tarball      - Show tarball filename version string
     --all          - Show all version numbers, separated by :
-    --base         - Show base version number (no repo number)
     --release-date - Show the release date
     --help         - This message
 EOF

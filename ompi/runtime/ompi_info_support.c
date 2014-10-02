@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -120,7 +120,7 @@ void ompi_info_show_ompi_version(const char *scope)
                                       OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                       OMPI_RELEASE_VERSION,
                                       OMPI_GREEK_VERSION,
-                                      OMPI_WANT_REPO_REV, OMPI_REPO_REV);
+                                      OMPI_REPO_REV);
     opal_info_out("Open MPI", tmp, tmp2);
     free(tmp);
     free(tmp2);
@@ -141,7 +141,7 @@ void ompi_info_show_ompi_version(const char *scope)
 
     tmp2 = opal_info_make_version_str(scope,
                                       MPI_VERSION, MPI_SUBVERSION,
-                                      0, "", 0, "");
+                                      0, "", "");
     opal_info_out("MPI API", "mpi-api:version:full", tmp2);
     free(tmp2);
 
