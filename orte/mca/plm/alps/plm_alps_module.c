@@ -323,9 +323,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     opal_argv_free(nodelist_argv);
 
     /* if we are using all allocated nodes, then alps
-     * doesn't need a nodelist
+     * doesn't need a nodelist, or if running without a batch scheduler
      */
-    if (map->num_new_daemons < orte_num_allocated_nodes) {
+    if ((map->num_new_daemons < orte_num_allocated_nodes) || (orte_num_allocated_nodes == 0)) {
         opal_argv_append(&argc, &argv, "-L");
         opal_argv_append(&argc, &argv, nodelist_flat);
     }
