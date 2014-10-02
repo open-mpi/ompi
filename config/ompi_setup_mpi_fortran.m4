@@ -28,15 +28,22 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=0
     OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0
 
+    OMPI_FORTRAN_BUILD_SIZEOF=0
+
     OMPI_FORTRAN_USEMPI_DIR=
     OMPI_FORTRAN_USEMPI_LIB=
 
     OMPI_FORTRAN_USEMPIF08_DIR=
     OMPI_FORTRAN_USEMPIF08_LIB=
 
+    OMPI_FORTRAN_MAX_ARRAY_RANK=0
+
+    OMPI_FORTRAN_HAVE_INTERFACE=0
     OMPI_FORTRAN_HAVE_IGNORE_TKR=0
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     OMPI_FORTRAN_HAVE_BIND_C=0
+    OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=0
+    OMPI_FORTRAN_HAVE_STORAGE_SIZE=0
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
     OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
@@ -202,6 +209,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # a true value.  
     OMPI_FORTRAN_GET_VALUE_TRUE
     OMPI_FORTRAN_CHECK_LOGICAL_ARRAY
+
+    # Find out how many array ranks this compiler supports.
+    OMPI_FORTRAN_CHECK_MAX_ARRAY_RANK
     
     # How big should MPI_STATUS_SIZE be?  (i.e., the size of
     # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
@@ -246,7 +256,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
 
     #--------------------------------------------------------
-    # This is all we need for the Fortran mpif.h MPI bindings
+    # Fortran mpif.h MPI bindings
     #--------------------------------------------------------
 
     AC_MSG_CHECKING([if building Fortran mpif.h bindings])
@@ -254,7 +264,38 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
           [AC_MSG_RESULT([yes])
            OMPI_BUILD_FORTRAN_MPIFH_BINDINGS=1],
           [AC_MSG_RESULT([no])])
-    
+
+    # "INTERFACE" is needed for MPI_SIZEOF
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_INTERFACE(
+               [OMPI_FORTRAN_HAVE_INTERFACE=1],
+               [OMPI_FORTRAN_HAVE_INTERFACE=0])])
+    AC_SUBST(OMPI_FORTRAN_HAVE_INTERFACE)
+
+    # The iso_fortran_env module is needed for MPI_SIZEOF
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_ISO_FORTRAN_ENV(
+               [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=1],
+               [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=0])])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV)
+
+    # Ensure that the fortran compiler supports STORAGE_SIZE for
+    # enough relevant types.
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_STORAGE_SIZE(
+               [OMPI_FORTRAN_HAVE_STORAGE_SIZE=1],
+               [OMPI_FORTRAN_HAVE_STORAGE_SIZE=0])])
+    AC_SUBST(OMPI_FORTRAN_HAVE_STORAGE_SIZE)
+
+    # We need INTERFACE, ISO_FORTRAN_ENV, and STORAGE_SIZE() support
+    # to build MPI_SIZEOF support
+    AS_IF([test $OMPI_FORTRAN_HAVE_INTERFACE -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_STORAGE_SIZE -eq 1],
+          [OMPI_FORTRAN_BUILD_SIZEOF=1],
+          [OMPI_FORTRAN_BUILD_SIZEOF=0])
+    AC_SUBST(OMPI_FORTRAN_BUILD_SIZEOF)
+
     #--------------------------------------------
     # Fortran use mpi or use mpi_f08 MPI bindings
     #--------------------------------------------
@@ -513,6 +554,25 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FC, ["$OMPI_FC"], [Underlying Fortran compiler])
     AC_DEFINE_UNQUOTED(OMPI_FC_ABSOLUTE, ["$OMPI_FC_ABSOLUTE"],
                        [Absolutey path to the underlying Fortran compiler found by configure])
+
+    # These go into ompi/info/param.c
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_BUILD_SIZEOF],
+                       [$OMPI_FORTRAN_BUILD_SIZEOF],
+                       [Whether the mpif.h interface supports the MPI_SIZEOF interface or not])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_INTERFACE],
+                       [$OMPI_FORTRAN_HAVE_INTERFACE],
+                       [Whether the compiler supports INTERFACE or not])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV],
+                       [$OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV],
+                       [Whether the compiler supports ISO_FORTRAN_ENV or not])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_STORAGE_SIZE],
+                       [$OMPI_FORTRAN_HAVE_STORAGE_SIZE],
+                       [Whether the compiler supports STORAGE_SIZE on relevant types])
+
+    # This conditional is used to determine whether we compile the
+    # various .f90 files that contain MPI_SIZEOF implementations.
+    AM_CONDITIONAL([BUILD_FORTRAN_SIZEOF],
+        [test $OMPI_FORTRAN_BUILD_SIZEOF -eq 1])
 
     # There are 2 layers to the MPI mpif.h layer. The only extra thing
     # that determine mpif.h bindings is that fortran can be disabled

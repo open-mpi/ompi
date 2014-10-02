@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,3 +28,12 @@
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
+
+# A little verbosity magic; "make" will show the terse output.  "make
+# V=1" will show the actual commands used (just like the other
+# Automake-generated compilation/linker rules).
+V=0
+
+OMPI_V_GEN = $(ompi__v_GEN_$V)
+ompi__v_GEN_ = $(ompi__v_GEN_$AM_DEFAULT_VERBOSITY)
+ompi__v_GEN_0 = @echo "  GENERATE" $@;

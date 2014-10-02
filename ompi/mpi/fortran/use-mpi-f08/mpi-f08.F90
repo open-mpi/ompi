@@ -27,7 +27,6 @@ module mpi_f08
   use mpi_f08_types
   use mpi_f08_interfaces  ! this module contains the  mpi_f08 interface declarations
   use pmpi_f08_interfaces ! this module contains the pmpi_f08 interface declarations
-  use mpi_f08_sizeof      ! this module from sizeof.F90
 
 !
 ! Declaration of the interfaces to the ompi impl files
@@ -43,5 +42,9 @@ module mpi_f08
 ! The MPI_CONVERSION_FN_NULL function
 
   include "conversion-fn-null-f08-interface.h"
+
+! The sizeof interfaces
+
+  include "sizeof_f08.h"
 
 end module mpi_f08
