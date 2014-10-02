@@ -3,7 +3,7 @@
 #
 # This script installs specific versions of a quad of (GNU autotools + flex)
 # to be used on the OMPI build server to make official Open MPI tarballs.
-# We put this into a script because if a human performs this manually, 
+# We put this into a script because if a human performs this manually,
 # they will inevitably forget one of the manual steps (e.g., making the
 # modulefile, or installing flex, or ...).
 #
@@ -100,10 +100,10 @@ export PATH=$thisdir/bin:$PATH
 
 # Install everything
 
-doit m4-$m4.tar.bz2       ftp://ftp.gnu.org/gnu/m4       "" m4-$m4       $thisdir 
-doit autoconf-$ac.tar.gz  ftp://ftp.gnu.org/gnu/autoconf "" autoconf-$ac $thisdir 
-doit automake-$am.tar.gz  ftp://ftp.gnu.org/gnu/automake "" automake-$am $thisdir 
-doit libtool-$lt.tar.gz   ftp://ftp.gnu.org/gnu/libtool  "" libtool-$lt  $thisdir 
+doit m4-$m4.tar.bz2       ftp://ftp.gnu.org/gnu/m4       "" m4-$m4       $thisdir
+doit autoconf-$ac.tar.gz  ftp://ftp.gnu.org/gnu/autoconf "" autoconf-$ac $thisdir
+doit automake-$am.tar.gz  ftp://ftp.gnu.org/gnu/automake "" automake-$am $thisdir
+doit libtool-$lt.tar.gz   ftp://ftp.gnu.org/gnu/libtool  "" libtool-$lt  $thisdir
 
 doit flex-$flex.tar.bz2   http://prdownloads.sourceforge.net/flex '?download' flex-$flex $thisdir
 
