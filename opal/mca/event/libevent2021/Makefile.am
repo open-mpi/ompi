@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
@@ -10,7 +10,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = opal_check_visibility.m4
+EXTRA_DIST = opal_check_visibility.m4 autogen.subdirs
 
 AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include -I$(srcdir)/libevent/compat
 

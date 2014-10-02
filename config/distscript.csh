@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -82,21 +82,6 @@ if ("$cur_repo_rev" == "-1") then
 else
     echo "*** Did NOT update VERSION file with repo rev number"
 endif
-
-# Copy configure.params and autogen.subdirs files into distribution.
-# This should really be in each component's Makefile.am, but that's
-# never going to happen.  So copy here automagically.
-echo "*** Copying configure.params files"
-set dirs=opal
-if (-d orte) then
-    set dirs="$dirs orte"
-endif
-if (-d ompi) then
-    set dirs="$dirs ompi"
-endif
-find $dirs -name "configure.params" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
-echo "*** Copying autogen.subdirs files"
-find $dirs -name "autogen.subdirs" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
 
 #########################################################
 # VERY IMPORTANT: Now go into the new distribution tree #
