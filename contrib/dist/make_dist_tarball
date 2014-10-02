@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,38 +45,35 @@ DISTCHECK_MAKE_FLAGS=-j4
 # Default to requiring *exact* versions if we're making distribution
 # tarballs; but higher-than-expected versions are ok for
 # non-distribution tarballs.
+want_ompi=1
+autogen_args=
+distdir=".."
+greekonly=0
 dirty_ok=0
 gnu_version_ignore=0
 dist_target=distcheck
 distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
+
 if test "`basename $0`" = "make_tarball"; then
     dist_target=dist
-    distcheck_flags=
+    distcheck_flags="AM_MAKEFLAGS=-j32"
     highok=1
     dirty_ok=1
+    greekonly=1
+    want_ompi=0
 else
     highok=0
 fi
 
-greekonly=0
-want_ompi=1
-autogen_args=
-distdir=".."
 while test "$1" != ""; do
     case $1 in
-        -greekonly) greekonly=1 ;;
         --greekonly) greekonly=1 ;;
-        -highok) highok=1 ;;
         --highok) highok=1 ;;
-        -no-ompi) want_ompi=0 ;;
         --no-ompi) want_ompi=0 ;;
-        -autogen-args) autogen_args=$2; shift ;;
         --autogen-args) autogen_args=$2; shift ;;
-        -distdir) distdir=$2; shift ;;
         --distdir) distdir=$2; shift ;;
         --dirtyok) dirty_ok=1; shift ;;
         --verok) gnu_version_ignore=1;;
-        -verok) gnu_version_ignore=1;;
         *)
             cat <<EOF
 Unrecognized argument: $1
@@ -283,8 +280,7 @@ make_tarball() {
     # happened to be in the tree already).
     #
     echo "*** Removing old generated flex files..."
-    chmod -R a+rw .
-    find . -name \*_lex.c -exec rm -f {} \; -print
+    find . -name \*_lex.c -exec chmod a+rw {} \; -exec rm -f {} \; -print
 
     #
     # make tarball
@@ -338,43 +334,44 @@ else
 fi
 
 #
-# Do svn up and all that
+# Get the latest
 #
-
-if test -d .svn; then
-    echo "*** Removing old VERSION file..."
-    rm -f VERSION
-    echo "*** Restoring pristine VERSION file..."
-    svn revert VERSION
-    echo "*** Running svn up..."
-    svn up
-    if test ! "$?" = "0"; then
-        echo "SVN update failed.  Aborting"
-        exit 1
-    fi
-    echo "*** Getting svn r number..."
-    repo_rev="r`svnversion .`"
-elif test -d .hg; then
-    echo "*** Removing old VERSION file..."
-    rm -f VERSION
-    echo "*** Restoring pristine VERSION file..."
-    hg revert VERSION
-    echo "*** Running hg up..."
-    hg up
-    if test ! "$?" = "0"; then
-        echo "HG update failed.  Aborting"
-        exit 1
-    fi
-    echo "*** Getting hg version number..."
-    repo_rev=hg`hg tip | grep ^changeset: | head -n 1 | cut -d: -f3`
-elif test -d .git; then
-    echo "*** Removing old VERSION file..."
-    rm -f VERSION
-    echo "*** Restoring pristine VERSION file..."
-    git checkout VERSION
-    echo "*** Getting git version number..."
-    repo_rev=git`git log -1 --oneline | head -1 | cut -d' ' -f1`
+echo "*** Git pull to get the latest..."
+git pull --rebase
+if test $? -ne 0; then
+    echo "*** Git pull failed.  Cannot continue."
+    exit 1
 fi
+
+#
+# Ensure we have a clean repo
+#
+if test $dirty_ok -eq 0; then
+    echo "*** Checking if source tree is dirty..."
+    dirty=0
+    file=git-status.$$.out
+    git status > $file
+    if test "`grep 'Changes not staged for commit' $file`" != "" ||
+       test "`grep 'Changes staged for commit' $file`" != ""; then
+        dirty=1
+    fi
+    rm -f $file
+
+    if test $dirty -eq 1; then
+        echo "    Source tree is dirty.  Cannot continue."
+        exit 1
+    fi
+fi
+
+#
+# Get our repo_rev
+#
+echo "*** Removing old VERSION file..."
+rm -f VERSION
+echo "*** Restoring pristine VERSION file..."
+git checkout VERSION
+echo "*** Getting git version..."
+repo_rev=`git describe --tags --always`
 echo "    Repo rev number: $repo_rev"
 
 # Sanity checks
@@ -386,42 +383,18 @@ elif test "`echo $repo_rev | grep ' '`" != ""; then
     exit 1
 fi
 
-# Ensure we have a clean repo
-if test $dirty_ok -eq 0; then
-    echo "*** Checking if source tree is dirty..."
-    dirty=0
-    if test -d .svn; then
-        if test "`echo $repo_rev | grep M`" != ""; then
-            dirty=1
-        fi
-    elif test -d .hg; then
-        if test "`hg status | egrep -v '^\$ '`" != ""; then
-            dirty=1
-        fi
-    elif test -d .git; then
-        if test "`git status | grep 'Changes not staged for commit'`" = ""; then
-            dirty=1
-        fi
-    fi
-
-    if test $dirty -eq 1; then
-        echo "    Source tree is dirty.  Cannot continue."
-        exit 1
-    fi
-fi
-
 #
-# Ditch "svn/hg" from all version numbers
+# Set final values in VERSION
 #
-echo "*** Removing svn version numbers from VERSION..."
+echo "*** Removing version numbers from VERSION..."
 version_files=VERSION
 release_date=`date '+%b %d, %Y'`
 echo "    Release date: $release_date"
 for file in $version_files; do
     echo " - $file"
-    sed -e 's/^want_repo_rev=.*/want_repo_rev=0/' \
-        -e 's/^repo_rev=.*/'repo_rev=$repo_rev/ \
+    sed -e 's/^repo_rev=.*/'repo_rev=$repo_rev/ \
         -e "s/^date=.*/date=\"$release_date\"/" \
+        -e "s/^tarball_version=.*/tarball_version=/" \
         $file > $file.new
     cp -f $file.new $file
     rm $file.new
@@ -450,7 +423,7 @@ make_tarball
 
 # Now if ! --greekonly, make the non-greek tarball
 
-if test "$greekonly" = "0"; then
+if test $greekonly -eq 0; then
     echo "*** REMOVING ALL GREEK FROM VERSION NUMBERS!!"
     for file in $version_files; do
         echo " - $file"
@@ -463,13 +436,8 @@ if test "$greekonly" = "0"; then
 fi
 
 # Put the VERSION file back the way it was
-if test -d .svn; then
-    svn revert VERSION
-elif test -d .hg; then
-    hg revert VERSION
-elif test -d .git; then
-    git checkout VERSION
-fi
+rm -f VERSION
+git checkout VERSION
 
 echo " "
 echo "*** Start time:  $start"
