@@ -277,16 +277,16 @@ m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
 
 # Set up project specific AM_CONDITIONALs
 AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
-m4_ifndef([project_ompi], [project_ompi_amc=no])
-AM_CONDITIONAL([PROJECT_OMPI], [$project_ompi_amc])
+m4_ifndef([project_ompi], [project_ompi_amc=false])
+AM_CONDITIONAL([PROJECT_OMPI], [test "$project_ompi_amc" = "true"])
 
 AS_IF([test "$enable_orte" != "no"], [project_orte_amc=true], [project_orte_amc=false])
 m4_ifndef([project_orte], [project_orte_amc=false])
-AM_CONDITIONAL([PROJECT_ORTE], [$project_orte_amc])
+AM_CONDITIONAL([PROJECT_ORTE], [test "$project_orte_amc" = "true"])
 
 AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc=false])
 m4_ifndef([project_oshmem], [project_oshmem_amc=false])
-AM_CONDITIONAL([PROJECT_OSHMEM], [$project_oshmem_amc])
+AM_CONDITIONAL([PROJECT_OSHMEM], [test "$project_oshmem_amc" = "true"])
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
