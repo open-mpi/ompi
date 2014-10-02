@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
@@ -97,7 +97,7 @@ void orte_info_show_orte_version(const char *scope)
                                       ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
                                       ORTE_RELEASE_VERSION, 
                                       ORTE_GREEK_VERSION,
-                                      ORTE_WANT_REPO_REV, ORTE_REPO_REV);
+                                      ORTE_REPO_REV);
     opal_info_out("Open RTE", tmp, tmp2);
     free(tmp);
     free(tmp2);
