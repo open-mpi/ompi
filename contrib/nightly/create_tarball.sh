@@ -160,7 +160,7 @@ cd "$scratch_root"
 scratch_root="`pwd`"
 
 # setup target directory where clone+logs will go
-clone_root="$scratch_root/hwloc-`date +%Y-%m-%d-%H%M%S`"
+clone_root="$scratch_root/ompi-`date +%Y-%m-%d-%H%M%S`"
 rm -rf $clone_root
 mkdir -p $clone_root
 
@@ -170,13 +170,13 @@ mkdir "$logdir"
 
 # Get a fresh git clone
 cd $clone_root
-do_command "git clone $giturl hwloc"
-cd hwloc
+do_command "git clone $giturl ompi"
+cd ompi
 do_command "git checkout $gitbranch"
 
-# Find the "git describe" string for this branch (remove a leading "hwloc-"
+# Find the "git describe" string for this branch (remove a leading "ompi-"
 # prefix, if there is one).
-describe=`git describe --tags --always | sed -e s/^hwloc-//`
+describe=`git describe --tags --always | sed -e s/^ompi-//`
 if test -n "$debug"; then
     echo "** found $gitbranch describe: $describe"
 fi
@@ -210,7 +210,7 @@ if test -n "$debug"; then
 fi
 
 # Ensure that VERSION is set to indicate that it wants a snapshot, and
-# insert the actual value that we want (so that hwloc_get_version.sh
+# insert the actual value that we want (so that ompi_get_version.sh
 # will report exactly that version).
 sed -e 's/^snapshot=.*/snapshot=1/' \
     -e 's/^snapshot_version=.*/snapshot_version='$describe/ \
