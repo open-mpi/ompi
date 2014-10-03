@@ -2,9 +2,10 @@
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
-    dirs="branches/v1.8"
+    branches="v1.8"
 else
-    dirs=$@
+    branches=$1
+    shift
 fi
 
 # Build root - scratch space
@@ -29,14 +30,12 @@ module load sowing
 
 # move to the directory
 # Loop making them
-for dir in $dirs; do
-        ver=`basename $dir`
+for branch in $branches; do
+    cd $build_root/$branch
 
-        cd $build_root/$ver
+    module load "autotools/ompi-$branch"
 
-        module load "autotools/ompi-$ver"
-
-        ./$script $@ >dist.out 2>&1
+    ./$script $@ >dist.out 2>&1
 	if test "$?" != "0"; then
 		cat <<EOF
 =============================================================================
@@ -48,5 +47,5 @@ EOF
 		exit 1
 	fi
 
-        module unload "autotools"
+    module unload "autotools"
 done
