@@ -160,6 +160,16 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
         return NULL;
     }
 
+    /* get hostname */
+    if (NULL == module_proc->proc_opal->proc_hostname) {
+        OPAL_MODEX_RECV_VALUE(rc, OPAL_DSTORE_HOSTNAME, module_proc->proc_opal,
+                              (char**)&(module_proc->proc_opal->proc_hostname), OPAL_STRING);
+        if (OPAL_SUCCESS != rc) {
+            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
+            return NULL;
+        }
+    }
+
     /* Message was packed in btl_openib_component.c; the format is
        listed in a comment in that file */
     modex_message_size = ((char *) &(dummy.end)) - ((char*) &dummy);

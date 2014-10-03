@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
@@ -46,6 +46,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 
@@ -394,7 +395,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     if ( OPAL_SUCCESS != i )
         return i;
 
-    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_user, 
+    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_user,
 		    sizeof(mca_btl_sm_user_t),
 		    opal_cache_line_size, OBJ_CLASS(mca_btl_sm_user_t),
 		    sizeof(mca_btl_sm_hdr_t), opal_cache_line_size,
@@ -403,7 +404,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
 		    mca_btl_sm_component.sm_free_list_inc,
 		    mca_btl_sm_component.sm_mpool);
     if ( OPAL_SUCCESS != i )
-	    return i;   
+	    return i;
 
     mca_btl_sm_component.num_outstanding_frags = 0;
 
@@ -482,6 +483,14 @@ int mca_btl_sm_add_procs(
      * host to shared memory reachbility list.  Also, get number
      * of local procs in the procs list. */
     for (proc = 0; proc < (int32_t)nprocs; proc++) {
+        /* get hostname */
+        OPAL_MODEX_RECV_VALUE(return_code, OPAL_DSTORE_HOSTNAME, procs[proc],
+                              (char**)&(procs[proc]->proc_hostname), OPAL_STRING);
+        if (OPAL_SUCCESS != return_code) {
+            opal_output(0, "opal_modex_recv: failed with return value=%d", return_code);
+            continue;
+        }
+
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (opal_process_name_jobid(procs[proc]->proc_name) != opal_process_name_jobid(my_proc->proc_name) ||
@@ -999,7 +1008,7 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
 }
 
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
-struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst( 
+struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
 		struct mca_btl_base_module_t* btl,
 		struct mca_btl_base_endpoint_t* endpoint,
 		struct mca_mpool_base_registration_t* registration,
@@ -1020,7 +1029,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
     frag->segment.base.seg_len = *size;
     opal_convertor_get_current_pointer( convertor, &ptr );
     frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
-    
+
     frag->base.des_remote = NULL;
     frag->base.des_remote_count = 0;
     frag->base.des_local = (mca_btl_base_segment_t*)&frag->segment;
@@ -1049,7 +1058,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
         struct knem_cmd_inline_copy icopy;
         struct knem_cmd_param_iovec recv_iovec;
-    
+
         /* Fill in the ioctl data fields.  There's no async completion, so
            we don't need to worry about getting a slot, etc. */
         recv_iovec.base = (uintptr_t) dst->base.seg_addr.lval;
@@ -1119,8 +1128,8 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
     btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-        frag->base.des_cbfunc(&mca_btl_sm.super, 
-                              frag->endpoint, &frag->base, 
+        frag->base.des_cbfunc(&mca_btl_sm.super,
+                              frag->endpoint, &frag->base,
                               OPAL_SUCCESS);
     }
     if (btl_ownership) {
@@ -1153,7 +1162,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_local;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
-    
+
     /* If we have no knem slots available, return
        TEMP_OUT_OF_RESOURCE */
     if (sm_btl->knem_status_num_used >=
@@ -1169,7 +1178,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     icopy.local_iovec_nr = 1;
     icopy.write = 0;
     icopy.async_status_index = sm_btl->knem_status_first_avail++;
-    if (sm_btl->knem_status_first_avail >= 
+    if (sm_btl->knem_status_first_avail >=
         mca_btl_sm_component.knem_max_simultaneous) {
         sm_btl->knem_status_first_avail = 0;
     }
@@ -1185,7 +1194,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     }
 
     sm_btl->knem_frag_array[icopy.async_status_index] = frag;
-    if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd, 
+    if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd,
                                KNEM_CMD_INLINE_COPY, &icopy))) {
         if (icopy.current_status != KNEM_STATUS_PENDING) {
             /* request completed synchronously */
@@ -1194,8 +1203,8 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
 
             btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-                frag->base.des_cbfunc(&mca_btl_sm.super, 
-                                      frag->endpoint, &frag->base, 
+                frag->base.des_cbfunc(&mca_btl_sm.super,
+                                      frag->endpoint, &frag->base,
                                       OPAL_SUCCESS);
             }
             if (btl_ownership) {
@@ -1227,16 +1236,16 @@ void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag;
 
     mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
-                     (void*) btl, (void*) endpoint, 
+                     (void*) btl, (void*) endpoint,
                      endpoint->my_smp_rank, endpoint->peer_smp_rank);
     if( NULL != endpoint ) {
         for(item =  opal_list_get_first(&endpoint->pending_sends);
-            item != opal_list_get_end(&endpoint->pending_sends); 
+            item != opal_list_get_end(&endpoint->pending_sends);
             item = opal_list_get_next(item)) {
             frag = (mca_btl_sm_frag_t*)item;
             mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
-                             frag->hdr->len, frag->hdr->my_smp_rank, 
+                             frag->hdr->len, frag->hdr->my_smp_rank,
                              frag->hdr->tag);
         }
     }

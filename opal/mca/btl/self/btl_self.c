@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -34,6 +34,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
 #include "opal/util/proc.h"
@@ -63,15 +64,24 @@ mca_btl_base_module_t mca_btl_self = {
 };
 
 
-int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl, 
-                            size_t nprocs, 
-                            struct opal_proc_t **procs, 
+int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl,
+                            size_t nprocs,
+                            struct opal_proc_t **procs,
                             struct mca_btl_base_endpoint_t **peers,
                             opal_bitmap_t* reachability )
 {
-    int i;
+    int i, rc;
 
     for( i = 0; i < (int)nprocs; i++ ) {
+        /* get hostname */
+        if (NULL == procs[i]->proc_hostname) {
+            OPAL_MODEX_RECV_VALUE(rc, OPAL_DSTORE_HOSTNAME, procs[i],
+                                  (char**)&(procs[i]->proc_hostname), OPAL_STRING);
+            if (OPAL_SUCCESS != rc) {
+                opal_output(0, "opal_modex_recv: failed with return value=%d", rc);
+                continue;
+            }
+        }
         if( 0 == opal_compare_proc(procs[i]->proc_name, OPAL_PROC_MY_NAME) ) {
             opal_bitmap_set_bit( reachability, i );
             break;  /* there will always be only one ... */
@@ -81,9 +91,9 @@ int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl,
 }
 
 
-int mca_btl_self_del_procs( struct mca_btl_base_module_t* btl, 
+int mca_btl_self_del_procs( struct mca_btl_base_module_t* btl,
                             size_t nprocs,
-                            struct opal_proc_t **procs, 
+                            struct opal_proc_t **procs,
                             struct mca_btl_base_endpoint_t **peers )
 {
     return OPAL_SUCCESS;
@@ -130,16 +140,16 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag);
     }
     if( OPAL_UNLIKELY(NULL == frag) ) {
-        return NULL; 
+        return NULL;
     }
-    
+
     frag->segment.seg_len = size;
     frag->base.des_flags       = flags;
     frag->base.des_local       = &(frag->segment);
     frag->base.des_local_count = 1;
     return (mca_btl_base_descriptor_t*)frag;
 }
-                                                                                                                   
+
 /**
  * Return a segment allocated by this BTL.
  *
@@ -200,7 +210,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
 
         if(reserve + max_data > frag->size) {
             max_data = frag->size - reserve;
-        } 
+        }
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)(frag+1) + reserve);
 
@@ -269,7 +279,7 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->base.des_flags = flags;
     return &frag->base;
 }
- 
+
 /**
  * Initiate a send to the peer.
  *
@@ -346,7 +356,7 @@ static int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
             } else {
                 dst_len = 0;
             }
-                
+
         } else {
             size_t bytes = src_len < dst_len ? src_len : dst_len;
             memcpy(dst_addr, src_addr, bytes);
