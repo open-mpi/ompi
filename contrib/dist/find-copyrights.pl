@@ -15,24 +15,19 @@ my $copyrights;
 
 # Ensure that we're in the top of an SVN or hg directory.
 
-my $good = 0;
-$good = 1
-    if (-d ".hg");
-$good = 1
-    if (-d ".svn" && -f "README.WINDOWS.txt" && -f "VERSION");
 die "Must be in root of OMPI tree"
-    if (!$good);
+    if (! -d ".git");
 
 # Find all interesting files (skip the top-level LICENSE file)
 my @files;
 &File::Find::find(
     sub {
         push(@files, $File::Find::name)
-            if ($_ ne "." && $_ ne ".." && 
+            if ($_ ne "." && $_ ne ".." &&
                 !($_ eq "LICENSE" && $File::Find::dir eq ".") &&
                 $_ !~ /~$/ && $_ !~ /\.bak$/ && $_ !~ /\.orig$/ &&
                 -f $_ && ! -l $_ &&
-                $File::Find::dir !~ /\.svn/ &&
+                $File::Find::dir !~ /\.git/ &&
                 $File::Find::dir !~ /\.libs/ &&
                 $File::Find::dir !~ /\.deps/);
     },
@@ -66,7 +61,7 @@ sub save {
         }
         return;
     }
-    
+
     # Save a single year
     if (!exists($copyrights->{$core}->{$org}->{$year}->{$file})) {
         $copyrights->{$core}->{$org}->{$year}->{$file} = 1;
@@ -104,7 +99,7 @@ foreach my $f (@files) {
             $current = $2;
         }
         # Beginning of something else
-        elsif (defined($current) && 
+        elsif (defined($current) &&
                ($line =~ /\s*\*\s*$/ ||
                 $line =~ /^\s*$/ ||
                 $line =~ /^\s*\#\s*$/)) {
@@ -149,7 +144,7 @@ print "Found copyrights:\n";
 foreach my $c (qw/1 0/) {
     print "========= Core: $c\n";
     foreach my $org (sort(keys(%{$copyrights->{$c}}))) {
-        print "$org: " . join(",", 
+        print "$org: " . join(",",
                              sort(keys(%{$copyrights->{$c}->{$org}}))) . "\n";
     }
 }
