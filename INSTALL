@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -30,8 +30,8 @@ Developer Builds
 ================
 
 If you have checked out a DEVELOPER'S COPY of Open MPI (i.e., you
-checked out from subversion), you should read the HACKING file before
-attempting to build Open MPI.  You must then run:
+cloned from Git), you should read the HACKING file before attempting
+to build Open MPI.  You must then run:
 
 shell$ ./autogen.pl
 

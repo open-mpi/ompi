@@ -6,15 +6,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -33,22 +33,22 @@ elif ("$OMPI_VERSION" == "") then
 endif
 
 # we can catch some hard (but possible) to do mistakes by looking at
-# our tree's revision number, but only if we are in the source tree.
+# our repo's revision, but only if we are in the source tree.
 # Otherwise, use what configure told us, at the cost of allowing one
 # or two corner cases in (but otherwise VPATH builds won't work)
 set repo_rev=$OMPI_REPO_REV
-if (-d .svn) then
-    set repo_rev="r`svnversion .`"
+if (-d .git) then
+    set repo_rev="`config/opal_get_version.sh VERSION --repo-rev`"
 endif
 
 set start=`date`
 cat <<EOF
- 
+
 Creating Open MPI distribution
 In directory: `pwd`
 Version: $OMPI_VERSION
 Started: $start
- 
+
 EOF
 
 umask 022
@@ -66,37 +66,14 @@ if (! -d "$distdir") then
 endif
 
 #
-# See if we need to update the version file with the current SVN
-# revision number.  Do this *before* entering the distribution tree to
-# solve a whole host of problems with VPATH (since srcdir may be
-# relative or absolute)
+# Update VERSION:repo_rev with the best value we have.
 #
-set cur_repo_rev="`grep '^repo_rev' ${distdir}/VERSION | cut -d= -f2`"
-if ("$cur_repo_rev" == "-1") then
-    sed -e 's/^repo_rev=.*/repo_rev='$repo_rev'/' "${distdir}/VERSION" > "${distdir}/version.new"
-    cp -f "${distdir}/version.new" "${distdir}/VERSION"
-    rm -f "${distdir}/version.new"
-    # need to reset the timestamp to not annoy AM dependencies
-    touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
-    echo "*** Updated VERSION file with repo rev number"
-else
-    echo "*** Did NOT update VERSION file with repo rev number"
-endif
-
-# Copy configure.params and autogen.subdirs files into distribution.
-# This should really be in each component's Makefile.am, but that's
-# never going to happen.  So copy here automagically.
-echo "*** Copying configure.params files"
-set dirs=opal
-if (-d orte) then
-    set dirs="$dirs orte"
-endif
-if (-d ompi) then
-    set dirs="$dirs ompi"
-endif
-find $dirs -name "configure.params" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
-echo "*** Copying autogen.subdirs files"
-find $dirs -name "autogen.subdirs" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
+sed -e 's/^repo_rev=.*/repo_rev='$repo_rev'/' "${distdir}/VERSION" > "${distdir}/version.new"
+cp -f "${distdir}/version.new" "${distdir}/VERSION"
+rm -f "${distdir}/version.new"
+# need to reset the timestamp to not annoy AM dependencies
+touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
+echo "*** Updated VERSION file with repo rev number"
 
 #########################################################
 # VERY IMPORTANT: Now go into the new distribution tree #
@@ -181,68 +158,6 @@ end
 
 
 #
-# Put in date/version number in man pages
-# JMS don't have man pages yet -- this is a straight copy from LAM7
-#
-
-set ver="$OMPI_VERSION"
-#echo "*** Updating version date/number in man pages"
-#rm -f manfiles
-#find man -type f | grep -v Makefile > manfiles
-
-#set date="`date '+%B, %Y'`"
-#cp $srcdir/config/doctext.nroff.def .
-#foreach file (`cat manfiles` doctext.nroff.def)
-#    sed -e "s/-RELEASEDATE-/$date/g" $file > foo
-#    sed -e "s/-RELEASEVERSION-/$ver/g" foo > bar
-#    rm -f $file # Needed 'cause automake makes hard links, not copies
-#    mv bar $file
-#    rm -f foo
-#end
-#rm -f manfiles
-
-#
-# Make all the man pages -- doctext needs to be in your path
-# JMS: Don't have man pages yet; need to do this at some point
-#
-
-#
-# Now we need to list all these generated man pages in the Makefile.am
-# and Makefile.in in man/man3.  Ick!
-# JMS: Will probably need to do this as well.  Sigh.
-#
-
-#echo "*** Frobbing Makefile.am and Makefile.in..."
-#cd ../../man/man3
-#set files="`ls MPI_*3 MPIO_*3 XMPI_*3 MPIL_*3`"
-
-#
-# This is unfortunately necessary because $files is too long to do a
-# single sed search/replace.  Ugh.
-# JMS: Will probably need to do this as well.  Sigh.
-#
-
-#echo "*** Adding man files to Makefile.in..."
-#foreach file ($files)
-#    set name_prefix="`echo $file | cut -c1-4`"
-#    if ("$name_prefix" == "MPI_") then
-#	set letter="`echo $file | cut -c5`"
-#	set div="`expr $letter \> F`"
-#	set line="generated_man_$div"
-#    else
-#	set line="generated_man_other"
-#    endif
-#    echo " - $file / $line"
-#    foreach fix (Makefile.am Makefile.in)
-#	sed -e "s/$line =/$line =$file /" $fix > $fix.new
-#	chmod +w $fix
-#	mv -f $fix.new $fix
-#	chmod -w $fix
-#    end
-#end
-#cd ../..
-
-#
 # Put the release version number in the README and INSTALL files
 #
 
@@ -251,7 +166,7 @@ echo "*** Updating version number in $files..."
 foreach file ($files)
     echo " - Setting $file"
     if (-f $file) then
-	sed -e "s/OMPI_VERSION/$ver/g" $file > bar
+	sed -e "s/OMPI_VERSION/$OMPI_VERSION/g" $file > bar
 	mv -f bar $file
     endif
 end
@@ -261,10 +176,10 @@ end
 #
 
 cat <<EOF
-*** Open MPI version $ver distribution created
- 
+*** Open MPI version $OMPI_VERSION distribution created
+
 Started: $start
 Ended:   `date`
- 
+
 EOF
 

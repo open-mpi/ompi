@@ -6,30 +6,31 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This script is used to create a nightly snapshot tarball of Open MPI.
 #
 # $1: scratch root
 # $2: e-mail address for destination
-# $3: SVN root
-# $4: dest dir
-# $5: version string for error e-mails, eg. trunk, v1.2, etc. (optional)
+# $3: dest dir
+# $4: git URL
+# $5: git branch
 #
 
-scratch_root="$1"
-email="$2"
-svnroot="$3"
-destdir="$4"
+scratch_root=$1
+email=$2
+destdir=$3
+giturl=$4
+gitbranch=$5
 
 # Set this to any value for additional output; typically only when
 # debugging
@@ -51,20 +52,16 @@ max_snapshots=5
 start_time="`date`"
 
 # Sanity checks
-if test -z "$scratch_root" -o -z "$email" -o -z "$svnroot" \
+if test -z "$scratch_root" -o -z "$email" -o -z "$giturl" -o -z "$gitbranch" \
     -o -z "$destdir"; then
-    echo "Must specify scratch root directory, e-mail address, SVN root, and destination directory"
+    echo "$0 scratch_root email_addr dest_dir git_url git_branch"
     exit 1
 fi
 
-# Get a version string to use if there is an error.
-# It will get replaced upon succesful "make distcheck" with the real version.
-# Extract (from the SVN root) a version string if one wasn't supplied.
-if test -n "$5"; then
-    version="$5"
-else
-    version=`basename $svnroot`
-fi
+# Use the branch name as the "version" string (for if there is an
+# error).  This version string will be replaced upon successful "make
+# distcheck" with the real version.
+version=$gitbranch
 
 # send a mail
 # should only be called after logdir is set
@@ -151,82 +148,6 @@ if test ! -f "$file"; then
 fi
 rm -f "$file"
 
-# if there's a $destdir/latest_snapshot.txt, see if anything has
-# happened since that r number.
-desired_r=
-if test -f "$destdir/latest_snapshot.txt"; then
-    # $r will be just an integer (not "r12345")
-    r=`cat $destdir/latest_snapshot.txt | sed -e 's/.*r\([0-9]*\)/\1/'`
-    if test -n "$debug"; then
-        echo "** last snapshot r: $r"
-    fi
-
-    # If the current HEAD is on this $svnroot, then we'll get a log
-    # message.  Otherwise, we'll get a single line of dashes.
-    file=/tmp/svn-log.txt.$$
-    svn log -r HEAD $svnroot > $file
-    # if we got more than 1 line, then extract the r number from the
-    # log message.
-    need_build=0
-    if test "`wc -l $file | awk '{ print $1}'`" != "1"; then
-        # $head_r will be "rXXXXX"
-        head_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
-        if test -n "$debug"; then
-            echo "** found HEAD r: $head_r"
-        fi
-
-        # If the head r is the same as the last_snapshot r, then exit
-        # nicely
-        rm -f /tmp/svn-log.txt.$$
-        if test "r$r" = "$head_r"; then
-            if test -n "$debug"; then
-                echo "** svn HEAD r is same as last_snapshot -- not doing anything"
-            fi
-            exit 0
-        fi
-
-        # If we get here, it means the head r is different than the
-        # last_snapshot r, and therefore we need to build.
-        need_build=1
-        desired_r=$head_r
-    fi
-
-    # If need_build still = 0, we know the r's are different.  But has
-    # anything happened on this branch since then?
-    if test "$need_build" = "0"; then
-        svn log -r HEAD:$r $svnroot > $file
-
-        # We'll definitely have at least one log message because we
-        # included the last snapshot number in the svn log command
-        # (i.e., we'll at least see the log message for that commit).
-        # So there's no need to check for a single line of dashes
-        # here.
-
-        # $last_commit_r will be "rXXXXX"
-        last_commit_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
-        if test -n "$debug"; then
-            echo "** found last commit r: $last_commit_r"
-        fi
-
-        # If the head r is the same as the last_snapshot r, then exit
-        # nicely
-        rm -f $file
-        if test "r$r" = "$last_commit_r"; then
-            if test -n "$debug"; then
-                echo "** Last commit is same r as last_snapshot -- not doing anything"
-            fi
-            exit 0
-        fi
-
-        # If we get here, the r numbers didn't match, and we therefore
-        # need a new snapshot.
-        desired_r=$last_commit_r
-    fi
-fi
-if test -n "$debug"; then
-    echo "** we need a new snapshot"
-fi
-
 # move into the scratch directory and ensure we have an absolute
 # pathname for it
 if test ! -d "$scratch_root"; then
@@ -238,52 +159,67 @@ fi
 cd "$scratch_root"
 scratch_root="`pwd`"
 
-if test -n "$desired_r"; then
-    # we got a desired r number from above, so use that
-    # $svnr will be rXXXXX
-    svnr=$desired_r
-else
-    # we don't have a desired r number, so get the last r number of a
-    # commit
-    svn co -N "$svnroot" ompi > /dev/null 2>&1
-    cd ompi
-    # $svnr will be rXXXXX
-    svnr="r`svn info . | egrep '^Last Changed Rev: [0-9]+' | awk '{ print $4 }'`"
-    cd ..
-    rm -rf ompi
-fi
-if test -n "$debug"; then
-    echo "** making snapshot for r: $svnr"
-fi
-root="$scratch_root/create-$svnr"
-rm -rf "$root"
-mkdir "$root"
-cd "$root"
+# setup target directory where clone+logs will go
+clone_root="$scratch_root/ompi-`date +%Y-%m-%d-%H%M%S`"
+rm -rf $clone_root
+mkdir -p $clone_root
 
-# startup the logfile
-logdir="$root/logs"
+# startup the logfile (must be before do_command)
+logdir="$clone_root/logs"
 mkdir "$logdir"
 
-# checkout a clean version
-r=`echo $svnr | cut -c2-`
-do_command "svn co $svnroot -r $r ompi"
-
-# ensure that we append the SVN number on the official version number
+# Get a fresh git clone
+cd $clone_root
+do_command "git clone $giturl ompi"
 cd ompi
-svnversion="r`svnversion .`"
-version_files="`find . -name VERSION`"
-d=`date +'%b %d, %Y'`
-for file in $version_files; do
-    sed -e 's/^want_repo_rev=.*/want_repo_rev=1/' \
-        -e 's/^repo_rev=.*/repo_rev='$svnversion/ \
-        -e 's@^date=.*@date="'"$d"' (nightly snapshot tarball)"@' \
-        $file > $file.new
-    cp -f $file.new $file
-    rm -f $file.new
-done
+do_command "git checkout $gitbranch"
+
+# Find the "git describe" string for this branch (remove a leading "ompi-"
+# prefix, if there is one).
+describe=`git describe --tags --always | sed -e s/^ompi-//`
+if test -n "$debug"; then
+    echo "** found $gitbranch describe: $describe"
+fi
+version=$describe
+
+# if there's a $destdir/latest_snapshot.txt, see if anything has
+# happened since the describe listed in that file
+if test -f "$destdir/latest_snapshot.txt"; then
+    snapshot_describe=`cat $destdir/latest_snapshot.txt`
+    if test -n "$debug"; then
+        echo "** last snapshot describe: $snapshot_describe"
+    fi
+
+    # Do we need a new snapshot?
+    if test "$describe" = "$snapshot_describe"; then
+        if test -n "$debug"; then
+            echo "** git $gitbranch describe is same as latest_snapshot -- not doing anything"
+        fi
+        # Since we didn't do anything, there's no point in leaving the clone we
+        # just created
+        cd ..
+        rm -rf $clone_root
+
+        # All done... nothing to see here...
+        exit 0
+    fi
+fi
+
+if test -n "$debug"; then
+    echo "** making snapshot for describe: $describe"
+fi
+
+# Ensure that VERSION is set to indicate that it wants a snapshot, and
+# insert the actual value that we want (so that ompi_get_version.sh
+# will report exactly that version).
+sed -e 's/^repo_rev=.*/repo_rev='$describe/ \
+    -e 's/^tarball_version=.*/tarball_version='$describe/ \
+    VERSION > VERSION.new
+cp -f VERSION.new VERSION
+rm -f VERSION.new
 
 # lie about our username in $USER so that autogen will skip all
-# .ompi_ignore'ed directories (i.e., so that we won't get 
+# .ompi_ignore'ed directories (i.e., so that we won't get
 # .ompi_unignore'ed)
 USER="ompibuilder"
 export USER
@@ -292,18 +228,23 @@ export USER
 do_command "./autogen.pl"
 
 # do config
-do_command "./configure --enable-dist"
+do_command "./configure"
 
-# distcheck does many things; we need to ensure it doesn't pick up any 
-# other OMPI installs via LD_LIBRARY_PATH.  It may be a bit Draconian
-# to totally clean LD_LIBRARY_PATH (i.e., we may need something in there),
-# but at least in the current building setup, we don't.  But be advised
-# that this may need to change in the future...
+# Do make distcheck (which will invoke config/distscript.csh to set
+# the right values in VERSION).  distcheck does many things; we need
+# to ensure it doesn't pick up any other installs via LD_LIBRARY_PATH.
+# It may be a bit Draconian to totally clean LD_LIBRARY_PATH (i.e., we
+# may need something in there), but at least in the current building
+# setup, we don't.  But be advised that this may need to change in the
+# future...
 save=$LD_LIBRARY_PATH
 LD_LIBRARY_PATH=
 do_command "make -j 8 distcheck"
 LD_LIBRARY_PATH=$save
 save=
+
+# chmod the whole directory, so that core files are accessible by others
+chmod a+rX -R .
 
 # move the resulting tarballs to the destdir
 gz="`/bin/ls openmpi*tar.gz`"
@@ -352,8 +293,8 @@ rm -rf "$root"
 
 # send success mail
 if test "$want_success_mail" = "1"; then
-    Mail -s "Create success (r$version)" "$email" <<EOF
-Creating nightly snapshot SVN tarball was a success.
+    Mail -s "Create success ($version)" "$email" <<EOF
+Creating nightly snapshot tarball was a success.
 
 Snapshot:   $version
 Start time: $start_time
