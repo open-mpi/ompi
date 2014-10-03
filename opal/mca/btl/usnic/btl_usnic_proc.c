@@ -29,6 +29,7 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/proc.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_proc.h"
@@ -248,7 +249,7 @@ static int create_proc(opal_proc_t *opal_proc,
                        "transport mismatch",
                        true,
                        opal_process_info.nodename,
-                       proc->proc_opal->proc_hostname);
+                       opal_get_proc_hostname(proc->proc_opal));
         OBJ_RELEASE(proc);
         return OPAL_ERR_BAD_PARAM;
     }
@@ -628,8 +629,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
                     ibv_get_device_name(module->device),
                     module->if_name,
                     module->if_mtu,
-                    (NULL == proc->proc_opal->proc_hostname) ?
-                    "unknown" : proc->proc_opal->proc_hostname,
+                    opal_get_proc_hostname(proc->proc_opal),
                     proc->proc_modex[*index_out].mtu);
         *index_out = -1;
         return OPAL_ERR_UNREACH;

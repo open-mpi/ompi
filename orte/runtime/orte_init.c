@@ -170,6 +170,15 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
+    /* we may have modified the local nodename according to
+     * request to retain/strip the FQDN and prefix, so update
+     * it here. The OPAL layer will strdup the hostname, so
+     * we have to free it first to avoid a memory leak */
+    if (NULL != opal_process_info.nodename) {
+        free(opal_process_info.nodename);
+    }
+    opal_process_info.nodename = orte_process_info.nodename;
+
     /* setup the dstore framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -231,6 +240,18 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_init";
         goto error;
     }
+
+    /* set the remaining opal_process_info fields. Note that
+     * the OPAL layer will have initialized these to NULL, and
+     * anyone between us would not have strdup'd the string, so
+     * we cannot free it here */
+    opal_process_info.job_session_dir  = orte_process_info.job_session_dir;
+    opal_process_info.proc_session_dir = orte_process_info.proc_session_dir;
+    opal_process_info.num_local_peers  = (int32_t)orte_process_info.num_local_peers;
+    opal_process_info.my_local_rank    = (int32_t)orte_process_info.my_local_rank;
+#if OPAL_HAVE_HWLOC
+    opal_process_info.cpuset           = orte_process_info.cpuset;
+#endif  /* OPAL_HAVE_HWLOC */
 
 #if OPAL_ENABLE_TIMING
     opal_timing_set_jobid(ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

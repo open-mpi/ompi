@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 #include <unistd.h>
 
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_util.h"
@@ -205,11 +207,7 @@ static void map_output_procs(FILE *fp)
     /* Loop over and print the sorted module device information */
     for (i = 0; i < num_procs; ++i) {
         fprintf(fp, "peer=%d,", opal_process_name_vpid(procs[i]->proc_opal->proc_name));
-        if (procs[i]->proc_opal->proc_hostname) {
-            fprintf(fp, "hostname=%s,",
-                    procs[i]->proc_opal->proc_hostname);
-        }
-
+        fprintf(fp, "hostname=%s,", opal_get_proc_hostname(procs[i]->proc_opal));
         map_output_endpoints(fp, procs[i]);
     }
 
@@ -235,7 +233,7 @@ void opal_btl_usnic_connectivity_map(void)
        rank>.txt */
     asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
              mca_btl_usnic_component.connectivity_map_prefix,
-             opal_process_info.nodename,
+             opal_get_proc_hostname(opal_proc_local_get()),
              getpid(),
              opal_process_name_jobid(opal_proc_local_get()->proc_name),
              opal_process_name_vpid(opal_proc_local_get()->proc_name));

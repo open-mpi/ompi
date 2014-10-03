@@ -35,6 +35,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
+#include "opal/util/proc.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -379,7 +380,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     int rc, *a = NULL;
     size_t i, j;
 
-    if (NULL == (proc_hostname = btl_proc->proc_opal->proc_hostname)) {
+    if (NULL == (proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal))) {
         return OPAL_ERR_UNREACH;
     }
 

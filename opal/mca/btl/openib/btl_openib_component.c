@@ -84,6 +84,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/proc.h"
 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -540,8 +541,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        break;
     case MCA_BTL_OPENIB_CONTROL_CTS:
         OPAL_OUTPUT((-1, "received CTS from %s (buffer %p): posted recvs %d, sent cts %d",
-                     (NULL == ep->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : ep->endpoint_proc->proc_opal->proc_hostname,
+                     opal_get_proc_hostname(ep->endpoint_proc->proc_opal),
                      (void*) ctl_hdr,
                      ep->endpoint_posted_recvs, ep->endpoint_cts_sent));
         ep->endpoint_cts_received = true;
@@ -676,7 +676,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
     if (mca_btl_openib_component.gid_index >
         ib_port_attr->gid_tbl_len) {
         opal_show_help("help-mpi-btl-openib.txt", "gid index too large",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        ibv_get_device_name(device->ib_dev), port_num,
                        mca_btl_openib_component.gid_index,
                        ib_port_attr->gid_tbl_len);
@@ -734,7 +734,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
         opal_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
-                true, opal_proc_local_get()->proc_hostname);
+                true, opal_process_info.nodename);
     }
 
     lmc = (1 << ib_port_attr->lmc);
@@ -1200,7 +1200,7 @@ static int setup_qps(void)
     if (0 == opal_argv_count(queues)) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "no qps in receive_queues", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        mca_btl_openib_component.receive_queues);
         ret = OPAL_ERROR;
         goto error;
@@ -1219,7 +1219,7 @@ static int setup_qps(void)
             num_xrc_qps++;
 #else
             opal_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
-                           opal_proc_local_get()->proc_hostname,
+                           opal_process_info.nodename,
                            mca_btl_openib_component.receive_queues);
             ret = OPAL_ERR_NOT_AVAILABLE;
             goto error;
@@ -1227,7 +1227,7 @@ static int setup_qps(void)
         } else {
             opal_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true,
-                           opal_proc_local_get()->proc_hostname,
+                           opal_process_info.nodename,
                            mca_btl_openib_component.receive_queues,
                            queues[qp]);
             ret = OPAL_ERR_BAD_PARAM;
@@ -1239,7 +1239,7 @@ static int setup_qps(void)
        and SRQ */
     if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
         opal_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        mca_btl_openib_component.receive_queues);
         ret = OPAL_ERR_BAD_PARAM;
         goto error;
@@ -1248,7 +1248,7 @@ static int setup_qps(void)
     /* Current XRC implementation can't used with btls_per_lid > 1 */
     if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
         opal_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        mca_btl_openib_component.receive_queues, num_xrc_qps);
         ret = OPAL_ERR_BAD_PARAM;
         goto error;
@@ -1279,7 +1279,7 @@ static int setup_qps(void)
             if (count < 3 || count > 6) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid pp qp specification", true,
-                               opal_proc_local_get()->proc_hostname, queues[qp]);
+                               opal_process_info.nodename, queues[qp]);
                 ret = OPAL_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1310,7 +1310,7 @@ static int setup_qps(void)
             if (count < 3 || count > 7) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
-                               opal_proc_local_get()->proc_hostname, queues[qp]);
+                               opal_process_info.nodename, queues[qp]);
                 ret = OPAL_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1346,14 +1346,14 @@ static int setup_qps(void)
 
             if (rd_num < rd_init) {
                 opal_show_help("help-mpi-btl-openib.txt", "rd_num must be >= rd_init",
-                        true, opal_proc_local_get()->proc_hostname, queues[qp]);
+                        true, opal_process_info.nodename, queues[qp]);
                 ret = OPAL_ERR_BAD_PARAM;
                 goto error;
             }
 
             if (rd_num < srq_limit) {
                 opal_show_help("help-mpi-btl-openib.txt", "srq_limit must be > rd_num",
-                        true, opal_proc_local_get()->proc_hostname, queues[qp]);
+                        true, opal_process_info.nodename, queues[qp]);
                 ret = OPAL_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1365,7 +1365,7 @@ static int setup_qps(void)
 
         if (rd_num <= rd_low) {
             opal_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
-                    true, opal_proc_local_get()->proc_hostname, queues[qp]);
+                    true, opal_process_info.nodename, queues[qp]);
             ret = OPAL_ERR_BAD_PARAM;
             goto error;
         }
@@ -1386,21 +1386,21 @@ static int setup_qps(void)
     if (max_qp_size < max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too small", true,
-                       opal_proc_local_get()->proc_hostname, max_qp_size,
+                       opal_process_info.nodename, max_qp_size,
                        max_size_needed);
         ret = OPAL_ERR_BAD_PARAM;
         goto error;
     } else if (max_qp_size > max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too big", true,
-                       opal_proc_local_get()->proc_hostname, max_qp_size,
+                       opal_process_info.nodename, max_qp_size,
                        max_size_needed);
     }
 
     if (mca_btl_openib_component.ib_free_list_max > 0 &&
         min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
         opal_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        mca_btl_openib_component.ib_free_list_max,
                        min_freelist_size);
         ret = OPAL_ERR_BAD_PARAM;
@@ -1514,7 +1514,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         if (mca_btl_openib_component.warn_no_device_params_found) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "no device params found", true,
-                           opal_proc_local_get()->proc_hostname,
+                           opal_process_info.nodename,
                            ibv_get_device_name(device->ib_dev),
                            device->ib_dev_attr.vendor_id,
                            device->ib_dev_attr.vendor_part_id);
@@ -1997,7 +1997,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                     opal_show_help("help-mpi-btl-openib.txt",
                                    "locally conflicting receive_queues", true,
                                    opal_install_dirs.opaldatadir,
-                                   opal_proc_local_get()->proc_hostname,
+                                   opal_process_info.nodename,
                                    ibv_get_device_name(receive_queues_device->ib_dev),
                                    receive_queues_device->ib_dev_attr.vendor_id,
                                    receive_queues_device->ib_dev_attr.vendor_part_id,
@@ -2021,7 +2021,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 opal_show_help("help-mpi-btl-openib.txt",
                                "locally conflicting receive_queues", true,
                                opal_install_dirs.opaldatadir,
-                               opal_proc_local_get()->proc_hostname,
+                               opal_process_info.nodename,
                                ibv_get_device_name(receive_queues_device->ib_dev),
                                receive_queues_device->ib_dev_attr.vendor_id,
                                receive_queues_device->ib_dev_attr.vendor_part_id,
@@ -2059,7 +2059,7 @@ error:
     if (OPAL_SUCCESS != ret) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(device->ib_dev));
     }
 
@@ -2402,7 +2402,7 @@ btl_openib_component_init(int *num_btl_modules,
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "ptmalloc2 with no threads", true,
-                       opal_proc_local_get()->proc_hostname);
+                       opal_process_info.nodename);
         goto no_btls;
     }
 #endif
@@ -2517,7 +2517,7 @@ btl_openib_component_init(int *num_btl_modules,
             if (mca_btl_openib_component.want_fork_support > 0) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "ibv_fork_init fail", true,
-                               opal_proc_local_get()->proc_hostname);
+                               opal_process_info.nodename);
                 goto no_btls;
             }
         }
@@ -2636,7 +2636,7 @@ btl_openib_component_init(int *num_btl_modules,
     free(dev_sorted);
     if (!found) {
         opal_show_help("help-mpi-btl-openib.txt", "no devices right type",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        ((BTL_OPENIB_DT_IB == mca_btl_openib_component.device_type) ?
                         "InfiniBand" :
                         (BTL_OPENIB_DT_IWARP == mca_btl_openib_component.device_type) ?
@@ -2653,7 +2653,7 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.warn_nonexistent_if) {
         char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
         opal_show_help("help-mpi-btl-openib.txt", "nonexistent port",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        ((NULL != mca_btl_openib_component.if_include) ?
                         "in" : "ex"), str);
         free(str);
@@ -2665,7 +2665,7 @@ btl_openib_component_init(int *num_btl_modules,
         if (num_devices_intentionally_ignored < num_devs) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "no active ports found", true, 
-                           opal_proc_local_get()->proc_hostname);
+                           opal_process_info.nodename);
         }
         goto no_btls;
     }
@@ -3394,11 +3394,7 @@ error:
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
         IBV_WC_RETRY_EXC_ERR == wc->status) {
         const char *peer_hostname;
-        if (endpoint->endpoint_proc->proc_opal && endpoint->endpoint_proc->proc_opal->proc_hostname) {
-            peer_hostname = endpoint->endpoint_proc->proc_opal->proc_hostname;
-        } else {
-            peer_hostname = "<unknown -- please run with mpi_keep_peer_hostnames=1>";
-        }
+        peer_hostname = opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal);
         const char *device_name =
             ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
 
@@ -3410,21 +3406,21 @@ error:
                 opal_show_help("help-mpi-btl-openib.txt",
                                "pp rnr retry exceeded",
                                true,
-                               opal_proc_local_get()->proc_hostname,
+                               opal_process_info.nodename,
                                device_name,
                                peer_hostname);
             } else {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "srq rnr retry exceeded",
                                true,
-                               opal_proc_local_get()->proc_hostname,
+                               opal_process_info.nodename,
                                device_name,
                                peer_hostname);
             }
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "pp retry exceeded", true,
-                           opal_proc_local_get()->proc_hostname,
+                           opal_process_info.nodename,
                            device_name, peer_hostname);
         }
     }

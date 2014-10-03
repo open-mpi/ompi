@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include <stdarg.h>
 
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 
 #include "base.h"
 #include "btl_base_error.h"
@@ -64,7 +66,7 @@ void mca_btl_base_error_no_nics(const char* transport,
         asprintf(&procid, "%s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
         opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
-                       true, procid, transport, opal_proc_local_get()->proc_hostname,
+                       true, procid, transport, opal_process_info.nodename,
                        nic_name);
         free(procid);
     }

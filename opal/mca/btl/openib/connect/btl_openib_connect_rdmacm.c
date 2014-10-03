@@ -6,7 +6,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -50,6 +50,7 @@
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 
 #include "btl_openib_fd.h"
 #include "btl_openib_proc.h"
@@ -532,7 +533,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
         endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(contents->openib_btl->device->ib_dev),
                        contents->openib_btl->port_num,
                        req_inline, attr.cap.max_inline_data);
@@ -888,8 +889,7 @@ static int rdmacm_module_start_connect(opal_btl_openib_connect_base_module_t *cp
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
                  endpoint->endpoint_initiator ? "am" : "am NOT",
-                 (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                 opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
 
     /* If we're the initiator, then open all the QPs */
     if (contents->endpoint->endpoint_initiator) {
@@ -942,14 +942,14 @@ static void *show_help_cant_find_endpoint(void *context)
         msg = stringify(c->peer_ip_addr);
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        c->device_name,
                        c->peer_tcp_port);
         free(msg);
     } else {
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        "<unknown>", "<unknown>", -1);
     }
     free(context);
@@ -1032,8 +1032,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
                  endpoint->endpoint_initiator ? "am" : "am NOT",
-                 (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                 opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
     if (endpoint->endpoint_initiator) {
         reject_reason_t reason = REJECT_WRONG_DIRECTION;
 
@@ -1094,8 +1093,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
         }
         OPAL_OUTPUT((-1, "Posted CTS receiver buffer (%p) for peer %s, qp index %d (QP num %d), WR ID %p, SG addr %p, len %d, lkey %d",
                      (void*)((uintptr_t*) wr->sg_list[0].addr),
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname,
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                      qpnum,
                      endpoint->qps[qpnum].qp->lcl_qp->qp_num,
                      (void*)((uintptr_t*) wr->wr_id),
@@ -1286,8 +1284,7 @@ static void *local_endpoint_cpc_complete(void *context)
     mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t *)context;
 
     OPAL_OUTPUT((-1, "MAIN local_endpoint_cpc_complete to %s",
-                 (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                 opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
     mca_btl_openib_endpoint_cpc_complete(endpoint);
 
     return NULL;
@@ -1307,8 +1304,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     if (contents->server) {
         endpoint = context->endpoint;
         OPAL_OUTPUT((-1, "SERVICE Server CPC complete to %s",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
     } else {
         endpoint = contents->endpoint;
         endpoint->rem_info.rem_index =
@@ -1323,8 +1319,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
             contents->on_client_list = true;
         }
         OPAL_OUTPUT((-1, "SERVICE Client CPC complete to %s",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
     }
     if (NULL == endpoint) {
         BTL_ERROR(("Can't find endpoint"));
@@ -1337,11 +1332,9 @@ static int rdmacm_connect_endpoint(id_context_t *context,
        connected */
     if (++data->rdmacm_counter < mca_btl_openib_component.num_qps) {
 	BTL_VERBOSE(("%s to peer %s, count == %d", contents->server?"server":"client",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname, data->rdmacm_counter));
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal), data->rdmacm_counter));
         OPAL_OUTPUT((-1, "%s to peer %s, count == %d", contents->server?"server":"client",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname, data->rdmacm_counter));
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal), data->rdmacm_counter));
         return OPAL_SUCCESS;
     }
 
@@ -1578,8 +1571,7 @@ static int finish_connect(id_context_t *context)
             OPAL_OUTPUT((-1, "Posted initiator CTS buffer (%p, length %d) for peer %s, qp index %d (QP num %d)",
                          (void*)((uintptr_t*) wr->sg_list[0].addr),
                          wr->sg_list[0].length,
-                         (NULL == contents->endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                         "unknown" : contents->endpoint->endpoint_proc->proc_opal->proc_hostname,
+                         opal_get_proc_hostname(contents->endpoint->endpoint_proc->proc_opal),
                          context->qpnum,
                          contents->endpoint->qps[context->qpnum].qp->lcl_qp->qp_num));
         }
@@ -1651,8 +1643,7 @@ static int finish_connect(id_context_t *context)
                  (void*) contents->endpoint,
                  (void*) contents->endpoint->endpoint_local_cpc,
                  contents->endpoint->endpoint_initiator ? "am" : "am NOT",
-                 (NULL == contents->endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : contents->endpoint->endpoint_proc->proc_opal->proc_hostname));
+                 opal_get_proc_hostname(contents->endpoint->endpoint_proc->proc_opal)));
     rc = rdma_connect(context->id, &conn_param);
     if (0 != rc) {
         BTL_ERROR(("rdma_connect Failed with %d", rc));
@@ -1680,7 +1671,7 @@ static void *show_help_rdmacm_event_error(void *c)
     if (RDMA_CM_EVENT_DEVICE_REMOVAL == event->event) {
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm device removal", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(event->id->verbs->device));
     } else {
         const char *device = "Unknown";
@@ -1691,11 +1682,10 @@ static void *show_help_rdmacm_event_error(void *c)
         }
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm event error", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        device,
                        rdma_event_str(event->event),
-                       (NULL == context->endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                       "unknown" : context->endpoint->endpoint_proc->proc_opal->proc_hostname);
+                       opal_get_proc_hostname(context->endpoint->endpoint_proc->proc_opal));
     }
 
     return NULL;

@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -442,28 +443,28 @@ set_uniq_paths_for_init_rndv(mca_btl_smcuda_component_t *comp_ptr)
     if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool_rndv.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_module.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_rndv.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }

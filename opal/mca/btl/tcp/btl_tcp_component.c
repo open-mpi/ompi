@@ -58,6 +58,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
@@ -193,14 +194,14 @@ static int mca_btl_tcp_component_verify(void)
 {
     if( mca_btl_tcp_component.tcp_port_min > USHRT_MAX ) {
         opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
-                       true, "v4", opal_proc_local_get()->proc_hostname,
+                       true, "v4", opal_process_info.nodename,
                        mca_btl_tcp_component.tcp_port_min );
         mca_btl_tcp_component.tcp_port_min = 1024;
     }
 #if OPAL_ENABLE_IPV6
     if( mca_btl_tcp_component.tcp6_port_min > USHRT_MAX ) {
         opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
-                       true, "v6", opal_proc_local_get()->proc_hostname,
+                       true, "v6", opal_process_info.nodename,
                        mca_btl_tcp_component.tcp6_port_min );
         mca_btl_tcp_component.tcp6_port_min = 1024;
     }
@@ -479,7 +480,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         str = strchr(argv[i], '/');
         if (NULL == str) {
             opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, opal_proc_local_get()->proc_hostname, 
+                           true, name, opal_process_info.nodename, 
                            tmp, "Invalid specification (missing \"/\")");
             free(argv[i]);
             free(tmp);
@@ -496,7 +497,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 
         if (1 != ret) {
             opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, opal_proc_local_get()->proc_hostname, tmp,
+                           true, name, opal_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
             continue;
@@ -524,7 +525,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         if (if_index < 0) {
             if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
                 opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                               true, name, opal_proc_local_get()->proc_hostname, tmp,
+                               true, name, opal_process_info.nodename, tmp,
                                "Did not find interface matching this subnet");
             }
             free(tmp);

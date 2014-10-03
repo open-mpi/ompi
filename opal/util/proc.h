@@ -108,4 +108,10 @@ OPAL_DECLSPEC extern uint32_t (*opal_process_name_jobid)(const opal_process_name
 #define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
 #define OPAL_NAME_INVALID  0xffffffffffffffff
 
+/* provide a safe way to retrieve the hostname of a proc, including
+ * our own. This is to be used by all BTLs so we don't retrieve hostnames
+ * unless needed. The returned value MUST NOT be free'd as it is
+ * owned by the proc_t */
+OPAL_DECLSPEC char* opal_get_proc_hostname(const opal_proc_t *proc);
+
 #endif  /* OPAL_PROC_H */

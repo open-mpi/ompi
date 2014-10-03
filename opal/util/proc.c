@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,9 +18,9 @@
 #include "opal/mca/pmix/pmix.h"
 
 opal_process_info_t opal_process_info = {
-    .nodename = "not yet named",
-    .job_session_dir = "not yet defined",
-    .proc_session_dir = "not yet defined",
+    .nodename = NULL,
+    .job_session_dir = NULL,
+    .proc_session_dir = NULL,
     .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
 #if OPAL_HAVE_HWLOC
@@ -34,7 +35,7 @@ static opal_proc_t opal_local_proc = {
     0,
     0,
     NULL,
-    "localhost - unnamed"
+    NULL
 };
 static opal_proc_t* opal_proc_my_name = &opal_local_proc;
 
@@ -120,3 +121,34 @@ char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_
 uint32_t (*opal_process_name_vpid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
 uint32_t (*opal_process_name_jobid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
 
+char* opal_get_proc_hostname(const opal_proc_t *proc)
+{
+    int ret;
+
+    /* if the proc is NULL, then we can't know */
+    if (NULL == proc) {
+        return "unknown";
+    }
+
+    /* if it is my own hostname we are after, then just hand back
+     * the value in opal_process_info */
+    if (proc == opal_proc_my_name) {
+        return opal_process_info.nodename;
+    }
+
+    /* see if we already have the data - if so, pass it back */
+    if (NULL != proc->proc_hostname) {
+        return proc->proc_hostname;
+    }
+
+    /* if we don't already have it, then try to get it */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, proc,
+                          (char**)&(proc->proc_hostname), OPAL_STRING);
+    if (OPAL_SUCCESS != ret) {
+        OPAL_ERROR_LOG(ret);
+        return "unknown";  // return something so the caller doesn't segfault
+    }
+
+    /* user is not allowed to release the data */
+    return proc->proc_hostname;
+}

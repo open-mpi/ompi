@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
  *
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,8 @@
 
 #include "opal/util/show_help.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/proc.h"
+
 #include "connect/btl_openib_connect_sl.h"
 #include <infiniband/iba/ib_types.h>
 
@@ -113,7 +116,7 @@ static int init_ud_qp(struct ibv_context *context_arg,
     if (NULL == cache->cq) {
         BTL_ERROR(("error creating cq, errno says %s", strerror(errno)));
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                true, opal_proc_local_get()->proc_hostname,
+                true, opal_process_info.nodename,
                 __FILE__, __LINE__, "ibv_create_cq",
                 strerror(errno), errno,
                 ibv_get_device_name(context_arg->device));

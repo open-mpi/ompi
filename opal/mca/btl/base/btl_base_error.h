@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,53 +36,54 @@ OPAL_DECLSPEC extern int mca_btl_base_verbose;
 OPAL_DECLSPEC extern int mca_btl_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
 OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
 
-#define BTL_OUTPUT(args)                                  \
-do {                                                      \
-    mca_btl_base_out("[%s]%s[%s:%d:%s] ",                 \
-            opal_proc_local_get()->proc_hostname,         \
-            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),           \
-            __FILE__, __LINE__, __func__);                \
-    mca_btl_base_out args;                                \
-    mca_btl_base_out("\n");                               \
-} while(0);
+#define BTL_OUTPUT(args)                                        \
+    do {                                                        \
+        mca_btl_base_out("[%s]%s[%s:%d:%s] ",                   \
+                         opal_process_info.nodename,            \
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),    \
+                         __FILE__, __LINE__, __func__);         \
+        mca_btl_base_out args;                                  \
+        mca_btl_base_out("\n");                                 \
+    } while(0);
 
 
-#define BTL_ERROR(args)                                   \
-do {                                                      \
-    mca_btl_base_err("[%s]%s[%s:%d:%s] ",                 \
-            opal_proc_local_get()->proc_hostname,         \
-            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),           \
-            __FILE__, __LINE__, __func__);                \
-    mca_btl_base_err args;                                \
-    mca_btl_base_err("\n");                               \
-} while(0);
+#define BTL_ERROR(args)                                         \
+    do {                                                        \
+        mca_btl_base_err("[%s]%s[%s:%d:%s] ",                   \
+                         opal_process_info.nodename,            \
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),    \
+                         __FILE__, __LINE__, __func__);         \
+        mca_btl_base_err args;                                  \
+        mca_btl_base_err("\n");                                 \
+    } while(0);
 
-#define BTL_PEER_ERROR(proc, args)                        \
-do {                                                      \
-    mca_btl_base_err("%s[%s:%d:%s] from %s ",             \
-                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),  \
-                     __FILE__, __LINE__, __func__,        \
-                     opal_proc_local_get()->proc_hostname); \
-    if(proc) {                     \
-        mca_btl_base_err("to: %s ", proc->proc_hostname); \
-    }                                                     \
-    mca_btl_base_err args;                                \
-    mca_btl_base_err("\n");                               \
-} while(0);
+#define BTL_PEER_ERROR(proc, args)                              \
+    do {                                                        \
+        mca_btl_base_err("%s[%s:%d:%s] from %s ",               \
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),    \
+                         __FILE__, __LINE__, __func__,          \
+                         opal_process_info.nodename);           \
+        if (proc) {                                             \
+            mca_btl_base_err("to: %s ",                         \
+                             opal_get_proc_hostname(proc));     \
+        }                                                       \
+        mca_btl_base_err args;                                  \
+        mca_btl_base_err("\n");                                 \
+    } while(0);
 
 
 #if OPAL_ENABLE_DEBUG
-#define BTL_VERBOSE(args)                                 \
-do {                                                      \
-   if(mca_btl_base_verbose > 0) {                         \
-        mca_btl_base_err("[%s]%s[%s:%d:%s] ",             \
-            opal_proc_local_get()->proc_hostname,         \
-            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),           \
-                __FILE__, __LINE__, __func__);            \
-        mca_btl_base_err args;                            \
-        mca_btl_base_err("\n");                           \
-   }                                                      \
-} while(0); 
+#define BTL_VERBOSE(args)                                               \
+    do {                                                                \
+        if(mca_btl_base_verbose > 0) {                                  \
+            mca_btl_base_err("[%s]%s[%s:%d:%s] ",                       \
+                             opal_process_info.nodename,                \
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),        \
+                             __FILE__, __LINE__, __func__);             \
+            mca_btl_base_err args;                                      \
+            mca_btl_base_err("\n");                                     \
+        }                                                               \
+    } while(0); 
 #else
 #define BTL_VERBOSE(args) 
 #endif

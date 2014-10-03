@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -59,6 +60,7 @@
 #include <pthread.h>
 
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/util/alfg.h"
@@ -1246,7 +1248,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
 
     if (NULL == lcl_ep->qps[qp].qp->lcl_qp) {
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "ibv_create_qp failed", true, opal_proc_local_get()->proc_hostname,
+                       "ibv_create_qp failed", true, opal_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
                        "Reliable connected (RC)");
 
@@ -1256,7 +1258,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     if (init_attr.cap.max_inline_data < req_inline) {
         lcl_ep->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "inline truncated", true, opal_proc_local_get()->proc_hostname,
+                       "inline truncated", true, opal_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
                        m->btl->port_num, req_inline,
                        init_attr.cap.max_inline_data);

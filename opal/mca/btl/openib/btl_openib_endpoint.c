@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -38,6 +38,7 @@
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/class/ompi_free_list.h"
 
@@ -507,8 +508,7 @@ static void cts_sent(mca_btl_base_module_t* btl,
     /* Nothing to do/empty function (we can't pass in a NULL pointer
        for the des_cbfunc) */
     OPAL_OUTPUT((-1, "CTS send to %s completed",
-                 (NULL == ep->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : ep->endpoint_proc->proc_opal->proc_hostname));
+                 opal_get_proc_hostname(ep->endpoint_proc->proc_opal)));
 }
 
 /*
@@ -523,8 +523,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_control_header_t *ctl_hdr;
 
     OPAL_OUTPUT((-1, "SENDING CTS to %s on qp index %d (QP num %d)",
-                 (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname,
+                 opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                  mca_btl_openib_component.credits_qp,
                  endpoint->qps[mca_btl_openib_component.credits_qp].qp->lcl_qp->qp_num));
     sc_frag = alloc_control_frag(endpoint->endpoint_btl);
@@ -594,8 +593,7 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
         transport_type_ib_p = (IBV_TRANSPORT_IB == endpoint->endpoint_btl->device->ib_dev->transport_type);
 #endif
         OPAL_OUTPUT((-1, "cpc_complete to peer %s: is IB %d, initiatior %d, cts received: %d",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname,
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                      transport_type_ib_p,
                      endpoint->endpoint_initiator,
                      endpoint->endpoint_cts_received));
@@ -608,15 +606,13 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
                mark us as connected */
             if (endpoint->endpoint_cts_received) {
                 OPAL_OUTPUT((-1, "cpc_complete to %s -- already got CTS, so marking endpoint as complete",
-                             (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                             "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                             opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
                 mca_btl_openib_endpoint_connected(endpoint);
             }
         }
 
         OPAL_OUTPUT((-1, "cpc_complete to %s -- done",
-                     (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                     "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname));
+                     opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
         return;
     }
 
@@ -1054,7 +1050,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     if (NULL == btl || NULL == btl->error_cb) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "cannot raise btl error", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        __FILE__, __LINE__);
         exit(1);
     }

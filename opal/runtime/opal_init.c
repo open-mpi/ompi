@@ -255,6 +255,7 @@ opal_init_util(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
+    char hostname[512];
 
     if( ++opal_util_initialized != 1 ) {
         if( opal_util_initialized < 1 ) {
@@ -262,6 +263,13 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
+
+    /* set the nodename right away so anyone who needs it has it. Note
+     * that we don't bother with fqdn and prefix issues here - we let
+     * the RTE later replace this with a modified name if the user
+     * requests it */
+    gethostname(hostname, 512);
+    opal_process_info.nodename = strdup(hostname);
 
     /* initialize the memory allocator */
     opal_malloc_init();
