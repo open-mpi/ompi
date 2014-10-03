@@ -16,6 +16,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -513,28 +514,28 @@ set_uniq_paths_for_init_rndv(mca_btl_sm_component_t *comp_ptr)
     if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_pool_rndv.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_btl_rndv.%s",
                  opal_process_info.job_session_dir,
-                 opal_proc_local_get()->proc_hostname) < 0) {
+                 opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
@@ -806,10 +807,10 @@ mca_btl_sm_component_init(int *num_btls,
                         sbuf.st_mode = 0;
                     }
                     opal_show_help("help-mpi-btl-sm.txt", "knem permission denied",
-                                   true, opal_proc_local_get()->proc_hostname, sbuf.st_mode);
+                                   true, opal_process_info.nodename, sbuf.st_mode);
                 } else {
                     opal_show_help("help-mpi-btl-sm.txt", "knem fail open",
-                                   true, opal_proc_local_get()->proc_hostname, errno,
+                                   true, opal_process_info.nodename, errno,
                                    strerror(errno));
                 }
                 goto no_knem;
@@ -821,13 +822,13 @@ mca_btl_sm_component_init(int *num_btls,
                        &mca_btl_sm_component.knem_info);
             if (rc < 0) {
                 opal_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
-                               true, opal_proc_local_get()->proc_hostname, errno,
+                               true, opal_process_info.nodename, errno,
                                strerror(errno));
                 goto no_knem;
             }
             if (KNEM_ABI_VERSION != mca_btl_sm_component.knem_info.abi) {
                 opal_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
-                               true, opal_proc_local_get()->proc_hostname, KNEM_ABI_VERSION,
+                               true, opal_process_info.nodename, KNEM_ABI_VERSION,
                                mca_btl_sm_component.knem_info.abi);
                 goto no_knem;
             }
@@ -849,7 +850,7 @@ mca_btl_sm_component_init(int *num_btls,
                                                     KNEM_STATUS_ARRAY_FILE_OFFSET);
                 if (MAP_FAILED == mca_btl_sm.knem_status_array) {
                     opal_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
-                                   true, opal_proc_local_get()->proc_hostname, errno,
+                                   true, opal_process_info.nodename, errno,
                                    strerror(errno));
                     goto no_knem;
                 }

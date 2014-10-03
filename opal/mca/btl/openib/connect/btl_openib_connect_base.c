@@ -4,7 +4,7 @@
  * Copyright (c) 2007      Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -27,6 +27,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 /*
@@ -127,7 +128,7 @@ int opal_btl_openib_connect_base_register(void)
             if (NULL == all[i]) {
                 opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
-                               "include", opal_proc_local_get()->proc_hostname,
+                               "include", opal_process_info.nodename,
                                "include", btl_openib_cpc_include, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -153,7 +154,7 @@ int opal_btl_openib_connect_base_register(void)
             if (NULL == all[i]) {
                 opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
-                               "exclude", opal_proc_local_get()->proc_hostname,
+                               "exclude", opal_process_info.nodename,
                                "exclude", btl_openib_cpc_exclude, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -299,7 +300,7 @@ int opal_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     if (0 == cpc_index) {
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "no cpcs for port", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(btl->device->ib_dev),
                        btl->port_num, msg);
         free(cpcs);
@@ -454,8 +455,7 @@ int opal_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
         mca_btl_openib_component.credits_qp;
     endpoint->endpoint_cts_frag.super.endpoint = endpoint;
     OPAL_OUTPUT((-1, "Got a CTS frag for peer %s, addr %p, length %d, lkey %d",
-                 (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                 "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname,
+                 opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                  (void*) endpoint->endpoint_cts_frag.super.sg_entry.addr,
                  endpoint->endpoint_cts_frag.super.sg_entry.length,
                  endpoint->endpoint_cts_frag.super.sg_entry.lkey));

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #include "opal_config.h"
 
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 
 #include "btl_usnic_util.h"
 #include "btl_usnic_proc.h"
@@ -284,7 +286,7 @@ opal_btl_usnic_check_connectivity(opal_btl_usnic_module_t *module,
                                          endpoint->endpoint_remote_addr.cidrmask,
                                          endpoint->endpoint_remote_addr.connectivity_udp_port,
                                          endpoint->endpoint_remote_addr.mac,
-                                         endpoint->endpoint_proc->proc_opal->proc_hostname,
+                                         opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                                          endpoint->endpoint_remote_addr.mtu);
         endpoint->endpoint_connectivity_checked = true;
     }

@@ -476,7 +476,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     /* no select is required as this is a static framework */
 
-    /* Setup RTE - note that we are an MPI process  */
+    /* Setup RTE */
     if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, NULL))) {
         error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
@@ -497,15 +497,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 #endif
-
-    opal_process_info.nodename         = ompi_process_info.nodename;
-    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
-    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
-    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
-    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
-#if OPAL_HAVE_HWLOC
-    opal_process_info.cpuset           = ompi_process_info.cpuset;
-#endif  /* OPAL_HAVE_HWLOC */
 
     /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability

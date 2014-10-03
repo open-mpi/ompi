@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -34,6 +34,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
+#include "opal/util/proc.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/btl/btl.h"
@@ -142,13 +143,13 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         }
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
 }
@@ -473,13 +474,12 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     if(mca_btl_openib_get_transport_type(openib_btl) != endpoint->rem_info.rem_transport_type) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "conflicting transport types", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
                        (openib_btl->device->ib_dev_attr).vendor_id,
                        (openib_btl->device->ib_dev_attr).vendor_part_id,
                        mca_btl_openib_transport_name_strings[mca_btl_openib_get_transport_type(openib_btl)],
-                       (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                       "unknown" : endpoint->endpoint_proc->proc_opal->proc_hostname,
+                       opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                        endpoint->rem_info.rem_vendor_id,
                        endpoint->rem_info.rem_vendor_part_id,
                        mca_btl_openib_transport_name_strings[endpoint->rem_info.rem_transport_type]);
@@ -495,7 +495,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
         OPAL_ERR_NOT_FOUND != ret) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
-                       opal_proc_local_get()->proc_hostname,
+                       opal_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev));
         return ret;
     }
@@ -539,13 +539,12 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                                          recv_qps)) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               opal_proc_local_get()->proc_hostname,
+                               opal_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
                                mca_btl_openib_component.receive_queues,
-                               (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                               "unknown": endpoint->endpoint_proc->proc_opal->proc_hostname,
+                               opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                                endpoint->rem_info.rem_vendor_id,
                                endpoint->rem_info.rem_vendor_part_id,
                                recv_qps);
@@ -562,13 +561,12 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                                 values.receive_queues)) {
                      opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               opal_proc_local_get()->proc_hostname,
+                               opal_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
                                mca_btl_openib_component.receive_queues,
-                               (NULL == endpoint->endpoint_proc->proc_opal->proc_hostname) ?
-                               "unknown": endpoint->endpoint_proc->proc_opal->proc_hostname,
+                               opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                                endpoint->rem_info.rem_vendor_id,
                                endpoint->rem_info.rem_vendor_part_id,
                                values.receive_queues);
@@ -679,7 +677,7 @@ static uint64_t calculate_max_reg (void)
             action = "Your MPI job will continue, but may be behave poorly and/or hang.";
         }
         opal_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
-                       opal_proc_local_get()->proc_hostname, (unsigned long)(max_reg >> 20),
+                       opal_process_info.nodename, (unsigned long)(max_reg >> 20),
                        (unsigned long)(mem_total >> 20), action);
         return 0;  /* signal that we can't have enough memory */
     }

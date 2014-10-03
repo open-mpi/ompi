@@ -6,6 +6,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,8 @@
 #include <errno.h>
 
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
+
 #include "opal/mca/btl/base/base.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
@@ -405,14 +408,14 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             case IBV_EVENT_PATH_MIG_ERR:
             case IBV_EVENT_SRQ_ERR:
                 opal_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,opal_proc_local_get()->proc_hostname, (int)getpid(),
+                    true,opal_process_info.nodename, (int)getpid(),
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
                 break;
             case IBV_EVENT_PORT_ERR:
                 opal_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,opal_proc_local_get()->proc_hostname, (int)getpid(),
+                    true,opal_process_info.nodename, (int)getpid(),
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
@@ -442,7 +445,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 break;
             default:
                 opal_show_help("help-mpi-btl-openib.txt", "of unknown event",
-                        true,opal_proc_local_get()->proc_hostname, (int)getpid(),
+                        true,opal_process_info.nodename, (int)getpid(),
                         event_type, xrc_event ? "true" : "false");
         }
         ibv_ack_async_event(&event);

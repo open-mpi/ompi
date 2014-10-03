@@ -53,6 +53,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/net.h"
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
 #include "btl_tcp.h"
@@ -505,7 +506,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
             return OPAL_ERROR;
         }
         opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_process_info.nodename,
                        getpid(),
                        "did not receive entire connect ACK from peer");
         return OPAL_ERR_UNREACH;
