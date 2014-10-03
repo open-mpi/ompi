@@ -31,7 +31,7 @@ linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 # applications to only use the SHMEM and MPI APIs.
 libs=-loshmem -lmpi
 libs_static=-loshmem -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
-dyn_lib_file=libsohmem.@OPAL_DYN_LIB_SUFFIX@
+dyn_lib_file=liboshmem.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=liboshmem.a
 required_file=
 includedir=${includedir}
