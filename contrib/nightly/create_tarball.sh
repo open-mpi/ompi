@@ -21,8 +21,8 @@
 #
 # $1: scratch root
 # $2: e-mail address for destination
-# $4: dest dir
-# $3: git URL
+# $3: dest dir
+# $4: git URL
 # $5: git branch
 #
 
@@ -212,8 +212,8 @@ fi
 # Ensure that VERSION is set to indicate that it wants a snapshot, and
 # insert the actual value that we want (so that ompi_get_version.sh
 # will report exactly that version).
-sed -e 's/^snapshot=.*/snapshot=1/' \
-    -e 's/^snapshot_version=.*/snapshot_version='$describe/ \
+sed -e 's/^repo_rev=.*/repo_rev='$describe/ \
+    -e 's/^tarball_version=.*/tarball_version='$describe/ \
     VERSION > VERSION.new
 cp -f VERSION.new VERSION
 rm -f VERSION.new
@@ -228,7 +228,7 @@ export USER
 do_command "./autogen.pl"
 
 # do config
-do_command "./configure --enable-dist"
+do_command "./configure"
 
 # Do make distcheck (which will invoke config/distscript.csh to set
 # the right values in VERSION).  distcheck does many things; we need
