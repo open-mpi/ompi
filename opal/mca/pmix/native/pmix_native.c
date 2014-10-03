@@ -1092,10 +1092,11 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
      * equates to "non local" */
     ranks = opal_argv_split(lclpeers->data.string, ',');
     for (i=0; NULL != ranks[i]; i++) {
-        if (myrank == i) {
+        uint32_t vid = strtoul(ranks[i], NULL, 10);
+        if (myrank == vid) {
             continue;
         }
-        native_pname.vid = strtoul(ranks[i], NULL, 10);
+        native_pname.vid = vid;
 #if OPAL_HAVE_HWLOC
         OBJ_CONSTRUCT(&vals, opal_list_t);
         if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)&native_pname,
