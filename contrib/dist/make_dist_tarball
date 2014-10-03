@@ -60,7 +60,6 @@ if test "`basename $0`" = "make_tarball"; then
     highok=1
     dirty_ok=1
     greekonly=1
-    want_ompi=0
 else
     highok=0
 fi
