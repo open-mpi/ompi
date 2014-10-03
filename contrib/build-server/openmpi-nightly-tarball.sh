@@ -12,8 +12,8 @@ results_addr=testing@open-mpi.org
 # svn repository uri
 master_code_uri=https://github.com/open-mpi/ompi.git
 master_raw_uri=https://raw.github.com/open-mpi/ompi
-release_code_uri=https://github.com/open-mpi/ompi.git
-release_raw_uri=https://raw.github.com/open-mpi/ompi
+release_code_uri=https://github.com/open-mpi/ompi-release.git
+release_raw_uri=https://raw.github.com/open-mpi/ompi-release
 
 # where to put built tarballs
 outputroot=/l/osl/www/www.open-mpi.org/nightly
@@ -26,10 +26,10 @@ script_dir=/u/mpiteam/scripts
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
-    # We're no longer ever checking the 1.0 - 1.4 branches anymore
-    branches="master v1.8 v1.6"
+    # We're no longer ever checking the 1.0 - 1.6 branches anymore
+    branches="master v1.8"
 else
-    dirs=$@
+    branches=$@
 fi
 
 # Build root - scratch space
