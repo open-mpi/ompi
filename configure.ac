@@ -578,7 +578,7 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
     [test "$enable_oshmem" = "yes" && \
      test "$ompi_fortran_happy" = "1" && \
-     test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && \
+     test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
      test "$enable_oshmem_fortran" != "no"])
 
 # checkpoint results
@@ -1212,7 +1212,7 @@ fi
 # do this for C++, because even if we're not building the MPI C++
 # bindings, we *do* still want to setup the mpicxx wrapper if we have
 # a C++ compiler.
-AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
+AS_IF([test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS"],[F77=no FC=no])
 
 LT_INIT([dlopen win32-dll])
 

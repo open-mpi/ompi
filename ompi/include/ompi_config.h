@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,12 +55,5 @@
 #      define OMPI_MODULE_DECLSPEC
 #    endif
 #  endif
-
-/* Convenience */
-#if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS || OMPI_BUILD_FORTRAN_USEMPI_BINDINGS || OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
-#define OMPI_BUILD_FORTRAN_BINDINGS 1
-#else
-#define OMPI_BUILD_FORTRAN_BINDINGS 0
-#endif
 
 #endif

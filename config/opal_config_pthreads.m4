@@ -218,7 +218,9 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_FC], [
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
+if test "$opal_pthread_fortran_success" = "0" && \
+   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
+   test $ompi_fortran_happy -eq 1; then
   AC_MSG_CHECKING([if Fortran compiler and POSIX threads work as is])
 
   AC_LANG_PUSH(C)
@@ -322,7 +324,9 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
+if test "$opal_pthread_fortran_success" = "0" && \
+   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
+   test $ompi_fortran_happy -eq 1; then
   for pf in $pflags; do
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
     FCFLAGS="$orig_FCFLAGS $pf"
@@ -507,7 +511,9 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS_FC],[
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
+if test "$opal_pthread_fortran_success" = "0" && \
+   test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
+   test $ompi_fortran_happy -eq 1; then
   if test ! "$opal_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $PTHREAD_LIBS])
     LIBS="$orig_LIBS $PTHREAD_LIBS"
@@ -650,7 +656,8 @@ CXXCPPFLAGS="$orig_CXXCPPFLAGS"
 LDFLAGS="$orig_LDFLAGS"
 LIBS="$orig_LIBS"
 
-if test "$OMPI_WANT_FORTRAN_BINDINGS" != "1" || test $ompi_fortran_happy -ne 1; then
+if test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS" || \
+   test $ompi_fortran_happy -ne 1; then
   opal_pthread_fortran_success=1
 fi
 

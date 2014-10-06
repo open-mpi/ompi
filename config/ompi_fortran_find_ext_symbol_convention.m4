@@ -34,7 +34,8 @@ AC_DEFUN([OMPI_FORTRAN_FIND_EXT_SYMBOL_CONVENTION], [
 
     AC_CACHE_CHECK([$FORTRAN external symbol convention],
         [ompi_cv_fortran_external_symbol],
-        [if test "$FC" = "none" || test "$OMPI_WANT_FORTRAN_BINDINGS" = "0"; then
+        [if test "$FC" = "none" || \
+            test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS"; then
              ompi_cv_fortran_external_symbol="skipped"
          else
              cat >conftest.f <<EOF

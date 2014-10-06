@@ -30,7 +30,8 @@ AC_DEFUN([OMPI_FORTRAN_GET_KIND_VALUE],[
 
     rm -f conftest.out    
     AC_CACHE_CHECK([KIND value of Fortran $1], kind_value_var,
-        [if test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 || test $ompi_fortran_happy -eq 0; then
+        [if test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS || \
+            test $ompi_fortran_happy -eq 0; then
              value=skipped
          else
              AC_LANG_PUSH([Fortran])
@@ -75,7 +76,8 @@ AC_DEFUN([_OMPI_FORTRAN_SELECTED_INT_KIND],[
     AC_CACHE_CHECK([Fortran value of selected_int_kind($1)], sel_int_kind_var,
         [outval=no
 
-         AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 1 && test $ompi_fortran_happy -eq 1],
+         AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS && \
+                test $ompi_fortran_happy -eq 1],
                [rm -f conftest.out
                 AC_LANG_PUSH([Fortran])
                 AC_RUN_IFELSE(AC_LANG_PROGRAM(, [[
