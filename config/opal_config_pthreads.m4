@@ -186,8 +186,6 @@ if test "$opal_pthread_c_success" = "0"; then
   if test "$opal_pthread_c_success" = "1"; then
     AC_MSG_RESULT([yes])
   else
-    PTHREAD_CPPFLAGS=
-    CPPFLAGS="$orig_CPPFLAGS"
     AC_MSG_RESULT([no])
   fi
 fi
@@ -208,8 +206,6 @@ if test "$opal_pthread_cxx_success" = "0"; then
   if test "$opal_pthread_cxx_success" = "1"; then
     AC_MSG_RESULT([yes])
   else
-    PTHREAD_CXXCPPFLAGS=
-    CXXCPPFLAGS="$orig_CXXCPPFLAGS"
     AC_MSG_RESULT([no])
   fi
 fi
