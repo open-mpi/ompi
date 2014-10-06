@@ -15,6 +15,8 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +30,7 @@ AC_DEFUN([OMPI_FIND_MPI_AINT_COUNT_OFFSET],[
     _OMPI_FIND_MPI_OFFSET_TYPE
 
     if test "$ompi_fortran_happy" == "1" && \
-       test "$OMPI_WANT_FORTRAN_BINDINGS" == "1"; then
+       test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS"; then
         _OMPI_FIND_MPI_INTEGER_KIND
         _OMPI_FIND_MPI_ADDRESS_KIND
         _OMPI_FIND_MPI_COUNT_KIND

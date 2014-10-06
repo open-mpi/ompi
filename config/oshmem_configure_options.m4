@@ -133,13 +133,14 @@ AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
 if test "$enable_oshmem" != "no" && test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
-   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 && test "$enable_oshmem_fortran" = "yes"],
-               [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
+   AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS && \
+          test "$enable_oshmem_fortran" = "yes"],
+               [AC_MSG_RESULT([bad value OMPI_TRY_FORTRAN_BINDINGS: ($OMPI_TRY_FORTRAN_BINDINGS)])
                 AC_MSG_WARN([Your request to --enable-oshmem-fortran can only be satisfied if fortran support is enabled in OMPI.
 You see this message because OMPI fortran support has been explicitly disabled via --disable-mpi-fortran and OSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
 Configure will abort because you, a human, have asked for something that cannot be provided.])
                 AC_MSG_ERROR([Cannot continue])])
-    if test $OMPI_WANT_FORTRAN_BINDINGS -eq 1; then
+    if test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS; then
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])

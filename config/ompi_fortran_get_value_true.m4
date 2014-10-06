@@ -33,7 +33,9 @@ AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
 
     AC_CACHE_CHECK([Fortran value for .TRUE. logical type],
         fortran_true_var,
-        [if test "$1" = "none" || test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 || test $ompi_fortran_happy -eq 0 ; then
+        [if test "$1" = "none" || \
+            test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS || \
+            test $ompi_fortran_happy -eq 0 ; then
              value=77
          else
              #
