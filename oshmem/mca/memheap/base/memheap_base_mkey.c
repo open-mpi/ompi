@@ -755,10 +755,16 @@ uint64_t mca_memheap_base_find_offset(int pe,
                                       void* rva)
 {
     map_segment_t *s;
+    int my_pe = oshmem_my_proc_id();
 
     s = __find_va(va);
 
-    return ((s && MAP_SEGMENT_IS_VALID(s)) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
+    if (my_pe == pe) {
+        return (uintptr_t)va - (uintptr_t)s->seg_base_addr;
+    }
+    else {
+        return ((s && MAP_SEGMENT_IS_VALID(s)) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
+    }
 }
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
