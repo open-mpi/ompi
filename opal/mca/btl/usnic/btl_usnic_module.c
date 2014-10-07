@@ -41,7 +41,6 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -107,16 +106,6 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
         mca_btl_base_endpoint_t* usnic_endpoint;
 
         endpoints[i] = NULL;
-
-        /* get hostname */
-        if (NULL == opal_proc->proc_hostname) {
-            OPAL_MODEX_RECV_VALUE(rc, OPAL_DSTORE_HOSTNAME, opal_proc,
-                                  (char**)&(opal_proc->proc_hostname), OPAL_STRING);
-            if (OPAL_SUCCESS != rc) {
-                opal_output(0, "opal_modex_recv: failed with return value=%d", rc);
-                continue;
-            }
-        }
 
         /* Do not create loopback usnic connections */
         if (opal_proc == my_proc) {

@@ -113,7 +113,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* initialize fragment descriptor free lists */
     /* initialize free list for put/get/single copy/inline fragments */
-    rc = ompi_free_list_init_ex_new(&component->vader_frags_user,
+    rc = ompi_free_list_init_ex_new(&component->vader_frags_user, 
                                     sizeof(mca_btl_vader_frag_t),
                                     opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
                                     0, opal_cache_line_size,
@@ -274,14 +274,6 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
     }
 
     for (int32_t proc = 0, local_rank = 0 ; proc < (int32_t) nprocs ; ++proc) {
-        /* get hostname */
-        OPAL_MODEX_RECV_VALUE(rc, OPAL_DSTORE_HOSTNAME, procs[proc],
-                              (char**)&(procs[proc]->proc_hostname), OPAL_STRING);
-        if (OPAL_SUCCESS != rc) {
-            opal_output(0, "opal_modex_recv: failed with return value=%d", rc);
-            continue;
-        }
-
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (opal_process_name_jobid(procs[proc]->proc_name) != opal_process_name_jobid(my_proc->proc_name) ||
@@ -448,12 +440,12 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
     if (OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
-
+    
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
     frag->segments[0].seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
     frag->segments[0].seg_len       = *size;
-
+    
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 

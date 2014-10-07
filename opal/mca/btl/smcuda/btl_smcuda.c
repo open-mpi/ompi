@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ *                         All rights reserved. 
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
@@ -47,7 +47,6 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
-#include "opal/mca/pmix/pmix.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
@@ -404,7 +403,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     if ( OPAL_SUCCESS != i )
         return i;
 
-    i = ompi_free_list_init_new(&mca_btl_smcuda_component.sm_frags_user,
+    i = ompi_free_list_init_new(&mca_btl_smcuda_component.sm_frags_user, 
 		    sizeof(mca_btl_smcuda_user_t),
 		    opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_user_t),
 		    sizeof(mca_btl_smcuda_hdr_t), opal_cache_line_size,
@@ -413,7 +412,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
 		    mca_btl_smcuda_component.sm_free_list_inc,
 		    mca_btl_smcuda_component.sm_mpool);
     if ( OPAL_SUCCESS != i )
-	    return i;
+	    return i;   
 
     mca_btl_smcuda_component.num_outstanding_frags = 0;
 
@@ -504,15 +503,6 @@ int mca_btl_smcuda_add_procs(
      * host to shared memory reachbility list.  Also, get number
      * of local procs in the procs list. */
     for (proc = 0; proc < (int32_t)nprocs; proc++) {
-        /* get hostname */
-        if (NULL == procs[proc]->proc_hostname) {
-            OPAL_MODEX_RECV_VALUE(return_code, OPAL_DSTORE_HOSTNAME, procs[proc],
-                                  (char**)&(procs[proc]->proc_hostname), OPAL_STRING);
-            if (OPAL_SUCCESS != return_code) {
-                opal_output(0, "opal_modex_recv: failed with return value=%d", return_code);
-                continue;
-            }
-        }
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (opal_process_name_jobid(procs[proc]->proc_name) != opal_process_name_jobid(my_proc->proc_name) ||
@@ -811,7 +801,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 #if OPAL_CUDA_SUPPORT
     } else {
         /* Normally, we are here because we have a GPU buffer and we are preparing
-         * to send it.  However, we can also be there because we have received a
+         * to send it.  However, we can also be there because we have received a 
          * PUT message because we are trying to send a host buffer.  Therefore,
          * we need to again check to make sure buffer is GPU.  If not, then return
          * NULL. We can just check the convertor since we have that. */
@@ -833,7 +823,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
         frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) iov.iov_base;
         frag->segment.base.seg_len = max_data;
         memcpy(frag->segment.key, ((mca_mpool_common_cuda_reg_t *)registration)->memHandle,
-               sizeof(((mca_mpool_common_cuda_reg_t *)registration)->memHandle) +
+               sizeof(((mca_mpool_common_cuda_reg_t *)registration)->memHandle) + 
                sizeof(((mca_mpool_common_cuda_reg_t *)registration)->evtHandle));
         frag->segment.memh_seg_addr.pval = registration->base;
         frag->segment.memh_seg_len = registration->bound - registration->base + 1;
@@ -1024,7 +1014,7 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
     return 0;
 }
 #if OPAL_CUDA_SUPPORT
-struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
+struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst( 
         struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t* endpoint,
         struct mca_mpool_base_registration_t* registration,
@@ -1046,7 +1036,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
-
+    
     frag->segment.base.seg_len = *size;
     opal_convertor_get_current_pointer( convertor, &ptr );
     frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
@@ -1075,11 +1065,11 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
     void *remote_memory_address;
     size_t offset;
     mca_btl_smcuda_frag_t* frag = (mca_btl_smcuda_frag_t*)descriptor;
-
+ 
     /* Set to 0 for debugging since it is a list item but I am not
      * intializing it properly and it is annoying to see all the
      * garbage in the debugger.  */
-
+    
     memset(&rget_reg, 0, sizeof(rget_reg));
     memcpy(&rget_reg.memHandle, src_seg->key, sizeof(src_seg->key));
 
@@ -1115,7 +1105,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
     /* The remote side posted an IPC event to make sure we do not start our
      * copy until IPC event completes.  This is to ensure that the data being sent
      * is available in the sender's GPU buffer.  Therefore, do a stream synchronize
-     * on the IPC event that we received.  Note that we pull it from
+     * on the IPC event that we received.  Note that we pull it from 
      * rget_reg, not reg_ptr, as we do not cache the event. */
     mca_common_wait_stream_synchronize(&rget_reg);
 
@@ -1135,8 +1125,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
         /* This should only be true when experimenting with synchronous copies. */
         btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-            frag->base.des_cbfunc(&mca_btl_smcuda.super,
-                                  frag->endpoint, &frag->base,
+            frag->base.des_cbfunc(&mca_btl_smcuda.super, 
+                                  frag->endpoint, &frag->base, 
                                   OPAL_SUCCESS);
         }
 
@@ -1187,7 +1177,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-
+    
     if (0 != (res = mca_common_cuda_get_device(&mydevnum))) {
         opal_output(0, "Cannot determine device.  IPC cannot be set.");
         endpoint->ipcstate = IPC_BAD;
@@ -1242,16 +1232,16 @@ void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
     mca_btl_smcuda_frag_t* frag;
 
     mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
-                     (void*) btl, (void*) endpoint,
+                     (void*) btl, (void*) endpoint, 
                      endpoint->my_smp_rank, endpoint->peer_smp_rank);
     if( NULL != endpoint ) {
         for(item =  opal_list_get_first(&endpoint->pending_sends);
-            item != opal_list_get_end(&endpoint->pending_sends);
+            item != opal_list_get_end(&endpoint->pending_sends); 
             item = opal_list_get_next(item)) {
             frag = (mca_btl_smcuda_frag_t*)item;
             mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
-                             frag->hdr->len, frag->hdr->my_smp_rank,
+                             frag->hdr->len, frag->hdr->my_smp_rank, 
                              frag->hdr->tag);
         }
     }
