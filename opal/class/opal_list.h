@@ -486,6 +486,7 @@ static inline opal_list_item_t *opal_list_remove_item
     if (!found) {
         fprintf(stderr," Warning :: opal_list_remove_item - the item %p is not on the list %p \n",(void*) item, (void*) list);
         fflush(stderr);
+        abort();
         return (opal_list_item_t *)NULL;
     }
 
