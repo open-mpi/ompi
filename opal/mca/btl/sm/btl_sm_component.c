@@ -251,7 +251,6 @@ static int sm_register(void)
     mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
     mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
-    mca_btl_sm.super.btl_seg_size = sizeof (mca_btl_sm_segment_t);
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 

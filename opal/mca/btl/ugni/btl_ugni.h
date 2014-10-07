@@ -33,6 +33,7 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/mca/common/ugni/common_ugni.h"
 
 #include <errno.h>
@@ -79,6 +80,11 @@ typedef struct mca_btl_ugni_module_t {
     /** lock for the eager_get_pending list */
     opal_mutex_t eager_get_pending_lock;
     opal_list_t eager_get_pending;
+
+    opal_mutex_t pending_descriptors_lock;
+    opal_list_t pending_descriptors;
+
+    ompi_free_list_t post_descriptors;
 
     mca_mpool_base_module_t *smsg_mpool;
     ompi_free_list_t         smsg_mboxes;
@@ -143,8 +149,6 @@ typedef struct mca_btl_ugni_component_t {
 
     /* After this message size switch to BTE protocols */
     size_t ugni_fma_limit;
-    /* Switch to put when trying to GET at or above this size */
-    size_t ugni_get_limit;
     /* Switch to get when sending above this size */
     size_t ugni_smsg_limit;
 
@@ -269,10 +273,13 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-int
-mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
+                      struct mca_btl_base_endpoint_t *endpoint,
+                      void *local_address, uint64_t remote_address,
+                      struct mca_btl_base_registration_handle_t *local_handle,
+                      struct mca_btl_base_registration_handle_t *remote_handle,
+                      size_t size, int flags, mca_btl_base_rdma_completion_fn_t cbfunc,
+                      void *cbcontext, void *cbdata);
 
 /**
  * Initiate a put operation.
@@ -283,10 +290,13 @@ mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-int
-mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
+                      struct mca_btl_base_endpoint_t *endpoint,
+                      void *local_address, uint64_t remote_address,
+                      struct mca_btl_base_registration_handle_t *local_handle,
+                      struct mca_btl_base_registration_handle_t *remote_handle,
+                      size_t size, int flags, mca_btl_base_rdma_completion_fn_t cbfunc,
+                      void *cbcontext, void *cbdata);
 
 int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
@@ -295,9 +305,14 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
                    struct mca_btl_base_endpoint_t *endpoint,
                    uint8_t order, size_t size, uint32_t flags);
 
+struct mca_btl_base_registration_handle_t {
+    /** uGNI memory handle */
+    gni_mem_handle_t gni_handle;
+};
+
 typedef struct mca_btl_ugni_reg_t {
     mca_mpool_base_registration_t base;
-    gni_mem_handle_t         memory_hdl;
+    mca_btl_base_registration_handle_t handle;
 } mca_btl_ugni_reg_t;
 
 /* Global structures */ 

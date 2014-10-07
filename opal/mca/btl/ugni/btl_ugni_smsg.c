@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -26,7 +26,7 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.smsg_attr.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) base_reg->base;
     mbox->attr.smsg_attr.msg_buffer     = base_reg->base;
     mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
-    mbox->attr.smsg_attr.mem_hndl       = ugni_reg->memory_hdl;
+    mbox->attr.smsg_attr.mem_hndl       = ugni_reg->handle.gni_handle;
 #if 0
     fprintf(stderr,"ugni_reg->memory_hdl 0x%lx 0x%lx\n",
                     ugni_reg->memory_hdl.qword1,ugni_reg->memory_hdl.qword2);

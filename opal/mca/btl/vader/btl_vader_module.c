@@ -56,16 +56,6 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (
                                                             uint32_t flags
                                                             );
 
-static struct mca_btl_base_descriptor_t *vader_prepare_dst (
-                                                            struct mca_btl_base_module_t *btl,
-                                                            struct mca_btl_base_endpoint_t *endpoint,
-                                                            struct mca_mpool_base_registration_t *registration,
-                                                            struct opal_convertor_t *convertor,
-                                                            uint8_t order,
-                                                            size_t reserve,
-                                                            size_t *size,
-                                                            uint32_t flags);
-
 static int vader_add_procs(struct mca_btl_base_module_t* btl,
                            size_t nprocs, struct opal_proc_t **procs,
                            struct mca_btl_base_endpoint_t** peers,
@@ -82,7 +72,6 @@ mca_btl_vader_t mca_btl_vader = {
         .btl_alloc = mca_btl_vader_alloc,
         .btl_free = vader_free,
         .btl_prepare_src = vader_prepare_src,
-        .btl_prepare_dst = vader_prepare_dst,
         .btl_send = mca_btl_vader_send,
         .btl_sendi = mca_btl_vader_sendi,
         .btl_dump = mca_btl_base_dump,
@@ -438,60 +427,6 @@ static int vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descripto
     MCA_BTL_VADER_FRAG_RETURN((mca_btl_vader_frag_t *) des);
 
     return OPAL_SUCCESS;
-}
-
-struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t *btl,
-                                                    struct mca_btl_base_endpoint_t *endpoint,
-                                                    struct mca_mpool_base_registration_t *registration,
-                                                    struct opal_convertor_t *convertor,
-                                                    uint8_t order, size_t reserve, size_t *size,
-                                                    uint32_t flags)
-{
-    mca_btl_vader_frag_t *frag;
-    void *data_ptr;
-
-    if (MCA_BTL_VADER_NONE != mca_btl_vader_component.single_copy_mechanism) {
-        (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
-    } else {
-        (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint);
-    }
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-    frag->segments[0].base.seg_len       = *size;
-
-#if OPAL_BTL_VADER_HAVE_KNEM
-    if (MCA_BTL_VADER_KNEM == mca_btl_vader_component.single_copy_mechanism) {
-        struct knem_cmd_create_region knem_cr;
-        struct knem_cmd_param_iovec knem_iov;
-
-        knem_iov.base = (uintptr_t) data_ptr;
-        knem_iov.len = *size;
-
-        knem_cr.iovec_array = (uintptr_t) &knem_iov;
-        knem_cr.iovec_nr = 1;
-        knem_cr.protection = PROT_WRITE;
-        /* Vader will explicitly destroy this cookie */
-        knem_cr.flags = 0;
-        if (OPAL_UNLIKELY(ioctl(mca_btl_vader.knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
-            MCA_BTL_VADER_FRAG_RETURN(frag);
-            return NULL;
-        }
-
-        frag->segments[0].cookie = knem_cr.cookie;
-        frag->segments[0].registered_base = (intptr_t) data_ptr;
-        frag->cookie = knem_cr.cookie;
-    }
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
-    
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
-
-    return &frag->base;
 }
 
 /**

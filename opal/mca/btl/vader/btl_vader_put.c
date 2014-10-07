@@ -35,31 +35,26 @@
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_VADER_HAVE_XPMEM
-int mca_btl_vader_put_xpmem (struct mca_btl_base_module_t *btl,
-                             struct mca_btl_base_endpoint_t *endpoint,
-                             struct mca_btl_base_descriptor_t *des)
+int mca_btl_vader_put (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       struct mca_btl_base_registration_handle_t *local_handle,
+                       struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
-    mca_btl_base_segment_t *src = des->des_local;
-    mca_btl_base_segment_t *dst = des->des_remote;
-    const size_t size = min(dst->seg_len, src->seg_len);
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
 
-    reg = vader_get_registation (endpoint, dst->seg_addr.pval, dst->seg_len, 0, &rem_ptr);
+    reg = vader_get_registation (endpoint, (void *)(intptr_t) remote_address, size, 0, &rem_ptr);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return OPAL_ERROR;
     }
 
-    vader_memmove (rem_ptr, src->seg_addr.pval, size);
+    vader_memmove (rem_ptr, local_address, size);
 
     vader_return_registration (reg, endpoint);
 
     /* always call the callback function */
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    frag->endpoint = endpoint;
-    mca_btl_vader_frag_complete (frag);
+    cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
     return OPAL_SUCCESS;
 }
@@ -70,12 +65,8 @@ int mca_btl_vader_put_cma (struct mca_btl_base_module_t *btl,
                            struct mca_btl_base_endpoint_t *endpoint,
                            struct mca_btl_base_descriptor_t *des)
 {
-    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
-    mca_btl_base_segment_t *src = des->des_local;
-    mca_btl_base_segment_t *dst = des->des_remote;
-    const size_t size = min(dst->seg_len, src->seg_len);
-    struct iovec src_iov = {.iov_base = src->seg_addr.pval, .iov_len = size};
-    struct iovec dst_iov = {.iov_base = dst->seg_addr.pval, .iov_len = size};
+    struct iovec src_iov = {.iov_base = local_address, .iov_len = size};
+    struct iovec dst_iov = {.iov_base = (void *)(intptr_t) remote_address, .iov_len = size};
     ssize_t ret;
 
     ret = process_vm_writev (endpoint->segment_data.other.seg_ds->seg_cpid, &src_iov, 1, &dst_iov, 1, 0);

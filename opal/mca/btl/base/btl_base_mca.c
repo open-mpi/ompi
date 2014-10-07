@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -74,6 +75,39 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_eager_limit);
+
+    if ((module->btl_flags & MCA_BTL_FLAGS_GET) && module->btl_get) {
+	if (0 == module->btl_get_limit) {
+	    module->btl_get_limit = SIZE_MAX;
+	}
+
+	(void) mca_base_component_var_register(version, "get_limit", "Maximum size (in bytes) for btl get",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4,
+					       MCA_BASE_VAR_SCOPE_READONLY, &module->btl_get_limit);
+
+	/* Allow the user to set the alignment. The BTL should double-check the alignment in its open
+	 * function. */
+	(void) mca_base_component_var_register(version, "get_alignment", "Alignment required for btl get",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_6,
+					       MCA_BASE_VAR_SCOPE_CONSTANT, &module->btl_get_alignment);
+    }
+
+    if ((module->btl_flags & MCA_BTL_FLAGS_PUT) && module->btl_put) {
+	if (0 == module->btl_put_limit) {
+	    module->btl_put_limit = SIZE_MAX;
+	}
+	(void) mca_base_component_var_register(version, "put_limit", "Maximum size (in bytes) for btl put",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4,
+					       MCA_BASE_VAR_SCOPE_READONLY, &module->btl_put_limit);
+
+	/* Allow the user to set the alignment. The BTL should double-check the alignment in its open
+	 * function. */
+	(void) mca_base_component_var_register(version, "put_alignment", "Alignment required for btl put",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_6,
+					       MCA_BASE_VAR_SCOPE_CONSTANT, &module->btl_put_alignment);
+    }
+
+
 #if OPAL_CUDA_GDR_SUPPORT
     /* If no CUDA RDMA support, zero them out */
     if (!(MCA_BTL_FLAGS_CUDA_GET & module->btl_flags)) {
@@ -142,6 +176,14 @@ int mca_btl_base_param_verify(mca_btl_base_module_t *module)
 
     if (NULL == module->btl_get) {
         module->btl_flags &= ~MCA_BTL_FLAGS_GET;
+    }
+
+    if (0 == module->btl_get_limit) {
+	module->btl_get_limit = SIZE_MAX;
+    }
+
+    if (0 == module->btl_put_limit) {
+	module->btl_put_limit = SIZE_MAX;
     }
 
     return OPAL_SUCCESS;
