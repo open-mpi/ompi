@@ -46,4 +46,6 @@ module mpi
   include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h"
 #endif
 
+  include 'mpi-ignore-tkr-sizeof.h'
+
 end module mpi

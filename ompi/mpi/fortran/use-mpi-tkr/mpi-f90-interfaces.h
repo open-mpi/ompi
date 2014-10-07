@@ -3458,5 +3458,3 @@ subroutine MPI_Win_flush_local_all(win, ierror)
 end subroutine MPI_Win_flush_local_all
 
 end interface
-
-

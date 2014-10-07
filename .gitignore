@@ -268,6 +268,7 @@ ompi/include/mpif-constants.h
 ompi/include/mpif-io-handles.h
 ompi/include/mpif-handles.h
 ompi/include/mpif-io-constants.h
+ompi/include/mpif-sizeof.h
 ompi/include/mpi_portable_platform.h
 ompi/include/ompi/version.h
 ompi/include/ompi/frameworks.h
@@ -379,10 +380,17 @@ ompi/mpi/fortran/base/*.mod
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
 ompi/mpi/fortran/mpiext/*.mod
+ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
+ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
 ompi/mpi/fortran/use-mpi-f08/constants.h
 ompi/mpi/fortran/use-mpi-f08/*.mod
+ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
+ompi/mpi/fortran/use-mpi-f08/sizeof_f08.h
+ompi/mpi/fortran/use-mpi-f08/profile/psizeof_f08.f90
 ompi/mpi/fortran/use-mpi-f08-desc/*.mod
+ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.f90
+ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/*.mod

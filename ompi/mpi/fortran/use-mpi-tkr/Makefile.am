@@ -22,6 +22,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.man-page-rules
+
 # THIS MAKEFILE IS OLD AND ONLY TO SUPPORT FORTRAN COMPILERS THAT DO
 # NOT SUPPORT "IGNORE TKR" FUNCTIONALITY (i.e., gfortran before v4.9).
 # All other Fortran compilers support ignore TKR and don't compile
@@ -66,7 +68,6 @@ mpi.lo: mpi-f90-cptr-interfaces.F90
 libmpi_usempi_la_SOURCES = \
      mpi.F90 \
      mpi_comm_spawn_multiple_f90.f90 \
-     mpi_sizeof.f90 \
      mpi_testall_f90.f90 \
      mpi_testsome_f90.f90 \
      mpi_waitall_f90.f90 \
@@ -76,15 +77,48 @@ libmpi_usempi_la_SOURCES = \
 libmpi_usempi_la_LIBADD = \
      $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
 
+# Don't distribute mpi-tkr-sizeof-*; they're generated.
+
+nodist_libmpi_usempi_la_SOURCES =
+if BUILD_FORTRAN_SIZEOF
+nodist_libmpi_usempi_la_SOURCES += \
+     mpi-tkr-sizeof.h \
+     mpi-tkr-sizeof.f90
+endif
+
 # Set the library version
 libmpi_usempi_la_LDFLAGS = \
         -version-info $(libmpi_usempi_tkr_so_version) \
         $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
 
 #
+# mpi-ignore-tkr-sizeof.* are generated based on some results from
+# configure tests.
+#
+
+sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+
+mpi-tkr-sizeof.h: $(top_builddir)/config.status
+mpi-tkr-sizeof.h: $(sizeof_pl)
+mpi-tkr-sizeof.h:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --header=$@ --ierror=mandatory \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+mpi-tkr-sizeof.f90: $(top_builddir)/config.status
+mpi-tkr-sizeof.f90: $(sizeof_pl)
+mpi-tkr-sizeof.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=mandatory --mpi --pmpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+
+#
 # Clean up all F90 module files and all generated files
 #
 
+CLEANFILES += mpi-tkr-sizeof.h mpi-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
 DISTCLEANFILES = $(nodist_libmpi_usempi_la_SOURCES)
 

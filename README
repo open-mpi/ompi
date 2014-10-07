@@ -360,7 +360,11 @@ Compiler Notes
 
   The following notes apply to the above-listed Fortran bindings:
 
-  - All Fortran compilers support the mpif.h/shmem.fh-based bindings.
+  - All Fortran compilers support the mpif.h/shmem.fh-based bindings,
+    with one exception: the MPI_SIZEOF interfaces will only be present
+    when Open MPI is built with a Fortran compiler that support the
+    INTERFACE keyword and ISO_FORTRAN_ENV.  Most notably, this
+    excludes the GNU Fortran compiler suite before version 4.9.
 
   - The level of support provided by the mpi module is based on your
     Fortran compiler.
@@ -381,6 +385,9 @@ Compiler Notes
     parameter type checking at run-time (e.g., MPI_INIT,
     MPI_COMM_RANK, etc.).
 
+    Similar to the mpif.h interface, MPI_SIZEOF is only supported on
+    Fortran compilers that support INTERFACE and ISO_FORTRAN_ENV.
+
   - The mpi_f08 module is new and has been tested with the Intel
     Fortran compiler and gfortran >= v4.9.  Other modern Fortran
     compilers may also work (but are, as yet, only lightly tested).
@@ -389,6 +396,12 @@ Compiler Notes
     Many older Fortran compilers do not provide enough modern Fortran
     features to support the mpi_f08 module.  For example, gfortran <
     v4.9 does provide enough support for the mpi_f08 module.
+
+  You can examine the output of the following command to see all
+  the Fortran features that are/are not enabled in your Open MPI
+  installation:
+
+  shell$ ompi_info | grep -i fort
 
 
 General Run-Time Support Notes

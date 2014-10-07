@@ -21,6 +21,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.man-page-rules
+
 SUBDIRS = profile
 
 #
@@ -50,6 +52,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 #
 
 lib_LTLIBRARIES =
+CLEANFILES =
 libmpi_mpifh_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(OMPI_MPIEXT_MPIFH_LIBS)
 libmpi_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 
@@ -74,6 +77,46 @@ headers = \
 # These files are only built and added to libmpi_mpifh.la in certain cases.
 #
 libmpi_mpifh_la_SOURCES =
+
+# sizeof_f.f90 is generated based on some results from configure tests.
+CLEANFILES += sizeof_f.f90
+
+# If we're building the MPI_SIZEOF interfaces, generate the source
+# code in sizeof_f.f90 (via a perl script).  Normally, we'd just add
+# sizeof_f.f90 to the libmpi_mpif_la_SOURCES and be done with it.
+# However, since this is the first *actual Fortran* source that we've
+# added to libmpi_mpif_la_SOURCEs, this causes Libtool to use the
+# *Fortran* linker to create the final libmpi_mpif.la library
+# (vs. using the C linker, as it has done for years).  This exposes an
+# unfortunate bug in the Absoft linker: it does not honor the order of
+# -Wl arguments, which basically causes the resulting libmpi_mpif.so
+# to be borked.
+#
+# To get around this, we compile sizeof_f.f90 into its own LT
+# convenience library, and then we LIBADD that convenience library
+# into the main libmpi_mpifh.la.  In this way, we basically trick
+# Libtool into still using the C linker to create libmpi_mpif.la, and
+# our -Wl flags therefore don't get re-ordered.
+#
+# All this being said, we can't rely on Automake/Libtool not figuring
+# out this workaround indefinitely.  So Jeff advised Absoft to fix
+# this bug in Sep 2014.
+noinst_LTLIBRARIES=
+if BUILD_FORTRAN_SIZEOF
+noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
+libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
+libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
+endif
+
+sizeof_pl = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+
+sizeof_f.f90: $(top_builddir)/config.status
+sizeof_f.f90: $(sizeof_pl)
+sizeof_f.f90:
+	$(OMPI_V_GEN) $(sizeof_pl) \
+	    --impl=$@ --ierror=mandatory --mpi \
+	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
 
 if BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER
 libmpi_mpifh_la_SOURCES += \

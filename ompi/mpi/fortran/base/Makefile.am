@@ -21,7 +21,8 @@ noinst_LTLIBRARIES =
 
 EXTRA_DIST = \
      attr-fn-int-callback-interfaces.h \
-     conversion-fn-null-int-interface.h
+     conversion-fn-null-int-interface.h \
+     gen-mpi-sizeof.pl
 
 #-----------------------------------------------------------------------------
 
