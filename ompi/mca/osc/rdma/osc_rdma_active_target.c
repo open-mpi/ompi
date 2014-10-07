@@ -461,7 +461,7 @@ ompi_osc_rdma_wait(ompi_win_t *win)
 
     OPAL_THREAD_LOCK(&module->lock);
     while (0 != module->num_complete_msgs ||
-             module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+             module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                              "num_complete_msgs = %d, active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
                              module->num_complete_msgs, module->active_incoming_frag_count, module->active_incoming_frag_signal_count));
@@ -501,7 +501,7 @@ ompi_osc_rdma_test(ompi_win_t *win,
     OPAL_THREAD_LOCK(&(module->lock));
 
     if (0 != module->num_complete_msgs || 
-           module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+           module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
         *flag = 0;
         ret = OMPI_SUCCESS;
         goto cleanup;
