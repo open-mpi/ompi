@@ -662,6 +662,7 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 {
     int i;
 
+    MCA_SPML_CALL(fence());
     if (!mkeys)
         return OSHMEM_SUCCESS;
 
