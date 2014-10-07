@@ -423,8 +423,8 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
 {
     if (MPI_PROC_NULL == source) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "mark_incoming_completion marking active incoming complete. count = %d",
-                             (int) module->active_incoming_frag_count + 1));
+                             "mark_incoming_completion marking active incoming complete. count = %d. signal = %d",
+                             (int) module->active_incoming_frag_count + 1, module->active_incoming_frag_signal_count));
         OPAL_THREAD_ADD32(&module->active_incoming_frag_count, 1);
         if (module->active_incoming_frag_count >= module->active_incoming_frag_signal_count) {
             opal_condition_broadcast(&module->cond);
