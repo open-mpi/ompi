@@ -36,7 +36,7 @@ static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
     frag->post_desc.base.remote_addr     = (uint64_t) rem_addr;
     frag->post_desc.base.remote_mem_hndl = rem_mdh;
     frag->post_desc.base.length          = bufsize;
-    frag->post_desc.base.rdma_mode       = 0;
+    frag->post_desc.base.rdma_mode       = GNI_RDMAMODE_FENCE;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
     frag->post_desc.tries                = 0;
 }
@@ -50,7 +50,9 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
     init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
                         rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len, 0);
 
+    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     rc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
+    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
     if (GNI_RC_SUCCESS != rc) {
         BTL_VERBOSE(("GNI_PostFma failed with gni rc: %d", rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -62,17 +64,19 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
 static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
                                          mca_btl_ugni_segment_t *lcl_seg, mca_btl_ugni_segment_t *rem_seg)
 {
-    gni_return_t rc;
+    gni_return_t status;
 
     /* Post descriptor */
     init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
                         rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
                         frag->endpoint->btl->rdma_local_cq);
 
-    rc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_VERBOSE(("GNI_PostRdma failed with gni rc: %d", rc));
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
+    status = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
+    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
+    if (GNI_RC_SUCCESS != status) {
+        BTL_VERBOSE(("GNI_PostRdma failed with gni rc: %d", status));
+        return opal_common_rc_ugni_to_opal(status);
     }
 
     return OPAL_SUCCESS;
@@ -99,16 +103,20 @@ static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag, int rc) 
 
     frag->cbfunc = mca_btl_ugni_frag_complete;
 
+    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     if (GNI_POST_RDMA_PUT == frag->post_desc.base.type ||
         GNI_POST_RDMA_GET == frag->post_desc.base.type) {
         grc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     } else {
         grc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     }
+    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
 
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         frag->cbfunc = mca_btl_ugni_repost;
+        OPAL_THREAD_LOCK(&frag->endpoint->btl->failed_frags_lock);
         opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
+        OPAL_THREAD_UNLOCK(&frag->endpoint->btl->failed_frags_lock);
     }
 }
 

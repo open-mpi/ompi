@@ -136,6 +136,8 @@ static int opal_common_ugni_device_init (opal_common_ugni_device_t *device,
 
     OPAL_OUTPUT((-1, "Got NIC Addr: 0x%08x, CPU ID: %d", device->dev_addr, device->dev_id));
 
+    OBJ_CONSTRUCT(&device->dev_lock,opal_mutex_t);
+
     /* Attach device to the communication domain */
     rc = GNI_CdmAttach (opal_common_ugni_module.cd_handle, device->dev_id,
                         &device->dev_pe_addr, &device->dev_handle);
@@ -267,8 +269,9 @@ int opal_common_ugni_init (void)
         mca_btl_ugni_component.rdma_max_retries;
 
     /* Create a communication domain */
+    /* TODO - bte single should be removed when the IRQ problem is figured out */
     modes = GNI_CDM_MODE_FORK_FULLCOPY | GNI_CDM_MODE_CACHED_AMO_ENABLED |
-            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL;
+            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL | GNI_CDM_MODE_BTE_SINGLE_CHANNEL;
 
     /* collect uGNI information */
     rc = get_ptag(&opal_common_ugni_module.ptag);

@@ -96,6 +96,7 @@ struct mca_mpool_udreg_module_t {
     struct mca_mpool_base_resources_t resources;
     ompi_free_list_t reg_list;
     mca_mpool_udreg_hugepage_t *huge_page;
+    opal_mutex_t lock;
     void *udreg_handle;
 };
 typedef struct mca_mpool_udreg_module_t mca_mpool_udreg_module_t;

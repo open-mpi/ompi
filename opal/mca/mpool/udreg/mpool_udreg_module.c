@@ -156,6 +156,8 @@ int mca_mpool_udreg_module_init(mca_mpool_udreg_module_t* mpool)
         cache_attr.modes |= UDREG_CC_MODE_USE_LAZY_DEREG;
     }
 
+    OBJ_CONSTRUCT(&mpool->lock,opal_mutex_t);
+
     strncpy (cache_attr.cache_name, mpool->resources.pool_name, UDREG_MAX_CACHENAME_LEN);
     cache_attr.max_entries         = mpool->resources.max_entries;
     cache_attr.debug_mode          = 0;
@@ -363,14 +365,17 @@ int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if (false == bypass_cache) {
         /* Get a udreg entry for this region */
+        OPAL_THREAD_LOCK(&mpool_udreg->lock);
         while (UDREG_RC_SUCCESS !=
                (urc = UDREG_Register (mpool_udreg->udreg_handle, addr, size, &udreg_entry))) {
             /* try to remove one unused reg and retry */
             if (!mca_mpool_udreg_evict (mpool)) {
                 *reg = NULL;
+                OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
         }
+        OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
 
         udreg_reg = (mca_mpool_base_registration_t *) udreg_entry->device_data;
         udreg_reg->mpool_context = udreg_entry;
@@ -444,7 +449,9 @@ int mca_mpool_udreg_deregister(struct mca_mpool_base_module_t *mpool,
     if (0 == reg->ref_count && reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS) {
         mca_mpool_udreg_dereg_func (reg, mpool);
     } else if (!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS)) {
+        OPAL_THREAD_LOCK(&mpool_udreg->lock);
         UDREG_DecrRefcount (mpool_udreg->udreg_handle, reg->mpool_context);
+        OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
     }
 
     return OPAL_SUCCESS;
@@ -473,6 +480,7 @@ void mca_mpool_udreg_finalize(struct mca_mpool_base_module_t *mpool)
 
     UDREG_CacheRelease (mpool_udreg->udreg_handle);
     OBJ_DESTRUCT(&mpool_udreg->reg_list);
+    OBJ_DESTRUCT(&mpool_udreg->lock);
 }
 
 int mca_mpool_udreg_ft_event(int state) {

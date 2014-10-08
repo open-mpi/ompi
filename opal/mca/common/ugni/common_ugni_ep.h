@@ -18,6 +18,7 @@ struct opal_common_ugni_device_t;
 struct opal_common_ugni_endpoint_t {
     opal_object_t super;
     uint32_t ep_rem_addr, ep_rem_id;         /**< remote information */
+    gni_mem_handle_t ep_rem_irq_memhndl;
     struct opal_common_ugni_device_t *dev;   /**< device this endpoint is using */
 };
 typedef struct opal_common_ugni_endpoint_t opal_common_ugni_endpoint_t;

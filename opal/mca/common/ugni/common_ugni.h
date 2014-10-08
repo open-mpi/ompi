@@ -33,6 +33,7 @@
 struct opal_common_ugni_modex_t {
     uint32_t addr;
     int      id;
+    gni_mem_handle_t irq_memhndl;
 };
 typedef struct opal_common_ugni_modex_t opal_common_ugni_modex_t;
 
@@ -47,8 +48,10 @@ struct opal_common_ugni_device_t {
     uint32_t         dev_addr;
     uint32_t         dev_cpu_id;
 
-    size_t                      dev_ep_count;
-    void *btl_ctx;
+    size_t           dev_ep_count;
+    opal_mutex_t     dev_lock;
+    gni_mem_handle_t smsg_irq_mhndl;
+    void             *btl_ctx;
 };
 typedef struct opal_common_ugni_device_t opal_common_ugni_device_t;
 

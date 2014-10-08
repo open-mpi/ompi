@@ -42,6 +42,7 @@ int opal_common_ugni_endpoint_for_proc (opal_common_ugni_device_t *dev, opal_pro
 
     endpoint->ep_rem_addr = modex->addr;
     endpoint->ep_rem_id   = modex->id;
+    endpoint->ep_rem_irq_memhndl = modex->irq_memhndl;
 
     endpoint->dev = dev;
 
@@ -70,14 +71,21 @@ int opal_common_ugni_ep_create (opal_common_ugni_endpoint_t *cep, gni_cq_handle_
     }
 
     /* create a uGNI endpoint handle and bind it to the remote peer */
+    OPAL_THREAD_LOCK(&cep->dev->dev_lock);
     grc = GNI_EpCreate (cep->dev->dev_handle, cq, ep_handle);
+    OPAL_THREAD_UNLOCK(&cep->dev->dev_lock);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         return opal_common_rc_ugni_to_opal (grc);
     }
 
+    OPAL_THREAD_LOCK(&cep->dev->dev_lock);
     grc = GNI_EpBind (*ep_handle, cep->ep_rem_addr, cep->ep_rem_id);
+    OPAL_THREAD_UNLOCK(&cep->dev->dev_lock);
+
     if (GNI_RC_SUCCESS != grc) {
+        OPAL_THREAD_LOCK(&cep->dev->dev_lock);
         GNI_EpDestroy (*ep_handle);
+        OPAL_THREAD_UNLOCK(&cep->dev->dev_lock);
         return opal_common_rc_ugni_to_opal (grc);
     }
 
@@ -92,6 +100,7 @@ int opal_common_ugni_ep_destroy  (gni_ep_handle_t *ep)
         return OPAL_SUCCESS;
     }
 
+    /* TODO: need to fix, may be outstanding tx's, etc. */
     rc = GNI_EpUnbind (*ep);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* should warn */

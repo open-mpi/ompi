@@ -58,17 +58,24 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     }
 
     if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state && send_disconnect) {
+        OPAL_THREAD_LOCK(&ep->common->dev->dev_lock);
         rc = GNI_SmsgSendWTag (ep->smsg_ep_handle, NULL, 0, NULL, 0, -1,
                                MCA_BTL_UGNI_TAG_DISCONNECT);
+        OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("btl/ugni could not send close message"));
         }
 
-        /* we might want to wait for local completion here (do we even care) */
+        /* we might want to wait for local completion here (do we even care), yes we do */
+        /* TODO: FIX FIX FIX */
+
     }
 
+    /* TODO: FIX GROSS */
+    OPAL_THREAD_LOCK(&ep->common->dev->dev_lock);
     (void) opal_common_ugni_ep_destroy (&ep->smsg_ep_handle);
     (void) opal_common_ugni_ep_destroy (&ep->rdma_ep_handle);
+    OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
 
     OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
     ep->mailbox = NULL;
@@ -89,7 +96,7 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     }
 
     BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u proc: %p",
-                 ep->common->ep_rem_addr, ep->common->ep_rem_id, ep->peer_proc));
+                 ep->common->ep_rem_addr, ep->common->ep_rem_id, (void *)ep->peer_proc));
 
     /* bind endpoint to remote address */
     /* we bind two endpoints to seperate out local smsg completion and local fma completion */
@@ -150,6 +157,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     GNI_EpSetEventData (ep->rdma_ep_handle, ep->index, ep->remote_attr.index);
     GNI_EpSetEventData (ep->smsg_ep_handle, ep->index, ep->remote_attr.index);
 
+    ep->rmt_irq_mem_hndl = ep->remote_attr.rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
 
     /* send all pending messages */
@@ -158,7 +166,9 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     rc = mca_btl_ugni_progress_send_wait_list (ep);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         ep->wait_listed = true;
+        OPAL_THREAD_LOCK(&ep->btl->ep_wait_list_lock);
         opal_list_append (&ep->btl->ep_wait_list, &ep->super);
+        OPAL_THREAD_UNLOCK(&ep->btl->ep_wait_list_lock);
     }
 
     return OPAL_SUCCESS;
@@ -167,7 +177,8 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 static inline int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep) {
     gni_return_t rc;
 
-    BTL_VERBOSE(("posting directed datagram to remote id: %d for endpoint %p", ep->common->ep_rem_id, ep));
+    BTL_VERBOSE(("posting directed datagram to remote id: %d for endpoint %p", ep->common->ep_rem_id, (void *)ep));
+    ep->mailbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
 
     rc = GNI_EpPostDataWId (ep->smsg_ep_handle, &ep->mailbox->attr, sizeof (ep->mailbox->attr),
                             &ep->remote_attr, sizeof (ep->remote_attr),
@@ -179,7 +190,7 @@ static inline int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep) {
 int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    BTL_VERBOSE(("progressing connection for endpoint %p with state %d", ep, ep->state));
+    BTL_VERBOSE(("progressing connection for endpoint %p with state %d", (void *)ep, ep->state));
 
     if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         return OPAL_SUCCESS;

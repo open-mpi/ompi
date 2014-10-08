@@ -47,7 +47,9 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         return OPAL_SUCCESS;
     }
 
+    OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     grc = GNI_CqGetEvent (ugni_module->smsg_local_cq, &event_data);
+    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     if (GNI_RC_NOT_DONE == grc) {
         return OPAL_SUCCESS;
     }
@@ -69,7 +71,7 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         return OPAL_ERROR;
     }
 
-    ugni_module->active_send_count--;
+    opal_atomic_add_32(&ugni_module->active_send_count,-1);
 
     frag->flags |= MCA_BTL_UGNI_FRAG_SMSG_COMPLETE;
 
@@ -83,15 +85,18 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
 static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                void *hdr, size_t hdr_len,
                                                void *payload, size_t payload_len,
-                                               mca_btl_ugni_smsg_tag_t tag) {
+                                               mca_btl_ugni_smsg_tag_t tag)
+{
     gni_return_t grc;
 
+    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len,
                             payload, payload_len, frag->msg_id, tag);
+    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
 
     if (OPAL_LIKELY(GNI_RC_SUCCESS == grc)) {
         /* increment the active send counter */
-        frag->endpoint->btl->active_send_count++;
+        opal_atomic_add_32(&frag->endpoint->btl->active_send_count,1);
 
         (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
         return OPAL_SUCCESS;

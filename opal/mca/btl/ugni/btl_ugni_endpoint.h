@@ -39,9 +39,11 @@ typedef struct mca_btl_base_endpoint_t {
     gni_ep_handle_t smsg_ep_handle;
     gni_ep_handle_t rdma_ep_handle;
 
-    mca_btl_ugni_endpoint_attr_t remote_attr;
+    mca_btl_ugni_endpoint_attr_t remote_attr; /* TODO: UGH, remove this */
 
     struct mca_btl_ugni_smsg_mbox_t *mailbox;
+    gni_mem_handle_t  rmt_irq_mem_hndl;
+
 
     opal_list_t frag_wait_list;
     bool wait_listed;
