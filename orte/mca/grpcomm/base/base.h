@@ -30,6 +30,7 @@
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss_types.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/hwloc/hwloc.h"
@@ -67,6 +68,7 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_base_active_t);
 typedef struct {
     opal_list_t actives;
     opal_list_t ongoing;
+    opal_hash_table_t sig_table;
 } orte_grpcomm_base_t;
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
