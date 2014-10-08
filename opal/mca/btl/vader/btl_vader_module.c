@@ -28,6 +28,7 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_fifo.h"
 #include "btl_vader_fbox.h"
+#include "btl_vader_xpmem.h"
 
 #include <string.h>
 
