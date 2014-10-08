@@ -81,7 +81,6 @@ typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_ugni_reg_t          *registration;
     ompi_free_list_t            *my_list;
-    frag_cb_t                    cbfunc;
 } mca_btl_ugni_base_frag_t;
 
 typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_smsg_frag_t;

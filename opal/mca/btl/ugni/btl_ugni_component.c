@@ -471,24 +471,20 @@ mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *ugni_module, int which_cq)
                           !recoverable)) {
             /* give up */
             BTL_ERROR(("giving up on frag %p type %d CQE error %s", (void *) frag, frag->post_desc.base.type, buffer));
-            if (frag->cbfunc) {
-                frag->cbfunc (frag, OPAL_ERROR);
-            }
+            mca_btl_ugni_frag_complete (frag, OPAL_ERROR);
 
             return OPAL_ERROR;
         }
 
         /* repost transaction */
-        mca_btl_ugni_repost (frag, OPAL_SUCCESS);
+        mca_btl_ugni_repost (frag);
 
         return 0;
     }
 
     BTL_VERBOSE(("RDMA/FMA complete for frag %p", (void *) frag));
 
-    if (frag->cbfunc) {
-        frag->cbfunc (frag, opal_common_rc_ugni_to_opal (rc));
-    }
+    mca_btl_ugni_frag_complete (frag, opal_common_rc_ugni_to_opal (rc));
 
     return 1;
 }
@@ -504,11 +500,11 @@ mca_btl_ugni_retry_failed (mca_btl_ugni_module_t *ugni_module)
         mca_btl_ugni_base_frag_t *frag =
             (mca_btl_ugni_base_frag_t *) opal_list_remove_first (&ugni_module->failed_frags);
         OPAL_THREAD_UNLOCK(&ugni_module->failed_frags_lock);
-        assert (NULL != frag);
-
-        if (frag->cbfunc) {
-            frag->cbfunc (frag, OPAL_SUCCESS);
+        if (NULL == frag) {
+            break;
         }
+
+        mca_btl_ugni_repost (frag);
     }
 
     return count;

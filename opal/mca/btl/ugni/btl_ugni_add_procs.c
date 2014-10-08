@@ -380,10 +380,10 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     if (0 == mca_btl_ugni_component.mbox_increment) {
         /* limit mailbox allocations to either 12.5% of available registrations
            or 2MiB per allocation */
-        mbox_increment = (int) (2097152.0 / (float)mca_btl_ugni_component.smsg_mbox_size);
+        mbox_increment = (unsigned int) (2097152.0 / (float)mca_btl_ugni_component.smsg_mbox_size);
 
         /* we may end up using more */
-        if (nprocs/mbox_increment > ugni_module->reg_max / 8) {
+        if (nprocs/mbox_increment > (unsigned int) ugni_module->reg_max / 8) {
             mbox_increment = nprocs / (ugni_module->reg_max >> 3);
         }
     } else {

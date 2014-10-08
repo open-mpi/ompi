@@ -71,7 +71,12 @@ typedef struct mca_btl_ugni_module_t {
 
     /* lock for this list */
     opal_mutex_t     failed_frags_lock;
+    /** rdma frags waiting to be reposted */
     opal_list_t failed_frags;
+
+    /** lock for the eager_get_pending list */
+    opal_mutex_t eager_get_pending_lock;
+    opal_list_t eager_get_pending;
 
     mca_mpool_base_module_t *smsg_mpool;
     ompi_free_list_t         smsg_mboxes;
@@ -107,8 +112,8 @@ typedef struct mca_btl_ugni_module_t {
     /* fragment id bounce buffer (smsg msg ids are only 32 bits) */
     opal_pointer_array_t pending_smsg_frags_bb;
 
-    uint32_t reg_max;
-    volatile int reg_count;
+    int32_t reg_max;
+    volatile int32_t reg_count;
 
     /* used to calculate the fraction of registered memory resources
      * this rank should be limited too */

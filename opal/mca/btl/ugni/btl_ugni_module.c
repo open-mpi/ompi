@@ -74,7 +74,11 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     ugni_module->active_send_count = 0;
 
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
-    OBJ_CONSTRUCT(&ugni_module->failed_frags_lock,opal_mutex_t);
+    OBJ_CONSTRUCT(&ugni_module->failed_frags_lock, opal_mutex_t);
+
+    OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
+    OBJ_CONSTRUCT(&ugni_module->eager_get_pending_lock,opal_mutex_t);
+
     OBJ_CONSTRUCT(&ugni_module->eager_frags_send, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->smsg_frags, ompi_free_list_t);
@@ -183,6 +187,9 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
     OBJ_DESTRUCT(&ugni_module->endpoints);
     OBJ_DESTRUCT(&ugni_module->failed_frags);
+
+    OBJ_DESTRUCT(&ugni_module->eager_get_pending);
+    OBJ_DESTRUCT(&ugni_module->eager_get_pending_lock);
 
     if (ugni_module->initialized) {
         /* need to tear down the mpools *after* the free lists */

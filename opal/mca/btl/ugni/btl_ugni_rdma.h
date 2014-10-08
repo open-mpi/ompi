@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -85,26 +85,20 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     return OPAL_SUCCESS;
 }
 
-static inline int mca_btl_ugni_post_wcb (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
-                                         mca_btl_ugni_segment_t *rem_seg, frag_cb_t cb) {
-    frag->cbfunc = cb;
-
-    if (frag->base.des_local->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
-        return mca_btl_ugni_post_fma (frag, get ? GNI_POST_FMA_GET : GNI_POST_FMA_PUT, lcl_seg, rem_seg);
-    }
-
-    return mca_btl_ugni_post_bte (frag, get ? GNI_POST_RDMA_GET : GNI_POST_RDMA_PUT, lcl_seg, rem_seg);
-}
-
 static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
                                      mca_btl_ugni_segment_t *rem_seg) {
-    return mca_btl_ugni_post_wcb (frag, get, lcl_seg, rem_seg, mca_btl_ugni_frag_complete);
+    const gni_post_type_t fma_ops[2] = {GNI_POST_FMA_PUT, GNI_POST_FMA_GET};
+    const gni_post_type_t rdma_ops[2] = {GNI_POST_RDMA_PUT, GNI_POST_RDMA_GET};
+
+    if (frag->base.des_local->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
+        return mca_btl_ugni_post_fma (frag, fma_ops[get], lcl_seg, rem_seg);
+    }
+
+    return mca_btl_ugni_post_bte (frag, rdma_ops[get], lcl_seg, rem_seg);
 }
 
-static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag, int rc) {
+static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag) {
     gni_return_t grc;
-
-    frag->cbfunc = mca_btl_ugni_frag_complete;
 
     OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     if (GNI_POST_RDMA_PUT == frag->post_desc.base.type ||
@@ -116,7 +110,9 @@ static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag, int rc) 
     OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
 
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
-        frag->cbfunc = mca_btl_ugni_repost;
+        /* NTH: Should we even retry these? When this code was written there was no indication
+         * whether an error in post is recoverable. Clobber this code and the associated data
+         * structures if post errors are not recoverable. */
         OPAL_THREAD_LOCK(&frag->endpoint->btl->failed_frags_lock);
         opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
         OPAL_THREAD_UNLOCK(&frag->endpoint->btl->failed_frags_lock);
