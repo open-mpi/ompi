@@ -137,7 +137,7 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
 }
 #endif
 
-#define ompi_hostname_cutoff orte_full_modex_cutoff
+#define ompi_direct_modex_cutoff orte_direct_modex_cutoff
 
 END_C_DECLS
 

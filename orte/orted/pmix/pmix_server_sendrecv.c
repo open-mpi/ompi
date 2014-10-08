@@ -752,7 +752,7 @@ static void process_message(pmix_server_peer_t *peer)
         /* if we are in a group collective mode, then we need to prep
          * the data as it should be included in the modex */
         OBJ_CONSTRUCT(&save, opal_buffer_t);
-        if (orte_process_info.num_procs < orte_full_modex_cutoff) {
+        if (orte_process_info.num_procs < orte_direct_modex_cutoff) {
             /* need to include the id of the sender for later unpacking */
             opal_dss.pack(&save, &id, 1, OPAL_UINT64);
             opal_dss.copy_payload(&save, &xfer);
@@ -948,9 +948,9 @@ static void process_message(pmix_server_peer_t *peer)
                                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                                             orte_rml_send_callback, NULL);
                 }
+                opal_list_remove_item(&pmix_server_pending_dmx_reqs, &req->super);
+                OBJ_RELEASE(req);
             }
-            opal_list_remove_item(&pmix_server_pending_dmx_reqs, &req->super);
-            OBJ_RELEASE(req);
         }
         OBJ_DESTRUCT(&blocal);
         OBJ_DESTRUCT(&bremote);

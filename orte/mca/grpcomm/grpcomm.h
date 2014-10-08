@@ -57,6 +57,7 @@ typedef struct {
     opal_object_t super;
     orte_process_name_t *signature;
     size_t sz;
+    uint32_t seq_num;
 } orte_grpcomm_signature_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_signature_t);
 
@@ -73,6 +74,10 @@ typedef struct {
     size_t ndmns;
     /* number reported in */
     size_t nreported;
+    /* distance masks for receive */
+    uint32_t distance_mask_recv;
+    /* received buckets */
+    opal_buffer_t ** buffers;
     /* callback function */
     orte_grpcomm_cbfunc_t cbfunc;
     /* user-provided callback data */

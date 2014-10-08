@@ -51,10 +51,8 @@ int main(int argc, char* argv[])
         gethostname(hostname, 512);
         pid = getpid();
         printf("Hello from the child %d of %d on host %s pid %ld: argv[1] = %s\n", rank, size, hostname, (long)pid, argv[1]);
-        if (0 == rank) {
-            MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
-            printf("Child %d received msg: %d\n", rank, msg);
-        }
+        MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
+        printf("Child %d received msg: %d\n", rank, msg);
         MPI_Comm_disconnect(&parent);
         printf("Child %d disconnected\n", rank);
     }
