@@ -49,14 +49,14 @@ int orte_dt_compare_name(orte_process_name_t *value1,
     } else if (NULL == value2) {
         return OPAL_VALUE1_GREATER;
     }
-    
+
     /* If any of the fields are wildcard,
     * then we want to just ignore that one field. In the case
     * of ORTE_NAME_WILDCARD (where ALL of the fields are wildcard), this
     * will automatically result in OPAL_EQUAL for any name in the other
     * value - a totally useless result, but consistent in behavior.
     */
-    
+
     /** check the jobids - if one of them is WILDCARD, then ignore
     * this field since anything is okay
     */
@@ -68,7 +68,7 @@ int orte_dt_compare_name(orte_process_name_t *value1,
             return OPAL_VALUE1_GREATER;
         }
     }
-    
+
     /** check the vpids - if one of them is WILDCARD, then ignore
     * this field since anything is okay
     */
@@ -92,11 +92,11 @@ int orte_dt_compare_vpid(orte_vpid_t *value1,
     /** if either value is WILDCARD, then return equal */
     if (*value1 == ORTE_VPID_WILDCARD ||
         *value2 == ORTE_VPID_WILDCARD) return OPAL_EQUAL;
-    
+
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -107,11 +107,11 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     /** if either value is WILDCARD, then return equal */
     if (*value1 == ORTE_JOBID_WILDCARD ||
         *value2 == ORTE_JOBID_WILDCARD) return OPAL_EQUAL;
-    
+
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -133,12 +133,12 @@ int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type)
 {
     int test;
-    
+
     /** check node names */
     test = strcmp(value1->name, value2->name);
     if (0 == test) return OPAL_EQUAL;
     if (0 < test) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_VALUE1_GREATER;
 }
 
@@ -162,7 +162,7 @@ int orte_dt_compare_app_context(orte_app_context_t *value1, orte_app_context_t *
 {
     if (value1->idx > value2->idx) return OPAL_VALUE1_GREATER;
     if (value2->idx > value1->idx) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -174,9 +174,9 @@ int orte_dt_compare_exit_code(orte_exit_code_t *value1,
                                     opal_data_type_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -188,9 +188,9 @@ int orte_dt_compare_node_state(orte_node_state_t *value1,
                                      orte_node_state_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -202,9 +202,9 @@ int orte_dt_compare_proc_state(orte_proc_state_t *value1,
                                      orte_proc_state_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -216,9 +216,9 @@ int orte_dt_compare_job_state(orte_job_state_t *value1,
                                     orte_job_state_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -248,9 +248,9 @@ int orte_dt_compare_tags(orte_rml_tag_t *value1, orte_rml_tag_t *value2, opal_da
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -258,9 +258,9 @@ int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_f
 int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
+
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
+
     return OPAL_EQUAL;
 }
 
@@ -286,10 +286,15 @@ int orte_dt_compare_sig(orte_grpcomm_signature_t *value1, orte_grpcomm_signature
     if (value2->sz > value1->sz) {
         return OPAL_VALUE2_GREATER;
     }
+     if (value1->seq_num > value2->seq_num) {
+        return OPAL_VALUE1_GREATER;
+    }
+    if (value2->seq_num > value1->seq_num) {
+        return OPAL_VALUE2_GREATER;
+    }
     /* same size - check contents */
     if (0 == memcmp(value1->signature, value2->signature, value1->sz*sizeof(orte_process_name_t))) {
         return OPAL_EQUAL;
     }
-
     return OPAL_VALUE2_GREATER;
 }
