@@ -36,7 +36,10 @@ static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
     frag->post_desc.base.remote_addr     = (uint64_t) rem_addr;
     frag->post_desc.base.remote_mem_hndl = rem_mdh;
     frag->post_desc.base.length          = bufsize;
+#if 0
     frag->post_desc.base.rdma_mode       = GNI_RDMAMODE_FENCE;
+#endif
+    frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
     frag->post_desc.tries                = 0;
 }

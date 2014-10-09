@@ -269,9 +269,9 @@ int opal_common_ugni_init (void)
         mca_btl_ugni_component.rdma_max_retries;
 
     /* Create a communication domain */
-    /* TODO - bte single should be removed when the IRQ problem is figured out */
+
     modes = GNI_CDM_MODE_FORK_FULLCOPY | GNI_CDM_MODE_CACHED_AMO_ENABLED |
-            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL | GNI_CDM_MODE_BTE_SINGLE_CHANNEL;
+            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL;
 
     /* collect uGNI information */
     rc = get_ptag(&opal_common_ugni_module.ptag);
