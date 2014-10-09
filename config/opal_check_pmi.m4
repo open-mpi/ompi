@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+# Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
@@ -20,23 +20,6 @@
 #
 # $HEADER$
 #
-
-#
-# special check for cray pmi, uses macro(s) from pkg.m4 
-#
-# OPAL_CHECK_CRAY_PMI(prefix, [action-if-found], [action-if-not-found])
-# --------------------------------------------------------
-AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
-
-    PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
-                      [$1_LDFLAGS="$CRAY_PMI_LIBS"
-                       $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
-                       $1_LIBS="$1_LDFLAGS"
-                        $2],
-                       [AC_MSG_RESULT([no])
-                        $3])
-])
-
 
 # OPAL_CHECK_PMI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -159,4 +142,58 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     CPPFLAGS="$opal_check_pmi_$1_save_CPPFLAGS"
     LDFLAGS="$opal_check_pmi_$1_save_LDFLAGS"
     LIBS="$opal_check_pmi_$1_save_LIBS"
+])
+
+#
+# special check for cray pmi, uses macro(s) from pkg.m4
+#
+# OPAL_CHECK_CRAY_PMI(prefix, [action-if-found], [action-if-not-found])
+# --------------------------------------------------------
+AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
+    if test -z "$opal_check_cray_pmi_happy" ; then
+        if test -f "/usr/lib/alps/libalps.a" ; then
+            using_cle5_install="no"
+        else
+            using_cle5_install="yes"
+        fi
+
+        if test "$using_cle5_install" = "no" ; then
+            OPAL_CHECK_PMI([CRAY_PMI], [opal_check_cray_pmi_happy="yes"],
+                [opal_check_cray_pmi_happy="no"])
+
+            if test "$opal_check_cray_pmi_happy" = "yes" ; then
+                # Check for extra libraries required by Cray PMI
+                opal_check_alps_pmi_alps_happy=no
+                for opal_check_cray_pmi_extra_dir in "/usr/lib/alps" "/opt/cray/xe-sysroot/default/usr/lib/alps" ; do
+                    AC_MSG_CHECKING([for alps libraries required by PMI in "$opal_check_cray_pmi_extra_dir"])
+
+                    # libalpslli and libalpsutil are needed by libpmi to compile statically
+                    if test -f "$opal_check_cray_pmi_extra_dir/libalpslli.a" ; then
+                        if test -f "$opal_check_cray_pmi_extra_dir/libalpsutil.a" ; then
+                            opal_check_alps_pmi_alps_happy=yes
+                            CRAY_PMI_LIBS="$CRAY_PMI_LIBS -L$opal_check_cray_pmi_extra_dir"
+                            AC_MSG_RESULT([found])
+                            break
+                        fi
+                    fi
+                    AC_MSG_RESULT([not found])
+                done
+
+                if test "$opal_check_alps_pmi_alps_happy" = "no" ; then
+                    opal_check_cray_pmi_alps_happy="no"
+                fi
+            fi
+        else
+            # CLE5 uses package config
+            PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
+                [opal_check_cray_pmi_happy="yes"],
+                [opal_check_cray_pmi_happy="no"])
+        fi
+    fi
+
+    AS_IF([test "$opal_check_cray_pmi_happy" = "yes"],
+        [$1_LDFLAGS="$CRAY_PMI_LIBS"
+            $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
+            $1_LIBS="$1_LDFLAGS"
+            $2], [$3])
 ])
