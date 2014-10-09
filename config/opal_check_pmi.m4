@@ -66,7 +66,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_LIBS=
 
     AC_MSG_CHECKING([if user requested PMI support])
-    AS_IF([test "$with_pmi" == "no"],
+    AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
            $3],
           [AC_MSG_RESULT([yes])
@@ -74,29 +74,31 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            # cannot use OPAL_CHECK_PACKAGE as its backend header
            # support appends "include" to the path, which won't
            # work with slurm :-(
-           AS_IF([test ! -z "$with_pmi" -a "$with_pmi" != "yes"],
+           AS_IF([test ! -z "$with_pmi" && test "$with_pmi" != "yes"],
                  [opal_check_pmi_install_dir=$with_pmi
                   opal_default_loc="no"],
                  [opal_check_pmi_install_dir="/usr"
                   opal_default_loc="yes"])
            # check for pmi-1 lib */
-           AS_IF([test -f "$opal_check_pmi_install_dir/lib64/libpmi.so"],
+           files=`ls -U $opal_check_pmi_install_dir/lib64/libpmi.* 2> /dev/null | wc -l`
+           AS_IF([test "$files" -gt "0"],
                  [opal_have_pmi1=1
-                  AS_IF([test "$opal_default_loc" == "no"],
+                  AS_IF([test "$opal_default_loc" = "no"],
                         [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_install_dir/lib64"
                          opal_pmi_rpath="$opal_check_pmi_install_dir/lib64"
                          opal_pmi_added_ldflag=yes])
                   opal_check_pmi_$1_LIBS="-lpmi"],
-                 [AS_IF([test -f "$opal_check_pmi_install_dir/lib/libpmi.so"],
+                 [files=`ls -U $opal_check_pmi_install_dir/lib/libpmi.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi1=1
-                         AS_IF([test "$opal_default_loc" == "no"],
+                         AS_IF([test "$opal_default_loc" = "no"],
                                [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_install_dir/lib"
                                 opal_pmi_rpath="$opal_check_pmi_install_dir/lib"
                                 opal_pmi_added_ldflag=yes])
                          opal_check_pmi_$1_LIBS="-lpmi"])])
            # check for pmi.h
            AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi.h"],
-               [AS_IF([test "$opal_default_loc" == "no"],
+               [AS_IF([test "$opal_default_loc" = "no"],
                       [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"
                        opal_pmi_added_cppflag=yes])],
                # this could be SLURM, which puts things in a different location
@@ -107,31 +109,34 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                        opal_pmi_added_cppflag=yes])])
 
            # check for pmi2 lib */
-           AS_IF([test -f "$opal_check_pmi_install_dir/lib64/libpmi2.so"],
+           files=`ls -U $opal_check_pmi_install_dir/lib64/libpmi2.* 2> /dev/null | wc -l`
+           AS_IF([test "$files" -gt "0"],
                  [opal_have_pmi2=1
-                  AS_IF([test "$opal_pmi_added_ldflag" != "yes" -a "$opal_default_loc" == "no"],
+                  AS_IF([test "$opal_pmi_added_ldflag" != "yes" && test "$opal_default_loc" = "no"],
                         [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_install_dir/lib64"
                          opal_pmi_rpath="$opal_check_pmi_install_dir/lib64"])
                   opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"],
-                 [AS_IF([test -f "$opal_check_pmi_install_dir/lib/libpmi2.so"],
+                 [files=`ls -U $opal_check_pmi_install_dir/lib/libpmi2.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi2=1
-                         AS_IF([test "$opal_pmi_added_ldflag" != "yes" -a "$opal_default_loc" == "no"],
+                         AS_IF([test "$opal_pmi_added_ldflag" != "yes" && test "$opal_default_loc" = "no"],
                                [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_install_dir/lib"
                                 opal_pmi_rpath="$opal_check_pmi_install_dir/lib"])
                          opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"])])
            # check for pmi2.h
-           AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi2.h"],
-               [AS_IF([test "$opal_pmi_added_cppflag" != "yes" -a "$opal_default_loc" == "no"],
-                      [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"])],
-               # this could be SLURM, which puts things in a different location
-               [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi2.h"],
-                       # even if this was the default loc, we still need to add it in
-                       # because of the slurm path addition
-                      [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"])])
+           AS_IF([test "$opal_pmi_added_cppflag" = "no"],
+                 [AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi2.h"],
+                        [AS_IF([test "$opal_default_loc" = "no"],
+                               [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"])],
+                        # this could be SLURM, which puts things in a different location
+                        [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi2.h"],
+                               # even if this was the default loc, we still need to add it in
+                               # because of the slurm path addition
+                               [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"])])])
 
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
-           AS_IF([test $opal_have_pmi1 != 1 -a $opal_have_pmi2 != 1],
+           AS_IF([test "$opal_have_pmi1" != "1" && test "$opal_have_pmi2" != "1"],
                  [AC_MSG_RESULT([not found])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but neither libpmi])
                   AC_MSG_WARN([nor libpmi2 were found under locations:])
