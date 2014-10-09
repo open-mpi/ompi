@@ -76,6 +76,10 @@ typedef struct opal_hash_table_t opal_hash_table_t;
 
 OPAL_DECLSPEC int opal_hash_table_init(opal_hash_table_t* ht, size_t table_size);
 
+/* this could be the new init if people wanted a more general API */
+OPAL_DECLSPEC int opal_hash_table_init2(opal_hash_table_t* ht, size_t estimated_max_size,
+                                        int density_numer, int density_denom,
+                                        int growth_numer, int growth_denom);
 
 /**
  *  Returns the number of elements currently stored in the table.
