@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -55,7 +55,7 @@ mca_coll_base_module_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, 
                           int *priority)
 {
-    int size, ret;
+    int size;
     mca_coll_basic_module_t *basic_module;
 
     basic_module = OBJ_NEW(mca_coll_basic_module_t);
@@ -70,12 +70,9 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
     } else {
         size = ompi_comm_size(comm);
     }
-
-    ret = mca_coll_basic_check_for_requests (basic_module, size * 2);
-    if (OMPI_SUCCESS != ret) {
-        OBJ_RELEASE(basic_module);
-        return NULL;
-    }
+    basic_module->mccb_num_reqs = size * 2;
+    basic_module->mccb_reqs = (ompi_request_t**) 
+        malloc(sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
