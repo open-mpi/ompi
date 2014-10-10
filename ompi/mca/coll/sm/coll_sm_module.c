@@ -13,6 +13,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -589,7 +591,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
+        for (int i = 1 ; i < ompi_comm_size (comm) ; ++i) {
             MCA_PML_CALL(send(&data->sm_bootstrap_meta->shmem_ds, sizeof (data->sm_bootstrap_meta->shmem_ds), MPI_BYTE,
                          i, MCA_COLL_BASE_TAG_BCAST, MCA_PML_BASE_SEND_STANDARD, comm));
         }
