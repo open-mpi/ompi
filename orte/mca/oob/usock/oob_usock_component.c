@@ -164,7 +164,9 @@ static bool component_available(void)
                         "oob:usock: component_available called");
 
     /* if session directories were forbidden, then we cannot be used */
-    if (!orte_create_session_dirs) {
+    if (!orte_create_session_dirs ||
+        NULL == orte_process_info.tmpdir_base ||
+        NULL == orte_process_info.top_session_dir) {
         return false;
     }
 
