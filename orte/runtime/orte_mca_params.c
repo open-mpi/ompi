@@ -741,7 +741,7 @@ int orte_register_params(void)
                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                 &orte_direct_modex_cutoff);
     /* register a synonym for old name */
-    mca_base_var_register_synonym (id, "ompi", "direct_modex", "cutoff", NULL, MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    mca_base_var_register_synonym (id, "ompi", "ompi", "hostname", "cutoff", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     return ORTE_SUCCESS;
 }
