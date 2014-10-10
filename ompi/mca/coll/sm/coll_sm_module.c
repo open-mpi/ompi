@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
- *                         All rights reserved. 
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -101,6 +101,7 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
             /* Ignore any errors -- what are we going to do about
                them? */
             mca_common_sm_fini(c->sm_bootstrap_meta);
+            OBJ_RELEASE(c->sm_bootstrap_meta);
         }
         free(c);
     }
@@ -195,7 +196,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatterv   = NULL;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                        "coll:sm:comm_query (%d/%s): pick me! pick me!", 
+                        "coll:sm:comm_query (%d/%s): pick me! pick me!",
                         comm->c_contextid, comm->c_name);
     return &(sm_module->super);
 }
@@ -246,11 +247,11 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
     maffinity = (opal_hwloc_base_memory_segment_t*)
-        malloc(sizeof(opal_hwloc_base_memory_segment_t) * 
+        malloc(sizeof(opal_hwloc_base_memory_segment_t) *
                c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable (%d/%s): malloc failed (1)", 
+                            "coll:sm:enable (%d/%s): malloc failed (1)",
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -269,10 +270,10 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
           mca_coll_sm_tree_node_t
     */
     sm_module->sm_comm_data = data = (mca_coll_sm_comm_t*)
-        malloc(sizeof(mca_coll_sm_comm_t) + 
-               (c->sm_comm_num_segments * 
+        malloc(sizeof(mca_coll_sm_comm_t) +
+               (c->sm_comm_num_segments *
                 sizeof(mca_coll_sm_data_index_t)) +
-               (size * 
+               (size *
                 (sizeof(mca_coll_sm_tree_node_t) +
                  (sizeof(mca_coll_sm_tree_node_t*) * c->sm_tree_degree))));
     if (NULL == data) {
@@ -280,7 +281,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         free(maffinity);
 #endif
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable (%d/%s): malloc failed (2)", 
+                            "coll:sm:enable (%d/%s): malloc failed (2)",
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
@@ -297,7 +298,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     data->mcb_tree[0].mcstn_children = (mca_coll_sm_tree_node_t**)
         (data->mcb_tree + size);
     for (i = 1; i < size; ++i) {
-        data->mcb_tree[i].mcstn_children = 
+        data->mcb_tree[i].mcstn_children =
             data->mcb_tree[i - 1].mcstn_children + c->sm_tree_degree;
     }
 
@@ -307,9 +308,9 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     for (root = 0; root < size; ++root) {
         parent = (root - 1) / mca_coll_sm_component.sm_tree_degree;
         num_children = mca_coll_sm_component.sm_tree_degree;
-    
+
         /* Do we have children?  If so, how many? */
-        
+
         if ((root * num_children) + 1 >= size) {
             /* Leaves */
             min_child = -1;
@@ -334,7 +335,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         }
         data->mcb_tree[root].mcstn_num_children = num_children;
         for (i = 0; i < c->sm_tree_degree; ++i) {
-            data->mcb_tree[root].mcstn_children[i] = 
+            data->mcb_tree[root].mcstn_children[i] =
                 (i < num_children) ?
                 &data->mcb_tree[min_child + i] : NULL;
         }
@@ -365,7 +366,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     if (data->mcb_tree[rank].mcstn_parent) {
         data->mcb_barrier_control_parent = (uint32_t*)
             (base +
-             (data->mcb_tree[rank].mcstn_parent->mcstn_id * control_size * 
+             (data->mcb_tree[rank].mcstn_parent->mcstn_id * control_size *
               num_barrier_buffers * 2));
     } else {
         data->mcb_barrier_control_parent = NULL;
@@ -393,7 +394,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     if (0 == rank) {
 #if OPAL_HAVE_HWLOC
         maffinity[j].mbs_start_addr = base;
-        maffinity[j].mbs_len = c->sm_control_size * 
+        maffinity[j].mbs_len = c->sm_control_size *
             c->sm_comm_num_in_use_flags;
 #endif
         /* Set the op counts to 1 (actually any nonzero value will do)
@@ -416,8 +417,8 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     for (i = 0; i < c->sm_comm_num_segments; ++i) {
         data->mcb_data_index[i].mcbmi_control = (uint32_t*)
             (base + (i * (control_size + frag_size)));
-        data->mcb_data_index[i].mcbmi_data = 
-            (((char*) data->mcb_data_index[i].mcbmi_control) + 
+        data->mcb_data_index[i].mcbmi_data =
+            (((char*) data->mcb_data_index[i].mcbmi_control) +
              control_size);
 
 #if OPAL_HAVE_HWLOC
@@ -432,7 +433,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         /* Memory affinity: data */
 
         maffinity[j].mbs_len = c->sm_fragment_size;
-        maffinity[j].mbs_start_addr = 
+        maffinity[j].mbs_start_addr =
             ((char*) data->mcb_data_index[i].mcbmi_data) +
             (rank * c->sm_control_size);
         ++j;
@@ -447,7 +448,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 #endif
 
     /* Zero out the control structures that belong to this process */
-    memset(data->mcb_barrier_control_me, 0, 
+    memset(data->mcb_barrier_control_me, 0,
            num_barrier_buffers * 2 * c->sm_control_size);
     for (i = 0; i < c->sm_comm_num_segments; ++i) {
         memset((void *) data->mcb_data_index[i].mcbmi_control, 0,
@@ -472,7 +473,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     if (0 == rank) {
         unlink(data->sm_bootstrap_meta->shmem_ds.seg_name);
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable (%d/%s): removed mmap file %s", 
+                            "coll:sm:enable (%d/%s): removed mmap file %s",
                             comm->c_contextid, comm->c_name,
                             data->sm_bootstrap_meta->shmem_ds.seg_name);
     }
@@ -480,7 +481,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     /* All done */
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                        "coll:sm:enable (%d/%s): success!", 
+                        "coll:sm:enable (%d/%s): success!",
                         comm->c_contextid, comm->c_name);
     return OMPI_SUCCESS;
 }
@@ -526,7 +527,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
     for (i = 1; i < comm_size; ++i) {
         proc = ompi_group_peer_lookup(comm->c_local_group, i);
-        if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
+        if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                           OMPI_CAST_RTE_NAME(&proc->super.proc_name),
                                           lowest_name) < 0) {
             lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
@@ -536,7 +537,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
              OMPI_NAME_PRINT(lowest_name));
     if (NULL == shortpath) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed", 
+                            "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed",
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -545,7 +546,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     free(shortpath);
     if (NULL == fullpath) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): opal_os_path failed", 
+                            "coll:sm:enable:bootstrap comm (%d/%s): opal_os_path failed",
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -579,25 +580,27 @@ static int bootstrap_comm(ompi_communicator_t *comm,
                         "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
                         comm->c_contextid, comm->c_name, size, fullpath);
     if (0 == ompi_comm_rank (comm)) {
-	data->sm_bootstrap_meta = mca_common_sm_module_create_and_attach (size, fullpath, sizeof(mca_common_sm_seg_header_t), 8);
-	if (NULL == data->sm_bootstrap_meta) {
-	    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-				"coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed",
-				comm->c_contextid, comm->c_name);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        data->sm_bootstrap_meta = mca_common_sm_module_create_and_attach (size, fullpath, sizeof(mca_common_sm_seg_header_t), 8);
+        if (NULL == data->sm_bootstrap_meta) {
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed",
+                comm->c_contextid, comm->c_name);
+            free(fullpath);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-	for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
-	    MCA_PML_CALL(send(&data->sm_bootstrap_meta->shmem_ds, sizeof (data->sm_bootstrap_meta->shmem_ds), MPI_BYTE,
-			      i, MCA_COLL_BASE_TAG_BCAST, MCA_PML_BASE_SEND_STANDARD, comm));
-	}
+        for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
+            MCA_PML_CALL(send(&data->sm_bootstrap_meta->shmem_ds, sizeof (data->sm_bootstrap_meta->shmem_ds), MPI_BYTE,
+                         i, MCA_COLL_BASE_TAG_BCAST, MCA_PML_BASE_SEND_STANDARD, comm));
+        }
     } else {
-	opal_shmem_ds_t shmem_ds;
-	MCA_PML_CALL(recv(&shmem_ds, sizeof (shmem_ds), MPI_BYTE, 0, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
-	data->sm_bootstrap_meta = mca_common_sm_module_attach (&shmem_ds, sizeof(mca_common_sm_seg_header_t), 8);
+        opal_shmem_ds_t shmem_ds;
+        MCA_PML_CALL(recv(&shmem_ds, sizeof (shmem_ds), MPI_BYTE, 0, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
+        data->sm_bootstrap_meta = mca_common_sm_module_attach (&shmem_ds, sizeof(mca_common_sm_seg_header_t), 8);
     }
 
     /* All done */
+    free(fullpath);
     return OMPI_SUCCESS;
 }
 
