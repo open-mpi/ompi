@@ -53,6 +53,7 @@ opal_dstore_base_component_t mca_dstore_hash_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     component_create,
+    NULL,
     NULL
 };
 

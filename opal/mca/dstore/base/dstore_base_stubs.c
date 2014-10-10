@@ -49,6 +49,25 @@ int opal_dstore_base_open(const char *name, opal_list_t *attrs)
     return OPAL_ERROR;
 }
 
+int opal_dstore_base_update(int dstorehandle, opal_list_t *attrs)
+{
+    int rc;
+
+    if (dstorehandle < 0) {
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+
+    if (NULL == opal_dstore_base.storage_component->update_handle) {
+        return OPAL_SUCCESS;
+    }
+
+    if (OPAL_SUCCESS != (rc = opal_dstore_base.storage_component->update_handle(dstorehandle, attrs))) {
+        OPAL_ERROR_LOG(rc);
+    }
+
+    return rc;
+}
+
 int opal_dstore_base_close(int dstorehandle)
 {
     opal_dstore_handle_t *hdl;
