@@ -22,14 +22,14 @@
 #include "opal/mca/dstore/base/base.h"
 
 
-int opal_dstore_base_open(const char *name)
+int opal_dstore_base_open(const char *name, opal_list_t *attrs)
 {
     opal_dstore_handle_t *hdl;
     int index;
     opal_dstore_base_module_t *mod;
 
     /* ask the storage component for a module */
-    if (NULL != (mod = opal_dstore_base.storage_component->create_handle())) {
+    if (NULL != (mod = opal_dstore_base.storage_component->create_handle(attrs))) {
         /* have our module, so create a new dstore_handle */
         hdl = OBJ_NEW(opal_dstore_handle_t);
         if (NULL != name) {

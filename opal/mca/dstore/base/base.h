@@ -79,7 +79,7 @@ typedef struct {
 } opal_dstore_proc_data_t;
 OBJ_CLASS_DECLARATION(opal_dstore_proc_data_t);
 
-OPAL_DECLSPEC int opal_dstore_base_open(const char *name);
+OPAL_DECLSPEC int opal_dstore_base_open(const char *name, opal_list_t *attrs);
 OPAL_DECLSPEC int opal_dstore_base_close(int dstorehandle);
 OPAL_DECLSPEC int opal_dstore_base_store(int dstorehandle,
                                          const opal_identifier_t *id,

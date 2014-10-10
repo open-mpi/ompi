@@ -25,7 +25,7 @@
 #include "opal/mca/dstore/base/base.h"
 #include "dstore_hash.h"
 
-static opal_dstore_base_module_t *component_create(void);
+static opal_dstore_base_module_t *component_create(opal_list_t *attrs);
 static int dstore_hash_query(mca_base_module_t **module, int *priority);
 
 /*
@@ -64,7 +64,8 @@ static int dstore_hash_query(mca_base_module_t **module, int *priority)
     return OPAL_SUCCESS;
 }
 
-static opal_dstore_base_module_t *component_create(void)
+/* this component ignores any input attributes */
+static opal_dstore_base_module_t *component_create(opal_list_t *attrs)
 {
     mca_dstore_hash_module_t *mod;
 

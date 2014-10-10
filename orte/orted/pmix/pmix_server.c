@@ -198,15 +198,15 @@ int pmix_server_init(void)
     opal_setenv("PMIX_SERVER_URI", pmix_server_uri, true, &orte_launch_environ);
 
     /* setup the datastore handles */
-    if (0 > (pmix_server_local_handle = opal_dstore.open("pmix-local"))) {
+    if (0 > (pmix_server_local_handle = opal_dstore.open("pmix-local", NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > (pmix_server_remote_handle = opal_dstore.open("pmix-remote"))) {
+    if (0 > (pmix_server_remote_handle = opal_dstore.open("pmix-remote", NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > (pmix_server_global_handle = opal_dstore.open("pmix-global"))) {
+    if (0 > (pmix_server_global_handle = opal_dstore.open("pmix-global", NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

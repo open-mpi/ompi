@@ -191,7 +191,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
     /* create the handle */
-    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
+    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL", NULL))) {
         error = "opal dstore internal";
         ret = ORTE_ERR_FATAL;
         goto error;
