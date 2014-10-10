@@ -20,10 +20,10 @@ linker_flags=@ORTE_WRAPPER_EXTRA_LDFLAGS@
 # intentionally always link in open-pal and open-rte in
 # ortecc/ortec++ because we intend ORTE applications to use both the
 # ORTE and OPAL APIs.
-libs=-lopen-rte -lopen-pal
-libs_static=-lopen-rte -lopen-pal @ORTE_WRAPPER_EXTRA_LIBS@
+libs=-l@ORTE_LIB@ -l@OPAL_LIB@
+libs_static=-l@ORTE_LIB@ -l@OPAL_LIB@ @ORTE_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=libopen-rte.@OPAL_DYN_LIB_SUFFIX@
-static_lib_file=libopen-rte.a
+static_lib_file=lib@ORTE_LIB@.a
 required_file=
 includedir=${includedir}
 libdir=${libdir}

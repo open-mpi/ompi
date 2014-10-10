@@ -1406,6 +1406,8 @@ opalincludedir='${includedir}/openmpi'
 AC_SUBST(opaldatadir)
 AC_SUBST(opallibdir)
 AC_SUBST(opalincludedir)
+OPAL_LIB="open-pal"
+AC_SUBST(OPAL_LIB)
 
 m4_ifdef([project_orte],
          [ortedatadir="$opaldatadir"
@@ -1413,7 +1415,9 @@ m4_ifdef([project_orte],
           ortelibdir="$opallibdir"
           AC_SUBST(ortelibdir)
           orteincludedir="$opalincludedir"
-          AC_SUBST(orteincludedir)])
+          AC_SUBST(orteincludedir)
+          ORTE_LIB="open-rte"
+          AC_SUBST(ORTE_LIB)])
 m4_ifdef([project_ompi],
          [ompidatadir="$opaldatadir"
           AC_SUBST(ompidatadir)

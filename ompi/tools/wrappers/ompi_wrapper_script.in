@@ -62,7 +62,7 @@ my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
 my $libs = "-lmpi " . $extra_libs;
-my $libs_static = "-lmpi -lopen-rte -lopen-pal " . $extra_libs;
+my $libs_static = "-lmpi -l@ORTE_LIB@ -l@OPAL_LIB@ " . $extra_libs;
 
 my $have_dynamic = 0;
 if (-e $libdir . "/libmpi." . $dynamic_lib_suffix) {

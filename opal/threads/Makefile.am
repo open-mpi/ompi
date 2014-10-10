@@ -27,7 +27,7 @@ headers += \
         threads/threads.h \
 	threads/tsd.h
 
-libopen_pal_la_SOURCES += \
+lib@OPAL_LIB@_la_SOURCES += \
         threads/condition.c \
         threads/mutex.c \
         threads/thread.c \

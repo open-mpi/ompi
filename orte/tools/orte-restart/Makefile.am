@@ -41,7 +41,7 @@ dist_ortedata_DATA = help-orte-restart.txt
 endif # OPAL_INSTALL_BINARIES
 
 orte_restart_SOURCES = orte-restart.c
-orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orte_restart_LDADD = $(top_builddir)/orte/lib@ORTE_LIB@.la $(top_builddir)/opal/lib@OPAL_LIB@.la
 
 endif # WANT_FT_CR
 

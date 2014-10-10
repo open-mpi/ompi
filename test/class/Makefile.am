@@ -38,37 +38,37 @@ TESTS =
 
 opal_bitmap_SOURCES = opal_bitmap.c 
 opal_bitmap_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_bitmap_DEPENDENCIES = $(opal_bitmap_LDADD)
 
 opal_list_SOURCES = opal_list.c 
 opal_list_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_list_DEPENDENCIES = $(opal_list_LDADD)
 
 opal_tree_SOURCES = opal_tree.c 
 opal_tree_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_tree_DEPENDENCIES = $(opal_tree_LDADD)
 
 opal_hash_table_SOURCES = opal_hash_table.c
 opal_hash_table_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
 opal_pointer_array_SOURCES = opal_pointer_array.c
 opal_pointer_array_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_pointer_array_DEPENDENCIES = $(opal_pointer_array_LDADD)
 
 opal_value_array_SOURCES = opal_value_array.c
 opal_value_array_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 

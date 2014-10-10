@@ -24,7 +24,7 @@ dist_ortedata_DATA += orted/help-orted.txt
 headers += \
 	orted/orted.h
 
-libopen_rte_la_SOURCES += \
+lib@ORTE_LIB@_la_SOURCES += \
         orted/orted_main.c \
         orted/orted_comm.c
 
