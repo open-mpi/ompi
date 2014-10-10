@@ -287,23 +287,16 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                     ompi_communicator_t **newcomm)
 {
     int err;
-
     ompi_proc_t **topo_procs = NULL;
     int num_procs, ret, rank, i;
     ompi_communicator_t *new_comm;
     mca_topo_base_comm_dist_graph_2_2_0_t* topo;
-    num_procs = ompi_comm_size(comm_old);
-    rank = ompi_comm_rank(comm_old);
+
     topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-    if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
-        memcpy(topo_procs, 
-               comm_old->c_local_group->grp_proc_pointers,
-               num_procs * sizeof(ompi_proc_t *));
-    } else {
-        for(i = 0 ; i < num_procs; i++) {
-            topo_procs[i] = ompi_group_peer_lookup(comm_old->c_local_group,i);
-        }
+    if (NULL == topo_procs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    num_procs = ompi_comm_size(comm_old);
     new_comm = ompi_comm_allocate(num_procs, 0);
     if (NULL == new_comm) {
         free(topo_procs);
@@ -317,10 +310,22 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                               &topo);
     if( OMPI_SUCCESS != err ) {
         free(topo_procs);
-        ompi_comm_free(newcomm);
+        ompi_comm_free(&new_comm);
         return err;
     }
 
+    /* we cannot simply call ompi_comm_create because c_topo
+       must be set before invoking ompi_comm_enable */
+    rank = ompi_comm_rank(comm_old);
+    if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
+        memcpy(topo_procs, 
+               comm_old->c_local_group->grp_proc_pointers,
+               num_procs * sizeof(ompi_proc_t *));
+    } else {
+        for(i = 0 ; i < num_procs; i++) {
+            topo_procs[i] = ompi_group_peer_lookup(comm_old->c_local_group,i);
+        }
+    }
     assert(NULL == new_comm->c_topo);
     new_comm->c_topo             = module;
     new_comm->c_topo->reorder    = reorder;
