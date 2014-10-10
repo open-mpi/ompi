@@ -1,15 +1,17 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ *                         rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  */
 #include "nbc_internal.h"
@@ -28,7 +30,7 @@
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
 int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs, 
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                 struct mca_coll_base_module_2_0_0_t *module)
+                                 struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, p, res, r, speer, rpeer;
   MPI_Aint rcvext;
@@ -92,7 +94,7 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
 
 int ompi_coll_libnbc_iallgatherv_inter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs,
 				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				       struct mca_coll_base_module_2_0_0_t *module)
+				       struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, res, r, rsize;
   MPI_Aint rcvext;

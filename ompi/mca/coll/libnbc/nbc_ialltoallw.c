@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -18,7 +20,7 @@
 int ompi_coll_libnbc_ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
                                 MPI_Datatype sendtypes[], void* recvbuf, int *recvcounts, int *rdispls,
                                 MPI_Datatype recvtypes[], struct ompi_communicator_t *comm, ompi_request_t ** request,
-				struct mca_coll_base_module_2_0_0_t *module)
+				struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, p, res, i;
   NBC_Schedule *schedule;
@@ -84,7 +86,7 @@ int ompi_coll_libnbc_ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 int ompi_coll_libnbc_ialltoallw_inter (void* sendbuf, int *sendcounts, int *sdispls,
 				       MPI_Datatype sendtypes[], void* recvbuf, int *recvcounts, int *rdispls,
 				       MPI_Datatype recvtypes[], struct ompi_communicator_t *comm, ompi_request_t ** request,
-				       struct mca_coll_base_module_2_0_0_t *module)
+				       struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, res, i, rsize;
   NBC_Schedule *schedule;

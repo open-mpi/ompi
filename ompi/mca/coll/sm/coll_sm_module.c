@@ -78,6 +78,8 @@ static int sm_module_enable(mca_coll_base_module_t *module,
 static bool have_local_peers(ompi_group_t *group, size_t size);
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module);
+static int mca_coll_sm_module_disable(mca_coll_base_module_t *module,
+                          struct ompi_communicator_t *comm);
 
 /*
  * Module constructor
@@ -88,6 +90,7 @@ static void mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
     module->sm_comm_data = NULL;
     module->previous_reduce = NULL;
     module->previous_reduce_module = NULL;
+    module->super.coll_module_disable = mca_coll_sm_module_disable;
 }
 
 /*
@@ -114,6 +117,20 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
     }
 
     module->enabled = false;
+}
+
+/*
+ * Module disable
+ */
+static int mca_coll_sm_module_disable(mca_coll_base_module_t *module, struct ompi_communicator_t *comm)
+{
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    if (NULL != sm_module->previous_reduce_module) {
+	sm_module->previous_reduce = NULL;
+        OBJ_RELEASE(sm_module->previous_reduce_module);
+	sm_module->previous_reduce_module = NULL;
+    }
+    return OMPI_SUCCESS;
 }
 
 

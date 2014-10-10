@@ -1,12 +1,14 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ *                         rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -32,7 +34,7 @@
 
 int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, 
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_0_0_t *module) {
+                                     struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, maxr, p, r, res, count, offset, firstred;
   MPI_Aint ext;
   char *redbuf, *sbuf, inplace;
@@ -151,7 +153,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
 
 int ompi_coll_libnbc_ireduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
 						 struct ompi_op_t *op, struct ompi_communicator_t *comm,
-						 ompi_request_t **request, struct mca_coll_base_module_2_0_0_t *module) {
+						 ompi_request_t **request, struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, res, count, rsize;
   MPI_Aint ext;
   NBC_Schedule *schedule;

@@ -2510,7 +2510,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
 static void init_coll_func_pointers(mca_coll_ml_module_t *ml_module)
 {
-    mca_coll_base_module_2_0_0_t *coll_base = &ml_module->super;
+    mca_coll_base_module_2_1_0_t *coll_base = &ml_module->super;
 
     int iboffload_used =
         mca_coll_ml_check_if_bcol_is_used("iboffload", ml_module, COLL_ML_TOPO_MAX);

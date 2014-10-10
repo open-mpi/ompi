@@ -36,6 +36,12 @@
 #define CLOSE(comm, func)                                       \
     do {                                                        \
         if (NULL != comm->c_coll.coll_ ## func ## _module) {    \
+            if (NULL != comm->c_coll.coll_ ## func ## _module-> \
+                coll_module_disable) {                          \
+                comm->c_coll.coll_ ## func ## _module->         \
+                coll_module_disable(                            \
+                comm->c_coll.coll_ ## func ## _module, comm);   \
+            }                                                   \
             OBJ_RELEASE(comm->c_coll.coll_ ## func ## _module); \
             comm->c_coll.coll_## func = NULL;                   \
             comm->c_coll.coll_## func ## _module = NULL;        \

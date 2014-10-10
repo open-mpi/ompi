@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +48,7 @@ static void coll_base_module_construct(mca_coll_base_module_t *m)
 {
     /* zero out all functions */
     memset ((char *) m + sizeof (m->super), 0, sizeof (*m) - sizeof (m->super));
+    m->coll_module_disable = NULL;
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t, 

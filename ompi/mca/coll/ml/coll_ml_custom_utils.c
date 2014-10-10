@@ -7,6 +7,8 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +53,7 @@
 struct avail_coll_t {
     opal_list_item_t super;
     int ac_priority;
-    mca_coll_base_module_2_0_0_t *ac_module;
+    mca_coll_base_module_2_1_0_t *ac_module;
 };
 typedef struct avail_coll_t avail_coll_t;
 

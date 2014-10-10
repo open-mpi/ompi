@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -34,7 +36,7 @@ int NBC_Ineighbor_alltoallw_args_compare(NBC_Ineighbor_alltoallw_args *a, NBC_In
 int ompi_coll_libnbc_ineighbor_alltoallw(void *sbuf, int *scounts, MPI_Aint *sdisps, MPI_Datatype *stypes,
                                          void *rbuf, int *rcounts, MPI_Aint *rdisps, MPI_Datatype *rtypes,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                         struct mca_coll_base_module_2_0_0_t *module) {
+                                         struct mca_coll_base_module_2_1_0_t *module) {
   int rank, size, res, worldsize;
   MPI_Aint *sndexts, *rcvexts;
   NBC_Handle *handle;

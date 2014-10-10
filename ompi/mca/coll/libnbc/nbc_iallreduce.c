@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2006       The Trustees of Indiana University and Indiana
- *                          University Research and Technology
- *                          Corporation.  All rights reserved.
- * Copyright (c) 2006       The Technical University of Chemnitz. All
- *                          rights reserved.
- * Copyright (c) 2013       Los Alamos National Security, LLC. All rights
- *                          reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -40,7 +42,7 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 
 int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_0_0_t *module)
+                                struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, p, res;
   OPAL_PTRDIFF_TYPE ext, lb;
@@ -143,7 +145,7 @@ int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Dat
 
 int ompi_coll_libnbc_iallreduce_inter(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                      struct mca_coll_base_module_2_0_0_t *module)
+                                      struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, res, size, rsize;
   MPI_Aint ext;
