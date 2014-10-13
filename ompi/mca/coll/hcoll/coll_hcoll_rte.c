@@ -358,7 +358,7 @@ static int my_rank (rte_grp_handle_t grp_h )
 
 static int ec_on_local_node (rte_ec_handle_t ec, rte_grp_handle_t group){
     ompi_proc_t *proc = (ompi_proc_t *)ec.handle;
-    return OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags);
+    return OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags);
 }
 
 
@@ -425,5 +425,5 @@ static void coll_handle_complete(void *handle)
 
 static int world_rank(rte_grp_handle_t grp_h, rte_ec_handle_t ec){
     ompi_proc_t *proc = (ompi_proc_t *)ec.handle;
-    return proc->proc_name.vpid;
+    return ((ompi_process_name_t*)&proc->super.proc_name)->vpid;
 }
