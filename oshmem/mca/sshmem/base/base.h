@@ -12,15 +12,17 @@
 #define MCA_SSHMEM_BASE_H
 
 #include "oshmem_config.h"
+#include "oshmem/mca/sshmem/sshmem.h"
+#include "oshmem/proc/proc.h"
 
 #include "opal/mca/base/mca_base_framework.h"
 
-#include "oshmem/mca/sshmem/sshmem.h"
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
 extern void* mca_sshmem_base_start_address;
-
+extern char* mca_sshmem_base_backing_file_dir;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* Public API for the sshmem framework */
@@ -143,6 +145,25 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_sshmem_base_framework;
 #define SSHMEM_WARN(...) \
     oshmem_output_verbose(0, oshmem_sshmem_base_framework.framework_output, \
         "Warning %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+
+
+/*
+ * Get unique file name
+ */
+static inline char * oshmem_get_unique_file_name(uint64_t pe)
+{
+    char *file_name = NULL;
+
+    assert(mca_sshmem_base_backing_file_dir);
+
+    if (NULL == (file_name = calloc(OPAL_PATH_MAX, sizeof(char)))) {
+        return NULL;
+    }
+
+    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, ORTE_PROC_MY_NAME->jobid, pe);
+
+    return file_name;
+}
 
 END_C_DECLS
 

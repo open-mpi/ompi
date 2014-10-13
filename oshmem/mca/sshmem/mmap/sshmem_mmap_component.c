@@ -105,6 +105,23 @@ mmap_register(void)
                                      MCA_BASE_VAR_SCOPE_ALL_EQ,
                                      &mca_sshmem_mmap_component.priority);
 
+    mca_sshmem_mmap_component.is_anonymous = 1;
+    mca_base_component_var_register (&mca_sshmem_mmap_component.super.base_version,
+                                    "anonymous", "Select whether anonymous sshmem is used for mmap "
+                                    "component (default: 1)", MCA_BASE_VAR_TYPE_INT,
+                                    NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_3,
+                                    MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                    &mca_sshmem_mmap_component.is_anonymous);
+
+   mca_sshmem_mmap_component.is_start_addr_fixed = 1;
+   mca_base_component_var_register (&mca_sshmem_mmap_component.super.base_version,
+                                    "fixed", "Select whether fixed start address is used for shmem "
+                                    "(default: 1)", MCA_BASE_VAR_TYPE_INT,
+                                    NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_3,
+                                    MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                    &mca_sshmem_mmap_component.is_start_addr_fixed);
     return OSHMEM_SUCCESS;
 }
 
