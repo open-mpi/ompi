@@ -253,7 +253,7 @@ segment_create(map_segment_t *ds_buf,
         OBJ_CONSTRUCT(&device->ib_mr_array, opal_value_array_t);
         opal_value_array_init(&device->ib_mr_array, sizeof(struct ibv_mr *));
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
+#if (MPAGE_ENABLE > 0)
         exp_access_flag = IBV_EXP_ACCESS_ALLOCATE_MR |
                           IBV_EXP_ACCESS_SHARED_MR_USER_READ |
                           IBV_EXP_ACCESS_SHARED_MR_USER_WRITE;
@@ -282,7 +282,7 @@ segment_create(map_segment_t *ds_buf,
             opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
         }
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
+#if (MPAGE_ENABLE > 0)
         if (!rc && mca_sshmem_verbs_component.has_shared_mr) {
             access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
