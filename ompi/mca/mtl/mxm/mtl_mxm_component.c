@@ -129,11 +129,11 @@ static int ompi_mtl_mxm_component_register(void)
 {
     unsigned long cur_ver = mxm_get_version();
 
+    ompi_mtl_mxm.bulk_connect = 0;
+
     if (cur_ver < MXM_VERSION(3,2)) {
-        ompi_mtl_mxm.bulk_connect    = 0;
         ompi_mtl_mxm.bulk_disconnect = 0;
     } else {
-        ompi_mtl_mxm.bulk_connect    = 1;
         ompi_mtl_mxm.bulk_disconnect = 1;
     }
 
