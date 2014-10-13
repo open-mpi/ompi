@@ -72,7 +72,7 @@ while test "$1" != ""; do
         --no-ompi) want_ompi=0 ;;
         --autogen-args) autogen_args=$2; shift ;;
         --distdir) distdir=$2; shift ;;
-        --dirtyok) dirty_ok=1; shift ;;
+        --dirtyok) dirty_ok=1 ;;
         --verok) gnu_version_ignore=1;;
         --no-git-update) git_update=0;;
         *)

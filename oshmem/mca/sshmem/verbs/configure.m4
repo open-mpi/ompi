@@ -35,15 +35,14 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
     AC_SUBST([oshmem_verbs_LDFLAGS])
     AC_SUBST([oshmem_verbs_LIBS])
 
+    # ibv_reg_shared_mr was added in MOFED 1.8
+    oshmem_have_mpage=0
     # If we have the oshmem_verbs stuff available, find out what we've got
     AS_IF(
         [test "$oshmem_verbs_sm_build_verbs" = "1"],
         [
             OSHMEM_LIBSHMEM_EXTRA_LDFLAGS="$OSHMEM_LIBSHMEM_EXTRA_LDFLAGS $oshmem_verbs_LDFLAGS"
             OSHMEM_LIBSHMEM_EXTRA_LIBS="$OSHMEM_LIBSHMEM_EXTRA_LIBS $oshmem_verbs_LIBS"
-
-            # ibv_reg_shared_mr was added in MOFED 1.8
-            oshmem_have_mpage=0
 
             oshmem_verbs_save_CPPFLAGS="$CPPFLAGS"
             oshmem_verbs_save_LDFLAGS="$LDFLAGS"
@@ -64,22 +63,19 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
             CPPFLAGS="$oshmem_verbs_save_CPPFLAGS"
             LDFLAGS="$oshmem_verbs_save_LDFLAGS"
             LIBS="$oshmem_verbs_save_LIBS"
-    
-            AC_DEFINE_UNQUOTED(MPAGE_ENABLE, $oshmem_have_mpage,
-                [Whether we can use M-PAGE supported since MOFED 1.8])
 
 		    if test "x$oshmem_have_mpage" = "x0"; then
 		        oshmem_verbs_sm_build_verbs=0
 		    fi
         ])
-
+    AC_DEFINE_UNQUOTED(MPAGE_ENABLE, $oshmem_have_mpage, [Whether we can use M-PAGE supported since MOFED 1.8])
+                
+    exp_access_happy=0
     exp_reg_mr_happy=0
     AS_IF([test "$oshmem_have_mpage" = "3"],
             [
               AC_CHECK_MEMBER([struct ibv_exp_reg_shared_mr_in.exp_access],
-                [AC_DEFINE_UNQUOTED(MPAGE_HAVE_SMR_EXP_ACCESS, 1,
-                    [exp_access field is part of ibv_exp_reg_shared_mr_in]
-                    )],
+                [exp_access_happy=1],
                 [],
                 [#include <infiniband/verbs_exp.h>])
 
@@ -88,7 +84,8 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
                 [],
                 [#include <infiniband/verbs_exp.h>])
          ])
-    AC_DEFINE_UNQUOTED(MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS, $exp_reg_mr_happy, [create_flags field is part of ibv_exp_reg_mr_in]),
+    AC_DEFINE_UNQUOTED(MPAGE_HAVE_SMR_EXP_ACCESS, $exp_access_happy, [exp_access field is part of ibv_exp_reg_shared_mr_in])
+    AC_DEFINE_UNQUOTED(MPAGE_HAVE_IBV_EXP_REG_MR_CREATE_FLAGS, $exp_reg_mr_happy, [create_flags field is part of ibv_exp_reg_mr_in])
 
     AS_IF([test "$enable_verbs_sshmem" = "yes" -a "$oshmem_verbs_sm_build_verbs" = "0"],
           [AC_MSG_WARN([VERBS shared memory support requested but not found])
