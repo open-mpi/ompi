@@ -58,7 +58,7 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
     },
     90, /* priority */
     0,  /* verbose level */
-    1,   /* hcoll_enable */
+    0,   /* hcoll_enable */
     NULL /*hcoll version */
 };
 
