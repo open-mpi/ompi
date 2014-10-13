@@ -31,7 +31,7 @@ typedef struct openib_device_t {
     struct ibv_mr *ib_mr_shared;
 } openib_device_t;
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
+#if (MPAGE_ENABLE > 0)
 
 #   if MPAGE_ENABLE < 3
 #       define IBV_EXP_ACCESS_ALLOCATE_MR IBV_ACCESS_ALLOCATE_MR
@@ -60,7 +60,7 @@ static inline void mca_sshmem_verbs_fill_shared_mr(struct ibv_exp_reg_shared_mr_
     mr->pd = pd;
     mr->addr = addr;
     mr->mr_handle = handle;
-#if defined(MPAGE_HAVE_SMR_EXP_ACCESS)
+#if (MPAGE_HAVE_SMR_EXP_ACCESS)
     mr->exp_access = access;
 #else
     mr->access = access;

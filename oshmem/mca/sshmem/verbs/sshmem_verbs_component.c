@@ -160,7 +160,7 @@ verbs_runtime_query(mca_base_module_t **module,
         OBJ_CONSTRUCT(&device->ib_mr_array, opal_value_array_t);
         opal_value_array_init(&device->ib_mr_array, sizeof(struct ibv_mr *));
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
+#if (MPAGE_ENABLE > 0)
         exp_access_flag = IBV_EXP_ACCESS_ALLOCATE_MR  |
                           IBV_EXP_ACCESS_SHARED_MR_USER_READ |
                           IBV_EXP_ACCESS_SHARED_MR_USER_WRITE; 
@@ -175,7 +175,7 @@ verbs_runtime_query(mca_base_module_t **module,
             opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
         }
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
+#if (MPAGE_ENABLE > 0)
         if (!rc && mca_sshmem_verbs_component.has_shared_mr > 0) {
             struct ibv_exp_reg_shared_mr_in in_smr;
 

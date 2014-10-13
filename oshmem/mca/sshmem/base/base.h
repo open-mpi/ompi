@@ -128,7 +128,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_sshmem_base_framework;
 #define __SSHMEM_FILE__ __FILE__
 #endif
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define SSHMEM_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_sshmem_base_framework.framework_output, \
         "%s:%d - %s()", __SSHMEM_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
