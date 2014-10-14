@@ -169,7 +169,7 @@ static int mca_spml_ikrit_component_register(void)
     mca_spml_ikrit_param_register_int("priority", 20,
                                       "[integer] ikrit priority",
                                       &mca_spml_ikrit.priority);
-    mca_spml_ikrit_param_register_int("hw_rdma_channel", 1,
+    mca_spml_ikrit_param_register_int("hw_rdma_channel", 0,
                                        "create separate reliable connection channel",
                                        &mca_spml_ikrit.hw_rdma_channel);
     mca_spml_ikrit_param_register_string("mxm_tls",
