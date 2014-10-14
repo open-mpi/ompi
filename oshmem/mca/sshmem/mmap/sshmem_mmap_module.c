@@ -49,6 +49,10 @@
 
 #include "sshmem_mmap.h"
 
+#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
+#    define MAP_ANONYMOUS MAP_ANON
+#endif /* MAP_ANONYMOUS and MAP_ANON */
+
 #if !defined(MAP_FAILED)
 #    define MAP_FAILED ((char*)-1)
 #endif /* MAP_FAILED */

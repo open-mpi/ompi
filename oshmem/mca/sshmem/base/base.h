@@ -160,7 +160,7 @@ static inline char * oshmem_get_unique_file_name(uint64_t pe)
         return NULL;
     }
 
-    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, ORTE_PROC_MY_NAME->jobid, pe);
+    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, ORTE_PROC_MY_NAME->jobid, (unsigned long long)pe);
 
     return file_name;
 }

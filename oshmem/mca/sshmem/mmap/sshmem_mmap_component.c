@@ -110,7 +110,7 @@ mmap_register(void)
                                     "anonymous", "Select whether anonymous sshmem is used for mmap "
                                     "component (default: 1)", MCA_BASE_VAR_TYPE_INT,
                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_3,
+                                    OPAL_INFO_LVL_4,
                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
                                     &mca_sshmem_mmap_component.is_anonymous);
 
@@ -119,7 +119,7 @@ mmap_register(void)
                                     "fixed", "Select whether fixed start address is used for shmem "
                                     "(default: 1)", MCA_BASE_VAR_TYPE_INT,
                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_3,
+                                    OPAL_INFO_LVL_4,
                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
                                     &mca_sshmem_mmap_component.is_start_addr_fixed);
     return OSHMEM_SUCCESS;
