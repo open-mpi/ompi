@@ -163,6 +163,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     if (o_status.error != 0) {
 	/* No need to free the pvfs2_fs structure, since it will
 	   be deallocated in file_close in case of an error */
+	fh->f_fs_ptr = NULL;
 	return OMPI_ERROR;
     }
 
