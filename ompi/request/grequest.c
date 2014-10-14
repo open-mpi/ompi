@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -216,11 +218,15 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
         if (g->greq_funcs_are_c) {
             rc = g->greq_query.c_query(g->greq_state, status);
         } else {
+#if OMPI_BUILD_FORTRAN_BINDINGS
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
             g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
+#else
+            rc = OMPI_ERROR;
+#endif
         }
     }
 

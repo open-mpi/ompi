@@ -16,6 +16,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -87,7 +89,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcart_sub.c \
         pclose_port.c \
         pcomm_accept.c \
-        pcomm_c2f.c \
         pcomm_call_errhandler.c \
         pcomm_compare.c \
         pcomm_connect.c \
@@ -100,7 +101,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_dup.c \
         pcomm_dup_with_info.c \
         pcomm_idup.c \
-        pcomm_f2c.c \
         pcomm_free.c \
         pcomm_free_keyval.c \
         pcomm_get_attr.c \
@@ -129,9 +129,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_test_inter.c \
 	pcompare_and_swap.c \
         pdims_create.c \
-        perrhandler_c2f.c \
         perrhandler_create.c \
-        perrhandler_f2c.c \
         perrhandler_free.c \
         perrhandler_get.c \
         perrhandler_set.c \
@@ -163,11 +161,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pgraphdims_get.c \
         pgrequest_complete.c \
         pgrequest_start.c \
-        pgroup_c2f.c \
         pgroup_compare.c \
         pgroup_difference.c \
         pgroup_excl.c \
-        pgroup_f2c.c \
         pgroup_free.c \
         pgroup_incl.c \
         pgroup_intersection.c \
@@ -180,11 +176,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pibsend.c \
 	pimprobe.c \
 	pimrecv.c \
-        pinfo_c2f.c \
         pinfo_create.c \
         pinfo_delete.c \
         pinfo_dup.c \
-        pinfo_f2c.c \
         pinfo_free.c \
         pinfo_get.c \
         pinfo_get_nkeys.c \
@@ -205,8 +199,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pkeyval_create.c \
         pkeyval_free.c \
         plookup_name.c \
-        pmessage_f2c.c \
-        pmessage_c2f.c \
         pmprobe.c \
         pmrecv.c \
         pneighbor_allgather.c \
@@ -219,10 +211,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pineighbor_alltoallv.c \
         pneighbor_alltoallw.c \
         pineighbor_alltoallw.c \
-        pop_c2f.c \
         pop_create.c \
         pop_commutative.c \
-        pop_f2c.c \
         pop_free.c \
         popen_port.c \
         ppack_external.c \
@@ -243,8 +233,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pireduce_scatter.c \
         preduce_scatter_block.c \
         pireduce_scatter_block.c \
-        prequest_c2f.c \
-        prequest_f2c.c \
         prequest_free.c \
         prequest_get_status.c \
 	prget.c \
@@ -266,8 +254,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pssend.c \
         pstart.c \
         pstartall.c \
-        pstatus_c2f.c \
-        pstatus_f2c.c \
         pstatus_set_cancelled.c \
         pstatus_set_elements.c \
         pstatus_set_elements_x.c \
@@ -277,7 +263,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptest_cancelled.c \
         ptestsome.c \
         ptopo_test.c \
-        ptype_c2f.c \
         ptype_commit.c \
         ptype_contiguous.c \
         ptype_create_darray.c \
@@ -295,7 +280,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_delete_attr.c \
         ptype_dup.c \
         ptype_extent.c \
-        ptype_f2c.c \
         ptype_free.c \
         ptype_free_keyval.c \
         ptype_get_attr.c \
@@ -333,7 +317,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pwin_allocate.c \
 	pwin_allocate_shared.c \
 	pwin_attach.c \
-        pwin_c2f.c \
         pwin_call_errhandler.c \
         pwin_complete.c  \
         pwin_create_errhandler.c \
@@ -342,7 +325,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pwin_create_dynamic.c \
         pwin_delete_attr.c \
 	pwin_detach.c \
-        pwin_f2c.c \
         pwin_fence.c \
 	pwin_flush.c \
 	pwin_flush_all.c \
@@ -370,14 +352,36 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pwin_unlock_all.c \
         pwin_wait.c
 
+if OMPI_BUILD_FORTRAN_BINDINGS
+nodist_libmpi_c_pmpi_la_SOURCES += \
+        pcomm_c2f.c \
+        pcomm_f2c.c \
+        perrhandler_c2f.c \
+        perrhandler_f2c.c \
+        pgroup_c2f.c \
+        pgroup_f2c.c \
+        pinfo_c2f.c \
+        pinfo_f2c.c \
+        pmessage_c2f.c \
+        pmessage_f2c.c \
+        pop_c2f.c \
+        pop_f2c.c \
+        prequest_c2f.c \
+        prequest_f2c.c \
+        pstatus_c2f.c \
+        pstatus_f2c.c \
+        ptype_c2f.c \
+        ptype_f2c.c \
+        pwin_c2f.c \
+        pwin_f2c.c
+endif
+
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
 nodist_libmpi_c_pmpi_la_SOURCES += \
-        pfile_c2f.c \
         pfile_call_errhandler.c \
         pfile_close.c \
         pfile_create_errhandler.c \
         pfile_delete.c \
-        pfile_f2c.c \
         pfile_get_amode.c \
         pfile_get_atomicity.c \
         pfile_get_byte_offset.c \
@@ -430,6 +434,13 @@ nodist_libmpi_c_pmpi_la_SOURCES += \
         pfile_write_ordered_end.c \
         pfile_write_shared.c \
         pregister_datarep.c
+
+if OMPI_BUILD_FORTRAN_BINDINGS
+nodist_libmpi_c_pmpi_la_SOURCES += \
+        pfile_c2f.c \
+        pfile_f2c.c
+endif
+
 endif
 
 #

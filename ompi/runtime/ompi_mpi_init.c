@@ -17,6 +17,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -59,7 +61,9 @@
 #include "opal/util/timings.h"
 
 #include "ompi/constants.h"
+#if OMPI_BUILD_FORTRAN_BINDINGS
 #include "ompi/mpi/fortran/base/constants.h"
+#endif
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"

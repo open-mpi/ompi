@@ -15,6 +15,8 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -751,4 +753,10 @@ end type test_mpi_handle],
     # safe, too.
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS, 
                    [test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1])
+
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_BINDINGS,
+                   [test $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS -eq 1 || \
+                    test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 || \
+                    test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1])
+
 ])
