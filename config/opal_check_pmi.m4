@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- shell-script ; indent-tabs-mode:nil -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -171,7 +171,8 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
                     if test -f "$opal_check_cray_pmi_extra_dir/libalpslli.a" ; then
                         if test -f "$opal_check_cray_pmi_extra_dir/libalpsutil.a" ; then
                             opal_check_alps_pmi_alps_happy=yes
-                            CRAY_PMI_LIBS="$CRAY_PMI_LIBS -L$opal_check_cray_pmi_extra_dir"
+                            CRAY_PMI_LDFLAGS="$CRAY_PMI_LDFLAGS -L$opal_check_cray_pmi_extra_dir"
+                            CRAY_PMI_LIBS="$CRAY_PMI_LIBS -lalpslli -lalpsutil"
                             AC_MSG_RESULT([found])
                             break
                         fi
@@ -192,8 +193,8 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
     fi
 
     AS_IF([test "$opal_check_cray_pmi_happy" = "yes"],
-        [$1_LDFLAGS="$CRAY_PMI_LIBS"
-            $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
-            $1_LIBS="$1_LDFLAGS"
+        [$1_LDFLAGS="$CRAY_PMI_LDFLAGS"
+            $1_CPPFLAGS="$CRAY_PMI_CPPFLAGS"
+            $1_LIBS="$CRAY_PMI_LIBS"
             $2], [$3])
 ])
