@@ -12,6 +12,8 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,7 +192,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
         err = ompi_datatype_get_true_extent(rdtype, &true_lb, &true_extent);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-        free_buf = (char*) calloc(((true_extent + true_lb + 
+        free_buf = (char*) calloc(((true_extent - true_lb + 
                                     ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount - 1) * rext)),
                                   sizeof(char));
         if (NULL == free_buf) { 
