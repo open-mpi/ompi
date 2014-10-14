@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2012 Universite Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,11 +87,21 @@
  * file.
  */
 
+#if OMPI_FORTRAN_CAPS
 #define DECL(type, upper_case, lower_case, single_u, double_u)   \
-OMPI_DECLSPEC extern type upper_case; \
-OMPI_DECLSPEC extern type lower_case; \
-OMPI_DECLSPEC extern type single_u; \
+OMPI_DECLSPEC extern type upper_case
+#elif OMPI_FORTRAN_PLAIN
+#define DECL(type, upper_case, lower_case, single_u, double_u)   \
+OMPI_DECLSPEC extern type lower_case
+#elif OMPI_FORTRAN_SINGLE_UNDERSCORE
+#define DECL(type, upper_case, lower_case, single_u, double_u)   \
+OMPI_DECLSPEC extern type single_u
+#elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
+#define DECL(type, upper_case, lower_case, single_u, double_u)   \
 OMPI_DECLSPEC extern type double_u
+#else
+#error Unrecognized Fortran name mangling scheme
+#endif
 
 /* Note that the rationale for the types of each of these variables is
    discussed in ompi/include/mpif-common.h.  Do not change the types
@@ -116,57 +128,10 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*
- * Create macros to do the checking.  Only check for all 4 if we have
- * weak symbols.  Otherwise, just check for the one relevant symbol.
+ * Create macros to do the checking.
+ * Just check for the one and only relevant symbol.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-  (addr == (void*) &MPI_FORTRAN_BOTTOM || \
-   addr == (void*) &mpi_fortran_bottom || \
-   addr == (void*) &mpi_fortran_bottom_ || \
-   addr == (void*) &mpi_fortran_bottom__)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-  (addr == (void*) &MPI_FORTRAN_IN_PLACE || \
-   addr == (void*) &mpi_fortran_in_place || \
-   addr == (void*) &mpi_fortran_in_place_ || \
-   addr == (void*) &mpi_fortran_in_place__)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED || \
-   addr == (void*) &mpi_fortran_unweighted || \
-   addr == (void*) &mpi_fortran_unweighted_ || \
-   addr == (void*) &mpi_fortran_unweighted__)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-  (addr == (void*) &MPI_FORTRAN_WEIGHTS_EMPTY || \
-   addr == (void*) &mpi_fortran_weights_empty || \
-   addr == (void*) &mpi_fortran_weights_empty_ || \
-   addr == (void*) &mpi_fortran_weights_empty__)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGV_NULL || \
-   addr == (void*) &mpi_fortran_argv_null || \
-   addr == (void*) &mpi_fortran_argv_null_ || \
-   addr == (void*) &mpi_fortran_argv_null__)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGVS_NULL || \
-   addr == (void*) &mpi_fortran_argvs_null || \
-   addr == (void*) &mpi_fortran_argvs_null_ || \
-   addr == (void*) &mpi_fortran_argvs_null__)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_ERRCODES_IGNORE || \
-   addr == (void*) &mpi_fortran_errcodes_ignore || \
-   addr == (void*) &mpi_fortran_errcodes_ignore_ || \
-   addr == (void*) &mpi_fortran_errcodes_ignore__)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUS_IGNORE || \
-   addr == (void*) &mpi_fortran_status_ignore || \
-   addr == (void*) &mpi_fortran_status_ignore_ || \
-   addr == (void*) &mpi_fortran_status_ignore__)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUSES_IGNORE || \
-   addr == (void*) &mpi_fortran_statuses_ignore || \
-   addr == (void*) &mpi_fortran_statuses_ignore_ || \
-   addr == (void*) &mpi_fortran_statuses_ignore__)
-
-#elif OMPI_FORTRAN_CAPS
+#if OMPI_FORTRAN_CAPS
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
   (addr == (void*) &MPI_FORTRAN_BOTTOM)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
@@ -226,7 +191,7 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
    (addr == (void*) &mpi_fortran_statuses_ignore_)
 
-#else
+#elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
    (addr == (void*) &mpi_fortran_bottom__)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
@@ -246,7 +211,10 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
    (addr == (void*) &mpi_fortran_statuses_ignore__)
 
-#endif /* weak / specific symbol type */
+#else
+#error Unrecognized Fortran name mangling scheme
+
+#endif /* specific symbol type */
 
 /* Convert between Fortran and C MPI_BOTTOM */
 #define OMPI_F2C_BOTTOM(addr)      (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))

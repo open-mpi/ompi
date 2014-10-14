@@ -179,6 +179,11 @@ m4_ifdef([project_ompi],
 m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADER([oshmem/include/shmem.h])])
 
+# A preprocessor header file just for Fortran.  We cannot use AC
+# CONFIG_HEADER because it adds a /* */-style comment at the top,
+# and this header file must be usable in .F90 files.  :-(
+AC_CONFIG_FILES([opal/include/opal_fortran_config.h])
+
 opal_show_subtitle "Initialization, setup"
 
 OMPI_TOP_BUILDDIR="`pwd`"

@@ -3,6 +3,8 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2014      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 !
 ! $COPYRIGHT$
 !
@@ -108,5 +110,6 @@
 ! Include some post-processing, based on the values from above
 
 #include "ompi/mpi/fortran/configure-fortran-output-bottom.h"
+#include "opal/include/opal_fortran_config.h"
 
 #endif
