@@ -22,10 +22,15 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+extern int inGlobalExit_Status;
+
 void shmem_finalize(void)
 {
     OPAL_CR_FINALIZE_LIBRARY();
-
+    if (inGlobalExit_Status != 0)
+    {
+        return;
+    }
     oshmem_shmem_finalize();
 }
 
