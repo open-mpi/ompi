@@ -388,7 +388,7 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     opal_value_t *kp;
     opal_identifier_t id;
     size_t i;
-    uint32_t np;
+    uint64_t np;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native executing fence on %u procs",
@@ -562,7 +562,7 @@ static void fencenb_cbfunc(opal_buffer_t *buf, void *cbdata)
     opal_value_t *kp;
     opal_identifier_t id;
     size_t i;
-    uint32_t np;
+    uint64_t np;
 
     /* get the number of contributors */
     cnt = 1;
