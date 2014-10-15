@@ -25,6 +25,8 @@ typedef struct mca_sshmem_mmap_component_t {
     mca_sshmem_base_component_t super;
     /* priority for mmap component */
     int priority;
+    int is_anonymous;
+    int is_start_addr_fixed;
 } mca_sshmem_mmap_component_t;
 
 OSHMEM_MODULE_DECLSPEC extern mca_sshmem_mmap_component_t
