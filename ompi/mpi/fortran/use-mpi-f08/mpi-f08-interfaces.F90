@@ -2103,6 +2103,21 @@ subroutine MPI_Type_set_name_f08(datatype,type_name,ierror)
 end subroutine MPI_Type_set_name_f08
 end interface  MPI_Type_set_name
 
+interface MPI_Win_allocate
+subroutine MPI_Win_allocate_f08(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+  INTEGER, INTENT(IN) ::  disp_unit
+  TYPE(MPI_Info), INTENT(IN) ::  info
+  TYPE(MPI_Comm), INTENT(IN) ::  comm
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  TYPE(MPI_Win), INTENT(OUT) ::  win
+  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+end subroutine MPI_Win_allocate_f08
+end interface MPI_Win_allocate
+
 interface MPI_Win_allocate_shared
 subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
@@ -2116,7 +2131,7 @@ subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine MPI_Win_allocate_shared_f08
-end interface
+end interface MPI_Win_allocate_shared
 
 interface  MPI_Win_create_keyval
 subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
