@@ -1533,10 +1533,11 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
     const char *var_full_name = var->mbv_full_name;
     const char *var_long_name = var->mbv_long_name;
     bool deprecated = VAR_IS_DEPRECATED(var[0]);
+    bool is_synonym = VAR_IS_SYNONYM(var[0]);
     mca_base_var_file_value_t *fv;
     int ret;
 
-    if (VAR_IS_SYNONYM(var[0])) {
+    if (is_synonym) {
         ret = var_get (var->mbv_synonym_for, &var, true);
         if (OPAL_SUCCESS != ret) {
             return OPAL_ERROR;
@@ -1583,8 +1584,15 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
         }
 
         if (deprecated) {
+            const char *new_variable = "None (going away)";
+
+            if (is_synonym) {
+                new_variable = var->mbv_full_name;
+            }
+
             opal_show_help("help-mca-var.txt", "deprecated-mca-file",
-                           true, var_full_name, fv->mbvfv_file);
+                           true, var_full_name, fv->mbvfv_file,
+                           new_variable);
         }
 
         if (NULL != fv->mbvfv_file) {
