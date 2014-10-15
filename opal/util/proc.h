@@ -23,7 +23,7 @@
 #include "opal/dss/dss.h"
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-#include <arpa/inet.h>
+#include "opal/types.h"
 #endif
 
 /**
@@ -37,22 +37,11 @@
 typedef opal_identifier_t opal_process_name_t;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
-#define OPAL_PROCESS_NAME_NTOH(guid) opal_process_name_ntoh_intr(&(guid))
-static inline __opal_attribute_always_inline__ void
-opal_process_name_ntoh_intr(opal_process_name_t *name)
-{
-    uint32_t * w = (uint32_t *)name;
-    w[0] = ntohl(w[0]);
-    w[1] = ntohl(w[1]);
-}
-#define OPAL_PROCESS_NAME_HTON(guid) opal_process_name_hton_intr(&(guid))
-static inline __opal_attribute_always_inline__ void
-opal_process_name_hton_intr(opal_process_name_t *name)
-{
-    uint32_t * w = (uint32_t *)name;
-    w[0] = htonl(w[0]);
-    w[1] = htonl(w[1]);
-}
+#define OPAL_PROCESS_NAME_NTOH(guid) \
+    guid = ntoh64(guid)
+
+#define OPAL_PROCESS_NAME_HTON(guid) \
+    guid = hton64(guid)
 #else
 #define OPAL_PROCESS_NAME_NTOH(guid)
 #define OPAL_PROCESS_NAME_HTON(guid)

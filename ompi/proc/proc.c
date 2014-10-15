@@ -107,6 +107,7 @@ int ompi_proc_init(void)
         OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid = i;
 
         if (i == OMPI_PROC_MY_NAME->vpid) {
+            opal_value_t kv;
             ompi_proc_local_proc = proc;
             proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->super.proc_hostname = strdup(ompi_process_info.nodename);
@@ -115,8 +116,13 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, OPAL_DSTORE_ARCH,
-                                   &proc->super.proc_arch, OPAL_UINT32);
+            OBJ_CONSTRUCT(&kv, opal_value_t);
+            kv.key = strdup(OPAL_DSTORE_ARCH);
+            kv.type = OPAL_UINT32;
+            kv.data.uint32 = opal_local_arch;
+            ret = opal_pmix.put(PMIX_REMOTE, &kv);
+            OBJ_DESTRUCT(&kv);
+
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }
