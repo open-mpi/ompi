@@ -834,8 +834,10 @@ int orterun(int argc, char *argv[])
      */
     orte_launch_environ = opal_argv_copy(environ);
     
-    /* purge an ess flag set externally */
+    /* purge any ess flag set externally */
     opal_unsetenv("OMPI_MCA_ess", &orte_launch_environ);
+    /* purge the env list, if set */
+    opal_unsetenv("OMPI_MCA_mca_base_env_list", &orte_launch_environ);
     
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
@@ -1533,6 +1535,11 @@ static int capture_cmd_line_params(int argc, int start, char **argv)
     for (i = 0; i < (argc-start); ++i) {
         if (0 == strcmp("-mca",  argv[i]) ||
             0 == strcmp("--mca", argv[i]) ) {
+            /* ignore this one */
+            if (0 == strcmp(argv[i+1], "mca_base_env_list")) {
+                i += 2;
+                continue;
+            }
             /* It would be nice to avoid increasing the length
              * of the orted cmd line by removing any non-ORTE
              * params. However, this raises a problem since
@@ -1624,11 +1631,13 @@ static int create_app(int argc, char* argv[],
     opal_cmd_line_t cmd_line;
     char cwd[OPAL_PATH_MAX];
     int i, j, count, rc;
-    char *param, *value, *value2;
+    char *param, *value;
     orte_app_context_t *app = NULL;
     bool cmd_line_made = false;
     bool found = false;
     char *appname;
+    char **vars;
+    char *env_set_flag;
 
     *made_app = false;
 
@@ -1718,8 +1727,8 @@ static int create_app(int argc, char* argv[],
     }
 
     /* Did the user request to export any environment variables on the cmd line? */
+    env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {
-        char* env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
         if (NULL != env_set_flag) {
             orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
             return ORTE_ERR_FATAL;
@@ -1730,59 +1739,42 @@ static int create_app(int argc, char* argv[],
         for (i = 0; i < j; ++i) {
             param = opal_cmd_line_get_param(&cmd_line, "x", i, 0);
 
-            if (NULL != strchr(param, '=')) {
-                opal_argv_append_nosize(&app->env, param);
+            if (NULL != (value = strchr(param, '='))) {
+                /* terminate the name of the param */
+                *value = '\0';
+                /* step over the equals */
+                value++;
+                /* overwrite any prior entry */
+                opal_setenv(param, value, true, &app->env);
                 /* save it for any comm_spawn'd apps */
-                opal_argv_append_nosize(&orte_forwarded_envars, param);
+                opal_setenv(param, value, true, &orte_forwarded_envars);
             } else {
                 value = getenv(param);
                 if (NULL != value) {
-                    if (NULL != strchr(value, '=')) {
-                        opal_argv_append_nosize(&app->env, value);
-                        /* save it for any comm_spawn'd apps */
-                        opal_argv_append_nosize(&orte_forwarded_envars, value);
-                    } else {
-                        asprintf(&value2, "%s=%s", param, value);
-                        opal_argv_append_nosize(&app->env, value2);
-                        /* save it for any comm_spawn'd apps */
-                        opal_argv_append_nosize(&orte_forwarded_envars, value2);
-                        free(value2);
-                    }
+                    /* overwrite any prior entry */
+                    opal_setenv(param, value, true, &app->env);
+                    /* save it for any comm_spawn'd apps */
+                    opal_setenv(param, value, true, &orte_forwarded_envars);
                 } else {
                     opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
                 }
             }
         }
-    }
-
-    /* Did the user request to export any environment variables via MCA param? */
-    if (NULL != orte_forward_envars) {
-        char **vars;
-        vars = opal_argv_split(orte_forward_envars, ',');
-        for (i=0; NULL != vars[i]; i++) {
-            if (NULL != strchr(vars[i], '=')) {
-                /* user supplied a value */
-                opal_argv_append_nosize(&app->env, vars[i]);
+    } else if (NULL != env_set_flag) {
+        /* set necessary env variables for external usage */
+        vars = NULL;
+        if (OPAL_SUCCESS == mca_base_var_process_env_list(&vars) &&
+            NULL != vars) {
+            for (i=0; NULL != vars[i]; i++) {
+                value = strchr(vars[i], '=');
+                /* terminate the name of the param */
+                *value = '\0';
+                /* step over the equals */
+                value++;
+                /* overwrite any prior entry */
+                opal_setenv(param, value, true, &app->env);
                 /* save it for any comm_spawn'd apps */
-                opal_argv_append_nosize(&orte_forwarded_envars, vars[i]);
-            } else {
-                /* get the value from the environ */
-                value = getenv(vars[i]);
-                if (NULL != value) {
-                    if (NULL != strchr(value, '=')) {
-                        opal_argv_append_nosize(&app->env, value);
-                        /* save it for any comm_spawn'd apps */
-                        opal_argv_append_nosize(&orte_forwarded_envars, value);
-                    } else {
-                        asprintf(&value2, "%s=%s", vars[i], value);
-                        opal_argv_append_nosize(&app->env, value2);
-                        /* save it for any comm_spawn'd apps */
-                        opal_argv_append_nosize(&orte_forwarded_envars, value2);
-                        free(value2);
-                    }
-                } else {
-                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
-                }
+                opal_setenv(param, value, true, &orte_forwarded_envars);
             }
         }
         opal_argv_free(vars);

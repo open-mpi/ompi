@@ -781,6 +781,7 @@ int orte_daemon(int argc, char *argv[])
             "orte_ess_vpid",
             "orte_ess_num_procs",
             "orte_parent_uri",
+            "mca_base_env_list",
             NULL
         };
         for (i=0; i < argc; i++) {

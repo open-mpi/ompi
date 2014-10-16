@@ -127,7 +127,6 @@ static int mca_base_var_cache_files (bool rel_path_search);
 static int var_set_initial (mca_base_var_t *var);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
-static int mca_base_var_process_env_list(void);
 
 /*
  * classes
@@ -261,28 +260,28 @@ int mca_base_var_init(void)
 
         mca_base_var_cache_files(false);
 
-        /* set nesessary env variables for external usage */
-        mca_base_var_process_env_list();
+        /* register the envar-forwarding params */
+        (void)mca_base_var_register ("opal", "mca", "base", "env_list",
+                                     "Set SHELL env variables",
+                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
+        (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
+                                     "Set SHELL env variables delimiter. Default: semicolon ';'",
+                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
     }
 
     return OPAL_SUCCESS;
 }
 
-static int mca_base_var_process_env_list(void)
+int mca_base_var_process_env_list(char ***argv)
 {
     int i;
     char** tokens;
     char* ptr;
     char* param, *value;
     char sep;
-    (void)mca_base_var_register ("opal", "mca", "base", "env_list",
-                                 "Set SHELL env variables",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
-    (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
-                                 "Set SHELL env variables delimiter. Default: semicolon ';'",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
+
     if (NULL == mca_base_env_list) {
         return OPAL_SUCCESS;
     }
@@ -307,10 +306,10 @@ static int mca_base_var_process_env_list(void)
                         value = strchr(param, '=');
                         *value = '\0';
                         value++;
-                        opal_setenv(param, value, true, &environ);
+                        opal_setenv(param, value, true, argv);
                         free(param);
                     } else {
-                        opal_setenv(tokens[i], value, true, &environ);
+                        opal_setenv(tokens[i], value, true, argv);
                     }
                 } else {
                     opal_show_help("help-mca-var.txt", "incorrect-env-list-param",
@@ -321,7 +320,7 @@ static int mca_base_var_process_env_list(void)
                 value = strchr(param, '=');
                 *value = '\0';
                 value++;
-                opal_setenv(param, value, true, &environ);
+                opal_setenv(param, value, true, argv);
                 free(param);
             }
         }

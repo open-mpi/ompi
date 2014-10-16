@@ -722,6 +722,12 @@ OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_typ
 #define MCA_COMPILETIME_VER "print_compiletime_version"
 #define MCA_RUNTIME_VER "print_runtime_version"
 
+/*
+ * Parse a provided list of envars and add their local value, or
+ * their assigned value, to the provided argv
+ */
+OPAL_DECLSPEC int mca_base_var_process_env_list(char ***argv);
+
 END_C_DECLS
 
 #endif /* OPAL_MCA_BASE_VAR_H */

@@ -573,8 +573,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * only if they aren't already present
          */
         for (i = 0; NULL != environ[i]; ++i) {
+            if (0 == strncmp("OMPI_MCA_mca_base_env_list", environ[i],
+                             strlen("OMPI_MCA_mca_base_env_list"))) {
+                /* ignore this one */
+                continue;
+            }
             if (0 == strncmp("OMPI_MCA", environ[i], 8)) {
-                /* check for duplicate in app->env - this
+               /* check for duplicate in app->env - this
                  * would have been placed there by the
                  * cmd line processor. By convention, we
                  * always let the cmd line override the

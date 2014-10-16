@@ -18,7 +18,9 @@
 #include "opal/types.h"
 
 #include "opal_stdint.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
@@ -258,6 +260,9 @@ static int s2_init(void)
             break;
         }
     }
+
+    /* setup any local envars we were asked to do */
+    mca_base_var_process_env_list(&environ);
 
     return OPAL_SUCCESS;
  err_exit:
