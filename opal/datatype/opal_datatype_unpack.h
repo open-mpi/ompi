@@ -17,20 +17,12 @@
 
 #include "opal_config.h"
 
-#include <stddef.h>
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
 /* Make use of existing macro to do CUDA style memcpy */
 #undef MEMCPY_CSUM
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
     CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif
-
-#include "opal/datatype/opal_convertor.h"
-
 
 static inline void unpack_predefined_data( opal_convertor_t* CONVERTOR, /* the convertor */
                                            dt_elem_desc_t* ELEM,         /* the element description */
