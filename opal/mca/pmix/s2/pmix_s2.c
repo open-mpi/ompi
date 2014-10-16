@@ -6,6 +6,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -361,37 +363,7 @@ static int s2_put(opal_pmix_scope_t scope,
         return rc;
     }
 
-    if (pmix_packed_data_offset == 0) {
-        /* nothing to write */
-        return OPAL_SUCCESS;
-    }
-
-    if (pmix_packed_data_offset < pmix_vallen_max) {
-        /* this meta-key is still being filled,
-         * nothing to put yet
-         */
-        return OPAL_SUCCESS;
-    }
-
-    /* encode only full filled meta keys */
-    rem_offset = pmix_packed_data_offset % pmix_vallen_max;
-    data_to_put = pmix_packed_data_offset - rem_offset;
-    buffer_to_put = (char*)malloc(data_to_put);
-    memcpy(buffer_to_put, pmix_packed_data, data_to_put);
-
-    opal_pmix_base_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
-
-    free(buffer_to_put);
-    pmix_packed_data_offset = rem_offset;
-    if (0 == pmix_packed_data_offset) {
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    } else {
-        memmove (pmix_packed_data, pmix_packed_data + data_to_put, pmix_packed_data_offset);
-        pmix_packed_data = realloc (pmix_packed_data, pmix_packed_data_offset);
-    }
-
-    return rc;
+    return OPAL_SUCCESS;
 }
 
 static int s2_fence(opal_process_name_t *procs, size_t nprocs)
