@@ -144,7 +144,7 @@ int opal_pmix_base_commit_packed( char* buffer_to_put, int data_to_put,
     for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
         size_t value_size = vallen > left ? left : vallen - 1;
 
-        sprintf (tmp_key, "key%d", *pack_key);
+        sprintf (tmp_key, "key%d", pkey);
 
         if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, vallen))) {
             OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
