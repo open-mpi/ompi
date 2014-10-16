@@ -1772,9 +1772,9 @@ static int create_app(int argc, char* argv[],
                 /* step over the equals */
                 value++;
                 /* overwrite any prior entry */
-                opal_setenv(param, value, true, &app->env);
+                opal_setenv(vars[i], value, true, &app->env);
                 /* save it for any comm_spawn'd apps */
-                opal_setenv(param, value, true, &orte_forwarded_envars);
+                opal_setenv(vars[i], value, true, &orte_forwarded_envars);
             }
         }
         opal_argv_free(vars);
