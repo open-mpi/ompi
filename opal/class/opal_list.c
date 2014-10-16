@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -144,13 +144,13 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         /* Spot check: ensure this item is only on the list that we
            just insertted it into */
 
-        opal_atomic_add( &(item->opal_list_item_refcount), 1 );
+        (void)opal_atomic_add( &(item->opal_list_item_refcount), 1 );
         assert(1 == item->opal_list_item_refcount);
         item->opal_list_item_belong_to = list;
 #endif
     }
-    
-    list->opal_list_length++;    
+
+    list->opal_list_length++;
     return true;
 }
 

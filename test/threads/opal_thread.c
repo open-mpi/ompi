@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  */
 
@@ -33,13 +36,13 @@ static volatile int count = 0;
 
 static void* thr1_run(opal_object_t* obj)
 {
-    opal_atomic_add(&count, 1);
+    (void)opal_atomic_add(&count, 1);
     return NULL;
 }
 
 static void* thr2_run(opal_object_t* obj)
 {
-    opal_atomic_add(&count, 2);
+    (void)opal_atomic_add(&count, 2);
     return NULL;
 }
 

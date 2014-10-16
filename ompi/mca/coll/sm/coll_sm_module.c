@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -463,7 +463,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     OBJ_RETAIN(sm_module->previous_reduce_module);
 
     /* Indicate that we have successfully attached and setup */
-    opal_atomic_add(&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
+    (void)opal_atomic_add(&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
 
     /* Wait for everyone in this communicator to attach and setup */
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,

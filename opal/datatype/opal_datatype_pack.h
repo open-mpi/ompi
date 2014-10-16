@@ -18,9 +18,6 @@
 #include "opal_config.h"
 
 #include <stddef.h>
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
 /* Make use of existing macro to do CUDA style memcpy */

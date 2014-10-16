@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -356,7 +356,7 @@ extern uint32_t mca_coll_sm_one;
  * Macro to release an in-use flag from this process
  */
 #define FLAG_RELEASE(flag) \
-    opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1)
+    (void)opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1)
 
 /**
  * Macro to copy a single segment in from a user buffer to a shared

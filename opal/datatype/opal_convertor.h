@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -23,19 +23,8 @@
 
 #include "opal_config.h"
 
-#include <stddef.h>
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
-#endif
-#ifdef HAVE_NET_UIO_H
-#include <net/uio.h>
-#endif
-#if HAVE_STRING_H
-#include <string.h>
 #endif
 
 #include "opal/constants.h"

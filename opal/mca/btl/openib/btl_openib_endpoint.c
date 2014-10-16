@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -994,8 +994,8 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         endpoint->eager_rdma_local.rd_win?endpoint->eager_rdma_local.rd_win:1;
 
     /* set local rdma pointer to real value */
-    opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
-            buf);
+    (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
+                                 (void*)1, buf);
 
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OPAL_SUCCESS) {
         mca_btl_openib_device_t *device = endpoint->endpoint_btl->device;
@@ -1018,8 +1018,8 @@ free_headers_buf:
     free(headers_buf);
 unlock_rdma_local:
     /* set local rdma pointer back to zero. Will retry later */
-    opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
-            endpoint->eager_rdma_local.base.pval, NULL);
+    (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
+                                 endpoint->eager_rdma_local.base.pval, NULL);
     endpoint->eager_rdma_local.frags = NULL;
 }
 

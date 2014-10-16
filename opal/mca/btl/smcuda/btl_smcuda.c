@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -589,7 +589,7 @@ int mca_btl_smcuda_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    opal_atomic_add_32(&mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
+    (void)opal_atomic_add_32(&mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
            mca_btl_smcuda_component.sm_seg->module_seg->seg_inited) {
         opal_progress();

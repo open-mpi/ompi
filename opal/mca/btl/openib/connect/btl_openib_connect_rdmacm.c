@@ -7,6 +7,9 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -1193,7 +1196,7 @@ static void *call_disconnect_callback(void *v)
     OBJ_RELEASE(context);
 
     /* Tell the main thread that we're done */
-    opal_atomic_add(&disconnect_callbacks, 1);
+    (void)opal_atomic_add(&disconnect_callbacks, 1);
     OPAL_OUTPUT((-1, "SERVICE Service thread disconnect on ID %p done; count=%d",
                  (void*) tmp, disconnect_callbacks));
     return NULL;
