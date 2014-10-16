@@ -3,6 +3,9 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,7 +103,7 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
             for (int j = 0 ; j < csize ; ++j) {
                 if (ompi_group_peer_lookup(module->start_group, i) ==
                     ompi_comm_peer_lookup(module->comm, j)) {
-                    opal_atomic_add_32(&module->node_states[j].complete_count, 1);
+                    (void)opal_atomic_add_32(&module->node_states[j].complete_count, 1);
                 }
             }
         }
@@ -136,7 +139,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
             for (int j = 0 ; j < csize ; ++j) {
                 if (ompi_group_peer_lookup(module->post_group, i) ==
                     ompi_comm_peer_lookup(module->comm, j)) {
-                    opal_atomic_add_32(&module->node_states[j].post_count, 1);
+                    (void)opal_atomic_add_32(&module->node_states[j].post_count, 1);
                 }
             }
         }

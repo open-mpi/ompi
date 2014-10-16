@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -217,7 +220,7 @@ ompi_osc_portals4_rput(void *origin_addr,
                     "MPI_Rput: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_64(&module->opcount, 1);
         request->ops_expected = 1;
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
@@ -287,7 +290,7 @@ ompi_osc_portals4_rget(void *origin_addr,
                     "MPI_Rget: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_64(&module->opcount, 1);
         request->ops_expected = 1;
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
@@ -374,7 +377,7 @@ ompi_osc_portals4_raccumulate(void *origin_addr,
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
-            opal_atomic_add_64(&module->opcount, 1);
+            (void)opal_atomic_add_64(&module->opcount, 1);
             request->ops_expected++;
 
             if (MPI_REPLACE == op) {
@@ -491,7 +494,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
                 ret = PtlSwap(result_md_h,
@@ -528,7 +531,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
                 ret = PtlGet(md_h,
@@ -567,7 +570,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
                 ret = PtlFetchAtomic(result_md_h,
@@ -630,7 +633,7 @@ ompi_osc_portals4_put(void *origin_addr,
                     "MPI_Put: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_64(&module->opcount, 1);
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             return ret;
@@ -690,7 +693,7 @@ ompi_osc_portals4_get(void *origin_addr,
                     "MPI_Get: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_64(&module->opcount, 1);
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             return ret;
@@ -766,7 +769,7 @@ ompi_osc_portals4_accumulate(void *origin_addr,
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
-            opal_atomic_add_64(&module->opcount, 1);
+            (void)opal_atomic_add_64(&module->opcount, 1);
 
             if (MPI_REPLACE == op) {
                 ret = PtlPut(md_h,
@@ -873,7 +876,7 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
 
                 ret = PtlSwap(result_md_h,
                               result_md_offset + sent,
@@ -908,7 +911,7 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
 
                 ret = PtlGet(md_h,
                              md_offset + sent,
@@ -946,7 +949,7 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_64(&module->opcount, 1);
 
                 ret = PtlFetchAtomic(result_md_h,
                                      result_md_offset + sent,
@@ -1016,7 +1019,7 @@ ompi_osc_portals4_compare_and_swap(void *origin_addr,
     ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
     origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
 
-    opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_64(&module->opcount, 1);
 
     ret = PtlSwap(result_md_h,
                   result_md_offset,
@@ -1076,7 +1079,7 @@ ompi_osc_portals4_fetch_and_op(void *origin_addr,
 
     assert(length < module->fetch_atomic_max);
 
-    opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_64(&module->opcount, 1);
 
     if (MPI_REPLACE == op) {
         ptl_handle_md_t result_md_h, origin_md_h;

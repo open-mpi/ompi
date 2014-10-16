@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +48,7 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
     rc = rcache->rcache_find_all (rcache, (void *) base, bound - base, regs, 10);
     for (i = 0 ; i < rc ; ++i) {
         if (bound <= (uintptr_t)regs[i]->bound && base  >= (uintptr_t)regs[i]->base) {
-            opal_atomic_add (&regs[i]->ref_count, 1);
+            (void)opal_atomic_add (&regs[i]->ref_count, 1);
             reg = regs[i];
             goto reg_found;
         }
@@ -65,7 +68,7 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
         /* start the new segment from the lower of the two bases */
         base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;                        
 
-        opal_atomic_add (&regs[i]->ref_count, -1);
+        (void)opal_atomic_add (&regs[i]->ref_count, -1);
 
         if (OPAL_LIKELY(0 == regs[i]->ref_count)) {
             /* this pointer is not in use */

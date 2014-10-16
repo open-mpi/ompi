@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +47,7 @@ lk_cas64(ompi_osc_portals4_module_t *module,
     ptl_handle_md_t result_md_h, write_md_h;
     void *result_base, *write_base;
 
-    opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_64(&module->opcount, 1);
 
     ompi_osc_portals4_get_md(result_val, module->md_h, &result_md_h, &result_base);
     ompi_osc_portals4_get_md(&write_val, module->md_h, &write_md_h, &write_base);
@@ -82,7 +85,7 @@ lk_write64(ompi_osc_portals4_module_t *module,
     ptl_handle_md_t md_h;
     void *base;
 
-    opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_64(&module->opcount, 1);
 
     ompi_osc_portals4_get_md(&write_val, module->md_h, &md_h, &base);
 
@@ -116,7 +119,7 @@ lk_add64(ompi_osc_portals4_module_t *module,
     ptl_handle_md_t result_md_h, write_md_h;
     void *result_base, *write_base;
 
-    opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_64(&module->opcount, 1);
 
     ompi_osc_portals4_get_md(result_val, module->md_h, &result_md_h, &result_base);
     ompi_osc_portals4_get_md(&write_val, module->md_h, &write_md_h, &write_base);

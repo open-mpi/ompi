@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,11 +42,11 @@ static void* atomic_math_test(void* arg)
     int i;
 
     for (i = 0 ; i < count ; ++i) {
-        opal_atomic_add_32(&val32, 5);
+        (void)opal_atomic_add_32(&val32, 5);
 #if OPAL_HAVE_ATOMIC_MATH_64
-        opal_atomic_add_64(&val64, 6);
+        (void)opal_atomic_add_64(&val64, 6);
 #endif
-        opal_atomic_add(&valint, 4);
+        (void)opal_atomic_add(&valint, 4);
     }
 
     return NULL;
