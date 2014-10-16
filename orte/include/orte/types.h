@@ -10,8 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,17 +83,17 @@ typedef uint32_t orte_vpid_t;
 #define ORTE_VPID_MAX       UINT32_MAX-2
 #define ORTE_VPID_MIN       0
 
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
-#define ORTE_PROCESS_NAME_HTON(n)                      \
-    OPAL_PROCESS_NAME_HTON(*(opal_process_name_t *)&(n))
+#define ORTE_PROCESS_NAME_HTON(n)       \
+do {                                    \
+    n.jobid = htonl(n.jobid);           \
+    n.vpid = htonl(n.vpid);             \
+} while (0)
 
-#define ORTE_PROCESS_NAME_NTOH(n)                      \
-    OPAL_PROCESS_NAME_NTOH(*(opal_process_name_t *)&(n))
-#else
-#define ORTE_PROCESS_NAME_HTON(n)
-
-#define ORTE_PROCESS_NAME_NTOH(n)
-#endif
+#define ORTE_PROCESS_NAME_NTOH(n)       \
+do {                                    \
+    n.jobid = ntohl(n.jobid);           \
+    n.vpid = ntohl(n.vpid);             \
+} while (0)
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? (unsigned long)ORTE_JOBID_INVALID : (unsigned long)(n)->jobid), \
@@ -117,23 +115,11 @@ typedef uint32_t orte_vpid_t;
 
 /*
  * define the process name structure
- * the OPAL layer sees an orte_process_name_t as an opal_process_name_t aka uint64_t
- * if heterogeneous is supported, when converting this uint64_t to
- * an endian neutral format, vpid and jobid will be swapped.
- * consequently, the orte_process_name_t struct must have different definitions
- * (swap jobid and vpid) on little and big endian arch.
  */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
-struct orte_process_name_t {
-    orte_vpid_t vpid;       /**< Process id - equivalent to rank */
-    orte_jobid_t jobid;     /**< Job number */
-};
-#else
 struct orte_process_name_t {
     orte_jobid_t jobid;     /**< Job number */
     orte_vpid_t vpid;       /**< Process id - equivalent to rank */
 };
-#endif
 typedef struct orte_process_name_t orte_process_name_t;
 
 
