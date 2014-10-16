@@ -6,6 +6,8 @@
  *                         rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -36,9 +38,9 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
 #endif
 
 /* the non-blocking reduce */
-int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, 
+int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_0_0_t *module) {
+                             struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res, segsize, size;
   MPI_Aint ext;
   NBC_Schedule *schedule;
@@ -149,7 +151,7 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
 
 int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
 				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				   struct mca_coll_base_module_2_0_0_t *module) {
+				   struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, rsize;
   NBC_Schedule *schedule;
   MPI_Aint ext;

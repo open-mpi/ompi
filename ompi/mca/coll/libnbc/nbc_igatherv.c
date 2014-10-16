@@ -2,11 +2,13 @@
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -18,10 +20,10 @@
  * would not be sufficient ... we simply do not cache it */
 
 
-int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, 
-                              void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, 
+int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_0_0_t *module) {
+                              struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res, i;
   MPI_Aint rcvext = 0;
   NBC_Schedule *schedule;
@@ -84,7 +86,7 @@ int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtyp
 int ompi_coll_libnbc_igatherv_inter (void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				     void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
 				     int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				     struct mca_coll_base_module_2_0_0_t *module) {
+				     struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res, i, rsize;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;

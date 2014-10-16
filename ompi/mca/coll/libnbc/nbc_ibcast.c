@@ -2,8 +2,10 @@
  * Copyright (c) 2006 The Trustees of Indiana University and Indiana
  *                    University Research and Technology
  *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -33,7 +35,7 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 
 int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_0_0_t *module)
+                              struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, p, res, size, segsize;
   NBC_Schedule *schedule;
