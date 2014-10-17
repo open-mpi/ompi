@@ -155,6 +155,19 @@ static int mca_btl_sm_component_verify(void) {
 static int sm_register(void)
 {
     mca_base_var_flag_t var_flags;
+    static bool have_knem = (bool) OPAL_BTL_SM_HAVE_KNEM;
+
+    /* Register an MCA param to indicate whether we have knem support
+       or not */
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "have_knem_support",
+                                           "Whether this component supports the knem Linux kernel module or not",
+                                           MCA_BASE_VAR_TYPE_BOOL,
+                                           NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &have_knem);
 
     if (OPAL_BTL_SM_HAVE_KNEM) {
         var_flags = 0;
@@ -169,7 +182,7 @@ static int sm_register(void)
                                            "even if it is not available, 0 = do not enable knem "
                                            "support, positive = try to enable knem support and "
                                            "fail if it is not available)", MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, var_flags, OPAL_INFO_LVL_9,
+                                           NULL, 0, var_flags, OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_sm_component.use_knem);
 
     /* Currently disabling DMA mode by default; it's not clear that
@@ -180,7 +193,7 @@ static int sm_register(void)
                                            "Minimum message size (in bytes) to use the knem DMA mode; "
                                            "ignored if knem does not support DMA mode (0 = do not use the "
                                            "knem DMA mode)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
-                                           0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_sm_component.knem_dma_min);
 
     mca_btl_sm_component.knem_max_simultaneous = 0;
@@ -191,7 +204,7 @@ static int sm_register(void)
                                            "best large message latency; >0 means to do all operations "
                                            "asynchronously, which supports better overlap for simultaneous "
                                            "large message sends)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
-                                           0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, 
+                                           0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_sm_component.knem_max_simultaneous);
 
     /* CMA parameters */
@@ -199,7 +212,7 @@ static int sm_register(void)
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
                                            "use_cma", "Whether or not to enable CMA",
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_sm_component.use_cma);
 
     /* register SM component parameters */
@@ -1162,3 +1175,4 @@ int mca_btl_sm_component_progress(void)
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
     return nevents;
 }
+ 
