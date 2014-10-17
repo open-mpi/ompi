@@ -40,7 +40,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
                         mca_btl_base_tag_t tag)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
-    const size_t total_size = frag->segments[0].seg_len;
+    const size_t total_size = frag->segments[0].base.seg_len;
 
     if (OPAL_LIKELY(frag->fbox)) {
         mca_btl_vader_fbox_send (frag->fbox, tag);
@@ -60,7 +60,9 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
         OPAL_THREAD_LOCK(&endpoint->lock);
         opal_list_append (&endpoint->pending_frags, (opal_list_item_t *) frag);
         if (!endpoint->waiting) {
+            OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
             opal_list_append (&mca_btl_vader_component.pending_endpoints, &endpoint->super);
+            OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
             endpoint->waiting = true;
         }
         OPAL_THREAD_UNLOCK(&endpoint->lock);

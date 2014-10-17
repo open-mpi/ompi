@@ -5,7 +5,7 @@
 #                         reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 #
@@ -34,6 +34,7 @@ AC_DEFUN([OPAL_CHECK_CMA],[
             AC_DEFINE_UNQUOTED([OPAL_CMA_NEED_SYSCALL_DEFS],
                 [$ompi_check_cma_need_defs],
                 [Need CMA syscalls defined])
+            AC_CHECK_HEADERS([sys/prctl.h])
     else
         AC_MSG_RESULT([no])
     fi

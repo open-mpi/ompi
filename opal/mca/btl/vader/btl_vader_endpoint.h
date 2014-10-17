@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -26,18 +26,8 @@
 #ifndef MCA_BTL_VADER_ENDPOINT_H
 #define MCA_BTL_VADER_ENDPOINT_H
 
-#if OPAL_BTL_VADER_HAVE_XPMEM
-  #if defined(HAVE_XPMEM_H)
-    #include <xpmem.h>
-  #elif defined(HAVE_SN_XPMEM_H)
-    #include <sn/xpmem.h>
-
-    typedef int64_t xpmem_apid_t;
-  #endif
-
-#else
-#include "opal/mca/shmem/base/base.h"
-#endif
+#include "opal_config.h"
+#include "btl_vader_xpmem.h"
 
 #define MCA_BTL_VADER_FBOX_ALIGNMENT      32
 #define MCA_BTL_VADER_FBOX_ALIGNMENT_MASK (MCA_BTL_VADER_FBOX_ALIGNMENT - 1)
@@ -57,38 +47,43 @@ typedef struct mca_btl_base_endpoint_t {
 
     /* per peer buffers */
     struct {
-        unsigned char *buffer;
+        unsigned char *buffer; /**< starting address of peer's fast box out */
         unsigned int start, seq;
         uint32_t *startp;
     } fbox_in;
 
     struct {
-        unsigned char *buffer;
+        unsigned char *buffer; /**< starting address of peer's fast box in */
         unsigned int start, end, seq;
-        uint32_t *startp;
+        uint32_t *startp;      /**< pointer to location storing start offset */
     } fbox_out;
 
     int32_t peer_smp_rank;  /**< my peer's SMP process rank.  Used for accessing
                              *   SMP specfic data structures. */
     uint32_t send_count;    /**< number of fragments sent to this peer */
-    char         *segment_base;
+    char *segment_base;     /**< start of the peer's segment (in the address space
+                             *   of this process) */
 
-    struct vader_fifo_t *fifo;
+    struct vader_fifo_t *fifo; /**< */
 
-    opal_mutex_t lock;
+    opal_mutex_t lock;      /**< lock to protect endpoint structures from concurrent
+                             *   access */
 
+    union {
 #if OPAL_BTL_VADER_HAVE_XPMEM
-    struct mca_rcache_base_module_t *rcache;
-    xpmem_apid_t    apid;       /**< xpmem apid for remote peer */
-#else
-    pid_t           pid;        /**< pid of remote peer (used for CMA) */
-    opal_shmem_ds_t *seg_ds;    /**< stored segment information for detach */
+        struct {
+            struct mca_rcache_base_module_t *rcache;
+            xpmem_apid_t    apid;       /**< xpmem apid for remote peer */
+        } xpmem;
 #endif
+        struct {
+            pid_t           pid;        /**< pid of remote peer (used for CMA) */
+            opal_shmem_ds_t *seg_ds;    /**< stored segment information for detach */
+        } other;
+    } segment_data;
 
-    /** fragments pending fast box space */
-    opal_list_t pending_frags;
-    /** endpoint is on the component wait list */
-    bool waiting;
+    opal_list_t pending_frags; /**< fragments pending fast box space */
+    bool waiting;           /**< endpoint is on the component wait list */
 } mca_btl_base_endpoint_t;
 
 typedef mca_btl_base_endpoint_t mca_btl_vader_endpoint_t;

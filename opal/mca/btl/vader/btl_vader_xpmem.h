@@ -12,9 +12,18 @@
 #if !defined(MCA_BTL_VADER_XPMEM_H)
 #define MCA_BTL_VADER_XPMEM_H
 
-#include "btl_vader.h"
-
 #if OPAL_BTL_VADER_HAVE_XPMEM
+
+#if defined(HAVE_XPMEM_H)
+  #include <xpmem.h>
+
+  typedef struct xpmem_addr xpmem_addr_t;
+#elif defined(HAVE_SN_XPMEM_H)
+  #include <sn/xpmem.h>
+
+  typedef int64_t xpmem_segid_t;
+#endif
+
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 

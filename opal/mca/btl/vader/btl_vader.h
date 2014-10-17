@@ -42,19 +42,7 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#if OPAL_BTL_VADER_HAVE_XPMEM
-  #if defined(HAVE_XPMEM_H)
-    #include <xpmem.h>
-
-    typedef struct xpmem_addr xpmem_addr_t;
-  #elif defined(HAVE_SN_XPMEM_H)
-    #include <sn/xpmem.h>
-
-    typedef int64_t xpmem_segid_t;
-  #endif
-#else
 #include "opal/mca/shmem/base/base.h"
-#endif
 
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
@@ -70,6 +58,9 @@
 
 #include "opal/mca/pmix/pmix.h"
 
+#include "btl_vader_xpmem.h"
+#include "btl_vader_knem.h"
+
 BEGIN_C_DECLS
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -83,13 +74,24 @@ struct vader_fifo_t;
 /*
  * Modex data
  */
-struct vader_modex_t {
+union vader_modex_t {
 #if OPAL_BTL_VADER_HAVE_XPMEM
-    xpmem_segid_t seg_id;
-    void *segment_base;
-#else
-    opal_shmem_ds_t seg_ds;
+    struct vader_modex_xpmem_t {
+        xpmem_segid_t seg_id;
+        void *segment_base;
+    } xpmem;
 #endif
+    opal_shmem_ds_t seg_ds;
+};
+
+/**
+ * Single copy mechanisms
+ */
+enum {
+    MCA_BTL_VADER_XPMEM = 0,
+    MCA_BTL_VADER_CMA   = 1,
+    MCA_BTL_VADER_KNEM  = 2,
+    MCA_BTL_VADER_NONE  = 3,
 };
 
 /**
@@ -102,9 +104,8 @@ struct mca_btl_vader_component_t {
     int vader_free_list_inc;                /**< number of elements to alloc when growing free lists */
 #if OPAL_BTL_VADER_HAVE_XPMEM
     xpmem_segid_t my_seg_id;                /**< this rank's xpmem segment id */
-#else
-    opal_shmem_ds_t seg_ds;                 /**< this rank's shared memory segment */
 #endif
+    opal_shmem_ds_t seg_ds;                 /**< this rank's shared memory segment (when not using xpmem) */
 
     opal_mutex_t lock;                      /**< lock to protect concurrent updates to this structure's members */
     char *my_segment;                       /**< this rank's base pointer */
@@ -112,15 +113,16 @@ struct mca_btl_vader_component_t {
     size_t segment_offset;                  /**< start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
     ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
-#if !OPAL_BTL_VADER_HAVE_XPMEM
     ompi_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
-#endif
-    ompi_free_list_t vader_frags_user;      /**< free list of vader put/get frags */
+    ompi_free_list_t vader_frags_user;      /**< free list of small inline frags */
+    ompi_free_list_t vader_frags_rdma;      /**< free list of vader put/get frags (single-copy) */
 
     unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
     unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */
     unsigned int fbox_size;                 /**< size of each peer fast box allocation */
     unsigned int fbox_count;                /**< number of send fast boxes allocated  */
+
+    int single_copy_mechanism;              /**< single copy mechanism to use */
 
     int memcpy_limit;                       /**< Limit where we switch from memmove to memcpy */
     int log_attach_align;                   /**< Log of the alignment for xpmem segments */
@@ -132,6 +134,12 @@ struct mca_btl_vader_component_t {
     struct vader_fifo_t *my_fifo;           /**< pointer to the local fifo */
 
     opal_list_t pending_endpoints;          /**< list of endpoints with pending fragments */
+    opal_list_t pending_fragments;          /**< fragments pending remote completion */
+
+    /* knem stuff */
+#if OPAL_BTL_VADER_HAVE_KNEM
+    unsigned int knem_dma_min;              /**< minimum size to enable DMA for knem transfers (0 disables) */
+#endif
 };
 typedef struct mca_btl_vader_component_t mca_btl_vader_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_vader_component_t mca_btl_vader_component;
@@ -143,6 +151,9 @@ struct mca_btl_vader_t {
     mca_btl_base_module_t  super;       /**< base BTL interface */
     bool btl_inited;  /**< flag indicating if btl has been inited */
     mca_btl_base_module_error_cb_fn_t error_cb;
+#if OPAL_BTL_VADER_HAVE_KNEM
+    int knem_fd;
+#endif
 };
 typedef struct mca_btl_vader_t mca_btl_vader_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
@@ -196,9 +207,23 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
-                       struct mca_btl_base_endpoint_t *endpoint,
-                       struct mca_btl_base_descriptor_t *des);
+#if OPAL_BTL_VADER_HAVE_XPMEM
+int mca_btl_vader_put_xpmem (struct mca_btl_base_module_t *btl,
+                             struct mca_btl_base_endpoint_t *endpoint,
+                             struct mca_btl_base_descriptor_t *des);
+#endif
+
+#if OPAL_BTL_VADER_HAVE_CMA
+int mca_btl_vader_put_cma (struct mca_btl_base_module_t *btl,
+                           struct mca_btl_base_endpoint_t *endpoint,
+                           struct mca_btl_base_descriptor_t *des);
+#endif
+
+#if OPAL_BTL_VADER_HAVE_KNEM
+int mca_btl_vader_put_knem (struct mca_btl_base_module_t *btl,
+                            struct mca_btl_base_endpoint_t *endpoint,
+                            struct mca_btl_base_descriptor_t *des);
+#endif
 
 /**
  * Initiate an synchronous get.
@@ -207,9 +232,23 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
-                       struct mca_btl_base_endpoint_t *endpoint,
-                       struct mca_btl_base_descriptor_t *des);
+#if OPAL_BTL_VADER_HAVE_XPMEM
+int mca_btl_vader_get_xpmem (struct mca_btl_base_module_t *btl,
+                             struct mca_btl_base_endpoint_t *endpoint,
+                             struct mca_btl_base_descriptor_t *des);
+#endif
+
+#if OPAL_BTL_VADER_HAVE_CMA
+int mca_btl_vader_get_cma (struct mca_btl_base_module_t *btl,
+                           struct mca_btl_base_endpoint_t *endpoint,
+                           struct mca_btl_base_descriptor_t *des);
+#endif
+
+#if OPAL_BTL_VADER_HAVE_KNEM
+int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
+                            struct mca_btl_base_endpoint_t *endpoint,
+                            struct mca_btl_base_descriptor_t *des);
+#endif
 
 /**
  * Allocate a segment.

@@ -15,7 +15,6 @@
 #include "btl_vader.h"
 
 #include "opal/include/opal/align.h"
-#include "btl_vader_xpmem.h"
 #include "opal/mca/memchecker/base/base.h"
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
@@ -25,7 +24,7 @@
 mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *ep, void *rem_ptr,
 						      size_t size, int flags, void **local_ptr)
 {
-    struct mca_rcache_base_module_t *rcache = ep->rcache;
+    struct mca_rcache_base_module_t *rcache = ep->segment_data.xpmem.rcache;
     mca_mpool_base_registration_t *regs[10], *reg = NULL;
     xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
@@ -88,9 +87,9 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
         reg->flags = flags;
 
 #if defined(HAVE_SN_XPMEM_H)
-        xpmem_addr.id     = ep->apid;
+        xpmem_addr.id     = ep->segment_data.xpmem.apid;
 #else
-        xpmem_addr.apid   = ep->apid;
+        xpmem_addr.apid   = ep->segment_data.xpmem.apid;
 #endif
         xpmem_addr.offset = base;
 
@@ -118,7 +117,7 @@ reg_found:
 
 void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
 {
-    struct mca_rcache_base_module_t *rcache = ep->rcache;
+    struct mca_rcache_base_module_t *rcache = ep->segment_data.xpmem.rcache;
     int32_t ref_count;
 
     ref_count = opal_atomic_add_32 (&reg->ref_count, -1);

@@ -54,30 +54,27 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
     OPAL_VAR_SCOPE_POP
 ])dnl
 
-# MCA_btl_sm_CONFIG([action-if-can-compile],
-#                   [action-if-cant-compile])
+# MCA_btl_vader_CONFIG([action-if-can-compile],
+#                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_btl_vader_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/vader/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy btl_vader_cma_happy])
+    OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy btl_vader_cma_happy btl_vader_knem_happy])
 
-    btl_vader_cma_happy=0
-    btl_vader_xpmem_happy=0
-
-    # default to using XPMEM if it is available
-    OPAL_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [])
+    # Check for single-copy APIs
+    OPAL_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [btl_vader_xpmem_happy=0])
+    OPAL_CHECK_KNEM([btl_vader], [btl_vader_knem_happy=1],[btl_vader_knem_happy=0])
+    OPAL_CHECK_CMA([btl_vader], [AC_CHECK_HEADER([sys/prctl.h]) btl_vader_cma_happy=1], [btl_vader_cma_happy=0])
 
     AC_DEFINE_UNQUOTED([OPAL_BTL_VADER_HAVE_XPMEM], [$btl_vader_xpmem_happy],
         [If XPMEM support can be enabled within vader])
 
-    if test $btl_vader_xpmem_happy = 0 ; then
-        # check for CMA if requested. it won't be used if xpmem was available
-	OPAL_CHECK_CMA([btl_vader], [btl_vader_cma_happy=1], [])
-    fi
-
     AC_DEFINE_UNQUOTED([OPAL_BTL_VADER_HAVE_CMA], [$btl_vader_cma_happy],
         [If CMA support can be enabled within vader])
+
+    AC_DEFINE_UNQUOTED([OPAL_BTL_VADER_HAVE_KNEM], [$btl_vader_knem_happy],
+	[If KNEM support can be enabled within vader])
 
     OPAL_VAR_SCOPE_POP
 

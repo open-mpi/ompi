@@ -31,10 +31,10 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
     if(frag->hdr != NULL) {
         frag->hdr->frag = frag;
         frag->hdr->flags = 0;
-        frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
+        frag->segments[0].base.seg_addr.pval = (char *)(frag->hdr + 1);
     }
 
-    frag->base.des_local       = frag->segments;
+    frag->base.des_local       = &frag->segments->base;
     frag->base.des_local_count = 1;
     frag->fbox = NULL;
 }
@@ -45,14 +45,12 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
     unsigned int data_size = (unsigned int)(uintptr_t) ctx;
     unsigned int frag_size = data_size + sizeof (mca_btl_vader_hdr_t);
 
-    assert (data_size > 0);
-
     /* ensure next fragment is aligned on a cache line */
     frag_size = (frag_size + 63) & ~63;
 
     OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
 
-    if (mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
+    if (data_size && mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
         OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
         item->ptr = NULL;
         return;
@@ -65,15 +63,16 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
         frag->my_list = &mca_btl_vader_component.vader_frags_user;
     } else if (mca_btl_vader.super.btl_eager_limit == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_eager;
-    }
-#if !OPAL_BTL_VADER_HAVE_XPMEM
-    else if (mca_btl_vader.super.btl_max_send_size == data_size) {
+    } else if (mca_btl_vader.super.btl_max_send_size == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_max_send;
+    } else {
+        frag->my_list = &mca_btl_vader_component.vader_frags_rdma;
     }
-#endif
 
-    item->ptr = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
-    mca_btl_vader_component.segment_offset += frag_size;
+    if (data_size) {
+        item->ptr = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
+        mca_btl_vader_component.segment_offset += frag_size;
+    }
 
     OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 
