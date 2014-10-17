@@ -505,19 +505,19 @@ extern int mca_btl_sm_send(
  * Synchronous knem/cma get
  */
 extern int mca_btl_sm_get_sync(
-		struct mca_btl_base_module_t* btl,
-		struct mca_btl_base_endpoint_t* endpoint,
-		struct mca_btl_base_descriptor_t* des );
+        struct mca_btl_base_module_t* btl,
+        struct mca_btl_base_endpoint_t* endpoint,
+        struct mca_btl_base_descriptor_t* des );
 
 extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
-		struct mca_btl_base_module_t* btl,
-		struct mca_btl_base_endpoint_t* endpoint,
-		struct mca_mpool_base_registration_t* registration,
-		struct opal_convertor_t* convertor,
-		uint8_t order,
-		size_t reserve,
-		size_t* size,
-		uint32_t flags);
+        struct mca_btl_base_module_t* btl,
+        struct mca_btl_base_endpoint_t* endpoint,
+        struct mca_mpool_base_registration_t* registration,
+        struct opal_convertor_t* convertor,
+        uint8_t order,
+        size_t reserve,
+        size_t* size,
+        uint32_t flags);
 #endif /* OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA */
 
 #if OPAL_BTL_SM_HAVE_KNEM

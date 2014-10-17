@@ -168,7 +168,7 @@ static int sm_register(void)
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &have_knem);
 
-    if (OPAL_BTL_SM_HAVE_KNEM) {
+    if (have_knem) {
         mca_btl_sm_component.use_knem = -1;
     } else {
         mca_btl_sm_component.use_knem = 0;
@@ -1142,7 +1142,6 @@ int mca_btl_sm_component_progress(void)
     if( 0 == mca_btl_sm_component.use_knem ) {
         return nevents;
     }
-    opal_output(0, "===checking for knem progress");
     while (mca_btl_sm.knem_status_num_used > 0 &&
            KNEM_STATUS_PENDING != 
            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
