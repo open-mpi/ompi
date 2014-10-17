@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -565,7 +567,7 @@ int opal_dss_open(void)
                                                      "OPAL_TIMEVAL", &tmp))) {
         return rc;
     }
-     tmp = OPAL_TIME;
+    tmp = OPAL_TIME;
     if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_time,
                                                      opal_dss_unpack_time,
                                                      (opal_dss_copy_fn_t)opal_dss_std_copy,
@@ -573,6 +575,16 @@ int opal_dss_open(void)
                                                      (opal_dss_print_fn_t)opal_dss_print_time,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "OPAL_TIME", &tmp))) {
+        return rc;
+    }
+    tmp = OPAL_NAME;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_name,
+                                                     opal_dss_unpack_name,
+                                                     (opal_dss_copy_fn_t)opal_dss_std_copy,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_name,
+                                                     (opal_dss_print_fn_t)opal_dss_print_name,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "OPAL_NAME", &tmp))) {
         return rc;
     }
    /* All done */

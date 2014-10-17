@@ -13,6 +13,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -288,7 +290,7 @@ static int rte_init(void)
     /* if our URI was not provided by the system, then
      * push our URI so others can find us */
     OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME.id,
                                           OPAL_DSTORE_URI, &vals)) {
         /* construct the RTE string */
         rmluri = orte_rml.get_contact_info();
@@ -322,7 +324,7 @@ static int rte_init(void)
     /* if our local rank was not provided by the system, then
      * push our local rank so others can access it */
     OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME.id,
                                           OPAL_DSTORE_LOCALRANK, &vals)) {
         OBJ_CONSTRUCT(&kvn, opal_value_t);
         kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
@@ -340,7 +342,7 @@ static int rte_init(void)
     /* if our node rank was not provided by the system, then
      * push our node rank so others can access it */
     OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME.id,
                                           OPAL_DSTORE_NODERANK, &vals)) {
         OBJ_CONSTRUCT(&kvn, opal_value_t);
         kvn.key = strdup(OPAL_DSTORE_NODERANK);

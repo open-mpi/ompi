@@ -206,7 +206,7 @@ int opal_pmix_base_get_packed(const opal_identifier_t* proc, char **packed_data,
 
         sprintf (tmp_key, "key%d", remote_key);
 
-        if (NULL == (pmikey = setup_key(proc, tmp_key, vallen))) {
+        if (NULL == (pmikey = setup_key((opal_process_name_t *)proc, tmp_key, vallen))) {
             rc = OPAL_ERR_OUT_OF_RESOURCE;
             OPAL_ERROR_LOG(rc);
             return rc;
@@ -400,7 +400,7 @@ static char* setup_key(const opal_process_name_t* name, const char *key, int pmi
     char *pmi_kvs_key;
 
     if (pmix_keylen_max <= asprintf(&pmi_kvs_key, "%" PRIu64 "-%s",
-                                        *name, key)) {
+                                        name->id, key)) {
         free(pmi_kvs_key);
         return NULL;
     }

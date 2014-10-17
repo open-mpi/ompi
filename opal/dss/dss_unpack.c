@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -368,6 +370,30 @@ int opal_dss_unpack_int64(opal_buffer_t *buffer, void *dest,
     for (i = 0; i < (*num_vals); ++i) {
         memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
         tmp = ntoh64(tmp);
+        memcpy(&desttmp[i], &tmp, sizeof(tmp));
+        buffer->unpack_ptr += sizeof(tmp);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_unpack_name(opal_buffer_t *buffer, void *dest,
+                          int32_t *num_vals, opal_data_type_t type)
+{
+    int32_t i;
+    opal_process_name_t tmp, *desttmp = (opal_process_name_t*) dest;
+
+   OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack_name* %d\n", (int)*num_vals ) );
+    /* check to see if there's enough data in buffer */
+    if (opal_dss_too_small(buffer, (*num_vals)*sizeof(tmp))) {
+        return OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
+    }
+
+    /* unpack the data */
+    for (i = 0; i < (*num_vals); ++i) {
+        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
+        tmp.name.jobid = ntohl(tmp.name.jobid);
+        tmp.name.vpid = ntohl(tmp.name.vpid);
         memcpy(&desttmp[i], &tmp, sizeof(tmp));
         buffer->unpack_ptr += sizeof(tmp);
     }
@@ -1069,6 +1095,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                 return ret;
             }
             break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.name, &m, OPAL_NAME))) {
+                return ret;
+            }
+            break;
         case OPAL_FLOAT_ARRAY:
             if (OPAL_SUCCESS !=
                 (ret = opal_dss_unpack_buffer(buffer,
@@ -1354,6 +1385,22 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                                               ptr[i]->data.tv_array.data,
                                               &ptr[i]->data.tv_array.size,
                                               OPAL_TIMEVAL))) {
+                return ret;
+            }
+            break;
+        case OPAL_NAME_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              &ptr[i]->data.name_array.size,
+                                              &m,
+                                              OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_unpack_buffer(buffer,
+                                              ptr[i]->data.name_array.data,
+                                              &ptr[i]->data.name_array.size,
+                                              OPAL_NAME))) {
                 return ret;
             }
             break;

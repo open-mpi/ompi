@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -354,12 +356,12 @@ int usock_send_connect_ack(void)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* setup the header */
-    hdr.id = OPAL_PROC_MY_NAME;
+    hdr.id = OPAL_PROC_MY_NAME.id;
     hdr.tag = UINT32_MAX;
     hdr.type = PMIX_USOCK_IDENT;
 
     /* get our security credential */
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, &OPAL_PROC_MY_NAME, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, &OPAL_PROC_MY_NAME.id, &cred))) {
         return rc;
     }
 

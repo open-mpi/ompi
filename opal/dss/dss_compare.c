@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -241,6 +243,17 @@ int opal_dss_compare_time(time_t *value1, time_t *value2, opal_data_type_t type)
 {
     if (value1 > value2) return OPAL_VALUE1_GREATER;
     if (value2 > value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+/* PROCESS_NAME */
+int opal_dss_compare_name(opal_process_name_t *value1, opal_process_name_t *value2, opal_data_type_t type)
+{
+    if (value1->name.jobid > value2->name.jobid) return OPAL_VALUE1_GREATER;
+    if (value2->name.jobid > value1->name.jobid) return OPAL_VALUE2_GREATER;
+    if (value1->name.vpid > value2->name.vpid) return OPAL_VALUE1_GREATER;
+    if (value2->name.vpid > value1->name.vpid) return OPAL_VALUE2_GREATER;
 
     return OPAL_EQUAL;
 }

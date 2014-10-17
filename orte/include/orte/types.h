@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +29,7 @@
 #include <sys/types.h>
 #endif
 #include "opal/dss/dss_types.h"
+#include "opal/util/proc.h"
 
 /**
  * Supported datatypes for messaging and storage operations.
@@ -74,11 +77,11 @@ typedef uint32_t orte_app_idx_t;
  * the other, and it will cause problems in the communication subsystems
  */
 
-typedef uint32_t orte_jobid_t;
+typedef opal_jobid_t orte_jobid_t;
 #define ORTE_JOBID_T        OPAL_UINT32
 #define ORTE_JOBID_MAX      UINT32_MAX-2
 #define ORTE_JOBID_MIN      0
-typedef uint32_t orte_vpid_t;
+typedef opal_vpid_t orte_vpid_t;
 #define ORTE_VPID_T         OPAL_UINT32
 #define ORTE_VPID_MAX       UINT32_MAX-2
 #define ORTE_VPID_MIN       0
@@ -116,11 +119,7 @@ do {                                    \
 /*
  * define the process name structure
  */
-struct orte_process_name_t {
-    orte_jobid_t jobid;     /**< Job number */
-    orte_vpid_t vpid;       /**< Process id - equivalent to rank */
-};
-typedef struct orte_process_name_t orte_process_name_t;
+typedef opal_proc_name_t orte_process_name_t;
 
 
 /**

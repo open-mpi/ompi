@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +33,7 @@ opal_process_info_t opal_process_info = {
 static opal_proc_t opal_local_proc = {
     { .opal_list_next = NULL,
       .opal_list_prev = NULL},
-    OPAL_NAME_INVALID,
+    { .id = OPAL_NAME_INVALID},
     0,
     0,
     NULL,
@@ -44,13 +46,13 @@ static void opal_proc_construct(opal_proc_t* proc)
     proc->proc_arch = opal_local_arch;
     proc->proc_convertor = NULL;
     proc->proc_flags = 0;
-    proc->proc_name = 0;
+    proc->proc_name.id = 0;
 }
 
 static void opal_proc_destruct(opal_proc_t* proc)
 {
     proc->proc_flags     = 0;
-    proc->proc_name      = 0;
+    proc->proc_name.id = 0;
     proc->proc_hostname  = NULL;
     proc->proc_convertor = NULL;
 }
@@ -62,8 +64,8 @@ static int
 opal_compare_opal_procs(const opal_process_name_t proc1,
                         const opal_process_name_t proc2)
 {
-    if( proc1 == proc2 ) return  0;
-    if( proc1 <  proc2 ) return -1;
+    if( proc1.id == proc2.id ) return  0;
+    if( proc1.id <  proc2.id ) return -1;
     return 1;
 }
 

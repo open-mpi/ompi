@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,7 +81,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                        tcp_proc->proc_opal->proc_name);
+                                        tcp_proc->proc_opal->proc_name.id);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* release resources */
@@ -99,7 +101,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(const opal_proc_t* proc)
 {
-    uint64_t hash = proc->proc_name;
+    uint64_t hash = proc->proc_name.id;
     mca_btl_tcp_proc_t* btl_proc;
     size_t size;
     int rc;
@@ -721,7 +723,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
     mca_btl_tcp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                     *name, (void**)&proc);
+                                     name->id, (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
     return proc;
 }

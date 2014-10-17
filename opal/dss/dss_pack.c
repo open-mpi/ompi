@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -411,6 +413,32 @@ int opal_dss_pack_time(opal_buffer_t *buffer, const void *src,
     return OPAL_SUCCESS;
 }
 
+/* PROCESS_NAME */
+int opal_dss_pack_name(opal_buffer_t *buffer, const void *src,
+                        int32_t num_vals, opal_data_type_t type)
+{
+    int32_t i;
+    opal_process_name_t tmp, *srctmp = (opal_process_name_t*) src;
+    char *dst;
+    size_t bytes_packed = num_vals * sizeof(tmp);
+
+    OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_pack_name * %d\n", num_vals ) );
+    /* check to see if buffer needs extending */
+    if (NULL == (dst = opal_dss_buffer_extend(buffer, bytes_packed))) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0; i < num_vals; ++i) {
+        tmp.name.jobid = htonl(srctmp[i].name.jobid);
+        tmp.name.vpid = htonl(srctmp[i].name.vpid);
+        memcpy(dst, &tmp, sizeof(tmp));
+        dst += sizeof(tmp);
+    }
+    buffer->pack_ptr += bytes_packed;
+    buffer->bytes_used += bytes_packed;
+
+    return OPAL_SUCCESS;
+}
 
 /* PACK FUNCTIONS FOR GENERIC OPAL TYPES */
 
@@ -816,6 +844,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
         case OPAL_PTR:
             /* just ignore these values */
             break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.name, 1, OPAL_NAME))) {
+                return ret;
+            }
+            break;
         case OPAL_FLOAT_ARRAY:
             if (OPAL_SUCCESS !=
                 (ret = opal_dss_pack_buffer(buffer,
@@ -1100,6 +1133,22 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
                 (ret = opal_dss_pack_buffer(buffer,
                                             ptr[i]->data.tv_array.data,
                                             ptr[i]->data.tv_array.size,
+                                            OPAL_TIMEVAL))) {
+                return ret;
+            }
+            break;
+        case OPAL_NAME_ARRAY:
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_pack_buffer(buffer,
+                                            &ptr[i]->data.name_array.size,
+                                            1,
+                                            OPAL_INT32))) {
+                return ret;
+            }
+            if (OPAL_SUCCESS !=
+                (ret = opal_dss_pack_buffer(buffer,
+                                            ptr[i]->data.name_array.data,
+                                            ptr[i]->data.name_array.size,
                                             OPAL_TIMEVAL))) {
                 return ret;
             }
