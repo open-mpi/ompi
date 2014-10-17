@@ -154,7 +154,6 @@ static int mca_btl_sm_component_verify(void) {
 
 static int sm_register(void)
 {
-    mca_base_var_flag_t var_flags;
     static bool have_knem = (bool) OPAL_BTL_SM_HAVE_KNEM;
 
     /* Register an MCA param to indicate whether we have knem support
@@ -170,10 +169,8 @@ static int sm_register(void)
                                            &have_knem);
 
     if (OPAL_BTL_SM_HAVE_KNEM) {
-        var_flags = 0;
         mca_btl_sm_component.use_knem = -1;
     } else {
-        var_flags = MCA_BASE_VAR_FLAG_DEFAULT_ONLY;
         mca_btl_sm_component.use_knem = 0;
     }
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
@@ -182,7 +179,7 @@ static int sm_register(void)
                                            "even if it is not available, 0 = do not enable knem "
                                            "support, positive = try to enable knem support and "
                                            "fail if it is not available)", MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, var_flags, OPAL_INFO_LVL_4,
+                                           NULL, 0, 0, OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_sm_component.use_knem);
 
     /* Currently disabling DMA mode by default; it's not clear that
@@ -889,6 +886,12 @@ mca_btl_sm_component_init(int *num_btls,
             mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
         }
     }
+#else
+    /* If the user explicitly asked for knem and we can't provide it,
+       error */
+    if (mca_btl_sm_component.use_knem > 0) {
+        goto no_knem;
+    }
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
 
 #if OPAL_BTL_SM_HAVE_CMA
@@ -905,8 +908,8 @@ mca_btl_sm_component_init(int *num_btls,
 
     return btls;
 
-#if OPAL_BTL_SM_HAVE_KNEM
  no_knem:
+#if OPAL_BTL_SM_HAVE_KNEM
     mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
 
     if (NULL != mca_btl_sm.knem_frag_array) {
@@ -922,10 +925,14 @@ mca_btl_sm_component_init(int *num_btls,
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
-    
+#endif /* OPAL_BTL_SM_HAVE_KNEM */
+
     /* If "use_knem" is positive, then it's an error if knem support
        is not available -- deactivate the sm btl. */
     if (mca_btl_sm_component.use_knem > 0) {
+        opal_show_help("help-mpi-btl-sm.txt",
+                       "knem requested but not available",
+                       true, opal_process_info.nodename);
         return NULL;
     }
 
@@ -933,7 +940,6 @@ mca_btl_sm_component_init(int *num_btls,
        was <0, in which case the fact that knem is not available is
        not an error. */
     return btls;
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
 }
 
 
@@ -1136,6 +1142,7 @@ int mca_btl_sm_component_progress(void)
     if( 0 == mca_btl_sm_component.use_knem ) {
         return nevents;
     }
+    opal_output(0, "===checking for knem progress");
     while (mca_btl_sm.knem_status_num_used > 0 &&
            KNEM_STATUS_PENDING != 
            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
@@ -1175,4 +1182,3 @@ int mca_btl_sm_component_progress(void)
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
     return nevents;
 }
- 
