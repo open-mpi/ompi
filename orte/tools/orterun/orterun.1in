@@ -274,7 +274,8 @@ To order processes' ranks in MPI_COMM_WORLD:
 .B --rank-by <foo>
 Rank in round-robin fashion according to the specified object,
 defaults to \fIslot\fP. Supported options
-include slot, hwthread, core, socket, numa, board, and node.
+include slot, hwthread, core, L1cache, L2cache, L3cache,
+socket, numa, board, and node.
 .
 .
 .
@@ -856,7 +857,22 @@ each running \fIuptime\fP on nodes bb and cc, respectively.
 .SS Mapping, Ranking, and Binding: Oh My!
 .
 OpenMPI employs a three-phase procedure for assigning process locations and
-ranks. The \fImapping\fP step is used to assign a default location to each process
+ranks:
+.
+.TP 10
+\fBmapping\fP
+Assigns a default location to each process
+.
+.TP 10
+\fBranking\fP
+Assigns an MPI rank value to each process
+.
+.TP 10
+\fBbinding\fP
+Constrains each process to run on specific processors
+.
+.PP
+The \fImapping\fP step is used to assign a default location to each process
 based on the mapper being employed. Mapping by slot, node, and sequentially results
 in the assignment of the processes to the node level. In contrast, mapping by object, allows
 the mapper to assign the process to an actual object on each node.
