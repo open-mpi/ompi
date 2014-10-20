@@ -37,7 +37,6 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 
 static int opal_pmix_base_frame_close(void)
 {
-    unsetenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM");
     return mca_base_framework_components_close(&opal_pmix_base_framework, NULL);
 }
 
