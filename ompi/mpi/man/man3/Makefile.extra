@@ -36,6 +36,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Attr_get.3 \
         mpi/man/man3/MPI_Attr_put.3 \
         mpi/man/man3/MPI_Barrier.3 \
+        mpi/man/man3/MPI_Ibarrier.3 \
         mpi/man/man3/MPI_Bcast.3 \
         mpi/man/man3/MPI_Ibcast.3 \
         mpi/man/man3/MPI_Bsend.3 \
