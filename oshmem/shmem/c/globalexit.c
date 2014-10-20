@@ -14,11 +14,11 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 
-extern int inGlobalExit;
+extern int oshmem_shmem_inglobalexit;
 
 void globalexit(int status)
 {
-    inGlobalExit++;
+    oshmem_shmem_inglobalexit++;
 
     orte_errmgr.abort(status, NULL);
     
