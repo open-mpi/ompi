@@ -413,14 +413,6 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 
     assert(mtl == &ompi_mtl_mxm.super);
 
-    char *envvar = getenv("OMPI_MTL_MXM_CONNECT_ON_FIRST_COMM");
-    if ((envvar != NULL) && (strlen(envvar) > 0) &&
-        ((strcmp(envvar, "yes") == 0 || strcmp(envvar, "true") == 0 || strcmp(envvar, "1") == 0)))
-    {
-        MXM_VERBOSE(80, "Set endpoint connection on first communication. Skip it now.");
-        return OMPI_SUCCESS;
-    }
-
 #if MXM_API < MXM_VERSION(2,0)
     /* Allocate connection requests */
     conn_reqs = calloc(nprocs, sizeof(mxm_conn_req_t));
