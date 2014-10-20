@@ -856,7 +856,7 @@ each running \fIuptime\fP on nodes bb and cc, respectively.
 .
 .SS Mapping, Ranking, and Binding: Oh My!
 .
-OpenMPI employs a three-phase procedure for assigning process locations and
+Open MPI employs a three-phase procedure for assigning process locations and
 ranks:
 .
 .TP 10
@@ -865,7 +865,7 @@ Assigns a default location to each process
 .
 .TP 10
 \fBranking\fP
-Assigns an MPI rank value to each process
+Assigns an MPI_COMM_WORLD rank value to each process
 .
 .TP 10
 \fBbinding\fP
@@ -904,9 +904,10 @@ gives you detailed control over process binding as well.  Rankfiles
 are discussed below.
 .
 .PP
-The second phase focuses on the \fIranking\fP of the process within the job. OpenMPI
+The second phase focuses on the \fIranking\fP of the process within
+the job's MPI_COMM_WORLD.  Open MPI
 separates this from the mapping procedure to allow more flexibility in the
-relative placement of MPI ranks. This is best illustrated by considering the
+relative placement of MPI processes. This is best illustrated by considering the
 following two cases where we used the —map-by ppr:2:socket option:
 .
 .PP
@@ -919,12 +920,14 @@ following two cases where we used the —map-by ppr:2:socket option:
    rank-by socket:span   0 4 ! 1 5     2 6 ! 3 7
 .
 .PP
-Ranking by core and by slot provide the identical result - a simple progression of ranks across
-each node. Ranking by socket does a round-robin ranking within each node until all processes
-have been assigned a rank, and then progresses to the next node. Adding the \fIspan\fP
-modifier to the ranking directive causes the ranking algorithm to treat the entire allocation
-as a single entity - thus, the ranks are assigned across all sockets before circling back
-around to the beginning.
+Ranking by core and by slot provide the identical result - a simple
+progression of MPI_COMM_WORLD ranks across each node. Ranking by
+socket does a round-robin ranking within each node until all processes
+have been assigned an MCW rank, and then progresses to the next
+node. Adding the \fIspan\fP modifier to the ranking directive causes
+the ranking algorithm to treat the entire allocation as a single
+entity - thus, the MCW ranks are assigned across all sockets before
+circling back around to the beginning.
 .
 .PP
 The \fIbinding\fP phase actually binds each process to a given set of processors. This can
@@ -939,11 +942,13 @@ processes excessively, regardless of how optimally those processes
 were placed to begin with.
 .
 .PP
-The processors to be used for binding
-can be identified in terms of topological groupings - e.g., binding to an l3cache will bind
-each process to all processors in the l3cache within their assigned location. Thus, if a process
-is assigned by the mapper to a certain socket, then a \fI—bind-to l3cache\fP directive will cause
-the process to be bound to the l3cache within that socket.
+The processors to be used for binding can be identified in terms of
+topological groupings - e.g., binding to an l3cache will bind each
+process to all processors within the scope of a single L3 cache within
+their assigned location. Thus, if a process is assigned by the mapper
+to a certain socket, then a \fI—bind-to l3cache\fP directive will
+cause the process to be bound to the processors that share a single L3
+cache within that socket.
 .
 .PP
 To help balance loads, the binding directive uses a round-robin method when binding to
@@ -955,7 +960,7 @@ each process located to a socket to a unique core in a round-robin manner.
 .PP
 Alternatively, processes mapped by l2cache and then bound to socket will simply be bound
 to all the processors in the socket where they are located. In this manner, users can
-exert detailed control over relative rank location and binding.
+exert detailed control over relative MCW rank location and binding.
 .
 .PP
 Finally, \fI--report-bindings\fP can be used to report bindings.
@@ -1292,9 +1297,9 @@ is equivalent to
 .
 All environment variables that are named in the form OMPI_* will automatically
 be exported to new processes on the local and remote nodes. Environmental
-parameters can also be set/forwarded to the new processes using the new MCA
+parameters can also be set/forwarded to the new processes using the MCA
 parameter \fImca_base_env_list\fP. The \fI\-x\fP option to \fImpirun\fP has
-been deprecated, but the syntax of the new MCA param follows that prior
+been deprecated, but the syntax of the MCA param follows that prior
 example. While the syntax of the \fI\-x\fP option and MCA param
 allows the definition of new variables, note that the parser
 for these options are currently not very sophisticated - it does not even
