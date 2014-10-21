@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,9 +29,7 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-#if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#endif
 
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"

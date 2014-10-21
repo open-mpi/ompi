@@ -16,7 +16,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -460,7 +460,6 @@ int btl_openib_register_mca_params(void)
                    "(must be >= 0, where 0 = use all available)",
                    1, &mca_btl_openib_component.max_lmc, 0));
 
-#if OPAL_HAVE_THREADS
     CHECK(reg_int("enable_apm_over_lmc", NULL, "Maximum number of alternative paths for each device port "
                   "(must be >= -1, where 0 = disable apm, -1 = all available alternative paths )",
                   0, &mca_btl_openib_component.apm_lmc, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
@@ -501,9 +500,6 @@ int btl_openib_register_mca_params(void)
                    "Enable/Disable on demand SRQ resize. "
                    "(0 = without resizing, nonzero = with resizing)", 1,
                    &mca_btl_openib_component.enable_srq_resize));
-#else
-    mca_btl_openib_component.enable_srq_resize = false;
-#endif
 
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
     CHECK(reg_bool("rroce_enable", NULL,

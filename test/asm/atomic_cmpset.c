@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +64,6 @@ void *oldptr;
 void *newptr;
 
 
-#if OPAL_HAVE_POSIX_THREADS
 static void *thread_main(void *arg)
 {
     int rank = (int) (unsigned long) arg;
@@ -80,15 +81,11 @@ static void *thread_main(void *arg)
 
     return (void *) (unsigned long) (rank + 1000);
 }
-#endif
-
 
 int main(int argc, char *argv[])
 {
-#if OPAL_HAVE_POSIX_THREADS
     int tid;
     pthread_t *th;
-#endif
     
     if (argc != 2) {
         printf("*** Incorrect number of arguments.  Skipping test\n");
@@ -252,7 +249,6 @@ int main(int argc, char *argv[])
     valint = 0;
 
     /* -- create the thread set -- */
-#if OPAL_HAVE_POSIX_THREADS
     th = (pthread_t *) malloc(nthreads * sizeof(pthread_t));
     if (!th) {
         perror("malloc");
@@ -285,7 +281,6 @@ int main(int argc, char *argv[])
 #endif
     opal_atomic_rmb();
     assert((5 * nthreads * nreps) == valint);
-#endif
 
     return 0;
 }

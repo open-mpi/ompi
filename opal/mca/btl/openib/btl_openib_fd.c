@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -10,7 +12,7 @@
  */
 
 /**
- * Note: this file is a little fast-n-loose with OPAL_HAVE_THREADS --
+ * Note: this file is a little fast-n-loose --
  * it uses this value in run-time "if" conditionals (vs. compile-time
  * #if conditionals).  We also don't protect including <pthread.h>.
  * That's because this component currently only compiles on Linux and
@@ -487,36 +489,34 @@ int opal_btl_openib_fd_init(void)
         /* Calculate the real size of the cmd struct */
         cmd_size = (int) (&(bogus.end) - ((char*) &bogus));
 
-        if (OPAL_HAVE_THREADS) {
-            OBJ_CONSTRUCT(&pending_to_main_thread, opal_list_t);
+        OBJ_CONSTRUCT(&pending_to_main_thread, opal_list_t);
 
-            /* Create pipes to communicate between the two threads */
-            if (0 != pipe(pipe_to_service_thread)) {
-                return OPAL_ERR_IN_ERRNO;
-            }
-            if (0 != pipe(pipe_to_main_thread)) {
-                return OPAL_ERR_IN_ERRNO;
-            }
+        /* Create pipes to communicate between the two threads */
+        if (0 != pipe(pipe_to_service_thread)) {
+            return OPAL_ERR_IN_ERRNO;
+        }
+        if (0 != pipe(pipe_to_main_thread)) {
+            return OPAL_ERR_IN_ERRNO;
+        }
 
-            /* Create a libevent event that is used in the main thread
-               to watch its pipe */
-            opal_event_set(opal_event_base, &main_thread_event, pipe_to_main_thread[0],
-                           OPAL_EV_READ | OPAL_EV_PERSIST,
-                           main_thread_event_callback, NULL);
-            opal_event_add(&main_thread_event, 0);
+        /* Create a libevent event that is used in the main thread
+           to watch its pipe */
+        opal_event_set(opal_event_base, &main_thread_event, pipe_to_main_thread[0],
+                       OPAL_EV_READ | OPAL_EV_PERSIST,
+                       main_thread_event_callback, NULL);
+        opal_event_add(&main_thread_event, 0);
 
-            /* Start the service thread */
-            if (0 != pthread_create(&thread, NULL, service_thread_start,
-                                    NULL)) {
-                int errno_save = errno;
-                opal_event_del(&main_thread_event);
-                close(pipe_to_service_thread[0]);
-                close(pipe_to_service_thread[1]);
-                close(pipe_to_main_thread[0]);
-                close(pipe_to_main_thread[1]);
-                errno = errno_save;
-                return OPAL_ERR_IN_ERRNO;
-            }
+        /* Start the service thread */
+        if (0 != pthread_create(&thread, NULL, service_thread_start,
+                                NULL)) {
+            int errno_save = errno;
+            opal_event_del(&main_thread_event);
+            close(pipe_to_service_thread[0]);
+            close(pipe_to_service_thread[1]);
+            close(pipe_to_main_thread[0]);
+            close(pipe_to_main_thread[1]);
+            errno = errno_save;
+            return OPAL_ERR_IN_ERRNO;
         }
 
         initialized = true;
@@ -545,14 +545,9 @@ int opal_btl_openib_fd_monitor(int fd, int flags,
     cmd.pc_flags = flags;
     cmd.pc_fn.event = callback;
     cmd.pc_context = context;
-    if (OPAL_HAVE_THREADS) {
-        /* For the threaded version, write a command down the pipe */
-        OPAL_OUTPUT((-1, "main thread sending monitor fd %d", fd));
-        opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
-    } else {
-        /* Otherwise, add it directly */
-        service_pipe_cmd_add_fd(true, &cmd);
-    }
+    /* For the threaded version, write a command down the pipe */
+    OPAL_OUTPUT((-1, "main thread sending monitor fd %d", fd));
+    opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
 
     return OPAL_SUCCESS;
 }
@@ -578,14 +573,9 @@ int opal_btl_openib_fd_unmonitor(int fd,
     cmd.pc_flags = 0;
     cmd.pc_fn.event = callback;
     cmd.pc_context = context;
-    if (OPAL_HAVE_THREADS) {
-        /* For the threaded version, write a command down the pipe */
-        OPAL_OUTPUT((-1, "main thread sending unmonitor fd %d", fd));
-        opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
-    } else {
-        /* Otherwise, remove it directly */
-        service_pipe_cmd_remove_fd(&cmd);
-    }
+    /* For the threaded version, write a command down the pipe */
+    OPAL_OUTPUT((-1, "main thread sending unmonitor fd %d", fd));
+    opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
 
     return OPAL_SUCCESS;
 }
@@ -604,14 +594,9 @@ int opal_btl_openib_fd_run_in_service(opal_btl_openib_fd_main_callback_fn_t *cal
     cmd.pc_flags = 0;
     cmd.pc_fn.main = callback;
     cmd.pc_context = context;
-    if (OPAL_HAVE_THREADS) {
-        /* For the threaded version, write a command down the pipe */
-        OPAL_OUTPUT((-1, "main thread sending 'run in service'"));
-        opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
-    } else {
-        /* Otherwise, run it directly */
-        callback(context);
-    }
+    /* For the threaded version, write a command down the pipe */
+    OPAL_OUTPUT((-1, "main thread sending 'run in service'"));
+    opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
 
     return OPAL_SUCCESS;
 }
@@ -623,22 +608,16 @@ int opal_btl_openib_fd_run_in_service(opal_btl_openib_fd_main_callback_fn_t *cal
 int opal_btl_openib_fd_run_in_main(opal_btl_openib_fd_main_callback_fn_t *callback,
                                    void *context)
 {
-    if (OPAL_HAVE_THREADS) {
-        cmd_t cmd;
+    cmd_t cmd;
 
-        OPAL_OUTPUT((-1, "run in main -- sending command"));
-        /* For the threaded version, write a command down the pipe */
-        cmd.pc_cmd = CMD_CALL_FUNCTION;
-        cmd.pc_fd = -1;
-        cmd.pc_flags = 0;
-        cmd.pc_fn.main = callback;
-        cmd.pc_context = context;
-        write_to_main_thread(&cmd);
-    } else {
-        /* Otherwise, call it directly */
-        OPAL_OUTPUT((-1, "run in main -- calling now!"));
-        callback(context);
-    }
+    OPAL_OUTPUT((-1, "run in main -- sending command"));
+    /* For the threaded version, write a command down the pipe */
+    cmd.pc_cmd = CMD_CALL_FUNCTION;
+    cmd.pc_fd = -1;
+    cmd.pc_flags = 0;
+    cmd.pc_fn.main = callback;
+    cmd.pc_context = context;
+    write_to_main_thread(&cmd);
 
     return OPAL_SUCCESS;
 }
@@ -677,37 +656,35 @@ opal_btl_openib_fd_main_thread_drain(void)
 int opal_btl_openib_fd_finalize(void)
 {
     if (initialized) {
-        if (OPAL_HAVE_THREADS) {
-            /* For the threaded version, send a command down the pipe */
-            cmd_t cmd;
-            OPAL_OUTPUT((-1, "shutting down openib fd"));
-            /* Check if the thread exists before asking it to quit */ 
-            if (ESRCH != pthread_kill(thread, 0)) {
-                memset(&cmd, 0, cmd_size);
-                cmd.pc_cmd = CMD_TIME_TO_QUIT;
-                if (OPAL_SUCCESS != opal_fd_write(pipe_to_service_thread[1],
-                                                  cmd_size, &cmd)) {
-                    /* We cancel the thread if there's an error
-                     * sending the "quit" cmd. This only ever happens on
-                     * a "restart" which could result in dangling
-                     * fds. OMPI must not rely on the checkpointer to
-                     * save/restore any fds or connections
-                     */
-                    pthread_cancel(thread);
-                }
-
-                pthread_join(thread, NULL);
-                opal_atomic_rmb();
+        /* For the threaded version, send a command down the pipe */
+        cmd_t cmd;
+        OPAL_OUTPUT((-1, "shutting down openib fd"));
+        /* Check if the thread exists before asking it to quit */ 
+        if (ESRCH != pthread_kill(thread, 0)) {
+            memset(&cmd, 0, cmd_size);
+            cmd.pc_cmd = CMD_TIME_TO_QUIT;
+            if (OPAL_SUCCESS != opal_fd_write(pipe_to_service_thread[1],
+                                              cmd_size, &cmd)) {
+                /* We cancel the thread if there's an error
+                 * sending the "quit" cmd. This only ever happens on
+                 * a "restart" which could result in dangling
+                 * fds. OMPI must not rely on the checkpointer to
+                 * save/restore any fds or connections
+                 */
+                pthread_cancel(thread);
             }
 
-            opal_event_del(&main_thread_event);
-
-            close(pipe_to_service_thread[0]);
-            close(pipe_to_service_thread[1]);
-            close(pipe_to_main_thread[0]);
-            close(pipe_to_main_thread[1]);
-            OBJ_DESTRUCT(&pending_to_main_thread);
+            pthread_join(thread, NULL);
+            opal_atomic_rmb();
         }
+
+        opal_event_del(&main_thread_event);
+
+        close(pipe_to_service_thread[0]);
+        close(pipe_to_service_thread[1]);
+        close(pipe_to_main_thread[0]);
+        close(pipe_to_main_thread[1]);
+        OBJ_DESTRUCT(&pending_to_main_thread);
         OBJ_DESTRUCT(&registered_items);
     }
     initialized = false;

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,13 +36,11 @@
 
 #include "opal_config.h"
 
-#if OPAL_HAVE_POSIX_THREADS
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
 #include <errno.h>
 #include <stdio.h>
-#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
@@ -50,9 +50,7 @@ BEGIN_C_DECLS
 struct opal_mutex_t {
     opal_object_t super;
 
-#if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
-#endif
 
 #if OPAL_ENABLE_DEBUG
     int m_lock_debug;
@@ -68,12 +66,6 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
  *
  * mutex operations (non-atomic versions)
  *
- ************************************************************************/
-
-#if OPAL_HAVE_POSIX_THREADS
-
-/************************************************************************
- * POSIX threads
  ************************************************************************/
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
@@ -118,34 +110,6 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
     pthread_mutex_unlock(&m->m_lock_pthread);
 #endif
 }
-
-#elif OPAL_HAVE_ATOMIC_SPINLOCKS
-
-/************************************************************************
- * Spin Locks
- ************************************************************************/
-
-static inline int opal_mutex_trylock(opal_mutex_t *m)
-{
-    return opal_atomic_trylock(&m->m_lock_atomic);
-}
-
-static inline void opal_mutex_lock(opal_mutex_t *m)
-{
-    opal_atomic_lock(&m->m_lock_atomic);
-}
-
-static inline void opal_mutex_unlock(opal_mutex_t *m)
-{
-    opal_atomic_unlock(&m->m_lock_atomic);
-}
-
-#else
-
-#error No mutex definition
-
-#endif
-
 
 /************************************************************************
  *

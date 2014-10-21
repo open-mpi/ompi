@@ -5,6 +5,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -18,10 +20,10 @@
 #include "btl_openib_proc.h"
 #include "connect/base.h"
 #include "connect/btl_openib_connect_empty.h"
-#if OPAL_HAVE_RDMACM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_RDMACM
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OPAL_HAVE_UDCM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_UDCM
 #include "connect/btl_openib_connect_udcm.h"
 #endif
 
@@ -44,19 +46,11 @@ static opal_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OPAL_HAVE_RDMACM && OPAL_HAVE_THREADS
     &opal_btl_openib_connect_rdmacm,
-#else
-    &opal_btl_openib_connect_empty,
-#endif
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if UD CM is not enabled, use the "empty" CPC */
-#if OPAL_HAVE_UDCM && OPAL_HAVE_THREADS
     &opal_btl_openib_connect_udcm,
-#else
-    &opal_btl_openib_connect_empty,
-#endif
 
     NULL
 };

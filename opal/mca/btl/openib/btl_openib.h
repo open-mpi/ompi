@@ -138,7 +138,6 @@ typedef enum {
     BTL_OPENIB_DT_ALL
 } btl_openib_device_type_t;
 
-#if OPAL_HAVE_THREADS
 /* The structer for manage all BTL SRQs */
 typedef struct mca_btl_openib_srq_manager_t {
     opal_mutex_t lock;
@@ -147,7 +146,6 @@ typedef struct mca_btl_openib_srq_manager_t {
        pointers that associated with these SRQs */
     opal_hash_table_t srq_addr_table;
 } mca_btl_openib_srq_manager_t;
-#endif
 
 struct mca_btl_openib_component_t {
     mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
@@ -228,7 +226,6 @@ struct mca_btl_openib_component_t {
     int     apm_lmc;
     int     apm_ports;
     unsigned int buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
-#if OPAL_HAVE_THREADS
     int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
@@ -237,7 +234,6 @@ struct mca_btl_openib_component_t {
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
 #if BTL_OPENIB_FAILOVER_ENABLED
     bool port_error_failover;        /**< Report port errors to speed up failover */
-#endif
 #endif
     /* declare as an int instead of btl_openib_device_type_t since there is no
        guarantee about the size of an enum. this value will be registered as an
@@ -393,10 +389,8 @@ typedef struct mca_btl_openib_device_t {
     uint16_t hp_cq_polls;
     uint16_t eager_rdma_polls;
     bool pollme;
-#if OPAL_HAVE_THREADS
     volatile bool got_fatal_event;
     volatile bool got_port_event;
-#endif
 #if HAVE_XRC
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     struct ibv_xrcd *xrcd;

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,16 +39,8 @@ OBJ_CLASS_INSTANCE(opal_thread_t,
 static void opal_thread_construct(opal_thread_t *t)
 {
     t->t_run = 0;
-#if OPAL_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
-#endif
 }
-
-#if OPAL_HAVE_POSIX_THREADS
-
-/************************************************************************
- * POSIX threads
- ************************************************************************/
 
 int opal_thread_start(opal_thread_t *t)
 {
@@ -89,38 +83,3 @@ void opal_thread_kill(opal_thread_t *t, int sig)
 {
     pthread_kill(t->t_handle, sig);
 }
-
-
-#else
-
-/************************************************************************
- * No thread support
- ************************************************************************/
-
-int opal_thread_start(opal_thread_t *t)
-{
-    return OPAL_ERROR;
-}
-
-
-int opal_thread_join(opal_thread_t *t, void **thr_return)
-{
-    return OPAL_ERROR;
-}
-
-
-bool opal_thread_self_compare(opal_thread_t *t)
-{
-    return true;
-}
-
-opal_thread_t *opal_thread_get_self(void)
-{
-    return NULL;
-}
-
-void opal_thread_kill(opal_thread_t *t, int sig)
-{
-}
-
-#endif

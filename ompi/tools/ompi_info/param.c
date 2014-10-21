@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -288,23 +288,19 @@ void ompi_info_do_config(bool want_all)
         fortran_have_ignore_tkr = strdup("no");
     }
 
-    if (OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
 #if OMPI_RTE_ORTE
-        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
-                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                       OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
+                   "posix",
+                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
-        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
-                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                       OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
+                   "posix",
+                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
-    } else {
-        threads = strdup("no");
-    }
     
     (void)asprintf(&ft_support, "%s (checkpoint thread: %s)", 
                    OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +42,6 @@ struct start_info {
 
 static int atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id);
 
-#if OPAL_HAVE_POSIX_THREADS
 static void* atomic_spinlock_start(void* arg)
 {
     struct start_info *data = (struct start_info*) arg;
@@ -48,13 +49,10 @@ static void* atomic_spinlock_start(void* arg)
     return (void*) (unsigned long) atomic_spinlock_test(data->lock, data->count,
                                         data->tid);
 }
-#endif
-
 
 static int
 atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_count)
 {
-#if OPAL_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
     struct start_info *data;
@@ -90,9 +88,6 @@ atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_cou
     free(th);
 
     return ret;
-#else
-    return 77;
-#endif
 }
 
 

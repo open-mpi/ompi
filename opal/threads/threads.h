@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,9 +25,7 @@
 
 #include "opal_config.h"
 
-#if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#endif
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -48,9 +48,7 @@ struct opal_thread_t {
     opal_object_t super;
     opal_thread_fn_t t_run;
     void* t_arg;
-#ifdef OPAL_HAVE_POSIX_THREADS
     pthread_t t_handle;
-#endif
 };
 
 typedef struct opal_thread_t opal_thread_t;
