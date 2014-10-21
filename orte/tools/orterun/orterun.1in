@@ -4,7 +4,7 @@
 .\" $COPYRIGHT$
 .\"
 .\" Man page for ORTE's orterun command
-.\" 
+.\"
 .\" .TH name     section center-footer   left-footer  center-header
 .TH MPIRUN 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
@@ -27,7 +27,7 @@ other.  Using any of the names will produce the same behavior.
 Single Process Multiple Data (SPMD) Model:
 
 .B mpirun
-[ options ] 
+[ options ]
 .B <program>
 [ <args> ]
 .P
@@ -41,8 +41,8 @@ Multiple Instruction Multiple Data (MIMD) Model:
 [ <args1> ] :
        [ local_options2 ]
 .B <program2>
-[ <args2> ] : 
-       ... : 
+[ <args2> ] :
+       ... :
        [ local_optionsN ]
 .B <programN>
 [ <argsN> ]
@@ -164,7 +164,7 @@ List of hosts on which to invoke processes.
 .TP
 .B
 -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
-Provide a hostfile to use. 
+Provide a hostfile to use.
 .\" JJH - Should have man page for how to format a hostfile properly.
 .
 .
@@ -190,7 +190,7 @@ execute (i.e., neither the "-np" nor its synonyms are provided on the command
 line), Open MPI will automatically execute a copy of the program on
 each process slot (see below for description of a "process slot"). This
 feature, however, can only be used in the SPMD model and will return an
-error (without beginning execution of the application) otherwise. 
+error (without beginning execution of the application) otherwise.
 .
 .
 .TP
@@ -636,9 +636,9 @@ There may be other options listed with \fImpirun --help\fP.
 .TP
 .B MPIEXEC_TIMEOUT
 The maximum number of seconds that
-.I mpirun 
+.I mpirun
 .RI ( mpiexec )
-will run.  After this many seconds, 
+will run.  After this many seconds,
 .I mpirun
 will abort the launched job and exit.
 .
@@ -856,7 +856,7 @@ each running \fIuptime\fP on nodes bb and cc, respectively.
 .
 .SS Mapping, Ranking, and Binding: Oh My!
 .
-OpenMPI employs a three-phase procedure for assigning process locations and
+Open MPI employs a three-phase procedure for assigning process locations and
 ranks:
 .
 .TP 10
@@ -865,7 +865,7 @@ Assigns a default location to each process
 .
 .TP 10
 \fBranking\fP
-Assigns an MPI rank value to each process
+Assigns an MPI_COMM_WORLD rank value to each process
 .
 .TP 10
 \fBbinding\fP
@@ -904,9 +904,10 @@ gives you detailed control over process binding as well.  Rankfiles
 are discussed below.
 .
 .PP
-The second phase focuses on the \fIranking\fP of the process within the job. OpenMPI
+The second phase focuses on the \fIranking\fP of the process within
+the job's MPI_COMM_WORLD.  Open MPI
 separates this from the mapping procedure to allow more flexibility in the
-relative placement of MPI ranks. This is best illustrated by considering the
+relative placement of MPI processes. This is best illustrated by considering the
 following two cases where we used the —map-by ppr:2:socket option:
 .
 .PP
@@ -919,12 +920,14 @@ following two cases where we used the —map-by ppr:2:socket option:
    rank-by socket:span   0 4 ! 1 5     2 6 ! 3 7
 .
 .PP
-Ranking by core and by slot provide the identical result - a simple progression of ranks across
-each node. Ranking by socket does a round-robin ranking within each node until all processes
-have been assigned a rank, and then progresses to the next node. Adding the \fIspan\fP
-modifier to the ranking directive causes the ranking algorithm to treat the entire allocation
-as a single entity - thus, the ranks are assigned across all sockets before circling back
-around to the beginning.
+Ranking by core and by slot provide the identical result - a simple
+progression of MPI_COMM_WORLD ranks across each node. Ranking by
+socket does a round-robin ranking within each node until all processes
+have been assigned an MCW rank, and then progresses to the next
+node. Adding the \fIspan\fP modifier to the ranking directive causes
+the ranking algorithm to treat the entire allocation as a single
+entity - thus, the MCW ranks are assigned across all sockets before
+circling back around to the beginning.
 .
 .PP
 The \fIbinding\fP phase actually binds each process to a given set of processors. This can
@@ -939,11 +942,13 @@ processes excessively, regardless of how optimally those processes
 were placed to begin with.
 .
 .PP
-The processors to be used for binding
-can be identified in terms of topological groupings - e.g., binding to an l3cache will bind
-each process to all processors in the l3cache within their assigned location. Thus, if a process
-is assigned by the mapper to a certain socket, then a \fI—bind-to l3cache\fP directive will cause
-the process to be bound to the l3cache within that socket.
+The processors to be used for binding can be identified in terms of
+topological groupings - e.g., binding to an l3cache will bind each
+process to all processors within the scope of a single L3 cache within
+their assigned location. Thus, if a process is assigned by the mapper
+to a certain socket, then a \fI—bind-to l3cache\fP directive will
+cause the process to be bound to the processors that share a single L3
+cache within that socket.
 .
 .PP
 To help balance loads, the binding directive uses a round-robin method when binding to
@@ -955,7 +960,7 @@ each process located to a socket to a unique core in a round-robin manner.
 .PP
 Alternatively, processes mapped by l2cache and then bound to socket will simply be bound
 to all the processors in the socket where they are located. In this manner, users can
-exert detailed control over relative rank location and binding.
+exert detailed control over relative MCW rank location and binding.
 .
 .PP
 Finally, \fI--report-bindings\fP can be used to report bindings.
@@ -1073,7 +1078,7 @@ hostnames, indexed from 0.  For example:
 Starting with Open MPI v1.7, all socket/core slot locations are be
 specified as
 .I logical
-indexes (the Open MPI v1.6 series used 
+indexes (the Open MPI v1.6 series used
 .I physical
 indexes).  You can use tools such as HWLOC's "lstopo" to find the
 logical indexes of socket and cores.
@@ -1102,7 +1107,7 @@ If a relative directory is specified, it must be relative to the initial
 working directory determined by the specific starter used. For example when
 using the rsh or ssh starters, the initial directory is $HOME by default. Other
 starters may set the initial directory to the current working directory from
-the invocation of \fImpirun\fP. 
+the invocation of \fImpirun\fP.
 .
 .
 .
@@ -1130,7 +1135,7 @@ that node), then Open MPI will use the default directory determined by
 the starter.
 .PP
 All directory changing occurs before the user's program is invoked; it
-does not wait until \fIMPI_INIT\fP is called.  
+does not wait until \fIMPI_INIT\fP is called.
 .
 .
 .
@@ -1158,7 +1163,7 @@ using the typical shell redirection procedure on \fImpirun\fP.
 Note that in this example \fIonly\fP the MPI_COMM_WORLD rank 0 process will
 receive the stream from \fImy_input\fP on stdin.  The stdin on all the other
 nodes will be tied to /dev/null.  However, the stdout from all nodes will
-be collected into the \fImy_output\fP file. 
+be collected into the \fImy_output\fP file.
 .
 .
 .
@@ -1194,8 +1199,8 @@ MPI application.
 .PP
 User signal handlers should probably avoid trying to cleanup MPI state
 (Open MPI is currently not async-signal-safe; see MPI_Init_thread(3)
-for details about 
-.I MPI_THREAD_MULTIPLE 
+for details about
+.I MPI_THREAD_MULTIPLE
 and thread safety).  For example, if a segmentation fault occurs in
 \fIMPI_SEND\fP (perhaps because a bad buffer was passed in) and a user
 signal handler is invoked, if this user handler attempts to invoke
@@ -1274,7 +1279,7 @@ The \fI--prefix\fR option is not sufficient if the installation paths
 on the remote node are different than the local node (e.g., if "/lib"
 is used on the local node, but "/lib64" is used on the remote node),
 or if the installation paths are something other than a subdirectory
-under a common prefix.  
+under a common prefix.
 .PP
 Note that executing \fImpirun\fR via an absolute pathname is
 equivalent to specifying \fI--prefix\fR without the last subdirectory
@@ -1292,9 +1297,9 @@ is equivalent to
 .
 All environment variables that are named in the form OMPI_* will automatically
 be exported to new processes on the local and remote nodes. Environmental
-parameters can also be set/forwarded to the new processes using the new MCA
+parameters can also be set/forwarded to the new processes using the MCA
 parameter \fImca_base_env_list\fP. The \fI\-x\fP option to \fImpirun\fP has
-been deprecated, but the syntax of the new MCA param follows that prior
+been deprecated, but the syntax of the MCA param follows that prior
 example. While the syntax of the \fI\-x\fP option and MCA param
 allows the definition of new variables, note that the parser
 for these options are currently not very sophisticated - it does not even
@@ -1317,7 +1322,7 @@ The \fI<key>\fP argument generally specifies which MCA module will receive the v
 For example, the \fI<key>\fP "btl" is used to select which BTL to be used for
 transporting MPI messages.  The \fI<value>\fP argument is the value that is
 passed.
-For example: 
+For example:
 .
 .TP 4
 mpirun -mca btl tcp,self -np 1 foo
@@ -1384,7 +1389,7 @@ are spawned by that job are designated "secondary" jobs):
 .IP \[bu] 2
 if all processes in the primary job normally terminate with exit status 0, we return 0
 .IP \[bu]
-if one or more processes in the primary job normally terminate with non-zero exit status, 
+if one or more processes in the primary job normally terminate with non-zero exit status,
 we return the exit status of the process with the lowest MPI_COMM_WORLD rank to have a non-zero status
 .IP \[bu]
 if all processes in the primary job normally terminate with exit status 0, and one or more
@@ -1430,7 +1435,7 @@ transport of MPI messages.
 .
 .
 .TP 4
-mpirun -np 4 -mca btl tcp,sm,self 
+mpirun -np 4 -mca btl tcp,sm,self
 .br
 --mca btl_tcp_if_include eth0 prog1
 .br
