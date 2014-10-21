@@ -125,60 +125,167 @@ int opal_pmix_base_store_encoded(const char *key, const void *data,
     return OPAL_SUCCESS;
 }
 
-int opal_pmix_base_commit_packed( char* buffer_to_put, int data_to_put,
-                                  int vallen, int* pack_key, kvs_put_fn fn)
+int opal_pmix_base_commit_packed( char** data, int* data_offset,
+                                  char** enc_data, int* enc_data_offset,
+                                  int max_key, int* pack_key, kvs_put_fn fn)
 {
-    int rc, left;
+    int rc;
     char *pmikey = NULL, *tmp;
-    char tmp_key[32], save;
+    char tmp_key[32];
     char *encoded_data;
+    int encoded_data_len;
+    int data_len;
     int pkey;
 
     pkey = *pack_key;
 
-    if (NULL == (encoded_data = pmi_encode(buffer_to_put, data_to_put))) {
+    if (NULL == (tmp = malloc(max_key))) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+    data_len = *data_offset;
+    if (NULL == (encoded_data = pmi_encode(*data, data_len))) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        free(tmp);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    *data = NULL;
+    *data_offset = 0;
 
-    for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
-        size_t value_size = vallen > left ? left : vallen - 1;
+    encoded_data_len = (int)strlen(encoded_data);
+    while (encoded_data_len+*enc_data_offset > max_key - 2) {
+        memcpy(tmp, *enc_data, *enc_data_offset);
+        memcpy(tmp+*enc_data_offset, encoded_data, max_key-*enc_data_offset-1);
+        tmp[max_key-1] = 0;
 
         sprintf (tmp_key, "key%d", pkey);
 
-        if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, vallen))) {
+        if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, max_key))) {
             OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
             rc = OPAL_ERR_BAD_PARAM;
             break;
         }
 
-        /* only write value_size bytes */
-        save = tmp[value_size];
-        tmp[value_size] = '\0';
-
         rc = fn(pmikey, tmp);
+        free(pmikey);
         if (OPAL_SUCCESS != rc) {
             *pack_key = pkey;
+            free(tmp);
             return rc;
         }
 
-        free(pmikey);
         if (OPAL_SUCCESS != rc) {
             break;
         }
 
-        tmp[value_size] = save;
-        tmp += value_size;
-        left -= value_size;
+        pkey++;
+        memmove(encoded_data, encoded_data+max_key-1-*enc_data_offset, encoded_data_len - max_key + *enc_data_offset + 2);
+        *enc_data_offset = 0;
+        encoded_data_len = (int)strlen(encoded_data);
+    }
+    memcpy(tmp, *enc_data, *enc_data_offset);
+    memcpy(tmp+*enc_data_offset, encoded_data, encoded_data_len+1);
+    tmp[*enc_data_offset+encoded_data_len+1] = '\0';
+    tmp[*enc_data_offset+encoded_data_len] = '-';
 
-         pkey++;
+    sprintf (tmp_key, "key%d", pkey);
 
-        rc = OPAL_SUCCESS;
+    if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, max_key))) {
+        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+        rc = OPAL_ERR_BAD_PARAM;
+        free(tmp);
+        return rc;
     }
 
-    if (encoded_data) {
-        free(encoded_data);
+    rc = fn(pmikey, tmp);
+    free(pmikey);
+    if (OPAL_SUCCESS != rc) {
+        *pack_key = pkey;
+        free(tmp);
+        return rc;
     }
+
+    pkey++;
+    free(encoded_data);
+    free(*data);
+    *data = NULL;
+    *data_offset = 0;
+    free(tmp);
+    if (NULL != *enc_data) {
+        free(*enc_data);
+        *enc_data = NULL;
+        *enc_data_offset = 0;
+    }
+    *pack_key = pkey;
+    return OPAL_SUCCESS;
+}
+
+int opal_pmix_base_partial_commit_packed( char** data, int* data_offset,
+                                          char** enc_data, int* enc_data_offset,
+                                          int max_key, int* pack_key, kvs_put_fn fn)
+{
+    int rc;
+    char *pmikey = NULL, *tmp;
+    char tmp_key[32];
+    char *encoded_data;
+    int encoded_data_len;
+    int data_len;
+    int pkey;
+
+    pkey = *pack_key;
+
+    if (NULL == (tmp = malloc(max_key))) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    data_len = *data_offset - (*data_offset%3);
+    if (NULL == (encoded_data = pmi_encode(*data, data_len))) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        free(tmp);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    if (*data_offset == data_len) {
+        *data = NULL;
+        *data_offset = 0;
+    } else {
+        memmove(*data, *data+data_len, *data_offset - data_len);
+        *data = realloc(*data, *data_offset - data_len);
+        *data_offset -= data_len;
+    }
+
+    encoded_data_len = (int)strlen(encoded_data);
+    while (encoded_data_len+*enc_data_offset > max_key - 2) {
+        memcpy(tmp, *enc_data, *enc_data_offset);
+        memcpy(tmp+*enc_data_offset, encoded_data, max_key-*enc_data_offset-1);
+        tmp[max_key-1] = 0;
+
+        sprintf (tmp_key, "key%d", pkey);
+
+        if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, max_key))) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            rc = OPAL_ERR_BAD_PARAM;
+            break;
+        }
+
+        rc = fn(pmikey, tmp);
+        free(pmikey);
+        if (OPAL_SUCCESS != rc) {
+            *pack_key = pkey;
+            free(tmp);
+            return rc;
+        }
+
+        pkey++;
+        memmove(encoded_data, encoded_data+max_key-1-*enc_data_offset, encoded_data_len - max_key + *enc_data_offset + 2);
+        *enc_data_offset = 0;
+        encoded_data_len = (int)strlen(encoded_data);
+    }
+    free(tmp);
+    if (NULL != *enc_data) {
+        free(*enc_data);
+    }
+    *enc_data = realloc(encoded_data, strlen(encoded_data)+1);
+    *enc_data_offset = strlen(encoded_data);
     *pack_key = pkey;
     return OPAL_SUCCESS;
 }
@@ -487,9 +594,7 @@ static char *pmi_encode(const void *val, size_t vallen)
         pmi_base64_encode_block((unsigned char *) val + i, tmp, vallen - i);
     }
 
-    /* mark the end of the pmi string */
-    tmp[0] = (unsigned char)'-';
-    tmp[1] = (unsigned char)'\0';
+    tmp[0] = (unsigned char)'\0';
 
     return outdata;
 }

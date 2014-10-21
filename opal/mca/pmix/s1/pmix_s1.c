@@ -86,12 +86,15 @@ static int pmix_init_count = 0;
 static int pmix_kvslen_max = 0;
 static int pmix_keylen_max = 0;
 static int pmix_vallen_max = 0;
+static int pmix_vallen_threshold = INT_MAX;
 
 // Job environment description
 static char *pmix_kvs_name = NULL;
 static bool s1_committed = false;
 static char* pmix_packed_data = NULL;
 static int pmix_packed_data_offset = 0;
+static char* pmix_packed_encoded_data = NULL;
+static int pmix_packed_encoded_data_offset = 0;
 static int pmix_pack_key = 0;
 static uint32_t s1_jobid;
 static int s1_rank;
@@ -164,6 +167,8 @@ static int s1_init(void)
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_value_length_max");
         goto err_exit;
     }
+    pmix_vallen_threshold = pmix_vallen_max * 3;
+    pmix_vallen_threshold >>= 2;
 
     rc = PMI_KVS_Get_name_length_max(&pmix_kvslen_max);
     if (PMI_SUCCESS != rc ) {
@@ -360,9 +365,6 @@ static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv)
 {
     int rc;
-    char* buffer_to_put;
-    int rem_offset = 0;
-    int data_to_put = 0;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s1 put for key %s",
@@ -378,30 +380,16 @@ static int s1_put(opal_pmix_scope_t scope,
         return OPAL_SUCCESS;
     }
 
-    if (pmix_packed_data_offset < pmix_vallen_max) {
+    if (((pmix_packed_data_offset/3)*4) + pmix_packed_encoded_data_offset < pmix_vallen_max) {
         /* this meta-key is still being filled,
          * nothing to put yet
          */
         return OPAL_SUCCESS;
     }
 
-    /* encode only full filled meta keys */
-    rem_offset = pmix_packed_data_offset % pmix_vallen_max;
-    data_to_put = pmix_packed_data_offset - rem_offset;
-    buffer_to_put = (char*)malloc(data_to_put);
-    memcpy(buffer_to_put, pmix_packed_data, data_to_put);
-
-    opal_pmix_base_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
-
-    free(buffer_to_put);
-    pmix_packed_data_offset = rem_offset;
-    if (0 == pmix_packed_data_offset) {
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    } else {
-        memmove (pmix_packed_data, pmix_packed_data + data_to_put, pmix_packed_data_offset);
-        pmix_packed_data = realloc (pmix_packed_data, pmix_packed_data_offset);
-    }
+    rc = opal_pmix_base_partial_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
+                                               &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
+                                               pmix_vallen_max, &pmix_pack_key, kvs_put);
 
     s1_committed = false;
     return rc;
@@ -419,12 +407,10 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check if there is partially filled meta key and put them */
-    if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        opal_pmix_base_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
-        pmix_packed_data_offset = 0;
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    }
+    opal_pmix_base_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
+                                  &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
+                                  pmix_vallen_max, &pmix_pack_key, kvs_put);
+
     /* if we haven't already done it, ensure we have committed our values */
     if (!s1_committed) {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
