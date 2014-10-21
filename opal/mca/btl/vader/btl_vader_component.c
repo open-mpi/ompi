@@ -44,6 +44,11 @@
 #include <sys/prctl.h>
 #endif
 
+/* NTH: OS X does not define MAP_ANONYMOUS */
+#if !defined(MAP_ANONYMOUS)
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 static int mca_btl_vader_component_progress (void);
 static int mca_btl_vader_component_open(void);
 static int mca_btl_vader_component_close(void);
