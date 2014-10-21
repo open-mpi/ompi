@@ -170,7 +170,7 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         OPAL_LIBLTDL_INTERNAL=1
 
         CPPFLAGS_save="$CPPFLAGS"
-        CPPFLAGS="-I."
+        CPPFLAGS="-I$srcdir/opal/libltdl/"
         # Must specifically mention $srcdir here for VPATH builds
         # (this file is in the src tree).
         AC_EGREP_HEADER([lt_dladvise_init], [$srcdir/opal/libltdl/ltdl.h],
