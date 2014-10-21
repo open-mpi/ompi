@@ -358,7 +358,6 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                 return OPAL_ERROR;
             }
 
-#if OPAL_HAVE_THREADS
             {
                 opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
                 opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
@@ -375,7 +374,6 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                 }
                 opal_mutex_unlock(lock);
             }
-#endif
             rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
             rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init;
 
@@ -632,7 +630,6 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
         OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, ompi_free_list_t);
     }
 
-#if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
         mca_btl_openib_async_cmd_t async_command;
 
@@ -661,7 +658,6 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
     device->thread.t_run = mca_btl_openib_progress_thread;
     device->thread.t_arg = device;
     device->progress = false;
-#endif
 #endif
 
 #if HAVE_XRC
@@ -1617,7 +1613,6 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
             MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                     &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
             if (NULL != openib_btl->qps[qp].u.srq_qp.srq) {
-#if OPAL_HAVE_THREADS
                 opal_mutex_t *lock =
                              &mca_btl_openib_component.srq_manager.lock;
 
@@ -1633,7 +1628,6 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
                     rc = OPAL_ERROR;
                 }
                 opal_mutex_unlock(lock);
-#endif
                 if (0 != ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)) {
                     BTL_VERBOSE(("Failed to close SRQ %d", qp));
                     rc = OPAL_ERROR;

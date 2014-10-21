@@ -2,6 +2,8 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -15,9 +17,7 @@
 
 #include "opal_config.h"
 
-#if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#endif
 
 #include "opal/constants.h"
 
@@ -134,7 +134,7 @@ OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
  */
 OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
-#elif OPAL_HAVE_POSIX_THREADS
+#else
 
 typedef pthread_key_t opal_tsd_key_t;
 
@@ -163,19 +163,6 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
     *valuep = pthread_getspecific(key);
     return OPAL_SUCCESS;
 }
-
-#else
-
-typedef int opal_tsd_key_t;
-
-OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key, 
-                                      opal_tsd_destructor_t destructor);
-
-OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
-
-OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
-
-OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
 #endif
 

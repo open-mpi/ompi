@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -354,13 +356,9 @@ void orte_info_do_config(bool want_all)
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     
     /* setup strings that require allocation */    
-    if (OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
-                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                 OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
-    } else {
-        threads = strdup("no");
-    }
+    asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
+             "posix",
+             OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
     
     asprintf(&ft_support, "%s (checkpoint thread: %s)", 
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;

@@ -3,6 +3,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,13 +22,11 @@
 struct ompi_osc_sm_global_state_t {
     int use_barrier_for_fence;
 
-#if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_t mtx;
     pthread_cond_t cond;
 
     int sense;
     int32_t count;
-#endif
 };
 typedef struct ompi_osc_sm_global_state_t ompi_osc_sm_global_state_t;
 
@@ -74,9 +74,7 @@ struct ompi_osc_sm_module_t {
     ompi_group_t *start_group;
     ompi_group_t *post_group;
 
-#if OPAL_HAVE_POSIX_THREADS
     int my_sense;
-#endif
 
     enum ompi_osc_sm_locktype_t *outstanding_locks;
 

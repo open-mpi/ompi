@@ -101,9 +101,7 @@
 #if BTL_OPENIB_FAILOVER_ENABLED
 #include "btl_openib_failover.h"
 #endif
-#if OPAL_HAVE_THREADS
 #include "btl_openib_async.h"
-#endif
 #include "connect/base.h"
 #include "btl_openib_ip.h"
 
@@ -206,14 +204,12 @@ static int btl_openib_component_register(void)
  */
 static int btl_openib_component_open(void)
 {
-#if OPAL_HAVE_THREADS
     opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
     opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
 
     /* Construct hash table that stores pointers to SRQs */
     OBJ_CONSTRUCT(lock, opal_mutex_t);
     OBJ_CONSTRUCT(srq_addr_table, opal_hash_table_t);
-#endif
 
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
@@ -241,7 +237,6 @@ static int btl_openib_component_close(void)
 {
     int rc = OPAL_SUCCESS;
 
-#if OPAL_HAVE_THREADS
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
@@ -265,7 +260,6 @@ static int btl_openib_component_close(void)
 
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.lock);
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.srq_addr_table);
-#endif
 
     opal_btl_openib_connect_base_finalize();
     opal_btl_openib_fd_finalize();
@@ -748,7 +742,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         lmc = mca_btl_openib_component.max_lmc;
     }
 
-#if OPAL_HAVE_THREADS
     /* APM support -- only meaningful if async event support is
        enabled.  If async events are not enabled, then there's nothing
        to listen for the APM event to load the new path, so it's not
@@ -771,7 +764,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
         }
     }
-#endif
 
     for(lid = ib_port_attr->lid;
             lid < ib_port_attr->lid + lmc; lid += lmc_step){
@@ -892,12 +884,10 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->xrc_fd = -1;
 #endif
     device->qps = NULL;
-#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_pipe[0] =
         mca_btl_openib_component.async_pipe[1] = -1;
     mca_btl_openib_component.async_comp_pipe[0] =
         mca_btl_openib_component.async_comp_pipe[1] = -1;
-#endif
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&device->send_free_control, ompi_free_list_t);
     device->max_inline_data = 0;
@@ -908,7 +898,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
 {
     int i;
 
-#if OPAL_HAVE_THREADS
 #if OPAL_ENABLE_PROGRESS_THREADS
     if(device->progress) {
         device->progress = false;
@@ -939,7 +928,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
             goto device_error;
         }
     }
-#endif
 
     if(device->eager_rdma_buffers) {
         int i;
@@ -2517,15 +2505,6 @@ btl_openib_component_init(int *num_btl_modules,
        OS's that support OpenFabrics that provide both FREE and MUNMAP
        support, so the following test is [currently] good enough... */
     value = opal_mem_hooks_support_level();
-#if !OPAL_HAVE_THREADS
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                       "ptmalloc2 with no threads", true,
-                       opal_process_info.nodename);
-        goto no_btls;
-    }
-#endif
 
     /* If we have a memory manager available, and
        opal_leave_pinned==-1, then unless the user explicitly set
@@ -2698,9 +2677,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
-#endif
     distance = dev_sorted[0].distance;
     for (found = false, i = 0;
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
@@ -2795,7 +2772,6 @@ btl_openib_component_init(int *num_btl_modules,
     if (OPAL_SUCCESS != setup_qps()) {
         goto no_btls;
     }
-#if OPAL_HAVE_THREADS
     if (mca_btl_openib_component.num_srq_qps > 0 ||
                      mca_btl_openib_component.num_xrc_qps > 0) {
         opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
@@ -2807,7 +2783,6 @@ btl_openib_component_init(int *num_btl_modules,
             goto no_btls;
         }
     }
-#endif
 
     /* For XRC:
      * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
@@ -3713,12 +3688,10 @@ static int btl_openib_component_progress(void)
     int i;
     int count = 0;
 
-#if OPAL_HAVE_THREADS
     if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
             mca_btl_openib_component.error_counter)) {
         goto error;
     }
-#endif
 
     for(i = 0; i < mca_btl_openib_component.devices_count; i++) {
         mca_btl_openib_device_t *device =
@@ -3749,7 +3722,6 @@ static int btl_openib_component_progress(void)
 
     return count;
 
-#if OPAL_HAVE_THREADS
 error:
     /* Set the fatal counter to zero */
     mca_btl_openib_component.error_counter = 0;
@@ -3770,7 +3742,6 @@ error:
         }
     }
     return count;
-#endif
 }
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)

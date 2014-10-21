@@ -33,12 +33,8 @@ AC_DEFUN([OPAL_CONFIG_THREADS],[
 # configure threads
 #
 
-# create templates
-AH_TEMPLATE([OPAL_HAVE_POSIX_THREADS], 
-    [Do we have POSIX threads])
-
 #
-# Check for thread types - add your type here...
+# Check we have POSIX threads
 #
 OPAL_CONFIG_POSIX_THREADS(HAVE_POSIX_THREADS=1, HAVE_POSIX_THREADS=0)
 AC_MSG_CHECKING([for working POSIX threads package])
@@ -59,8 +55,6 @@ if test "$HAVE_POSIX_THREADS" = "0"; then
     AC_MSG_ERROR(["*** Can not continue"])
 fi
 
-AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 1)
-
 THREAD_CFLAGS="$PTHREAD_CFLAGS"
 THREAD_FCFLAGS="$PTHREAD_FCFLAGS"
 THREAD_CXXFLAGS="$PTHREAD_CXXFLAGS"
@@ -70,9 +64,6 @@ THREAD_LDFLAGS="$PTHREAD_LDFLAGS"
 THREAD_LIBS="$PTHREAD_LIBS"
 
 OPAL_CHECK_PTHREAD_PIDS
-
-THREAD_TYPE = "posix"
-AM_CONDITIONAL(OPAL_HAVE_POSIX_THREADS, 1)
 
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [1],
                    [Whether we should enable thread support within the OPAL code base])

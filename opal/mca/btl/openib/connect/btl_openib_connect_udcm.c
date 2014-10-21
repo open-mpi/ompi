@@ -875,7 +875,6 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
         return;
     }
 
-#if OPAL_HAVE_THREADS
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
         /* Tell the openib async thread to ignore ERR state on the QP
@@ -894,7 +893,6 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
             BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
         }
     }
-#endif
 
     do {
         /* Move listen QP into the ERR state to cancel all outstanding
@@ -2681,7 +2679,6 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
         return OPAL_ERROR;
     }
 #endif
-#if OPAL_HAVE_THREADS
     if (APM_ENABLED) {
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
         mca_btl_openib_load_apm(lcl_ep->xrc_recv_qp, lcl_ep);
@@ -2689,7 +2686,6 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
         mca_btl_openib_load_apm_xrc_rcv(lcl_ep->xrc_recv_qp_num, lcl_ep);
 #endif
     }
-#endif
 
     return OPAL_SUCCESS;
 }

@@ -13,6 +13,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,9 +69,6 @@
  * status
  *
  **********************************************************************/
-
-/* Do we have posix or solaris thread lib */
-#define OPAL_HAVE_THREADS (OPAL_HAVE_POSIX_THREADS)
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
