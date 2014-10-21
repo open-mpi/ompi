@@ -15,6 +15,8 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -208,7 +210,7 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
 
             ep->segment_base = opal_shmem_segment_attach (ep->segment_data.other.seg_ds);
             if (NULL == ep->segment_base) {
-                return rc;
+                return OPAL_ERROR;
             }
 #if OPAL_BTL_VADER_HAVE_XPMEM
         }
