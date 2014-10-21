@@ -39,7 +39,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 endif # OPAL_INSTALL_BINARIES
 
 orte_server_SOURCES = orte-server.c 
-orte_server_LDADD =  $(top_builddir)/orte/lib@ORTE_LIB@.la $(top_builddir)/opal/lib@OPAL_LIB@.la
+orte_server_LDADD =  $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

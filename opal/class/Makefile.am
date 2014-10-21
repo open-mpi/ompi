@@ -37,7 +37,7 @@ headers += \
         class/opal_rb_tree.h \
         class/ompi_free_list.h
 
-lib@OPAL_LIB@_la_SOURCES += \
+libopen_pal_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \

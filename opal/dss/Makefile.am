@@ -25,7 +25,7 @@ headers += \
         dss/dss_types.h \
         dss/dss_internal.h
 
-lib@OPAL_LIB@_la_SOURCES += \
+libopen_pal_la_SOURCES += \
         dss/dss_internal_functions.c \
         dss/dss_compare.c \
         dss/dss_copy.c \

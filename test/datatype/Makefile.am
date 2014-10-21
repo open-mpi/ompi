@@ -55,5 +55,5 @@ to_self_LDADD = $(top_builddir)/ompi/libmpi.la
 
 opal_datatype_test_SOURCES = opal_datatype_test.c opal_ddt_lib.c opal_ddt_lib.h
 opal_datatype_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-opal_datatype_test_LDADD = $(top_builddir)/opal/lib@OPAL_LIB@.la
+opal_datatype_test_LDADD = $(top_builddir)/opal/libopen-pal.la
 

@@ -58,7 +58,7 @@ headers += \
         util/regex.h \
         util/attr.h
 
-lib@ORTE_LIB@_la_SOURCES += \
+libopen_rte_la_SOURCES += \
         util/error_strings.c \
         util/name_fns.c \
         util/proc_info.c \

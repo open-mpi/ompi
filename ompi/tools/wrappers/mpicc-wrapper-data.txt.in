@@ -21,7 +21,7 @@ linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
 libs=-lmpi
-libs_static=-lmpi -l@ORTE_LIB@ -l@OPAL_LIB@ @OMPI_WRAPPER_EXTRA_LIBS@
+libs_static=-lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=libmpi.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=libmpi.a
 required_file=

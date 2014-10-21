@@ -24,7 +24,7 @@ endif
 noinst_LTLIBRARIES = libmca_rte_orte.la
 libmca_rte_orte_la_SOURCES =$(sources) $(headers)
 libmca_rte_orte_la_LDFLAGS = -module -avoid-version
-libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB@.la
+libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/libopen-rte.la
 
 man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1 ompi-server.1
 

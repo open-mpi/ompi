@@ -44,7 +44,7 @@ orted_SOURCES = orted.c
 #  nice for systems that don't have all the shared 
 #  libraries on the computes 
 orted_LDFLAGS =
-orted_LDADD = $(top_builddir)/orte/lib@ORTE_LIB@.la $(top_builddir)/opal/lib@OPAL_LIB@.la
+orted_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

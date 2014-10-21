@@ -145,10 +145,10 @@ libmpi_la_LIBADD = \
 
 if OMPI_RTE_ORTE
 libmpi_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/orte/lib@ORTE_LIB@.la
+        $(OMPI_TOP_BUILDDIR)/orte/libopen-rte.la
 endif
 libmpi_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB@.la
+        $(OMPI_TOP_BUILDDIR)/opal/libopen-pal.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
