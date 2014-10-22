@@ -104,7 +104,7 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = -module -avoid-version $(btl_usnic_LDFLAGS)
 mca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS) \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)

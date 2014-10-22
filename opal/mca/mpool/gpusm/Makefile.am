@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -48,7 +48,7 @@ mca_mpool_gpusm_la_LDFLAGS = -module -avoid-version
 mca_mpool_gpusm_la_LIBADD = $(mpool_gpusm_LIBS)
 if OPAL_cuda_support
 mca_mpool_gpusm_la_LIBADD += \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

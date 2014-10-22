@@ -34,7 +34,9 @@ dist_ortedata_DATA = help-orte-migrate.txt
 endif # OPAL_INSTALL_BINARIES
 
 orte_migrate_SOURCES = orte-migrate.c
-orte_migrate_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orte_migrate_LDADD = \
+	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 endif # WANT_FT_CR
 

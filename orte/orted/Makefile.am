@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ dist_ortedata_DATA += orted/help-orted.txt
 headers += \
 	orted/orted.h
 
-libopen_rte_la_SOURCES += \
+lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         orted/orted_main.c \
         orted/orted_comm.c
 

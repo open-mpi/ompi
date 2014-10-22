@@ -69,9 +69,9 @@ oshmem_info_SOURCES = \
 oshmem_info_LDADD = $(top_builddir)/ompi/libmpi.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
 if OMPI_RTE_ORTE
-oshmem_info_LDADD +=  $(top_builddir)/orte/libopen-rte.la
+oshmem_info_LDADD +=  $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 endif
-oshmem_info_LDADD += $(top_builddir)/opal/libopen-pal.la
+oshmem_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

@@ -199,7 +199,7 @@ static int create_proc(opal_proc_t *opal_proc,
     /* If this proc simply doesn't have this key, then they're not
        running the usnic BTL -- just ignore them.  Otherwise, show an
        error message. */
-    if (OPAL_ERR_DATA_VALUE_NOT_FOUND == rc) {
+    if (OPAL_ERR_NOT_FOUND == rc) {
         OBJ_RELEASE(proc);
         return OPAL_ERR_UNREACH;
     } else if (OPAL_SUCCESS != rc) {

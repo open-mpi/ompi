@@ -52,7 +52,9 @@ orterun_SOURCES = \
         orterun.c \
         orterun.h
 
-orterun_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orterun_LDADD = \
+	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +26,7 @@ headers += \
         dss/dss_types.h \
         dss/dss_internal.h
 
-libopen_pal_la_SOURCES += \
+lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         dss/dss_internal_functions.c \
         dss/dss_compare.c \
         dss/dss_copy.c \

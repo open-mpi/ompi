@@ -13,6 +13,7 @@
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,7 +38,7 @@ headers += \
         runtime/opal_params.h \
         runtime/opal_progress_threads.h
 
-libopen_pal_la_SOURCES += \
+lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         runtime/opal_progress.c \
         runtime/opal_finalize.c \
         runtime/opal_init.c \

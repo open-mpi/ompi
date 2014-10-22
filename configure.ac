@@ -1407,13 +1407,15 @@ AC_SUBST(opaldatadir)
 AC_SUBST(opallibdir)
 AC_SUBST(opalincludedir)
 
+OPAL_SET_LIB_PREFIX([])
 m4_ifdef([project_orte],
          [ortedatadir="$opaldatadir"
           AC_SUBST(ortedatadir)
           ortelibdir="$opallibdir"
           AC_SUBST(ortelibdir)
           orteincludedir="$opalincludedir"
-          AC_SUBST(orteincludedir)])
+          AC_SUBST(orteincludedir)
+          ORTE_SET_LIB_PREFIX([])])
 m4_ifdef([project_ompi],
          [ompidatadir="$opaldatadir"
           AC_SUBST(ompidatadir)

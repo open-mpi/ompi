@@ -37,8 +37,8 @@ dist_opaldata_DATA = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = libmca_common_verbs.la
-comp_noinst = libmca_common_verbs_noinst.la
+comp_inst = lib@OPAL_LIB_PREFIX@mca_common_verbs.la
+comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_verbs_noinst.la
 
 if MCA_BUILD_opal_common_verbs_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -46,14 +46,14 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_common_verbs_la_SOURCES = $(headers) $(sources)
-# TBD: create own config file 
-libmca_common_verbs_la_CPPFLAGS = $(common_verbs_CPPFLAGS)
-libmca_common_verbs_la_LDFLAGS =  \
+lib@OPAL_LIB_PREFIX@mca_common_verbs_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_verbs_la_CPPFLAGS = $(common_verbs_CPPFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LDFLAGS =  \
         -version-info $(libmca_common_verbs_so_version) \
         $(common_verbs_LDFLAGS)
-libmca_common_verbs_la_LIBADD =   $(common_verbs_LIBS)
-libmca_common_verbs_noinst_la_SOURCES = $(libmca_common_verbs_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LIBADD = $(common_verbs_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_verbs_noinst_la_SOURCES = \
+        $(lib@OPAL_LIB_PREFIX@mca_common_verbs_la_SOURCES)
 
 # Conditionally install the header files
 

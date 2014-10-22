@@ -37,8 +37,8 @@ endif
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = libmca_common_ofacm.la
-comp_noinst = libmca_common_ofacm_noinst.la
+comp_inst = lib@OPAL_LIB_PREFIX@mca_common_ofacm.la
+comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_ofacm_noinst.la
 
 if MCA_BUILD_opal_common_ofacm_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -46,13 +46,14 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_common_ofacm_la_SOURCES = $(headers) $(sources)
-libmca_common_ofacm_la_CPPFLAGS = $(common_ofacm_CPPFLAGS)
-libmca_common_ofacm_la_LDFLAGS = \
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_CPPFLAGS = $(common_ofacm_CPPFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_LDFLAGS = \
         -version-info $(libmca_common_ofacm_so_version) \
         $(common_ofacm_LDFLAGS)
-libmca_common_ofacm_la_LIBADD = $(common_ofacm_LIBS)
-libmca_common_ofacm_noinst_la_SOURCES = $(libmca_common_ofacm_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_LIBADD = $(common_ofacm_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_noinst_la_SOURCES = \
+        $(lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_SOURCES)
 
 # Conditionally install the header files
 

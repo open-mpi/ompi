@@ -15,8 +15,8 @@
 
 AM_CPPFLAGS = $(common_ugni_CPPFLAGS)
 
-component_noinst = libmca_common_ugni_noinst.la
-component_install = libmca_common_ugni.la
+component_noinst = lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst.la
+component_install = lib@OPAL_LIB_PREFIX@mca_common_ugni.la
 
 if MCA_BUILD_opal_common_ugni_DSO
 mcacomponent_LTLIBRARIES = $(component_install)
@@ -31,17 +31,20 @@ ugni_SOURCES = common_ugni.c \
                common_ugni_ep.c
 
 mcacomponentdir = $(opallibdir)
-libmca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
-nodist_libmca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-libmca_common_ugni_la_LIBADD = $(common_ugni_LIBS) 
-libmca_common_ugni_la_LDFLAGS = \
+lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
+nodist_lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_ugni_la_LIBADD = $(common_ugni_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ugni_la_LDFLAGS = \
         -version-info $(libmca_common_ugni_so_version) \
         $(common_ugni_LDFLAGS)
 
-libmca_common_ugni_noinst_la_SOURCES = $(headers) $(ugni_SOURCES)
-nodist_libmca_common_ugni_noinst_la_SOURCES = $(ugni_nodist_SOURCES)
-libmca_common_ugni_noinst_la_LIBADD = $(common_ugni_LIBS)
-libmca_common_ugni_noinst_la_LDFLAGS = -module -avoid-version $(common_ugni_LDFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst_la_SOURCES = \
+        $(headers) $(ugni_SOURCES)
+nodist_lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst_la_SOURCES = \
+        $(ugni_nodist_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst_la_LIBADD = $(common_ugni_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst_la_LDFLAGS = \
+        -module -avoid-version $(common_ugni_LDFLAGS)
 
 # These two rules will sym link the "noinst" libtool library filename
 # to the installable libtool library filename in the case where we are

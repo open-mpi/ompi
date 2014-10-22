@@ -72,8 +72,8 @@ dist_opaldata_DATA = help-mpi-common-sm.txt
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = libmca_common_sm.la
-comp_noinst = libmca_common_sm_noinst.la
+comp_inst = lib@OPAL_LIB_PREFIX@mca_common_sm.la
+comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_sm_noinst.la
 
 if MCA_BUILD_opal_common_sm_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -81,9 +81,12 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_common_sm_la_SOURCES = $(headers) $(sources)
-libmca_common_sm_la_LDFLAGS = -version-info $(libmca_common_sm_so_version)
-libmca_common_sm_noinst_la_SOURCES = $(libmca_common_sm_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_sm_la_SOURCES = \
+        $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_sm_la_LDFLAGS = \
+        -version-info $(libmca_common_sm_so_version)
+lib@OPAL_LIB_PREFIX@mca_common_sm_noinst_la_SOURCES = \
+        $(lib@OPAL_LIB_PREFIX@mca_common_sm_la_SOURCES)
 
 # Conditionally install the header files
 

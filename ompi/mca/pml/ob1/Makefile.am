@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -69,7 +69,7 @@ mca_pml_ob1_la_LDFLAGS = -module -avoid-version
 
 if OPAL_cuda_support
 mca_pml_ob1_la_LIBADD = \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

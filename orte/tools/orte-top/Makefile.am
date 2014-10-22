@@ -39,7 +39,9 @@ dist_ortedata_DATA = help-orte-top.txt
 endif # OPAL_INSTALL_BINARIES
 
 orte_top_SOURCES = orte-top.c
-orte_top_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orte_top_LDADD = \
+	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

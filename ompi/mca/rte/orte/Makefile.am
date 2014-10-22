@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ endif
 noinst_LTLIBRARIES = libmca_rte_orte.la
 libmca_rte_orte_la_SOURCES =$(sources) $(headers)
 libmca_rte_orte_la_LDFLAGS = -module -avoid-version
-libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/libopen-rte.la
+libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 
 man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1 ompi-server.1
 

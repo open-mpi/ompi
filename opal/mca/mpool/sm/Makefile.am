@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -43,10 +43,10 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version
 mca_mpool_sm_la_LIBADD = \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_PREFIX@mca_common_sm.la
 if OPAL_cuda_support
 mca_mpool_sm_la_LIBADD += \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

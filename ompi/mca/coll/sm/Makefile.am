@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -62,7 +62,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_sm_la_SOURCES = $(sources)
 mca_coll_sm_la_LDFLAGS = -module -avoid-version
 mca_coll_sm_la_LIBADD = \
-        $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
+        $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_PREFIX@mca_common_sm.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_sm_la_SOURCES =$(sources)

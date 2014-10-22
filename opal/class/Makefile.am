@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,7 +38,7 @@ headers += \
         class/opal_rb_tree.h \
         class/ompi_free_list.h
 
-libopen_pal_la_SOURCES += \
+lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \

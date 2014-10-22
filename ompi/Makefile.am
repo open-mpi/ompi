@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -145,10 +145,10 @@ libmpi_la_LIBADD = \
 
 if OMPI_RTE_ORTE
 libmpi_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/orte/libopen-rte.la
+        $(OMPI_TOP_BUILDDIR)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 endif
 libmpi_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/opal/libopen-pal.la
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \

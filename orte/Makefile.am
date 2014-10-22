@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -33,19 +33,19 @@ DIST_SUBDIRS = \
 
 # Build the main ORTE library
 
-lib_LTLIBRARIES = libopen-rte.la
-libopen_rte_la_SOURCES =
-libopen_rte_la_LIBADD = \
+lib_LTLIBRARIES = lib@ORTE_LIB_PREFIX@open-rte.la
+lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES =
+lib@ORTE_LIB_PREFIX@open_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
-	$(ORTE_TOP_BUILDDIR)/opal/libopen-pal.la
-libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
-libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
+	$(ORTE_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+lib@ORTE_LIB_PREFIX@open_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
+lib@ORTE_LIB_PREFIX@open_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
 dist_ortedata_DATA =
-libopen_rte_la_SOURCES += $(headers)
+lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

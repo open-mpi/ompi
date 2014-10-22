@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
@@ -118,10 +118,10 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
 mca_btl_openib_la_LIBADD = $(btl_openib_LIBS) \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
 if OPAL_cuda_support
 mca_btl_openib_la_LIBADD += \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(lib)

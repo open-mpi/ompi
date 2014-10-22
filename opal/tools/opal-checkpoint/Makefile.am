@@ -41,7 +41,7 @@ dist_opaldata_DATA = help-opal-checkpoint.txt
 endif # OPAL_INSTALL_BINARIES
 
 opal_checkpoint_SOURCES = opal-checkpoint.c
-opal_checkpoint_LDADD = $(top_builddir)/opal/libopen-pal.la
+opal_checkpoint_LDADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 endif # WANT_FT_CR
 

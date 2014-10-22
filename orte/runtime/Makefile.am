@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -36,7 +36,7 @@ headers += \
         runtime/orte_data_server.h \
         runtime/orte_info_support.h
 
-libopen_rte_la_SOURCES += \
+lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         runtime/orte_finalize.c \
         runtime/orte_init.c \
         runtime/orte_locks.c \

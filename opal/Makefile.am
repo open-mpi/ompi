@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -46,23 +46,23 @@ DIST_SUBDIRS = \
 
 # Build the main OPAL library
 
-lib_LTLIBRARIES = libopen-pal.la
-libopen_pal_la_SOURCES =
-libopen_pal_la_LIBADD = \
+lib_LTLIBRARIES = lib@OPAL_LIB_PREFIX@open-pal.la
+lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES =
+lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
         $(LIBLTDL) \
         asm/libasm.la \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS)
-libopen_pal_la_DEPENDENCIES = $(libopen_pal_la_LIBADD)
-libopen_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
+lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = $(lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD)
+lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
 dist_opaldata_DATA =
-libopen_pal_la_SOURCES += $(headers)
+lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

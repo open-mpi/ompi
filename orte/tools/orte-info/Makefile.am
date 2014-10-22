@@ -64,7 +64,9 @@ orte_info_SOURCES = \
         components.c \
         version.c
 
-orte_info_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orte_info_LDADD = \
+	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
