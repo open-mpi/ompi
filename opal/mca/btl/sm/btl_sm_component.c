@@ -903,6 +903,16 @@ mca_btl_sm_component_init(int *num_btls,
            so no problems with accidentally overwriting this set earlier */
         mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
     }
+#else
+    /* If the user explicitly asked for CMA and we can't provide itm
+     *   error */
+    if (mca_btl_sm_component.use_cma > 0) {
+        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
+        opal_show_help("help-mpi-btl-sm.txt",
+                       "CMA requested but not available",
+                       true, opal_process_info.nodename);
+        return NULL;
+    }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
 
 #if OPAL_CUDA_SUPPORT
