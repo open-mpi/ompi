@@ -780,12 +780,12 @@ void opal_memory_linux_malloc_init_hook(void)
        (unfortunately, there's really no good way to do this other
        than this abstraction violation :-( ) */
     lp = check("OPAL_MCA_leave_pinned");
-    if( RESULT_NOT_FOUND == lp ) lp = check("OMPI_MCA_mpi_leave_pinned");
+    if( RESULT_NOT_FOUND == lp ) lp = check(OPAL_MCA_PREFIX"mpi_leave_pinned");
     lpp = check("OPAL_MCA_leave_pinned_pipeline");
-    if( RESULT_NOT_FOUND == lpp ) lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
+    if( RESULT_NOT_FOUND == lpp ) lpp = check(OPAL_MCA_PREFIX"mpi_leave_pinned_pipeline");
 
     /* See if we want to disable this component.  */
-    r1 = check("OMPI_MCA_memory_linux_disable");
+    r1 = check(OPAL_MCA_PREFIX"memory_linux_disable");
     if (RESULT_NOT_FOUND != r1 && RESULT_NO != r1) {
         return;
     }

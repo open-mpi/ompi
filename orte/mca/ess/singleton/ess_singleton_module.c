@@ -129,7 +129,7 @@ static int rte_init(void)
         /* save the daemon uri - we will process it later */
         orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
         /* for convenience, push the pubsub version of this param into the environ */
-        asprintf(&param,"OMPI_MCA_pubsub_orte_server=%s",orte_process_info.my_hnp_uri);
+        asprintf(&param,OPAL_MCA_PREFIX"pubsub_orte_server=%s",orte_process_info.my_hnp_uri);
         putenv(param);
     }
 
@@ -202,7 +202,7 @@ static int rte_init(void)
     putenv("OMPI_NUM_APP_CTX=1");
     putenv("OMPI_FIRST_RANKS=0");
     putenv("OMPI_APP_CTX_NUM_PROCS=1");
-    putenv("OMPI_MCA_orte_ess_num_procs=1");
+    putenv(OPAL_MCA_PREFIX"orte_ess_num_procs=1");
 
     /* push some required info to our local datastore */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
@@ -271,8 +271,8 @@ static int rte_finalize(void)
     unsetenv("OMPI_NUM_APP_CTX");
     unsetenv("OMPI_FIRST_RANKS");
     unsetenv("OMPI_APP_CTX_NUM_PROCS");
-    unsetenv("OMPI_MCA_orte_ess_num_procs");
-    unsetenv("OMPI_MCA_pubsub_orte_server");  // just in case it is there
+    unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs");
+    unsetenv(OPAL_MCA_PREFIX"pubsub_orte_server");  // just in case it is there
 
     return ret;
 }

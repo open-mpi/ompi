@@ -751,7 +751,7 @@ static int setup_child(orte_proc_t *child,
          */
         opal_setenv("PWD", param, true, env);
         /* update the initial wdir value too */
-        opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
+        opal_setenv(OPAL_MCA_PREFIX"initial_wdir", param, true, env);
     }
     free(param);
     return ORTE_SUCCESS;
@@ -791,7 +791,7 @@ static int setup_path(orte_app_context_t *app)
         getcwd(dir, sizeof(dir));
         opal_setenv("PWD", dir, true, &app->env);
         /* update the initial wdir value too */
-        opal_setenv("OMPI_MCA_initial_wdir", dir, true, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"initial_wdir", dir, true, &app->env);
     }
 
     /* Search for the OMPI_exec_path and PATH settings in the environment. */

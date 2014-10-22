@@ -57,9 +57,9 @@ int orte_ess_base_proc_binding(void)
     opal_value_t kv;
 
     /* Determine if we were pre-bound or not */
-    if (NULL != getenv("OMPI_MCA_orte_bound_at_launch")) {
+    if (NULL != getenv(OPAL_MCA_PREFIX"orte_bound_at_launch")) {
         orte_proc_is_bound = true;
-        if (NULL != (map = getenv("OMPI_MCA_orte_base_applied_binding"))) {
+        if (NULL != (map = getenv(OPAL_MCA_PREFIX"orte_base_applied_binding"))) {
             orte_proc_applied_binding = hwloc_bitmap_alloc();
             if (0 != (ret = hwloc_bitmap_list_sscanf(orte_proc_applied_binding, map))) {
                 error = "applied_binding parse";

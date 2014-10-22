@@ -563,7 +563,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
                                           NULL);
     
     /* ensure that only the ssh plm is selected on the remote daemon */
-    opal_argv_append_nosize(&argv, "-mca");
+    opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append_nosize(&argv, "plm");
     opal_argv_append_nosize(&argv, "rsh");
     
@@ -573,12 +573,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * only if they aren't already present
          */
         for (i = 0; NULL != environ[i]; ++i) {
-            if (0 == strncmp("OMPI_MCA_mca_base_env_list", environ[i],
-                             strlen("OMPI_MCA_mca_base_env_list"))) {
+            if (0 == strncmp(OPAL_MCA_PREFIX"mca_base_env_list", environ[i],
+                             strlen(OPAL_MCA_PREFIX"mca_base_env_list"))) {
                 /* ignore this one */
                 continue;
             }
-            if (0 == strncmp("OMPI_MCA", environ[i], 8)) {
+            if (0 == strncmp(OPAL_MCA_PREFIX, environ[i], 9)) {
                /* check for duplicate in app->env - this
                  * would have been placed there by the
                  * cmd line processor. By convention, we
@@ -599,7 +599,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
                 }
                 if (!found) {
                     /* add it */
-                    opal_argv_append(&argc, &argv, "-mca");
+                    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
                     opal_argv_append(&argc, &argv, param);
                     opal_argv_append(&argc, &argv, value);
                 }

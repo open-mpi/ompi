@@ -835,9 +835,9 @@ int orterun(int argc, char *argv[])
     orte_launch_environ = opal_argv_copy(environ);
     
     /* purge any ess flag set externally */
-    opal_unsetenv("OMPI_MCA_ess", &orte_launch_environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
     /* purge the env list, if set */
-    opal_unsetenv("OMPI_MCA_mca_base_env_list", &orte_launch_environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"mca_base_env_list", &orte_launch_environ);
     
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
@@ -1533,8 +1533,8 @@ static int capture_cmd_line_params(int argc, int start, char **argv)
     };
     
     for (i = 0; i < (argc-start); ++i) {
-        if (0 == strcmp("-mca",  argv[i]) ||
-            0 == strcmp("--mca", argv[i]) ) {
+        if (0 == strcmp("-"OPAL_MCA_CMD_LINE_ID,  argv[i]) ||
+            0 == strcmp("--"OPAL_MCA_CMD_LINE_ID, argv[i]) ) {
             /* ignore this one */
             if (0 == strcmp(argv[i+1], "mca_base_env_list")) {
                 i += 2;
@@ -1723,11 +1723,11 @@ static int create_app(int argc, char* argv[],
     
     /* add the ompi-server, if provided */
     if (NULL != ompi_server) {
-        opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"pubsub_orte_server", ompi_server, true, &app->env);
     }
 
     /* Did the user request to export any environment variables on the cmd line? */
-    env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
+    env_set_flag = getenv(OPAL_MCA_PREFIX"mca_base_env_list");
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {
         if (NULL != env_set_flag) {
             orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);

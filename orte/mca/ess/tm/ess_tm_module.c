@@ -84,7 +84,7 @@ static int rte_init(void)
      */
     if (ORTE_PROC_IS_DAEMON) {
         /* get the list of nodes used for this job */
-        nodelist = getenv("OMPI_MCA_orte_nodelist");
+        nodelist = getenv(OPAL_MCA_PREFIX"orte_nodelist");
         
         if (NULL != nodelist) {
             /* split the node list into an argv array */

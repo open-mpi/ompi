@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
      * code will output
      */
     if (debug) {
-        putenv("OMPI_MCA_orte_debug=1");
+        putenv(OPAL_MCA_PREFIX"orte_debug=1");
     }
         
     /* detach from controlling terminal
