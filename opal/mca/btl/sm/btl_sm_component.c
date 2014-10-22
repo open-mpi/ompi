@@ -937,6 +937,10 @@ mca_btl_sm_component_init(int *num_btls,
                        "knem requested but not available",
                        true, opal_process_info.nodename);
         return NULL;
+    } else if (0 == mca_btl_sm_component.use_cma) {
+        /* disable get when not using knem or cma */
+        mca_btl_sm.super.btl_get = NULL;
+        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
     }
 
     /* Otherwise, use_knem was 0 (and we didn't get here) or use_knem
