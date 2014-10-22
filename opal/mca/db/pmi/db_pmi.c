@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -361,6 +363,7 @@ static void cache_keys_locally(const opal_identifier_t *uid)
             if (size == 0xffff) {
                 bo.bytes = NULL;
                 bo.size = 0;
+                size = 0;
             } else {
                 bo.bytes = (uint8_t*)tmp3;
                 bo.size = size;
