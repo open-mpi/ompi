@@ -135,13 +135,23 @@ static inline unsigned int mca_btl_sm_param_register_uint(
     return *storage;
 }
 
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+static void mca_btl_sm_dummy_get (void)
+{
+    /* If a backtrace ends at this function something has gone wrong with
+     * the btl bootstrapping. Check that the btl_get function was set to
+     * something reasonable. */
+    abort ();
+}
+#endif
+
 static int mca_btl_sm_component_verify(void) {
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
     if (mca_btl_sm_component.use_knem || mca_btl_sm_component.use_cma) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
         /* set a dummy value for btl_get to prevent mca_btl_base_param_verify from
          * unsetting the MCA_BTL_FLAGS_GET flags. */
-        mca_btl_sm.super.btl_get = (mca_btl_base_module_get_fn_t) 1;
+        mca_btl_sm.super.btl_get = (mca_btl_base_module_get_fn_t) mca_btl_sm_dummy_get;
     }
 
     if (mca_btl_sm_component.use_knem && mca_btl_sm_component.use_cma) {
