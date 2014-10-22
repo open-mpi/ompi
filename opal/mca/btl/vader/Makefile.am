@@ -53,9 +53,6 @@ component_noinst = libmca_btl_vader.la
 component_install =
 endif
 
-# See opal/mca/common/vader/Makefile.am for an explanation of
-# libmca_common_vader.la.
-
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_vader_la_SOURCES = $(libmca_btl_vader_la_sources)
