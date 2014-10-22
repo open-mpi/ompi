@@ -100,6 +100,14 @@ mca_btl_vader_component_t mca_btl_vader_component = {
     }  /* end super */
 };
 
+static void mca_btl_vader_dummy_rdma (void)
+{
+    /* If a backtrace ends at this function something has gone wrong with
+     * the btl bootstrapping. Check that the btl_get function was set to
+     * something reasonable. */
+    abort ();
+}
+
 static int mca_btl_vader_component_register (void)
 {
     mca_base_var_enum_t *new_enum;
@@ -241,8 +249,8 @@ static int mca_btl_vader_component_register (void)
         mca_btl_vader.super.btl_bandwidth = 40000; /* Mbs */
 
         /* Set dummy values so the RDMA flag doesn't get unset by mca_btl_base_param_verify() */
-        mca_btl_vader.super.btl_get = (mca_btl_base_module_get_fn_t) 1;
-        mca_btl_vader.super.btl_put = (mca_btl_base_module_get_fn_t) 1;
+        mca_btl_vader.super.btl_get = (mca_btl_base_module_get_fn_t) mca_btl_vader_dummy_rdma;
+        mca_btl_vader.super.btl_put = (mca_btl_base_module_get_fn_t) mca_btl_vader_dummy_rdma;
     } else {
         mca_btl_vader.super.btl_flags     = MCA_BTL_FLAGS_SEND_INPLACE;
         mca_btl_vader.super.btl_bandwidth = 10000; /* Mbs */
