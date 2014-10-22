@@ -358,6 +358,7 @@ int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* k
                 if (size == 0xffff) {
                     kv->data.bo.bytes = NULL;
                     kv->data.bo.size = 0;
+                    size = 0;
                 } else {
                     kv->data.bo.bytes = malloc(size);
                     memcpy(kv->data.bo.bytes, tmp3, size);
