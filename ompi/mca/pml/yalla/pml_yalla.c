@@ -1,16 +1,11 @@
-/**
-* Copyright (C) Mellanox Technologies Ltd. 2001-2014.  ALL RIGHTS RESERVED.
-* This software product is a proprietary product of Mellanox Technologies Ltd.
-* (the "Company") and all right, title, and interest and to the software product,
-* including all associated intellectual property rights, are and shall
-* remain exclusively with the Company.
-*
-* This software product is governed by the End User License Agreement
-* provided with the software product.
-* $COPYRIGHT$
-* $HEADER$
-*/
-
+/*
+ * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
 #include "pml_yalla.h"
 #include "pml_yalla_request.h"
@@ -114,13 +109,14 @@ int mca_pml_yalla_init(void)
          opal_mem_hooks_support_level()))
     {
         PML_YALLA_VERBOSE(1, "enabling on-demand memory mapping");
-        setenv("MXM_PML_MEM_ON_DEMAND_MAP", "y", 0);
+        opal_setenv("MXM_PML_MEM_ON_DEMAND_MAP", "y", false, &environ);
         ompi_pml_yalla.using_mem_hooks = 1;
     } else {
         PML_YALLA_VERBOSE(1, "disabling on-demand memory mapping");
         ompi_pml_yalla.using_mem_hooks = 0;
     }
-    setenv("MXM_PML_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y" , 0);
+    opal_setenv("MXM_PML_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y",
+                false, &environ);
 
     /* Read options */
     error = mxm_config_read_opts(&ctx_opts, &ep_opts, "PML", NULL, 0);

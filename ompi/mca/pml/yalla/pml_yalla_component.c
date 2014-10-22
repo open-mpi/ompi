@@ -1,15 +1,11 @@
-/**
-* Copyright (C) Mellanox Technologies Ltd. 2001-2014.  ALL RIGHTS RESERVED.
-* This software product is a proprietary product of Mellanox Technologies Ltd.
-* (the "Company") and all right, title, and interest and to the software product,
-* including all associated intellectual property rights, are and shall
-* remain exclusively with the Company.
-*
-* This software product is governed by the End User License Agreement
-* provided with the software product.
-* $COPYRIGHT$
-* $HEADER$
-*/
+/*
+ * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
 #include "pml_yalla.h"
 
@@ -55,7 +51,7 @@ static int mca_pml_yalla_component_register(void)
     (void) mca_base_component_var_register(&mca_pml_yalla_component.pmlm_version, "verbose",
                                            "Verbose level of the yalla component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_3,
+                                           OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_yalla.verbose);
 

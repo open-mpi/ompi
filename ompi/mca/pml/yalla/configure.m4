@@ -24,7 +24,6 @@ AC_DEFUN([MCA_ompi_pml_yalla_CONFIG], [
           [$2])
 
     # substitute in the things needed to build mxm
-    AC_SUBST([pml_yalla_CFLAGS])
     AC_SUBST([pml_yalla_CPPFLAGS])
     AC_SUBST([pml_yalla_LDFLAGS])
     AC_SUBST([pml_yalla_LIBS])
