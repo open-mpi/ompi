@@ -234,33 +234,34 @@ static int usnic_modex_send(void)
     size_t size;
     opal_btl_usnic_addr_t* addrs = NULL;
 
+    if (0 == mca_btl_usnic_component.num_modules) {
+        return OPAL_SUCCESS;
+    }
+
     size = mca_btl_usnic_component.num_modules *
         sizeof(opal_btl_usnic_addr_t);
-    if (size != 0) {
-        addrs = (opal_btl_usnic_addr_t*) malloc(size);
-        if (NULL == addrs) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
+    addrs = (opal_btl_usnic_addr_t*) malloc(size);
+    if (NULL == addrs) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
-        for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
-            opal_btl_usnic_module_t* module =
-                mca_btl_usnic_component.usnic_active_modules[i];
-            addrs[i] = module->local_addr;
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic: modex_send DQP:%d, CQP:%d, subnet = 0x%016" PRIx64 " interface =0x%016" PRIx64,
-                                addrs[i].qp_num[USNIC_DATA_CHANNEL],
-                                addrs[i].qp_num[USNIC_PRIORITY_CHANNEL],
-                                ntoh64(addrs[i].gid.global.subnet_prefix),
-                                ntoh64(addrs[i].gid.global.interface_id));
-        }
+    for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
+        opal_btl_usnic_module_t* module =
+            mca_btl_usnic_component.usnic_active_modules[i];
+        addrs[i] = module->local_addr;
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: modex_send DQP:%d, CQP:%d, subnet = 0x%016" PRIx64 " interface =0x%016" PRIx64,
+                            addrs[i].qp_num[USNIC_DATA_CHANNEL],
+                            addrs[i].qp_num[USNIC_PRIORITY_CHANNEL],
+                            ntoh64(addrs[i].gid.global.subnet_prefix),
+                            ntoh64(addrs[i].gid.global.interface_id));
     }
 
     OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
                     &mca_btl_usnic_component.super.btl_version, 
                     addrs, size);
-    if (NULL != addrs) {
-        free(addrs);
-    }
+    free(addrs);
+
     return rc;
 }
 
