@@ -305,10 +305,13 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
 
         /* setup endpoint */
         peers[proc] = component->endpoints + local_rank;
-        init_vader_endpoint (peers[proc], procs[proc], local_rank++);
+        rc = init_vader_endpoint (peers[proc], procs[proc], local_rank++);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
     }
 
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 /**
