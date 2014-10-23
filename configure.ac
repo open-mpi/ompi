@@ -1408,6 +1408,8 @@ AC_SUBST(opallibdir)
 AC_SUBST(opalincludedir)
 
 OPAL_SET_LIB_PREFIX([])
+OPAL_SET_MCA_PREFIX([OMPI_MCA_])
+OPAL_SET_MCA_CMD_LINE_ID([mca])
 m4_ifdef([project_orte],
          [ortedatadir="$opaldatadir"
           AC_SUBST(ortedatadir)

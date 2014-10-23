@@ -296,7 +296,7 @@ int orte_daemon(int argc, char *argv[])
     orte_launch_environ = opal_argv_copy(environ);
     
     /* purge any ess flag set in the environ when we were launched */
-    opal_unsetenv("OMPI_MCA_ess", &orte_launch_environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
     
     /* if orte_daemon_debug is set, let someone know we are alive right
      * away just in case we have a problem along the way
@@ -600,7 +600,7 @@ int orte_daemon(int argc, char *argv[])
          * we may start as the result of a comm_spawn
          */
         for (i=0; NULL != environ[i]; i++) {
-            if (0 == strncmp(environ[i], "OMPI_MCA", 8)) {
+            if (0 == strncmp(environ[i], OPAL_MCA_PREFIX, 9)) {
                 /* make a copy to manipulate */
                 tmp = strdup(environ[i]);
                 /* find the equal sign */
@@ -608,7 +608,7 @@ int orte_daemon(int argc, char *argv[])
                 *nptr = '\0';
                 nptr++;
                 /* add the mca param to the orted cmd line */
-                opal_argv_append_nosize(&orted_cmd_line, "-mca");
+                opal_argv_append_nosize(&orted_cmd_line, "-"OPAL_MCA_CMD_LINE_ID);
                 opal_argv_append_nosize(&orted_cmd_line, &tmp[9]);
                 opal_argv_append_nosize(&orted_cmd_line, nptr);
                 free(tmp);
@@ -785,8 +785,8 @@ int orte_daemon(int argc, char *argv[])
             NULL
         };
         for (i=0; i < argc; i++) {
-            if (0 == strcmp("-mca",  argv[i]) ||
-                0 == strcmp("--mca", argv[i]) ) {
+            if (0 == strcmp("-"OPAL_MCA_CMD_LINE_ID,  argv[i]) ||
+                0 == strcmp("--"OPAL_MCA_CMD_LINE_ID, argv[i]) ) {
                 ignore = false;
                 /* see if this is something we cannot pass along */
                 for (k=0; NULL != no_keep[k]; k++) {

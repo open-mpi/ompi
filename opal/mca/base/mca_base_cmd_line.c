@@ -49,13 +49,13 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 {
     int ret = OPAL_SUCCESS;
 
-    ret = opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
-                                  "Pass context-specific MCA parameters; they are considered global if --gmca is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
+    ret = opal_cmd_line_make_opt3(cmd, '\0', OPAL_MCA_CMD_LINE_ID, OPAL_MCA_CMD_LINE_ID, 2,
+                                  "Pass context-specific MCA parameters; they are considered global if --g"OPAL_MCA_CMD_LINE_ID" is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
-    ret = opal_cmd_line_make_opt3(cmd, '\0', "gmca", "gmca", 2,
+    ret = opal_cmd_line_make_opt3(cmd, '\0', "g"OPAL_MCA_CMD_LINE_ID, "g"OPAL_MCA_CMD_LINE_ID, 2,
                                   "Pass global MCA parameters that are applicable to all contexts (arg0 is the parameter name; arg1 is the parameter value)");
 
     if (OPAL_SUCCESS != ret) {
@@ -90,18 +90,18 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
     /* If no relevant parameters were given, just return */
 
-    if (!opal_cmd_line_is_taken(cmd, "mca") &&
-        !opal_cmd_line_is_taken(cmd, "gmca")) {
+    if (!opal_cmd_line_is_taken(cmd, OPAL_MCA_CMD_LINE_ID) &&
+        !opal_cmd_line_is_taken(cmd, "g"OPAL_MCA_CMD_LINE_ID)) {
         return OPAL_SUCCESS;
     }
 
     /* Handle app context-specific parameters */
 
-    num_insts = opal_cmd_line_get_ninsts(cmd, "mca");
+    num_insts = opal_cmd_line_get_ninsts(cmd, OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
-                                              opal_cmd_line_get_param(cmd, "mca", i, 1),
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0), 
+                                              opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 1),
                                               &params, &values))) {
             return rc;
         }
@@ -114,11 +114,11 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
     /* Handle global parameters */
 
-    num_insts = opal_cmd_line_get_ninsts(cmd, "gmca");
+    num_insts = opal_cmd_line_get_ninsts(cmd, "g"OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "gmca", i, 0), 
-                                              opal_cmd_line_get_param(cmd, "gmca", i, 1),
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 0), 
+                                              opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 1),
                                               &params, &values))) {
             return rc;
         }
@@ -191,7 +191,7 @@ static void add_to_env(char **params, char **values, char ***env)
     char *name;
 
     /* Loop through all the args that we've gotten and make env
-       vars of the form OMPI_MCA_*=value. */
+       vars of the form OPAL_MCA_PREFIX*=value. */
 
     for (i = 0; NULL != params && NULL != params[i]; ++i) {
         (void) mca_base_var_env_name (params[i], &name);
@@ -206,8 +206,8 @@ void mca_base_cmd_line_wrap_args(char **args)
     char *tstr;
 
     for (i=0; NULL != args && NULL != args[i]; i++) {
-        if (0 == strcmp(args[i], "-mca") ||
-            0 == strcmp(args[i], "--mca")) {
+        if (0 == strcmp(args[i], "-"OPAL_MCA_CMD_LINE_ID) ||
+            0 == strcmp(args[i], "--"OPAL_MCA_CMD_LINE_ID)) {
             if (NULL == args[i+1] || NULL == args[i+2]) {
                 /* this should be impossible as the error would
                  * have been detected well before here, but just

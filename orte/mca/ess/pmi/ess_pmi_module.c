@@ -212,7 +212,7 @@ static int rte_init(void)
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
-    asprintf(&ev1, "OMPI_MCA_orte_ess_num_procs=%d", orte_process_info.num_procs);
+    asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
     putenv(ev1);
     asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
     putenv(ev2);
@@ -401,9 +401,9 @@ static int rte_finalize(void)
             /* remove the envars that we pushed into environ
              * so we leave that structure intact
              */
-            unsetenv("OMPI_MCA_routed");
-            unsetenv("OMPI_MCA_orte_precondition_transports");
-            unsetenv("OMPI_MCA_orte_ess_num_procs");
+            unsetenv(OPAL_MCA_PREFIX"routed");
+            unsetenv(OPAL_MCA_PREFIX"orte_precondition_transports");
+            unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs");
             unsetenv("OMPI_APP_CTX_NUM_PROCS");
             /* use the default app procedure to finish */
             if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {

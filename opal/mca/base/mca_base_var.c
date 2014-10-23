@@ -52,7 +52,7 @@
  * local variables
  */
 static opal_pointer_array_t mca_base_vars;
-static const char *mca_prefix = "OMPI_MCA_";
+static const char *mca_prefix = OPAL_MCA_PREFIX;
 static char *home = NULL;
 static char *cwd  = NULL;
 bool mca_base_var_initialized = false;

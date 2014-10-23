@@ -289,12 +289,12 @@ int orte_plm_base_fork_hnp(void)
     }
     
     /* indicate that it must use the novm state machine */
-    opal_argv_append(&argc, &argv, "-mca");
+    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(&argc, &argv, "state_novm_select");
     opal_argv_append(&argc, &argv, "1");
 
     /* pass it a jobid to match my job family */
-    opal_argv_append(&argc, &argv, "-mca");
+    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(&argc, &argv, "ess_base_jobid");
     jobid = ORTE_DAEMON_JOBID(ORTE_PROC_MY_NAME->jobid);
     if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&param, jobid))) {
