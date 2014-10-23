@@ -1573,7 +1573,7 @@ usnic_send(
             /* only briefly, we will set it back to 1 before release */
             sseg->ss_send_desc.num_sge = 2;
             sseg->ss_base.us_sg_entry[1].addr =
-                frag->sf_base.uf_src_seg[1].seg_addr.lval,
+                frag->sf_base.uf_src_seg[1].seg_addr.lval;
             sseg->ss_base.us_sg_entry[1].length =
                 frag->sf_base.uf_src_seg[1].seg_len;
         } else {
