@@ -1,8 +1,9 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Bsend_init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Bsend_init\fP \- Builds a handle for a buffered send.
@@ -33,21 +34,11 @@ Prequest MPI.COMM_WORLD.Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const 
 
 .fi
-.SH Java Syntax
-.nf
-#include <mpi.h>
-Prequest Comm::Bsend_init(Object \fIbuf\fP, int \fIoffset\fP, int \fIcount\fP,
-	                  MPI.Datatype \fIdatatype\fP, int \fIdest\fP, int \fItag\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 buf
 Initial address of send buffer (choice).
-.TP 1i
-offset
-Offset of starting point in buffer (Java-only).
 .TP 1i
 count
 Number of elements sent (integer).

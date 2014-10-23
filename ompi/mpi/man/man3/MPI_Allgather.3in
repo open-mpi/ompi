@@ -1,8 +1,9 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Allgather, MPI_Iallgather\fP \- Gathers data from all processes and distributes it to all processes
@@ -45,21 +46,11 @@ void MPI::Comm::Allgather(const void* \fIsendbuf\fP, int \fIsendcount\fP, const
 	const MPI::Datatype& \fIrecvtype\fP) const = 0
 
 .fi
-.SH Java Syntax
-.nf
-import mpi.*;
-void MPI.COMM_WORLD.Allgather(Object \fIsendbuf\fP, int \fIsendoffset\fP, int \fIsendcount\fP, MPI.Datatype \fIsendtype\fP,
-                              Object \fIrecvbuf\fP, int \fIrecvoffset\fP, int \fIrecvcount\fP, Datatype \fIrecvtype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 sendbuf    
 Starting address of send buffer (choice).
-.TP 1i
-sendoffset    
-Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1i
 sendcount    
 Number of elements in send buffer (integer).
@@ -69,9 +60,6 @@ Datatype of send buffer elements (handle).
 .TP 1i
 recvbuf    
 Starting address of recv buffer (choice).
-.TP 1i
-recvoffset    
-Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1i
 recvcount    
 Number of elements received from any process (integer).
