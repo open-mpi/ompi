@@ -13,6 +13,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,6 +101,7 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
             /* Ignore any errors -- what are we going to do about
                them? */
             mca_common_sm_fini(c->sm_bootstrap_meta);
+            OBJ_RELEASE(c->sm_bootstrap_meta);
         }
         free(c);
     }
@@ -611,6 +614,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
         mca_common_sm_init_group(comm->c_local_group, size, fullpath,
                                  sizeof(mca_common_sm_seg_header_t),
                                  getpagesize());
+    free(fullpath);
     if (NULL == data->sm_bootstrap_meta) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed", 
