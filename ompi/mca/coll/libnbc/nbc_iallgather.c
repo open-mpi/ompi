@@ -98,7 +98,7 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
         res = NBC_Sched_recv(rbuf, false, recvcount, recvtype, r, schedule);
         if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
         /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = NBC_Sched_send(sbuf, false, recvcount, recvtype, r, schedule);
+        res = NBC_Sched_send(sbuf, false, sendcount, sendtype, r, schedule);
         if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
       }
     }
@@ -174,7 +174,7 @@ int ompi_coll_libnbc_iallgather_inter(void* sendbuf, int sendcount, MPI_Datatype
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 
     /* send to rank r */
-    res = NBC_Sched_send(sendbuf, false, recvcount, recvtype, r, schedule);
+    res = NBC_Sched_send(sendbuf, false, sendcount, sendtype, r, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
   }
 
