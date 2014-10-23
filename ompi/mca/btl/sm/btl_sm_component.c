@@ -912,7 +912,7 @@ mca_btl_sm_component_init(int *num_btls,
         mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
         opal_show_help("help-mpi-btl-sm.txt",
                        "CMA requested but not available",
-                       true, opal_process_info.nodename);
+                       true, ompi_process_info.nodename);
         return NULL;
     }
 #endif /* OMPI_BTL_SM_HAVE_CMA */
@@ -946,7 +946,7 @@ mca_btl_sm_component_init(int *num_btls,
     if (mca_btl_sm_component.use_knem > 0) {
         opal_show_help("help-mpi-btl-sm.txt",
                        "knem requested but not available",
-                       true, opal_process_info.nodename);
+                       true, ompi_process_info.nodename);
         return NULL;
     } else if (0 == mca_btl_sm_component.use_cma) {
         /* disable get when not using knem or cma */
