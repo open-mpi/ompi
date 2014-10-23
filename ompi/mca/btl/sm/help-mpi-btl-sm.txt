@@ -90,3 +90,25 @@ parameter to 0 to run without /dev/knem support.
   Local host:  %s
   System call: %s
   Errno:       %d (%s)
+#
+[knem requested but not available]
+WARNING: Linux kernel Knem support was requested via the
+mca_btl_sm_use_knem MCA parameter, but Knem support was either not
+compiled into this Open MPI installation, or Knem support was unable
+to be activated in this process.
+
+The shared memory BTL will now deactivate itself, likely resulting in
+lower performance for on-node communication.
+
+  Local host: %s
+#
+[CMA requested but not available]
+WARNING: Linux kernel CMA support was requested via the
+mca_btl_sm_use_cma MCA parameter, but CMA support was either not
+compiled into this Open MPI installation, or CMA support was unable
+to be activated in this process.
+
+The shared memory BTL will now deactivate itself, likely resulting in
+lower performance for on-node communication.
+
+  Local host: %s

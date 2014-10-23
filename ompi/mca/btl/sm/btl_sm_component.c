@@ -142,10 +142,23 @@ static inline unsigned int mca_btl_sm_param_register_uint(
     return *storage;
 }
 
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+static void mca_btl_sm_dummy_get (void)
+{
+    /* If a backtrace ends at this function something has gone wrong with
+     * the btl bootstrapping. Check that the btl_get function was set to
+     * something reasonable. */
+    abort ();
+}
+#endif
+
 static int mca_btl_sm_component_verify(void) {
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     if (mca_btl_sm_component.use_knem || mca_btl_sm_component.use_cma) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
+        /* set a dummy value for btl_get to prevent mca_btl_base_param_verify from
+         * unsetting the MCA_BTL_FLAGS_GET flags. */
+        mca_btl_sm.super.btl_get = (mca_btl_base_module_get_fn_t) mca_btl_sm_dummy_get;
     }
 
     if (mca_btl_sm_component.use_knem && mca_btl_sm_component.use_cma) {
@@ -892,6 +905,16 @@ mca_btl_sm_component_init(int *num_btls,
            so no problems with accidentally overwriting this set earlier */
         mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
     }
+#else
+    /* If the user explicitly asked for CMA and we can't provide it
+     *   error */
+    if (mca_btl_sm_component.use_cma > 0) {
+        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
+        opal_show_help("help-mpi-btl-sm.txt",
+                       "CMA requested but not available",
+                       true, opal_process_info.nodename);
+        return NULL;
+    }
 #endif /* OMPI_BTL_SM_HAVE_CMA */
 
 #if OPAL_CUDA_SUPPORT
@@ -921,7 +944,14 @@ mca_btl_sm_component_init(int *num_btls,
     /* If "use_knem" is positive, then it's an error if knem support
        is not available -- deactivate the sm btl. */
     if (mca_btl_sm_component.use_knem > 0) {
+        opal_show_help("help-mpi-btl-sm.txt",
+                       "knem requested but not available",
+                       true, opal_process_info.nodename);
         return NULL;
+    } else if (0 == mca_btl_sm_component.use_cma) {
+        /* disable get when not using knem or cma */
+        mca_btl_sm.super.btl_get = NULL;
+        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
     }
 
     /* Otherwise, use_knem was 0 (and we didn't get here) or use_knem
