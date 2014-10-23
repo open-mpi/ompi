@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,7 +144,7 @@ static inline unsigned int mca_btl_sm_param_register_uint(
     return *storage;
 }
 
-#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
 static void mca_btl_sm_dummy_get (void)
 {
     /* If a backtrace ends at this function something has gone wrong with
