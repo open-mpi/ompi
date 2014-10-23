@@ -359,14 +359,20 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     /* ensure our routing plan is up-to-date */
     orte_routed.update_routing_plan();
     
-    /*** RHC: USER REQUEST TO TIE-OFF STDXXX TO /DEV/NULL
-     *** WILL BE SENT IN LAUNCH MESSAGE AS PART OF CONTROLS FIELD.
-     *** SO IF USER WANTS NO IO BEING SENT AROUND, THE ORTEDS
-     *** WILL TIE IT OFF AND THE IOF WILL NEVER RECEIVE ANYTHING.
-     *** THE IOF AUTOMATICALLY KNOWS TO OUTPUT ANY STDXXX
-     *** DATA IT -DOES- RECEIVE TO THE APPROPRIATE FD, SO THERE
-     *** IS NOTHING WE NEED DO HERE TO SETUP IOF
-     ***/
+    /* If this job is being started by me, then there is nothing
+     * further we need to do as any user directives (e.g., to tie
+     * off IO to /dev/null) will have been included in the launch
+     * message and the IOF knows how to handle any default situation.
+     * However, if this is a proxy spawn request, then the spawner
+     * might be a tool that wants IO forwarded to it. If that's the
+     * situation, then the job object will contain an attribute
+     * indicating that request */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FWDIO_TO_TOOL, NULL, OPAL_BOOL)) {
+        /* send a message to our IOF containing the requested pull */
+        ORTE_IOF_PROXY_PULL(jdata, &jdata->originator);
+        /* the tool will PUSH its stdin, so nothing we need to do here
+         * about stdin */
+    }
     
 #if OPAL_ENABLE_FT_CR == 1
     /*

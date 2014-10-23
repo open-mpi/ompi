@@ -201,6 +201,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "JOB-INIT-BAR-ID";
     case ORTE_JOB_FINI_BAR_ID:
         return "JOB-FINI-BAR-ID";
+    case ORTE_JOB_FWDIO_TO_TOOL:
+        return "JOB-FWD-IO-TO-TOOL";
 
     case ORTE_PROC_NOBARRIER:
         return "PROC-NOBARRIER";

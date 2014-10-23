@@ -127,6 +127,31 @@
 
 BEGIN_C_DECLS
 
+/* define a macro for requesting a proxy PULL of IO on
+ * behalf of a tool that had the HNP spawn a job */
+#define ORTE_IOF_PROXY_PULL(a, b)                                       \
+    do {                                                                \
+        opal_buffer_t *buf;                                             \
+        orte_iof_tag_t tag;                                             \
+        orte_process_name_t nm;                                         \
+                                                                        \
+        buf = OBJ_NEW(opal_buffer_t);                                   \
+                                                                        \
+        /* setup the tag to pull from HNP */                            \
+        tag = ORTE_IOF_STDOUTALL | ORTE_IOF_PULL;                       \
+                                                                        \
+        opal_dss.pack(buf, &tag, 1, ORTE_IOF_TAG);                      \
+        /* pack the name of the source we want to pull */               \
+        nm.jobid = (b)->jobid;                                          \
+        nm.vpid = ORTE_VPID_WILDCARD;                                   \
+        opal_dss.pack(buf, &nm, 1, ORTE_NAME);                          \
+                                                                        \
+        /* send the buffer to the HNP */                                \
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,                  \
+                                ORTE_RML_TAG_IOF_HNP,                   \
+                                orte_rml_send_callback, NULL);          \
+    } while(0);
+
 /* Initialize the selected module */
 typedef int (*orte_iof_base_init_fn_t)(void);
 
