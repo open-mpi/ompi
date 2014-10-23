@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -158,7 +159,13 @@ static int tool_pull(const orte_process_name_t* src_name,
         OBJ_RELEASE(buf);
         return rc;
     }
-    
+    /* pack our name as the sink */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+
     /* send the buffer to the correct HNP */
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
     orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,

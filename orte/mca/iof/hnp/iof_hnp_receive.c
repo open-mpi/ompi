@@ -55,7 +55,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                        void* cbdata)
 {
-    orte_process_name_t origin;
+    orte_process_name_t origin, requestor;
     unsigned char data[ORTE_IOF_BASE_MSG_MAX];
     orte_iof_tag_t stream;
     int32_t count, numbytes;
@@ -99,31 +99,39 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     
     /* check to see if a tool has requested something */
     if (ORTE_IOF_PULL & stream) {
+        /* get name of the process wishing to be the sink */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &requestor, &count, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEAN_RETURN;
+        }
+    
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received pull cmd from remote tool %s for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(sender),
+                             ORTE_NAME_PRINT(&requestor),
                              ORTE_NAME_PRINT(&origin)));
+
         /* a tool is requesting that we send it a copy of the specified stream(s)
          * from the specified process(es), so create a sink for it
          */
         if (ORTE_IOF_STDOUT & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDOUT,
                                  NULL, &mca_iof_hnp_component.sinks);
-            sink->daemon.jobid = sender->jobid;
-            sink->daemon.vpid = sender->vpid;
+            sink->daemon.jobid = requestor.jobid;
+            sink->daemon.vpid = requestor.vpid;
         }
         if (ORTE_IOF_STDERR & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR,
                                  NULL, &mca_iof_hnp_component.sinks);
-            sink->daemon.jobid = sender->jobid;
-            sink->daemon.vpid = sender->vpid;
+            sink->daemon.jobid = requestor.jobid;
+            sink->daemon.vpid = requestor.vpid;
         }
         if (ORTE_IOF_STDDIAG & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG,
                                  NULL, &mca_iof_hnp_component.sinks);
-            sink->daemon.jobid = sender->jobid;
-            sink->daemon.vpid = sender->vpid;
+            sink->daemon.jobid = requestor.jobid;
+            sink->daemon.vpid = requestor.vpid;
         }
         goto CLEAN_RETURN;
     }
