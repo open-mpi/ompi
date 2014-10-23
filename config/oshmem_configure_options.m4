@@ -97,6 +97,10 @@ fi
 AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
     [Whether we want to check OSHMEM parameters always or never])
 
+#
+# check for on_exit
+#
+AC_CHECK_FUNCS([on_exit])
 
 #
 #  OSHMEM profiling support

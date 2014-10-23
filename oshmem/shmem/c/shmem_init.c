@@ -29,10 +29,17 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+extern int oshmem_shmem_globalexit_status;
+
 void start_pes(int npes)
 {
     /* spec says that npes are ignored for now */
     shmem_init();
+}
+
+static void shmem_onexit(int exitcode, void *arg)
+{
+    oshmem_shmem_globalexit_status = exitcode;
 }
 
 void shmem_init(void)
@@ -56,5 +63,8 @@ void shmem_init(void)
     }
 
     OPAL_CR_INIT_LIBRARY();
+#if HAVE_ON_EXIT
+    on_exit(shmem_onexit, NULL);
+#endif
 }
 
