@@ -6,6 +6,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -435,7 +437,7 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s2_nlranks; i++) {
-            s2_pname.vid = i;
+            s2_pname.vid = s2_lranks[i];
             rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&s2_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
