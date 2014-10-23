@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,7 +45,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "valgrind/memcheck.h"
 ]],
-                     [[char buffer = 0xff;
+                     [[char buffer = 0x0f;
                        VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]])],
                      [AC_MSG_RESULT([yes])
                       opal_memchecker_valgrind_happy=yes],

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -464,7 +464,11 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
     opal_object_t *object;
     assert(cls->cls_sizeof >= sizeof(opal_object_t));
 
+#if OPAL_WANT_MEMCHECKER
+    object = (opal_object_t *) calloc(1, cls->cls_sizeof);
+#else
     object = (opal_object_t *) malloc(cls->cls_sizeof);
+#endif
     if (0 == cls->cls_initialized) {
         opal_class_initialize(cls);
     }
