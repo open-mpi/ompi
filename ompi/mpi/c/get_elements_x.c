@@ -53,7 +53,7 @@ int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Coun
                     * Before checking the complete status, we need to reset the definedness
                     * of the MPI_ERROR-field (single-completion calls wait/test).
                     */
-                   opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
+                   opal_memchecker_base_mem_defined((void*)&status->MPI_ERROR, sizeof(int));
                    memchecker_status(status);
                    memchecker_datatype(datatype);
                }

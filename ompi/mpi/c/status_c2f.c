@@ -51,7 +51,7 @@ int MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status)
              * Before checking the complete status, we need to reset the definedness
              * of the MPI_ERROR-field (single-completion calls wait/test).
              */
-            opal_memchecker_base_mem_defined(&c_status->MPI_ERROR, sizeof(int));
+            opal_memchecker_base_mem_defined((void*)&c_status->MPI_ERROR, sizeof(int));
             memchecker_status(c_status);
         }
     );
