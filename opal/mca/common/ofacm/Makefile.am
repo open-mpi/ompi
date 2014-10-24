@@ -52,8 +52,7 @@ lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_LDFLAGS = \
         -version-info $(libmca_common_ofacm_so_version) \
         $(common_ofacm_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_LIBADD = $(common_ofacm_LIBS)
-lib@OPAL_LIB_PREFIX@mca_common_ofacm_noinst_la_SOURCES = \
-        $(lib@OPAL_LIB_PREFIX@mca_common_ofacm_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_ofacm_noinst_la_SOURCES = $(headers) $(sources)
 
 # Conditionally install the header files
 

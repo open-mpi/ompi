@@ -85,8 +85,7 @@ lib@OPAL_LIB_PREFIX@mca_common_cuda_la_LDFLAGS = \
         -version-info $(libmca_common_cuda_so_version)
 lib@OPAL_LIB_PREFIX@mca_common_cuda_la_LIBADD = $(common_cuda_LIBS)
 
-lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_SOURCES = \
-        $(lib@OPAL_LIB_PREFIX@mca_common_cuda_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_LDFLAGS = $(common_cuda_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_LIBADD = $(common_cuda_LIBS)
 

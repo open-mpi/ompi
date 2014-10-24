@@ -52,8 +52,7 @@ lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LDFLAGS =  \
         -version-info $(libmca_common_verbs_so_version) \
         $(common_verbs_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LIBADD = $(common_verbs_LIBS)
-lib@OPAL_LIB_PREFIX@mca_common_verbs_noinst_la_SOURCES = \
-        $(lib@OPAL_LIB_PREFIX@mca_common_verbs_la_SOURCES)
+lib@OPAL_LIB_PREFIX@mca_common_verbs_noinst_la_SOURCES = $(headers) $(sources)
 
 # Conditionally install the header files
 

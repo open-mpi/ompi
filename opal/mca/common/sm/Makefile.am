@@ -86,7 +86,7 @@ lib@OPAL_LIB_PREFIX@mca_common_sm_la_SOURCES = \
 lib@OPAL_LIB_PREFIX@mca_common_sm_la_LDFLAGS = \
         -version-info $(libmca_common_sm_so_version)
 lib@OPAL_LIB_PREFIX@mca_common_sm_noinst_la_SOURCES = \
-        $(lib@OPAL_LIB_PREFIX@mca_common_sm_la_SOURCES)
+        $(headers) $(sources)
 
 # Conditionally install the header files
 
