@@ -10,6 +10,7 @@
 #include "opal_config.h"
 
 #include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "opal/align.h"
