@@ -14,6 +14,8 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -67,7 +69,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
           [AC_MSG_RESULT([found])
            LDFLAGS="$LDFLAGS -L$1/lib64"
            AC_CHECK_LIB([$2], [$3],
-                        [lib_happy=yes.
+                        [lib_happy=yes
                          $2_LDFLAGS="-L$1/lib64"
                          $2_rpath="$1/lib64"],
                         [lib_happy=no])],
