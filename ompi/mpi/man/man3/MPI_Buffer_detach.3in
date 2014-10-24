@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright 2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Buffer_detach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Buffer_detach\fP \- Removes an existing buffer (for use in MPI_Bsend, etc.)
@@ -25,12 +27,6 @@ MPI_BUFFER_DETACH(\fIBUF\fP,\fI SIZE\fP, \fIIERROR\fP)
 .nf
 #include <mpi.h>
 int Detach_buffer(void*& \fIbuffer\fP)
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-byte[] MPI.Buffer_detach()
 
 .fi
 .SH OUTPUT PARAMETERS

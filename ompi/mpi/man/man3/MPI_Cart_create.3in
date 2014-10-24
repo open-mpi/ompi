@@ -1,8 +1,9 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Cart_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Cart_create\fP \- Makes a new communicator to which Cartesian topology information has been attached.
@@ -30,12 +31,6 @@ MPI_CART_CREATE(\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP,\fI PERIODS\fP,\fI REORD
 #include <mpi.h>
 Cartcomm Intracomm.Create_cart(int[] \fIndims\fP, int[] \fIdims\fP[], 
 	const bool \fIperiods\fP[], bool \fIreorder\fP) const
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-Cartcomm Intracomm.Create_cart(int \fIdims\fP[], const bool \fIperiods\fP[], bool \fIreorder\fP)
 
 .fi
 .SH INPUT PARAMETERS

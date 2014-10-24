@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
+.\" $COPYRIGHT$
 .TH MPI_Buffer_attach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Buffer_attach\fP \- Attaches a user-defined buffer for sending.
@@ -25,12 +27,6 @@ MPI_BUFFER_ATTACH(\fIBUF\fP,\fI SIZE\fP, \fIIERROR\fP)
 .nf
 #include <mpi.h>
 void Attach_buffer(void* \fIbuffer\fP, int \fIsize\fP)
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-void MPI.Buffer_attach(byte[] \fIbuffer\fP)
 
 .fi
 .SH INPUT PARAMETERS

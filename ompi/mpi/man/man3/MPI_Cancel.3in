@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Cancel 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Cancel\fP \- Cancels a communication request.
@@ -24,12 +26,6 @@ MPI_CANCEL(\fIREQUEST\fP, \fIIERROR\fP)
 .nf
 #include <mpi.h>
 void Request::Cancel() const
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-void MPI.Request.Cancel()
 
 .fi
 .SH INPUT PARAMETER

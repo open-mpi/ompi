@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright 2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Cart_get 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Cart_get\fP \-  Retrieves Cartesian topology information associated with a communicator.
@@ -26,13 +28,6 @@ MPI_CART_GET(\fICOMM\fP, \fIMAXDIMS\fP, \fIDIMS\fP, \fIPERIODS\fP, \fICOORDS\fP,
 .nf
 #include <mpi.h>
 void Cartcomm::Get_topo(int \fImaxdims\fP, int \fIdims\fP[], 
-	bool \fIperiods\fP[], int \fIcoords\fP[]) const 
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-void Cartcomm.Get_topo(int \fImaxdims\fP, int \fIdims\fP[], 
 	bool \fIperiods\fP[], int \fIcoords\fP[]) const 
 
 .fi

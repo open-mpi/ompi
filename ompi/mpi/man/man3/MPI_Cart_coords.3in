@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Cart_coords 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Cart_coords\fP \- Determines process coords in Cartesian topology given rank in group.
@@ -26,12 +28,6 @@ MPI_CART_COORDS(\fICOMM\fP,\fI RANK\fP,\fI MAXDIMS\fP,\fI COORDS\fP, \fIIERROR\f
 #include <mpi.h>
 void Cartcomm::Get_coords(int \fIrank\fP, int \fImaxdims\fP, 
 	int \fIcoords\fP[]) const
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-int[] Cartcomm.Coords(int \fIrank\fP)
 
 .fi
 .SH INPUT PARAMETERS

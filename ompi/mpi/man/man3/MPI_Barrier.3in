@@ -1,6 +1,8 @@
+.\" -*- nroff -*-
 .\" Copyright 2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Barrier 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Barrier, MPI_Ibcarrier\fP \- Synchronization between MPI processes in a group
@@ -29,14 +31,6 @@ MPI_IBARRIER(\fICOMM\fP,\fI IERROR\fP)
 .nf
 import mpi.*;
 void MPI.COMM_WORLD.Barrier()
-
-.fi
-.SH Java Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Barrier() const = 0
-
-void MPI::Comm::Ibarrier() const = 0
 
 .fi
 .SH INPUT PARAMETER

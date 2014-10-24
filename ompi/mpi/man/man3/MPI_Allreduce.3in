@@ -1,8 +1,9 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Allreduce 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Allreduce, MPI_Iallreduce\fP \- Combines values from all processes and distributes the result back to all processes.
@@ -40,28 +41,14 @@ void MPI::Comm::Allreduce(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
 	MPI::Op& \fIop\fP) const=0
 
 .fi
-.SH Java Syntax
-.nf
-import mpi.*;
-void MPI.COMM_WORLD.Allreduce(Object \fIsendbuf\fP, int \fIsendoffset\fP,
-                              Object \fIrecvbuf\fP, int \fIrecvoffset\fP,
-                              int \fIcount\fP, MPI.Datatype \fIsendtype\fP,
-                              MPI.Op \fIop\fP)
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 sendbuf
 Starting address of send buffer (choice).
 .TP 1i
-sendoffset    
-Number of elements to skip at beginning of buffer (integer, Java-only).
-.TP 1i
 count
 Number of elements in send buffer (integer).
-.TP 1i
-recvoffset    
-Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1i
 datatype
 Datatype of elements of send buffer (handle).

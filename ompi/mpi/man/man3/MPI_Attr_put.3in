@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Attr_put 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Attr_put\fP \- Stores attribute value associated with a key -- use of this routine is deprecated.
@@ -19,12 +21,6 @@ INCLUDE 'mpif.h'
 MPI_ATTR_PUT(\fICOMM\fP,\fI KEYVAL\fP, \fIATTRIBUTE_VAL\fP,\fI IERROR\fP)
 	INTEGER	\fICOMM\fP,\fI KEYVAL\fP,\fI ATTRIBUTE_VAL\fP,\fI IERROR
 
-
-.fi
-.SH Java Syntax
-.nf
-import mpi.*;
-int MPI.COMM_WORLD.Attr_put(MPI.\fIkeyval\fP, int \fIattribute_val\fP)
 
 .fi
 .SH INPUT PARAMETERS
