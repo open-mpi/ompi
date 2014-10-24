@@ -1407,6 +1407,19 @@ subroutine pompi_type_set_name_f(type,type_name,ierror,type_name_len) &
    INTEGER, VALUE, INTENT(IN) :: type_name_len
 end subroutine pompi_type_set_name_f
 
+subroutine pompi_win_allocate_f(size, disp_unit, info, comm, &
+      baseptr, win, ierror) BIND(C, name="ompi_win_allocate_f")
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+  INTEGER, INTENT(IN) ::  disp_unit
+  INTEGER, INTENT(IN) ::  info
+  INTEGER, INTENT(IN) ::  comm
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  INTEGER, INTENT(OUT) ::  win
+  INTEGER, INTENT(OUT) ::  ierror
+end subroutine pompi_win_allocate_f
+
 subroutine pompi_win_allocate_shared_f(size, disp_unit, info, comm, &
       baseptr, win, ierror) BIND(C, name="ompi_win_allocate_shared_f")
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR

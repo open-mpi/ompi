@@ -17,6 +17,35 @@
 ! below.
 !
 
+interface MPI_Win_allocate
+
+subroutine MPI_Win_allocate(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  include 'mpif-config.h'
+  integer(KIND=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: disp_unit
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_allocate
+
+! Only include the 2nd interface if we have ISO_C_BINDING / TYPE(C_PTR)
+#if OMPI_FORTRAN_HAVE_ISO_C_BINDING
+subroutine MPI_Win_allocate_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine MPI_Win_allocate_cptr
+#endif
+
+end interface
+
+
 interface MPI_Win_allocate_shared
 
 subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
