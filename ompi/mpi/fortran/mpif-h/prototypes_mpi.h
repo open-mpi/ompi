@@ -401,6 +401,8 @@ PN2(void, MPI_Waitall, mpi_waitall, MPI_WAITALL, (MPI_Fint *count, MPI_Fint *arr
 PN2(void, MPI_Waitany, mpi_waitany, MPI_WAITANY, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Wait, mpi_wait, MPI_WAIT, (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Waitsome, mpi_waitsome, MPI_WAITSOME, (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr));
+PN2(void, MPI_Win_allocate, mpi_win_allocate, MPI_WIN_ALLOCATE, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
+PN2(void, MPI_Win_allocate_cptr, mpi_win_allocate_cptr, MPI_WIN_ALLOCATE_CPTR, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_allocate_shared, mpi_win_allocate_shared, MPI_WIN_ALLOCATE_SHARED, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_allocate_shared_cptr, mpi_win_allocate_shared_cptr, MPI_WIN_ALLOCATE_SHARED_CPTR, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_call_errhandler, mpi_win_call_errhandler, MPI_WIN_CALL_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr));

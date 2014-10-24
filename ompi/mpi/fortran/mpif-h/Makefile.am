@@ -386,6 +386,7 @@ libmpi_mpifh_la_SOURCES += \
         rput_f.c \
         compare_and_swap_f.c \
         fetch_and_op_f.c \
+        win_allocate_f.c \
         win_allocate_shared_f.c \
         win_call_errhandler_f.c \
         win_complete_f.c \
