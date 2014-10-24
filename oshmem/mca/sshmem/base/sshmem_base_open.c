@@ -40,6 +40,8 @@ void *mca_sshmem_base_start_address = (void*)0;
 void* mca_sshmem_base_start_address = (void*)0xFF000000;
 #endif
 
+char * mca_sshmem_base_backing_file_dir = NULL;
+
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
  * Register some sshmem-wide MCA params
@@ -65,6 +67,20 @@ mca_sshmem_base_register (mca_base_register_flag_t flags)
                                          "start_address",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
+    mca_sshmem_base_backing_file_dir = "/dev/shm";
+    index = mca_base_var_register("oshmem",
+                                 "sshmem",
+                                 "base",
+                                 "backing_file_dir",
+                                 "Specifies where backing files will be created when "
+                                 "mmap is used and shmem_mmap_anonymous set to 0.",
+                                 MCA_BASE_VAR_TYPE_STRING,
+                                 NULL,
+                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_sshmem_base_backing_file_dir);
     return OSHMEM_SUCCESS;
 }
 
