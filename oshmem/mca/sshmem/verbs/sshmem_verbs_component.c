@@ -312,12 +312,12 @@ verbs_register(void)
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    mca_sshmem_verbs_component.has_shared_mr = 2;
+    mca_sshmem_verbs_component.has_shared_mr = -1;
     index = mca_base_component_var_register (&mca_sshmem_verbs_component.super.base_version,
                                            "shared_mr", "Shared memory region usage "
-                                           "[0 - off, 1 - on, 2 - auto] (default: 2)", MCA_BASE_VAR_TYPE_INT,
+                                           "[0 - off, 1 - on, -1 - auto] (default: -1)", MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_3,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_ALL_EQ,
                                            &mca_sshmem_verbs_component.has_shared_mr);
 

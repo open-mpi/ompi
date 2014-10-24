@@ -264,7 +264,9 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
                     ds_buf->seg_size,
                     PROT_READ | PROT_WRITE,
                     MAP_SHARED |
+#if defined(MAP_ANONYMOUS)
                     MAP_ANONYMOUS |
+#endif
                     MAP_FIXED,
                     -1,
                     0);

@@ -188,8 +188,8 @@ segment_create(map_segment_t *ds_buf,
      */
     flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;
 #if defined (SHM_HUGETLB)
-    flags |= (mca_sshmem_sysv_component.use_hp ? SHM_HUGETLB : 0);
-    size = ((size + oshmem_gethugepagesize() - 1) / oshmem_gethugepagesize()) * oshmem_gethugepagesize();
+    flags |= ((0 != mca_sshmem_sysv_component.use_hp) ? SHM_HUGETLB : 0);
+    size = ((size + sshmem_sysv_gethugepagesize() - 1) / sshmem_sysv_gethugepagesize()) * sshmem_sysv_gethugepagesize();
 #endif
 
     /* Create a new shared memory segment and save the shmid. */
@@ -295,7 +295,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
         shmctl(ds_buf->seg_id, IPC_RMID, NULL );
     }
 
-    if (mca_sshmem_sysv_component.use_hp > 0) {
+    if (mca_sshmem_sysv_component.use_hp != 0) {
         /**
          *  Workaround kernel panic when detaching huge pages from user space simultanously from several processes
          *  dont detach here instead let kernel do it during process cleanup
@@ -336,4 +336,37 @@ segment_unlink(map_segment_t *ds_buf)
 
     return OSHMEM_SUCCESS;
 }
+
+/*
+ * Get current huge page size
+ *   
+ */
+size_t sshmem_sysv_gethugepagesize(void)
+{
+    static size_t huge_page_size = 0;
+    char buf[256];
+    int size_kb;
+    FILE *f;
+
+    /* Cache the huge page size value */
+    if (huge_page_size == 0) {
+        f = fopen("/proc/meminfo", "r");
+        if (f != NULL) {
+            while (fgets(buf, sizeof(buf), f)) {
+                if (sscanf(buf, "Hugepagesize: %d kB", &size_kb) == 1) {
+                    huge_page_size = size_kb * 1024L;
+                    break;
+                }
+            }
+            fclose(f);
+        }
+
+        if (huge_page_size == 0) {
+            huge_page_size = 2 * 1024L *1024L;
+        }
+    }
+
+    return huge_page_size;
+}
+
 
