@@ -325,6 +325,7 @@ mpi_api_files = \
         waitany_f08.F90 \
         wait_f08.F90 \
         waitsome_f08.F90 \
+        win_allocate_f08.F90 \
         win_allocate_shared_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
@@ -671,6 +672,7 @@ pmpi_api_files = \
         profile/pwaitany_f08.F90 \
         profile/pwait_f08.F90 \
         profile/pwaitsome_f08.F90 \
+        profile/pwin_allocate_f08.F90 \
         profile/pwin_allocate_shared_f08.F90 \
         profile/pwin_call_errhandler_f08.F90 \
         profile/pwin_complete_f08.F90 \

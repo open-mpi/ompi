@@ -344,6 +344,8 @@
 #define ompi_waitany_f pompi_waitany_f
 #define ompi_wait_f pompi_wait_f
 #define ompi_waitsome_f pompi_waitsome_f
+#define ompi_win_allocate_f pompi_win_allocate_f
+#define ompi_win_allocate_cptr_f pompi_win_allocate_cptr_f
 #define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
 #define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
 #define ompi_win_call_errhandler_f pompi_win_call_errhandler_f

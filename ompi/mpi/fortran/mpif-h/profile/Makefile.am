@@ -314,6 +314,7 @@ linked_files = \
         prput_f.c \
         pcompare_and_swap_f.c \
         pfetch_and_op_f.c \
+        pwin_allocate_f.c \
         pwin_allocate_shared_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
