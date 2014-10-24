@@ -130,29 +130,29 @@ struct ompi_osc_rdma_module_t {
 
     /** Nmber of communication fragments started for this epoch, by
         peer.  Not in peer data to make fence more manageable. */
-    int32_t *epoch_outgoing_frag_count;
+    uint32_t *epoch_outgoing_frag_count;
 
     /** List of full communication buffers queued to be sent.  Should
         be maintained in order (at least in per-target order). */
     opal_list_t queued_frags;
 
     /** cyclic counter for a unique tage for long messages. */
-    int tag_counter;
+    unsigned int tag_counter;
 
     /* Number of outgoing fragments that have completed since the
        begining of time */
-    int32_t outgoing_frag_count;
+    uint32_t outgoing_frag_count;
     /* Next outgoing fragment count at which we want a signal on cond */
-    int32_t outgoing_frag_signal_count;
+    uint32_t outgoing_frag_signal_count;
 
     /* Number of incoming fragments that have completed since the
        begining of time */
-    int32_t active_incoming_frag_count;
+    uint32_t active_incoming_frag_count;
     /* Next incoming buffer count at which we want a signal on cond */
-    int32_t active_incoming_frag_signal_count;
+    uint32_t active_incoming_frag_signal_count;
 
-    int32_t *passive_incoming_frag_count;
-    int32_t *passive_incoming_frag_signal_count;
+    uint32_t *passive_incoming_frag_count;
+    uint32_t *passive_incoming_frag_signal_count;
 
     /* Number of flush ack requests send since beginning of time */
     uint64_t flush_ack_requested_count;
@@ -423,9 +423,9 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
 {
     if (MPI_PROC_NULL == source) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "mark_incoming_completion marking active incoming complete. count = %d",
-                             (int) module->active_incoming_frag_count + 1));
-        OPAL_THREAD_ADD32(&module->active_incoming_frag_count, 1);
+                             "mark_incoming_completion marking active incoming complete. count = %d. signal = %d",
+                             (int) module->active_incoming_frag_count + 1, module->active_incoming_frag_signal_count));
+        OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_count, 1);
         if (module->active_incoming_frag_count >= module->active_incoming_frag_signal_count) {
             opal_condition_broadcast(&module->cond);
         }
@@ -433,7 +433,7 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "mark_incoming_completion marking passive incoming complete. source = %d, count = %d",
                              source, (int) module->passive_incoming_frag_count[source] + 1));
-        OPAL_THREAD_ADD32(module->passive_incoming_frag_count + source, 1);
+        OPAL_THREAD_ADD32((int32_t *) module->passive_incoming_frag_count + source, 1);
         if (module->passive_incoming_frag_count[source] >= module->passive_incoming_frag_signal_count[source]) {
             opal_condition_broadcast(&module->cond);
         }
@@ -455,7 +455,7 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
  */
 static inline void mark_outgoing_completion (ompi_osc_rdma_module_t *module)
 {
-    OPAL_THREAD_ADD32(&module->outgoing_frag_count, 1);
+    OPAL_THREAD_ADD32((int32_t *) &module->outgoing_frag_count, 1);
     if (module->outgoing_frag_count >= module->outgoing_frag_signal_count) {
         opal_condition_broadcast(&module->cond);
     }
@@ -475,12 +475,12 @@ static inline void mark_outgoing_completion (ompi_osc_rdma_module_t *module)
  */
 static inline void ompi_osc_signal_outgoing (ompi_osc_rdma_module_t *module, int target, int count)
 {
-    OPAL_THREAD_ADD32(&module->outgoing_frag_signal_count, count);
+    OPAL_THREAD_ADD32((int32_t *) &module->outgoing_frag_signal_count, count);
     if (MPI_PROC_NULL != target) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "ompi_osc_signal_outgoing_passive: target = %d, count = %d, total = %d", target,
                              count, module->epoch_outgoing_frag_count[target] + count));
-        OPAL_THREAD_ADD32(module->epoch_outgoing_frag_count + target, count);
+        OPAL_THREAD_ADD32((int32_t *) module->epoch_outgoing_frag_count + target, count);
     }
 }
 

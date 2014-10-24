@@ -349,6 +349,16 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
         tag = get_tag(module);
     }
 
+    /* flush will be called at the end of this function. make sure the post message has
+     * arrived. */
+    if ((is_long_msg || request) && module->sc_group) {
+        while (0 != module->num_post_msgs) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                 "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+    }
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -525,6 +535,16 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
         tag = get_tag (module);
     }
 
+    /* flush will be called at the end of this function. make sure the post message has
+     * arrived. */
+    if ((is_long_msg || request) && module->sc_group) {
+        while (0 != module->num_post_msgs) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                 "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+    }
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     header = (ompi_osc_rdma_header_acc_t*) ptr;
@@ -607,7 +627,7 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
 
     ret = ompi_osc_rdma_frag_finish(module, frag);
 
-    if (request) {
+    if (is_long_msg || request) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_rdma_frag_flush_target (module, target);
     }
@@ -858,6 +878,16 @@ static inline int ompi_osc_rdma_rget_internal (void *origin_addr, int origin_cou
     /* for bookkeeping the get is "outgoing" */
     ompi_osc_signal_outgoing (module, target, 1);
 
+    /* flush will be called at the end of this function. make sure the post message has
+     * arrived. */
+    if (!release_req && module->sc_group) {
+        while (0 != module->num_post_msgs) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                 "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+    }
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     header = (ompi_osc_rdma_header_get_t*) ptr;
@@ -1087,6 +1117,16 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
 
     /* increment the number of outgoing fragments */
     ompi_osc_signal_outgoing (module, target_rank, rdma_request->outstanding_requests);
+
+    /* flush will be called at the end of this function. make sure the post message has
+     * arrived. */
+    if (!release_req && module->sc_group) {
+        while (0 != module->num_post_msgs) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                 "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+    }
 
     OPAL_THREAD_UNLOCK(&module->lock);
 

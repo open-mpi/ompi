@@ -1331,8 +1331,10 @@ static inline int process_complete (ompi_osc_rdma_module_t *module, int source,
                                     ompi_osc_rdma_header_complete_t *complete_header)
 {
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma:  process_complete got complete message from %d. expected fragment count %d",
-                         source, complete_header->frag_count));
+                         "osc rdma:  process_complete got complete message from %d. expected fragment count %d. "
+                         "current signal count %d. current incomming count: %d",
+                         source, complete_header->frag_count, module->active_incoming_frag_signal_count,
+                         module->active_incoming_frag_count));
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -1677,8 +1679,12 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
     /* restart the receive request */
     OPAL_THREAD_LOCK(&module->lock);
 
-    mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
-                              source : MPI_PROC_NULL);
+    /* post messages come unbuffered and should NOT increment the incoming completion
+     * counters */
+    if (OMPI_OSC_RDMA_HDR_TYPE_POST != base_header->type) {
+        mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
+                                  source : MPI_PROC_NULL);
+    }
 
     osc_rdma_gc_clean ();
 
