@@ -1834,6 +1834,13 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         goto cant_send;
     }
 
+#if OPAL_CUDA_GDR_SUPPORT
+    /* We do not want to use this path when we have GDR support */
+    if (convertor->flags & CONVERTOR_CUDA) {
+        goto cant_send;
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
+
     /* Allocate WQE */
     if(OPAL_UNLIKELY(qp_get_wqe(ep, qp) < 0)) {
         goto no_credits_or_wqe;
