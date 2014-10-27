@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,9 +61,13 @@ OBJ_CLASS_INSTANCE(opal_proc_t, opal_list_item_t,
                    opal_proc_construct, opal_proc_destruct);
 
 static int
-opal_compare_opal_procs(const opal_process_name_t proc1,
-                        const opal_process_name_t proc2)
+opal_compare_opal_procs(const opal_process_name_t p1,
+                        const opal_process_name_t p2)
 {
+    opal_process_name_t proc1, proc2;
+    /* to protect alignment, copy the name across */
+    memcpy(&proc1, &p1, sizeof(opal_process_name_t));
+    memcpy(&proc2, &p2, sizeof(opal_process_name_t));
     if( proc1 == proc2 ) return  0;
     if( proc1 <  proc2 ) return -1;
     return 1;
@@ -96,7 +102,8 @@ int opal_proc_local_set(opal_proc_t* proc)
  * understood */
 void opal_proc_set_name(opal_process_name_t *name)
 {
-    opal_local_proc.proc_name = *name;
+    /* to protect alignment, copy the name across */
+    memcpy(&opal_local_proc.proc_name, name, sizeof(opal_process_name_t));
 }
 
 /**
