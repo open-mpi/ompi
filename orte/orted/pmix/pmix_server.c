@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -605,7 +607,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     /* unpack the id of the proc involved - must be one
      * of my local children */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -731,7 +733,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
 
     /* unpack the id of the proc whose data is being requested */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &idreq, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &idreq, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -749,7 +751,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         /* send back an error - they obviously have made a mistake */
         reply = OBJ_NEW(opal_buffer_t);
         /* pack the id of the requested proc */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             return;
@@ -810,7 +812,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     /* return it */
     reply = OBJ_NEW(opal_buffer_t);
     /* pack the id of the requested proc */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
         return;
@@ -921,7 +923,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
 
     /* unpack the id of the target whose info we just received */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }

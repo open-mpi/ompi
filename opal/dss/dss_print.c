@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -548,6 +550,33 @@ int opal_dss_print_timeval(char **output, char *prefix,
     return OPAL_SUCCESS;
 }
 
+int opal_dss_print_name(char **output, char *prefix,
+                           opal_process_name_t *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_NAME\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_NAME\tValue: (%u,%u)", prefx,
+             src->name.jobid, src->name.vpid);
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return OPAL_SUCCESS;
+}
+
 int opal_dss_print_null(char **output, char *prefix, void *src, opal_data_type_t type)
 {
     char *prefx;
@@ -796,6 +825,10 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     case OPAL_PTR:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PTR\tKey: %s", prefx, src->key);
         break;
+    case OPAL_NAME:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_NAME\tKey: %s\tValue: (%u,%u)", prefx,
+                 src->key, src->data.name.name.jobid, src->data.name.name.vpid);
+        break;
     case OPAL_FLOAT_ARRAY:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
                  prefx, src->key, src->data.fval_array.size);
@@ -967,6 +1000,17 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
             asprintf(&t2, "%s\n%s\t%ld.%06ld", *output, prefx,
                      (long)src->data.tv_array.data[i].tv_sec,
                      (long)src->data.tv_array.data[i].tv_usec);
+            free(*output);
+            *output = t2;
+        }
+        break;
+    case OPAL_NAME_ARRAY:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_NAME_ARRAY\tKey: %s \tSIZE: %d \tDATA: ",
+                 prefx, src->key, src->data.name_array.size);
+        for (i = 0; i < src->data.name_array.size; i++) {
+            asprintf(&t2, "%s\n%s\t(%u.%u)", *output, prefx,
+                     src->data.name_array.data[i].name.jobid,
+                     src->data.name_array.data[i].name.vpid);
             free(*output);
             *output = t2;
         }

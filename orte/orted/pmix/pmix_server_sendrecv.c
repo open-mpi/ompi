@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -480,7 +482,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
             tmp = NULL;
             if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
                 /* add the name of the proc */
-                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&pptr->name, 1, OPAL_UINT64))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, (opal_identifier_t*)&pptr->name, 1, OPAL_NAME))) {
                     ORTE_ERROR_LOG(rc);
                     opal_argv_free(list);
                     return rc;
@@ -620,7 +622,7 @@ static void process_message(pmix_server_peer_t *peer)
     opal_buffer_t *reply, xfer, *bptr, buf, save, blocal, bremote;
     opal_value_t kv, *kvp, *kvp2, *kp;
     opal_identifier_t id, idreq;
-    orte_process_name_t name;
+    opal_process_name_t name;
     orte_job_t *jdata;
     orte_proc_t *proc;
     opal_list_t values;
@@ -650,6 +652,7 @@ static void process_message(pmix_server_peer_t *peer)
     opal_output_verbose(2, pmix_server_output,
                         "%s recvd pmix cmd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cmd);
+    memcpy(&name, &id, sizeof(orte_process_name_t));
     switch(cmd) {
     case PMIX_ABORT_CMD:
         opal_output_verbose(2, pmix_server_output,
@@ -664,12 +667,11 @@ static void process_message(pmix_server_peer_t *peer)
         }
         /* don't bother to unpack the message - we ignore this for now as the
          * proc should have emitted it for itself */
-        memcpy(&name, &id, sizeof(orte_process_name_t));
         /* go find the proc structure for this process */
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(name.name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         } else {
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.name.vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             } else {
                 proc->exit_code = ret;
@@ -692,19 +694,19 @@ static void process_message(pmix_server_peer_t *peer)
         return;
     case PMIX_FENCE_CMD:
     case PMIX_FENCENB_CMD:
+        memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
         opal_output_verbose(2, pmix_server_output,
                             "%s recvd %s FROM PROC %s ON TAG %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE",
-                            OPAL_NAME_PRINT(id), tag);
+                            OPAL_NAME_PRINT(name), tag);
         /* get the job and proc objects for the sender */
-        memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(name.name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
             return;
         }
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.name.vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
             return;
@@ -754,7 +756,7 @@ static void process_message(pmix_server_peer_t *peer)
         OBJ_CONSTRUCT(&save, opal_buffer_t);
         if (orte_process_info.num_procs < orte_direct_modex_cutoff) {
             /* need to include the id of the sender for later unpacking */
-            opal_dss.pack(&save, &id, 1, OPAL_UINT64);
+            opal_dss.pack(&save, &id, 1, OPAL_NAME);
             opal_dss.copy_payload(&save, &xfer);
         }
         /* if data was given, unpack and store it in the pmix dstore - it is okay
@@ -902,7 +904,7 @@ static void process_message(pmix_server_peer_t *peer)
                     PMIX_SERVER_QUEUE_SEND(req->peer, req->tag, reply);
                 } else {
                     /* pack the id of the requested proc */
-                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_NAME))) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(reply);
                         OBJ_DESTRUCT(&xfer);
@@ -958,7 +960,7 @@ static void process_message(pmix_server_peer_t *peer)
         /* send notification to myself */
         reply = OBJ_NEW(opal_buffer_t);
         /* pack the id of the sender */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             OBJ_RELEASE(sig);
@@ -1023,7 +1025,7 @@ static void process_message(pmix_server_peer_t *peer)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* unpack the id of the proc whose data is being requested */
         cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &idreq, &cnt, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &idreq, &cnt, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&xfer);
             return;
@@ -1034,13 +1036,13 @@ static void process_message(pmix_server_peer_t *peer)
                             "%s recvd GET FROM PROC %s FOR PROC %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT((orte_process_name_t*)&id),
-                            ORTE_NAME_PRINT(&name));
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+                            ORTE_NAME_PRINT(&name.name));
+        if (NULL == (jdata = orte_get_job_data_object(name.name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
             return;
         }
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.name.vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
             return;
@@ -1086,7 +1088,7 @@ static void process_message(pmix_server_peer_t *peer)
                     /* setup the request */
                     reply = OBJ_NEW(opal_buffer_t);
                     /* pack the proc we want info about */
-                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
                         ORTE_ERROR_LOG(rc);
                         return;
                     }
@@ -1111,7 +1113,7 @@ static void process_message(pmix_server_peer_t *peer)
             opal_output_verbose(2, pmix_server_output,
                                 "%s recvd GET PROC %s IS LOCAL",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&name));
+                                ORTE_NAME_PRINT(&name.name));
             kvp = NULL;
             kvp2 = NULL;
             /* retrieve the local blob for that proc */
@@ -1167,7 +1169,7 @@ static void process_message(pmix_server_peer_t *peer)
                                     "%s passing local blob of size %d from proc %s to proc %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     (int)kvp->data.bo.size,
-                                    ORTE_NAME_PRINT(&name),
+                                    ORTE_NAME_PRINT(&name.name),
                                     ORTE_NAME_PRINT(&peer->name));
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
                 opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
@@ -1191,7 +1193,7 @@ static void process_message(pmix_server_peer_t *peer)
                                     "%s passing global blob of size %d from proc %s to proc %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     (int)kvp2->data.bo.size,
-                                    ORTE_NAME_PRINT(&name),
+                                    ORTE_NAME_PRINT(&name.name),
                                     ORTE_NAME_PRINT(&peer->name));
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
                 opal_dss.load(&buf, kvp2->data.bo.bytes, kvp2->data.bo.size);
@@ -1217,7 +1219,7 @@ static void process_message(pmix_server_peer_t *peer)
         opal_output_verbose(2, pmix_server_output,
                             "%s recvd GET PROC %s IS NON-LOCAL",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&name));
+                            ORTE_NAME_PRINT(&name.name));
         OBJ_DESTRUCT(&xfer);  // done with this
         /* since we already have this proc's data, we know that the
          * entire blob is stored in the remote handle - so get it */
@@ -1229,7 +1231,7 @@ static void process_message(pmix_server_peer_t *peer)
                                 "%s passing blob of size %d from remote proc %s to proc %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 (int)kvp->data.bo.size,
-                                ORTE_NAME_PRINT(&name),
+                                ORTE_NAME_PRINT(&name.name),
                                 ORTE_NAME_PRINT(&peer->name));
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
             opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
@@ -1274,13 +1276,13 @@ static void process_message(pmix_server_peer_t *peer)
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         /* look up this proc */
         memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(name.name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&buf);
             OBJ_DESTRUCT(&xfer);
             return;
         }
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.name.vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&buf);
             OBJ_DESTRUCT(&xfer);
@@ -1326,13 +1328,13 @@ static void process_message(pmix_server_peer_t *peer)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* look up this proc */
         memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
-        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(name.name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&buf);
             OBJ_DESTRUCT(&xfer);
             return;
         }
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.name.vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&buf);
             OBJ_DESTRUCT(&xfer);

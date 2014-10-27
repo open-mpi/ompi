@@ -26,33 +26,18 @@
 #include <arpa/inet.h>
 #endif
 
-/**
- * This is a transparent handle proposed to the upper layer as a mean
- * to store whatever information it needs in order to efficiently
- * retrieve the RTE process naming scheme, and get access to the RTE
- * information associated with it. The only direct usage of this type
- * is to be copied from one structure to another, otherwise it should
- * only be used via the accessors defined below.
- */
-typedef opal_identifier_t opal_process_name_t;
-
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
-#define OPAL_PROCESS_NAME_NTOH(guid) opal_process_name_ntoh_intr(&(guid))
-static inline __opal_attribute_always_inline__ void
-opal_process_name_ntoh_intr(opal_process_name_t *name)
-{
-    uint32_t * w = (uint32_t *)name;
-    w[0] = ntohl(w[0]);
-    w[1] = ntohl(w[1]);
-}
-#define OPAL_PROCESS_NAME_HTON(guid) opal_process_name_hton_intr(&(guid))
-static inline __opal_attribute_always_inline__ void
-opal_process_name_hton_intr(opal_process_name_t *name)
-{
-    uint32_t * w = (uint32_t *)name;
-    w[0] = htonl(w[0]);
-    w[1] = htonl(w[1]);
-}
+#define OPAL_PROCESS_NAME_NTOH(n)       \
+do {                                    \
+    n.name.jobid = ntohl(n.name.jobid); \
+    n.name.vpid  = ntohl(n.name.vpid);  \
+} while (0);
+    
+#define OPAL_PROCESS_NAME_HTON(n)       \
+do {                                    \
+    n.name.jobid = htonl(n.name.jobid); \
+    n.name.vpid  = htonl(n.name.vpid);  \
+} while (0);
 #else
 #define OPAL_PROCESS_NAME_NTOH(guid)
 #define OPAL_PROCESS_NAME_HTON(guid)

@@ -154,7 +154,7 @@ static int native_init(void)
             return OPAL_ERROR;
         }
         mca_pmix_native_component.uri = strdup(srv);
-        mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
+        mca_pmix_native_component.id = OPAL_PROC_MY_NAME.id;
     }
 
     /* if we have it, setup the path to the daemon rendezvous point */
@@ -372,7 +372,7 @@ static int native_put(opal_pmix_scope_t scope,
 
     /* have to save a copy locally as some of our components will
      * look for it */
-    (void)opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kv);
+    (void)opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME.id, kv);
     return rc;
 }
 
@@ -413,7 +413,7 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
         return rc;
     }
     if (0 < nprocs) {
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_NAME))) {
             OPAL_ERROR_LOG(rc);
             OBJ_RELEASE(msg);
             return rc;
@@ -507,7 +507,7 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
         }
         /* extract the id of the contributor from the blob */
         cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_NAME))) {
             OPAL_ERROR_LOG(rc);
             return rc;
         }
@@ -584,7 +584,7 @@ static void fencenb_cbfunc(opal_buffer_t *buf, void *cbdata)
         }
         /* extract the id of the contributor from the blob */
         cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_NAME))) {
             OPAL_ERROR_LOG(rc);
             return;
         }
@@ -656,7 +656,7 @@ static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
         return rc;
     }
     if (0 < nprocs) {
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_NAME))) {
             OPAL_ERROR_LOG(rc);
             OBJ_RELEASE(msg);
             return rc;
@@ -747,7 +747,7 @@ static int native_get(const opal_identifier_t *id,
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native getting value for proc %s key %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                        OPAL_NAME_PRINT(*id), key);
+                        OPAL_NAME_PRINT(*(opal_process_name_t *)id), key);
 
     /* first see if we already have the info in our dstore */
     OBJ_CONSTRUCT(&vals, opal_list_t);
@@ -776,7 +776,7 @@ static int native_get(const opal_identifier_t *id,
     }
     /* pack the request information - we'll get the entire blob
      * for this proc, so we don't need to pass the key */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, id, 1, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, id, 1, OPAL_NAME))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
@@ -811,7 +811,7 @@ static int native_get(const opal_identifier_t *id,
                                 "%s pmix:native retrieved %s (%s) from server for proc %s",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key,
                                 (OPAL_STRING == kp->type) ? kp->data.string : "NS",
-                                OPAL_NAME_PRINT(*id));
+                                OPAL_NAME_PRINT(*(opal_process_name_t *)id));
             if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
                 OPAL_ERROR_LOG(ret);
             }
@@ -897,7 +897,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     opal_hwloc_locality_t locality;
     pmix_cb_t *cb;
     uint32_t i, myrank;
-    opal_identifier_t id;
+    opal_process_name_t name;
     char *cpuset;
     opal_buffer_t buf;
 
@@ -907,7 +907,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 
     /* try to retrieve the requested value from the dstore */
     OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME, attr, &vals)) {
+    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME.id, attr, &vals)) {
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
         OPAL_LIST_DESTRUCT(&vals);
         return true;
@@ -1006,7 +1006,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                 kp->data.bo.size = 0;
                 OBJ_RELEASE(kp);
                 cnt=1;
-                while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &id, &cnt, OPAL_UINT64))) {
+                while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &name.id, &cnt, OPAL_NAME))) {
                     cnt=1;
                     if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &cpuset, &cnt, OPAL_STRING))) {
                         OPAL_ERROR_LOG(rc);
@@ -1018,12 +1018,12 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                                         "%s saving cpuset %s for local peer %s",
                                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                         (NULL == cpuset) ? "NULL" : cpuset,
-                                        OPAL_NAME_PRINT(id));
+                                        OPAL_NAME_PRINT(name));
                     OBJ_CONSTRUCT(&kvn, opal_value_t);
                     kvn.key = strdup(OPAL_DSTORE_CPUSET);
                     kvn.type = OPAL_STRING;
                     kvn.data.string = cpuset;
-                    if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &id, &kvn))) {
+                    if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &name.id, &kvn))) {
                         OPAL_ERROR_LOG(rc);
                         OBJ_DESTRUCT(&kvn);
                         cnt = 1;
@@ -1039,7 +1039,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
                 cnt=1;
                 continue;
             }
-            if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
+            if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME.id, kp))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(kp);
                 cnt = 1;
@@ -1104,7 +1104,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s cpuset for local proc %s not found",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
+                                OPAL_NAME_PRINT(*(opal_process_name_t*)&native_pname));
             OPAL_LIST_DESTRUCT(&vals);
             /* even though the cpuset wasn't found, we at least know it is
              * on the same node with us */
@@ -1131,7 +1131,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                              "%s pmix:native proc %s locality %s",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                             OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname),
+                             OPAL_NAME_PRINT(*(opal_process_name_t*)&native_pname),
                              opal_hwloc_base_print_locality(locality)));
     
         OBJ_CONSTRUCT(&kvn, opal_value_t);

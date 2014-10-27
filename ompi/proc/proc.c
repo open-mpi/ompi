@@ -100,6 +100,7 @@ int ompi_proc_init(void)
 
     /* create proc structures and find self */
     for( i = 0; i < ompi_process_info.num_procs; i++ ) {
+        opal_value_t kv;
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
 
@@ -115,8 +116,13 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, OPAL_DSTORE_ARCH,
-                                   &proc->super.proc_arch, OPAL_UINT32);
+            OBJ_CONSTRUCT(&kv, opal_value_t);
+            kv.key = strdup(OPAL_DSTORE_ARCH);
+            kv.type = OPAL_UINT32;
+            kv.data.uint32 = opal_local_arch;
+            ret = opal_pmix.put(PMIX_REMOTE, &kv);
+            OBJ_DESTRUCT(&kv);
+
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }

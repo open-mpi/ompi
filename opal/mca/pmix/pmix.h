@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -174,7 +176,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                            \
     do {                                                                \
         opal_value_t *kv;                                               \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,       \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name.id,    \
                                                  (s), &kv))) {          \
             *(d) = NULL;                                                \
         } else {                                                        \
@@ -199,7 +201,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                          \
     do {                                                                \
         opal_value_t *kv;                                               \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get(&(p)->proc_name,       \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get(&(p)->proc_name.id,    \
                                                  (s), &kv)) &&          \
             NULL != kv) {                                               \
             *(d) = kv->data.bo.bytes;                                   \

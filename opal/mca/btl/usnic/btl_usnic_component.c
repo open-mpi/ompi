@@ -16,6 +16,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -459,7 +461,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     /* initialization */
     mca_btl_usnic_component.my_hashed_rte_name =
-        opal_proc_local_get()->proc_name;
+        opal_proc_local_get()->proc_name.id;
     MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
                    __func__, mca_btl_usnic_component.my_hashed_rte_name);
 

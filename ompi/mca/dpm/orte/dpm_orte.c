@@ -16,6 +16,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -459,7 +461,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         }
         OPAL_LIST_DESTRUCT(&all_procs);
         /* perform it */
-        opal_pmix.fence(ids, i);
+        opal_pmix.fence((opal_process_name_t *)ids, i);
         free(ids);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
@@ -711,7 +713,7 @@ static int disconnect(ompi_communicator_t *comm)
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:disconnect calling barrier on comm_cid %d with %d participants",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, i));
-    opal_pmix.fence(ids, i);
+    opal_pmix.fence((opal_process_name_t *)ids, i);
     free(ids);
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
@@ -1667,7 +1669,7 @@ static int dpm_pconnect(char *port,
 }
 
 static void paccept_recv(int status,
-                         struct orte_process_name_t* peer,
+                         orte_process_name_t* peer,
                          struct opal_buffer_t* buffer,
                          orte_rml_tag_t tag,
                          void* cbdata)

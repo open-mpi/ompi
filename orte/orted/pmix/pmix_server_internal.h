@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -156,7 +158,7 @@ OBJ_CLASS_DECLARATION(pmix_server_dmx_req_t);
                             ORTE_NAME_PRINT(&(p)->name));               \
         msg = OBJ_NEW(pmix_server_send_t);                              \
         /* setup the header */                                          \
-        msg->hdr.id = OPAL_PROC_MY_NAME;                                \
+        msg->hdr.id = OPAL_PROC_MY_NAME.id;                             \
         msg->hdr.type = PMIX_USOCK_USER;                                \
         msg->hdr.tag = (t);                                             \
         msg->hdr.nbytes = (b)->bytes_used;                              \
