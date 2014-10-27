@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #endif
 #include <dlfcn.h>
+#include <poll.h>
 
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
@@ -106,6 +107,11 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
+    char *env = getenv("OMPI_ATTACH");
+    if (NULL != env && 0 < atoi(env)) {
+        volatile int _dbg = 1;
+        while (_dbg) poll(NULL, 0, 1);
+    }
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
     if(libmpi == NULL)
@@ -113,13 +119,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
         fprintf(stderr, "Java bindings failed to load liboshmem.\n");
         exit(1);
     }
-
-    mca_base_var_register("ompi", "mpi", "java", "eager",
-                          "Java buffers eager size",
-                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                          OPAL_INFO_LVL_5,
-                          MCA_BASE_VAR_SCOPE_READONLY,
-                          &ompi_mpi_java_eager);
 
     return JNI_VERSION_1_6;
 }
@@ -256,6 +255,12 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
 
     int rc = MPI_Init(&len, &sargs);
     ompi_java_exceptionCheck(env, rc);
+    mca_base_var_register("ompi", "mpi", "java", "eager",
+                          "Java buffers eager size",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                          OPAL_INFO_LVL_5,
+                          MCA_BASE_VAR_SCOPE_READONLY,
+                          &ompi_mpi_java_eager);
 
     string = (*env)->FindClass(env, "java/lang/String");
     value = (*env)->NewObjectArray(env, len, string, NULL);
