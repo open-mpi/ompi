@@ -26,7 +26,7 @@
 # define an internal function for checking the existence
 # and validity of a PMI library
 #
-# OPAL_CHECK_PMI_LIB(installdir, pmi, function, [action-if-valid], [action-if-not-valid])
+# OPAL_CHECK_PMI_LIB(installdir, pmi, function, [action-if-slurm], [action-if-valid], [action-if-not-valid])
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI_LIB],
 [
@@ -48,7 +48,8 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
            AC_MSG_CHECKING([for $2.h in $1/include/slurm])
            AS_IF([test -f $1/include/slurm/$2.h],
                  [AC_MSG_RESULT([found])
-                  mycppflags="-I$1/include/slurm"],
+                  mycppflags="-I$1/include/slurm"
+		  $4],
                  [AC_MSG_RESULT([not found])
                   hdr_happy=no])])
 
@@ -98,7 +99,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
     LIBS="$save_LIBS"
 
     AS_IF([test "$hdr_happy" = "yes" && test "$lib_happy" = "yes"],
-          [$4], [$5])
+          [$5], [$6])
 
     OPAL_VAR_SCOPE_POP
 ])
@@ -133,34 +134,41 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            # work with slurm :-(
            AS_IF([test ! -z "$with_pmi" && test "$with_pmi" != "yes"],
                  [check_install_dir=$with_pmi
-                  default_loc="no"],
-                 [check_install_dir="/usr"
-                  default_loc="yes"])
+                  default_loc=no],
+                 [check_install_dir=/usr
+                  default_loc=yes])
 
            # check for pmi-1 lib */
            OPAL_CHECK_PMI_LIB([$check_install_dir],
                               [pmi], [PMI_Init],
-                              [have_pmi1=yes
-                               AS_IF([test "$default_loc" = "no"],
-                                     [$1_CPPFLAGS="$pmi_CPPFLAGS"
-                                      $1_LDFLAGS="$pmi_LDFLAGS"
-                                      have_rpath="$pmi_rpath"
-                                      added_flags=yes])
-                               local_libs="$pmi_LIBS"],
+			      [default_loc=no],
+                              [have_pmi1=yes],
                               [have_pmi1=no])
 
+           AS_IF([test "$have_pmi1" = "yes"],
+                 [AS_IF([test "$default_loc" = "no"],
+                        [$1_CPPFLAGS="$pmi_CPPFLAGS"
+                        $1_LDFLAGS="$pmi_LDFLAGS"
+                        have_rpath="$pmi_rpath"
+                        added_flags=yes])
+                  local_libs="$pmi_LIBS"])
+		  
            # check for pmi2 lib */
            OPAL_CHECK_PMI_LIB([$check_install_dir],
                               [pmi2], [PMI2_Init],
+			      [default_loc=no],
                               [have_pmi2=yes
-                               opal_have_pmi2=1
-                               AS_IF([test "$default_loc" = "no" && test "$added_flags" = "no"],
-                                     [$1_CPPFLAGS="$pmi2_CPPFLAGS"
-                                      $1_LDFLAGS="$pmi2_LDFLAGS"
-                                      have_rpath="$pmi2_rpath"])
-                               local_libs="local_libs $pmi2_LIBS"],
+                               opal_have_pmi2=1],
                               [have_pmi2=no])
 
+           AS_IF([test "$have_pmi2" = "yes"],
+                 [AS_IF([test "$default_loc" = "no" && test "$added_flags" = "no"],
+                        [$1_CPPFLAGS="$pmi2_CPPFLAGS"
+                        $1_LDFLAGS="$pmi2_LDFLAGS"
+                        have_rpath="$pmi2_rpath"
+                        added_flags=yes])
+                  local_libs="$local_libs $pmi2_LIBS"])
+		  
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
            AS_IF([test "$have_pmi1" != "yes" && test "$have_pmi2" != "yes"],
