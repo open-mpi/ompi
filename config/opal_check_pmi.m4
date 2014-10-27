@@ -48,6 +48,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
            AC_MSG_CHECKING([for $2.h in $1/include/slurm])
            AS_IF([test -f $1/include/slurm/$2.h],
                  [AC_MSG_RESULT([found])
+                  added_flags="yes"
                   mycppflags="-I$1/include/slurm"],
                  [AC_MSG_RESULT([not found])
                   hdr_happy=no])])
@@ -154,7 +155,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                               [pmi2], [PMI2_Init],
                               [have_pmi2=yes
                                opal_have_pmi2=1
-                               AS_IF([test "$default_loc" = "no" && test "$added_flags" = "no"],
+                               AS_IF([test "$default_loc" = "no" || test "$added_flags" = "yes"],
                                      [$1_CPPFLAGS="$pmi2_CPPFLAGS"
                                       $1_LDFLAGS="$pmi2_LDFLAGS"
                                       have_rpath="$pmi2_rpath"])
