@@ -14,15 +14,14 @@ AC_DEFUN([MCA_opal_pmix_s1_CONFIG], [
     AC_CONFIG_FILES([opal/mca/pmix/s1/Makefile])
          
     AC_REQUIRE([OPAL_CHECK_UGNI])
-    OPAL_CHECK_PMI([pmix_s1], [pmix_s1_good=1], [pmix_s1_good=0])
+    AC_REQUIRE([OPAL_CHECK_PMI])
          
     # Evaluate succeed / fail
-    AS_IF([test "$pmix_s1_good" = 1 -a "$opal_check_ugni_happy" = "no"],
-          [$1],
+    AS_IF([test "$opal_enable_pmi1" = "yes" && test "$opal_check_ugni_happy" = "no"],
+          [$1
+           # need to set the wrapper flags for static builds
+           pmix_s1_WRAPPER_EXTRA_LDFLAGS="$opal_pmi1_LDFLAGS"
+           pmix_s1_WRAPPER_EXTRA_LIBS="$opal_pmi1_LIBS"],
           [$2])
 
-    # set build flags to use in makefile
-    AC_SUBST([pmix_s1_CPPFLAGS])
-    AC_SUBST([pmix_s1_LDFLAGS])
-    AC_SUBST([pmix_s1_LIBS])
 ])

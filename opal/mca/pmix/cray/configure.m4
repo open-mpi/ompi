@@ -20,7 +20,10 @@ AC_DEFUN([MCA_opal_pmix_cray_CONFIG], [
          
     # Evaluate succeed / fail
     AS_IF([test "$pmix_cray_good" = 1],
-          [$1],
+          [$1
+           # need to set the wrapper flags for static builds
+           pmix_cray_WRAPPER_EXTRA_LDFLAGS="$pmix_cray_LDFLAGS"
+           pmix_cray_WRAPPER_EXTRA_LIBS="$pmix_cray_LIBS"],
           [$2])
 
     # set build flags to use in makefile
