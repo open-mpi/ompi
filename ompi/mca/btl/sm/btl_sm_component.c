@@ -433,7 +433,7 @@ create_and_attach(mca_btl_sm_component_t *comp_ptr,
                                                size_ctl_structure,
                                                data_seg_alignment))) {
         opal_output(0, "create_and_attach: unable to create shared memory "
-                    "BTL coordinating strucure :: size %lu \n",
+                    "BTL coordinating structure :: size %lu \n",
                     (unsigned long)size);
         return OMPI_ERROR;
     }
