@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -187,6 +188,13 @@ ompi_mtl_psm_component_close(void)
 }
 
 static int
+get_num_total_procs(int *out_ntp)
+{
+    *out_ntp = (int)ompi_process_info.num_procs;
+    return OMPI_SUCCESS;
+}
+
+static int
 get_num_local_procs(int *out_nlp)
 {
     /* num_local_peers does not include us in
@@ -218,6 +226,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     int	verno_major = PSM_VERNO_MAJOR;
     int verno_minor = PSM_VERNO_MINOR;
     int local_rank = -1, num_local_procs = 0;
+    int num_total_procs = 0;
 
     /* Compute the total number of processes on this host and our local rank
      * on that node. We need to provide PSM with these values so it can 
@@ -232,6 +241,12 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
         opal_output(0, "Cannot determine local rank. Cannot continue.\n");
         return NULL;
     }
+    if (OMPI_SUCCESS != get_num_total_procs(&num_total_procs)) {
+        opal_output(0, "Cannot determine total number of processes. "
+                    "Cannot continue.\n");
+        return NULL;
+    }
+
      
     err = psm_error_register_handler(NULL /* no ep */,
 			             PSM_ERRHANDLER_NOP);
@@ -254,15 +269,24 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     }
 #endif
     
-    /* Only allow for shm and ipath devices in 2.0 and earlier releases 
-     * (unless the user overrides the setting).
-     */
-    
-    if (PSM_VERNO >= 0x0104) {
-      setenv("PSM_DEVICES", "self,shm,ipath", 0);
-    }
-    else {
-      setenv("PSM_DEVICES", "shm,ipath", 0);
+    if (getenv("PSM_DEVICES") == NULL) {
+        /* Only allow for shm and ipath devices in 2.0 and earlier releases 
+         * (unless the user overrides the setting).
+         */
+        if (PSM_VERNO >= 0x0104) {
+            if (num_local_procs == num_total_procs) {
+                setenv("PSM_DEVICES", "self,shm", 0);
+	    } else {
+                setenv("PSM_DEVICES", "self,shm,ipath", 0);
+	    }
+        }
+        else {
+            if (num_local_procs == num_total_procs) {
+                setenv("PSM_DEVICES", "shm", 0);
+	    } else {
+                setenv("PSM_DEVICES", "shm,ipath", 0);
+	    }
+        }
     }
     
     err = psm_init(&verno_major, &verno_minor);
