@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
- *                         All rights reserved. 
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,27 +40,40 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
                         mca_btl_base_tag_t tag)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
+    const size_t total_size = frag->segments[0].base.seg_len;
 
     if (OPAL_LIKELY(frag->fbox)) {
-        mca_btl_vader_fbox_send (frag->fbox, tag, endpoint);
+        mca_btl_vader_fbox_send (frag->fbox, tag);
         mca_btl_vader_frag_complete (frag);
 
         return 1;
     }
 
     /* header (+ optional inline data) */
-    frag->hdr->len = frag->segments[0].seg_len;
+    frag->hdr->len = total_size;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
     /* post the relative address of the descriptor into the peer's fifo */
-    vader_fifo_write_ep (frag->hdr, endpoint);
+    if (opal_list_get_size (&endpoint->pending_frags) || !vader_fifo_write_ep (frag->hdr, endpoint)) {
+        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        OPAL_THREAD_LOCK(&endpoint->lock);
+        opal_list_append (&endpoint->pending_frags, (opal_list_item_t *) frag);
+        if (!endpoint->waiting) {
+            OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
+            opal_list_append (&mca_btl_vader_component.pending_endpoints, &endpoint->super);
+            OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
+            endpoint->waiting = true;
+        }
+        OPAL_THREAD_UNLOCK(&endpoint->lock);
+        return OMPI_SUCCESS;
+    }
 
     if ((frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) ||
         !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
-        return 0;
+        return OMPI_SUCCESS;
     }
 
     /* data is gone (from the pml's perspective). frag callback/release will

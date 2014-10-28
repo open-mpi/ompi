@@ -9,8 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 # 
@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = $(btl_vader_CPPFLAGS)
 
-dist_ompidata_DATA = help-mpi-btl-vader.txt
+dist_ompidata_DATA = help-btl-vader.txt
 
 libmca_btl_vader_la_sources = \
     btl_vader_module.c \
@@ -37,7 +37,9 @@ libmca_btl_vader_la_sources = \
     btl_vader_get.c \
     btl_vader_put.c \
     btl_vader_xpmem.c \
-    btl_vader_xpmem.h
+    btl_vader_xpmem.h \
+    btl_vader_knem.c \
+    btl_vader_knem.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
