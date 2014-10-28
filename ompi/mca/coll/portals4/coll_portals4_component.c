@@ -203,6 +203,14 @@ portals4_register(void)
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_portals4_priority);
 
+    mca_coll_portals4_component.use_binomial_gather_algorithm = 0;
+    (void) mca_base_component_var_register(&mca_coll_portals4_component.super.collm_version, "use_binomial_gather_algorithm",
+            "if 1 use a binomial tree algorithm for gather, otherwise use linear",
+            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+            OPAL_INFO_LVL_9,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &mca_coll_portals4_component.use_binomial_gather_algorithm);
+
     return OMPI_SUCCESS;
 }
 
@@ -463,7 +471,7 @@ portals4_init_query(bool enable_progress_threads,
                 __FILE__, __LINE__, ret);
         return OMPI_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, ompi_coll_base_framework.framework_output, "PtlMDBind start=%p length=%x\n", md.start, md.length));
+    OPAL_OUTPUT_VERBOSE((90, ompi_coll_base_framework.framework_output, "PtlMDBind start=%p length=%lx\n", md.start, md.length));
 
     /* setup finish ack ME */
     me.start = NULL;
@@ -472,7 +480,7 @@ portals4_init_query(bool enable_progress_threads,
     me.min_free = 0;
     me.uid = mca_coll_portals4_component.uid;
     me.options = PTL_ME_OP_PUT |
-            PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
+        PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.match_bits = 0;
@@ -584,6 +592,12 @@ portals4_comm_query(struct ompi_communicator_t *comm,
     portals4_module->super.coll_barrier = ompi_coll_portals4_barrier_intra;
     portals4_module->super.coll_ibarrier = ompi_coll_portals4_ibarrier_intra;
 
+    portals4_module->super.coll_gather   = ompi_coll_portals4_gather_intra;
+    portals4_module->super.coll_igather  = ompi_coll_portals4_igather_intra;
+
+    portals4_module->cached_in_order_bmtree=NULL;
+    portals4_module->cached_in_order_bmtree_root=-1;
+
     portals4_module->super.coll_bcast = ompi_coll_portals4_bcast_intra;
     portals4_module->super.coll_ibcast = ompi_coll_portals4_ibcast_intra;
 
@@ -592,6 +606,9 @@ portals4_comm_query(struct ompi_communicator_t *comm,
 
     portals4_module->super.coll_reduce = ompi_coll_portals4_reduce_intra;
     portals4_module->super.coll_ireduce = ompi_coll_portals4_ireduce_intra;
+
+    portals4_module->barrier_count = 0;
+    portals4_module->gather_count = 0;
 
     return &(portals4_module->super);
 }
@@ -689,9 +706,11 @@ portals4_progress(void)
                         ompi_coll_portals4_iallreduce_intra_fini(ptl_request);
                         break;
                     case OMPI_COLL_PORTALS4_TYPE_SCATTER:
-                    case OMPI_COLL_PORTALS4_TYPE_GATHER:
                         opal_output(ompi_coll_base_framework.framework_output,
-                                "allreduce is not supported yet\n");
+                                "scatter is not supported yet\n");
+                        break;
+                    case OMPI_COLL_PORTALS4_TYPE_GATHER:
+                        ompi_coll_portals4_igather_intra_fini(ptl_request);
                         break;
                     }
                 }
