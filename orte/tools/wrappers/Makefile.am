@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,7 +31,7 @@ pkgconfig_DATA = orte.pc
 
 install-exec-hook:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
+	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) ortecc$(EXEEXT))
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT)

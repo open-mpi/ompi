@@ -12,6 +12,8 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -88,12 +90,12 @@ nodist_ompidata_DATA = \
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper mpicc)
-	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper mpic++)
-	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
-	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper mpifort)
-	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) mpifort mpif77)
-	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) mpifort mpif90)
+	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpifort$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) mpifort$(EXEEXT) mpif77$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) mpifort$(EXEEXT) mpif90$(EXEEXT))
 if OMPI_WANT_JAVA_BINDINGS
 	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
@@ -124,7 +126,7 @@ uninstall-local-always:
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
-	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) opal_wrapper mpiCC)
+	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpiCC$(EXEEXT))
 
 install-data-hook: install-data-hook-always
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpiCC-wrapper-data.txt)
