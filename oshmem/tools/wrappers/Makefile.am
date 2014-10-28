@@ -18,12 +18,14 @@ if PROJECT_OSHMEM
 # Only install / uninstall if we're building oshmem
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun shmemrun)
-	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun oshrun)
-	(cd $(DESTDIR)$(bindir); rm -f shmemcc$(EXEEXT); $(LN_S) mpicc shmemcc)
-	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) mpicc oshcc)
-	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) mpifort shmemfort)
-	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) mpifort oshfort)
+	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) shmemrun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) oshrun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f shmemcc$(EXEEXT); $(LN_S) mpicc$(EXEEXT) shmemcc$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) mpicc$(EXEEXT) oshcc$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) shmemfort$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) oshfort$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f shmemjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) shmemjavac$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f oshjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) oshjavac$(EXEEXT))
 
 install-data-hook:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshcc-wrapper-data.txt; $(LN_S) shmemcc-wrapper-data.txt oshcc-wrapper-data.txt)

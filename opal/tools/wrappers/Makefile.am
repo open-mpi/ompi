@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -47,8 +49,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = opal.pc
 
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
-	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
+	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper$(EXEECT) opalcc$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper$(EXEECT) opalc++$(EXEEXT))
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
