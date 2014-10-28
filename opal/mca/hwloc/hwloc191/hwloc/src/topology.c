@@ -1818,15 +1818,22 @@ merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
     /* There are no child, nothing to merge. */
     return;
 
-  if (child->next_sibling && !hwloc_obj_type_is_io(child->next_sibling->type))
-    /* There are several non-I/O children */
+  /* we don't merge if there are multiple "important" children.
+   * non-important ones are at the end of the list.
+   * look at the second child to find out.
+   */
+  if (child->next_sibling
+      /* I/O objects may be ignored when trying to merge */
+      && !hwloc_obj_type_is_io(child->next_sibling->type)
+      /* Misc objects without cpuset may be ignored as well */
+      && !(child->next_sibling->type == HWLOC_OBJ_MISC && !child->next_sibling->cpuset))
+      /* There are several children that prevent from merging */
     return;
 
-  /* There is one non-I/O child and possible some I/O children.
-   * I/O children shouldn't prevent merging because they can be attached
-   * to anything with the same locality.
+  /* There is one important child, and some children that may be ignored
+   * during merging because they can be attached to anything with the same locality.
    * Move them to the side during merging, and append them back later.
-   * This is easy because I/O children are always last in the list.
+   * This is easy because children with no cpuset are always last in the list.
    */
   ios = child->next_sibling;
   child->next_sibling = NULL;
@@ -1873,7 +1880,7 @@ merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
   }
 
   if (ios) {
-    /* append I/O children to the list of children of the remaining object */
+    /* append the remaining list of children to the remaining object */
     pchild = &((*pparent)->first_child);
     while (*pchild)
       pchild = &((*pchild)->next_sibling);
