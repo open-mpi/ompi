@@ -17,6 +17,8 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -433,7 +435,7 @@ create_and_attach(mca_btl_sm_component_t *comp_ptr,
                                                size_ctl_structure,
                                                data_seg_alignment))) {
         opal_output(0, "create_and_attach: unable to create shared memory "
-                    "BTL coordinating strucure :: size %lu \n",
+                    "BTL coordinating structure :: size %lu \n",
                     (unsigned long)size);
         return OPAL_ERROR;
     }
