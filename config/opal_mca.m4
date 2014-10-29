@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -738,7 +738,16 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
     if test "$8" = "dso" ; then
         $6="$$6 $3"
     else
-        $7="mca/$2/$3/libmca_$2_$3.la $$7"
+        if test "$2" = "common"; then
+            # Static libraries in "common" frameworks are installed, and
+            # therefore must obey the $FRAMEWORK_LIB_PREFIX that was
+            # set.
+            $7="mca/$2/$3/lib${m4_translit([$1], [a-z], [A-Z])_LIB_PREFIX}mca_$2_$3.la $$7"
+        else
+            # Other frameworks do not have to obey the
+            # $FRAMEWORK_LIB_PREFIX prefix.
+            $7="mca/$2/$3/libmca_$2_$3.la $$7"
+        fi
         echo "extern const mca_base_component_t mca_$2_$3_component;" >> $outfile.extern
         echo "  &mca_$2_$3_component, " >> $outfile.struct
         $5="$$5 $3"

@@ -277,6 +277,12 @@ if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_ERROR([Cannot continue])
 fi
 
+# The library prefixes must be set before we call OPAL MCA.  Here is
+# as good a place as any.
+OPAL_SET_LIB_PREFIX([jeffopal])
+m4_ifdef([project_orte],
+          ORTE_SET_LIB_PREFIX([jefforte])])
+
 ############################################################################
 # Libtool: part one
 # (before C compiler setup)
@@ -1407,7 +1413,6 @@ AC_SUBST(opaldatadir)
 AC_SUBST(opallibdir)
 AC_SUBST(opalincludedir)
 
-OPAL_SET_LIB_PREFIX([])
 OPAL_SET_MCA_PREFIX([OMPI_MCA_])
 OPAL_SET_MCA_CMD_LINE_ID([mca])
 m4_ifdef([project_orte],
@@ -1416,8 +1421,7 @@ m4_ifdef([project_orte],
           ortelibdir="$opallibdir"
           AC_SUBST(ortelibdir)
           orteincludedir="$opalincludedir"
-          AC_SUBST(orteincludedir)
-          ORTE_SET_LIB_PREFIX([])])
+          AC_SUBST(orteincludedir)])
 m4_ifdef([project_ompi],
          [ompidatadir="$opaldatadir"
           AC_SUBST(ompidatadir)
