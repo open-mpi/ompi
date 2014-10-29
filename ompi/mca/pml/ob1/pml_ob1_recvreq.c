@@ -16,6 +16,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -152,11 +154,16 @@ static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* reque
     OBJ_CONSTRUCT(&request->lock, opal_mutex_t);
 }
 
+static void mca_pml_ob1_recv_request_destruct(mca_pml_ob1_recv_request_t* request)
+{
+    OBJ_DESTRUCT(&request->lock);
+}
+
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_recv_request_t,
     mca_pml_base_recv_request_t,
     mca_pml_ob1_recv_request_construct,
-    NULL);
+    mca_pml_ob1_recv_request_destruct);
 
 
 /*
