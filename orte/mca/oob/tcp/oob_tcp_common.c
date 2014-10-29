@@ -59,9 +59,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
-#if defined(TCP_NODELAY)
 #include "opal/mca/backtrace/backtrace.h"
-#endif
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
