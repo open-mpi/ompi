@@ -127,7 +127,7 @@ static opal_mutex_t common_cuda_dtoh_lock;
 static opal_mutex_t common_cuda_ipc_lock;
 
 /* Functions called by opal layer - plugged into opal function table */
-static int mca_common_cuda_is_gpu_buffer(const void*);
+static int mca_common_cuda_is_gpu_buffer(const void*, opal_convertor_t*);
 static int mca_common_cuda_memmove(void*, void*, size_t);
 static int mca_common_cuda_cu_memcpy_async(void*, const void*, size_t, opal_convertor_t*);
 static int mca_common_cuda_cu_memcpy(void*, const void*, size_t);
@@ -1700,7 +1700,7 @@ static float mydifftime(opal_timer_t ts_start, opal_timer_t ts_end) {
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
 /* Routines that get plugged into the opal datatype code */
-static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
+static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t *convertor)
 {
     int res;
     CUmemorytype memType = 0;
@@ -1715,6 +1715,15 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
     void *attrdata[] = {(void *)&memType, (void *)&ctx, (void *)&isManaged};
 
     res = cuFunc.cuPointerGetAttributes(3, attributes, attrdata, dbuf);
+
+    /* Mark unified memory buffers with a flag.  This will allow all unified
+     * memory to be forced through host buffers.  Note that this memory can
+     * be either host or device so we need to set this flag prior to that check. */
+    if (1 == isManaged) {
+        if (NULL != convertor) {
+            convertor->flags |= CONVERTOR_CUDA_UNIFIED;
+        }
+    }
     if (res != CUDA_SUCCESS) {
         /* If we cannot determine it is device pointer,
          * just assume it is not. */
@@ -1778,15 +1787,6 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
             return OPAL_ERROR;
         }
     }
-
-#if OPAL_CUDA_GET_ATTRIBUTES
-    if (1 == isManaged) {
-        /* Currently cannot support managed memory */
-        opal_output(0, "CUDA: ptr=%p: CUDA-aware Open MPI detected managed memory but there "
-                    "is no support for it.  Result will be unpredictable.", pUserBuf);
-        return OPAL_ERROR;
-    }
-#endif /* OPAL_CUDA_GET_ATTRIBUTES */
 
     /* First access on a device pointer finalizes CUDA support initialization.
      * If initialization fails, disable support. */

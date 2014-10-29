@@ -57,7 +57,7 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
         return;
     }
 
-    if (ftable.gpu_is_gpu_buffer(pUserBuf)) {
+    if (ftable.gpu_is_gpu_buffer(pUserBuf, convertor)) {
         convertor->flags |= CONVERTOR_CUDA;
     }
 }
@@ -78,7 +78,7 @@ bool opal_cuda_check_bufs(char *dest, char *src)
         return false;
     }
 
-    if (ftable.gpu_is_gpu_buffer(dest) || ftable.gpu_is_gpu_buffer(src)) {
+    if (ftable.gpu_is_gpu_buffer(dest, NULL) || ftable.gpu_is_gpu_buffer(src, NULL)) {
         return true;
     } else {
         return false;
