@@ -279,9 +279,9 @@ fi
 
 # The library prefixes must be set before we call OPAL MCA.  Here is
 # as good a place as any.
-OPAL_SET_LIB_PREFIX([jeffopal])
+OPAL_SET_LIB_PREFIX([])
 m4_ifdef([project_orte],
-          ORTE_SET_LIB_PREFIX([jefforte])])
+          ORTE_SET_LIB_PREFIX([])])
 
 ############################################################################
 # Libtool: part one
