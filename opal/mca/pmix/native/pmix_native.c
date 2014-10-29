@@ -1097,6 +1097,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             continue;
         }
         native_pname.vid = vid;
+        memcpy(&id, &native_pname, sizeof(opal_identifier_t));
 #if OPAL_HAVE_HWLOC
         OBJ_CONSTRUCT(&vals, opal_list_t);
         if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)&native_pname,
@@ -1104,7 +1105,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s cpuset for local proc %s not found",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
+                                OPAL_NAME_PRINT(id));
             OPAL_LIST_DESTRUCT(&vals);
             /* even though the cpuset wasn't found, we at least know it is
              * on the same node with us */
@@ -1131,7 +1132,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                              "%s pmix:native proc %s locality %s",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                             OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname),
+                             OPAL_NAME_PRINT(id),
                              opal_hwloc_base_print_locality(locality)));
     
         OBJ_CONSTRUCT(&kvn, opal_value_t);
