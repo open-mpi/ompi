@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -53,8 +53,6 @@ AC_DEFUN([_OPAL_CHECK_VERBS_DIR],[
 #    "no" if --without-verbs was specified)
 #    "optional" if neither --with-verbs* nor --without-verbs was specified
 #
-# NOTE: --with-openib* are deprecated synonyms for --with-verbs*.
-#
 # 2. $opal_verbs_dir and $opal_verbs_libdir with either both be set or
 # both be empty.
 #
@@ -67,55 +65,6 @@ AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
     AC_ARG_WITH([verbs-libdir],
        [AC_HELP_STRING([--with-verbs-libdir=DIR],
              [Search for verbs libraries in DIR])])
-
-    # Add deprecated --with options
-    # JMS REMOVE THESE IN v1.9
-    AC_ARG_WITH([openib],
-        [AC_HELP_STRING([--with-openib(=DIR)],
-             [DEPRECATED synonym for --with-verbs])])
-    AC_ARG_WITH([openib-libdir],
-       [AC_HELP_STRING([--with-openib-libdir=DIR],
-             [DEPRECATED synonym for --with-verbs-libdir])])
-
-    # Did we specify both --with-openib* and --with-verbs*?
-    # JMS REMOVE THESE IN v1.9
-    AS_IF([test -n "$with_openib" -a -n "$with_verbs"],
-          [AC_MSG_WARN([Both --with-verbs and --with-openib specified.])
-           AC_MSG_WARN([--with-openib value ignored.])
-           with_openib=
-          ])
-    AS_IF([test -n "$with_openib_libdir" -a -n "$with_verbs_libdir"],
-          [AC_MSG_WARN([Both --with-verbs-libdir and --with-openib-libdir specified.])
-           AC_MSG_WARN([--with-openib-libdir value ignored.])
-           with_openib_libdir=
-          ])
-
-    # Did we specify --with-openib* and not --with-verbs*?
-    # JMS REMOVE THESE IN v1.9
-    AS_IF([test -n "$with_openib" -a -z "$with_verbs"],
-          [AC_MSG_WARN([**************************************************])
-           AC_MSG_WARN([The use of --with-openib is deprecated.])
-           AC_MSG_WARN([You should use --with-verbs instead.])
-           AC_MSG_WARN([Proceeding with the assumption you meant])
-           AC_MSG_WARN([--with-verbs=$with_openib])
-           AC_MSG_WARN([(sleeping to let you read this message)])
-           AC_MSG_WARN([**************************************************])
-           sleep 10
-           with_verbs=$with_openib
-           with_openib=
-          ])
-    AS_IF([test -n "$with_openib_libdir" -a -z "$with_verbs_libdir"],
-          [AC_MSG_WARN([**************************************************])
-           AC_MSG_WARN([The use of --with-openib-libdir is deprecated.])
-           AC_MSG_WARN([You should use --with-verbs-libdir instead.])
-           AC_MSG_WARN([Proceeding with the assumption you meant])
-           AC_MSG_WARN([--with-verbs-libdir=$with_openib_libdir])
-           AC_MSG_WARN([(sleeping to let you read this message)])
-           AC_MSG_WARN([**************************************************])
-           sleep 10
-           with_verbs_libdir=$with_openib_libdir
-           with_openib_libdir=
-          ])
 
     # Sanity check the --with values
     OPAL_CHECK_WITHDIR([verbs], [$with_verbs], 

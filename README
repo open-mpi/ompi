@@ -900,16 +900,10 @@ NETWORKING SUPPORT / OPTIONS
   InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
 
 --with-verbs-libdir=<directory>
-  Look in directory for the verbs libraries.  By default, Open
-  MPI will look in <openib directory>/lib and <openib
-  directory>/lib64, which covers most cases.  This option is only
-  needed for special configurations.
-
---with-openib=<directory>
-  DEPRECATED synonym for --with-verbs.
-
---with-openib-libdir=<directory>
-  DEPRECATED synonym for --with-verbs-libdir.
+  Look in directory for the verbs libraries.  By default, Open MPI
+  will look in <verbs_directory>/lib and <verbs_ directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
 
 --with-portals4=<directory>
   Specify the directory where the Portals4 libraries and header files
