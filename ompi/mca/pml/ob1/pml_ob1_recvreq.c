@@ -198,7 +198,7 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
     if (OPAL_LIKELY(0 < rdma_size)) {
-        assert (rdma_size == frag->rdma_length);
+        assert ((uint64_t) rdma_size == frag->rdma_length);
 
         /* check completion status */
         OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, (size_t) rdma_size);
@@ -441,11 +441,13 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
  */
 int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
 {
+    mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
+    mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
     int rc;
 
     /* prepare descriptor */
-    if (bml_btl->btl->btl_register_mem && !frag->local_handle) {
+    if (bml_btl->btl->btl_register_mem && !frag->local_handle && !recvreq->local_handle) {
         mca_bml_base_register_mem (bml_btl, frag->local_address, frag->rdma_length, MCA_BTL_REG_FLAG_LOCAL_WRITE |
                                    MCA_BTL_REG_FLAG_REMOTE_WRITE, &frag->local_handle);
         if (OPAL_UNLIKELY(NULL == frag->local_handle)) {
@@ -453,12 +455,18 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
         }
     }
 
+    if (frag->local_handle) {
+        local_handle = frag->local_handle;
+    } else if (recvreq->local_handle) {
+        local_handle = recvreq->local_handle;
+    }
+
     PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
                                  &(((mca_pml_ob1_recv_request_t *) frag->rdma_req)->req_recv.req_base),
                                  frag->rdma_length, PERUSE_RECV);
 
     /* queue up get request */
-    rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, frag->local_handle,
+    rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
                            0, MCA_BTL_NO_ORDER, mca_pml_ob1_rget_completion, frag);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
@@ -671,6 +679,24 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 
     /* save the request for put fallback */
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
+    recvreq->rdma_bml = rdma_bml;
+
+    /* try to register the entire buffer */
+    if (rdma_bml->btl->btl_register_mem) {
+        void *data_ptr;
+
+        offset = 0;
+
+        OPAL_THREAD_LOCK(&recvreq->lock);
+        opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
+        opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &data_ptr);
+        OPAL_THREAD_UNLOCK(&recvreq->lock);
+
+        mca_bml_base_register_mem (rdma_bml, data_ptr, bytes_remaining, MCA_BTL_REG_FLAG_LOCAL_WRITE |
+                                   MCA_BTL_REG_FLAG_REMOTE_WRITE, &recvreq->local_handle);
+        /* It is not an error if the memory region can not be registered here. The registration will
+         * be attempted again for each get fragment. */
+    }
 
     /* The while loop adds a fragmentation mechanism. The variable bytes_remaining holds the num
      * of bytes left to be send. In each iteration we send the max possible bytes supported

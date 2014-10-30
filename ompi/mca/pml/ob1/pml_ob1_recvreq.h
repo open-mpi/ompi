@@ -53,6 +53,8 @@ struct mca_pml_ob1_recv_request_t {
     bool req_ack_sent; /**< whether ack was sent to the sender */
     bool req_match_received; /**< Prevent request to be completed prematurely */
     opal_mutex_t lock;
+    mca_bml_base_btl_t *rdma_bml;
+    mca_btl_base_registration_handle_t *local_handle;
     mca_pml_ob1_com_btl_t req_rdma[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
@@ -132,8 +134,12 @@ do {                                                                \
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
         MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
+        if ((recvreq)->local_handle) {                                  \
+            mca_bml_base_deregister_mem ((recvreq)->rdma_bml, (recvreq)->local_handle); \
+            (recvreq)->local_handle = NULL;                             \
+        }                                                               \
         OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,          \
-                               (ompi_free_list_item_t*)(recvreq));      \
+                                  (ompi_free_list_item_t*)(recvreq));   \
     }
 
 /**
