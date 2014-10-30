@@ -915,7 +915,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 
     if (NULL == mca_pmix_native_component.uri) {
         /* no server available, so just return */
-        return OPAL_ERR_NOT_FOUND;
+        return false;
     }
 
     /* if the value isn't yet available, then we should try to retrieve
