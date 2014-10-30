@@ -254,6 +254,10 @@ static int sm_register(void)
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
+#if OPAL_BTL_SM_HAVE_KNEM
+    mca_btl_sm.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+#endif
+
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
                                 &mca_btl_sm.super);
@@ -295,6 +299,8 @@ static int mca_btl_sm_component_open(void)
 
     mca_btl_sm_component.sm_seg = NULL;
 #if OPAL_BTL_SM_HAVE_KNEM
+    OBJ_CONSTRICT(&mca_btl_sm_component.registration_handles, ompi_free_list_t);
+
     mca_btl_sm.knem_fd = -1;
     mca_btl_sm.knem_status_array = NULL;
     mca_btl_sm.knem_frag_array = NULL;
@@ -329,6 +335,8 @@ static int mca_btl_sm_component_close(void)
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
+
+    OBJ_DESTRUCT(&mca_btl_sm_component.registration_handles);
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
@@ -903,6 +911,9 @@ mca_btl_sm_component_init(int *num_btls,
         } else {
             mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
         }
+
+        mca_btl_sm.super.btl_register_mem = mca_btl_sm_register_mem;
+        mca_btl_sm.super.btl_deregister_mem = mca_btl_sm_deregister_mem;
     }
 #else
     /* If the user explicitly asked for knem and we can't provide it,
@@ -917,6 +928,8 @@ mca_btl_sm_component_init(int *num_btls,
         /* Will only ever have either cma or knem enabled at runtime
            so no problems with accidentally overwriting this set earlier */
         mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
+        mca_btl_sm.super.btl_register_mem = mca_btl_sm_register_mem;
+        mca_btl_sm.super.btl_deregister_mem = mca_btl_sm_deregister_mem;
     }
 #else
     /* If the user explicitly asked for CMA and we can't provide itm
@@ -1175,22 +1188,14 @@ int mca_btl_sm_component_progress(void)
            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
         if (KNEM_STATUS_SUCCESS == 
             mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
-            int btl_ownership;
 
             /* Handle the completed fragment */
             frag = 
                 mca_btl_sm.knem_frag_array[mca_btl_sm.knem_status_first_used];
-            btl_ownership = (frag->base.des_flags & 
-                             MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-            if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & 
-                      frag->base.des_flags)) {
-                frag->base.des_cbfunc(&mca_btl_sm.super, 
-                                      frag->endpoint, &frag->base, 
-                                      OPAL_SUCCESS);
-            }
-            if (btl_ownership) {
-                MCA_BTL_SM_FRAG_RETURN(frag);
-            }
+            frag.cb.func (&mca_btl_sm.super, frag->endpoint,
+                          frag->cb.local_address, frag->cb.local_handle,
+                          frag->cb.context, frag->cb.data, OPAL_SUCCESS);
+            MCA_BTL_SM_FRAG_RETURN(frag);
 
             /* Bump counters, loop around the circular buffer if
                necessary */

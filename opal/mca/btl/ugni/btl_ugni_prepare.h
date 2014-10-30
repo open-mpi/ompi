@@ -41,7 +41,7 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
     frag->segments[1].seg_addr.pval = NULL;
     frag->segments[1].seg_len       = 0;
 
-    frag->base.des_segments       = &frag->segments;
+    frag->base.des_segments      = frag->segments;
     frag->base.des_segment_count = 1;
     frag->base.order           = order;
     frag->base.des_flags       = flags;
@@ -98,7 +98,7 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
     frag->segments[1].seg_addr.pval = data_ptr;
     frag->segments[1].seg_len       = *size;
 
-    frag->base.des_segments       = &frag->segments;
+    frag->base.des_segments       = frag->segments;
     frag->base.des_segment_count = 2;
     frag->base.order           = order;
     frag->base.des_flags       = flags;
@@ -159,7 +159,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     frag->segments[1].seg_addr.pval = frag->base.super.ptr;
     frag->segments[1].seg_len       = *size;
 
-    frag->base.des_segments       = &frag->segments;
+    frag->base.des_segments       = frag->segments;
     frag->base.des_segment_count = 2;
     frag->base.order           = order;
     frag->base.des_flags       = flags;

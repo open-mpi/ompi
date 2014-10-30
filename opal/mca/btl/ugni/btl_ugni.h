@@ -264,39 +264,15 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                     uint32_t flags, mca_btl_base_tag_t tag,
                     mca_btl_base_descriptor_t **descriptor);
 
-/**
- * Initiate a get operation.
- *
- * location: btl_ugni_get.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address,
-                      struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle,
-                      size_t size, int flags, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata);
+int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-/**
- * Initiate a put operation.
- *
- * location: btl_ugni_put.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address,
-                      struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle,
-                      size_t size, int flags, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata);
+int mca_btl_ugni_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 

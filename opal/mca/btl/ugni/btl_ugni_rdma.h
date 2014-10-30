@@ -21,7 +21,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
                                   mca_btl_ugni_base_frag_t *frag);
 
 static inline void init_gni_post_desc (opal_common_ugni_post_desc_t *post_desc,
-                                       gni_post_type_t op_type,
+                                       int order, gni_post_type_t op_type,
                                        uint64_t lcl_addr,
                                        gni_mem_handle_t lcl_mdh,
                                        uint64_t rem_addr,
@@ -30,7 +30,11 @@ static inline void init_gni_post_desc (opal_common_ugni_post_desc_t *post_desc,
                                        gni_cq_handle_t cq_hndl) {
     post_desc->base.type            = op_type;
     post_desc->base.cq_mode         = GNI_CQMODE_GLOBAL_EVENT;
-    post_desc->base.dlvr_mode       = GNI_DLVMODE_PERFORMANCE;
+    if (MCA_BTL_NO_ORDER == order) {
+        post_desc->base.dlvr_mode       = GNI_DLVMODE_PERFORMANCE;
+    } else {
+        post_desc->base.dlvr_mode       = GNI_DLVMODE_NO_ADAPT;
+    }
     post_desc->base.local_addr      = (uint64_t) lcl_addr;
     post_desc->base.local_mem_hndl  = lcl_mdh;
     post_desc->base.remote_addr     = (uint64_t) rem_addr;
@@ -45,7 +49,7 @@ static inline int mca_btl_ugni_post_fma (struct mca_btl_base_endpoint_t *endpoin
                                          size_t size, void *local_address, uint64_t remote_address,
                                          mca_btl_base_registration_handle_t *local_handle,
                                          mca_btl_base_registration_handle_t *remote_handle,
-                                         mca_btl_base_rdma_completion_fn_t cbfunc,
+                                         int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                          void *cbcontext, void *cbdata)
 {
     mca_btl_ugni_post_descriptor_t *post_desc;
@@ -58,7 +62,7 @@ static inline int mca_btl_ugni_post_fma (struct mca_btl_base_endpoint_t *endpoin
 
     /* Post descriptor (CQ is ignored for FMA transactions) -- The CQ associated with the endpoint
      * is used. */
-    init_gni_post_desc (&post_desc->desc, op_type, (intptr_t) local_address, local_handle->gni_handle,
+    init_gni_post_desc (&post_desc->desc, order, op_type, (intptr_t) local_address, local_handle->gni_handle,
                         remote_address, remote_handle->gni_handle, size, 0);
 
     OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);
@@ -83,7 +87,7 @@ static inline int mca_btl_ugni_post_bte (mca_btl_base_endpoint_t *endpoint, gni_
                                          size_t size, void *local_address, uint64_t remote_address,
                                          mca_btl_base_registration_handle_t *local_handle,
                                          mca_btl_base_registration_handle_t *remote_handle,
-                                         mca_btl_base_rdma_completion_fn_t cbfunc,
+                                         int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                          void *cbcontext, void *cbdata)
 {
     mca_btl_ugni_post_descriptor_t *post_desc;
@@ -95,7 +99,7 @@ static inline int mca_btl_ugni_post_bte (mca_btl_base_endpoint_t *endpoint, gni_
     }
 
     /* Post descriptor */
-    init_gni_post_desc (&post_desc->desc, op_type, (intptr_t) local_address, local_handle->gni_handle,
+    init_gni_post_desc (&post_desc->desc, order, op_type, (intptr_t) local_address, local_handle->gni_handle,
                         remote_address, remote_handle->gni_handle, size, endpoint->btl->rdma_local_cq);
 
     OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);
@@ -120,7 +124,7 @@ static inline int mca_btl_ugni_post (mca_btl_base_endpoint_t *endpoint, int get,
                                      void *local_address, uint64_t remote_address,
                                      mca_btl_base_registration_handle_t *local_handle,
                                      mca_btl_base_registration_handle_t *remote_handle,
-                                     mca_btl_base_rdma_completion_fn_t cbfunc,
+                                     int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                      void *cbcontext, void *cbdata)
 {
     const gni_post_type_t fma_ops[2] = {GNI_POST_FMA_PUT, GNI_POST_FMA_GET};
@@ -128,11 +132,11 @@ static inline int mca_btl_ugni_post (mca_btl_base_endpoint_t *endpoint, int get,
 
     if (size <= mca_btl_ugni_component.ugni_fma_limit) {
         return mca_btl_ugni_post_fma (endpoint, fma_ops[get], size, local_address, remote_address,
-                                      local_handle, remote_handle, cbfunc, cbcontext, cbdata);
+                                      local_handle, remote_handle, order, cbfunc, cbcontext, cbdata);
     }
 
     return mca_btl_ugni_post_bte (endpoint, rdma_ops[get], size, local_address, remote_address,
-                                  local_handle, remote_handle, cbfunc, cbcontext, cbdata);
+                                  local_handle, remote_handle, order, cbfunc, cbcontext, cbdata);
 }
 
 static inline int mca_btl_ugni_repost (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_post_descriptor_t *post_desc)

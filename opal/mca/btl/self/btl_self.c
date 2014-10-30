@@ -38,17 +38,15 @@
 #include "btl_self_frag.h"
 #include "opal/util/proc.h"
 
-int mca_btl_self_put (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                      uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+static int mca_btl_self_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-int mca_btl_self_get (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                      uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 mca_btl_base_module_t mca_btl_self = {
     .btl_component = &mca_btl_self_component.super,
@@ -176,7 +174,6 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
 struct mca_btl_base_descriptor_t*
 mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
-                          mca_mpool_base_registration_t* registration,
                           struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
@@ -268,11 +265,10 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
 }
 
 
-int mca_btl_self_put (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                      uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+static int mca_btl_self_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     memcpy ((void *)(intptr_t) remote_address, local_address, size);
 
@@ -281,11 +277,10 @@ int mca_btl_self_put (struct mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
-int mca_btl_self_get (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                      uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     memcpy (local_address, (void *)(intptr_t) remote_address, size);
 

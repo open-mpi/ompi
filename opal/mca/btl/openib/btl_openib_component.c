@@ -605,6 +605,9 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    openib_reg->btl_handle.lkey = openib_reg->mr->lkey;
+    openib_reg->btl_handle.rkey = openib_reg->mr->rkey;
+
     OPAL_OUTPUT_VERBOSE((30, mca_btl_openib_component.memory_registration_verbose,
                          "openib_reg_mr: base=%p, bound=%p, size=%d, flags=0x%x", reg->base, reg->bound,
                          (int) (reg->bound - reg->base + 1), reg->flags));
@@ -804,7 +807,19 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
 
-            openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
+            if (openib_btl->super.btl_get_limit > openib_btl->ib_port_attr.max_msg_sz) {
+                openib_btl->super.btl_get_limit = openib_btl->ib_port_attr.max_msg_sz;
+            }
+
+            openib_btl->super.btl_get_alignment = 0;
+
+            if (openib_btl->super.btl_put_limit > openib_btl->ib_port_attr.max_msg_sz) {
+                openib_btl->super.btl_put_limit = openib_btl->ib_port_attr.max_msg_sz;
+            }
+
+            openib_btl->super.btl_put_alignment = 0;
+
+            openib_btl->super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 
             /* Check bandwidth configured for this device */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
@@ -2881,16 +2896,15 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
     size_t i, len = opal_list_get_size(&ep->pending_get_frags);
     int rc;
 
-    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++)
-    {
+    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++) {
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         frag = opal_list_remove_first(&(ep->pending_get_frags));
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
+        if (NULL == frag)
             break;
-        rc = mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
-                                &to_base_frag(frag)->base);
-        if(OPAL_ERR_OUT_OF_RESOURCE == rc)
+        rc = mca_btl_openib_get_internal ((mca_btl_base_module_t *)openib_btl, ep,
+                                          qp, to_get_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
 
@@ -2899,11 +2913,11 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         frag = opal_list_remove_first(&(ep->pending_put_frags));
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
+        if (NULL == frag)
             break;
-        rc = mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
-                                &to_base_frag(frag)->base);
-        if(OPAL_ERR_OUT_OF_RESOURCE == rc)
+        rc = mca_btl_openib_put_internal ((mca_btl_base_module_t*)openib_btl, ep,
+                                          qp, to_put_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
 }
@@ -3266,11 +3280,25 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     /* Handle work completions */
     switch(wc->opcode) {
         case IBV_WC_RDMA_READ:
-            OPAL_OUTPUT((-1, "Got WC: RDMA_READ"));
-            OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
-            /* fall through */
-
         case IBV_WC_RDMA_WRITE:
+            OPAL_OUTPUT((-1, "Got WC: RDMA_READ or RDMA_WRITE"));
+
+            if (IBV_WC_RDMA_READ == wc->opcode) {
+                OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
+
+                mca_btl_openib_get_frag_t *get_frag = to_get_frag(des);
+
+                get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
+                                   get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
+                                   OPAL_SUCCESS);
+            } else {
+                mca_btl_openib_put_frag_t *put_frag = to_put_frag(des);
+
+                put_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
+                                   put_frag->cb.local_handle, put_frag->cb.context, put_frag->cb.data,
+                                   OPAL_SUCCESS);
+            }
+            /* fall through */
         case IBV_WC_SEND:
             OPAL_OUTPUT((-1, "Got WC: RDMA_WRITE or SEND"));
             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {

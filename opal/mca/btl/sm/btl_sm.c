@@ -743,7 +743,6 @@ extern int mca_btl_sm_free(
 struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -999,44 +998,77 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
 }
 
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
-struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst( 
-        struct mca_btl_base_module_t* btl,
-        struct mca_btl_base_endpoint_t* endpoint,
-        struct mca_mpool_base_registration_t* registration,
-        struct opal_convertor_t* convertor,
-        uint8_t order,
-        size_t reserve,
-        size_t* size,
-        uint32_t flags)
+mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base_module_t* btl,
+                                                             struct mca_btl_base_endpoint_t* endpoint,
+                                                             void *base, size_t size, uint32_t flags)
 {
-    void *ptr;
-    mca_btl_sm_frag_t* frag;
+    mca_btl_sm_registration_handle_t *handle = NULL;
 
-    MCA_BTL_SM_FRAG_ALLOC_USER(frag);
-    if(OPAL_UNLIKELY(NULL == frag)) {
+    OMPI_FREE_LIST_GET_MT(&mca_btl_sm_component.registration_handles, &handle);
+    if (OPAL_UNLIKELY(NULL == handle)) {
         return NULL;
     }
 
-    frag->segment.base.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, &ptr );
-    frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
+#if OPAL_BTL_SM_HAVE_KNEM
+    if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
+        knem_iov.base = (uintptr_t)base & (opal_getpagesize() - 1);
+        knem_iov.len = OPAL_ALIGN(size + ((intptr_t) base - knem_iov.base), opal_getpagesize());
+        knem_cr.iovec_array = (uintptr_t)&knem_iov;
+        knem_cr.iovec_nr = iov_count;
+        knem_cr.flags = 0;
+        knem_cr.protection = 0;
 
-    frag->base.des_segments = (mca_btl_base_segment_t*)&frag->segment;
-    frag->base.des_segment_count = 1;
-    frag->base.des_flags = flags;
-    return &frag->base;
+        if (flags & MCA_BTL_REG_FLAG_REMOTE_READ) {
+            knem_cr.protection |= PROT_READ;
+        }
+        if (flags & MCA_BTL_REG_FLAG_REMOTE_WRITE) {
+            knem_cr.protection |= PROT_WRITE;
+        }
+
+       if (OPAL_UNLIKELY(ioctl(sm_btl->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
+            return NULL;
+        }
+
+        handle->btl_handle.data.knem.cookie = knem_cr.cookie;
+        handle->btl_handle.data.knem.base_addr = knem_iov.base;
+    } else
+#endif
+    {
+        /* the pid could be included in a modex but this will work until btl/sm is
+         * deleted */
+        handle->btl_handle.data.pid = getpid ();
+    }
+
+    /* return the public part of the handle */
+    return &handle->btl_handle;
 }
+
+void mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_registration_handle_t *handle)
+{
+    mca_btl_sm_registration_handle_t *sm_handle =
+        (mca_btl_sm_registration_handle_t *)((intptr_t) handle - offsetof (mca_btl_sm_registration_handle_t, btl_handle));
+
+#if OPAL_BTL_SM_HAVE_KNEM
+    if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
+        (void) ioctl(sm_btl->knem_fd, KNEM_CMD_DESTROY_REGION, &handle->cookie);
+    }
+#endif
+
+    OMPI_FREE_LIST_RETURN_MT(&mca_btl_sm_component.registration_handles, &sm_handle->super);
+
+    return OPAL_SUCCESS;
+}
+#endif /* OPAL_BTL_SM_HAVE_KNEM */
+
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
 
 /**
  * Initiate an synchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
-int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
-                        struct mca_btl_base_endpoint_t* endpoint,
-                        struct mca_btl_base_descriptor_t* des)
+int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     int btl_ownership;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
@@ -1050,12 +1082,12 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     
         /* Fill in the ioctl data fields.  There's no async completion, so
            we don't need to worry about getting a slot, etc. */
-        recv_iovec.base = (uintptr_t) dst->base.seg_addr.lval;
-        recv_iovec.len =  dst->base.seg_len;
+        recv_iovec.base = (uintptr_t) local_address;
+        recv_iovec.len =  size;
         icopy.local_iovec_array = (uintptr_t)&recv_iovec;
         icopy.local_iovec_nr = 1;
-        icopy.remote_cookie = src->key;
-        icopy.remote_offset = 0;
+        icopy.remote_cookie = remote_handle->data.knem.cookie;
+        icopy.remote_offset = remote_address - remote_handle->base_addr;
         icopy.write = 0;
 
         /* Use the DMA flag if knem supports it *and* the segment length
@@ -1063,7 +1095,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
            value is 0 (i.e., the MCA param was set to 0), the segment size
            will never be larger than it, so DMA will never be used. */
         icopy.flags = 0;
-        if (mca_btl_sm_component.knem_dma_min <= dst->base.seg_len) {
+        if (mca_btl_sm_component.knem_dma_min <= size) {
             icopy.flags = mca_btl_sm_component.knem_dma_flag;
         }
         /* synchronous flags only, no need to specify icopy.async_status_index */
@@ -1081,23 +1113,18 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
 #if OPAL_BTL_SM_HAVE_CMA
     if (OPAL_LIKELY(mca_btl_sm_component.use_cma)) {
-        char *remote_address, *local_address;
-        int remote_length, local_length;
         struct iovec local, remote;
         pid_t remote_pid;
         int val;
 
-        remote_address = (char *)(uintptr_t) src->base.seg_addr.lval;
-        remote_length = src->base.seg_len;
-
         local_address = (char *)(uintptr_t) dst->base.seg_addr.lval;
         local_length = dst->base.seg_len;
 
-        remote_pid = src->key;
+        remote_pid = remote_handle->data.pid;
         remote.iov_base = remote_address;
-        remote.iov_len = remote_length;
+        remote.iov_len = size;
         local.iov_base = local_address;
-        local.iov_len = local_length;
+        local.iov_len = size;
 
         val = process_vm_readv(remote_pid, &local, 1, &remote, 1, 0);
 
@@ -1115,15 +1142,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
 
-    btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-    if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-        frag->base.des_cbfunc(&mca_btl_sm.super, 
-                              frag->endpoint, &frag->base, 
-                              OPAL_SUCCESS);
-    }
-    if (btl_ownership) {
-        MCA_BTL_SM_FRAG_RETURN(frag);
-    }
+    cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
     return OPAL_SUCCESS;
 }
@@ -1135,33 +1154,44 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
 /**
  * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
-int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
-                         struct mca_btl_base_endpoint_t* endpoint,
-                         struct mca_btl_base_descriptor_t* des)
+int mca_btl_sm_get_async (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                          uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                          mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     int btl_ownership;
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
-    mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
+    mca_btl_sm_frag_t* frag;
     mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_remote;
     mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_segments;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
     
-    /* If we have no knem slots available, return
-       TEMP_OUT_OF_RESOURCE */
+    /* If we have no knem slots available, fall back to synchronous */
     if (sm_btl->knem_status_num_used >=
         mca_btl_sm_component.knem_max_simultaneous) {
-        return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
+        return mca_btl_sm_get_sync (btl, endpoint, local_address, remote_address, local_handle,
+                                    remote_handle, size, flags, cbfunc, cbcontext, cbdata);
     }
+
+    /* allocate a fragment to keep track of this transaction */
+    MCA_BTL_SM_FRAG_ALLOC_USER(frag);
+    if (OPAL_UNLIKELY(NULL == frag)) {
+        return mca_btl_sm_get_sync (btl, endpoint, local_address, remote_address, local_handle,
+                                    remote_handle, size, flags, cbfunc, cbcontext, cbdata);
+    }
+
+    /* fill in callback data */
+    frag->cb.func = cbfunc;
+    frag->cb.context = cbcontext;
+    frag->cb.data = cbdata;
+    frag->cb.local_address = local_address;
+    frag->cb.local_handle = local_handle;
 
     /* We have a slot, so fill in the data fields.  Bump the
        first_avail and num_used counters. */
-    recv_iovec.base = (uintptr_t) dst->base.seg_addr.lval;
+    recv_iovec.base = (uintptr_t) local_address;
     recv_iovec.len =  dst->base.seg_len;
     icopy.local_iovec_array = (uintptr_t)&recv_iovec;
     icopy.local_iovec_nr = 1;
@@ -1172,8 +1202,8 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
         sm_btl->knem_status_first_avail = 0;
     }
     ++sm_btl->knem_status_num_used;
-    icopy.remote_cookie = src->key;
-    icopy.remote_offset = 0;
+    icopy.remote_cookie = remote_handle->data.knem.cookie;
+    icopy.remote_offset = remote_address - remote_handle->data.knem.base_addr;
 
     /* Use the DMA flag if knem supports it *and* the segment length
        is greater than the cutoff */
@@ -1186,19 +1216,11 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd, 
                                KNEM_CMD_INLINE_COPY, &icopy))) {
         if (icopy.current_status != KNEM_STATUS_PENDING) {
+            MCA_BTL_SM_FRAG_RETURN(frag);
             /* request completed synchronously */
 
             /* FIXME: what if icopy.current_status == KNEM_STATUS_FAILED? */
-
-            btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-            if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-                frag->base.des_cbfunc(&mca_btl_sm.super, 
-                                      frag->endpoint, &frag->base, 
-                                      OPAL_SUCCESS);
-            }
-            if (btl_ownership) {
-                MCA_BTL_SM_FRAG_RETURN(frag);
-            }
+            cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
             --sm_btl->knem_status_num_used;
             ++sm_btl->knem_status_first_used;

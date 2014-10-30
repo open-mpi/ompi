@@ -13,13 +13,10 @@
 #include "btl_ugni_rdma.h"
 #include "btl_ugni_smsg.h"
 
-int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address,
-                      struct mca_btl_base_registration_handle_t *local_handle,
-                      struct mca_btl_base_registration_handle_t *remote_handle,
-                      size_t size, int flags, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata)
+int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     bool check;
 
@@ -40,7 +37,7 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     (void) mca_btl_ugni_check_endpoint_state(endpoint);
 
     return mca_btl_ugni_post (endpoint, true, size, local_address, remote_address, local_handle,
-                              remote_handle, cbfunc, cbcontext, cbdata);
+                              remote_handle, order, cbfunc, cbcontext, cbdata);
 }
 
 /* eager get */
@@ -171,7 +168,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *endpoint,
         /* start the get */
         rc = mca_btl_ugni_post (endpoint, true, size, frag->base.super.ptr, hdr.eager.address,
                                 &frag->memory_handle, &hdr.eager.memory_handle,
-                                mca_btl_ugni_callback_eager_get, frag, NULL);
+                                MCA_BTL_NO_ORDER, mca_btl_ugni_callback_eager_get, frag, NULL);
         if (OPAL_UNLIKELY(OPAL_SUCCESS == rc)) {
             return OPAL_SUCCESS;
         }

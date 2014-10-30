@@ -118,22 +118,22 @@ static int mca_btl_scif_send_frag (struct mca_btl_base_endpoint_t *endpoint,
     unsigned char * restrict dst;
 
     BTL_VERBOSE(("btl/scif sending descriptor %p from %d -> %d. length = %" PRIu64, (void *) frag,
-                 OPAL_PROC_MY_NAME.vpid, endpoint->peer_proc->proc_name.vpid, frag->segments[0].base.seg_len));
+                 opal_process_name_vpid(OPAL_PROC_MY_NAME), opal_process_name_vpid(endpoint->peer_proc->proc_name), frag->segments[0].seg_len));
 
     if (OPAL_LIKELY(OPAL_SUCCESS == mca_btl_scif_send_get_buffer (endpoint, size, &dst))) {
-        unsigned char * restrict data = (unsigned char * restrict) frag->segments[0].base.seg_addr.pval;
+        unsigned char * restrict data = (unsigned char * restrict) frag->segments[0].seg_addr.pval;
 #if defined(SCIF_TIMING)
         struct timespec ts;
 
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
 #endif
 
-        memcpy (dst + sizeof (frag->hdr), data, frag->segments[0].base.seg_len);
+        memcpy (dst + sizeof (frag->hdr), data, frag->segments[0].seg_len);
 
-        if (frag->segments[1].base.seg_len) {
-            memcpy (dst + sizeof (frag->hdr) + frag->segments[0].base.seg_len,
-                     frag->segments[1].base.seg_addr.pval,
-                     frag->segments[1].base.seg_len);
+        if (frag->segments[1].seg_len) {
+            memcpy (dst + sizeof (frag->hdr) + frag->segments[0].seg_len,
+                     frag->segments[1].seg_addr.pval,
+                     frag->segments[1].seg_len);
         }
 
 #if defined(SCIF_USE_SEQ)
@@ -165,7 +165,7 @@ int mca_btl_scif_send (struct mca_btl_base_module_t *btl,
                        mca_btl_base_tag_t tag)
 {
     mca_btl_scif_base_frag_t *frag = (mca_btl_scif_base_frag_t *) descriptor;
-    size_t size = frag->segments[0].base.seg_len + frag->segments[1].base.seg_len;
+    size_t size = frag->segments[0].seg_len + frag->segments[1].seg_len;
     int rc;
 
     frag->hdr.tag  = tag;

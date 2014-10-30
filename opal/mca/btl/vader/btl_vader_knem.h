@@ -17,6 +17,12 @@
 #include <knem_io.h>
 #include <sys/mman.h>
 
+/* At this time only knem requires a registration of "RDMA" buffers */
+struct mca_btl_base_registration_handle_t {
+    uint64_t cookie;
+    intptr_t base_addr;
+};
+
 int mca_btl_vader_knem_init (void);
 int mca_btl_vader_knem_fini (void);
 int mca_btl_vader_knem_progress (void);

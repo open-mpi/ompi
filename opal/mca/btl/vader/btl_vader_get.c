@@ -33,11 +33,10 @@
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_VADER_HAVE_XPMEM
-int mca_btl_vader_get (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                       void *local_address, uint64_t remote_address,
-                       struct mca_btl_base_registration_handle_t *local_handle,
-                       struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+int mca_btl_vader_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
@@ -63,9 +62,10 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl, struct mca_btl_base_en
 #endif
 
 #if OPAL_BTL_VADER_HAVE_CMA
-int mca_btl_vader_get_cma (struct mca_btl_base_module_t *btl,
-                           struct mca_btl_base_endpoint_t *endpoint,
-                           struct mca_btl_base_descriptor_t *des)
+int mca_btl_vader_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     struct iovec src_iov = {.iov_base = (void *)(intptr_t) remote_address, .iov_len = size};
     struct iovec dst_iov = {.iov_base = local_address, .iov_len = size};
@@ -78,36 +78,29 @@ int mca_btl_vader_get_cma (struct mca_btl_base_module_t *btl,
     }
 
     /* always call the callback function */
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    frag->endpoint = endpoint;
-    mca_btl_vader_frag_complete (frag);
+    cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
     return OPAL_SUCCESS;
 }
 #endif
 
 #if OPAL_BTL_VADER_HAVE_KNEM
-int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
-                            struct mca_btl_base_endpoint_t *endpoint,
-                            struct mca_btl_base_descriptor_t *des)
+int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                            uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                            mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                            int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
-    mca_btl_vader_segment_t *src = (mca_btl_vader_segment_t *) des->des_remote;
-    mca_btl_vader_segment_t *dst = (mca_btl_vader_segment_t *) des->des_local;
-    const size_t size = min(dst->base.seg_len, src->base.seg_len);
-    intptr_t offset = src->base.seg_addr.lval - src->registered_base;
     struct knem_cmd_param_iovec recv_iovec;
     struct knem_cmd_inline_copy icopy;
 
     /* Fill in the ioctl data fields.  There's no async completion, so
        we don't need to worry about getting a slot, etc. */
-    recv_iovec.base = (uintptr_t) dst->base.seg_addr.lval;
+    recv_iovec.base = (uintptr_t) local_address;
     recv_iovec.len = size;
     icopy.local_iovec_array = (uintptr_t) &recv_iovec;
     icopy.local_iovec_nr    = 1;
-    icopy.remote_cookie     = src->cookie;
-    icopy.remote_offset     = offset;
+    icopy.remote_cookie     = remote_handle->cookie;
+    icopy.remote_offset     = remote_address - remote_handle->base_addr;
     icopy.write             = 0;
     icopy.flags             = 0;
 
@@ -115,7 +108,7 @@ int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
      * is greater than the cutoff. Not that if DMA is not supported
      * or the user specified 0 for knem_dma_min the knem_dma_min was
      * set to UINT_MAX in mca_btl_vader_knem_init. */
-    if (mca_btl_vader_component.knem_dma_min <= dst->base.seg_len) {
+    if (mca_btl_vader_component.knem_dma_min <= size) {
         icopy.flags = KNEM_FLAG_DMA;
     }
     /* synchronous flags only, no need to specify icopy.async_status_index */
@@ -131,10 +124,7 @@ int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
     }
 
     /* always call the callback function */
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    frag->endpoint = endpoint;
-    mca_btl_vader_frag_complete (frag);
+    cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
     return OPAL_SUCCESS;
 }

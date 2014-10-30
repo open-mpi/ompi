@@ -30,7 +30,6 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t* btl);
 static struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           struct mca_btl_base_endpoint_t *endpoint,
-                          mca_mpool_base_registration_t *registration,
                           struct opal_convertor_t *convertor,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags);
@@ -271,7 +270,6 @@ mca_btl_ugni_free (struct mca_btl_base_module_t *btl,
 static struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           mca_btl_base_endpoint_t *endpoint,
-                          mca_mpool_base_registration_t *registration,
                           struct opal_convertor_t *convertor,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags)

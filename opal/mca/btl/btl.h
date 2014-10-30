@@ -241,23 +241,27 @@ enum {
     /** Allow local write on the registered region. If a region is registered
      * with this flag the registration can be used as the local handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_LOCAL_WRITE   = 0x1,
+    MCA_BTL_REG_FLAG_LOCAL_WRITE   = 0x00000001,
     /** Allow remote read on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_REMOTE_READ   = 0x2,
+    MCA_BTL_REG_FLAG_REMOTE_READ   = 0x00000002,
     /** Allow remote write on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_put operation. */
-    MCA_BTL_REG_FLAG_REMOTE_WRITE  = 0x4,
+    MCA_BTL_REG_FLAG_REMOTE_WRITE  = 0x00000004,
     /** Allow remote atomic operations on the registered region. If a region is
      * registered with this flag the registration can be used as the remote
      * handle for a btl_atomic_op or btl_atomic_fop operation. */
-    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = 0x8,
+    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = 0x00000008,
     /** Allow any btl operation on the registered region. If a region is registered
      * with this flag the registration can be used as the local or remote handle for
      * any btl operation. */
-    MCA_BTL_REG_FLAG_ACCESS_ANY    = 0xf,
+    MCA_BTL_REG_FLAG_ACCESS_ANY    = 0x0000000f,
+#if OPAL_CUDA_GDR_SUPPORT
+    /** Region is in GPU memory */
+    MCA_BTL_REG_FLAG_CUDA_GPU_MEM  = 0x00010000,
+#endif
 };
 
 /**
@@ -718,7 +722,6 @@ typedef int (*mca_btl_base_module_free_fn_t)(
 typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -853,10 +856,11 @@ typedef int (*mca_btl_base_module_sendi_fn_t)(
  *                            (remote_address, remote_address + size)
  * @param size (IN)           Number of bytes to put
  * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
  * @param cbfunc (IN)         Function to call on completion (if queued)
  * @param cbcontext (IN)      Context for the callback
  * @param cbdata (IN)         Data for callback
- * 
+ *
  * @retval OPAL_SUCCESS    The descriptor was successfully queued for a put
  * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a put
  * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the put
@@ -868,7 +872,7 @@ typedef int (*mca_btl_base_module_put_fn_t) (struct mca_btl_base_module_t *btl,
     struct mca_btl_base_endpoint_t *endpoint, void *local_address,
     uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
     struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous get.
@@ -916,6 +920,7 @@ typedef int (*mca_btl_base_module_put_fn_t) (struct mca_btl_base_module_t *btl,
  *                            (remote_address, remote_address + size)
  * @param size (IN)           Number of bytes to put
  * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
  * @param cbfunc (IN)         Function to call on completion (if queued)
  * @param cbcontext (IN)      Context for the callback
  * @param cbdata (IN)         Data for callback
@@ -931,7 +936,7 @@ typedef int (*mca_btl_base_module_get_fn_t) (struct mca_btl_base_module_t *btl,
     struct mca_btl_base_endpoint_t *endpoint, void *local_address,
     uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
     struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Diagnostic dump of btl state.

@@ -78,7 +78,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     frag->hdr->tag = tag;
 
     /* write the match header (with MPI comm/tag/etc. info) */
-    memcpy (frag->segments[0].base.seg_addr.pval, header, header_size);
+    memcpy (frag->segments[0].seg_addr.pval, header, header_size);
 
     /* write the message data if there is any */
     /* we can't use single-copy semantics here since as caller will consider the send
@@ -88,7 +88,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
         struct iovec iov;
 
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segments[0].base.seg_addr.pval + header_size);
+        iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segments[0].seg_addr.pval + header_size);
         iov.iov_len  = length = payload_size;
 
         (void) opal_convertor_pack (convertor, &iov, &iov_count, &length);

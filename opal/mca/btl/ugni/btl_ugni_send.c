@@ -98,7 +98,6 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                         uint32_t flags, mca_btl_base_tag_t tag,
                         mca_btl_base_descriptor_t **descriptor)
 {
-    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     size_t total_size = header_size + payload_size;
     mca_btl_ugni_base_frag_t *frag = NULL;
     size_t packed_size = payload_size;

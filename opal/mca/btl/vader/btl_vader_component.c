@@ -251,7 +251,6 @@ static int mca_btl_vader_component_register (void)
         mca_btl_vader.super.btl_bandwidth = 10000; /* Mbs */
     }
 
-    mca_btl_vader.super.btl_seg_size  = sizeof (mca_btl_vader_segment_t);
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */
 
     /* Call the BTL based to register its MCA params */
@@ -272,7 +271,9 @@ static int mca_btl_vader_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_rdma, ompi_free_list_t);
+#if OPAL_BTL_VADER_HAVE_KNEM
+    OBJ_CONSTRUCT(&mca_btl_vader_component.registration_handles, ompi_free_list_t);
+#endif
     OBJ_CONSTRUCT(&mca_btl_vader_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_fragments, opal_list_t);
@@ -293,7 +294,9 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_max_send);
-    OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_rdma);
+#if OPAL_BTL_VADER_HAVE_KNEM
+    OBJ_DESTRUCT(&mca_btl_vader_component.registration_handles);
+#endif
     OBJ_DESTRUCT(&mca_btl_vader_component.lock);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
@@ -349,7 +352,6 @@ static void mca_btl_vader_select_next_single_copy_mechanism (void)
 static void mca_btl_vader_check_single_copy (void)
 {
     int initial_mechanism = mca_btl_vader_component.single_copy_mechanism;
-    int rc;
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
@@ -564,7 +566,7 @@ failed:
 void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *endpoint)
 {
     mca_btl_base_segment_t segments[2];
-    mca_btl_base_descriptor_t frag = {.des_local = segments, .des_local_count = 1};
+    mca_btl_base_descriptor_t frag = {.des_segments = segments, .des_segment_count = 1};
     const mca_btl_active_message_callback_t *reg;
 
     if (hdr->flags & MCA_BTL_VADER_FLAG_COMPLETE) {
@@ -584,7 +586,7 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_ba
                                            &segments[1].seg_addr.pval);
 
         segments[1].seg_len       = hdr->sc_iov.iov_len;
-        frag.des_local_count = 2;
+        frag.des_segment_count = 2;
 
         /* recv upcall */
         reg->cbfunc(&mca_btl_vader.super, hdr->tag, &frag, reg->cbdata);
