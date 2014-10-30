@@ -236,10 +236,9 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
      * happens in one thread, the increase of the req_bytes_delivered does not
      * have to be atomic.
      */
-    req_bytes_delivered = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_local,
-                                                              des->des_local_count,
-                                                              sizeof(mca_pml_ob1_rendezvous_hdr_t));
+    req_bytes_delivered = mca_pml_ob1_compute_segment_length_base ((void *) des->des_segments,
+                                                                   des->des_segment_count,
+                                                                   sizeof(mca_pml_ob1_rendezvous_hdr_t));
 
     mca_pml_ob1_rndv_completion_request( bml_btl, sendreq, req_bytes_delivered );
 }
@@ -305,10 +304,9 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     }
 
     /* count bytes of user data actually delivered */
-    req_bytes_delivered = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_local,
-                                                              des->des_local_count,
-                                                              sizeof(mca_pml_ob1_frag_hdr_t));
+    req_bytes_delivered = mca_pml_ob1_compute_segment_length_base ((void *) des->des_segments,
+                                                                   des->des_segment_count,
+                                                                   sizeof(mca_pml_ob1_frag_hdr_t));
 
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -379,7 +377,7 @@ int mca_pml_ob1_send_request_start_buffered(
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_local;
+    segment = des->des_segments;
 
     /* pack the data into the BTL supplied buffer */
     iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + 
@@ -517,7 +515,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    segment = des->des_local;
+    segment = des->des_segments;
 
     if(size > 0) {
         /* pack the data into the supplied buffer */
@@ -611,7 +609,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    segment = des->des_local;
+    segment = des->des_segments;
 
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
@@ -704,7 +702,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     }
 
     /* build match header */
-    hdr = (mca_pml_ob1_rget_hdr_t *) des->des_local->seg_addr.pval;
+    hdr = (mca_pml_ob1_rget_hdr_t *) des->des_segments->seg_addr.pval;
     /* TODO -- Add support for multiple segments for get */
     mca_pml_ob1_rget_hdr_prepare (hdr, MCA_PML_OB1_HDR_FLAGS_CONTIG | MCA_PML_OB1_HDR_FLAGS_PIN,
                                   sendreq->req_send.req_base.req_comm->c_contextid,
@@ -788,7 +786,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_local;
+    segment = des->des_segments;
 
     /* build hdr */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
@@ -1007,7 +1005,7 @@ cannot_pack:
         des->des_cbdata = sendreq;
 
         /* setup header */
-        hdr = (mca_pml_ob1_frag_hdr_t*)des->des_local->seg_addr.pval;
+        hdr = (mca_pml_ob1_frag_hdr_t*)des->des_segments->seg_addr.pval;
         mca_pml_ob1_frag_hdr_prepare (hdr, 0, range->range_send_offset, sendreq,
                                       sendreq->req_recv.lval);
 

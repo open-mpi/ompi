@@ -229,7 +229,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     }
 
     /* fill out header */
-    ack = (mca_pml_ob1_ack_hdr_t*)des->des_local->seg_addr.pval;
+    ack = (mca_pml_ob1_ack_hdr_t*)des->des_segments->seg_addr.pval;
     mca_pml_ob1_ack_hdr_prepare (ack, nordma ? MCA_PML_OB1_HDR_FLAGS_NORDMA : 0,
                                  hdr_src_req, hdr_dst_req, hdr_send_offset, size);
 
@@ -406,7 +406,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     ctl->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
         
     /* fill in rdma header */
-    hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_local->seg_addr.pval;
+    hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_segments->seg_addr.pval;
     mca_pml_ob1_rdma_hdr_prepare (hdr, (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0,
                                   recvreq->remote_req_send.lval, frag, recvreq, frag->rdma_offset,
                                   frag->local_address, frag->rdma_length, frag->local_handle,

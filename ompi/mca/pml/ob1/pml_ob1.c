@@ -659,7 +659,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     fin->des_cbdata = NULL;
 
     /* fill in header */
-    mca_pml_ob1_fin_hdr_prepare ((mca_pml_ob1_fin_hdr_t *) fin->des_local->seg_addr.pval,
+    mca_pml_ob1_fin_hdr_prepare ((mca_pml_ob1_fin_hdr_t *) fin->des_segments->seg_addr.pval,
                                  0, hdr_frag.lval, status ? status : rdma_size);
 
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
