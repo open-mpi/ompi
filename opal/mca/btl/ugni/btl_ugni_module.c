@@ -236,8 +236,8 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_local = &frag->segments[1];
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = &frag->segments[1];
+    frag->base.des_segment_count = 1;
 
     frag->segments[0].seg_addr.pval = NULL;
     frag->segments[0].seg_len       = 0;

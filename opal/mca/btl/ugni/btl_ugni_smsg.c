@@ -116,8 +116,8 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             BTL_VERBOSE(("received smsg fragment. hdr = {len = %u, tag = %d}", len, tag));
 
             reg = mca_btl_base_active_message_trigger + tag;
-            frag.base.des_local       = &seg;
-            frag.base.des_local_count = 1;
+            frag.base.des_segments       = &seg;
+            frag.base.des_segment_count = 1;
 
             seg.seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
             seg.seg_len       = len;

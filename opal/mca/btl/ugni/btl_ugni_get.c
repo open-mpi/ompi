@@ -90,16 +90,16 @@ static void mca_btl_ugni_callback_eager_get (struct mca_btl_base_module_t *btl, 
 
     BTL_VERBOSE(("eager get for rem_ctx %p complete", frag->hdr.eager.ctx))
 
-    tmp.base.des_local = segs;
+    tmp.base.des_segments = segs;
     if (hdr_len) {
-        tmp.base.des_local_count = 2;
+        tmp.base.des_segment_count = 2;
 
         segs[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
         segs[0].seg_len       = hdr_len;
         segs[1].seg_addr.pval = local_address;
         segs[1].seg_len       = payload_len;
     } else {
-        tmp.base.des_local_count = 1;
+        tmp.base.des_segment_count = 1;
 
         segs[0].seg_addr.pval = local_address;
         segs[0].seg_len       = payload_len;

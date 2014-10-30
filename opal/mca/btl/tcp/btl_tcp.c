@@ -170,8 +170,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
-    frag->base.des_local = frag->segments;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_tcp_module_t*)btl;
@@ -238,7 +238,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     frag->segments[0].seg_addr.pval = (frag + 1);
     frag->segments[0].seg_len = reserve;
 
-    frag->base.des_local_count = 1;
+    frag->base.des_segment_count = 1;
     if(opal_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
@@ -268,10 +268,10 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
 
         frag->segments[1].seg_addr.pval = iov.iov_base;
         frag->segments[1].seg_len = max_data;
-        frag->base.des_local_count = 2;
+        frag->base.des_segment_count = 2;
     }
 
-    frag->base.des_local = frag->segments;
+    frag->base.des_segments = frag->segments;
     frag->base.des_remote = NULL;
     frag->base.des_remote_count = 0;
     frag->base.des_flags = flags;
@@ -320,8 +320,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
 
     frag->base.des_remote = NULL;
     frag->base.des_remote_count = 0;
-    frag->base.des_local = frag->segments;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
@@ -355,7 +355,7 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->hdr.size = 0;
-    for( i = 0; i < (int)frag->base.des_local_count; i++) {
+    for( i = 0; i < (int)frag->base.des_segment_count; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+1].iov_len = frag->segments[i].seg_len;
         frag->iov[i+1].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
@@ -396,7 +396,7 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_remote;
     frag->iov[1].iov_len = frag->base.des_remote_count * sizeof(mca_btl_base_segment_t);
-    for( i = 0; i < (int)frag->base.des_local_count; i++ ) {
+    for( i = 0; i < (int)frag->base.des_segment_count; i++ ) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+2].iov_len = frag->segments[i].seg_len;
         frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;

@@ -828,11 +828,9 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     }
 #endif /* OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA */
 
-    frag->base.des_local = &(frag->segment.base);
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = &(frag->segment.base);
+    frag->base.des_segment_count = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
     frag->base.des_flags = flags;
     *size = max_data;
     return &frag->base;
@@ -1022,11 +1020,9 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
     frag->segment.base.seg_len = *size;
     opal_convertor_get_current_pointer( convertor, &ptr );
     frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
-    
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
-    frag->base.des_local = (mca_btl_base_segment_t*)&frag->segment;
-    frag->base.des_local_count = 1;
+
+    frag->base.des_segments = (mca_btl_base_segment_t*)&frag->segment;
+    frag->base.des_segment_count = 1;
     frag->base.des_flags = flags;
     return &frag->base;
 }
@@ -1045,7 +1041,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     int btl_ownership;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
     mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_remote;
-    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_local;
+    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_segments;
 #if OPAL_BTL_SM_HAVE_KNEM
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
@@ -1152,7 +1148,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
     mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_remote;
-    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_local;
+    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_segments;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
     

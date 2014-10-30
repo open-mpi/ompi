@@ -335,15 +335,13 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
  * operation along w/ a callback routine that is called on
  * completion of the request.
  * Note: receive callbacks will store the incomming data segments in
- *       des_local
+ *       des_segments
  */
 
 struct mca_btl_base_descriptor_t {
     ompi_free_list_item_t super;  
-    mca_btl_base_segment_t *des_local;  /**< local segments */
-    size_t des_local_count;             /**< number of local segments */
-    mca_btl_base_segment_t *des_remote; /**< remote segments */
-    size_t des_remote_count;            /**< number of destination segments */
+    mca_btl_base_segment_t *des_segments;     /**< local segments */
+    size_t des_segment_count;                 /**< number of local segments */
     mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */ 
     void* des_cbdata;                         /**< opaque callback data */
     void* des_context;                        /**< more opaque callback data */
@@ -468,7 +466,7 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  * completion function, this implies that all data payload in the 
  * mca_btl_base_descriptor_t must be copied out within this callback or 
  * forfeited back to the BTL.
- * Note also that descriptor segments (des_local) must be base
+ * Note also that descriptor segments (des_segments) must be base
  * segments for all callbacks.
  * 
  * @param[IN] btl        BTL module

@@ -163,8 +163,8 @@ mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_local = &frag->segments[0].base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = &frag->segments[0].base;
+    frag->base.des_segment_count = 1;
 
     frag->segments[0].base.seg_len       = size;
 
@@ -241,8 +241,8 @@ static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma (struct mca_bt
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 
-    frag->base.des_local = &frag->segments->base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = &frag->segments->base;
+    frag->base.des_segment_count = 1;
 
     return &frag->base;
 }
@@ -289,7 +289,7 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
         frag->segments[0].base.seg_len       = reserve;
         frag->segments[1].base.seg_addr.pval = data_ptr;
         frag->segments[1].base.seg_len       = *size;
-        frag->base.des_local_count = 2;
+        frag->base.des_segment_count = 2;
     } else {
         /* buffered send */
         (void) MCA_BTL_SCIF_FRAG_ALLOC_EAGER(endpoint, frag);
@@ -310,10 +310,10 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
         }
 
         frag->segments[0].base.seg_len = reserve + *size;
-        frag->base.des_local_count = 1;
+        frag->base.des_segment_count = 1;
     }
 
-    frag->base.des_local   = &frag->segments->base;
+    frag->base.des_segments   = &frag->segments->base;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 

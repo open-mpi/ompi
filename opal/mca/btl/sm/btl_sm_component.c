@@ -1089,8 +1089,8 @@ int mca_btl_sm_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_sm_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_local_count = 1;
-                Frag.base.des_local = &seg;
+                Frag.base.des_segment_count = 1;
+                Frag.base.des_segments = &seg;
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
                 /* return the fragment */

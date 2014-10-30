@@ -118,8 +118,8 @@ do {                                                                       \
     frag->iov_ptr = frag->iov;                                             \
     frag->base.des_remote = NULL;                                          \
     frag->base.des_remote_count = 0;                                       \
-    frag->base.des_local = frag->segments;                                 \
-    frag->base.des_local_count = 1;                                        \
+    frag->base.des_segments = frag->segments;                                 \
+    frag->base.des_segment_count = 1;                                        \
 } while(0)
 
 

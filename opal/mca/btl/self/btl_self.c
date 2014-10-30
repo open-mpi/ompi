@@ -138,8 +138,8 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
     
     frag->segment.seg_len = size;
     frag->base.des_flags       = flags;
-    frag->base.des_local       = &(frag->segment);
-    frag->base.des_local_count = 1;
+    frag->base.des_segments       = &(frag->segment);
+    frag->base.des_segment_count = 1;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -154,10 +154,8 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
 {
     mca_btl_self_frag_t* frag = (mca_btl_self_frag_t*)des;
 
-    frag->base.des_local        = NULL;
-    frag->base.des_local_count  = 0;
-    frag->base.des_remote       = NULL;
-    frag->base.des_remote_count = 0;
+    frag->base.des_segments        = NULL;
+    frag->base.des_segment_count  = 0;
 
     if(frag->size == mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_RETURN_EAGER(frag);
@@ -234,8 +232,8 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         *size = max_data;
     }
     frag->base.des_flags = flags;
-    frag->base.des_local       = &frag->segment;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments       = &frag->segment;
+    frag->base.des_segment_count = 1;
 
     return &frag->base;
 }
@@ -255,12 +253,6 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     mca_btl_active_message_callback_t* reg;
     int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
-    /**
-     * We have to set the dst before the call to the function and reset them
-     * after.
-     */
-    des->des_remote       = des->des_local;
-    des->des_remote_count = des->des_local_count;
     /* upcall */
     reg = mca_btl_base_active_message_trigger + tag;
     reg->cbfunc( btl, tag, des, reg->cbdata );

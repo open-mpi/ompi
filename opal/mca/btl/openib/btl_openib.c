@@ -1982,7 +1982,7 @@ int mca_btl_openib_send(
 
     if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
         to_coalesced_frag(des)->hdr->tag = tag;
-        to_coalesced_frag(des)->hdr->size = des->des_local->seg_len;
+        to_coalesced_frag(des)->hdr->size = des->des_segments->seg_len;
         if(ep->nbo)
             BTL_OPENIB_HEADER_COALESCED_HTON(*to_coalesced_frag(des)->hdr);
         frag = to_coalesced_frag(des)->send_frag;
@@ -2005,7 +2005,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* ep,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    mca_btl_openib_segment_t *src_seg = (mca_btl_openib_segment_t *) descriptor->des_local;
+    mca_btl_openib_segment_t *src_seg = (mca_btl_openib_segment_t *) descriptor->des_segments;
     mca_btl_openib_segment_t *dst_seg = (mca_btl_openib_segment_t *) descriptor->des_remote;
     struct ibv_send_wr* bad_wr;
     mca_btl_openib_out_frag_t* frag = to_out_frag(descriptor);
@@ -2083,7 +2083,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
                     mca_btl_base_descriptor_t* descriptor)
 {
     mca_btl_openib_segment_t *src_seg = (mca_btl_openib_segment_t *) descriptor->des_remote;
-    mca_btl_openib_segment_t *dst_seg = (mca_btl_openib_segment_t *) descriptor->des_local;
+    mca_btl_openib_segment_t *dst_seg = (mca_btl_openib_segment_t *) descriptor->des_segments;
     struct ibv_send_wr* bad_wr;
     mca_btl_openib_get_frag_t* frag = to_get_frag(descriptor);
     int qp = descriptor->order;

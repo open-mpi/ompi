@@ -68,8 +68,8 @@ static void out_constructor(mca_btl_openib_out_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 
     frag->sr_desc.wr_id = (uint64_t)(uintptr_t)frag;
     frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
@@ -83,8 +83,8 @@ static void in_constructor(mca_btl_openib_in_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 }
 
 static void send_constructor(mca_btl_openib_send_frag_t *frag)
@@ -154,8 +154,8 @@ static void coalesced_constructor(mca_btl_openib_coalesced_frag_t *frag)
 
     base_frag->type = MCA_BTL_OPENIB_FRAG_COALESCED;
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 }
 
 OBJ_CLASS_INSTANCE(

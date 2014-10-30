@@ -471,7 +471,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
     mca_btl_active_message_callback_t* reg;
-    size_t len = des->des_local->seg_len - sizeof(*ctl_hdr);
+    size_t len = des->des_segments->seg_len - sizeof(*ctl_hdr);
 
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
@@ -522,8 +522,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
 
                 skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size - pad);
 
-                tmp_des.des_local = &tmp_seg;
-                tmp_des.des_local_count = 1;
+                tmp_des.des_segments = &tmp_seg;
+                tmp_des.des_segment_count = 1;
                 tmp_seg.seg_addr.pval = clsc_hdr + 1;
                 tmp_seg.seg_len = clsc_hdr->size;
 
@@ -2925,7 +2925,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     /* advance the segment address past the header and subtract from the
      * length.*/
-    des->des_local->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
+    des->des_segments->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
 
     if(OPAL_LIKELY(!(is_credit_msg = is_credit_message(frag)))) {
         /* call registered callback */
@@ -2960,7 +2960,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
     } else {
         mca_btl_openib_rdma_credits_header_t *chdr =
-            (mca_btl_openib_rdma_credits_header_t *) des->des_local->seg_addr.pval;
+            (mca_btl_openib_rdma_credits_header_t *) des->des_segments->seg_addr.pval;
         if(ep->nbo) {
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(*chdr);
         }

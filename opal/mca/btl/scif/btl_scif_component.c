@@ -329,11 +329,11 @@ static int mca_btl_scif_progress_recvs (mca_btl_base_endpoint_t *ep)
              * the fragment without introducing another copy here. this
              * limitation has not appeared to cause any performance
              * problems. */
-            frag.base.des_local_count = 1;
+            frag.base.des_segment_count = 1;
             frag.segments[0].base.seg_len = hdr->size;
             frag.segments[0].base.seg_addr.pval = (void *) (hdr + 1);
 
-            frag.base.des_local = &frag.segments[0].base;
+            frag.base.des_segments = &frag.segments[0].base;
 
             /* call the registered callback function */
             reg->cbfunc(&mca_btl_scif_module.super, hdr->tag, &frag.base, reg->cbdata);
