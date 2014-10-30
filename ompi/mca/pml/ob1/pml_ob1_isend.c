@@ -94,12 +94,9 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         opal_convertor_get_packed_size (&convertor, &size);
     }
 
-    match.hdr_common.hdr_flags = 0;
-    match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
-    match.hdr_ctx = comm->c_contextid;
-    match.hdr_src = comm->c_my_rank;
-    match.hdr_tag = tag;
-    match.hdr_seq = seqn;
+    mca_pml_ob1_match_hdr_prepare (&match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
+                                   comm->c_contextid, comm->c_my_rank,
+                                   tag, seqn);
 
     ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH, dst_proc);
 
@@ -220,7 +217,7 @@ int mca_pml_ob1_send(void *buf,
 
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
-    sendreq->src_des = NULL;
+    sendreq->rdma_frag = NULL;
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   buf,
