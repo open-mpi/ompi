@@ -234,7 +234,7 @@ int mca_pml_ob1_send(void *buf,
                              PERUSE_SEND);
 
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
-    if (OPAL_UNLIKELY(rc == OMPI_SUCCESS)) {
+    if (OPAL_LIKELY(rc == OMPI_SUCCESS)) {
         ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
 
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
