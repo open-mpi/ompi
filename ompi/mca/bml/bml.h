@@ -311,28 +311,27 @@ static inline int  mca_bml_base_sendi( mca_bml_base_btl_t* bml_btl,
 static inline int mca_bml_base_put( mca_bml_base_btl_t* bml_btl, void *local_address, uint64_t remote_address,
                                     struct mca_btl_base_registration_handle_t *local_handle,
                                     struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
-                                    int flags, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
+                                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
     return btl->btl_put( btl, bml_btl->btl_endpoint, local_address, remote_address, local_handle,
-                         remote_handle, size, flags, cbfunc, (void *) bml_btl, cbdata);
+                         remote_handle, size, flags, order, cbfunc, (void *) bml_btl, cbdata);
 }
 
 static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl, void *local_address, uint64_t remote_address,
                                     struct mca_btl_base_registration_handle_t *local_handle,
                                     struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
-                                    int flags, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
+                                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
     return btl->btl_get( btl, bml_btl->btl_endpoint, local_address, remote_address, local_handle,
-                         remote_handle, size, flags, cbfunc, (void *) bml_btl, cbdata);
+                         remote_handle, size, flags, order, cbfunc, (void *) bml_btl, cbdata);
 }
 
 
 static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
-                                            mca_mpool_base_registration_t* reg, 
                                             struct opal_convertor_t* conv, 
                                             uint8_t order,
                                             size_t reserve, 
@@ -342,7 +341,7 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    *des = btl->btl_prepare_src( btl, bml_btl->btl_endpoint, reg, conv,
+    *des = btl->btl_prepare_src( btl, bml_btl->btl_endpoint, conv,
                                  order, reserve, size, flags );
     if( OPAL_LIKELY((*des) != NULL) ) {
         (*des)->des_context = (void*) bml_btl;
