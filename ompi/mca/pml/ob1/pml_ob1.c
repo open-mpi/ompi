@@ -500,7 +500,7 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
     case MCA_PML_OB1_HDR_TYPE_RGET:
         type = "RGET";
         snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %" PRIu64
-                  "seg_cnt %d  frag %" PRIu64 " src_ptr %" PRIu64,
+                  "frag %" PRIu64 " src_ptr %" PRIu64,
                   hdr->hdr_rndv.hdr_match.hdr_ctx, hdr->hdr_rndv.hdr_match.hdr_src,
                   hdr->hdr_rndv.hdr_match.hdr_tag, hdr->hdr_rndv.hdr_match.hdr_seq,
                   hdr->hdr_rndv.hdr_msg_length, hdr->hdr_rget.hdr_frag.lval,
@@ -520,7 +520,7 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
         break;
     case MCA_PML_OB1_HDR_TYPE_PUT:
         type = "PUT";
-        snprintf( header, 128, "seg_cnt %d dst_req %p src_frag %p recv_req %p offset %" PRIu64
+        snprintf( header, 128, "dst_req %p src_frag %p recv_req %p offset %" PRIu64
                   " dst_ptr %" PRIu64 " dst_size %" PRIu64,
                   hdr->hdr_rdma.hdr_req.pval, hdr->hdr_rdma.hdr_frag.pval,
                   hdr->hdr_rdma.hdr_recv_req.pval, hdr->hdr_rdma.hdr_rdma_offset,

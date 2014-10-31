@@ -137,6 +137,7 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_ob1_send_request_cancel;
     req->req_rdma_cnt = 0;
     req->req_throttle_sends = false;
+    req->rdma_frag = NULL;
     OBJ_CONSTRUCT(&req->req_send_ranges, opal_list_t);
     OBJ_CONSTRUCT(&req->req_send_range_lock, opal_mutex_t);
 }
@@ -145,6 +146,10 @@ static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
 {
     OBJ_DESTRUCT(&req->req_send_ranges);
     OBJ_DESTRUCT(&req->req_send_range_lock);
+    if (req->rdma_frag) {
+        MCA_PML_OB1_RDMA_FRAG_RETURN(req->rdma_frag);
+        req->rdma_frag = NULL;
+    }
 }
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
@@ -599,7 +604,6 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
 
     /* prepare descriptor */
     mca_bml_base_prepare_src( bml_btl,
-                              NULL,
                               &sendreq->req_send.req_base.req_convertor,
                               MCA_BTL_NO_ORDER,
                               OMPI_PML_OB1_MATCH_HDR_LEN,
@@ -768,7 +772,6 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_datatype);
         );
         mca_bml_base_prepare_src( bml_btl, 
-                                  NULL,
                                   &sendreq->req_send.req_base.req_convertor,
                                   MCA_BTL_NO_ORDER,
                                   sizeof(mca_pml_ob1_rendezvous_hdr_t),
@@ -978,10 +981,8 @@ cannot_pack:
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
         );
-        mca_bml_base_prepare_src(bml_btl, NULL,
-                                 &sendreq->req_send.req_base.req_convertor,
-                                 MCA_BTL_NO_ORDER,
-                                 sizeof(mca_pml_ob1_frag_hdr_t),
+        mca_bml_base_prepare_src(bml_btl, &sendreq->req_send.req_base.req_convertor,
+                                 MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_frag_hdr_t),
                                  &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK, &des);
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
@@ -1166,7 +1167,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
-                           0, mca_pml_ob1_put_completion, frag);
+                           0, MCA_BTL_NO_ORDER, mca_pml_ob1_put_completion, frag);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         mca_pml_ob1_send_request_put_frag_failed (frag, rc);
         return rc;
