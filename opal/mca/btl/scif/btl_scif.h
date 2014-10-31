@@ -93,6 +93,7 @@ typedef struct mca_btl_scif_module_t {
     pthread_t listen_thread;
 
     volatile bool exiting;
+    bool listening;
 } mca_btl_scif_module_t;
 
 typedef struct mca_btl_scif_component_t {

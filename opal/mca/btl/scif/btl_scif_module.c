@@ -126,7 +126,7 @@ mca_btl_scif_module_finalize (struct mca_btl_base_module_t *btl)
     }
 
     /* close the listening endpoint */
-    if (-1 != mca_btl_scif_module.scif_fd) {
+    if (mca_btl_scif_module.listening && -1 != mca_btl_scif_module.scif_fd) {
         /* wake up the scif thread */
         scif_epd_t tmpfd;
         tmpfd = scif_open();

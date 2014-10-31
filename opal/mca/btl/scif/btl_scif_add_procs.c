@@ -98,10 +98,13 @@ int mca_btl_scif_add_procs(struct mca_btl_base_module_t* btl,
 
     scif_module->endpoint_count = procs_on_board;
 
-    /* start listening thread */
-    rc = pthread_create (&mca_btl_scif_module.listen_thread, NULL, mca_btl_scif_connect_accept, NULL);
-    if (0 > rc) {
-        return OPAL_ERROR;
+    if (!mca_btl_scif_module.listening) {
+        /* start listening thread */
+        rc = pthread_create (&mca_btl_scif_module.listen_thread, NULL, mca_btl_scif_connect_accept, NULL);
+        if (0 > rc) {
+            return OPAL_ERROR;
+        }
+        mca_btl_scif_module.listening = true;
     }
 
     return OPAL_SUCCESS;
