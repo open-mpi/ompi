@@ -66,10 +66,6 @@ frag_send(ompi_osc_rdma_module_t *module,
                          "osc rdma: frag_send called to %d, frag = %p, count = %d",
                          frag->target, (void *) frag, count));
 
-    /* we need to signal now that a frag is outgoing to ensure the count sent
-     * with the unlock message is correct */
-    ompi_osc_signal_outgoing (module, frag->target, 1);
-
     return ompi_osc_rdma_isend_w_cb (frag->buffer, count, MPI_BYTE, frag->target, OSC_RDMA_FRAG_TAG,
                                      module->comm, frag_send_cb, frag);
 }
@@ -83,6 +79,10 @@ ompi_osc_rdma_frag_start(ompi_osc_rdma_module_t *module,
 
     assert(0 == frag->pending);
     assert(module->peers[frag->target].active_frag != frag);
+
+    /* we need to signal now that a frag is outgoing to ensure the count sent
+     * with the unlock message is correct */
+    ompi_osc_signal_outgoing (module, frag->target, 1);
 
     /* if eager sends are not active, can't send yet, so buffer and
        get out... */
