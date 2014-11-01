@@ -47,7 +47,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
            AS_IF([test -f $1/include/slurm/$2.h],
                  [AC_MSG_RESULT([found])
                   opal_check_$2_mycppflags="-I$1/include/slurm"
-		  $4],
+                  $4],
                  [AC_MSG_RESULT([not found])
                   opal_check_$2_hdr_happy=no])])
 
@@ -73,7 +73,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
                          $2_rpath=$1/lib64],
                         [opal_check_$2_lib_happy=no])],
            [AC_MSG_RESULT([not found])])
-           
+
 
     # if we didn't find lib64, or the library wasn't present or correct,
     # then try a lib directory if present
@@ -113,7 +113,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     check_pmi_install_dir=
     default_pmi_loc=
     slurm_pmi_found=
-    
+
     AC_MSG_CHECKING([if user requested PMI support])
     AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
@@ -132,7 +132,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            slurm_pmi_found=no
            OPAL_CHECK_PMI_LIB([$check_pmi_install_dir],
                               [pmi], [PMI_Init],
-			      [slurm_pmi_found=yes],
+                              [slurm_pmi_found=yes],
                               [opal_enable_pmi1=yes
                                opal_pmi1_LIBS="-lpmi"
                                AC_SUBST(opal_pmi1_LIBS)],
@@ -146,12 +146,12 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          AC_SUBST(opal_pmi1_LDFLAGS)
                          opal_pmi1_rpath="$pmi_rpath"
                          AC_SUBST(opal_pmi1_rpath)])])
-		  
+
            # check for pmi2 lib */
            slurm_pmi_found=no
            OPAL_CHECK_PMI_LIB([$check_pmi_install_dir],
                               [pmi2], [PMI2_Init],
-			      [slurm_pmi_found=yes],
+                              [slurm_pmi_found=yes],
                               [opal_enable_pmi2=yes
                                opal_pmi2_LIBS="-lpmi2"
                                AC_SUBST(opal_pmi2_LIBS)],
@@ -165,7 +165,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          AC_SUBST(opal_pmi2_LDFLAGS)
                          opal_pmi2_rpath="$pmi2_rpath"
                          AC_SUBST(opal_pmi2_rpath)])])
-		  
+
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
            AS_IF([test "$opal_enable_pmi1" != "yes" && test "$opal_enable_pmi2" != "yes"],
