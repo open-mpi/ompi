@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -321,10 +321,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
 
-    /* if we are using all allocated nodes, then alps
-     * doesn't need a nodelist
+    /* if we are using all allocated nodes, , or if running without a batch scheduler,
+     * then alps doesn't need a nodelist
      */
-    if (map->num_new_daemons < orte_num_allocated_nodes) {
+    if (map->num_new_daemons < orte_num_allocated_nodes || (orte_num_allocated_nodes == 0)) {
         opal_argv_append(&argc, &argv, "-L");
         opal_argv_append(&argc, &argv, nodelist_flat);
     }
