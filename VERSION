@@ -31,7 +31,7 @@ greek=rc1
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=
+repo_rev=gitclone
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
