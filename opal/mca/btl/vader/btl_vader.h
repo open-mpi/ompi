@@ -115,9 +115,6 @@ struct mca_btl_vader_component_t {
     ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
     ompi_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
     ompi_free_list_t vader_frags_user;      /**< free list of small inline frags */
-#if OPAL_BTL_VADER_HAVE_KNEM
-    ompi_free_list_t registration_handles;  /**< registration handles for knem segments */
-#endif
 
     unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
     unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */

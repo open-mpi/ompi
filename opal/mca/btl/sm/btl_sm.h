@@ -183,6 +183,8 @@ struct mca_btl_sm_component_t {
 #if OPAL_BTL_SM_HAVE_KNEM
     /* Knem capabilities info */
     struct knem_cmd_info knem_info;
+#endif
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
     /** registration handles to hold knem cookies */
     ompi_free_list_t registration_handles;
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
@@ -506,7 +508,7 @@ extern int mca_btl_sm_send(
 /*
  * Synchronous knem/cma get
  */
-int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
                          uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                          mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
@@ -516,7 +518,7 @@ int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *en
 /*
  * Asynchronous knem get
  */
-int mca_btl_sm_get_async (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+int mca_btl_sm_get_async (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
@@ -566,13 +568,12 @@ struct mca_btl_sm_registration_handle_t {
     mca_btl_base_registration_handle_t btl_handle;
 };
 typedef struct mca_btl_sm_registration_handle_t mca_btl_sm_registration_handle_t;
-OBJ_CLASS_DECLARATION(mca_btl_sm_registration_handle_t);
 
 mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base_module_t* btl,
                                                              struct mca_btl_base_endpoint_t* endpoint,
                                                              void *base, size_t size, uint32_t flags);
 
-void mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_registration_handle_t *handle);
+int mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_registration_handle_t *handle);
 
 #endif
 

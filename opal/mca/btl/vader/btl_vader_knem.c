@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "opal/util/show_help.h"
+#include "opal/mca/mpool/grdma/mpool_grdma.h"
 
 struct mca_btl_vader_registration_handle_t {
     ompi_free_list_item_t super;
@@ -28,65 +29,79 @@ typedef struct mca_btl_vader_registration_handle_t mca_btl_vader_registration_ha
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_registration_handle_t, ompi_free_list_item_t, NULL, NULL);
 
-static mca_btl_base_registration_handle_t *
-mca_btl_vader_register_mem_knem (struct mca_btl_base_module_t* btl,
-                                 struct mca_btl_base_endpoint_t *endpoint,
-                                 void *base, size_t size, uint32_t flags)
+static int mca_btl_vader_knem_reg (void *reg_data, void *base, size_t size,
+                                   mca_mpool_base_registration_t *reg)
 {
-    mca_btl_vader_registration_handle_t *handle = NULL;
+    mca_btl_vader_reg_t *knem_reg = (mca_btl_vader_reg_t *) reg;
     struct knem_cmd_create_region knem_cr;
     struct knem_cmd_param_iovec knem_iov;
-
-    /* NTH: TODO -- Replace this with just using an mpool once we can pass the
-     * protection flags through. */
-
-    OMPI_FREE_LIST_GET_MT(&mca_btl_vader.registration_handles, &handle);
-    if (OPAL_UNLIKELY(NULL == handle)) {
-        return NULL;
-    }
 
     knem_iov.base = (uintptr_t) base;
     knem_iov.len = size;
 
     knem_cr.iovec_array = (uintptr_t) &knem_iov;
     knem_cr.iovec_nr = 1;
-    knem_cr.protection = 0;
-
-    if (flags & MCA_BTL_REG_FLAG_REMOTE_READ) {
-        knem_cr.protection |= PROT_READ;
-    }
-
-    if (flags & MCA_BTL_REG_FLAG_REMOTE_WRITE) {
-        knem_cr.protection |= PROT_WRITE;
-    }
+    /* TODO -- set proper access flags when the protection is passed down */
+    knem_cr.protection = PROT_READ | PROT_WRITE;
 
     /* Vader will explicitly destroy this cookie */
     knem_cr.flags = 0;
     if (OPAL_UNLIKELY(ioctl(mca_btl_vader.knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
-        OMPI_FREE_LIST_RETURN_MT(&mca_btl_vader.registration_handles, handle);
+        return OPAL_ERROR;
+    }
+
+    knem_reg->btl_handle.cookie = knem_cr.cookie;
+    knem_reg->btl_handle.base_addr = (intptr_t) base;
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_btl_vader_knem_dereg (void *reg_data, mca_mpool_base_registration_t *reg)
+{
+    mca_btl_vader_reg_t *knem_reg = (mca_btl_vader_reg_t *) reg;
+
+    /* NTH: explicity ignore the return code. Don't care about this cookie anymore anyway. */
+    (void) ioctl(mca_btl_vader.knem_fd, KNEM_CMD_DESTROY_REGION, &knem_reg->btl_handle.cookie);
+
+    return OPAL_SUCCESS;
+}
+
+static mca_btl_base_registration_handle_t *
+mca_btl_vader_register_mem_knem (struct mca_btl_base_module_t* btl,
+                                 struct mca_btl_base_endpoint_t *endpoint,
+                                 void *base, size_t size, uint32_t flags)
+{
+    mca_btl_vader_reg_t *reg = NULL;
+    int rc;
+
+    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, 0,
+                                         (mca_mpool_base_registration_t **) &reg);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
     }
 
-    handle->btl_handle.cookie = knem_cr.cookie;
-    handle->btl_handle.base_addr = (intptr_t) base;
-
-    return &handle->btl_handle;
+    return &reg->btl_handle;
 }
 
 static int
 mca_btl_vader_deregister_mem_knem (struct mca_btl_base_module_t* btl, struct mca_btl_base_registration_handle_t *handle)
 {
-    mca_btl_vader_registration_handle_t *vader_handle =
-        (mca_btl_vader_registration_handle_t *)((intptr_t) handle - offsetof (mca_btl_vader_registration_handle_t, btl_handle));
+    mca_btl_vader_reg_t *reg =
+        (mca_btl_vader_reg_t *)((intptr_t) handle - offsetof (mca_btl_vader_reg_t, btl_handle));
 
-    /* NTH: explicity ignore the return code. Don't care about this cookie anymore anyway. */
-    (void) ioctl(mca_btl_vader.knem_fd, KNEM_CMD_DESTROY_REGION, &vader_handle->cookie);
+    btl->btl_mpool->mpool_deregister (btl->btl_mpool, &reg->base);
 
     return OPAL_SUCCESS;
 }
 
 int mca_btl_vader_knem_init (void)
 {
+    mca_mpool_base_resources_t mpool_resources = {
+        .pool_name = "vader", .reg_data = NULL,
+        .sizeof_reg = sizeof (mca_btl_vader_reg_t),
+        .register_mem = mca_btl_vader_knem_reg,
+        .deregister_mem = mca_btl_vader_knem_dereg
+    };
     struct knem_cmd_info knem_info;
     int rc;
 
@@ -140,9 +155,15 @@ int mca_btl_vader_knem_init (void)
 	mca_btl_vader.super.btl_put = mca_btl_vader_put_knem;
 
         /* knem requires registration */
-        mca_btl_vader.super.btl_register_mem = mca_btl_vader_vader_register_mem_kem;
-        mca_btl_vader.super.btl_deregister_mem = mca_btl_vader_vader_deregister_mem_kem;
+        mca_btl_vader.super.btl_register_mem = mca_btl_vader_register_mem_knem;
+        mca_btl_vader.super.btl_deregister_mem = mca_btl_vader_deregister_mem_knem;
         mca_btl_vader.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+
+        mca_btl_vader.super.btl_mpool = mca_mpool_base_module_create ("grdma", NULL,
+                                                                      &mpool_resources);
+        if (NULL == mca_btl_vader.super.btl_mpool) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
 
 	return OPAL_SUCCESS;
     } while (0);

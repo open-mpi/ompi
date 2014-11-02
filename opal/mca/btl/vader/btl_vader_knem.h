@@ -23,6 +23,12 @@ struct mca_btl_base_registration_handle_t {
     intptr_t base_addr;
 };
 
+struct mca_btl_vader_reg_t {
+    mca_mpool_base_registration_t base;
+    mca_btl_base_registration_handle_t btl_handle;
+};
+typedef struct mca_btl_vader_reg_t mca_btl_vader_reg_t;
+
 int mca_btl_vader_knem_init (void);
 int mca_btl_vader_knem_fini (void);
 int mca_btl_vader_knem_progress (void);

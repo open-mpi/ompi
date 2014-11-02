@@ -271,9 +271,6 @@ static int mca_btl_vader_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, ompi_free_list_t);
-#if OPAL_BTL_VADER_HAVE_KNEM
-    OBJ_CONSTRUCT(&mca_btl_vader_component.registration_handles, ompi_free_list_t);
-#endif
     OBJ_CONSTRUCT(&mca_btl_vader_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_fragments, opal_list_t);
@@ -294,9 +291,6 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_max_send);
-#if OPAL_BTL_VADER_HAVE_KNEM
-    OBJ_DESTRUCT(&mca_btl_vader_component.registration_handles);
-#endif
     OBJ_DESTRUCT(&mca_btl_vader_component.lock);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
@@ -421,7 +415,7 @@ static void mca_btl_vader_check_single_copy (void)
 #if OPAL_BTL_VADER_HAVE_KNEM
     if (MCA_BTL_VADER_KNEM == mca_btl_vader_component.single_copy_mechanism) {
         /* mca_btl_vader_knem_init will set the appropriate get/put functions */
-        rc = mca_btl_vader_knem_init ();
+        int rc = mca_btl_vader_knem_init ();
         if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_KNEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "knem requested but not available",

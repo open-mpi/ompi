@@ -96,21 +96,6 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     component->segment_offset = MCA_BTL_VADER_FIFO_SIZE;
 
     /* initialize fragment descriptor free lists */
-    /* initialize free list for single copy (get, put) */
-#if OPAL_BTL_VADER_HAVE_KNEM
-    if (MCA_BTL_VADER_KNEM != mca_btl_vader_component.single_copy_mechanism) {
-        rc = ompi_free_list_init_new (&component->registration_handles,
-                                      sizeof(mca_btl_vader_registration_handle_t), 8,
-                                      OBJ_CLASS(mca_btl_vader_registration_handle_t),
-                                      0, 8, component->vader_free_list_num,
-                                      component->vader_free_list_max,
-                                      component->vader_free_list_inc, NULL);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-    }
-#endif
-
     /* initialize free list for small send and inline fragments */
     rc = ompi_free_list_init_ex_new(&component->vader_frags_user, 
                                     sizeof(mca_btl_vader_frag_t),
