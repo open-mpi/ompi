@@ -225,6 +225,12 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_FLAGS_SIGNALED        0x4000
 
+
+/** The BTL supports network atomic operations */
+#define MCA_BTL_FLAGS_ATOMIC_OPS      0x08000
+/** The BTL supports fetching network atomic operations */
+#define MCA_BTL_FLAGS_ATOMIC_FOPS     0x10000
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
@@ -262,6 +268,34 @@ enum {
     MCA_BTL_REG_FLAG_CUDA_GPU_MEM  = 0x00010000,
 #endif
 };
+
+/** supported atomic operations */
+enum {
+    /** The btl supports atomic add */
+    MCA_BTL_ATOMIC_SUPPORTS_ADD    = 0x00000001,
+    /** The btl supports atomic bitwise and */
+    MCA_BTL_ATOMIC_SUPPORTS_AND    = 0x00000200,
+    /** The btl supports atomic bitwise or */
+    MCA_BTL_ATOMIC_SUPPORTS_OR     = 0x00000400,
+    /** The btl supports atomic bitwise exclusive or */
+    MCA_BTL_ATOMIC_SUPPORTS_XOR    = 0x00000800,
+    /** The btl supports atomic compare-and-swap */
+    MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x10000000,
+    /** The btl guarantees global atomicity (can mix btl atomics with cpu atomics) */
+    MCA_BTL_ATOMIC_SUPPORTS_GLOB   = 0x20000000,
+};
+
+enum mca_btl_base_atomic_op_t {
+    /** Atomic add: (*remote_address) = (*remote_address) + operand */
+    MCA_BTL_ATOMIC_ADD = 0x0001,
+    /** Atomic and: (*remote_address) = (*remote_address) & operand */
+    MCA_BTL_ATOMIC_AND = 0x0011,
+    /** Atomic or: (*remote_address) = (*remote_address) | operand */
+    MCA_BTL_ATOMIC_OR  = 0x0012,
+    /** Atomic xor: (*remote_address) = (*remote_address) ^ operand */
+    MCA_BTL_ATOMIC_XOR = 0x0014,
+};
+typedef enum mca_btl_base_atomic_op_t mca_btl_base_atomic_op_t;
 
 /**
  * Asynchronous callback function on completion of an operation.
@@ -825,12 +859,6 @@ typedef int (*mca_btl_base_module_sendi_fn_t)(
  *                       until all outstanding operations on that handle
  *                       have been completed.
  *
- * BTLs that do not have the MCA_BTL_FLAGS_RDMA_MATCHED flag set 
- *  allow multiple concurrent put operations on the same descriptor. 
- * BTLs that do have the MCA_BTL_FLAGS_RDMA_MATCHED  flag set require 
- *  a corresponding prepare_src/dst call for each put operation and 
- *  therefore prohibit multiple concurrent put operations.
- * 
  * @param btl (IN)            BTL module
  * @param endpoint (IN)       BTL addressing information
  * @param local_address (IN)  Local address to put from (registered)
@@ -861,39 +889,12 @@ typedef int (*mca_btl_base_module_put_fn_t) (struct mca_btl_base_module_t *btl,
 
 /**
  * Initiate an asynchronous get.
- *
- * Completion Semantics: the descriptor has been queued for a get operation
- *                       the BTL now controls the descriptor until local 
- *                       completion callback is made on the descriptor
- *
- * BTLs that do not have the MCA_BTL_FLAGS_RDMA_MATCHED flag set 
- *  allow multiple concurrent get operations on the same descriptor. 
- * BTLs that do have the MCA_BTL_FLAGS_RDMA_MATCHED  flag set require 
- *  a corresponding prepare_src/dst call for each get operation and 
- *  therefore prohibit multiple concurrent get operations.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- * 
- * @retval OPAL_SUCCESS    The descriptor was successfully queued for a get
- * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a get
- *
- */
-/**
- * Initiate an asynchronous get.
  * Completion Semantics: if this function returns a 1 then the operation
  *                       is complete. a return of OPAL_SUCCESS indicates
  *                       the get operation has been queued with the
  *                       network. the local_handle can not be deregistered
  *                       until all outstanding operations on that handle
  *                       have been completed.
- *
- * BTLs that do not have the MCA_BTL_FLAGS_RDMA_MATCHED flag set
- *  allow multiple concurrent put operations on the same descriptor.
- * BTLs that do have the MCA_BTL_FLAGS_RDMA_MATCHED  flag set require
- *  a corresponding prepare_src/dst call for each put operation and
- *  therefore prohibit multiple concurrent put operations.
  *
  * @param btl (IN)            BTL module
  * @param endpoint (IN)       BTL addressing information
@@ -922,6 +923,139 @@ typedef int (*mca_btl_base_module_get_fn_t) (struct mca_btl_base_module_t *btl,
     uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
     struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous atomic operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param remote_address (IN) Remote address to put to (registered remotely)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param op (IN)             Operation to perform
+ * @param operand (IN)        Operand for the operation
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu or other btl atomics.
+ */
+typedef int (*mca_btl_base_module_atomic_op64_fn_t) (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+    uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+    void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous fetching atomic operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param op (IN)             Operation to perform
+ * @param operand (IN)        Operand for the operation
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu or other btl atomics.
+ */
+typedef int (*mca_btl_base_module_atomic_fop64_fn_t) (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint, void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+    uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+    void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous compare and swap operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param compare (IN)        Operand for the operation
+ * @param value (IN)          Value to store on success
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with {value} if *remote_address == compare.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ */
+typedef int (*mca_btl_base_module_atomic_cswap64_fn_t) (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint, void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+    uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+    void *cbcontext, void *cbdata);
 
 /**
  * Diagnostic dump of btl state.
@@ -961,6 +1095,7 @@ struct mca_btl_base_module_t {
     uint32_t    btl_latency;          /**< relative ranking of latency used to prioritize btls */
     uint32_t    btl_bandwidth;        /**< bandwidth (Mbytes/sec) supported by each endpoint */
     uint32_t    btl_flags;            /**< flags (put/get...) */
+    uint32_t    btl_atomic_flags;     /**< atomic operations supported (add, and, xor, etc) */
     size_t      btl_registration_handle_size; /**< size of the BTLs registration handles */
 
     /* One-sided limitations (0 for no alignment, SIZE_MAX for no limit ) */
@@ -983,6 +1118,11 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_put_fn_t            btl_put;
     mca_btl_base_module_get_fn_t            btl_get;
     mca_btl_base_module_dump_fn_t           btl_dump; 
+
+    /* atomic operations */
+    mca_btl_base_module_atomic_op64_fn_t    btl_atomic_op;
+    mca_btl_base_module_atomic_fop64_fn_t   btl_atomic_fop;
+    mca_btl_base_module_atomic_cswap64_fn_t btl_atomic_cswap;
 
     /* new memory registration functions */
     mca_btl_base_module_register_mem_fn_t   btl_register_mem;   /**< memory registration function (NULL if not needed) */
