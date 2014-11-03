@@ -54,10 +54,9 @@ static int direct_register(void)
     mca_base_component_t *c = &mca_grpcomm_direct_component.base_version;
 
     /* make the priority adjustable so users can select
-     * direct for use by apps without affecting daemons - set
-     * it to be first for now until the others are fixed
+     * direct for use by apps without affecting daemons
      */
-    my_priority = 1000;
+    my_priority = 1;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm direct component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

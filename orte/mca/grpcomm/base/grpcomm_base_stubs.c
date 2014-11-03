@@ -242,7 +242,7 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
     if (1 < opal_output_get_verbosity(orte_grpcomm_base_framework.framework_output)) {
         char *tmp=NULL;
         (void)opal_dss.print(&tmp, NULL, coll->sig, ORTE_SIGNATURE);
-        opal_output(0, "%s grpcomm:base: creating new coll for procs %s",
+        opal_output(0, "%s grpcomm:base: creating new coll for%s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
         free(tmp);
     }

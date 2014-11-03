@@ -905,19 +905,19 @@ int orte_dt_print_sig(char **output, char *prefix, orte_grpcomm_signature_t *src
 
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
-        asprintf(output, "%sData type: ORTE_SIG\tValue: NULL pointer", prefx);
+        asprintf(output, "%sData type: ORTE_SIG", prefx);
         free(prefx);
         return OPAL_SUCCESS;
     }
 
     if (NULL == src->signature) {
-        asprintf(output, "%sORTE_SIG\tValue: NULL", prefx);
+        asprintf(output, "%sORTE_SIG  SeqNumber:%d  Procs: NULL", prefx, src->seq_num);
         free(prefx);
         return ORTE_SUCCESS;
     }
 
-    /* there must be at least one */
-    asprintf(&tmp, "%sORTE_SIG\tSeqNumber:%d\tValue: ", prefx, src->seq_num);
+    /* there must be at least one proc in the signature */
+    asprintf(&tmp, "%sORTE_SIG  SeqNumber:%d  Procs: ", prefx, src->seq_num);
 
     for (i=0; i < src->sz; i++) {
         asprintf(&tmp2, "%s%s", tmp, ORTE_NAME_PRINT(&src->signature[i]));

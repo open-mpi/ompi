@@ -36,9 +36,6 @@
 /* Static API's */
 static int init(void);
 static void finalize(void);
-static int xcast(orte_vpid_t *vpids,
-                 size_t nprocs,
-                 opal_buffer_t *msg);
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *buf);
 static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t distance);
@@ -52,7 +49,7 @@ static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret);
 orte_grpcomm_base_module_t orte_grpcomm_brks_module = {
     init,
     finalize,
-    xcast,
+    NULL,
     allgather
 };
 
@@ -78,13 +75,6 @@ static void finalize(void)
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_BRKS);
 
     return;
-}
-
-static int xcast(orte_vpid_t *vpids,
-                 size_t nprocs,
-                 opal_buffer_t *msg)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 static int allgather(orte_grpcomm_coll_t *coll,
