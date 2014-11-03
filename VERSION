@@ -82,20 +82,14 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-# JMS Code changed in libmpi
-# JMS Added MPIT interfaces in libmpi
 libmpi_so_version=7:0:6
 libmpi_cxx_so_version=2:3:1
-# JMS Add interface to libmpifh
 libmpi_mpifh_so_version=7:0:5
 libmpi_usempi_tkr_so_version=4:2:3
 libmpi_usempif08_so_version=5:0:5
-# JMS Code changes in libopen-rte
 libopen_rte_so_version=7:5:0
-# JMS Code changed in libopen-pal
 libopen_pal_so_version=8:1:2
 libmpi_java_so_version=3:0:2
-# JMS Code changes in liboshmem
 liboshmem_so_version=3:1:0
 
 # "Common" components install standalone libraries that are run-time
@@ -104,7 +98,6 @@ liboshmem_so_version=3:1:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-# JMS Code changed in common cuda
 libmca_common_cuda_so_version=1:7:0
 libmca_common_mx_so_version=2:5:0
 libmca_common_sm_so_version=4:4:0
@@ -112,5 +105,4 @@ libmca_common_ugni_so_version=2:1:2
 libmca_common_verbs_so_version=2:3:2
 
 # OPAL layer
-# JMS Code changed in pmi common
 libmca_opal_common_pmi_so_version=2:3:1
