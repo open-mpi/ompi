@@ -1975,9 +1975,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
 
         /* If the MCA param was specified, skip all the checks */
-        if ( MCA_BASE_VAR_SOURCE_COMMAND_LINE ||
-                MCA_BASE_VAR_SOURCE_ENV ==
-            mca_btl_openib_component.receive_queues_source) {
+        if (MCA_BASE_VAR_SOURCE_DEFAULT != mca_btl_openib_component.receive_queues_source) {
             goto good;
         }
 
@@ -1995,7 +1993,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 mca_btl_openib_component.receive_queues =
                     strdup(values.receive_queues);
                 mca_btl_openib_component.receive_queues_source =
-                    MCA_BASE_VAR_SOURCE_FILE;
+                    BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
             }
         }
 
