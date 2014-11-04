@@ -67,7 +67,9 @@
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
 static OBJ_CLASS_INSTANCE(mca_btl_sm_registration_handle_t, ompi_free_list_item_t, NULL, NULL);
+#endif
 
 static int mca_btl_sm_component_open(void);
 static int mca_btl_sm_component_close(void);
