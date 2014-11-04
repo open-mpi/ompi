@@ -347,7 +347,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          NULL, &proc_vpid_index,
+                                          "slurm", &proc_vpid_index,
                                           nodelist_flat);
     free(nodelist_flat);
 

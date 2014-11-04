@@ -849,6 +849,11 @@ int orterun(int argc, char *argv[])
     free(tmp_env_var);
 #endif
 
+    /* force selection of the HNP ess module to avoid
+     * the PMI component attempting to initialize and
+     * generating a false error message */
+    putenv(OPAL_MCA_PREFIX"ess=hnp");
+
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
