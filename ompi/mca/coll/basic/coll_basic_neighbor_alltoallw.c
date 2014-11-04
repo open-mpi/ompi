@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -45,6 +45,11 @@ mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], co
     int rc = MPI_SUCCESS, dim, i, nreqs;
     ompi_request_t **reqs;
 
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, cart->ndims * 4);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     /* post receives first */
     for (dim = 0, i = 0, nreqs = 0, reqs = basic_module->mccb_reqs ; dim < cart->ndims ; ++dim, i += 2) {
@@ -124,6 +129,12 @@ mca_coll_basic_neighbor_alltoallw_graph(const void *sbuf, const int scounts[], c
 
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
 
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, 2 * degree);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
     edges = graph->edges;
     if (rank > 0) {
         edges += graph->index[rank - 1];
@@ -172,6 +183,12 @@ mca_coll_basic_neighbor_alltoallw_dist_graph(const void *sbuf, const int scounts
 
     indegree = dist_graph->indegree;
     outdegree = dist_graph->outdegree;
+
+    /* ensure we have enough storage for requests */
+    rc = mca_coll_basic_check_for_requests (basic_module, indegree + outdegree);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;
