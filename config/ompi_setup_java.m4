@@ -89,8 +89,6 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
            AC_MSG_WARN([*** the Java MPI bindings in Open MPI is contingent])
            AC_MSG_WARN([*** upon user interest and developer support.])
            AC_MSG_WARN([******************************************************])
-           CFLAGS="$CFLAGS -D_REENTRANT"
-           CPPFLAGS="$CPPFLAGS -D_REENTRANT"
           ])
 
     AC_CONFIG_FILES([

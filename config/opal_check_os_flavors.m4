@@ -1,6 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010     Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014     Intel, Inc. All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -44,7 +45,9 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVORS],
     OPAL_CHECK_OS_FLAVOR_SPECIFIC([__sun__], [sun])
 
     AS_IF([test "$opal_found_sun" = "yes"],
-          [opal_have_solaris=1],
+          [opal_have_solaris=1
+           CFLAGS="$CFLAGS -D_REENTRANT"
+           CPPFLAGS="$CPPFLAGS -D_REENTRANT"],
           [opal_have_solaris=0])
     AC_DEFINE_UNQUOTED([OPAL_HAVE_SOLARIS],
                        [$opal_have_solaris],
