@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,7 +128,7 @@ mca_coll_tuned_alltoall_intra_basic_inplace(void *rbuf, int rcount,
             }
 
             /* Wait for the requests to complete */
-            err = ompi_request_wait_all (2, tuned_module->tuned_data->mcct_reqs, MPI_STATUS_IGNORE);
+            err = ompi_request_wait_all (2, tuned_module->tuned_data->mcct_reqs, MPI_STATUSES_IGNORE);
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Free the requests. */
