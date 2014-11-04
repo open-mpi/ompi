@@ -371,6 +371,7 @@ typedef struct mca_btl_openib_coalesced_frag_t {
     mca_btl_openib_frag_t super;
     mca_btl_openib_send_frag_t *send_frag;
     mca_btl_openib_header_coalesced_t *hdr;
+    bool sent;
 } mca_btl_openib_coalesced_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
 

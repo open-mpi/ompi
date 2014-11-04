@@ -1133,15 +1133,16 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
 
 /* check if pending fragment has enough space for coalescing */
 static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
-        opal_mutex_t *lock, mca_btl_base_endpoint_t *ep, size_t size)
+    opal_mutex_t *lock, struct mca_btl_base_endpoint_t *ep, size_t size,
+    mca_btl_openib_coalesced_frag_t **cfrag)
 {
     mca_btl_openib_send_frag_t *frag = NULL;
 
-    if(opal_list_is_empty(frag_list))
+    if (opal_list_is_empty(frag_list))
         return NULL;
 
     OPAL_THREAD_LOCK(lock);
-    if(!opal_list_is_empty(frag_list)) {
+    if (!opal_list_is_empty(frag_list)) {
         int qp;
         size_t total_length;
         opal_list_item_t *i = opal_list_get_first(frag_list);
@@ -1158,10 +1159,20 @@ static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
 
         qp = to_base_frag(frag)->base.order;
 
-        if(total_length <= mca_btl_openib_component.qp_infos[qp].size)
-            opal_list_remove_first(frag_list);
-        else
+        if(total_length <= mca_btl_openib_component.qp_infos[qp].size) {
+            /* make sure we can allocate a coalescing frag before returning success */
+            *cfrag = alloc_coalesced_frag();
+            if (OPAL_LIKELY(NULL != cfrag)) {
+                (*cfrag)->send_frag = frag;
+                (*cfrag)->sent = false;
+
+                opal_list_remove_first(frag_list);
+            } else {
+                frag = NULL;
+            }
+        } else {
             frag = NULL;
+        }
     }
     OPAL_THREAD_UNLOCK(lock);
 
@@ -1188,7 +1199,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     int qp = frag_size_to_order(obtl, size);
     mca_btl_openib_send_frag_t *sfrag = NULL;
-    mca_btl_openib_coalesced_frag_t *cfrag;
+    mca_btl_openib_coalesced_frag_t *cfrag = NULL;
 
     assert(qp != MCA_BTL_NO_ORDER);
 
@@ -1197,26 +1208,25 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
 
         sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
-                &ep->endpoint_lock, ep, size);
+                                 &ep->endpoint_lock, ep, size, &cfrag);
 
-        if(NULL == sfrag) {
+        if (NULL == sfrag) {
             if(BTL_OPENIB_QP_TYPE_PP(qp)) {
                 sfrag = check_coalescing(&ep->qps[qp].no_credits_pending_frags[prio],
-                        &ep->endpoint_lock, ep, size);
+                                         &ep->endpoint_lock, ep, size, &cfrag);
             } else {
                 sfrag = check_coalescing(
                         &obtl->qps[qp].u.srq_qp.pending_frags[prio],
-                        &obtl->ib_lock, ep, size);
+                        &obtl->ib_lock, ep, size, &cfrag);
             }
         }
     }
 
-    if(NULL == sfrag)
+    if (NULL == sfrag) {
         return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order, flags);
+    }
 
     /* begin coalescing message */
-    cfrag = alloc_coalesced_frag();
-    cfrag->send_frag = sfrag;
 
     /* fix up new coalescing header if this is the first coalesced frag */
     if(sfrag->hdr != sfrag->chdr) {
@@ -1250,10 +1260,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     to_base_frag(cfrag)->segment.base.seg_addr.pval = cfrag->hdr + 1;
     to_base_frag(cfrag)->segment.base.seg_len = size;
 
-    /* save coalesced fragment on a main fragment; we will need it after send
-     * completion to free it and to call upper layer callback */
-    opal_list_append(&sfrag->coalesced_frags, (opal_list_item_t*)cfrag);
-    sfrag->coalesced_length += (size+sizeof(mca_btl_openib_header_coalesced_t));
+    /* NTH: there is no reason to append the coalesced fragment here. No more
+     * fragments will be added until either send or free has been called on
+     * the coalesced frag. */
 
     to_base_frag(cfrag)->base.des_flags = flags;
 
@@ -1306,6 +1315,15 @@ int mca_btl_openib_free(
         default:
             break;
     }
+
+    if (openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED && !to_coalesced_frag(des)->sent) {
+        mca_btl_openib_send_frag_t *sfrag = to_coalesced_frag(des)->send_frag;
+
+        /* the coalesced fragment would have sent the original fragment but that
+         * will not happen so send the fragment now */
+        mca_btl_openib_endpoint_send(to_com_frag(sfrag)->endpoint, sfrag);
+    }
+
     MCA_BTL_IB_FRAG_RETURN(des);
 
     return OPAL_SUCCESS;
@@ -1888,11 +1906,19 @@ int mca_btl_openib_send(
             openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED);
 
     if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
+        frag = to_coalesced_frag(des)->send_frag;
+
+        /* save coalesced fragment on a main fragment; we will need it after send
+         * completion to free it and to call upper layer callback */
+        opal_list_append(&frag->coalesced_frags, (opal_list_item_t*) des);
+        frag->coalesced_length += to_coalesced_frag(des)->hdr->alloc_size +
+                                   sizeof(mca_btl_openib_header_coalesced_t);
+
+        to_coalesced_frag(des)->sent = true;
         to_coalesced_frag(des)->hdr->tag = tag;
         to_coalesced_frag(des)->hdr->size = des->des_local->seg_len;
         if(ep->nbo)
             BTL_OPENIB_HEADER_COALESCED_HTON(*to_coalesced_frag(des)->hdr);
-        frag = to_coalesced_frag(des)->send_frag;
     } else {
         frag = to_send_frag(des);
         to_com_frag(des)->endpoint = ep;
