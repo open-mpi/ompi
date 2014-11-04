@@ -1081,9 +1081,9 @@ static void mca_pml_ob1_send_request_put_frag_failed (mca_pml_ob1_rdma_frag_t *f
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
     } else {
         /* tell receiver to deregister memory */
-        mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc,
-                              bml_btl, frag->rdma_hdr.hdr_rdma.hdr_frag,
-                              0, MCA_BTL_NO_ORDER, 1);
+        mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc, bml_btl,
+                              frag->rdma_hdr.hdr_rdma.hdr_frag, 0, MCA_BTL_NO_ORDER,
+                              OPAL_ERR_TEMP_OUT_OF_RESOURCE);
 
         /* send fragment by copy in/out */
         mca_pml_ob1_send_request_copy_in_out(sendreq, frag->rdma_hdr.hdr_rdma.hdr_rdma_offset,

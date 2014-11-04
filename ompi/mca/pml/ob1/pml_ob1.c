@@ -642,7 +642,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
                           opal_ptr_t hdr_frag,
                           uint64_t rdma_size,
                           uint8_t order,
-                          uint32_t status )
+                          int status )
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_ob1_fin_hdr_t* hdr;
@@ -665,9 +665,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
 
     /* queue request */
-    rc = mca_bml_base_send( bml_btl,
-                            fin,
-                            MCA_PML_OB1_HDR_TYPE_FIN );
+    rc = mca_bml_base_send( bml_btl, fin, MCA_PML_OB1_HDR_TYPE_FIN );
     if( OPAL_LIKELY( rc >= 0 ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             MCA_PML_OB1_PROGRESS_PENDING(bml_btl);

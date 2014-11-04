@@ -254,7 +254,7 @@ do {                                                            \
 
 
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        opal_ptr_t hdr_frag, uint64_t size, uint8_t order, uint32_t status);
+        opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to

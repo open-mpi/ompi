@@ -193,13 +193,13 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
 
-    assert (rdma_size == frag->rdma_length);
-
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
     if (OPAL_LIKELY(0 < rdma_size)) {
+        assert (rdma_size == frag->rdma_length);
+
         /* check completion status */
         OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, (size_t) rdma_size);
         if (recv_request_pml_complete_check(recvreq) == false &&
