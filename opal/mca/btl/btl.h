@@ -279,7 +279,7 @@ enum {
     /** The btl supports atomic bitwise exclusive or */
     MCA_BTL_ATOMIC_SUPPORTS_XOR    = 0x00000800,
     /** The btl supports atomic compare-and-swap */
-    MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x80000000,
+    MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x10000000,
 };
 
 enum mca_btl_base_atomic_op_t {
@@ -839,7 +839,8 @@ typedef int (*mca_btl_base_module_send_fn_t)(
  * @param flags (IN)           Flags.
  * @param tag (IN)             The tag value used to notify the peer.
  * @param descriptor (OUT)     The descriptor to be returned unable to be sent immediately
-
+ *                             (may be NULL).
+ *
  * @retval OPAL_SUCCESS           The send was successfully queued  
  * @retval OPAL_ERROR             The send failed 
  * @retval OPAL_ERR_UNREACH       The endpoint is not reachable 
