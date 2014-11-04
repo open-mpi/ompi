@@ -14,6 +14,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -435,7 +437,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
             goto exit;
         }
 
-        err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+        err = ompi_request_wait( &req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }

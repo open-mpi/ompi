@@ -18,6 +18,8 @@
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1292,7 +1294,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE);
+        rc = ompi_request_wait( &req, MPI_STATUS_IGNORE);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }

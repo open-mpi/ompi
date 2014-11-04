@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -179,7 +181,7 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
             goto exit;
         }
 
-        err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+        err = ompi_request_wait( &req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
