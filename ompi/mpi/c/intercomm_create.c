@@ -11,6 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,7 +121,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE);
+        rc = ompi_request_wait( &req, MPI_STATUS_IGNORE);
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
