@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -115,23 +115,26 @@ AC_DEFUN([OMPI_SETUP_FC],[
            [AC_FC_SRCEXT(f)
             AC_FC_SRCEXT(f90)])
 
-    # Per #1982, on OS X, we may need some esoteric linker flags in
-    # the wrapper compilers.  Assume that we need it for both F77 and
-    # FC flags (note that in an upcoming update where there will only
-    # be one Fortran compiler, anyway).
+    # Per trac #1982, on OS X, we may need some esoteric linker flags
+    # in the wrapper compilers.  However, per
+    # https://github.com/open-mpi/ompi/issues/259, we need to use
+    # -Wl,-flat_namespace when *building* the library (and
+    # -Wl,-commons,use_dylibs isn't quite sufficient).
     AS_IF([test $ompi_fc_happy -eq 1],
           [AC_MSG_CHECKING([to see if Fortran compilers need additional linker flags])
            case "$host" in
            *apple-darwin*)
-               # Test whether -Wl,-commons,use_dylibs works; if it
-               # does, use it.
+               # Test whether -Wl,-flat_namespace works; if it does,
+               # both use it to build the libraries, and also put it
+               # in the wrapper compiler LDFLAGS.
                LDFLAGS_save=$LDFLAGS
-               LDFLAGS="$LDFLAGS -Wl,-commons,use_dylibs"
+               LDFLAGS="$LDFLAGS -Wl,-flat_namespace"
                AC_LANG_PUSH([Fortran])
                AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
   integer :: i
 end program]])],
-                              [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
+                              [LDFLAGS_save=$LDFLAGS
+                               OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-flat_namespace"
                                OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])],
                               [OMPI_FORTRAN_WRAPPER_FLAGS=none])
                AC_LANG_POP([Fortran])
