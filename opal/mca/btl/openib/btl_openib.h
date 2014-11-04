@@ -627,7 +627,6 @@ struct mca_btl_openib_get_frag_t;
  *
  * @param btl (IN)               BTL instance
  * @param ep (IN)                BTL endpoint
- * @param qp (IN)                ID of queue pair to schedule the get on
  * @param frag (IN)              Fragment prepared by mca_btl_openib_put
  *
  * If the fragment can not be scheduled due to resource limitations then
@@ -635,7 +634,7 @@ struct mca_btl_openib_get_frag_t;
  * when another get/put fragment has completed.
  */
 int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
-                                 int qp, struct mca_btl_openib_put_frag_t *frag);
+                                 struct mca_btl_openib_put_frag_t *frag);
 
 /**
  * @brief Schedule an RDMA write with the HCA
@@ -676,7 +675,7 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
  * when another get/put fragment has completed.
  */
 int mca_btl_openib_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
-                                 int qp, struct mca_btl_openib_get_frag_t *frag);
+                                 struct mca_btl_openib_get_frag_t *frag);
 
 /**
  * @brief Schedule an RDMA read with the HCA

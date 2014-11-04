@@ -134,6 +134,7 @@ static void put_constructor(mca_btl_openib_put_frag_t *frag)
 {
     to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_SEND_USER;
     to_out_frag(frag)->sr_desc.opcode = IBV_WR_RDMA_WRITE;
+    frag->cb.func = NULL;
 }
 
 static void get_constructor(mca_btl_openib_get_frag_t *frag)

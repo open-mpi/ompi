@@ -2903,9 +2903,13 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         if (NULL == frag)
             break;
         rc = mca_btl_openib_get_internal ((mca_btl_base_module_t *)openib_btl, ep,
-                                          qp, to_get_frag(frag));
-        if (OPAL_ERR_OUT_OF_RESOURCE == rc)
+                                          to_get_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc) {
+            OPAL_THREAD_LOCK(&ep->endpoint_lock);
+            opal_list_prepend (&ep->pending_get_frags, frag);
+            OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
             break;
+        }
     }
 
     len = opal_list_get_size(&ep->pending_put_frags);
@@ -2916,9 +2920,13 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         if (NULL == frag)
             break;
         rc = mca_btl_openib_put_internal ((mca_btl_base_module_t*)openib_btl, ep,
-                                          qp, to_put_frag(frag));
-        if (OPAL_ERR_OUT_OF_RESOURCE == rc)
+                                          to_put_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc) {
+            OPAL_THREAD_LOCK(&ep->endpoint_lock);
+            opal_list_prepend (&ep->pending_put_frags, frag);
+            OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
             break;
+        }
     }
 }
 
@@ -3291,12 +3299,13 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
                                    get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
                                    OPAL_SUCCESS);
-            } else {
+            } else if (MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
                 mca_btl_openib_put_frag_t *put_frag = to_put_frag(des);
 
                 put_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
                                    put_frag->cb.local_handle, put_frag->cb.context, put_frag->cb.data,
                                    OPAL_SUCCESS);
+                put_frag->cb.func = NULL;
             }
             /* fall through */
         case IBV_WC_SEND:
