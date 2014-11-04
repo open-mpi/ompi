@@ -129,10 +129,7 @@ struct mca_btl_openib_qp_info_t {
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_XRC_QP)
 
 typedef enum {
-    BTL_OPENIB_RQ_SOURCE_DEFAULT,
-    BTL_OPENIB_RQ_SOURCE_MCA,
-    BTL_OPENIB_RQ_SOURCE_DEVICE_INI,
-    BTL_OPENIB_RQ_SOURCE_MAX
+    BTL_OPENIB_RQ_SOURCE_DEVICE_INI = MCA_BASE_VAR_SOURCE_MAX,
 } btl_openib_receive_queues_source_t;
 
 typedef enum {

@@ -531,10 +531,12 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
        if a user distributes different INI files or parameters for different node/procs,
        it is on his own responsibility */
     switch(mca_btl_openib_component.receive_queues_source) {
-        case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-        case MCA_BASE_VAR_SOURCE_ENV:
-        case MCA_BASE_VAR_SOURCE_MAX:
-            break;
+    case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
+    case MCA_BASE_VAR_SOURCE_ENV:
+    case MCA_BASE_VAR_SOURCE_FILE:
+    case MCA_BASE_VAR_SOURCE_SET:
+    case MCA_BASE_VAR_SOURCE_OVERRIDE:
+        break;
 
         /* If the queues configuration was set from command line
            (with --mca btl_openib_receive_queues parameter) => both sides have a same configuration */
@@ -543,40 +545,38 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
            not possible that remote side got its queues configuration from command line =>
            (by prio) the configuration was set from INI file or (if not configure)
            by default queues configuration */
-        case MCA_BASE_VAR_SOURCE_FILE:
-        case MCA_BASE_VAR_SOURCE_SET:
-        case MCA_BASE_VAR_SOURCE_OVERRIDE:
-            if(NULL != values.receive_queues) {
-                recv_qps = values.receive_queues;
-            } else {
-                recv_qps = mca_btl_openib_component.default_recv_qps;
-            }
+    case BTL_OPENIB_RQ_SOURCE_DEVICE_INI:
+        if(NULL != values.receive_queues) {
+            recv_qps = values.receive_queues;
+        } else {
+            recv_qps = mca_btl_openib_component.default_recv_qps;
+        }
 
-            if(0 != strcmp(mca_btl_openib_component.receive_queues,
-                                                         recv_qps)) {
-                opal_show_help("help-mpi-btl-openib.txt",
-                               "unsupported queues configuration", true,
-                               opal_process_info.nodename,
-                               ibv_get_device_name(openib_btl->device->ib_dev),
-                               (openib_btl->device->ib_dev_attr).vendor_id,
-                               (openib_btl->device->ib_dev_attr).vendor_part_id,
-                               mca_btl_openib_component.receive_queues,
-                               opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
-                               endpoint->rem_info.rem_vendor_id,
-                               endpoint->rem_info.rem_vendor_part_id,
-                               recv_qps);
+        if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                       recv_qps)) {
+            opal_show_help("help-mpi-btl-openib.txt",
+                           "unsupported queues configuration", true,
+                           opal_process_info.nodename,
+                           ibv_get_device_name(openib_btl->device->ib_dev),
+                           (openib_btl->device->ib_dev_attr).vendor_id,
+                           (openib_btl->device->ib_dev_attr).vendor_part_id,
+                           mca_btl_openib_component.receive_queues,
+                           opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
+                           endpoint->rem_info.rem_vendor_id,
+                           endpoint->rem_info.rem_vendor_part_id,
+                           recv_qps);
 
-                return OPAL_ERROR;
-            }
-            break;
+            return OPAL_ERROR;
+        }
+        break;
 
         /* If the local queues configuration was set
            by default queues => check all possible cases for remote side and compare */
-        case  MCA_BASE_VAR_SOURCE_DEFAULT:
-            if(NULL != values.receive_queues) {
-                if(0 != strcmp(mca_btl_openib_component.receive_queues,
-                                                values.receive_queues)) {
-                     opal_show_help("help-mpi-btl-openib.txt",
+    case  MCA_BASE_VAR_SOURCE_DEFAULT:
+        if(NULL != values.receive_queues) {
+            if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                           values.receive_queues)) {
+                opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
                                opal_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
@@ -588,10 +588,10 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                endpoint->rem_info.rem_vendor_part_id,
                                values.receive_queues);
 
-                    return OPAL_ERROR;
-                }
+                return OPAL_ERROR;
             }
-            break;
+        }
+        break;
     }
 
     return OPAL_SUCCESS;
