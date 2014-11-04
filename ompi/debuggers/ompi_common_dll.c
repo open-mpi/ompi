@@ -7,6 +7,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -152,12 +153,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         i_info->opal_hash_table_t.size = mqs_sizeof(qh_type);
         ompi_field_offset(i_info->opal_hash_table_t.offset.ht_table,
                           qh_type, opal_hash_table_t, ht_table);
-        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_table_size,
-                          qh_type, opal_hash_table_t, ht_table_size);
         ompi_field_offset(i_info->opal_hash_table_t.offset.ht_size,
                           qh_type, opal_hash_table_t, ht_size);
-        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_mask,
-                          qh_type, opal_hash_table_t, ht_mask);
     }
     /*
      * Now let's look for all types required for reading the requests.
