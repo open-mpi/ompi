@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,10 +25,10 @@
 
 #include <string.h>
 
-#include "osc_rdma.h"
-#include "osc_rdma_data_move.h"
-#include "osc_rdma_frag.h"
-#include "osc_rdma_request.h"
+#include "osc_pt2pt.h"
+#include "osc_pt2pt_data_move.h"
+#include "osc_pt2pt_frag.h"
+#include "osc_pt2pt_request.h"
 
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
@@ -55,11 +55,11 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                             struct ompi_communicator_t *comm, struct ompi_info_t *info,
                             int flavor, int *model);
 
-ompi_osc_rdma_component_t mca_osc_rdma_component = {
+ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
         { /* ompi_base_component_t */
             OMPI_OSC_BASE_VERSION_3_0_0,
-            "rdma",
+            "pt2pt",
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
@@ -80,51 +80,51 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
 };
 
 
-ompi_osc_rdma_module_t ompi_osc_rdma_module_template = {
+ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
     {
         NULL, /* shared_query */
 
-        ompi_osc_rdma_attach,
-        ompi_osc_rdma_detach,
-        ompi_osc_rdma_free,
+        ompi_osc_pt2pt_attach,
+        ompi_osc_pt2pt_detach,
+        ompi_osc_pt2pt_free,
 
-        ompi_osc_rdma_put,
-        ompi_osc_rdma_get,
-        ompi_osc_rdma_accumulate,
-        ompi_osc_rdma_compare_and_swap,
-        ompi_osc_rdma_fetch_and_op,
-        ompi_osc_rdma_get_accumulate,
+        ompi_osc_pt2pt_put,
+        ompi_osc_pt2pt_get,
+        ompi_osc_pt2pt_accumulate,
+        ompi_osc_pt2pt_compare_and_swap,
+        ompi_osc_pt2pt_fetch_and_op,
+        ompi_osc_pt2pt_get_accumulate,
 
-        ompi_osc_rdma_rput,
-        ompi_osc_rdma_rget,
-        ompi_osc_rdma_raccumulate,
-        ompi_osc_rdma_rget_accumulate,
+        ompi_osc_pt2pt_rput,
+        ompi_osc_pt2pt_rget,
+        ompi_osc_pt2pt_raccumulate,
+        ompi_osc_pt2pt_rget_accumulate,
 
-        ompi_osc_rdma_fence,
+        ompi_osc_pt2pt_fence,
 
-        ompi_osc_rdma_start,
-        ompi_osc_rdma_complete,
-        ompi_osc_rdma_post,
-        ompi_osc_rdma_wait,
-        ompi_osc_rdma_test,
+        ompi_osc_pt2pt_start,
+        ompi_osc_pt2pt_complete,
+        ompi_osc_pt2pt_post,
+        ompi_osc_pt2pt_wait,
+        ompi_osc_pt2pt_test,
 
-        ompi_osc_rdma_lock,
-        ompi_osc_rdma_unlock,
-        ompi_osc_rdma_lock_all,
-        ompi_osc_rdma_unlock_all,
+        ompi_osc_pt2pt_lock,
+        ompi_osc_pt2pt_unlock,
+        ompi_osc_pt2pt_lock_all,
+        ompi_osc_pt2pt_unlock_all,
 
-        ompi_osc_rdma_sync,
-        ompi_osc_rdma_flush,
-        ompi_osc_rdma_flush_all,
-        ompi_osc_rdma_flush_local,
-        ompi_osc_rdma_flush_local_all,
+        ompi_osc_pt2pt_sync,
+        ompi_osc_pt2pt_flush,
+        ompi_osc_pt2pt_flush_all,
+        ompi_osc_pt2pt_flush_local,
+        ompi_osc_pt2pt_flush_local_all,
 
-        ompi_osc_rdma_set_info,
-        ompi_osc_rdma_get_info
+        ompi_osc_pt2pt_set_info,
+        ompi_osc_pt2pt_get_info
     }
 };
 
-bool ompi_osc_rdma_no_locks;
+bool ompi_osc_pt2pt_no_locks;
 
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
@@ -157,7 +157,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     return result;
 
  info_not_found:
-    param = mca_base_var_find("ompi", "osc", "rdma", key);
+    param = mca_base_var_find("ompi", "osc", "pt2pt", key);
     if (0 > param) return false;
 
     ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
@@ -177,8 +177,8 @@ component_open(void)
 static int
 component_register(void)
 {
-    ompi_osc_rdma_no_locks = false;
-    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+    ompi_osc_pt2pt_no_locks = false;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
                                            "no_locks",
                                            "Enable optimizations available only if MPI_LOCK is "
                                            "not used.  "
@@ -186,38 +186,38 @@ component_register(void)
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_osc_rdma_no_locks);
+                                           &ompi_osc_pt2pt_no_locks);
 
-    mca_osc_rdma_component.buffer_size = 8192;
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "buffer_size",
+    mca_osc_pt2pt_component.buffer_size = 8192;
+    (void) mca_base_component_var_register (&mca_osc_pt2pt_component.super.osc_version, "buffer_size",
 					    "Data transfers smaller than this limit may be coalesced before "
 					    "being transferred (default: 8k)", MCA_BASE_VAR_TYPE_UNSIGNED_INT,
 					    NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-					    &mca_osc_rdma_component.buffer_size);
+					    &mca_osc_pt2pt_component.buffer_size);
 
     return OMPI_SUCCESS;
 }
 
 static int component_progress (void)
 {
-    ompi_osc_rdma_pending_t *pending, *next;
+    ompi_osc_pt2pt_pending_t *pending, *next;
 
-    if (0 == opal_list_get_size (&mca_osc_rdma_component.pending_operations)) {
+    if (0 == opal_list_get_size (&mca_osc_pt2pt_component.pending_operations)) {
 	return 0;
     }
 
     /* process one incoming request */
-    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-    OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_rdma_component.pending_operations, ompi_osc_rdma_pending_t) {
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_pt2pt_component.pending_operations, ompi_osc_pt2pt_pending_t) {
 	int ret;
 
 	switch (pending->header.base.type) {
-	case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ:
-	    ret = ompi_osc_rdma_process_flush (pending->module, pending->source,
+	case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
+	    ret = ompi_osc_pt2pt_process_flush (pending->module, pending->source,
 					       &pending->header.flush);
 	    break;
-	case OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_REQ:
-	    ret = ompi_osc_rdma_process_unlock (pending->module, pending->source,
+	case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
+	    ret = ompi_osc_pt2pt_process_unlock (pending->module, pending->source,
 						&pending->header.unlock);
 	    break;
 	default:
@@ -227,11 +227,11 @@ static int component_progress (void)
 	}
 
 	if (OMPI_SUCCESS == ret) {
-	    opal_list_remove_item (&mca_osc_rdma_component.pending_operations, &pending->super);
+	    opal_list_remove_item (&mca_osc_pt2pt_component.pending_operations, &pending->super);
 	    OBJ_RELEASE(pending);
 	}
     }
-    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
 
     return 1;
 }
@@ -242,22 +242,22 @@ component_init(bool enable_progress_threads,
 {
     int ret;
 
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.pending_operations, opal_list_t);
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.request_gc, opal_list_t);
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.buffer_gc, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.request_gc, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.buffer_gc, opal_list_t);
 
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.modules,
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.modules,
                   opal_hash_table_t);
-    opal_hash_table_init(&mca_osc_rdma_component.modules, 2);
+    opal_hash_table_init(&mca_osc_pt2pt_component.modules, 2);
 
-    mca_osc_rdma_component.progress_enable = false;
-    mca_osc_rdma_component.module_count = 0;
+    mca_osc_pt2pt_component.progress_enable = false;
+    mca_osc_pt2pt_component.module_count = 0;
 
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.frags, opal_free_list_t);
-    ret = opal_free_list_init(&mca_osc_rdma_component.frags,
-			      sizeof(ompi_osc_rdma_frag_t),
-			      OBJ_CLASS(ompi_osc_rdma_frag_t),
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.frags, opal_free_list_t);
+    ret = opal_free_list_init(&mca_osc_pt2pt_component.frags,
+			      sizeof(ompi_osc_pt2pt_frag_t),
+			      OBJ_CLASS(ompi_osc_pt2pt_frag_t),
 			      1, -1, 1);
     if (OMPI_SUCCESS != ret) {
 	opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -266,10 +266,10 @@ component_init(bool enable_progress_threads,
 	return ret;
     }
 
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.requests, ompi_free_list_t);
-    ret = ompi_free_list_init(&mca_osc_rdma_component.requests,
-                              sizeof(ompi_osc_rdma_request_t),
-                              OBJ_CLASS(ompi_osc_rdma_request_t),
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.requests, ompi_free_list_t);
+    ret = ompi_free_list_init(&mca_osc_pt2pt_component.requests,
+                              sizeof(ompi_osc_pt2pt_request_t),
+                              OBJ_CLASS(ompi_osc_pt2pt_request_t),
                               0, -1, 32, NULL);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -282,29 +282,29 @@ component_init(bool enable_progress_threads,
 }
 
 
-int 
+int
 component_finalize(void)
 {
     size_t num_modules;
 
-    if (mca_osc_rdma_component.progress_enable) {
+    if (mca_osc_pt2pt_component.progress_enable) {
 	opal_progress_unregister (component_progress);
     }
 
-    if (0 != 
-        (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.modules))) {
+    if (0 !=
+        (num_modules = opal_hash_table_get_size(&mca_osc_pt2pt_component.modules))) {
         opal_output(ompi_osc_base_framework.framework_output,
                     "WARNING: There were %d Windows created but not freed.",
                     (int) num_modules);
     }
 
-    OBJ_DESTRUCT(&mca_osc_rdma_component.frags);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.modules);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.lock);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.requests);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.pending_operations);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.request_gc);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.buffer_gc);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.frags);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.modules);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.lock);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.requests);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.request_gc);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.buffer_gc);
 
     return OMPI_SUCCESS;
 }
@@ -326,7 +326,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                  struct ompi_communicator_t *comm, struct ompi_info_t *info,
                  int flavor, int *model)
 {
-    ompi_osc_rdma_module_t *module = NULL;
+    ompi_osc_pt2pt_module_t *module = NULL;
     int ret;
     char *name;
     bool no_locks = false;
@@ -337,16 +337,16 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     if (check_config_value_bool("no_locks", info)) {
         no_locks = true;
-	ompi_osc_rdma_no_locks = true;
+	ompi_osc_pt2pt_no_locks = true;
     }
 
     /* create module structure with all fields initialized to zero */
-    module = (ompi_osc_rdma_module_t*)
-        calloc(1, sizeof(ompi_osc_rdma_module_t));
+    module = (ompi_osc_pt2pt_module_t*)
+        calloc(1, sizeof(ompi_osc_pt2pt_module_t));
     if (NULL == module) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     /* fill in the function pointer part */
-    memcpy(module, &ompi_osc_rdma_module_template, 
+    memcpy(module, &ompi_osc_pt2pt_module_template,
            sizeof(ompi_osc_base_module_t));
 
     /* initialize the objects, so that always free in cleanup */
@@ -385,14 +385,14 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                         "rdma component creating window with id %d",
+                         "pt2pt component creating window with id %d",
                          ompi_comm_get_cid(module->comm)));
 
     /* record my displacement unit.  Always resolved at target */
     module->disp_unit = disp_unit;
 
     /* peer data */
-    module->peers = calloc(ompi_comm_size(comm), sizeof(ompi_osc_rdma_peer_t));
+    module->peers = calloc(ompi_comm_size(comm), sizeof(ompi_osc_pt2pt_peer_t));
     if (NULL == module->peers) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -443,29 +443,29 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     }
 
     /* update component data */
-    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-    ret = opal_hash_table_set_value_uint32(&mca_osc_rdma_component.modules,
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    ret = opal_hash_table_set_value_uint32(&mca_osc_pt2pt_component.modules,
                                            ompi_comm_get_cid(module->comm),
                                            module);
-    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     /* fill in window information */
     *model = MPI_WIN_UNIFIED;
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    asprintf(&name, "rdma window %d", ompi_comm_get_cid(module->comm));
+    asprintf(&name, "pt2pt window %d", ompi_comm_get_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    module->incoming_buffer = malloc (mca_osc_rdma_component.buffer_size + sizeof (ompi_osc_rdma_frag_header_t));
+    module->incoming_buffer = malloc (mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t));
     if (OPAL_UNLIKELY(NULL == module->incoming_buffer)) {
 	goto cleanup;
     }
 
-    ret = ompi_osc_rdma_frag_start_receive (module);
+    ret = ompi_osc_pt2pt_frag_start_receive (module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
 	goto cleanup;
     }
@@ -476,30 +476,30 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                                             module->comm->c_coll.coll_barrier_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
-    if (!mca_osc_rdma_component.progress_enable) {
+    if (!mca_osc_pt2pt_component.progress_enable) {
 	opal_progress_register (component_progress);
-	mca_osc_rdma_component.progress_enable = true;
+	mca_osc_pt2pt_component.progress_enable = true;
     }
 
     OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                         "done creating rdma window %d", ompi_comm_get_cid(module->comm)));
+                         "done creating pt2pt window %d", ompi_comm_get_cid(module->comm)));
 
     return OMPI_SUCCESS;
 
  cleanup:
     /* set the module so we properly cleanup */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    ompi_osc_rdma_free (win);
+    ompi_osc_pt2pt_free (win);
 
     return ret;
 }
 
 
 int
-ompi_osc_rdma_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
+ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
 {
-    ompi_osc_rdma_module_t *module =
-        (ompi_osc_rdma_module_t*) win->w_osc_module;
+    ompi_osc_pt2pt_module_t *module =
+        (ompi_osc_pt2pt_module_t*) win->w_osc_module;
 
     /* enforce collectiveness... */
     return module->comm->c_coll.coll_barrier(module->comm,
@@ -508,7 +508,7 @@ ompi_osc_rdma_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
 
 
 int
-ompi_osc_rdma_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
+ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
 {
     ompi_info_t *info = OBJ_NEW(ompi_info_t);
     if (NULL == info) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -518,4 +518,4 @@ ompi_osc_rdma_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
     return OMPI_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_pending_t, opal_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_t, opal_list_item_t, NULL, NULL);

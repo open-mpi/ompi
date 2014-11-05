@@ -4,23 +4,23 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include "osc_rdma.h"
+#include "osc_pt2pt.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/mca/btl/btl.h"
@@ -31,24 +31,24 @@
 
 
 int
-ompi_osc_rdma_attach(struct ompi_win_t *win, void *base, size_t len)
+ompi_osc_pt2pt_attach(struct ompi_win_t *win, void *base, size_t len)
 {
     return OMPI_SUCCESS;
 }
 
 
 int
-ompi_osc_rdma_detach(struct ompi_win_t *win, void *base)
+ompi_osc_pt2pt_detach(struct ompi_win_t *win, void *base)
 {
     return OMPI_SUCCESS;
 }
 
 
 int
-ompi_osc_rdma_free(ompi_win_t *win)
+ompi_osc_pt2pt_free(ompi_win_t *win)
 {
     int ret = OMPI_SUCCESS;
-    ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     opal_list_item_t *item;
 
     if (NULL == module) {
@@ -57,7 +57,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     if (NULL != module->comm) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "rdma component destroying window with id %d",
+                            "pt2pt component destroying window with id %d",
                             ompi_comm_get_cid(module->comm));
 
         /* finish with a barrier */
@@ -67,10 +67,10 @@ ompi_osc_rdma_free(ompi_win_t *win)
         }
 
         /* remove from component information */
-        OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-        opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
+        OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+        opal_hash_table_remove_value_uint32(&mca_osc_pt2pt_component.modules,
                                             ompi_comm_get_cid(module->comm));
-        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+        OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
     }
 
     win->w_osc_module = NULL;
@@ -95,7 +95,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&module->pending_posts);
 
-    osc_rdma_gc_clean ();
+    osc_pt2pt_gc_clean ();
 
     if (NULL != module->peers) {
         free(module->peers);
