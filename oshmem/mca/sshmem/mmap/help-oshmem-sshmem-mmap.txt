@@ -23,26 +23,4 @@ This issue could also be related to CONFIG_STRICT_DEVMEM
 kernel option which if enabled prevents access to physical
 memory via "mmap". In this case you could try using other
 sshmem components instead.
-
-[mmap:file open failure]
-
-You can try the following:
-
-1. Switch to anonymous mapping using "-mca sshmem_mmap_anonymous 0".
-   The anonymous mapping is not backed by any file.
-2. Set path to backing files explicitly using "-mca sshmem_base_backing_file_dir <path>"
-
-   File: %s
-   Error: %s
-
-[mmap:file truncate failure]
-
-File can not be truncated to specified length. 
-
-You can try to switch to anonymous mapping using "-mca sshmem_mmap_anonymous 0".
-The anonymous mapping is not backed by any file.
-
-   File: %s
-   Size: %llu
-   Error: %s
-
+#

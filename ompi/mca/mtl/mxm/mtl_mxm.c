@@ -127,7 +127,7 @@ static int ompi_mtl_mxm_get_ep_address(void **address_p, size_t *address_len_p)
 
     err = mxm_ep_get_address(ompi_mtl_mxm.ep, *address_p, address_len_p);
     if (MXM_OK != err) {
-        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint ptl address",
                        true, mxm_error_string(err));
         return OMPI_ERROR;
     }
