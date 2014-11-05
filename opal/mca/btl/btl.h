@@ -228,7 +228,9 @@ typedef uint8_t mca_btl_base_tag_t;
 
 
 /** The BTL supports network atomic operations */
-#define MCA_BTL_FLAGS_ATOMIC_OPS      0x8000
+#define MCA_BTL_FLAGS_ATOMIC_OPS      0x08000
+/** The BTL supports fetching network atomic operations */
+#define MCA_BTL_FLAGS_ATOMIC_FOPS     0x10000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
