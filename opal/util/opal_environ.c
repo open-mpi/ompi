@@ -132,7 +132,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
         /* setenv copies the value, so we can free it here */
         free(newvalue);
 #else
-        len - strlen(name);
+        len = strlen(name);
         for (i = 0; (*env)[i] != NULL; ++i) {
             if (0 == strncmp((*env)[i], name, len)) {
                 /* if we find the value in the environ, then
