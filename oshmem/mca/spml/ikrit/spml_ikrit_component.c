@@ -23,6 +23,7 @@
 #include "oshmem/mca/spml/ikrit/spml_ikrit.h"
 
 #include "orte/util/show_help.h"
+#include "opal/util/opal_environ.h"
 
 static int mca_spml_ikrit_component_register(void);
 static int mca_spml_ikrit_component_open(void);
@@ -99,11 +100,11 @@ static inline int set_mxm_tls()
 
     tls = getenv("MXM_TLS");
     if (NULL == tls) {
-        setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1);
+        opal_setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1, &environ);
         return OSHMEM_SUCCESS;
     }
     if (OSHMEM_SUCCESS == check_mxm_tls("MXM_TLS")) {
-        setenv("MXM_OSHMEM_TLS", tls, 1);
+        opal_setenv("MXM_OSHMEM_TLS", tls, 1, &environ);
         return OSHMEM_SUCCESS;
     }
     return OSHMEM_ERROR;
@@ -131,8 +132,8 @@ static inline int set_mxm_hw_rdma_tls()
     if (!mca_spml_ikrit.hw_rdma_channel) {
         return check_mxm_hw_tls("MXM_OSHMEM_TLS", getenv("MXM_OSHMEM_TLS"));
     }
-    setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0);
-    setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0);
+    opal_setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0, &environ);
+    opal_setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0, &environ);
 
     return check_mxm_hw_tls("MXM_OSHMEM_HW_RDMA_TLS", 
             getenv("MXM_OSHMEM_HW_RDMA_TLS"));
