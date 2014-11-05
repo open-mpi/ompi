@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -123,10 +124,15 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     if( *env == environ ) {
         /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
            because so that we don't violate the law of least
-           astonishmet for OPAL developers (i.e., those that don't
+           astonishment for OPAL developers (i.e., those that don't
            check the return code of opal_setenv() and notice that we
            returned an error if you passed in the real environ) */
+#if defined (HAVE_SETENV)
+        setenv(name, value, overwrite);
+        free(newvalue);
+#else
         putenv(newvalue);
+#endif
         return OPAL_SUCCESS;
     }
 
