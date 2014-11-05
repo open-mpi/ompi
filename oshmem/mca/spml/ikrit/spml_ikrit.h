@@ -55,6 +55,7 @@ BEGIN_C_DECLS
 struct mxm_peer {
     opal_list_item_t    super;
     mxm_conn_h          mxm_conn;
+    mxm_conn_h          mxm_hw_rdma_conn;
     int                 pe;
     int32_t             n_active_puts;
     int                 need_fence;
@@ -68,8 +69,10 @@ struct mca_spml_ikrit_t {
 
     mxm_context_opts_t *mxm_ctx_opts;
     mxm_ep_opts_t *mxm_ep_opts;
+    mxm_ep_opts_t *mxm_ep_hw_rdma_opts;
     mxm_h mxm_context;
     mxm_ep_h mxm_ep;
+    mxm_ep_h mxm_hw_rdma_ep;
     mxm_mq_h mxm_mq;
     mxm_peer_t **mxm_peers;
 
@@ -92,6 +95,8 @@ struct mca_spml_ikrit_t {
     int   ud_only;  /* only ud transport is used. In this case 
                        it is possible to speedup mkey exchange 
                        and not to register memheap */
+    int hw_rdma_channel;  /* true if we provide separate channel that
+                       has true one sided capability */
     int np;
 #if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
