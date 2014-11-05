@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -122,11 +123,39 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     /* If this is the "environ" array, use putenv */
     if( *env == environ ) {
         /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
-           because so that we don't violate the law of least
-           astonishmet for OPAL developers (i.e., those that don't
+           so that we don't violate the law of least
+           astonishment for OPAL developers (i.e., those that don't
            check the return code of opal_setenv() and notice that we
            returned an error if you passed in the real environ) */
+#if defined (HAVE_SETENV)
+        setenv(name, value, overwrite);
+        /* setenv copies the value, so we can free it here */
+        free(newvalue);
+#else
+        len = strlen(name);
+        for (i = 0; (*env)[i] != NULL; ++i) {
+            if (0 == strncmp((*env)[i], name, len)) {
+                /* if we find the value in the environ, then
+                 * we need to check the overwrite flag to determine
+                 * the correct response */
+                if (overwrite) {
+                    /* since it was okay to overwrite, do so */
+                    putenv(newvalue);
+                    /* putenv does NOT copy the value, so we
+                     * cannot free it here */
+                    return OPAL_SUCCESS;
+                }
+                /* since overwrite was not allowed, we return
+                 * an error as we cannot perform the requested action */
+                free(newvalue);
+                return OPAL_EXISTS;
+            }
+        }
+        /* since the value wasn't found, we can add it */
         putenv(newvalue);
+        /* putenv does NOT copy the value, so we
+         * cannot free it here */
+#endif
         return OPAL_SUCCESS;
     }
 
