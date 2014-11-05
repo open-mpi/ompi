@@ -13,6 +13,8 @@
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,7 +133,7 @@ opal_btl_usnic_proc_lookup_ompi(opal_proc_t* opal_proc)
  */
 opal_btl_usnic_endpoint_t *
 opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
-                                    uint64_t sender_proc_name)
+                                    opal_process_name_t sender_proc_name)
 {
     opal_btl_usnic_proc_t *proc;
     opal_btl_usnic_endpoint_t *endpoint;
@@ -152,7 +154,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
            working to give handles instead of proc names, and then
            have a function pointer to perform comparisons.  This would
            be bad here in the critical path, though... */
-        if (proc->proc_opal->proc_name == sender_proc_name) {
+        if (0 == opal_compare_proc(proc->proc_opal->proc_name, sender_proc_name)) {
             MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
                           (void *)endpoint);
             opal_mutex_unlock(&receiver->all_endpoints_lock);
@@ -576,8 +578,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
          * sides are always setting up the exact same graph by always putting
          * the process with the lower (jobid,vpid) on the "left".
          */
-        proc_is_left = (proc->proc_opal->proc_name <
-                        opal_proc_local_get()->proc_name);
+        proc_is_left = opal_compare_proc(proc->proc_opal->proc_name, opal_proc_local_get()->proc_name) < 0;
 
         err = create_proc_module_graph(proc, proc_is_left, &g);
         if (OPAL_SUCCESS != err) {

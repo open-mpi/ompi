@@ -50,7 +50,7 @@ static int s2_spawn(int count, const char * cmds[],
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s2_fence(opal_process_name_t *procs, size_t nprocs);
-static int s2_get(const opal_identifier_t *id,
+static int s2_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv);
 static int s2_publish(const char service_name[],
@@ -111,10 +111,7 @@ static int s2_jsize;
 static int s2_appnum;
 static int s2_nlranks;
 static int *s2_lranks=NULL;
-static struct {
-    uint32_t jid;
-    uint32_t vid;
-} s2_pname;
+static opal_process_name_t s2_pname;
 
 static bool got_modex_data = false;
 static char* pmix_error(int pmix_err);
@@ -225,12 +222,12 @@ static int s2_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    s2_pname.jid = s2_jobid;
-    s2_pname.vid = s2_rank;
-    opal_proc_set_name((opal_process_name_t*)&s2_pname);
+    s2_pname.jobid = s2_jobid;
+    s2_pname.vpid = s2_rank;
+    opal_proc_set_name(&s2_pname);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s2: assigned tmp name",
-                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s2_pname));
+                        OPAL_NAME_PRINT(s2_pname));
 
     char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
@@ -245,7 +242,7 @@ static int s2_init(void)
         return OPAL_ERROR;
     }
 
-    s2_lranks = mca_common_pmi2_parse_pmap(pmapping, s2_pname.vid, &my_node, &s2_nlranks);
+    s2_lranks = mca_common_pmi2_parse_pmap(pmapping, s2_pname.vpid, &my_node, &s2_nlranks);
     if (NULL == s2_lranks) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
         OPAL_ERROR_LOG(rc);
@@ -330,9 +327,9 @@ static int s2_spawn(int count, const char * cmds[],
 static int s2_job_connect(const char jobId[])
 {
     int rc;
-    PMI2_Connect_comm_t *conn;
+    PMI2_Connect_comm_t conn;
     /*FIXME should change function prototype to add void* conn */
-    rc = PMI2_Job_Connect(jobId, conn);
+    rc = PMI2_Job_Connect(jobId, &conn);
     if( PMI2_SUCCESS != rc ){
         OPAL_PMI_ERROR(rc, "PMI2_Job_Connect");
         return OPAL_ERROR;
@@ -437,8 +434,8 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s2_nlranks; i++) {
-            s2_pname.vid = s2_lranks[i];
-            rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&s2_pname, OPAL_DSTORE_CPUSET,
+            s2_pname.vpid = s2_lranks[i];
+            rc = opal_pmix_base_cache_keys_locally(&s2_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
@@ -466,14 +463,14 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s2 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&s2_pname),
+                                 OPAL_NAME_PRINT(s2_pname),
                                  opal_hwloc_base_print_locality(locality)));
 
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s2_pname, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, &s2_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -481,7 +478,7 @@ static int s2_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
-static int s2_get(const opal_identifier_t *id,
+static int s2_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv)
 {

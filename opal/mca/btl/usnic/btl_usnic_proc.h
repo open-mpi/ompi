@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +87,7 @@ struct opal_btl_usnic_module_t;
 
 opal_btl_usnic_endpoint_t *
 opal_btl_usnic_proc_lookup_endpoint(struct opal_btl_usnic_module_t *receiver,
-                                    uint64_t sender_hashed_rte_name);
+                                    opal_process_name_t name);
 
 int opal_btl_usnic_proc_match(opal_proc_t* opal_proc,
                               struct opal_btl_usnic_module_t *module,

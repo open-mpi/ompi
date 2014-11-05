@@ -17,6 +17,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -310,20 +312,6 @@ _process_name_print_for_opal(const opal_process_name_t procname)
     return OMPI_NAME_PRINT(rte_name);
 }
 
-static uint32_t
-_process_name_jobid_for_opal(const opal_process_name_t procname)
-{
-    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
-    return rte_name->jobid;
-}
-
-static uint32_t
-_process_name_vpid_for_opal(const opal_process_name_t procname)
-{
-    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
-    return rte_name->vpid;
-}
-
 static int
 _process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
 {
@@ -409,8 +397,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Convince OPAL to use our naming scheme */
     opal_process_name_print = _process_name_print_for_opal;
-    opal_process_name_vpid = _process_name_vpid_for_opal;
-    opal_process_name_jobid = _process_name_jobid_for_opal;
     opal_compare_proc = _process_name_compare;
 
     /* Register MCA variables */

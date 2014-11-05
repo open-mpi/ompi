@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -816,6 +818,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
         case OPAL_PTR:
             /* just ignore these values */
             break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.name, 1, OPAL_NAME))) {
+                return ret;
+            }
+            break;
         case OPAL_FLOAT_ARRAY:
             if (OPAL_SUCCESS !=
                 (ret = opal_dss_pack_buffer(buffer,
@@ -1144,4 +1151,92 @@ int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
     return OPAL_SUCCESS;
 }
 
+/*
+ * NAME
+ */
+int opal_dss_pack_name(opal_buffer_t *buffer, const void *src,
+                           int32_t num_vals, opal_data_type_t type)
+{
+    int rc;
+    int32_t i;
+    opal_process_name_t* proc;
+    opal_jobid_t *jobid;
+    opal_vpid_t *vpid;
+
+    /* collect all the jobids in a contiguous array */
+    jobid = (opal_jobid_t*)malloc(num_vals * sizeof(opal_jobid_t));
+    if (NULL == jobid) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    proc = (opal_process_name_t*)src;
+    for (i=0; i < num_vals; i++) {
+        jobid[i] = proc->jobid;
+        proc++;
+    }
+    /* now pack them in one shot */
+    if (OPAL_SUCCESS != (rc =
+                         opal_dss_pack_jobid(buffer, jobid, num_vals, OPAL_JOBID))) {
+        OPAL_ERROR_LOG(rc);
+        free(jobid);
+        return rc;
+    }
+    free(jobid);
+
+    /* collect all the vpids in a contiguous array */
+    vpid = (opal_vpid_t*)malloc(num_vals * sizeof(opal_vpid_t));
+    if (NULL == vpid) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    proc = (opal_process_name_t*)src;
+    for (i=0; i < num_vals; i++) {
+        vpid[i] = proc->vpid;
+        proc++;
+    }
+    /* now pack them in one shot */
+    if (OPAL_SUCCESS != (rc =
+                         opal_dss_pack_vpid(buffer, vpid, num_vals, OPAL_VPID))) {
+        OPAL_ERROR_LOG(rc);
+        free(vpid);
+        return rc;
+    }
+    free(vpid);
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * JOBID
+ */
+int opal_dss_pack_jobid(opal_buffer_t *buffer, const void *src,
+                            int32_t num_vals, opal_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and pack the real type */
+    if (OPAL_SUCCESS != (
+                         ret = opal_dss_pack_buffer(buffer, src, num_vals, OPAL_JOBID_T))) {
+        OPAL_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
+
+/*
+ * VPID
+ */
+int opal_dss_pack_vpid(opal_buffer_t *buffer, const void *src,
+                           int32_t num_vals, opal_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and pack the real type */
+    if (OPAL_SUCCESS != (
+                         ret = opal_dss_pack_buffer(buffer, src, num_vals, OPAL_VPID_T))) {
+        OPAL_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
 

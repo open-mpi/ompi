@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,7 +165,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         /* cancel wildcard post */
         rc = GNI_EpPostDataCancelById (ugni_module->wildcard_ep,
                                        MCA_BTL_UGNI_CONNECT_WILDCARD_ID |
-                                       opal_process_name_vpid(OPAL_PROC_MY_NAME));
+                                       OPAL_PROC_MY_NAME.vpid);
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("btl/ugni error cancelling wildcard post"));
         }

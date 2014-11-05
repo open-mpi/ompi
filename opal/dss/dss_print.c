@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -988,3 +990,73 @@ int opal_dss_print_buffer_contents(char **output, char *prefix,
     return OPAL_SUCCESS;
 }
 
+/*
+ * NAME
+ */
+int opal_dss_print_name(char **output, char *prefix, opal_process_name_t *name, opal_data_type_t type)
+{
+    /* set default result */
+    *output = NULL;
+
+    if (NULL == name) {
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
+                 (NULL == prefix ? " " : prefix));
+    } else {
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%d,%d]",
+                 (NULL == prefix ? " " : prefix), name->jobid, name->vpid);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_print_jobid(char **output, char *prefix,
+                         opal_process_name_t *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_JOBID\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_JOBID\tValue: %s", prefx, opal_jobid_print(src->jobid));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_print_vpid(char **output, char *prefix,
+                         opal_process_name_t *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_VPID\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_VPID\tValue: %s", prefx, opal_vpid_print(src->vpid));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return OPAL_SUCCESS;
+}

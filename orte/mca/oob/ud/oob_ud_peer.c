@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,8 +36,8 @@ int mca_oob_ud_peer_lookup (const orte_process_name_t *name, mca_oob_ud_peer_t *
 
     *peer = NULL;
 
-    rc = opal_hash_table_get_value_uint64(&mca_oob_ud_component.ud_peers,
-                                          orte_util_hash_name(name), (void**)peer);
+    rc = opal_proc_table_get_value(&mca_oob_ud_component.ud_peers,
+                                   *name, (void**)peer);
     if (OPAL_SUCCESS != rc) {
         return ORTE_ERR_UNREACH;
     }
@@ -156,9 +158,8 @@ mca_oob_ud_peer_t *mca_oob_ud_get_peer (struct mca_oob_ud_port_t *port,
     peer->peer_context = port->device;
 
     OPAL_THREAD_LOCK(&mca_oob_ud_component.ud_lock);
-    opal_hash_table_set_value_uint64(&mca_oob_ud_component.ud_peers,
-                                     orte_util_hash_name(name),
-                                     (void *) peer);
+    opal_proc_table_set_value(&mca_oob_ud_component.ud_peers,
+                              *name, (void *) peer);
     OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
 
     return peer;

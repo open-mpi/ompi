@@ -13,6 +13,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +57,7 @@
 static void stdin_write_handler(int fd, short event, void *cbdata);
 
 static void
-orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason);
+orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason);
 
 /* API FUNCTIONS */
 static int init(void);
@@ -585,7 +587,7 @@ CHECK:
  */
 
 static void
-orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason)
+orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason)
 {
 #if 0
     orte_iof_base_endpoint_t *endpoint;

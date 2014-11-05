@@ -183,7 +183,7 @@ int opal_pmix_base_commit_packed( char* buffer_to_put, int data_to_put,
     return OPAL_SUCCESS;
 }
 
-int opal_pmix_base_get_packed(const opal_identifier_t* proc, char **packed_data,
+int opal_pmix_base_get_packed(const opal_process_name_t* proc, char **packed_data,
                               size_t *len, int vallen, kvs_get_fn fn)
 {
     char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
@@ -255,7 +255,7 @@ int opal_pmix_base_get_packed(const opal_identifier_t* proc, char **packed_data,
     return rc;
 }
 
-int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* key,
+int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char* key,
                                       opal_value_t **out_kv, char* kvs_name,
                                       int vallen, kvs_get_fn fn)
 {
@@ -286,8 +286,8 @@ int opal_pmix_base_cache_keys_locally(const opal_identifier_t* id, const char* k
     OPAL_LIST_DESTRUCT(&values);
 
     OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
-                         "pmix: get all keys for proc %" PRIu64 " in KVS %s",
-                         *id, kvs_name));
+                         "pmix: get all keys for proc %s in KVS %s",
+                         OPAL_NAME_PRINT(*id), kvs_name));
 
     rc = opal_pmix_base_get_packed(id, &tmp_val, &len, vallen, fn);
     if (OPAL_SUCCESS != rc) {
@@ -399,8 +399,8 @@ static char* setup_key(const opal_process_name_t* name, const char *key, int pmi
 {
     char *pmi_kvs_key;
 
-    if (pmix_keylen_max <= asprintf(&pmi_kvs_key, "%" PRIu64 "-%s",
-                                        *name, key)) {
+    if (pmix_keylen_max <= asprintf(&pmi_kvs_key, "%" PRIu32 "-%" PRIu32 "-%s",
+                                        name->jobid, name->vpid, key)) {
         free(pmi_kvs_key);
         return NULL;
     }

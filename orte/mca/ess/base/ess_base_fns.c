@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -304,7 +306,7 @@ int orte_ess_base_proc_binding(void)
             goto error;
         }
         /* and store a copy locally */
-        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv);
+        (void)opal_dstore.store(opal_dstore_internal, ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
     }
     return ORTE_SUCCESS;

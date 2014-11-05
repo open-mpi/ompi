@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +41,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     }
 
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
-                 opal_process_name_vpid(OPAL_PROC_MY_NAME), endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
+                 OPAL_PROC_MY_NAME.vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
 
     /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
     frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);

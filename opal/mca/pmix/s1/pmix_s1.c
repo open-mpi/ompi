@@ -35,7 +35,7 @@ static int s1_abort(int flag, const char msg[]);
 static int s1_fence(opal_process_name_t *procs, size_t nprocs);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
-static int s1_get(const opal_identifier_t *id,
+static int s1_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv);
 static int s1_publish(const char service_name[],
@@ -102,10 +102,7 @@ static int s1_jsize;
 static int s1_appnum;
 static int s1_nlranks;
 static int *s1_lranks=NULL;
-static struct {
-    uint32_t jid;
-    uint32_t vid;
-} s1_pname;
+static opal_process_name_t s1_pname;
 
 static bool got_modex_data = false;
 static char* pmix_error(int pmix_err);
@@ -217,12 +214,12 @@ static int s1_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    s1_pname.jid = s1_jobid;
-    s1_pname.vid = s1_rank;
-    opal_proc_set_name((opal_process_name_t*)&s1_pname);
+    s1_pname.jobid = s1_jobid;
+    s1_pname.vpid = s1_rank;
+    opal_proc_set_name(&s1_pname);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s1: assigned tmp name",
-                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s1_pname));
+                        OPAL_NAME_PRINT(s1_pname));
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
@@ -458,8 +455,8 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s1_nlranks; i++) {
-            s1_pname.vid = s1_lranks[i];
-            rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&s1_pname, OPAL_DSTORE_CPUSET,
+            s1_pname.vpid = s1_lranks[i];
+            rc = opal_pmix_base_cache_keys_locally(&s1_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
@@ -487,14 +484,14 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s1 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname),
+                                 OPAL_NAME_PRINT(s1_pname),
                                  opal_hwloc_base_print_locality(locality)));
     
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s1_pname, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, &s1_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -502,7 +499,7 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
-static int s1_get(const opal_identifier_t *id,
+static int s1_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv)
 {

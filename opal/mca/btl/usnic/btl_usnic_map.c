@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,7 +208,7 @@ static void map_output_procs(FILE *fp)
 
     /* Loop over and print the sorted module device information */
     for (i = 0; i < num_procs; ++i) {
-        fprintf(fp, "peer=%d,", opal_process_name_vpid(procs[i]->proc_opal->proc_name));
+        fprintf(fp, "peer=%" PRIu32 ",", procs[i]->proc_opal->proc_name.vpid);
         fprintf(fp, "hostname=%s,", opal_get_proc_hostname(procs[i]->proc_opal));
         map_output_endpoints(fp, procs[i]);
     }
@@ -235,8 +237,8 @@ void opal_btl_usnic_connectivity_map(void)
              mca_btl_usnic_component.connectivity_map_prefix,
              opal_get_proc_hostname(opal_proc_local_get()),
              getpid(),
-             opal_process_name_jobid(opal_proc_local_get()->proc_name),
-             opal_process_name_vpid(opal_proc_local_get()->proc_name));
+             opal_proc_local_get()->proc_name.jobid,
+             opal_proc_local_get()->proc_name.vpid);
     if (NULL == filename) {
         /* JMS abort? */
         return;

@@ -45,12 +45,6 @@
 #include "opal/util/output.h"
 #endif
 
-/* define an RTE-agnostic process identifier */
-typedef uint64_t opal_identifier_t;
-#define OPAL_ID_T OPAL_UINT64
-#define OPAL_ID_INVALID UINT64_MAX
-
-
 /*
  * portable assignment of pointer to int
  */

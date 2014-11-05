@@ -16,6 +16,8 @@
  *                         All rights reserved. 
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -505,7 +507,7 @@ int mca_btl_smcuda_add_procs(
     for (proc = 0; proc < (int32_t)nprocs; proc++) {
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
-        if (opal_process_name_jobid(procs[proc]->proc_name) != opal_process_name_jobid(my_proc->proc_name) ||
+        if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
             !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;

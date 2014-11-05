@@ -2114,7 +2114,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
     opal_output_verbose(1, opal_btl_base_framework.framework_output, 
                         "[rank=%d] openib: using port %s:%d", 
-                        opal_process_name_vpid(OPAL_PROC_MY_NAME),
+                        OPAL_PROC_MY_NAME.vpid,
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         openib_btl->port_num);
     return OPAL_SUCCESS;
@@ -2371,7 +2371,7 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    seedv[0] = opal_process_name_vpid(OPAL_PROC_MY_NAME);
+    seedv[0] = OPAL_PROC_MY_NAME.vpid;
     seedv[1] = opal_timer_base_get_cycles();
     seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
@@ -2590,7 +2590,7 @@ btl_openib_component_init(int *num_btl_modules,
             (dev_sorted[i].distance - distance) > EPS) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output, 
                                 "[rank=%d] openib: skipping device %s; it is too far away", 
-                                opal_process_name_vpid(OPAL_PROC_MY_NAME),
+                                OPAL_PROC_MY_NAME.vpid,
                                 ibv_get_device_name(dev_sorted[i].ib_dev));
             break;
         }

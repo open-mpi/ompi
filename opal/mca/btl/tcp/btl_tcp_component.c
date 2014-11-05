@@ -17,6 +17,8 @@
  *                         reserved. 
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -314,12 +316,12 @@ static int mca_btl_tcp_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
-    opal_hash_table_init(&mca_btl_tcp_component.tcp_procs, 256);
+    opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 

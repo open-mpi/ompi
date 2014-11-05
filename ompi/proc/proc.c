@@ -115,8 +115,8 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, OPAL_DSTORE_ARCH,
-                                   &proc->super.proc_arch, OPAL_UINT32);
+            OPAL_MODEX_SEND_VALUE(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
+                                  OPAL_DSTORE_ARCH, &opal_local_arch, OPAL_UINT32);
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }
@@ -156,7 +156,7 @@ int ompi_proc_complete_init(void)
              */
             OBJ_CONSTRUCT(&myvals, opal_list_t);
             if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
-                                                         (opal_identifier_t*)&proc->super.proc_name,
+                                                         &proc->super.proc_name,
                                                          OPAL_DSTORE_LOCALITY, &myvals))) {
                 proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
             } else {
@@ -424,7 +424,7 @@ int ompi_proc_refresh(void)
              */
             OBJ_CONSTRUCT(&myvals, opal_list_t);
             if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
-                                                         (opal_identifier_t*)&proc->super.proc_name,
+                                                         &proc->super.proc_name,
                                                          OPAL_DSTORE_LOCALITY, &myvals))) {
                 proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
             } else {
@@ -522,7 +522,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
              */
             OBJ_CONSTRUCT(&data, opal_list_t);
             rc = opal_dstore.fetch(opal_dstore_internal,
-                                   (opal_identifier_t*)&proclist[i]->super.proc_name,
+                                   &proclist[i]->super.proc_name,
                                    NULL, &data);
             if (OPAL_SUCCESS != rc) {
                 OMPI_ERROR_LOG(rc);
@@ -701,7 +701,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                                                                    OMPI_PROC_MY_NAME, &new_name)) {
                         /* store it in the database */
                         if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                                    (opal_identifier_t*)&new_name, kv))) {
+                                                                    &new_name, kv))) {
                             OMPI_ERROR_LOG(rc);
                         }
                     }
@@ -711,7 +711,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_CONSTRUCT(&myvals, opal_list_t);
                 rc = opal_dstore.fetch(opal_dstore_internal,
-                                       (opal_identifier_t*)&new_name,
+                                       &new_name,
                                        OPAL_DSTORE_ARCH, &myvals);
                 if( OPAL_SUCCESS == rc ) {
                     kv = (opal_value_t*)opal_list_get_first(&myvals);
@@ -727,7 +727,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     /* retrieve the hostname */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
                     rc = opal_dstore.fetch(opal_dstore_internal,
-                                           (opal_identifier_t*)&new_name,
+                                           &new_name,
                                            OPAL_DSTORE_HOSTNAME, &myvals);
                     if( OPAL_SUCCESS == rc ) {
                         kv = (opal_value_t*)opal_list_get_first(&myvals);

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +64,7 @@ static int mca_oob_ud_component_open (void)
     OBJ_CONSTRUCT(&mca_oob_ud_component.ud_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_ud_component.ud_match_lock, opal_mutex_t);
 
-    OBJ_CONSTRUCT(&mca_oob_ud_component.ud_peers, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_ud_component.ud_peers, opal_proc_table_t);
 
     return ORTE_SUCCESS;
 }
@@ -224,7 +226,7 @@ static mca_oob_t *mca_oob_ud_component_init(int *priority)
      */
     *priority = 0;
 
-    opal_hash_table_init (&mca_oob_ud_component.ud_peers, 1024);
+    opal_proc_table_init (&mca_oob_ud_component.ud_peers, 16, 1024);
 
     devices = ibv_get_device_list (&num_devices);
     if (NULL == devices || 0 == num_devices) {

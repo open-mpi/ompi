@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +17,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
