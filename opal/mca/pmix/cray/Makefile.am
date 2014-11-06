@@ -11,6 +11,7 @@ sources = \
         pmix_cray.h \
         pmix_cray_component.c \
         pmix_cray_pmap_parser.c \
+        pmix_cray_pmap_parser.h \
         pmix_cray.c
 
 # Make the output library in this directory, and name it either
