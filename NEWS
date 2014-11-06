@@ -65,7 +65,6 @@ included in the vX.Y.Z section and be denoted as:
 - Fixed param registration issue in Java bindings
 - Several man page fixes
 - Silence several warnings and close some memory leaks
-- Add new PML to improve MXM performance
 - Re-enabled the use of CMA and knem in the shared memory BTL
 - Updated mpirun manpage to correctly explain new map/rank/binding options
 - Numerous updates and performance improvements to OSHMEM
