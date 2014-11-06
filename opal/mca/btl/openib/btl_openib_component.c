@@ -445,7 +445,7 @@ static int btl_openib_modex_send(void)
     }
 
     /* All done -- send it! */
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
                     &mca_btl_openib_component.super.btl_version,
                     message, msg_size);
     free(message);
