@@ -231,11 +231,8 @@ int opal_common_ugni_fini (void)
 
 int opal_common_ugni_init (void)
 {
-#if 0
-    opal_proc_t *my_proc;
-#endif
     int modes, rc, i;
-    uint32_t my_cdm_id, *ptr;
+    uint32_t my_cdm_id;
 
     opal_common_ugni_module_ref_count ++;
 
@@ -243,26 +240,11 @@ int opal_common_ugni_init (void)
         return OPAL_SUCCESS;
     }
 
-    /* get a unique id from the runtime */
-    /* the code below is unnecessary.  The cdm_id only needs to be unique
+    /* use pid for my_cdm_id.  Although its not stated in the uGNI
+       documentation, the cdm_id only needs to be unique
        within a node for a given ptag/cookie tuple */
-#if 0
-#if defined(OMPI_DB_GLOBAL_RANK)
-    {
-        ptr = &my_rank;
-        OPAL_MODEX_RECV_VALUE(rc, (opal_identifier_t *)&my_proc->proc_name,
-                              OMPI_DB_GLOBAL_RANK, (void**)&ptr, OPAL_UINT32);
-        if (OPAL_SUCCESS != rc) {
-            my_rank = my_proc->proc_name.vpid;
-        } 
-        OPAL_LIST_DESTRUCT(&myvals);
-    }
-#else
-    my_rank = my_proc->proc_name.vpid;
-#endif
-#else
+
     my_cdm_id = getpid();   /*TODO: eventually need something else for thread-hot support */
-#endif
 
     /* pull settings from ugni btl */
     opal_common_ugni_module.rdma_max_retries =
