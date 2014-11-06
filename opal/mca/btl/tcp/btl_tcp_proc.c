@@ -76,12 +76,15 @@ void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* tcp_proc)
 
 void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 {
-    /* remove from list of all proc instances */
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                        tcp_proc->proc_opal->proc_name);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-
+    if( NULL != tcp_proc->proc_opal ) {
+        /* remove from list of all proc instances */
+        OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+        opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
+                                            tcp_proc->proc_opal->proc_name);
+        OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+        /* Do not OBJ_RELEASE the proc_opal ! */
+        /* OBJ_RELEASE(tcp_proc->proc_opal); */
+    }
     /* release resources */
     if(NULL != tcp_proc->proc_endpoints) {
         free(tcp_proc->proc_endpoints);
@@ -97,7 +100,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
  * datastructure.
  */
 
-mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(const opal_proc_t* proc)
+mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
 {
     uint64_t hash = proc->proc_name;
     mca_btl_tcp_proc_t* btl_proc;
@@ -116,6 +119,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(const opal_proc_t* proc)
     if(NULL == btl_proc)
         return NULL;
     btl_proc->proc_opal = proc;
+    OBJ_RETAIN(btl_proc->proc_opal);
 
     /* add to hash table of all proc instance */
     opal_hash_table_set_value_uint64(&mca_btl_tcp_component.tcp_procs,
@@ -683,7 +687,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
  * Remove an endpoint from the proc array and indicate the address is
  * no longer in use.
  */
-                                                                                                                 
+
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_t* btl_endpoint)
 {
     size_t i;

@@ -98,7 +98,6 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
         if(NULL == tcp_endpoint) {
             OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-            OBJ_RELEASE(opal_proc);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
@@ -106,7 +105,6 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
         if(rc != OPAL_SUCCESS) {
             OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-            OBJ_RELEASE(opal_proc);
             OBJ_RELEASE(tcp_endpoint);
             continue;
         }
