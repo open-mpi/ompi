@@ -61,6 +61,24 @@ Trunk (not on release branches yet)
   via --enable-mpi-cxx.
 
 
+1.8.4
+-----
+- Removed inadvertent change that set --enable-mpi-thread-multiple "on"
+  by default, thus impacting performance for non-threaded apps
+- Significantly reduced startup time by optimizing internal hash table
+  implementation
+- Fixed segfault in neighborhood collectives under certain use-cases
+- Fixed Solaris support
+- Fixed PMI configure tests for certain Slurm installation patterns
+- Fixed param registration issue in Java bindings
+- Several man page fixes
+- Silence several warnings and close some memory leaks
+- Add new PML to improve MXM performance
+- Re-enabled the use of CMA and knem in the shared memory BTL
+- Updated mpirun manpage to correctly explain new map/rank/binding options
+- Numerous updates and performance improvements to OSHMEM
+
+
 1.8.3
 -----
 
