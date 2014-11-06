@@ -192,13 +192,13 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
         err = ompi_datatype_get_true_extent(rdtype, &true_lb, &true_extent);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-        free_buf = (char*) calloc(((true_extent - true_lb + 
+        free_buf = (char*) calloc(((true_extent + 
                                     ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount - 1) * rext)),
                                   sizeof(char));
         if (NULL == free_buf) { 
             line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; 
         }
-        shift_buf = free_buf - rlb;
+        shift_buf = free_buf - true_lb;
       
         /* 1. copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer */
         err = ompi_datatype_copy_content_same_ddt(rdtype, ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount),
