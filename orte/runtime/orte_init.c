@@ -191,10 +191,18 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
     /* create the handle */
-    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL", NULL))) {
+    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL", "hash", NULL))) {
         error = "opal dstore internal";
         ret = ORTE_ERR_FATAL;
         goto error;
+    }
+
+    if (ORTE_PROC_IS_APP) {
+        if (0 > (opal_dstore_modex = opal_dstore.open("MODEX", "sm,hash", NULL))) {
+            error = "opal dstore modex";
+            ret = ORTE_ERR_FATAL;
+            goto error;
+        }
     }
 
     if (ORTE_PROC_IS_APP) {
