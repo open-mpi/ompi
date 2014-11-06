@@ -38,7 +38,7 @@ struct mca_btl_tcp_proc_t {
     opal_list_item_t super;
     /**< allow proc to be placed on a list */
 
-    const opal_proc_t *proc_opal;
+    opal_proc_t *proc_opal;
     /**< pointer to corresponding opal_proc_t */
 
     struct mca_btl_tcp_addr_t* proc_addrs;
@@ -104,7 +104,7 @@ enum mca_btl_tcp_connection_quality {
 };
 
 
-mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(const opal_proc_t* proc);
+mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc);
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t* name);
 int  mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
