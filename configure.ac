@@ -176,7 +176,7 @@ m4_ifdef([project_ompi],
 m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADER([oshmem/include/shmem.h])])
 
-opal_show_subtitle "Initialization, setup"
+ompi_show_subtitle "Initialization, setup"
 
 OMPI_TOP_BUILDDIR="`pwd`"
 AC_SUBST(OMPI_TOP_BUILDDIR)
