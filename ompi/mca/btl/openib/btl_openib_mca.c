@@ -513,10 +513,14 @@ int btl_openib_register_mca_params(void)
                    "Preferred communication buffer alignment, in bytes "
                    "(must be > 0 and power of two)",
                    64, &mca_btl_openib_component.buffer_alignment, 0));
-
+    /* RHC: MESSAGE COALESCING IS BEING TURNED OFF IN 1.8 UNTIL FINAL
+     * FIX IS AVAILABLE */
+#if 0
     CHECK(reg_bool("use_message_coalescing", NULL,
                    "If nonzero, use message coalescing", true,
                    &mca_btl_openib_component.use_message_coalescing));
+#endif
+    mca_btl_openib_component.use_message_coalescing = false;
 
     CHECK(reg_uint("cq_poll_ratio", NULL,
                    "How often to poll high priority CQ versus low priority CQ",
