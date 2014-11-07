@@ -18,12 +18,12 @@
 #include "opal/mca/shmem/base/base.h"
 
 static int opal_dstore_sm_enable = 0;
-static void component_finalize(void);
 static int dstore_sm_query(mca_base_module_t **module, int *priority);
 static opal_dstore_base_module_t *component_create(opal_list_t *attrs);
 static int component_update(int hdl, opal_list_t *attributes);
 static int add_trk(opal_dstore_base_module_t *imod,
         uint32_t jid, char* seg_info);
+static int component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -43,7 +43,7 @@ opal_dstore_base_component_t mca_dstore_sm_component = {
         NULL,
         NULL,
         dstore_sm_query,
-        NULL
+        component_register
     },
     {
         /* The component is checkpoint ready */
@@ -61,24 +61,25 @@ static int dstore_sm_query(mca_base_module_t **module, int *priority)
     return OPAL_SUCCESS;
 }
 
+static int component_register(void)
+{
+    opal_dstore_sm_enable = 0;
+    (void)mca_base_component_var_register(&mca_dstore_sm_component.base_version, "enable",
+            "Enable/disable dstore sm component (default: disabled)",
+            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+            &opal_dstore_sm_enable);
+    return OPAL_SUCCESS;
+}
+
 static opal_dstore_base_module_t *component_create(opal_list_t *attrs)
 {
-    int ret;
     mca_dstore_sm_module_t *mod;
-    ret = mca_base_component_var_register(&mca_dstore_sm_component.base_version, "enable",
-                                          "Enable/disable dstore sm component (default: disabled)",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                          &opal_dstore_sm_enable);
-    if (0 > ret) {
-        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
-        return NULL;
-    }
-
+    opal_output(0, "SM MODULE REQUEST");
     if (0 == opal_dstore_sm_enable) {
+        opal_output(0, "SM MODULE NOT ENABLED");
         return NULL;
     }
-
     mod = (mca_dstore_sm_module_t*)malloc(sizeof(mca_dstore_sm_module_t));
     if (NULL == mod) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
