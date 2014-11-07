@@ -316,6 +316,8 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
         } else if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
+            /* adjust the number of bytes remaining to be written */
+            output->numbytes -= num_written;
             /* push this item back on the front of the list */
             opal_list_prepend(&wev->outputs, item);
             /* if the list is getting too large, abort */
