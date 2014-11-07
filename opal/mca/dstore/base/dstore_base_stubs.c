@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2013-2014 Intel Inc. All rights reserved
+ * Copyright (c) 2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,26 +24,37 @@
 #include "opal/mca/dstore/base/base.h"
 
 
-int opal_dstore_base_open(const char *name, opal_list_t *attrs)
+int opal_dstore_base_open(const char *name, char* desired_components, opal_list_t *attrs)
 {
     opal_dstore_handle_t *hdl;
     int index;
     opal_dstore_base_module_t *mod;
-
-    /* ask the storage component for a module */
-    if (NULL != (mod = opal_dstore_base.storage_component->create_handle(attrs))) {
-        /* have our module, so create a new dstore_handle */
-        hdl = OBJ_NEW(opal_dstore_handle_t);
-        if (NULL != name) {
-            hdl->name = strdup(name);
+    int i;
+    mca_base_component_list_item_t* cli;
+    char** tokens;
+    tokens = opal_argv_split(desired_components, ',');
+    for (i = 0; NULL != tokens[i]; i++) {
+        OPAL_LIST_FOREACH(cli, &opal_dstore_base.available_components, mca_base_component_list_item_t) {
+            if (0 == strncmp(tokens[i], cli->cli_component->mca_component_name, strlen(tokens[i]))) {
+                if (NULL != ((opal_dstore_base_component_t*)cli->cli_component)->create_handle && NULL != (mod = ((opal_dstore_base_component_t*)cli->cli_component)->create_handle(attrs))) {
+                    /* have our module, so create a new dstore_handle */
+                    hdl = OBJ_NEW(opal_dstore_handle_t);
+                    if (NULL != name) {
+                        hdl->name = strdup(name);
+                    }
+                    hdl->module = mod;
+                    hdl->storage_component = (opal_dstore_base_component_t*)cli->cli_component;
+                    if (0 > (index = opal_pointer_array_add(&opal_dstore_base.handles, hdl))) {
+                        OPAL_ERROR_LOG(index);
+                        OBJ_RELEASE(hdl);
+                    }
+                    opal_argv_free(tokens);
+                    return index;
+                }
+            }
         }
-        hdl->module = mod;
-        if (0 > (index = opal_pointer_array_add(&opal_dstore_base.handles, hdl))) {
-            OPAL_ERROR_LOG(index);
-            OBJ_RELEASE(hdl);
-        }
-        return index;
     }
+    opal_argv_free(tokens);
 
     /* if we get here, then we were unable to create a module
      * for this scope
@@ -52,16 +65,22 @@ int opal_dstore_base_open(const char *name, opal_list_t *attrs)
 int opal_dstore_base_update(int dstorehandle, opal_list_t *attrs)
 {
     int rc;
+    opal_dstore_handle_t *hdl;
 
     if (dstorehandle < 0) {
         return OPAL_ERR_NOT_INITIALIZED;
     }
 
-    if (NULL == opal_dstore_base.storage_component->update_handle) {
+    if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    if (NULL == hdl->storage_component->update_handle) {
         return OPAL_SUCCESS;
     }
 
-    if (OPAL_SUCCESS != (rc = opal_dstore_base.storage_component->update_handle(dstorehandle, attrs))) {
+    if (OPAL_SUCCESS != (rc = hdl->storage_component->update_handle(dstorehandle, attrs))) {
         OPAL_ERROR_LOG(rc);
     }
 
@@ -171,6 +190,18 @@ int opal_dstore_base_remove_data(int dstorehandle,
     return hdl->module->remove((struct opal_dstore_base_module_t*)hdl->module, id, key);
 }
 
+int opal_dstore_base_get_handle(int dstorehandle, void **dhdl)
+{
+    opal_dstore_handle_t *hdl;
+
+    if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    *dhdl = (void*)hdl;
+    return OPAL_SUCCESS;
+}
 
 /**
  * Find data for a given key in a given proc_data_t

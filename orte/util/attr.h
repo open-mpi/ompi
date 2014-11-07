@@ -138,6 +138,7 @@ typedef uint16_t orte_proc_flags_t;
 #define ORTE_PROC_FLAG_RECORDED      0x0400  // termination has been recorded
 #define ORTE_PROC_FLAG_DATA_IN_SM    0x0800  // modex data has been stored in the local shared memory region
 #define ORTE_PROC_FLAG_DATA_RECVD    0x1000  // modex data for this proc has been received
+#define ORTE_PROC_FLAG_SM_ACCESS     0x2000  // indicate if process can read modex data from shared memory region
 
 /***   PROCESS ATTRIBUTE KEYS   ***/
 #define ORTE_PROC_START_KEY   ORTE_JOB_MAX_KEY

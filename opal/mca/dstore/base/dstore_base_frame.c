@@ -35,15 +35,18 @@ opal_dstore_base_API_t opal_dstore = {
     opal_dstore_base_close,
     opal_dstore_base_store,
     opal_dstore_base_fetch,
-    opal_dstore_base_remove_data
+    opal_dstore_base_remove_data,
+    opal_dstore_base_get_handle
 };
 opal_dstore_base_t opal_dstore_base;
 
 int opal_dstore_internal = -1;
+int opal_dstore_modex = -1;
 
 static int opal_dstore_base_frame_close(void)
 {
     opal_dstore_handle_t *hdl;
+    opal_list_item_t *item;
     int i;
 
     /* cycle across all the active dstore handles and let them cleanup - order
@@ -56,6 +59,13 @@ static int opal_dstore_base_frame_close(void)
     }
     OBJ_DESTRUCT(&opal_dstore_base.handles);
 
+    for (item = opal_list_remove_first(&opal_dstore_base.available_components);
+            NULL != item;
+            item = opal_list_remove_first(&opal_dstore_base.available_components)) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&opal_dstore_base.available_components);
+
     /* let the backfill module finalize, should it wish to do so */
     if (NULL != opal_dstore_base.backfill_module && NULL != opal_dstore_base.backfill_module->finalize) {
         opal_dstore_base.backfill_module->finalize((struct opal_dstore_base_module_t*)opal_dstore_base.backfill_module);
@@ -67,7 +77,9 @@ static int opal_dstore_base_frame_close(void)
 static int opal_dstore_base_frame_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&opal_dstore_base.handles, opal_pointer_array_t);
-    opal_pointer_array_init(&opal_dstore_base.handles, 3, INT_MAX, 1);
+    opal_pointer_array_init(&opal_dstore_base.handles, 5, INT_MAX, 1);
+
+    OBJ_CONSTRUCT(&opal_dstore_base.available_components, opal_list_t);
 
     /* Open up all available components */
     return mca_base_framework_components_open(&opal_dstore_base_framework, flags);
@@ -83,6 +95,7 @@ static void hdl_con(opal_dstore_handle_t *p)
 {
     p->name = NULL;
     p->module = NULL;
+    p->storage_component = NULL;
 }
 static void hdl_des(opal_dstore_handle_t *p)
 {
@@ -117,5 +130,9 @@ OBJ_CLASS_INSTANCE(opal_dstore_proc_data_t,
                    opal_list_item_t,
                    proc_data_construct,
                    proc_data_destruct);
+
+OBJ_CLASS_INSTANCE(opal_dstore_attr_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
 

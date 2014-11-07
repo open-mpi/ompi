@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -199,6 +201,7 @@ extern void pmix_server_peer_event_init(pmix_server_peer_t* peer);
 extern char* pmix_server_state_print(pmix_server_state_t state);
 extern pmix_server_peer_t* pmix_server_peer_lookup(int sd);
 extern void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg);
+extern int pack_segment_info(opal_identifier_t id, opal_buffer_t *reply);
 
 
 /* exposed shared variables */

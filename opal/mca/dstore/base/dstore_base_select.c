@@ -25,7 +25,7 @@ static bool selected = false;
 int 
 opal_dstore_base_select(void)
 {
-    mca_base_component_list_item_t *cli;
+    mca_base_component_list_item_t *cli, *copy_cli;
     mca_base_component_t *cmp;
     mca_base_module_t *md;
     int priority, cmp_pri, mod_pri;
@@ -70,6 +70,11 @@ opal_dstore_base_select(void)
             continue;
         }
 
+        copy_cli = OBJ_NEW(mca_base_component_list_item_t);
+        if (NULL != copy_cli) {
+            copy_cli->cli_component = cmp;
+            opal_list_append(&opal_dstore_base.available_components, (opal_list_item_t *)copy_cli);
+        }
         /* track the highest priority component that returned a NULL module - this
          * will become our storage element */
         if (NULL == md) {

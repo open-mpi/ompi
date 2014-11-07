@@ -53,6 +53,7 @@ typedef struct {
     opal_dstore_base_component_t *storage_component;
     opal_dstore_base_module_t *backfill_module;
     opal_pointer_array_t handles;   // array of open datastore handles
+    opal_list_t available_components;
 } opal_dstore_base_t;
 
 OPAL_DECLSPEC extern opal_dstore_base_t opal_dstore_base;
@@ -61,6 +62,7 @@ typedef struct {
     opal_object_t super;
     char *name;
     opal_dstore_base_module_t *module;
+    opal_dstore_base_component_t *storage_component;
 } opal_dstore_handle_t;
 OBJ_CLASS_DECLARATION(opal_dstore_handle_t);
 
@@ -79,7 +81,26 @@ typedef struct {
 } opal_dstore_proc_data_t;
 OBJ_CLASS_DECLARATION(opal_dstore_proc_data_t);
 
-OPAL_DECLSPEC int opal_dstore_base_open(const char *name, opal_list_t *attrs);
+/**
+ * Attribute structure to update tracker object
+ * (used in dstore sm component)
+ */
+typedef struct {
+    opal_list_item_t super;
+    uint32_t jobid;
+    char *connection_info;
+} opal_dstore_attr_t;
+OBJ_CLASS_DECLARATION(opal_dstore_attr_t);
+
+typedef struct {
+    int32_t seg_index;
+    uint32_t offset;
+    int32_t data_size;
+} meta_info;
+
+#define META_OFFSET 65536
+
+OPAL_DECLSPEC int opal_dstore_base_open(const char *name, char* desired_components, opal_list_t *attrs);
 OPAL_DECLSPEC int opal_dstore_base_update(int dstorehandle, opal_list_t *attrs);
 OPAL_DECLSPEC int opal_dstore_base_close(int dstorehandle);
 OPAL_DECLSPEC int opal_dstore_base_store(int dstorehandle,
@@ -92,6 +113,7 @@ OPAL_DECLSPEC int opal_dstore_base_fetch(int dstorehandle,
 OPAL_DECLSPEC int opal_dstore_base_remove_data(int dstorehandle,
                                                const opal_identifier_t *id,
                                                const char *key);
+OPAL_DECLSPEC int opal_dstore_base_get_handle(int dstorehandle, void **dhdl);
 
 /* support */
 OPAL_DECLSPEC opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_hash_table_t *jtable,
