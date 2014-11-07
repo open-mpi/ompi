@@ -354,7 +354,16 @@ $constants->{MPI_COMBINER_F90_INTEGER} = 16;
 $constants->{MPI_COMBINER_RESIZED} = 17;
 $constants->{MPI_COMBINER_HINDEXED_BLOCK} = 18;
 
-$constants->{MPI_COMM_TYPE_SHARED} = 0;
+$constants->{MPI_COMM_TYPE_HWTHREAD} = 0;
+$constants->{MPI_COMM_TYPE_CORE} = 1;
+$constants->{MPI_COMM_TYPE_L3CACHE} = 2;
+$constants->{MPI_COMM_TYPE_L2CACHE} = 3;
+$constants->{MPI_COMM_TYPE_L1CACHE} = 4;
+$constants->{MPI_COMM_TYPE_SOCKET} = 5;
+$constants->{MPI_COMM_TYPE_NUMA} = 6;
+$constants->{MPI_COMM_TYPE_NODE} = 7;
+$constants->{MPI_COMM_TYPE_SHARED} = 7;
+$constants->{MPI_COMM_TYPE_BOARD} = 8;
 
 #----------------------------------------------------------------------------
 

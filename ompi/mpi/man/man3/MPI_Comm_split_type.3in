@@ -62,10 +62,41 @@ value MPI_UNDEFINED, in which case newcomm returns MPI_COMM_NULL.
 
 .SH SPLIT TYPES
 .ft R
-
 .TP 1i
-MPI_COMM_TYPE_SHARED
+MPI_COMM_TYPE_SHARED|MPI_COMM_TYPE_NODE
 This type splits the communicator into subcommunicators, each of which can create a shared memory region.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_HWTHREAD
+This type splits the communicator into subcommunicators, each of which belongs to the same hardware thread.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_CORE
+This type splits the communicator into subcommunicators, each of which belongs to the same core/processing unit.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_L1CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L1 cache.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_L2CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L2 cache.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_L3CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L3 cache.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_SOCKET
+This type splits the communicator into subcommunicators, each of which belongs to the same socket.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_NUMA
+This type splits the communicator into subcommunicators, each of which belongs to the same NUMA-node.
+.ft R
+.TP 1i
+MPI_COMM_TYPE_BOARD
+This type splits the communicator into subcommunicators, each of which belongs to the same board.
 
 .SH NOTES
 .ft R
