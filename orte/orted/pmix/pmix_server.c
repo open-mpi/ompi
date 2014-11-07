@@ -769,10 +769,9 @@ static void pmix_server_release(int status,
     orte_process_name_t name;
     orte_proc_t *proc, *proc_peer;
     opal_buffer_t *msg, *bptr;
-    int rc, ret;
+    int rc;
     opal_pmix_scope_t scope;
     int32_t cnt;
-    opal_value_t *kp;
     opal_identifier_t id;
     size_t i;
     uint32_t np;
