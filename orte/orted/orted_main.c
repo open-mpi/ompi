@@ -391,7 +391,7 @@ int orte_daemon(int argc, char *argv[])
             res = hwloc_bitmap_alloc();
             for (i=0; NULL != cores[i]; i++) {
                 core = strtoul(cores[i], NULL, 10);
-                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core))) {
+                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core, OPAL_HWLOC_LOGICAL))) {
                     /* turn off the show help forwarding as we won't
                      * be able to cycle the event library to send
                      */
