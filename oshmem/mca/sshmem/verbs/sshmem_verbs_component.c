@@ -176,7 +176,7 @@ verbs_runtime_query(mca_base_module_t **module,
         }
 
 #if (MPAGE_ENABLE > 0)
-        if (!rc && mca_sshmem_verbs_component.has_shared_mr > 0) {
+        if (!rc && (0 != mca_sshmem_verbs_component.has_shared_mr)) {
             struct ibv_exp_reg_shared_mr_in in_smr;
 
             access_flag = IBV_ACCESS_LOCAL_WRITE |
