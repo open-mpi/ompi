@@ -56,7 +56,7 @@ ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
 ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(component_install)`;
 
 all-local:
-	$(OMPI_V_LN_SCOMP) if test -z "$(mcacomponent_LTLIBRARIES)"; then \
+	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(component_install)"; \
 	  $(LN_S) "$(component_noinst)" "$(component_install)"; \
 	fi
