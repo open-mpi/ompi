@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2012 Inria.  All rights reserved.
+ * Copyright © 2009-2014 Inria.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -283,6 +283,8 @@ hwloc_look_osf(struct hwloc_backend *backend)
 
       indexes[radid] = radid;
       nodes[radid] = obj = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, radid);
+      obj->nodeset = hwloc_bitmap_alloc();
+      hwloc_bitmap_set(obj->nodeset, radid);
       obj->cpuset = hwloc_bitmap_alloc();
       obj->memory.local_memory = rad_get_physmem(radid) * hwloc_getpagesize();
       obj->memory.page_types_len = 2;

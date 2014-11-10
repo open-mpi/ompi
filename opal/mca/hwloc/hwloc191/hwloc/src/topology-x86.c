@@ -517,6 +517,8 @@ static void summarize(hwloc_topology_t topology, struct procinfo *infos, unsigne
       }
       node = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, nodeid);
       node->cpuset = node_cpuset;
+      node->nodeset = hwloc_bitmap_alloc();
+      hwloc_bitmap_set(node->nodeset, nodeid);
       hwloc_debug_1arg_bitmap("os node %u has cpuset %s\n",
           nodeid, node_cpuset);
       hwloc_insert_object_by_cpuset(topology, node);
