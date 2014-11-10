@@ -54,7 +54,6 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
 {
     hwloc_obj_type_t obj_type = HWLOC_OBJ_CORE;
     hwloc_obj_t obj;
-    int cnt;
     
     /* hwloc isn't able to find cores on all platforms.  Example:
        PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
@@ -69,25 +68,25 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
        So first we have to see if we can find *any* cores by looking
        for the 0th core.  If we find it, then try to find the Nth
        core.  Otherwise, try to find the Nth PU. */
-    if (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
+    if (NULL == (obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0))) {
         obj_type = HWLOC_OBJ_PU;
     }
 
     if (OPAL_HWLOC_PHYSICAL == rtype) {
-        /* find the pu */
-        obj = hwloc_get_obj_by_type(topo, obj_type, 0);
-        cnt = 0;
-        opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                            "Searching for %d PHYSICAL PU", lid);
-        while (lid != cnt && NULL != obj) {
-            obj = obj->next_cousin;
-            cnt++;
-        }
-        if (lid != cnt) {
+        /* find the pu - note that we can only find physical PUs
+         * as cores do not have unique physical numbers (they are
+         * numbered within their sockets instead). So we find the
+         * specified PU, and then return the core object that contains it */
+        obj = hwloc_get_pu_obj_by_os_index(topo, lid);
+        if (NULL == obj) {
             opal_show_help("help-opal-hwloc-base.txt",
                            "cpu-not-found", true, "physical",
-                           lid, opal_hwloc_base_cpu_set);
+                           lid, (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set);
             return NULL; // failed to find it
+        }
+        /* we now need to shift upward to the core including this PU */
+        if (HWLOC_OBJ_CORE == obj_type) {
+            obj = obj->parent;
         }
         return obj;
     }
@@ -100,7 +99,7 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
     if (NULL == obj) {
         opal_show_help("help-opal-hwloc-base.txt",
                        "cpu-not-found", true, "logical",
-                       lid, opal_hwloc_base_cpu_set);
+                       lid, (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set);
         return NULL;
     }
 
@@ -158,7 +157,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
                     opal_argv_free(ranges);
                     opal_argv_free(range);
-                    return OPAL_ERROR;
+                    return OPAL_ERR_SILENT;
                 }
                 hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                 hwloc_bitmap_or(res, avail, pucpus);
@@ -173,7 +172,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         opal_argv_free(ranges);
                         opal_argv_free(range);
                         hwloc_bitmap_free(avail);
-                        return OPAL_ERROR;
+                        return OPAL_ERR_SILENT;
                     }
                     hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                     hwloc_bitmap_or(res, avail, pucpus);
@@ -1291,13 +1290,12 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
             case 1:  /* only one core, or a list of cores, specified */
                 list = opal_argv_split(range[0], ',');
                 for (j=0; NULL != list[j]; j++) {
-                    opal_output(0, "LIST %d VAL %s", j, list[j]);
                     core_id = atoi(list[j]);
                     /* find the specified available cpu */
                     if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
                         opal_argv_free(range);
                         opal_argv_free(item);
-                        return OPAL_ERROR;
+                        return OPAL_ERR_SILENT;
                     }
                     /* get the available cpus for that object */
                     pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
@@ -1315,7 +1313,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                     if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
                         opal_argv_free(range);
                         opal_argv_free(item);
-                        return OPAL_ERROR;
+                        return OPAL_ERR_SILENT;
                     }
                     /* get the available cpus for that object */
                     pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
