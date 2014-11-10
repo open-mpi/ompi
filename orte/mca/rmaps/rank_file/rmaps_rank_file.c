@@ -81,7 +81,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_rank_file_component.super.base_version;
     char *slots;
     bool initial_map=true;
-
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_resource_type_t rtype;
+#endif
+    
     /* only handle initial launch of rf job */
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -113,6 +116,19 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 
     /* convenience def */
     map = jdata->map;
+
+#if OPAL_HAVE_HWLOC
+    /* default to LOGICAL processors */
+    if (mca_rmaps_rank_file_component.physical) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:rank_file: using PHYSICAL processors");
+        rtype = OPAL_HWLOC_PHYSICAL;
+    } else {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:rank_file: using LOGICAL processors");
+        rtype = OPAL_HWLOC_LOGICAL;
+    }
+#endif
     
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -275,7 +291,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
                 bitmap = hwloc_bitmap_alloc();
                 /* parse the slot_list to find the socket and core */
-                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, bitmap))) {
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }
