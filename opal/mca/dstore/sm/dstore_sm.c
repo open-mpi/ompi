@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +30,6 @@
 
 static uint32_t cur_offset = 0;
 static int32_t cur_seg_index = -1;
-static int hdr_offset;
 
 static int init(struct opal_dstore_base_module_t *imod);
 static void finalize(struct opal_dstore_base_module_t *imod);
@@ -308,7 +309,6 @@ static int fetch(struct opal_dstore_base_module_t *imod,
 {
     int rc;
     int32_t size;
-    size_t my_offset;
     mca_dstore_sm_module_t *mod;
     void *addr, *ptr;
     opal_buffer_t *bptr, buf;
