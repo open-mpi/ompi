@@ -46,15 +46,6 @@ BEGIN_C_DECLS
 
 /** Data type compare functions */
 int orte_dt_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, opal_data_type_t type);
-int orte_dt_compare_name(orte_process_name_t *value1,
-                         orte_process_name_t *value2,
-                         opal_data_type_t type);
-int orte_dt_compare_jobid(orte_jobid_t *value1,
-                          orte_jobid_t *value2,
-                          opal_data_type_t type);
-int orte_dt_compare_vpid(orte_vpid_t *value1,
-                         orte_vpid_t *value2,
-                         opal_data_type_t type);
 int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t type);
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type);
 int orte_dt_compare_proc(orte_proc_t *value1, orte_proc_t *value2, opal_data_type_t type);
@@ -82,9 +73,6 @@ int orte_dt_compare_sig(orte_grpcomm_signature_t *value1, orte_grpcomm_signature
 
 /** Data type copy functions */
 int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_data_type_t type);
-int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal_data_type_t type);
-int orte_dt_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, opal_data_type_t type);
-int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t type);
 int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type);
 int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t type);
 int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t type);
@@ -105,14 +93,6 @@ int orte_dt_copy_sig(orte_grpcomm_signature_t **dest, orte_grpcomm_signature_t *
 /** Data type pack functions */
 int orte_dt_pack_std_cntr(opal_buffer_t *buffer, const void *src,
                             int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
-                            int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
-                      int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
-                       int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
-                      int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                      int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
@@ -146,7 +126,6 @@ int orte_dt_pack_sig(opal_buffer_t *buffer, const void *src, int32_t num_vals,
 
 /** Data type print functions */
 int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t type);
-int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, opal_data_type_t type);
 int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_type_t type);
 int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_type_t type);
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type);
@@ -157,12 +136,6 @@ int orte_dt_print_sig(char **output, char *prefix, orte_grpcomm_signature_t *src
 
 /** Data type unpack functions */
 int orte_dt_unpack_std_cntr(opal_buffer_t *buffer, void *dest,
-                        int32_t *num_vals, opal_data_type_t type);
-int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
-                        int32_t *num_vals, opal_data_type_t type);
-int orte_dt_unpack_jobid(opal_buffer_t *buffer, void *dest,
-                         int32_t *num_vals, opal_data_type_t type);
-int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type);

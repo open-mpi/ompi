@@ -1,12 +1,14 @@
-/**
- *   Copyright (c) 2013      Mellanox Technologies, Inc.
- *                           All rights reserved.
- *     $COPYRIGHT$
+/*
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
  *
- *       Additional copyrights may follow
+ * Additional copyrights may follow
  *
- *         $HEADER$
- *          */
+ * $HEADER$
+ */
 #define _GNU_SOURCE
 #include <stdio.h>
 
@@ -150,7 +152,7 @@ int mca_scoll_fca_get_fca_lib(struct oshmem_group_t *group)
                   mca_scoll_fca_component.fca_spec_file);
         return OSHMEM_ERROR;
     }
-    spec->job_id = opal_process_name_jobid(oshmem_proc_local()->super.proc_name);
+    spec->job_id = oshmem_proc_local()->super.proc_name.jobid;
     spec->rank_id = oshmem_proc_pe(oshmem_proc_local());
     spec->progress.func = mca_scoll_fca_progress_cb;
     spec->progress.arg = NULL;

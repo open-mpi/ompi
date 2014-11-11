@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -306,7 +308,7 @@ OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
 /* Get a unique 64-bit id for the process name */
 static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
     /* Throw away the top bit of the jobid for the datagram type */
-    return ((uint64_t) (opal_process_name_jobid(name) & 0x7fffffff) << 32 | opal_process_name_vpid(name));
+    return ((uint64_t) (name.jobid & 0x7fffffff) << 32 | name.vpid);
 }
 
 

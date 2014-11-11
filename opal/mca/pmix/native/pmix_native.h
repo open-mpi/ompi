@@ -65,7 +65,7 @@ typedef void (*pmix_usock_cbfunc_t)(opal_buffer_t *buf, void *cbdata);
 
 /* header for messages */
 typedef struct {
-    opal_identifier_t id;
+    opal_process_name_t id;
     uint8_t type;
     uint32_t tag;
     size_t nbytes;
@@ -134,8 +134,8 @@ typedef struct {
     opal_buffer_t *cache_remote;
     opal_buffer_t *cache_global;
     opal_event_base_t *evbase;
-    opal_identifier_t id;
-    opal_identifier_t server;
+    opal_process_name_t id;
+    opal_process_name_t server;
     char *uri;
     struct sockaddr_un address;
     int sd;

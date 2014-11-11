@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -317,7 +319,7 @@ int ompi_mtl_mxm_module_init(void)
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags)) {
-            mxlr = max(mxlr, opal_process_name_vpid(procs[proc]->super.proc_name));
+            mxlr = max(mxlr, procs[proc]->super.proc_name.vpid);
         }
     }
 

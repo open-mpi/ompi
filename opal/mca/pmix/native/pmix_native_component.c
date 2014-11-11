@@ -79,7 +79,7 @@ static int pmix_native_open(void)
 {
     /* construct the component fields */
     mca_pmix_native_component.uri = NULL;
-    mca_pmix_native_component.id = 0;
+    mca_pmix_native_component.id = opal_name_invalid;
     mca_pmix_native_component.cache_local = NULL;
     mca_pmix_native_component.cache_remote = NULL;
     mca_pmix_native_component.cache_global = NULL;
@@ -124,8 +124,8 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
         mca_pmix_native_component.uri = NULL;
     } else {
         /* if PMIx is present, then we need to use it */
+        opal_convert_string_to_process_name(&mca_pmix_native_component.id, id);
         mca_pmix_native_component.uri = strdup(t);
-        mca_pmix_native_component.id = strtoull(id, NULL, 10);
         opal_proc_set_name(&mca_pmix_native_component.id);
         *priority = 100;
     }

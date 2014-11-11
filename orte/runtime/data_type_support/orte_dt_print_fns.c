@@ -129,16 +129,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             orte_dt_quick_print(output, "ORTE_STD_CNTR", prefix, src, ORTE_STD_CNTR_T);
             break;
 
-        case ORTE_VPID:
-            orte_dt_quick_print(output, "ORTE_VPID", prefix, src, ORTE_VPID_T);
-            break;
-
-        case ORTE_JOBID:
-            asprintf(output, "%sData Type: ORTE_JOBID\tData size: %lu\tValue: %s",
-                     (NULL == prefix) ? "" : prefix, (unsigned long)sizeof(orte_jobid_t),
-                     ORTE_JOBID_PRINT(*(orte_jobid_t*)src));
-            break;
-
         case ORTE_PROC_STATE:
             orte_dt_quick_print(output, "ORTE_PROC_STATE", prefix, src, ORTE_PROC_STATE_T);
             break;
@@ -170,25 +160,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
             return ORTE_ERR_UNKNOWN_DATA_TYPE;
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * NAME
- */
-int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, opal_data_type_t type)
-{
-    /* set default result */
-    *output = NULL;
-
-    if (NULL == name) {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
-                 (NULL == prefix ? " " : prefix));
-    } else {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: %s",
-                 (NULL == prefix ? " " : prefix), ORTE_NAME_PRINT(name));
     }
 
     return ORTE_SUCCESS;

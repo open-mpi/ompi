@@ -78,8 +78,8 @@ void mca_btl_tcp2_proc_destruct(mca_btl_tcp2_proc_t* tcp_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_tcp2_component.tcp_lock);
-    opal_hash_table_remove_value_uint64(&mca_btl_tcp2_component.tcp_procs, 
-                                        orte_util_hash_name(&tcp_proc->proc_ompi->proc_name));
+    opal_proc_table_remove_value(&mca_btl_tcp2_component.tcp_procs, 
+                                 tcp_proc->proc_ompi->proc_name);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp2_component.tcp_lock);
 
     /* release resources */
@@ -102,11 +102,10 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     size_t size;
     mca_btl_tcp2_proc_t* btl_proc;
-    uint64_t hash = orte_util_hash_name(&ompi_proc->proc_name);
 
     OPAL_THREAD_LOCK(&mca_btl_tcp2_component.tcp_lock);
-    rc = opal_hash_table_get_value_uint64(&mca_btl_tcp2_component.tcp_procs, 
-                                          hash, (void**)&btl_proc);
+    rc = opal_proc_table_get_value(&mca_btl_tcp2_component.tcp_procs, 
+                                   ompi_proc->proc_name, (void**)&btl_proc);
     if(OMPI_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp2_component.tcp_lock);
         return btl_proc;
@@ -118,8 +117,8 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_create(ompi_proc_t* ompi_proc)
     btl_proc->proc_ompi = ompi_proc;
     
     /* add to hash table of all proc instance */
-    opal_hash_table_set_value_uint64(&mca_btl_tcp2_component.tcp_procs,
-                                     hash, btl_proc);
+    opal_proc_table_set_value(&mca_btl_tcp2_component.tcp_procs,
+                              ompi_proc->proc_name, btl_proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp2_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
@@ -713,8 +712,8 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_lookup(const orte_process_name_t *name)
 {
     mca_btl_tcp2_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_tcp2_component.tcp_lock);
-    opal_hash_table_get_value_uint64(&mca_btl_tcp2_component.tcp_procs, 
-                                     orte_util_hash_name(name), (void**)&proc);
+    opal_proc_table_get_value(&mca_btl_tcp2_component.tcp_procs, 
+                              name->proc_name, (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp2_component.tcp_lock);
     return proc;
 }

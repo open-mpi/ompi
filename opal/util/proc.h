@@ -22,6 +22,7 @@
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #include <arpa/inet.h>
 #endif
@@ -34,24 +35,45 @@
  * is to be copied from one structure to another, otherwise it should
  * only be used via the accessors defined below.
  */
-typedef opal_identifier_t opal_process_name_t;
+#define OPAL_JOBID_T        OPAL_UINT32
+#define OPAL_JOBID_MAX      UINT32_MAX-2
+#define OPAL_JOBID_MIN      0
+#define OPAL_JOBID_INVALID  (OPAL_JOBID_MAX + 2)
+#define OPAL_JOBID_WILDCARD (OPAL_JOBID_MAX + 1)
+
+#define OPAL_VPID_T         OPAL_UINT32
+#define OPAL_VPID_MAX       UINT32_MAX-2
+#define OPAL_VPID_MIN       0
+#define OPAL_VPID_INVALID   (OPAL_VPID_MAX + 2)
+#define OPAL_VPID_WILDCARD  (OPAL_VPID_MAX + 1)
+
+#define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
+#define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
+
+#define OPAL_NAME_WILDCARD      (&opal_name_wildcard)
+OPAL_DECLSPEC extern opal_process_name_t opal_name_wildcard;
+#define OPAL_NAME_INVALID       (&opal_name_invalid)
+OPAL_DECLSPEC extern opal_process_name_t opal_name_invalid;
+
+
+#define OPAL_NAME_ARGS(n) \
+    (unsigned long) ((NULL == n) ? (unsigned long)OPAL_JOBID_INVALID : (unsigned long)(n)->jobid), \
+    (unsigned long) ((NULL == n) ? (unsigned long)OPAL_VPID_INVALID : (unsigned long)(n)->vpid) \
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
 #define OPAL_PROCESS_NAME_NTOH(guid) opal_process_name_ntoh_intr(&(guid))
 static inline __opal_attribute_always_inline__ void
 opal_process_name_ntoh_intr(opal_process_name_t *name)
 {
-    uint32_t * w = (uint32_t *)name;
-    w[0] = ntohl(w[0]);
-    w[1] = ntohl(w[1]);
+    name->jobid = ntohl(name->jobid);
+    name->vpid = ntohl(name->vpid);
 }
 #define OPAL_PROCESS_NAME_HTON(guid) opal_process_name_hton_intr(&(guid))
 static inline __opal_attribute_always_inline__ void
 opal_process_name_hton_intr(opal_process_name_t *name)
 {
-    uint32_t * w = (uint32_t *)name;
-    w[0] = htonl(w[0]);
-    w[1] = htonl(w[1]);
+    name->jobid = htonl(name->jobid);
+    name->vpid = htonl(name->vpid);
 }
 #else
 #define OPAL_PROCESS_NAME_NTOH(guid)
@@ -80,7 +102,7 @@ typedef struct opal_process_info_t {
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
-    int32_t my_local_rank;    /**< local rank */
+    int32_t my_local_rank;              /**< local rank on this node within my job */
 #if OPAL_HAVE_HWLOC
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
 #endif
@@ -99,14 +121,14 @@ OPAL_DECLSPEC extern void opal_proc_set_name(opal_process_name_t *name);
 typedef int (*opal_compare_proc_fct_t)(const opal_process_name_t, const opal_process_name_t);
 OPAL_DECLSPEC extern opal_compare_proc_fct_t opal_compare_proc;
 
+/* Provide print functions that will be overwritten by the RTE layer */
 OPAL_DECLSPEC extern char* (*opal_process_name_print)(const opal_process_name_t);
-OPAL_DECLSPEC extern uint32_t (*opal_process_name_vpid)(const opal_process_name_t);
-OPAL_DECLSPEC extern uint32_t (*opal_process_name_jobid)(const opal_process_name_t);
+OPAL_DECLSPEC extern int (*opal_convert_string_to_process_name)(opal_process_name_t *name,
+                                                                const char* name_string);
+OPAL_DECLSPEC extern char* (*opal_vpid_print)(const opal_vpid_t);
+OPAL_DECLSPEC extern char* (*opal_jobid_print)(const opal_jobid_t);
 
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
-#define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
-#define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
-#define OPAL_NAME_INVALID  0xffffffffffffffff
 
 /* provide a safe way to retrieve the hostname of a proc, including
  * our own. This is to be used by all BTLs so we don't retrieve hostnames

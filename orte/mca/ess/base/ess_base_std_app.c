@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -162,7 +164,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.job_session_dir);
         if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     ORTE_PROC_MY_NAME,
                                                      &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);
@@ -175,7 +177,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.proc_session_dir);
         if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     ORTE_PROC_MY_NAME,
                                                      &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);

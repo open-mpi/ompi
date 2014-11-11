@@ -242,41 +242,6 @@ int orte_dt_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    tmp = ORTE_NAME;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_name,
-                                                     orte_dt_unpack_name,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_name,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_name,
-                                                     (opal_dss_print_fn_t)orte_dt_print_name,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_NAME", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_VPID;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_vpid,
-                                                     orte_dt_unpack_vpid,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_vpid,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_vpid,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_VPID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_JOBID;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_jobid,
-                                                     orte_dt_unpack_jobid,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_jobid,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_jobid,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_JOBID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
     tmp = ORTE_JOB;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_job,
@@ -502,7 +467,6 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
     char *hostname;
-    int rc;
     opal_list_t myvals;
     opal_value_t *kv;
 
@@ -522,10 +486,9 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 
     /* if we are an app, get the data from the modex db */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                (opal_identifier_t*)proc,
-                                                OPAL_DSTORE_HOSTNAME,
-                                                &myvals))) {
+    if (ORTE_SUCCESS != opal_dstore.fetch(opal_dstore_internal, proc,
+                                          OPAL_DSTORE_HOSTNAME,
+                                          &myvals)) {
         OPAL_LIST_DESTRUCT(&myvals);
         return NULL;
     }
@@ -557,8 +520,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 
     /* if we are an app, get the value from the modex db */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                (opal_identifier_t*)proc,
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, proc,
                                                 OPAL_DSTORE_NODERANK,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
