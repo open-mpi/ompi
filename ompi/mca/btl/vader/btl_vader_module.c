@@ -612,7 +612,10 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
             knem_cr.iovec_array = (uintptr_t) &knem_iov;
             knem_cr.iovec_nr = 1;
-            knem_cr.protection = PROT_READ;
+            /* NTH: there is no way to register a region for both read and write and get one cookie.
+             * As a workaround prepare_src should register for both. This is not in master as the BTL
+             * interface is changing to fix these kinds of issues. */
+            knem_cr.protection = PROT_WRITE | PROT_READ;
             /* Vader will explicitly destroy this cookie */
             knem_cr.flags = 0;
             if (OPAL_UNLIKELY(ioctl(mca_btl_vader.knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
