@@ -1737,8 +1737,6 @@ static int create_app(int argc, char* argv[],
         if (NULL != env_set_flag) {
             orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
             return ORTE_ERR_FATAL;
-        } else {
-            orte_show_help("help-orterun.txt", "orterun:deprecated-env-set", false);
         }
         j = opal_cmd_line_get_ninsts(&cmd_line, "x");
         for (i = 0; i < j; ++i) {
