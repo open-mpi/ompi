@@ -260,7 +260,7 @@ static int s2_init(void)
     for (i=0; i < s2_nlranks; i++) {
         if (s2_rank == s2_lranks[i]) {
             s2_lrank = i;
-            s2_nrank = my_node;
+            s2_nrank = i;
             break;
         }
     }
