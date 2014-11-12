@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -282,7 +284,7 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+                                                         ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

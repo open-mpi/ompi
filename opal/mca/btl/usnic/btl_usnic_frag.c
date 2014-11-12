@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@ common_send_seg_helper(
     bseg = &seg->ss_base;
 
     bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)bseg->us_list.ptr;
-    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_rte_name;
+    bseg->us_btl_header->sender = mca_btl_usnic_component.my_name;
 
     /* build verbs work request descriptor */
     seg->ss_send_desc.wr_id = (unsigned long) seg;

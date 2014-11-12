@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"
+#include "opal/util/proc.h"
 
 #ifdef HAVE_STRING_H
 #    if !defined(STDC_HEADERS) && HAVE_MEMORY_H
@@ -321,6 +324,15 @@ int opal_dss_pack_timeval(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_time(opal_buffer_t *buffer, const void *src,
                        int32_t num_vals, opal_data_type_t type);
 
+int opal_dss_pack_name(opal_buffer_t *buffer, const void *src,
+                      int32_t num_vals, opal_data_type_t type);
+
+int opal_dss_pack_jobid(opal_buffer_t *buffer, const void *src,
+                       int32_t num_vals, opal_data_type_t type);
+
+int opal_dss_pack_vpid(opal_buffer_t *buffer, const void *src,
+                      int32_t num_vals, opal_data_type_t type);
+
 /*
  * Internal unpack functions
  */
@@ -381,6 +393,16 @@ int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
 int opal_dss_unpack_time(opal_buffer_t *buffer, void *dest,
                          int32_t *num_vals, opal_data_type_t type);
 
+int opal_dss_unpack_name(opal_buffer_t *buffer, void *dest,
+                        int32_t *num_vals, opal_data_type_t type);
+
+int opal_dss_unpack_jobid(opal_buffer_t *buffer, void *dest,
+                         int32_t *num_vals, opal_data_type_t type);
+
+int opal_dss_unpack_vpid(opal_buffer_t *buffer, void *dest,
+                        int32_t *num_vals, opal_data_type_t type);
+
+
 /*
  * Internal copy functions
  */
@@ -405,6 +427,13 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
 
 int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
                                   opal_data_type_t type);
+
+int opal_dss_copy_name(opal_process_name_t **dest, opal_process_name_t *src, opal_data_type_t type);
+
+int opal_dss_copy_jobid(opal_jobid_t **dest, opal_jobid_t *src, opal_data_type_t type);
+
+int opal_dss_copy_vpid(opal_vpid_t **dest, opal_vpid_t *src, opal_data_type_t type);
+
 
 /*
  * Internal compare functions
@@ -457,6 +486,18 @@ int opal_dss_compare_timeval(struct timeval *value1, struct timeval *value2, opa
 
 int opal_dss_compare_time(time_t *value1, time_t *value2, opal_data_type_t type);
 
+int opal_dss_compare_name(opal_process_name_t *value1,
+                          opal_process_name_t *value2,
+                          opal_data_type_t type);
+
+int opal_dss_compare_vpid(opal_vpid_t *value1,
+                          opal_vpid_t *value2,
+                          opal_data_type_t type);
+
+int opal_dss_compare_jobid(opal_jobid_t *value1,
+                           opal_jobid_t *value2,
+                           opal_data_type_t type);
+
 /*
  * Internal print functions
  */
@@ -493,6 +534,9 @@ int opal_dss_print_float(char **output, char *prefix, float *src, opal_data_type
 int opal_dss_print_double(char **output, char *prefix, double *src, opal_data_type_t type);
 int opal_dss_print_timeval(char **output, char *prefix, struct timeval *src, opal_data_type_t type);
 int opal_dss_print_time(char **output, char *prefix, time_t *src, opal_data_type_t type);
+int opal_dss_print_name(char **output, char *prefix, opal_process_name_t *name, opal_data_type_t type);
+int opal_dss_print_jobid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
+int opal_dss_print_vpid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
 
 
 /*

@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #endif
 #include "opal/dss/dss_types.h"
+#include "opal/util/proc.h"
 
 /**
  * Supported datatypes for messaging and storage operations.
@@ -58,42 +59,24 @@ typedef uint32_t orte_app_idx_t;
 #define ORTE_APP_IDX        OPAL_UINT32
 #define ORTE_APP_IDX_MAX    UINT32_MAX
 
-/*
- * general typedefs & structures
- */
-/** Set the allowed range for ids in each space
- *
- * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
- * uses of it if these types change to be larger than (long)!  The
- * HTON and NTOH macros below must be updated, as well as the MIN /
- * MAX macros below and the datatype packing representations in
- * orte/mca/plm/base/plm_private.h
- *
- * NOTE: Be sure to keep the jobid and vpid types the same size! Due
- * to padding rules, it won't save anything to have one larger than
- * the other, and it will cause problems in the communication subsystems
+/* general typedefs & structures */
+
+/* Equate the ORTE jobid/vpid types and their associated values/structs
+ * to their OPAL equivalents
  */
 
-typedef uint32_t orte_jobid_t;
-#define ORTE_JOBID_T        OPAL_UINT32
-#define ORTE_JOBID_MAX      UINT32_MAX-2
-#define ORTE_JOBID_MIN      0
-typedef uint32_t orte_vpid_t;
-#define ORTE_VPID_T         OPAL_UINT32
-#define ORTE_VPID_MAX       UINT32_MAX-2
-#define ORTE_VPID_MIN       0
+typedef opal_jobid_t orte_jobid_t;
+#define ORTE_JOBID_T        OPAL_JOBID_T
+#define ORTE_JOBID_MAX      OPAL_JOBID_MAX
+#define ORTE_JOBID_MIN      OPAL_JOBID_MIN
+typedef opal_vpid_t orte_vpid_t;
+#define ORTE_VPID_T         OPAL_VPID_T
+#define ORTE_VPID_MAX       OPAL_VPID_MAX
+#define ORTE_VPID_MIN       OPAL_VPID_MIX
 
-#define ORTE_PROCESS_NAME_HTON(n)       \
-do {                                    \
-    n.jobid = htonl(n.jobid);           \
-    n.vpid = htonl(n.vpid);             \
-} while (0)
+#define ORTE_PROCESS_NAME_HTON(n) OPAL_PROCESS_NAME_HTON(n)
 
-#define ORTE_PROCESS_NAME_NTOH(n)       \
-do {                                    \
-    n.jobid = ntohl(n.jobid);           \
-    n.vpid = ntohl(n.vpid);             \
-} while (0)
+#define ORTE_PROCESS_NAME_NTOH(n) OPAL_PROCESS_NAME_NTOH(n)
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? (unsigned long)ORTE_JOBID_INVALID : (unsigned long)(n)->jobid), \
@@ -102,25 +85,21 @@ do {                                    \
 /*
  * define invalid values
  */
-#define ORTE_JOBID_INVALID          (ORTE_JOBID_MAX + 2)
-#define ORTE_VPID_INVALID           (ORTE_VPID_MAX + 2)
+#define ORTE_JOBID_INVALID          OPAL_JOBID_INVALID
+#define ORTE_VPID_INVALID           OPAL_VPID_INVALID
 #define ORTE_LOCAL_JOBID_INVALID    (ORTE_JOBID_INVALID & 0x0000FFFF)
 
 /*
  * define wildcard values
  */
-#define ORTE_JOBID_WILDCARD         (ORTE_JOBID_MAX + 1)
-#define ORTE_VPID_WILDCARD          (ORTE_VPID_MAX + 1)
+#define ORTE_JOBID_WILDCARD         OPAL_JOBID_WILDCARD
+#define ORTE_VPID_WILDCARD          OPAL_VPID_WILDCARD
 #define ORTE_LOCAL_JOBID_WILDCARD   (ORTE_JOBID_WILDCARD & 0x0000FFFF)
 
 /*
  * define the process name structure
  */
-struct orte_process_name_t {
-    orte_jobid_t jobid;     /**< Job number */
-    orte_vpid_t vpid;       /**< Process id - equivalent to rank */
-};
-typedef struct orte_process_name_t orte_process_name_t;
+typedef opal_process_name_t orte_process_name_t;
 
 
 /**
@@ -169,41 +148,41 @@ typedef struct {
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 
 
+/* Name-related types - equate to OPAL equivalents*/
+#define    ORTE_NAME                OPAL_NAME   /**< an orte_process_name_t */
+#define    ORTE_VPID                OPAL_VPID   /**< a vpid */
+#define    ORTE_JOBID               OPAL_JOBID  /**< a jobid */
+
 /* General ORTE types - support handled within DSS */
 #define    ORTE_STD_CNTR            (OPAL_DSS_ID_DYNAMIC + 1)  /**< standard counter type */
-/* PLM types */
-    /* Name-related types */
-#define    ORTE_NAME                (OPAL_DSS_ID_DYNAMIC + 2)  /**< an orte_process_name_t */
-#define    ORTE_VPID                (OPAL_DSS_ID_DYNAMIC + 3)  /**< a vpid */
-#define    ORTE_JOBID               (OPAL_DSS_ID_DYNAMIC + 4)  /**< a jobid */
     /* State-related types */
-#define    ORTE_NODE_STATE          (OPAL_DSS_ID_DYNAMIC + 6)  /**< node status flag */
-#define    ORTE_PROC_STATE          (OPAL_DSS_ID_DYNAMIC + 7)  /**< process/resource status */
-#define    ORTE_JOB_STATE           (OPAL_DSS_ID_DYNAMIC + 8)  /**< job status flag */
-#define    ORTE_EXIT_CODE           (OPAL_DSS_ID_DYNAMIC + 9)  /**< process exit code */
+#define    ORTE_NODE_STATE          (OPAL_DSS_ID_DYNAMIC + 2)  /**< node status flag */
+#define    ORTE_PROC_STATE          (OPAL_DSS_ID_DYNAMIC + 3)  /**< process/resource status */
+#define    ORTE_JOB_STATE           (OPAL_DSS_ID_DYNAMIC + 4)  /**< job status flag */
+#define    ORTE_EXIT_CODE           (OPAL_DSS_ID_DYNAMIC + 5)  /**< process exit code */
     /* Data-passing types */
-#define    ORTE_VALUE               (OPAL_DSS_ID_DYNAMIC + 10)  /**< registry return value */
+#define    ORTE_VALUE               (OPAL_DSS_ID_DYNAMIC + 6)  /**< registry return value */
     /* Resource types */
-#define    ORTE_APP_CONTEXT         (OPAL_DSS_ID_DYNAMIC + 11) /**< argv and enviro arrays */
-#define    ORTE_NODE_DESC           (OPAL_DSS_ID_DYNAMIC + 12) /**< describes capabilities of nodes */
-#define    ORTE_SLOT_DESC           (OPAL_DSS_ID_DYNAMIC + 13) /**< describes slot allocations/reservations */
-#define    ORTE_JOB                 (OPAL_DSS_ID_DYNAMIC + 14) /**< job information */
-#define    ORTE_NODE                (OPAL_DSS_ID_DYNAMIC + 15) /**< node information */
-#define    ORTE_PROC                (OPAL_DSS_ID_DYNAMIC + 16) /**< process information */
-#define    ORTE_JOB_MAP             (OPAL_DSS_ID_DYNAMIC + 17) /**< map of process locations */
+#define    ORTE_APP_CONTEXT         (OPAL_DSS_ID_DYNAMIC + 7) /**< argv and enviro arrays */
+#define    ORTE_NODE_DESC           (OPAL_DSS_ID_DYNAMIC + 8) /**< describes capabilities of nodes */
+#define    ORTE_SLOT_DESC           (OPAL_DSS_ID_DYNAMIC + 9) /**< describes slot allocations/reservations */
+#define    ORTE_JOB                 (OPAL_DSS_ID_DYNAMIC + 10) /**< job information */
+#define    ORTE_NODE                (OPAL_DSS_ID_DYNAMIC + 11) /**< node information */
+#define    ORTE_PROC                (OPAL_DSS_ID_DYNAMIC + 12) /**< process information */
+#define    ORTE_JOB_MAP             (OPAL_DSS_ID_DYNAMIC + 13) /**< map of process locations */
 
 /* RML types */
-#define    ORTE_RML_TAG             (OPAL_DSS_ID_DYNAMIC + 18) /**< tag for sending/receiving messages */
+#define    ORTE_RML_TAG             (OPAL_DSS_ID_DYNAMIC + 14) /**< tag for sending/receiving messages */
 /* DAEMON command type */
-#define    ORTE_DAEMON_CMD          (OPAL_DSS_ID_DYNAMIC + 19) /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (OPAL_DSS_ID_DYNAMIC + 15) /**< command flag for communicating with the daemon */
 
 /* IOF types */
-#define    ORTE_IOF_TAG             (OPAL_DSS_ID_DYNAMIC + 20)
+#define    ORTE_IOF_TAG             (OPAL_DSS_ID_DYNAMIC + 16)
 
 /* Attribute */
-#define    ORTE_ATTRIBUTE           (OPAL_DSS_ID_DYNAMIC + 21)
+#define    ORTE_ATTRIBUTE           (OPAL_DSS_ID_DYNAMIC + 17)
 /* Grpcomm signature */
-#define    ORTE_SIGNATURE           (OPAL_DSS_ID_DYNAMIC + 22)
+#define    ORTE_SIGNATURE           (OPAL_DSS_ID_DYNAMIC + 18)
 
 /* provide a boundary for others to use */
 #define    ORTE_DSS_ID_DYNAMIC      (OPAL_DSS_ID_DYNAMIC + 50)

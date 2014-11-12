@@ -564,7 +564,6 @@ static int setup_child(orte_proc_t *child,
     char *param, *value, ***env;
     int rc;
     int32_t nrestarts=0, *nrptr;
-    opal_identifier_t id;
 
     /* for convenience */
     env = &app->env;
@@ -652,8 +651,7 @@ static int setup_child(orte_proc_t *child,
      * name itself. Although in most cases the ID and the
      * process name are the same, it isn't necessarily
      * required */
-    memcpy(&id, &child->name, sizeof(id));
-    asprintf(&value, "%"PRIu64"", id);
+    orte_util_convert_process_name_to_string(&value, &child->name);
     opal_setenv("PMIX_ID", value, true, env);
     free(value);
 

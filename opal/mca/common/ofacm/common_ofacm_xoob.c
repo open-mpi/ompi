@@ -353,7 +353,7 @@ static int xoob_context_init(opal_common_ofacm_xoob_local_connection_context_t *
         (opal_common_ofacm_base_module_t *)xcpc;
     
     /* Set IB address for this context */
-    xcontext->addr = xoob_ib_address_add_new(xcpc, rem_lid, subnet_id, opal_process_name_jobid(proc->proc_opal->proc_name));
+    xcontext->addr = xoob_ib_address_add_new(xcpc, rem_lid, subnet_id, proc->proc_opal->proc_name.jobid);
     if (NULL == xcontext->addr) {
         OFACM_ERROR(("Failed to allocate or found xoob ib address"));
         return OPAL_ERROR;
@@ -1090,8 +1090,8 @@ static opal_common_ofacm_xoob_local_connection_context_t* xoob_find_context
         &opal_common_ofacm_xoob.all_procs;
 
     OFACM_VERBOSE(("Searching for ep and proc with follow parameters:"
-                "jobid %d, vpid %d, sid %d, lid %d, cpc type %d",
-                opal_process_name_jobid(*process_name), opal_process_name_vpid(*process_name), subnet_id, lid, cpc_type));
+                "jobid %" PRIu32 ", vpid %" PRIu32 ", sid %d, lid %d, cpc type %d",
+                process_name->jobid, process_name->vpid, subnet_id, lid, cpc_type));
     /* find ibproc */
     for (context_proc  = (opal_common_ofacm_base_proc_t*)opal_list_get_first(all_procs);
          context_proc != (opal_common_ofacm_base_proc_t*)opal_list_get_end(all_procs);

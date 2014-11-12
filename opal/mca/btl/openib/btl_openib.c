@@ -1077,7 +1077,7 @@ int mca_btl_openib_add_procs(
             rc = mca_btl_openib_ib_address_add_new(
                     ib_proc->proc_ports[j].pm_port_info.lid,
                     ib_proc->proc_ports[j].pm_port_info.subnet_id,
-                    opal_process_name_jobid(proc->proc_name), endpoint);
+                    proc->proc_name.jobid, endpoint);
             if (OPAL_SUCCESS != rc ) {
                 OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
                 return OPAL_ERROR;

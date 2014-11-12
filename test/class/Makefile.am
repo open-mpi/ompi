@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,6 +29,7 @@ endif
 check_PROGRAMS = \
 	$(REQUIRES_OMPI) opal_bitmap \
 	opal_hash_table \
+	opal_proc_table \
 	opal_tree \
 	opal_list \
 	opal_value_array \
@@ -60,6 +63,12 @@ opal_hash_table_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
+opal_proc_table_SOURCES = opal_proc_table.c
+opal_proc_table_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_proc_table_DEPENDENCIES = $(opal_proc_table_LDADD)
+
 opal_pointer_array_SOURCES = opal_pointer_array.c
 opal_pointer_array_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
@@ -79,4 +88,4 @@ ompi_rb_tree_LDADD = \
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
 clean-local:
-	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt
+	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt opal_proc_table_test_out.txt

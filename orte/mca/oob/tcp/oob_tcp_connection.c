@@ -359,7 +359,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+                                                         ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

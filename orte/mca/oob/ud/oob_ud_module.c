@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -135,9 +137,8 @@ int mca_oob_ud_set_addr (const orte_process_name_t *name, const char *uri)
         peer->needs_notification = true;
     }
 
-    opal_hash_table_set_value_uint64(&mca_oob_ud_component.ud_peers,
-                                     orte_util_hash_name(name),
-                                     (void *)peer);
+    opal_proc_table_set_value(&mca_oob_ud_component.ud_peers,
+                              name, (void *)peer);
 
     OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
 
@@ -393,7 +394,7 @@ static int mca_oob_ud_module_fini (void)
     mca_oob_ud_peer_t *peer;
     opal_list_item_t *item;
     uint64_t key;
-    void *node;
+    void *node1, *node2;
     int rc;
 
     OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:fini entering",
@@ -418,19 +419,19 @@ static int mca_oob_ud_module_fini (void)
 
     OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_match_lock);
 
-    rc = opal_hash_table_get_first_key_uint64 (&mca_oob_ud_component.ud_peers, &key,
-                                               (void **) &peer, &node);
+    rc = opal_proc_table_get_first_key (&mca_oob_ud_component.ud_peers, &key,
+                                        (void **) &peer, &node1, &node2);
     if (OPAL_SUCCESS == rc) {
         do {
             if (NULL != peer) {
                 mca_oob_ud_peer_release (peer);
             }
-            rc = opal_hash_table_get_next_key_uint64 (&mca_oob_ud_component.ud_peers, &key,
-                                                      (void **) &peer, node, &node);
+            rc = opal_proc_table_get_next_key (&mca_oob_ud_component.ud_peers, &key,
+                                               (void **) &peer, node1, &node1, node2, &node2);
         } while (OPAL_SUCCESS == rc);
     }
 
-    opal_hash_table_remove_all (&mca_oob_ud_component.ud_peers);
+    opal_proc_table_remove_all (&mca_oob_ud_component.ud_peers);
 
     for (item = opal_list_get_first (&mca_oob_ud_component.ud_devices);
          item != opal_list_get_end (&mca_oob_ud_component.ud_devices);

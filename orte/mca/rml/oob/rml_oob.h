@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,7 +86,7 @@ void orte_rml_oob_set_uri(const char*);
 
 int orte_rml_oob_add_exception(orte_rml_exception_callback_t cbfunc);
 int orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc);
-void orte_rml_oob_exception_callback(const orte_process_name_t *peer,
+void orte_rml_oob_exception_callback(orte_process_name_t *peer,
                                     orte_rml_exception_t exception);
 
 

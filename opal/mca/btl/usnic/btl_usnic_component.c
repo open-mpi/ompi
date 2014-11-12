@@ -16,6 +16,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -458,10 +460,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
      ************************************************************************/
 
     /* initialization */
-    mca_btl_usnic_component.my_hashed_rte_name =
+    mca_btl_usnic_component.my_name =
         opal_proc_local_get()->proc_name;
-    MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
-                   __func__, mca_btl_usnic_component.my_hashed_rte_name);
+    MSGDEBUG1_OUT("%s: my_name=%s", 
+                   __func__, OPAL_NAME_PRINT(mca_btl_usnic_component.my_name));
 
     opal_srand(&opal_btl_usnic_rand_buff, ((uint32_t) getpid()));
 
@@ -732,12 +734,12 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
 
         /* Make a hash table of senders */
-        OBJ_CONSTRUCT(&module->senders, opal_hash_table_t);
+        OBJ_CONSTRUCT(&module->senders, opal_proc_table_t);
         /* JMS This is a fixed size -- BAD!  But since hash table
            doesn't grow dynamically, I don't know what size to put
            here.  I think the long-term solution is to write a better
            hash table... :-( */
-        opal_hash_table_init(&module->senders, 4096);
+        opal_proc_table_init(&module->senders, 16, 4096);
 
         /* Let this module advance to the next round! */
         btls[i++] = &(module->super);
@@ -1440,8 +1442,8 @@ static void dump_endpoint(opal_btl_usnic_endpoint_t *endpoint)
 
     opal_output(0, "    endpoint %p, %s job=%u, rank=%u rts=%s s_credits=%"PRIi32"\n",
                 (void *)endpoint, ep_addr_str,
-                opal_process_name_jobid(endpoint->endpoint_proc->proc_opal->proc_name),
-                opal_process_name_vpid(endpoint->endpoint_proc->proc_opal->proc_name),
+                endpoint->endpoint_proc->proc_opal->proc_name.jobid,
+                endpoint->endpoint_proc->proc_opal->proc_name.vpid,
                 (endpoint->endpoint_ready_to_send ? "true" : "false"),
                 endpoint->endpoint_send_credits);
     opal_output(0, "      endpoint->frag_send_queue:\n");
@@ -1553,8 +1555,8 @@ void opal_btl_usnic_component_debug(void)
     opal_list_item_t *item;
     const opal_proc_t *proc = opal_proc_local_get();
 
-    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %u ***\n",
-                opal_process_name_vpid(proc->proc_name));
+    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %" PRIu32 " ***\n",
+                proc->proc_name.vpid);
     for (i = 0; i < (int)mca_btl_usnic_component.num_modules; ++i) {
         module = mca_btl_usnic_component.usnic_active_modules[i];
 

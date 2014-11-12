@@ -3,6 +3,8 @@
  * Copyright (c) 2013-2014 Intel Inc. All rights reserved
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -116,7 +118,7 @@ int opal_dstore_base_close(int dstorehandle)
 
 
 int opal_dstore_base_store(int dstorehandle,
-                           const opal_identifier_t *id,
+                           const opal_process_name_t *id,
                            opal_value_t *kv)
 {
     opal_dstore_handle_t *hdl;
@@ -137,7 +139,7 @@ int opal_dstore_base_store(int dstorehandle,
 }
 
 int opal_dstore_base_fetch(int dstorehandle,
-                           const opal_identifier_t *id,
+                           const opal_process_name_t *id,
                            const char *key,
                            opal_list_t *kvs)
 {
@@ -170,7 +172,7 @@ int opal_dstore_base_fetch(int dstorehandle,
 }
 
 int opal_dstore_base_remove_data(int dstorehandle,
-                                 const opal_identifier_t *id,
+                                 const opal_process_name_t *id,
                                  const char *key)
 {
     opal_dstore_handle_t *hdl;
@@ -223,13 +225,14 @@ opal_value_t* opal_dstore_base_lookup_keyval(opal_dstore_proc_data_t *proc_data,
 
 /**
  * Find proc_data_t container associated with given
- * opal_identifier_t.
+ * opal_process_name_t.
  */
-opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_hash_table_t *jtable, opal_identifier_t id)
+opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_proc_table_t *ptable,
+                                                      opal_process_name_t id)
 {
     opal_dstore_proc_data_t *proc_data = NULL;
 
-    opal_hash_table_get_value_uint64(jtable, id, (void**)&proc_data);
+    opal_proc_table_get_value(ptable, id, (void**)&proc_data);
     if (NULL == proc_data) {
         /* The proc clearly exists, so create a data structure for it */
         proc_data = OBJ_NEW(opal_dstore_proc_data_t);
@@ -237,7 +240,7 @@ opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_hash_table_t *jtable,
             opal_output(0, "dstore:hash:lookup_opal_proc: unable to allocate proc_data_t\n");
             return NULL;
         }
-        opal_hash_table_set_value_uint64(jtable, id, proc_data);
+        opal_proc_table_set_value(ptable, id, proc_data);
     }
     
     return proc_data;

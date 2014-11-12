@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -169,7 +172,7 @@ struct mca_oob_ud_component_t {
 
     opal_mutex_t      ud_match_lock;
 
-    opal_hash_table_t ud_peers;
+    opal_proc_table_t ud_peers;
 };
 
 typedef struct mca_oob_ud_component_t mca_oob_ud_component_t;

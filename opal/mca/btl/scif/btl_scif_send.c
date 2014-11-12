@@ -118,7 +118,7 @@ static int mca_btl_scif_send_frag (struct mca_btl_base_endpoint_t *endpoint,
     unsigned char * restrict dst;
 
     BTL_VERBOSE(("btl/scif sending descriptor %p from %d -> %d. length = %" PRIu64, (void *) frag,
-                 opal_process_name_vpid(OPAL_PROC_MY_NAME), opal_process_name_vpid(endpoint->peer_proc->proc_name), frag->segments[0].base.seg_len));
+                 OPAL_PROC_MY_NAME.vpid, endpoint->peer_proc->proc_name.vpid, frag->segments[0].base.seg_len));
 
     if (OPAL_LIKELY(OPAL_SUCCESS == mca_btl_scif_send_get_buffer (endpoint, size, &dst))) {
         unsigned char * restrict data = (unsigned char * restrict) frag->segments[0].base.seg_addr.pval;

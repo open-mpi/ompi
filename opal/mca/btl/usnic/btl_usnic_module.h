@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,7 +137,7 @@ typedef struct opal_btl_usnic_module_t {
     size_t max_tiny_payload;    /* threshold for using inline send */
 
     /** Hash table to keep track of senders */
-    opal_hash_table_t senders;
+    opal_proc_table_t senders;
 
     /** local address information */
     struct opal_btl_usnic_addr_t local_addr;

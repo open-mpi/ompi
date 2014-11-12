@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,8 +120,8 @@ typedef enum {
  */
 typedef struct {
 
-    /* Hashed RTE process name of the sender */
-    uint64_t sender;
+    /* process name of the sender */
+    opal_process_name_t sender;
 
     /* Sliding window sequence number (echoed back in an ACK). */
     opal_btl_usnic_seq_t pkt_seq;

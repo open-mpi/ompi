@@ -12,6 +12,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -136,7 +138,7 @@ typedef struct opal_btl_usnic_component_t {
 
     /* Cached hashed version of my RTE proc name (to stuff in
        protocol headers) */
-    uint64_t my_hashed_rte_name;
+    opal_process_name_t my_name;
 
     /** array of possible BTLs (>= num_modules elements) */
     struct opal_btl_usnic_module_t* usnic_all_modules;

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +19,7 @@
 
 #include "opal_config.h"
 #include "opal/types.h"
+#include "opal/util/proc.h"
 
 #include "opal/mca/mca.h"
 #include "opal/dss/dss_types.h"
@@ -74,7 +77,7 @@ typedef void (*opal_sec_base_module_finalize_fn_t)(void);
  * code indicating why it failed
  */
 typedef int (*opal_sec_base_module_get_my_cred_fn_t)(int dstorehandle,
-                                                     opal_identifier_t *my_id,
+                                                     opal_process_name_t *my_id,
                                                      opal_sec_cred_t **cred);
 
 /*

@@ -6,6 +6,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,11 +35,6 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_cray.h"
 
-typedef struct {
-    uint32_t jid;
-    uint32_t vid;
-} pmix_pname_t;
-
 static int cray_init(void);
 static int cray_fini(void);
 static bool cray_initialized(void);
@@ -53,7 +50,7 @@ static int cray_job_connect(const char jobId[]);
 static int cray_job_disconnect(const char jobId[]);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
 static int cray_fence(opal_process_name_t *procs, size_t nprocs);
-static int cray_get(const opal_identifier_t *id,
+static int cray_get(const opal_process_name_t *id,
                     const char *key,
                     opal_value_t **kv);
 static int cray_publish(const char service_name[],
@@ -115,7 +112,7 @@ static int pmix_appnum = 0;
 static int pmix_usize = 0;
 static char *pmix_kvs_name = NULL;
 static int *pmix_lranks = NULL;
-static pmix_pname_t pmix_pname;
+static opal_process_name_t pmix_pname;
 static uint32_t pmix_jobid = -1;
 
 
@@ -199,12 +196,12 @@ static int cray_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    pmix_pname.jid = pmix_jobid;
-    pmix_pname.vid = pmix_rank;
-    opal_proc_set_name((opal_process_name_t*)&pmix_pname);
+    pmix_pname.jobid = pmix_jobid;
+    pmix_pname.vpid = pmix_rank;
+    opal_proc_set_name(&pmix_pname);
     opal_output_verbose(10, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray: assigned tmp name %d %d pmix_kvs_name %s",
-                        OPAL_NAME_PRINT(*(opal_process_name_t*)&pmix_pname),pmix_pname.jid,pmix_pname.vid,pmix_kvs_name);
+                        OPAL_NAME_PRINT(pmix_pname),pmix_pname.jobid,pmix_pname.vpid,pmix_kvs_name);
 
     pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
@@ -432,8 +429,8 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < pmix_nlranks; i++) {
-            pmix_pname.vid = pmix_lranks[i];
-            rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&pmix_pname, OPAL_DSTORE_CPUSET,
+            pmix_pname.vpid = pmix_lranks[i];
+            rc = opal_pmix_base_cache_keys_locally(&pmix_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
@@ -461,14 +458,14 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s2 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&pmix_pname),
+                                 OPAL_NAME_PRINT(pmix_pname),
                                  opal_hwloc_base_print_locality(locality)));
 
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&pmix_pname, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, &pmix_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -511,7 +508,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     return OPAL_SUCCESS;
 }
 
-static int cray_get(const opal_identifier_t *id, const char *key, opal_value_t **kv)
+static int cray_get(const opal_process_name_t *id, const char *key, opal_value_t **kv)
 {
     int rc;
     rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
