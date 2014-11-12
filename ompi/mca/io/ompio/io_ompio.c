@@ -986,7 +986,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                     fh->f_procs_per_group = fh->f_procs_per_group%root_offset;
                 }
             }
-            else if ((size_t)mca_io_ompio_bytes_per_agg > 
+            else if ((size_t)mca_io_ompio_bytes_per_agg >= 
                      bytes_per_proc * fh->f_procs_per_group) {
                 i = ceil ((float)mca_io_ompio_bytes_per_agg/
                           (bytes_per_proc * fh->f_procs_per_group));
@@ -1146,7 +1146,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                 fh->f_procs_per_group = fh->f_procs_per_group%root_offset;
             }
         }
-        else if ((size_t)mca_io_ompio_bytes_per_agg > 
+        else if ((size_t)mca_io_ompio_bytes_per_agg >= 
                  max_bytes_per_proc * fh->f_procs_per_group) {
             i = ceil ((float)mca_io_ompio_bytes_per_agg/
                       (max_bytes_per_proc * fh->f_procs_per_group));
