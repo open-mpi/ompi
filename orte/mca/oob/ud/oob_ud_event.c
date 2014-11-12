@@ -2,15 +2,17 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
 
-#include "oob_ud.h"
+#include "oob_ud_component.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
@@ -46,11 +48,12 @@ static inline opal_list_item_t *mca_oob_ud_list_get_next (opal_list_t *list, opa
 }
 
 static bool event_started = false;
+static bool event_completed_set = false;
 
 void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 {
     if (!event_started) {
-#if !ORTE_ENABLE_PROGRESS_THREADS
+#if !OPAL_ENABLE_PROGRESS_THREADS
         opal_progress_event_users_increment ();
 #endif
         opal_event_set (orte_event_base, &device->event, device->ib_channel->fd,
@@ -63,7 +66,7 @@ void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 void mca_oob_ud_event_stop_monitor (mca_oob_ud_device_t *device)
 {
     if (event_started) {
-#if !ORTE_ENABLE_PROGRESS_THREADS
+#if !OPAL_ENABLE_PROGRESS_THREADS
         opal_progress_event_users_decrement ();
 #endif
         opal_event_del (&device->event);
@@ -166,8 +169,9 @@ static int mca_oob_ud_process_messages (struct ibv_cq *event_cq, mca_oob_ud_port
                 mca_oob_ud_port_post_one_recv (port, msg_num);
             }
         } else {
-            OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:process_message got a null peer for message id %"
-                                 PRIu64, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id));
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:process_message got a null peer for message id %"
+                                 PRIu64, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id);
             mca_oob_ud_port_post_one_recv (port, msg_num);
         }
     }
@@ -208,6 +212,7 @@ static int mca_oob_ud_process_messages (struct ibv_cq *event_cq, mca_oob_ud_port
     /* Process remaining messages */
     while (NULL !=
            (msg_item = (mca_oob_ud_msg_item_t *) opal_list_remove_first (processing_msgs))) {
+
         switch (msg_item->hdr->msg_type) {
         case MCA_OOB_UD_MSG_REQUEST:
             mca_oob_ud_event_handle_req (port, msg_item->peer, msg_item->hdr);
@@ -240,21 +245,23 @@ static int mca_oob_ud_event_handle_ack (mca_oob_ud_port_t *port, mca_oob_ud_peer
 {
     mca_oob_ud_msg_t *msg;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_handle_ack got ack for msg id %" PRIu64
-                         " from peer %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id, 
-                         ORTE_NAME_PRINT(&peer->peer_name)));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_handle_ack got ack for msg id %" PRIu64
+                         " from peer %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id,
+                         ORTE_NAME_PRINT(&peer->peer_name));
 
     OPAL_THREAD_LOCK(&peer->peer_lock);
 
     mca_oob_ud_peer_stop_timer (peer);
 
-    while (NULL !=
-           (msg = (mca_oob_ud_msg_t *) mca_oob_ud_list_get_first (&peer->peer_flying_messages))) {
+    msg = (mca_oob_ud_msg_t *) mca_oob_ud_list_get_first (&peer->peer_flying_messages);
+
+    while (NULL != (msg = (mca_oob_ud_msg_t *) mca_oob_ud_list_get_first (&peer->peer_flying_messages))) {
         if (msg->hdr->msg_id > msg_hdr->msg_id) {
             break;
         }
 
-        (void) opal_list_remove_first (&peer->peer_flying_messages);
+        msg = (mca_oob_ud_msg_t *)opal_list_remove_first (&peer->peer_flying_messages);
         (void) mca_oob_ud_msg_status_update (msg, MCA_OOB_UD_MSG_STATUS_COMPLETE);
     }
 
@@ -270,9 +277,10 @@ static int mca_oob_ud_event_handle_nack (mca_oob_ud_port_t *port, mca_oob_ud_pee
 {
     mca_oob_ud_msg_t *msg;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_handle_nack got nack for msg id %" PRIu64
-                         " from peer %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id, 
-                         ORTE_NAME_PRINT(&peer->peer_name)));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_handle_nack got nack for msg id %" PRIu64
+                         " from peer %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id,
+                         ORTE_NAME_PRINT(&peer->peer_name));
 
     OPAL_THREAD_LOCK(&peer->peer_lock);
 
@@ -297,13 +305,14 @@ static int mca_oob_ud_event_handle_nack (mca_oob_ud_port_t *port, mca_oob_ud_pee
 
     OPAL_THREAD_UNLOCK(&peer->peer_lock);
 
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }
 
 static int mca_oob_ud_event_handle_end (mca_oob_ud_peer_t *peer, mca_oob_ud_msg_hdr_t *msg_hdr)
 {
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_handle_end got end message from peer %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&peer->peer_name)));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_handle_end got end message from peer %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&peer->peer_name));
 
     mca_oob_ud_peer_lost (peer);
 
@@ -317,9 +326,10 @@ static int mca_oob_ud_event_send_ack (mca_oob_ud_port_t *port, mca_oob_ud_peer_t
     struct ibv_send_wr wr;
     struct ibv_sge sge;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_send_ack sending ack for message id %"
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_send_ack sending ack for message id %"
                          PRIu64 " peer = %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr->msg_id,
-                         ORTE_NAME_PRINT(&peer->peer_name)));
+                         ORTE_NAME_PRINT(&peer->peer_name));
 
     /* reuse registered buffer to send ack (just need to change the type/return address) */
     memcpy (&tmp_hdr, msg_hdr, sizeof (tmp_hdr));
@@ -352,9 +362,10 @@ static int mca_oob_ud_event_send_nack (mca_oob_ud_port_t *port, mca_oob_ud_peer_
     struct ibv_send_wr wr;
     struct ibv_sge sge;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_send_nack sending nack for message id %"
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_send_nack sending nack for message id %"
                          PRIu64 " peer = %s. msg_id = %" PRIu64, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         peer->peer_expected_id, ORTE_NAME_PRINT(&peer->peer_name), msg_hdr->msg_id));
+                         peer->peer_expected_id, ORTE_NAME_PRINT(&peer->peer_name), msg_hdr->msg_id);
 
     /* reuse registered buffer to send the nack (just need to change the type/return address) */
     memcpy (&tmp_hdr, msg_hdr, sizeof (tmp_hdr));
@@ -388,7 +399,9 @@ void mca_oob_ud_event_queue_completed (mca_oob_ud_req_t *req)
 
     mca_oob_ud_req_append_to_list (req, &mca_oob_ud_component.ud_event_queued_reqs);
 
-    if (!opal_event_evtimer_pending (&mca_oob_ud_component.ud_complete_event, &now)) {
+    if (!(event_completed_set) ||
+        !(opal_event_evtimer_pending (&mca_oob_ud_component.ud_complete_event, &now))) {
+        event_completed_set = true;
         opal_event_evtimer_set (orte_event_base, &mca_oob_ud_component.ud_complete_event,
                                 mca_oob_ud_complete_dispatch, NULL);
         opal_event_add (&mca_oob_ud_component.ud_complete_event, &now);
@@ -401,19 +414,18 @@ static int mca_oob_ud_event_handle_completion (mca_oob_ud_port_t *port, mca_oob_
     bool brc;
 
     if (NULL == recv_req) {
+        opal_output(0, "%s oob:ud:event_handle_completion msg_hdr->msg_lcl_ctx is NULL",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return ORTE_ERROR;
     }
-
-    OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:event_handle_completion got "
-                         "completion message for request %p", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (void *) recv_req));
 
     brc = mca_oob_ud_req_is_in_list (recv_req, &mca_oob_ud_component.ud_active_recvs);
     if (false == brc) {
         /* duplicate completion message? */
-        OPAL_OUTPUT_VERBOSE((0, mca_oob_base_output, "%s oob:ud:event_handle_completion apparent duplicate completion. "
+        opal_output_verbose(0, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:event_handle_completion apparent duplicate completion. "
                              "request %p. req list = %p", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) recv_req,
-                             (void *) recv_req->req_list));
+                             (void *) recv_req->req_list);
         return ORTE_SUCCESS;
     }
 
@@ -433,14 +445,16 @@ static int mca_oob_ud_event_handle_data_ok (mca_oob_ud_port_t *port, mca_oob_ud_
         return ORTE_ERROR;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_handle_data_ok got data ok message for "
-                         "request %p", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) send_req));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_handle_data_ok got data ok message for request %p",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) send_req);
 
     brc = mca_oob_ud_req_is_in_list (send_req, &mca_oob_ud_component.ud_active_sends);
     if (false == brc) {
-        OPAL_OUTPUT_VERBOSE((0, mca_oob_base_output, "%s oob:ud:event_handle_data_ok apparent duplicate data ok. "
+        opal_output_verbose(0, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:event_handle_data_ok apparent duplicate data ok. "
                              "request %p. req list = %p", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) send_req,
-                             (void *) send_req->req_list));
+                             (void *) send_req->req_list);
         /* duplicate data ok message? */
         return ORTE_SUCCESS;
     }
@@ -469,13 +483,15 @@ static int mca_oob_ud_event_handle_rep (mca_oob_ud_port_t *port, mca_oob_ud_msg_
     mca_oob_ud_req_t *send_req = (mca_oob_ud_req_t *) msg_hdr->msg_lcl_ctx;
     bool brc;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_handle_rep got reply for request %p",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) send_req));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:event_handle_rep got reply for request %p",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) send_req);
 
     brc = mca_oob_ud_req_is_in_list (send_req, &mca_oob_ud_component.ud_active_sends);
     if (false == brc) {
-        OPAL_OUTPUT_VERBOSE((0, mca_oob_base_output, "%s oob:ud:event_handle_rep no send matches reply",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        opal_output_verbose(0, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:event_handle_rep no send matches reply",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* duplicate reply message? */
         return ORTE_SUCCESS;
     }
@@ -504,6 +520,8 @@ static void *mca_oob_ud_event_dispatch(int fd, int flags, void *context)
 
     if (NULL == event_cq) {
         /* re-arm the event */
+        opal_output (0, "%s oob:ud:event_dispatch re-arm the event",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_event_add (&port->device->event, NULL);
 
         return NULL;
@@ -525,7 +543,7 @@ static void *mca_oob_ud_event_dispatch(int fd, int flags, void *context)
 
     /* re-arm the event */
     opal_event_add (&port->device->event, NULL);
- 
+
     return NULL;
 }
 
@@ -538,14 +556,14 @@ static void *mca_oob_ud_complete_dispatch(int fd, int flags, void *context)
            (req = (mca_oob_ud_req_t *) opal_list_remove_first (&mca_oob_ud_component.ud_event_queued_reqs))) {
         OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_match_lock);
 
-        OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:event_process processing request %p",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) req));
+        opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:event_process processing request %p",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) req);
 
         req->req_list = NULL;
 
         switch (req->type) {
         case MCA_OOB_UD_REQ_RECV:
-        case MCA_OOB_UD_REQ_UNEX:
             if (req->state == MCA_OOB_UD_REQ_COMPLETE) {
                 mca_oob_ud_recv_complete (req);
             } else {
@@ -575,8 +593,9 @@ static void mca_oob_ud_stop_events (mca_oob_ud_device_t *device)
 {
     opal_list_item_t *item;
 
-    OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:stop_events stopping event processing",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:stop_events stopping event processing",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     for (item = opal_list_get_first (&device->ports) ;
          item != opal_list_get_end (&device->ports) ;
@@ -587,6 +606,7 @@ static void mca_oob_ud_stop_events (mca_oob_ud_device_t *device)
         mca_oob_ud_qp_to_reset (&port->listen_qp);
     }
 
-    OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:stop_events events stopped",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:stop_events events stopped",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 }
