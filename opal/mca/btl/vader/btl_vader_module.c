@@ -483,6 +483,7 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
         }
 
         frag->segments[0].cookie = knem_cr.cookie;
+        frag->segments[0].registered_base = (intptr_t) data_ptr;
         frag->cookie = knem_cr.cookie;
     }
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
@@ -625,6 +626,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
             }
 
             frag->segments[0].cookie = knem_cr.cookie;
+            frag->segments[0].registered_base = (intptr_t) data_ptr;
             frag->cookie = knem_cr.cookie;
         }
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
