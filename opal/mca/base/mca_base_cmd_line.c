@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -162,11 +163,11 @@ static int process_arg(const char *param, const char *value,
              * to the process exiting */
             fprintf(stderr,
                     "---------------------------------------------------------------------------\n"
-                    "The following MCA parameter has been listed multiple times on the"
-                    "cmd line:\n\n"
+                    "The following MCA parameter has been listed multiple times on the\n"
+                    "command line:\n\n"
                     "  MCA param:   %s\n\n"
-                    "MCA parameters can only be listed once on a cmd line to ensure there\n"
-                    "is no ambiguity as to its value. Please correct the situation and\n"
+                    "MCA parameters can only be listed once on a command line to ensure there\n"
+                    "is no ambiguity as to its value.  Please correct the situation and\n"
                     "try again.\n"
                     "---------------------------------------------------------------------------\n",
                     param);
