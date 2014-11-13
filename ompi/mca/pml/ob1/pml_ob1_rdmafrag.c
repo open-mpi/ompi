@@ -24,7 +24,7 @@
 #include "pml_ob1.h"
 #include "pml_ob1_rdmafrag.h"
 
-void mca_pml_ob1_rdma_frag_constructor (mca_pml_ob1_rdma_frag_t *frag)
+static void mca_pml_ob1_rdma_frag_constructor (mca_pml_ob1_rdma_frag_t *frag)
 {
     frag->local_handle = NULL;
 }
