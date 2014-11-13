@@ -122,16 +122,16 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
-        ret = module->comm->c_coll.coll_barrier(module->comm,
-                                                module->comm->c_coll.coll_barrier_module);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "osc pt2pt: fence end (short circuit)"));
         return ret;
     }
 
-    /* try to start all the requests.  */
+    /* try to start all requests.  */
     ret = ompi_osc_pt2pt_frag_flush_all(module);
-    if (OMPI_SUCCESS != ret) goto cleanup;
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: fence done sending"));
@@ -141,10 +141,12 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                                                           &incoming_reqs, 1, MPI_UINT32_T,
                                                           MPI_SUM, module->comm,
                                                           module->comm->c_coll.coll_reduce_scatter_block_module);
-    if (OMPI_SUCCESS != ret) goto cleanup;
+    if (OMPI_SUCCESS != ret) {
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return ret;
+    }
 
     OPAL_THREAD_LOCK(&module->lock);
-
     bzero(module->epoch_outgoing_frag_count,
           sizeof(uint32_t) * ompi_comm_size(module->comm));
 
@@ -161,22 +163,21 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
         opal_condition_wait(&module->cond, &module->lock);
     }
 
-    ret = OMPI_SUCCESS;
+    module->active_incoming_frag_signal_count = 0;
 
     if (assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
          * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */
         module->active_eager_send_active = false;
         module->all_access_epoch = false;
-   }
+    }
+    opal_condition_broadcast (&module->cond);
+    OPAL_THREAD_UNLOCK(&module->lock);
 
- cleanup:
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: fence end: %d", ret));
 
-    OPAL_THREAD_UNLOCK(&module->lock);
-
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 
@@ -226,9 +227,13 @@ ompi_osc_pt2pt_start(ompi_group_t *group,
         ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
 
         if (group_contains_proc (module->sc_group, pending_proc)) {
+            ompi_osc_pt2pt_peer_t *peer = module->peers + pending_post->rank;
+
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Consumed unexpected post message from %d",
                                  pending_post->rank));
             ++module->num_post_msgs;
+            peer->eager_send_active = true;
+
             opal_list_remove_item (&module->pending_posts, &pending_post->super);
             OBJ_RELEASE(pending_post);
         }
@@ -291,6 +296,7 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
                              "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
         opal_condition_wait(&module->cond, &module->lock);
     }
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete sending complete message"));
@@ -302,7 +308,6 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
        At the same time, clean out the outgoing count for the next
        round. */
-    OPAL_THREAD_UNLOCK(&module->lock);
     for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
         if (my_rank == ranks[i]) {
             /* shortcut for self */
@@ -325,15 +330,17 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
                                          sizeof(ompi_osc_pt2pt_header_complete_t));
         if (OMPI_SUCCESS != ret) goto cleanup;
     }
-    OPAL_THREAD_LOCK(&module->lock);
 
     /* start all requests */
     ret = ompi_osc_pt2pt_frag_flush_all(module);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
+    OPAL_THREAD_LOCK(&module->lock);
     /* zero the fragment counts here to ensure they are zerod */
     for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
+        peer = module->peers + ranks[i];
         module->epoch_outgoing_frag_count[ranks[i]] = 0;
+        peer->eager_send_active = false;
     }
 
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
@@ -347,7 +354,7 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
     module->sc_group = NULL;
 
     /* unlock here, as group cleanup can take a while... */
-    OPAL_THREAD_UNLOCK(&(module->lock));
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     /* phase 2 cleanup group */
     ompi_group_decrement_proc_count(group);
@@ -361,8 +368,6 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
  cleanup:
     if (NULL != ranks) free(ranks);
-
-    OPAL_THREAD_UNLOCK(&(module->lock));
 
     return ret;
 }
@@ -504,7 +509,6 @@ ompi_osc_pt2pt_test(ompi_win_t *win,
            module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
         *flag = 0;
         ret = OMPI_SUCCESS;
-        goto cleanup;
     } else {
         *flag = 1;
 
@@ -519,7 +523,6 @@ ompi_osc_pt2pt_test(ompi_win_t *win,
         return OMPI_SUCCESS;
     }
 
- cleanup:
     OPAL_THREAD_UNLOCK(&(module->lock));
 
     return ret;
@@ -528,6 +531,7 @@ ompi_osc_pt2pt_test(ompi_win_t *win,
 int osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source)
 {
     ompi_proc_t *source_proc = ompi_comm_peer_lookup (module->comm, source);
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -546,6 +550,9 @@ int osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source)
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_SUCCESS;
     }
+
+    assert (!peer->eager_send_active);
+    peer->eager_send_active = true;
 
     module->num_post_msgs++;
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,

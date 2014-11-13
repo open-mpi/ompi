@@ -49,14 +49,12 @@ static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
 
     mark_outgoing_completion (module);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if (0 == --pt2pt_request->outstanding_requests) {
+    if (0 == OPAL_THREAD_ADD32(&pt2pt_request->outstanding_requests, -1)) {
         ompi_osc_pt2pt_request_complete (pt2pt_request, request->req_status.MPI_ERROR);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -64,11 +62,19 @@ static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
 static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
 {
     ompi_datatype_t *datatype = (ompi_datatype_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = NULL;
 
     OBJ_RELEASE(datatype);
 
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    opal_hash_table_get_value_uint32(&mca_osc_pt2pt_component.modules,
+                                     ompi_comm_get_cid(request->req_mpi_object.comm),
+                                     (void **) &module);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+    assert (NULL != module);
+
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -327,8 +333,6 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
     payload_len = origin_dt->super.size * origin_count;
     frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + ddt_len + payload_len;
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + ddt_len;
@@ -338,7 +342,6 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
             frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
             ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -352,14 +355,14 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
     /* flush will be called at the end of this function. make sure the post message has
      * arrived. */
     if ((is_long_msg || request) && module->sc_group) {
+        OPAL_THREAD_LOCK(&module->lock);
         while (0 != module->num_post_msgs) {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                  "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
             opal_condition_wait(&module->cond, &module->lock);
         }
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: put long protocol: %d, large datatype: %d",
@@ -433,15 +436,12 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
         header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_VALID;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     ret = ompi_osc_pt2pt_frag_finish(module, frag);
 
     if (request || is_long_msg) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_pt2pt_frag_flush_target (module, target);
     }
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -512,8 +512,6 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
     ddt_len = ompi_datatype_pack_description_length(target_dt);
     payload_len = origin_dt->super.size * origin_count;
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     frag_len = sizeof(*header) + ddt_len + payload_len;
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
@@ -524,7 +522,6 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
             frag_len = sizeof(*header) + 8;
             ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -538,14 +535,14 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
     /* flush will be called at the end of this function. make sure the post message has
      * arrived. */
     if ((is_long_msg || request) && module->sc_group) {
+        OPAL_THREAD_LOCK(&module->lock);
         while (0 != module->num_post_msgs) {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                  "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
             opal_condition_wait(&module->cond, &module->lock);
         }
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     header = (ompi_osc_pt2pt_header_acc_t*) ptr;
     header->base.flags = 0;
@@ -623,16 +620,12 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
         header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_VALID;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     ret = ompi_osc_pt2pt_frag_finish(module, frag);
 
     if (is_long_msg || request) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_pt2pt_frag_flush_target (module, target);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -700,12 +693,9 @@ int ompi_osc_pt2pt_compare_and_swap (void *origin_addr, void *compare_addr,
     /* we need to send both the origin and compare buffers */
     payload_len = dt->super.size * 2;
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     frag_len = sizeof(ompi_osc_pt2pt_header_cswap_t) + ddt_len + payload_len;
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
-        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -733,12 +723,10 @@ int ompi_osc_pt2pt_compare_and_swap (void *origin_addr, void *compare_addr,
     ret = ompi_osc_pt2pt_irecv_w_cb (result_addr, 1, dt, target, tag, module->comm,
                                     NULL, ompi_osc_pt2pt_req_comm_complete, request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OPAL_THREAD_UNLOCK(&module->lock);
         return ret;
     }
 
     ret = ompi_osc_pt2pt_frag_finish(module, frag);
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -857,8 +845,6 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
      * must fit in a single frag */
     ddt_len = ompi_datatype_pack_description_length(target_dt);
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     frag_len = sizeof(ompi_osc_pt2pt_header_get_t) + ddt_len;
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
@@ -866,7 +852,6 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
         frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
         ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -887,8 +872,6 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
             opal_condition_wait(&module->cond, &module->lock);
         }
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     header = (ompi_osc_pt2pt_header_get_t*) ptr;
     header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_GET;
@@ -936,14 +919,12 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
         *request = &pt2pt_request->super;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
     ret = ompi_osc_pt2pt_frag_finish(module, frag);
 
     if (!release_req) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_pt2pt_frag_flush_target (module, target);
     }
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -1087,8 +1068,6 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
         payload_len = 0;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     frag_len = sizeof(*header) + ddt_len + payload_len;
     ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
@@ -1099,7 +1078,6 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
             frag_len = sizeof(*header) + 8;
             ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -1121,14 +1099,14 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
     /* flush will be called at the end of this function. make sure the post message has
      * arrived. */
     if (!release_req && module->sc_group) {
+        OPAL_THREAD_LOCK(&module->lock);
         while (0 != module->num_post_msgs) {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                  "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
             opal_condition_wait(&module->cond, &module->lock);
         }
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     header = (ompi_osc_pt2pt_header_acc_t *) ptr;
     header->base.flags = 0;
@@ -1191,14 +1169,12 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
         *request = (ompi_request_t *) pt2pt_request;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
     ret = ompi_osc_pt2pt_frag_finish(module, frag);
 
     if (!release_req) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_pt2pt_frag_flush_target (module, target_rank);
     }
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }

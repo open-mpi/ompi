@@ -26,7 +26,7 @@ struct ompi_osc_pt2pt_request_t {
     int origin_count;
     struct ompi_datatype_t *origin_dt;
     ompi_osc_pt2pt_module_t* module;
-    int outstanding_requests;
+    int32_t outstanding_requests;
     bool internal;
 };
 typedef struct ompi_osc_pt2pt_request_t ompi_osc_pt2pt_request_t;

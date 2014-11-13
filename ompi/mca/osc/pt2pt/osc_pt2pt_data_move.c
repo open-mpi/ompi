@@ -26,7 +26,6 @@
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_data_move.h"
-#include "osc_pt2pt_obj_convert.h"
 #include "osc_pt2pt_frag.h"
 #include "osc_pt2pt_request.h"
 
@@ -225,16 +224,12 @@ int ompi_osc_pt2pt_control_send (ompi_osc_pt2pt_module_t *module, int target,
     char *ptr;
     int ret;
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     ret = ompi_osc_pt2pt_frag_alloc(module, target, len, &frag, &ptr);
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
         memcpy (ptr, data, len);
 
         ret = ompi_osc_pt2pt_frag_finish(module, frag);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -254,7 +249,7 @@ static int ompi_osc_pt2pt_control_send_unbuffered_cb (ompi_request_t *request)
     free (ctx);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -453,7 +448,7 @@ static int osc_pt2pt_incoming_req_complete (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -476,7 +471,7 @@ static int osc_pt2pt_get_post_send_cb (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -683,8 +678,7 @@ static int accumulate_cb (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    OPAL_THREAD_LOCK(&module->lock);
-    if (0 == --acc_data->request_count) {
+    if (0 == OPAL_THREAD_ADD32(&acc_data->request_count, -1)) {
         /* no more requests needed before the buffer can be accumulated */
 
         if (acc_data->source) {
@@ -695,13 +689,11 @@ static int accumulate_cb (ompi_request_t *request)
         /* drop the accumulate lock */
         ompi_osc_pt2pt_accumulate_unlock (module);
 
-        osc_pt2pt_gc_add_buffer (&acc_data->super);
+        osc_pt2pt_gc_add_buffer (module, &acc_data->super);
     }
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
-
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_pt2pt_gc_add_request (module, request);
 
     return ret;
 }
@@ -710,6 +702,7 @@ static int accumulate_cb (ompi_request_t *request)
 static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_header_t *header, int source,
                                        char *data, size_t data_len, ompi_datatype_t *datatype)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
     osc_pt2pt_pending_acc_t *pending_acc;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -720,11 +713,9 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    if (!ompi_osc_pt2pt_no_locks) {
-        /* NTH: ensure we don't leave wait/process_flush/etc until this
-         * accumulate operation is complete. */
-        module->passive_incoming_frag_signal_count[source]++;
-    }
+    /* NTH: ensure we don't leave wait/process_flush/etc until this
+     * accumulate operation is complete. */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     pending_acc->source = source;
 
@@ -757,9 +748,7 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
     }
 
     /* add to the pending acc queue */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->pending_acc, &pending_acc->super);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    OPAL_THREAD_SCOPED_LOCK(&module->lock, opal_list_append (&module->pending_acc, &pending_acc->super));
 
     return OMPI_SUCCESS;
 }
@@ -776,7 +765,7 @@ static int replace_cb (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     /* unlock the accumulate lock */
     ompi_osc_pt2pt_accumulate_unlock (module);
@@ -1143,10 +1132,8 @@ int ompi_osc_pt2pt_progress_pending_acc (ompi_osc_pt2pt_module_t *module)
         assert (0);
     }
 
-    if (!ompi_osc_pt2pt_no_locks) {
-        /* signal that an operation is complete */
-        mark_incoming_completion (module, pending_acc->source);
-    }
+    /* signal that an operation is complete */
+    mark_incoming_completion (module, pending_acc->source);
 
     pending_acc->data = NULL;
     OBJ_RELEASE(pending_acc);
@@ -1340,17 +1327,14 @@ static inline int process_complete (ompi_osc_pt2pt_module_t *module, int source,
                          source, complete_header->frag_count, module->active_incoming_frag_signal_count,
                          module->active_incoming_frag_count));
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     /* the current fragment is not part of the frag_count so we need to add it here */
-    module->active_incoming_frag_signal_count += complete_header->frag_count + 1;
-    module->num_complete_msgs++;
+    OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_signal_count,
+                      complete_header->frag_count + 1);
 
-    if (0 == module->num_complete_msgs) {
+
+    if (0 == OPAL_THREAD_ADD32((int32_t *) &module->num_complete_msgs, 1)) {
         opal_condition_broadcast (&module->cond);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return sizeof (*complete_header);
 }
@@ -1361,17 +1345,18 @@ static inline int process_complete (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
                                  ompi_osc_pt2pt_header_flush_t *flush_header)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "process_flush header = {.frag_count = %d}", flush_header->frag_count));
 
     /* increase signal count by incoming frags */
-    module->passive_incoming_frag_signal_count[source] += flush_header->frag_count;
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) flush_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "%d: process_flush: received message from %d. passive_incoming_frag_signal_count = %d, passive_incoming_frag_count = %d",
-                         ompi_comm_rank(module->comm), source, module->passive_incoming_frag_signal_count[source], module->passive_incoming_frag_count[source]));
+                         "%d: process_flush: received message from %d. passive_incoming_frag_count = %d",
+                         ompi_comm_rank(module->comm), source, peer->passive_incoming_frag_count));
 
     ret = ompi_osc_pt2pt_process_flush (module, source, flush_header);
     if (OMPI_SUCCESS != ret) {
@@ -1382,16 +1367,11 @@ static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
         pending->source = source;
         pending->header.flush = *flush_header;
 
-        OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
-        opal_list_append (&mca_osc_pt2pt_component.pending_operations, &pending->super);
-        OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
-
-        /* we now have to count the current fragment */
-        module->passive_incoming_frag_signal_count[source]++;
-    } else {
-        /* need to account for the current fragment */
-        module->passive_incoming_frag_count[source] = -1;
+        osc_pt2pt_add_pending (pending);
     }
+
+    /* signal incomming will increment this counter */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*flush_header);
 }
@@ -1399,18 +1379,18 @@ static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
                                   ompi_osc_pt2pt_header_unlock_t *unlock_header)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "process_unlock header = {.frag_count = %d}", unlock_header->frag_count));
 
     /* increase signal count by incoming frags */
-    module->passive_incoming_frag_signal_count[source] += unlock_header->frag_count;
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) unlock_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: processing unlock request from %d. frag count = %d, signal_count = %d, processed_count = %d",
-                         source, unlock_header->frag_count, (int) module->passive_incoming_frag_signal_count[source],
-                         (int) module->passive_incoming_frag_count[source]));
+                         "osc pt2pt: processing unlock request from %d. frag count = %d, processed_count = %d",
+                         source, unlock_header->frag_count, (int) peer->passive_incoming_frag_count));
 
     ret = ompi_osc_pt2pt_process_unlock (module, source, unlock_header);
     if (OMPI_SUCCESS != ret) {
@@ -1421,16 +1401,11 @@ static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
         pending->source = source;
         pending->header.unlock = *unlock_header;
 
-        OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
-        opal_list_append (&mca_osc_pt2pt_component.pending_operations, &pending->super);
-        OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
-
-        /* we now have to count the current fragment */
-        module->passive_incoming_frag_signal_count[source]++;
-    } else {
-        /* need to account for the current fragment */
-        module->passive_incoming_frag_count[source] = -1;
+        osc_pt2pt_add_pending (pending);
     }
+
+    /* signal incomming will increment this counter */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*unlock_header);
 }
@@ -1463,10 +1438,10 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
     }
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     /* free the datatype buffer */
-    osc_pt2pt_gc_add_buffer (&ddt_buffer->super);
+    osc_pt2pt_gc_add_buffer (module, &ddt_buffer->super);
 
     return OMPI_SUCCESS;
 }
@@ -1679,10 +1654,6 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "finished processing incoming messages"));
-
-    /* restart the receive request */
-    OPAL_THREAD_LOCK(&module->lock);
-
     /* post messages come unbuffered and should NOT increment the incoming completion
      * counters */
     if (OMPI_OSC_PT2PT_HDR_TYPE_POST != base_header->type) {
@@ -1690,13 +1661,11 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
                                   source : MPI_PROC_NULL);
     }
 
-    osc_pt2pt_gc_clean ();
+    osc_pt2pt_gc_clean (module);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
     ompi_osc_pt2pt_frag_start_receive (module);
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
 
@@ -1734,20 +1703,15 @@ isend_completion_cb(ompi_request_t *request)
     mark_outgoing_completion(module);
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
 
 
-int
-ompi_osc_pt2pt_component_isend(ompi_osc_pt2pt_module_t *module,
-                              void *buf,
-                              size_t count,
-                              struct ompi_datatype_t *datatype,
-                              int dest,
-                              int tag,
-                              struct ompi_communicator_t *comm)
+int ompi_osc_pt2pt_component_isend (ompi_osc_pt2pt_module_t *module, void *buf,
+                                    size_t count, struct ompi_datatype_t *datatype,
+                                    int dest, int tag, struct ompi_communicator_t *comm)
 {
     return ompi_osc_pt2pt_isend_w_cb (buf, count, datatype, dest, tag, comm,
                                      isend_completion_cb, module);

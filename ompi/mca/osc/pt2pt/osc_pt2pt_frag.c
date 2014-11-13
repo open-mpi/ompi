@@ -21,18 +21,11 @@
 #include "osc_pt2pt_data_move.h"
 
 static void ompi_osc_pt2pt_frag_constructor (ompi_osc_pt2pt_frag_t *frag){
-    frag->buffer = malloc (mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t));
-    assert (frag->buffer);
+    frag->buffer = frag->super.ptr;
 }
 
-static void ompi_osc_pt2pt_frag_destructor (ompi_osc_pt2pt_frag_t *frag) {
-    if (NULL != frag->buffer) {
-        free (frag->buffer);
-    }
-}
-
-OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_frag_t, opal_list_item_t,
-                   ompi_osc_pt2pt_frag_constructor, ompi_osc_pt2pt_frag_destructor);
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_frag_t, ompi_free_list_item_t,
+                   ompi_osc_pt2pt_frag_constructor, NULL);
 
 static int frag_send_cb (ompi_request_t *request)
 {
@@ -45,11 +38,11 @@ static int frag_send_cb (ompi_request_t *request)
                          frag->target, (void *) frag, (void *) request));
 
     mark_outgoing_completion(module);
-    OPAL_FREE_LIST_RETURN(&mca_osc_pt2pt_component.frags, &frag->super);
+    OMPI_FREE_LIST_RETURN_MT(&mca_osc_pt2pt_component.frags, &frag->super);
 
 
     /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -77,12 +70,12 @@ frag_send(ompi_osc_pt2pt_module_t *module,
 
 int
 ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module,
-                        ompi_osc_pt2pt_frag_t *frag)
+                          ompi_osc_pt2pt_frag_t *frag)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + frag->target;
     int ret;
 
-    assert(0 == frag->pending);
-    assert(module->peers[frag->target].active_frag != frag);
+    assert(0 == frag->pending && peer->active_frag != frag);
 
     /* we need to signal now that a frag is outgoing to ensure the count sent
      * with the unlock message is correct */
@@ -90,16 +83,10 @@ ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module,
 
     /* if eager sends are not active, can't send yet, so buffer and
        get out... */
-    if (module->passive_target_access_epoch) {
-        if (!module->passive_eager_send_active[frag->target]) {
-            opal_list_append(&module->queued_frags, &frag->super);
-            return OMPI_SUCCESS;
-        }
-    } else {
-        if (!module->active_eager_send_active) {
-            opal_list_append(&module->queued_frags, &frag->super);
-            return OMPI_SUCCESS;
-        }
+    if (!(peer->eager_send_active || module->all_access_epoch)) {
+        OPAL_THREAD_SCOPED_LOCK(&module->queued_frags_lock,
+                                opal_list_append(&module->queued_frags, (opal_list_item_t *) frag));
+        return OMPI_SUCCESS;
     }
 
     ret = frag_send(module, frag);
@@ -113,43 +100,50 @@ ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module,
 int
 ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target)
 {
+    ompi_osc_pt2pt_frag_t *next, *frag = module->peers[target].active_frag;
     int ret = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush target begin"));
 
     /* flush the active frag */
-    if (NULL != module->peers[target].active_frag) {
-        ompi_osc_pt2pt_frag_t *frag = module->peers[target].active_frag;
-
-        if (0 != frag->pending) {
-            /* communication going on while synchronizing; this is a bug */
+    if (NULL != frag) {
+        if (1 != frag->pending) {
+            /* communication going on while synchronizing; this is an rma usage bug */
             return OMPI_ERR_RMA_SYNC;
         }
 
-        module->peers[target].active_frag = NULL;
-
-        ret = ompi_osc_pt2pt_frag_start(module, frag);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (opal_atomic_cmpset (&module->peers[target].active_frag, frag, NULL)) {
+            OPAL_THREAD_ADD32(&frag->pending, -1);
+            ret = ompi_osc_pt2pt_frag_start(module, frag);
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+        }
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush target finished active frag"));
 
     /* walk through the pending list and send */
-    ompi_osc_pt2pt_frag_t *frag, *next;
-    OPAL_LIST_FOREACH_SAFE(frag, next, &module->queued_frags, ompi_osc_pt2pt_frag_t) {
-        if (frag->target == target) {
-            opal_list_remove_item(&module->queued_frags, &frag->super);
-            ret = frag_send(module, frag);
-            if (OMPI_SUCCESS != ret) return ret;
+    OPAL_THREAD_LOCK(&module->queued_frags_lock);
+    if (opal_list_get_size (&module->queued_frags)) {
+        OPAL_LIST_FOREACH_SAFE(frag, next, &module->queued_frags, ompi_osc_pt2pt_frag_t) {
+            if (frag->target == target) {
+                opal_list_remove_item(&module->queued_frags, (opal_list_item_t *) frag);
+                ret = frag_send(module, frag);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != frag)) {
+                    break;
+                }
+            }
         }
     }
+    OPAL_THREAD_UNLOCK(&module->queued_frags_lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush target finished"));
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
@@ -165,18 +159,24 @@ ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module)
 
     /* flush the active frag */
     for (i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-        if (NULL != module->peers[i].active_frag) {
-            ompi_osc_pt2pt_frag_t *frag = module->peers[i].active_frag;
+        ompi_osc_pt2pt_frag_t *frag = module->peers[i].active_frag;
 
-            if (0 != frag->pending) {
+        if (NULL != frag) {
+            if (1 != frag->pending) {
+                OPAL_THREAD_UNLOCK(&module->lock);
                 /* communication going on while synchronizing; this is a bug */
                 return OMPI_ERR_RMA_SYNC;
             }
 
-            module->peers[i].active_frag = NULL;
+            if (!opal_atomic_cmpset_ptr (&module->peers[i].active_frag, frag, NULL)) {
+                continue;
+            }
 
+            OPAL_THREAD_ADD32(&frag->pending, -1);
             ret = ompi_osc_pt2pt_frag_start(module, frag);
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
         }
     }
 
@@ -184,18 +184,20 @@ ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module)
                          "osc pt2pt: frag flush all finished active frag"));
 
     /* try to start all the queued frags */
-    OPAL_LIST_FOREACH_SAFE(frag, next, &module->queued_frags, ompi_osc_pt2pt_frag_t) {
-        opal_list_remove_item(&module->queued_frags, &frag->super);
-        ret = frag_send(module, frag);
-        if (OMPI_SUCCESS != ret) {
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                                 "osc pt2pt: failure for frag send: %d", ret));
-            return ret;
+    OPAL_THREAD_LOCK(&module->queued_frags_lock);
+    if (opal_list_get_size (&module->queued_frags)) {
+        OPAL_LIST_FOREACH_SAFE(frag, next, &module->queued_frags, ompi_osc_pt2pt_frag_t) {
+            opal_list_remove_item(&module->queued_frags, (opal_list_item_t *) frag);
+            ret = frag_send(module, frag);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
         }
     }
+    OPAL_THREAD_UNLOCK(&module->queued_frags_lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush all done"));
 
-    return OMPI_SUCCESS;
+    return ret;
 }

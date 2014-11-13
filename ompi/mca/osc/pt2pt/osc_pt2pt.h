@@ -59,7 +59,7 @@ struct ompi_osc_pt2pt_component_t {
     int module_count;
 
     /** free list of ompi_osc_pt2pt_frag_t structures */
-    opal_free_list_t frags;
+    ompi_free_list_t frags;
 
     /** Free list of requests */
     ompi_free_list_t requests;
@@ -67,17 +67,14 @@ struct ompi_osc_pt2pt_component_t {
     /** PT2PT component buffer size */
     unsigned int buffer_size;
 
+    /** Lock for pending_operations */
+    opal_mutex_t pending_operations_lock;
+
     /** List of operations that need to be processed */
     opal_list_t pending_operations;
 
     /** Is the progress function enabled? */
     bool progress_enable;
-
-    /** List of requests that need to be freed */
-    opal_list_t request_gc;
-
-    /** List of buffers that need to be freed */
-    opal_list_t buffer_gc;
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
 
@@ -89,7 +86,9 @@ struct ompi_osc_pt2pt_peer_t {
     /** Number of acks pending.  New requests can not be sent out if there are
      * acks pending (to fulfill the ordering constraints of accumulate) */
     uint32_t num_acks_pending;
+    int32_t passive_incoming_frag_count;
     bool access_epoch;
+    bool eager_send_active;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
 
@@ -133,6 +132,9 @@ struct ompi_osc_pt2pt_module_t {
         peer.  Not in peer data to make fence more manageable. */
     uint32_t *epoch_outgoing_frag_count;
 
+    /** Lock for queued_frags */
+    opal_mutex_t queued_frags_lock;
+
     /** List of full communication buffers queued to be sent.  Should
         be maintained in order (at least in per-target order). */
     opal_list_t queued_frags;
@@ -152,9 +154,6 @@ struct ompi_osc_pt2pt_module_t {
     /* Next incoming buffer count at which we want a signal on cond */
     uint32_t active_incoming_frag_signal_count;
 
-    uint32_t *passive_incoming_frag_count;
-    uint32_t *passive_incoming_frag_signal_count;
-
     /* Number of flush ack requests send since beginning of time */
     uint64_t flush_ack_requested_count;
     /* Number of flush ack replies received since beginning of
@@ -170,8 +169,6 @@ struct ompi_osc_pt2pt_module_t {
 
     /** Indicates the window is in an all access epoch (fence, lock_all) */
     bool all_access_epoch;
-
-    bool *passive_eager_send_active;
 
     /* ********************* PWSC data ************************ */
     struct ompi_group_t *pw_group;
@@ -189,9 +186,11 @@ struct ompi_osc_pt2pt_module_t {
 
     /** Status of the local window lock.  One of 0 (unlocked),
         MPI_LOCK_EXCLUSIVE, or MPI_LOCK_SHARED. */
-    int lock_status;
-    /** number of peers who hold a shared lock on the local window */
-    int32_t shared_count;
+    int32_t lock_status;
+
+    /** lock for locks_pending list */
+    opal_mutex_t locks_pending_lock;
+
     /** target side list of lock requests we couldn't satisfy yet */
     opal_list_t locks_pending;
 
@@ -210,6 +209,15 @@ struct ompi_osc_pt2pt_module_t {
     /* enforce pscw matching */
     /** list of unmatched post messages */
     opal_list_t        pending_posts;
+
+    /** Lock for garbage collection lists */
+    opal_mutex_t gc_lock;
+
+    /** List of requests that need to be freed */
+    opal_list_t request_gc;
+
+    /** List of buffers that need to be freed */
+    opal_list_t buffer_gc;
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
@@ -431,11 +439,12 @@ static inline void mark_incoming_completion (ompi_osc_pt2pt_module_t *module, in
             opal_condition_broadcast(&module->cond);
         }
     } else {
+        ompi_osc_pt2pt_peer_t *peer = module->peers + source;
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "mark_incoming_completion marking passive incoming complete. source = %d, count = %d",
-                             source, (int) module->passive_incoming_frag_count[source] + 1));
-        OPAL_THREAD_ADD32((int32_t *) (module->passive_incoming_frag_count + source), 1);
-        if (module->passive_incoming_frag_count[source] >= module->passive_incoming_frag_signal_count[source]) {
+                             source, (int) peer->passive_incoming_frag_count + 1));
+        OPAL_THREAD_ADD32((int32_t *) &peer->passive_incoming_frag_count, 1);
+        if (0 == peer->passive_incoming_frag_count) {
             opal_condition_broadcast(&module->cond);
         }
     }
@@ -576,36 +585,42 @@ static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, voi
  *       and buffers on the module's garbage collection lists and release then
  *       at a later time.
  */
-static inline void osc_pt2pt_gc_clean (void)
+static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
 {
     ompi_request_t *request;
     opal_list_item_t *item;
 
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_LOCK(&module->gc_lock);
 
-    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&mca_osc_pt2pt_component.request_gc))) {
+    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&module->request_gc))) {
+        OPAL_THREAD_UNLOCK(&module->gc_lock);
         ompi_request_free (&request);
+        OPAL_THREAD_LOCK(&module->gc_lock);
     }
 
-    while (NULL != (item = opal_list_remove_first (&mca_osc_pt2pt_component.buffer_gc))) {
+    while (NULL != (item = opal_list_remove_first (&module->buffer_gc))) {
         OBJ_RELEASE(item);
     }
 
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_UNLOCK(&module->gc_lock);
 }
 
-static inline void osc_pt2pt_gc_add_request (ompi_request_t *request)
+static inline void osc_pt2pt_gc_add_request (ompi_osc_pt2pt_module_t *module, ompi_request_t *request)
 {
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
-    opal_list_append (&mca_osc_pt2pt_component.request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_SCOPED_LOCK(&module->gc_lock,
+                            opal_list_append (&module->request_gc, (opal_list_item_t *) request));
 }
 
-static inline void osc_pt2pt_gc_add_buffer (opal_list_item_t *buffer)
+static inline void osc_pt2pt_gc_add_buffer (ompi_osc_pt2pt_module_t *module, opal_list_item_t *buffer)
 {
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
-    opal_list_append (&mca_osc_pt2pt_component.buffer_gc, buffer);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_SCOPED_LOCK(&module->gc_lock,
+                            opal_list_append (&module->buffer_gc, buffer));
+}
+
+static inline void osc_pt2pt_add_pending (ompi_osc_pt2pt_pending_t *pending)
+{
+    OPAL_THREAD_SCOPED_LOCK(&mca_osc_pt2pt_component.pending_operations_lock,
+                            opal_list_append (&mca_osc_pt2pt_component.pending_operations, &pending->super));
 }
 
 #define OSC_PT2PT_FRAG_TAG   0x10000
