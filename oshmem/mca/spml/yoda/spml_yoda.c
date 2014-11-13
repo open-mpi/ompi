@@ -1173,7 +1173,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
             }
             OBJ_DESTRUCT(&convertor);
             frag->rdma_segs[0].base_seg.seg_addr.lval = (uintptr_t) p_src;
-            getreq->p_dst = (uint64_t*) p_dst;
+            getreq->p_dst = NULL;
             frag->size = ncopied;
             des->des_cbfunc = mca_spml_yoda_get_completion;
             des->des_remote = &frag->rdma_segs[0].base_seg;
