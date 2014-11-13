@@ -120,7 +120,7 @@ typedef struct ompi_osc_pt2pt_header_post_t ompi_osc_pt2pt_header_post_t;
 struct ompi_osc_pt2pt_header_lock_t {
     ompi_osc_pt2pt_header_base_t base;
     int32_t lock_type;
-    uint64_t serial_number;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_lock_t ompi_osc_pt2pt_header_lock_t;
 
@@ -128,7 +128,7 @@ struct ompi_osc_pt2pt_header_lock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
     uint16_t windx;
     uint32_t source;
-    uint64_t serial_number;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_lock_ack_t ompi_osc_pt2pt_header_lock_ack_t;
 
@@ -136,11 +136,13 @@ struct ompi_osc_pt2pt_header_unlock_t {
     ompi_osc_pt2pt_header_base_t base;
     int32_t lock_type;
     uint32_t frag_count;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_unlock_t ompi_osc_pt2pt_header_unlock_t;
 
 struct ompi_osc_pt2pt_header_unlock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_unlock_ack_t ompi_osc_pt2pt_header_unlock_ack_t;
 
@@ -161,8 +163,8 @@ struct ompi_osc_pt2pt_frag_header_t {
     ompi_osc_pt2pt_header_base_t base;
     uint16_t windx; /* cid of communicator backing window (our window id) */
     uint32_t source; /* rank in window of source process */
-    uint16_t num_ops; /* number of operations in this buffer */
-    uint16_t pad[3]; /* ensure the fragment header is a multiple of 8 bytes */
+    int32_t num_ops; /* number of operations in this buffer */
+    uint32_t pad; /* ensure the fragment header is a multiple of 8 bytes */
 };
 typedef struct ompi_osc_pt2pt_frag_header_t ompi_osc_pt2pt_frag_header_t;
 

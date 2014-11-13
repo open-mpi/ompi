@@ -200,14 +200,15 @@ component_register(void)
 
 static int component_progress (void)
 {
+    int count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
     ompi_osc_pt2pt_pending_t *pending, *next;
 
-    if (0 == opal_list_get_size (&mca_osc_pt2pt_component.pending_operations)) {
+    if (0 == count) {
 	return 0;
     }
 
     /* process one incoming request */
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_operations_lock);
     OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_pt2pt_component.pending_operations, ompi_osc_pt2pt_pending_t) {
 	int ret;
 
@@ -231,7 +232,7 @@ static int component_progress (void)
 	    OBJ_RELEASE(pending);
 	}
     }
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
 
     return 1;
 }
@@ -244,8 +245,7 @@ component_init(bool enable_progress_threads,
 
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
-    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.request_gc, opal_list_t);
-    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.buffer_gc, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
 
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.modules,
                   opal_hash_table_t);
@@ -254,11 +254,13 @@ component_init(bool enable_progress_threads,
     mca_osc_pt2pt_component.progress_enable = false;
     mca_osc_pt2pt_component.module_count = 0;
 
-    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.frags, opal_free_list_t);
-    ret = opal_free_list_init(&mca_osc_pt2pt_component.frags,
-			      sizeof(ompi_osc_pt2pt_frag_t),
-			      OBJ_CLASS(ompi_osc_pt2pt_frag_t),
-			      1, -1, 1);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.frags, ompi_free_list_t);
+    ret = ompi_free_list_init_new (&mca_osc_pt2pt_component.frags,
+                                   sizeof(ompi_osc_pt2pt_frag_t), 8,
+                                   OBJ_CLASS(ompi_osc_pt2pt_frag_t),
+                                   mca_osc_pt2pt_component.buffer_size +
+                                   sizeof (ompi_osc_pt2pt_frag_header_t),
+                                   8, 1, -1, 1, 0);
     if (OMPI_SUCCESS != ret) {
 	opal_output_verbose(1, ompi_osc_base_framework.framework_output,
 			    "%s:%d: ompi_free_list_init failed: %d",
@@ -303,8 +305,7 @@ component_finalize(void)
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.lock);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.requests);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations);
-    OBJ_DESTRUCT(&mca_osc_pt2pt_component.request_gc);
-    OBJ_DESTRUCT(&mca_osc_pt2pt_component.buffer_gc);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations_lock);
 
     return OMPI_SUCCESS;
 }
@@ -329,16 +330,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     ompi_osc_pt2pt_module_t *module = NULL;
     int ret;
     char *name;
-    bool no_locks = false;
 
     /* We don't support shared windows; that's for the sm onesided
        component */
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
-
-    if (check_config_value_bool("no_locks", info)) {
-        no_locks = true;
-	ompi_osc_pt2pt_no_locks = true;
-    }
 
     /* create module structure with all fields initialized to zero */
     module = (ompi_osc_pt2pt_module_t*)
@@ -354,10 +349,15 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->cond, opal_condition_t);
     OBJ_CONSTRUCT(&module->acc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->queued_frags, opal_list_t);
+    OBJ_CONSTRUCT(&module->queued_frags_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
+    OBJ_CONSTRUCT(&module->locks_pending_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
     OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
+    OBJ_CONSTRUCT(&module->request_gc, opal_list_t);
+    OBJ_CONSTRUCT(&module->buffer_gc, opal_list_t);
+    OBJ_CONSTRUCT(&module->gc_lock, opal_mutex_t);
 
     /* options */
     /* FIX ME: should actually check this value... */
@@ -405,20 +405,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         goto cleanup;
     }
 
-    if (!no_locks) {
-        module->passive_incoming_frag_count = calloc(ompi_comm_size(comm), sizeof(uint32_t));
-        if (NULL == module->passive_incoming_frag_count) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-
-        module->passive_incoming_frag_signal_count = calloc(ompi_comm_size(comm), sizeof(uint32_t));
-        if (NULL == module->passive_incoming_frag_signal_count) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-    }
-
     /* the statement below (from Brian) does not seem correct so disable active target on the
      * window. if this end up being incorrect please revert this one change */
     module->active_eager_send_active = false;
@@ -428,14 +414,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
        they start their epochs, so this isn't a problem. */
     module->active_eager_send_active = true;
 #endif
-
-    if (!no_locks) {
-        module->passive_eager_send_active = malloc(sizeof(bool) * ompi_comm_size(comm));
-        if (NULL == module->passive_eager_send_active) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-    }
 
     /* lock data */
     if (check_config_value_bool("no_locks", info)) {
