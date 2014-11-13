@@ -80,6 +80,10 @@ included in the vX.Y.Z section and be denoted as:
 - Fixed MPI_IALLGATHER problem with intercommunicators.  Thanks for
   Takahiro Kawashima for the patch.
 - Numerous updates and performance improvements to OSHMEM.
+- Turned off message coalescing in the openib BTL until a proper fix
+  for that capability can be provided (tentatively expected for 1.8.5)
+- Fix a bug in iof output that dates back to the dinosaurs which would
+  output extra bytes if the system was very heavily loaded
 
 
 1.8.3
