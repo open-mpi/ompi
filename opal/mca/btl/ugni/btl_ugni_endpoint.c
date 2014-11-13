@@ -86,13 +86,13 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
 static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u proc: %p",
-                 ep->common->ep_rem_addr, ep->common->ep_rem_id, (void *)ep->peer_proc));
-
     rc = mca_btl_ugni_ep_connect_rdma (ep);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
+
+    BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u proc: %p",
+                 ep->common->ep_rem_addr, ep->common->ep_rem_id, (void *)ep->peer_proc));
 
     /* bind endpoint to remote address */
     /* we bind two endpoints to seperate out local smsg completion and local fma completion */

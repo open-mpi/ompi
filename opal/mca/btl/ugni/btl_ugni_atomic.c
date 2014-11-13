@@ -50,7 +50,9 @@ int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     post_desc->desc.base.first_operand = operand;
 
+    OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);
     rc = GNI_PostFma (endpoint->rdma_ep_handle, &post_desc->desc.base);
+    OPAL_THREAD_UNLOCK(&endpoint->btl->device->dev_lock);
     if (GNI_RC_SUCCESS != rc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -84,7 +86,9 @@ int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_en
 
     post_desc->desc.base.first_operand = operand;
 
+    OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);
     rc = GNI_PostFma (endpoint->rdma_ep_handle, &post_desc->desc.base);
+    OPAL_THREAD_UNLOCK(&endpoint->btl->device->dev_lock);
     if (GNI_RC_SUCCESS != rc) {
         mca_btl_ugni_return_post_descriptor (endpoint->btl, post_desc);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -119,7 +123,9 @@ int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_
     post_desc->desc.base.first_operand = compare;
     post_desc->desc.base.second_operand = value;
 
+    OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);
     rc = GNI_PostFma (endpoint->rdma_ep_handle, &post_desc->desc.base);
+    OPAL_THREAD_UNLOCK(&endpoint->btl->device->dev_lock);
     if (GNI_RC_SUCCESS != rc) {
         mca_btl_ugni_return_post_descriptor (endpoint->btl, post_desc);
         return OPAL_ERR_OUT_OF_RESOURCE;
