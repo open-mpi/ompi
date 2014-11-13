@@ -47,6 +47,10 @@ static ompi_errcode_intern_t ompi_err_request;
 static ompi_errcode_intern_t ompi_err_buffer;
 static ompi_errcode_intern_t ompi_err_rma_sync;
 static ompi_errcode_intern_t ompi_err_rma_shared;
+static ompi_errcode_intern_t ompi_err_rma_attach;
+static ompi_errcode_intern_t ompi_err_rma_range;
+static ompi_errcode_intern_t ompi_err_rma_conflict;
+static ompi_errcode_intern_t ompi_err_win;
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
@@ -210,6 +214,38 @@ int ompi_errcode_intern_init (void)
     opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_shared.index,
                                 &ompi_err_rma_shared);
 
+    OBJ_CONSTRUCT(&ompi_err_rma_attach, ompi_errcode_intern_t);
+    ompi_err_rma_attach.code = OMPI_ERR_RMA_ATTACH;
+    ompi_err_rma_attach.mpi_code = MPI_ERR_RMA_ATTACH;
+    ompi_err_rma_attach.index = pos++;
+    strncpy(ompi_err_rma_attach.errstring, "OMPI_ERR_RMA_ATTACH", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_attach.index,
+                                &ompi_err_rma_attach);
+
+    OBJ_CONSTRUCT(&ompi_err_rma_range, ompi_errcode_intern_t);
+    ompi_err_rma_range.code = OMPI_ERR_RMA_RANGE;
+    ompi_err_rma_range.mpi_code = MPI_ERR_RMA_RANGE;
+    ompi_err_rma_range.index = pos++;
+    strncpy(ompi_err_rma_range.errstring, "OMPI_ERR_RMA_RANGE", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_range.index,
+                                &ompi_err_rma_range);
+
+    OBJ_CONSTRUCT(&ompi_err_rma_conflict, ompi_errcode_intern_t);
+    ompi_err_rma_conflict.code = OMPI_ERR_RMA_CONFLICT;
+    ompi_err_rma_conflict.mpi_code = MPI_ERR_RMA_CONFLICT;
+    ompi_err_rma_conflict.index = pos++;
+    strncpy(ompi_err_rma_conflict.errstring, "OMPI_ERR_RMA_CONFLICT", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_conflict.index,
+                                &ompi_err_rma_conflict);
+
+    OBJ_CONSTRUCT(&ompi_err_win, ompi_errcode_intern_t);
+    ompi_err_win.code = OMPI_ERR_WIN;
+    ompi_err_win.mpi_code = MPI_ERR_WIN;
+    ompi_err_win.index = pos++;
+    strncpy(ompi_err_win.errstring, "OMPI_ERR_WIN", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_win.index,
+                                &ompi_err_win);
+
     ompi_errcode_intern_lastused=pos;
     return OMPI_SUCCESS;
 }
@@ -235,6 +271,10 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_request);
     OBJ_DESTRUCT(&ompi_err_rma_sync);
     OBJ_DESTRUCT(&ompi_err_rma_shared);
+    OBJ_DESTRUCT(&ompi_err_rma_attach);
+    OBJ_DESTRUCT(&ompi_err_rma_range);
+    OBJ_DESTRUCT(&ompi_err_rma_conflict);
+    OBJ_DESTRUCT(&ompi_err_win);
 
     OBJ_DESTRUCT(&ompi_errcodes_intern);
     return OMPI_SUCCESS;
