@@ -816,7 +816,7 @@ static void pmix_server_release(int status,
         proc_peer = orte_get_proc_object(&peer->name);
         /* check if peer has an access to the shared memory dstore segment.
          * If not, just send a reply with all data. */
-        if (!ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
+        if (NULL == proc_peer || !ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
             OBJ_RETAIN(reply);
             PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);
         } else {
