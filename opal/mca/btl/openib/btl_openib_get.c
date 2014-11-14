@@ -77,6 +77,8 @@ int mca_btl_openib_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
     /* set up descriptor */
     frag->sr_desc.wr.rdma.remote_addr = remote_address;
+    /* the opcode may have been changed by an atomic operation */
+    frag->sr_desc.opcode = IBV_WR_RDMA_READ;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if((ep->endpoint_proc->proc_opal->proc_arch & OPAL_ARCH_ISBIGENDIAN)

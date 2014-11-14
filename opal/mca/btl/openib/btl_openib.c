@@ -115,6 +115,10 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         .btl_ft_event = mca_btl_openib_ft_event,
         .btl_register_mem = mca_btl_openib_register_mem,
         .btl_deregister_mem = mca_btl_openib_deregister_mem,
+#if HAVE_DECL_IBV_ATOMIC_HCA
+        .btl_atomic_fop = mca_btl_openib_atomic_fop,
+        .btl_atomic_cswap = mca_btl_openib_atomic_cswap,
+#endif
     }
 };
 
@@ -954,6 +958,12 @@ int mca_btl_openib_add_procs(
         return rc;
     }
 
+    rc = mca_btl_openib_size_queues(openib_btl, nprocs);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("error creating cqs"));
+        return rc;
+    }
+
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
         mca_btl_openib_proc_t* ib_proc;
@@ -965,11 +975,6 @@ int mca_btl_openib_add_procs(
             local_procs ++;
         }
 
-        /* OOB, XOOB, and RDMACM do not support SELF comunication, so
-         * mark the prco as unreachable by openib btl  */
-        if (0 == opal_compare_proc(OPAL_PROC_MY_NAME, proc->proc_name)) {
-            continue;
-        }
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
         /* Most current iWARP adapters (June 2008) cannot handle
            talking to other processes on the same host (!) -- so mark
@@ -1139,7 +1144,7 @@ int mca_btl_openib_add_procs(
         return OPAL_ERROR;
     }
 
-    return mca_btl_openib_size_queues(openib_btl, nprocs);
+    return OPAL_SUCCESS;
 }
 
 /*

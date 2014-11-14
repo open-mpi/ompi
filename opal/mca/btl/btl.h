@@ -282,6 +282,8 @@ enum {
     MCA_BTL_ATOMIC_SUPPORTS_XOR    = 0x00000800,
     /** The btl supports atomic compare-and-swap */
     MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x10000000,
+    /** The btl guarantees global atomicity (can mix btl atomics with cpu atomics) */
+    MCA_BTL_ATOMIC_SUPPORTS_GLOB   = 0x20000000,
 };
 
 enum mca_btl_base_atomic_op_t {
