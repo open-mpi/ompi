@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -412,8 +412,8 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
        Early blocks are at most 1 element larger than the late ones.
     */
     COLL_TUNED_COMPUTE_BLOCKCOUNT( count, size, split_rank, 
-                                   early_segcount, late_segcount )
-        max_segcount = early_segcount;
+                                   early_segcount, late_segcount );
+    max_segcount = early_segcount;
     max_real_segsize = true_extent + (max_segcount - 1) * extent;
 
 
@@ -698,10 +698,10 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
        out of the largest one will have max_segcount elements.
     */
     COLL_TUNED_COMPUTE_BLOCKCOUNT( count, size, split_rank, 
-                                   early_blockcount, late_blockcount )
-        COLL_TUNED_COMPUTE_BLOCKCOUNT( early_blockcount, num_phases, inbi,
-                                       max_segcount, k)
-        max_real_segsize = true_extent + (ptrdiff_t)(max_segcount - 1) * extent;
+                                   early_blockcount, late_blockcount );
+    COLL_TUNED_COMPUTE_BLOCKCOUNT( early_blockcount, num_phases, inbi,
+                                   max_segcount, k);
+    max_real_segsize = true_extent + (ptrdiff_t)(max_segcount - 1) * extent;
 
     /* Allocate and initialize temporary buffers */
     inbuf[0] = (char*)malloc(max_real_segsize);

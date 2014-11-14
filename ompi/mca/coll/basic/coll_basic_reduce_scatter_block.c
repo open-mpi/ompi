@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -85,7 +85,7 @@ mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
         /* temporary receive buffer.  See coll_basic_reduce.c for
            details on sizing */
         recv_buf_free = (char*) malloc(buf_size);
-        recv_buf = recv_buf_free - lb;
+        recv_buf = recv_buf_free - true_lb;
         if (NULL == recv_buf_free) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup;

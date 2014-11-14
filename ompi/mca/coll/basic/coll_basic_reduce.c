@@ -81,8 +81,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      * in the layout pattern in the datatype.
      *
      * For example, consider the following buffer (just talking about
-     * LB, extent, and true extent -- extrapolate for UB; i.e., assume
-     * the UB equals exactly where the data ends):
+     * true_lb, extent, and true extent -- extrapolate for true_ub:
      *
      * A              B                                       C
      * --------------------------------------------------------
@@ -96,7 +95,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      *
      * - extent: C-A
      * - true extent: C-A
-     * - LB: 0
+     * - true_lb: 0
      *
      * A                                                      C
      * --------------------------------------------------------
@@ -110,7 +109,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      *
      * - extent: C-A
      * - true extent: C-B
-     * - LB: positive
+     * - true_lb: positive
      *
      * A              B                                       C
      * --------------------------------------------------------
@@ -124,7 +123,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      *
      * - extent: C-A
      * - true extent: C-A
-     * - LB: negative
+     * - true_lb: negative
      *
      * A              B                                       C
      * --------------------------------------------------------
@@ -139,7 +138,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      *
      * - extent: C-MPI_BOTTOM
      * - true extent: C-B
-     * - LB: [potentially very large] positive
+     * - true_lb: [potentially very large] positive
      *
      * MPI_BOTTOM     B                                       C
      * --------------------------------------------------------
@@ -165,19 +164,19 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      *
      * 2. If B is what we get back from malloc, but we give A to
      * MPI_Send, then the buffer range [A,B) represents "dead space"
-     * -- no data will be put there.  So it's safe to give B-LB to
-     * MPI_Send.  More specifically, the LB is positive, so B-LB is
+     * -- no data will be put there.  So it's safe to give B-true_lb to
+     * MPI_Send.  More specifically, the true_lb is positive, so B-true_lb is
      * actually A.
      *
      * 3. If A is what we get back from malloc, and B is what we give to
-     * MPI_Send, then the LB is negative, so A-LB will actually equal
+     * MPI_Send, then the true_lb is negative, so A-true_lb will actually equal
      * B.
      *
      * 4. Although this seems like the weirdest case, it's actually
      * quite similar to case #2 -- the pointer we give to MPI_Send is
      * smaller than the pointer we got back from malloc().
      *
-     * Hence, in all cases, we give (return_from_malloc - LB) to MPI_Send.
+     * Hence, in all cases, we give (return_from_malloc - true_lb) to MPI_Send.
      *
      * This works fine and dandy if we only have (count==1), which we
      * rarely do.  ;-) So we really need to allocate (true_extent +
@@ -197,7 +196,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        rbuf = inplace_temp - lb;
+        rbuf = inplace_temp - true_lb;
     }
 
     if (size > 1) {
@@ -208,7 +207,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
             }
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = free_buffer - lb;
+        pml_buffer = free_buffer - true_lb;
     }
 
     /* Initialize the receive buffer. */
@@ -361,7 +360,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    pml_buffer = free_buffer - lb;
+    pml_buffer = free_buffer - true_lb;
     /* read the comment about commutative operations (few lines down
      * the page) */
     if (ompi_op_is_commute(op)) {
@@ -377,7 +376,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
-        sbuf = inplace_temp - lb;
+        sbuf = inplace_temp - true_lb;
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
     }
     snd_buffer = (char*)sbuf;
@@ -391,7 +390,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
-        rbuf = free_rbuf - lb;
+        rbuf = free_rbuf - true_lb;
     }
 
     /* Loop over cube dimensions. High processes send to low ones in the
@@ -546,7 +545,7 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = free_buffer - lb;
+        pml_buffer = free_buffer - true_lb;
 
 
         /* Initialize the receive buffer. */

@@ -656,7 +656,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        rbuf = inplace_temp - lb;
+        rbuf = inplace_temp - true_lb;
     }
 
     if (size > 1) {
@@ -665,7 +665,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-        pml_buffer = free_buffer - lb;
+        pml_buffer = free_buffer - true_lb;
     }
 
     /* Initialize the receive buffer. */

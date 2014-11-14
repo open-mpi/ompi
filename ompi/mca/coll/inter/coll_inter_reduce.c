@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -64,7 +64,7 @@ mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
 	if (NULL == free_buffer) {
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
-	pml_buffer = free_buffer - lb;
+	pml_buffer = free_buffer - true_lb;
 
 	err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
 						     dtype, op, 0, comm->c_local_comm,

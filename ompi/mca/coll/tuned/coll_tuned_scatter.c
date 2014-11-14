@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -100,7 +100,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
                 err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
 
-            ptmp = tempbuf - slb;
+            ptmp = tempbuf - strue_lb;
 
             /* and rotate data so they will eventually in the right place */
             err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)(size - root),
@@ -128,7 +128,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
 
-        ptmp = tempbuf - rlb;
+        ptmp = tempbuf - rtrue_lb;
 
         sdtype = rdtype;
         scount = rcount;
