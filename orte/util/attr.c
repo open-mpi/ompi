@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -337,6 +339,14 @@ static int orte_attr_load(orte_attribute_t *kv,
         kv->data.ptr = data;
         break;
 
+    case OPAL_VPID:
+        kv->data.vpid = *(orte_vpid_t *)data;
+        break;
+
+    case OPAL_JOBID:
+        kv->data.jobid = *(orte_jobid_t *)data;
+        break;
+
     default:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         return OPAL_ERR_NOT_SUPPORTED;
@@ -438,6 +448,14 @@ static int orte_attr_unload(orte_attribute_t *kv,
 
     case OPAL_PTR:
         *data = kv->data.ptr;
+        break;
+
+    case OPAL_VPID:
+        memcpy(*data, &kv->data.vpid, sizeof(orte_vpid_t));
+        break;
+
+    case OPAL_JOBID:
+        memcpy(*data, &kv->data.jobid, sizeof(orte_jobid_t));
         break;
 
     default:
