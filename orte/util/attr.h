@@ -160,6 +160,8 @@ typedef uint16_t orte_proc_flags_t;
 
 #define ORTE_PROC_MAX_KEY   400
 
+#define ORTE_MAX_ATTR_KEY  1000
+
 
 /*** FLAG OPS ***/
 #define ORTE_FLAG_SET(p, f)         ((p)->flags |= (f))
