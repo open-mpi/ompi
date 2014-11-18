@@ -377,7 +377,7 @@ static int compare_nodes (opal_list_item_t **a, opal_list_item_t **b)
     }
 
     ldptr = &launchb;
-    if (!orte_get_attribute(&nodea->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
+    if (!orte_get_attribute(&nodeb->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
         return 0;
     }
 
