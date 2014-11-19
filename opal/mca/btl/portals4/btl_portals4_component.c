@@ -725,11 +725,11 @@ mca_btl_portals4_component_progress(void)
                 frag = ev.user_ptr;
                 tag = (unsigned char) (ev.hdr_data);
 
-                frag->base.des_local = seg;
+                frag->base.des_segments = seg;
                 seg[0].seg_addr.pval = ev.start;
                 seg[0].seg_len = ev.mlength;
 
-                frag->base.des_local_count = 1;
+                frag->base.des_segment_count = 1;
 
                 reg = mca_btl_base_active_message_trigger + tag;
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,

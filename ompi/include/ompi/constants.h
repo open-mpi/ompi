@@ -66,7 +66,11 @@ enum {
 
     OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1,
     OMPI_ERR_RMA_SYNC               = OMPI_ERR_BASE - 2,
-    OMPI_ERR_RMA_SHARED             = OMPI_ERR_BASE - 3
+    OMPI_ERR_RMA_SHARED             = OMPI_ERR_BASE - 3,
+    OMPI_ERR_RMA_ATTACH             = OMPI_ERR_BASE - 4,
+    OMPI_ERR_RMA_RANGE              = OMPI_ERR_BASE - 5,
+    OMPI_ERR_RMA_CONFLICT           = OMPI_ERR_BASE - 6,
+    OMPI_ERR_WIN                    = OMPI_ERR_BASE - 7,
 };
 
 #define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 100)

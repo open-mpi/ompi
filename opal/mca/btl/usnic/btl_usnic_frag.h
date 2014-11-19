@@ -297,7 +297,7 @@ typedef struct opal_btl_usnic_large_send_frag_t {
 /* Shortcut member macros.  Access uf_src_seg array instead of the descriptor's
  * des_src ptr to save a deref. */
 #define lsf_des_src       lsf_base.sf_base.uf_local_seg
-#define lsf_des_local_cnt lsf_base.sf_base.uf_base.des_local_count
+#define lsf_des_segments_cnt lsf_base.sf_base.uf_base.des_segment_count
 
 /**
  * small send fragment
@@ -471,7 +471,7 @@ opal_btl_usnic_frag_return(
         }
         lfrag->lsf_pack_on_the_fly = false;
 
-        if (2 == lfrag->lsf_des_local_cnt &&
+        if (2 == lfrag->lsf_des_segments_cnt &&
             NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
