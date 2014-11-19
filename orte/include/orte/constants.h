@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,7 +132,8 @@ enum {
     ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 42),
     ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 43),
     ORTE_ERR_NO_PATH_TO_TARGET              = (ORTE_ERR_BASE - 44),
-    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45)
+    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45),
+    ORTE_ERR_PEER_CLOSED                    = (ORTE_ERR_BASE - 46)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
