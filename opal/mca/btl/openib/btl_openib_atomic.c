@@ -12,6 +12,7 @@
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h"
+#include "btl_openib_xrc.h"
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
 
