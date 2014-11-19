@@ -363,10 +363,9 @@ static int do_child(orte_app_context_t* context,
                     orte_iof_base_io_conf_t opts)
 {
     int i, rc;
+    int app_alps_filedes[2],alps_app_filedes[2];
     sigset_t sigs;
-#if 0
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
-#endif
     char *param, *msg;
 
     if (orte_forward_job_control) {
@@ -437,19 +436,29 @@ static int do_child(orte_app_context_t* context,
 
     /* close all file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
-       the parent. - well we can't do this in the Cray/alps/gni launch
-       environment since there are several pipes between the apshepherd
-       daemon and the application ranks - and this means the orted's for
-       a mpirun launched Open MPI job - that need to be kept open to allos
-       for passing of RDMA credentials info from the apshepher process
-       to the app ranks.  So comment this section out for now.*/
-#if 0
+       the parent. Be careful to retain all of the pipe fd's set up
+       by the apshephered. These are needed for obtaining RDMA credentials,
+       synchronizing with aprun, etc. */
+
+    rc = alps_app_lli_pipes(app_alps_filedes,alps_app_filedes);
+    if (0 != rc) {
+        send_error_show_help(write_fd, 1, "help-orte-odls-alps.txt",
+                             "alps_app_lli_pipes",
+                             orte_process_info.nodename, context->app,
+                             __FILE__, __LINE__, rc);
+    }
+
     for(fd=3; fd<fdmax; fd++) {
+        if (fd == XTAPI_FD_IDENTITY) continue;
+        if (fd == XTAPI_FD_RESILIENCY) continue;
+        if ((fd == app_alps_filedes[0]) ||
+            (fd == app_alps_filedes[1]) ||
+            (fd == alps_app_filedes[0]) ||
+            (fd == alps_app_filedes[1])) continue;
         if (fd != opts.p_internal[1] && fd != write_fd) {
             close(fd);
         }
     }
-#endif
 
     
     if (context->argv == NULL) {

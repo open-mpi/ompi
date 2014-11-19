@@ -136,3 +136,12 @@ This is a warning only; your job will continue.
   Local host:        %s
   Application name:  %s
   Location:          %s:%d
+#
+[alps_app_lli_pipes]
+WARNING: Open MPI call to Alps alps_app_lli_pipes function failed.
+
+  Local host:        %s
+  Application name:  %s
+  Location:  %s:%d
+  Return Value: %d
+
