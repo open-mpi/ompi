@@ -190,6 +190,9 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_SEND            0x0001
 #define MCA_BTL_FLAGS_PUT             0x0002
 #define MCA_BTL_FLAGS_GET             0x0004
+/* btls that set the MCA_BTL_FLAGS_RDMA will always get added to the BML
+ * rdma_btls list. This allows the updated one-sided component to
+ * use btls that are not otherwise used for send/recv. */
 #define MCA_BTL_FLAGS_RDMA (MCA_BTL_FLAGS_GET|MCA_BTL_FLAGS_PUT)
 
 /* btl can send directly from user buffer w/out registration */
