@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -377,6 +379,7 @@ void mca_oob_usock_component_set_module(int fd, short args, void *cbdata)
 void mca_oob_usock_component_lost_connection(int fd, short args, void *cbdata)
 {
     mca_oob_usock_peer_op_t *pop = (mca_oob_usock_peer_op_t*)cbdata;
+    opal_object_t *peer;
     uint64_t ui64;
     int rc;
 
@@ -392,9 +395,17 @@ void mca_oob_usock_component_lost_connection(int fd, short args, void *cbdata)
      * worry about shifting to another component. Eventually, we will want to push
      * this decision to the OOB so it can try other components and eventually error out
      */
-    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
-                                                               ui64, NULL))) {
-        ORTE_ERROR_LOG(rc);
+    if (OPAL_SUCCESS == opal_hash_table_get_value_uint64(&orte_oob_base.peers, ui64, (void **)&peer)) {
+        if (NULL != peer) {
+            if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
+                                                                       ui64, NULL))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            /* FIXME
+             * release the peer to fix a memory leak in mpirun
+             */
+            OBJ_RELEASE(peer);
+        }
     }
 
     /* activate the proc state */

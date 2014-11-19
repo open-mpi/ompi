@@ -41,6 +41,7 @@
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
@@ -52,6 +53,8 @@
 
 /* need the data type support functions here */
 #include "orte/runtime/data_type_support/orte_dt_support.h"
+
+#include "orte/orted/pmix/pmix_server.h"
 
 /* State Machine */
 opal_list_t orte_job_states;
@@ -743,6 +746,23 @@ static void orte_job_destruct(orte_job_t* job)
             }
         }
     }
+    /* FIXME
+     * remove all orte_procs_t with this jobid from orte_local_children
+     * otherwise, they get removed when the program completes, and this
+     * can/should be seen as a memory leak
+     * and finally detach the pmix segment
+     */
+    if (NULL != orte_local_children) {
+        for (n=0; n < orte_local_children->size; n++) {
+            orte_proc_t *pdata;
+            if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, n)) &&
+                pdata->name.jobid == job->jobid) {
+                OBJ_RELEASE(pdata);
+                opal_pointer_array_set_item(orte_local_children, n, NULL);
+            }
+        }
+    }
+    pmix_server_detach_segment(job->jobid);
 }
 
 OBJ_CLASS_INSTANCE(orte_job_t,

@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -216,6 +218,23 @@ void mca_oob_usock_send_handler(int sd, short flags, void *cbdata)
                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                             ORTE_NAME_PRINT(&(peer->name)),
                                             msg->hdr.nbytes, peer->sd);
+                        
+                        /* FIXME
+                         * the destructor will explictly not free msg->msg,
+                         * but it has to be freed here ...
+                         */
+                        if (1 == msg->super.super.obj_reference_count) {
+                            if (NULL != msg->msg) {
+                               /* FIXME
+                                * there is no destructor for msg->msg, so manually free the data
+                                */
+                               if (NULL != msg->msg->data) {
+                                   free(msg->msg->data);
+                               }
+                               OBJ_RELEASE(msg->msg);
+                            }
+                            msg->msg = NULL;
+                        }
                         OBJ_RELEASE(msg);
                         peer->send_msg = NULL;
                     } else {

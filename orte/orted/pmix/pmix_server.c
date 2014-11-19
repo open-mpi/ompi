@@ -159,6 +159,31 @@ static opal_dstore_attr_t *pmix_sm_attach(uint32_t jobid, char *seg_info)
     return (OPAL_SUCCESS == rc) ? attr : NULL;
 }
 
+/* FIXME
+ * this is still incomplete since :
+ * the file is not removed
+ * the segment is very likely still mmap'ed
+ */
+int pmix_server_detach_segment(orte_jobid_t jobid)
+{
+    int rc = OPAL_SUCCESS;
+    bool found = false;
+    opal_dstore_attr_t *attr, *next;
+    if (0 != opal_list_get_size(&meta_segments)) {
+        OPAL_LIST_FOREACH_SAFE(attr, next, &meta_segments, opal_dstore_attr_t) {
+            if (jobid == attr->jobid) {
+                found = true;
+                opal_list_remove_item(&meta_segments, &attr->super);
+                OBJ_RELEASE(attr);
+            }
+        }
+    }
+    if (found) {
+        rc = opal_dstore.update(opal_dstore_modex, &meta_segments);
+    }
+    return rc;
+}
+
 opal_dstore_attr_t *pmix_server_create_shared_segment(orte_jobid_t jid)
 {
     int rc;
@@ -815,7 +840,7 @@ static void pmix_server_release(int status,
         proc_peer = orte_get_proc_object(&peer->name);
         /* check if peer has an access to the shared memory dstore segment.
          * If not, just send a reply with all data. */
-        if (NULL == proc_peer || !ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
+        if (!ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
             OBJ_RETAIN(reply);
             PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);
         } else {
