@@ -307,8 +307,10 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+        free(msg);
         return ORTE_ERR_UNREACH;
     }
+    free(msg);
     return ORTE_SUCCESS;
 }
 

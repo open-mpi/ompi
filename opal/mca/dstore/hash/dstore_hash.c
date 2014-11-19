@@ -116,7 +116,7 @@ static int store(struct opal_dstore_base_module_t *imod,
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(*id));
 
     /* lookup the proc data object for this proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, true))) {
         /* unrecoverable error */
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                              "%s dstore:hash:store: storing data for proc %s unrecoverably failed",
@@ -169,7 +169,7 @@ static int fetch(struct opal_dstore_base_module_t *imod,
                          (NULL == key) ? "NULL" : key, OPAL_NAME_PRINT(*id)));
 
     /* lookup the proc data object for this proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, true))) {
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                              "%s dstore_hash:fetch data for proc %s not found",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -228,7 +228,7 @@ static int remove_data(struct opal_dstore_base_module_t *imod,
     mod = (mca_dstore_hash_module_t*)imod;
 
     /* lookup the specified proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, false))) {
         /* no data for this proc */
         return OPAL_SUCCESS;
     }

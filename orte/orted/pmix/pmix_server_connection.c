@@ -120,8 +120,10 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+        free(msg);
         return ORTE_ERR_UNREACH;
     }
+    free(msg);
     return ORTE_SUCCESS;
 }
 

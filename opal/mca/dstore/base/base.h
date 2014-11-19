@@ -120,7 +120,7 @@ OPAL_DECLSPEC int opal_dstore_base_get_handle(int dstorehandle, void **dhdl);
 
 /* support */
 OPAL_DECLSPEC opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_proc_table_t *jtable,
-                                                                    opal_process_name_t id);
+                                                                    opal_process_name_t id, bool create);
 
 OPAL_DECLSPEC opal_value_t* opal_dstore_base_lookup_keyval(opal_dstore_proc_data_t *proc_data,
                                                            const char *key);

@@ -91,6 +91,9 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
     if(NULL != tcp_proc->proc_endpoints) {
         free(tcp_proc->proc_endpoints);
     }
+    if(NULL != tcp_proc->proc_addrs) {
+        free(tcp_proc->proc_addrs);
+    }
     OBJ_DESTRUCT(&tcp_proc->proc_lock);
 }
 

@@ -891,6 +891,7 @@ int opal_proc_table_remove_all(opal_proc_table_t *pt) {
         do {
             if (NULL != vpids) {
                 opal_hash_table_remove_all(vpids);
+                OBJ_RELEASE(vpids);
             }
             rc = opal_hash_table_get_next_key_uint32 (&pt->super, &jobid,
                                                (void **) &vpids, node, &node);
@@ -940,7 +941,12 @@ int opal_proc_table_remove_value(opal_proc_table_t* pt, opal_process_name_t key)
     if (OPAL_SUCCESS != (rc=opal_hash_table_get_value_uint32(&pt->super, key.jobid, (void **)&vpids))) {
         return rc;
     }
-    rc = opal_hash_table_remove_value_uint32(vpids, key.vpid);
+    if (OPAL_SUCCESS == (rc=opal_hash_table_remove_value_uint32(vpids, key.vpid))) {
+        if (0 == vpids->ht_size) {
+            opal_hash_table_remove_value_uint32(&pt->super, key.jobid);
+            OBJ_RELEASE(vpids);
+        }
+    }
     return rc;
 }
 

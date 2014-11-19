@@ -256,13 +256,12 @@ opal_value_t* opal_dstore_base_lookup_keyval(opal_dstore_proc_data_t *proc_data,
  * opal_process_name_t.
  */
 opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_proc_table_t *ptable,
-                                                      opal_process_name_t id)
+                                                      opal_process_name_t id, bool create)
 {
     opal_dstore_proc_data_t *proc_data = NULL;
 
     opal_proc_table_get_value(ptable, id, (void**)&proc_data);
-    if (NULL == proc_data) {
-        /* The proc clearly exists, so create a data structure for it */
+    if (NULL == proc_data && create) {
         proc_data = OBJ_NEW(opal_dstore_proc_data_t);
         if (NULL == proc_data) {
             opal_output(0, "dstore:hash:lookup_opal_proc: unable to allocate proc_data_t\n");

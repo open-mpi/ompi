@@ -6,6 +6,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -362,8 +364,11 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                  */
                 if (ORTE_PROC_IS_HNP) {
                     /* no need - already have the info */
-                    if (NULL != bo->bytes) {
-                        free(bo->bytes);
+                    if (NULL != bo) {
+                        if (NULL != bo->bytes) {
+                            free(bo->bytes);
+                        }
+                        free(bo);
                     }
                 } else {
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -409,6 +414,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     /* done with the wireup buffer - dump it */
                     OBJ_DESTRUCT(&wireup);
                 }
+                free(bo);
                 /* copy the remainder of the payload */
                 opal_dss.copy_payload(relay, buffer);
             }
@@ -430,6 +436,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:direct:send_relay - recipient list is empty!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_RELEASE(rly);
         goto CLEANUP;
     }
     

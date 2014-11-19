@@ -389,7 +389,6 @@ void pmix_server_finalize(void)
             NULL != item;
             item = opal_list_remove_first(&meta_segments)) {
         attr = (opal_dstore_attr_t*) item;
-        free(attr->connection_info);
         OBJ_RELEASE(attr);
     }
     OPAL_LIST_DESTRUCT(&meta_segments);

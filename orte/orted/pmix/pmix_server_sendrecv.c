@@ -310,7 +310,7 @@ static int read_bytes(pmix_server_peer_t* peer)
             //if (NULL != pmix_server.oob_exception_callback) {
             //   pmix_server.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
             //}
-            return ORTE_ERR_WOULD_BLOCK;
+            return ORTE_ERR_PEER_CLOSED;
         }
         /* we were able to read something, so adjust counters and location */
         peer->recv_msg->rdbytes -= rc;
@@ -486,15 +486,18 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
                 /* add the name of the proc */
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &pptr->name, 1, OPAL_NAME))) {
                     ORTE_ERROR_LOG(rc);
+                    free(tmp);
                     opal_argv_free(list);
                     return rc;
                 }
                 /* add its cpuset */
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &tmp, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
+                    free(tmp);
                     opal_argv_free(list);
                     return rc;
                 }
+                free(tmp);
             }
         }
     }
@@ -1095,6 +1098,7 @@ static void process_message(pmix_server_peer_t *peer)
         orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, reply,
                                 ORTE_RML_TAG_DAEMON_COLL,
                                 orte_rml_send_callback, NULL);
+        OBJ_DESTRUCT(&xfer);
         return;
     reply_fence:
         if (PMIX_FENCE_CMD == cmd) {
@@ -1156,6 +1160,7 @@ static void process_message(pmix_server_peer_t *peer)
             /* pack the error status */
             if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&xfer);
                 OBJ_RELEASE(reply);
                 return;
             }
@@ -1163,10 +1168,12 @@ static void process_message(pmix_server_peer_t *peer)
             rc = pack_segment_info(idreq, reply);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&xfer);
                 OBJ_RELEASE(reply);
                 return;
             }
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
+            OBJ_DESTRUCT(&xfer);
             return;
         }
         /* if we have not yet received data for this proc, then we just
@@ -1201,10 +1208,12 @@ static void process_message(pmix_server_peer_t *peer)
                         ret = ORTE_ERR_NOT_FOUND;
                         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                             ORTE_ERROR_LOG(rc);
+                            OBJ_DESTRUCT(&xfer);
                             OBJ_RELEASE(reply);
                             return;
                         }
                         PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
+                        OBJ_DESTRUCT(&xfer);
                         return;
                     }
                     /* setup the request */
@@ -1212,6 +1221,7 @@ static void process_message(pmix_server_peer_t *peer)
                     /* pack the proc we want info about */
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
                         ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&xfer);
                         return;
                     }
                     /* send the request - the recv will come back elsewhere
@@ -1222,6 +1232,7 @@ static void process_message(pmix_server_peer_t *peer)
                 }
             }
             /* nothing further to do as we are waiting for data */
+            OBJ_DESTRUCT(&xfer);
             return;
         }
 
