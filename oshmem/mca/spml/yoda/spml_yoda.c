@@ -414,7 +414,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         mkeys[i].spml_context = yoda_context;
 
         yoda_context->registration = NULL;
-        if (NULL != ybtl->btl->btl_prepare_src) {
+        if (ybtl->btl->btl_flags & MCA_BTL_FLAGS_RDMA) {
 
             /* initialize convertor for source descriptor*/
             opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
