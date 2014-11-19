@@ -189,6 +189,11 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                         "%s usock:send_handler BODY SENT",
                                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                    /* FIXME
+                     * should this be freed in msg destructor
+                     * (that does not exist yet ...)
+                     */
+                    free(msg->data);
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
                     goto next;
