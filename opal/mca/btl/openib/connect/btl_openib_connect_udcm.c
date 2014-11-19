@@ -521,30 +521,33 @@ static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
 
     opal_mutex_lock (&udep->udep_lock);
     do {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        rc = udcm_xrc_recv_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num);
+#else
+        lcl_ep->xrc_recv_qp_num = lcl_ep->qps[0].qp->lcl_qp->qp_num;
         rc = udcm_xrc_recv_qp_connect (lcl_ep);
-        if (OMPI_SUCCESS != rc) {
+#endif
+        if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("error connecting loopback XRC receive queue pair"));
             break;
         }
 
-        lcl_ep->xrc_recv_qp_num = lcl_ep->qps[0].qp->lcl_qp->qp_num;
-
         rc = mca_btl_openib_endpoint_post_recvs (lcl_ep);
-        if (OMPI_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("error posting receives for loopback queue pair"));
             break;
         }
 
         rc = udcm_xrc_recv_qp_create (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
                                       lcl_ep->qps[0].qp->lcl_psn);
-        if (OMPI_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("error creating loopback XRC receive queue pair"));
             break;
         }
 
         rc = udcm_xrc_send_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
                                        lcl_ep->qps[0].qp->lcl_psn);
-        if (OMPI_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("error creating loopback XRC send queue pair"));
             break;
         }
