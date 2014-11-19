@@ -34,29 +34,49 @@ int opal_dstore_base_open(const char *name, char* desired_components, opal_list_
     int i;
     mca_base_component_list_item_t* cli;
     char** tokens;
-    tokens = opal_argv_split(desired_components, ',');
-    for (i = 0; NULL != tokens[i]; i++) {
-        OPAL_LIST_FOREACH(cli, &opal_dstore_base.available_components, mca_base_component_list_item_t) {
-            if (0 == strncmp(tokens[i], cli->cli_component->mca_component_name, strlen(tokens[i]))) {
-                if (NULL != ((opal_dstore_base_component_t*)cli->cli_component)->create_handle && NULL != (mod = ((opal_dstore_base_component_t*)cli->cli_component)->create_handle(attrs))) {
-                    /* have our module, so create a new dstore_handle */
-                    hdl = OBJ_NEW(opal_dstore_handle_t);
-                    if (NULL != name) {
-                        hdl->name = strdup(name);
+
+    if (NULL != desired_components) {
+        tokens = opal_argv_split(desired_components, ',');
+        for (i = 0; NULL != tokens[i]; i++) {
+            OPAL_LIST_FOREACH(cli, &opal_dstore_base.available_components, mca_base_component_list_item_t) {
+                if (0 == strncmp(tokens[i], cli->cli_component->mca_component_name, strlen(tokens[i]))) {
+                    if (NULL != ((opal_dstore_base_component_t*)cli->cli_component)->create_handle && NULL != (mod = ((opal_dstore_base_component_t*)cli->cli_component)->create_handle(attrs))) {
+                        /* have our module, so create a new dstore_handle */
+                        hdl = OBJ_NEW(opal_dstore_handle_t);
+                        if (NULL != name) {
+                            hdl->name = strdup(name);
+                        }
+                        hdl->module = mod;
+                        hdl->storage_component = (opal_dstore_base_component_t*)cli->cli_component;
+                        if (0 > (index = opal_pointer_array_add(&opal_dstore_base.handles, hdl))) {
+                            OPAL_ERROR_LOG(index);
+                            OBJ_RELEASE(hdl);
+                        }
+                        opal_argv_free(tokens);
+                        return index;
                     }
-                    hdl->module = mod;
-                    hdl->storage_component = (opal_dstore_base_component_t*)cli->cli_component;
-                    if (0 > (index = opal_pointer_array_add(&opal_dstore_base.handles, hdl))) {
-                        OPAL_ERROR_LOG(index);
-                        OBJ_RELEASE(hdl);
-                    }
-                    opal_argv_free(tokens);
-                    return index;
                 }
             }
         }
+        opal_argv_free(tokens);
+    } else {
+        OPAL_LIST_FOREACH(cli, &opal_dstore_base.available_components, mca_base_component_list_item_t) {
+            if (NULL != ((opal_dstore_base_component_t*)cli->cli_component)->create_handle && NULL != (mod = ((opal_dstore_base_component_t*)cli->cli_component)->create_handle(attrs))) {
+                /* have our module, so create a new dstore_handle */
+                hdl = OBJ_NEW(opal_dstore_handle_t);
+                if (NULL != name) {
+                    hdl->name = strdup(name);
+                }
+                hdl->module = mod;
+                hdl->storage_component = (opal_dstore_base_component_t*)cli->cli_component;
+                if (0 > (index = opal_pointer_array_add(&opal_dstore_base.handles, hdl))) {
+                    OPAL_ERROR_LOG(index);
+                    OBJ_RELEASE(hdl);
+                }
+                return index;
+            }
+        }
     }
-    opal_argv_free(tokens);
 
     /* if we get here, then we were unable to create a module
      * for this scope
