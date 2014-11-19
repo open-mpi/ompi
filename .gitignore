@@ -16,6 +16,7 @@
 *.rej
 *.class
 *.xcscheme
+*.out
 *.plist
 *~
 Makefile
