@@ -53,6 +53,10 @@ int opal_dstore_base_open(const char *name, char* desired_components, opal_list_
                             OBJ_RELEASE(hdl);
                         }
                         opal_argv_free(tokens);
+                        opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                                            "Created handle for %s dstore to component %s",
+                                            (NULL == hdl->name) ? "NULL" : hdl->name,
+                                            cli->cli_component->mca_component_name);
                         return index;
                     }
                 }
@@ -73,6 +77,10 @@ int opal_dstore_base_open(const char *name, char* desired_components, opal_list_
                     OPAL_ERROR_LOG(index);
                     OBJ_RELEASE(hdl);
                 }
+                opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                                    "Created handle for %s dstore to component %s",
+                                    (NULL == hdl->name) ? "NULL" : hdl->name,
+                                    cli->cli_component->mca_component_name);
                 return index;
             }
         }
