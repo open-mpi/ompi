@@ -31,6 +31,7 @@
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h"
+#include "btl_openib_xrc.h"
 
 /*
  * RDMA WRITE local buffer to remote buffer address.
