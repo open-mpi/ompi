@@ -91,7 +91,7 @@ static void mca_bml_base_completion(
 {
     mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) des->des_cbdata;
     /* restore original state */
-    ((unsigned char*)des->des_local[0].seg_addr.pval)[ctx->index] ^= ~0;
+    ((unsigned char*)des->des_segments[0].seg_addr.pval)[ctx->index] ^= ~0;
     des->des_cbdata = ctx->cbdata;
     des->des_cbfunc = ctx->cbfunc;
     free(ctx);
@@ -121,11 +121,11 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
                 opal_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
-                ctx->index = (size_t) ((des->des_local[0].seg_len *
+                ctx->index = (size_t) ((des->des_segments[0].seg_len *
                             opal_rand(&mca_bml_base_rand_buff) * 1.0) / (UINT32_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
-                ((unsigned char*)des->des_local[0].seg_addr.pval)[ctx->index] ^= ~0;
+                ((unsigned char*)des->des_segments[0].seg_addr.pval)[ctx->index] ^= ~0;
                 des->des_cbdata = ctx;
                 des->des_cbfunc = mca_bml_base_completion;
             }
