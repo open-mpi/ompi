@@ -284,8 +284,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
             segment.seg_addr.pval = fip->rfi_data;
             segment.seg_len = fip->rfi_frag_size;
-            desc.des_segments = &segment;
-            desc.des_segment_count = 1;
+            desc.des_local = &segment;
+            desc.des_local_count = 1;
 
             /* only up to PML if this was not a put */
             if (chunk_hdr->ch_hdr.put_addr == NULL) {
@@ -293,8 +293,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
                 opal_output(0, "large recv complete, pass up %p, %u bytes, tag=%d\n",
-                        desc.des_segments->seg_addr.pval,
-                        (unsigned)desc.des_segments->seg_len,
+                        desc.des_local->seg_addr.pval,
+                        (unsigned)desc.des_local->seg_len,
                         (int)chunk_hdr->ch_hdr.tag);
 #endif
                 reg = mca_btl_base_active_message_trigger +

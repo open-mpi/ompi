@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -308,30 +307,27 @@ static inline int  mca_bml_base_sendi( mca_bml_base_btl_t* bml_btl,
                           payload_size, order, flags, tag, descriptor);
 }
 
-static inline int mca_bml_base_put( mca_bml_base_btl_t* bml_btl, void *local_address, uint64_t remote_address,
-                                    struct mca_btl_base_registration_handle_t *local_handle,
-                                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
-                                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
+static inline int mca_bml_base_put( mca_bml_base_btl_t* bml_btl,
+                                    mca_btl_base_descriptor_t* des)
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    return btl->btl_put( btl, bml_btl->btl_endpoint, local_address, remote_address, local_handle,
-                         remote_handle, size, flags, order, cbfunc, (void *) bml_btl, cbdata);
+    des->des_context = (void*) bml_btl; 
+    return btl->btl_put( btl, bml_btl->btl_endpoint, des );
 }
 
-static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl, void *local_address, uint64_t remote_address,
-                                    struct mca_btl_base_registration_handle_t *local_handle,
-                                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
-                                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbdata)
+static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl,
+                                    mca_btl_base_descriptor_t* des)
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    return btl->btl_get( btl, bml_btl->btl_endpoint, local_address, remote_address, local_handle,
-                         remote_handle, size, flags, order, cbfunc, (void *) bml_btl, cbdata);
+    des->des_context = (void*) bml_btl; 
+    return btl->btl_get( btl, bml_btl->btl_endpoint, des );
 }
 
 
 static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
+                                            mca_mpool_base_registration_t* reg, 
                                             struct opal_convertor_t* conv, 
                                             uint8_t order,
                                             size_t reserve, 
@@ -341,27 +337,29 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    *des = btl->btl_prepare_src( btl, bml_btl->btl_endpoint, conv,
+    *des = btl->btl_prepare_src( btl, bml_btl->btl_endpoint, reg, conv,
                                  order, reserve, size, flags );
     if( OPAL_LIKELY((*des) != NULL) ) {
         (*des)->des_context = (void*) bml_btl;
     }
 }
 
-static inline void mca_bml_base_register_mem (mca_bml_base_btl_t* bml_btl, void *base,
-                                              size_t size, uint32_t flags,
-                                              mca_btl_base_registration_handle_t **handle)
-{
+static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl, 
+                                            mca_mpool_base_registration_t* reg, 
+                                            struct opal_convertor_t* conv, 
+                                            uint8_t order,
+                                            size_t reserve, 
+                                            size_t *size,
+                                            uint32_t flags,
+                                            mca_btl_base_descriptor_t** des)
+{ 
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    *handle =  btl->btl_register_mem (btl, bml_btl->btl_endpoint, base, size, flags);
-}
-
-static inline void mca_bml_base_deregister_mem (mca_bml_base_btl_t* bml_btl, mca_btl_base_registration_handle_t *handle)
-{
-    mca_btl_base_module_t* btl = bml_btl->btl;
-
-    btl->btl_deregister_mem (btl, handle);
+    *des = btl->btl_prepare_dst( btl, bml_btl->btl_endpoint, reg, conv,
+                                 order, reserve, size, flags );
+    if( OPAL_LIKELY((*des) != NULL) ) {
+        (*des)->des_context = (void*) bml_btl;
+    }
 }
 
 /*

@@ -691,7 +691,7 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
     mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
-    mca_btl_base_segment_t* segments = des->des_segments;
+    mca_btl_base_segment_t* segments = des->des_local;
 
     /* Use the rank of the peer that sent the data to get to the endpoint
      * structure.  This is needed for PML callback. */
@@ -1065,8 +1065,8 @@ int mca_btl_smcuda_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_smcuda_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_segment_count = 1;
-                Frag.base.des_segments = &seg;
+                Frag.base.des_local_count = 1;
+                Frag.base.des_local = &seg;
 #if OPAL_CUDA_SUPPORT
                 Frag.hdr = hdr;  /* needed for peer rank in control messages */
 #endif /* OPAL_CUDA_SUPPORT */

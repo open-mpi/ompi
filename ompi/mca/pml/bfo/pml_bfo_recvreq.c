@@ -246,7 +246,7 @@ int mca_pml_bfo_recv_request_ack_send_btl(
     }
 
     /* fill out header */
-    ack = (mca_pml_bfo_ack_hdr_t*)des->des_segments->seg_addr.pval;
+    ack = (mca_pml_bfo_ack_hdr_t*)des->des_local->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = nordma ? MCA_PML_BFO_HDR_FLAGS_NORDMA : 0;
     ack->hdr_src_req.lval = hdr_src_req;
@@ -851,7 +851,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
         dst->des_cbfunc = mca_pml_bfo_put_completion;
         dst->des_cbdata = recvreq;
 
-        seg_size = btl->btl_seg_size * dst->des_segment_count;
+        seg_size = btl->btl_seg_size * dst->des_local_count;
 
         /* prepare a descriptor for rdma control message */
         mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof(mca_pml_bfo_rdma_hdr_t) + seg_size,
@@ -867,7 +867,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
 #endif /* PML_BFO */
         
         /* fill in rdma header */
-        hdr = (mca_pml_bfo_rdma_hdr_t*)ctl->des_segments->seg_addr.pval;
+        hdr = (mca_pml_bfo_rdma_hdr_t*)ctl->des_local->seg_addr.pval;
         hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_PUT;
         hdr->hdr_common.hdr_flags =
             (!recvreq->req_ack_sent) ? MCA_PML_BFO_HDR_TYPE_ACK : 0;
@@ -877,10 +877,10 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
 #endif /* PML_BFO */
         hdr->hdr_des.pval = dst;
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
-        hdr->hdr_seg_cnt = dst->des_segment_count;
+        hdr->hdr_seg_cnt = dst->des_local_count;
 
         /* copy segments */
-        memmove (hdr + 1, dst->des_segments, seg_size);
+        memmove (hdr + 1, dst->des_local, seg_size);
 
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;

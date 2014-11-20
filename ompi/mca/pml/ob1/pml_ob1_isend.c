@@ -66,6 +66,7 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
                                            ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
                                            ompi_communicator_t * comm)
 {
+    mca_btl_base_descriptor_t *des = NULL;
     mca_pml_ob1_match_hdr_t match;
     mca_bml_base_btl_t *bml_btl;
     OPAL_PTRDIFF_TYPE lb, extent;
@@ -93,21 +94,28 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         opal_convertor_get_packed_size (&convertor, &size);
     }
 
-    mca_pml_ob1_match_hdr_prepare (&match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
-                                   comm->c_contextid, comm->c_my_rank,
-                                   tag, seqn);
+    match.hdr_common.hdr_flags = 0;
+    match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
+    match.hdr_ctx = comm->c_contextid;
+    match.hdr_src = comm->c_my_rank;
+    match.hdr_tag = tag;
+    match.hdr_seq = seqn;
 
     ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH, dst_proc);
 
     /* try to send immediately */
     rc = mca_bml_base_sendi (bml_btl, &convertor, &match, OMPI_PML_OB1_MATCH_HDR_LEN,
                              size, MCA_BTL_NO_ORDER, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
-                             MCA_PML_OB1_HDR_TYPE_MATCH, NULL);
+                             MCA_PML_OB1_HDR_TYPE_MATCH, &des);
     if (count > 0) {
         opal_convertor_cleanup (&convertor);
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        if (des) {
+            mca_bml_base_free (bml_btl, des);
+        }
+
 	return rc;
     }
 
@@ -212,7 +220,7 @@ int mca_pml_ob1_send(void *buf,
 
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
-    sendreq->rdma_frag = NULL;
+    sendreq->src_des = NULL;
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   buf,

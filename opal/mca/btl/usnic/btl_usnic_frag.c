@@ -139,8 +139,8 @@ recv_seg_constructor(
     bseg->us_sg_entry[0].addr = (unsigned long) seg->rs_protocol_header;
 
     /* initialize mca descriptor */
-    seg->rs_desc.des_segments = &seg->rs_segment;
-    seg->rs_desc.des_segment_count = 1;
+    seg->rs_desc.des_local = &seg->rs_segment;
+    seg->rs_desc.des_local_count = 1;
     seg->rs_desc.des_remote = NULL;
     seg->rs_desc.des_remote_count = 0;
 
@@ -161,10 +161,10 @@ send_frag_constructor(opal_btl_usnic_send_frag_t *frag)
 
     /* Fill in source descriptor */
     desc = &frag->sf_base.uf_base;
-    desc->des_segments = frag->sf_base.uf_local_seg;
+    desc->des_local = frag->sf_base.uf_local_seg;
     frag->sf_base.uf_local_seg[0].seg_len = 0;
     frag->sf_base.uf_local_seg[1].seg_len = 0;
-    desc->des_segment_count = 2;
+    desc->des_local_count = 2;
     desc->des_remote = frag->sf_base.uf_remote_seg;
     desc->des_remote_count = 0;
 
@@ -182,7 +182,7 @@ send_frag_destructor(opal_btl_usnic_send_frag_t *frag)
 
     /* make sure nobody twiddled these values after the constructor */
     desc = &frag->sf_base.uf_base;
-    assert(desc->des_segments == frag->sf_base.uf_local_seg);
+    assert(desc->des_local == frag->sf_base.uf_local_seg);
     assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
     /* PML may change desc->des_remote to point elsewhere, cannot assert that it
      * still points to our embedded segment */
@@ -245,15 +245,15 @@ put_dest_frag_constructor(opal_btl_usnic_put_dest_frag_t *pfrag)
     pfrag->uf_type = OPAL_BTL_USNIC_FRAG_PUT_DEST;
 
     /* point dest to our utility segment */
-    pfrag->uf_base.des_segments = pfrag->uf_remote_seg;
-    pfrag->uf_base.des_segment_count = 1;
+    pfrag->uf_base.des_local = pfrag->uf_remote_seg;
+    pfrag->uf_base.des_local_count = 1;
 }
 
 static void
 put_dest_frag_destructor(opal_btl_usnic_put_dest_frag_t *pfrag)
 {
-    assert(pfrag->uf_base.des_segments == pfrag->uf_remote_seg);
-    assert(1 == pfrag->uf_base.des_segment_count);
+    assert(pfrag->uf_base.des_local == pfrag->uf_remote_seg);
+    assert(1 == pfrag->uf_base.des_local_count);
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_segment_t,
