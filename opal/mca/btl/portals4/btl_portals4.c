@@ -183,7 +183,7 @@ mca_btl_portals4_alloc(struct mca_btl_base_module_t* btl_base,
     }
 
     frag->md_h = PTL_INVALID_HANDLE;
-    frag->base.des_segment_count = 1;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     frag->base.order = MCA_BTL_NO_ORDER;
 
@@ -272,7 +272,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
         }
 
         frag->segments[0].base.seg_len = max_data + reserve;
-        frag->base.des_segment_count = 1;
+        frag->base.des_local_count = 1;
 
     } else {
         /* no need to pack - rdma operation out of user's buffer */
@@ -302,7 +302,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
         frag->segments[0].base.seg_len = max_data;
         frag->segments[0].base.seg_addr.pval = iov.iov_base;
         frag->segments[0].key = OPAL_THREAD_ADD64(&(portals4_btl->portals_rdma_key), 1);
-        frag->base.des_segment_count = 1;
+        frag->base.des_local_count = 1;
 
         /* either a put or get.  figure out which later */
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
@@ -348,7 +348,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
               (void *)frag, frag->me_h, me.start, me.length,
               me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
     }
-    frag->base.des_segments = &frag->segments[0].base;
+    frag->base.des_local = &frag->segments[0].base;
     frag->base.des_remote = NULL;
     frag->base.des_remote_count = 0;
     frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
@@ -390,8 +390,8 @@ mca_btl_portals4_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->segments[0].key = OPAL_THREAD_ADD64(&(portals4_btl->portals_rdma_key), 1);
     frag->base.des_remote = NULL;
     frag->base.des_remote_count = 0;
-    frag->base.des_segments = &frag->segments[0].base;
-    frag->base.des_segment_count = 1;
+    frag->base.des_local = &frag->segments[0].base;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->md_h = PTL_INVALID_HANDLE;

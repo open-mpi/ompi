@@ -217,22 +217,32 @@ extern int mca_btl_tcp_send(
 
 /**
  * Initiate an asynchronous put.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
  */
 
-int mca_btl_tcp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-		     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-		     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-		     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+extern int mca_btl_tcp_put(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* btl_peer,
+    struct mca_btl_base_descriptor_t* decriptor
+);
 
 
 /**
  * Initiate an asynchronous get.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
  */
 
-int mca_btl_tcp_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-		     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-		     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-		     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+extern int mca_btl_tcp_get(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* btl_peer,
+    struct mca_btl_base_descriptor_t* decriptor
+);
 
 /**
  * Allocate a descriptor with a segment of the requested size.
@@ -280,12 +290,23 @@ extern int mca_btl_tcp_free(
 mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
+    struct mca_mpool_base_registration_t*,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
     uint32_t flags
 );
+
+extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst( 
+    struct mca_btl_base_module_t* btl, 
+    struct mca_btl_base_endpoint_t* peer,
+    struct mca_mpool_base_registration_t*,
+    struct opal_convertor_t* convertor,
+    uint8_t order,
+    size_t reserve,
+    size_t* size,
+    uint32_t flags); 
 
 
 /**

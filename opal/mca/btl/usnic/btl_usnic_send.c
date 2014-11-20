@@ -131,7 +131,7 @@ opal_btl_usnic_finish_put_or_send(
          * We already packed via the convertor if necessary, so we only need to
          * handle the simple memcpy case here.
          */
-        if (frag->sf_base.uf_base.des_segment_count > 1) {
+        if (frag->sf_base.uf_base.des_local_count > 1) {
             /* no convertor */
             assert(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
 
@@ -141,7 +141,7 @@ opal_btl_usnic_finish_put_or_send(
                     frag->sf_base.uf_local_seg[1].seg_len);
 
             /* update 1st segment length */
-            frag->sf_base.uf_base.des_segment_count = 1;
+            frag->sf_base.uf_base.des_local_count = 1;
             frag->sf_base.uf_local_seg[0].seg_len +=
                 frag->sf_base.uf_local_seg[1].seg_len;
         }
