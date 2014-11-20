@@ -34,7 +34,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t **peers,
                            opal_bitmap_t *reachable) {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
-    opal_proc_t *my_proc = opal_proc_local_get();
     size_t i;
     int rc;
 
@@ -66,11 +65,8 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         if (OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
             ugni_module->nlocal_procs++;
 
-            /* Do not use uGNI to communicate with local procs unless we are adding more ranks.
-             * Change this when sm and vader are updated to handle additional add procs. */
-            if (!ugni_module->initialized || my_proc == ompi_proc) {
-                continue;
-            }
+            /* ugni is allowed on local processes to provide support for network
+             * atomic operations */
         }
 
         /*  Create and Init endpoints */
@@ -188,7 +184,7 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
                           size, NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING,
-                          -1, &(ugni_reg->memory_hdl));
+                          -1, &(ugni_reg->handle.gni_handle));
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
 
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
@@ -211,7 +207,7 @@ static int ugni_reg_smsg_mem (void *reg_data, void *base, size_t size,
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
                           size, ugni_module->smsg_remote_cq, GNI_MEM_READWRITE, -1,
-                          &(ugni_reg->memory_hdl));
+                          &(ugni_reg->handle.gni_handle));
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     return opal_common_rc_ugni_to_opal (rc);
 }
@@ -224,7 +220,7 @@ ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
     gni_return_t rc;
 
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
-    rc = GNI_MemDeregister (ugni_module->device->dev_handle, &ugni_reg->memory_hdl);
+    rc = GNI_MemDeregister (ugni_module->device->dev_handle, &ugni_reg->handle.gni_handle);
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     if (GNI_RC_SUCCESS != rc) {
         return OPAL_ERROR;
@@ -398,6 +394,15 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
                                   ugni_module->smsg_mpool);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));
+        return rc;
+    }
+
+    rc = ompi_free_list_init_new (&ugni_module->post_descriptors,
+                                  sizeof (mca_btl_ugni_post_descriptor_t),
+                                  8, OBJ_CLASS(mca_btl_ugni_post_descriptor_t),
+                                  0, 0, 0, -1, 256, NULL);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        BTL_ERROR(("error creating post descriptor free list"));
         return rc;
     }
 

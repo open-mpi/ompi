@@ -284,7 +284,7 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
 
     proc = (ompi_proc_t*) des->des_cbdata;
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    hdr = (mca_pml_bfo_fin_hdr_t*)des->des_local->seg_addr.pval;
+    hdr = (mca_pml_bfo_fin_hdr_t*)des->des_segments->seg_addr.pval;
 
     opal_output_verbose(20, mca_pml_bfo_output,
                         "REPOST: BFO_HDR_TYPE_FIN: seq=%d,myrank=%d,peer=%d,hdr->hdr_fail=%d,src=%d",
@@ -376,7 +376,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                                                       mca_btl_base_tag_t tag,
                                                       mca_btl_base_descriptor_t* des,
                                                       void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_recv_request_t* recvreq;
     ompi_proc_t* ompi_proc;
@@ -461,7 +461,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartack(mca_btl_base_module_t* btl,
                                                    mca_btl_base_tag_t tag,
                                                    mca_btl_base_descriptor_t* des,
                                                    void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_send_request_t* sendreq;
 
@@ -522,7 +522,7 @@ void mca_pml_bfo_recv_frag_callback_recverrnotify(mca_btl_base_module_t* btl,
                                                   mca_btl_base_tag_t tag,
                                                   mca_btl_base_descriptor_t* des,
                                                   void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_send_request_t* sendreq;
 
@@ -607,7 +607,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnack(mca_btl_base_module_t* btl,
                                                     mca_btl_base_descriptor_t* des,
                                                     void* cbdata ) {
 
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_send_request_t* sendreq;
 
@@ -701,7 +701,7 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
     }
 
     /* fill out header */
-    restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+    restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
     restart->hdr_match.hdr_common.hdr_flags = 0;
     restart->hdr_match.hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY;
     restart->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -915,7 +915,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
         mca_btl_base_segment_t* oldseg;
         mca_btl_base_segment_t* newseg;
 
-        oldseg = des->des_local;
+        oldseg = des->des_segments;
         /* The alloc routine must be called with the MCA_BTL_NO_ORDER
          * flag so that the allocation routine works.  The allocation
          * will fill in the order flag in the descriptor. */
@@ -928,7 +928,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
                         __FILE__, __LINE__);
             ompi_rte_abort(-1, NULL);
         }
-        newseg = newdes->des_local;
+        newseg = newdes->des_segments;
         /* Copy over all the data that is actually sent over the wire */
         memcpy(newseg->seg_addr.pval, oldseg->seg_addr.pval, oldseg->seg_len);
         newseg->seg_len = oldseg->seg_len;
@@ -972,7 +972,7 @@ mca_pml_bfo_rndvrestartnotify_completion(mca_btl_base_module_t* btl,
     mca_pml_bfo_restart_hdr_t* restart;
     mca_pml_bfo_send_request_t* sendreq;
 
-    restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+    restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
     sendreq = (mca_pml_bfo_send_request_t*) restart->hdr_src_req.pval;
 
     /* Need to resend this message in the case that it fails */
@@ -1061,7 +1061,7 @@ void mca_pml_bfo_recv_request_recverrnotify(mca_pml_bfo_recv_request_t* recvreq,
     }
 
     /* fill out header */
-    restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+    restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
     restart->hdr_match.hdr_common.hdr_flags = 0;
     restart->hdr_match.hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY;
     restart->hdr_match.hdr_ctx = recvreq->req_recv.req_base.req_comm->c_contextid;
@@ -1145,7 +1145,7 @@ void mca_pml_bfo_recv_request_rndvrestartack(mca_pml_bfo_recv_request_t* recvreq
     }
 
     /* fill out header */
-    restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+    restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
     restart->hdr_match.hdr_common.hdr_flags = 0;
     restart->hdr_match.hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK;
     restart->hdr_match.hdr_ctx = recvreq->req_recv.req_base.req_comm->c_contextid;
@@ -1208,7 +1208,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
         ompi_proc = olddes->des_cbdata;
     }
 
-    segments = olddes->des_local;
+    segments = olddes->des_segments;
     hdr = (mca_pml_bfo_restart_hdr_t*)segments->seg_addr.pval;
 
     bml_endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
@@ -1226,7 +1226,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
     }
 
     /* fill out header */
-    nack = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+    nack = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
     nack->hdr_match.hdr_common.hdr_flags = 0;
     nack->hdr_match.hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK;
     nack->hdr_match.hdr_ctx = hdr->hdr_match.hdr_ctx;
@@ -1317,13 +1317,13 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
                                           int status )
 {
     if(OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
-        mca_pml_bfo_common_hdr_t* common = des->des_local->seg_addr.pval;
+        mca_pml_bfo_common_hdr_t* common = des->des_segments->seg_addr.pval;
         mca_pml_bfo_restart_hdr_t* restart;  /* RESTART header */
         mca_pml_bfo_recv_request_t* recvreq;
 
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK:
-            restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+            restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
             recvreq = (mca_pml_bfo_recv_request_t*) restart->hdr_dst_req.pval;
             opal_output_verbose(30, mca_pml_bfo_output,
                                 "RNDVRESTARTACK: completion failed: try again "
@@ -1351,7 +1351,7 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
             mca_pml_bfo_recv_request_rndvrestartnack(des, NULL, true);
             break;
         case MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY:
-            restart = (mca_pml_bfo_restart_hdr_t*)des->des_local->seg_addr.pval;
+            restart = (mca_pml_bfo_restart_hdr_t*)des->des_segments->seg_addr.pval;
             recvreq = (mca_pml_bfo_recv_request_t*) restart->hdr_dst_req.pval;
             /* With just two BTLs, this should never happen as we are
              * typically sending the RECVERRNOTIFY message on the
@@ -1759,7 +1759,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
                                                   struct mca_btl_base_descriptor_t* des,
                                                   int status)
 {
-    mca_pml_bfo_common_hdr_t * common = des->des_local->seg_addr.pval;
+    mca_pml_bfo_common_hdr_t * common = des->des_segments->seg_addr.pval;
     mca_pml_bfo_rdma_hdr_t* hdr; /* PUT header */
     struct mca_btl_base_descriptor_t* rdma_des;
     mca_pml_bfo_recv_request_t* recvreq;
@@ -1789,7 +1789,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
             break;
 
         case MCA_PML_BFO_HDR_TYPE_PUT:
-            hdr = (mca_pml_bfo_rdma_hdr_t*)des->des_local->seg_addr.pval;
+            hdr = (mca_pml_bfo_rdma_hdr_t*)des->des_segments->seg_addr.pval;
             rdma_des = hdr->hdr_des.pval;
             recvreq = des->des_cbdata;
             if ((NULL != rdma_des->des_cbdata) && (recvreq == rdma_des->des_cbdata)) {
@@ -1947,14 +1947,14 @@ void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
                                                struct mca_btl_base_descriptor_t* des)
 {
     if ((*bml_btl)->btl != btl) {
-        mca_pml_bfo_common_hdr_t * common = des->des_local->seg_addr.pval;
+        mca_pml_bfo_common_hdr_t * common = des->des_segments->seg_addr.pval;
         mca_pml_bfo_ack_hdr_t* ack;  /* ACK header */
         mca_pml_bfo_recv_request_t* recvreq = NULL;
         char *type = NULL;
 
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_ACK:
-            ack = (mca_pml_bfo_ack_hdr_t*)des->des_local->seg_addr.pval;
+            ack = (mca_pml_bfo_ack_hdr_t*)des->des_segments->seg_addr.pval;
             recvreq = (mca_pml_bfo_recv_request_t*) ack->hdr_dst_req.pval;
             type = "ACK";
             break;
@@ -2106,11 +2106,11 @@ void mca_pml_bfo_find_recvreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
 bool mca_pml_bfo_rndv_completion_status_error(struct mca_btl_base_descriptor_t* des,
                                               mca_pml_bfo_send_request_t* sendreq)
 {
-    assert(((mca_pml_bfo_hdr_t*)((des)->des_local->seg_addr.pval))->hdr_match.hdr_ctx ==
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_segments->seg_addr.pval))->hdr_match.hdr_ctx ==
            (sendreq)->req_send.req_base.req_comm->c_contextid);
-    assert(((mca_pml_bfo_hdr_t*)((des)->des_local->seg_addr.pval))->hdr_match.hdr_src ==
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_segments->seg_addr.pval))->hdr_match.hdr_src ==
            (sendreq)->req_send.req_base.req_comm->c_my_rank);
-    assert(((mca_pml_bfo_hdr_t*)((des)->des_local->seg_addr.pval))->hdr_match.hdr_seq ==
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_segments->seg_addr.pval))->hdr_match.hdr_seq ==
            (uint16_t)(sendreq)->req_send.req_base.req_sequence);
     if ((!(sendreq)->req_error) && (NULL == (sendreq)->req_recv.pval)) {
         (sendreq)->req_events--;
@@ -2157,7 +2157,7 @@ void mca_pml_bfo_completion_sendreq_has_error(mca_pml_bfo_send_request_t* sendre
 void mca_pml_bfo_send_ctl_completion_status_error(struct mca_btl_base_descriptor_t* des)
 {
     mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)des->des_cbdata;
-    mca_pml_bfo_hdr_t* hdr = des->des_local->seg_addr.pval;
+    mca_pml_bfo_hdr_t* hdr = des->des_segments->seg_addr.pval;
     switch (hdr->hdr_common.hdr_type) {
     case MCA_PML_BFO_HDR_TYPE_RGET:
         if ((hdr->hdr_match.hdr_ctx != sendreq->req_send.req_base.req_comm->c_contextid) ||

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +67,16 @@ struct mca_btl_sm_frag_t {
     /* pointer written to the FIFO, this is the base of the shared memory region */
     mca_btl_sm_hdr_t *hdr;
     ompi_free_list_t* my_list;
+#if OPAL_BTL_SM_HAVE_KNEM
+    /* rdma callback data. required for async get */
+    struct {
+        mca_btl_base_rdma_completion_fn_t func;
+        void *local_address;
+        struct mca_btl_base_registration_handle_t *local_handle;
+        void *context;
+        void *data;
+    } cb;
+#endif
 };
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag_t;
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag1_t;
