@@ -743,7 +743,7 @@ int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl
                                void *local_address, uint64_t remote_address,
                                struct mca_btl_base_registration_handle_t *local_handle,
                                struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-                               uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                               int64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                void *cbcontext, void *cbdata);
 
 /**
@@ -788,8 +788,8 @@ int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl
 int mca_btl_openib_atomic_cswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
                                  void *local_address, uint64_t remote_address,
                                  struct mca_btl_base_registration_handle_t *local_handle,
-                                 struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
-                                 uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                                 struct mca_btl_base_registration_handle_t *remote_handle, int64_t compare,
+                                 int64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                  void *cbcontext, void *cbdata);
 
 /**

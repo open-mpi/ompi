@@ -1447,11 +1447,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     size_t* size,
     uint32_t flags)
 {
+    mca_btl_openib_module_t *openib_btl;
     mca_btl_openib_com_frag_t *frag = NULL;
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
     void *ptr;
+    int rc;
+
+    openib_btl = (mca_btl_openib_module_t*)btl;
 
     assert(MCA_BTL_NO_ORDER == order);
 
