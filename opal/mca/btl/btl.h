@@ -348,31 +348,19 @@ typedef void (*mca_btl_base_rdma_completion_fn_t)(
 /**
  * Describes a region/segment of memory that is addressable 
  * by an BTL.
- *
- * Note: In many cases the alloc and prepare methods of BTLs
- * do not return a mca_btl_base_segment_t but instead return a
- * subclass. Extreme care should be used when modifying
- * BTL segments to prevent overwriting internal BTL data.
- *
- * All BTLs MUST use base segments when calling registered
- * Callbacks.
- *
- * BTL MUST use mca_btl_base_segment_t or a subclass and
- * MUST store their segment length in btl_seg_size. BTLs
- * MUST specify a segment no larger than MCA_BTL_SEG_MAX_SIZE.
  */
 
 struct mca_btl_base_segment_t {
     /** Address of the memory */
     opal_ptr_t seg_addr;        
-     /** Length in bytes */
+    /** Length in bytes */
     uint64_t   seg_len;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
 
 /**
- * A descriptor that holds the parameters to a send/put/get
+ * A descriptor that holds the parameters to a send
  * operation along w/ a callback routine that is called on
  * completion of the request.
  * Note: receive callbacks will store the incomming data segments in
@@ -414,11 +402,6 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC   0x0008
 
-/* Type of transfer that will be done with this frag.
- */
-#define MCA_BTL_DES_FLAGS_PUT               0x0010
-#define MCA_BTL_DES_FLAGS_GET               0x0020
-
 /* Ask the BTL to wake the remote process (send/sendi) or local process
  * (put/get) to handle this message. The BTL may ignore this flag if
  * signaled operations are not supported.
@@ -426,15 +409,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 #define MCA_BTL_DES_FLAGS_SIGNAL            0x0040
 
 /**
- * Maximum number of allowed segments in src/dst fields of a descriptor.
+ * Maximum number of allowed segments in a descriptor.
  */
 #define MCA_BTL_DES_MAX_SEGMENTS 16
-
-/**
- * Maximum size of a BTL segment (NTH: does it really save us anything
- * to hardcode this?)
- */
-#define MCA_BTL_SEG_MAX_SIZE 256
 
 /**
  * Maximum size of a BTL registration handle in bytes
@@ -507,8 +484,6 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  * completion function, this implies that all data payload in the 
  * mca_btl_base_descriptor_t must be copied out within this callback or 
  * forfeited back to the BTL.
- * Note also that descriptor segments (des_segments) must be base
- * segments for all callbacks.
  * 
  * @param[IN] btl        BTL module
  * @param[IN] tag        The active message receive callback tag value 
