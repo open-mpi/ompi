@@ -450,11 +450,7 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
     mca_btl_vader_frag_t *frag;
     void *data_ptr;
 
-    if (MCA_BTL_VADER_NONE != mca_btl_vader_component.single_copy_mechanism) {
-        (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
-    } else {
-        (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint);
-    }
+    (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
     if (OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
@@ -596,11 +592,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
         }
     } else {
         /* put/get fragment */
-        if (MCA_BTL_VADER_NONE != mca_btl_vader_component.single_copy_mechanism) {
-            (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
-        } else {
-            (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint);
-        }
+        (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
