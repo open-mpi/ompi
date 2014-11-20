@@ -27,6 +27,7 @@ pt2pt_sources = \
 	osc_pt2pt_frag.h \
 	osc_pt2pt_frag.c \
 	osc_pt2pt_header.h \
+	osc_pt2pt_obj_convert.h \
 	osc_pt2pt_request.h \
 	osc_pt2pt_request.c \
 	osc_pt2pt_active_target.c \
