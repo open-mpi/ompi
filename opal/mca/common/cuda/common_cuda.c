@@ -39,6 +39,7 @@
 
 #include "opal/mca/mpool/base/base.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/mca/timer/base/base.h"
 
 #include "common_cuda.h"
 
@@ -190,12 +191,12 @@ opal_lt_dlhandle libcuda_handle = NULL;
 #if OPAL_ENABLE_DEBUG
 /* Some timing support structures.  Enable this to help analyze
  * internal performance issues. */
-static struct timespec ts_start;
-static struct timespec ts_end;
+static opal_timer_t ts_start;
+static opal_timer_t ts_end;
 static double accum;
 #define THOUSAND  1000L
 #define MILLION   1000000L
-static float mydifftime(struct timespec ts_start, struct timespec ts_end);
+static float mydifftime(opal_timer_t ts_start, opal_timer_t ts_end);
 #endif /* OPAL_ENABLE_DEBUG */
 
 /* These functions are typically unused in the optimized builds. */
@@ -1691,27 +1692,8 @@ static void cuda_dump_evthandle(int verbose, void *evtHandle, char *str) {
  *
  */
 #if OPAL_ENABLE_DEBUG
-static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
-    float seconds;
-    float microseconds;
-    float nanoseconds;
-
-    /* If we did not rollover the seconds clock, then we just take
-     * the difference between the nanoseconds clock for actual time */
-    if (0 == (ts_end.tv_sec - ts_start.tv_sec)) {
-        nanoseconds = (float)(ts_end.tv_nsec - ts_start.tv_nsec);
-        return nanoseconds / THOUSAND;
-    } else {
-        seconds = (float)(ts_end.tv_sec - ts_start.tv_sec); 
-
-        /* Note that this value can be negative or positive
-         * which is fine.  In the case that it is negative, it
-         * just gets subtracted from the difference which is what
-         * we want. */
-        nanoseconds = (float)(ts_end.tv_nsec - ts_start.tv_nsec);
-        microseconds = (seconds * MILLION) + (nanoseconds/THOUSAND);
-        return microseconds;
-    }
+static float mydifftime(opal_timer_t ts_start, opal_timer_t ts_end) {
+    return (ts_end - ts_start);
 }
 #endif /* OPAL_ENABLE_DEBUG */
 
@@ -1839,7 +1821,7 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
                                               CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)dest);
         result = cuFunc.cuPointerGetAttribute(&memTypeSrc,
                                               CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)src);
-        clock_gettime(CLOCK_MONOTONIC, &ts_start);
+        ts_start = opal_timer_base_get_usec();
     }
 #endif
     if (mca_common_cuda_cumemcpy_async) {
@@ -1865,7 +1847,7 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
     }
 #if OPAL_ENABLE_DEBUG
     if (OPAL_UNLIKELY(mca_common_cuda_cumemcpy_timing)) {
-        clock_gettime(CLOCK_MONOTONIC, &ts_end);
+        ts_end = opal_timer_base_get_usec();
         accum = mydifftime(ts_start, ts_end);
         if (mca_common_cuda_cumemcpy_async) {
             opal_output(0, "cuMemcpyAsync took   %7.2f usecs (src=%p (%d), dst=%p (%d))\n",
