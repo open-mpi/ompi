@@ -302,6 +302,44 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, 
                                        void **out_node);
 
 
+/**
+ *  Get the first ptr bit key from the hash table, which can be used later to
+ *  get the next key
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The first key (OUT)
+ *  @param  key_size The first key size (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  node     The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, void* *key,
+                                        size_t *key_size, void **value, void **node);
+
+
+/**
+ *  Get the next ptr bit key from the hash table, knowing the current key 
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The key (OUT)
+ *  @param  key_size The key size (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  in_node  The node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_hash_table_get_next_key_ptr(opal_hash_table_t *table, void* *key,
+                                       size_t *key_size, void **value,
+                                       void *in_node, void **out_node);
+
+
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_proc_table_t);
                            
