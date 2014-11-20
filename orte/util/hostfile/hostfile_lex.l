@@ -173,7 +173,7 @@ cores_per_socket   { orte_util_hostfile_value.sval = yytext;
                       orte_util_hostfile_value.sval = yytext;
                       return ORTE_HOSTFILE_IPV6; }
 
-(\^?[A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
+(\^?[A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z0-9][A-Za-z0-9_\-\.]*  {
                      orte_util_hostfile_value.sval = yytext; 
                      return ORTE_HOSTFILE_HOSTNAME; }
 
