@@ -40,7 +40,7 @@ AC_DEFUN([MCA_orte_odls_alps_CONFIG],[
                        odls_alps_LDFLAGS="$odls_alps_LDFLAGS  $CRAY_ALPS_UTIL_LIBS"
                        odls_alps_LIBS="$odls_alps_LIBS $CRAY_ALPS_LLI_LIBS"
                        odls_alps_util_happy="yes"],
-                      [AC_MSG_RESULT([hey, no alps lli found])])
+                      [AC_MSG_RESULT([no])])
 
     AS_IF([test "$odls_alps_lli_happy" = "yes" -a "$odls_alps_util_happy" = "yes"], 
           [$1
