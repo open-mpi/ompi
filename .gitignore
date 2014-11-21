@@ -776,6 +776,8 @@ test/datatype/checksum
 test/datatype/position
 test/datatype/ddt_raw
 test/datatype/opal_datatype_test
+test/datatype/position_noncontig
+test/datatype/unpack_ooo
 test/datatype/*.log
 test/datatype/*.trs
 test/dss/dss_buffer
