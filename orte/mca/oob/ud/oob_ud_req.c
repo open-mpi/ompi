@@ -2,15 +2,17 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
 
-#include "oob_ud.h"
+#include "oob_ud_component.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -57,15 +59,7 @@ static void mca_oob_ud_req_destruct (mca_oob_ud_req_t *req)
         free (req->req_sge);
     }
 
-    if (req->req_mr) {
-        for (i = 0 ; i < req->req_count ; ++i) {
-            if (req->req_mr[i]) {
-                (void) ibv_dereg_mr (req->req_mr[i]);
-            }
-        }
-        /* these should have already been deregistered */
-        free (req->req_mr);
-    }
+    MCA_OOB_UD_REQ_DEREG_MR(req);
 }
 
 void mca_oob_ud_req_timer_set (mca_oob_ud_req_t *req, const struct timeval *timeout,
@@ -87,8 +81,9 @@ int mca_oob_ud_msg_get (struct mca_oob_ud_port_t *port, mca_oob_ud_req_t *req,
 
     OPAL_FREE_LIST_WAIT(list, item, rc);
     if (OPAL_SUCCESS != rc) {
-        OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:msg_get error getting message "
-                             "buffer. rc = %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc));
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:msg_get error getting message buffer. rc = %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
         return ORTE_ERROR;
     }
 
@@ -180,8 +175,9 @@ int mca_oob_ud_msg_post_send (mca_oob_ud_msg_t *msg)
         mca_oob_ud_msg_return (msg);
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:msg_post_send posted send for msg %p with id %" PRIu64,
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) msg, msg->hdr->msg_id));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:msg_post_send posted send for msg %p with id %" PRIu64,
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) msg, msg->hdr->msg_id);
 
     OPAL_THREAD_UNLOCK(&msg->peer->peer_lock);
 
@@ -192,16 +188,18 @@ int mca_oob_ud_msg_status_update (mca_oob_ud_msg_t *msg, mca_oob_ud_status_t sta
 {
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:msg_status_update setting status of msg %p "
-                         "to %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) msg, (int) status));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:msg_status_update setting status of msg %p to %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) msg, (int) status);
 
     OPAL_THREAD_LOCK(&msg->lock);
 
     if (status != msg->status) {
         if (MCA_OOB_UD_MSG_STATUS_COMPLETE == status) {
-            OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:msg_status_update setting peer %s as "
-                                 "available", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&msg->peer->peer_name)));
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:msg_status_update setting peer %s as available",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&msg->peer->peer_name));
 
             msg->peer->peer_available = true;
         }
@@ -242,8 +240,9 @@ int mca_oob_ud_msg_status_update (mca_oob_ud_msg_t *msg, mca_oob_ud_status_t sta
 
 static void mca_oob_ud_req_return (mca_oob_ud_req_t *req)
 {
-    OPAL_OUTPUT_VERBOSE((15, mca_oob_base_output, "%s oob:ud:req_return returning req %p",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) req));
+    opal_output_verbose(15, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:req_return returning req %p",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) req);
 
     mca_oob_ud_req_append_to_list (req, NULL);
 
@@ -262,29 +261,15 @@ static void mca_oob_ud_req_return (mca_oob_ud_req_t *req)
         req->req_sge = NULL;
     }
 
-    if (ORTE_RML_PERSISTENT & req->req_flags) {
-        if (ORTE_RML_ALLOC & req->req_flags) {
-            int iov_index = req->req_count - 1;
-
-            /* NTH: caller took possesion of the buffer */
-            if (req->req_uiov[iov_index].iov_base) {
-                req->req_uiov[iov_index].iov_base = NULL;
-                req->req_uiov[iov_index].iov_len  = 0;
-            }
-        }
-
-        mca_oob_ud_recv_match (req);
-    } else {
-        OBJ_RELEASE(req);
-    }
+    OBJ_RELEASE(req);
 }
 
 void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
 {
-    int size, i;
-
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:req_complete request %p completed with status %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) req, rc));
+    int i;
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:req_complete %s request %p completed with status %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (req->type == MCA_OOB_UD_REQ_SEND) ? "SEND":"RECV", (void *) req, rc);
 
     if (NULL != req->req_qp) {
         (void) mca_oob_ud_qp_data_release (req->req_qp);
@@ -292,55 +277,71 @@ void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
     }
 
     /* deregister memory *before* handing it to the callback */
-    if (req->req_mr) {
-        for (i = 0 ; i < req->req_count ; ++i) {
-            if (req->req_mr[i]) {
-                (void) ibv_dereg_mr (req->req_mr[i]);
-                req->req_mr[i] = NULL;
-            }
+    MCA_OOB_UD_REQ_DEREG_MR(req);
+
+    switch (req->type) {
+    case MCA_OOB_UD_REQ_SEND:
+        if (req->req_data_type != MCA_OOB_UD_REQ_TR) {
+            req->rml_msg->status = rc;
+            ORTE_RML_SEND_COMPLETE(req->rml_msg);
         }
-    }
-
-    if (req->req_cbfunc) {
-        req->req_rc = rc;
-
-        if ((req->req_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
-            OPAL_THREAD_LOCK (&mca_oob_ud_component.ud_lock);
-            mca_oob_ud_req_append_to_list (req, &mca_oob_ud_component.ud_completed);
-            size = opal_list_get_size (&mca_oob_ud_component.ud_completed);
-            OPAL_THREAD_UNLOCK (&mca_oob_ud_component.ud_lock);
-            if (size > 1) {
-                return;
+        break;
+    case MCA_OOB_UD_REQ_RECV:
+        if ((req->req_target.jobid == ORTE_PROC_MY_NAME->jobid) &&
+            (req->req_target.vpid == ORTE_PROC_MY_NAME->vpid)) {
+            opal_output_verbose(1, orte_oob_base_framework.framework_output,
+                "%s DELIVERING TO RML",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            if (MCA_OOB_UD_REQ_IOV == req->req_data_type) {
+                char *data = (char *)calloc(req->req_data.iov.count, sizeof(struct iovec));
+                int datalen = 0;
+                for (i = 0 ; i < req->req_data.iov.count; ++i) {
+                    memcpy (&data[datalen], req->req_data.iov.uiov[i].iov_base, req->req_data.iov.uiov[i].iov_len);
+                    datalen += req->req_data.iov.uiov[i].iov_len;
+                }
+                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag, data, datalen);
+                free(data);
+            } else {
+                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag,
+                                       req->req_data.buf.p, req->req_data.buf.size);
             }
-        }
-
-        req->req_cbfunc (req->req_rc, &req->req_target, req->req_uiov, req->req_count,
-                         req->req_tag, req->req_cbdata);
-
-        if ((req->req_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
-            opal_list_item_t* item;
-
-            OPAL_THREAD_LOCK(&mca_oob_ud_component.ud_lock);
-            mca_oob_ud_req_return (req);
-            while(NULL != 
-                  (item = opal_list_remove_first(&mca_oob_ud_component.ud_completed))) {
-                req = (mca_oob_ud_req_t *) item;
-                req->req_list = NULL;
-
-                OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
-                req->req_cbfunc (req->req_rc, &req->req_target, req->req_uiov, req->req_count,
-                                 req->req_tag, req->req_cbdata);
-                OPAL_THREAD_LOCK(&mca_oob_ud_component.ud_lock);
-
-                mca_oob_ud_req_return (req);
-            }
-            OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
         } else {
-            mca_oob_ud_req_return (req);
+            opal_output_verbose(1, orte_oob_base_framework.framework_output,
+                                "%s UD PROMOTING ROUTED MESSAGE FOR %s TO OOB",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&req->req_target));
+
+            orte_rml_send_t *snd = OBJ_NEW(orte_rml_send_t);
+            snd->dst = req->req_target;
+            snd->origin =  req->req_origin;
+            snd->tag = req->req_tag;
+
+            if (MCA_OOB_UD_REQ_IOV == req->req_data_type) {
+                char *data = (char *)calloc(req->req_data.iov.count, sizeof(struct iovec));
+                int datalen = 0;
+                for (i = 0 ; i < req->req_data.iov.count; ++i) {
+                    memcpy (&data[datalen], req->req_data.iov.uiov[i].iov_base, req->req_data.iov.uiov[i].iov_len);
+                    datalen += req->req_data.iov.uiov[i].iov_len;
+                }
+                snd->data = data;
+                snd->count = datalen;
+            } else {
+                char *data = (char *)calloc(req->req_data.buf.size, sizeof(char));
+                memcpy (data, req->req_data.buf.p, req->req_data.buf.size);
+                snd->data = data;
+                snd->count = req->req_data.buf.size;
+            }
+            snd->cbfunc.iov = NULL;
+            snd->cbdata = NULL;
+            /* activate the OOB send state */
+            ORTE_OOB_SEND(snd);
         }
-    } else {
-        mca_oob_ud_req_return (req);
+        break;
+    default:
+        break;
     }
+
+    mca_oob_ud_req_return (req);
 }
 
 void mca_oob_ud_req_append_to_list (mca_oob_ud_req_t *req, opal_list_t *list)
@@ -390,12 +391,6 @@ void mca_oob_ud_req_abort (mca_oob_ud_req_t *req)
         mca_oob_ud_qp_data_release (req->req_qp);
         req->req_qp = NULL;
     }
-
-    /* don't call the callback */
-    req->req_cbfunc = NULL;
-
-    /* make sure the request is freed */
-    req->req_flags = 0;
 
     /* free up request resources */
     mca_oob_ud_req_complete (req, ORTE_ERR_INTERUPTED);
