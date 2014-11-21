@@ -85,7 +85,6 @@ ompi_mtl_psm_component_register(void)
 #if PSM_VERNO >= 0x010d
     mca_base_var_enum_t *new_enum;
 #endif
-    int ret;
     
     ompi_mtl_psm.connect_timeout = 180;
     (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
@@ -148,7 +147,7 @@ ompi_mtl_psm_component_register(void)
 
     ompi_mtl_psm.path_res_type = PSM_PATH_RES_NONE;
     mca_base_var_enum_create("mtl_psm_path_query", path_query_values, &new_enum);
-    ret = mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
                                           "path_query",
                                           "Path record query mechanisms",
                                           MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
