@@ -22,6 +22,7 @@ AM_CPPFLAGS = $(orte_oob_ud_CPPFLAGS)
 dist_ortedata_DATA = help-oob-ud.txt
 
 sources = \
+	oob_ud_component.h \
 	oob_ud_component.c \
 	oob_ud.c \
 	oob_ud.h \
