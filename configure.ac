@@ -157,6 +157,7 @@ AC_SUBST(libmca_common_ofacm_so_version)
 AC_SUBST(libmca_common_sm_so_version)
 AC_SUBST(libmca_common_ugni_so_version)
 AC_SUBST(libmca_common_verbs_so_version)
+AC_SUBST(libmca_common_alps_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us

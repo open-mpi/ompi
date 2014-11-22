@@ -37,6 +37,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/mca/common/alps/common_alps.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/alps/odls_alps.h"
@@ -77,9 +78,7 @@ int orte_odls_alps_component_open(void)
 int orte_odls_alps_component_query(mca_base_module_t **module, int *priority)
 {
     int rc = ORTE_SUCCESS;
-    const char proc_job_file[]="/proc/job";
-    FILE *fd = NULL, *fd_task_is_app = NULL;
-    char task_is_app_fname[PATH_MAX];
+    bool flag;
 
     /*
      * make sure we're in a daemon process
@@ -97,26 +96,10 @@ int orte_odls_alps_component_query(mca_base_module_t **module, int *priority)
      * the cray job kernel module  - the thing that creates the PAGG
      */
 
-    /* disqualify ourselves if not running in a Cray PAGG container */
-    fd = fopen(proc_job_file, "r");
-    if (fd == NULL) {
-        *priority = 0;
-        *module = NULL;
-        rc = ORTE_ERROR;
-    } else {
-        snprintf(task_is_app_fname,sizeof(task_is_app_fname),
-                 "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
-        fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container, 
-                                           and we are an app task (not just a process
-                                           running on a mom node, for example),
-                                           so we should give cray pmi a shot. */
-            *priority = 10; /* take precendence over base */
-            *module = (mca_base_module_t *) &orte_odls_alps_module;
-            fclose(fd_task_is_app);
-            rc = orte_odls_alps_get_rdma_creds();
-        }
-        fclose(fd);
+    rc = orte_common_alps_proc_in_pagg(&flag);
+    if ((ORTE_SUCCESS == rc) && flag) {
+        *priority = 10; /* take precendence over base */
+        *module = (mca_base_module_t *) &orte_odls_alps_module;
     }
 
     return rc;

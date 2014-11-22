@@ -28,6 +28,7 @@
 #include "orte/constants.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/proc_info.h"
+#include "orte/mca/common/alps/common_alps.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/alps/ess_alps.h"
@@ -71,9 +72,7 @@ orte_ess_alps_component_open(void)
 int orte_ess_alps_component_query(mca_base_module_t **module, int *priority)
 {
     int rc = ORTE_SUCCESS;
-    const char proc_job_file[]="/proc/job";
-    FILE *fd = NULL, *fd_task_is_app = NULL;
-    char task_is_app_fname[PATH_MAX];
+    bool flag;
 
     /*
      * don't use the alps ess component if an app proc
@@ -91,25 +90,10 @@ int orte_ess_alps_component_query(mca_base_module_t **module, int *priority)
      * the cray job kernel module  - the thing that creates the PAGG)
      */
 
-    /* disqualify ourselves if not running in a Cray PAGG container */
-    fd = fopen(proc_job_file, "r");
-    if (fd == NULL) {
-        *priority = 0;
-        *module = NULL;
-        rc = ORTE_ERROR;
-    } else {
-        snprintf(task_is_app_fname,sizeof(task_is_app_fname),
-                 "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
-        fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container, 
-                                           and we are an app task (not just a process
-                                           running on a mom node, for example),
-                                           so we should give cray pmi a shot. */
-            *priority = 35; /* take precendence over base */
-            *module = (mca_base_module_t *) &orte_ess_alps_module;
-            fclose(fd_task_is_app);
-        }
-        fclose(fd);
+    rc = orte_common_alps_proc_in_pagg(&flag);
+    if ((ORTE_SUCCESS == rc) && flag) {
+        *priority = 35; /* take precendence over base */
+        *module = (mca_base_module_t *) &orte_ess_alps_module;
     }
 
     return rc;
