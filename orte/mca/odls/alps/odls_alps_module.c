@@ -740,6 +740,15 @@ int orte_odls_alps_launch_local_procs(opal_buffer_t *data)
         return rc;
     }
     
+    /* get the RDMA credentials and push them into the launch environment */
+
+    if (ORTE_SUCCESS != (rc = orte_odls_alps_get_rdma_creds())) {;
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+                             "%s odls:alps:launch:failed to get GNI rdma credentials %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+        return rc;
+    }
+
     /* launch the local procs */
     ORTE_ACTIVATE_LOCAL_LAUNCH(job, odls_alps_fork_local_proc);
     

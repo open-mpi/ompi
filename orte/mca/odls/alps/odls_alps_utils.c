@@ -231,12 +231,6 @@ int orte_odls_alps_get_rdma_creds(void)
             goto fn_exit;
         }
 
-#if 0
-    fprintf(stderr,"apid = 0x%lx ptag0 %d cookie0 0x%x(%d) ptag1 %d cookie1 0x%x(%d)\n",apid,
-             rdmacred_buf[0].ptag,rdmacred_buf[0].cookie,rdmacred_buf[0].cookie,
-             rdmacred_buf[1].ptag,rdmacred_buf[1].cookie,rdmacred_buf[1].cookie);
-#endif
-
     } 
 
    fn_exit:
