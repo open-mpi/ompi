@@ -93,11 +93,6 @@ int opal_timer_darwin_open(void)
        nanoseconds, taking the reverse of that and multipling by
        1000000000 will give you a frequency in cycles / second if you
        think of mach_absolute_time() always returning a cycle count.
-
-       By the way, it's interesting to note that because these are
-       library functions and because of how rosetta works, a PPC
-       binary running under rosetta on an Intel Mac will behave
-       exactly like an Intel binary running on an Intel Mac.
     */
     opal_timer_darwin_freq = sTBI.denom * (1000000000 / sTBI.numer);
 
