@@ -253,6 +253,27 @@ opal_datatype_t* create_contiguous_type( const opal_datatype_t* type, int length
    return newtype;
 }
 
+/* Create a non-contiguous resized datatype */
+struct structure {
+    double not_transfered;
+    double transfered_1;
+    double transfered_2;
+};
+
+opal_datatype_t* create_struct_constant_gap_resized_ddt( void )
+{
+    opal_datatype_t *struct_type;
+
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &struct_type);
+    opal_datatype_add( struct_type, &opal_datatype_float8, 1,  8, -1 );
+    opal_datatype_add( struct_type, &opal_datatype_float8, 1, 16, -1 );
+
+    opal_datatype_resize(struct_type, 0, sizeof(struct structure));
+    opal_datatype_commit(struct_type);
+
+    return struct_type;
+}
+
 
 /*****************************************************************************/
 /* Copied Function to get test to work */

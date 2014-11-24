@@ -23,6 +23,37 @@ extern void ompi_datatype_dump( MPI_Datatype ddt );
 #define MPI_DDT_DUMP(ddt)
 #endif  /* OPEN_MPI */
 
+/* Create a non-contiguous resized datatype */
+struct structure {
+    double not_transfered;
+    double transfered_1;
+    double transfered_2;
+};
+
+static MPI_Datatype
+create_struct_constant_gap_resized_ddt( int number,  /* number of repetitions */
+                                        int contig_size,  /* IGNORED: number of elements in a contiguous chunk */
+                                        int gap_size )    /* IGNORED: number of elements in a gap */
+{
+    struct structure *data;
+    MPI_Datatype struct_type, temp_type;
+    MPI_Datatype types[2] = {MPI_DOUBLE, MPI_DOUBLE};
+    int blocklens[2] = {1, 1};
+    MPI_Aint disps[3];
+
+    MPI_Get_address(&data[0].transfered_1, &disps[0]);
+    MPI_Get_address(&data[0].transfered_2, &disps[1]);
+    MPI_Get_address(&data[0], &disps[2]);
+    disps[1] -= disps[2]; /*  8 */
+    disps[0] -= disps[2]; /* 16 */
+
+    MPI_Type_create_struct(2, blocklens, disps, types, &temp_type);
+    MPI_Type_create_resized(temp_type, 0, sizeof(data[0]), &struct_type);
+    MPI_Type_commit(&struct_type);
+
+    return struct_type;
+}
+
 /* Create a datatype similar to the one use by HPL */
 static MPI_Datatype
 create_indexed_constant_gap_ddt( int number,  /* number of repetitions */
@@ -328,17 +359,18 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
     return 0;
 }
 
-#define DO_CONTIG                 0x01
-#define DO_CONSTANT_GAP           0x02
-#define DO_INDEXED_GAP            0x04
-#define DO_OPTIMIZED_INDEXED_GAP  0x08
+#define DO_CONTIG                       0x01
+#define DO_CONSTANT_GAP                 0x02
+#define DO_INDEXED_GAP                  0x04
+#define DO_OPTIMIZED_INDEXED_GAP        0x08
+#define DO_STRUCT_CONSTANT_GAP_RESIZED  0x10
 
 int main( int argc, char* argv[] )
 {
-    int length = 1024 * 1024;
+    int length = 111;
     int rank, size;
     MPI_Datatype ddt;
-    int run_tests = DO_CONTIG | DO_CONSTANT_GAP | DO_INDEXED_GAP | DO_OPTIMIZED_INDEXED_GAP;
+    int run_tests = 0xffffffff;  /* do all tests by default */
     /*int run_tests = DO_CONSTANT_GAP;*/
 
     MPI_Init (&argc, &argv);
@@ -383,6 +415,14 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_CONSTANT_GAP ) {
         printf( "\noptimized constant indexed gap\n\n" );
         ddt = create_optimized_indexed_constant_gap_ddt( 80, 100, 1 );
+        MPI_DDT_DUMP( ddt );
+        do_test_for_ddt( ddt, ddt, length );
+        MPI_Type_free( &ddt );
+    }
+
+    if( run_tests & DO_STRUCT_CONSTANT_GAP_RESIZED ) {
+        printf( "\nstruct constant gap resized\n\n" );
+        ddt = create_struct_constant_gap_resized_ddt( 80, 0 /* unused */, 0 /* unused */ );
         MPI_DDT_DUMP( ddt );
         do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
