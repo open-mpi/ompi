@@ -40,7 +40,9 @@ double MPI_Wtime(void)
 {
     double wtime;
 
-#if OPAL_TIMER_USEC_NATIVE
+#if OPAL_TIMER_CYCLE_NATIVE
+    wtime = ((double) opal_timer_base_get_cycles()) / opal_timer_base_get_freq();
+#elif OPAL_TIMER_USEC_NATIVE
     wtime = ((double) opal_timer_base_get_usec()) / 1000000.0;
 #else
     /* Fall back to gettimeofday() if we have nothing else */
