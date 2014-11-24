@@ -36,7 +36,7 @@ opal_sys_timer_get_cycles(void)
      __asm__ __volatile__ ("cpuid\n\t"
                            "rdtsc\n\t"
                            : "=a" (a), "=d" (d)
-                           :: "%rax", "%rbx", "%rcx", "%rdx");
+                           :: "rbx", "rcx");
 #else
      /* If we need higher accuracy we should implement the algorithm proposed
       * on the Intel document referenced above. However, in the context of MPI
@@ -44,9 +44,9 @@ opal_sys_timer_get_cycles(void)
       * can afford a small inaccuracy.
       */
      __asm__ __volatile__ ("rdtscp\n\t"
-                           "cpuid"
+                           "cpuid\n\t"
                            : "=a" (a), "=d" (d)
-                           :: "%rax", "%rbx", "%rcx", "%rdx");
+                           :: "rbx", "rcx");
 #endif
      return ((opal_timer_t)a) | (((opal_timer_t)d) << 32);
 }

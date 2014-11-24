@@ -33,7 +33,7 @@ opal_sys_timer_get_cycles(void)
     __asm__ __volatile__("cpuid\n"
                          "rdtsc\n"
                          : "=A"(ret)
-                         :: "%eax", "%ebx", "%ecx", "%edx");
+                         :: "ebx", "ecx", "edx");
 
     return ret;
 }
