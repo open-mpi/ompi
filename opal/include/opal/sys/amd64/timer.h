@@ -25,11 +25,29 @@ typedef uint64_t opal_timer_t;
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline opal_timer_t 
+/**
+ * http://www.intel.com/content/www/us/en/intelligent-systems/embedded-systems-training/ia-32-ia-64-benchmark-code-execution-paper.html
+ */
+static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
-     unsigned a, d; 
-     __asm__ __volatile__ ("rdtsc" : "=a" (a), "=d" (d));
+     unsigned a, d;
+#if 0
+     __asm__ __volatile__ ("cpuid\n\t"
+                           "rdtsc\n\t"
+                           : "=a" (a), "=d" (d)
+                           :: "%rax", "%rbx", "%rcx", "%rdx");
+#else
+     /* If we need higher accuracy we should implement the algorithm proposed
+      * on the Intel document referenced above. However, in the context of MPI
+      * this function will be used as the backend for MPI_Wtime and as such
+      * can afford a small inaccuracy.
+      */
+     __asm__ __volatile__ ("rdtscp\n\t"
+                           "cpuid"
+                           : "=a" (a), "=d" (d)
+                           :: "%rax", "%rbx", "%rcx", "%rdx");
+#endif
      return ((opal_timer_t)a) | (((opal_timer_t)d) << 32);
 }
 
