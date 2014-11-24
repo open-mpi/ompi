@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -21,20 +21,24 @@
 
 #include "opal_config.h"
 #include <mach/mach_time.h>
+#include <CoreServices/CoreServices.h>
 
 typedef uint64_t opal_timer_t;
 
 /* frequency in mhz */
 OPAL_DECLSPEC extern opal_timer_t opal_timer_darwin_freq;
-
+OPAL_DECLSPEC extern mach_timebase_info_data_t opal_timer_darwin_info;
 
 static inline opal_timer_t
 opal_timer_base_get_cycles(void)
 {
+    if( opal_timer_darwin_info.denom == 0 ) {
+        (void) mach_timebase_info(&opal_timer_darwin_info);
+    }
     /* this is basically a wrapper around the "right" assembly to get
        the tick counter off the PowerPC Time Base.  I believe it's
        something similar on x86 */
-    return mach_absolute_time();
+    return mach_absolute_time() * opal_timer_darwin_info.numer / opal_timer_darwin_info.denom / 1000;
 }
 
 
@@ -43,7 +47,7 @@ opal_timer_base_get_usec(void)
 {
     /* freq is in Hz, so this gives usec */
     return mach_absolute_time() * 1000000  / opal_timer_darwin_freq;
-}    
+}
 
 
 static inline opal_timer_t
@@ -53,9 +57,9 @@ opal_timer_base_get_freq(void)
 }
 
 
-#define OPAL_TIMER_CYCLE_NATIVE 1
+#define OPAL_TIMER_CYCLE_NATIVE 0
 #define OPAL_TIMER_CYCLE_SUPPORTED 1
-#define OPAL_TIMER_USEC_NATIVE 0
+#define OPAL_TIMER_USEC_NATIVE 1
 #define OPAL_TIMER_USEC_SUPPORTED 1
 
 #endif
