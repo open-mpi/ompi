@@ -25,7 +25,7 @@
 #include "opal/constants.h"
 
 opal_timer_t opal_timer_darwin_freq;
-mach_timebase_info_data_t opal_timer_darwin_info;
+mach_timebase_info_data_t opal_timer_darwin_info = {.denom = 0};
 
 static int opal_timer_darwin_open(void);
 
