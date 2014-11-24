@@ -44,9 +44,11 @@ opal_sys_timer_get_cycles(void)
       * can afford a small inaccuracy.
       */
      __asm__ __volatile__ ("rdtscp\n\t"
+                           "mov %%edx, %0\n\t"
+                           "mov %%eax, %1\n\t"
                            "cpuid\n\t"
-                           : "=a" (a), "=d" (d)
-                           :: "rbx", "rcx");
+                           : "=r" (a), "=r" (d)
+                           :: "rax", "rbx", "rcx", "rdx");
 #endif
      return ((opal_timer_t)a) | (((opal_timer_t)d) << 32);
 }
