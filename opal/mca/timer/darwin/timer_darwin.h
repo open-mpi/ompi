@@ -21,7 +21,6 @@
 
 #include "opal_config.h"
 #include <mach/mach_time.h>
-#include <CoreServices/CoreServices.h>
 
 typedef uint64_t opal_timer_t;
 
