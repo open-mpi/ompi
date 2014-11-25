@@ -56,9 +56,9 @@ static int test_upper( unsigned int length )
     TIMER_DATA_TYPE start, end;
     long total_time;
 
-    printf( "test upper matrix\n" );
+    /*printf( "test upper matrix\n" );*/
     pdt = upper_matrix( length );
-    opal_datatype_dump( pdt );
+    /*opal_datatype_dump( pdt );*/
 
     mat1 = malloc( length * length * sizeof(double) );
     init_random_upper_matrix( length, mat1 );
@@ -346,15 +346,15 @@ int main( int argc, char* argv[] )
      * By default simulate homogeneous architectures.
      */
     remote_arch = opal_local_arch;
-    printf( "\n\n#\n * TEST CREATE CONTIGUOUS\n #\n\n" );
+    printf( "\n\n#\n * TEST CREATE CONTIGUOUS\n#\n\n" );
     pdt = create_contiguous_type( &opal_datatype_int1, 10 );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_count(pdt, 100);
         local_copy_with_convertor(pdt, 100, 956);
     }
-
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    printf( "\n\n#\n * TEST STRANGE DATATYPE\n #\n\n" );
+
+    printf( "\n\n#\n * TEST STRANGE DATATYPE\n#\n\n" );
     pdt = create_strange_dt();
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_count(pdt, 1);
@@ -362,27 +362,34 @@ int main( int argc, char* argv[] )
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
-
-    printf( "\n\n#\n * TEST UPPER TRIANGULAR MATRIX (size 100)\n #\n\n" );
+    printf( "\n\n#\n * TEST UPPER TRIANGULAR MATRIX (size 100)\n#\n\n" );
     pdt = upper_matrix(100);
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_count(pdt, 1);
         local_copy_with_convertor(pdt, 1, 48);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    
+
+    printf( "\n\n#\n * TEST CREATE STRUCT CONSTANT GAP RESIZED\n#\n\n" );
+    pdt = create_struct_constant_gap_resized_ddt();
+    if( outputFlags & CHECK_PACK_UNPACK ) {
+        local_copy_ddt_count(pdt, 10000);
+        local_copy_with_convertor(pdt, 10000, 956);
+    }
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
+
     mpich_typeub();
     mpich_typeub2();
     mpich_typeub3();
 
-    printf( "\n\n#\n * TEST UPPER MATRIX\n #\n\n" );
+    printf( "\n\n#\n * TEST UPPER MATRIX\n#\n\n" );
     rc = test_upper( length );
     if( rc == 0 )
         printf( "decode [PASSED]\n" );
     else
         printf( "decode [NOT PASSED]\n" );
 
-    printf( "\n\n#\n * TEST MATRIX BORDERS\n #\n\n" );
+    printf( "\n\n#\n * TEST MATRIX BORDERS\n#\n\n" );
     pdt = test_matrix_borders( length, 100 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
         opal_datatype_dump( pdt );
@@ -390,10 +397,10 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
 
-    printf( "\n\n#\n * TEST CONTIGUOUS\n #\n\n" );
+    printf( "\n\n#\n * TEST CONTIGUOUS\n#\n\n" );
     pdt = test_contiguous();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    printf( "\n\n#\n * TEST STRUCT\n #\n\n" );
+    printf( "\n\n#\n * TEST STRUCT\n#\n\n" );
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
