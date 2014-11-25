@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,7 +30,10 @@ opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
 
-    __asm__ __volatile__("rdtsc" : "=A"(ret));
+    __asm__ __volatile__("cpuid\n"
+                         "rdtsc\n"
+                         : "=A"(ret)
+                         :: "ebx", "ecx", "edx");
 
     return ret;
 }
