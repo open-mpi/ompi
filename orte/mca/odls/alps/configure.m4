@@ -25,29 +25,13 @@
 AC_DEFUN([MCA_orte_odls_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/odls/alps/Makefile])
 
-    odls_alps_lli_happy="no"
-    odls_alps_util_happy="no"
+    ORTE_CHECK_ALPS([odls_alps], [odls_alps_happy="yes"], [odls_alps_happy="no"])
 
-    PKG_CHECK_MODULES([CRAY_ALPS_LLI], [cray-alpslli],
-                      [odls_alps_CPPFLAGS=$CRAY_ALPS_LLI_CFLAGS
-                       odls_alps_LDFLAGS=$CRAY_ALPS_LLI_LIBS
-                       odls_alps_LIBS=$CRAY_ALPS_LLI_LIBS
-                       odls_alps_lli_happy="yes"],
-                      [AC_MSG_RESULT([no])])
-
-    PKG_CHECK_MODULES([CRAY_ALPS_UTIL], [cray-alpsutil],
-                      [odls_alps_CPPFLAGS="$odls_alps_CPPFLAGS $CRAY_ALPS_UTIL_CFLAGS"
-                       odls_alps_LDFLAGS="$odls_alps_LDFLAGS  $CRAY_ALPS_UTIL_LIBS"
-                       odls_alps_LIBS="$odls_alps_LIBS $CRAY_ALPS_LLI_LIBS"
-                       odls_alps_util_happy="yes"],
-                      [AC_MSG_RESULT([no])])
-
-    AS_IF([test "$odls_alps_lli_happy" = "yes" -a "$odls_alps_util_happy" = "yes"], 
+    AS_IF([test "$odls_alps_happy" = "yes"], 
           [$1
            AC_SUBST([odls_alps_CPPFLAGS])
            AC_SUBST([odls_alps_LDFLAGS])
            AC_SUBST([odls_alps_LIBS])], 
           [$2])
-
 ])dnl
 
