@@ -82,7 +82,10 @@ enum {
     ORTE_ERR_TAKE_NEXT_OPTION               = OPAL_ERR_TAKE_NEXT_OPTION,
     ORTE_ERR_PROC_ENTRY_NOT_FOUND           = OPAL_ERR_PROC_ENTRY_NOT_FOUND,
     ORTE_ERR_DATA_VALUE_NOT_FOUND           = OPAL_ERR_DATA_VALUE_NOT_FOUND,
-
+    ORTE_ERR_CONNECTION_FAILED              = OPAL_ERR_CONNECTION_FAILED,
+    ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
+    ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
+    
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
     Otherwise, the error reporting system will potentially crash,
@@ -94,8 +97,6 @@ enum {
     ORTE_ERR_REQUEST                        = (ORTE_ERR_BASE -  4),
     ORTE_ERR_NO_CONNECTION_ALLOWED          = (ORTE_ERR_BASE -  5),
     ORTE_ERR_CONNECTION_REFUSED             = (ORTE_ERR_BASE -  6),
-    ORTE_ERR_CONNECTION_FAILED              = (ORTE_ERR_BASE -  7),
-    ORTE_ERR_COMM_FAILURE                   = (ORTE_ERR_BASE -  8),
     ORTE_ERR_COMPARE_FAILURE                = (ORTE_ERR_BASE -  9),
     ORTE_ERR_COPY_FAILURE                   = (ORTE_ERR_BASE - 10),
     ORTE_ERR_PROC_STATE_MISSING             = (ORTE_ERR_BASE - 11),
@@ -132,8 +133,7 @@ enum {
     ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 42),
     ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 43),
     ORTE_ERR_NO_PATH_TO_TARGET              = (ORTE_ERR_BASE - 44),
-    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45),
-    ORTE_ERR_PEER_CLOSED                    = (ORTE_ERR_BASE - 46)
+    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

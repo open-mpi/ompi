@@ -310,7 +310,7 @@ static int read_bytes(pmix_server_peer_t* peer)
             //if (NULL != pmix_server.oob_exception_callback) {
             //   pmix_server.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
             //}
-            return ORTE_ERR_PEER_CLOSED;
+            return ORTE_ERR_CONNECTION_FAILED;
         }
         /* we were able to read something, so adjust counters and location */
         peer->recv_msg->rdbytes -= rc;

@@ -63,12 +63,6 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_CONNECTION_REFUSED:
         retval = "Connection refused";
         break;
-    case ORTE_ERR_CONNECTION_FAILED:
-        retval = "Connection failed";
-        break;
-    case ORTE_ERR_COMM_FAILURE:
-        retval = "Communication failure";
-        break;
     case ORTE_ERR_TYPE_MISMATCH:
         retval = "Type mismatch";
         break;
