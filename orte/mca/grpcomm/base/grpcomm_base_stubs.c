@@ -12,8 +12,6 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,18 +68,9 @@ static void gccon(orte_grpcomm_caddy_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
-static void gcdes(orte_grpcomm_caddy_t *p)
-{
-    if (NULL != p->sig) {
-        OBJ_RELEASE(p->sig);
-    }
-    p->buf = NULL;
-    p->cbfunc = NULL;
-    p->cbdata = NULL;
-}
 static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                           opal_object_t,
-                          gccon, gcdes);
+                          gccon, NULL);
 
 int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                            orte_rml_tag_t tag,

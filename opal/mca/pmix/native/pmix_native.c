@@ -163,7 +163,6 @@ static int pmix_sm_attach(uint32_t jid, char *seg_info)
 
     rc = opal_dstore.update(opal_dstore_modex, &attrs);
     opal_list_remove_item(&attrs, &attr->super);
-    free(attr->connection_info);
     OBJ_RELEASE(attr);
     OPAL_LIST_DESTRUCT(&attrs);
     return rc;
