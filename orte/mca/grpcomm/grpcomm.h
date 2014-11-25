@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,6 +182,8 @@ typedef orte_grpcomm_base_component_3_0_0_t orte_grpcomm_base_component_t;
 
 /* Global structure for accessing grpcomm functions */
 ORTE_DECLSPEC extern orte_grpcomm_API_module_t orte_grpcomm;
+
+ORTE_DECLSPEC void orte_grpcomm_remove_job(orte_jobid_t jobid);
 
 END_C_DECLS
 

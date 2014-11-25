@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +78,7 @@ static void accept_connection(const int accepted_fd,
 static void set_peer(const orte_process_name_t* name,
                      const uint16_t af_family,
                      const char *net, const char *ports);
+static void unset_peer(const orte_process_name_t *name);
 static void ping(const orte_process_name_t *proc);
 static void send_nb(orte_rml_send_t *msg);
 static void resend(struct mca_oob_tcp_msg_error_t *mop);
@@ -87,6 +90,7 @@ mca_oob_tcp_module_t mca_oob_tcp_module = {
         tcp_fini,
         accept_connection,
         set_peer,
+        unset_peer,
         ping,
         send_nb,
         resend,
@@ -331,6 +335,24 @@ static void set_peer(const orte_process_name_t *name,
 
     /* have to push this into our event base for processing */
     ORTE_ACTIVATE_TCP_PEER_OP(name, af_family, net, ports, process_set_peer);
+}
+
+static void unset_peer(const orte_process_name_t *name)
+{
+    uint64_t ui64;
+    mca_oob_tcp_peer_t *peer;
+    
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "%s:tcp unset addr for peer %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(name));
+
+    memcpy(&ui64, name, sizeof(uint64_t));
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_module.peers, ui64, (void **)&peer)) {
+        return;
+    }
+    OBJ_RELEASE(peer);
+    opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, ui64, NULL);
 }
 
 

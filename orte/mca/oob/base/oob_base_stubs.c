@@ -3,6 +3,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +28,8 @@
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/state/base/base.h"
 #endif
+
+#include "orte/mca/grpcomm/grpcomm.h"
 
 static void process_uri(char *uri);
 
@@ -390,6 +394,58 @@ static void process_uri(char *uri)
         }
     }
     opal_argv_free(uris);
+}
+
+void orte_oob_base_unset_addr(orte_process_name_t *peer)
+{
+    uint64_t ui64;
+    mca_base_component_list_item_t *cli;
+    mca_oob_base_component_t *component;
+    orte_oob_base_peer_t *pr;
+
+    if (peer->jobid == ORTE_PROC_MY_NAME->jobid &&
+        peer->vpid == ORTE_PROC_MY_NAME->vpid) {
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s:unset_addr peer %s is me",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(peer));
+        return;
+    }
+
+    /* get the peer object for this process */
+    memcpy(&ui64, peer, sizeof(uint64_t));
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&pr) ||
+        NULL == pr) {
+            return;
+    }
+
+    /* loop across all available components and let them extract
+     * whatever piece(s) of the uri they find relevant - they
+     * are all operating on our event base, so we can just
+     * directly call their functions
+     */
+    OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
+        component = (mca_oob_base_component_t*)cli->cli_component;
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s:unset_addr checking if peer %s is reachable via component %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(peer), component->oob_base.mca_component_name);
+        if (NULL != component->unset_addr) {
+            component->unset_addr(peer);
+            /* this component found reachable addresses
+             * in the uris
+             */
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                "%s: peer %s is reachable via component %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(peer), component->oob_base.mca_component_name);
+            opal_bitmap_clear_bit(&pr->addressable, component->idx);
+        }
+    }
+    opal_hash_table_set_value_uint64(&orte_oob_base.peers, ui64, NULL);
+    OBJ_RELEASE(pr);
+    orte_grpcomm_remove_job(peer->jobid);
 }
 
 #if OPAL_ENABLE_FT_CR == 1

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,6 +55,7 @@ typedef int (*mca_oob_base_component_send_fn_t)(orte_rml_send_t *msg);
 typedef char* (*mca_oob_base_component_get_addr_fn_t)(void);
 typedef int (*mca_oob_base_component_set_addr_fn_t)(orte_process_name_t *peer,
                                                     char **uris);
+typedef void (*mca_oob_base_component_unset_addr_fn_t)(orte_process_name_t *peer);
 typedef bool (*mca_oob_base_component_is_reachable_fn_t)(orte_process_name_t *peer);
 typedef void (*mca_oob_ping_callback_fn_t)(int status, void *cbdata);
 #if OPAL_ENABLE_FT_CR == 1
@@ -70,6 +73,7 @@ typedef struct {
     mca_oob_base_component_send_fn_t          send_nb;
     mca_oob_base_component_get_addr_fn_t      get_addr;
     mca_oob_base_component_set_addr_fn_t      set_addr;
+    mca_oob_base_component_unset_addr_fn_t    unset_addr;
     mca_oob_base_component_is_reachable_fn_t  is_reachable;
 #if OPAL_ENABLE_FT_CR == 1
     mca_oob_base_component_ft_event_fn_t      ft_event;
