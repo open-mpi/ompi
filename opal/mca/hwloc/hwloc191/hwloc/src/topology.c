@@ -3035,7 +3035,17 @@ hwloc__check_children(struct hwloc_obj *parent)
       assert(hwloc_bitmap_isincluded(parent->children[j]->cpuset, remaining_parent_set));
       hwloc_bitmap_andnot(remaining_parent_set, remaining_parent_set, parent->children[j]->cpuset);
     }
-    assert(hwloc_bitmap_iszero(remaining_parent_set));
+    if (parent->type == HWLOC_OBJ_PU) {
+      /* if parent is a PU, its os_index bit may remain.
+       * it may be in a Misc child inserted by cpuset, or could be in no child */
+      if (hwloc_bitmap_weight(remaining_parent_set) == 1)
+	assert((unsigned) hwloc_bitmap_first(remaining_parent_set) == parent->os_index);
+      else
+	assert(hwloc_bitmap_iszero(remaining_parent_set));
+    } else {
+      /* nothing remains */
+      assert(hwloc_bitmap_iszero(remaining_parent_set));
+    }
     hwloc_bitmap_free(remaining_parent_set);
   }
 
