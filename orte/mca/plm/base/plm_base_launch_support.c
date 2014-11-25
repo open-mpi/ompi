@@ -14,6 +14,8 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -521,6 +523,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
+    OBJ_RELEASE(buffer);
     /* maintain accounting */
     OBJ_RELEASE(sig);
 

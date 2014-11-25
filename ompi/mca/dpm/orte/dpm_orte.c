@@ -584,6 +584,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     if ( NULL != proc_list ) {
         free ( proc_list );
     }
+    if ( NULL != new_proc_list ) {
+        free ( new_proc_list );
+    }
     if ( OMPI_SUCCESS != rc ) {
         if ( MPI_COMM_NULL != newcomp && NULL != newcomp ) {
             OBJ_RETAIN(newcomp);

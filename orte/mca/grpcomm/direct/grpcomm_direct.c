@@ -312,13 +312,14 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     rly = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(rly, buffer);
 
-    /* get the signature */
+    /* get the signature that we do not need */
     cnt=1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(ret);
         ORTE_FORCED_TERMINATE(ret);
         return;
     }
+    OBJ_RELEASE(sig);
 
     /* get the target tag */
     cnt=1;
