@@ -25,24 +25,9 @@
 AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/ess/alps/Makefile])
 
-    ess_alps_lli_happy="no"
-    ess_alps_util_happy="no"
+    ORTE_CHECK_ALPS([ess_alps], [ess_alps_happy="yes"], [ess_alps_happy="no"])
 
-    PKG_CHECK_MODULES([CRAY_ALPS_LLI], [cray-alpslli],
-                      [ess_alps_CPPFLAGS=$CRAY_ALPS_LLI_CFLAGS
-                       ess_alps_LDFLAGS=$CRAY_ALPS_LLI_LIBS
-                       ess_alps_LIBS=$CRAY_ALPS_LLI_LIBS
-                       ess_alps_lli_happy="yes"],
-                      [AC_MSG_RESULT([no])])
-
-    PKG_CHECK_MODULES([CRAY_ALPS_UTIL], [cray-alpsutil],
-                      [ess_alps_CPPFLAGS="$ess_alps_CPPFLAGS $CRAY_ALPS_UTIL_CFLAGS"
-                       ess_alps_LDFLAGS="$ess_alps_LDFLAGS  $CRAY_ALPS_UTIL_LIBS"
-                       ess_alps_LIBS="$ess_alps_LIBS $CRAY_ALPS_LLI_LIBS"
-                       ess_alps_util_happy="yes"],
-                      [AC_MSG_RESULT([no])])
-
-    AS_IF([test "$ess_alps_lli_happy" = "yes" -a "$ess_alps_util_happy" = "yes"], 
+    AS_IF([test "$ess_alps_happy" = "yes"],
           [$1
            AC_SUBST([ess_alps_CPPFLAGS])
            AC_SUBST([ess_alps_LDFLAGS])
