@@ -481,9 +481,12 @@ static int mca_oob_ud_component_set_addr(orte_process_name_t *peer, char **uris)
     OPAL_THREAD_LOCK(&mca_oob_ud_component.ud_lock);
 
     for (int i = 0; NULL != uris[i]; i++) {
-        if (NULL != mca_oob_ud_module.api.set_addr) {
-            if (ORTE_SUCCESS != (rc = mca_oob_ud_module.api.set_addr(peer, uris[i]))) {
-                return rc;
+        if (0 == strncmp(uris[i], "ud:", 3)) {
+            if (NULL != mca_oob_ud_module.api.set_addr) {
+                if (ORTE_SUCCESS != (rc = mca_oob_ud_module.api.set_addr(peer, uris[i]))) {
+                    OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
+                    return rc;
+                }
             }
         }
     }
