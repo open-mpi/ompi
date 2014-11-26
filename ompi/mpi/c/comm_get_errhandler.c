@@ -39,7 +39,7 @@ static const char FUNC_NAME[] = "MPI_Comm_get_errhandler";
 
 int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
-    MPI_Errhandler tmp;
+    MPI_Errhandler old, tmp;
 
     /* Error checking */
     MEMCHECKER(
@@ -63,9 +63,10 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 
   /* On 64 bits environments we have to make sure the reading of the
      error_handler became atomic. */
-  do {
-      tmp = comm->error_handler;
-  } while (!OPAL_ATOMIC_CMPSET(&(comm->error_handler), tmp, tmp));
+  old = comm->error_handler;
+  while( old != (tmp = (MPI_Errhandler)OPAL_ATOMIC_CMPSET(&(comm->error_handler), old, old)) ) {
+      old = tmp;
+  }
 
   /* Retain the errhandler, corresponding to object refcount decrease
      in errhandler_free.c. */
