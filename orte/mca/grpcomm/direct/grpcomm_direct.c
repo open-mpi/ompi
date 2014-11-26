@@ -391,6 +391,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     goto relay;
                 }
                 if (0 == flag) {
+                    /* copy the remainder of the payload */
+                    opal_dss.copy_payload(relay, buffer);
                     /* no - just return */
                     goto relay;
                 }
