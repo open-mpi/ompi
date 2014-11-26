@@ -3,6 +3,9 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +73,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     uint32_t len;
     int count = 0;
 
-    if (!opal_atomic_cmpset_32 (&ep->smsg_progressing, 0, 1)) {
+    if (0 != opal_atomic_cmpset_32 (&ep->smsg_progressing, 0, 1)) {
         /* already progressing (we can't support reentry here) */
         return 0;
     }

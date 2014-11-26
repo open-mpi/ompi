@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -94,8 +94,8 @@ void opal_atomic_wmb(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_32(volatile int32_t *addr,
+                                            int32_t oldval, int32_t newval)
 {
     int32_t ret;
 
@@ -114,13 +114,13 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
 #endif
                          /* note: ret will be 0 if failed, 1 if succeeded */
                          "beqz   $1, 1b         \n" /* if 0 jump back to 1b */
-			 "nop                   \n" /* fill delay slots */
+                         "nop                   \n" /* fill delay slots */
                          "2:                    \n"
                          ".set reorder          \n"
                          : "=&r"(ret), "=m"(*addr)
                          : "m"(*addr), "r"(oldval), "r"(newval)
                          : "cc", "memory");
-   return (ret == oldval);
+   return ret;
 }
 
 
@@ -129,10 +129,10 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_acq_32(volatile int32_t *addr,
+                                                int32_t oldval, int32_t newval)
 {
-    int rc;
+    int32_t rc;
 
     rc = opal_atomic_cmpset_32(addr, oldval, newval);
     opal_atomic_rmb();
@@ -141,16 +141,16 @@ static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
 }
 
 
-static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_rel_32(volatile int32_t *addr,
+                                                int32_t oldval, int32_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_cmpset_32(addr, oldval, newval);
 }
 
 #ifdef OPAL_HAVE_ATOMIC_CMPSET_64
-static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
-                                        int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_64(volatile int64_t *addr,
+                                            int64_t oldval, int64_t newval)
 {
     int64_t ret;
 
@@ -163,14 +163,14 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                          "scd    $1, %2         \n\t" /* store tmp in *addr */
                          /* note: ret will be 0 if failed, 1 if succeeded */
                          "beqz   $1, 1b         \n\t" /* if 0 jump back to 1b */
-			 "nop                   \n\t" /* fill delay slot */
+                         "nop                   \n\t" /* fill delay slot */
                          "2:                    \n\t"
                          ".set reorder          \n"
                          : "=&r" (ret), "=m" (*addr)
                          : "m" (*addr), "r" (oldval), "r" (newval)
                          : "cc", "memory");
 
-   return (ret == oldval);
+   return ret;
 }
 
 
@@ -179,10 +179,10 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
-                                            int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_acq_64(volatile int64_t *addr,
+                                                int64_t oldval, int64_t newval)
 {
-    int rc;
+    int64_t rc;
 
     rc = opal_atomic_cmpset_64(addr, oldval, newval);
     opal_atomic_rmb();
@@ -191,8 +191,8 @@ static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
 }
 
 
-static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
-                                            int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_rel_64(volatile int64_t *addr,
+                                                int64_t oldval, int64_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_cmpset_64(addr, oldval, newval);

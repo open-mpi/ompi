@@ -3,6 +3,9 @@
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,10 +28,7 @@ lk_fetch_add32(ompi_osc_sm_module_t *module,
                size_t offset,
                uint32_t delta)
 {
-    /* opal_atomic_add_32 is an add then fetch so delta needs to be subtracted out to get the
-     * old value */
-    return opal_atomic_add_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
-                              delta) - delta;
+    return opal_atomic_add_32((int32_t*) ((char*) &module->node_states[target].lock + offset), delta);
 }
 
 

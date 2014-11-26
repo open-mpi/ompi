@@ -5,6 +5,9 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,7 +124,7 @@ void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_b
     int32_t ref_count;
 
     ref_count = opal_atomic_add_32 (&reg->ref_count, -1);
-    if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
+    if (OPAL_UNLIKELY(1 == ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
         /* protect rcache access */
         OPAL_THREAD_LOCK(&ep->lock);
         rcache->rcache_delete (rcache, reg);

@@ -2,10 +2,10 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -44,6 +44,7 @@
 
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 
+#define OPAL_HAVE_ATOMIC_SWAP_64 0  /* updated later */
 
 /**********************************************************************
  *
@@ -79,8 +80,8 @@ static inline void opal_atomic_wmb(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
-                                         int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_32( volatile int32_t *addr,
+                                             int32_t oldval, int32_t newval)
 {
    /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
     *
@@ -95,12 +96,12 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
    __asm__ __volatile__("casa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
                       : "r" (addr), "r" (oldval));
-   return (ret == oldval);
+   return ret;
 }
 
 
-static inline int opal_atomic_cmpset_acq_32( volatile int32_t *addr,
-                                             int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_acq_32( volatile int32_t *addr,
+                                                 int32_t oldval, int32_t newval)
 {
    int rc;
 
@@ -111,8 +112,8 @@ static inline int opal_atomic_cmpset_acq_32( volatile int32_t *addr,
 }
 
 
-static inline int opal_atomic_cmpset_rel_32( volatile int32_t *addr,
-                                             int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_rel_32( volatile int32_t *addr,
+                                                 int32_t oldval, int32_t newval)
 {
    opal_atomic_wmb();
    return opal_atomic_cmpset_32(addr, oldval, newval);
@@ -121,8 +122,8 @@ static inline int opal_atomic_cmpset_rel_32( volatile int32_t *addr,
 
 #if OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
 
-static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
-                                         int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
+                                             int64_t oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -136,13 +137,13 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
    __asm__ __volatile__("casxa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
                       : "r" (addr), "r" (oldval));
-   return (ret == oldval);
+   return ret;
 }
 
 #else /* OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64 */
 
-static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
-                                         int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
+                                             int64_t oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -152,7 +153,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
      *    reg(rd) = *(reg(rs1))
      *
      */
-    long long ret = newval;
+    int64_t ret = newval;
 
     __asm__ __volatile__(
                        "ldx %0, %%g1               \n\t" /* g1 = ret */
@@ -164,25 +165,24 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                        : "%g1", "%g2"
                        );
 
-   return (ret == oldval);
+   return ret;
 }
 
 #endif /* OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64 */
 
-static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
-                                             int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_acq_64( volatile int64_t *addr,
+                                                 int64_t oldval, int64_t newval)
 {
-   int rc;
-   
+   int64_t rc;
+
    rc = opal_atomic_cmpset_64(addr, oldval, newval);
    opal_atomic_rmb();
-   
+
    return rc;
 }
 
-
-static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
-                                             int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_rel_64( volatile int64_t *addr,
+                                                 int64_t oldval, int64_t newval)
 {
    opal_atomic_wmb();
    return opal_atomic_cmpset_64(addr, oldval, newval);
@@ -190,5 +190,42 @@ static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
+#if OPAL_GCC_INLINE_ASSEMBLY
+
+#define OPAL_HAVE_ATOMIC_SWAP_32 1
+
+static inline int32_t
+opal_atomic_swap_32( volatile int32_t *addr,
+                     int32_t newval)
+{
+    int32_t prev;
+    __asm__ __volatile__(
+             "swap %0, %1"
+             : "=m" (*addr), "=r" (prev)
+             : "1" (newval), "m" (*addr)
+             : "memory");
+    return prev;
+}
+
+#if OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
+
+#undef OPAL_HAVE_ATOMIC_SWAP_64
+#define OPAL_HAVE_ATOMIC_SWAP_64 1
+
+static inline int64_t
+opal_atomic_swap_64( volatile int64_t *addr,
+                     int64_t newval)
+{
+    int64_t prev;
+    __asm__ __volatile__(
+             "swap %0, %1"
+             : "=m" (*addr), "=r" (prev)
+             : "1" (newval), "m" (*addr)
+             : "memory");
+    return prev;
+}
+#endif  /* OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64 */
+
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

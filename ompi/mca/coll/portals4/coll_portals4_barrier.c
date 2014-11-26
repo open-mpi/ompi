@@ -42,7 +42,7 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
 
     ompi_coll_portals4_get_md(0, &md_h, &base);
 
-    count = opal_atomic_add_size_t(&portals4_module->barrier_count, 1);
+    count = 1 + opal_atomic_add_size_t(&portals4_module->barrier_count, 1);
 
     ret = PtlCTAlloc(mca_coll_portals4_component.ni_h,
                      &ct_h);
@@ -198,7 +198,7 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     *ompi_req = &request->super;
     request->type = OMPI_COLL_PORTALS4_TYPE_BARRIER;
 
-    count = opal_atomic_add_size_t(&portals4_module->barrier_count, 1);
+    count = 1 + opal_atomic_add_size_t(&portals4_module->barrier_count, 1);
 
     ret = PtlCTAlloc(mca_coll_portals4_component.ni_h,
                      &request->ct_h);

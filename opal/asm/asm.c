@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -59,7 +59,8 @@ opal_atomic_add_32(volatile int32_t *addr, int delta)
 
     opal_atomic_lock(FIND_LOCK(addr));
 
-    ret = (*addr += delta);
+    ret = *addr;
+    *addr += delta;
 
     opal_atomic_unlock(FIND_LOCK(addr));
 
@@ -74,7 +75,8 @@ opal_atomic_sub_32(volatile int32_t *addr, int delta)
 
     opal_atomic_lock(FIND_LOCK(addr));
 
-    ret = (*addr -= delta);
+    ret = *addr;
+    *addr -= delta;
 
     opal_atomic_unlock(FIND_LOCK(addr));
 

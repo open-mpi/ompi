@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -71,11 +71,11 @@ static void *thread_main(void *arg)
     /* thread tests */
 
     for (i = 0; i < nreps; i++) {
-        opal_atomic_add_32(&val32, 5);
+        (void)opal_atomic_add_32(&val32, 5);
 #if OPAL_HAVE_ATOMIC_MATH_64
-        opal_atomic_add_64(&val64, 5);
+        (void)opal_atomic_add_64(&val64, 5);
 #endif
-        opal_atomic_add(&valint, 5);
+        (void)opal_atomic_add(&valint, 5);
     }
 
     return (void *) (unsigned long) (rank + 1000);
@@ -102,30 +102,30 @@ int main(int argc, char *argv[])
     /* -- cmpset 32-bit tests -- */
 
     vol32 = 42, old32 = 42, new32 = 50;
-    assert(opal_atomic_cmpset_32(&vol32, old32, new32) == 1);
+    assert(opal_atomic_cmpset_32(&vol32, old32, new32) == 42);
     opal_atomic_rmb();
     assert(vol32 == new32);
 
     vol32 = 42, old32 = 420, new32 = 50;
-    assert(opal_atomic_cmpset_32(&vol32, old32, new32) ==  0);
+    assert(opal_atomic_cmpset_32(&vol32, old32, new32) == 42);
     opal_atomic_rmb();
     assert(vol32 == 42);
 
     vol32 = 42, old32 = 42, new32 = 50;
-    assert(opal_atomic_cmpset_acq_32(&vol32, old32, new32) == 1);
+    assert(opal_atomic_cmpset_acq_32(&vol32, old32, new32) == 42);
     assert(vol32 == new32);
 
     vol32 = 42, old32 = 420, new32 = 50;
-    assert(opal_atomic_cmpset_acq_32(&vol32, old32, new32) == 0);
+    assert(opal_atomic_cmpset_acq_32(&vol32, old32, new32) == 42);
     assert(vol32 == 42);
 
     vol32 = 42, old32 = 42, new32 = 50;
-    assert(opal_atomic_cmpset_rel_32(&vol32, old32, new32) ==  1);
+    assert(opal_atomic_cmpset_rel_32(&vol32, old32, new32) ==  42);
     opal_atomic_rmb();
     assert(vol32 == new32);
 
     vol32 = 42, old32 = 420, new32 = 50;
-    assert(opal_atomic_cmpset_rel_32(&vol32, old32, new32) == 0);
+    assert(opal_atomic_cmpset_rel_32(&vol32, old32, new32) == 42);
     opal_atomic_rmb();
     assert(vol32 == 42);
 
@@ -133,60 +133,60 @@ int main(int argc, char *argv[])
 
 #if OPAL_HAVE_ATOMIC_MATH_64
     vol64 = 42, old64 = 42, new64 = 50;
-    assert(1 == opal_atomic_cmpset_64(&vol64, old64, new64));
+    assert(opal_atomic_cmpset_64(&vol64, old64, new64) == 42);
     opal_atomic_rmb();
     assert(new64 == vol64);
 
     vol64 = 42, old64 = 420, new64 = 50;
-    assert(opal_atomic_cmpset_64(&vol64, old64, new64) == 0);
+    assert(opal_atomic_cmpset_64(&vol64, old64, new64) == 42);
     opal_atomic_rmb();
     assert(vol64 == 42);
 
     vol64 = 42, old64 = 42, new64 = 50;
-    assert(opal_atomic_cmpset_acq_64(&vol64, old64, new64) == 1);
+    assert(opal_atomic_cmpset_acq_64(&vol64, old64, new64) == 42);
     assert(vol64 == new64);
 
     vol64 = 42, old64 = 420, new64 = 50;
-    assert(opal_atomic_cmpset_acq_64(&vol64, old64, new64) == 0);
+    assert(opal_atomic_cmpset_acq_64(&vol64, old64, new64) == 42);
     assert(vol64 == 42);
 
     vol64 = 42, old64 = 42, new64 = 50;
-    assert(opal_atomic_cmpset_rel_64(&vol64, old64, new64) == 1);
+    assert(opal_atomic_cmpset_rel_64(&vol64, old64, new64) == 42);
     opal_atomic_rmb();
     assert(vol64 == new64);
 
     vol64 = 42, old64 = 420, new64 = 50;
-    assert(opal_atomic_cmpset_rel_64(&vol64, old64, new64) == 0);
+    assert(opal_atomic_cmpset_rel_64(&vol64, old64, new64) == 42);
     opal_atomic_rmb();
     assert(vol64 == 42);
 #endif
     /* -- cmpset int tests -- */
 
     volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_cmpset(&volint, oldint, newint) == 1);
+    assert(opal_atomic_cmpset(&volint, oldint, newint) == 42);
     opal_atomic_rmb();
     assert(volint ==newint);
 
     volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_cmpset(&volint, oldint, newint) == 0);
+    assert(opal_atomic_cmpset(&volint, oldint, newint) == 42);
     opal_atomic_rmb();
     assert(volint == 42);
 
     volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_cmpset_acq(&volint, oldint, newint) == 1);
+    assert(opal_atomic_cmpset_acq(&volint, oldint, newint) == 42);
     assert(volint == newint);
 
     volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_cmpset_acq(&volint, oldint, newint) == 0);
+    assert(opal_atomic_cmpset_acq(&volint, oldint, newint) == 42);
     assert(volint == 42);
 
     volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_cmpset_rel(&volint, oldint, newint) == 1);
+    assert(opal_atomic_cmpset_rel(&volint, oldint, newint) == 42);
     opal_atomic_rmb();
     assert(volint == newint);
 
     volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_cmpset_rel(&volint, oldint, newint) == 0);
+    assert(opal_atomic_cmpset_rel(&volint, oldint, newint) == 42);
     opal_atomic_rmb();
     assert(volint == 42);
 
@@ -194,44 +194,44 @@ int main(int argc, char *argv[])
     /* -- cmpset ptr tests -- */
 
     volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_ptr(&volptr, oldptr, newptr) == 1);
+    assert(opal_atomic_cmpset_ptr(&volptr, oldptr, newptr) == (void*)42);
     opal_atomic_rmb();
     assert(volptr == newptr);
 
     volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_ptr(&volptr, oldptr, newptr) == 0);
+    assert(opal_atomic_cmpset_ptr(&volptr, oldptr, newptr) == (void*)42);
     opal_atomic_rmb();
     assert(volptr == (void *) 42);
 
     volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_acq_ptr(&volptr, oldptr, newptr) == 1);
+    assert(opal_atomic_cmpset_acq_ptr(&volptr, oldptr, newptr) == (void*)42);
     assert(volptr == newptr);
 
     volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_acq_ptr(&volptr, oldptr, newptr) == 0);
+    assert(opal_atomic_cmpset_acq_ptr(&volptr, oldptr, newptr) == (void*)42);
     assert(volptr == (void *) 42);
 
     volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_rel_ptr(&volptr, oldptr, newptr) == 1);
+    assert(opal_atomic_cmpset_rel_ptr(&volptr, oldptr, newptr) == (void*)42);
     opal_atomic_rmb();
     assert(volptr == newptr);
 
     volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
-    assert(opal_atomic_cmpset_rel_ptr(&volptr, oldptr, newptr) == 0);
+    assert(opal_atomic_cmpset_rel_ptr(&volptr, oldptr, newptr) == (void*)42);
     opal_atomic_rmb();
     assert(volptr == (void *) 42);
 
     /* -- add_32 tests -- */
 
     val32 = 42;
-    assert(opal_atomic_add_32(&val32, 5) == (42 + 5));
+    assert(opal_atomic_add_32(&val32, 5) == (42));
     opal_atomic_rmb();
     assert((42 + 5) == val32);
 
     /* -- add_64 tests -- */
 #if OPAL_HAVE_ATOMIC_MATH_64
     val64 = 42;
-    assert(opal_atomic_add_64(&val64, 5) == (42 + 5));
+    assert(opal_atomic_add_64(&val64, 5) == (42));
     opal_atomic_rmb();
     assert((42 + 5) == val64);
 #endif
