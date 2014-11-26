@@ -13,6 +13,8 @@
 # Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+# Copyright (c) 2014      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,17 +27,14 @@
 # ------------------------------------------------
 AC_DEFUN([MCA_orte_common_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/common/alps/Makefile])
-    common_verbs_happy="no"
-    OPAL_CHECK_OPENFABRICS([common_verbs],
-                           [common_verbs_happy="yes"])
 
-    AS_IF([test "$common_verbs_happy" = "yes"],
-          [$1],
+    ORTE_CHECK_ALPS([common_alps], [common_alps_happy="yes"], [common_alps_happy="no"])
+
+    AS_IF([test "$common_alps_happy" = "yes"],
+          [$1
+           AC_SUBST([common_alps_CPPFLAGS])
+           AC_SUBST([common_alps_LDFLAGS])
+           AC_SUBST([common_alps_LIBS])],
           [$2])
-
-    # substitute in the things needed to build openib
-    AC_SUBST([common_alps_CFLAGS])
-    AC_SUBST([common_alps_CPPFLAGS])
-    AC_SUBST([common_alps_LDFLAGS])
-    AC_SUBST([common_alps_LIBS])
+    #
 ])dnl
