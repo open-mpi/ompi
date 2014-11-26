@@ -38,7 +38,7 @@ static const char FUNC_NAME[] = "MPI_Win_set_errhandler";
 
 int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler) 
 {
-    MPI_Errhandler tmp;
+    MPI_Errhandler old, tmp;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -62,9 +62,10 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
     /* Ditch the old errhandler, and decrement its refcount.  On 64
        bits environments we have to make sure the reading of the
        error_handler became atomic. */
-    do {
-        tmp = win->error_handler;
-    } while (!OPAL_ATOMIC_CMPSET(&(win->error_handler), tmp, errhandler));
+    old = win->error_handler;
+    while( old != (tmp = (MPI_Errhandler)OPAL_ATOMIC_CMPSET(&(win->error_handler), old, errhandler)) ) {
+        old = tmp;
+    }
     OBJ_RELEASE(tmp);
 
     /* All done */
