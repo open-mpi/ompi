@@ -66,7 +66,7 @@ static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t 
                                                 opal_list_item_t *item)
 {
     opal_counted_pointer_t new = {.data = {.item = item, .counter = old.data.counter + 1}};
-    return opal_atomic_cmpset_128 (&addr->value, old.value, new.value);
+    return (old.value == opal_atomic_cmpset_128 (&addr->value, old.value, new.value));
 }
 
 #endif
@@ -121,7 +121,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
         opal_atomic_wmb ();
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
-        if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
+        if (next == opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
             return next;
         }
         /* DO some kind of pause to release the bus */
@@ -170,7 +170,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
         opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
         item->opal_list_next = next;
         opal_atomic_wmb();
-        if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
+        if (next == opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
             opal_atomic_wmb ();
             /* now safe to pop this item */
             item->item_free = 0;
@@ -190,13 +190,13 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         opal_atomic_rmb();
 
         /* ensure it is safe to pop the head */
-        if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
+        if (0 != opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
             continue;
         }
 
         /* try to swap out the head pointer */
-        if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, item,
-                                   (void *) item->opal_list_next)) {
+        if (item == opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, item,
+                                            (void *) item->opal_list_next)) {
             break;
         }
         /* NTH: don't need another atomic here */
