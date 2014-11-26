@@ -271,7 +271,7 @@ OPAL_THREAD_ADD32(volatile int32_t *addr, int delta)
     int32_t ret;
 
     if (opal_using_threads()) {
-        ret = delta + opal_atomic_add_32(addr, delta);
+        ret = opal_atomic_add_32(addr, delta);
     } else {
         ret = *addr; *addr += delta;
     }
@@ -286,7 +286,7 @@ OPAL_THREAD_ADD64(volatile int64_t *addr, int delta)
     int64_t ret;
 
     if (opal_using_threads()) {
-        ret = delta + opal_atomic_add_64(addr, delta);
+        ret = opal_atomic_add_64(addr, delta);
     } else {
         ret = *addr; *addr += delta;
     }
@@ -301,7 +301,7 @@ OPAL_THREAD_ADD_SIZE_T(volatile size_t *addr, int delta)
     size_t ret;
 
     if (opal_using_threads()) {
-        ret = delta += opal_atomic_add_size_t(addr, delta);
+        ret = opal_atomic_add_size_t(addr, delta);
     } else {
         ret = *addr; *addr += delta;
     }
