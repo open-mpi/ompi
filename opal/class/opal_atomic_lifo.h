@@ -66,12 +66,13 @@ static inline bool opal_atomic_lifo_is_empty( opal_atomic_lifo_t* lifo )
 static inline opal_list_item_t* opal_atomic_lifo_push( opal_atomic_lifo_t* lifo,
                                                        opal_list_item_t* item )
 {
+    opal_list_item_t* tmp;
+
     do {
-        item->opal_list_next = lifo->opal_lifo_head;
+        item->opal_list_next = tmp = lifo->opal_lifo_head;
         opal_atomic_wmb();
-        if( opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
-                                    (void*)item->opal_list_next,
-                                    item ) ) {
+        if( tmp == opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
+                                           (void*)tmp, item ) ) {
             opal_atomic_cmpset_32((volatile int32_t*)&item->item_free, 1, 0);
             return (opal_list_item_t*)item->opal_list_next;
         }
@@ -90,9 +91,8 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
         opal_atomic_rmb();
         if(!opal_atomic_cmpset_32((volatile int32_t*)&item->item_free, 0, 1))
             continue;
-        if( opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
-                                    item,
-                                    (void*)item->opal_list_next ) )
+        if( item == opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
+                                    item, (void*)item->opal_list_next ) )
             break;
         opal_atomic_cmpset_32((volatile int32_t*)&item->item_free, 1, 0);
         /* Do some kind of pause to release the bus */
