@@ -38,8 +38,8 @@ lk_add32(ompi_osc_sm_module_t *module,
          size_t offset,
          uint32_t delta)
 {
-    opal_atomic_add_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
-                       delta);
+    (void)opal_atomic_add_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
+                             delta);
 }
 
 

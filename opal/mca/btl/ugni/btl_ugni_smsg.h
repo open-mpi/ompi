@@ -71,7 +71,7 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         return OPAL_ERROR;
     }
 
-    opal_atomic_add_32(&ugni_module->active_send_count,-1);
+    (void)opal_atomic_add_32(&ugni_module->active_send_count, -1);
 
     frag->flags |= MCA_BTL_UGNI_FRAG_SMSG_COMPLETE;
 
@@ -96,7 +96,7 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
 
     if (OPAL_LIKELY(GNI_RC_SUCCESS == grc)) {
         /* increment the active send counter */
-        opal_atomic_add_32(&frag->endpoint->btl->active_send_count,1);
+        (void)opal_atomic_add_32(&frag->endpoint->btl->active_send_count, 1);
 
         (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
         return OPAL_SUCCESS;

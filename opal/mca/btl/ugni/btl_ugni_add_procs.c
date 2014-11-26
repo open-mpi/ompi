@@ -195,7 +195,7 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    opal_atomic_add_32(&ugni_module->reg_count,1);
+    (void)opal_atomic_add_32(&ugni_module->reg_count, 1);
 
     return OPAL_SUCCESS;
 }
@@ -230,7 +230,7 @@ ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
         return OPAL_ERROR;
     }
 
-    opal_atomic_add_32(&ugni_module->reg_count,-1);
+    (void)opal_atomic_add_32(&ugni_module->reg_count, -1);
 
     return OPAL_SUCCESS;
 }
