@@ -30,6 +30,7 @@
 #include "orte/constants.h"
 #include "orte/mca/common/alps/common_alps.h"
 
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 
