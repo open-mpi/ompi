@@ -32,7 +32,7 @@ static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
      unsigned a, d;
-#if 0
+#if 1
      __asm__ __volatile__ ("cpuid\n\t"
                            "rdtsc\n\t"
                            : "=a" (a), "=d" (d)
