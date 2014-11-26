@@ -74,7 +74,7 @@ int coll_ml_progress_individual_message(mca_coll_ml_fragment_t *frag_descriptor)
 
    /* looks like we are done */
    /* increment counter for number of completed fragments */
-   n_frags_complete = OPAL_THREAD_ADD_SIZE_T(
+   n_frags_complete = 1 + OPAL_THREAD_ADD_SIZE_T(
        &(frag_descriptor->full_msg_descriptor->frags_complete), 1);
 
    /* 

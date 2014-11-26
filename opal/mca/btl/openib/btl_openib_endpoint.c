@@ -75,14 +75,14 @@ static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
     int prio = !(to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY);
 
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) < 0) {
+        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) <= 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
             opal_list_append(&endpoint->qps[qp].no_credits_pending_frags[prio],
                     (opal_list_item_t *)frag);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
     } else {
-        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0)
+        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) <= 0)
         {
             OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
             OPAL_THREAD_LOCK(&openib_btl->ib_lock);
@@ -792,7 +792,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     if(OPAL_SUCCESS == acquire_eager_rdma_send_credit(endpoint)) {
         do_rdma = true;
     } else {
-        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, 1) >
+        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, 1) >=
                 (mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv - 1)) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, -1);
             BTL_OPENIB_CREDITS_SEND_UNLOCK(endpoint, qp);

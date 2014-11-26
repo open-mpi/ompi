@@ -1846,12 +1846,12 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     /* Check send credits if it is no rdma */
     if(!do_rdma) {
         if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, -1) < 0)){
+            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, -1) <= 0)){
                 OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, 1);
                 goto no_credits_or_wqe;
             }
         } else {
-            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, -1) < 0)){
+            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, -1) <= 0)){
                 OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, 1);
                 goto no_credits_or_wqe;
             }
@@ -2118,7 +2118,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     }
 
     /* check for a get token */
-    if(OPAL_THREAD_ADD32(&ep->get_tokens,-1) < 0) {
+    if(OPAL_THREAD_ADD32(&ep->get_tokens,-1) <= 0) {
         qp_put_wqe(ep, qp);
         OPAL_THREAD_ADD32(&ep->get_tokens,1);
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
