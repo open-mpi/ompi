@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -215,8 +215,7 @@ opal_progress_set_event_flag(int flag)
 void
 opal_progress_event_users_increment(void)
 {
-    int32_t val;
-    val = opal_atomic_add_32(&num_event_users, 1);
+    int32_t val = 1 + opal_atomic_add_32(&num_event_users, 1);
 
     OPAL_OUTPUT((debug_output, "progress: event_users_increment setting count to %d", val));
 
@@ -233,8 +232,7 @@ opal_progress_event_users_increment(void)
 void
 opal_progress_event_users_decrement(void)
 {
-    int32_t val;
-    val = opal_atomic_sub_32(&num_event_users, 1);
+    int32_t val = opal_atomic_sub_32(&num_event_users, 1) - 1;
 
     OPAL_OUTPUT((debug_output, "progress: event_users_decrement setting count to %d", val));
 

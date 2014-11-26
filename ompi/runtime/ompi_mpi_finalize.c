@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -106,7 +106,7 @@ int ompi_mpi_finalize(void)
        ompi_comm_free() (or run into other nasty lions, tigers, or
        bears) */
 
-    if (! opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)) {
+    if (opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)) {
         /* Note that if we're already finalized, we cannot raise an
            MPI exception.  The best that we can do is write something
            to stderr. */

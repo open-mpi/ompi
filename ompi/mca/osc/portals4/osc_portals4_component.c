@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -219,8 +222,8 @@ process:
             /* can't disable send events, but they don't count in ops */
             if (ev.type == PTL_EVENT_SEND) continue;
             req = (ompi_osc_portals4_request_t*) ev.user_ptr;
-            opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
-            ops = opal_atomic_add_32(&req->ops_committed, 1);
+            (void)opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
+            ops = 1 + opal_atomic_add_32(&req->ops_committed, 1);
             if (ops == req->ops_expected) {
                 OPAL_THREAD_LOCK(&ompi_request_lock);
                 ompi_request_complete(&req->super, true);

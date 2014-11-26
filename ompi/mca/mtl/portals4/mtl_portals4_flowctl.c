@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -321,7 +324,7 @@ start_recover(void)
     int64_t epoch_counter;
 
     ompi_mtl_portals4.flowctl.flowctl_active = true;
-    epoch_counter = opal_atomic_add_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
+    epoch_counter = 1 + opal_atomic_add_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Entering flowctl_start_recover %d",

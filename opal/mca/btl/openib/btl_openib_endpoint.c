@@ -412,8 +412,8 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
-                    (void*)1)) {
+        if(NULL != opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
+                                          (void*)1)) {
             if ((void*)1 != endpoint->eager_rdma_local.base.pval &&
                     NULL != endpoint->eager_rdma_local.base.pval) {
                 endpoint->endpoint_btl->super.btl_mpool->mpool_free(endpoint->endpoint_btl->super.btl_mpool,
@@ -923,8 +923,8 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
-    if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
-                (void*)1))
+    if(NULL != opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
+                                      (void*)1))
         return;
 
     headers_buf = (mca_btl_openib_recv_frag_t*)
@@ -1004,7 +1004,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         assert(((opal_object_t*)endpoint)->obj_reference_count == 2);
         do {
             p = &device->eager_rdma_buffers[device->eager_rdma_buffers_count];
-        } while(!opal_atomic_cmpset_ptr(p, NULL, endpoint));
+        } while(NULL != opal_atomic_cmpset_ptr(p, NULL, endpoint));
 
         OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */

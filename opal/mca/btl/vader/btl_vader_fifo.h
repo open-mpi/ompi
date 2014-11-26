@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -138,7 +138,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();
 
-        if (!vader_item_cmpset (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
+        if (value != vader_item_cmpset (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
             while (VADER_FIFO_FREE == hdr->next) {
                 opal_atomic_rmb ();
             }

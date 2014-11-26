@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -78,18 +78,17 @@ static inline void opal_atomic_wmb(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_32( volatile int32_t *addr,
+                                             int32_t oldval, int32_t newval)
 {
-   unsigned char ret;
+   int32_t prev;
    __asm__ __volatile__ (
-                       SMPLOCK "cmpxchgl %3,%2   \n\t"
-                               "sete     %0      \n\t"
-                       : "=qm" (ret), "+a" (oldval), "+m" (*addr)
-                       : "q"(newval)
+                       SMPLOCK "cmpxchgl %1,%2   \n\t"
+                       : "=a" (prev)
+                       : "q"(newval), "m" (*addr), "0" (oldval)
                        : "memory", "cc");
 
-   return (int)ret;
+   return prev;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
@@ -99,19 +98,18 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
-                                         int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
+                                             int64_t oldval, int64_t newval)
 {
-   unsigned char ret;
+   int64_t prev;
    __asm__ __volatile__ (
-                       SMPLOCK "cmpxchgq %3,%2   \n\t"
-                               "sete     %0      \n\t"
-                       : "=qm" (ret), "+a" (oldval), "+m" (*((volatile long*)addr))
-                       : "q"(newval)
+                       SMPLOCK "cmpxchgq %1,%2   \n\t"
+                       : "=a" (prev)
+                       : "r"(newval), "m" (*addr), "0" (oldval)
                        : "memory", "cc"
                        );
 
-   return (int)ret;
+   return prev;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
@@ -126,15 +124,13 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 
 static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
-					   int32_t newval)
+                                           int32_t newval)
 {
-    int32_t oldval;
-
-    __asm__ __volatile__("xchg %1, %0" :
-			 "=r" (oldval), "=m" (*addr) :
-			 "0" (newval), "m" (*addr) :
-			 "memory");
-    return oldval;
+    __asm__ __volatile__("xchg %1, %0" /* SMPLOCK is implicit */:
+                         "+r" (newval), "+m" (*addr) :
+                         :
+                         "memory");
+    return newval;  /* beware this has been swaped in xchgl */
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
@@ -144,13 +140,11 @@ static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
 static inline int64_t opal_atomic_swap_64( volatile int64_t *addr,
                                            int64_t newval)
 {
-    int64_t oldval;
-
-    __asm__ __volatile__("xchgq %1, %0" :
-			 "=r" (oldval) :
-			 "m" (*addr), "0" (newval) :
-			 "memory");
-    return oldval;
+    __asm__ __volatile__("xchgq %1, %0" /* SMPLOCK is implicit */:
+                         "+r" (newval), "+m" (*addr) :
+                         :
+                         "memory");
+    return newval;  /* beware this has been swaped in xchgl */
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
@@ -169,18 +163,17 @@ static inline int64_t opal_atomic_swap_64( volatile int64_t *addr,
  * @i: integer value to add
  * @v: pointer of type int
  *
- * Atomically adds @i to @v.
+ * Atomically adds @value to @*v.
  */
-static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_add_32(volatile int32_t* v, int32_t value)
 {
-    int ret = i;
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (value)
+                        :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return value;
 }
 
 #define OPAL_HAVE_ATOMIC_ADD_64 1
@@ -190,18 +183,17 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
  * @i: integer value to add
  * @v: pointer of type int
  *
- * Atomically adds @i to @v.
+ * Atomically adds @value to @*v.
  */
-static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
+static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t value)
 {
-    int64_t ret = i;
    __asm__ __volatile__(
                         SMPLOCK "xaddq %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (value)
+                        :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return value;
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
@@ -211,18 +203,18 @@ static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
  * @i: integer value to subtract
  * @v: pointer of type int
  *
- * Atomically subtracts @i from @v.
+ * Atomically subtracts @i from @*v.
  */
 static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
 {
     int ret = -i;
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (ret)
+                        :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_64 1
@@ -232,18 +224,18 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
  * @i: integer value to subtract
  * @v: pointer of type int
  *
- * Atomically subtracts @i from @v.
+ * Atomically subtracts @i from @*v.
  */
 static inline int64_t opal_atomic_sub_64(volatile int64_t* v, int64_t i)
 {
     int64_t ret = -i;
    __asm__ __volatile__(
                         SMPLOCK "xaddq %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (ret)
+                        :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */

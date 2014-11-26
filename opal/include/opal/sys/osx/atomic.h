@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,7 +27,7 @@
 
 
 #if OPAL_WANT_SMP_LOCKS
-#define MB() OSMemoryBarrier
+#define MB() OSMemoryBarrier()
 #else
 #define MB()
 #endif
@@ -76,13 +76,13 @@ static inline void opal_atomic_wmb(void)
  * Atomic math operations
  *
  *********************************************************************/
-static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline int32_t opal_atomic_cmpset_32( volatile int32_t *addr,
+                                             int32_t oldval, int32_t newval)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicCompareAndSwap32Barrier(oldval, newval, addr);
+    return (OSAtomicCompareAndSwap32Barrier(oldval, newval, addr)) ? oldval : *addr;
 #else
-    return OSAtomicCompareAndSwap32(oldval, newval, addr);
+    return (OSAtomicCompareAndSwap32(oldval, newval, addr)) ? oldval : *addr;
 #endif
 }
 
@@ -90,13 +90,13 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 #define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
 
 
-static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
-                                         int64_t oldval, int64_t newval)
+static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
+                                             int64_t oldval, int64_t newval)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicCompareAndSwap64Barrier(oldval, newval, addr);
+    return (OSAtomicCompareAndSwap64Barrier(oldval, newval, addr)) ? oldval : *addr;
 #else
-    return OSAtomicCompareAndSwap64(oldval, newval, addr);
+    return (OSAtomicCompareAndSwap64(oldval, newval, addr)) ? oldval : *addr;
 #endif
 }
 
@@ -110,12 +110,12 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_add_32(volatile int32_t* v, int32_t i)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd32Barrier (i, v);
+    return OSAtomicAdd32Barrier (i, v) - i;
 #else
-    return OSAtomicAdd32 (i, v);
+    return OSAtomicAdd32 (i, v) - i;
 #endif
 }
 
@@ -129,9 +129,9 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
 static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd64Barrier (i, v);
+    return OSAtomicAdd64Barrier (i, v) - i;
 #else
-    return OSAtomicAdd64 (i, v);
+    return OSAtomicAdd64 (i, v) - i;
 #endif
 }
 
@@ -142,12 +142,12 @@ static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int32_t i)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd32Barrier (-i, v);
+    return OSAtomicAdd32Barrier (-i, v) + i;
 #else
-    return OSAtomicAdd32 (-i, v);
+    return OSAtomicAdd32 (-i, v) + i;
 #endif
 }
 
@@ -161,16 +161,16 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
 static inline int64_t opal_atomic_sub_64(volatile int64_t* v, int64_t i)
 {
 #if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd64Barrier (-i, v);
+    return OSAtomicAdd64Barrier (-i, v) + i;
 #else
-    return OSAtomicAdd64 (-i, v);
+    return OSAtomicAdd64 (-i, v) + i;
 #endif
 }
 
 static inline void opal_atomic_init(opal_atomic_lock_t* lock, int32_t value)
 {
     lock->u.lock = OS_SPINLOCK_INIT;
-    if (value) {
+    if (OPAL_ATOMIC_LOCKED == value) {
         OSSpinLockLock (&lock->u.lock);
     }
 }
