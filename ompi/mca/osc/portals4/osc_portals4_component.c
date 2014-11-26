@@ -5,6 +5,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2015 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 

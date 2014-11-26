@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -90,7 +90,7 @@ static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
 #define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
 
 #if OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
-static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
+static inline opal_int128_t opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
                                           opal_int128_t oldval, opal_int128_t newval)
 {
     return __sync_val_compare_and_swap(addr, oldval, newval);
