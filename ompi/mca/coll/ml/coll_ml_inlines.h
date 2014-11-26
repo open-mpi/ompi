@@ -49,7 +49,7 @@ static inline __opal_attribute_always_inline__
     uint64_t bank_index = ml_request->fragment_data.buffer_desc->bank_index;
     int rc;
 
-    opal_atomic_add(&ml_memblock->bank_release_counters[bank_index], 1);
+    (void)opal_atomic_add(&ml_memblock->bank_release_counters[bank_index], 1);
 
     /* Check if the bank is ready for recycling */
     if (ml_memblock->bank_release_counters[bank_index] ==
@@ -74,7 +74,7 @@ static inline __opal_attribute_always_inline__
                     return rc;
                 }
 
-                opal_atomic_add(&ml_memblock->memsync_counter, 1);
+                (void)opal_atomic_add(&ml_memblock->memsync_counter, 1);
                 if (ml_memblock->memsync_counter == (int)ml_memblock->num_banks) {
                     ml_memblock->memsync_counter = 0;
                 }

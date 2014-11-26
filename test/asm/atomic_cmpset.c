@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     /* -- add_int tests -- */
 
     valint = 42;
-    opal_atomic_add(&valint, 5);
+    (void)opal_atomic_add(&valint, 5);
     opal_atomic_rmb();
     assert((42 + 5) == valint);
 
