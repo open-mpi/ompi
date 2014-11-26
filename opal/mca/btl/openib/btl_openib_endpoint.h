@@ -266,19 +266,19 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
 static inline int32_t qp_get_wqe(mca_btl_openib_endpoint_t *ep, const int qp)
 {
-    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, -1);
+    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, -1) - 1;
 }
 
 static inline int32_t qp_put_wqe(mca_btl_openib_endpoint_t *ep, const int qp)
 {
-    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, 1);
+    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe, 1) + 1;
 }
 
 
 static inline int32_t qp_inc_inflight_wqe(mca_btl_openib_endpoint_t *ep, const int qp, mca_btl_openib_com_frag_t *frag)
 {
     frag->n_wqes_inflight = 0;
-    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe_inflight, 1);
+    return OPAL_THREAD_ADD32(&ep->qps[qp].qp->sd_wqe_inflight, 1) + 1;
 }
 
 static inline void qp_inflight_wqe_to_frag(mca_btl_openib_endpoint_t *ep, const int qp, mca_btl_openib_com_frag_t *frag)
@@ -522,7 +522,7 @@ ib_send_flags(uint32_t size, mca_btl_openib_endpoint_qp_t *qp, int do_signal)
 static inline int
 acquire_eager_rdma_send_credit(mca_btl_openib_endpoint_t *endpoint)
 {
-    if(OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, -1) < 0) {
+    if(OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, -1) <= 0) {
         OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

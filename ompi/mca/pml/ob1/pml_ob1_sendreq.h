@@ -74,12 +74,12 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
 static inline bool lock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock,  1) == 1;
+    return OPAL_THREAD_ADD32(&sendreq->req_lock,  1) == 0;
 }
 
 static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock, -1) == 0;
+    return OPAL_THREAD_ADD32(&sendreq->req_lock, -1) == 1;
 }
 
 static inline void

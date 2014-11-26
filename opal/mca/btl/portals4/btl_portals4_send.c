@@ -54,7 +54,7 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
     offset = (ptl_size_t) ((char*) frag->segments[0].base.seg_addr.pval - (char*) base);
 
     /* reserve space in the event queue for rdma operations immediately */
-    while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >
+    while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >=
            portals4_btl->portals_max_outstanding_ops) {
         OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,

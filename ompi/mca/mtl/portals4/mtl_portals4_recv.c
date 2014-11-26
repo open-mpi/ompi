@@ -59,7 +59,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    while (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
+    while (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) <= 0)) {
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         ompi_mtl_portals4_progress();
     }
