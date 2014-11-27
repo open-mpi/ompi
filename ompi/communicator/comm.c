@@ -712,7 +712,6 @@ ompi_comm_split_type(ompi_communicator_t *comm,
 
     /* sort according to participation and rank. Gather information from everyone */
     /* allowed splitting types:
-        CLUSTER
         CU
         HOST
         BOARD
@@ -726,29 +725,33 @@ ompi_comm_split_type(ompi_communicator_t *comm,
         HWTHREAD
        Even though HWTHREAD/CORE etc. is overkill they are here for consistency.
        They will most likely return a communicator which is equal to MPI_COMM_SELF
-       Unless oversubscriping.
+       Unless oversubscribing.
     */
     myinfo[0] = 0; // default to no type splitting (also if non-recognized split-type)
     switch ( split_type ) {
-    case MPI_COMM_TYPE_HWTHREAD:
+    case OMPI_COMM_TYPE_HWTHREAD:
         myinfo[0] = 1; break;
-    case MPI_COMM_TYPE_CORE:
+    case OMPI_COMM_TYPE_CORE:
         myinfo[0] = 2; break;
-    case MPI_COMM_TYPE_L1CACHE:
+    case OMPI_COMM_TYPE_L1CACHE:
         myinfo[0] = 3; break;
-    case MPI_COMM_TYPE_L2CACHE:
+    case OMPI_COMM_TYPE_L2CACHE:
         myinfo[0] = 4; break;
-    case MPI_COMM_TYPE_L3CACHE:
+    case OMPI_COMM_TYPE_L3CACHE:
         myinfo[0] = 5; break;
-    case MPI_COMM_TYPE_SOCKET:
+    case OMPI_COMM_TYPE_SOCKET:
         myinfo[0] = 6; break;
-    case MPI_COMM_TYPE_NUMA:
+    case OMPI_COMM_TYPE_NUMA:
         myinfo[0] = 7; break;
-    case MPI_COMM_TYPE_SHARED: // the default implemented type
-    case MPI_COMM_TYPE_NODE:
+    case MPI_COMM_TYPE_SHARED: // the standard implemented type
+    case OMPI_COMM_TYPE_NODE:
         myinfo[0] = 8; break;
-    case MPI_COMM_TYPE_BOARD:
+    case OMPI_COMM_TYPE_BOARD:
         myinfo[0] = 9; break;
+    case OMPI_COMM_TYPE_HOST:
+        myinfo[0] = 10; break;
+    case OMPI_COMM_TYPE_CU:
+        myinfo[0] = 11; break;
     }
     myinfo[1] = key;
 
@@ -816,6 +819,14 @@ ompi_comm_split_type(ompi_communicator_t *comm,
             if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
                 my_size++;
             }
+        } else if ( results[2*i] == 10 ) {
+            if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
+                my_size++;
+            }
+        } else if ( results[2*i] == 11 ) {
+            if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
+                my_size++;
+            }
         }
     }
 
@@ -868,6 +879,14 @@ ompi_comm_split_type(ompi_communicator_t *comm,
             }
         } else if ( results[2*i] == 9 ) {
             if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
+                found = 1;
+            }
+        } else if ( results[2*i] == 10 ) {
+            if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
+                found = 1;
+            }
+        } else if ( results[2*i] == 11 ) {
+            if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
                 found = 1;
             }
         }
@@ -952,6 +971,14 @@ ompi_comm_split_type(ompi_communicator_t *comm,
                 if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
                     my_rsize++;
                 }
+            } else if ( rresults[2*i] == 10 ) {
+                if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
+                    my_rsize++;
+                }
+            } else if ( rresults[2*i] == 11 ) {
+                if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
+                    my_rsize++;
+                }
             }
         }
 
@@ -999,6 +1026,14 @@ ompi_comm_split_type(ompi_communicator_t *comm,
                     }
                 } else if ( rresults[2*i] == 9 ) {
                     if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
+                        found = 1;
+                    }
+                } else if ( rresults[2*i] == 10 ) {
+                    if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
+                        found = 1;
+                    }
+                } else if ( rresults[2*i] == 11 ) {
+                    if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
                         found = 1;
                     }
                 }
