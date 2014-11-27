@@ -967,6 +967,28 @@ AC_MSG_ERROR([Can not continue.])
         [Architecture type of assembly to use for atomic operations and CMA])
     AC_SUBST([OPAL_ASSEMBLY_ARCH])
 
+    # Check for RDTSCP support
+    result=0
+    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" -o "$opal_cv_asm_arch" = "OPAL_IA32"],
+          [AC_MSG_CHECKING([for RDTSCP assembly support])
+           AC_LANG_PUSH([C])
+           AC_TRY_RUN([[
+int main(int argc, char* argv[])
+{
+  unsigned int rax, rdx;
+  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
+  return 0;
+}
+           ]],
+           [result=1
+            AC_MSG_RESULT([yes])],
+           [AC_MSG_RESULT([no])],
+           [#cross compile not supported
+            AC_MSG_RESULT(["no (cross compiling)"])])
+           AC_LANG_POP([C])])
+    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_SUPPORTS_RDTSCP], [$result],
+                       [Whether we have support for RDTSCP instruction])
+
     result="OPAL_$opal_cv_asm_builtin"
     OPAL_ASSEMBLY_BUILTIN="$opal_cv_asm_builtin"
     AC_MSG_CHECKING([for builtin atomics])
