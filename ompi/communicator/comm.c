@@ -743,7 +743,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
         myinfo[0] = 6; break;
     case OMPI_COMM_TYPE_NUMA:
         myinfo[0] = 7; break;
-    case MPI_COMM_TYPE_SHARED: // the standard implemented type
+    //case MPI_COMM_TYPE_SHARED: // the standard implemented type
     case OMPI_COMM_TYPE_NODE:
         myinfo[0] = 8; break;
     case OMPI_COMM_TYPE_BOARD:
