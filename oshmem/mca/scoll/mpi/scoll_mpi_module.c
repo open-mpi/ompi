@@ -1,11 +1,13 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
- $HEADER$
+/*
+ * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 
 #include "ompi_config.h"
@@ -125,7 +127,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
             ompi_proc_t* ompi_proc;
             for( int j = 0; j < ompi_group_size(parent_group); j++ ) {
                 ompi_proc = ompi_group_peer_lookup(parent_group, j);
-                if( ompi_proc->super.proc_name == osh_group->proc_array[i]->super.proc_name) {
+                if( 0 == opal_compare_proc(ompi_proc->super.proc_name, osh_group->proc_array[i]->super.proc_name)) {
                     ranks[i] = j;
                     break;
                 }

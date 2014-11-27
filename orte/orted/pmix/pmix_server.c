@@ -16,6 +16,8 @@
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -188,23 +190,23 @@ opal_dstore_attr_t *pmix_server_create_shared_segment(orte_jobid_t jid)
     return attr;
 }
 
-int pack_segment_info(opal_identifier_t id, opal_buffer_t *reply)
+int pack_segment_info(opal_process_name_t id, opal_buffer_t *reply)
 {
     opal_dstore_attr_t *attr;
     int rc;
     bool found_trk = false;
     OPAL_LIST_FOREACH(attr, &meta_segments, opal_dstore_attr_t) {
-        if (attr->jobid == opal_process_name_jobid(id)) {
+        if (attr->jobid == id.jobid) {
             found_trk = true;
             break;
         }
     }
     if (!found_trk) {
         /* create new segment for this job id and attach to it*/
-        attr = pmix_server_create_shared_segment(opal_process_name_jobid(id));
+        attr = pmix_server_create_shared_segment(id.jobid);
     }
     /* pack proc id into reply buffer */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_NAME))) {
         return OPAL_ERROR;
     }
     /* pack seg info into reply buffer */
@@ -267,7 +269,15 @@ int pmix_server_init(void)
              ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "pmix");
 
     /* add it to our launch environment so our children get it */
-    (void)asprintf(&pmix_server_uri, "%"PRIu64":%s", *(opal_identifier_t*)&orte_process_info.my_name, address.sun_path);
+#if 0
+    (void)asprintf(&pmix_server_uri, "%s:%s",
+                                     OPAL_NAME_PRINT(orte_process_info.my_name),
+                                     address.sun_path);
+#else
+    (void)asprintf(&pmix_server_uri, "%"PRIu32".%"PRIu32":%s",
+                                     orte_process_info.my_name.jobid,
+                                     orte_process_info.my_name.vpid, address.sun_path);
+#endif
     opal_output_verbose(2, pmix_server_output,
                         "%s PMIX server uri: %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmix_server_uri);
@@ -379,7 +389,6 @@ void pmix_server_finalize(void)
             NULL != item;
             item = opal_list_remove_first(&meta_segments)) {
         attr = (opal_dstore_attr_t*) item;
-        free(attr->connection_info);
         OBJ_RELEASE(attr);
     }
     OPAL_LIST_DESTRUCT(&meta_segments);
@@ -509,7 +518,7 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
                 OPAL_ERROR_LOG(rc);
                 return;
             }
-            memcpy(&peer->name, &hdr.id, sizeof(opal_identifier_t));
+            peer->name = hdr.id;
             peer->state = PMIX_SERVER_ACCEPTING;
             peer->sd = sd;
         }
@@ -593,7 +602,7 @@ pmix_server_peer_t* pmix_server_peer_lookup(int sd)
 }
 
 
-static pmix_server_trk_t* get_trk(opal_identifier_t *id,
+static pmix_server_trk_t* get_trk(opal_process_name_t *id,
                                   orte_grpcomm_signature_t *sig)
 {
     pmix_server_trk_t *trk;
@@ -681,7 +690,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     orte_process_name_t name;
     int rc;
     int32_t cnt;
-    opal_identifier_t id;
+    opal_process_name_t id;
     pmix_server_trk_t *trk;
     pmix_server_local_t *lcl;
     uint32_t tag;
@@ -696,7 +705,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     /* unpack the id of the proc involved - must be one
      * of my local children */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -769,11 +778,10 @@ static void pmix_server_release(int status,
     orte_process_name_t name;
     orte_proc_t *proc, *proc_peer;
     opal_buffer_t *msg, *bptr;
-    int rc, ret;
+    int rc;
     opal_pmix_scope_t scope;
     int32_t cnt;
-    opal_value_t *kp;
-    opal_identifier_t id;
+    opal_process_name_t id;
     size_t i;
     uint32_t np;
     bool stored;
@@ -807,7 +815,7 @@ static void pmix_server_release(int status,
         proc_peer = orte_get_proc_object(&peer->name);
         /* check if peer has an access to the shared memory dstore segment.
          * If not, just send a reply with all data. */
-        if (!ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
+        if (NULL == proc_peer || !ORTE_FLAG_TEST(proc_peer, ORTE_PROC_FLAG_SM_ACCESS)) {
             OBJ_RETAIN(reply);
             PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);
         } else {
@@ -842,7 +850,7 @@ static void pmix_server_release(int status,
                     }
                     /* extract the id of the contributor from the blob */
                     cnt = 1;
-                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_UINT64))) {
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(msg, &id, &cnt, OPAL_NAME))) {
                         OPAL_ERROR_LOG(rc);
                         OBJ_RELEASE(reply);
                         OBJ_RELEASE(reply_short);
@@ -935,7 +943,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     int32_t cnt;
     opal_buffer_t *reply, *bptr, buf;
     opal_value_t *kvp, *kvp2, kv, *kp;
-    opal_identifier_t idreq;
+    opal_process_name_t idreq;
     orte_process_name_t name;
     orte_job_t *jdata;
     orte_proc_t *proc;
@@ -950,7 +958,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
 
     /* unpack the id of the proc whose data is being requested */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &idreq, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &idreq, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -968,7 +976,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         /* send back an error - they obviously have made a mistake */
         reply = OBJ_NEW(opal_buffer_t);
         /* pack the id of the requested proc */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             return;
@@ -1029,7 +1037,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     /* return it */
     reply = OBJ_NEW(opal_buffer_t);
     /* pack the id of the requested proc */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &idreq, 1, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
         return;
@@ -1130,9 +1138,8 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     int rc, ret;
     int32_t cnt;
     opal_buffer_t *reply, xfer, *bptr, *data, *reply_short;
-    opal_identifier_t target;
+    opal_process_name_t target;
     opal_value_t kv;
-    orte_process_name_t name;
     orte_proc_t *proc, *proc_peer;
     bool stored;
 
@@ -1143,13 +1150,12 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
 
     /* unpack the id of the target whose info we just received */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &cnt, OPAL_UINT64))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &cnt, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
-    memcpy((char*)&name, (char*)&target, sizeof(orte_process_name_t));
-    proc = orte_get_proc_object(&name);
+    proc = orte_get_proc_object(&target);
 
     /* unpack the status */
     cnt = 1;
@@ -1187,7 +1193,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
      * process */
     reply_short = NULL;
     OPAL_LIST_FOREACH_SAFE(req, nxt, &pmix_server_pending_dmx_reqs, pmix_server_dmx_req_t) {
-        if (target == req->target) {
+        if (0 == opal_compare_proc(target, req->target)) {
             /* get the proc object for the peer */
             proc_peer = orte_get_proc_object(&req->peer->name);
             /* check if peer has access to shared memory dstore,

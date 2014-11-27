@@ -2,6 +2,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
+#include "opal/util/proc.h"
 
 #include "opal/mca/dstore/dstore.h"
 
@@ -104,21 +107,20 @@ OPAL_DECLSPEC int opal_dstore_base_open(const char *name, char* desired_componen
 OPAL_DECLSPEC int opal_dstore_base_update(int dstorehandle, opal_list_t *attrs);
 OPAL_DECLSPEC int opal_dstore_base_close(int dstorehandle);
 OPAL_DECLSPEC int opal_dstore_base_store(int dstorehandle,
-                                         const opal_identifier_t *id,
+                                         const opal_process_name_t *id,
                                          opal_value_t *kv);
 OPAL_DECLSPEC int opal_dstore_base_fetch(int dstorehandle,
-                                         const opal_identifier_t *id,
+                                         const opal_process_name_t *id,
                                          const char *key,
                                          opal_list_t *kvs);
 OPAL_DECLSPEC int opal_dstore_base_remove_data(int dstorehandle,
-                                               const opal_identifier_t *id,
+                                               const opal_process_name_t *id,
                                                const char *key);
 OPAL_DECLSPEC int opal_dstore_base_get_handle(int dstorehandle, void **dhdl);
 
 /* support */
-OPAL_DECLSPEC opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_hash_table_t *jtable,
-                                                                    opal_identifier_t id);
-
+OPAL_DECLSPEC opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_proc_table_t *jtable,
+                                                                    opal_process_name_t id, bool create);
 
 OPAL_DECLSPEC opal_value_t* opal_dstore_base_lookup_keyval(opal_dstore_proc_data_t *proc_data,
                                                            const char *key);

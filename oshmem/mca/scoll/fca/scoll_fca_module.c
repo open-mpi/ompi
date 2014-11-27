@@ -136,7 +136,7 @@ static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
     for (rank = 0; rank < comm->proc_count; ++rank) {
         proc = comm->proc_array[rank];
         if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
-            if (opal_process_name_vpid(proc->super.proc_name) == (uint32_t) fca_module->rank) {
+            if (proc->super.proc_name.vpid == (uint32_t) fca_module->rank) {
                 fca_module->local_proc_idx = fca_module->num_local_procs;
             }
             ++fca_module->num_local_procs;
@@ -231,7 +231,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
     if (root_pe == comm->my_pe) {
         for (i = 0; i < comm->proc_count; i++) {
             if (mca_scoll_fca_component.rcounts[i] > 0) {
-                MCA_SPML_CALL(get((void *)mca_scoll_fca_component.my_info_exchangeable, mca_scoll_fca_component.rcounts[i], (void*)(((char*)all_info)+disps[i]),opal_process_name_vpid(comm->proc_array[i]->super.proc_name)));
+                MCA_SPML_CALL(get((void *)mca_scoll_fca_component.my_info_exchangeable, mca_scoll_fca_component.rcounts[i], (void*)(((char*)all_info)+disps[i]),comm->proc_array[i]->super.proc_name.vpid));
             }
         }
     }

@@ -537,8 +537,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     proc_self = oshmem_proc_group_find(oshmem_group_all, my_rank);
     /* identify local processes and change transport to SHM */
     for (i = 0; i < nprocs; i++) {
-        if (opal_process_name_jobid(procs[i]->super.proc_name) != opal_process_name_jobid(proc_self->super.proc_name) ||
-        !OPAL_PROC_ON_LOCAL_NODE(procs[i]->super.proc_flags)) {
+        if (procs[i]->super.proc_name.jobid != proc_self->super.proc_name.jobid ||
+            !OPAL_PROC_ON_LOCAL_NODE(procs[i]->super.proc_flags)) {
             continue;
         }
         if (procs[i] == proc_self)
@@ -644,7 +644,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-                     opal_process_name_vpid(oshmem_proc_local_proc->super.proc_name), i, addr, (unsigned long long)size,
+                     oshmem_proc_local_proc->super.proc_name.vpid, i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
     }
@@ -1113,10 +1113,10 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
         put_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_LAZY|MXM_REQ_FLAG_SEND_SYNC;
     }
 #else
+    put_req->mxm_req.flags = 0;
     if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
             (int)opal_list_get_size(&mca_spml_ikrit.active_peers) > mca_spml_ikrit.unsync_conn_max ||
             (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
-        put_req->mxm_req.flags = 0;
         need_progress = 1;
         put_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
     } else  {

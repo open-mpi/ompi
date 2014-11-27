@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -181,8 +181,8 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
        - create temporary shift buffer, 
        see discussion in coll_basic_reduce.c about the size and begining 
        of temporary buffer.
-       - copy blocks [0 .. (size - rank - 1)] in rbuf to shift buffer
-       - move blocks [(size - rank) .. size] in rbuf to begining of rbuf
+       - copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer
+       - move blocks [(size - rank) .. size] from rbuf to begining of rbuf
        - copy blocks from shift buffer starting at block [rank] in rbuf.
     */
     if (0 != rank) {
@@ -192,14 +192,14 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
         err = ompi_datatype_get_true_extent(rdtype, &true_lb, &true_extent);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-        free_buf = (char*) calloc(((true_extent - true_lb + 
+        free_buf = (char*) calloc(((true_extent +
                                     ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount - 1) * rext)),
                                   sizeof(char));
         if (NULL == free_buf) { 
             line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; 
         }
-        shift_buf = free_buf - rlb;
-      
+        shift_buf = free_buf - true_lb;
+
         /* 1. copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer */
         err = ompi_datatype_copy_content_same_ddt(rdtype, ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount),
                                                   shift_buf, rbuf);

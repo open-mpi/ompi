@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -186,7 +186,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 
     /* Allocate temporary receive buffer. */
     recv_buf_free = (char*) malloc(buf_size);
-    recv_buf = recv_buf_free - lb;
+    recv_buf = recv_buf_free - true_lb;
     if (NULL == recv_buf_free) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup;
@@ -194,7 +194,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
    
     /* allocate temporary buffer for results */
     result_buf_free = (char*) malloc(buf_size);
-    result_buf = result_buf_free - lb;
+    result_buf = result_buf_free - true_lb;
    
     /* copy local buffer into the temporary results */
     err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);

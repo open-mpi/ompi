@@ -19,6 +19,7 @@
 #include "opal/mca/pmix/pmix.h"
 #include "pmix_cray.h"
 #include <sys/syscall.h>   
+#include <pmi.h>
 
 /*
  * Public string showing the pmix cray component version number
@@ -74,9 +75,8 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
 {
     int rc;
     const char proc_job_file[]="/proc/job";
-    FILE *fd = NULL;
-    char string[128];  /* just need to get a little output */
-    char *tmp = NULL;
+    FILE *fd = NULL, *fd_task_is_app = NULL;
+    char task_is_app_fname[PATH_MAX];
 
     /* disqualify ourselves if not running in a Cray PAGG container */
     fd = fopen(proc_job_file, "r");
@@ -85,14 +85,16 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
         *module = NULL;
         rc = OPAL_ERROR;
     } else {
-        tmp = fgets(string, sizeof(string), fd);
-        if (tmp && (getenv("ALPS_APP_DEPTH") != NULL)) {   /* okay we're in a PAGG container, 
-                                                              got non-null output from job device.
-                                                              The check for ALPS_APP_DEPTH is required
-                                                              since on systems using MOM nodes, the
-                                                              mpirun/orte is actually in a PAGG */
+        snprintf(task_is_app_fname,sizeof(task_is_app_fname),
+                 "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
+        fd_task_is_app = fopen(task_is_app_fname, "r");
+        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container, 
+                                           and we are an app task (not just a process
+                                           running on a mom node, for example),
+                                           so we should give cray pmi a shot. */
             *priority = 90;
             *module = (mca_base_module_t *)&opal_pmix_cray_module;
+            fclose(fd_task_is_app);
             rc = OPAL_SUCCESS;
         }
         fclose(fd);

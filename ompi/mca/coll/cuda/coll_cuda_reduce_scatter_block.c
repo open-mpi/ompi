@@ -55,7 +55,7 @@ mca_coll_cuda_reduce_scatter_block(void *sbuf, void *rbuf, int rcount,
         }
         opal_cuda_memcpy_sync(sbuf1, sbuf, sbufsize);
         sbuf2 = sbuf; /* save away original buffer */
-        sbuf = sbuf1 - lb;
+        sbuf = sbuf1 - true_lb;
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
@@ -66,7 +66,7 @@ mca_coll_cuda_reduce_scatter_block(void *sbuf, void *rbuf, int rcount,
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, rbufsize);
         rbuf2 = rbuf; /* save away original buffer */
-        rbuf = rbuf1 - lb;
+        rbuf = rbuf1 - true_lb;
     }
     rc = s->c_coll.coll_reduce_scatter_block(sbuf, rbuf, rcount, dtype, op, comm,
                                              s->c_coll.coll_reduce_scatter_block_module);

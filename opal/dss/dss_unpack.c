@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1069,6 +1071,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                 return ret;
             }
             break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.name, &m, OPAL_NAME))) {
+                return ret;
+            }
+            break;
         case OPAL_FLOAT_ARRAY:
             if (OPAL_SUCCESS !=
                 (ret = opal_dss_unpack_buffer(buffer,
@@ -1406,4 +1413,99 @@ int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
         ptr[i]->bytes_used = m;
     }
     return OPAL_SUCCESS;
+}
+
+/*
+ * NAME
+ */
+int opal_dss_unpack_name(opal_buffer_t *buffer, void *dest,
+                        int32_t *num_vals, opal_data_type_t type)
+{
+    int rc;
+    int32_t i, num;
+    opal_process_name_t* proc;
+    opal_jobid_t *jobid;
+    opal_vpid_t *vpid;
+
+    num = *num_vals;
+
+    /* allocate space for all the jobids in a contiguous array */
+    jobid = (opal_jobid_t*)malloc(num * sizeof(opal_jobid_t));
+    if (NULL == jobid) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        *num_vals = 0;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    /* now unpack them in one shot */
+    if (OPAL_SUCCESS != (rc =
+                         opal_dss_unpack_jobid(buffer, jobid, num_vals, OPAL_JOBID))) {
+        OPAL_ERROR_LOG(rc);
+        *num_vals = 0;
+        free(jobid);
+        return rc;
+    }
+
+    /* collect all the vpids in a contiguous array */
+    vpid = (opal_vpid_t*)malloc(num * sizeof(opal_vpid_t));
+    if (NULL == vpid) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        *num_vals = 0;
+        free(jobid);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    /* now unpack them in one shot */
+    if (OPAL_SUCCESS != (rc =
+                         opal_dss_unpack_vpid(buffer, vpid, num_vals, OPAL_VPID))) {
+        OPAL_ERROR_LOG(rc);
+        *num_vals = 0;
+        free(vpid);
+        free(jobid);
+        return rc;
+    }
+
+    /* build the names from the jobid/vpid arrays */
+    proc = (opal_process_name_t*)dest;
+    for (i=0; i < num; i++) {
+        proc->jobid = jobid[i];
+        proc->vpid = vpid[i];
+        proc++;
+    }
+
+    /* cleanup */
+    free(vpid);
+    free(jobid);
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * JOBID
+ */
+int opal_dss_unpack_jobid(opal_buffer_t *buffer, void *dest,
+                         int32_t *num_vals, opal_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and unpack the real type */
+    if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, dest, num_vals, OPAL_JOBID_T))) {
+        OPAL_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
+
+/*
+ * VPID
+ */
+int opal_dss_unpack_vpid(opal_buffer_t *buffer, void *dest,
+                        int32_t *num_vals, opal_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and unpack the real type */
+    if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, dest, num_vals, OPAL_VPID_T))) {
+        OPAL_ERROR_LOG(ret);
+    }
+
+    return ret;
 }

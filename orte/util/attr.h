@@ -19,6 +19,9 @@
 #define ORTE_ATTR_LOCAL    true      // for local use only
 #define ORTE_ATTR_GLOBAL   false     // include when sending this object
 
+/* define the mininum value of the ORTE keys just in
+ * case someone someday puts a layer underneath us */
+#define ORTE_ATTR_KEY_BASE        0
 
 /*** ATTRIBUTE FLAGS - never sent anywwhere ***/
 typedef uint8_t orte_app_context_flags_t;
@@ -160,6 +163,8 @@ typedef uint16_t orte_proc_flags_t;
 
 #define ORTE_PROC_MAX_KEY   400
 
+#define ORTE_ATTR_KEY_MAX  1000
+
 
 /*** FLAG OPS ***/
 #define ORTE_FLAG_SET(p, f)         ((p)->flags |= (f))
@@ -179,5 +184,16 @@ ORTE_DECLSPEC int orte_set_attribute(opal_list_t *attributes, orte_attribute_key
 /* Remove the named attribute from a list */
 ORTE_DECLSPEC void orte_remove_attribute(opal_list_t *attributes, orte_attribute_key_t key);
 
+/*
+ * Register a handler for converting attr keys to strings
+ *
+ * Handlers will be invoked by orte_attr_key_to_str to return the appropriate value.
+ */
+typedef char* (*orte_attr2str_fn_t)(int key);
+
+ORTE_DECLSPEC int orte_attr_register(const char *project,
+                                     orte_attribute_key_t key_base,
+                                     orte_attribute_key_t key_max,
+                                     orte_attr2str_fn_t converter);
 
 #endif

@@ -8,6 +8,8 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -332,6 +334,8 @@ static int rcd_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
     opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
 
     OBJ_RELEASE(reply);
+
+    OBJ_RELEASE(coll);
 
     return ORTE_SUCCESS;
 }

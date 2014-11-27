@@ -101,6 +101,7 @@ int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
     mca_btl_vader_segment_t *src = (mca_btl_vader_segment_t *) des->des_remote;
     mca_btl_vader_segment_t *dst = (mca_btl_vader_segment_t *) des->des_local;
     const size_t size = min(dst->base.seg_len, src->base.seg_len);
+    intptr_t offset = src->base.seg_addr.lval - src->registered_base;
     struct knem_cmd_param_iovec recv_iovec;
     struct knem_cmd_inline_copy icopy;
 
@@ -111,7 +112,7 @@ int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
     icopy.local_iovec_array = (uintptr_t) &recv_iovec;
     icopy.local_iovec_nr    = 1;
     icopy.remote_cookie     = src->cookie;
-    icopy.remote_offset     = 0;
+    icopy.remote_offset     = offset;
     icopy.write             = 0;
     icopy.flags             = 0;
 

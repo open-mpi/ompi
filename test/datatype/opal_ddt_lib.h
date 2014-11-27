@@ -49,4 +49,6 @@ extern int mpich_typeub( void );
 extern int mpich_typeub2( void );
 extern int mpich_typeub3( void );
 
+extern opal_datatype_t* create_struct_constant_gap_resized_ddt( void );
+
 #endif /* TEST_OPAL_DDT_LIB_H */

@@ -16,6 +16,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -389,7 +391,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     if (new_proc_len > 0) {
         opal_list_t all_procs;
         orte_namelist_t *name;
-        opal_identifier_t *ids;
+        opal_process_name_t *ids;
         opal_list_t myvals;
         opal_value_t *kv;
 
@@ -451,11 +453,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
         /* setup the modex */
-        ids = (opal_identifier_t*)malloc(opal_list_get_size(&all_procs) * sizeof(opal_identifier_t));
+        ids = (opal_process_name_t*)malloc(opal_list_get_size(&all_procs) * sizeof(opal_process_name_t));
         /* copy across the list of participants */
         i=0;
         OPAL_LIST_FOREACH(nm, &all_procs, orte_namelist_t) {
-            memcpy(&ids[i++], &nm->name, sizeof(opal_identifier_t));
+            ids[i++] = nm->name;
         }
         OPAL_LIST_DESTRUCT(&all_procs);
         /* perform it */
@@ -471,7 +473,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         for (j=0; j < new_proc_len; j++) {
             OBJ_CONSTRUCT(&myvals, opal_list_t);
             if (OMPI_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                         (opal_identifier_t*)&new_proc_list[j]->super.proc_name,
+                                                         &new_proc_list[j]->super.proc_name,
                                                          OPAL_DSTORE_LOCALITY, &myvals))) {
                 new_proc_list[j]->super.proc_flags = OPAL_PROC_NON_LOCAL;
             } else {
@@ -582,6 +584,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     if ( NULL != proc_list ) {
         free ( proc_list );
     }
+    if ( NULL != new_proc_list ) {
+        free ( new_proc_list );
+    }
     if ( OMPI_SUCCESS != rc ) {
         if ( MPI_COMM_NULL != newcomp && NULL != newcomp ) {
             OBJ_RETAIN(newcomp);
@@ -622,7 +627,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             /* need to maintain an ordered list to ensure the tracker signatures
              * match across all procs */
             OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
-                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                if (opal_compare_proc(nm->name, n2->name) < 0) {
                     opal_list_insert_pos(peers, &n2->super, &nm->super);
                     nm = NULL;
                     break;
@@ -650,7 +655,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             /* need to maintain an ordered list to ensure the tracker signatures
              * match across all procs */
             OPAL_LIST_FOREACH(n2, peers, orte_namelist_t) {
-                if (*(opal_identifier_t*)&nm->name < *(opal_identifier_t*)&n2->name) {
+                if (opal_compare_proc(nm->name, n2->name) < 0) {
                     opal_list_insert_pos(peers, &n2->super, &nm->super);
                     nm = NULL;
                     break;
@@ -671,7 +676,7 @@ static int disconnect(ompi_communicator_t *comm)
     ompi_group_t *group;
     opal_list_t coll;
     orte_namelist_t *nm;
-    opal_identifier_t *ids;
+    opal_process_name_t *ids;
 
     /* Note that we explicitly use an RTE-based barrier (vs. an MPI
        barrier).  See a lengthy comment in
@@ -701,10 +706,10 @@ static int disconnect(ompi_communicator_t *comm)
     }
 
     /* setup the ids */
-    ids = (opal_identifier_t*)malloc(opal_list_get_size(&coll) * sizeof(opal_identifier_t));
+    ids = (opal_process_name_t*)malloc(opal_list_get_size(&coll) * sizeof(opal_process_name_t));
     i=0;
     OPAL_LIST_FOREACH(nm, &coll, orte_namelist_t) {
-        memcpy(&ids[i++], &nm->name, sizeof(opal_identifier_t));
+        ids[i++] = nm->name;
     }
     OPAL_LIST_DESTRUCT(&coll);
 
@@ -1667,7 +1672,7 @@ static int dpm_pconnect(char *port,
 }
 
 static void paccept_recv(int status,
-                         struct orte_process_name_t* peer,
+                         orte_process_name_t* peer,
                          struct opal_buffer_t* buffer,
                          orte_rml_tag_t tag,
                          void* cbdata)

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -70,7 +70,7 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
       if (NULL == tbuf) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
       }
-      tmpbuf = tbuf - lb;
+      tmpbuf = tbuf - true_lb;
       
       if ( MPI_IN_PLACE != sbuf ) {
 	ret = lcomm->c_coll.coll_reduce (sbuf, tmpbuf, count, dtype, 

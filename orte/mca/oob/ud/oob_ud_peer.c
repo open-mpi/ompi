@@ -2,16 +2,20 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
 
 #include "oob_ud_peer.h"
-#include "oob_ud.h"
+#include "oob_ud_component.h"
 
 #include "opal/include/opal_stdint.h"
 
@@ -34,8 +38,8 @@ int mca_oob_ud_peer_lookup (const orte_process_name_t *name, mca_oob_ud_peer_t *
 
     *peer = NULL;
 
-    rc = opal_hash_table_get_value_uint64(&mca_oob_ud_component.ud_peers,
-                                          orte_util_hash_name(name), (void**)peer);
+    rc = opal_proc_table_get_value(&mca_oob_ud_module.peers,
+                                   *name, (void**)peer);
     if (OPAL_SUCCESS != rc) {
         return ORTE_ERR_UNREACH;
     }
@@ -123,14 +127,16 @@ mca_oob_ud_peer_t *mca_oob_ud_get_peer (struct mca_oob_ud_port_t *port,
 
     rc = mca_oob_ud_peer_lookup (name, &peer);
     if (ORTE_SUCCESS == rc) {
-        OPAL_OUTPUT_VERBOSE((20, mca_oob_base_output, "%s oob:ud:peer_from_msg_hdr using "
-                             "cached peer", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        opal_output_verbose(20, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:peer_from_msg_hdr using cached peer",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
         return peer;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:peer_from_msg_hdr creating "
-                         "peer from return address", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:peer_from_msg_hdr creating peer from return address",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     peer = OBJ_NEW(mca_oob_ud_peer_t);
     if (NULL == peer) {
@@ -156,9 +162,10 @@ mca_oob_ud_peer_t *mca_oob_ud_get_peer (struct mca_oob_ud_port_t *port,
     peer->peer_context = port->device;
 
     OPAL_THREAD_LOCK(&mca_oob_ud_component.ud_lock);
-    opal_hash_table_set_value_uint64(&mca_oob_ud_component.ud_peers,
-                                     orte_util_hash_name(name),
-                                     (void *) peer);
+
+    opal_proc_table_set_value(&mca_oob_ud_module.peers,
+                              *name, (void *) peer);
+
     OPAL_THREAD_UNLOCK(&mca_oob_ud_component.ud_lock);
 
     return peer;
@@ -197,33 +204,37 @@ void mca_oob_ud_peer_handle_end (mca_oob_ud_peer_t *peer)
     mca_oob_ud_msg_t *msg = NULL;
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:peer_handle_end telling peer %s i "
-                         "am going away", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&peer->peer_name)));
+    opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:peer_handle_end telling peer %s i am going away",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&peer->peer_name));
 
     do {
         /* tell the peer that we are deleting them */
         if (NULL == peer || NULL == peer->peer_context || false == peer->peer_available ||
             false == peer->needs_notification) {
-            OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:peer_handle_end don't need to tell %s i "
-                                 "am going away", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&peer->peer_name)));
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:peer_handle_end don't need to tell %s i am going away",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer->peer_name));
             break;
         }
 
         port = (mca_oob_ud_port_t *) opal_list_get_first (&((mca_oob_ud_device_t *)peer->peer_context)->ports);
         if (NULL == port) {
-            OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:peer_handle_end can't tell %s i "
-                                 "am going away (no port)", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&peer->peer_name)));
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:peer_handle_end can't tell %s i am going away (no port)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer->peer_name));
             break;
         }
 
         rc = mca_oob_ud_msg_get (port, NULL, &port->listen_qp, peer, true, &msg);
         if (ORTE_SUCCESS != rc) {
-            OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:peer_handle_end can't tell %s i "
-                                 "am going away (no message buffer)", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&peer->peer_name)));
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:peer_handle_end can't tell %s i am going away (no message buffer)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer->peer_name));
             break;
         }
 
@@ -234,9 +245,10 @@ void mca_oob_ud_peer_handle_end (mca_oob_ud_peer_t *peer)
 
         rc = mca_oob_ud_qp_post_send (&port->listen_qp, &msg->wr, 1);
         if (ORTE_SUCCESS != rc) {
-            OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:peer_handle_end can't tell %s i "
-                                 "am going away (send failed)", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&peer->peer_name)));
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:peer_handle_end can't tell %s i am going away (send failed)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer->peer_name));
             break;
         }
     } while (0);
@@ -253,8 +265,9 @@ void mca_oob_ud_peer_lost (mca_oob_ud_peer_t *peer)
     if (true == peer->peer_available) {
         peer->peer_available = false;
 
-        OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:peer_lost lost connectivity to peer "
-                             "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&peer->peer_name)));
+        opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                             "%s oob:ud:peer_lost lost connectivity to peer %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&peer->peer_name));
 
         /* inform the ERRMGR framework that we have lost a connection so
          * it can decide if this is important, what to do about it, etc.
@@ -275,7 +288,7 @@ static void mca_oob_ud_peer_destruct (mca_oob_ud_peer_t *peer)
 
     if (NULL != peer->peer_ah) {
         (void) ibv_destroy_ah (peer->peer_ah);
-    }    
+    }
 }
 
 static void mca_oob_ud_peer_msg_timeout (int fd, short event, void *ctx)
@@ -291,9 +304,10 @@ static void mca_oob_ud_peer_msg_timeout (int fd, short event, void *ctx)
 
     peer->peer_timer.active = false;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:peer_msg_timeout timeout sending to peer "
-                         "%s. first message = %" PRIu64 " which has length %d" , ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&peer->peer_name), msg->hdr->msg_id, msg->wr.sg_list[0].length));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:peer_msg_timeout timeout sending to peer %s. first message = %" PRIu64 " which has length %d" ,
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&peer->peer_name), msg->hdr->msg_id, msg->wr.sg_list[0].length);
 
     if (peer->peer_timer.tries == 0) {
         opal_list_item_t *item;
@@ -351,10 +365,10 @@ void mca_oob_ud_peer_stop_timer (mca_oob_ud_peer_t *peer)
 
 void mca_oob_ud_peer_reset_timer (mca_oob_ud_peer_t *peer)
 {
-    /* NTH: XXX -- TODO -- make these mca variables */
-    peer->peer_timer.tries         = 5;
-    peer->peer_timer.value.tv_sec  = 0;
-    peer->peer_timer.value.tv_usec = 800000;
+    peer->peer_timer.tries         = mca_oob_ud_component.ud_max_retries;
+
+    peer->peer_timer.value.tv_sec = mca_oob_ud_component.ud_timeout_usec / 1000000;
+    peer->peer_timer.value.tv_usec = mca_oob_ud_component.ud_timeout_usec % 1000000;
 }
 
 void mca_oob_ud_peer_start_timer (mca_oob_ud_peer_t *peer)
@@ -372,8 +386,9 @@ void mca_oob_ud_peer_post_all (mca_oob_ud_peer_t *peer)
 {
     opal_list_item_t *item;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_oob_base_output, "%s oob:ud:peer_post_all reposting all messages for peer %p",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) peer));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:peer_post_all reposting all messages for peer %p",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) peer);
 
     for (item = opal_list_get_first (&peer->peer_flying_messages) ;
          item != opal_list_get_end (&peer->peer_flying_messages) ;

@@ -845,6 +845,10 @@ mca_btl_smcuda_component_init(int *num_btls,
     mca_btl_smcuda_component.sm_mpool = NULL;
     mca_btl_smcuda_component.sm_mpool_base = NULL;
 
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_stage_one_init();
+#endif /* OPAL_CUDA_SUPPORT */
+
     /* if no session directory was created, then we cannot be used */
     if (NULL == opal_process_info.job_session_dir) {
     /* SKG - this isn't true anymore. Some backing facilities don't require a
@@ -936,7 +940,6 @@ mca_btl_smcuda_component_init(int *num_btls,
     /* Register a smcuda control function to help setup IPC support */
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbfunc = btl_smcuda_control;
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbdata = NULL;
-    mca_common_cuda_stage_one_init();
 #endif /* OPAL_CUDA_SUPPORT */
 
     return btls;

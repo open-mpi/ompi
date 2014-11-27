@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -393,7 +395,16 @@ static int odls_base_default_setup_fork(orte_job_t *jdata,
     /* setup base environment: copy the current environ and merge
        in the app context environ */
     if (NULL != context->env) {
-        *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
+        if (*environ_copy == context->env) {
+            /* manually free original context->env to avoid a memory leak */
+            char ** tmp = context->env;
+            *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
+            if (NULL != tmp) {
+                opal_argv_free(tmp);
+            }
+        } else {
+            *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
+        }
     } else {
         *environ_copy = opal_argv_copy(orte_launch_environ);
     }
@@ -564,7 +575,6 @@ static int setup_child(orte_proc_t *child,
     char *param, *value, ***env;
     int rc;
     int32_t nrestarts=0, *nrptr;
-    opal_identifier_t id;
 
     /* for convenience */
     env = &app->env;
@@ -652,8 +662,7 @@ static int setup_child(orte_proc_t *child,
      * name itself. Although in most cases the ID and the
      * process name are the same, it isn't necessarily
      * required */
-    memcpy(&id, &child->name, sizeof(id));
-    asprintf(&value, "%"PRIu64"", id);
+    orte_util_convert_process_name_to_string(&value, &child->name);
     opal_setenv("PMIX_ID", value, true, env);
     free(value);
 
@@ -893,8 +902,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_jobid_t job = caddy->job;
     orte_odls_base_fork_local_proc_fn_t fork_local = caddy->fork_local;
     char *num_app_ctx = NULL;
-    char **nps, *npstring;
-    char **firstranks, *firstrankstring;
+    char **nps, *npstring = NULL;
+    char **firstranks, *firstrankstring = NULL;
     bool index_argv;
 
     /* establish our baseline working directory - we will be potentially
@@ -1387,6 +1396,16 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
  ERROR_OUT:
     /* ensure we reset our working directory back to our default location  */
     chdir(basedir);
+    /* release allocated memory */
+    if (NULL != num_app_ctx) {
+        free(num_app_ctx);
+    }
+    if (NULL != npstring) {
+        free(npstring);
+    }
+    if (NULL != firstrankstring) {
+        free(firstrankstring);
+    }
     /* release the event */
     OBJ_RELEASE(caddy);
 }

@@ -49,7 +49,7 @@ int mca_coll_cuda_scan(void *sbuf, void *rbuf, int count,
         }
         opal_cuda_memcpy_sync(sbuf1, sbuf, bufsize);
         sbuf2 = sbuf; /* save away original buffer */
-        sbuf = sbuf1 - lb;
+        sbuf = sbuf1 - true_lb;
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
@@ -60,7 +60,7 @@ int mca_coll_cuda_scan(void *sbuf, void *rbuf, int count,
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
         rbuf2 = rbuf; /* save away original buffer */
-        rbuf = rbuf1 - lb;
+        rbuf = rbuf1 - true_lb;
     }
     rc = s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
                              s->c_coll.coll_scan_module);

@@ -32,10 +32,10 @@ int main(int argc, char* argv[])
 {
     int rc, i;
     opal_cmd_line_t cmd_line;
-    opal_identifier_t uid;
+    opal_process_name_t uid;
     opal_value_t kvs;
     char *key;
-    uint64_t data, *dptr;
+    opal_process_name_t data, *dptr;
     float *fval;
     opal_list_t kvlist;
 
@@ -75,15 +75,17 @@ int main(int argc, char* argv[])
         return rc;
     }
     /* set our id */
-    uid = 12345;
-    opal_db.set_id((opal_identifier_t*)&uid);
+    uid.jobid = 12345;
+    uid.vpid = 67890;
+    opal_db.set_id(&uid);
 
     /* create and store some arbitrary key-value pairs */
     for (i=0; i < NKV; i++) {
         asprintf(&key, "foo.%d", i);
-        data = (uint64_t)i;
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&uid, OPAL_SCOPE_GLOBAL,
-                                                key, &data, OPAL_UINT64))) {
+        data.jobid = i;
+        data.vpid = i;
+        if (ORTE_SUCCESS != (rc = opal_db.store(&uid, OPAL_SCOPE_GLOBAL,
+                                                key, &data, OPAL_NAME))) {
             fprintf(stderr, "%s: db_store failed (%d)\n", argv[0], rc);
             return rc;
         }
@@ -112,13 +114,13 @@ int main(int argc, char* argv[])
     dptr = &data;
     for (i=0; i < NKV; i++) {
         asprintf(&key, "foo.%d", i);
-        if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&uid, key, (void**)&dptr, OPAL_UINT64))) {
+        if (ORTE_SUCCESS != (rc = opal_db.fetch(&uid, key, (void**)&dptr, OPAL_NAME))) {
             fprintf(stderr, "%s: db_fetch failed (%d)\n", argv[0], rc);
             return rc;
         }
-        if (data != (uint64_t)i) {
-            fprintf(stderr, "%s: db_fetch return incorrect data: %u vs %d\n", argv[0],
-                    data, i);
+        if (data.jobid != i || data.vpid != i) {
+            fprintf(stderr, "%s: db_fetch return incorrect data: %s vs %d\n", argv[0],
+                    OPAL_NAME_PRINT(data), i);
             return 1;
         }
         free(key);
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
     }
 
     /* verify that it no longer is in the store */
-    if (ORTE_SUCCESS == (rc = opal_db.fetch((opal_identifier_t*)&uid, "foo.0", (void**)&dptr, OPAL_UINT64))) {
+    if (ORTE_SUCCESS == (rc = opal_db.fetch(&uid, "foo.0", (void**)&dptr, OPAL_NAME))) {
         fprintf(stderr, "%s: db_fetch succeeded when it should have failed\n", argv[0]);
         return 1;
     }

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -102,7 +102,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
                 err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
 
-            ptmp = tempbuf - rlb;
+            ptmp = tempbuf - rtrue_lb;
             if (sbuf != MPI_IN_PLACE) {
                 /* copy from sbuf to temp buffer */
                 err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
@@ -125,7 +125,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
 
-        ptmp = tempbuf - slb;
+        ptmp = tempbuf - strue_lb;
         /* local copy to tempbuf */
         err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                    ptmp, scount, sdtype);

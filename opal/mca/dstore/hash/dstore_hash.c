@@ -5,7 +5,10 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,14 +38,14 @@
 static int init(struct opal_dstore_base_module_t *imod);
 static void finalize(struct opal_dstore_base_module_t *imod);
 static int store(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *proc,
+                 const opal_process_name_t *proc,
                  opal_value_t *val);
 static int fetch(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *proc,
+                 const opal_process_name_t *proc,
                  const char *key,
                  opal_list_t *kvs);
 static int remove_data(struct opal_dstore_base_module_t *imod,
-                       const opal_identifier_t *proc, const char *key);
+                       const opal_process_name_t *proc, const char *key);
 
 mca_dstore_hash_module_t opal_dstore_hash_module = {
     {
@@ -60,16 +63,16 @@ static int init(struct opal_dstore_base_module_t *imod)
     mca_dstore_hash_module_t *mod;
 
     mod = (mca_dstore_hash_module_t*)imod;
-    OBJ_CONSTRUCT(&mod->hash_data, opal_hash_table_t);
-    opal_hash_table_init(&mod->hash_data, 256);
+    OBJ_CONSTRUCT(&mod->ptable, opal_proc_table_t);
+    opal_proc_table_init(&mod->ptable, 16, 256);
     return OPAL_SUCCESS;
 }
 
 static void finalize(struct opal_dstore_base_module_t *imod)
 {
     opal_dstore_proc_data_t *proc_data;
-    uint64_t key;
-    char *node;
+    opal_process_name_t key;
+    void *node1, *node2;
     mca_dstore_hash_module_t *mod;
 
     mod = (mca_dstore_hash_module_t*)imod;
@@ -77,50 +80,47 @@ static void finalize(struct opal_dstore_base_module_t *imod)
     /* to assist in getting a clean valgrind, cycle thru the hash table
      * and release all data stored in it
      */
-    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&mod->hash_data, &key,
-                                                             (void**)&proc_data,
-                                                             (void**)&node)) {
+    if (OPAL_SUCCESS == opal_proc_table_get_first_key(&mod->ptable, &key,
+                                                      (void**)&proc_data,
+                                                      &node1, &node2)) {
         if (NULL != proc_data) {
             OBJ_RELEASE(proc_data);
         }
-        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&mod->hash_data, &key,
-                                                                   (void**)&proc_data,
-                                                                   node, (void**)&node)) {
+        while (OPAL_SUCCESS == opal_proc_table_get_next_key(&mod->ptable, &key,
+                                                            (void**)&proc_data,
+                                                            node1, &node1,
+                                                            node2, &node2)) {
             if (NULL != proc_data) {
                 OBJ_RELEASE(proc_data);
             }
         }
     }
-    OBJ_DESTRUCT(&mod->hash_data);
+    OBJ_DESTRUCT(&mod->ptable);
 }
 
 
 
 static int store(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *uid,
+                 const opal_process_name_t *id,
                  opal_value_t *val)
 {
     opal_dstore_proc_data_t *proc_data;
     opal_value_t *kv;
-    opal_identifier_t id;
     mca_dstore_hash_module_t *mod;
     int rc;
 
     mod = (mca_dstore_hash_module_t*)imod;
 
-    /* to protect alignment, copy the identifier across */
-    memcpy(&id, uid, sizeof(opal_identifier_t));
-
     opal_output_verbose(1, opal_dstore_base_framework.framework_output,
                         "%s dstore:hash:store storing data for proc %s",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(id));
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(*id));
 
     /* lookup the proc data object for this proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->hash_data, id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, true))) {
         /* unrecoverable error */
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                              "%s dstore:hash:store: storing data for proc %s unrecoverably failed",
-                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(id)));
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(*id)));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -134,7 +134,7 @@ static int store(struct opal_dstore_base_module_t *imod,
                          "%s dstore:hash:store: %s key %s[%s] for proc %s",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                          (NULL == kv ? "storing" : "updating"),
-                         val->key, _data_type, OPAL_NAME_PRINT(id)));
+                         val->key, _data_type, OPAL_NAME_PRINT(*id)));
     free (_data_type);
 #endif
 
@@ -153,31 +153,27 @@ static int store(struct opal_dstore_base_module_t *imod,
 }
 
 static int fetch(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *uid,
+                 const opal_process_name_t *id,
                  const char *key, opal_list_t *kvs)
 {
     opal_dstore_proc_data_t *proc_data;
     opal_value_t *kv, *knew;
-    opal_identifier_t id;
     mca_dstore_hash_module_t *mod;
     int rc;
 
     mod = (mca_dstore_hash_module_t*)imod;
 
-    /* to protect alignment, copy the identifier across */
-    memcpy(&id, uid, sizeof(opal_identifier_t));
-
     OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                          "%s dstore:hash:fetch: searching for key %s on proc %s",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                         (NULL == key) ? "NULL" : key, OPAL_NAME_PRINT(id)));
+                         (NULL == key) ? "NULL" : key, OPAL_NAME_PRINT(*id)));
 
     /* lookup the proc data object for this proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->hash_data, id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, true))) {
         OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                              "%s dstore_hash:fetch data for proc %s not found",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                             OPAL_NAME_PRINT(id)));
+                             OPAL_NAME_PRINT(*id)));
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -193,7 +189,7 @@ static int fetch(struct opal_dstore_base_module_t *imod,
                                  "%s dstore:hash:fetch: adding data for key %s on proc %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                  (NULL == kv->key) ? "NULL" : kv->key,
-                                 OPAL_NAME_PRINT(id)));
+                                 OPAL_NAME_PRINT(*id)));
 
             /* add it to the output list */
             opal_list_append(kvs, &knew->super);
@@ -207,7 +203,7 @@ static int fetch(struct opal_dstore_base_module_t *imod,
                              "%s dstore_hash:fetch key %s for proc %s not found",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                              (NULL == key) ? "NULL" : key,
-                             OPAL_NAME_PRINT(id)));
+                             OPAL_NAME_PRINT(*id)));
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -223,20 +219,16 @@ static int fetch(struct opal_dstore_base_module_t *imod,
 }
 
 static int remove_data(struct opal_dstore_base_module_t *imod,
-                       const opal_identifier_t *uid, const char *key)
+                       const opal_process_name_t *id, const char *key)
 {
     opal_dstore_proc_data_t *proc_data;
     opal_value_t *kv;
-    opal_identifier_t id;
     mca_dstore_hash_module_t *mod;
 
     mod = (mca_dstore_hash_module_t*)imod;
 
-    /* to protect alignment, copy the identifier across */
-    memcpy(&id, uid, sizeof(opal_identifier_t));
-
     /* lookup the specified proc */
-    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->hash_data, id))) {
+    if (NULL == (proc_data = opal_dstore_base_lookup_proc(&mod->ptable, *id, false))) {
         /* no data for this proc */
         return OPAL_SUCCESS;
     }
@@ -247,7 +239,7 @@ static int remove_data(struct opal_dstore_base_module_t *imod,
             OBJ_RELEASE(kv);
         }
         /* remove the proc_data object itself from the jtable */
-        opal_hash_table_remove_value_uint64(&mod->hash_data, id);
+        opal_proc_table_remove_value(&mod->ptable, *id);
         /* cleanup */
         OBJ_RELEASE(proc_data);
         return OPAL_SUCCESS;

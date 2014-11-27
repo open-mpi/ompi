@@ -734,6 +734,10 @@ mca_btl_sm_component_init(int *num_btls,
     mca_btl_sm_component.sm_mpool = NULL;
     mca_btl_sm_component.sm_mpool_base = NULL;
 
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_stage_one_init();
+#endif /* OPAL_CUDA_SUPPORT */
+
     /* if no session directory was created, then we cannot be used */
     if (NULL == opal_process_info.job_session_dir) {
     /* SKG - this isn't true anymore. Some backing facilities don't require a
@@ -773,7 +777,7 @@ mca_btl_sm_component_init(int *num_btls,
     /* create a named pipe to receive events  */
     sprintf( mca_btl_sm_component.sm_fifo_path,
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", opal_process_info.job_session_dir,
-             (unsigned long)opal_process_name_vpid(OPAL_PROC_MY_NAME) );
+             (unsigned long)OPAL_PROC_MY_NAME.vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
@@ -926,10 +930,6 @@ mca_btl_sm_component_init(int *num_btls,
         return NULL;
     }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_stage_one_init();
-#endif /* OPAL_CUDA_SUPPORT */
 
     return btls;
 

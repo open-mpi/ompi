@@ -52,7 +52,6 @@ BEGIN_C_DECLS
 
 
 struct opal_buffer_t;
-struct orte_process_name_t;
 struct orte_rml_module_t;
 typedef struct {
     opal_object_t super;
@@ -146,7 +145,7 @@ typedef struct orte_rml_component_2_0_0_t orte_rml_component_t;
  * @param[in] cbdata  User data passed to send_nb()
  */
 typedef void (*orte_rml_callback_fn_t)(int status,
-                                       struct orte_process_name_t* peer,
+                                       orte_process_name_t* peer,
                                        struct iovec* msg,
                                        int count,
                                        orte_rml_tag_t tag,
@@ -171,7 +170,7 @@ typedef void (*orte_rml_callback_fn_t)(int status,
  * @param[in] cbdata  User data passed to send_buffer_nb() or recv_buffer_nb()
  */
 typedef void (*orte_rml_buffer_callback_fn_t)(int status,
-                                              struct orte_process_name_t* peer,
+                                              orte_process_name_t* peer,
                                               struct opal_buffer_t* buffer,
                                               orte_rml_tag_t tag,
                                               void* cbdata);
@@ -188,7 +187,7 @@ typedef void (*orte_rml_buffer_callback_fn_t)(int status,
  * @param[in] peer      Name of peer process
  * @param[in] exception Description of the error causing the exception
  */
-typedef void (*orte_rml_exception_callback_t)(const orte_process_name_t* peer,
+typedef void (*orte_rml_exception_callback_t)(orte_process_name_t* peer,
                                               orte_rml_exception_t exception);
 
 
@@ -315,7 +314,7 @@ typedef int (*orte_rml_module_ping_fn_t)(const char* contact_info,
  *                    receiving process is not available
  * @retval ORTE_ERROR  An unspecified error occurred
  */
-typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_process_name_t* peer,
+typedef int (*orte_rml_module_send_nb_fn_t)(orte_process_name_t* peer,
                                             struct iovec* msg,
                                             int count,
                                             orte_rml_tag_t tag,
@@ -345,7 +344,7 @@ typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_process_name_t* peer,
  *                    receiving process is not available
  * @retval ORTE_ERROR  An unspecified error occurred
  */
-typedef int (*orte_rml_module_send_buffer_nb_fn_t)(struct orte_process_name_t* peer,
+typedef int (*orte_rml_module_send_buffer_nb_fn_t)(orte_process_name_t* peer,
                                                    struct opal_buffer_t* buffer,
                                                    orte_rml_tag_t tag,
                                                    orte_rml_buffer_callback_fn_t cbfunc,
@@ -360,7 +359,7 @@ typedef int (*orte_rml_module_send_buffer_nb_fn_t)(struct orte_process_name_t* p
  * @param[in] cbfunc   Callback function on message comlpetion
  * @param[in] cbdata   User data to provide during completion callback
  */
-typedef void (*orte_rml_module_recv_nb_fn_t)(struct orte_process_name_t* peer,
+typedef void (*orte_rml_module_recv_nb_fn_t)(orte_process_name_t* peer,
                                              orte_rml_tag_t tag,
                                              bool persistent,
                                              orte_rml_callback_fn_t cbfunc,
@@ -376,7 +375,7 @@ typedef void (*orte_rml_module_recv_nb_fn_t)(struct orte_process_name_t* peer,
  * @param[in] cbfunc   Callback function on message comlpetion
  * @param[in] cbdata   User data to provide during completion callback
  */
-typedef void (*orte_rml_module_recv_buffer_nb_fn_t)(struct orte_process_name_t* peer,
+typedef void (*orte_rml_module_recv_buffer_nb_fn_t)(orte_process_name_t* peer,
                                                     orte_rml_tag_t tag,
                                                     bool persistent,
                                                     orte_rml_buffer_callback_fn_t cbfunc,
@@ -427,7 +426,7 @@ typedef int  (*orte_rml_module_ft_event_fn_t)(int state);
  * to/from a specified process. Used when a process aborts
  * and is to be restarted
  */
-typedef void (*orte_rml_module_purge_fn_t)(struct orte_process_name_t *peer);
+typedef void (*orte_rml_module_purge_fn_t)(orte_process_name_t *peer);
 
 /* ******************************************************************** */
 

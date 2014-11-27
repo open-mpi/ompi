@@ -1865,7 +1865,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
          */
         OBJ_CONSTRUCT(&myvals, opal_list_t);
         if (OMPI_SUCCESS != opal_dstore.fetch(opal_dstore_internal,
-                                              (opal_identifier_t*)&rprocs[i]->super.proc_name,
+                                              &rprocs[i]->super.proc_name,
                                               OPAL_DSTORE_LOCALITY, &myvals)) {
             rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
         } else {

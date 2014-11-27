@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +92,7 @@ void mca_spml_yoda_get_completion(mca_btl_base_module_t* btl,
     /* decide if we need to copy buffer */
     if (getreq->p_dst) {
         memcpy(getreq->p_dst,
-               des->des_remote->seg_addr.pval,
+               des->des_local->seg_addr.pval,
            frag->size);
     }
 

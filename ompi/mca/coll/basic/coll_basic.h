@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -354,25 +354,6 @@ struct mca_coll_basic_module_t {
     int mccb_num_reqs;
 };
 typedef struct mca_coll_basic_module_t mca_coll_basic_module_t;
-
-static inline int mca_coll_basic_check_for_requests (mca_coll_basic_module_t *basic_module, int max_reqs)
-{
-    if (basic_module->mccb_num_reqs < max_reqs) {
-        void *tmp;
-
-        basic_module->mccb_num_reqs = max_reqs;
-
-        tmp = realloc (basic_module->mccb_reqs, sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
-        if (NULL == tmp) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        basic_module->mccb_reqs = tmp;
-    }
-
-    return OMPI_SUCCESS;
-}
-
 OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
 
 END_C_DECLS

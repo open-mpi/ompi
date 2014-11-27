@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +62,7 @@ struct mca_btl_tcp_component_t {
     int tcp_free_list_max;                  /**< maximum size of free lists */
     int tcp_free_list_inc;                  /**< number of elements to alloc when growing free lists */
     int tcp_endpoint_cache;                 /**< amount of cache on each endpoint */
-    opal_hash_table_t tcp_procs;            /**< hash table of tcp proc structures */
+    opal_proc_table_t tcp_procs;            /**< hash table of tcp proc structures */
     opal_list_t tcp_events;                 /**< list of pending tcp events */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
 

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,17 +103,18 @@ int mca_btl_vader_put_knem (struct mca_btl_base_module_t *btl,
     mca_btl_vader_segment_t *src = (mca_btl_vader_segment_t *) des->des_local;
     mca_btl_vader_segment_t *dst = (mca_btl_vader_segment_t *) des->des_remote;
     const size_t size = min(dst->base.seg_len, src->base.seg_len);
+    intptr_t offset = dst->base.seg_addr.lval - dst->registered_base;
     struct knem_cmd_param_iovec send_iovec;
     struct knem_cmd_inline_copy icopy;
 
     /* Fill in the ioctl data fields.  There's no async completion, so
        we don't need to worry about getting a slot, etc. */
-    send_iovec.base = (uintptr_t) dst->base.seg_addr.lval;
+    send_iovec.base = (uintptr_t) src->base.seg_addr.lval;
     send_iovec.len = size;
     icopy.local_iovec_array = (uintptr_t) &send_iovec;
     icopy.local_iovec_nr    = 1;
     icopy.remote_cookie     = dst->cookie;
-    icopy.remote_offset     = 0;
+    icopy.remote_offset     = offset;
     icopy.write             = 1;
     icopy.flags             = 0;
 

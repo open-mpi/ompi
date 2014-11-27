@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -123,19 +123,22 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    new_comm->c_topo            = topo;
+    new_comm->c_topo->mtc.graph = graph;
+    new_comm->c_flags          |= OMPI_COMM_GRAPH;
+    new_comm->c_topo->reorder   = reorder;
+
     ret = ompi_comm_enable(old_comm, new_comm,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
+        new_comm->c_topo            = NULL;
+        new_comm->c_flags          &= ~OMPI_COMM_GRAPH;
         free(topo_procs);
         OBJ_RELEASE(graph);
         ompi_comm_free (&new_comm);
         return ret;
     }
     
-    new_comm->c_topo            = topo;
-    new_comm->c_topo->mtc.graph = graph;
-    new_comm->c_flags          |= OMPI_COMM_GRAPH;
-    new_comm->c_topo->reorder   = reorder;
     *comm_topo = new_comm;
 
     if( MPI_UNDEFINED == new_rank ) {

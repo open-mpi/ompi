@@ -19,6 +19,9 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/pmix/pmix.h"
 
+opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCARD};
+opal_process_name_t opal_name_invalid = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID}; 
+
 opal_process_info_t opal_process_info = {
     .nodename = NULL,
     .job_session_dir = NULL,
@@ -33,7 +36,7 @@ opal_process_info_t opal_process_info = {
 static opal_proc_t opal_local_proc = {
     { .opal_list_next = NULL,
       .opal_list_prev = NULL},
-    OPAL_NAME_INVALID,
+    {OPAL_JOBID_INVALID, OPAL_VPID_INVALID},
     0,
     0,
     NULL,
@@ -46,13 +49,13 @@ static void opal_proc_construct(opal_proc_t* proc)
     proc->proc_arch = opal_local_arch;
     proc->proc_convertor = NULL;
     proc->proc_flags = 0;
-    proc->proc_name = 0;
+    proc->proc_name = *OPAL_NAME_INVALID;
 }
 
 static void opal_proc_destruct(opal_proc_t* proc)
 {
     proc->proc_flags     = 0;
-    proc->proc_name      = 0;
+    proc->proc_name      = *OPAL_NAME_INVALID;
     proc->proc_hostname  = NULL;
     proc->proc_convertor = NULL;
 }
@@ -64,13 +67,19 @@ static int
 opal_compare_opal_procs(const opal_process_name_t p1,
                         const opal_process_name_t p2)
 {
-    opal_process_name_t proc1, proc2;
-    /* to protect alignment, copy the name across */
-    memcpy(&proc1, &p1, sizeof(opal_process_name_t));
-    memcpy(&proc2, &p2, sizeof(opal_process_name_t));
-    if( proc1 == proc2 ) return  0;
-    if( proc1 <  proc2 ) return -1;
-    return 1;
+    if( p1.jobid < p2.jobid ) {
+        return  -1;
+    }
+    if( p1.jobid > p2.jobid ) {
+        return  1;
+    }
+    if( p1.vpid <  p2.vpid ) {
+        return -1;
+    }
+    if( p1.vpid >  p2.vpid ) {
+        return 1;
+    }
+    return 0;
 }
 
 opal_compare_proc_fct_t opal_compare_proc = opal_compare_opal_procs;
@@ -118,15 +127,28 @@ opal_process_name_print_should_never_be_called(const opal_process_name_t procnam
     return "My Name is Nobody";
 }
 
-static uint32_t
-opal_process_name_vpid_should_never_be_called(const opal_process_name_t unused)
+static char*
+opal_vpid_print_should_never_be_called(const opal_vpid_t unused)
 {
-    return UINT_MAX;
+    return "My VPID";
+}
+
+static char*
+opal_jobid_print_should_never_be_called(const opal_jobid_t unused)
+{
+    return "My JOBID";
+}
+
+static int opal_convert_string_to_process_name_should_never_be_called(opal_process_name_t *name,
+                                                                      const char* name_string)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_print_should_never_be_called;
-uint32_t (*opal_process_name_vpid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
-uint32_t (*opal_process_name_jobid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
+char* (*opal_vpid_print)(const opal_vpid_t) = opal_vpid_print_should_never_be_called;
+char* (*opal_jobid_print)(const opal_jobid_t) = opal_jobid_print_should_never_be_called;
+int (*opal_convert_string_to_process_name)(opal_process_name_t *name, const char* name_string) = opal_convert_string_to_process_name_should_never_be_called;
 
 char* opal_get_proc_hostname(const opal_proc_t *proc)
 {

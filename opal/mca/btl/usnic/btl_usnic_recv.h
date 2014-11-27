@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,9 +43,9 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
        btl_header->sender, echo back the ptr to the sender's
        ompi_proc.  There was limited speedup with this scheme; more
        investigation is required. */
-    ret = opal_hash_table_get_value_uint64(&module->senders,
-                                           seg->us_btl_header->sender,
-                                           (void**) &sender);
+    ret = opal_proc_table_get_value(&module->senders,
+                                    seg->us_btl_header->sender,
+                                    (void**) &sender);
     if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
         return sender;
     }
@@ -53,8 +55,8 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
     sender = opal_btl_usnic_proc_lookup_endpoint(module,
                                                  seg->us_btl_header->sender);
     if (NULL != sender) {
-        opal_hash_table_set_value_uint64(&module->senders,
-                                         seg->us_btl_header->sender, sender);
+        opal_proc_table_set_value(&module->senders,
+                                  seg->us_btl_header->sender, sender);
         return sender;
     }
 

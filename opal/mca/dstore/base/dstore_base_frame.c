@@ -2,6 +2,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,8 +133,19 @@ OBJ_CLASS_INSTANCE(opal_dstore_proc_data_t,
                    proc_data_construct,
                    proc_data_destruct);
 
+static void attr_construct(opal_dstore_attr_t *attr)
+{
+    attr->connection_info = NULL;
+}
+
+static void attr_destruct(opal_dstore_attr_t *attr)
+{
+    if (NULL != attr->connection_info) {
+        free(attr->connection_info);
+    }
+}
 OBJ_CLASS_INSTANCE(opal_dstore_attr_t,
                    opal_list_item_t,
-                   NULL, NULL);
+                   attr_construct, attr_destruct);
 
 

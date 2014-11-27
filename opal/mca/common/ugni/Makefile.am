@@ -19,7 +19,7 @@ component_noinst = lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst.la
 component_install = lib@OPAL_LIB_PREFIX@mca_common_ugni.la
 
 if MCA_BUILD_opal_common_ugni_DSO
-mcacomponent_LTLIBRARIES = $(component_install)
+lib_LTLIBRARIES = $(component_install)
 else
 noinst_LTLIBRARIES = $(component_noinst)
 endif
@@ -30,7 +30,7 @@ headers = common_ugni.h \
 ugni_SOURCES = common_ugni.c \
                common_ugni_ep.c
 
-mcacomponentdir = $(opallibdir)
+#mcacomponentdir = $(opallibdir)
 lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
 nodist_lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
 lib@OPAL_LIB_PREFIX@mca_common_ugni_la_LIBADD = $(common_ugni_LIBS)
@@ -56,7 +56,7 @@ ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
 ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(component_install)`;
 
 all-local:
-	$(OMPI_V_LN_SCOMP) if test -z "$(mcacomponent_LTLIBRARIES)"; then \
+	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(component_install)"; \
 	  $(LN_S) "$(component_noinst)" "$(component_install)"; \
 	fi

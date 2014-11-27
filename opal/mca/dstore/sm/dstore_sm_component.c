@@ -75,9 +75,8 @@ static int component_register(void)
 static opal_dstore_base_module_t *component_create(opal_list_t *attrs)
 {
     mca_dstore_sm_module_t *mod;
-    opal_output(0, "SM MODULE REQUEST");
+
     if (0 == opal_dstore_sm_enable) {
-        opal_output(0, "SM MODULE NOT ENABLED");
         return NULL;
     }
     mod = (mca_dstore_sm_module_t*)malloc(sizeof(mca_dstore_sm_module_t));

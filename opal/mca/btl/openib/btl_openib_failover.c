@@ -4,6 +4,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -373,15 +375,15 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
                         opal_output_verbose(20, mca_btl_openib_component.verbose_failover,
                                             "IB: rank=%d, control message (remote=%d), "
                                             "moved local head by one (new=%d)",
-                                            opal_process_name_vpid(OPAL_PROC_MY_NAME),
-                                            opal_process_name_vpid(newep->endpoint_proc->proc_opal->proc_name),
+                                            OPAL_PROC_MY_NAME.vpid,
+                                            newep->endpoint_proc->proc_opal->proc_name.vpid,
                                             newep->eager_rdma_local.head);
                     } else {
                         opal_output_verbose(20, mca_btl_openib_component.verbose_failover,
                                             "IB: rank=%d, control message (remote=%d), "
                                             "did not move local head by one (still=%d)",
-                                            opal_process_name_vpid(OPAL_PROC_MY_NAME),
-                                            opal_process_name_vpid(newep->endpoint_proc->proc_opal->proc_name),
+                                            OPAL_PROC_MY_NAME.vpid,
+                                            newep->endpoint_proc->proc_opal->proc_name.vpid,
                                             newep->eager_rdma_local.head);
                     }
                 }
@@ -685,7 +687,7 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
     bc_hdr->control.type = type;
     bc_hdr->lid = endpoint->endpoint_btl->port_info.lid;
     bc_hdr->subnet_id = endpoint->endpoint_btl->port_info.subnet_id;
-    bc_hdr->vpid = opal_process_name_vpid(OPAL_PROC_MY_NAME);
+    bc_hdr->vpid = OPAL_PROC_MY_NAME.vpid;
     bc_hdr->index = index;
 
     if(newep->nbo) {
@@ -740,7 +742,7 @@ void mca_btl_openib_dump_all_local_rdma_frags(mca_btl_openib_device_t *device) {
     mca_btl_openib_endpoint_t* endpoint;
 
     c = device->eager_rdma_buffers_count;
-    opal_output(0, "rank=%d, device=%s", opal_process_name_vpid(OPAL_PROC_MY_NAME), device->ib_dev->name);
+    opal_output(0, "rank=%d, device=%s", OPAL_PROC_MY_NAME.vpid, device->ib_dev->name);
 
     for(i = 0; i < c; i++) {
         endpoint = device->eager_rdma_buffers[i];

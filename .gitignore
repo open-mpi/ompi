@@ -8,6 +8,7 @@
 *.so
 *.a
 .dirstamp
+*.dwarf
 *.dSYM
 *.S
 *.loT
@@ -15,6 +16,7 @@
 *.rej
 *.class
 *.xcscheme
+*.out
 *.plist
 *~
 Makefile

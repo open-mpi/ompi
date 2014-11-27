@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -483,7 +485,7 @@ static void process_opens(int fd, short args, void *cbdata)
         /* fetch the hostname where this daemon is located */
         OBJ_CONSTRUCT(&myvals, opal_list_t);
         if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                    (opal_identifier_t*)&daemon,
+                                                    &daemon,
                                                     OPAL_DSTORE_HOSTNAME, &myvals))) {
             ORTE_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&myvals);

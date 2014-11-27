@@ -117,8 +117,12 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
-    /* all routes go direct */
-    ret = target;
+    if (ORTE_PROC_IS_APP) {
+        ret = ORTE_PROC_MY_HNP;
+    } else {
+        /* all routes go direct */
+        ret = target;
+    }
 
  found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
@@ -217,39 +221,32 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
     /***   MUST BE A PROC   ***/
     
-    /* if ndat=NULL, then we are being called during orte_init */
-    if (NULL == ndat) {
-        if (NULL != orte_process_info.my_daemon_uri) {
-            /* we are being launched by a daemon, so we need to
-             * register a sync with it to get our nidmap back
-             */
-            /* Set the contact info in the RML - this won't actually establish
-             * the connection, but just tells the RML how to reach the daemon
-             * if/when we attempt to send to it
-             */
-            orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
-            /* extract the daemon's name so we can update the routing table */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
-                                                               ORTE_PROC_MY_DAEMON, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* set the contact info into the hash table */
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+
+        /* extract the hnp name and store it */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                        ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-        return ORTE_SUCCESS;
     }
-    
+
     /* if ndat != NULL, then this is being invoked by the proc to
      * init a route to a specified process that is outside of our
      * job family. It really doesn't matter as everything must
      * go direct
      */
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
-                         "%s routed_direct: init routes w/non-NULL data",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (NULL != ndat) {
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
+                    "%s routed_direct: init routes w/non-NULL data",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -290,7 +287,7 @@ static void get_routing_list(opal_list_t *coll)
     /* if I am anything other than daemons and the HNP, this
      * is a meaningless command as I am not allowed to route
      */
-    if (!ORTE_PROC_IS_DAEMON || !ORTE_PROC_IS_HNP) {
+    if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
         return;
     }
     
@@ -331,14 +328,14 @@ static void get_routing_list(opal_list_t *coll)
 
 static int get_wireup_info(opal_buffer_t *buf)
 {
-    opal_byte_object_t bo, *boptr;
+    int rc;
 
-    /* this is a meaningless command for a direct as I am not allowed to route */
-    bo.bytes = NULL;
-    bo.size = 0;
-    boptr = &bo;
-
-    opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT);
+    if (ORTE_PROC_IS_HNP) {
+        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
     return ORTE_SUCCESS;
 }
 

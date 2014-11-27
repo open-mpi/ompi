@@ -22,19 +22,22 @@ AM_CPPFLAGS = $(orte_oob_ud_CPPFLAGS)
 dist_ortedata_DATA = help-oob-ud.txt
 
 sources = \
+	oob_ud_component.h \
 	oob_ud_component.c \
-	oob_ud_module.c \
+	oob_ud.c \
 	oob_ud.h \
 	oob_ud_event.c \
 	oob_ud_peer.c \
 	oob_ud_peer.h \
 	oob_ud_ping.c \
+	oob_ud_ping.h \
 	oob_ud_qp.c \
 	oob_ud_qp.h \
 	oob_ud_recv.c \
 	oob_ud_req.c \
 	oob_ud_req.h \
-	oob_ud_send.c
+	oob_ud_send.c \
+        oob_ud_send.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

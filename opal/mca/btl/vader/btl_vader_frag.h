@@ -61,6 +61,7 @@ struct mca_btl_vader_segment_t {
     mca_btl_base_segment_t base;
 #if OPAL_BTL_VADER_HAVE_KNEM
     uint64_t cookie;
+    intptr_t registered_base;
 #endif
 };
 typedef struct mca_btl_vader_segment_t mca_btl_vader_segment_t;
