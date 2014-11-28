@@ -26,6 +26,19 @@
 #include "opal/mca/timer/linux/timer_linux.h"
 #include "opal/constants.h"
 
+static opal_timer_t opal_timer_base_get_cycles_sys_timer(void);
+static opal_timer_t opal_timer_base_get_usec_sys_timer(void);
+
+#if OPAL_HAVE_CLOCK_GETTIME
+static opal_timer_t opal_timer_base_get_cycles_clock_gettime(void);
+static opal_timer_t opal_timer_base_get_usec_clock_gettime(void);
+opal_timer_t *opal_timer_base_get_cycles = opal_timer_base_get_cycles_clock_gettime;
+opal_timer_t *opal_timer_base_get_usec = opal_timer_base_get_usec_clock_gettime;
+#else
+opal_timer_t *opal_timer_base_get_cycles = opal_timer_base_get_cycles_sys_timer;
+opal_timer_t *opal_timer_base_get_usec = opal_timer_base_get_usec_sys_timer;
+#endif  /* OPAL_HAVE_CLOCK_GETTIME */
+
 opal_timer_t opal_timer_linux_freq;
 
 static int opal_timer_linux_open(void);
@@ -73,8 +86,7 @@ find_info(FILE* fp, char *str, char *buf, size_t buflen)
     return NULL;
 }
 
-int
-opal_timer_linux_open(void)
+static int opal_timer_linux_find_freq(void)
 {
     FILE *fp;
     char *loc;
@@ -130,3 +142,71 @@ opal_timer_linux_open(void)
 
     return OPAL_SUCCESS;
 }
+
+int opal_timer_linux_open(void)
+{
+    int ret = OPAL_SUCCESS;
+#if !OPAL_HAVE_CLOCK_GETTIME
+    ret = opal_timer_linux_find_freq();
+#endif
+
+    if(mca_timer_base_monotonic) {
+#if OPAL_HAVE_CLOCK_GETTIME
+      struct timespec *res;
+      if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
+          opal_timer_linux_freq = res.tv_nsec;
+          return ret;
+      }
+#else
+#if (0 == OPAL_TIMER_MONOTONIC)
+      /* Monotonic time requested but cannot be found. Complain! */
+      opal_show_help("help-opal-timer-linux.txt", "monotonic not supported", 1);
+#endif  /* (0 == OPAL_TIMER_MONOTONIC) */
+#endif
+    }
+    return ret;
+}
+
+#if OPAL_HAVE_CLOCK_GETTIME
+opal_timer_t opal_timer_base_get_usec_clock_gettime(void)
+{
+    struct timespec *tp;
+
+    if( 0 == clock_gettime(CLOCK_MONOTONIC, &tp) ) {
+        return (tp.tv_sec * 1e9 + tp.tv_nsec);
+    }
+    return 0;
+}
+
+opal_timer_t opal_timer_base_get_cycles_clock_gettime(void)
+{
+    return opal_timer_base_get_usec_clock_gettime() * opal_timer_linux_freq;
+}
+#endif  /* OPAL_HAVE_CLOCK_GETTIME */
+
+opal_timer_t opal_timer_base_get_cycles_sys_timer(void)
+{
+#if OPAL_HAVE_SYS_TIMER_GET_CYCLES
+    return opal_sys_timer_get_cycles();
+#else
+    return 0;
+#endif
+}
+
+
+opal_timer_t opal_timer_base_get_usec_sys_timer(void)
+{
+#if OPAL_HAVE_SYS_TIMER_GET_CYCLES
+    /* freq is in Hz, so this gives usec */
+    return opal_sys_timer_get_cycles() * 1000000  / opal_timer_linux_freq;
+#else
+    return 0;
+#endif
+}
+
+opal_timer_t opal_timer_base_get_freq(void)
+{
+    return opal_timer_linux_freq;
+}
+
+
