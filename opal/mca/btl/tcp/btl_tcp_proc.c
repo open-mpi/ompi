@@ -84,8 +84,8 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
         opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, 
                                      tcp_proc->proc_opal->proc_name);
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-        /* Do not OBJ_RELEASE the proc_opal ! */
-        /* OBJ_RELEASE(tcp_proc->proc_opal); */
+        OBJ_RELEASE(tcp_proc->proc_opal);
+        tcp_proc->proc_opal = NULL;
     }
     /* release resources */
     if(NULL != tcp_proc->proc_endpoints) {
