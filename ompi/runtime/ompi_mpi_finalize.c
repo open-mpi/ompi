@@ -341,11 +341,6 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    /* free proc resources */
-    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-        return ret;
-    }
-    
     /* finalize the pubsub functions */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
         return ret;
@@ -417,6 +412,11 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
+        return ret;
+    }
+
+    /* free proc resources */
+    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
         return ret;
     }
 
