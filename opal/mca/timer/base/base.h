@@ -35,7 +35,12 @@ BEGIN_C_DECLS
  * Framework structure declaration
  */
 OPAL_DECLSPEC extern mca_base_framework_t opal_timer_base_framework;
-   
+
+/**
+ * MCA param to force monotonic timers.
+ */
+OPAL_DECLSPEC extern int mca_timer_base_monotonic;
+
 END_C_DECLS
 
 /* include implementation to call */
