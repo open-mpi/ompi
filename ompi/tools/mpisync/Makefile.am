@@ -50,7 +50,9 @@ bin_PROGRAMS = mpisync
 bin_SCRIPTS = mpirun_prof ompi_timing_post
 
 man_pages = mpisync.1
-EXTRA_DIST = $(man_pages:.1=.1in)
+EXTRA_DIST = $(man_pages:.1=.1in)\
+	     mpirun_prof \
+	     ompi_timing_post
 
 nodist_man_MANS = $(man_pages)
 
