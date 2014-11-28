@@ -24,8 +24,8 @@
 
 OPAL_DECLSPEC extern opal_timer_t opal_timer_linux_freq;
 
-OPAL_DECLSPEC extern opal_timer_t *opal_timer_base_get_cycles(void);
-OPAL_DECLSPEC extern opal_timer_t *opal_timer_base_get_usec(void);
+OPAL_DECLSPEC extern opal_timer_t (*opal_timer_base_get_cycles)(void);
+OPAL_DECLSPEC extern opal_timer_t (*opal_timer_base_get_usec)(void);
 
 OPAL_DECLSPEC extern opal_timer_t opal_timer_base_get_freq(void);
 
