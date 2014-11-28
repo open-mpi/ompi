@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,8 +33,6 @@ int mca_timer_base_monotonic = 1;
 
 static int mca_timer_base_register(mca_base_register_flag_t flags)
 {
-    /* figure out which bcol and sbgp components will actually be used */
-    /* get list of sub-grouping functions to use */
     (void) mca_base_var_register("opal", "timer", "require", "monotonic",
                                  "Node-level monotonic timer required (default yes)",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
