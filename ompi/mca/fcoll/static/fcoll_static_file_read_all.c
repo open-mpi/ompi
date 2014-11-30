@@ -111,13 +111,13 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   
   /* In case the data is not contigous in memory, decode it into an iovec */
   if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
-    ompi_io_ompio_decode_datatype (fh,
-				   datatype,
-				   count,
-				   buf,
-				   &max_data,
-				   &decoded_iov,
-				   &iov_count);
+      fh->f_decode_datatype ( (struct mca_io_ompio_file_t *)fh,
+			      datatype,
+			      count,
+			      buf,
+			      &max_data,
+			      &decoded_iov,
+			      &iov_count);
   }
   else {
     max_data = count * datatype->super.size;
@@ -128,18 +128,18 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   }
   
 
-  mca_io_ompio_get_num_aggregators ( &static_num_io_procs );
-  ompi_io_ompio_set_aggregator_props (fh, 
-				      static_num_io_procs,
-				      max_data);
+  fh->f_get_num_aggregators ( &static_num_io_procs );
+  fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh, 
+			      static_num_io_procs,
+			      max_data);
   
   /*  printf("max_data %ld\n", max_data);  */
-  ret = ompi_io_ompio_generate_current_file_view(fh,
-						 max_data,
-						 &iov,
-						 &iov_size);
+  ret = fh->f_generate_current_file_view((struct mca_io_ompio_file_t *)fh,
+					 max_data,
+					 &iov,
+					 &iov_size);
   if (ret != OMPI_SUCCESS){
-    goto exit;
+      goto exit;
   }
 
   if ( iov_size > 0 ) {
@@ -195,7 +195,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   /* #########################################################*/
   
   
-  mca_io_ompio_get_bytes_per_agg ( (int*) &bytes_per_cycle);  
+  fh->f_get_bytes_per_agg ( (int*) &bytes_per_cycle);  
   local_cycles = ceil((double)max_data/bytes_per_cycle);
   ret = fh->f_comm->c_coll.coll_allreduce (&local_cycles, 
 					   &cycles,
@@ -276,16 +276,16 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   }
 
 
-  ret = ompi_io_ompio_allgather_array (&iov_size,
-				       1,
-				       MPI_INT,
-				       iovec_count_per_process,
-				       1,
-				       MPI_INT,
-				       fh->f_aggregator_index,
-				       fh->f_procs_in_group,
-				       fh->f_procs_per_group,
-				       fh->f_comm);
+  ret = fh->f_allgather_array (&iov_size,
+			       1,
+			       MPI_INT,
+			       iovec_count_per_process,
+			       1,
+			       MPI_INT,
+			       fh->f_aggregator_index,
+			       fh->f_procs_in_group,
+			       fh->f_procs_per_group,
+			       fh->f_comm);
   
   if( OMPI_SUCCESS != ret){
     goto exit;
@@ -311,21 +311,21 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     }
   }
   
-  ret = ompi_io_ompio_gatherv_array (local_iov_array,
-				     iov_size,
-				     io_array_type,
-				     global_iov_array,
-				     iovec_count_per_process,
-				     displs,
-				     io_array_type,
-				     fh->f_aggregator_index,
-				     fh->f_procs_in_group,
-				     fh->f_procs_per_group,
-				     fh->f_comm);
+  ret = fh->f_gatherv_array (local_iov_array,
+			     iov_size,
+			     io_array_type,
+			     global_iov_array,
+			     iovec_count_per_process,
+			     displs,
+			     io_array_type,
+			     fh->f_aggregator_index,
+			     fh->f_procs_in_group,
+			     fh->f_procs_per_group,
+			     fh->f_comm);
   
   if (OMPI_SUCCESS != ret){
-    fprintf(stderr,"global_iov_array gather error!\n");
-    goto exit;
+      fprintf(stderr,"global_iov_array gather error!\n");
+      goto exit;
   }
 
   
@@ -422,17 +422,17 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     else {
       bytes_to_read_in_cycle = 0;
     }
-    ompi_io_ompio_gather_array (&bytes_to_read_in_cycle,
-				1,
-				MPI_INT,
-				bytes_per_process,
-				1,
-				MPI_INT,
-				fh->f_aggregator_index,
-				fh->f_procs_in_group,
-				fh->f_procs_per_group,
-				fh->f_comm);
-
+    fh->f_gather_array (&bytes_to_read_in_cycle,
+			1,
+			MPI_INT,
+			bytes_per_process,
+			1,
+			MPI_INT,
+			fh->f_aggregator_index,
+			fh->f_procs_in_group,
+			fh->f_procs_per_group,
+			fh->f_comm);
+    
     if (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY) {
       receive_buf = &((char*)buf)[position];
     }
@@ -898,9 +898,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     else
       nentry.aggregator = 0;
     nentry.nprocs_for_coll = static_num_io_procs;
-    if (!ompi_io_ompio_full_print_queue(READ_PRINT_QUEUE)){
-      ompi_io_ompio_register_print_entry(READ_PRINT_QUEUE,
-					 nentry);
+    if (!fh->f_full_print_queue(READ_PRINT_QUEUE)){
+      fh->f_register_print_entry(READ_PRINT_QUEUE,
+				 nentry);
     } 
 #endif
       
