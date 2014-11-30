@@ -103,7 +103,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts, *hstname, *sep, *eptr;
+    char *hosts, *hstname, *sep;
     FILE *fp;
 #if OPAL_HAVE_HWLOC
     opal_hwloc_resource_type_t rtype;
@@ -176,12 +176,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             if (NULL != (sep = strchr(hstname, ' '))) {
                 *sep = '\0';
                 sep++;
-                /* remove any trailing space */
-                eptr = sep + strlen(sep) - 1;
-                while (eptr > sep && isspace(*eptr)) {
-                    eptr--;
-                }
-                *(eptr+1) = 0;
                 sq->cpuset = strdup(sep);
             }
             sq->hostname = strdup(hstname);
@@ -195,26 +189,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     jdata->num_procs = 0;
     if (0 < opal_list_get_size(&default_seq_list)) {
         save = (seq_node_t*)opal_list_get_first(&default_seq_list);
-    }
-    
-#if OPAL_HAVE_HWLOC
-    /* default to LOGICAL processors */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, NULL, OPAL_BOOL)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:seq: using PHYSICAL processors");
-        rtype = OPAL_HWLOC_PHYSICAL;
-    } else {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:seq: using LOGICAL processors");
-        rtype = OPAL_HWLOC_LOGICAL;
-    }
-#endif
-
-    /* initialize all the nodes as not included in this job map */
-    for (j=0; j < orte_node_pool->size; j++) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
-            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-        } 
     }
     
 #if OPAL_HAVE_HWLOC
@@ -275,15 +249,9 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 if (NULL != (sep = strchr(hstname, ' '))) {
                     *sep = '\0';
                     sep++;
-                    /* remove any trailing space */
-                    eptr = sep + strlen(sep) - 1;
-                    while (eptr > sep && isspace(*eptr)) {
-                        eptr--;
-                    }
-                    *(eptr+1) = 0;
                     sq->cpuset = strdup(sep);
                 }
-                sq->hostname = hstname;
+                sq->hostname = strdup(hstname);
                 opal_list_append(&sq_list, &sq->super);
             }
             fclose(fp);
@@ -311,7 +279,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                  * hostfile may not have been FQDN, while name returned
                  * by gethostname may have been (or vice versa)
                  */
-                if (orte_ifislocal(seq->hostname)) {
+                if (opal_ifislocal(seq->hostname)) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:seq: removing head node %s", seq->hostname);
                     opal_list_remove_item(seq_list, item);
@@ -408,29 +376,18 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                         rc = ORTE_ERR_SILENT;
                         goto error;
                     }
-                    /* if we are using hwthreads as cpus and binding to hwthreads, then
-                     * we can just copy the cpuset across as it already specifies things
-                     * at that level */
-                    if (opal_hwloc_use_hwthreads_as_cpus &&
-                        OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                        cpu_bitmap = strdup(sq->cpuset);
-                    } else {
-                        /* setup the bitmap */
-                        bitmap = hwloc_bitmap_alloc();
-                        /* parse the slot_list to find the socket and core */
-                        if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
-                            ORTE_ERROR_LOG(rc);
-                            hwloc_bitmap_free(bitmap);
-                            goto error;
-                        }
-                        /* note that we cannot set the proc locale to any specific object
-                         * as the slot list may have assigned it to more than one - so
-                         * leave that field NULL
-                         */
-                        /* set the proc to the specified map */
-                        hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
-                        hwloc_bitmap_free(bitmap);
+                    bitmap = hwloc_bitmap_alloc();
+                    /* parse the slot_list to find the socket and core */
+                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto error;
                     }
+                    /* note that we cannot set the proc locale to any specific object
+                     * as the slot list may have assigned it to more than one - so
+                     * leave that field NULL
+                     */
+                    /* set the proc to the specified map */
+                    hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
                     orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:seq: binding proc %s to cpuset %s bitmap %s",
@@ -442,6 +399,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
                     /* cleanup */
                     free(cpu_bitmap);
+                    hwloc_bitmap_free(bitmap);
                 } else {
                     hwloc_obj_t locale;
 
