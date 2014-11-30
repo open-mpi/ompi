@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -362,11 +362,11 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     if( OPAL_LIKELY(0 == count) ) {
         pStack[1].type     = pElems->elem.common.type;
         pStack[1].count    = pElems->elem.count;
-        pStack[1].disp     = pElems->elem.disp;
+        pStack[1].disp     = 0;
     } else {
         pStack[1].type  = OPAL_DATATYPE_UINT1;
         pStack[1].count = pData->size - count;
-        pStack[1].disp  = pData->true_lb + count;
+        pStack[1].disp  = count;
     }
     pStack[1].index    = 0;  /* useless */
 
