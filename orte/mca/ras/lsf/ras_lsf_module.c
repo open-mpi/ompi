@@ -79,8 +79,9 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     char **nodelist;
     orte_node_t *node;
     int i, num_nodes;
-    char *affinity_file;
-
+    char *affinity_file, *hstname;
+    bool found;
+    
     /* check for an affinity file */
     if (NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
         /* the affinity file sequentially lists rank locations, with
@@ -90,7 +91,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             jdata->map = OBJ_NEW(orte_job_map_t);
         }
         ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_SEQ)
-        jdata->map->req_mapper = strdup("seq"); // need sequential mapper
+            jdata->map->req_mapper = strdup("seq"); // need sequential mapper
         /* tell the sequential mapper that all cpusets are to be treated as "physical" */
         orte_set_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, true, NULL, OPAL_BOOL);
         /* get the apps and set the hostfile attribute in each to point to
@@ -101,6 +102,38 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             }
             orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, true, (void*)&affinity_file, OPAL_STRING);
         }
+        /* read the specified file to get the allocation */
+        fp = fopen(affinity_file, "r");
+        if (NULL == fp) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        while (NULL != (hstname = orte_getline(fp))) {
+            if (0 == strlen(hstname)) {
+                /* blank line - ignore */
+                continue;
+            }
+            /* see if we already have this node */
+            found = false;
+            OPAL_LIST_FOREACH(node, nodes, orte_node_t) {
+                if (0 == strcmp(node->name, hstname)) {
+                    /* just increment the slots */
+                    ++node->slots;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                node = OBJ_NEW(orte_node_t);
+                node->name = strdup(hstname);
+                node->slots_inuse = 0;
+                node->slots_max = 0;
+                node->slots = 1;
+                opal_list_append(nodes, &node->super);
+            }
+        }
+        fclose(fp);
+
         return ORTE_SUCCESS;
     }
     

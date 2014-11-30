@@ -1215,13 +1215,8 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                         "slot assignment: slot_list == %s",
                         slot_str);
 
-    /* if someone used commas instead of semicolons, let them */
-    if (NULL != strchr(slot_str, ',')) {
-        item = opal_argv_split(slot_str, ',');
-    } else {
-        /* split at ';' */
-        item = opal_argv_split(slot_str, ';');
-    }
+    /* split at ';' */
+    item = opal_argv_split(slot_str, ';');
     
     /* start with a clean mask */
     hwloc_bitmap_zero(cpumask);
