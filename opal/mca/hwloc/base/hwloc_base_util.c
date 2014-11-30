@@ -1217,8 +1217,8 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                                     opal_hwloc_resource_type_t rtype,
                                     hwloc_cpuset_t cpumask)
 {
-    char **item;
-    int rc, i, j;
+    char **item, **rngs;
+    int rc, i, j, k;
     hwloc_obj_t pu;
     hwloc_cpuset_t pucpus;
     char **range, **list;
@@ -1237,13 +1237,8 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                         "slot assignment: slot_list == %s",
                         slot_str);
 
-    /* if someone used commas instead of semicolons, let them */
-    if (NULL != strchr(slot_str, ',')) {
-        item = opal_argv_split(slot_str, ',');
-    } else {
-        /* split at ';' */
-        item = opal_argv_split(slot_str, ';');
-    }
+    /* split at ';' */
+    item = opal_argv_split(slot_str, ';');
     
     /* start with a clean mask */
     hwloc_bitmap_zero(cpumask);
@@ -1263,75 +1258,95 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
             if (NULL == strchr(item[i], ':')) {
                 /* binding just to the socket level, though
                  * it could specify multiple sockets
+                 * Skip the S and look for a ranges
                  */
-                if (OPAL_SUCCESS != (rc = socket_to_cpu_set(&item[i][1],  /* skip the 'S' */
-                                                            topo, rtype, cpumask))) {
-                    opal_argv_free(item);
-                    return rc;
+                rngs = opal_argv_split(&item[i][1], ',');
+                for (j=0; NULL != rngs[j]; j++) {
+                    if (OPAL_SUCCESS != (rc = socket_to_cpu_set(rngs[j], topo, rtype, cpumask))) {
+                        opal_argv_free(rngs);
+                        opal_argv_free(item);
+                        return rc;
+                    }
                 }
+                opal_argv_free(rngs);
             } else {
                 /* binding to a socket/whatever specification */
                 if ('S' == item[i][0] ||
                     's' == item[i][0]) {
-                    if (OPAL_SUCCESS != (rc = socket_core_to_cpu_set(&item[i][1],  /* skip the 'S' */
-                                                                     topo, rtype, cpumask))) {
-                        opal_argv_free(item);
-                        return rc;
+                    rngs = opal_argv_split(&item[i][1], ',');
+                    for (j=0; NULL != rngs[j]; j++) {
+                        if (OPAL_SUCCESS != (rc = socket_core_to_cpu_set(rngs[j], topo, rtype, cpumask))) {
+                            opal_argv_free(rngs);
+                            opal_argv_free(item);
+                            return rc;
+                        }
                     }
+                    opal_argv_free(rngs);
                 } else {
-                    if (OPAL_SUCCESS != (rc = socket_core_to_cpu_set(item[i],
-                                                                     topo, rtype, cpumask))) {
-                        opal_argv_free(item);
-                        return rc;
+                    rngs = opal_argv_split(item[i], ',');
+                    for (j=0; NULL != rngs[j]; j++) {
+                        if (OPAL_SUCCESS != (rc = socket_core_to_cpu_set(rngs[j], topo, rtype, cpumask))) {
+                            opal_argv_free(rngs);
+                            opal_argv_free(item);
+                            return rc;
+                        }
                     }
+                    opal_argv_free(rngs);
                 }
             }
         } else {
-            /* just a core specification - see if one or a range was given */
-            range = opal_argv_split(item[i], '-');
-            range_cnt = opal_argv_count(range);
-            /* see if a range was set or not */
-            switch (range_cnt) {
-            case 1:  /* only one core, or a list of cores, specified */
-                list = opal_argv_split(range[0], ',');
-                for (j=0; NULL != list[j]; j++) {
-                    core_id = atoi(list[j]);
-                    /* find the specified available cpu */
-                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
-                        opal_argv_free(range);
-                        opal_argv_free(item);
-                        return OPAL_ERR_SILENT;
+            rngs = opal_argv_split(item[i], ',');
+            for (k=0; NULL != rngs[k]; k++) {
+                /* just a core specification - see if one or a range was given */
+                range = opal_argv_split(rngs[k], '-');
+                range_cnt = opal_argv_count(range);
+                /* see if a range was set or not */
+                switch (range_cnt) {
+                case 1:  /* only one core, or a list of cores, specified */
+                    list = opal_argv_split(range[0], ',');
+                    for (j=0; NULL != list[j]; j++) {
+                        core_id = atoi(list[j]);
+                        /* find the specified available cpu */
+                        if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
+                            opal_argv_free(range);
+                            opal_argv_free(item);
+                            opal_argv_free(rngs);
+                            return OPAL_ERR_SILENT;
+                        }
+                        /* get the available cpus for that object */
+                        pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                        /* set that in the mask */
+                        hwloc_bitmap_or(cpumask, cpumask, pucpus);
                     }
-                    /* get the available cpus for that object */
-                    pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
-                    /* set that in the mask */
-                    hwloc_bitmap_or(cpumask, cpumask, pucpus);
-                }
-                opal_argv_free(list);
-                break;
+                    opal_argv_free(list);
+                    break;
                     
-            case 2:  /* range of core id's was given */
-                lower_range = atoi(range[0]);
-                upper_range = atoi(range[1]);
-                for (core_id=lower_range; core_id <= upper_range; core_id++) {
-                    /* find the specified logical available cpu */
-                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
-                        opal_argv_free(range);
-                        opal_argv_free(item);
-                        return OPAL_ERR_SILENT;
+                case 2:  /* range of core id's was given */
+                    lower_range = atoi(range[0]);
+                    upper_range = atoi(range[1]);
+                    for (core_id=lower_range; core_id <= upper_range; core_id++) {
+                        /* find the specified logical available cpu */
+                        if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id, rtype))) {
+                            opal_argv_free(range);
+                            opal_argv_free(item);
+                            opal_argv_free(rngs);
+                            return OPAL_ERR_SILENT;
+                        }
+                        /* get the available cpus for that object */
+                        pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                        /* set that in the mask */
+                        hwloc_bitmap_or(cpumask, cpumask, pucpus);
                     }
-                    /* get the available cpus for that object */
-                    pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
-                    /* set that in the mask */
-                    hwloc_bitmap_or(cpumask, cpumask, pucpus);
-                }
-                break;
+                    break;
                 
-            default:
-                opal_argv_free(range);
-                opal_argv_free(item);
-                return OPAL_ERROR;
+                default:
+                    opal_argv_free(range);
+                    opal_argv_free(item);
+                    opal_argv_free(rngs);
+                    return OPAL_ERROR;
+                }
             }
+            opal_argv_free(rngs);
         }
     }
     opal_argv_free(item);
