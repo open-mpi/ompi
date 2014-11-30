@@ -132,7 +132,7 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
     }
 }
 
-int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
+int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                                               size_t max_data,
                                               struct iovec **f_iov,
                                               int *iov_count)
@@ -470,7 +470,7 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh, 
+int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh, 
                                    ompi_datatype_t *datatype,
                                    int count,
                                    void *buf,
@@ -903,7 +903,7 @@ int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
+int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
                                         int num_aggregators,
                                         size_t bytes_per_proc)
 {
