@@ -122,6 +122,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_INIT_BAR_ID            (ORTE_JOB_START_KEY + 31)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FINI_BAR_ID            (ORTE_JOB_START_KEY + 32)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FWDIO_TO_TOOL          (ORTE_JOB_START_KEY + 33)    // Forward IO for this job to the tool requesting its spawn
+#define ORTE_JOB_PHYSICAL_CPUIDS        (ORTE_JOB_START_KEY + 34)    // Hostfile contains physical jobids in cpuset
 
 #define ORTE_JOB_MAX_KEY   300
 
