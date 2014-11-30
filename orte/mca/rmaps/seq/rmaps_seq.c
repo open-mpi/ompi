@@ -215,6 +215,19 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         } 
     }
     
+#if OPAL_HAVE_HWLOC
+    /* default to LOGICAL processors */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, NULL, OPAL_BOOL)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:seq: using PHYSICAL processors");
+        rtype = OPAL_HWLOC_PHYSICAL;
+    } else {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:seq: using LOGICAL processors");
+        rtype = OPAL_HWLOC_LOGICAL;
+    }
+#endif
+
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
@@ -382,6 +395,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             {
                 /* record the cpuset, if given */
                 if (NULL != sq->cpuset) {
+                    /* setup the bitmap */
                     hwloc_cpuset_t bitmap;
                     char *cpu_bitmap;
                     if (NULL == node->topology) {
