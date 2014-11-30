@@ -148,6 +148,14 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
     ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;   
 
+    /*
+    if (MPI_INFO_NULL != info)  {
+        ret = ompi_info_dup (info, &ompio_fh->f_info);
+	if (OMPI_SUCCESS != ret) {
+             goto fn_fail;
+	}
+    }
+    */
     /* This fix is needed for data seiving to work with 
        two-phase collective I/O */
      if ((amode & MPI_MODE_WRONLY)){
