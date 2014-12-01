@@ -32,7 +32,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
     opal_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"
 
     AS_IF([test "$with_knem" != "no"],
-          [AS_IF([test ! -z "$with_knem" && test "$with_knem" != "yes"],
+          [AS_IF([test "$with_knem" != "yes"],
                  [opal_check_knem_dir="$with_knem"])
 
            _OPAL_CHECK_PACKAGE_HEADER([$1],
@@ -63,7 +63,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
     AS_IF([test "$opal_check_knem_happy" = "yes" && test "$opal_cv_knem_version_ok" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_knem" && test "$with_knem" != "no"],
+          [AS_IF([test "$with_knem" != "no"],
                  [AC_MSG_ERROR([KNEM support requested but not found.  Aborting])])
            $3])
     OPAL_VAR_SCOPE_POP
