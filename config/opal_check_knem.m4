@@ -22,14 +22,15 @@
 AC_DEFUN([OPAL_CHECK_KNEM],[
     OPAL_VAR_SCOPE_PUSH([opal_check_knem_happy opal_check_knem_$1_save_CPPFLAGS opal_check_knem_dir])
     AC_ARG_WITH([knem],
-        [AC_HELP_STRING([--with-knem(=DIR)],
-             [Build knem Linux kernel module support, searching for headers in DIR])])
+                [AC_HELP_STRING([--with-knem(=DIR)],
+                                [Build knem Linux kernel module support, searching for headers in DIR ])],
+                [], [with_knem=no])
 
     OPAL_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])
     opal_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"
 
     AS_IF([test "$with_knem" != "no"],
-          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "yes"],
+          [AS_IF([test "$with_knem" != "yes"],
                  [opal_check_knem_dir="$with_knem"])
 
            _OPAL_CHECK_PACKAGE_HEADER([$1],
@@ -60,7 +61,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
     AS_IF([test "$opal_check_knem_happy" = "yes" -a "$opal_cv_knem_version_ok" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "no"],
+          [AS_IF([test "$with_knem" != "no"],
                  [AC_MSG_ERROR([KNEM support requested but not found.  Aborting])])
            $3])
     OPAL_VAR_SCOPE_POP
