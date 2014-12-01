@@ -555,17 +555,20 @@ test/asm/atomic_cmpset_noinline.c
 test/asm/atomic_spinlock_noinline
 test/asm/atomic_barrier_noinline
 test/asm/atomic_spinlock
+test/asm/*.log
+test/asm/*.trs
 
 test/class/*.txt
+test/class/*.exe
+test/class/*.log
+test/class/*.trs
 test/class/ompi_bitmap_test_out.txt
 test/class/ompi_circular_buffer_fifo
 test/class/ompi_fifo
 test/class/ompi_rb_tree
 test/class/ompi_bitmap
 test/class/opal_bitmap
-test/class/opal_fifo
 test/class/opal_hash_table
-test/class/opal_lifo
 test/class/opal_list
 test/class/opal_pointer_array
 test/class/opal_proc_table
