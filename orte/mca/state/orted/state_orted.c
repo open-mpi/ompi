@@ -319,7 +319,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                 }
                 /* send it */
                 OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
-                                     "%s SENDING PROC TERMINATION UPDATE FOR JOB %s",
+                                     "%s SENDING JOB TERMINATION UPDATE FOR JOB %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
                 if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
