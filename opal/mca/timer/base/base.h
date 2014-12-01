@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,7 +35,12 @@ BEGIN_C_DECLS
  * Framework structure declaration
  */
 OPAL_DECLSPEC extern mca_base_framework_t opal_timer_base_framework;
-   
+
+/**
+ * MCA param to force monotonic timers.
+ */
+OPAL_DECLSPEC extern int mca_timer_base_monotonic;
+
 END_C_DECLS
 
 /* include implementation to call */

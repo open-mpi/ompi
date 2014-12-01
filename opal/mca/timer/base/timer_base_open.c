@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,6 +22,7 @@
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 
+int mca_timer_base_monotonic = 1;
 
 /*
  * The following file was created by configure.  It contains extern
@@ -30,9 +31,21 @@
  */
 #include "opal/mca/timer/base/static-components.h"
 
+static int mca_timer_base_register(mca_base_register_flag_t flags)
+{
+    (void) mca_base_var_register("opal", "timer", "require", "monotonic",
+                                 "Node-level monotonic timer required (default yes)",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &mca_timer_base_monotonic);
+
+    return OPAL_SUCCESS;
+}
+
 /*
  * Globals
  */
 /* Use default register/open/close functions */
-MCA_BASE_FRAMEWORK_DECLARE(opal, timer, NULL, NULL, NULL, NULL,
+MCA_BASE_FRAMEWORK_DECLARE(opal, timer, "OPAL OS timer", mca_timer_base_register, NULL, NULL,
                            mca_timer_base_static_components, 0);
