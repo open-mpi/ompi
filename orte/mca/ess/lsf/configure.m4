@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -32,6 +32,9 @@ AC_DEFUN([MCA_orte_ess_lsf_CONFIG],[
     AS_IF([test "$ess_lsf_good" = "1"],
           [$1],
           [$2])
+
+    $1_WRAPPER_EXTRA_LDFLAGS=[$]$1_LDFLAGS
+    $1_WRAPPER_EXTRA_LIBS=[$]$1_LIBS
 
     # set build flags to use in makefile
     AC_SUBST([ess_lsf_CPPFLAGS])
