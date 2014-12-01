@@ -260,6 +260,8 @@ static int mca_spml_ikrit_component_open(void)
                     (cur_ver >> MXM_MINOR_BIT) & 0xff);
     }
 
+    mca_spml_ikrit.mxm_mq = NULL;
+    mca_spml_ikrit.mxm_context = NULL;
     mca_spml_ikrit.ud_only = 0;
 #if MXM_API < MXM_VERSION(2,1)
     mca_spml_ikrit.hw_rdma_channel = 0;
@@ -319,6 +321,9 @@ static int mca_spml_ikrit_component_open(void)
 
 static int mca_spml_ikrit_component_close(void)
 {
+    if (mca_spml_ikrit.mxm_mq) {
+        mxm_mq_destroy(mca_spml_ikrit.mxm_mq);
+    }
     if (mca_spml_ikrit.mxm_context) {
         mxm_cleanup(mca_spml_ikrit.mxm_context);
 #if MXM_API < MXM_VERSION(2,0)
@@ -331,6 +336,7 @@ static int mca_spml_ikrit_component_close(void)
             mxm_config_free_ep_opts(mca_spml_ikrit.mxm_ep_hw_rdma_opts);
 #endif
     }
+    mca_spml_ikrit.mxm_mq = NULL;
     mca_spml_ikrit.mxm_context = NULL;
     return OSHMEM_SUCCESS;
 }
