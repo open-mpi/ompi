@@ -61,24 +61,13 @@ orte_ess_base_component_t mca_ess_pmi_component = {
 
 static int pmi_component_open(void)
 {
-
-    if (OPAL_SUCCESS != mca_base_framework_open(&opal_pmix_base_framework, 0)) {
-        return ORTE_ERROR;
-    }
-
-    if (OPAL_SUCCESS != opal_pmix_base_select()) {
-        return ORTE_ERROR;
-    }
-
     return ORTE_SUCCESS;
 }
 
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we are available anywhere PMI is available, but not for HNP itself */
-    if (!ORTE_PROC_IS_HNP && NULL != opal_pmix.init &&
-        OPAL_SUCCESS == opal_pmix.init()) {
-        /* if PMI is available, use it */
+    /* all APPS must use pmix */
+    if (ORTE_PROC_IS_APP) {
         *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
         return ORTE_SUCCESS;
@@ -93,9 +82,6 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
 
 static int pmi_component_close(void)
 {
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();  // balances query
-    }
-    return mca_base_framework_close(&opal_pmix_base_framework);
+    return ORTE_SUCCESS;
 }
 
