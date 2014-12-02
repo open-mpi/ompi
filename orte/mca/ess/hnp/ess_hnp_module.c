@@ -230,7 +230,7 @@ static int rte_init(void)
             }
         }
 
-        if (4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }

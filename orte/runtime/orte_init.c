@@ -35,7 +35,6 @@
 #endif
 
 #include "opal/mca/dstore/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -204,20 +203,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         }
     }
 
-    if (ORTE_PROC_IS_APP) {
-        /* we must have the pmix framework setup prior to opening/selecting ESS
-         * as some of those components may depend on it */
-        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_pmix_base_open";
-            goto error;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_pmix_base_select";
-            goto error;
-        }
-    } else if (!ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register();
     }
