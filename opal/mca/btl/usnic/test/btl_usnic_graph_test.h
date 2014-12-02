@@ -10,10 +10,11 @@
 #ifndef BTL_USNIC_GRAPH_TEST_H
 #define BTL_USNIC_GRAPH_TEST_H
 
-#include <stdlib.h>
-#include "btl_usnic_test.h"
-
 #if OPAL_BTL_USNIC_UNIT_TESTS
+
+#include <stdlib.h>
+#include <sys/time.h>
+#include "btl_usnic_test.h"
 
 #define check_graph_is_consistent(g)                                         \
     do {                                                                     \
@@ -87,6 +88,19 @@ static int cmp_int_pair(const void *a, const void *b)
             return 0;
         }
     }
+}
+
+/* Simple time function so that we don't have to deal with the
+   complexity of finding mpi.h to use MPI_Wtime */
+static double gettime(void)
+{
+    double wtime;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+
+    return wtime;
 }
 
 static int test_graph_create(void *ctx)
@@ -591,7 +605,7 @@ static int test_graph_assignment_solver(void *ctx)
      * 2 --> 4
      */
 #define NUM_ITER (10000)
-    start = MPI_Wtime();
+    start = gettime();
     for (iter = 0; iter < NUM_ITER; ++iter) {
         err = opal_btl_usnic_gr_create(NULL, NULL, &g);
         check_err_code(err, OPAL_SUCCESS);
@@ -627,7 +641,7 @@ static int test_graph_assignment_solver(void *ctx)
         err = opal_btl_usnic_gr_free(g);
         check_err_code(err, OPAL_SUCCESS);
     }
-    end = MPI_Wtime();
+    end = gettime();
     /* ensure that this operation on a 1000 node cluster will take less than one second */
     check(((end - start) / NUM_ITER) < 0.001);
 #if 0

@@ -14,10 +14,17 @@
 #include "opal_config.h"
 
 #include "opal/util/show_help.h"
-#include "opal/util/proc.h"
 
-#include "btl_usnic_util.h"
+#if BTL_IN_OPAL
+#include "opal/util/proc.h"
+#else
+#include "ompi/proc/proc.h"
+#endif
+
+#include "btl_usnic_compat.h"
+#include "btl_usnic_module.h"
 #include "btl_usnic_proc.h"
+#include "btl_usnic_util.h"
 
 
 /**
@@ -120,12 +127,10 @@ enum {
 typedef struct {
     void *module;
     uint32_t ipv4_addr;
-    uint32_t cidrmask;
-    uint32_t mtu;
+    uint32_t netmask;
+    uint32_t max_msg_size;
     char nodename[CONNECTIVITY_NODENAME_LEN];
-    char if_name[CONNECTIVITY_IFNAME_LEN];
     char usnic_name[CONNECTIVITY_IFNAME_LEN];
-    uint8_t mac[6];
 } opal_btl_usnic_connectivity_cmd_listen_t;
 
 /*
@@ -154,11 +159,10 @@ typedef struct {
     uint32_t src_ipv4_addr;
     uint32_t src_udp_port;
     uint32_t dest_ipv4_addr;
-    uint32_t dest_cidrmask;
+    uint32_t dest_netmask;
     uint32_t dest_udp_port;
-    uint32_t mtu;
+    uint32_t max_msg_size;
     char dest_nodename[CONNECTIVITY_NODENAME_LEN];
-    uint8_t dest_mac[6];
 } opal_btl_usnic_connectivity_cmd_ping_t;
 
 /**
@@ -185,7 +189,7 @@ int opal_btl_usnic_connectivity_client_init(void);
  * This routine will request the new listen from the agent, and wait
  * for the agent to reply with the UDP port that is being used/was
  * created.  The UDP listening port will then be stuffed in
- * module->local_addr.connectivity_udp_port (i.e., data that will be
+ * module->local_modex.connectivity_udp_port (i.e., data that will be
  * sent in the modex).
  *
  * It is safe to call this function even if the connectivity check is
@@ -200,11 +204,10 @@ int opal_btl_usnic_connectivity_listen(struct opal_btl_usnic_module_t *module);
  * @param[in] src_ipv4_addr The source module IPv4 address
  * @param[in] src_port The source module listening UDP port
  * @param[in] dest_ipv4_addr The destination IPv4 address
- * @param[in] dest_cidrmask The destination CIDR mask
+ * @param[in] dest_netmask The destination netmask
  * @param[in] dest_port The destination UDP port
- * @param[in] dest_mac The destination MAC address
  * @param[in] dest_nodename The destination server name
- * @param[in] mtu The max ping message size to send
+ * @param[in] max_msg_size The max ping message size to send
  *
  * @returns OPAL_SUCCESS or an OPAL error code.
  *
@@ -220,9 +223,9 @@ int opal_btl_usnic_connectivity_listen(struct opal_btl_usnic_module_t *module);
  */
 int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
                                      uint32_t dest_ipv4_addr,
-                                     uint32_t dest_cidrmask, int dest_port,
-                                     uint8_t *dest_mac, char *dest_nodename,
-                                     size_t mtu);
+                                     uint32_t dest_netmask, int dest_port,
+                                     char *dest_nodename,
+                                     size_t max_msg_size);
 
 /**
  * Tell the agent to stop listening on the given IP address.
@@ -280,14 +283,13 @@ opal_btl_usnic_check_connectivity(opal_btl_usnic_module_t *module,
 {
     if (OPAL_LIKELY(mca_btl_usnic_component.connectivity_enabled) &&
         OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
-        opal_btl_usnic_connectivity_ping(module->local_addr.ipv4_addr,
-                                         module->local_addr.connectivity_udp_port,
-                                         endpoint->endpoint_remote_addr.ipv4_addr,
-                                         endpoint->endpoint_remote_addr.cidrmask,
-                                         endpoint->endpoint_remote_addr.connectivity_udp_port,
-                                         endpoint->endpoint_remote_addr.mac,
+        opal_btl_usnic_connectivity_ping(module->local_modex.ipv4_addr,
+                                         module->local_modex.connectivity_udp_port,
+                                         endpoint->endpoint_remote_modex.ipv4_addr,
+                                         endpoint->endpoint_remote_modex.netmask,
+                                         endpoint->endpoint_remote_modex.connectivity_udp_port,
                                          opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
-                                         endpoint->endpoint_remote_addr.mtu);
+                                         endpoint->endpoint_remote_modex.max_msg_size);
         endpoint->endpoint_connectivity_checked = true;
     }
 }

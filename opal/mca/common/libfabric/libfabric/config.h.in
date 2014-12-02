@@ -1,0 +1,121 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Set to 1 to use c11 atomic functions */
+#undef HAVE_ATOMICS
+
+/* Define to 1 if you have the declaration of `O_CLOEXEC', and to 0 if you
+   don't. */
+#undef HAVE_DECL_O_CLOEXEC
+
+/* Define to 1 if you have the declaration of `SOCK_CLOEXEC', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SOCK_CLOEXEC
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* Define to 1 if you have the `ibverbs' library (-libverbs). */
+#undef HAVE_LIBIBVERBS
+
+/* Define to 1 if you have the `nl' library (-lnl). */
+#undef HAVE_LIBNL
+
+/* Define to 1 if you have the `psm_infinipath' library (-lpsm_infinipath). */
+#undef HAVE_LIBPSM_INFINIPATH
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the `rdmacm' library (-lrdmacm). */
+#undef HAVE_LIBRDMACM
+
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* assembler has .symver support */
+#undef HAVE_SYMVER_SUPPORT
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 to enable valgrind annotations */
+#undef INCLUDE_VALGRIND
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Defined to 0 if not provided */
+#undef O_CLOEXEC
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* Defined to 0 if not provided */
+#undef SOCK_CLOEXEC
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* fopen() modifier for setting close on exec flag */
+#undef STREAM_CLOEXEC
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const

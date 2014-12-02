@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +45,7 @@ typedef struct opal_btl_usnic_proc_t {
     opal_proc_t *proc_opal;
 
     /** Addresses received via modex for this remote proc */
-    opal_btl_usnic_addr_t* proc_modex;
+    opal_btl_usnic_modex_t* proc_modex;
     /** Number of entries in the proc_modex array */
     size_t proc_modex_count;
     /** Whether the modex entry is "claimed" by a module or not */
@@ -87,7 +85,7 @@ struct opal_btl_usnic_module_t;
 
 opal_btl_usnic_endpoint_t *
 opal_btl_usnic_proc_lookup_endpoint(struct opal_btl_usnic_module_t *receiver,
-                                    opal_process_name_t name);
+                                    uint64_t sender_hashed_rte_name);
 
 int opal_btl_usnic_proc_match(opal_proc_t* opal_proc,
                               struct opal_btl_usnic_module_t *module,

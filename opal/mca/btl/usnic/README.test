@@ -22,7 +22,7 @@ Goals
 
 Anti-Goals
 ----------
-* Testing the low level networking API (e.g., verbs).
+* Testing the low level networking API (e.g., libfabric).
 * Testing inter-process interaction, such as ORTE-related functionality.
 
 Constraints
@@ -40,7 +40,7 @@ Design Notes
     - Rationale: keeps `X.c` clutter-free
 * unit test infrastructure lives in `btl_usnic_test.c` and `btl_usnic_test.h`
 * unit test functionality is built and enabled by passing
-  `--enable-ompi-btl-usnic-unit-tests` to configure
+  `--enable-opal-btl-usnic-unit-tests` to configure
     - Rationale: default state disables all unit test logic, achieving our
       "non-interference" goals
 * The tests are run by a new executable that gets built when unit tests are

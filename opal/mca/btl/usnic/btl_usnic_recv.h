@@ -1,7 +1,5 @@
 /*
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +10,6 @@
 #ifndef BTL_USNIC_RECV_H
 #define BTL_USNIC_RECV_H
 
-#include <infiniband/verbs.h>
-
 #include "btl_usnic.h"
 #include "btl_usnic_util.h"
 #include "btl_usnic_frag.h"
@@ -22,8 +18,25 @@
 
 void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                               opal_btl_usnic_recv_segment_t *rseg,
-                              opal_btl_usnic_channel_t *channel,
-                              uint32_t l2_bytes_rcvd);
+                              opal_btl_usnic_channel_t *channel);
+
+static inline int
+opal_btl_usnic_post_recv_list(opal_btl_usnic_channel_t *channel)
+{
+    opal_btl_usnic_recv_segment_t *rseg;
+    int rc;
+
+    for (rseg = channel->repost_recv_head; NULL != rseg; rseg = rseg->rs_next) {
+        rc = fi_recv(channel->ep, rseg->rs_protocol_header,
+                rseg->rs_len, NULL, rseg);
+        if (0 != rc) {
+            return rc;
+        }
+    }
+    channel->repost_recv_head = NULL;
+
+    return 0;
+}
 
 /*
  * Given an incoming segment, lookup the endpoint that sent it
@@ -43,9 +56,9 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
        btl_header->sender, echo back the ptr to the sender's
        ompi_proc.  There was limited speedup with this scheme; more
        investigation is required. */
-    ret = opal_proc_table_get_value(&module->senders,
-                                    seg->us_btl_header->sender,
-                                    (void**) &sender);
+    ret = opal_hash_table_get_value_uint64(&module->senders,
+                                           seg->us_btl_header->sender,
+                                           (void**) &sender);
     if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
         return sender;
     }
@@ -55,8 +68,8 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
     sender = opal_btl_usnic_proc_lookup_endpoint(module,
                                                  seg->us_btl_header->sender);
     if (NULL != sender) {
-        opal_proc_table_set_value(&module->senders,
-                                  seg->us_btl_header->sender, sender);
+        opal_hash_table_set_value_uint64(&module->senders,
+                                         seg->us_btl_header->sender, sender);
         return sender;
     }
 
@@ -245,8 +258,7 @@ dup_needs_ack:
 static inline void
 opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
                          opal_btl_usnic_recv_segment_t *seg,
-                         opal_btl_usnic_channel_t *channel,
-                         uint32_t l2_bytes_rcvd)
+                         opal_btl_usnic_channel_t *channel)
 {
     opal_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -261,6 +273,10 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
     endpoint = lookup_sender(module, bseg);
     seg->rs_endpoint = endpoint;
 
+#if 0
+opal_output(0, "fast recv %d bytes:\n", bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
+opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
+#endif
     if (endpoint != NULL && !endpoint->endpoint_exiting &&
             (OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG ==
                 bseg->us_btl_header->payload_type) &&
@@ -268,8 +284,7 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
 
         /* Valgrind help */
         opal_memchecker_base_mem_defined(
-                (void*)(seg->rs_recv_desc.sg_list[0].addr),
-                seg->rs_recv_desc.sg_list[0].length);
+                (void*)(seg->rs_rs_protocol_header), seg->rs_len);
 
         seq = seg->rs_base.us_btl_header->pkt_seq;
         delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
@@ -298,7 +313,7 @@ drop:
         channel->chan_deferred_recv = seg;
 
     } else {
-        opal_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
+        opal_btl_usnic_recv_call(module, seg, channel);
     }
 }
 
@@ -318,8 +333,7 @@ opal_btl_usnic_recv_frag_bookkeeping(
 
     /* Valgrind help */
     opal_memchecker_base_mem_defined(
-            (void*)(seg->rs_recv_desc.sg_list[0].addr),
-            seg->rs_recv_desc.sg_list[0].length);
+                (void*)(seg->rs_rs_protocol_header), seg->rs_len);
 
     ++module->stats.num_total_recvs;
 
@@ -342,8 +356,8 @@ repost:
     ++module->stats.num_recv_reposts;
 
     /* Add recv to linked list for reposting */
-    seg->rs_recv_desc.next = channel->repost_recv_head;
-    channel->repost_recv_head = &seg->rs_recv_desc;
+    seg->rs_next = channel->repost_recv_head;
+    channel->repost_recv_head = seg;
 
     return rc;
 }
@@ -355,8 +369,7 @@ repost:
 static inline void
 opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
                     opal_btl_usnic_recv_segment_t *seg,
-                    opal_btl_usnic_channel_t *channel,
-                    uint32_t l2_bytes_rcvd)
+                    opal_btl_usnic_channel_t *channel)
 {
     opal_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -378,14 +391,6 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
                       (void*) endpoint, bseg->us_btl_header->pkt_seq,
                       bseg->us_btl_header->payload_len);
 
-        if (OPAL_UNLIKELY(opal_btl_usnic_frag_seg_proto_size(seg) !=
-                          l2_bytes_rcvd)) {
-            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
-                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
-                       l2_bytes_rcvd, opal_btl_usnic_frag_seg_proto_size(seg)));
-            abort();
-        }
-
         /* do the receive bookkeeping */
         rc = opal_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
         if (rc != 0) {
@@ -404,7 +409,7 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
                     &seg->rs_desc, reg->cbdata);
 
     } else {
-        opal_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
+        opal_btl_usnic_recv_call(module, seg, channel);
     }
 }
 

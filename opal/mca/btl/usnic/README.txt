@@ -35,7 +35,7 @@ data queue is for standard data traffic
 command queue should possibly be called "priority" queue
 
 command queue is shorter and has a smaller MTU that the data queue
-this makes the command queue a lot faster than the data queue, so we 
+this makes the command queue a lot faster than the data queue, so we
 hijack it for sending very small fragments (<= tiny_mtu, currently 768 bytes)
 
 command queue is used for ACKs and tiny fragments
@@ -47,7 +47,7 @@ PML fragments marked priority should perhaps use command queue
 sending
 
 Normally, all send requests are simply enqueued and then actually posted
-to the NIC by the routine opal_btl_usnic_module_progress_sends().  
+to the NIC by the routine opal_btl_usnic_module_progress_sends().
 "fastpath" tiny sends are the exception.
 
 Each module maintains a queue of endpoints that are ready to send.
@@ -59,14 +59,14 @@ An endpoint is ready to send if all of the following are met:
 Each module also maintains a list of segments that need to be retransmitted.
 Note that the list of pending retrans is per-module, not per-endpoint.
 
-send progression first posts any pending retransmissions, always using the 
+send progression first posts any pending retransmissions, always using the
 data channel.  (reason is that if we start getting heavy congestion and
-there are lots of retransmits, it becomes more important than ever to 
+there are lots of retransmits, it becomes more important than ever to
 prioritize ACKs, clogging command channel with retrans data makes things worse,
 not better)
 
 Next, progression loops sending segments to the endpoint at the top of
-the "endpoints_with_sends" queue.  When an endpoint exhausts its send 
+the "endpoints_with_sends" queue.  When an endpoint exhausts its send
 credits or fills its send window or runs out of segments to send, it removes
 itself from the endpoint_with_sends list.  Any pending ACKs will be
 picked up and piggy-backed on these sends.
@@ -79,11 +79,11 @@ The middle part of the progression loop handles both small (single-segment)
 and large (multi-segment) sends.
 
 For small fragments, the verbs descriptor within the embedded segment is
-updated with length, BTL header is updated, then we call 
+updated with length, BTL header is updated, then we call
 opal_btl_usnic_endpoint_send_segment() to send the segment.
 After posting, we make a PML callback if needed.
 
-For large fragments, a little more is needed.  segments froma large 
+For large fragments, a little more is needed.  segments froma large
 fragment have a slightly larger BTL header which contains a fragment ID,
 and offset, and a size.  The fragment ID is allocated when the first chunk
 the fragment is sent.  A segment gets allocated, next blob of data is
@@ -93,7 +93,7 @@ send queue.
 
 [double-click opal_btl_usnic_endpoint_send_segment()]
 
-This is common posting code for large or small segments.  It assigns a 
+This is common posting code for large or small segments.  It assigns a
 sequence number to a segment, checks for an ACK to piggy-back,
 posts the segment to the NIC, and then starts the retransmit timer
 by checking the segment into hotel.  Send credits are consumed here.
@@ -117,7 +117,7 @@ usnic_put(desc)
 
 
 usnic_alloc() currently asserts the length is "small", allocates and
-fills in a small fragment.  src pointer will point to start of 
+fills in a small fragment.  src pointer will point to start of
 associated registered mem + sizeof BTL header, and PML will put its
 data there.
 
@@ -138,7 +138,7 @@ fragment, the user data is copied into the associated registered memory at this
 time and the SG list in the descriptor is collapsed to one entry.
 
 After the checks above are done, the fragment is enqueued to be sent
-via opal_btl_usnic_endpoint_enqueue_frag() 
+via opal_btl_usnic_endpoint_enqueue_frag()
 
 usnic_put()
 PML will have filled in destination address in descriptor.  This is saved
@@ -161,7 +161,7 @@ An ack packet is header only with a sequence number being ACKed.
 
 Both frag and chunk packets go through some of the same processing.
 Both may carry piggy-backed ACKs which may need to be processed.
-Both have sequence numbers which must be processed and may result in 
+Both have sequence numbers which must be processed and may result in
 dropping the packet and/or queueing an ACK to the sender.
 
 frag packets may be either regular PML fragments or PUT segments.
@@ -173,7 +173,7 @@ needed.  Once the callback is complete, the receive buffer is recycled.
 
 chunk packets are parts of a larger fragment.  If an active fragment receive
 for the matching fragment ID cannot be found, and new fragment info
-descriptor is allocated.  If this is not a PUT (put_addr == NULL), we 
+descriptor is allocated.  If this is not a PUT (put_addr == NULL), we
 malloc() data to reassemble the fragment into.  Each subsequent chunk
 is copied either into this reassembly buffer or directly into user memory.
 When the last chunk of a fragment arrives, a PML callback is made for non-PUTs,
@@ -247,3 +247,40 @@ of the large sends.  smalls would have to be paced pretty precisely to
 keep command queue empty enough and also beat out the large sends.
 send credits limit how many larges can be queued on the sender, but there
 could be many on the receiver
+
+======================================
+
+November 2014 / SC 2014
+
+The usnic BTL code has been unified across master and the v1.8
+branches.  That is, you can copy the code from
+v1.8:ompi/mca/btl/usnic/* to master:opal/mca/btl/usnic*, and then only
+have to make 3 changes in the resulting code in master:
+
+1. Edit Makefile.am: s/ompi/opal/gi
+2. Edit configure.m4: s/ompi/opal/gi
+3. Edit Makefile.am: change -DBTL_IN_OPAL=0 to -DBTL_IN_OPAL=1
+
+*** Note: the BTL_IN_OPAL preprocessor macro is set in Makefile.am
+    rather that in btl_usnic_compat.h to avoid all kinds of include
+    file dependency issues (i.e., btl_usnic_compat.h would need to be
+    included first, but it requires some data structures to be
+    defined, which means it either can't be first or we have to
+    declare various structs first... just put BTL_IN_OPAL in
+    Makefile.am and be happy).
+
+*** Note 2: CARE MUST BE TAKEN WHEN COPYING THE OTHER DIRECTION!  It
+    is *not* as simple as simple s/opal/ompi/gi in configure.m4 and
+    Makefile.am.  It certainly can be done, but there's a few strings
+    that need to stay "opal" or "OPAL" (e.g., OPAL_HAVE_HWLOC).
+    Hence, the string replace will likely need to be done via manual
+    inspection.
+
+Things still to do:
+
+- VF/PF sanity checks in component.c:check_usnic_config() uses
+  usnic-specific fi_provider info.  The exact mechanism might change
+  as provider-specific info is still being discussed upstream.
+
+- component.c:usnic_handle_cq_error is using a USD_* constant from
+  usnic_direct.  Need to get that value through libfabric somehow.

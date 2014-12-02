@@ -23,16 +23,19 @@
 
 #include "opal_config.h"
 
-#include <infiniband/verbs.h>
 #include <unistd.h>
 
 #include "opal_stdint.h"
 #include "opal/mca/memchecker/base/base.h"
-
 #include "opal/constants.h"
+
+#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/common/verbs/common_verbs.h"
+#else
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
@@ -50,8 +53,7 @@
  */
 void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                               opal_btl_usnic_recv_segment_t *seg,
-                              opal_btl_usnic_channel_t *channel,
-                              uint32_t l2_bytes_rcvd)
+                              opal_btl_usnic_channel_t *channel)
 {
     opal_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -61,8 +63,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
     uint32_t window_index;
     int rc;
 #if MSGDEBUG1
-    char src_mac[32];
-    char dest_mac[32];
+    char local_ip[IPV4STRADDRLEN];
+    char remote_ip[IPV4STRADDRLEN];
 #endif
 
     bseg = &seg->rs_base;
@@ -70,22 +72,33 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
     ++module->stats.num_total_recvs;
 
     /* Valgrind help */
-    opal_memchecker_base_mem_defined((void*)(seg->rs_recv_desc.sg_list[0].addr),
-                                     seg->rs_recv_desc.sg_list[0].length);
+    opal_memchecker_base_mem_defined((void*)(seg->rs_protocol_header),
+                                     seg->rs_len);
 
     /* Find out who sent this segment */
     endpoint = seg->rs_endpoint;
     if (FAKE_RECV_FRAG_DROP || OPAL_UNLIKELY(NULL == endpoint)) {
         /* No idea who this was from, so drop it */
 #if MSGDEBUG1
-        opal_output(0, "=== Unknown sender; dropped: from MAC %s to MAC %s, seq %" UDSEQ, 
-                    src_mac,
-                    dest_mac,
+        opal_output(0, "=== Unknown sender; dropped: seq %" UDSEQ,
                     bseg->us_btl_header->pkt_seq);
 #endif
         ++module->stats.num_unk_recvs;
         goto repost_no_endpoint;
     }
+
+#if MSGDEBUG1
+    struct opal_btl_usnic_modex_t *modex;
+
+    modex = &module->local_modex;
+    opal_btl_usnic_snprintf_ipv4_addr(local_ip, sizeof(local_ip),
+                                      modex->ipv4_addr,
+                                      modex->netmask);
+    modex = &endpoint->endpoint_remote_modex;
+    opal_btl_usnic_snprintf_ipv4_addr(remote_ip, sizeof(remote_ip),
+                                      modex->ipv4_addr,
+                                      modex->netmask);
+#endif
 
     /***********************************************************************/
     /* Segment is an incoming frag */
@@ -107,7 +120,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
                     (void*) endpoint,
                     seg->rs_base.us_btl_header->pkt_seq,
-                    src_mac, dest_mac,
+                    remote_ip, local_ip,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,
                     endpoint->endpoint_highest_seq_rcvd,
@@ -119,14 +132,6 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         }
 #endif
 #endif
-
-        if (OPAL_UNLIKELY(opal_btl_usnic_frag_seg_proto_size(seg) !=
-                          l2_bytes_rcvd)) {
-            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
-                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
-                       l2_bytes_rcvd, opal_btl_usnic_frag_seg_proto_size(seg)));
-            abort();
-        }
 
         /* If this it not a PUT, Pass this segment up to the PML.
          * Be sure to get the payload length from the BTL header because
@@ -168,14 +173,6 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         int frag_index;
         opal_btl_usnic_rx_frag_info_t *fip;
 
-        if (OPAL_UNLIKELY(opal_btl_usnic_chunk_seg_proto_size(seg) !=
-                          l2_bytes_rcvd)) {
-            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
-                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
-                       l2_bytes_rcvd, opal_btl_usnic_chunk_seg_proto_size(seg)));
-            abort();
-        }
-
         /* Is incoming sequence # ok? */
         if (OPAL_UNLIKELY(opal_btl_usnic_check_rx_seq(endpoint, seg,
                         &window_index) != 0)) {
@@ -187,7 +184,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                     seg->rs_base.us_btl_chunk_header->ch_frag_id,
                     (void*) endpoint,
                     seg->rs_base.us_btl_chunk_header->ch_hdr.pkt_seq,
-                    src_mac, dest_mac,
+                    remote_ip, local_ip,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,
                     endpoint->endpoint_highest_seq_rcvd,
@@ -284,8 +281,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
             segment.seg_addr.pval = fip->rfi_data;
             segment.seg_len = fip->rfi_frag_size;
-            desc.des_local = &segment;
-            desc.des_local_count = 1;
+            desc.USNIC_RECV_LOCAL = &segment;
+            desc.USNIC_RECV_LOCAL_COUNT = 1;
 
             /* only up to PML if this was not a put */
             if (chunk_hdr->ch_hdr.put_addr == NULL) {
@@ -293,8 +290,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
                 opal_output(0, "large recv complete, pass up %p, %u bytes, tag=%d\n",
-                        desc.des_local->seg_addr.pval,
-                        (unsigned)desc.des_local->seg_len,
+                        desc.USNIC_RECV_LOCAL->seg_addr.pval,
+                        (unsigned)desc.USNIC_RECV_LOCAL->seg_len,
                         (int)chunk_hdr->ch_hdr.tag);
 #endif
                 reg = mca_btl_base_active_message_trigger +
@@ -342,7 +339,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
 #if MSGDEBUG1
         opal_output(0, "    Received ACK for sequence number %" UDSEQ " from %s to %s\n",
-                    bseg->us_btl_header->ack_seq, src_mac, dest_mac);
+                    bseg->us_btl_header->ack_seq, remote_ip, local_ip);
 #endif
         opal_btl_usnic_handle_ack(endpoint, ack_seq);
 
@@ -353,7 +350,11 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
     /* Have no idea what the frag is; drop it */
     else {
         ++module->stats.num_unk_recvs;
-        opal_output(0, "==========================unknown 2");
+        if (module->stats.num_unk_recvs < 10) {
+            opal_output(0, "unrecognized payload type %d", bseg->us_btl_header->payload_type);
+            opal_output(0, "base = %p, proto = %p, hdr = %p", bseg->us_list.ptr, seg->rs_protocol_header, (void*) bseg->us_btl_header);
+            opal_btl_usnic_dump_hex(bseg->us_list.ptr, 96+sizeof(*bseg->us_btl_header));
+        }
         goto repost;
     }
 
@@ -368,6 +369,6 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
     ++module->stats.num_recv_reposts;
 
     /* Add recv to linked list for reposting */
-    seg->rs_recv_desc.next = channel->repost_recv_head;
-    channel->repost_recv_head = &seg->rs_recv_desc;
+    seg->rs_next = channel->repost_recv_head;
+    channel->repost_recv_head = seg;
 }
