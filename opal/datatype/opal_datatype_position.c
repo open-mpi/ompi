@@ -109,9 +109,8 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
     uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
-    uint16_t type;            /* type at current position */
     dt_elem_desc_t* description = pConvertor->use_desc->desc;
-    dt_elem_desc_t* pElem;
+    dt_elem_desc_t* pElem;    /* current position */
     unsigned char *base_pointer = pConvertor->pBaseBuf;
     size_t iov_len_local;
     OPAL_PTRDIFF_TYPE extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
@@ -133,8 +132,8 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
                                (unsigned long)pConvertor->bConverted, (unsigned long)*position, (unsigned long)pConvertor->pDesc->size,
                                (unsigned long)iov_len_local, count_desc ); );
         /* Update all the stack including the last one */
-        for( type = 0; type <= pConvertor->stack_pos; type++ )
-            pStack[type].disp += count_desc * extent;
+        for( pos_desc = 0; pos_desc <= pConvertor->stack_pos; pos_desc++ )
+            pStack[pos_desc].disp += count_desc * extent;
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
         pStack[0].count -= count_desc;
@@ -228,7 +227,6 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
             POSITION_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
                                           base_pointer, iov_len_local );
             if( 0 != count_desc ) {  /* completed */
-                type = pElem->elem.common.type;
                 pConvertor->partial_length = (uint32_t)iov_len_local;
                 goto complete_loop;
             }
@@ -245,7 +243,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
 
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
-        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
+        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElem->elem.common.type, count_desc,
                     base_pointer - pConvertor->pBaseBuf );
         DO_DEBUG( opal_output( 0, "position save stack stack_pos %d pos_desc %d count_desc %d disp %llx\n",
                                pConvertor->stack_pos, pStack->index, (int)pStack->count, (unsigned long long)pStack->disp ); );
