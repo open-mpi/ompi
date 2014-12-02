@@ -558,6 +558,25 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
     unset sparc_result
 ])dnl
 
+dnl #################################################################
+dnl
+dnl OPAL_CHECK_CMPXCHG16B
+dnl
+dnl #################################################################
+AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
+    AC_MSG_CHECKING([if have x86_64 16-byte compare-and-exchange])
+    OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
+    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
+            cmpxchg16b 0],
+        [AC_MSG_RESULT([yes])
+            cmpxchg16b_result=1],
+        [AC_MSG_RESULT([no])
+            cmpxchg16b_result=0])
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
+        [Whether the processor supports the cmpxchg16b instruction])
+    OPAL_VAR_SCOPE_POP
+])dnl
+
 
 dnl #################################################################
 dnl
@@ -801,6 +820,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+            OPAL_CHECK_CMPXCHG16B
             ;;
 
         ia64-*)

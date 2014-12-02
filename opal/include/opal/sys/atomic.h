@@ -177,6 +177,9 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #ifndef OPAL_HAVE_ATOMIC_CMPSET_64
 #define OPAL_HAVE_ATOMIC_CMPSET_64 0
 #endif
+#ifndef OPAL_HAVE_ATOMIC_CMPSET_128
+#define OPAL_HAVE_ATOMIC_CMPSET_128 0
+#endif
 #endif /* DOXYGEN */
 
 /**********************************************************************
