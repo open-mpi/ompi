@@ -1635,6 +1635,28 @@ unlink_and_free_single_object(hwloc_obj_t *pparent)
   hwloc_free_unlinked_object(parent);
 }
 
+static void
+reorder_children(hwloc_obj_t parent)
+{
+  /* move the children list on the side */
+  hwloc_obj_t *prev, child, children = parent->first_child;
+  parent->first_child = NULL;
+  while (children) {
+    /* dequeue child */
+    child = children;
+    children = child->next_sibling;
+    /* find where to enqueue it */
+    prev = &parent->first_child;
+    while (*prev
+	   && (!child->cpuset || !(*prev)->cpuset
+	       || hwloc__object_cpusets_compare_first(child, *prev) > 0))
+      prev = &((*prev)->next_sibling);
+    /* enqueue */
+    child->next_sibling = *prev;
+    *prev = child;
+  }
+}
+
 /* Remove all ignored objects.  */
 static int
 remove_ignored(hwloc_topology_t topology, hwloc_obj_t *pparent)
@@ -1656,25 +1678,8 @@ remove_ignored(hwloc_topology_t topology, hwloc_obj_t *pparent)
     dropped = 1;
 
   } else if (dropped_children) {
-    /* we keep this object but its children changed, reorder them by cpuset */
-
-    /* move the children list on the side */
-    hwloc_obj_t *prev, children = parent->first_child;
-    parent->first_child = NULL;
-    while (children) {
-      /* dequeue child */
-      child = children;
-      children = child->next_sibling;
-      /* find where to enqueue it */
-      prev = &parent->first_child;
-      while (*prev
-	     && (!child->cpuset || !(*prev)->cpuset
-		 || hwloc__object_cpusets_compare_first(child, *prev) > 0))
-	prev = &((*prev)->next_sibling);
-      /* enqueue */
-      child->next_sibling = *prev;
-      *prev = child;
-    }
+    /* we keep this object but its children changed, reorder them by complete_cpuset */
+    reorder_children(parent);
   }
 
   return dropped;
@@ -1804,20 +1809,23 @@ can_merge_group(hwloc_topology_t topology, hwloc_obj_t obj)
  * Merge with the only child if either the parent or the child has a type to be
  * ignored while keeping structure
  */
-static void
+static int
 merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
 {
   hwloc_obj_t parent = *pparent, child, *pchild, ios;
-  int replacechild = 0, replaceparent = 0;
+  int replacechild = 0, replaceparent = 0, droppedchildren = 0;
+
+  if (!parent->first_child)
+    /* There are no child, nothing to merge. */
+    return 0;
 
   for_each_child_safe(child, parent, pchild)
-    merge_useless_child(topology, pchild);
+    droppedchildren += merge_useless_child(topology, pchild);
+
+  if (droppedchildren)
+    reorder_children(parent);
 
   child = parent->first_child;
-  if (!child)
-    /* There are no child, nothing to merge. */
-    return;
-
   /* we don't merge if there are multiple "important" children.
    * non-important ones are at the end of the list.
    * look at the second child to find out.
@@ -1828,7 +1836,7 @@ merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
       /* Misc objects without cpuset may be ignored as well */
       && !(child->next_sibling->type == HWLOC_OBJ_MISC && !child->next_sibling->cpuset))
       /* There are several children that prevent from merging */
-    return;
+    return 0;
 
   /* There is one important child, and some children that may be ignored
    * during merging because they can be attached to anything with the same locality.
@@ -1886,6 +1894,8 @@ merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
       pchild = &((*pchild)->next_sibling);
     *pchild = ios;
   }
+
+  return replaceparent ? 1 : 0;
 }
 
 static void
