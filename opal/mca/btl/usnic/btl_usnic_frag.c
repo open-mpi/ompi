@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,29 +31,22 @@
 
 static void
 common_send_seg_helper(
-    opal_btl_usnic_send_segment_t *seg)
+    opal_btl_usnic_send_segment_t *seg,
+    int offset)
 {
     opal_btl_usnic_segment_t *bseg;
 
     bseg = &seg->ss_base;
 
-    bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)bseg->us_list.ptr;
-    bseg->us_btl_header->sender = mca_btl_usnic_component.my_name;
-
-    /* build verbs work request descriptor */
-    seg->ss_send_desc.wr_id = (unsigned long) seg;
-    seg->ss_send_desc.sg_list = bseg->us_sg_entry;
-    seg->ss_send_desc.num_sge = 1;
-    seg->ss_send_desc.opcode = IBV_WR_SEND;
-    seg->ss_send_desc.next = NULL;
-
-    seg->ss_send_desc.send_flags = IBV_SEND_SIGNALED;
+    bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)
+        (((char*) bseg->us_list.ptr) + offset);
+    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_rte_name;
 
     seg->ss_send_posted = 0;
     seg->ss_ack_pending = false;
 
-    /* verbs SG entry, len will be filled in just before send */
-    bseg->us_sg_entry[0].addr = (unsigned long) bseg->us_btl_header;
+    /* send ptr, len will be filled in just before send */
+    seg->ss_ptr = (uint8_t *)bseg->us_btl_header;
 }
 
 static void
@@ -68,7 +59,7 @@ chunk_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_CHUNK;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg);
+    common_send_seg_helper(seg, mca_btl_usnic_component.transport_header_len);
 
     /* payload starts next byte beyond BTL chunk header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_chunk_header + 1);
@@ -86,7 +77,7 @@ frag_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_FRAG;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg);
+    common_send_seg_helper(seg, mca_btl_usnic_component.transport_header_len);
 
     /* payload starts next byte beyond BTL header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_header + 1);
@@ -104,14 +95,14 @@ ack_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_ACK;
 
     /* some more common initializaiton */
-    common_send_seg_helper(ack);
+    common_send_seg_helper(ack, mca_btl_usnic_component.transport_header_len);
 
     /* ACK value embedded in BTL header */
     bseg->us_btl_header->payload_type = OPAL_BTL_USNIC_PAYLOAD_TYPE_ACK;
     bseg->us_btl_header->payload_len = 0;
     bseg->us_btl_header->ack_present = 1;
 
-    bseg->us_sg_entry[0].length = sizeof(bseg->us_btl_header);
+    ack->ss_len = sizeof(bseg->us_btl_header);
 }
 
 
@@ -127,22 +118,14 @@ recv_seg_constructor(
     /* on receive, BTL header starts after protocol header */
     seg->rs_protocol_header = bseg->us_list.ptr;
     bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)(
-        ((char *)seg->rs_protocol_header) +
-        OPAL_BTL_USNIC_PROTO_HDR_SZ);
+        ((char *) seg->rs_protocol_header) +
+        mca_btl_usnic_component.transport_header_len);
 
-    /* initialize verbs work request */
-    seg->rs_recv_desc.wr_id = (unsigned long) seg;
-    seg->rs_recv_desc.sg_list = bseg->us_sg_entry;
-    seg->rs_recv_desc.num_sge = 1;
-
-    /* verbs SG entry, len filled in by caller b/c we don't have value */
-    bseg->us_sg_entry[0].addr = (unsigned long) seg->rs_protocol_header;
-
-    /* initialize mca descriptor */
-    seg->rs_desc.des_local = &seg->rs_segment;
-    seg->rs_desc.des_local_count = 1;
-    seg->rs_desc.des_remote = NULL;
-    seg->rs_desc.des_remote_count = 0;
+    /* initialize descriptor */
+    seg->rs_desc.USNIC_RECV_LOCAL = &seg->rs_segment;
+    seg->rs_desc.USNIC_RECV_LOCAL_COUNT = 1;
+    seg->rs_desc.USNIC_RECV_REMOTE = NULL;
+    seg->rs_desc.USNIC_RECV_REMOTE_COUNT = 0;
 
     /*
      * This pointer is only correct for incoming segments of type
@@ -161,12 +144,12 @@ send_frag_constructor(opal_btl_usnic_send_frag_t *frag)
 
     /* Fill in source descriptor */
     desc = &frag->sf_base.uf_base;
-    desc->des_local = frag->sf_base.uf_local_seg;
+    desc->USNIC_SEND_LOCAL = frag->sf_base.uf_local_seg;
     frag->sf_base.uf_local_seg[0].seg_len = 0;
     frag->sf_base.uf_local_seg[1].seg_len = 0;
-    desc->des_local_count = 2;
-    desc->des_remote = frag->sf_base.uf_remote_seg;
-    desc->des_remote_count = 0;
+    desc->USNIC_SEND_LOCAL_COUNT = 2;
+    desc->USNIC_SEND_REMOTE = frag->sf_base.uf_remote_seg;
+    desc->USNIC_SEND_REMOTE_COUNT = 0;
 
     desc->order = MCA_BTL_NO_ORDER;
     desc->des_flags = 0;
@@ -182,8 +165,9 @@ send_frag_destructor(opal_btl_usnic_send_frag_t *frag)
 
     /* make sure nobody twiddled these values after the constructor */
     desc = &frag->sf_base.uf_base;
-    assert(desc->des_local == frag->sf_base.uf_local_seg);
+    assert(desc->USNIC_SEND_LOCAL == frag->sf_base.uf_local_seg);
     assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
+
     /* PML may change desc->des_remote to point elsewhere, cannot assert that it
      * still points to our embedded segment */
 
@@ -205,7 +189,6 @@ small_send_frag_constructor(opal_btl_usnic_small_send_frag_t *frag)
     fseg->ss_parent_frag = (struct opal_btl_usnic_send_frag_t *)frag;
 
     frag->ssf_base.sf_base.uf_type = OPAL_BTL_USNIC_FRAG_SMALL_SEND;
-    frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     /* save data pointer for PML */
     frag->ssf_base.sf_base.uf_local_seg[0].seg_addr.pval =
@@ -245,15 +228,15 @@ put_dest_frag_constructor(opal_btl_usnic_put_dest_frag_t *pfrag)
     pfrag->uf_type = OPAL_BTL_USNIC_FRAG_PUT_DEST;
 
     /* point dest to our utility segment */
-    pfrag->uf_base.des_local = pfrag->uf_remote_seg;
-    pfrag->uf_base.des_local_count = 1;
+    pfrag->uf_base.USNIC_PUT_LOCAL = pfrag->uf_remote_seg;
+    pfrag->uf_base.USNIC_PUT_LOCAL_COUNT = 1;
 }
 
 static void
 put_dest_frag_destructor(opal_btl_usnic_put_dest_frag_t *pfrag)
 {
-    assert(pfrag->uf_base.des_local == pfrag->uf_remote_seg);
-    assert(1 == pfrag->uf_base.des_local_count);
+    assert(pfrag->uf_base.USNIC_PUT_LOCAL == pfrag->uf_remote_seg);
+    assert(1 == pfrag->uf_base.USNIC_PUT_LOCAL_COUNT);
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_segment_t,

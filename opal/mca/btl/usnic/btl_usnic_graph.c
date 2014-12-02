@@ -16,9 +16,15 @@
 #include "opal/constants.h"
 
 /* mainly for BTL_ERROR */
+#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#else
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
+#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_graph.h"

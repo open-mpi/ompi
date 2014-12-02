@@ -1,0 +1,189 @@
+.TH "FI_DIRECT" 7 "2014-11-11" "Libfabric v0.0.2" "Libfabric Programmer's Manual" libfabric
+.SH NAME
+Fabric Interface Library
+.SH SYNOPSIS
+.B #include <rdma/fabric.h>
+.PP
+Libfabric is a high-performance fabric software library designed to
+provide low-latency interfaces to fabric hardware.
+.SH OVERVIEW
+Libfabric provides 'process direct I/O' to application software communicating
+across fabric software and hardware.  Process direct I/O, historically
+referred to as RDMA, allows an application to directly access network
+resources without operating system interventions.  Data transfers can
+occur directly to and from application memory.
+.PP
+There are two components to the libfabric software:
+.IP "Fabric Providers" 12
+Conceptually, a fabric provider may be viewed as a local hardware
+NIC driver, though a provider is not limited by this definition.  The first
+component of libfabric is a general purpose framework that is capable of
+handling different types of fabric hardware.  All fabric hardware
+devices and their software drivers are required to support this framework.
+Devices and the drivers that plug into the libfabric framework are
+referred to as fabric providers, or simply providers.  Provider details
+may be found in fi_prov.
+.PP
+.IP "Fabric Interfaces" 12
+The second component is a set of communication operations.  Libfabric
+defines several sets of communication functions that providers can support.
+It is not required that providers implement all the interfaces that are
+defined; however, providers clearly indicate which interfaces they do
+support.
+.sp
+The fabric interfaces are designed such that they are
+cohesive and not simply a union of disjoint interfaces.  The interfaces are
+logically divided into two groups: control interfaces and communication
+operations. The control interfaces are a common set of operations that
+provide access to local communication resources, such as address vectors
+and event queues.  The communication operations expose particular models
+of communication and fabric functionality, such as message queues, remote
+memory access, and atomic operations.  Communication operations are
+associated with fabric endpoints.
+.sp
+Applications will typically use the control interfaces to discover local
+capabilities and allocate necessary resources.  They will then allocate and
+configure a communication endpoint to send and receive data, or perform
+other types of data transfers, with remote endpoints.
+.SH "CONTROL INTERFACES"
+The control interfaces APIs provide applications access to network resources. 
+This involves listing all the interfaces available, obtaining the capabilities 
+of the interfaces and opening a provider.
+.IP "fi_getinfo - Fabric Information" 12
+The fi_getinfo call is the base call used to discover and request fabric
+services offered by the system.  Applications can use this call to
+indicate the type of communication that they desire.  The results from
+fi_getinfo, fi_info, are used to reserve and configure fabric resources.
+.sp
+fi_getinfo returns a list of fi_info structures.  Each structure references
+a single fabric provider, indicating the interfaces that the provider
+supports, along with a named set of resources.  A fabric provider may
+include multiple fi_info structures in the returned list.
+.IP "fi_fabric - Fabric Domain" 12
+A fabric domain represents a collection of hardware and software resources
+that access a single physical or virtual network.  All network ports on a
+system that can communicate with each other through the fabric belong to
+the same fabric domain.  A fabric domain shares network addresses and
+can span multiple providers.  libfabric supports systems connected to
+multiple fabrics.
+.IP "fi_domain - Access Domains" 12
+An access domain represents a single logical connection into a fabric.
+It may map to a single physical or virtual NIC or a port.
+An access domain defines the boundary across which fabric resources
+may be associated.  Each access domain belongs to a single fabric domain.
+.IP "fi_endpoint - Fabric Endpoint" 12
+A fabric endpoint is a communication portal.  An endpoint may be either
+active or passive.  Passive endpoints are used to listen for connection
+requests.  Active endpoints can perform data transfers.  Endpoints are
+configured with specific communication capabilities and data transfer
+interfaces.
+.IP "fi_eq - Event Queue" 12
+Event queues, are used to collect
+and report the completion of asynchronous operations.  For example, the
+completion of a data transfer operation submitted over a fabric endpoint
+may write an event to an event queue associated with the endpoint.
+There are multiple types of event queues, and the format of the events
+that they report are controlled by applications.
+.IP "fi_cntr - Event Counters" 12
+Event counters are used to report the number of completed asynchronous
+operations.  Event counters are considered light-weight, in that a
+completion simply increments a counter, rather than placing an entry into
+an event queue.
+.IP "fi_mr - Memory Region" 12
+Memory regions describe application local memory buffers.  In order for
+fabric resources to access application memory, the application must first
+grant permission to the fabric provider by constructing a memory region.
+Memory regions are required for specific types of data transfer operations,
+such as RMA transfers (see below).
+.IP "fi_av - Address Vector" 12
+Address vectors are used to map higher level addresses, such as IP
+addresses, which may be more natural for an application to use, into
+fabric specific addresses.  The use of address vectors allows providers
+to reduce the amount of memory required to maintain large address
+look-up tables, and eliminate expensive address resolution and look-up
+methods during data transfer operations.
+.SH "DATA TRANSFER INTERFACES"
+Fabric endpoints are associated with multiple data transfer interfaces.
+Each interface set is designed to support a specific style of communication,
+with an endpoint allowing the different interfaces to be used in conjunction.
+The following data transfer interfaces are defined by libfabric.
+.IP "fi_msg - Message Queue" 12
+Message queues expose a simple, message-based FIFO queue interface to
+the application.  Message data transfers allow applications to send and
+receive data with message boundaries being maintained.
+.IP "fi_tagged - Tagged Message Queues" 12
+Tagged message lists expose send/receive data transfer operations
+built on the concept of tagged messaging.  The tagged message queue is
+conceptually similar to standard message queues, but with the addition
+of 64-bit tags for each message.  Sent messages are matched with receive
+buffers that are tagged with a similar value.
+.IP "fi_rma - Remote Memory Access" 12
+RMA transfers are one-sided operations that read or write data directly
+to a remote memory region.  Other than defining the appropriate memory
+region, RMA operations do not require interaction at the target side for
+the data transfer to complete.
+.IP "fi_atomic - Atomic" 12
+Atomic operations can perform one of several operations on a remote
+memory region.  Atomic operations include well-known functionality, such
+as atomic-add and compare-and-swap, plus several other pre-defined calls.
+Unlike other data transfer interfaces, atomic operations are aware of the
+data formatting at the target memory region.
+.SH "PROVIDER REQUIREMENTS"
+Libfabric provides a general framework for supporting multiple types of
+fabric objects and their related interfaces.  Fabric providers have a large
+amount of flexibility in selecting which components they are able and
+willing to support, based on specific hardware constraints.  To assist in
+the development of applications, libfabric specifies the following
+requirements that must be met by any fabric provider, if requested by an
+application.  (Note that the instantiation of a specific fabric object is
+subject to application configuration parameters and need not meet these
+requirements).
+.IP \(bu
+A fabric provider must support at least one endpoint type.
+.IP \(bu
+All endpoints must support the message queue data transfer interface.
+.IP \(bu
+An endpoint that advertises support for a specific endpoint capability
+must support the corresponding data transfer interface.
+.IP \(bu
+Endpoints must support operations to send and receive data for any data
+transfer operations that they support. 
+.IP \(bu
+Connectionless endpoints must support all relevant 'to/from' data transfer
+routines. (sendto / recvfrom / writeto / readfrom / etc.)
+.IP \(bu
+Connectionless endpoints must support the CM interfaces for getname, getpeer,
+and connect.
+.IP \(bu
+Connectionless endpoints that support multicast operations must support the
+CM interfaces join and leave.
+.IP \(bu
+Connection-oriented interfaces must support the CM interfaces getname, getpeer,
+connect, listen, accept, reject, and shutdown.
+.IP \(bu
+All endpoints must support all relevant 'msg' data transfer routines.
+(sendmsg / recvmsg / writemsg / readmsg / etc.)
+.IP \(bu
+Access domains must support opening address vector maps and tables.
+.IP \(bu
+Address vectors associated with domains that may be identified using IP
+addresses must support FI_SOCKADDR_IN and FI_SOCKADDR_IN6 input formats.
+.IP \(bu
+Address vectors must support FI_ADDR, FI_ADDR_INDEX, and FI_AV output formats.
+.IP \(bu
+Access domains must support opening event queues and counters.
+.IP \(bu
+Event queues must support the FI_EQ_FORMAT_CONTEXT format.
+.IP \(bu
+Event queues associated with data transfer completions must support the
+FI_EQ_FORMAT_DATA format.
+.IP \(bu
+Event queues associated with tagged message transfers must support the
+FI_EQ_FORMAT_TAGGED format.
+.IP \(bu
+A provider is expected to be forward compatible, and must be able to be
+compiled against expanded fi_xxx_ops structures that define new functions
+added after the provider was written.  Any unknown functions must be set
+to NULL.
+.SH "SEE ALSO"
+fi_getinfo(3), fi_endpoint(3), fi_domain(3), fi_av(3), fi_eq(3), fi_mr(3)

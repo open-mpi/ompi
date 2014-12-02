@@ -1,0 +1,23 @@
+.TH "FI_VERSION" 3 "2014-11-11" "Libfabric v0.0.2" "Libfabric Programmer's Manual" libfabric
+.SH NAME
+fi_version \- Version of the library interfaces
+.SH SYNOPSIS
+.B "#include <rdma/fabric.h>"
+.HP
+.BI "uint32_t fi_version();"
+.HP
+.BI "FI_MAJOR(version)"
+.HP
+.BI "FI_MINOR(version)"
+.SH "DESCRIPTION"
+This call returns the current version of the library interfaces.  The
+version includes major and a minor numbers.  These may be extracted from
+the returned value using the FI_MAJOR() and FI_MINOR() macros.
+.SH "NOTES"
+The library may support older versions of the interfaces.
+.SH "RETURN VALUE"
+Returns the current library version.  The upper 16-bits of the version
+correspond to the major number, and the lower 16-bits correspond with the
+minor number.
+.SH "SEE ALSO"
+fabric(7), fi_getinfo(3)

@@ -1,0 +1,200 @@
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# See opal/mca/common/sm/Makefile.am for an explanation of the
+# different library targets in this file.
+
+#
+# Embedded libfabric
+#
+
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+
+# Only build this embedded copy if we're not using an external
+# libfabric.
+if OPAL_COMMON_LIBFABRIC_BUILD_EMBEDDED
+
+comp_inst = lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
+comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst.la
+
+if MCA_BUILD_opal_common_libfabric_DSO
+lib_LTLIBRARIES += $(comp_inst)
+else
+noinst_LTLIBRARIES += $(comp_noinst)
+endif
+
+# We have to override the CFLAGS that come in from above to remove
+# --pedantic (see configure.m4 for details).
+CFLAGS = $(opal_common_libfabric_embedded_CFLAGS)
+
+cppflags = \
+	$(opal_common_libfabric_embedded_CPPFLAGS) \
+	-D_GNU_SOURCE \
+	-DSYSCONFDIR=\"$(sysconfdir)\" \
+	-DRDMADIR=\"/tmp\" \
+	-DEXTDIR=\"$(pkglibdir)\" \
+	-D__LIBUSNIC__
+libadd = $(opal_common_libfabric_embedded_LIBADD)
+
+libfabric_core_headers = \
+	libfabric/include/fi.h \
+	libfabric/include/fi_enosys.h \
+	libfabric/include/fi_indexer.h \
+	libfabric/include/fi_list.h \
+	libfabric/include/fi_rbuf.h \
+	libfabric/include/rdma/fabric.h \
+	libfabric/include/rdma/fi_atomic.h \
+	libfabric/include/rdma/fi_cm.h \
+	libfabric/include/rdma/fi_domain.h \
+	libfabric/include/rdma/fi_endpoint.h \
+	libfabric/include/rdma/fi_eq.h \
+	libfabric/include/rdma/fi_errno.h \
+	libfabric/include/rdma/fi_prov.h \
+	libfabric/include/rdma/fi_rma.h \
+	libfabric/include/rdma/fi_tagged.h \
+	libfabric/include/rdma/fi_trigger.h
+
+libfabric_core_sources = \
+	libfabric/src/fabric.c \
+	libfabric/src/fi_tostr.c \
+	libfabric/src/common.c \
+	libfabric/src/enosys.c
+
+libfabric_usnic_headers = \
+	libfabric/prov/usnic/src/fi_usnic.h \
+	libfabric/prov/usnic/src/usdf.h \
+	libfabric/prov/usnic/src/usdf_av.h \
+	libfabric/prov/usnic/src/usdf_cm.h \
+	libfabric/prov/usnic/src/usdf_dgram.h \
+	libfabric/prov/usnic/src/usdf_endpoint.h \
+	libfabric/prov/usnic/src/usdf_msg.h \
+	libfabric/prov/usnic/src/usdf_progress.h \
+	libfabric/prov/usnic/src/usdf_timer.h \
+	libfabric/prov/usnic/src/usnic_direct/cq_desc.h \
+	libfabric/prov/usnic/src/usnic_direct/cq_enet_desc.h \
+	libfabric/prov/usnic/src/usnic_direct/kcompat.h \
+	libfabric/prov/usnic/src/usnic_direct/kcompat_priv.h \
+	libfabric/prov/usnic/src/usnic_direct/libnl1_utils.h \
+	libfabric/prov/usnic/src/usnic_direct/libnl3_utils.h \
+	libfabric/prov/usnic/src/usnic_direct/libnl_utils.h \
+	libfabric/prov/usnic/src/usnic_direct/linux/delay.h \
+	libfabric/prov/usnic/src/usnic_direct/linux/slab.h \
+	libfabric/prov/usnic/src/usnic_direct/linux_types.h \
+	libfabric/prov/usnic/src/usnic_direct/rq_enet_desc.h \
+	libfabric/prov/usnic/src/usnic_direct/usd.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_caps.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_dest.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_device.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_ib_cmd.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_ib_sysfs.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_post.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_queue.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_socket.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_time.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_util.h \
+	libfabric/prov/usnic/src/usnic_direct/usd_vnic.h \
+	libfabric/prov/usnic/src/usnic_direct/usnic_abi.h \
+	libfabric/prov/usnic/src/usnic_direct/usnic_direct.h \
+	libfabric/prov/usnic/src/usnic_direct/usnic_ib_abi.h \
+	libfabric/prov/usnic/src/usnic_direct/usnic_ip_utils.h \
+	libfabric/prov/usnic/src/usnic_direct/usnic_user_utils.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_cq.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_devcmd.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_dev.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_enet.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_resource.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_rq.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_stats.h \
+	libfabric/prov/usnic/src/usnic_direct/vnic_wq.h \
+	libfabric/prov/usnic/src/usnic_direct/wq_enet_desc.h
+
+libfabric_usnic_sources = \
+	libfabric/prov/usnic/src/usdf_av.c \
+	libfabric/prov/usnic/src/usdf_cm.c \
+	libfabric/prov/usnic/src/usdf_cq.c \
+	libfabric/prov/usnic/src/usdf_dgram.c \
+	libfabric/prov/usnic/src/usdf_domain.c \
+	libfabric/prov/usnic/src/usdf_endpoint.c \
+	libfabric/prov/usnic/src/usdf_ep_dgram.c \
+	libfabric/prov/usnic/src/usdf_ep_msg.c \
+	libfabric/prov/usnic/src/usdf_eq.c \
+	libfabric/prov/usnic/src/usdf_fabric.c \
+	libfabric/prov/usnic/src/usdf_mem.c \
+	libfabric/prov/usnic/src/usdf_msg.c \
+	libfabric/prov/usnic/src/usdf_pep.c \
+	libfabric/prov/usnic/src/usdf_progress.c \
+	libfabric/prov/usnic/src/usdf_timer.c \
+	libfabric/prov/usnic/src/usnic_direct/libnl_utils_common.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_caps.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_dest.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_device.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_event.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_ib_cmd.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_ib_sysfs.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_mem.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_poll.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_post.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_post_raw_normal.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_post_udp_normal.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_post_udp_pio.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_queues.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_socket.c \
+	libfabric/prov/usnic/src/usnic_direct/usd_vnic.c \
+	libfabric/prov/usnic/src/usnic_direct/usnic_ip_utils.c \
+	libfabric/prov/usnic/src/usnic_direct/vnic_cq.c \
+	libfabric/prov/usnic/src/usnic_direct/vnic_dev.c \
+	libfabric/prov/usnic/src/usnic_direct/vnic_rq.c \
+	libfabric/prov/usnic/src/usnic_direct/vnic_wq.c
+
+sources = \
+	$(libfabric_core_sources) \
+	$(libfabric_usnic_sources)
+
+headers = \
+	$(libfabric_core_headers) \
+	$(libfabric_usnic_headers)
+
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_CPPFLAGS = $(cppflags)
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LDFLAGS = -version-info 0:0:0
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LIBADD = $(libadd)
+
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_CPPFLAGS = $(cppflags)
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_LIBADD = $(libadd)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+opaldir = $(opalincludedir)/$(subdir)
+opal_HEADERS = $(headers)
+endif
+
+# These two rules will sym link the "noinst" libtool library filename
+# to the installable libtool library filename in the case where we are
+# compiling this component statically (case 2), described above).
+
+# See Makefile.ompi-rules for an explanation of the "V" macros, below
+V=0
+OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
+ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
+ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(comp_inst)`;
+
+all-local:
+	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
+	fi
+
+clean-local:
+	if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	fi
+
+endif OPAL_COMMON_LIBFABRIC_BUILD_EMBEDDED
