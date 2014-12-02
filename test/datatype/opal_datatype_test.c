@@ -186,8 +186,8 @@ local_copy_with_convertor_2datatypes( opal_datatype_t const * const send_type, i
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
-    size_t max_data;
-    int32_t length = 0, done1 = 0, done2 = 0;
+    size_t max_data, length = 0;
+    int32_t done1 = 0, done2 = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
@@ -285,8 +285,8 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
-    size_t max_data;
-    int32_t length = 0, done1 = 0, done2 = 0, errors = 0;
+    size_t max_data, length = 0;
+    int32_t done1 = 0, done2 = 0, errors = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
@@ -343,17 +343,84 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
 
         length += max_data;
         if( outputFlags & RESET_CONVERTORS ) {
-            size_t pos = 0;
-            opal_convertor_set_position(send_convertor, &pos);
-            pos = length;
-            opal_convertor_set_position(send_convertor, &pos);
-            assert(pos == length);
+            struct dt_stack_t stack[1+send_convertor->stack_pos];
+            int i, stack_pos = send_convertor->stack_pos;
+            size_t pos;
 
-            pos = 0;
-            opal_convertor_set_position(recv_convertor, &pos);
-            pos = length;
-            opal_convertor_set_position(recv_convertor, &pos);
-            assert(pos == length);
+            if( 0 == done1 ) {
+                memcpy(stack, send_convertor->pStack, (1+send_convertor->stack_pos) * sizeof(struct dt_stack_t));
+                pos = 0;
+                opal_convertor_set_position(send_convertor, &pos);
+                pos = length;
+                opal_convertor_set_position(send_convertor, &pos);
+                assert(pos == length);
+                for(i = 0; i <= stack_pos; i++ ) {
+                    if( stack[i].index != send_convertor->pStack[i].index )
+                        {errors = 1; printf("send stack[%d].index differs (orig %d != new %d) (completed %lu/%lu)\n",
+                                            i, stack[i].index, send_convertor->pStack[i].index,
+                                            length, pdt->size * count);}
+                    if( stack[i].count != send_convertor->pStack[i].count ) {
+                        if( stack[i].type == send_convertor->pStack[i].type ) {
+                            {errors = 1; printf("send stack[%d].count differs (orig %lu != new %lu) (completed %lu/%lu)\n",
+                                                    i, stack[i].count, send_convertor->pStack[i].count,
+                                                    length, pdt->size * count);}
+                        } else {
+                            if( (OPAL_DATATYPE_MAX_PREDEFINED <= stack[i].type) || (OPAL_DATATYPE_MAX_PREDEFINED <= send_convertor->pStack[i].type) )
+                                {errors = 1; printf("send stack[%d].type wrong (orig %d != new %d) (completed %lu/%lu)\n",
+                                                    i, (int)stack[i].type, (int)send_convertor->pStack[i].type,
+                                                    length, pdt->size * count);}
+                            else if( (stack[i].count * opal_datatype_basicDatatypes[stack[i].type]->size) !=
+                                     (send_convertor->pStack[i].count * opal_datatype_basicDatatypes[send_convertor->pStack[i].type]->size) )
+                                {errors = 1; printf("send stack[%d].type*count differs (orig (%d,%lu) != new (%d, %lu)) (completed %lu/%lu)\n",
+                                                    i, (int)stack[i].type, stack[i].count,
+                                                    (int)send_convertor->pStack[i].type, send_convertor->pStack[i].count,
+                                                    length, pdt->size * count);}
+                        }
+                    }
+                    if( stack[i].disp != send_convertor->pStack[i].disp )
+                        {errors = 1; printf("send stack[%d].disp differs (orig %p != new %p) (completed %lu/%lu)\n",
+                                            i, (void*)stack[i].disp, (void*)send_convertor->pStack[i].disp,
+                                            length, pdt->size * count);}
+                    if(0 != errors) {assert(0); exit(-1);}
+                }
+            }
+            if( 0 == done2 ) {
+                memcpy(stack, recv_convertor->pStack, (1+recv_convertor->stack_pos) * sizeof(struct dt_stack_t));
+                pos = 0;
+                opal_convertor_set_position(recv_convertor, &pos);
+                pos = length;
+                opal_convertor_set_position(recv_convertor, &pos);
+                assert(pos == length);
+                for(i = 0; i <= stack_pos; i++ ) {
+                    if( stack[i].index != recv_convertor->pStack[i].index )
+                        {errors = 1; printf("recv stack[%d].index differs (orig %d != new %d) (completed %lu/%lu)\n",
+                                            i, stack[i].index, recv_convertor->pStack[i].index,
+                                            length, pdt->size * count);}
+                    if( stack[i].count != recv_convertor->pStack[i].count ) {
+                        if( stack[i].type == recv_convertor->pStack[i].type ) {
+                            {errors = 1; printf("recv stack[%d].count differs (orig %lu != new %lu) (completed %lu/%lu)\n",
+                                                    i, stack[i].count, recv_convertor->pStack[i].count,
+                                                    length, pdt->size * count);}
+                        } else {
+                            if( (OPAL_DATATYPE_MAX_PREDEFINED <= stack[i].type) || (OPAL_DATATYPE_MAX_PREDEFINED <= recv_convertor->pStack[i].type) )
+                                {errors = 1; printf("recv stack[%d].type wrong (orig %d != new %d) (completed %lu/%lu)\n",
+                                                    i, (int)stack[i].type, (int)recv_convertor->pStack[i].type,
+                                                    length, pdt->size * count);}
+                            else if( (stack[i].count * opal_datatype_basicDatatypes[stack[i].type]->size) !=
+                                     (recv_convertor->pStack[i].count * opal_datatype_basicDatatypes[recv_convertor->pStack[i].type]->size) )
+                                {errors = 1; printf("recv stack[%d].type*count differs (orig (%d,%lu) != new (%d, %lu)) (completed %lu/%lu)\n",
+                                                    i, (int)stack[i].type, stack[i].count,
+                                                    (int)recv_convertor->pStack[i].type, recv_convertor->pStack[i].count,
+                                                    length, pdt->size * count);}
+                        }
+                    }
+                    if( stack[i].disp != recv_convertor->pStack[i].disp )
+                        {errors = 1; printf("recv stack[%d].disp differs (orig %p != new %p) (completed %lu/%lu)\n",
+                                            i, (void*)stack[i].disp, (void*)recv_convertor->pStack[i].disp,
+                                            length, pdt->size * count);}
+                    if(0 != errors) {assert(0); exit(-1);}
+                }
+            }
         }
     }
     GET_TIME( end );
@@ -365,7 +432,7 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
     /******   GEORGE: PLEASE FIX ME   *****/
 #if 0
     if(outputFlags & VALIDATE_DATA) {
-        for( int i = 0; i < (count * extent); i++ ) {
+        for( int i = errors = 0; i < (count * extent); i++ ) {
             if( ((char*)pdst)[i] != ((char*)psrc)[i] ) {
                 printf("error at position %d (%d != %d)\n",
                        i, (int)((char*)pdst)[i], (int)((char*)psrc)[i]);
