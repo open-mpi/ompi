@@ -262,6 +262,12 @@ static int rte_finalize(void)
 {
     int ret;
         
+    /* mark us as finalized */
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+        (void) mca_base_framework_close(&opal_pmix_base_framework);
+    }
+        
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);

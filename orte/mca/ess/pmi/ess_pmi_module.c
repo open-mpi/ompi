@@ -106,18 +106,6 @@ static int rte_init(void)
     }
 #endif
 
-    /* open and setup pmix */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_open";
-        goto error;
-    }
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
-
     /* we don't have to call pmix.init because the pmix select did it */
 
     /****   THE FOLLOWING ARE REQUIRED VALUES   ***/

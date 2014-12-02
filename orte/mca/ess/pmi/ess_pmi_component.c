@@ -24,6 +24,7 @@
 #include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
@@ -66,8 +67,35 @@ static int pmi_component_open(void)
 
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
+    int ret;
+    
     /* all APPS must use pmix */
     if (ORTE_PROC_IS_APP) {
+        /* open and setup pmix */
+        if (NULL == opal_pmix.initialized) {
+            if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+                ORTE_ERROR_LOG(ret);
+                *priority = -1;
+                *module = NULL;
+                return ret;
+            }
+            if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                *priority = -1;
+                *module = NULL;
+                (void) mca_base_framework_close(&opal_pmix_base_framework);
+                return ret;
+            }
+        }
+        if (!opal_pmix.initialized()) {
+            /* we may have everything setup, but we are not
+             * in a PMI environment and so we need to disqualify
+             * ourselves - we are likely a singleton and will
+             * pick things up from there */
+            *priority = -1;
+            *module = NULL;
+            return ORTE_ERROR;
+        }
         *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
         return ORTE_SUCCESS;
