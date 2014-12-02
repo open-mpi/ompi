@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +25,7 @@
 #define OMPI_FREE_LIST_H
 
 #include "opal_config.h"
-#include "opal/class/opal_atomic_lifo.h"
+#include "opal/class/opal_lifo.h"
 #include "opal/prefetch.h"
 #include "opal/threads/condition.h"
 #include "opal/constants.h"
@@ -38,7 +41,7 @@ typedef void (*ompi_free_list_item_init_fn_t) (
 
 struct ompi_free_list_t
 {
-    opal_atomic_lifo_t super;
+    opal_lifo_t super;
     size_t fl_max_to_alloc;
     size_t fl_num_allocated;
     size_t fl_num_per_alloc;
@@ -194,7 +197,7 @@ OPAL_DECLSPEC int ompi_free_list_resize_mt(ompi_free_list_t *flist, size_t size)
 
 #define OMPI_FREE_LIST_GET_MT(fl, item)                                 \
     {                                                                   \
-        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
+        item = (ompi_free_list_item_t*) opal_lifo_pop (&((fl)->super)); \
         if( OPAL_UNLIKELY(NULL == item) ) {                             \
             if(opal_using_threads()) {                                  \
                 opal_mutex_lock(&((fl)->fl_lock));                      \
@@ -203,7 +206,7 @@ OPAL_DECLSPEC int ompi_free_list_resize_mt(ompi_free_list_t *flist, size_t size)
             } else {                                                    \
                 ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);      \
             }                                                           \
-            item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
+            item = (ompi_free_list_item_t*) opal_lifo_pop(&((fl)->super)); \
         }                                                               \
     } 
 
@@ -225,7 +228,7 @@ OPAL_DECLSPEC int ompi_free_list_resize_mt(ompi_free_list_t *flist, size_t size)
 static inline void __ompi_free_list_wait_mt( ompi_free_list_t* fl,
                                              ompi_free_list_item_t** item )
 {
-    *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
+    *item = (ompi_free_list_item_t*)opal_lifo_pop(&((fl)->super));
     while( NULL == *item ) {
         if( !OPAL_THREAD_TRYLOCK(&((fl)->fl_lock)) ) {
             if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {
@@ -256,7 +259,7 @@ static inline void __ompi_free_list_wait_mt( ompi_free_list_t* fl,
             OPAL_THREAD_LOCK(&((fl)->fl_lock));
         }
         OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
-        *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
+        *item = (ompi_free_list_item_t*)opal_lifo_pop(&((fl)->super));
     }
 } 
 
@@ -272,8 +275,7 @@ static inline void __ompi_free_list_wait_mt( ompi_free_list_t* fl,
     do {                                                                \
         opal_list_item_t* original;                                     \
                                                                         \
-        original = opal_atomic_lifo_push( &(fl)->super,                 \
-                                          &(item)->super);              \
+        original = opal_lifo_push( &(fl)->super, &(item)->super);       \
         if( &(fl)->super.opal_lifo_ghost == original ) {                \
             OPAL_THREAD_LOCK(&(fl)->fl_lock);                           \
             if((fl)->fl_num_waiting > 0) {                              \

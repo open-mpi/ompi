@@ -33,7 +33,8 @@ check_PROGRAMS = \
 	opal_tree \
 	opal_list \
 	opal_value_array \
-	opal_pointer_array
+	opal_pointer_array \
+	opal_lifo
 
 # The tests are built, but since they're not actively maintained, they
 # are not run during "make check".
@@ -86,6 +87,12 @@ ompi_rb_tree_LDADD = \
         $(top_builddir)/ompi/libmpi.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
+
+opal_lifo_SOURCES = opal_lifo.c
+opal_lifo_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+	$(top_builddir)/test/support/libsupport.a
+opal_lifo_DEPENDENCIES = $(opal_lifo_LDADD)
 
 clean-local:
 	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt opal_proc_table_test_out.txt
