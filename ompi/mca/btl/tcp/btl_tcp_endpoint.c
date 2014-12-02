@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -782,6 +785,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECTING:
         mca_btl_tcp_endpoint_complete_connect(btl_endpoint);
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
         break;
     case MCA_BTL_TCP_CONNECTED:
         /* complete the current send */
@@ -807,6 +811,8 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
 
         }
 
+        /* the lock must be dropped BEFORE the event is deleted to prevent hold-and-wait */
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
         /* if nothing else to do unregister for send event notifications */
         if(NULL == btl_endpoint->endpoint_send_frag) {
             opal_event_del(&btl_endpoint->endpoint_send_event);
@@ -814,10 +820,11 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
         break;
     default:
         BTL_ERROR(("invalid connection state (%d)", btl_endpoint->endpoint_state));
+        /* the lock must be dropped BEFORE the event is deleted to prevent hold-and-wait */
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
         opal_event_del(&btl_endpoint->endpoint_send_event);
         break;
     }
-    OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
 }
 
 
