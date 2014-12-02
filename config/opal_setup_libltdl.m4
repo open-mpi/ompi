@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
@@ -127,6 +127,10 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
     AC_SUBST(LIBLTDL)
     AC_SUBST(LIBLTDL_SUBDIR)
 
+    AC_MSG_CHECKING([for lt_dladvise])
+    AS_IF([test $OPAL_HAVE_LTDL_ADVISE -eq 1],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])])
     AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
         [Whether libltdl appears to have the lt_dladvise interface])
 
@@ -170,10 +174,8 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         OPAL_LIBLTDL_INTERNAL=1
 
         CPPFLAGS_save="$CPPFLAGS"
-        CPPFLAGS="-I$srcdir/opal/libltdl/"
-        # Must specifically mention $srcdir here for VPATH builds
-        # (this file is in the src tree).
-        AC_EGREP_HEADER([lt_dladvise_init], [$srcdir/opal/libltdl/ltdl.h],
+        CPPFLAGS="-I$srcdir"
+        AC_EGREP_HEADER([lt_dladvise_init], [opal/libltdl/ltdl.h],
                         [OPAL_HAVE_LTDL_ADVISE=1])
         CPPFLAGS="$CPPFLAGS_save"
 
