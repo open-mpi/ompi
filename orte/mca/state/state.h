@@ -84,6 +84,10 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
                             ORTE_JOBID_PRINT(shadow->jobid),		\
                             orte_job_state_to_str((s)),                 \
                             __FILE__, __LINE__);			\
+        /* sanity check */                                              \
+        if ((s) < 0) {                                                  \
+            assert(0);                                                  \
+        }                                                               \
         orte_state.activate_job_state(shadow, (s));                     \
     } while(0);
 
@@ -97,6 +101,10 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
                             ORTE_NAME_PRINT(shadow),			\
                             orte_proc_state_to_str((s)),		\
                             __FILE__, __LINE__);			\
+        /* sanity check */                                              \
+        if ((s) < 0) {                                                  \
+            assert(0);                                                  \
+        }                                                               \
         orte_state.activate_proc_state(shadow, (s));                    \
     } while(0);
 

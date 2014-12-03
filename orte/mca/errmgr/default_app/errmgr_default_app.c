@@ -73,7 +73,7 @@ static void proc_errors(int fd, short args, void *cbdata);
 static void pmix_error(int error)
 {
     /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_ERR_COMM_FAILURE);
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
 }
 
 /************************
