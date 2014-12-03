@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -77,6 +77,15 @@ opal_show_subsubsubtitle() {
 --- ${1}
 EOF
   OPAL_LOG_MSG([--- ${1}], 1)
+}
+
+opal_show_verbose() {
+  if test "$V" = "1"; then
+      cat <<EOF
++++ VERBOSE: ${1}
+EOF
+      OPAL_LOG_MSG([--- ${1}], 1)
+  fi
 }
 
 #

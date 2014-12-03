@@ -526,9 +526,11 @@ EOF
 AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
     opal_show_subsubsubtitle "MCA component $2:$3 (no configuration)"
 
+    opal_show_verbose "OPAL_MCA_NO_CONFIG_COMPONENT: before, should_build=$8"
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, 
                               [should_build=$8], [should_build=0])
     MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
+    opal_show_verbose "OPAL_MCA_NO_CONFIG_COMPONENT: after, should_build=$should_build"
 
     if test "$should_build" = "1" ; then
         MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)
@@ -573,6 +575,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
         [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro, priority MCA_$1_$2_$3_PRIORITY)"],
         [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"])
 
+    opal_show_verbose "OPAL_MCA_M4_CONFIG_COMPONENT: before, should_build=$8"
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
@@ -586,6 +589,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
              [MCA_$1_$2_$3_CONFIG([should_build=$should_build], 
                                   [should_build=0])],
              [m4_fatal([MCA_$1_$2_$3_CONFIG macro not found])])
+    opal_show_verbose "OPAL_MCA_M4_CONFIG_COMPONENT: after, should_build=$should_build"
 
     AS_IF([test "$should_build" = "1"],
           [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
@@ -630,14 +634,17 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
         if test -d $component_path -a -x $component_path/configure ; then
             opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
 
+            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: before, should_build=$8"
             MCA_COMPONENT_BUILD_CHECK($1, $2, $component, 
                                       [should_build=1], [should_build=0])
             MCA_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
+            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after, should_build=$should_build"
 
             if test "$should_build" = "1" ; then
                 OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
                                    [$opal_subdir_args],
                                    [should_build=1], [should_build=0])
+                opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after subdir, should_build=$should_build"
             fi
 
             if test "$should_build" = "1" ; then
