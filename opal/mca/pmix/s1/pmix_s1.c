@@ -299,6 +299,9 @@ static int s1_init(void)
     /* setup any local envars we were asked to do */
     mca_base_var_process_env_list(&environ);
 
+    /* increment the init count */
+    ++pmix_init_count;
+    
     return OPAL_SUCCESS;
 
  err_exit:
