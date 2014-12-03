@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -138,6 +138,10 @@ AC_DEFUN([ORTE_CHECK_TM],[
     CPPFLAGS="$orte_check_package_$1_save_CPPFLAGS"
     LDFLAGS="$orte_check_package_$1_save_LDFLAGS"
     LIBS="$orte_check_package_$1_save_LIBS"
+
+    # add the TM libraries to static builds as they are required
+    $1_WRAPPER_EXTRA_LDFLAGS=[$]$1_LDFLAGS
+    $1_WRAPPER_EXTRA_LIBS=[$]$1_LIBS
 
     # Did we find the right stuff?
     AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_found" = "yes"],
