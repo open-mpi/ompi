@@ -49,10 +49,7 @@
 #include "opal_config.h"
 
 #include "opal/sys/architecture.h"
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+#include "opal_stdint.h"
 
 /* do some quick #define cleanup in cases where we are doing
    testing... */

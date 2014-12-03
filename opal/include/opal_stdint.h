@@ -134,6 +134,33 @@ typedef unsigned long long uint64_t;
 
 #endif
 
+/* 128-bit */
+
+#ifdef HAVE_INT128_T
+
+typedef int128_t opal_int128_t;
+typedef uint128_t opal_uint128_t;
+
+#define HAVE_OPAL_INT128_T 1
+
+#elif HAVE___INT128
+
+/* suppress warning about __int128 type */
+#pragma GCC diagnostic ignored "-Wpedantic"
+typedef __int128 opal_int128_t;
+
+/* suppress warning about __int128 type */
+#pragma GCC diagnostic ignored "-Wpedantic"
+typedef unsigned __int128 opal_uint128_t;
+
+#define HAVE_OPAL_INT128_T 1
+
+#else
+
+#define HAVE_OPAL_INT128_T 0
+
+#endif
+
 /* Pointers */
 
 #if SIZEOF_VOID_P == SIZEOF_INT
