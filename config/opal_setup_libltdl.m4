@@ -174,7 +174,7 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         OPAL_LIBLTDL_INTERNAL=1
 
         CPPFLAGS_save=$CPPFLAGS
-        CPPFLAGS="-I$srcdir"
+        CPPFLAGS="-I$srcdir -I$srcdir/opal/libltdl"
         AC_EGREP_HEADER([lt_dladvise_init], [opal/libltdl/ltdl.h],
                         [OPAL_HAVE_LTDL_ADVISE=1])
         CPPFLAGS=$CPPFLAGS_save
