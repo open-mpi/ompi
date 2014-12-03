@@ -13,7 +13,6 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,12 +30,12 @@ AC_DEFUN([MCA_orte_ras_lsf_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ras_lsf_good" = "1"],
-          [$1
-           ras_lsf_WRAPPER_EXTRA_LDFLAGS="$ras_lsf_LDFLAGS"
-           ras_lsf_WRAPPER_EXTRA_LIBS="$ras_lsf_LIBS"],
+          [$1],
           [$2])
 
-    
+    $1_WRAPPER_EXTRA_LDFLAGS=[$]$1_LDFLAGS
+    $1_WRAPPER_EXTRA_LIBS=[$]$1_LIBS
+
     # set build flags to use in makefile
     AC_SUBST([ras_lsf_CPPFLAGS])
     AC_SUBST([ras_lsf_LDFLAGS])
