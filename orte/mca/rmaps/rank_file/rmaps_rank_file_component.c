@@ -88,14 +88,14 @@ static int orte_rmaps_rank_file_register(void)
     tmp = mca_base_component_var_register(c, "path",
                                           "Name of the rankfile to be used for mapping processes (relative or absolute path)",
                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
+                                          OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY, &orte_rankfile);
     (void) mca_base_var_register_synonym(tmp, "orte", "orte", NULL, "rankfile", 0);
 
     mca_rmaps_rank_file_component.physical = false;
     (void) mca_base_component_var_register(c, "physical", "Rankfile contains physical cpu designations",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_rmaps_rank_file_component.physical);
 

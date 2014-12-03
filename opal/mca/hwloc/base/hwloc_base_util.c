@@ -68,7 +68,7 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
        So first we have to see if we can find *any* cores by looking
        for the 0th core.  If we find it, then try to find the Nth
        core.  Otherwise, try to find the Nth PU. */
-    if (NULL == (obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0))) {
+    if (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
         obj_type = HWLOC_OBJ_PU;
     }
 
