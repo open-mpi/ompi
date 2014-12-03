@@ -75,19 +75,16 @@ opal_btl_usnic_post_segment(
                 (void*) sseg->ss_ptr,
                 sseg->ss_len);
 #endif
+
     /* Send the segment */
-#if 0
-opal_output(0, "send len=%d ret=%d\n", sseg->ss_len, ret);
-opal_btl_usnic_dump_hex(sseg->ss_ptr, sseg->ss_len);
-#endif
-    ret = fi_sendto(channel->ep,
+    ret = fi_send(channel->ep,
             sseg->ss_ptr,
             sseg->ss_len,
             NULL,
             endpoint->endpoint_remote_addrs[channel_id],
             sseg);
     if (OPAL_UNLIKELY(0 != ret)) {
-        opal_btl_usnic_util_abort("fi_sendto() failed",
+        opal_btl_usnic_util_abort("fi_send() failed",
                                   __FILE__, __LINE__);
         /* Never returns */
     }
@@ -129,18 +126,14 @@ opal_btl_usnic_post_ack(
                 sseg->ss_len);
 #endif
 
-#if 0
-opal_output(0, "ACK send:\n");
-opal_btl_usnic_dump_hex(sseg->ss_ptr, sseg->ss_len);
-#endif
-    ret = fi_sendto(channel->ep,
+    ret = fi_send(channel->ep,
             sseg->ss_ptr,
             sseg->ss_len,
             NULL,
             endpoint->endpoint_remote_addrs[channel_id],
             sseg);
     if (OPAL_UNLIKELY(0 != ret)) {
-        opal_btl_usnic_util_abort("fi_sendto() failed",
+        opal_btl_usnic_util_abort("fi_send() failed",
                                   __FILE__, __LINE__);
         /* Never returns */
     }
