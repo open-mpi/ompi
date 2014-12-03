@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,7 +31,9 @@ AC_DEFUN([MCA_orte_plm_slurm_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$plm_slurm_good" = "1"],
-          [$1],
+          [$1
+           plm_slurm_WRAPPER_EXTRA_LDFLAGS="$plm_slurm_LDFLAGS"
+           plm_slurm_WRAPPER_EXTRA_LIBS="$plm_slurm_LIBS"],
           [$2])
 
     # set build flags to use in makefile
