@@ -120,10 +120,10 @@ static inline int64_t opal_atomic_cmpset_64( volatile int64_t *addr,
 #define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
 #define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
 
-#if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE___INT128
+#if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
-static inline __int128 opal_atomic_cmpset_128 (volatile __int128 *addr, __int128 oldval,
-                                               __int128 newval)
+static inline opal_int128_t opal_atomic_cmpset_128 (volatile opal_int128_t *addr, opal_int128_t oldval,
+                                                    opal_int128_t newval)
 {
     unsigned char ret;
 
