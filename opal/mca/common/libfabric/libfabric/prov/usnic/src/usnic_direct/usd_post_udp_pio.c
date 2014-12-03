@@ -45,7 +45,7 @@
 #include "usd.h"
 #include "usd_post.h"
 
-int
+static int
 usd_post_send_one_udp_pio(
     struct usd_qp *uqp,
     struct usd_dest *dest,
@@ -143,7 +143,7 @@ usd_post_send_one_udp_pio(
 /*
  * 2 WQEs - our header plus user header in 1st one, user packet in 2nd
  */
-int
+static int
 usd_post_send_two_udp_pio(
     struct usd_qp *uqp,
     struct usd_dest *dest,

@@ -40,7 +40,7 @@
  *
  *
  */
-#ident "$Id$"
+#ident "$Id: vnic_dev.c 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #include <linux/kernel.h>
 #include <linux/errno.h>
@@ -57,6 +57,17 @@
 #include "vnic_dev.h"
 #include "vnic_stats.h"
 #include "vnic_wq.h"
+
+struct devcmd2_controller {
+	struct vnic_wq_ctrl *wq_ctrl;
+	struct vnic_dev_ring results_ring;
+	struct vnic_wq wq;
+	struct vnic_devcmd2 *cmd_ring;
+	struct devcmd2_result *result;
+	u16 next_result;
+	u16 result_size;
+	int color;
+};
 
 enum vnic_proxy_type {
 	PROXY_NONE,
@@ -98,7 +109,7 @@ struct vnic_dev {
 	u32 proxy_index;
 	u64 args[VNIC_DEVCMD_NARGS];
 	struct vnic_intr_coal_timer_info intr_coal_timer_info;
-
+	struct devcmd2_controller *devcmd2;
 	int (*devcmd_rtn)(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd, int wait);
 };
 
@@ -238,7 +249,9 @@ void vnic_dev_upd_res_vaddr(struct vnic_dev *vdev,
 {
 	int i;
 
-	for (i = RES_TYPE_EOL + 1; i < RES_TYPE_MAX; i++) {
+	for (i = RES_TYPE_EOL; i < RES_TYPE_MAX; i++) {
+		if (i == RES_TYPE_EOL)
+			continue;
 		if (vdev->res[i].bus_addr >= map->bus_addr &&
 			vdev->res[i].bus_addr < map->bus_addr + map->len)
 			vdev->res[i].vaddr = map->vaddr +
@@ -495,7 +508,91 @@ static int _vnic_dev_cmd(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
 #endif
 }
 
-static int vnic_dev_init_devcmdorig(struct vnic_dev *vdev)
+static int _vnic_dev_cmd2(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
+	int wait)
+{
+#if defined(CONFIG_MIPS) || defined(MGMT_VNIC)
+	return 0;
+#else
+	struct devcmd2_controller *dc2c = vdev->devcmd2;
+	struct devcmd2_result *result = dc2c->result + dc2c->next_result;
+	unsigned int i;
+	int delay;
+	int err;
+	u32 fetch_index;
+	u32 posted;
+	u32 new_posted;
+
+	posted = ioread32(&dc2c->wq_ctrl->posted_index);
+	fetch_index = ioread32(&dc2c->wq_ctrl->fetch_index);
+
+	if (posted == 0xFFFFFFFF || fetch_index == 0xFFFFFFFF) { /* check for hardware gone  */
+		/* Hardware surprise removal: return error */
+		return -ENODEV;
+
+	}
+	new_posted = (posted + 1) % DEVCMD2_RING_SIZE;
+
+	if (new_posted == fetch_index) {
+		pr_err("wq is full while issuing devcmd2 command %d, "
+			"fetch index: %u, posted index: %u\n",
+			_CMD_N(cmd), fetch_index, posted);
+		return -EBUSY;
+
+	}
+	dc2c->cmd_ring[posted].cmd = cmd;
+	dc2c->cmd_ring[posted].flags = 0;
+
+	if ((_CMD_FLAGS(cmd) & _CMD_FLAGS_NOWAIT))
+		dc2c->cmd_ring[posted].flags |= DEVCMD2_FNORESULT;
+	if (_CMD_DIR(cmd) & _CMD_DIR_WRITE) {
+		for (i = 0; i < VNIC_DEVCMD_NARGS; i++)
+			dc2c->cmd_ring[posted].args[i] = vdev->args[i];
+
+	}
+
+	/* Adding write memory barrier prevents compiler and/or CPU
+ 	 * reordering, thus avoiding descriptor posting before
+	 * descriptor is initialized. Otherwise, hardware can read
+	 * stale descriptor fields.
+	 */
+	wmb();
+	iowrite32(new_posted, &dc2c->wq_ctrl->posted_index);
+
+	if (dc2c->cmd_ring[posted].flags & DEVCMD2_FNORESULT)
+		return 0;
+
+	for (delay = 0; delay < wait; delay++) {
+		udelay(100);
+		if (result->color == dc2c->color) {
+			dc2c->next_result++;
+			if (dc2c->next_result == dc2c->result_size) {
+				dc2c->next_result = 0;
+				dc2c->color = dc2c->color ? 0 : 1;
+			}
+			if (result->error) {
+				err = -(int) result->error;
+				if (err != ERR_ECMDUNKNOWN || cmd != CMD_CAPABILITY)
+					pr_err("Error %d devcmd %d\n",
+						err, _CMD_N(cmd));
+				return err;
+			}
+			if (_CMD_DIR(cmd) & _CMD_DIR_READ) {
+				rmb();
+				for (i = 0; i < VNIC_DEVCMD_NARGS; i++)
+					vdev->args[i] = result->results[i];
+			}
+			return 0;
+		}
+	}
+	
+	pr_err("Timed out devcmd %d\n", _CMD_N(cmd));
+
+	return -ETIMEDOUT;
+#endif
+}
+
+int vnic_dev_init_devcmdorig(struct vnic_dev *vdev)
 {
 #if !defined(CONFIG_MIPS) && !defined(MGMT_VNIC)
 	vdev->devcmd = vnic_dev_get_res(vdev, RES_TYPE_DEVCMD, 0);
@@ -506,6 +603,89 @@ static int vnic_dev_init_devcmdorig(struct vnic_dev *vdev)
 	return 0;
 #else
 	return 0;
+#endif
+}
+
+static int vnic_dev_init_devcmd2(struct vnic_dev *vdev)
+{
+#if !defined(CONFIG_MIPS) && !defined(MGMT_VNIC)
+	int err;
+	unsigned int fetch_index;
+	
+	if (vdev->devcmd2)
+		return 0;
+
+	vdev->devcmd2 = kzalloc(sizeof(*vdev->devcmd2), GFP_ATOMIC);
+	if (!vdev->devcmd2)
+		return -ENOMEM;
+	
+	vdev->devcmd2->color = 1;
+	vdev->devcmd2->result_size = DEVCMD2_RING_SIZE;
+	err = vnic_wq_devcmd2_alloc(vdev, &vdev->devcmd2->wq,
+				DEVCMD2_RING_SIZE, DEVCMD2_DESC_SIZE);
+	if (err)
+		goto err_free_devcmd2;
+	
+	fetch_index = ioread32(&vdev->devcmd2->wq.ctrl->fetch_index);
+	if (fetch_index == 0xFFFFFFFF) { /* check for hardware gone  */
+		pr_err("Fatal error in devcmd2 init - hardware surprise removal");
+		return -ENODEV;
+	}
+	
+	/*
+	 * Don't change fetch_index ever and
+	 * set posted_index same as fetch_index
+	 * when setting up the WQ for devmcd2.
+	 */
+	vnic_wq_init_start(&vdev->devcmd2->wq, 0, fetch_index, fetch_index, 0, 0);
+	vnic_wq_enable(&vdev->devcmd2->wq);
+	
+	err = vnic_dev_alloc_desc_ring(vdev, &vdev->devcmd2->results_ring,
+			DEVCMD2_RING_SIZE, DEVCMD2_DESC_SIZE);
+	if (err)
+		goto err_free_wq;
+	
+	vdev->devcmd2->result =
+		(struct devcmd2_result *) vdev->devcmd2->results_ring.descs;
+	vdev->devcmd2->cmd_ring =
+		(struct vnic_devcmd2 *) vdev->devcmd2->wq.ring.descs;
+	vdev->devcmd2->wq_ctrl = vdev->devcmd2->wq.ctrl;
+	vdev->args[0] = (u64) vdev->devcmd2->results_ring.base_addr |
+				VNIC_PADDR_TARGET;
+	vdev->args[1] = DEVCMD2_RING_SIZE;
+
+	err = _vnic_dev_cmd2(vdev, CMD_INITIALIZE_DEVCMD2, 1000);
+	if (err)
+		goto err_free_desc_ring;
+	
+	vdev->devcmd_rtn = &_vnic_dev_cmd2;
+
+	return 0;
+
+err_free_desc_ring:
+	vnic_dev_free_desc_ring(vdev, &vdev->devcmd2->results_ring);
+err_free_wq:
+	vnic_wq_disable(&vdev->devcmd2->wq);
+	vnic_wq_free(&vdev->devcmd2->wq);
+err_free_devcmd2:
+	kfree(vdev->devcmd2);
+	vdev->devcmd2 = NULL;
+	
+	return err;
+#else
+	return 0;
+#endif
+}
+
+static void vnic_dev_deinit_devcmd2(struct vnic_dev *vdev)
+{
+#if !defined(CONFIG_MIPS) && !defined(MGMT_VNIC)
+	vnic_dev_free_desc_ring(vdev, &vdev->devcmd2->results_ring);
+	vnic_wq_disable(&vdev->devcmd2->wq);
+	vnic_wq_free(&vdev->devcmd2->wq);
+	kfree(vdev->devcmd2);
+	vdev->devcmd2 = NULL;
+	vdev->devcmd_rtn = &_vnic_dev_cmd;
 #endif
 }
 
@@ -899,7 +1079,7 @@ int vnic_dev_hang_reset_done(struct vnic_dev *vdev, int *done)
 
 int vnic_dev_hang_notify(struct vnic_dev *vdev)
 {
-	u64 a0, a1;
+	u64 a0 = 0, a1 = 0;
 	int wait = 1000;
 	return vnic_dev_cmd(vdev, CMD_HANG_NOTIFY, &a0, &a1, wait);
 }
@@ -911,7 +1091,7 @@ int vnic_dev_get_mac_addr(struct vnic_dev *vdev, u8 *mac_addr)
 	memcpy(mac_addr, &laa, ETH_ALEN);
 	return 0;
 #else
-	u64 a0, a1;
+	u64 a0 = 0, a1 = 0;
 	int wait = 1000;
 	int err, i;
 
@@ -1386,6 +1566,8 @@ void vnic_dev_unregister(struct vnic_dev *vdev)
 			pci_free_consistent(vdev->pdev,
 				sizeof(struct vnic_devcmd_fw_info),
 				vdev->fw_info, vdev->fw_info_pa);
+		if (vdev->devcmd2)
+			vnic_dev_deinit_devcmd2(vdev);
 
 		kfree(vdev);
 	}
@@ -1450,10 +1632,24 @@ struct pci_dev *vnic_dev_get_pdev(struct vnic_dev *vdev)
 EXPORT_SYMBOL(vnic_dev_get_pdev);
 #endif
 
-int vnic_dev_cmd_init(struct vnic_dev *vdev, int UNUSED(fallback))
+int vnic_dev_cmd_init(struct vnic_dev *vdev, int fallback)
 {
 #if !defined(CONFIG_MIPS) && !defined(MGMT_VNIC)
-	return vnic_dev_init_devcmdorig(vdev);
+	int err;
+ 	void *p;
+    
+	p = vnic_dev_get_res(vdev, RES_TYPE_DEVCMD2, 0);
+	if (p)
+		err = vnic_dev_init_devcmd2(vdev);
+	else if (fallback) {
+		pr_warning("DEVCMD2 resource not found, fall back to devcmd\n");
+		err = vnic_dev_init_devcmdorig(vdev);
+	} else {
+		pr_err("DEVCMD2 resource not found, no fall back to devcmd allowed\n");
+		err = -ENODEV;
+	}
+	
+	return err;
 #else
 	return 0;
 #endif
@@ -1541,7 +1737,7 @@ int vnic_dev_deinit_done(struct vnic_dev *vdev, int *status)
 
 int vnic_dev_set_mac_addr(struct vnic_dev *vdev, u8 *mac_addr)
 {
-	u64 a0, a1;
+	u64 a0 = 0, a1 = 0;
 	int wait = 1000;
 	int i;
 

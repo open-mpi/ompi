@@ -187,7 +187,7 @@ usd_dest_progress_dev(
 }
 
 static void
-usd_dest_progress()
+usd_dest_progress(void)
 {
     struct usd_device *dev;
 

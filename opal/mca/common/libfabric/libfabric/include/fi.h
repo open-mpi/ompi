@@ -185,7 +185,6 @@ int fi_poll_fd(int fd, int timeout);
 int fi_wait_cond(pthread_cond_t *cond, pthread_mutex_t *mut, int timeout);
 
 struct fi_info *fi_allocinfo_internal(void);
-void fi_freeinfo_internal(struct fi_info *info);
 
 int fi_sockaddr_len(struct sockaddr *addr);
 size_t fi_datatype_size(enum fi_datatype datatype);

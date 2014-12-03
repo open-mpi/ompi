@@ -182,16 +182,12 @@ static struct fi_ops_msg usdf_msg_ops = {
 	.size = sizeof(struct fi_ops_msg),
 	.recv = usdf_msg_recv,
 	.recvv = usdf_msg_recvv,
-	.recvfrom = fi_no_msg_recvfrom,
 	.recvmsg = usdf_msg_recvmsg,
 	.send = usdf_msg_send,
 	.sendv = usdf_msg_sendv,
-	.sendto = fi_no_msg_sendto,
 	.sendmsg = usdf_msg_sendmsg,
 	.inject = usdf_msg_inject,
-	.injectto = fi_no_msg_injectto,
 	.senddata = usdf_msg_senddata,
-	.senddatato = fi_no_msg_senddatato
 };
 
 int

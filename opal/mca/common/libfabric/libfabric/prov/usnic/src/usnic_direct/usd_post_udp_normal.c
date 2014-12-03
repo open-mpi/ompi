@@ -45,7 +45,7 @@
 #include "usd.h"
 #include "usd_post.h"
 
-int
+static int
 usd_post_send_one_udp_normal(
     struct usd_qp *uqp,
     struct usd_dest *dest,
@@ -87,7 +87,7 @@ usd_post_send_one_udp_normal(
     return 0;
 }
 
-int
+static int
 usd_post_send_one_copy_udp_normal(
     struct usd_qp *uqp,
     struct usd_dest *dest,
@@ -131,7 +131,7 @@ usd_post_send_one_copy_udp_normal(
     return 0;
 }
 
-int
+static int
 usd_post_send_one_prefixed_udp_normal(
     struct usd_qp *uqp,
     struct usd_dest *dest,
@@ -175,7 +175,7 @@ usd_post_send_one_prefixed_udp_normal(
 /*
  * 2 WQEs - our header plus user header in 1st one, user packet in 2nd
  */
-int
+static int
 usd_post_send_two_copy_udp_normal(
     struct usd_qp *uqp,
     struct usd_dest *dest,

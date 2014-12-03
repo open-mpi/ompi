@@ -43,34 +43,29 @@ int usdf_cm_dgram_shutdown(struct fid_ep *ep, uint64_t flags);
 
 /* fi_ops_msg for DGRAM */
 ssize_t usdf_dgram_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-	void *context);
+	fi_addr_t src_addr, void *context);
 ssize_t usdf_dgram_recvv(struct fid_ep *ep, const struct iovec *iov,
-	void **desc, size_t count, void *context);
-ssize_t usdf_dgram_recvfrom(struct fid_ep *ep, void *buf, size_t len,
-	void *desc, fi_addr_t src_addr, void *context);
+	void **desc, size_t count, fi_addr_t src_addr, void *context);
 ssize_t usdf_dgram_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	uint64_t flags);
 ssize_t usdf_dgram_send(struct fid_ep *ep, const void *buf, size_t len,
-	void *desc, void *context);
-ssize_t usdf_dgram_sendv(struct fid_ep *ep, const struct iovec *iov,
-	void **desc, size_t count, void *context);
-ssize_t usdf_dgram_sendto(struct fid_ep *ep, const void *buf, size_t len,
 	void *desc, fi_addr_t dest_addr, void *context);
+ssize_t usdf_dgram_conn_send(struct fid_ep *ep, const void *buf, size_t len,
+	void *desc, fi_addr_t dest_addr, void *context);
+ssize_t usdf_dgram_sendv(struct fid_ep *ep, const struct iovec *iov,
+	void **desc, size_t count, fi_addr_t dest_addr, void *context);
 ssize_t usdf_dgram_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	uint64_t flags);
-ssize_t usdf_dgram_inject(struct fid_ep *ep, const void *buf, size_t len);
-ssize_t usdf_dgram_injectto(struct fid_ep *ep, const void *buf, size_t len,
+ssize_t usdf_dgram_inject(struct fid_ep *ep, const void *buf, size_t len,
 	fi_addr_t dest_addr);
 ssize_t usdf_dgram_senddata(struct fid_ep *ep, const void *buf, size_t len,
-	void *desc, uint64_t data, void *context);
-ssize_t usdf_dgram_senddatato(struct fid_ep *ep, const void *buf, size_t len,
 	void *desc, uint64_t data, fi_addr_t dest_addr, void *context);
 
 ssize_t usdf_dgram_prefix_recv(struct fid_ep *ep, void *buf, size_t len,
-	void *desc, void *context);
+	void *desc, fi_addr_t src_addr, void *context);
 ssize_t usdf_dgram_prefix_recvv(struct fid_ep *ep, const struct iovec *iov,
-	void **desc, size_t count, void *context);
-ssize_t usdf_dgram_prefix_sendto(struct fid_ep *ep, const void *buf, size_t len,
+	void **desc, size_t count, fi_addr_t src_addr, void *context);
+ssize_t usdf_dgram_prefix_send(struct fid_ep *ep, const void *buf, size_t len,
 	void *desc, fi_addr_t dest_addr, void *context);
 
 #endif /* _USDF_DGRAM_H_ */

@@ -134,11 +134,6 @@ struct usnic_ib_create_qp_resp {
 	struct usnic_vnic_barres_info	resources[0];
 };
 
-struct usnic_ib_create_cq_cmd {
-	u32 cq_group_id;
-	u32 num_qps_in_group;
-};
-
 #define USNIC_CTX_RESP_VERSION 1
 
 struct usnic_ib_get_context_cmd	{

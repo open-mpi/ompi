@@ -73,7 +73,7 @@ static ssize_t sock_cq_entry_size(struct sock_cq *sock_cq)
 	case FI_CQ_FORMAT_UNSPEC:
 	default:
 		size = -1;
-		sock_debug(SOCK_ERROR, "CQ: Invalid CQ format\n");
+		SOCK_LOG_ERROR("CQ: Invalid CQ format\n");
 		break;
 	}
 	return size;
@@ -188,7 +188,7 @@ static void sock_cq_set_report_fn(struct sock_cq *sock_cq)
 
 	case FI_CQ_FORMAT_UNSPEC:
 	default:
-		sock_debug(SOCK_ERROR, "CQ: Invalid CQ format\n");
+		SOCK_LOG_ERROR("CQ: Invalid CQ format\n");
 		break;
 	}
 }
@@ -254,15 +254,12 @@ ssize_t sock_cq_read(struct fid_cq *cq, void *buf, size_t count)
 
 
 ssize_t sock_cq_readerr(struct fid_cq *cq, struct fi_cq_err_entry *buf,
-			size_t len, uint64_t flags)
+			uint64_t flags)
 {
 	ssize_t num_read;
 	struct sock_cq *sock_cq;
 	
 	sock_cq = container_of(cq, struct sock_cq, cq_fid);
-	if(len < sizeof(struct fi_cq_err_entry))
-		return -FI_ETOOSMALL;
-
 	num_read = 0;
 	fastlock_acquire(&sock_cq->lock);
 
@@ -301,7 +298,7 @@ ssize_t sock_cq_writeerr(struct fid_cq *cq, struct fi_cq_err_entry *buf,
 }
 
 const char * sock_cq_strerror(struct fid_cq *cq, int prov_errno,
-			      const void *err_data, void *buf, size_t len)
+			      const void *err_data, char *buf, size_t len)
 {
 	if (buf && len)
 		return strncpy(buf, strerror(prov_errno), len);
@@ -373,7 +370,7 @@ static int sock_cq_verify_attr(struct fi_cq_attr *attr)
 }
 
 static struct fi_cq_attr _sock_cq_def_attr = {
-	.size = SOCK_CQ_DEF_LEN,
+	.size = SOCK_CQ_DEF_SZ,
 	.flags = 0,
 	.format = FI_CQ_FORMAT_CONTEXT,
 	.wait_obj = FI_WAIT_FD,

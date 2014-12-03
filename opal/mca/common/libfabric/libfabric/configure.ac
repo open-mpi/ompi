@@ -132,13 +132,24 @@ AC_CACHE_CHECK(whether ld accepts --version-script, ac_cv_version_script,
 
 AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$ac_cv_version_script" = "yes")
 
+dnl Disable symbol versioning with icc + ipo, with it ipo is disabled by icc.
+dnl The gcc equivalent ipo (-fwhole-program) seems to work fine.
+AS_IF([case "$CFLAGS" in
+         *-ipo*) true ;;
+         *)      false ;;
+        esac],
+      [AC_MSG_NOTICE([disabling symbol versioning support with -ipo CFLAG])],
+[
+
 AC_CACHE_CHECK(for .symver assembler support, ac_cv_asm_symver_support,
 	[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],
 		[[asm("symbol:\n.symver symbol, api@ABI\n");]])],
 		[ac_cv_asm_symver_support=yes],
 		[ac_cv_asm_symver_support=no])])
 
-if test $ac_cv_asm_symver_support = yes; then
+]) dnl AS_IF
+
+if test x$ac_cv_asm_symver_support = xyes; then
 	AC_DEFINE([HAVE_SYMVER_SUPPORT], 1, [assembler has .symver support])
 fi
 

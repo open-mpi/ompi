@@ -139,7 +139,6 @@ struct fi_ops usdf_ep_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_close,
 	.bind = usdf_ep_bind,
-	.sync = fi_no_sync,
 	.control = fi_no_control,
 	.ops_open = fi_no_ops_open
 };

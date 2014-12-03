@@ -266,7 +266,7 @@ usd_get_iface(
 /*
  * Read an integer from a sysfs entry
  */
-int
+static int
 usd_ib_sysfs_get_int(
     struct usd_device *dev,
     char *entry,

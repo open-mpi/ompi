@@ -216,10 +216,9 @@ static void fi_tostr_protocol(char *buf, uint32_t protocol)
 
 static void fi_tostr_mode(char *buf, uint64_t mode)
 {
-	IFFLAGSTR(mode, FI_WRITE_NONCOHERENT);
 	IFFLAGSTR(mode, FI_CONTEXT);
 	IFFLAGSTR(mode, FI_LOCAL_MR);
-	IFFLAGSTR(mode, FI_PROV_MR_KEY);
+	IFFLAGSTR(mode, FI_PROV_MR_ATTR);
 	IFFLAGSTR(mode, FI_MSG_PREFIX);
 
 	fi_remove_comma(buf);
@@ -268,6 +267,11 @@ static void fi_tostr_addr(char *buf, uint32_t addr_format,
 static void fi_tostr_tx_attr(char *buf, const struct fi_tx_ctx_attr *attr,
 			     const char *prefix)
 {
+	if (!attr) {
+		strcatf(buf, "%sfi_tx_ctx_attr: (null)\n", prefix);
+		return;
+	}
+
 	strcatf(buf, "%sfi_tx_ctx_attr:\n", prefix);
 	strcatf(buf, "%s%scaps: [ ", prefix, TAB);
 	fi_tostr_caps(buf, attr->caps);
@@ -284,12 +288,16 @@ static void fi_tostr_tx_attr(char *buf, const struct fi_tx_ctx_attr *attr,
 	strcatf(buf, "%s%sinject_size: %zd\n", prefix, TAB, attr->inject_size);
 	strcatf(buf, "%s%ssize: %zd\n", prefix, TAB, attr->size);
 	strcatf(buf, "%s%siov_limit: %zd\n", prefix, TAB, attr->iov_limit);
-	strcatf(buf, "%s%sop_alignment: %zd\n", prefix, TAB, attr->op_alignment);
 }
 
 static void fi_tostr_rx_attr(char *buf, const struct fi_rx_ctx_attr *attr,
 			     const char *prefix)
 {
+	if (!attr) {
+		strcatf(buf, "%sfi_rx_ctx_attr: (null)\n", prefix);
+		return;
+	}
+
 	strcatf(buf, "%sfi_rx_ctx_attr:\n", prefix);
 	strcatf(buf, "%s%scaps: [ ", prefix, TAB);
 	fi_tostr_caps(buf, attr->caps);
@@ -306,11 +314,15 @@ static void fi_tostr_rx_attr(char *buf, const struct fi_rx_ctx_attr *attr,
 	strcatf(buf, "%s%stotal_buffered_recv: %zd\n", prefix, TAB, attr->total_buffered_recv);
 	strcatf(buf, "%s%ssize: %zd\n", prefix, TAB, attr->size);
 	strcatf(buf, "%s%siov_limit: %zd\n", prefix, TAB, attr->iov_limit);
-	strcatf(buf, "%s%sop_alignment: %zd\n", prefix, TAB, attr->op_alignment);
 }
 
 static void fi_tostr_ep_attr(char *buf, const struct fi_ep_attr *attr, const char *prefix)
 {
+	if (!attr) {
+		strcatf(buf, "%sfi_ep_attr: (null)\n", prefix);
+		return;
+	}
+
 	strcatf(buf, "%sfi_ep_attr:\n", prefix);
 	strcatf(buf, "%s%sprotocol: ", prefix, TAB);
 	fi_tostr_protocol(buf, attr->protocol);
@@ -334,6 +346,11 @@ static void fi_tostr_ep_attr(char *buf, const struct fi_ep_attr *attr, const cha
 static void fi_tostr_domain_attr(char *buf, const struct fi_domain_attr *attr,
 				 const char *prefix)
 {
+	if (!attr) {
+		strcatf(buf, "%sfi_domain_attr: (null)\n", prefix);
+		return;
+	}
+
 	strcatf(buf, "%sfi_domain_attr:\n", prefix);
 	strcatf(buf, "%s%sname: %s\n", prefix, TAB, attr->name);
 	strcatf(buf, "%s%sthreading: ", prefix, TAB);
@@ -354,13 +371,16 @@ static void fi_tostr_domain_attr(char *buf, const struct fi_domain_attr *attr,
 	strcatf(buf, "%s%srx_ctx_cnt: %zd\n", prefix, TAB, attr->rx_ctx_cnt);
 	strcatf(buf, "%s%smax_ep_tx_ctx: %zd\n", prefix, TAB, attr->max_ep_tx_ctx);
 	strcatf(buf, "%s%smax_ep_rx_ctx: %zd\n", prefix, TAB, attr->max_ep_rx_ctx);
-	strcatf(buf, "%s%sop_size: %zd\n", prefix, TAB, attr->op_size);
-	strcatf(buf, "%s%siov_size: %zd\n", prefix, TAB, attr->iov_size);
 }
 
 static void fi_tostr_fabric_attr(char *buf, const struct fi_fabric_attr *attr,
 				 const char *prefix)
 {
+	if (!attr) {
+		strcatf(buf, "%sfi_fabric_attr: (null)\n", prefix);
+		return;
+	}
+
 	strcatf(buf, "%sfi_fabric_attr:\n", prefix);
 	strcatf(buf, "%s%sname: %s\n", prefix, TAB, attr->name);
 	strcatf(buf, "%s%sprov_name: %s\n", prefix, TAB, attr->prov_name);

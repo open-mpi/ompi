@@ -45,4 +45,6 @@
 
 int usd_get_devspec(struct usd_qp_impl *qp);
 
+int usd_vnic_hang_notify(struct usd_qp *uqp);
+
 #endif /* _USD_VNIC_H_ */

@@ -152,32 +152,24 @@ static struct fi_ops_msg usdf_dgram_ops = {
 	.size = sizeof(struct fi_ops_msg),
 	.recv = usdf_dgram_recv,
 	.recvv = usdf_dgram_recvv,
-	.recvfrom = usdf_dgram_recvfrom,
 	.recvmsg = usdf_dgram_recvmsg,
 	.send = usdf_dgram_send,
 	.sendv = usdf_dgram_sendv,
-	.sendto = usdf_dgram_sendto,
 	.sendmsg = usdf_dgram_sendmsg,
 	.inject = usdf_dgram_inject,
-	.injectto = usdf_dgram_injectto,
 	.senddata = usdf_dgram_senddata,
-	.senddatato = usdf_dgram_senddatato
 };
 
 static struct fi_ops_msg usdf_dgram_prefix_ops = {
 	.size = sizeof(struct fi_ops_msg),
 	.recv = usdf_dgram_prefix_recv,
 	.recvv = usdf_dgram_prefix_recvv,
-	.recvfrom = usdf_dgram_recvfrom,
 	.recvmsg = usdf_dgram_recvmsg,
 	.send = usdf_dgram_send,
 	.sendv = usdf_dgram_sendv,
-	.sendto = usdf_dgram_prefix_sendto,
 	.sendmsg = usdf_dgram_sendmsg,
 	.inject = usdf_dgram_inject,
-	.injectto = usdf_dgram_injectto,
 	.senddata = usdf_dgram_senddata,
-	.senddatato = usdf_dgram_senddatato
 };
 
 static struct fi_ops_cm usdf_cm_dgram_ops = {

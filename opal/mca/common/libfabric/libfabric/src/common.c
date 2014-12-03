@@ -115,28 +115,10 @@ struct fi_info *fi_allocinfo_internal(void)
 
 	return info;
 err:
-	fi_freeinfo_internal(info);
+	fi_freeinfo(info);
 	return NULL;
 }
 
-void fi_freeinfo_internal(struct fi_info *info)
-{
-	free(info->src_addr);
-	free(info->dest_addr);
-	free(info->tx_attr);
-	free(info->rx_attr);
-	free(info->ep_attr);
-	if (info->domain_attr) {
-		free(info->domain_attr->name);
-		free(info->domain_attr);
-	}
-	if (info->fabric_attr) {
-		free(info->fabric_attr->name);
-		free(info->fabric_attr->prov_name);
-		free(info->fabric_attr);
-	}
-	free(info);
-}
 uint64_t fi_tag_bits(uint64_t mem_tag_format)
 {
 	return UINT64_MAX >> (ffsll(htonll(mem_tag_format)) -1);

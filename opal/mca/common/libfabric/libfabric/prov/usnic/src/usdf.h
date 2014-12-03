@@ -216,7 +216,8 @@ int usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 		struct fid_pep **pep_p, void *context);
 
 /* fi_ops_domain */
-int usdf_cq_open();
+int usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
+		 struct fid_cq **cq_o, void *context);
 int usdf_endpoint_open(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context);
 int usdf_av_open(struct fid_domain *domain, struct fi_av_attr *attr,

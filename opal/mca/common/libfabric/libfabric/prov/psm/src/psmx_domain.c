@@ -68,7 +68,6 @@ static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_domain_close,
 	.bind = fi_no_bind,
-	.sync = fi_no_sync,
 	.control = fi_no_control,
 };
 
@@ -139,7 +138,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	if (err)
 		domain_priv->ns_thread = 0;
 
-	if (psmx_domain_enable_features(domain_priv, 0) < 0) {
+	if (psmx_domain_enable_ep(domain_priv, NULL) < 0) {
 		if (domain_priv->ns_thread) {
 			pthread_cancel(domain_priv->ns_thread);
 			pthread_join(domain_priv->ns_thread, NULL);
@@ -168,23 +167,28 @@ int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 	if ((ep_cap & PSMX_CAPS) != ep_cap)
 		return -EINVAL;
 
-	if ((ep_cap & FI_TAGGED) && domain->tagged_used)
+	if ((ep_cap & FI_TAGGED) && domain->tagged_ep)
 		return -EBUSY;
 
-	if ((ep_cap & FI_MSG) && domain->msg_used)
+	if ((ep_cap & FI_MSG) && domain->msg_ep)
 		return -EBUSY;
 
-	if ((ep_cap & FI_RMA) && domain->rma_used)
+	if ((ep_cap & FI_RMA) && domain->rma_ep)
 		return -EBUSY;
 
-	if ((ep_cap & FI_ATOMICS) && domain->atomics_used)
+	if ((ep_cap & FI_ATOMICS) && domain->atomics_ep)
 		return -EBUSY;
 
 	return 0;
 }
 
-int psmx_domain_enable_features(struct psmx_fid_domain *domain, int ep_cap)
+int psmx_domain_enable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep)
 {
+	uint64_t ep_cap = 0;
+
+	if (ep)
+		ep_cap = ep->caps;
+
 	if (ep_cap & FI_MSG)
 		domain->reserved_tag_bits |= PSMX_MSG_BIT;
 
@@ -204,17 +208,35 @@ int psmx_domain_enable_features(struct psmx_fid_domain *domain, int ep_cap)
 	}
 
 	if (ep_cap & FI_RMA)
-		domain->rma_used = 1;
+		domain->rma_ep = ep;
 
 	if (ep_cap & FI_ATOMICS)
-		domain->atomics_used = 1;
+		domain->atomics_ep = ep;
 
 	if (ep_cap & FI_TAGGED)
-		domain->tagged_used = 1;
+		domain->tagged_ep = ep;
 
 	if (ep_cap & FI_MSG)
-		domain->msg_used = 1;
+		domain->msg_ep = ep;
 
 	return 0;
+}
+
+void psmx_domain_disable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep)
+{
+	if (!ep)
+		return;
+
+	if ((ep->caps & FI_RMA) && domain->rma_ep == ep)
+		domain->rma_ep = NULL;
+
+	if ((ep->caps & FI_ATOMICS) && domain->atomics_ep == ep)
+		domain->atomics_ep = NULL;
+
+	if ((ep->caps & FI_TAGGED) && domain->tagged_ep == ep)
+		domain->tagged_ep = NULL;
+
+	if ((ep->caps & FI_MSG) && domain->msg_ep == ep)
+		domain->msg_ep = NULL;
 }
 

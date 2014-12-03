@@ -61,7 +61,6 @@ enum usd_link_state {
 
 /* forward structure defs */
 struct usd_qp;
-struct usd_cq_group;
 struct usd_device;
 struct usd_dest;
 struct usd_connection;
@@ -320,27 +319,13 @@ int usd_get_completion_fd(struct usd_device *dev, int *comp_fd_o);
 int usd_put_completion_fd(int comp_fd);
 
 /*
- * Create a CQ group that will be shared over a set of QPs
- *   num_qp - able to be shared by this many QPs
- *   cq_group_id_o - CQ group ID returned
- */
-int usd_create_cq_group(struct usd_device *dev, unsigned num_qp,
-        struct usd_cq_group **cq_group_o);
-
-/*
- * Destroy a CQ group
- */
-int usd_destroy_cq_group(struct usd_cq_group *cq_group);
-
-/*
  * Request a CQ with specified attributes:
  *   dev - device on which to create this CQ
  *   num_cqe - number of CQ entries
- *   cq_group - group ID for this CQ or USD_CQ_NO_GROUP for none
  *   comp_fd - completions will be signalled on this fd or -1 for none
  */
 int usd_create_cq(struct usd_device *dev, unsigned num_cqe,
-        struct usd_cq_group *cq_group, int comp_fd, struct usd_cq **cq_o);
+        int comp_fd, struct usd_cq **cq_o);
 
 int usd_destroy_cq(struct usd_cq *cq);
 

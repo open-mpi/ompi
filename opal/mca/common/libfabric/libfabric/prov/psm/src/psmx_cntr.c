@@ -49,115 +49,115 @@ void psmx_cntr_check_trigger(struct psmx_fid_cntr *cntr)
 		cntr->trigger = trigger->next;
 		switch (trigger->op) {
 		case PSMX_TRIGGERED_SEND:
-			_psmx_sendto(trigger->send.ep,
-				     trigger->send.buf,
-				     trigger->send.len,
-				     trigger->send.desc,
-				     trigger->send.dest_addr,
-				     trigger->send.context,
-				     trigger->send.flags);
+			_psmx_send(trigger->send.ep,
+				   trigger->send.buf,
+				   trigger->send.len,
+				   trigger->send.desc,
+				   trigger->send.dest_addr,
+				   trigger->send.context,
+				   trigger->send.flags);
 			break;
 		case PSMX_TRIGGERED_RECV:
-			_psmx_recvfrom(trigger->recv.ep,
-				       trigger->recv.buf,
-				       trigger->recv.len,
-				       trigger->recv.desc,
-				       trigger->recv.src_addr,
-				       trigger->recv.context,
-				       trigger->recv.flags);
+			_psmx_recv(trigger->recv.ep,
+				   trigger->recv.buf,
+				   trigger->recv.len,
+				   trigger->recv.desc,
+				   trigger->recv.src_addr,
+				   trigger->recv.context,
+				   trigger->recv.flags);
 			break;
 		case PSMX_TRIGGERED_TSEND:
-			_psmx_tagged_sendto(trigger->tsend.ep,
-					    trigger->tsend.buf,
-					    trigger->tsend.len,
-					    trigger->tsend.desc,
-					    trigger->tsend.dest_addr,
-					    trigger->tsend.tag,
-					    trigger->tsend.context,
-					    trigger->tsend.flags);
+			_psmx_tagged_send(trigger->tsend.ep,
+					  trigger->tsend.buf,
+					  trigger->tsend.len,
+					  trigger->tsend.desc,
+					  trigger->tsend.dest_addr,
+					  trigger->tsend.tag,
+					  trigger->tsend.context,
+					  trigger->tsend.flags);
 			break;
 		case PSMX_TRIGGERED_TRECV:
-			_psmx_tagged_recvfrom(trigger->trecv.ep,
-					      trigger->trecv.buf,
-					      trigger->trecv.len,
-					      trigger->trecv.desc,
-					      trigger->trecv.src_addr,
-					      trigger->trecv.tag,
-					      trigger->trecv.ignore,
-					      trigger->trecv.context,
-					      trigger->trecv.flags);
+			_psmx_tagged_recv(trigger->trecv.ep,
+					  trigger->trecv.buf,
+					  trigger->trecv.len,
+					  trigger->trecv.desc,
+					  trigger->trecv.src_addr,
+					  trigger->trecv.tag,
+					  trigger->trecv.ignore,
+					  trigger->trecv.context,
+					  trigger->trecv.flags);
 			break;
 		case PSMX_TRIGGERED_WRITE:
-			_psmx_writeto(trigger->write.ep,
-				      trigger->write.buf,
-				      trigger->write.len,
-				      trigger->write.desc,
-				      trigger->write.dest_addr,
-				      trigger->write.addr,
-				      trigger->write.key,
-				      trigger->write.context,
-				      trigger->write.flags,
-				      trigger->write.data);
+			_psmx_write(trigger->write.ep,
+				    trigger->write.buf,
+				    trigger->write.len,
+				    trigger->write.desc,
+				    trigger->write.dest_addr,
+				    trigger->write.addr,
+				    trigger->write.key,
+				    trigger->write.context,
+				    trigger->write.flags,
+				    trigger->write.data);
 			break;
 
 		case PSMX_TRIGGERED_READ:
-			_psmx_readfrom(trigger->read.ep,
-				       trigger->read.buf,
-				       trigger->read.len,
-				       trigger->read.desc,
-				       trigger->read.src_addr,
-				       trigger->read.addr,
-				       trigger->read.key,
-				       trigger->read.context,
-				       trigger->read.flags);
+			_psmx_read(trigger->read.ep,
+				   trigger->read.buf,
+				   trigger->read.len,
+				   trigger->read.desc,
+				   trigger->read.src_addr,
+				   trigger->read.addr,
+				   trigger->read.key,
+				   trigger->read.context,
+				   trigger->read.flags);
 			break;
 
 		case PSMX_TRIGGERED_ATOMIC_WRITE:
-			_psmx_atomic_writeto(trigger->atomic_write.ep,
-					     trigger->atomic_write.buf,
-					     trigger->atomic_write.count,
-					     trigger->atomic_write.desc,
-					     trigger->atomic_write.dest_addr,
-					     trigger->atomic_write.addr,
-					     trigger->atomic_write.key,
-					     trigger->atomic_write.datatype,
-					     trigger->atomic_write.atomic_op,
-					     trigger->atomic_write.context,
-					     trigger->atomic_write.flags);
+			_psmx_atomic_write(trigger->atomic_write.ep,
+					   trigger->atomic_write.buf,
+					   trigger->atomic_write.count,
+					   trigger->atomic_write.desc,
+					   trigger->atomic_write.dest_addr,
+					   trigger->atomic_write.addr,
+					   trigger->atomic_write.key,
+					   trigger->atomic_write.datatype,
+					   trigger->atomic_write.atomic_op,
+					   trigger->atomic_write.context,
+					   trigger->atomic_write.flags);
 			break;
 
 		case PSMX_TRIGGERED_ATOMIC_READWRITE:
-			_psmx_atomic_readwriteto(trigger->atomic_readwrite.ep,
-						 trigger->atomic_readwrite.buf,
-						 trigger->atomic_readwrite.count,
-						 trigger->atomic_readwrite.desc,
-						 trigger->atomic_readwrite.result,
-						 trigger->atomic_readwrite.result_desc,
-						 trigger->atomic_readwrite.dest_addr,
-						 trigger->atomic_readwrite.addr,
-						 trigger->atomic_readwrite.key,
-						 trigger->atomic_readwrite.datatype,
-						 trigger->atomic_readwrite.atomic_op,
-						 trigger->atomic_readwrite.context,
-						 trigger->atomic_readwrite.flags);
+			_psmx_atomic_readwrite(trigger->atomic_readwrite.ep,
+						trigger->atomic_readwrite.buf,
+						trigger->atomic_readwrite.count,
+						trigger->atomic_readwrite.desc,
+						trigger->atomic_readwrite.result,
+						trigger->atomic_readwrite.result_desc,
+						trigger->atomic_readwrite.dest_addr,
+						trigger->atomic_readwrite.addr,
+						trigger->atomic_readwrite.key,
+						trigger->atomic_readwrite.datatype,
+						trigger->atomic_readwrite.atomic_op,
+						trigger->atomic_readwrite.context,
+						trigger->atomic_readwrite.flags);
 			break;
 
 		case PSMX_TRIGGERED_ATOMIC_COMPWRITE:
-			_psmx_atomic_compwriteto(trigger->atomic_compwrite.ep,
-						 trigger->atomic_compwrite.buf,
-						 trigger->atomic_compwrite.count,
-						 trigger->atomic_compwrite.desc,
-						 trigger->atomic_compwrite.compare,
-						 trigger->atomic_compwrite.compare_desc,
-						 trigger->atomic_compwrite.result,
-						 trigger->atomic_compwrite.result_desc,
-						 trigger->atomic_compwrite.dest_addr,
-						 trigger->atomic_compwrite.addr,
-						 trigger->atomic_compwrite.key,
-						 trigger->atomic_compwrite.datatype,
-						 trigger->atomic_compwrite.atomic_op,
-						 trigger->atomic_compwrite.context,
-						 trigger->atomic_compwrite.flags);
+			_psmx_atomic_compwrite(trigger->atomic_compwrite.ep,
+						trigger->atomic_compwrite.buf,
+						trigger->atomic_compwrite.count,
+						trigger->atomic_compwrite.desc,
+						trigger->atomic_compwrite.compare,
+						trigger->atomic_compwrite.compare_desc,
+						trigger->atomic_compwrite.result,
+						trigger->atomic_compwrite.result_desc,
+						trigger->atomic_compwrite.dest_addr,
+						trigger->atomic_compwrite.addr,
+						trigger->atomic_compwrite.key,
+						trigger->atomic_compwrite.datatype,
+						trigger->atomic_compwrite.atomic_op,
+						trigger->atomic_compwrite.context,
+						trigger->atomic_compwrite.flags);
 			break;
 		default:
 			psmx_debug("%s: %d unsupported op\n", __func__, trigger->op);
@@ -199,7 +199,9 @@ static uint64_t psmx_cntr_read(struct fid_cntr *cntr)
 
 	cntr_priv = container_of(cntr, struct psmx_fid_cntr, cntr);
 
-	return cntr_priv->counter;
+	cntr_priv->counter_last_read = cntr_priv->counter;
+
+	return cntr_priv->counter_last_read;
 }
 
 static uint64_t psmx_cntr_readerr(struct fid_cntr *cntr)
@@ -208,7 +210,9 @@ static uint64_t psmx_cntr_readerr(struct fid_cntr *cntr)
 
 	cntr_priv = container_of(cntr, struct psmx_fid_cntr, cntr);
 
-	return cntr_priv->error_counter;
+	cntr_priv->error_counter_last_read = cntr_priv->error_counter;
+
+	return cntr_priv->error_counter_last_read;
 }
 
 static int psmx_cntr_add(struct fid_cntr *cntr, uint64_t value)
@@ -266,6 +270,9 @@ static int psmx_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout
 
 		if (cntr_priv->counter >= threshold)
 			break;
+
+		if (timeout < 0)
+			continue;
 
 		clock_gettime(CLOCK_REALTIME, &ts);
 		msec_passed = (ts.tv_sec - ts0.tv_sec) * 1000 +
@@ -325,7 +332,6 @@ static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_cntr_close,
 	.bind = fi_no_bind,
-	.sync = fi_no_sync,
 	.control = psmx_cntr_control,
 };
 
@@ -365,6 +371,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	switch (attr->wait_obj) {
 	case FI_WAIT_NONE:
+	case FI_WAIT_UNSPEC:
 		break;
 
 	case FI_WAIT_SET:
@@ -376,7 +383,6 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		wait = (struct psmx_fid_wait *)attr->wait_set;
 		break;
 
-	case FI_WAIT_UNSPEC:
 	case FI_WAIT_FD:
 	case FI_WAIT_MUT_COND:
 		wait_attr.wait_obj = attr->wait_obj;

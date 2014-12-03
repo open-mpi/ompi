@@ -43,24 +43,23 @@ int usdf_cm_msg_shutdown(struct fid_ep *ep, uint64_t flags);
 
 /* fi_ops_msg for RC */
 ssize_t usdf_msg_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-	void *context);
+	fi_addr_t src_addr, void *context);
 ssize_t usdf_msg_recvv(struct fid_ep *ep, const struct iovec *iov,
-	void **desc, size_t count, void *context);
-ssize_t usdf_msg_recvfrom(struct fid_ep *ep, void *buf, size_t len,
-	void *desc, fi_addr_t src_addr, void *context);
+	void **desc, size_t count, fi_addr_t src_addr, void *context);
 ssize_t usdf_msg_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	uint64_t flags);
 
 ssize_t usdf_msg_send(struct fid_ep *ep, const void *buf, size_t len,
-	void *desc, void *context);
+	void *desc, fi_addr_t src_addr, void *context);
 ssize_t usdf_msg_sendv(struct fid_ep *ep, const struct iovec *iov,
-	void **desc, size_t count, void *context);
+	void **desc, size_t count, fi_addr_t src_addr, void *context);
 ssize_t usdf_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	uint64_t flags);
 ssize_t usdf_msg_senddata(struct fid_ep *ep, const void *buf, size_t len,
-	void *desc, uint64_t data, void *context);
+	void *desc, uint64_t data, fi_addr_t src_addr, void *context);
 
-ssize_t usdf_msg_inject(struct fid_ep *ep, const void *buf, size_t len);
+ssize_t usdf_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
+	fi_addr_t src_addr);
 	
 
 

@@ -98,7 +98,7 @@ ssize_t sock_eq_read(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 }
 
 ssize_t sock_eq_readerr(struct fid_eq *eq, struct fi_eq_err_entry *buf,
-			size_t len, uint64_t flags)
+			uint64_t flags)
 {
 	int ret;
 	struct sock_eq *sock_eq;
@@ -115,11 +115,6 @@ ssize_t sock_eq_readerr(struct fid_eq *eq, struct fi_eq_err_entry *buf,
 
 	list = sock_eq->err_list.list.next;
 	entry = container_of(list, struct sock_eq_entry, entry);
-
-	if(entry->len > len) {
-		ret = -FI_ETOOSMALL;
-		goto out;
-	}
 
 	ret = entry->len;
 	memcpy(buf, entry->event, entry->len);
@@ -191,7 +186,7 @@ static ssize_t sock_eq_write(struct fid_eq *eq, uint32_t event,
 }
 
 const char * sock_eq_strerror(struct fid_eq *eq, int prov_errno,
-			      const void *err_data, void *buf, size_t len)
+			      const void *err_data, char *buf, size_t len)
 {
 	if (buf && len)
 		return strncpy(buf, strerror(prov_errno), len);
@@ -244,7 +239,6 @@ static struct fi_ops sock_eq_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = sock_eq_fi_close,
 	.bind = fi_no_bind,
-	.sync = fi_no_sync,
 	.control = sock_eq_fi_control,
 	.ops_open = fi_no_ops_open,
 };
@@ -269,7 +263,7 @@ static int _sock_eq_verify_attr(struct fi_eq_attr *attr)
 }
 
 static struct fi_eq_attr _sock_eq_def_attr ={
-	.size = SOCK_EQ_DEF_LEN,
+	.size = SOCK_EQ_DEF_SZ,
 	.flags = 0,
 	.wait_obj = FI_WAIT_FD,
 	.signaling_vector = 0,

@@ -40,7 +40,7 @@
  *
  *
  */
-#ident "$Id: kcompat.h 194404 2014-10-17 09:03:00Z gvaradar $"
+#ident "$Id: kcompat.h 195274 2014-10-24 06:32:21Z gvaradar $"
 
 #ifndef _KCOMPAT_H_
 #define _KCOMPAT_H_
@@ -203,17 +203,18 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 }
 #endif /*CONFIG_RFS_ACCEL*/
 
-#if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE == RHEL_RELEASE_VERSION(6, 5)))
+#if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(6, 5)))
 #define skb_get_rxhash(skb) (skb)->rxhash
 #endif /*RHEL_RELEASE_VERSION == 6.5*/
 #endif /*LINUX >= 3.3.0*/
 
 #ifdef CONFIG_RFS_ACCEL
-#if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE == RHEL_RELEASE_VERSION(6, 5)))
+#if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(6, 5) \
+			&& RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(7, 0)))
 #define enic_netdev_rmap(enic) netdev_extended(enic->netdev)->rfs_data.rx_cpu_rmap
 #else
 #define enic_netdev_rmap(enic) enic->netdev->rx_cpu_rmap
-#endif /*RHEL_RELEASE_VERSION == 6.5*/
+#endif /*RHEL_RELEASE_VERSION >= 6.5 && < 7.0*/
 #endif /*CONFIG_RFS_ACCEL*/
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 00))

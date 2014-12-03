@@ -41,10 +41,6 @@ int fi_no_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_sync(struct fid *fid, uint64_t flags, void *context)
-{
-	return -FI_ENOSYS;
-}
 int fi_no_control(struct fid *fid, int command, void *arg)
 {
 	return -FI_ENOSYS;
@@ -79,22 +75,14 @@ int fi_no_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
  */
 ssize_t fi_no_atomic_write(struct fid_ep *ep,
 		const void *buf, size_t count, void *desc,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_atomic_writev(struct fid_ep *ep,
 		const struct fi_ioc *iov, void **desc, size_t count,
-		uint64_t addr, uint64_t key,
-		enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_atomic_writeto(struct fid_ep *ep,
-		const void *buf, size_t count, void *desc,
-		fi_addr_t dest_addr,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
@@ -105,12 +93,6 @@ ssize_t fi_no_atomic_writemsg(struct fid_ep *ep,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_atomic_inject(struct fid_ep *ep, const void *buf, size_t count,
-		uint64_t addr, uint64_t key, enum fi_datatype datatype,
-		enum fi_op op)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_atomic_injectto(struct fid_ep *ep, const void *buf, size_t count,
 		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op)
 {
@@ -119,7 +101,7 @@ ssize_t fi_no_atomic_injectto(struct fid_ep *ep, const void *buf, size_t count,
 ssize_t fi_no_atomic_readwrite(struct fid_ep *ep,
 		const void *buf, size_t count, void *desc,
 		void *result, void *result_desc,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
@@ -127,16 +109,7 @@ ssize_t fi_no_atomic_readwrite(struct fid_ep *ep,
 ssize_t fi_no_atomic_readwritev(struct fid_ep *ep,
 		const struct fi_ioc *iov, void **desc, size_t count,
 		struct fi_ioc *resultv, void **result_desc, size_t result_count,
-		uint64_t addr, uint64_t key,
-		enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_atomic_readwriteto(struct fid_ep *ep,
-		const void *buf, size_t count, void *desc,
-		void *result, void *result_desc,
-		fi_addr_t dest_addr,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
@@ -152,7 +125,7 @@ ssize_t fi_no_atomic_compwrite(struct fid_ep *ep,
 		const void *buf, size_t count, void *desc,
 		const void *compare, void *compare_desc,
 		void *result, void *result_desc,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
@@ -161,17 +134,7 @@ ssize_t fi_no_atomic_compwritev(struct fid_ep *ep,
 		const struct fi_ioc *iov, void **desc, size_t count,
 		const struct fi_ioc *comparev, void **compare_desc, size_t compare_count,
 		struct fi_ioc *resultv, void **result_desc, size_t result_count,
-		uint64_t addr, uint64_t key,
-		enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_atomic_compwriteto(struct fid_ep *ep,
-		const void *buf, size_t count, void *desc,
-		const void *compare, void *compare_desc,
-		void *result, void *result_desc,
-		fi_addr_t dest_addr,
-		uint64_t addr, uint64_t key,
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return -FI_ENOSYS;
@@ -281,6 +244,16 @@ int fi_no_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
 {
 	return -FI_ENOSYS;
 }
+int fi_no_stx_context(struct fid_domain *domain, struct fi_tx_ctx_attr *attr,
+		struct fid_stx **stx, void *context)
+{
+	return -FI_ENOSYS;
+}
+int fi_no_srx_context(struct fid_domain *domain, struct fi_rx_ctx_attr *attr,
+		struct fid_ep **rx_ep, void *context)
+{
+	return -FI_ENOSYS;
+}
 
 /*
  * struct fi_ops_mr
@@ -325,13 +298,13 @@ int fi_no_setopt(fid_t fid, int level, int optname,
 {
 	return -FI_ENOSYS;
 }
-int fi_no_tx_ctx(struct fid_ep *ep, int index,
+int fi_no_tx_ctx(struct fid_sep *sep, int index,
 		struct fi_tx_ctx_attr *attr, struct fid_ep **tx_ep,
 		void *context)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_rx_ctx(struct fid_ep *ep, int index,
+int fi_no_rx_ctx(struct fid_sep *sep, int index,
 		struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
 		void *context)
 {
@@ -342,17 +315,12 @@ int fi_no_rx_ctx(struct fid_ep *ep, int index,
  * struct fi_ops_msg
  */
 ssize_t fi_no_msg_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		void *context)
+		fi_addr_t src_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_msg_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_recvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		fi_addr_t src_addr, void *context)
+		size_t count, fi_addr_t src_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -362,17 +330,12 @@ ssize_t fi_no_msg_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_msg_send(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		void *context)
+		fi_addr_t dest_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_msg_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_sendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		fi_addr_t dest_addr, void *context)
+		size_t count, fi_addr_t dest_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -381,21 +344,12 @@ ssize_t fi_no_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 {
 	return -FI_ENOSYS;
 }
-ssize_t fi_no_msg_inject(struct fid_ep *ep, const void *buf, size_t len)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_injectto(struct fid_ep *ep, const void *buf, size_t len,
+ssize_t fi_no_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
 		fi_addr_t dest_addr)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_senddatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, void *context)
 {
 	return -FI_ENOSYS;
@@ -471,17 +425,12 @@ int fi_no_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout)
  * struct fi_ops_rma
  */
 ssize_t fi_no_rma_read(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		uint64_t addr, uint64_t key, void *context)
+		fi_addr_t src_addr, uint64_t addr, uint64_t key, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_rma_readv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, uint64_t addr, uint64_t key, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_rma_readfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		fi_addr_t src_addr, uint64_t addr, uint64_t key,
+		size_t count, fi_addr_t src_addr, uint64_t addr, uint64_t key,
 		void *context)
 {
 	return -FI_ENOSYS;
@@ -492,17 +441,12 @@ ssize_t fi_no_rma_readmsg(struct fid_ep *ep, const struct fi_msg_rma *msg,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_rma_write(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t addr, uint64_t key, void *context)
+		fi_addr_t dest_addr, uint64_t addr, uint64_t key, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_rma_writev(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, uint64_t addr, uint64_t key, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_rma_writeto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
+		size_t count, fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		void *context)
 {
 	return -FI_ENOSYS;
@@ -513,21 +457,11 @@ ssize_t fi_no_rma_writemsg(struct fid_ep *ep, const struct fi_msg_rma *msg,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_rma_inject(struct fid_ep *ep, const void *buf, size_t len,
-		uint64_t addr, uint64_t key)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_rma_injectto(struct fid_ep *ep, const void *buf, size_t len,
 		fi_addr_t dest_addr, uint64_t addr, uint64_t key)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_rma_writedata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, uint64_t addr, uint64_t key, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_rma_writedatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		void *context)
 {
@@ -538,18 +472,13 @@ ssize_t fi_no_rma_writedatato(struct fid_ep *ep, const void *buf, size_t len, vo
  * struct fi_ops_tagged
  */
 ssize_t fi_no_tagged_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		uint64_t tag, uint64_t ignore, void *context)
+		fi_addr_t src_addr, uint64_t tag, uint64_t ignore, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_tagged_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, uint64_t tag, uint64_t ignore, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_tagged_recvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		fi_addr_t src_addr,
-		uint64_t tag, uint64_t ignore, void *context)
+		size_t count, fi_addr_t src_addr, uint64_t tag, uint64_t ignore,
+		void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -559,17 +488,12 @@ ssize_t fi_no_tagged_recvmsg(struct fid_ep *ep, const struct fi_msg_tagged *msg,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_tagged_send(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t tag, void *context)
+		fi_addr_t dest_addr, uint64_t tag, void *context)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_tagged_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, uint64_t tag, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_tagged_sendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		fi_addr_t dest_addr, uint64_t tag, void *context)
+		size_t count, fi_addr_t dest_addr, uint64_t tag, void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -579,21 +503,11 @@ ssize_t fi_no_tagged_sendmsg(struct fid_ep *ep, const struct fi_msg_tagged *msg,
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_tagged_inject(struct fid_ep *ep, const void *buf, size_t len,
-		uint64_t tag)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_tagged_injectto(struct fid_ep *ep, const void *buf, size_t len,
 		fi_addr_t dest_addr, uint64_t tag)
 {
 	return -FI_ENOSYS;
 }
 ssize_t fi_no_tagged_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, uint64_t tag, void *context)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_tagged_senddatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context)
 {
 	return -FI_ENOSYS;

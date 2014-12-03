@@ -71,10 +71,10 @@ struct fi_ops_ep {
 			void *optval, size_t *optlen);
 	int	(*setopt)(fid_t fid, int level, int optname,
 			const void *optval, size_t optlen);
-	int	(*tx_ctx)(struct fid_ep *ep, int index,
+	int	(*tx_ctx)(struct fid_sep *sep, int index,
 			struct fi_tx_ctx_attr *attr, struct fid_ep **tx_ep,
 			void *context);
-	int	(*rx_ctx)(struct fid_ep *ep, int index,
+	int	(*rx_ctx)(struct fid_sep *sep, int index,
 			struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
 			void *context);
 };
@@ -82,27 +82,20 @@ struct fi_ops_ep {
 struct fi_ops_msg {
 	size_t	size;
 	ssize_t (*recv)(struct fid_ep *ep, void *buf, size_t len, void *desc,
-			void *context);
-	ssize_t (*recvv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, void *context);
-	ssize_t (*recvfrom)(struct fid_ep *ep, void *buf, size_t len, void *desc,
 			fi_addr_t src_addr, void *context);
+	ssize_t (*recvv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
+			size_t count, fi_addr_t src_addr, void *context);
 	ssize_t (*recvmsg)(struct fid_ep *ep, const struct fi_msg *msg,
 			uint64_t flags);
 	ssize_t (*send)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			void *context);
-	ssize_t (*sendv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, void *context);
-	ssize_t (*sendto)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			fi_addr_t dest_addr, void *context);
+	ssize_t (*sendv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
+			size_t count, fi_addr_t dest_addr, void *context);
 	ssize_t (*sendmsg)(struct fid_ep *ep, const struct fi_msg *msg,
 			uint64_t flags);
-	ssize_t	(*inject)(struct fid_ep *ep, const void *buf, size_t len);
-	ssize_t	(*injectto)(struct fid_ep *ep, const void *buf, size_t len,
+	ssize_t	(*inject)(struct fid_ep *ep, const void *buf, size_t len,
 			fi_addr_t dest_addr);
 	ssize_t (*senddata)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			uint64_t data, void *context);
-	ssize_t (*senddatato)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			uint64_t data, fi_addr_t dest_addr, void *context);
 };
 
@@ -137,6 +130,17 @@ struct fid_pep {
 	struct fi_ops_cm	*cm;
 };
 
+struct fid_stx {
+	struct fid		fid;
+	struct fi_ops_ep	ops;
+};
+
+struct fid_sep {
+	struct fid		fid;
+	struct fi_ops_ep	*ops;
+	struct fi_ops_cm	*cm;
+};
+
 #ifndef FABRIC_DIRECT
 
 static inline int
@@ -153,9 +157,21 @@ fi_endpoint(struct fid_domain *domain, struct fi_info *info,
 	return domain->ops->endpoint(domain, info, ep, context);
 }
 
+static inline int
+fi_scalable_ep(struct fid_domain *domain, struct fi_info *info,
+	    struct fid_sep **sep, void *context)
+{
+	return domain->ops->scalable_ep(domain, info, sep, context);
+}
+
 static inline int fi_ep_bind(struct fid_ep *ep, struct fid *bfid, uint64_t flags)
 {
 	return ep->fid.ops->bind(&ep->fid, bfid, flags);
+}
+
+static inline int fi_scalable_ep_bind(struct fid_sep *sep, struct fid *bfid, uint64_t flags)
+{
+	return sep->fid.ops->bind(&sep->fid, bfid, flags);
 }
 
 static inline int fi_enable(struct fid_ep *ep)
@@ -186,37 +202,45 @@ fi_getopt(fid_t fid, int level, int optname,
 }
 
 static inline int
-fi_tx_context(struct fid_ep *ep, int index, struct fi_tx_ctx_attr *attr,
+fi_tx_context(struct fid_sep *sep, int index, struct fi_tx_ctx_attr *attr,
 	      struct fid_ep **tx_ep, void *context)
 {
-	return ep->ops->tx_ctx(ep, index, attr, tx_ep, context);
+	return sep->ops->tx_ctx(sep, index, attr, tx_ep, context);
 }
 
 static inline int
-fi_rx_context(struct fid_ep *ep, int index, struct fi_rx_ctx_attr *attr,
+fi_rx_context(struct fid_sep *sep, int index, struct fi_rx_ctx_attr *attr,
 	      struct fid_ep **rx_ep, void *context)
 {
-	return ep->ops->rx_ctx(ep, index, attr, rx_ep, context);
+	return sep->ops->rx_ctx(sep, index, attr, rx_ep, context);
+}
+
+static inline int
+fi_stx_context(struct fid_domain *domain, struct fi_tx_ctx_attr *attr,
+	       struct fid_stx **stx, void *context)
+{
+	return domain->ops->stx_ctx(domain, attr, stx, context);
+}
+
+static inline int
+fi_srx_context(struct fid_domain *domain, struct fi_rx_ctx_attr *attr,
+	       struct fid_ep **rx_ep, void *context)
+{
+	return domain->ops->srx_ctx(domain, attr, rx_ep, context);
 }
 
 static inline ssize_t
-fi_recv(struct fid_ep *ep, void *buf, size_t len, void *desc, void *context)
+fi_recv(struct fid_ep *ep, void *buf, size_t len, void *desc, fi_addr_t src_addr,
+	void *context)
 {
-	return ep->msg->recv(ep, buf, len, desc, context);
+	return ep->msg->recv(ep, buf, len, desc, src_addr, context);
 }
 
 static inline ssize_t
 fi_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-	 size_t count, void *context)
+	 size_t count, fi_addr_t src_addr, void *context)
 {
-	return ep->msg->recvv(ep, iov, desc, count, context);
-}
-
-static inline ssize_t
-fi_recvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-	    fi_addr_t src_addr, void *context)
-{
-	return ep->msg->recvfrom(ep, buf, len, desc, src_addr, context);
+	return ep->msg->recvv(ep, iov, desc, count, src_addr, context);
 }
 
 static inline ssize_t
@@ -226,23 +250,17 @@ fi_recvmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
 }
 
 static inline ssize_t
-fi_send(struct fid_ep *ep, const void *buf, size_t len, void *desc, void *context)
+fi_send(struct fid_ep *ep, const void *buf, size_t len, void *desc,
+	fi_addr_t dest_addr, void *context)
 {
-	return ep->msg->send(ep, buf, len, desc, context);
+	return ep->msg->send(ep, buf, len, desc, dest_addr, context);
 }
 
 static inline ssize_t
 fi_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-	 size_t count, void *context)
+	 size_t count, fi_addr_t dest_addr, void *context)
 {
-	return ep->msg->sendv(ep, iov, desc, count, context);
-}
-
-static inline ssize_t
-fi_sendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	  fi_addr_t dest_addr, void *context)
-{
-	return ep->msg->sendto(ep, buf, len, desc, dest_addr, context);
+	return ep->msg->sendv(ep, iov, desc, count, dest_addr, context);
 }
 
 static inline ssize_t
@@ -252,29 +270,16 @@ fi_sendmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
 }
 
 static inline ssize_t
-fi_inject(struct fid_ep *ep, const void *buf, size_t len)
+fi_inject(struct fid_ep *ep, const void *buf, size_t len, fi_addr_t dest_addr)
 {
-	return ep->msg->inject(ep, buf, len);
-}
-
-static inline ssize_t
-fi_injectto(struct fid_ep *ep, const void *buf, size_t len, fi_addr_t dest_addr)
-{
-	return ep->msg->injectto(ep, buf, len, dest_addr);
+	return ep->msg->inject(ep, buf, len, dest_addr);
 }
 
 static inline ssize_t
 fi_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	    uint64_t data, void *context)
-{
-	return ep->msg->senddata(ep, buf, len, desc, data, context);
-}
-
-static inline ssize_t
-fi_senddatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 	      uint64_t data, fi_addr_t dest_addr, void *context)
 {
-	return ep->msg->senddatato(ep, buf, len, desc, data, dest_addr, context);
+	return ep->msg->senddata(ep, buf, len, desc, data, dest_addr, context);
 }
 
 #else // FABRIC_DIRECT
