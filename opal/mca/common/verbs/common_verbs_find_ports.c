@@ -171,148 +171,6 @@ static const char *link_layer_to_str(int link_type)
 }
 #endif
 
-/* Helper routine to detect Cisco usNIC devices (these are non-IB, non-RoCE,
- * non-iWARP devices).  See the usnic BTL for more information.
- *
- * Once usNIC is no longer new and the IBV_TRANSPORT_USNIC constant is widely
- * available in the wild, all calls to it can be replaced with a simple check
- * against said constant.
- */
-static bool device_is_usnic(struct ibv_device *device)
-{
-    /* A usNIC-capable VIC will present as one of:
-     *   1. _IWARP -- any libibverbs and old kernel
-     *   2. _UNKNOWN -- old libibverbs and new kernel
-     *   3. _USNIC -- new libibverbs and new kernel
-     *
-     * Where an "old kernel" is one that does not have this commit:
-     * http://bit.ly/kernel-180771a3
-     */
-#if HAVE_DECL_IBV_TRANSPORT_USNIC
-    if (IBV_TRANSPORT_USNIC == device->transport_type) {
-        return true;
-    }
-#endif
-#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
-    if (IBV_TRANSPORT_USNIC_UDP == device->transport_type) {
-        return true;
-    }
-#endif
-    if ((IBV_TRANSPORT_IWARP == device->transport_type ||
-         IBV_TRANSPORT_UNKNOWN == device->transport_type) &&
-        0 == strncmp(device->name, "usnic_", strlen("usnic_"))) {
-        /* if we are willing to open the device, query its attributes, then
-         * close it again, we could also check for Cisco's vendor ID (0x1137) */
-        return true;
-    }
-
-    return false;
-}
-
-enum {
-    USNIC_L2,
-    USNIC_UDP,
-    USNIC_UNKNOWN
-};
-
-/* See comment in btl_usnic_ext.c about why we must check the return
-   from the usnic verbs extensions probe for a magic number (which
-   means we must also copy the usnic extension struct and magic number
-   value down here into common/verbs.  Bummer). */
-typedef union {
-    struct {
-        int lookup_version;
-        uint64_t magic;
-    } qpt;
-    struct ibv_port_attr attr;
-} port_query_u;
-
-#define USNIC_PORT_QUERY_MAGIC (0x43494e7375534355ULL)
-
-/*
- * Probe for the magic number to see if the userspace side of verbs is
- * new enough to include UDP transport support.
- *
- * If the userspace side is too old to include UDP support, then it
- * will fail the magic probe.  If somehow we eneded up with a "new"
- * userspace (e.g., that supports UDP) and an "old" kernel module
- * (e.g., that does not support UDP), then the userspace will fail the
- * ABI check with the kernel module and we won't get this far at all.
- *
- * NB: it will be complicated if we ever need to extend this scheme
- * (e.g., if we support something other than UDP someday), because the
- * real way to know what the actual transport is will be to call a
- * usnic verbs extension, and that code is all currently over in the
- * usnic BTL, which we can't call from here.
- */
-static int usnic_magic_probe(struct ibv_context *context)
-{
-    int rc;
-    port_query_u u;
-
-    rc = ibv_query_port(context, 42, &u.attr);
-    /* See comment in btl_usnic_ext.c about why we have to check
-       for rc==0 *and* the magic number. */
-    if (0 == rc && USNIC_PORT_QUERY_MAGIC == u.qpt.magic) {
-        /* We only support version 1 of the lookup function in
-           this particular version of Open MPI */
-        if (1 == u.qpt.lookup_version) {
-            return USNIC_UDP;
-        } else {
-            return USNIC_UNKNOWN;
-        }
-    } else {
-        return USNIC_L2;
-    }
-}
-
-/*
- * usNIC devices will always return one of these
- * device->transport_type values:
- *
- * 1. TRANSPORT_IWARP: for older kernels (e.g., on systems such as
- * RHEL 6.x (x>=4) with the drivers downloaded from cisco.com) where
- * the cisco.com drivers could not modify verbs.h to include
- * TRANSPORT_USNIC*.  In this case, it is unknown whether the
- * transport is usNIC/L2 or usNIC/UDP -- you have to do an additional
- * probe to figure it out.
- *
- * 2. TRANSPORT_USNIC: for some systems that updated to include the
- * RDMA_TRANSPORT_USNIC constant, but not the RDMA_TRANSPORT_USNIC_UDP
- * constant, with the drivers downloaded from cisco.com (e.g., RHEL
- * 7.0).  This is just like the TRANSPORT_IWARP case: we have to do an
- * additional probe to figure out whether the transport is usNIC/L2 or
- * usNIC/UDP.
- *
- * 3. TRANSPORT_USNIC_UDP: on systems with new kernels and new
- * libibverbs.  In this case, the transport is guaranteed to be
- * usNIC/UDP.
- *
- * 4. TRANSPORT_UNKNOWN: on systems with a new kernel but an old
- * libibverbs (i.e., kernel understands/returns TRANSPORT_USNIC*
- * values, but libibverbs doesn't understant the TRANSPORT_USNIC*
- * constants, and therefore returns TRANSPORT_UNKNOWN).
- */
-static int usnic_transport(struct ibv_device *device,
-                           struct ibv_context *context)
-{
-    if (!device_is_usnic(device)) {
-        return USNIC_UNKNOWN;
-    }
-
-#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
-    /* If we got the transport type of USNIC_UDP, then it's definitely
-       the UDP transport. */
-    if (IBV_TRANSPORT_USNIC_UDP == device->transport_type) {
-        return USNIC_UDP;
-    }
-#endif
-
-    /* All other cases require a secondary check to figure out whether
-       the transport is L2 or UDP */
-    return usnic_magic_probe(context);
-}
-
 /***********************************************************************/
 
 static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
@@ -371,7 +229,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
     uint32_t i, j;
     opal_list_t *port_list = NULL;
     opal_list_item_t *item;
-    bool want, dev_is_usnic;
+    bool want;
 
     /* Allocate a list to fill */
     port_list = OBJ_NEW(opal_list_t);
@@ -420,12 +278,6 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
         opal_output_verbose(5, stream, "examining verbs interface: %s",
                             ibv_get_device_name(device));
 
-        dev_is_usnic = false;
-        if ((flags & OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC) ||
-            (flags & OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP)) {
-            dev_is_usnic = device_is_usnic(device);
-        }
-
         device_context = ibv_open_device(device);
         if (NULL == device_context) {
             opal_show_help("help-opal-common-verbs.txt",
@@ -456,22 +308,6 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
            device */
         want = false;
 
-        if (flags & OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC &&
-            dev_is_usnic &&
-            USNIC_L2 == usnic_transport(device, device_context)) {
-            want = true;
-            opal_output_verbose(5, stream,
-                                "verbs interface %s has the right transport (usNIC/L2)",
-                                ibv_get_device_name(device));
-        }
-        if (flags & OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP &&
-            dev_is_usnic &&
-            USNIC_UDP == usnic_transport(device, device_context)) {
-            want = true;
-            opal_output_verbose(5, stream,
-                                "verbs interface %s has the right transport (usNIC/UDP)",
-                                ibv_get_device_name(device));
-        }
         if (flags & OPAL_COMMON_VERBS_FLAGS_TRANSPORT_IB &&
             IBV_TRANSPORT_IB == device->transport_type) {
             opal_output_verbose(5, stream, "verbs interface %s has right type (IB)",
