@@ -1098,7 +1098,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
         channel->chan_error = true;
     }
 
-    rc = fi_cq_readerr(channel->cq, &err_entry, sizeof(err_entry), 0);
+    rc = fi_cq_readerr(channel->cq, &err_entry, 0);
     if (rc != sizeof(err_entry)) {
         BTL_ERROR(("%s: cq_readerr ret = %d",
                module->fabric_info->fabric_attr->name, rc));
