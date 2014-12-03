@@ -117,6 +117,10 @@ AC_DEFUN([ORTE_CHECK_LSF],[
     LDFLAGS="$orte_check_lsf_$1_save_LDFLAGS"
     LIBS="$orte_check_lsf_$1_save_LIBS"
 
+    # add the LSF libraries to static builds as they are required
+    $1_WRAPPER_EXTRA_LDFLAGS=[$]$1_LDFLAGS
+    $1_WRAPPER_EXTRA_LIBS=[$]$1_LIBS
+
     # Reset for the next time we're called
     orte_check_lsf_dir=
     orte_check_lsf_libdir=
