@@ -108,7 +108,7 @@ typedef int32_t orte_app_state_t;
 
 typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_T    OPAL_INT32
-#define ORTE_JOB_STATE_ANY  0xffff
+#define ORTE_JOB_STATE_ANY  INT_MAX
 
 #define ORTE_JOB_STATE_UNDEF                     0
 #define ORTE_JOB_STATE_INIT                      1  /* ready to be assigned id */

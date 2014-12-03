@@ -331,12 +331,6 @@ static int rte_finalize(void)
 {
     int ret;
 
-    /* mark us as finalized */
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();
-        (void) mca_base_framework_close(&opal_pmix_base_framework);
-    }
-        
     /* remove the envars that we pushed into environ
      * so we leave that structure intact
      */
@@ -355,6 +349,12 @@ static int rte_finalize(void)
         return ret;
     }
     
+    /* mark us as finalized */
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+        (void) mca_base_framework_close(&opal_pmix_base_framework);
+    }
+        
     return ORTE_SUCCESS;
 }
 
