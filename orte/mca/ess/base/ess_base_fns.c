@@ -117,7 +117,8 @@ int orte_ess_base_proc_binding(void)
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 if (OPAL_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
-                                                                           opal_hwloc_topology, cpus))) {
+                                                                           opal_hwloc_topology,
+                                                                           OPAL_HWLOC_LOGICAL, cpus))) {
                     error = "Setting processor affinity failed";
                     hwloc_bitmap_free(cpus);
                     goto error;

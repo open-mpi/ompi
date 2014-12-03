@@ -71,9 +71,10 @@ The specified %s policy is not recognized:
 Please check for a typo or ensure that the option is a supported
 one.
 #
-[logical-cpu-not-found]
-A specified logical processor does not exist in this topology:
+[cpu-not-found]
+A specified %s processor does not exist in this topology:
 
+  CPU number:     %d
   Cpu set given:  %s
 #
 [redefining-policy]
