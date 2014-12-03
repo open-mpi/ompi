@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,7 +31,9 @@ AC_DEFUN([MCA_orte_ras_tm_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ras_tm_good" = "1"],
-          [$1],
+          [$1
+           ras_tm_WRAPPER_EXTRA_LDFLAGS="$ras_tm_LDFLAGS"
+           ras_tm_WRAPPER_EXTRA_LIBS="$ras_tm_LIBS"],
           [$2])
 
     # set build flags to use in makefile
