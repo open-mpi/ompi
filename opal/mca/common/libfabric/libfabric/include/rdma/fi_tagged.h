@@ -58,29 +58,22 @@ struct fi_msg_tagged {
 struct fi_ops_tagged {
 	size_t	size;
 	ssize_t (*recv)(struct fid_ep *ep, void *buf, size_t len, void *desc,
+			fi_addr_t src_addr,
 			uint64_t tag, uint64_t ignore, void *context);
 	ssize_t (*recvv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, uint64_t tag, uint64_t ignore, void *context);
-	ssize_t (*recvfrom)(struct fid_ep *ep, void *buf, size_t len, void *desc,
-			fi_addr_t src_addr,
+			size_t count, fi_addr_t src_addr,
 			uint64_t tag, uint64_t ignore, void *context);
 	ssize_t (*recvmsg)(struct fid_ep *ep, const struct fi_msg_tagged *msg,
 			uint64_t flags);
 	ssize_t (*send)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			uint64_t tag, void *context);
-	ssize_t (*sendv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, uint64_t tag, void *context);
-	ssize_t (*sendto)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			fi_addr_t dest_addr, uint64_t tag, void *context);
+	ssize_t (*sendv)(struct fid_ep *ep, const struct iovec *iov, void **desc,
+			size_t count, fi_addr_t dest_addr, uint64_t tag, void *context);
 	ssize_t (*sendmsg)(struct fid_ep *ep, const struct fi_msg_tagged *msg,
 			uint64_t flags);
 	ssize_t	(*inject)(struct fid_ep *ep, const void *buf, size_t len,
-			uint64_t tag);
-	ssize_t	(*injectto)(struct fid_ep *ep, const void *buf, size_t len,
 			fi_addr_t dest_addr, uint64_t tag);
 	ssize_t (*senddata)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			uint64_t data, uint64_t tag, void *context);
-	ssize_t (*senddatato)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context);
 	ssize_t (*search)(struct fid_ep *ep, uint64_t *tag, uint64_t ignore,
 			uint64_t flags, fi_addr_t *src_addr, size_t *len, void *context);
@@ -91,24 +84,19 @@ struct fi_ops_tagged {
 
 static inline ssize_t
 fi_trecv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-	 uint64_t tag, uint64_t ignore, void *context)
+	 fi_addr_t src_addr, uint64_t tag, uint64_t ignore, void *context)
 {
-	return ep->tagged->recv(ep, buf, len, desc, tag, ignore, context);
+	return ep->tagged->recv(ep, buf, len, desc, src_addr, tag, ignore,
+				context);
 }
 
 static inline ssize_t
 fi_trecvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-	  size_t count, uint64_t tag, uint64_t ignore, void *context)
+	  size_t count, fi_addr_t src_addr, uint64_t tag, uint64_t ignore,
+	  void *context)
 {
-	return ep->tagged->recvv(ep, iov, desc, count, tag, ignore, context);
-}
-
-static inline ssize_t
-fi_trecvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-	     fi_addr_t src_addr, uint64_t tag, uint64_t ignore, void *context)
-{
-	return ep->tagged->recvfrom(ep, buf, len, desc, src_addr, tag, ignore,
-				    context);
+	return ep->tagged->recvv(ep, iov, desc, count, src_addr, tag, ignore,
+				 context);
 }
 
 static inline ssize_t
@@ -119,23 +107,16 @@ fi_trecvmsg(struct fid_ep *ep, const struct fi_msg_tagged *msg, uint64_t flags)
 
 static inline ssize_t
 fi_tsend(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	uint64_t tag, void *context)
+	 fi_addr_t dest_addr, uint64_t tag, void *context)
 {
-	return ep->tagged->send(ep, buf, len, desc, tag, context);
+	return ep->tagged->send(ep, buf, len, desc, dest_addr, tag, context);
 }
 
 static inline ssize_t
 fi_tsendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-	  size_t count, uint64_t tag, void *context)
+	  size_t count, fi_addr_t dest_addr, uint64_t tag, void *context)
 {
-	return ep->tagged->sendv(ep, iov, desc, count, tag, context);
-}
-
-static inline ssize_t
-fi_tsendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	   fi_addr_t dest_addr, uint64_t tag, void *context)
-{
-	return ep->tagged->sendto(ep, buf, len, desc, dest_addr, tag, context);
+	return ep->tagged->sendv(ep, iov, desc, count, dest_addr,tag, context);
 }
 
 static inline ssize_t
@@ -145,31 +126,18 @@ fi_tsendmsg(struct fid_ep *ep, const struct fi_msg_tagged *msg, uint64_t flags)
 }
 
 static inline ssize_t
-fi_tinject(struct fid_ep *ep, const void *buf, size_t len, uint64_t tag)
+fi_tinject(struct fid_ep *ep, const void *buf, size_t len,
+	   fi_addr_t dest_addr, uint64_t tag)
 {
-	return ep->tagged->inject(ep, buf, len, tag);
-}
-
-static inline ssize_t
-fi_tinjectto(struct fid_ep *ep, const void *buf, size_t len,
-	     fi_addr_t dest_addr, uint64_t tag)
-{
-	return ep->tagged->injectto(ep, buf, len, dest_addr, tag);
+	return ep->tagged->inject(ep, buf, len, dest_addr, tag);
 }
 
 static inline ssize_t
 fi_tsenddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	     uint64_t data, uint64_t tag, void *context)
+	     uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context)
 {
-	return ep->tagged->senddata(ep, buf, len, desc, data, tag, context);
-}
-
-static inline ssize_t
-fi_tsenddatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-	       uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context)
-{
-	return ep->tagged->senddatato(ep, buf, len, desc, data,
-				      dest_addr, tag, context);
+	return ep->tagged->senddata(ep, buf, len, desc, data,
+				    dest_addr, tag, context);
 }
 
 static inline ssize_t

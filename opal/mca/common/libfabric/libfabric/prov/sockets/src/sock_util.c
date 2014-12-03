@@ -54,27 +54,4 @@
 #include "sock.h"
 #include "sock_util.h"
 
-int sock_debug_level = SOCK_ERROR;
-
-void sock_debug(int level, char *fmt, ...)
-{
-	va_list ap;
-
-	if(level >= sock_debug_level){
-		switch(level){
-		case SOCK_INFO:
-			fprintf(stderr, "SOCK_INFO: ");
-			break;
-		case SOCK_WARN:
-			fprintf(stderr, "SOCK_WARN: ");
-			break;
-		case SOCK_ERROR:
-		default:
-			fprintf(stderr, "SOCK_ERROR: ");
-			break;
-		}
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	}
-}
+int sock_log_level = SOCK_ERROR;

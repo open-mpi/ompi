@@ -150,7 +150,6 @@ static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_wait_close,
 	.bind = fi_no_bind,
-	.sync = fi_no_sync,
 	.control = fi_no_control,
 	.ops_open = fi_no_ops_open,
 };
@@ -237,6 +236,7 @@ int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
 	wait_priv->wait.fid.context = 0;
 	wait_priv->wait.fid.ops = &psmx_fi_ops;
 	wait_priv->wait.ops = &psmx_wait_ops;
+	wait_priv->domain = domain_priv;
 
 	*waitset = &wait_priv->wait;
 	return 0;

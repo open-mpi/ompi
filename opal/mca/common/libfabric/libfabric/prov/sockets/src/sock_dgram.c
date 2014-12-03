@@ -78,7 +78,7 @@ int sockd_check_hints(struct fi_info *hints)
 	case FI_EP_DGRAM:
 		break;
 	default:
-		sock_debug(SOCK_ERROR,"[sockd] %s: hints->type = %d, only FI_EP_DGRAM = %d is supported\n",
+		SOCK_LOG_ERROR("[sockd] %s: hints->type = %d, only FI_EP_DGRAM = %d is supported\n",
 				__func__, hints->ep_type, FI_EP_DGRAM);
 		return -FI_ENODATA;
 	}
@@ -89,7 +89,7 @@ int sockd_check_hints(struct fi_info *hints)
 	case FI_SOCKADDR_IN6:
 		break;
 	default:
-		sock_debug(SOCK_ERROR,"[sockd] %s: hints->addr_format = %d, supported = FI_SOCKADDR or FI_SOCKADDR_IN or FI_SOCKADDR_IN6\n",
+		SOCK_LOG_ERROR("[sockd] %s: hints->addr_format = %d, supported = FI_SOCKADDR or FI_SOCKADDR_IN or FI_SOCKADDR_IN6\n",
 				__func__, hints->addr_format);
 		return -FI_ENODATA;
 	}
@@ -99,23 +99,31 @@ int sockd_check_hints(struct fi_info *hints)
 		case FI_PROTO_UNSPEC:
 			break;
 		default:
-			sock_debug(SOCK_ERROR,"[sockd] %s: hints->ep_attr->protocol=%lu, supported=%d\n",
+			/*
+			SOCK_LOG_ERROR("[sockd] %s: hints->ep_attr->protocol=%lu, supported=%d\n",
 					__func__, hints->ep_attr->protocol, FI_PROTO_UNSPEC);
+			*/
 			return -FI_ENODATA;
 		}
 		if (hints->ep_attr->max_msg_size > SOCKD_MTU) {
-			sock_debug(SOCK_ERROR,"[sockd] %s: hints->ep_attr->max_msg_size=%d, supported=%d\n",
+			/*
+			SOCK_LOG_ERROR("[sockd] %s: hints->ep_attr->max_msg_size=%d, supported=%d\n",
 					__func__, hints->ep_attr->max_msg_size, SOCKD_MTU);
+			*/
 			return -FI_ENODATA;
 		}
 		if (hints->ep_attr->inject_size > SOCKD_MTU) {
-			sock_debug(SOCK_ERROR,"[sockd] %s: hints->ep_attr->inject_size=%d, supported=%d\n",
+			/*
+			SOCK_LOG_ERROR("[sockd] %s: hints->ep_attr->inject_size=%d, supported=%d\n",
 					__func__, hints->ep_attr->inject_size, SOCKD_MTU);
+			*/
 			return -FI_ENODATA;
 		}
 		if (hints->ep_attr->total_buffered_recv > so_rcvbuf) {
-			sock_debug(SOCK_ERROR,"[sockd] %s: hints->ep_attr->total_buffered_recv=%d, supported=%d\n",
+			/*
+			SOCK_LOG_ERROR("[sockd] %s: hints->ep_attr->total_buffered_recv=%d, supported=%d\n",
 					__func__, hints->ep_attr->total_buffered_recv, so_rcvbuf);
+			*/
 			return -FI_ENODATA;
 		}
 		/* FIXME: check 
@@ -126,21 +134,25 @@ int sockd_check_hints(struct fi_info *hints)
 		 * msg_order */
 	}
 
-	if ((hints->caps & SOCK_EP_CAP) != hints->caps) {
-		sock_debug(SOCK_ERROR,"[sockd] %s: hints->ep_cap=0x%llx, supported=0x%llx\n",
-				__func__, hints->caps, SOCK_EP_CAP);
+	if ((hints->caps & SOCK_EP_DGRAM_CAP) != hints->caps) {
+		/*
+		SOCK_LOG_ERROR("[sockd] %s: hints->ep_cap=0x%llx, supported=0x%llx\n",
+				__func__, hints->caps, SOCK_EP_DGRAM_CAP);
+		*/
 		return -FI_ENODATA;
 	}
 
 	if (hints->tx_attr && ((hints->tx_attr->op_flags & SOCKD_OP_FLAGS) != hints->tx_attr->op_flags)) {
-		sock_debug(SOCK_ERROR,"[sockd] %s: hints->tx_attr->op_flags=0x%llx, supported=0x%llx\n",
+		/*
+		SOCK_LOG_ERROR("[sockd] %s: hints->tx_attr->op_flags=0x%llx, supported=0x%llx\n",
 				__func__, hints->tx_attr->op_flags, SOCKD_OP_FLAGS);
+		*/
 		return -FI_ENODATA;
 	}
 
 #if 0 /* TODO */
 	if ((hints->domain_cap & SOCKD_DOMAIN_CAP) != hints->domain_cap) {
-		sock_debug(SOCK_ERROR,"[sockd] %s: hints->domain_cap=0x%llx, supported=0x%llx\n",
+		SOCK_LOG_ERROR("[sockd] %s: hints->domain_cap=0x%llx, supported=0x%llx\n",
 				__func__, hints->domain_cap, SOCKD_DOMAIN_CAP);
 		return -FI_ENODATA;
 		/* FIXME: check
@@ -154,15 +166,15 @@ int sockd_check_hints(struct fi_info *hints)
 
 	struct sockaddr_in *si_src;
 	if (!hints->src_addr || !hints->src_addrlen) {
-		sock_debug(SOCK_ERROR,"[sockd] src_addr and src_addrlen are required from hints\n");
+		SOCK_LOG_ERROR("[sockd] src_addr and src_addrlen are required from hints\n");
 		return -FI_ENODATA;
 	} else {
 		si_src = (struct sockaddr_in *)(hints->src_addr);
 		if (ntohs(si_src->sin_port)<1024) {
-			sock_debug(SOCK_ERROR,"[sockd] port number should be above 1023\n");
+			SOCK_LOG_ERROR("[sockd] port number should be above 1023\n");
 			return -FI_ENODATA;
 		}
-		sock_debug(SOCK_ERROR,"[sockd] port is set to %d\n", ntohs(si_src->sin_port));
+		SOCK_LOG_ERROR("[sockd] port is set to %d\n", ntohs(si_src->sin_port));
 	}
 
 	return 0;
@@ -188,7 +200,7 @@ static struct fi_info* sockd_dupinfo(struct fi_info *hints)
 		fi->caps	= hints->caps;
 		fi->addr_format = hints->addr_format;
 	} else {
-		fi->caps	= SOCK_EP_CAP;
+		fi->caps	= SOCK_EP_DGRAM_CAP;
 		fi->addr_format = FI_SOCKADDR;
 	}
 
@@ -240,7 +252,7 @@ static struct fi_info* sockd_dupinfo(struct fi_info *hints)
 		memcpy(fi->src_addr, hints->src_addr, hints->src_addrlen);
 		fi->src_addrlen = hints->src_addrlen;
 	} else {
-		sock_debug(SOCK_ERROR,"[sockd] hints must have src_addr\n");
+		SOCK_LOG_ERROR("[sockd] hints must have src_addr\n");
 #if 0
 		fi->src_addr = NULL;
 		fi->src_addrlen = 0;
@@ -314,7 +326,7 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 		};
 		ret = getaddrinfo(node, service, &sock_hints, &res);
 		if (ret) {
-			sock_debug(SOCK_ERROR,"%s: couldn't getaddrinfo for (%s:%s):%s\n", __func__, node, service, gai_strerror(ret));
+			SOCK_LOG_ERROR("%s: couldn't getaddrinfo for (%s:%s):%s\n", __func__, node, service, gai_strerror(ret));
 			return -FI_ENODATA;
 		}
 		freeaddrinfo(res);
@@ -322,7 +334,7 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 
 	sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sockfd < 0) {
-		sock_debug(SOCK_ERROR,"%s: couldn't open DGRAM socket\n", __func__);
+		SOCK_LOG_ERROR("%s: couldn't open DGRAM socket\n", __func__);
 		return -FI_ENODATA;
 	}
 
@@ -358,7 +370,7 @@ static int sockd_ep_close(fid_t fid)
 	ep = container_of(fid, struct sock_ep, ep.fid);
 	if (ep->sock_fd)
 		if (close(ep->sock_fd)) {
-			sock_debug(SOCK_ERROR,"[sockd] cannot close sock_fd\n");
+			SOCK_LOG_ERROR("[sockd] cannot close sock_fd\n");
 			return -FI_ENODATA;
 		}
 
@@ -378,11 +390,11 @@ static int sockd_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 
 	switch (bfid->fclass) {
 	case FI_CLASS_CNTR:
-		sock_debug(SOCK_ERROR,"[sockd] bind counter to ep\n");
+		SOCK_LOG_ERROR("[sockd] bind counter to ep\n");
 		cntr = container_of(bfid, struct sock_cntr, cntr_fid.fid);
 		if (!(flags &
 			(FI_WRITE | FI_READ | FI_SEND | FI_RECV))) {
-			sock_debug(SOCK_ERROR,"[sockd] Counter only support FI_WRITE | FI_READ | FI_SEND | FI_RECV\n");
+			SOCK_LOG_ERROR("[sockd] Counter only support FI_WRITE | FI_READ | FI_SEND | FI_RECV\n");
 			errno = FI_EINVAL;
 			return -errno;
 		}
@@ -408,11 +420,11 @@ static int sockd_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		}
 		break;
 	case FI_CLASS_CQ:
-		sock_debug(SOCK_ERROR,"[sockd] bind CQ to ep\n");
+		SOCK_LOG_ERROR("[sockd] bind CQ to ep\n");
 		cq = container_of(bfid, struct sock_cq, cq_fid.fid);
 		if (!(flags &
 			(FI_SEND | FI_RECV))) {
-			sock_debug(SOCK_ERROR,"[sockd] CQ only support FI_SEND | FI_RECV\n");
+			SOCK_LOG_ERROR("[sockd] CQ only support FI_SEND | FI_RECV\n");
 			errno = FI_EINVAL;
 			return -errno;
 		}
@@ -433,7 +445,7 @@ static int sockd_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 */
 		break;
 	case FI_CLASS_EQ:
-		sock_debug(SOCK_ERROR,"[sockd] bind EQ to ep\n");
+		SOCK_LOG_ERROR("[sockd] bind EQ to ep\n");
 		/* FIXME: bind EQ to sockd EP */
 		eq = container_of(bfid, struct sock_eq, eq.fid);
 		if (ep->eq) {
@@ -442,7 +454,7 @@ static int sockd_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		ep->eq = eq;
 		break;
 	case FI_CLASS_AV:
-		sock_debug(SOCK_ERROR,"[sockd] bind AV to ep\n");
+		SOCK_LOG_ERROR("[sockd] bind AV to ep\n");
 		av = container_of(bfid,
 				struct sock_av, av_fid.fid);
 		if (ep->domain != av->dom)
@@ -454,12 +466,6 @@ static int sockd_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	}
 
 	return 0;
-}
-
-static int sockd_ep_sync(fid_t fid, uint64_t flags, void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
 }
 
 static int sockd_ep_control(fid_t fid, int command, void *arg)
@@ -508,7 +514,7 @@ static int sockd_ep_setopt(fid_t fid, int level, int optname,
 	return -errno;
 }
 
-static int sockd_ep_tx_ctx(struct fid_ep *ep, int index,
+static int sockd_ep_tx_ctx(struct fid_sep *sep, int index,
 		struct fi_tx_ctx_attr *attr, struct fid_ep **tx_ep,
 		void *context)
 {
@@ -517,7 +523,7 @@ static int sockd_ep_tx_ctx(struct fid_ep *ep, int index,
 }
 
 
-static int	sockd_ep_rx_ctx(struct fid_ep *ep, int index,
+static int sockd_ep_rx_ctx(struct fid_sep *sep, int index,
 			struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
 			void *context)
 {
@@ -588,20 +594,6 @@ static int sockd_cm_leave(struct fid_ep *ep, void *addr, fi_addr_t fi_addr,
 /* sockd_ops_msg */
 
 static ssize_t sockd_msg_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-		void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_recvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
 		fi_addr_t src_addr, void *context)
 {
 	struct sock_ep *sock_ep;
@@ -640,6 +632,13 @@ static ssize_t sockd_msg_recvfrom(struct fid_ep *ep, void *buf, size_t len, void
 	return 0;
 }
 
+static ssize_t sockd_msg_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
+			       size_t count, fi_addr_t src_addr, void *context)
+{
+	errno = FI_ENOSYS;
+	return -errno;
+}
+
 static ssize_t sockd_msg_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 		uint64_t flags)
 {
@@ -648,20 +647,6 @@ static ssize_t sockd_msg_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 }
 
 static ssize_t sockd_msg_send(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-		size_t count, void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_sendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		fi_addr_t dest_addr, void *context)
 {
 	struct sock_ep *sock_ep;
@@ -700,6 +685,13 @@ static ssize_t sockd_msg_sendto(struct fid_ep *ep, const void *buf, size_t len, 
 	return 0;
 }
 
+static ssize_t sockd_msg_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
+				size_t count, fi_addr_t dest_addr, void *context)
+{
+	errno = FI_ENOSYS;
+	return -errno;
+}
+
 static ssize_t sockd_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 		uint64_t flags)
 {
@@ -707,28 +699,15 @@ static ssize_t sockd_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	return -errno;
 }
 
-static ssize_t sockd_msg_inject(struct fid_ep *ep, const void *buf, size_t len)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_injectto(struct fid_ep *ep, const void *buf, size_t len,
-		fi_addr_t dest_addr)
+static ssize_t sockd_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
+				fi_addr_t dest_addr)
 {
 	errno = FI_ENOSYS;
 	return -errno;
 }
 
 static ssize_t sockd_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, void *context)
-{
-	errno = FI_ENOSYS;
-	return -errno;
-}
-
-static ssize_t sockd_msg_senddatato(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, fi_addr_t dest_addr, void *context)
+				  uint64_t data, fi_addr_t dest_addr, void *context)
 {
 	errno = FI_ENOSYS;
 	return -errno;
@@ -738,7 +717,6 @@ static struct fi_ops sockd_ep_fi_ops = {
 	.size		= sizeof(struct fi_ops),
 	.close		= sockd_ep_close,
 	.bind		= sockd_ep_bind,
-	.sync		= sockd_ep_sync,
 	.control	= sockd_ep_control,
 	.ops_open	= sockd_ep_ops_open
 };
@@ -770,26 +748,22 @@ static struct fi_ops_msg sockd_ops_msg = {
 	.size 		= sizeof(struct fi_ops_msg),
 	.recv 		= sockd_msg_recv,
 	.recvv 		= sockd_msg_recvv,
-	.recvfrom 	= sockd_msg_recvfrom,
 	.recvmsg 	= sockd_msg_recvmsg,
 	.send 		= sockd_msg_send,
 	.sendv 		= sockd_msg_sendv,
-	.sendto 	= sockd_msg_sendto,
 	.sendmsg 	= sockd_msg_sendmsg,
 	.inject 	= sockd_msg_inject,
-	.injectto 	= sockd_msg_injectto,
 	.senddata 	= sockd_msg_senddata,
-	.senddatato 	= sockd_msg_senddatato
 };
 
 static inline int _sock_ep_dgram_progress(struct sock_ep *ep, struct sock_cq *cq)
 {
 	struct sock_req_item *item;
 	if((item = dequeue_item(ep->send_list))) {
-		sock_debug(SOCK_ERROR,"[ep_dgram_progress] found a send req\n");
+		SOCK_LOG_ERROR("[ep_dgram_progress] found a send req\n");
 	}
 	if((item = dequeue_item(ep->recv_list))) {
-		sock_debug(SOCK_ERROR,"[ep_dgram_progress] found a recv req\n");
+		SOCK_LOG_ERROR("[ep_dgram_progress] found a recv req\n");
 	}
 	return -FI_ENOSYS;
 }
@@ -797,7 +771,7 @@ static inline int _sock_ep_dgram_progress(struct sock_ep *ep, struct sock_cq *cq
 int sock_dgram_ep(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context)
 {
-	sock_debug(SOCK_ERROR,"[sockd] enter sock_dgram_ep\n");
+	SOCK_LOG_ERROR("[sockd] enter sock_dgram_ep\n");
 	struct sock_ep *_ep;
 	struct sock_domain *_dom;
 	struct sockaddr_in si_me;
@@ -823,7 +797,7 @@ int sock_dgram_ep(struct fid_domain *domain, struct fi_info *info,
 
 	_ep->sock_fd 	= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (_ep->sock_fd < 0) {
-		sock_debug(SOCK_ERROR,"%s: couldn't open DGRAM socket\n", __func__);
+		SOCK_LOG_ERROR("%s: couldn't open DGRAM socket\n", __func__);
 		errno = FI_ENODATA;
 		goto err1;
 	}
@@ -832,16 +806,16 @@ int sock_dgram_ep(struct fid_domain *domain, struct fi_info *info,
 	si_me.sin_port		= ((struct sockaddr_in *)(info->src_addr))->sin_port;
 	si_me.sin_addr.s_addr	= htonl(INADDR_ANY);
 	if (bind(_ep->sock_fd, &si_me, sizeof(si_me)) == -1) {
-		sock_debug(SOCK_ERROR,"[sockd] %s: failed to bind sock_fd to port %d\n", __func__, ntohs(si_me.sin_port));
+		SOCK_LOG_ERROR("[sockd] %s: failed to bind sock_fd to port %d\n", __func__, ntohs(si_me.sin_port));
 		goto err2;
 	}
 
 	_ep->port_num		= ntohs(si_me.sin_port);
 
-	if(!(_ep->send_list = new_list(SOCK_EP_SNDQ_LEN)))
+	if(!(_ep->send_list = new_list(SOCK_CQ_DEF_SZ)))
 		goto err2;
 
-	if(!(_ep->recv_list = new_list(SOCK_EP_RCVQ_LEN)))
+	if(!(_ep->recv_list = new_list(SOCK_CQ_DEF_SZ)))
 		goto err3;
 
 /*	

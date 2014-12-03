@@ -40,7 +40,7 @@
  *
  *
  */
-#ident "$Id$"
+#ident "$Id: vnic_dev.h 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #ifndef _VNIC_DEV_H_
 #define _VNIC_DEV_H_
@@ -135,7 +135,7 @@ unsigned int vnic_dev_desc_ring_size(struct vnic_dev_ring *ring,
 void vnic_dev_clear_desc_ring(struct vnic_dev_ring *ring);
 #ifdef ENIC_PMD
 int vnic_dev_alloc_desc_ring(struct vnic_dev *vdev, struct vnic_dev_ring *ring,
-	unsigned int desc_count, unsigned int desc_size, unsigned int socket_id,
+	unsigned int desc_count, unsigned int desc_size, unsigned int socket_id, 
         char *z_name);
 #else
 int vnic_dev_alloc_desc_ring(struct vnic_dev *vdev, struct vnic_dev_ring *ring,
@@ -257,4 +257,5 @@ int vnic_dev_overlay_offload_enable_disable(struct vnic_dev *vdev,
 int vnic_dev_overlay_offload_cfg(struct vnic_dev *vdev, u8 overlay,
 	u16 vxlan_udp_port_number);
 #endif
+int vnic_dev_init_devcmdorig(struct vnic_dev *vdev);
 #endif /* _VNIC_DEV_H_ */

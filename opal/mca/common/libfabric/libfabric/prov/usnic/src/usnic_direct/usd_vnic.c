@@ -49,6 +49,7 @@
 
 #include "usd.h"
 #include "usd_util.h"
+#include "usd_vnic.h"
 
 #define GET_CONFIG(m) \
         do { \
@@ -63,8 +64,9 @@
         } while (0)
 
 
+#if 0
 /*
- * Dump the devspec
+ * Dump the devspec (for debugging)
  */
 int
 usd_dump_devspec(
@@ -100,6 +102,7 @@ usd_dump_devspec(
 
     return 0;
 }
+#endif
 
 /*
  * Get some QP settings from devspec

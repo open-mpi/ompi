@@ -120,7 +120,7 @@ int sock_ep_listen(struct fid_pep *pep)
 	struct sock_pep *sock_pep;
 
 	sock_pep = container_of(pep, struct sock_pep, pep);
-	ret = listen(sock_pep->sock_fd, SOCK_EP_BACKLOG);
+	ret = listen(sock_pep->sock_fd, 0);
 	if(ret)
 		return -errno;
 	return 0;
@@ -169,7 +169,7 @@ struct fi_ops_cm sock_cm_ops = {
 };
 
 ssize_t sock_ep_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
-			void *context)
+		     fi_addr_t src_addr, void *context)
 {
 /*
 	struct sock_ep *sock_ep;
@@ -188,13 +188,7 @@ ssize_t sock_ep_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
 }
 
 ssize_t sock_ep_recvv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, void *context)
-{
-	return 0;
-}
-
-ssize_t sock_ep_recvfrom(struct fid_ep *ep, void *buf, size_t len, void *desc,
-			fi_addr_t src_addr, void *context)
+			size_t count, fi_addr_t src_addr, void *context)
 {
 	return 0;
 }
@@ -206,19 +200,13 @@ ssize_t sock_ep_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 }
 
 ssize_t sock_ep_send(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			void *context)
+		     fi_addr_t dest_addr, void *context)
 {
 	return 0;
 }
 
 ssize_t sock_ep_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-			size_t count, void *context)
-{
-	return 0;
-}
-
-ssize_t sock_ep_sendto(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			fi_addr_t dest_addr, void *context)
+		      size_t count, fi_addr_t dest_addr, void *context)
 {
 	return 0;
 }
@@ -229,25 +217,14 @@ ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	return 0;
 }
 
-ssize_t sock_ep_inject(struct fid_ep *ep, const void *buf, size_t len)
+ssize_t sock_ep_inject(struct fid_ep *ep, const void *buf, size_t len,
+			fi_addr_t dest_addr)
 {
 	return 0;
 }
 
-ssize_t sock_ep_injectto(struct fid_ep *ep, const void *buf, size_t len,
-			  fi_addr_t dest_addr)
-{
-	return 0;
-}
-
-ssize_t sock_ep_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-			uint64_t data, void *context)
-{
-	return 0;
-}
-
-ssize_t sock_ep_senddatato(struct fid_ep *ep, const void *buf, size_t len, 
-				  void *desc, uint64_t data, fi_addr_t dest_addr, void *context)
+ssize_t sock_ep_senddata(struct fid_ep *ep, const void *buf, size_t len,
+			 void *desc, uint64_t data, fi_addr_t dest_addr, void *context)
 {
 	return 0;
 }
@@ -262,15 +239,11 @@ struct fi_ops_msg sock_msg_ops = {
 		.size = sizeof(struct fi_ops_msg),
 		.recv = NULL,
 		.recvv = NULL,
-		.recvfrom = NULL,
 		.recvmsg = NULL,
 		.send = NULL,
 		.sendv = NULL,
-		.sendto = NULL,
 		.sendmsg = NULL,
 		.inject = NULL,
-		.injectto = NULL,
 		.senddata = NULL,
-		.senddatato = NULL,
 };
 

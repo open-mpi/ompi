@@ -161,7 +161,6 @@ static struct fi_ops sock_av_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = sock_av_close,
 	.bind = sock_av_bind,
-	.sync = fi_no_sync,
 	.control = fi_no_control,
 	.ops_open = fi_no_ops_open,
 };
@@ -271,4 +270,11 @@ fi_addr_t _sock_av_lookup(struct sock_av *av, struct sockaddr *addr)
 		fprintf(stderr, "[sock] failed to lookup src_addr in av table\n");
 	}
 	return FI_ADDR_UNSPEC;
+}
+
+/* place holder */
+int sock_av_lookup_addr(struct sock_av *av, fi_addr_t addr, 
+			struct sock_conn **entry)
+{
+	return -FI_ENOSYS;
 }

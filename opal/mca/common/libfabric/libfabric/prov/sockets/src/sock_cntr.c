@@ -50,6 +50,23 @@ static uint64_t sock_cntr_read(struct fid_cntr *cntr)
 	return _cntr->value;
 }
 
+int sock_cntr_inc(struct sock_cntr *cntr)
+{
+	pthread_mutex_lock(&cntr->mut);
+	cntr->value += 1;
+	if (cntr->value >= cntr->threshold)
+		pthread_cond_signal(&cntr->cond);
+	pthread_mutex_unlock(&cntr->mut);
+	return 0;
+}
+
+int sock_cntr_err_inc(struct sock_cntr *cntr)
+{
+	atomic_inc(&cntr->err_cnt);
+	pthread_cond_signal(&cntr->cond);
+	return 0;
+}
+
 static int sock_cntr_add(struct fid_cntr *cntr, uint64_t value)
 {
 	struct sock_cntr *_cntr;
@@ -106,8 +123,16 @@ static int sock_cntr_close(struct fid *fid)
 	return 0;
 }
 
+uint64_t sock_cntr_readerr(struct fid_cntr *cntr)
+{
+	struct sock_cntr *_cntr;
+	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
+	return atomic_get(&_cntr->err_cnt);
+}
+
 static struct fi_ops_cntr sock_cntr_ops = {
 	.size = sizeof(struct fi_ops_cntr),
+	.readerr = sock_cntr_readerr,
 	.read = sock_cntr_read,
 	.add = sock_cntr_add,
 	.set = sock_cntr_set,
@@ -143,6 +168,8 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		goto err2;
 
 	atomic_init(&_cntr->ref, 0);
+	atomic_init(&_cntr->err_cnt, 0);
+
 	_cntr->cntr_fid.fid.fclass = FI_CLASS_CNTR;
 	_cntr->cntr_fid.fid.context = context;
 	_cntr->cntr_fid.fid.ops = &sock_cntr_fi_ops;

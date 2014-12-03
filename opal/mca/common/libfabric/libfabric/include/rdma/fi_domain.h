@@ -119,17 +119,26 @@ struct fi_ops_domain {
 			struct fid_cq **cq, void *context);
 	int	(*endpoint)(struct fid_domain *domain, struct fi_info *info,
 			struct fid_ep **ep, void *context);
+	int	(*scalable_ep)(struct fid_domain *domain, struct fi_info *info,
+			struct fid_sep **sep, void *context);
 	int	(*cntr_open)(struct fid_domain *domain, struct fi_cntr_attr *attr,
 			struct fid_cntr **cntr, void *context);
 	int	(*wait_open)(struct fid_domain *domain, struct fi_wait_attr *attr,
 			struct fid_wait **waitset);
 	int	(*poll_open)(struct fid_domain *domain, struct fi_poll_attr *attr,
 			struct fid_poll **pollset);
+	int	(*stx_ctx)(struct fid_domain *domain,
+			struct fi_tx_ctx_attr *attr, struct fid_stx **stx,
+			void *context);
+	int	(*srx_ctx)(struct fid_domain *domain,
+			struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
+			void *context);
 };
 
 
 /* Memory registration flags */
 #define FI_MR_OFFSET		(1ULL << 0)
+#define FI_MR_KEY		(1ULL << 1)
 
 struct fi_ops_mr {
 	size_t	size;
@@ -161,6 +170,12 @@ fi_domain(struct fid_fabric *fabric, struct fi_info *info,
 	   struct fid_domain **domain, void *context)
 {
 	return fabric->ops->domain(fabric, info, domain, context);
+}
+
+static inline int
+fi_domain_bind(struct fid_domain *domain, struct fid *fid, uint64_t flags)
+{
+	return domain->fid.ops->bind(&domain->fid, fid, flags);
 }
 
 static inline int
@@ -204,6 +219,12 @@ fi_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 }
 
 static inline int
+fi_av_bind(struct fid_av *av, struct fid *fid, uint64_t flags)
+{
+	return av->fid.ops->bind(&av->fid, fid, flags);
+}
+
+static inline int
 fi_av_insert(struct fid_av *av, const void *addr, size_t count,
 	     fi_addr_t *fi_addr, uint64_t flags, void *context)
 {
@@ -242,11 +263,6 @@ static inline fi_addr_t
 fi_rx_addr(fi_addr_t fi_addr, int rx_index, int rx_ctx_bits)
 {
 	return (fi_addr_t) (((uint64_t) rx_index << (64 - rx_ctx_bits)) | fi_addr);
-}
-
-static inline int fi_av_sync(struct fid_av *av, uint64_t flags, void *context)
-{
-	return fi_sync(&av->fid, flags, context);
 }
 
 

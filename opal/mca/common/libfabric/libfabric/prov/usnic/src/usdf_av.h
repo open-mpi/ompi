@@ -76,8 +76,4 @@ struct usdf_av {
 #define av_fidtou(FID) container_of(FID, struct usdf_av, av_fid.fid)
 #define av_utof(AV) (&(AV)->av_fid)
 
-/* USD routines we use */
-void usd_fill_udp_dest(struct usd_dest *dest, struct usd_device_attrs *dap,
-    uint32_t daddr_be, uint16_t dport_be);
-
 #endif /* _USDF_AV_H_ */

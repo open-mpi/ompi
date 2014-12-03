@@ -71,7 +71,7 @@ TAILQ_HEAD(,usd_device) usd_device_list =
  * Perform one-time initialization
  */
 static void
-do_usd_init()
+do_usd_init(void)
 {
     usd_init_error = usd_ib_get_devlist(&usd_ib_dev_list);
 }
@@ -187,9 +187,6 @@ int
 usd_close(
     struct usd_device *dev)
 {
-    struct usd_cq_group *cgp;
-    struct usd_cq_group *next_cgp;
-
     TAILQ_REMOVE(&usd_device_list, dev, ud_link);
 
     /* XXX - verify all other resources closed out */
@@ -197,14 +194,6 @@ usd_close(
         close(dev->ud_ib_dev_fd);
     if (dev->ud_arp_sockfd != -1)
         close(dev->ud_arp_sockfd);
-
-    /* free all allocated CQ group structs */
-    cgp = dev->ud_free_cq_grp;
-    while (cgp != NULL) {
-        next_cgp = cgp->cqg_next;
-        free(cgp);
-        cgp = next_cgp;
-    }
 
     free(dev);
 
@@ -278,7 +267,6 @@ usd_open_with_fd(
     dev->ud_ib_dev_fd = -1;
     dev->ud_arp_sockfd = -1;
     dev->ud_flags = 0;
-    dev->ud_next_cq_grp_id = 1;     /* CQ group IDs start at 1 */
     TAILQ_INIT(&dev->ud_pending_reqs);
     TAILQ_INIT(&dev->ud_completed_reqs);
 

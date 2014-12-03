@@ -86,10 +86,6 @@ struct usd_device {
     /* VFs we have associated with this device */
     struct usd_vf *ud_vf_list;
 
-    /* CQ group management */
-    struct usd_cq_group *ud_free_cq_grp;
-    uint32_t ud_next_cq_grp_id;
-
     /* PD for this device */
     uint32_t ud_pd_handle;
 
@@ -168,19 +164,10 @@ enum usd_qstate {
     USD_QS_READY = (1 << 5)
 };
 
-struct usd_cq_group {
-    struct usd_device *cqg_dev;
-    uint32_t cqg_id;
-    uint16_t cqg_num_qp;
-    uint16_t cqg_refcnt;
-    struct usd_cq_group *cqg_next;
-};
-
 struct usd_cq_impl {
     struct usd_cq ucq_cq;
     struct usd_device *ucq_dev;
     struct usd_vf *ucq_vf;
-    struct usd_cq_group *ucq_cq_group;
 
     uint32_t ucq_state;
 

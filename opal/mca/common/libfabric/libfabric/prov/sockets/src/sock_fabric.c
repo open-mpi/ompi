@@ -43,17 +43,67 @@
 const char const sock_fab_name[] = "IP";
 const char const sock_dom_name[] = "sockets";
 
-int _sock_verify_fabric_attr(struct fi_fabric_attr *attr)
+const struct fi_fabric_attr sock_fabric_attr = {
+	.fabric = NULL,
+	.name = NULL,
+	.prov_name = NULL,
+	.prov_version = FI_VERSION(SOCK_MAJOR_VERSION, SOCK_MINOR_VERSION),
+};
+
+int sock_verify_fabric_attr(struct fi_fabric_attr *attr)
 {
+	if (!attr)
+		return 0;
+
 	if (attr->name &&
 	    strcmp(attr->name, sock_fab_name))
 		return -FI_ENODATA;
 
-	if(attr->prov_version){
-		if(attr->prov_version != 
+	if (attr->prov_version) {
+		if (attr->prov_version != 
 		   FI_VERSION(SOCK_MAJOR_VERSION, SOCK_MINOR_VERSION))
 			return -FI_ENODATA;
 	}
+
+	return 0;
+}
+
+int sock_verify_info(struct fi_info *hints)
+{
+	int ret;
+	if (!hints)
+		return 0;
+
+	switch (hints->ep_type) {
+	case FI_EP_UNSPEC:
+	case FI_EP_MSG:
+	case FI_EP_DGRAM:
+	case FI_EP_RDM:
+		break;
+	default:
+		return -FI_ENODATA;
+	}
+	
+	switch (hints->addr_format) {
+	case FI_ADDR_UNSPEC:
+	case FI_SOCKADDR:
+	case FI_SOCKADDR_IN:
+		break;
+	default:
+		return -FI_ENODATA;
+	}
+
+	if (!sock_rdm_verify_ep_attr(hints->ep_attr, 
+				    hints->tx_attr, hints->rx_attr))
+		return 0;
+
+	ret = sock_verify_domain_attr(hints->domain_attr);
+	if (ret) 
+		return ret;
+
+	ret = sock_verify_fabric_attr(hints->fabric_attr);
+	if (ret) 
+		return ret;
 
 	return 0;
 }
@@ -70,7 +120,7 @@ static int sock_fabric_close(fid_t fid)
 	struct sock_fabric *fab;
 	fab = container_of(fid, struct sock_fabric, fab_fid);
 
-	if(atomic_get(&fab->ref)) {
+	if (atomic_get(&fab->ref)) {
 		return -FI_EBUSY;
 	}
 
@@ -79,11 +129,6 @@ static int sock_fabric_close(fid_t fid)
 }
 
 int sock_fabric_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
-{
-	return -FI_ENOSYS;
-}
-
-int sock_fabric_sync(struct fid *fid, uint64_t flags, void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -103,7 +148,6 @@ static struct fi_ops sock_fab_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = sock_fabric_close,
 	.bind = sock_fabric_bind,
-	.sync = sock_fabric_sync,
 	.control = sock_fabric_control,
 	.ops_open = sock_fabric_ops_open,
 };
@@ -137,6 +181,10 @@ static int sock_getinfo(uint32_t version, const char *node, const char *service,
 
 	return -FI_ENODATA;
 
+	ret = sock_verify_info(hints);
+	if (ret) 
+		return ret;
+	
 	if (hints) {
 		switch (hints->ep_type) {
 		case FI_EP_RDM:
@@ -153,19 +201,19 @@ static int sock_getinfo(uint32_t version, const char *node, const char *service,
 	ret = sock_rdm_getinfo(version, node, service, flags,
 			       hints, &_info);
 
-	if(ret == 0){
+	if (ret == 0) {
 		*info = tmp = _info;
 		while(tmp->next != NULL)
 			tmp=tmp->next;
-	}else if (-FI_ENODATA == ret){
+	} else if (ret == -FI_ENODATA) {
 		tmp = NULL;
-	}else
+	} else
 		return ret;
 	
 	ret = sock_dgram_getinfo(version, node, service, flags,
 			       hints, &_info);
 
-	if(NULL != tmp){
+	if (NULL != tmp) {
 		tmp->next = _info;
 		return ret;
 	}
@@ -174,35 +222,20 @@ static int sock_getinfo(uint32_t version, const char *node, const char *service,
 	return ret;
 }
 
-int sock_freeinfo(struct fi_info *info)
-{
-	if(info)
-		free(info);
-
-	return 0;
-}
-
-int sock_free_info(struct fi_info *info)
-{
-	free_fi_info(info);
-	return 0;
-}
-
 struct fi_provider sock_prov = {
 	.name = "IP",
 	.version = FI_VERSION(SOCK_MAJOR_VERSION, SOCK_MINOR_VERSION), 
 	.getinfo = sock_getinfo,
-	.freeinfo = sock_free_info,
 	.fabric = sock_fabric,
 };
 
 static void __attribute__((constructor)) sock_ini(void)
 {
 	char *tmp = getenv("SFI_SOCK_DEBUG_LEVEL");
-	if (tmp){
-		sock_debug_level = atoi(tmp);
-	}else{
-		sock_debug_level = SOCK_ERROR;
+	if (tmp) {
+		sock_log_level = atoi(tmp);
+	} else {
+		sock_log_level = SOCK_ERROR;
 	}
 
 	(void) fi_register(&sock_prov);

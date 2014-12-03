@@ -213,7 +213,7 @@ usd_map_vf(
                 goto out;
         }
 
-        ret = vnic_dev_cmd_init(vf->vf_vdev, 0);
+        ret = vnic_dev_cmd_init(vf->vf_vdev, 1);
         if (ret)
             goto out;
 
@@ -257,10 +257,6 @@ usd_destroy_cq(
     struct usd_cq_impl *cq;
 
     cq = to_cqi(ucq);
-
-    if (cq->ucq_cq_group != USD_CQ_NO_GROUP) {
-        --cq->ucq_cq_group->cqg_refcnt;
-    }
 
     if (cq->ucq_state & USD_QS_VERBS_CREATED)
         usd_ib_cmd_destroy_cq(cq->ucq_dev, cq);
@@ -613,7 +609,6 @@ int
 usd_create_cq(
     struct usd_device *dev,
     unsigned num_entries,
-    struct usd_cq_group *cgp,
     int comp_fd,
     struct usd_cq **cq_o)
 {
@@ -646,10 +641,6 @@ usd_create_cq(
     }
 
     qp_per_vf = dev->ud_attrs.uda_qp_per_vf;
-    cq->ucq_cq_group = cgp;
-    if (cgp != USD_CQ_NO_GROUP) {
-        ++cgp->cqg_refcnt;
-    }
 
     cq->ucq_wq_map = calloc(qp_per_vf, sizeof(struct usd_wq *));
     cq->ucq_rq_map = calloc(qp_per_vf, sizeof(struct usd_rq *));
@@ -1174,50 +1165,5 @@ usd_get_qp_attrs(
 
     qp = to_qpi(uqp);
     *qattrs = qp->uq_attrs;
-    return 0;
-}
-
-/*
- * Create a CQ group that will be shared over a set of QPs
- *   num_qp - able to be shared by this many QPs
- *   cq_group_id_o - CQ group ID returned
- */
-int usd_create_cq_group(struct usd_device *dev, unsigned num_qp,
-        struct usd_cq_group **cq_group_o)
-{
-    struct usd_cq_group *cgp;
-
-    cgp = dev->ud_free_cq_grp;
-    if (cgp != NULL) {
-        dev->ud_free_cq_grp = cgp->cqg_next;
-    } else if (dev->ud_next_cq_grp_id < USD_MAX_CQ_GROUP) {
-        cgp = calloc(1, sizeof(*cgp));
-        if (cgp == NULL) {
-            return -ENOMEM;
-        }
-        cgp->cqg_id = dev->ud_next_cq_grp_id;
-        ++dev->ud_next_cq_grp_id;
-        cgp->cqg_dev = dev;
-    } else {
-        return -ENOSPC;
-    }
-
-    cgp->cqg_refcnt = 0;
-    cgp->cqg_num_qp = num_qp;
-
-    *cq_group_o = cgp;
-    return 0;
-}
-
-int
-usd_destroy_cq_group(
-    struct usd_cq_group *cgp)
-{
-    if (cgp->cqg_refcnt > 0) {
-        return -EBUSY;
-    }
-
-    cgp->cqg_next = cgp->cqg_dev->ud_free_cq_grp;
-    cgp->cqg_dev->ud_free_cq_grp = cgp;
     return 0;
 }

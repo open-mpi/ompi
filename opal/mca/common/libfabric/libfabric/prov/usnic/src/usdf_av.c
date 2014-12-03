@@ -58,6 +58,7 @@
 #include "libnl_utils.h"
 #include "usd.h"
 #include "usd_queue.h"
+#include "usd_dest.h"
 
 #include "usdf.h"
 #include "usdf_av.h"
@@ -121,7 +122,7 @@ usdf_post_insert_request_error(struct usdf_av_insert *insert,
 /*
  * Called by progression thread to look for AV completions on this domain
  */
-void
+static void
 usdf_av_insert_progress(void *v)
 {
 	int ret;
@@ -273,9 +274,9 @@ usdf_am_insert_async(struct fid_av *fav, const void *addr, size_t count,
 			}
 
 		} else {
-            if (req->avr_daddr_be == 0) {
-                req->avr_daddr_be = sin->sin_addr.s_addr;
-            }
+			if (req->avr_daddr_be == 0) {
+				req->avr_daddr_be = sin->sin_addr.s_addr;
+			}
 			req->avr_dest = calloc(1, sizeof(*req->avr_dest));
 			if (req->avr_dest == NULL) {
 				ret = -FI_ENOMEM;
@@ -491,7 +492,6 @@ static struct fi_ops usdf_av_fi_ops = {
 	.close = usdf_av_close,
 	.bind = usdf_av_bind,
 	.control = fi_no_control,
-	.sync = fi_no_sync,
 	.ops_open = usdf_av_ops_open,
 };
 

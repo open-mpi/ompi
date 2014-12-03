@@ -66,4 +66,8 @@ struct usd_dest_req {
 
      TAILQ_ENTRY(usd_dest_req) udr_link;
 };
+
+void usd_fill_udp_dest(struct usd_dest *dest, struct usd_device_attrs *dap,
+    uint32_t daddr_be, uint16_t dport_be);
+
 #endif /* _USD_DEST_H_ */

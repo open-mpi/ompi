@@ -39,7 +39,8 @@
  *
  *
  */
-
+#include "config.h"
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -56,6 +57,7 @@
 
 #include "libnl_utils.h"
 #include "usnic_user_utils.h"
+#include "usnic_ip_utils.h"
 
 int usnic_arp_lookup(char *ifname, uint32_t ipaddr, int sockfd, uint8_t *macaddr)
 {

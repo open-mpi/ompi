@@ -216,23 +216,32 @@ default_symver(fi_getinfo_, fi_getinfo);
 __attribute__((visibility ("default")))
 void fi_freeinfo_(struct fi_info *info)
 {
-	struct fi_prov *prov;
 	struct fi_info *next;
 
 	for (; info; info = next) {
 		next = info->next;
-		prov = info->fabric_attr ?
-		       fi_getprov(info->fabric_attr->prov_name) : NULL;
 
-		if (prov && prov->provider->freeinfo)
-			prov->provider->freeinfo(info);
-		else
-			fi_freeinfo_internal(info);
+		free(info->src_addr);
+		free(info->dest_addr);
+		free(info->tx_attr);
+		free(info->rx_attr);
+		free(info->ep_attr);
+		if (info->domain_attr) {
+			free(info->domain_attr->name);
+			free(info->domain_attr);
+		}
+		if (info->fabric_attr) {
+			free(info->fabric_attr->name);
+			free(info->fabric_attr->prov_name);
+			free(info->fabric_attr);
+		}
+		free(info);
 	}
 }
 default_symver(fi_freeinfo_, fi_freeinfo);
 
-static struct fi_info *fi_dupinfo_internal(const struct fi_info *info)
+__attribute__((visibility ("default")))
+struct fi_info *fi_dupinfo_(const struct fi_info *info)
 {
 	struct fi_info *dup;
 
@@ -323,22 +332,8 @@ static struct fi_info *fi_dupinfo_internal(const struct fi_info *info)
 	return dup;
 
 fail:
-	fi_freeinfo_internal(dup);
+	fi_freeinfo(dup);
 	return NULL;
-}
-
-__attribute__((visibility ("default")))
-struct fi_info *fi_dupinfo_(const struct fi_info *info)
-{
-	struct fi_prov *prov;
-
-	prov = info->fabric_attr ?
-		fi_getprov(info->fabric_attr->prov_name) : NULL;
-	if (prov != NULL && prov->provider->dupinfo != NULL) {
-		return prov->provider->dupinfo(info);
-	} else {
-		return fi_dupinfo_internal(info);
-	}
 }
 default_symver(fi_dupinfo_, fi_dupinfo);
 
@@ -366,7 +361,7 @@ uint32_t fi_version_(void)
 default_symver(fi_version_, fi_version);
 
 #define FI_ERRNO_OFFSET	256
-#define FI_ERRNO_MAX	FI_EOPBADSTATE
+#define FI_ERRNO_MAX	FI_ENOCQ
 
 static const char *const errstr[] = {
 	[FI_EOTHER - FI_ERRNO_OFFSET] = "Unspecified error",
@@ -376,6 +371,7 @@ static const char *const errstr[] = {
 	[FI_EBADFLAGS - FI_ERRNO_OFFSET] = "Flags not supported",
 	[FI_ENOEQ - FI_ERRNO_OFFSET] = "Missing or unavailable event queue",
 	[FI_EDOMAIN - FI_ERRNO_OFFSET] = "Invalid resource domain",
+	[FI_ENOCQ - FI_ERRNO_OFFSET] = "Missing or unavailable completion queue",
 };
 
 __attribute__((visibility ("default")))

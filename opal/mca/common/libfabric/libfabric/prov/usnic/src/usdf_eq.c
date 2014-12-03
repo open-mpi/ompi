@@ -156,7 +156,7 @@ usdf_eq_write_event(struct usdf_eq *eq, uint32_t event,
 }
 
 static ssize_t
-usdf_eq_readerr(struct fid_eq *feq, struct fi_eq_err_entry *entry, size_t len,
+usdf_eq_readerr(struct fid_eq *feq, struct fi_eq_err_entry *entry,
 		uint64_t flags)
 {
 	struct usdf_eq *eq;
@@ -426,7 +426,7 @@ done:
 
 static const char *
 usdf_eq_strerror(struct fid_eq *feq, int prov_errno, const void *err_data,
-		 void *buf, size_t len)
+		 char *buf, size_t len)
 {
 	return NULL;
 }
@@ -492,7 +492,6 @@ static struct fi_ops usdf_eq_fi_ops = {
         .size = sizeof(struct fi_ops),
         .close = usdf_eq_close,
         .bind = fi_no_bind,
-        .sync = fi_no_sync,
         .control = usdf_eq_control,
         .ops_open = fi_no_ops_open,
 };

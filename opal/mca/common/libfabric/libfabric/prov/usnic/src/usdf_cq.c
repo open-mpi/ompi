@@ -65,7 +65,7 @@
 
 static ssize_t
 usdf_cq_readerr(struct fid_cq *fcq, struct fi_cq_err_entry *entry,
-	       size_t len, uint64_t flags)
+	        uint64_t flags)
 {
 	struct usdf_cq *cq;
 
@@ -74,10 +74,6 @@ usdf_cq_readerr(struct fid_cq *fcq, struct fi_cq_err_entry *entry,
 	// If top entry has no error, return 0
 	if (cq->cq_comp.uc_status == 0) {
 		return 0;
-	}
-
-	if (len < sizeof(*entry)) {
-		return -FI_ETOOSMALL;
 	}
 
 	entry->op_context = cq->cq_comp.uc_context;
@@ -291,10 +287,10 @@ usdf_cq_read_data(struct fid_cq *fcq, void *buf, size_t count)
 
 static const char *
 usdf_cq_strerror(struct fid_cq *eq, int prov_errno, const void *err_data,
-		void *buf, size_t len)
+		 char *buf, size_t len)
 {
 	strncpy(buf, "CQ Error", len-1);
-	((char *)buf)[len-1] = '\0';
+	buf[len-1] = '\0';
 	return buf;
 }
 
@@ -371,8 +367,7 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 
 	cq->cq_domain = container_of(domain, struct usdf_domain, dom_fid);
 
-	ret = usd_create_cq(cq->cq_domain->dom_dev, attr->size, USD_CQ_NO_GROUP,
-				-1, &cq->cq_cq);
+	ret = usd_create_cq(cq->cq_domain->dom_dev, attr->size, -1, &cq->cq_cq);
 	if (ret != 0) {
 		goto fail;
 	}

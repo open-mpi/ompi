@@ -63,7 +63,7 @@
 
 ssize_t
 usdf_msg_recv(struct fid_ep *fep, void *buf, size_t len,
-		void *desc, void *context)
+		void *desc, fi_addr_t src_addr, void *context)
 {
 	struct usdf_ep *ep;
 	struct usd_qp_impl *qp;
@@ -93,7 +93,7 @@ usdf_msg_recv(struct fid_ep *fep, void *buf, size_t len,
 
 ssize_t
 usdf_msg_recvv(struct fid_ep *fep, const struct iovec *iov, void **desc,
-                 size_t count, void *context)
+                 size_t count, fi_addr_t src_addr, void *context)
 {
 	struct usdf_ep *ep;
 	struct usd_recv_desc rxd;
@@ -121,16 +121,9 @@ usdf_msg_recvv(struct fid_ep *fep, const struct iovec *iov, void **desc,
 	return usd_post_recv(ep->ep_qp, &rxd);
 }
 
-ssize_t
-usdf_msg_recvfrom(struct fid_ep *fep, void *buf, size_t len, void *desc,
-		    fi_addr_t src_addr, void *context)
-{
-	return -FI_ENOSYS;
-}
-
 static inline ssize_t
-_usdf_msg_sendto(struct usdf_ep *ep, struct usd_dest *dest, 
-		const void *buf, size_t len,  void *context)
+_usdf_msg_send(struct usdf_ep *ep, struct usd_dest *dest,
+		const void *buf, size_t len, fi_addr_t dest_addr, void *context)
 {
 	if (len <= USD_SEND_MAX_COPY - sizeof(struct usd_udp_hdr)) {
 		return usd_post_send_one_copy(ep->ep_qp, dest, buf, len,
@@ -142,8 +135,8 @@ _usdf_msg_sendto(struct usdf_ep *ep, struct usd_dest *dest,
 }
 
 ssize_t
-usdf_msg_sendto(struct fid_ep *fep, const void *buf, size_t len, void *desc,
-		  fi_addr_t dest_addr, void *context)
+usdf_msg_send(struct fid_ep *fep, const void *buf, size_t len, void *desc,
+		fi_addr_t dest_addr, void *context)
 {
 	struct usdf_ep *ep;
 	struct usd_dest *dest;
@@ -152,40 +145,21 @@ usdf_msg_sendto(struct fid_ep *fep, const void *buf, size_t len, void *desc,
 	ep = ep_ftou(fep);
 
 	dest = (struct usd_dest *)(uintptr_t)dest_addr;
-	return _usdf_msg_sendto(ep, dest, buf, len, context);
-
-	return ret;
-}
-
-ssize_t
-usdf_msg_send(struct fid_ep *fep, const void *buf, size_t len,
-		void *desc, void *context)
-{
-	struct usdf_ep *ep;
-	struct usd_dest *dest;
-	int ret;
-
-	ep = ep_ftou(fep);
-	dest = ep->ep_dest;
-	if (dest == NULL) {
-		return -FI_ENOTCONN;
-	}
-
-	return _usdf_msg_sendto(ep, dest, buf, len, context);
+	return _usdf_msg_send(ep, dest, buf, len, dest_addr, context);
 
 	return ret;
 }
 
 ssize_t
 usdf_msg_senddata(struct fid_ep *ep, const void *buf, size_t len,
-		    void *desc, uint64_t data, void *context)
+		    void *desc, uint64_t data, fi_addr_t dest_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
 
 ssize_t
 usdf_msg_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-                 size_t count, void *context)
+                 size_t count, fi_addr_t dest_addr, void *context)
 {
 	return -FI_ENOSYS;
 }
@@ -197,22 +171,8 @@ usdf_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
 }
 
 ssize_t
-usdf_msg_inject(struct fid_ep *ep, const void *buf, size_t len)
-{
-	return -FI_ENOSYS;
-}
-
-ssize_t
-usdf_msg_injectto(struct fid_ep *ep, const void *buf, size_t len,
-		    fi_addr_t dest_addr)
-{
-	return -FI_ENOSYS;
-}
-
-ssize_t
-usdf_msg_senddatato(struct fid_ep *ep, const void *buf, size_t len,
-		      void *desc, uint64_t data, fi_addr_t dest_addr,
-		      void *context)
+usdf_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
+		fi_addr_t dest_addr)
 {
 	return -FI_ENOSYS;
 }
@@ -228,7 +188,7 @@ usdf_msg_recvmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
  */
 ssize_t
 usdf_msg_prefix_recv(struct fid_ep *fep, void *buf, size_t len,
-		void *desc, void *context)
+		void *desc, fi_addr_t src_addr, void *context)
 {
 	struct usdf_ep *ep;
 	struct usd_qp_impl *qp;
@@ -253,7 +213,7 @@ usdf_msg_prefix_recv(struct fid_ep *fep, void *buf, size_t len,
 
 ssize_t
 usdf_msg_prefix_recvv(struct fid_ep *fep, const struct iovec *iov,
-		void **desc, size_t count, void *context)
+		void **desc, size_t count, fi_addr_t src_addr, void *context)
 {
 	struct usdf_ep *ep;
 	struct usd_recv_desc rxd;

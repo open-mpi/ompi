@@ -109,7 +109,6 @@ static struct fi_ops usdf_fid_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_domain_close,
 	.bind = usdf_domain_bind,
-	.sync = fi_no_sync,
 	.ops_open = fi_no_ops_open,
 };
 

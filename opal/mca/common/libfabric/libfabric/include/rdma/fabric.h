@@ -76,6 +76,8 @@ struct fid_cq;
 struct fid_cntr;
 struct fid_ep;
 struct fid_pep;
+struct fid_stx;
+struct fid_sep;
 struct fid_mr;
 
 typedef struct fid *fid_t;
@@ -124,6 +126,7 @@ typedef struct fid *fid_t;
 
 #define FI_REMOTE_CQ_DATA	(1ULL << 24)
 #define FI_EVENT		(1ULL << 25)
+#define FI_COMPLETION		FI_EVENT
 #define FI_REMOTE_SIGNAL	(1ULL << 26)
 #define FI_REMOTE_COMPLETE	(1ULL << 27)
 #define FI_CANCEL		(1ULL << 28)
@@ -150,6 +153,7 @@ enum {
 };
 
 #define FI_ADDR_NOTAVAIL	UINT64_MAX
+#define FI_SHARED_CONTEXT	UINT64_MAX
 typedef uint64_t		fi_addr_t;
 typedef void *			fi_connreq_t;
 
@@ -201,28 +205,27 @@ enum {
 /* Mode bits */
 #define FI_CONTEXT		(1ULL << 0)
 #define FI_LOCAL_MR		(1ULL << 1)
-#define FI_WRITE_NONCOHERENT	(1ULL << 2)
-#define FI_PROV_MR_KEY		(1ULL << 3)
-#define FI_MSG_PREFIX		(1ULL << 4)
+#define FI_PROV_MR_ATTR		(1ULL << 2)
+#define FI_MSG_PREFIX		(1ULL << 3)
 
 struct fi_tx_ctx_attr {
 	uint64_t		caps;
+	uint64_t		mode;
 	uint64_t		op_flags;
 	uint64_t		msg_order;
 	size_t			inject_size;
 	size_t			size;
 	size_t			iov_limit;
-	size_t			op_alignment;
 };
 
 struct fi_rx_ctx_attr {
 	uint64_t		caps;
+	uint64_t		mode;
 	uint64_t		op_flags;
 	uint64_t		msg_order;
 	size_t			total_buffered_recv;
 	size_t			size;
 	size_t			iov_limit;
-	size_t			op_alignment;
 };
 
 struct fi_ep_attr {
@@ -248,13 +251,12 @@ struct fi_domain_attr {
 	enum fi_progress	data_progress;
 	size_t			mr_key_size;
 	size_t			cq_data_size;
+	size_t			cq_cnt;
 	size_t			ep_cnt;
 	size_t			tx_ctx_cnt;
 	size_t			rx_ctx_cnt;
 	size_t			max_ep_tx_ctx;
 	size_t			max_ep_rx_ctx;
-	size_t			op_size;
-	size_t			iov_size;
 };
 
 struct fi_fabric_attr {
@@ -287,8 +289,11 @@ enum {
 	FI_CLASS_FABRIC,
 	FI_CLASS_DOMAIN,
 	FI_CLASS_EP,
+	FI_CLASS_SEP,
 	FI_CLASS_RX_CTX,
+	FI_CLASS_SRX_CTX,
 	FI_CLASS_TX_CTX,
+	FI_CLASS_STX_CTX,
 	FI_CLASS_PEP,
 	FI_CLASS_INTERFACE,
 	FI_CLASS_AV,
@@ -306,7 +311,6 @@ struct fi_ops {
 	size_t	size;
 	int	(*close)(struct fid *fid);
 	int	(*bind)(struct fid *fid, struct fid *bfid, uint64_t flags);
-	int	(*sync)(struct fid *fid, uint64_t flags, void *context);
 	int	(*control)(struct fid *fid, int command, void *arg);
 	int	(*ops_open)(struct fid *fid, const char *name,
 			uint64_t flags, void **ops, void *context);
@@ -354,11 +358,6 @@ static inline int fi_close(struct fid *fid)
 static inline int fi_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 {
 	return fid->ops->bind(fid, bfid, flags);
-}
-
-static inline int fi_sync(struct fid *fid, uint64_t flags, void *context)
-{
-	return fid->ops->sync(fid, flags, context);
 }
 
 struct fi_alias {

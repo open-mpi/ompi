@@ -52,6 +52,7 @@
 
 #include "usd.h"
 #include "usd_util.h"
+#include "usd_socket.h"
 
 /*
  * Get the IP address and other information associated with this

@@ -72,13 +72,6 @@
 struct usdf_usnic_info *__usdf_devinfo;
 
 static int
-usdf_freeinfo(struct fi_info *info)
-{
-	fi_freeinfo_internal(info);
-	return 0;
-}
-
-static int
 usdf_validate_hints(struct fi_info *hints, struct usd_device_attrs *dap)
 {
 	struct fi_fabric_attr *fattrp;
@@ -184,25 +177,6 @@ fail:
 	return ret;		// fi_freeinfo() in caller frees all
 }
 
-static struct fi_info *
-usdf_allocinfo(void)
-{
-	struct fi_info *fi;
-
-	fi = fi_allocinfo_internal();
-	if (fi == NULL) {
-		goto fail;
-	}
-
-	return fi;
-
-fail:
-	if (fi != NULL) {
-		fi_freeinfo_internal(fi);
-	}
-	return NULL;
-}
-
 static int
 usdf_fill_info_dgram(
 	struct fi_info *hints,
@@ -230,7 +204,7 @@ usdf_fill_info_dgram(
 		return -FI_ENODATA;
 	}
 
-	fi = usdf_allocinfo();
+	fi = fi_allocinfo_internal();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -307,7 +281,7 @@ usdf_fill_info_dgram(
 
 fail:
 	if (fi != NULL) {
-		fi_freeinfo_internal(fi);
+		fi_freeinfo(fi);
 	}
 	return ret;
 }
@@ -339,7 +313,7 @@ usdf_fill_info_msg(
 		return -FI_ENODATA;
 	}
 
-	fi = usdf_allocinfo();
+	fi = fi_allocinfo_internal();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -414,13 +388,13 @@ usdf_fill_info_msg(
 
 fail:
 	if (fi != NULL) {
-		fi_freeinfo_internal(fi);
+		fi_freeinfo(fi);
 	}
 	return ret;
 }
 
 static int
-usdf_get_devinfo()
+usdf_get_devinfo(void)
 {
 	struct usdf_usnic_info *dp;
 	struct usdf_dev_entry *dep;
@@ -462,7 +436,7 @@ fail:
 	return ret;
 }
 
-int
+static int
 usdf_get_distance(
     struct usd_device_attrs *dap,
     uint32_t daddr_be,
@@ -494,7 +468,6 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 	struct usd_device_attrs *dap;
 	struct fi_info *fi_first;
 	struct fi_info *fi_last;
-	struct fi_info *fi_next;
 	struct addrinfo *ai;
 	struct sockaddr_in *src;
 	struct sockaddr_in *dest;
@@ -599,11 +572,7 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 
 fail:
 	if (ret != 0) {
-		while (fi_first != NULL) {
-			fi_next = fi_first->next;
-			fi_freeinfo_internal(fi_first);
-			fi_first = fi_next;
-		}
+		fi_freeinfo(fi_first);
 	}
 	if (ai != NULL) {
 		freeaddrinfo(ai);
@@ -679,7 +648,6 @@ static struct fi_ops usdf_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_fabric_close,
 	.bind = fi_no_bind,
-	.sync = fi_no_sync,
 	.control = fi_no_control,
 	.ops_open = usdf_fabric_ops_open,
 };
@@ -691,7 +659,7 @@ static struct fi_ops_fabric usdf_ops_fabric = {
 	.eq_open = usdf_eq_open,
 };
 
-int
+static int
 usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	       void *context)
 {
@@ -802,7 +770,6 @@ static struct fi_provider usdf_ops = {
 	.name = USDF_FI_NAME,
 	.version = FI_VERSION(0, 7),
 	.getinfo = usdf_getinfo,
-	.freeinfo = usdf_freeinfo,
 	.fabric = usdf_fabric_open,
 };
 

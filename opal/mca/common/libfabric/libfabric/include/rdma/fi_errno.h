@@ -182,6 +182,7 @@ extern "C" {
 #define FI_EBADFLAGS		260		/* Flags not supported */
 #define FI_ENOEQ		261		/* Missing or unavailable event queue */
 #define FI_EDOMAIN		262		/* Invalid resource domain */
+#define FI_ENOCQ		263		/* Missing or unavailable completion queue */
 
 const char *fi_strerror(int errnum);
 

@@ -146,6 +146,9 @@ static int psmx_ep_close(fid_t fid)
 	struct psmx_fid_ep *ep;
 
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
+
+	psmx_domain_disable_ep(ep->domain, ep);
+
 	free(ep);
 
 	return 0;
@@ -171,7 +174,7 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		cq = container_of(bfid, struct psmx_fid_cq, cq.fid);
 		if (ep->domain != cq->domain)
 			return -EINVAL;
-		if (flags & (FI_SEND | FI_READ | FI_WRITE)) {
+		if (flags & FI_SEND) {
 			ep->send_cq = cq;
 			if (flags & FI_EVENT)
 				ep->send_cq_event_flag = 1;
@@ -188,26 +191,18 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		cntr = container_of(bfid, struct psmx_fid_cntr, cntr.fid);
 		if (ep->domain != cntr->domain)
 			return -EINVAL;
-		if (flags & FI_SEND) {
+		if (flags & FI_SEND)
 			ep->send_cntr = cntr;
-			if (flags & FI_EVENT)
-				ep->send_cntr_event_flag = 1;
-		}
-		if (flags & FI_RECV){
+		if (flags & FI_RECV)
 			ep->recv_cntr = cntr;
-			if (flags & FI_EVENT)
-				ep->recv_cntr_event_flag = 1;
-		}
-		if (flags & FI_WRITE) {
+		if (flags & FI_WRITE)
 			ep->write_cntr = cntr;
-			if (flags & FI_EVENT)
-				ep->write_cntr_event_flag = 1;
-		}
-		if (flags & FI_READ){
+		if (flags & FI_READ)
 			ep->read_cntr = cntr;
-			if (flags & FI_EVENT)
-				ep->read_cntr_event_flag = 1;
-		}
+		if (flags & FI_REMOTE_WRITE)
+			ep->remote_write_cntr = cntr;
+		if (flags & FI_REMOTE_READ)
+			ep->remote_read_cntr = cntr;
 		break;
 
 	case FI_CLASS_AV:
@@ -237,35 +232,6 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 static inline int psmx_ep_progress(struct psmx_fid_ep *ep)
 {
 	return psmx_cq_poll_mq(NULL, ep->domain, NULL, 0, NULL);
-}
-
-static int psmx_ep_sync(fid_t fid, uint64_t flags, void *context)
-{
-	struct psmx_fid_ep *ep;
-
-	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
-
-	if (!flags || (flags & FI_SEND)) {
-		while (ep->pending_sends)
-			psmx_ep_progress(ep);
-	}
-
-	if (!flags || (flags & FI_WRITE)) {
-		while (ep->pending_writes)
-			psmx_ep_progress(ep);
-	}
-
-	if (!flags || (flags & FI_READ)) {
-		while (ep->pending_reads)
-			psmx_ep_progress(ep);
-	}
-
-	if (!flags || (flags & FI_WRITE) || (flags & FI_WRITE)) {
-		while (ep->pending_atomics)
-			psmx_ep_progress(ep);
-	}
-
-	return 0;
 }
 
 static int psmx_ep_control(fid_t fid, int command, void *arg)
@@ -324,7 +290,6 @@ static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_ep_close,
 	.bind = psmx_ep_bind,
-	.sync = psmx_ep_sync,
 	.control = psmx_ep_control,
 };
 
@@ -390,7 +355,9 @@ int psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 	if (ep_cap & FI_ATOMICS)
 		ep_priv->ep.atomic = &psmx_atomic_ops;
 
-	err = psmx_domain_enable_features(domain_priv, info->caps);
+	ep_priv->caps = ep_cap;
+
+	err = psmx_domain_enable_ep(domain_priv, ep_priv);
 	if (err) {
 		free(ep_priv);
 		return err;

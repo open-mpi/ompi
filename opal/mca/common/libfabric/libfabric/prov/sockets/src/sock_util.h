@@ -37,12 +37,33 @@
 #ifndef _SOCK_UTIL_H_
 #define _SOCK_UTIL_H_
 
+#include <stdio.h>
+
 #define SOCK_ERROR (1)
 #define SOCK_WARN  (2)
 #define SOCK_INFO  (3)
 
-extern int sock_debug_level;
+extern int sock_log_level;
 
-void sock_debug(int level, char *fmt, ...);
+#define SOCK_LOG_INFO(...) do {					\
+		if (sock_log_level <= SOCK_INFO) {			\
+			fprintf(stderr, "[SOCK_INFO - %s]: ", __func__); \
+			fprintf(stderr, __VA_ARGS__);			\
+		}							\
+	} while (0)
+
+#define SOCK_LOG_WARN(...) do {					\
+		if (sock_log_level <= SOCK_WARN) {		\
+			fprintf(stderr, "[SOCK_WARN - %s]: ", __func__); \
+			fprintf(stderr, __VA_ARGS__);			\
+		}							\
+	} while (0)
+
+#define SOCK_LOG_ERROR(...) do {					\
+		if (sock_log_level <= SOCK_ERROR) {			\
+			fprintf(stderr, "[SOCK_ERROR - %s]: ", __func__); \
+			fprintf(stderr, __VA_ARGS__);			\
+		}							\
+	} while (0)
 
 #endif

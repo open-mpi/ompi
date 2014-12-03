@@ -90,7 +90,6 @@ struct usnic_reg_mr_resp {
 
 struct usnic_create_cq {
 	struct ibv_create_cq		ibv_cmd;
-	struct usnic_ib_create_cq_cmd   usnic_cmd;
 	__u64				reserved;
 };
 

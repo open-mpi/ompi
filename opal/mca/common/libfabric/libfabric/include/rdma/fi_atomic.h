@@ -107,39 +107,29 @@ struct fi_ops_atomic {
 	size_t	size;
 	ssize_t	(*write)(struct fid_ep *ep,
 			const void *buf, size_t count, void *desc,
+			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
 	ssize_t	(*writev)(struct fid_ep *ep,
 			const struct fi_ioc *iov, void **desc, size_t count,
-			uint64_t addr, uint64_t key,
-			enum fi_datatype datatype, enum fi_op op, void *context);
-	ssize_t	(*writeto)(struct fid_ep *ep,
-			const void *buf, size_t count, void *desc,
 			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
 	ssize_t	(*writemsg)(struct fid_ep *ep,
 			const struct fi_msg_atomic *msg, uint64_t flags);
 	ssize_t	(*inject)(struct fid_ep *ep, const void *buf, size_t count,
-			uint64_t addr, uint64_t key, enum fi_datatype datatype,
-			enum fi_op op);
-	ssize_t	(*injectto)(struct fid_ep *ep, const void *buf, size_t count,
 			fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op);
 
 	ssize_t	(*readwrite)(struct fid_ep *ep,
 			const void *buf, size_t count, void *desc,
 			void *result, void *result_desc,
+			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
 	ssize_t	(*readwritev)(struct fid_ep *ep,
 			const struct fi_ioc *iov, void **desc, size_t count,
 			struct fi_ioc *resultv, void **result_desc, size_t result_count,
-			uint64_t addr, uint64_t key,
-			enum fi_datatype datatype, enum fi_op op, void *context);
-	ssize_t	(*readwriteto)(struct fid_ep *ep,
-			const void *buf, size_t count, void *desc,
-			void *result, void *result_desc,
 			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
@@ -152,18 +142,13 @@ struct fi_ops_atomic {
 			const void *buf, size_t count, void *desc,
 			const void *compare, void *compare_desc,
 			void *result, void *result_desc,
+			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
 	ssize_t	(*compwritev)(struct fid_ep *ep,
 			const struct fi_ioc *iov, void **desc, size_t count,
 			const struct fi_ioc *comparev, void **compare_desc, size_t compare_count,
 			struct fi_ioc *resultv, void **result_desc, size_t result_count,
-			uint64_t addr, uint64_t key,
-			enum fi_datatype datatype, enum fi_op op, void *context);
-	ssize_t	(*compwriteto)(struct fid_ep *ep,
-			const void *buf, size_t count, void *desc,
-			const void *compare, void *compare_desc,
-			void *result, void *result_desc,
 			fi_addr_t dest_addr,
 			uint64_t addr, uint64_t key,
 			enum fi_datatype datatype, enum fi_op op, void *context);
@@ -186,32 +171,23 @@ struct fi_ops_atomic {
 static inline ssize_t
 fi_atomic(struct fid_ep *ep,
 	  const void *buf, size_t count, void *desc,
+	  fi_addr_t dest_addr,
 	  uint64_t addr, uint64_t key,
 	  enum fi_datatype datatype, enum fi_op op, void *context)
 {
-	return ep->atomic->write(ep, buf, count, desc, addr, key,
+	return ep->atomic->write(ep, buf, count, desc, dest_addr, addr, key,
 			datatype, op, context);
 }
 
 static inline ssize_t
 fi_atomicv(struct fid_ep *ep,
 	   const struct fi_ioc *iov, void **desc, size_t count,
+	   fi_addr_t dest_addr,
 	   uint64_t addr, uint64_t key,
 	   enum fi_datatype datatype, enum fi_op op, void *context)
 {
-	return ep->atomic->writev(ep, iov, desc, count, addr, key, datatype,
-			op, context);
-}
-
-static inline ssize_t
-fi_atomicto(struct fid_ep *ep,
-	    const void *buf, size_t count, void *desc,
-	    fi_addr_t dest_addr,
-	    uint64_t addr, uint64_t key,
-	    enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return ep->atomic->writeto(ep, buf, count, desc, dest_addr,
-			addr, key, datatype, op, context);
+	return ep->atomic->writev(ep, iov, desc, count, dest_addr, addr, key,
+			datatype, op, context);
 }
 
 static inline ssize_t
@@ -223,19 +199,10 @@ fi_atomicmsg(struct fid_ep *ep,
 
 static inline ssize_t
 fi_inject_atomic(struct fid_ep *ep, const void *buf, size_t count,
-		uint64_t addr, uint64_t key, enum fi_datatype datatype,
-		enum fi_op op)
+		 fi_addr_t dest_addr, uint64_t addr, uint64_t key,
+		 enum fi_datatype datatype, enum fi_op op)
 {
-	return ep->atomic->inject(ep, buf, count, addr, key,
-			datatype, op);
-}
-
-static inline ssize_t
-fi_inject_atomicto(struct fid_ep *ep, const void *buf, size_t count,
-		fi_addr_t dest_addr, uint64_t addr, uint64_t key,
-		enum fi_datatype datatype, enum fi_op op)
-{
-	return ep->atomic->injectto(ep, buf, count, dest_addr, addr,
+	return ep->atomic->inject(ep, buf, count, dest_addr, addr,
 			key, datatype, op);
 }
 
@@ -243,36 +210,25 @@ static inline ssize_t
 fi_fetch_atomic(struct fid_ep *ep,
 		const void *buf, size_t count, void *desc,
 		void *result, void *result_desc,
+		fi_addr_t dest_addr,
 		uint64_t addr, uint64_t key,
 		enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return ep->atomic->readwrite(ep, buf, count, desc, result, result_desc,
-			addr, key, datatype, op, context);
+			dest_addr, addr, key, datatype, op, context);
 }
 
 static inline ssize_t
 fi_fetch_atomicv(struct fid_ep *ep,
 		 const struct fi_ioc *iov, void **desc, size_t count,
 		 struct fi_ioc *resultv, void **result_desc, size_t result_count,
+		 fi_addr_t dest_addr,
 		 uint64_t addr, uint64_t key,
 		 enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return ep->atomic->readwritev(ep, iov, desc, count,
 			resultv, result_desc, result_count,
-			addr, key, datatype, op, context);
-}
-
-static inline ssize_t
-fi_fetch_atomicto(struct fid_ep *ep,
-		  const void *buf, size_t count, void *desc,
-		  void *result, void *result_desc,
-		  fi_addr_t dest_addr,
-		  uint64_t addr, uint64_t key,
-		  enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return ep->atomic->readwriteto(ep, buf, count, desc, result,
-			result_desc, dest_addr, addr,
-			key, datatype, op, context);
+			dest_addr, addr, key, datatype, op, context);
 }
 
 static inline ssize_t
@@ -290,13 +246,13 @@ fi_compare_atomic(struct fid_ep *ep,
 		  const void *buf, size_t count, void *desc,
 		  const void *compare, void *compare_desc,
 		  void *result, void *result_desc,
+		  fi_addr_t dest_addr,
 		  uint64_t addr, uint64_t key,
 		  enum fi_datatype datatype, enum fi_op op, void *context)
 {
-	return ep->atomic->compwrite(ep, buf, count,
-			desc,compare, compare_desc,
-			result, result_desc, addr, key,
-			datatype, op, context);
+	return ep->atomic->compwrite(ep, buf, count, desc,
+			compare, compare_desc, result, result_desc,
+			dest_addr, addr, key, datatype, op, context);
 }
 
 static inline ssize_t
@@ -304,26 +260,13 @@ fi_compare_atomicv(struct fid_ep *ep,
 		   const struct fi_ioc *iov, void **desc, size_t count,
 		   const struct fi_ioc *comparev, void **compare_desc, size_t compare_count,
 		   struct fi_ioc *resultv, void **result_desc, size_t result_count,
+		   fi_addr_t dest_addr,
 		   uint64_t addr, uint64_t key,
 		   enum fi_datatype datatype, enum fi_op op, void *context)
 {
 	return ep->atomic->compwritev(ep, iov, desc, count,
 			comparev, compare_desc, compare_count,
 			resultv, result_desc, result_count,
-			addr, key, datatype, op, context);
-}
-
-static inline ssize_t
-fi_compare_atomicto(struct fid_ep *ep,
-		    const void *buf, size_t count, void *desc,
-		    const void *compare, void *compare_desc,
-		    void *result, void *result_desc,
-		    fi_addr_t dest_addr,
-		    uint64_t addr, uint64_t key,
-		    enum fi_datatype datatype, enum fi_op op, void *context)
-{
-	return ep->atomic->compwriteto(ep, buf, count, desc,
-			compare, compare_desc, result, result_desc,
 			dest_addr, addr, key, datatype, op, context);
 }
 

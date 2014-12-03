@@ -82,7 +82,7 @@ static inline void pci_free_consistent( __attribute__ ((unused))
 
 #define usd_err(args...) fprintf(stderr, args)
 #define pr_err usd_err
-#define pr_warning usd_err
+#define pr_warning(args...)
 
 #ifndef wmb
 #define wmb() asm volatile("" ::: "memory")

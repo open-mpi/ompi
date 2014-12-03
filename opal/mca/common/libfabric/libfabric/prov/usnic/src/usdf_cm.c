@@ -58,6 +58,22 @@
 
 #include "usnic_direct.h"
 #include "usdf.h"
+#include "usdf_dgram.h"
+#include "usdf_cm.h"
+#include "usdf_msg.h"
+
+
+static struct fi_ops_msg usdf_dgram_conn_ops = {
+	.size = sizeof(struct fi_ops_msg),
+	.recv = usdf_dgram_recv,
+	.recvv = usdf_dgram_recvv,
+	.recvmsg = usdf_dgram_recvmsg,
+	.send = usdf_dgram_conn_send,
+	.sendv = usdf_dgram_sendv,
+	.sendmsg = usdf_dgram_sendmsg,
+	.inject = usdf_dgram_inject,
+	.senddata = usdf_dgram_senddata,
+};
 
 int
 usdf_cm_dgram_connect(struct fid_ep *fep, const void *addr,
@@ -72,6 +88,9 @@ usdf_cm_dgram_connect(struct fid_ep *fep, const void *addr,
 
 	ret = usd_create_dest(ep->ep_domain->dom_dev, sin->sin_addr.s_addr,
 			sin->sin_port, &ep->ep_dest);
+	if (!ret) {
+		ep->ep_fid.msg = &usdf_dgram_conn_ops;
+	}
 
 	return ret;
 }
