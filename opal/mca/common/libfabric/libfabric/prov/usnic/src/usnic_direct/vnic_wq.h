@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_wq.h 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #ifndef _VNIC_WQ_H_
 #define _VNIC_WQ_H_
