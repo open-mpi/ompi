@@ -225,7 +225,7 @@ Check the resulting "mymap*" files to see the exact pairing of IP
 interfaces.  Inconsistent results may be indicative of underlying
 network misconfigurations.
 #
-[usd_create_dest timeout]
+[fi_av_insert timeout]
 The usnic BTL failed to create addresses for remote peers within the
 specified timeout.  This usually means that ARP requests failed to
 resolve in time.  You may be able to solve the problem by increasing
