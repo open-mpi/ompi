@@ -558,6 +558,7 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
+        proc->parent = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
@@ -567,6 +568,10 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        /* add the node to the job map */
+        OBJ_RETAIN(node);
+        opal_pointer_array_add(jdata->map->nodes, node);
+        jdata->map->num_nodes++;
         /* and it obviously is on the node */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(node->procs, proc);

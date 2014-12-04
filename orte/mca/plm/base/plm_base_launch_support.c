@@ -1326,7 +1326,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 {
     orte_node_t *node, *nptr;
-    orte_proc_t *proc;
+    orte_proc_t *proc, *pptr;
     orte_job_map_t *map=NULL;
     int rc, i;
     orte_job_t *daemons;
@@ -1846,6 +1846,12 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         if (ORTE_VPID_INVALID == map->daemon_vpid_start) {
             map->daemon_vpid_start = proc->name.vpid;
         }
+        /* loop across all app procs on this node and update their parent */
+        for (i=0; i < node->procs->size; i++) {
+            if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+                pptr->parent = proc->name.vpid;
+            }
+        }
     }
     
     if (orte_process_info.num_procs != daemons->num_procs) {
@@ -1869,5 +1875,15 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     /* mark that the daemon job changed */
     ORTE_FLAG_SET(daemons, ORTE_JOB_FLAG_UPDATED);
 
+    /* if new daemons are being launched, mark that this job
+     * caused it to happen */
+    if (0 < map->num_new_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_set_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS,
+                                                     true, NULL, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
