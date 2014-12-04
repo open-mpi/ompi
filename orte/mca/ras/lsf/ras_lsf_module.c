@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define SR1_PJOBS
 #include <lsf/lsbatch.h>
@@ -78,63 +80,8 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     int i, num_nodes;
     char *affinity_file, *hstname;
     bool found;
-    FILE *fp;
+    struct stat buf;
     orte_app_context_t *app;
-    
-    /* check for an affinity file */
-    if (NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
-        /* the affinity file sequentially lists rank locations, with
-         * cpusets given as physical cpu-ids. Setup the job object
-         * so it knows to process this accordingly */
-        if (NULL == jdata->map) {
-            jdata->map = OBJ_NEW(orte_job_map_t);
-        }
-        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_SEQ);
-        jdata->map->req_mapper = strdup("seq"); // need sequential mapper
-        /* tell the sequential mapper that all cpusets are to be treated as "physical" */
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, true, NULL, OPAL_BOOL);
-        /* get the apps and set the hostfile attribute in each to point to
-         * the hostfile */
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                continue;
-            }
-            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, true, (void*)&affinity_file, OPAL_STRING);
-        }
-        /* read the specified file to get the allocation */
-        fp = fopen(affinity_file, "r");
-        if (NULL == fp) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        while (NULL != (hstname = orte_getline(fp))) {
-            if (0 == strlen(hstname)) {
-                /* blank line - ignore */
-                continue;
-            }
-            /* see if we already have this node */
-            found = false;
-            OPAL_LIST_FOREACH(node, nodes, orte_node_t) {
-                if (0 == strcmp(node->name, hstname)) {
-                    /* just increment the slots */
-                    ++node->slots;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                node = OBJ_NEW(orte_node_t);
-                node->name = strdup(hstname);
-                node->slots_inuse = 0;
-                node->slots_max = 0;
-                node->slots = 1;
-                opal_list_append(nodes, &node->super);
-            }
-        }
-        fclose(fp);
-
-        return ORTE_SUCCESS;
-    }
     
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -165,6 +112,40 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     /* release the nodelist from lsf */
     opal_argv_free(nodelist);
 
+    /* check for an affinity file */
+    if (NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
+        /* check to see if the file is empty - if it is,
+         * then affinity wasn't actually set for this job */
+        if (0 != stat(affinity_file, &buf))
+            orte_show_help("help-ras-lsf.txt", "affinity-file-not-found", true, affinity_file);
+            return ORTE_ERR_SILENT;
+        }
+        if (0 == buf.st_size) {
+            /* no affinity, so just return */
+            return ORTE_SUCCESS;
+        }
+        /* the affinity file sequentially lists rank locations, with
+         * cpusets given as physical cpu-ids. Setup the job object
+         * so it knows to process this accordingly */
+        if (NULL == jdata->map) {
+            jdata->map = OBJ_NEW(orte_job_map_t);
+        }
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_SEQ);
+        jdata->map->req_mapper = strdup("seq"); // need sequential mapper
+        /* tell the sequential mapper that all cpusets are to be treated as "physical" */
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, true, NULL, OPAL_BOOL);
+        /* get the apps and set the hostfile attribute in each to point to
+         * the hostfile */
+        for (i=0; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, true, (void*)affinity_file, OPAL_STRING);
+        }
+
+        return ORTE_SUCCESS;
+    }
+    
     return ORTE_SUCCESS;
 }
 
