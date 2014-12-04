@@ -294,7 +294,7 @@ static void track_procs(int fd, short argc, void *cbdata)
          * successful launch for short-lived procs
          */
         pdata->iof_complete = true;
-        if (pdata->waitpid_recvd) {
+        if (pdata->alive && pdata->waitpid_recvd) {
             /* the proc has terminated */
             pdata->alive = false;
             pdata->state = ORTE_PROC_STATE_TERMINATED;
@@ -305,6 +305,12 @@ static void track_procs(int fd, short argc, void *cbdata)
             orte_session_dir_finalize(proc);
             /* track job status */
             jdata->num_terminated++;
+            OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
+                                 "%s IOF COMPLETE FOR PROC %s NTERM %s NLOC %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&pdata->name),
+                                 ORTE_VPID_PRINT(jdata->num_terminated),
+                                 ORTE_VPID_PRINT(jdata->num_local_procs)));
             if (jdata->num_terminated == jdata->num_local_procs) {
                 /* pack update state command */
                 cmd = ORTE_PLM_UPDATE_PROC_STATE;
@@ -365,7 +371,7 @@ static void track_procs(int fd, short argc, void *cbdata)
          * successful launch for short-lived procs
          */
         pdata->waitpid_recvd = true;
-        if (pdata->iof_complete) {
+        if (pdata->alive && pdata->iof_complete) {
             /* the proc has terminated */
             pdata->alive = false;
             pdata->state = ORTE_PROC_STATE_TERMINATED;
@@ -376,6 +382,12 @@ static void track_procs(int fd, short argc, void *cbdata)
             orte_session_dir_finalize(proc);
             /* track job status */
             jdata->num_terminated++;
+            OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
+                                 "%s WAITPID FOR PROC %s NTERM %s NLOC %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&pdata->name),
+                                 ORTE_VPID_PRINT(jdata->num_terminated),
+                                 ORTE_VPID_PRINT(jdata->num_local_procs)));
             if (jdata->num_terminated == jdata->num_local_procs) {
                 /* pack update state command */
                 cmd = ORTE_PLM_UPDATE_PROC_STATE;

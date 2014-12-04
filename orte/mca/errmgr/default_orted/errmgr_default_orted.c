@@ -470,6 +470,11 @@ static void proc_errors(int fd, short args, void *cbdata)
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
+        /* if the proc still reports itself as alive, then we need
+         * to ensure the state machine sees it */
+        if (child->alive && child->waitpid_recvd) {
+            ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_WAITPID_FIRED);
+        }
         return;
     }
 
