@@ -28,14 +28,6 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 #
-# NOTES
-# on Cray XE6 systems, the GNI development header (gni_pub.h) is in a
-# completely different place than the ugni library (libugni).
-#
-# EXAMPLE CONFIGURE USAGE:
-# --with-ugni=/base/path/to/libugni --with-ugni-includedir=/path/to/gni_pub.h
-#
-# --with-ugni=/opt/cray/ugni/default --with-ugni-includedir=/opt/cray/gni-headers/default/include
 
 AC_DEFUN([OPAL_CHECK_UGNI], [
     AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni],
@@ -49,8 +41,7 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
                       [$1_LDFLAGS="$CRAY_UGNI_LIBS"
                        $1_CPPFLAGS="$CRAY_UGNI_CFLAGS"
                        opal_check_ugni_happy="yes"],
-                      [AC_MSG_RESULT([no])
-                       opal_check_ugni_happy="no"])])
+                      [ opal_check_ugni_happy="no"])])
 
     opal_check_ugni_$1_save_CPPFLAGS="$CPPFLAGS"
     opal_check_ugni_$1_save_LDFLAGS="$LDFLAGS"
