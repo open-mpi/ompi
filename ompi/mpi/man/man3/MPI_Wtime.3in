@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Wtime 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -64,6 +65,18 @@ support" (or "options:mpi-wtime" when viewing the parsable
 output).  If this value is "native", a method that is likely to be
 cheaper than gettimeofday() will be used to obtain the time when
 MPI_Wtime is invoked.
+.PP
+For example, on platforms that support it, the
+.I clock_gettime()
+function will be used to obtain a monotonic clock value with whatever
+precision is supported on that platform (e.g., nanoseconds).
+.PP
+Note, too, that the MCA parameter opal_timer_require_monotonic can
+influcence this behavior.  It defaults to true, but if set to false,
+Open MPI may use a finer-grained timing mechanism (e.g., the
+RDTSC/RDTSCP clock ticks on x86_64 platforms), but is not guaranteed
+to be monotonic in some cases (e.g., if the MPI process is not bound
+to a single processor core).
 .PP
 This function does not return an error value. Consequently, the result of calling it before MPI_Init or after MPI_Finalize is undefined.
 
