@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_timer_base_framework;
 /**
  * MCA param to force monotonic timers.
  */
-OPAL_DECLSPEC extern int mca_timer_base_monotonic;
+OPAL_DECLSPEC extern bool mca_timer_base_monotonic;
 
 END_C_DECLS
 
