@@ -20,15 +20,29 @@ dnl
 
 
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
+
+  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result CFLAGS_save])
+
   AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values])
-
-  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result])
-
   AC_TRY_COMPILE([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
     [AC_MSG_RESULT([yes])
      sync_bool_compare_and_swap_128_result=1],
     [AC_MSG_RESULT([no])
      sync_bool_compare_and_swap_128_result=0])
+
+  if test $sync_bool_compare_and_swap_128_result = 0 ; then
+      CFLAGS_save=$CFLAGS
+      CFLAGS="$CFLAGS -mcx16"
+
+      AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+      AC_TRY_COMPILE([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+        [AC_MSG_RESULT([yes])
+         sync_bool_compare_and_swap_128_result=1
+	 CFLAGS_save="$CFLAGS"],
+        [AC_MSG_RESULT([no])])
+
+      CFLAGS=$CFLAGS_save
+  fi
 
   AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128], [$sync_bool_compare_and_swap_128_result],
 	[Whether the __sync builtin atomic compare and swap supports 128-bit values])
