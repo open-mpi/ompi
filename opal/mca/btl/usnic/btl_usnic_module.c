@@ -218,9 +218,10 @@ static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
 /* A bunch of calls to fi_av_insert() were previously
  * invoked.  Go reap them all.
  */
-static int add_procs_reap_create_dests(opal_btl_usnic_module_t *module,
-                                       size_t array_len,
-                                       struct mca_btl_base_endpoint_t **endpoints)
+static int
+add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
+                             size_t array_len,
+                             struct mca_btl_base_endpoint_t **endpoints)
 {
     int ret = OPAL_SUCCESS;
     int num_left = array_len;
@@ -249,11 +250,10 @@ static int add_procs_reap_create_dests(opal_btl_usnic_module_t *module,
            and bail. */
         else if (-FI_ETIMEDOUT == ret) {
             opal_show_help("help-mpi-btl-usnic.txt",
-                           "usd_create_dest timeout",
+                           "fi_av_insert timeout",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->domain_attr->name,
-                           " JMS don't know the eth name yet",
+                           module->fabric_info->fabric_attr->name,
                            mca_btl_usnic_component.arp_timeout);
             /* Note: this is not an error; these endpoints are just
                unreachable.  The desintations we've already created
@@ -413,7 +413,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
        will be the final determination of whether we can use the
        endpoint or not because we'll find out if each endpoint is
        reachable or not. */
-    rc = add_procs_reap_create_dests(module, nprocs, endpoints);
+    rc = add_procs_reap_fi_av_inserts(module, nprocs, endpoints);
     if (OPAL_SUCCESS != rc) {
         goto fail;
     }
