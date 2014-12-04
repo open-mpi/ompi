@@ -159,6 +159,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     ep->rmt_irq_mem_hndl = ep->remote_attr.rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
+    fprintf(stderr,"ep->rmt_irq_mem_hndl rmt_irq_mem_hndl 0x%lx 0x%lx\n",ep->rmt_irq_mem_hndl.qword1,ep->rmt_irq_mem_hndl.qword2);
 
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));

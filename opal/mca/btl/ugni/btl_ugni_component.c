@@ -564,7 +564,9 @@ static int mca_btl_ugni_component_progress (void)
         count += mca_btl_ugni_progress_local_smsg (ugni_module);
         count += mca_btl_ugni_progress_remote_smsg (ugni_module);
         count += mca_btl_ugni_progress_rdma (ugni_module, 0);
-
+        if (howards_progress_var) {
+            count += mca_btl_ugni_progress_rdma (ugni_module, 1);
+        }
     }
 
     return count;

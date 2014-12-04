@@ -47,6 +47,8 @@
 #define MCA_BTL_UGNI_CONNECT_DIRECTED_ID 0x8000000000000000ull
 #define MCA_BTL_UGNI_DATAGRAM_MASK       0x8000000000000000ull
 
+extern int howards_progress_var;
+
 /* ompi and smsg endpoint attributes */
 typedef struct mca_btl_ugni_endpoint_attr_t {
     uint64_t proc_id;
@@ -310,6 +312,9 @@ static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
     /* Throw away the top bit of the jobid for the datagram type */
     return ((uint64_t) (name.jobid & 0x7fffffff) << 32 | name.vpid);
 }
+
+int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t* btl);
+int mca_btl_ugni_kill_progress_thread(void);
 
 
 #endif
