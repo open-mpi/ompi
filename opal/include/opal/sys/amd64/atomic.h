@@ -135,7 +135,7 @@ static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr, opal_int
                           : "=qm" (ret)
                           : "S" (addr), "b" (((int64_t *)&newval)[0]), "c" (((int64_t *)&newval)[1]),
                             "a" (((int64_t *)&oldval)[0]), "d" (((int64_t *)&oldval)[1])
-                          : "memory", "cc", "eax", "edx");
+                          : "memory", "cc");
 
     return (int) ret;
 }
