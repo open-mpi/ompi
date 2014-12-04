@@ -53,6 +53,7 @@
 #define MCA_PML_OB1_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 #define MCA_PML_OB1_HDR_FLAGS_CONTIG  8  /* is user buffer contiguous */
 #define MCA_PML_OB1_HDR_FLAGS_NORDMA  16 /* rest will be send by copy-in-out */
+#define MCA_PML_OB1_HDR_FLAGS_SIGNAL  32 /* message can be optionally signalling */
 
 /**
  * Common hdr attributes - must be first element in each hdr type 

@@ -384,7 +384,8 @@ int mca_pml_ob1_send_request_start_buffered(
     mca_bml_base_alloc(bml_btl, &des, 
                        MCA_BTL_NO_ORDER,
                        sizeof(mca_pml_ob1_rendezvous_hdr_t) + size,
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+                       MCA_BTL_DES_FLAGS_SIGNAL);
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
@@ -720,7 +721,8 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
 
     /* allocate space for get hdr + segment list */
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, sizeof (*hdr) + seg_size,
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+                       MCA_BTL_DES_FLAGS_SIGNAL);
     if( OPAL_UNLIKELY(NULL == des) ) {
         /* NTH: no need to reset the converter here. it will be reset before it is retried */
         mca_bml_base_free(bml_btl, src);
@@ -811,7 +813,8 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                   MCA_BTL_NO_ORDER,
                                   sizeof(mca_pml_ob1_rendezvous_hdr_t),
                                   &size,
-                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+                                  MCA_BTL_DES_FLAGS_SIGNAL,
                                   &des );
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
@@ -828,7 +831,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
 
     /* build hdr */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_common.hdr_flags = flags | MCA_PML_OB1_HDR_FLAGS_SIGNAL;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
@@ -1023,7 +1026,9 @@ cannot_pack:
                                  &sendreq->req_send.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER,
                                  sizeof(mca_pml_ob1_frag_hdr_t),
-                                 &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK, &des);
+                                 &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK |
+                                 MCA_BTL_DES_FLAGS_SIGNAL,
+                                 &des);
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
                             sendreq->req_send.req_base.req_addr,

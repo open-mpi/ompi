@@ -17,6 +17,8 @@
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_frag.h"
 #include "btl_ugni_rdma.h"
+/* TODO: need to fix this one */
+#include "ompi/mca/pml/ob1/pml_ob1_hdr.h"
 
 typedef enum {
     MCA_BTL_UGNI_TAG_SEND,
@@ -82,12 +84,23 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
     return 1;
 }
 
+static void mca_btl_ugni_cqwrite_complete (mca_btl_ugni_base_frag_t *frag, int rc)
+{
+    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
+
+    BTL_VERBOSE(("cqwrite  frag complete"));
+    mca_btl_ugni_frag_return (frag);
+}
+
 static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                void *hdr, size_t hdr_len,
                                                void *payload, size_t payload_len,
                                                mca_btl_ugni_smsg_tag_t tag)
 {
+    int rc;
+    int pml_tag;
     gni_return_t grc;
+    mca_btl_ugni_base_frag_t *cq_write_frag = NULL;
 
     OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len,
@@ -97,6 +110,38 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
     if (OPAL_LIKELY(GNI_RC_SUCCESS == grc)) {
         /* increment the active send counter */
         (void)opal_atomic_add_32(&frag->endpoint->btl->active_send_count, 1);
+
+        if (howards_progress_var == 1 && (getenv("GENERATE_MDH_IRQS") != NULL)) {
+            pml_tag = frag->hdr.send.lag >> 24;
+            if (pml_tag > MCA_PML_OB1_HDR_TYPE_MATCH) {
+                rc = mca_btl_ugni_frag_alloc(frag->endpoint,
+                                             &frag->endpoint->btl->rdma_frags,
+                                             &cq_write_frag);
+                if (rc == OPAL_SUCCESS) {
+                    cq_write_frag->registration = NULL;
+                    cq_write_frag->endpoint = frag->endpoint;
+                    cq_write_frag->post_desc.base.type = GNI_POST_CQWRITE;
+                    cq_write_frag->post_desc.base.cqwrite_value = 0xdead;   /* up to 48 bytes here, not used for now */
+                    cq_write_frag->post_desc.base.cq_mode = GNI_CQMODE_GLOBAL_EVENT;
+                    cq_write_frag->post_desc.base.dlvr_mode = GNI_DLVMODE_IN_ORDER;
+                    cq_write_frag->post_desc.base.src_cq_hndl = frag->endpoint->btl->rdma_local_cq;
+                    cq_write_frag->post_desc.base.remote_mem_hndl = frag->endpoint->rmt_irq_mem_hndl;
+                    cq_write_frag->post_desc.tries = 0;
+                    cq_write_frag->cbfunc = mca_btl_ugni_cqwrite_complete;
+#if 0
+                fprintf(stderr,"doing a GNI_PostCqWrite to 0x%lx 0x%lx \n",cq_write_frag->post_desc.base.remote_mem_hndl.qword1,
+                                                                           cq_write_frag->post_desc.base.remote_mem_hndl.qword2);
+#endif
+                    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
+                    grc = GNI_PostCqWrite(frag->endpoint->rdma_ep_handle, &cq_write_frag->post_desc.base);
+                    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
+                    if (grc == GNI_RC_ERROR_RESOURCE) {   /* errors for PostCqWrite treated as non-fatal */
+                        fprintf(stderr,"GNI_PostCqWrite returned gni error %s\n",gni_err_str[grc]);
+                        mca_btl_ugni_frag_return (cq_write_frag);
+                    }
+                }
+            }
+        }
 
         (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
         return OPAL_SUCCESS;
