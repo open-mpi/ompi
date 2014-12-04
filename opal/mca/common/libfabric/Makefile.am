@@ -16,6 +16,10 @@
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 
+# We have to override the CFLAGS that come in from above to remove
+# --pedantic (see configure.m4 for details).
+CFLAGS = $(opal_common_libfabric_embedded_CFLAGS)
+
 # Only build this embedded copy if we're not using an external
 # libfabric.
 if OPAL_COMMON_LIBFABRIC_BUILD_EMBEDDED
@@ -29,17 +33,16 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-# We have to override the CFLAGS that come in from above to remove
-# --pedantic (see configure.m4 for details).
-CFLAGS = $(opal_common_libfabric_embedded_CFLAGS)
-
 cppflags = \
 	$(opal_common_libfabric_embedded_CPPFLAGS) \
 	-D_GNU_SOURCE \
 	-DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DRDMADIR=\"/tmp\" \
-	-DEXTDIR=\"$(pkglibdir)\" \
+	-DEXTDIR=\"$(pkglibdir)\"
+if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
+cppflags += \
 	-D__LIBUSNIC__
+endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 libadd = $(opal_common_libfabric_embedded_LIBADD)
 
 libfabric_core_headers = \
@@ -152,13 +155,15 @@ libfabric_usnic_sources = \
 	libfabric/prov/usnic/src/usnic_direct/vnic_rq.c \
 	libfabric/prov/usnic/src/usnic_direct/vnic_wq.c
 
-sources = \
-	$(libfabric_core_sources) \
-	$(libfabric_usnic_sources)
+sources = $(libfabric_core_sources)
+if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
+sources += $(libfabric_usnic_sources)
+endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 
-headers = \
-	$(libfabric_core_headers) \
-	$(libfabric_usnic_headers)
+headers = $(libfabric_core_headers)
+if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
+headers += (libfabric_usnic_headers)
+endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_CPPFLAGS = $(cppflags)
