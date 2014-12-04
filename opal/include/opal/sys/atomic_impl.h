@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -266,9 +269,9 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 #if (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64)
 
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SWAP_32
-#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_32((int32_t *) addr, value)
+#define opal_atomic_swap_ptr(addr, value) (void *) opal_atomic_swap_32((int32_t *) addr, (int32_t) value)
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SWAP_64
-#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_64((int64_t *) addr, value)
+#define opal_atomic_swap_ptr(addr, value) (void *) opal_atomic_swap_64((int64_t *) addr, (int64_t) value)
 #endif
 
 #endif /* (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64) */

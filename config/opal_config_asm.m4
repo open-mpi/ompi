@@ -19,6 +19,37 @@ dnl $HEADER$
 dnl
 
 
+AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
+
+  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result CFLAGS_save])
+
+  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values])
+  AC_TRY_COMPILE([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+    [AC_MSG_RESULT([yes])
+     sync_bool_compare_and_swap_128_result=1],
+    [AC_MSG_RESULT([no])
+     sync_bool_compare_and_swap_128_result=0])
+
+  if test $sync_bool_compare_and_swap_128_result = 0 ; then
+      CFLAGS_save=$CFLAGS
+      CFLAGS="$CFLAGS -mcx16"
+
+      AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+      AC_TRY_COMPILE([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+        [AC_MSG_RESULT([yes])
+         sync_bool_compare_and_swap_128_result=1
+	 CFLAGS_save="$CFLAGS"],
+        [AC_MSG_RESULT([no])])
+
+      CFLAGS=$CFLAGS_save
+  fi
+
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128], [$sync_bool_compare_and_swap_128_result],
+	[Whether the __sync builtin atomic compare and swap supports 128-bit values])
+
+  OPAL_VAR_SCOPE_POP
+])
+
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
   AC_MSG_CHECKING([for __sync builtin atomics])
 
@@ -558,6 +589,24 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
     unset sparc_result
 ])dnl
 
+dnl #################################################################
+dnl
+dnl OPAL_CHECK_CMPXCHG16B
+dnl
+dnl #################################################################
+AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
+    AC_MSG_CHECKING([if have x86_64 16-byte compare-and-exchange])
+    OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
+    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
+            cmpxchg16b 0],
+        [AC_MSG_RESULT([yes])
+            cmpxchg16b_result=1],
+        [AC_MSG_RESULT([no])
+            cmpxchg16b_result=0])
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
+        [Whether the processor supports the cmpxchg16b instruction])
+    OPAL_VAR_SCOPE_POP
+])dnl
 
 dnl #################################################################
 dnl
@@ -770,6 +819,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
          [Whether C compiler supports GCC style inline assembly])
+       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
     elif test "$enable_osx_builtin_atomics" = "yes" ; then
 	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
 	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
@@ -801,6 +851,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+            OPAL_CHECK_CMPXCHG16B
             ;;
 
         ia64-*)

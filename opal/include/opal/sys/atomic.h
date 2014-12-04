@@ -49,10 +49,7 @@
 #include "opal_config.h"
 
 #include "opal/sys/architecture.h"
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+#include "opal_stdint.h"
 
 /* do some quick #define cleanup in cases where we are doing
    testing... */
@@ -176,6 +173,9 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #endif
 #ifndef OPAL_HAVE_ATOMIC_CMPSET_64
 #define OPAL_HAVE_ATOMIC_CMPSET_64 0
+#endif
+#ifndef OPAL_HAVE_ATOMIC_CMPSET_128
+#define OPAL_HAVE_ATOMIC_CMPSET_128 0
 #endif
 #endif /* DOXYGEN */
 
