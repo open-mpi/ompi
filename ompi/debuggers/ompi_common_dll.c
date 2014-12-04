@@ -56,13 +56,17 @@ static int host_is_big_endian = 0;
  * call to the real function mqs_field_offset.
  */
 #ifndef ompi_field_offset
-#define ompi_field_offset(out_name, qh_type, struct_name, field_name)  \
-{ \
-    out_name = mqs_field_offset((qh_type), #field_name); \
-    if (out_name < 0) { \
-        fprintf(stderr, "WARNING: Field " #field_name " of type " #struct_name " not found!\n"); \
-    } \
-}
+#define ompi_field_offset(out_name, qh_type, struct_name, field_name)   \
+    {                                                                   \
+        out_name = mqs_field_offset((qh_type), #field_name);            \
+        if (out_name < 0) {                                             \
+            fprintf(stderr, "WARNING: Open MPI is unable to find "      \
+                    "field " #field_name " in the " #struct_name        \
+                    " type.  This can happen can if Open MPI is built " \
+                    "without debugging information, or is stripped "    \
+                    "after building.\n");                               \
+        }                                                               \
+    }
 #endif
 
 /*
@@ -512,7 +516,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
      * did our best but here we're at our limit. Give up!
      */
     *message = missing_in_action;
-    printf( "The following type is missing %s\n", missing_in_action );
+    fprintf(stderr, "WARNING: Open MPI is unable to find debugging information about the \"%s\" type.  This can happen if Open MPI was built without debugging information, or was stripped after building.\n",
+           missing_in_action);
     return err_missing_type;
 }
 
