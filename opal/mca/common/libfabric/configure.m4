@@ -27,30 +27,18 @@ AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
     # libfabric stuff lives.
     AC_REQUIRE([_OPAL_COMMON_LIBFABRIC_WITH_FLAGS])
 
-    AS_IF([test "$opal_want_libfabric" = "no"],
-          [$2],
-          [opal_check_libfabric_save_CPPFLAGS=$CPPFLAGS
-           opal_check_libfabric_save_LDFLAGS=$LDFLAGS
-           opal_check_libfabric_save_LIBS=$LIBS
+    AS_IF([test "$opal_want_libfabric" != "no"],
+          [ # Regardless of whether we build embedded or external,
+            # libfabric is only supported on Linux.
+           AC_MSG_CHECKING([if we are on Linux])
+           AS_CASE([$host_os],
+               [*linux*], [AC_MSG_RESULT([yes])
+                           _OPAL_COMMON_LIBFABRIC_CONFIGURE],
+               [*],       [AC_MSG_RESULT([no])],
+           )
+          ])
 
-           # Use the internal or external libfabric?
-           AS_IF([test -z "$opal_libfabric_dir" && \
-                  test -z "$opal_libfabric_libdir"],
-                 [_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],
-                 [_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EXTERNAL])
-
-           CPPFLAGS=$opal_check_libfabric_save_CPPFLAGS
-           LDFLAGS=$opal_check_libfabric_save_LDFLAGS
-           LIBS=$opal_check_libfabric_save_LIBS
-
-           AS_IF([test $opal_common_libfabric_happy -eq 1],
-                 [$1],
-                 [AS_IF([test "$opal_want_lifabric" = "yes"],
-                        [AC_MSG_WARN([Libfabric support requested (via --with-libfabric) but not found.])
-                         AC_MSG_ERROR([Cannot continue])])
-                  $2])
-           ])
-
+    # AM conditionals must be executed unconditionally
     _OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS
     AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_BUILD_EMBEDDED],
                    [test $opal_common_libfabric_build_embedded -eq 1])
@@ -64,6 +52,14 @@ AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
     AC_SUBST(opal_common_libfabric_embedded_CPPFLAGS)
     AC_SUBST(opal_common_libfabric_embedded_CFLAGS)
     AC_SUBST(opal_common_libfabric_embedded_LIBADD)
+
+    # Did libfabric configure successfully?
+    AS_IF([test $opal_common_libfabric_happy -eq 1],
+          [$1],
+          [AS_IF([test "$opal_want_libfabric" = "yes"],
+                 [AC_MSG_WARN([Libfabric support requested (via --with-libfabric) but not found.])
+                  AC_MSG_ERROR([Cannot continue])])
+           $2])
 ])
 
 
@@ -126,15 +122,39 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_WITH_FLAGS],[
 ])
 
 # --------------------------------------------------------
-# Internal helper macro to setup the embedded libfabric.
+# Internal helper macro to configure an internal or external libfabric.
+#
+# arg 1: action if will build libfabric
+# arg 2: action if will not build libfabric
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_CONFIGURE],[
+    opal_check_libfabric_save_CPPFLAGS=$CPPFLAGS
+    opal_check_libfabric_save_LDFLAGS=$LDFLAGS
+    opal_check_libfabric_save_LIBS=$LIBS
+
+    # Use the internal or external libfabric?
+    AS_IF([test -z "$opal_libfabric_dir" && \
+           test -z "$opal_libfabric_libdir"],
+          [_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],
+          [_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EXTERNAL])
+
+    CPPFLAGS=$opal_check_libfabric_save_CPPFLAGS
+    LDFLAGS=$opal_check_libfabric_save_LDFLAGS
+    LIBS=$opal_check_libfabric_save_LIBS
+
+    AS_IF([test $opal_common_libfabric_happy -eq 1], [$1], [$2])
+])
+
+# --------------------------------------------------------
+# Internal helper macros to setup the embedded libfabric.
 #
 # The internal libfabric is *TEMPORARY* and only for convenience of
 # development.  Ultimately, the embedded libfabric will disappear and
 # you will need to have libfabric installed.
 # --------------------------------------------------------
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS],[
-    AM_CONDITIONAL([HAVE_LD_VERSION_SCRIPT], [/bin/false])
-    AM_CONDITIONAL([HAVE_DIRECT], [/bin/false])
+    AM_CONDITIONAL([HAVE_LD_VERSION_SCRIPT], [false])
+    AM_CONDITIONAL([HAVE_DIRECT], [false])
 ])
 
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
@@ -148,8 +168,9 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
     AC_DEFINE([HAVE_ATOMICS], 0, [no atomics])
     AC_DEFINE([HAVE_SYMVER_SUPPORT], 1, [assembler has .symver support])
 
-    opal_common_libfabric_happy=1
-    AC_CHECK_HEADER([infiniband/verbs.h], [], [opal_common_libfabric_happy=0])
+    AC_CHECK_HEADER([infiniband/verbs.h],
+        [opal_common_libfabric_happy=1],
+        [opal_common_libfabric_happy=0])
 
     # Add flags for libfabric core
     AS_IF([test $opal_common_libfabric_happy -eq 1],
@@ -237,19 +258,25 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_CHECK_INCDIR],[
           ])
 ])
 
+# --------------------------------------------------------
 # Internal helper macro to look for the things the usnic provider
 # needs
 # --------------------------------------------------------
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
-    AC_CHECK_HEADER([linux/netlink.h], [], [opal_common_libfabric_happy=0], [
+    opal_common_libfabric_usnic_happy=1
+    AC_CHECK_HEADER([linux/netlink.h], [],
+                    [opal_common_libfabric_usnic_happy=0], [
 #include <sys/types.h>
 #include <net/if.h>
 ])
-     AC_CHECK_LIB([nl], [nl_connect], [], [opal_common_libfabric_happy=0])
+    AC_CHECK_LIB([nl], [nl_connect], [],
+                 [opal_common_libfabric_usnic_happy=0])
 
-     opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
-     opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
+    opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
+    opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
 
+    opal_common_libfabric_embedded_LIBADD="-lnl"
 
-     opal_common_libfabric_embedded_LIBADD="-lnl"
+    AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC],
+                   [test $opal_common_libfabric_usnic_happy -eq 1])
 ])
