@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_dev.h 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #ifndef _VNIC_DEV_H_
 #define _VNIC_DEV_H_

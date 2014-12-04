@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_rq.h 180262 2014-07-02 07:57:43Z gvaradar $"
 
 #ifndef _VNIC_RQ_H_
 #define _VNIC_RQ_H_

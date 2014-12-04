@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_wq.c 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #ifndef ENIC_PMD
 #include <linux/kernel.h>

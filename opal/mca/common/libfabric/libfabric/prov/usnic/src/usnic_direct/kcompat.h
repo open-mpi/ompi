@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: kcompat.h 195274 2014-10-24 06:32:21Z gvaradar $"
 
 #ifndef _KCOMPAT_H_
 #define _KCOMPAT_H_

@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_dev.c 200080 2014-11-24 09:04:23Z nalreddy $"
 
 #include <linux/kernel.h>
 #include <linux/errno.h>

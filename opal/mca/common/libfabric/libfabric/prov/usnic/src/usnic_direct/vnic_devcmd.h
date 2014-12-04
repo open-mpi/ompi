@@ -40,7 +40,6 @@
  *
  *
  */
-#ident "$Id: vnic_devcmd.h 173135 2014-05-16 03:14:06Z sanpilla $"
 
 #ifndef _VNIC_DEVCMD_H_
 #define _VNIC_DEVCMD_H_
