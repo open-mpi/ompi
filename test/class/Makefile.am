@@ -39,7 +39,7 @@ check_PROGRAMS = \
 
 # The tests are built, but since they're not actively maintained, they
 # are not run during "make check".
-TESTS =
+TESTS = opal_lifo opal_fifo
 
 opal_bitmap_SOURCES = opal_bitmap.c 
 opal_bitmap_LDADD = \
