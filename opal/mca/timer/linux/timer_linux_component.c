@@ -152,7 +152,7 @@ int opal_timer_linux_open(void)
 #if OPAL_HAVE_CLOCK_GETTIME
         struct timespec res;
         if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
-            opal_timer_linux_freq = res.tv_nsec;
+            opal_timer_linux_freq = 1.e9;
             opal_timer_base_get_cycles = opal_timer_base_get_cycles_clock_gettime;
             opal_timer_base_get_usec = opal_timer_base_get_usec_clock_gettime;
             return ret;
@@ -176,14 +176,19 @@ opal_timer_t opal_timer_base_get_usec_clock_gettime(void)
     struct timespec tp;
 
     if( 0 == clock_gettime(CLOCK_MONOTONIC, &tp) ) {
-        return (tp.tv_sec * 1e9 + tp.tv_nsec);
+        return (tp.tv_sec * 1e6 + tp.tv_nsec/1000);
     }
     return 0;
 }
 
 opal_timer_t opal_timer_base_get_cycles_clock_gettime(void)
 {
-    return opal_timer_base_get_usec_clock_gettime() * opal_timer_linux_freq;
+    struct timespec tp;
+
+    if( 0 == clock_gettime(CLOCK_MONOTONIC, &tp) ) {
+        return (tp.tv_sec * 1e9 + tp.tv_nsec);
+    }
+    return 0;
 }
 #endif  /* OPAL_HAVE_CLOCK_GETTIME */
 
