@@ -5,19 +5,19 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -74,9 +74,9 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
               libltdl_location=
               libltdl_need_external=1
               ;;
-           *) 
+           *)
               AC_MSG_RESULT([external copy ($libltdl_location)])
-              OMPI_CHECK_WITHDIR([libltdl], [$libltdl_location], 
+              OMPI_CHECK_WITHDIR([libltdl], [$libltdl_location],
                                  [include/ltdl.h])
               # If we're using an extern libltdl, then reset the
               # LTDLINCL that was set earlier (ie., there's no need to
@@ -127,6 +127,10 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
     AC_SUBST(LIBLTDL)
     AC_SUBST(LIBLTDL_SUBDIR)
 
+    AC_MSG_CHECKING([for lt_dladvise])
+    AS_IF([test $OPAL_HAVE_LTDL_ADVISE -eq 1],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])])
     AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
         [Whether libltdl appears to have the lt_dladvise interface])
 
@@ -135,7 +139,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
     AC_DEFINE_UNQUOTED(OPAL_LIBLTDL_INTERNAL, $OPAL_LIBLTDL_INTERNAL,
         [Whether we are using the internal libltdl or not])
 
-    AM_CONDITIONAL(OPAL_HAVE_DLOPEN, 
+    AM_CONDITIONAL(OPAL_HAVE_DLOPEN,
                    [test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1"])
     OPAL_VAR_SCOPE_POP([HAPPY])
 ])dnl
@@ -159,23 +163,21 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         ompi_subdir_args="$ompi_subdir_args --disable-static"
     fi
 
-    CFLAGS_save="$CFLAGS"
+    CFLAGS_save=$CFLAGS
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
 
     # VPATH support will be included by default in CONFIG_SUBDIR
-    OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], 
+    OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args],
                        [HAPPY=1], [HAPPY=0])
-    if test "$HAPPY" = "1"; then
+    if test $HAPPY -eq 1; then
         LIBLTDL_SUBDIR=libltdl
         OPAL_LIBLTDL_INTERNAL=1
 
-        CPPFLAGS_save="$CPPFLAGS"
-        CPPFLAGS="-I$srcdir/opal/libltdl/"
-        # Must specifically mention $srcdir here for VPATH builds
-        # (this file is in the src tree).
-        AC_EGREP_HEADER([lt_dladvise_init], [$srcdir/opal/libltdl/ltdl.h],
+        CPPFLAGS_save=$CPPFLAGS
+        CPPFLAGS="-I$srcdir -I$srcdir/opal/libltdl"
+        AC_EGREP_HEADER([lt_dladvise_init], [opal/libltdl/ltdl.h],
                         [OPAL_HAVE_LTDL_ADVISE=1])
-        CPPFLAGS="$CPPFLAGS_save"
+        CPPFLAGS=$CPPFLAGS_save
 
         # --export-dynamic allows exported symbols to be resolved via
         # --dlsym and friends.
@@ -187,7 +189,7 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         AC_MSG_WARN([dynamic shared object loading, by configuring with --disable-dlopen.])
         AC_MSG_ERROR([Cannot continue])
     fi
-    CFLAGS="$CFLAGS_save"
+    CFLAGS=$CFLAGS_save
 
     OPAL_VAR_SCOPE_POP
 ])dnl
