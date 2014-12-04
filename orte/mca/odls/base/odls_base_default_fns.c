@@ -100,12 +100,12 @@
 int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                               orte_jobid_t job)
 {
-    int rc;
-    orte_job_t *jdata=NULL;
+    int rc, i;
+    orte_job_t *jdata=NULL, *jptr;
     orte_job_map_t *map=NULL;
-    opal_buffer_t *wireup;
+    opal_buffer_t *wireup, jobdata;
     opal_byte_object_t bo, *boptr;
-    int32_t numbytes;
+    int32_t numbytes, numjobs;
     int8_t flag;
 
     /* get the job data pointer */
@@ -169,6 +169,57 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         opal_dss.pack(data, &flag, 1, OPAL_INT8);
     }
 
+    /* check if this job caused daemons to be spawned - if it did,
+     * then we need to ensure that those daemons get a complete
+     * copy of all active jobs so the grpcomm collectives can
+     * properly work should a proc from one of the other jobs
+     * interact with this one */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+        OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
+        numjobs = 0;
+        for (i=0; i < orte_job_data->size; i++) {
+            if (NULL == (jptr = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
+                continue;
+            }
+            if (ORTE_JOB_STATE_UNTERMINATED < jptr->state) {
+                /* job already terminated - ignore it */
+                continue;
+            }
+            if (jptr == jdata) {
+                /* ignore the job we are looking at - we'll get it separately */
+                continue;
+            }
+            /* pack the job struct */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            ++numjobs;
+        }
+        if (0 < numjobs) {
+            /* pack the number of jobs */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* pack the jobdata buffer */
+            wireup = &jobdata;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &wireup, 1, OPAL_BUFFER))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&jobdata);
+                return rc;
+            }
+            OBJ_DESTRUCT(&jobdata);
+        }
+    } else {
+        numjobs = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+
+
     /* pack the job struct */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata, 1, ORTE_JOB))) {
         ORTE_ERROR_LOG(rc);
@@ -191,7 +242,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
-    int32_t n, k;
+    int32_t n, j, k;
     orte_proc_t *pptr, *dmn;
     opal_buffer_t *bptr;
     orte_app_context_t *app;
@@ -203,6 +254,64 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     *job = ORTE_JOBID_INVALID;
+
+    /* unpack the flag to see if additional jobs are included in the data */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &n, &cnt, OPAL_INT32))) {
+        *job = ORTE_JOBID_INVALID;
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
+    /* get the daemon job object */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+
+    if (0 < n) {
+        /* unpack the buffer containing the info */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bptr, &cnt, OPAL_BUFFER))) {
+            *job = ORTE_JOBID_INVALID;
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+        for (k=0; k < n; k++) {
+            /* unpack each job and add it to the local orte_job_data array */
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &jdata, &cnt, ORTE_JOB))) {
+                *job = ORTE_JOBID_INVALID;
+                ORTE_ERROR_LOG(rc);
+                goto REPORT_ERROR;
+            }
+            /* check to see if we already have this one */
+            if (NULL == orte_get_job_data_object(jdata->jobid)) {
+                /* nope - add it */
+                opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
+                /* connect each proc to its node object */
+                for (j=0; j < jdata->procs->size; j++) {
+                    if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+                        continue;
+                    }
+                    if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        return ORTE_ERR_NOT_FOUND;
+                    }
+                    OBJ_RETAIN(dmn->node);
+                    pptr->node = dmn->node;
+                    /* add proc to node - note that num_procs for the
+                     * node was already correctly unpacked, so don't
+                     * increment it here */
+                    OBJ_RETAIN(pptr);
+                    opal_pointer_array_add(dmn->node->procs, pptr);
+                }
+            } else {
+                /* yep - so we can drop this copy */
+                jdata->jobid = ORTE_JOBID_INVALID;
+                OBJ_RELEASE(jdata);
+            }
+        }
+        /* release the buffer */
+        OBJ_RELEASE(bptr);
+    }
     
     /* unpack the job we are to launch */
     cnt=1;
@@ -300,7 +409,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
 
     /* check the procs */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     for (n=0; n < jdata->procs->size; n++) {
         if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
             continue;
@@ -308,6 +416,16 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         if (ORTE_PROC_STATE_UNDEF == pptr->state) {
             /* not ready for use yet */
             continue;
+        }
+        opal_output_verbose(5, orte_odls_base_framework.framework_output,
+                            "%s GETTING DAEMON FOR PROC %s WITH PARENT %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&pptr->name),
+                            ORTE_VPID_PRINT(pptr->parent));
+        if (ORTE_VPID_INVALID == pptr->parent) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            ORTE_FORCED_TERMINATE(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
         }
         /* connect the proc to its node object */
         if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {

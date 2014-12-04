@@ -247,7 +247,9 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-FWD-IO-TO-TOOL";
         case ORTE_JOB_PHYSICAL_CPUIDS:
             return "JOB-PHYSICAL-CPUIDS";
-
+        case ORTE_JOB_LAUNCHED_DAEMONS:
+            return "JOB-LAUNCHED-DAEMONS";
+            
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
         case ORTE_PROC_CPU_BITMAP:
