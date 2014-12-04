@@ -116,7 +116,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     if (NULL != (affinity_file = getenv("LSB_AFFINITY_HOSTFILE"))) {
         /* check to see if the file is empty - if it is,
          * then affinity wasn't actually set for this job */
-        if (0 != stat(affinity_file, &buf))
+        if (0 != stat(affinity_file, &buf)) {
             orte_show_help("help-ras-lsf.txt", "affinity-file-not-found", true, affinity_file);
             return ORTE_ERR_SILENT;
         }
