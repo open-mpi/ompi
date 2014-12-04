@@ -96,10 +96,6 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
     AS_IF([test "$opal_check_cray_pmi_happy" = "yes" -a "$enable_static" = "yes"],
           [CRAY_PMI_LIBS = $CRAY_PMI_STATIC_LIBS],[])
 
-    AC_MSG_RESULT([CRAY_PMI_STATIC_LIBS - $CRAY_PMI_STATIC_LIBS])
-    AC_MSG_RESULT([CRAY_PMI_LIBS - $CRAY_PMI_LIBS])
-    AC_MSG_RESULT([CRAY_PMI_CFLAGS - $CRAY_PMI_CFLAGS])
-          
     AS_IF([test "$opal_check_cray_pmi_happy" = "yes"],
           [$1_LDFLAGS="$CRAY_PMI_LIBS"
            $1_CPPFLAGS="$CRAY_PMI_CFLAGS"

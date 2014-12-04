@@ -107,3 +107,6 @@ libmca_common_verbs_so_version=0:0:0
 
 # OPAL layer
 libmca_opal_common_pmi_so_version=0:0:0
+
+# ORTE layer
+libmca_common_alps_so_version=0:0:0

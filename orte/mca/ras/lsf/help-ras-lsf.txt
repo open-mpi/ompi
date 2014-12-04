@@ -27,4 +27,10 @@ LSF or your cluster.
 While trying to determine what resources are available, LSF returned
 a list of available nodes from which we were unable to extract anything
 usable. This may indicate a problem with LSF or your cluster.
+[affinity-file-not-found]
+The affinity file provided in LSB_AFFINITY_HOSTFILE could not be found:
+
+  File:  %s
+
+We cannot continue.
 

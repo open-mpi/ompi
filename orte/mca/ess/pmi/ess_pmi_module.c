@@ -45,7 +45,7 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -73,7 +73,9 @@ orte_ess_base_module_t orte_ess_pmi_module = {
     NULL /* ft_event */
 };
 
-static bool app_init_complete=false;
+static bool added_transport_keys=false;
+static bool added_num_procs = false;
+static bool added_app_ctx = false;
 
 /****    MODULE FUNCTIONS    ****/
 
@@ -83,12 +85,10 @@ static int rte_init(void)
     char *error = NULL;
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
-    char *cs_env, *string_key;
-    orte_jobid_t jobid;
+    char *string_key;
     char *rmluri;
     opal_value_t *kv, kvn;
     opal_list_t vals;
-    orte_vpid_t starting_vpid = 1; // compensate for orterun
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -106,64 +106,7 @@ static int rte_init(void)
     }
 #endif
 
-    if (ORTE_PROC_IS_DAEMON) {  /* I am a daemon, launched by mpirun */
-        /* ensure that we always exit with a non-zero status
-         * so that Slurm and other such RMs will terminate the
-         * job if any daemon exits, whether normal termination or not
-         */
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-
-        /* we had to be given a jobid */
-        if (NULL == orte_ess_base_jobid) {
-            error = "missing jobid";
-            ret = ORTE_ERR_FATAL;
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
-            ORTE_ERROR_LOG(ret);
-            error = "convert jobid";
-            goto error;
-        }
-        ORTE_PROC_MY_NAME->jobid = jobid;
-
-        if (NULL != orte_ess_base_vpid) {
-            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&starting_vpid,
-                                                                       orte_ess_base_vpid))) {
-                ORTE_ERROR_LOG(ret);
-                return(ret);
-            }
-        } 
-
-        if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
-            error = "getting rank";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
-        }
-
-        ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + starting_vpid;  
-        fprintf(stderr,"Setting my vpid to %d\n",ORTE_PROC_MY_NAME->vpid);
-        OBJ_RELEASE(kv);
-
-        /* if we weren't given it, get universe size */
-        if (orte_ess_base_num_procs < 0) {
-            if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
-                error = "getting univ size";
-                ret = ORTE_ERR_NOT_FOUND;
-                goto error;
-            }
-            orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
-            OBJ_RELEASE(kv);
-        }
-
-        /* complete setup */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_orted_setup";
-            goto error;
-        }
-        return ORTE_SUCCESS;
-
-    }
+    /* we don't have to call pmix.init because the pmix select did it */
 
     /****   THE FOLLOWING ARE REQUIRED VALUES   ***/
     /* get our jobid from PMI */
@@ -212,10 +155,16 @@ static int rte_init(void)
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
-    asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
-    putenv(ev1);
-    asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
-    putenv(ev2);
+    if (NULL == getenv(OPAL_MCA_PREFIX"orte_ess_num_procs")) {
+        asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
+        putenv(ev1);
+        added_num_procs = true;
+    }
+    if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
+        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
+        putenv(ev2);
+        added_app_ctx = true;
+    }
 
 
     /* get our app number from PMI - ok if not found */
@@ -239,28 +188,26 @@ static int rte_init(void)
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
      */
-    unique_key[0] = ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid);
-    unique_key[1] = ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
-    if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    if (NULL == getenv(OPAL_MCA_PREFIX"orte_precondition_transports")) {
+        unique_key[0] = ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid);
+        unique_key[1] = ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
+        if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        asprintf(&envar, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
+        putenv(envar);
+        added_transport_keys = true;
+        /* cannot free the envar as that messes up our environ */
+        free(string_key);
     }
-    if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    asprintf(&envar, "%s=%s", cs_env, string_key);
-    putenv(envar);
-    /* cannot free the envar as that messes up our environ */
-    free(cs_env);
-    free(string_key);
 
     /* we don't need to force the routed system to pick the
      * "direct" component as that should happen automatically
      * in those cases where we are direct launched (i.e., no
      * HNP is defined in the environment */
 
-    /* now use the default procedure to finish my setup */
+    /* now that we have all required info, complete the setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
@@ -369,9 +316,6 @@ static int rte_init(void)
         opal_pmix.fence(NULL, 0);
     }
 
-    /* flag that we completed init */
-    app_init_complete = true;
-
     return ORTE_SUCCESS;
 
  error:
@@ -387,32 +331,30 @@ static int rte_finalize(void)
 {
     int ret;
 
-    if (app_init_complete) {
-        /* if I am a daemon, finalize using the default procedure */
-        if (ORTE_PROC_IS_DAEMON) {
-            if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
-                ORTE_ERROR_LOG(ret);
-                return ret;
-            }
-        } else {
-            /* mark us as finalized */
-            opal_pmix.finalize();
-
-            /* remove the envars that we pushed into environ
-             * so we leave that structure intact
-             */
-            unsetenv(OPAL_MCA_PREFIX"routed");
-            unsetenv(OPAL_MCA_PREFIX"orte_precondition_transports");
-            unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs");
-            unsetenv("OMPI_APP_CTX_NUM_PROCS");
-            /* use the default app procedure to finish */
-            if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-                ORTE_ERROR_LOG(ret);
-                return ret;
-            }
-        }
+    /* remove the envars that we pushed into environ
+     * so we leave that structure intact
+     */
+    if (added_transport_keys) {
+        unsetenv(OPAL_MCA_PREFIX"orte_precondition_transports");
+    }
+    if (added_num_procs) {
+        unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs");
+    }
+    if (added_app_ctx) {
+        unsetenv("OMPI_APP_CTX_NUM_PROCS");
+    }
+    /* use the default app procedure to finish */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
     
+    /* mark us as finalized */
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+        (void) mca_base_framework_close(&opal_pmix_base_framework);
+    }
+        
     return ORTE_SUCCESS;
 }
 

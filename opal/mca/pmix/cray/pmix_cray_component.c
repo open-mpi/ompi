@@ -105,10 +105,6 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
 
 static int pmix_cray_component_close(void)
 {
-    int ret = OPAL_SUCCESS;
-
-    ret = opal_pmix_cray_module.finalize();  
-
-    return ret;
+    return OPAL_SUCCESS;
 }
 

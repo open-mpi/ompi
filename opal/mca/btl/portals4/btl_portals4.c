@@ -91,9 +91,13 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
                         curr_proc, (void**) &id, &size);
 
-        if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_NOT_FOUND == ret) {
+            OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                "btl/portals4: Portals 4 BTL not available on peer: %s", opal_strerror(ret)));
+            continue;
+        } else if (OPAL_SUCCESS != ret) {
             opal_output_verbose(0, opal_btl_base_framework.framework_output,
-                "btl/portals4: opal_modex_recv failed: %d", ret);
+                "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
             return ret;
         }
         if (size < sizeof(ptl_process_t)) {  /* no available connection */
