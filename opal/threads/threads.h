@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -124,6 +127,13 @@ OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
 OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t*);
 OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);
+
+static inline void opal_thread_yield (void)
+{
+#if OPAL_HAVE_SCHED_YIELD
+    sched_yield ();
+#endif
+}
 
 END_C_DECLS
 
