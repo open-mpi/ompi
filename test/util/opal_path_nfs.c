@@ -31,9 +31,7 @@
 #include "opal/util/path.h"
 #include "opal/util/output.h"
 
-/*
 #define DEBUG
-*/
 
 /*
  * On Linux, if this test is run with no command line params, it will
