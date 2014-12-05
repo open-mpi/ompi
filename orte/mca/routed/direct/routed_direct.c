@@ -109,7 +109,10 @@ static int update_route(orte_process_name_t *target,
 
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
-    orte_process_name_t *ret;
+    orte_process_name_t *ret, daemon;
+    orte_routed_jobfam_t *jfam;
+    int i;
+    uint16_t jfamily;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
@@ -117,20 +120,92 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
+    /* initialize */
+    daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
+    daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
+
     if (ORTE_PROC_IS_APP) {
-        ret = ORTE_PROC_MY_HNP;
-    } else {
-        /* all routes go direct */
-        ret = target;
+        ret = ORTE_PROC_MY_DAEMON;
+        goto found;
     }
+
+    /* if I am a tool, the route is direct if target is in
+     * my own job family, and to the target's HNP if not
+     */
+    if (ORTE_PROC_IS_TOOL) {
+        if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            ret = target;
+            goto found;
+        } else {
+            ORTE_HNP_NAME_FROM_JOB(&daemon, target->jobid);
+            ret = &daemon;
+            goto found;
+        }
+    }
+
+    /******     HNP AND DAEMONS ONLY     ******/
+    /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
+    if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* if I am a daemon, route this via the HNP */
+        if (ORTE_PROC_IS_DAEMON) {
+            ret = ORTE_PROC_MY_HNP;
+            goto found;
+        }
+
+        /* if I am the HNP, then I stored a route to
+         * this job family, so look it up
+         */
+        jfamily = ORTE_JOB_FAMILY(target->jobid);
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
+                continue;
+            }
+            if (jfam->job_family == jfamily) {
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
+                                     "%s routed_direct: route to %s found",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOB_FAMILY_PRINT(target->jobid)));
+                ret = &jfam->route;
+                goto found;
+            }
+        }
+        /* not found - so we have no route */
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
+    /* THIS CAME FROM OUR OWN JOB FAMILY... */
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
+                    "%s routing direct to the HNP",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        ret = ORTE_PROC_MY_HNP;
+        goto found;
+    }
+
+    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    /* find out what daemon hosts this proc */
+    if (ORTE_VPID_INVALID == (daemon.vpid = orte_get_proc_daemon_vpid(target))) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
+    /* if the daemon is me, then send direct to the target! */
+    if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
+        ret = target;
+        goto found;
+    }
+
+    /* else route to this daemon directly */
+    ret = &daemon;
 
  found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                          "%s routed_direct_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(target),
                          ORTE_NAME_PRINT(ret)));
-    
+
     return *ret;
 }
 
@@ -220,16 +295,27 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     }
 
     /***   MUST BE A PROC   ***/
-    
-    if (NULL != orte_process_info.my_hnp_uri) {
-        /* set the contact info into the hash table */
-        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+    if (NULL == ndat) {
+        if (NULL != orte_process_info.my_hnp_uri) {
+            /* set the contact info into the hash table */
+            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
 
-        /* extract the hnp name and store it */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
-                        ORTE_PROC_MY_HNP, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+            /* extract the hnp name and store it */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                            ORTE_PROC_MY_HNP, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
+        if (NULL != orte_process_info.my_daemon_uri) {
+            orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+            /* extract the daemon's name so we can update the routing table */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                            ORTE_PROC_MY_DAEMON, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
     }
 
@@ -248,7 +334,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             return rc;
         }
     }
-
     return ORTE_SUCCESS;
 }
 
