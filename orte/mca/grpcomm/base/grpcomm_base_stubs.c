@@ -295,7 +295,19 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             return ORTE_ERR_NOT_FOUND;
         }
         if (NULL == jdata->map) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            /* we haven't generated a job map yet - if we are the HNP,
+             * then we should only involve ourselves. Otherwise, we have
+             * no choice but to abort to avoid hangs */
+            if (ORTE_PROC_IS_HNP) {
+                dns = (orte_vpid_t*)malloc(sizeof(vpid));
+                dns[0] = ORTE_PROC_MY_NAME->vpid;
+                *ndmns = 1;
+                *dmns = dns;
+                return ORTE_SUCCESS;
+            }
+            ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+            *ndmns = 0;
+            *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
         }
         /* get the array */
