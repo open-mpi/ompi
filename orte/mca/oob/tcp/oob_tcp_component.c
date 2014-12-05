@@ -200,11 +200,14 @@ static char *dyn_port_string;
 static char *dyn_port_string6;
 #endif
 
+static char *connection_timeout_string;
+
 static int tcp_component_register(void)
 {
     mca_base_component_t *component = &mca_oob_tcp_component.super.oob_base;
     int var_id;
-
+    char **vals=NULL;
+    
     /* register oob module parameters */
     mca_oob_tcp_component.peer_limit = -1;
     (void)mca_base_component_var_register(component, "peer_limit",
@@ -402,6 +405,23 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
+    mca_oob_tcp_component.connect_timeout.tv_sec = 0;
+    mca_oob_tcp_component.connect_timeout.tv_usec = 1000;
+    connection_timeout_string = "0:1000";
+    (void)mca_base_component_var_register(component, "connect_timeout",
+                                          "Timeout for connection attempts to peer expressed as sec:usec",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &connection_timeout_string);
+
+    vals = opal_argv_split(connection_timeout_string, ':');
+    mca_oob_tcp_component.connect_timeout.tv_sec = strtol(vals[0], NULL, 10);
+    if (NULL != vals[1]) {
+        mca_oob_tcp_component.connect_timeout.tv_usec = strtol(vals[1], NULL, 10);
+    }
+    opal_argv_free(vals);
+    
     return ORTE_SUCCESS;
 }
 
