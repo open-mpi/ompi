@@ -23,16 +23,23 @@ with_pmi=/opt/cray/pmi/2.1.4-1.0000.8596.8.9.gem
 #
 #with_udreg=/opt/cray/udreg/2.3.2-1.0401.5929.3.3.gem
 
-if test -e /opt/cray/alps/default ; then
-   # use default location for CLE4
-   with_alps=yes
-else
-   # set resource manager to alps for CLE 4.1 (change if using a different CLE)
-   with_alps=/opt/cray/xe-sysroot/4.1.40/usr
-   # the above directory is missing the libraries on the login nodes so use
-   # the copies from /usr/lib
-   with_alps_libdir=/usr/lib/alps
-fi
+#
+# the alps selection stuff is no longer needed unless
+# one is building for a es-login node of a system running CLE 4.2 or older
+# and needs to use a non-default /opt/cray/xe-sysroot directory
+#
+# On CLE 5 and higher systems, non-default alps packages can be selected via the
+# PKG_CONFIG_PATH env variable.
+#
+#if test -e /opt/cray/alps/default ; then
+#   with_alps=yes
+#else
+#   # set resource manager to alps for CLE 4.1 (change if using a different CLE)
+#   with_alps=/opt/cray/xe-sysroot/4.1.40/usr
+#   # the above directory is missing the libraries on the login nodes so use
+#   # the copies from /usr/lib
+#   with_alps_libdir=/usr/lib/alps
+#fi
 
 with_tm=no
 with_slurm=no
