@@ -61,7 +61,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
@@ -302,21 +301,25 @@ static int component_set_addr(orte_process_name_t *peer,
      * by me via my daemon
      */
     if (ORTE_PROC_IS_APP) {
-        ui64 = (uint64_t*)peer;
-        if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
-                                                             (*ui64), (void**)&pr) || NULL == pr) {
-            pr = OBJ_NEW(mca_oob_usock_peer_t);
-            pr->name = *peer;
-            opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
-        }
-        if (ORTE_PROC_MY_DAEMON->jobid == peer->jobid) {
+        /* if this is my daemon, then take it - otherwise, ignore */
+        if (ORTE_PROC_MY_DAEMON->jobid == peer->jobid &&
+            ORTE_PROC_MY_DAEMON->vpid == peer->vpid) {
+            ui64 = (uint64_t*)peer;
+            if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
+                                                                 (*ui64), (void**)&pr) || NULL == pr) {
+                pr = OBJ_NEW(mca_oob_usock_peer_t);
+                pr->name = *peer;
+                opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
+            }
             /* we have to initiate the connection because otherwise the
              * daemon has no way to communicate to us via this component
              * as the app doesn't have a listening port */
             pr->state = MCA_OOB_USOCK_CONNECTING;
             ORTE_ACTIVATE_USOCK_CONN_STATE(pr, mca_oob_usock_peer_try_connect);
+            return ORTE_SUCCESS;
         }
-        return ORTE_SUCCESS;
+        /* otherwise, indicate that we cannot reach this peer */
+        return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
     /* if I am a daemon or HNP, I can only reach my
@@ -397,10 +400,12 @@ void mca_oob_usock_component_lost_connection(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
     }
 
-    /* activate the proc state */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer->name)) {
+    /* activate the proc state - since an app only connects to its parent daemon,
+     * and the daemon is *always* its lifeline, activate the lifeline lost state */
+    if (ORTE_PROC_IS_APP) {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer->name, ORTE_PROC_STATE_LIFELINE_LOST);
     } else {
+        /* we are the daemon end, so notify that the child's comm failed */
         ORTE_ACTIVATE_PROC_STATE(&pop->peer->name, ORTE_PROC_STATE_COMM_FAILED);
     }
 
@@ -457,10 +462,12 @@ void mca_oob_usock_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer->name));
 
-    /* if this was a lifeline, then alert */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer->name)) {
+    /* since an app only connects to its parent daemon,
+     * and the daemon is *always* its lifeline, activate the lifeline lost state */
+    if (ORTE_PROC_IS_APP) {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer->name, ORTE_PROC_STATE_LIFELINE_LOST);
     } else {
+        /* we are the daemon end, so notify that the child's comm failed */
         ORTE_ACTIVATE_PROC_STATE(&pop->peer->name, ORTE_PROC_STATE_COMM_FAILED);
     }
     OBJ_RELEASE(pop);

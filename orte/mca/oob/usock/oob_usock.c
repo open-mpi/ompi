@@ -55,7 +55,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
