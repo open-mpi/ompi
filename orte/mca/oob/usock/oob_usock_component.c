@@ -290,7 +290,6 @@ static char* component_get_addr(void)
     tmp = strdup("usock");
     return tmp;
 }
-
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris)
 {
@@ -302,6 +301,10 @@ static int component_set_addr(orte_process_name_t *peer,
      * by me via my daemon
      */
     if (ORTE_PROC_IS_APP) {
+        /* if I'd like to communicate with hnp, I won't use usock oob */
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, peer)) {
+            return ORTE_ERR_TAKE_NEXT_OPTION;
+        }
         ui64 = (uint64_t*)peer;
         if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
                                                              (*ui64), (void**)&pr) || NULL == pr) {
