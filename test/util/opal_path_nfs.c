@@ -31,9 +31,7 @@
 #include "opal/util/path.h"
 #include "opal/util/output.h"
 
-/*
 #define DEBUG
-*/
 
 #if !defined(__linux__)
 /* This test currently only works on Linux */
