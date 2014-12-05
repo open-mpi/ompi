@@ -159,7 +159,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         }
 
         /* If we can not stat the fs, skip it */
-        if (statfs (dirs_tmp[i], statfs)) {
+        if (statfs (dirs_tmp[i], &statfs)) {
             continue;
         }
 
