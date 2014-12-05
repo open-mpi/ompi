@@ -459,8 +459,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(ORTE_ERR_FATAL);
                 return ORTE_ERR_FATAL;
             }
-            /* set the contact info into the hash table */
-            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
             
             /* extract the hnp name and store it */
             if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
@@ -468,6 +466,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            /* set the contact info into the hash table */
+            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
 
             /* if we are using static ports, set my lifeline to point at my parent */
             if (orte_static_ports) {
@@ -633,18 +633,18 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             return rc;
         }
         
-        /* Set the contact info in the RML - this won't actually establish
-         * the connection, but just tells the RML how to reach the daemon
-         * if/when we attempt to send to it
-         */
-        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
         /* extract the daemon's name so we can update the routing table */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
                                                            ORTE_PROC_MY_DAEMON, NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the daemon
+         * if/when we attempt to send to it
+         */
+        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+
         /* set our lifeline to the local daemon - we will abort if this connection is lost */
         lifeline = ORTE_PROC_MY_DAEMON;
         

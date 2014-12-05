@@ -66,7 +66,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "oob_usock.h"
@@ -706,9 +705,6 @@ static void usock_peer_connected(mca_oob_usock_peer_t* peer)
         peer->timer_ev_active = false;
     }
     peer->state = MCA_OOB_USOCK_CONNECTED;
-
-    /* update the route */
-    orte_routed.update_route(&peer->name, &peer->name);
 
     /* initiate send of first message on queue */
     if (NULL == peer->send_msg) {

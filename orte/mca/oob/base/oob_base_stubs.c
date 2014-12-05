@@ -386,6 +386,11 @@ static void process_uri(char *uri)
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
                 opal_bitmap_set_bit(&pr->addressable, component->idx);
+            } else {
+                opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                    "%s: peer %s is NOT reachable via component %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
             }
         }
     }

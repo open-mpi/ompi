@@ -65,7 +65,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_wait.h"
 
