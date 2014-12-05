@@ -143,7 +143,7 @@ typedef uint128_t opal_uint128_t;
 
 #define HAVE_OPAL_INT128_T 1
 
-#elif HAVE___INT128
+#elif defined(HAVE___INT128)
 
 /* suppress warning about __int128 type */
 #pragma GCC diagnostic ignored "-Wpedantic"
