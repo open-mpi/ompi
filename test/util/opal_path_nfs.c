@@ -32,6 +32,12 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
 
 #include "support.h"
 #include "opal/util/path.h"
