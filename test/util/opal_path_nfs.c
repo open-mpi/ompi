@@ -32,12 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
-#ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-#include <sys/vfs.h>
-#endif
 
 #include "support.h"
 #include "opal/util/path.h"
@@ -116,7 +110,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
     char ** dirs_tmp;
     bool * nfs_tmp;
     char buffer[SIZE];
-    struct statfs statfs;
+    struct statfs mystatfs;
 
     rc = system (cmd);
 
@@ -165,7 +159,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         }
 
         /* If we can not stat the fs, skip it */
-        if (statfs (dirs_tmp[i], &statfs)) {
+        if (statfs (dirs_tmp[i], &mystatfs)) {
             continue;
         }
 
