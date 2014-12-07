@@ -73,6 +73,12 @@ hwloc_backend_synthetic_init(struct hwloc_synthetic_backend_data_s *data,
 	errno = EINVAL;
 	return -1;
       }
+      if (type == HWLOC_OBJ_MISC) {
+	if (verbose)
+	  fprintf(stderr, "Synthetic string with disallow object type at '%s'\n", pos);
+	errno = EINVAL;
+	return -1;
+      }
 
       next_pos = strchr(pos, ':');
       if (!next_pos) {
@@ -134,9 +140,8 @@ hwloc_backend_synthetic_init(struct hwloc_synthetic_backend_data_s *data,
 	case HWLOC_OBJ_CACHE: type = HWLOC_OBJ_SOCKET; break;
 	case HWLOC_OBJ_SOCKET: type = HWLOC_OBJ_NODE; break;
 	case HWLOC_OBJ_NODE:
-	case HWLOC_OBJ_GROUP: type = HWLOC_OBJ_GROUP; break;
 	case HWLOC_OBJ_MACHINE:
-	case HWLOC_OBJ_MISC: type = HWLOC_OBJ_MISC; break;
+	case HWLOC_OBJ_GROUP: type = HWLOC_OBJ_GROUP; break;
 	default:
 	  assert(0);
 	}
@@ -242,8 +247,6 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
 
   /* pre-hooks */
   switch (type) {
-    case HWLOC_OBJ_MISC:
-      break;
     case HWLOC_OBJ_GROUP:
       break;
     case HWLOC_OBJ_SYSTEM:
@@ -265,6 +268,7 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       break;
     case HWLOC_OBJ_PU:
       break;
+    case HWLOC_OBJ_MISC:
     case HWLOC_OBJ_TYPE_MAX:
       /* Should never happen */
       assert(0);
@@ -290,8 +294,6 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
 
   /* post-hooks */
   switch (type) {
-    case HWLOC_OBJ_MISC:
-      break;
     case HWLOC_OBJ_GROUP:
       obj->attr->group.depth = curlevel->depth;
       break;
@@ -330,6 +332,7 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       break;
     case HWLOC_OBJ_PU:
       break;
+    case HWLOC_OBJ_MISC:
     case HWLOC_OBJ_TYPE_MAX:
       /* Should never happen */
       assert(0);
