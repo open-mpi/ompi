@@ -155,6 +155,8 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_CONFIGURE],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS],[
     AM_CONDITIONAL([HAVE_LD_VERSION_SCRIPT], [false])
     AM_CONDITIONAL([HAVE_DIRECT], [false])
+
+    _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS
 ])
 
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
@@ -276,7 +278,13 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
     opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
 
     opal_common_libfabric_embedded_LIBADD="-lnl"
+])
 
+# --------------------------------------------------------
+# Internal helper macro for usnic AM conditionals (that must be run
+# unconditionally)
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS],[
     AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC],
                    [test $opal_common_libfabric_usnic_happy -eq 1])
 ])
