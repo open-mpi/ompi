@@ -261,13 +261,12 @@ int opal_hwloc_base_get_topology(void)
     /* fill opal_cache_line_size global with the smallest L1 cache
        line size */
     fill_cache_line_size();
+
     return rc;
 }
 
 int opal_hwloc_base_set_topology(char *topofile)
 {
-    hwloc_obj_t obj;
-    unsigned j, k;
     struct hwloc_topology_support *support;
     int rc;
 
@@ -302,30 +301,7 @@ int opal_hwloc_base_set_topology(char *topofile)
                              "hwloc:base:set_topology failed to load"));
         return OPAL_ERR_NOT_SUPPORTED;
     }
-    /* remove the hostname from the topology. Unfortunately, hwloc
-     * decided to add the source hostname to the "topology", thus
-     * rendering it unusable as a pure topological description. So
-     * we remove that information here.
-     */
-    obj = hwloc_get_root_obj(opal_hwloc_topology);
-    for (k=0; k < obj->infos_count; k++) {
-        if (NULL == obj->infos[k].name ||
-            NULL == obj->infos[k].value) {
-            continue;
-        }
-        if (0 == strncmp(obj->infos[k].name, "HostName", strlen("HostName"))) {
-            free(obj->infos[k].name);
-            free(obj->infos[k].value);
-            /* left justify the array */
-            for (j=k; j < obj->infos_count-1; j++) {
-                obj->infos[j] = obj->infos[j+1];
-            }
-            obj->infos[obj->infos_count-1].name = NULL;
-            obj->infos[obj->infos_count-1].value = NULL;
-            obj->infos_count--;
-            break;
-        }
-    }
+
     /* unfortunately, hwloc does not include support info in its
      * xml output :-(( We default to assuming it is present as
      * systems that use this option are likely to provide
@@ -575,7 +551,7 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
 
     data = (opal_hwloc_obj_data_t*)obj->userdata;
 
-    if (NULL == data || 0 == data->npus) {
+    if (NULL == data || UINT_MAX == data->npus) {
         if (!opal_hwloc_use_hwthreads_as_cpus) {
             /* if we are treating cores as cpus, then we really
              * want to know how many cores are in this object.
@@ -2100,4 +2076,22 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
         }
     }
     return OPAL_ERR_NOT_FOUND;
+}
+
+char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
+{
+    unsigned int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
+    char *sig=NULL;
+    
+    nnuma = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
+    nsocket = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET, 0, OPAL_HWLOC_AVAILABLE);
+    nl3 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_CACHE, 3, OPAL_HWLOC_AVAILABLE);
+    nl2 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_CACHE, 2, OPAL_HWLOC_AVAILABLE);
+    nl1 = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_CACHE, 1, OPAL_HWLOC_AVAILABLE);
+    ncore = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
+    nhwt = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
+
+    asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH",
+             nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt);
+    return sig;
 }

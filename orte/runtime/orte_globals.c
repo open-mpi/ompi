@@ -70,6 +70,7 @@ char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
 opal_hash_table_t *orte_coprocessors = NULL;
+char *orte_topo_signature = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -84,7 +85,6 @@ int orte_use_hostname_alias;
 
 int orted_debug_failure;
 int orted_debug_failure_delay;
-bool orte_homogeneous_nodes = false;
 bool orte_hetero_apps = false;
 bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
@@ -924,3 +924,23 @@ static void orte_attr_des(orte_attribute_t *p)
 OBJ_CLASS_INSTANCE(orte_attribute_t,
                    opal_list_item_t,
                    orte_attr_cons, orte_attr_des);
+
+#if OPAL_HAVE_HWLOC
+static void tcon(orte_topology_t *t)
+{
+    t->topo = NULL;
+    t->sig = NULL;
+}
+static void tdes(orte_topology_t *t)
+{
+    if (NULL != t->topo) {
+        hwloc_topology_destroy(t->topo);
+    }
+    if (NULL != t->sig) {
+        free(t->sig);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_topology_t,
+                   opal_object_t,
+                   tcon, tdes);
+#endif

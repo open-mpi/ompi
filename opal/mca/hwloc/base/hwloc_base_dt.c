@@ -150,37 +150,8 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
 
 int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type_t type)
 {
-    char *xml;
-    int len;
-    struct hwloc_topology_support *support, *destsupport;
-
-    if (0 != hwloc_topology_export_xmlbuffer(src, &xml, &len)) {
-        return OPAL_ERROR;
-    }
-    if (0 != hwloc_topology_init(dest)) {
-        free(xml);
-        return OPAL_ERROR;
-    }
-    if (0 != hwloc_topology_set_xmlbuffer(*dest, xml, len)) {
-        hwloc_topology_destroy(*dest);
-        free(xml);
-        return OPAL_ERROR;
-    }
-    if (0 != hwloc_topology_load(*dest)) {
-        hwloc_topology_destroy(*dest);
-        free(xml);
-        return OPAL_ERROR;
-    }
-    free(xml);
-
-    /* get the available support - hwloc unfortunately does
-     * not include this info in its xml support!
-     */
-    support = (struct hwloc_topology_support*)hwloc_topology_get_support(src);
-    destsupport = (struct hwloc_topology_support*)hwloc_topology_get_support(*dest);
-    *destsupport = *support;
-
-    return OPAL_SUCCESS;
+    /* use the hwloc dup function */
+    return hwloc_topology_dup(dest, src);
 }
 
 int opal_hwloc_compare(const hwloc_topology_t topo1,
@@ -189,9 +160,6 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
 {
     hwloc_topology_t t1, t2;
     unsigned d1, d2;
-    char *x1=NULL, *x2=NULL;
-    int l1, l2;
-    int s;
     struct hwloc_topology_support *s1, *s2;
 
     /* stop stupid compiler warnings */
@@ -206,27 +174,10 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     } else if (d2 > d1) {
         return OPAL_VALUE2_GREATER;
     }
-
-    /* do the comparison the "cheat" way - get an xml representation
-     * of each tree, and strcmp!
-     */
-    if (0 != hwloc_topology_export_xmlbuffer(t1, &x1, &l1)) {
-        return OPAL_EQUAL;
-    }
-    if (0 != hwloc_topology_export_xmlbuffer(t2, &x2, &l2)) {
-        free(x1);
-        return OPAL_EQUAL;
-    }
-
-    s = strcmp(x1, x2);
-    free(x1);
-    free(x2);
-    if (s > 0) {
-        return OPAL_VALUE1_GREATER;
-    } else if (s < 0) {
-        return OPAL_VALUE2_GREATER;
-    }
-
+    
+    /* do a tree-wise search so we only compare the things we care about,
+     * and ignore stuff like MAC addresses */
+    
     /* compare the available support - hwloc unfortunately does
      * not include this info in its xml support!
      */

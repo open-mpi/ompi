@@ -48,6 +48,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     int i, n, val, dig, num_nodes;
     orte_node_t *node;
 #if OPAL_HAVE_HWLOC
+    orte_topology_t *t;
     hwloc_topology_t topo;
     hwloc_obj_t obj;
     unsigned j, k;
@@ -181,7 +182,10 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             support->cpubind->set_thisproc_cpubind = mca_ras_simulator_component.have_cpubind;
             support->membind->set_thisproc_membind = mca_ras_simulator_component.have_membind;
             /* add it to our array */
-            opal_pointer_array_add(orte_node_topologies, topo);
+            t = OBJ_NEW(orte_topology_t);
+            t->topo = topo;
+            t->sig = opal_hwloc_base_get_topo_signature(topo);
+            opal_pointer_array_add(orte_node_topologies, t);
         }
 #endif
 
