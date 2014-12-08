@@ -162,7 +162,7 @@ endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 
 headers = $(libfabric_core_headers)
 if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
-headers += (libfabric_usnic_headers)
+headers += $(libfabric_usnic_headers)
 endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
