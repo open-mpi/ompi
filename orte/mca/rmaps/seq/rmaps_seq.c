@@ -201,6 +201,13 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     }
 #endif
 
+    /* initialize all the nodes as not included in this job map */
+    for (j=0; j < orte_node_pool->size; j++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+        } 
+    }
+    
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
