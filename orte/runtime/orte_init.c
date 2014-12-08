@@ -61,6 +61,13 @@
  */
 
 static char*
+_process_name_print_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
+    return ORTE_NAME_PRINT(rte_name);
+}
+
+static char*
 _jobid_print_for_opal(const opal_jobid_t jobid)
 {
     return ORTE_JOBID_PRINT(jobid);
@@ -132,7 +139,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     }
     
     /* Convince OPAL to use our naming scheme */
-    // opal_process_name_print = _process_name_print_for_opal;
+    opal_process_name_print = _process_name_print_for_opal;
     opal_vpid_print = _vpid_print_for_opal;
     opal_jobid_print = _jobid_print_for_opal;
     opal_compare_proc = _process_name_compare;
