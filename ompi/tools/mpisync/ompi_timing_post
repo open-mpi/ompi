@@ -10,45 +10,49 @@
 #####################################################################
 # Evaluate a floating point number expression.
 
-function float_eval(){    
-    float_scale=9
-    local stat=0    
-    local result=0.0    
-    if [[ $# -gt 0 ]]; then
-        result=$(echo "scale=$float_scale; $*" | bc -q 2>/dev/null)
-        stat=$?
-        if [[ $stat -eq 0  &&  -z "$result" ]]; then
-            stat=1; 
-        fi    
-    fi    
-    echo $result    
-    return $stat
-}
-
 if [ -z "$1" ] || [ -z "$2" ]; then
     echo "Need the name of a timing file and the output file"
     exit 0
 fi
 
-thefile=$1
+initfile=$1
 postfile=$2
-sed '/^$/d' $thefile > ${thefile}_tmp
-sort  ${thefile}_tmp > ${postfile}
 
-read line < ${postfile}
-first_ts=`echo $line | awk '{ print $1 }' | sed -e 's/s//'`
-prev_ts=$first_ts
-echo $first_ts
+# 1. Filter OPAL_TRACE entrieas only 
+#    and put the timestamp to the first place
+#.2. Sort considering that we dealing with 
+#    floating point numbers
+# 3. Return to initial field order and count relative fields
+cat $initfile | \
+awk 'BEGIN { FPAT = "([^ ]+)|(\"[^\"]+\")" }
+{
+    if( $0 ~ /\[OPAL_TRACE\]/ ){
+        x = $NF
+        $NF = $1
+        $1 = x
+        print $0
+    }
+}' | sort --general-numeric-sort | \
+awk 'BEGIN { 
+    FPAT = "([^ ]+)|(\"[^\"]+\")" 
+    first = 0
+    prev = 0
+}
+{
+    if( first == 0 ){
+	first = $1
+	prev = $1
+    }
+    x = $1
+    $1 = $NF
+    $NF = x
+    rel_to_first = x - first
+    rel_to_prev = x - prev
+    prev = x
+    print $0, " ", rel_to_prev, " ", rel_to_first
+}' > $postfile
 
-while read line ; do
-    cur_ts=`echo $line | awk '{ print $1 }' | sed -e 's/s//'`
-    dif1=`float_eval "$cur_ts - $first_ts"`
-    dif2=`float_eval "$cur_ts - $prev_ts"`
-    newline=`echo $line | sed -e "s/$cur_ts/$dif1:$dif2/"`
-    prev_ts=$cur_ts
-    echo $newline
-done <  ${postfile} > ${thefile}_tmp
 
-cat ${thefile}_tmp > ${postfile}
 
-rm -f ${thefile}_tmp
+
+

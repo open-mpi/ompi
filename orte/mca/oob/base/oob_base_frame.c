@@ -107,7 +107,7 @@ static int orte_oob_base_close(void)
 
 
     OPAL_TIMING_EVENT((&tm_oob, "Finish"));
-    OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob, "COMM");
+    OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob);
 
     return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
 }
