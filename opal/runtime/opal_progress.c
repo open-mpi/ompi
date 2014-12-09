@@ -187,7 +187,7 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-#if defined(HAVE_SCHED_YIELD)
+#if OPAL_HAVE_SCHED_YIELD
     if (opal_progress_yield_when_idle && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
