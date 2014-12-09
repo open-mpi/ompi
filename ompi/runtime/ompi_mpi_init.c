@@ -512,6 +512,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
+    /* If thread support was enabled, then setup OPAL to allow for
+       them. */
+    if ((OPAL_ENABLE_PROGRESS_THREADS == 1) ||
+        (*provided != MPI_THREAD_SINGLE)) {
+        opal_set_using_threads(true);
+    }
+
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
      * init.
@@ -722,13 +729,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = ompi_proc_complete_init())) {
         error = "ompi_proc_complete_init failed";
         goto error;
-    }
-
-    /* If thread support was enabled, then setup OPAL to allow for
-       them. */
-    if ((OPAL_ENABLE_PROGRESS_THREADS == 1) ||
-        (*provided != MPI_THREAD_SINGLE)) {
-        opal_set_using_threads(true);
     }
 
     /* start PML/BTL's */
