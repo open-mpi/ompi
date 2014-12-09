@@ -28,7 +28,7 @@ opal_btl_usnic_post_recv_list(opal_btl_usnic_channel_t *channel)
 
     for (rseg = channel->repost_recv_head; NULL != rseg; rseg = rseg->rs_next) {
         rc = fi_recv(channel->ep, rseg->rs_protocol_header,
-                     rseg->rs_len, NULL, FI_ADDR_NOTAVAIL, rseg);
+                     rseg->rs_len, NULL, FI_ADDR_UNSPEC, rseg);
         if (0 != rc) {
             return rc;
         }
