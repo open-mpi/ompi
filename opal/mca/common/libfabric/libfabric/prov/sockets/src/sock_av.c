@@ -269,7 +269,7 @@ fi_addr_t _sock_av_lookup(struct sock_av *av, struct sockaddr *addr)
 		}
 		fprintf(stderr, "[sock] failed to lookup src_addr in av table\n");
 	}
-	return FI_ADDR_UNSPEC;
+	return FI_ADDR_NOTAVAIL;
 }
 
 /* place holder */

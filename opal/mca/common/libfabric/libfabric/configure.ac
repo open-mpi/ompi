@@ -44,47 +44,16 @@ AC_ARG_ENABLE([direct],
 	[enable_direct=no])
 
 dnl Checks for programs
-AC_PROG_CC
+AC_PROG_CC_C99
 
 dnl Checks for header files.
 AC_HEADER_STDC
-
-dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_CHECK_SIZEOF(long)
 
 dnl Only build on Linux
 AC_CHECK_HEADER([linux/types.h], [],
 	[AC_MSG_ERROR([libfabric only builds on Linux])])
 
 LT_INIT
-
-AC_CHECK_HEADERS([fcntl.h sys/socket.h])
-AC_CHECK_DECLS([O_CLOEXEC],,[AC_DEFINE([O_CLOEXEC],[0],
-	[Defined to 0 if not provided])],
-	[[
-		#ifdef HAVE_FCNTL_H
-		#include <fcntl.h>
-		#endif
-	]])
-
-AC_CHECK_DECLS([SOCK_CLOEXEC],,[AC_DEFINE([SOCK_CLOEXEC],[0],
-	[Defined to 0 if not provided])],
-	[[
-		#ifdef HAVE_SYS_SOCKET_H
-		#include <sys/socket.h>
-		#endif
-	]])
-
-AC_CACHE_CHECK(for close on exec modifier for fopen(),
-	ac_cv_feature_stream_cloexec_flag,
-	[if test $ac_cv_have_decl_O_CLOEXEC = yes ; then
-		if test $ac_cv_have_decl_SOCK_CLOEXEC = yes ; then
-			ac_cv_feature_stream_cloexec_flag="e"
-		fi
-	fi])
-AC_DEFINE_UNQUOTED([STREAM_CLOEXEC], "$ac_cv_feature_stream_cloexec_flag",
-	[fopen() modifier for setting close on exec flag])
 
 dnl dlopen support is optional
 AC_ARG_WITH([dlopen],
@@ -161,11 +130,6 @@ FI_PROVIDER_SETUP([verbs])
 FI_PROVIDER_SETUP([usnic])
 FI_PROVIDER_FINI
 
-# Make sure at least one provider was setup
-AS_IF([test x"$PROVIDERS_TO_BUILD" = "x"],
-      [AC_MSG_NOTICE([No providers were configured])
-       AC_MSG_ERROR([Cannot continue])])
-
 # If the user requested to build in direct mode, but
 # we have more than one provider, error.
 AS_IF([test x"$enable_direct" != x"no"],
@@ -178,3 +142,30 @@ AM_CONDITIONAL([HAVE_DIRECT], [test x"$enable_direct" != x"no"])
 
 AC_CONFIG_FILES([Makefile libfabric.spec])
 AC_OUTPUT
+
+dnl helpful output
+if test "$PROVIDERS_TO_BUILD" = ""; then
+	echo "***"
+	echo "*** No providers were configured. This may not be what you wanted."
+	echo "***"
+	exit 1
+fi
+
+echo "***"
+for i in $PROVIDERS_TO_BUILD; do
+	v=${i}_dl
+	if test `eval echo \\$${v}` != "1"; then
+		builtin="$i ${builtin}"
+	fi
+done
+echo -e "*** Built-in providers:\t${builtin}"
+echo "***"
+
+for i in $PROVIDERS_TO_BUILD; do
+	v=${i}_dl
+	if test `eval echo \\$${v}` == "1"; then
+		dso="$i ${dso}"
+	fi
+done
+echo -e "*** DSO providers:\t${dso}"
+echo "***"

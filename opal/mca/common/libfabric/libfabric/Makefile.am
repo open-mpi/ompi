@@ -186,6 +186,7 @@ endif HAVE_USNIC
 
 if HAVE_PSM
 _psm_files = \
+	prov/psm/src/psm_am.h \
 	prov/psm/src/psmx.h \
 	prov/psm/src/psmx_init.c \
 	prov/psm/src/psmx_domain.c \
@@ -321,7 +322,10 @@ dummy_man_pages = \
         man/fi_getopt.3 \
         man/fi_getpeer.3 \
         man/fi_inject.3 \
+        man/fi_injectdata.3 \
         man/fi_inject_atomic.3 \
+        man/fi_inject_write.3 \
+        man/fi_inject_writedata.3 \
         man/fi_join.3 \
         man/fi_leave.3 \
         man/fi_listen.3 \
@@ -332,10 +336,13 @@ dummy_man_pages = \
         man/fi_mr_regattr.3 \
         man/fi_mr_regv.3 \
         man/fi_open.3 \
-        man/fi_pendpoint.3 \
+        man/fi_passive_ep.3 \
         man/fi_poll_add.3 \
         man/fi_poll_del.3 \
         man/fi_poll_open.3 \
+        man/fi_read.3 \
+        man/fi_readmsg.3 \
+        man/fi_readv.3 \
         man/fi_recv.3 \
         man/fi_recvmsg.3 \
         man/fi_recvv.3 \
@@ -349,6 +356,7 @@ dummy_man_pages = \
         man/fi_shutdown.3 \
         man/fi_strerror.3 \
         man/fi_tinject.3 \
+        man/fi_tinjectdata.3 \
         man/fi_tostr.3 \
         man/fi_trecv.3 \
         man/fi_trecvmsg.3 \
@@ -359,7 +367,11 @@ dummy_man_pages = \
         man/fi_tsendmsg.3 \
         man/fi_tsendv.3 \
         man/fi_wait.3 \
-        man/fi_wait_open.3
+        man/fi_wait_open.3 \
+        man/fi_write.3 \
+        man/fi_writedata.3 \
+        man/fi_writemsg.3 \
+        man/fi_writev.3
 
 man_MANS = $(real_man_pages) $(dummy_man_pages)
 

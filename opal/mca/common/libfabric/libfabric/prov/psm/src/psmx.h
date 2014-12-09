@@ -519,9 +519,6 @@ struct psmx_fid_ep {
 	int			recv_cq_event_flag:1;
 	uint64_t		flags;
 	uint64_t		caps;
-	int			connected;
-	psm_epid_t		peer_psm_epid;
-	psm_epaddr_t		peer_psm_epaddr;
 	struct fi_context	nocomp_send_context;
 	struct fi_context	nocomp_recv_context;
 	struct fi_context	sendimm_context;

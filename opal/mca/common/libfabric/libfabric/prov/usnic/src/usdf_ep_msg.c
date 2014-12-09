@@ -188,6 +188,7 @@ static struct fi_ops_msg usdf_msg_ops = {
 	.sendmsg = usdf_msg_sendmsg,
 	.inject = usdf_msg_inject,
 	.senddata = usdf_msg_senddata,
+	.injectdata = fi_no_msg_injectdata,
 };
 
 int

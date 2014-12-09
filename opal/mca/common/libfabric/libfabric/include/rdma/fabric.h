@@ -101,6 +101,7 @@ typedef struct fid *fid_t;
 #define FI_DYNAMIC_MR		(1ULL << 7)
 #define FI_NAMED_RX_CTX		(1ULL << 8)
 #define FI_BUFFERED_RECV	(1ULL << 9)
+#define FI_DIRECTED_RECV	(1ULL << 10)
 
 /*
  * Flags
@@ -144,7 +145,7 @@ struct fi_ioc {
  * Format for transport addresses: sendto, writeto, etc.
  */
 enum {
-	FI_ADDR_UNSPEC,		/* void * */
+	FI_FORMAT_UNSPEC,	/* void * */
 	FI_SOCKADDR,		/* struct sockaddr */
 	FI_SOCKADDR_IN,		/* struct sockaddr_in */
 	FI_SOCKADDR_IN6,	/* struct sockaddr_in6 */
@@ -152,6 +153,7 @@ enum {
 	FI_ADDR_PSMX,		/* uint64_t */
 };
 
+#define FI_ADDR_UNSPEC		UINT64_MAX
 #define FI_ADDR_NOTAVAIL	UINT64_MAX
 #define FI_SHARED_CONTEXT	UINT64_MAX
 typedef uint64_t		fi_addr_t;
@@ -208,7 +210,7 @@ enum {
 #define FI_PROV_MR_ATTR		(1ULL << 2)
 #define FI_MSG_PREFIX		(1ULL << 3)
 
-struct fi_tx_ctx_attr {
+struct fi_tx_attr {
 	uint64_t		caps;
 	uint64_t		mode;
 	uint64_t		op_flags;
@@ -218,7 +220,7 @@ struct fi_tx_ctx_attr {
 	size_t			iov_limit;
 };
 
-struct fi_rx_ctx_attr {
+struct fi_rx_attr {
 	uint64_t		caps;
 	uint64_t		mode;
 	uint64_t		op_flags;
@@ -277,8 +279,8 @@ struct fi_info {
 	void			*src_addr;
 	void			*dest_addr;
 	fi_connreq_t		connreq;
-	struct fi_tx_ctx_attr	*tx_attr;
-	struct fi_rx_ctx_attr	*rx_attr;
+	struct fi_tx_attr	*tx_attr;
+	struct fi_rx_attr	*rx_attr;
 	struct fi_ep_attr	*ep_attr;
 	struct fi_domain_attr	*domain_attr;
 	struct fi_fabric_attr	*fabric_attr;
@@ -334,7 +336,7 @@ struct fi_ops_fabric {
 	size_t	size;
 	int	(*domain)(struct fid_fabric *fabric, struct fi_info *info,
 			struct fid_domain **dom, void *context);
-	int	(*endpoint)(struct fid_fabric *fabric, struct fi_info *info,
+	int	(*passive_ep)(struct fid_fabric *fabric, struct fi_info *info,
 			struct fid_pep **pep, void *context);
 	int	(*eq_open)(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 			struct fid_eq **eq, void *context);

@@ -1,4 +1,4 @@
-.TH fabric 7 "2014\-12\-02" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fabric 7 "2014\-12\-05" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 Fabric Interface Library
@@ -194,8 +194,7 @@ Connectionless endpoints must support all relevant data transfer
 routines.
 (send / recv / write / read / etc.)
 .IP \[bu] 2
-Connectionless endpoints must support the CM interfaces for getname,
-getpeer, and connect.
+Connectionless endpoints must support the CM interface getname.
 .IP \[bu] 2
 Connectionless endpoints that support multicast operations must support
 the CM interfaces join and leave.

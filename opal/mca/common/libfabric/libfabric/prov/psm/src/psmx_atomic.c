@@ -796,8 +796,6 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		dest_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -984,8 +982,6 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		dest_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -1172,8 +1168,6 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		dest_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;

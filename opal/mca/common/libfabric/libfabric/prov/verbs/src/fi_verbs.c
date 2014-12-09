@@ -94,6 +94,7 @@ struct fi_ibv_cq {
 	struct ibv_cq		*cq;
 	size_t			entry_size;
 	uint64_t		flags;
+	enum fi_cq_wait_cond	wait_cond;
 	struct ibv_wc		wc;
 };
 
@@ -140,7 +141,6 @@ static int fi_ibv_check_hints(struct fi_info *hints)
 	switch (hints->ep_type) {
 	case FI_EP_UNSPEC:
 	case FI_EP_MSG:
-	case FI_EP_DGRAM:
 		break;
 	default:
 		return -FI_ENODATA;
@@ -582,6 +582,7 @@ static struct fi_ops_msg fi_ibv_msg_ep_msg_ops = {
 	.sendmsg = fi_ibv_msg_ep_sendmsg,
 	.inject = fi_no_msg_inject,
 	.senddata = fi_ibv_msg_ep_senddata,
+	.injectdata = fi_no_msg_injectdata,
 };
 
 static ssize_t
@@ -807,6 +808,7 @@ static struct fi_ops_rma fi_ibv_msg_ep_rma_ops = {
 	.writemsg = fi_ibv_msg_ep_rma_writemsg,
 	.inject = fi_no_rma_inject,
 	.writedata = fi_ibv_msg_ep_rma_writedata,
+	.injectdata = fi_no_rma_injectdata,
 };
 
 static ssize_t
@@ -1790,7 +1792,8 @@ fi_ibv_cq_sread(struct fid_cq *cq, void *buf, size_t count, const void *cond,
 	struct fi_ibv_cq *_cq;
 
 	_cq = container_of(cq, struct fi_ibv_cq, cq_fid);
-	threshold = MIN((ssize_t) cond, count);
+	threshold = (_cq->wait_cond == FI_CQ_COND_THRESHOLD) ?
+		MIN((ssize_t) cond, count) : 1;
 
 	for (cur = 0; cur < threshold; ) {
 		ret = _cq->cq_fid.ops->read(cq, buf, count - cur);
@@ -1832,8 +1835,13 @@ static ssize_t fi_ibv_cq_read_context(struct fid_cq *cq, void *buf, size_t count
 
 	for (i = 0; i < count; i++) {
 		ret = ibv_poll_cq(_cq->cq, 1, &_cq->wc);
-		if (ret <= 0 || _cq->wc.status)
+		if (ret <= 0)
 			break;
+
+		if (_cq->wc.status) {
+			ret = -FI_EAVAIL;
+			break;
+		}
 
 		entry->op_context = (void *) (uintptr_t) _cq->wc.wr_id;
 		entry += 1;
@@ -1854,8 +1862,13 @@ static ssize_t fi_ibv_cq_read_msg(struct fid_cq *cq, void *buf, size_t count)
 
 	for (i = 0; i < count; i++) {
 		ret = ibv_poll_cq(_cq->cq, 1, &_cq->wc);
-		if (ret <= 0 || _cq->wc.status)
+		if (ret <= 0)
 			break;
+
+		if (_cq->wc.status) {
+			ret = -FI_EAVAIL;
+			break;
+		}
 
 		entry->op_context = (void *) (uintptr_t) _cq->wc.wr_id;
 		entry->flags = (uint64_t) _cq->wc.wc_flags;
@@ -1878,8 +1891,13 @@ static ssize_t fi_ibv_cq_read_data(struct fid_cq *cq, void *buf, size_t count)
 
 	for (i = 0; i < count; i++) {
 		ret = ibv_poll_cq(_cq->cq, 1, &_cq->wc);
-		if (ret <= 0 || _cq->wc.status)
+		if (ret <= 0)
 			break;
+
+		if (_cq->wc.status) {
+			ret = -FI_EAVAIL;
+			break;
+		}
 
 		entry->op_context = (void *) (uintptr_t) _cq->wc.wr_id;
 		if (_cq->wc.wc_flags & IBV_WC_WITH_IMM) {
@@ -2034,6 +2052,7 @@ fi_ibv_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	}
 
 	_cq->flags |= attr->flags;
+	_cq->wait_cond = attr->wait_cond;
 	_cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	_cq->cq_fid.fid.context = context;
 	_cq->cq_fid.fid.ops = &fi_ibv_cq_fi_ops;
@@ -2286,7 +2305,7 @@ static struct fi_ops fi_ibv_pep_ops = {
 };
 
 static int
-fi_ibv_pendpoint(struct fid_fabric *fabric, struct fi_info *info,
+fi_ibv_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 	      struct fid_pep **pep, void *context)
 {
 	struct fi_ibv_pep *_pep;
@@ -2334,7 +2353,7 @@ static struct fi_ops fi_ibv_fi_ops = {
 static struct fi_ops_fabric fi_ibv_ops_fabric = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = fi_ibv_domain,
-	.endpoint = fi_ibv_pendpoint,
+	.passive_ep = fi_ibv_passive_ep,
 	.eq_open = fi_ibv_eq_open,
 };
 

@@ -3,19 +3,8 @@
 /* Set to 1 to use c11 atomic functions */
 #undef HAVE_ATOMICS
 
-/* Define to 1 if you have the declaration of `O_CLOEXEC', and to 0 if you
-   don't. */
-#undef HAVE_DECL_O_CLOEXEC
-
-/* Define to 1 if you have the declaration of `SOCK_CLOEXEC', and to 0 if you
-   don't. */
-#undef HAVE_DECL_SOCK_CLOEXEC
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the <fcntl.h> header file. */
-#undef HAVE_FCNTL_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -59,9 +48,6 @@
 /* assembler has .symver support */
 #undef HAVE_SYMVER_SUPPORT
 
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#undef HAVE_SYS_SOCKET_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -77,9 +63,6 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
-
-/* Defined to 0 if not provided */
-#undef O_CLOEXEC
 
 /* Name of package */
 #undef PACKAGE
@@ -102,20 +85,8 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of `long', as computed by sizeof. */
-#undef SIZEOF_LONG
-
-/* Defined to 0 if not provided */
-#undef SOCK_CLOEXEC
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* fopen() modifier for setting close on exec flag */
-#undef STREAM_CLOEXEC
-
 /* Version number of package */
 #undef VERSION
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const

@@ -48,8 +48,6 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 	size_t idx;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
-	if (ep_priv->connected)
-		src_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -209,8 +207,6 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		dest_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -363,5 +359,6 @@ struct fi_ops_msg psmx_msg_ops = {
 	.sendmsg = psmx_sendmsg,
 	.inject = psmx_inject,
 	.senddata = fi_no_msg_senddata,
+	.injectdata = fi_no_msg_injectdata,
 };
 

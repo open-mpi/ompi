@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2014\-11\-21" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2014\-12\-08" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -97,8 +97,8 @@ struct\ fi_info\ {
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *src_addr;
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *dest_addr;
 \ \ \ \ fi_connreq_t\ \ \ \ \ \ \ \ \ \ connreq;
-\ \ \ \ struct\ fi_tx_ctx_attr\ *tx_attr;
-\ \ \ \ struct\ fi_rx_ctx_attr\ *rx_attr;
+\ \ \ \ struct\ fi_tx_attr\ *tx_attr;
+\ \ \ \ struct\ fi_rx_attr\ *rx_attr;
 \ \ \ \ struct\ fi_ep_attr\ \ \ \ \ *ep_attr;
 \ \ \ \ struct\ fi_domain_attr\ *domain_attr;
 \ \ \ \ struct\ fi_fabric_attr\ *fabric_attr;
@@ -289,6 +289,12 @@ is posted are lost.
 Applications may access endpoint options (getopt/setopt) to determine
 the size of available buffered receive space.
 .PP
+\f[I]FI_DIRECTED_RECV\f[] : Requests that the communication endpoint use
+the source address of an incoming message when matching it with a
+receive buffer.
+If this capability is not set, then the src_addr parameter for msg and
+tagged receive operations is ignored.
+.PP
 \f[I]FI_INJECT\f[] : Indicates that the endpoint be able to support the
 FI_INJECT flag on data transfer operations and the \[aq]inject\[aq] data
 transfer calls.
@@ -344,8 +350,8 @@ The FI_REMOTE_CQ_DATA indicates that an endpoint must support the
 FI_REMOTE_CQ_DATA flag on data transfer operations.
 The minimum supported size of remote CQ data that an endpoint with this
 capability must support is 4-bytes.
-Applications may access endpoint options (getopt/setopt) to determine
-remote CQ data limits.
+Applications may check the domain attributes to determine remote CQ data
+limits.
 .PP
 \f[I]FI_REMOTE_SIGNAL\f[] : Indicates that the endpoint support the
 FI_REMOTE_SIGNAL flag on data transfer operations.
@@ -486,15 +492,15 @@ In some cases, a selected addressing format may need to be translated or
 mapped into into an address which is native to the fabric.
 See \f[C]fi_av\f[](3).
 .PP
-\f[I]FI_ADDR_UNSPEC\f[] : FI_ADDR_UNSPEC indicates that a provider
+\f[I]FI_FORMAT_UNSPEC\f[] : FI_FORMAT_UNSPEC indicates that a provider
 specific address format should be selected.
 Provider specific addresses may be protocol specific or a vendor
 proprietary format.
-Applications that select FI_ADDR_UNSPEC should be prepared to be treat
+Applications that select FI_FORMAT_UNSPEC should be prepared to be treat
 returned addressing data as opaque.
-FI_ADDR_UNSPEC targets apps which make use of an out of band address
+FI_FORMAT_UNSPEC targets apps which make use of an out of band address
 exchange.
-Applications which use FI_ADDR_UNSPEC may use fi_getname() to obtain a
+Applications which use FI_FORMAT_UNSPEC may use fi_getname() to obtain a
 provider specific address assigned to an allocated endpoint.
 .PP
 \f[I]FI_SOCKADDR\f[] : Address is of type sockaddr.

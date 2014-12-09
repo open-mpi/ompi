@@ -451,8 +451,6 @@ ssize_t _psmx_read(struct fid_ep *ep, void *buf, size_t len,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		src_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -622,8 +620,6 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	assert(ep_priv->domain);
-	if (ep_priv->connected)
-		dest_addr = (fi_addr_t) ep_priv->peer_psm_epaddr;
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -836,5 +832,6 @@ struct fi_ops_rma psmx_rma_ops = {
 	.writemsg = psmx_writemsg,
 	.inject = psmx_inject,
 	.writedata = psmx_writedata,
+	.injectdata = fi_no_rma_injectdata,
 };
 

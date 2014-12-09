@@ -114,7 +114,7 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		return -FI_ENODATA;
 	}
 
-	if (node) {
+	if (node && !(flags & FI_SOURCE)) {
 		if (service)
 			dest_addr = psmx_resolve_name(node, atoi(service));
 		else

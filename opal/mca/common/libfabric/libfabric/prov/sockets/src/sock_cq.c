@@ -282,7 +282,7 @@ ssize_t sock_cq_write(struct fid_cq *cq, const void *buf, size_t len)
 	if(!(sock_cq->attr.flags & FI_WRITE))
 		return -FI_EINVAL;
 
-	return _sock_cq_write(sock_cq, FI_ADDR_UNSPEC, buf, len);
+	return _sock_cq_write(sock_cq, FI_ADDR_NOTAVAIL, buf, len);
 }
 
 ssize_t sock_cq_writeerr(struct fid_cq *cq, struct fi_cq_err_entry *buf,

@@ -78,7 +78,7 @@ usdf_validate_hints(struct fi_info *hints, struct usd_device_attrs *dap)
 	size_t size;
 
 	switch (hints->addr_format) {
-	case FI_ADDR_UNSPEC:
+	case FI_FORMAT_UNSPEC:
 	case FI_SOCKADDR_IN:
 		size = sizeof(struct sockaddr_in);
 		break;
@@ -130,7 +130,7 @@ usdf_fill_addr_info(struct fi_info *fi, struct fi_info *hints,
 	int ret;
 
 	/* If hints speficied, we already validated requested addr_format */
-	if (hints != NULL && hints->addr_format != FI_ADDR_UNSPEC) {
+	if (hints != NULL && hints->addr_format != FI_FORMAT_UNSPEC) {
 		fi->addr_format = hints->addr_format;
 	} else {
 		fi->addr_format = FI_SOCKADDR_IN;
@@ -189,8 +189,8 @@ usdf_fill_info_dgram(
 	struct fi_info *fi;
 	struct fi_fabric_attr *fattrp;
 	struct fi_domain_attr *dattrp;
-	struct fi_tx_ctx_attr *txattr;
-	struct fi_rx_ctx_attr *rxattr;
+	struct fi_tx_attr *txattr;
+	struct fi_rx_attr *rxattr;
 	struct fi_ep_attr *eattrp;
 	int ret;
 
@@ -298,8 +298,8 @@ usdf_fill_info_msg(
 	struct fi_info *fi;
 	struct fi_fabric_attr *fattrp;
 	struct fi_domain_attr *dattrp;
-	struct fi_tx_ctx_attr *txattr;
-	struct fi_rx_ctx_attr *rxattr;
+	struct fi_tx_attr *txattr;
+	struct fi_rx_attr *rxattr;
 	struct fi_ep_attr *eattrp;
 	int ret;
 
@@ -655,7 +655,7 @@ static struct fi_ops usdf_fi_ops = {
 static struct fi_ops_fabric usdf_ops_fabric = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = usdf_domain_open,
-	.endpoint = usdf_pep_open,
+	.passive_ep = usdf_pep_open,
 	.eq_open = usdf_eq_open,
 };
 

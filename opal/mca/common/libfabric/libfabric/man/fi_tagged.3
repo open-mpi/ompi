@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2014\-12\-02" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_tagged 3 "2014\-12\-08" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -83,7 +83,9 @@ Ignored for connected endpoints.
 .PP
 \f[I]src_addr\f[] : Source address to receive from for connectionless
 transfers.
-Ignored for connected endpoints.
+Applies only to connectionless endpoints with the FI_DIRECTED_RECV
+capability enabled, otherwise this field is ignored.
+If set to FI_ADDR_UNSPEC, any source address may match.
 .PP
 \f[I]msg\f[] : Message descriptor for send and receive operations.
 .PP

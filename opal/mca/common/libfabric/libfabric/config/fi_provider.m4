@@ -77,16 +77,14 @@ AC_DEFUN([FI_PROVIDER_SETUP],[
 		[PROVIDERS_TO_BUILD="$PROVIDERS_TO_BUILD $1"
 		 PROVIDERS_COUNT=$((PROVIDERS_COUNT+1))
 		 AS_IF([test $$1_dl -eq 1],
-			[AC_MSG_NOTICE([$1 provider to be built as a DSO])
-			 PROVIDERS_DL="prov/$1/lib$1.la $PROVIDERS_DL"
+			[PROVIDERS_DL="prov/$1/lib$1.la $PROVIDERS_DL"
 			 AS_IF([test x"$enable_static" = x"yes" &&
 				test x"$enable_shared" = x"no"],
 				[AC_MSG_WARN([$1 provider was selected to be built as DL])
 				 AC_MSG_WARN([but libfabric is being built as static-only])
 				 AC_MSG_ERROR([This is an impossible situation. Cannot continue.])])
 			],
-			[AC_MSG_NOTICE([$1 provider to be built statically])
-			 PROVIDERS_STATIC="prov/$1/lib$1.la $PROVIDERS_STATIC"])
+			[PROVIDERS_STATIC="prov/$1/lib$1.la $PROVIDERS_STATIC"])
 		],
 		[AC_MSG_NOTICE([$1 provider disabled])])
 
