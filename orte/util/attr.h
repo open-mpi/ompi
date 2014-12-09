@@ -191,7 +191,7 @@ ORTE_DECLSPEC void orte_remove_attribute(opal_list_t *attributes, orte_attribute
  *
  * Handlers will be invoked by orte_attr_key_to_str to return the appropriate value.
  */
-typedef char* (*orte_attr2str_fn_t)(int key);
+typedef char* (*orte_attr2str_fn_t)(orte_attribute_key_t key);
 
 ORTE_DECLSPEC int orte_attr_register(const char *project,
                                      orte_attribute_key_t key_base,
