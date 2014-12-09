@@ -97,6 +97,11 @@ Your job failed to map. Either no mapper was available, or none
 of the available mappers was able to perform the requested
 mapping operation. This can happen if you request a map type
 (e.g., loadbalance) and the corresponding mapper was not built.
+
+  Mapper result:    %s
+  #procs mapped:    %d
+  #nodes assigned:  %d
+
 #
 [unrecognized-policy]
 The specified %s policy is not recognized:
@@ -319,11 +324,13 @@ Please specify a mapping level that has more than one cpu, or
 else let us define a default mapping that will allow multiple
 cpus-per-proc.
 #
-[unrecog-modifier]
-A modifier was given to the --map-by directive that is not
-recognized:
+[seq:not-enough-resources]
+A sequential map was requested, but not enough node entries
+were given to support the requested number of processes:
 
-  Modifier:  %s
+  Num procs:  %d
+  Num nodes:  %d
 
-Please see "mpirun --help" for a description of supported
-modifiers.
+We cannot continue - please adjust either the number of processes
+or provide more node locations in the file.
+

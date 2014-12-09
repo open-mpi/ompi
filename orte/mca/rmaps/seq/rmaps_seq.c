@@ -53,6 +53,31 @@ orte_rmaps_base_module_t orte_rmaps_seq_module = {
     orte_rmaps_seq_map
 };
 
+/* local object for tracking rank locations */
+typedef struct {
+    opal_list_item_t super;
+    char *hostname;
+    char *cpuset;
+} seq_node_t;
+static void sn_con(seq_node_t *p)
+{
+    p->hostname = NULL;
+    p->cpuset = NULL;
+}
+static void sn_des(seq_node_t *p)
+{
+    if (NULL != p->hostname) {
+        free(p->hostname);
+    }
+    if (NULL != p->cpuset) {
+        free(p->cpuset);
+    }
+}
+OBJ_CLASS_INSTANCE(seq_node_t,
+                   opal_list_item_t,
+                   sn_con, sn_des);
+
+static char *orte_getline(FILE *fp);
 
 /*
  * Sequentially map the ranks according to the placement in the
@@ -65,17 +90,23 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     int i, n;
     orte_std_cntr_t j;
     opal_list_item_t *item;
-    orte_node_t *node, *nd, *save=NULL;
+    orte_node_t *node, *nd;
+    seq_node_t *sq, *save=NULL, *seq;;
     orte_vpid_t vpid;
     orte_std_cntr_t num_nodes;
     int rc;
-    opal_list_t *default_node_list=NULL;
-    opal_list_t *node_list=NULL;
+    opal_list_t default_seq_list;
+    opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
+    char *hstname, *sep;
+    FILE *fp;
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_resource_type_t rtype;
+#endif
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
-                         "%s rmaps:seq mapping job %s",
+                         "%s rmaps:seq called on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
@@ -89,13 +120,16 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (NULL != jdata->map->req_mapper &&
-        0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
-        /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:seq: job %s not using sequential mapper",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        return ORTE_ERR_TAKE_NEXT_OPTION;
+    if (NULL != jdata->map->req_mapper) {
+        if (0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
+            /* a mapper has been specified, and it isn't me */
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: job %s not using sequential mapper",
+                                ORTE_JOBID_PRINT(jdata->jobid));
+            return ORTE_ERR_TAKE_NEXT_OPTION;
+        }
+        /* we need to process it */
+        goto process;
     }
     if (ORTE_MAPPING_SEQ != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* I don't know how to do these - defer */
@@ -105,6 +139,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
+ process:
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:seq: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
@@ -115,23 +150,61 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     }
     jdata->map->last_mapper = strdup(c->mca_component_name);
 
-    /* conveniece def */
+    /* convenience def */
     map = jdata->map;
-      
+
     /* if there is a default hostfile, go and get its ordered list of nodes */
+    OBJ_CONSTRUCT(&default_seq_list, opal_list_t);
     if (NULL != orte_default_hostfile) {
-        default_node_list = OBJ_NEW(opal_list_t);
-        if (ORTE_SUCCESS != (rc = orte_util_get_ordered_host_list(default_node_list, orte_default_hostfile))) {
-            ORTE_ERROR_LOG(rc);
+        /* open the file */
+        fp = fopen(orte_default_hostfile, "r");
+        if (NULL == fp) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
             goto error;
         }
+        while (NULL != (hstname = orte_getline(fp))) {
+            if (0 == strlen(hstname)) {
+                /* blank line - ignore */
+                continue;
+            }
+            sq = OBJ_NEW(seq_node_t);
+            if (NULL != (sep = strchr(hstname, ' '))) {
+                *sep = '\0';
+                sep++;
+                sq->cpuset = strdup(sep);
+            }
+            sq->hostname = strdup(hstname);
+            opal_list_append(&default_seq_list, &sq->super);
+        }
+        fclose(fp);
     }
     
     /* start at the beginning... */
     vpid = 0;
     jdata->num_procs = 0;
-    if (NULL != default_node_list) {
-        save = (orte_node_t*)opal_list_get_first(default_node_list);
+    if (0 < opal_list_get_size(&default_seq_list)) {
+        save = (seq_node_t*)opal_list_get_first(&default_seq_list);
+    }
+    
+#if OPAL_HAVE_HWLOC
+    /* default to LOGICAL processors */
+    if (ORTE_JOB_CONTROL_PHYS_CPUS & jdata->controls) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:seq: using PHYSICAL processors");
+        rtype = OPAL_HWLOC_PHYSICAL;
+    } else {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:seq: using LOGICAL processors");
+        rtype = OPAL_HWLOC_LOGICAL;
+    }
+#endif
+
+    /* initialize all the nodes as not included in this job map */
+    for (j=0; j < orte_node_pool->size; j++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
+            node->mapped = false;
+        } 
     }
     
     /* cycle through the app_contexts, mapping them sequentially */
@@ -142,22 +215,51 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     
         /* dash-host trumps hostfile */
         if (NULL != app->dash_host) {
-            node_list = OBJ_NEW(opal_list_t);
-            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_dash_host_list(node_list, app->dash_host))) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: using dash-host nodes on app %s", app->app);
+            OBJ_CONSTRUCT(&node_list, opal_list_t);
+            /* dash host entries cannot specify cpusets, so used the std function to retrieve the list */
+            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_dash_host_list(&node_list, app->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 goto error;
             }            
-            nd = (orte_node_t*)opal_list_get_first(node_list);
+            /* transfer the list to a seq_node_t list */
+            OBJ_CONSTRUCT(&sq_list, opal_list_t);
+            while (NULL != (nd = (orte_node_t*)opal_list_remove_first(&node_list))) {
+                sq = OBJ_NEW(seq_node_t);
+                sq->hostname = strdup(nd->name);
+                opal_list_append(&sq_list, &sq->super);
+                OBJ_RELEASE(nd);
+            }
+            OBJ_DESTRUCT(&node_list);
+            seq_list = &sq_list;
         } else if (NULL != app->hostfile) {
-            node_list = OBJ_NEW(opal_list_t);
-            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_host_list(node_list, app->hostfile))) {
-                ORTE_ERROR_LOG(rc);
-                goto error;
-            }            
-            nd = (orte_node_t*)opal_list_get_first(node_list);
-        } else if (NULL != default_node_list) {
-            node_list = default_node_list;
-            nd = save;
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: using hostfile %s nodes on app %s", app->hostfile, app->app);
+            OBJ_CONSTRUCT(&sq_list, opal_list_t);
+            /* open the file */
+            fp = fopen(app->hostfile, "r");
+            if (NULL == fp) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                rc = ORTE_ERR_NOT_FOUND;
+                OBJ_DESTRUCT(&sq_list);
+            }
+            while (NULL != (hstname = orte_getline(fp))) {
+                sq = OBJ_NEW(seq_node_t);
+                if (NULL != (sep = strchr(hstname, ' '))) {
+                    *sep = '\0';
+                    sep++;
+                    sq->cpuset = strdup(sep);
+                }
+                sq->hostname = strdup(hstname);
+                opal_list_append(&sq_list, &sq->super);
+            }
+            fclose(fp);
+            seq_list = &sq_list;
+        } else if (0 < opal_list_get_size(&default_seq_list)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: using default hostfile nodes on app %s", app->app);
+            seq_list = &default_seq_list;
         } else {
             /* can't do anything - no nodes available! */
             orte_show_help("help-orte-rmaps-base.txt",
@@ -168,22 +270,24 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         
         /* check for nolocal and remove the head node, if required */
         if (map->mapping & ORTE_MAPPING_NO_USE_LOCAL) {
-            for (item  = opal_list_get_first(node_list);
-                 item != opal_list_get_end(node_list);
+            for (item  = opal_list_get_first(seq_list);
+                 item != opal_list_get_end(seq_list);
                  item  = opal_list_get_next(item) ) {
-                node = (orte_node_t*)item;
+                seq = (seq_node_t*)item;
                 /* need to check ifislocal because the name in the
                  * hostfile may not have been FQDN, while name returned
                  * by gethostname may have been (or vice versa)
                  */
-                if (opal_ifislocal(node->name)) {
-                    opal_list_remove_item(node_list, item);
+                if (opal_ifislocal(seq->hostname)) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps:seq: removing head node %s", seq->hostname);
+                    opal_list_remove_item(seq_list, item);
                     OBJ_RELEASE(item);  /* "un-retain" it */
                 }
             }
         }
             
-        if (NULL == node_list || 0 == (num_nodes = (orte_std_cntr_t)opal_list_get_size(node_list))) {
+        if (NULL == seq_list || 0 == (num_nodes = (orte_std_cntr_t)opal_list_get_size(seq_list))) {
             orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:no-available-resources",
                            true);
@@ -193,8 +297,20 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         /* if num_procs wasn't specified, set it now */
         if (0 == app->num_procs) {
             app->num_procs = num_nodes;
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: setting num procs to %s for app %s",
+                                ORTE_VPID_PRINT(app->num_procs), app->app);
+        } else if (num_nodes < app->num_procs) {
+            orte_show_help("help-orte-rmaps-base.txt", "seq:not-enough-resources", true,
+                           app->num_procs, num_nodes);
+            return ORTE_ERR_SILENT;
         }
-        
+
+        if (seq_list == &default_seq_list) {
+            sq = save;
+        } else {
+            sq = (seq_node_t*)opal_list_get_first(seq_list);
+        }
         for (n=0; n < app->num_procs; n++) {
             /* find this node on the global array - this is necessary so
              * that our mapping gets saved on that array as the objects
@@ -205,7 +321,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
                     continue;
                 } 
-                if (0 == strcmp(nd->name, node->name)) {
+                if (0 == strcmp(sq->hostname, node->name)) {
                     break;
                 }
             }
@@ -222,6 +338,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 OBJ_RETAIN(node);
                 opal_pointer_array_add(map->nodes, node);
                 node->mapped = true;
+                jdata->map->num_nodes++;
             }
             proc = orte_rmaps_base_setup_proc(jdata, node, i);
             if ((node->slots < (int)node->num_procs) ||
@@ -239,13 +356,54 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             }
             /* assign the vpid */
             proc->name.vpid = vpid++;
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:seq: assign proc %s to node %s for app %s",
+                                ORTE_VPID_PRINT(proc->name.vpid), sq->hostname, app->app);
 
 #if OPAL_HAVE_HWLOC
-            /* assign the locale - okay for the topo to be null as
-             * it just means it wasn't returned
-             */
-            if (NULL != node->topology) {
-                proc->locale = hwloc_get_root_obj(node->topology);
+            {
+                /* record the cpuset, if given */
+                if (NULL != sq->cpuset) {
+                    /* setup the bitmap */
+                    hwloc_cpuset_t bitmap;
+                    if (NULL == node->topology) {
+                        /* not allowed - for sequential cpusets, we must have
+                         * the topology info
+                         */
+                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology", true, node->name);
+                        rc = ORTE_ERR_SILENT;
+                        goto error;
+                    }
+                    bitmap = hwloc_bitmap_alloc();
+                    /* parse the slot_list to find the socket and core */
+                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto error;
+                    }
+                    /* note that we cannot set the proc locale to any specific object
+                     * as the slot list may have assigned it to more than one - so
+                     * leave that field NULL
+                     */
+                    /* set the proc to the specified map */
+                    hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, bitmap);
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps:seq: binding proc %s to cpuset %s bitmap %s",
+                                        ORTE_VPID_PRINT(proc->name.vpid), sq->cpuset, proc->cpu_bitmap);
+                    /* we are going to bind to cpuset since the user is specifying the cpus */
+                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CPUSET);
+                    /* note that the user specified the mapping */
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYUSER);
+                    ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+                    /* cleanup */
+                    hwloc_bitmap_free(bitmap);
+                } else {
+                    /* assign the locale - okay for the topo to be null as
+                     * it just means it wasn't returned
+                     */
+                    if (NULL != node->topology) {
+                        proc->locale = hwloc_get_root_obj(node->topology);
+                    }
+                }
             }
 #endif
 
@@ -255,43 +413,40 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 goto error;
             }
             /* move to next node */
-            nd = (orte_node_t*)opal_list_get_next((opal_list_item_t*)nd);
-            if (NULL == nd) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
+            sq = (seq_node_t*)opal_list_get_next(&sq->super);
         }
 
         /** track the total number of processes we mapped */
         jdata->num_procs += app->num_procs;
         
         /* cleanup the node list if it came from this app_context */
-        if (node_list != default_node_list) {
-            while (NULL != (item = opal_list_remove_first(node_list))) {
-                OBJ_RELEASE(item);
-            }
-            OBJ_RELEASE(node_list);
+        if (seq_list != &default_seq_list) {
+            OPAL_LIST_DESTRUCT(seq_list);
         } else {
-            save = nd;
+            save = sq;
         }
     }
 
     return ORTE_SUCCESS;
 
  error:
-    if (NULL != default_node_list) {
-        while (NULL != (item = opal_list_remove_first(default_node_list))) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_RELEASE(default_node_list);
-    }
-    if (NULL != node_list) {
-        while (NULL != (item = opal_list_remove_first(node_list))) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_RELEASE(node_list);
-    }
-    
+    OPAL_LIST_DESTRUCT(&default_seq_list);
     return rc;
 }
+
+static char *orte_getline(FILE *fp)
+{
+    char *ret, *buff;
+    char input[1024];
+
+    ret = fgets(input, 1024, fp);
+    if (NULL != ret) {
+	   input[strlen(input)-1] = '\0';  /* remove newline */
+	   buff = strdup(input);
+	   return buff;
+    }
+    
+    return NULL;
+}
+
 
