@@ -157,6 +157,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS],[
     AM_CONDITIONAL([HAVE_DIRECT], [false])
 
     _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS
+    _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM_CONDITIONALS
 ])
 
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
@@ -192,6 +193,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
 
             # Do stuff for specific providers
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC
+            _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM
            ])
 ])
 
@@ -287,4 +289,29 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS],[
     AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC],
                    [test $opal_common_libfabric_usnic_happy -eq 1])
+])
+
+# --------------------------------------------------------
+# Internal helper macro to look for the things the psm provider
+# needs
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM],[
+    opal_common_libfabric_psm_happy=1
+    AC_CHECK_HEADER([psm.h], [], [opal_common_libfabric_psm_happy=0])
+    AC_CHECK_LIB([psm_infinipath], [psm_init], [],
+                 [opal_common_libfabric_psm_happy=0])
+
+    opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/psm/src"
+    opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
+
+    opal_common_libfabric_embedded_LIBADD="-lpsm_infinipath"
+])
+
+# --------------------------------------------------------
+# Internal helper macro for psm AM conditionals (that must be run
+# unconditionally)
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM_CONDITIONALS],[
+    AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM],
+                   [test $opal_common_libfabric_psm_happy -eq 1])
 ])
