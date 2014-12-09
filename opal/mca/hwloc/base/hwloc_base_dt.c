@@ -193,9 +193,6 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     int l1, l2;
     int s;
     struct hwloc_topology_support *s1, *s2;
-    char *x1=NULL, *x2=NULL;
-    int l1, l2;
-    int s;
     
     /* stop stupid compiler warnings */
     t1 = (hwloc_topology_t)topo1;

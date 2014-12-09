@@ -201,6 +201,8 @@ static int rte_init(void)
                 goto error;
             }
         }
+        /* generate the signature */
+        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
 
         /* remove the hostname from the topology. Unfortunately, hwloc
          * decided to add the source hostname to the "topology", thus
