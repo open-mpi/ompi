@@ -19,6 +19,9 @@
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -349,7 +352,11 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     }
 
     endpoint->ib_addr = NULL;
+#if OPAL_HAVE_XRCD
+    endpoint->xrc_recv_qp = NULL;
+#else
     endpoint->xrc_recv_qp_num = 0;
+#endif
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_local_cpc = NULL;
@@ -460,12 +467,24 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* unregister xrc recv qp */
 #if HAVE_XRC
+#if OPAL_HAVE_XRCD
+    if (NULL != endpoint->xrc_recv_qp) {
+        if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
+            BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp->qp_num));
+        } else {
+            BTL_VERBOSE(("Unregistered XRC Recv QP:%d\n", endpoint->xrc_recv_qp->qp_num));
+        }
+    }
+#else
     if (0 != endpoint->xrc_recv_qp_num) {
         if(ibv_unreg_xrc_rcv_qp(endpoint->endpoint_btl->device->xrc_domain,
                     endpoint->xrc_recv_qp_num)) {
             BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp_num));
+        } else {
+            BTL_VERBOSE(("Unregistered XRC Recv QP:%d\n", endpoint->xrc_recv_qp_num));
         }
     }
+#endif
 #endif
 
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
