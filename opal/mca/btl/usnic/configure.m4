@@ -100,6 +100,7 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [AC_MSG_CHECKING([if building embedded libfabric])
            AS_IF([test $opal_common_libfabric_happy -eq 1 && \
+                  test $opal_common_libfabric_usnic_happy -eq 1 && \
                   test $opal_common_libfabric_build_embedded -eq 1],
                  [AC_MSG_RESULT([yes])],
                  [AC_MSG_RESULT([no])
