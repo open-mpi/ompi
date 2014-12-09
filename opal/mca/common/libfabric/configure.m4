@@ -276,10 +276,10 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
     AC_CHECK_LIB([nl], [nl_connect], [],
                  [opal_common_libfabric_usnic_happy=0])
 
-    opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
-    opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
-
-    opal_common_libfabric_embedded_LIBADD="-lnl"
+    AS_IF([test $opal_common_libfabric_usnic_happy -eq 1],
+          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
+           opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
+           opal_common_libfabric_embedded_LIBADD="-lnl"])
 ])
 
 # --------------------------------------------------------
@@ -301,10 +301,10 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM],[
     AC_CHECK_LIB([psm_infinipath], [psm_init], [],
                  [opal_common_libfabric_psm_happy=0])
 
-    opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/psm/src"
-    opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
-
-    opal_common_libfabric_embedded_LIBADD="-lpsm_infinipath"
+    AS_IF([test $opal_common_libfabric_psm_happy -eq 1],
+          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/psm/src"
+           opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
+           opal_common_libfabric_embedded_LIBADD="-lpsm_infinipath"])
 ])
 
 # --------------------------------------------------------
