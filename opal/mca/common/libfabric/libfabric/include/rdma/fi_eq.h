@@ -139,7 +139,14 @@ struct fi_eq_cm_entry {
 	/* user must call fi_freeinfo to release info */
 	struct fi_info		*info;
 	/* connection data placed here, up to space provided */
+    /* Open MPI added these pragmas to stem a flood of warnings.  This
+       needs to be addressed upstream */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 	uint8_t			data[0];
+    /* Open MPI added these pragmas to stem a flood of warnings.  This
+       needs to be addressed upstream */
+#pragma GCC diagnostic pop
 };
 
 struct fi_ops_eq {
