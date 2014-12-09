@@ -161,7 +161,10 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     hwloc_topology_t t1, t2;
     unsigned d1, d2;
     struct hwloc_topology_support *s1, *s2;
-
+    char *x1=NULL, *x2=NULL;
+    int l1, l2;
+    int s;
+    
     /* stop stupid compiler warnings */
     t1 = (hwloc_topology_t)topo1;
     t2 = (hwloc_topology_t)topo2;
@@ -175,8 +178,29 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
         return OPAL_VALUE2_GREATER;
     }
     
-    /* do a tree-wise search so we only compare the things we care about,
-     * and ignore stuff like MAC addresses */
+
+    /* do the comparison the "cheat" way - get an xml representation
+     * of each tree, and strcmp! This will work fine for inventory
+     * comparisons, but might not meet the need for comparing topology
+     * where we really need to do a tree-wise search so we only compare
+     * the things we care about, and ignore stuff like MAC addresses
+     */
+    if (0 != hwloc_topology_export_xmlbuffer(t1, &x1, &l1)) {
+        return OPAL_EQUAL;
+    }
+    if (0 != hwloc_topology_export_xmlbuffer(t2, &x2, &l2)) {
+        free(x1);
+        return OPAL_EQUAL;
+    }
+
+    s = strcmp(x1, x2);
+    free(x1);
+    free(x2);
+    if (s > 0) {
+        return OPAL_VALUE1_GREATER;
+    } else if (s < 0) {
+        return OPAL_VALUE2_GREATER;
+    }
     
     /* compare the available support - hwloc unfortunately does
      * not include this info in its xml support!
