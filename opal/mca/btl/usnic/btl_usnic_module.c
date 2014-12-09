@@ -2060,7 +2060,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
         rseg->rs_len = segsize;
 
         rc = fi_recv(channel->ep, rseg->rs_protocol_header, segsize,
-                     NULL, FI_ADDR_NOTAVAIL, rseg);
+                     NULL, FI_ADDR_UNSPEC, rseg);
         if (0 != rc) {
             opal_show_help("help-mpi-btl-usnic.txt",
                            "internal error during init",
