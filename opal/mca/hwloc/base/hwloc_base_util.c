@@ -2081,7 +2081,9 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
 char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 {
     unsigned int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
-    char *sig=NULL;
+    char *sig=NULL, *arch=NULL;
+    hwloc_obj_t obj;
+    unsigned i;
     
     nnuma = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
     nsocket = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET, 0, OPAL_HWLOC_AVAILABLE);
@@ -2091,7 +2093,21 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
     ncore = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
     nhwt = opal_hwloc_base_get_nbobjs_by_type(topo, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
 
-    asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH",
-             nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt);
+    /* get the root object so we can add the processor architecture */
+    obj = hwloc_get_root_obj(topo);
+    for (i=0; i < obj->infos_count; i++) {
+        if (0 == strcmp(obj->infos[i].name, "Architecture")) {
+            arch = obj->infos[i].value;
+            break;
+        }
+    }
+
+    if (NULL == arch) {
+        asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH",
+                 nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt);
+    } else {
+        asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH:%s",
+                 nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch);
+    }
     return sig;
 }
