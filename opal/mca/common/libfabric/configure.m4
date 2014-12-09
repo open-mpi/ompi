@@ -269,12 +269,12 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_CHECK_INCDIR],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
     opal_common_libfabric_usnic_happy=1
     AC_CHECK_HEADER([linux/netlink.h], [],
-                    [opal_common_libfabric_happy=0], [
+                    [opal_common_libfabric_usnic_happy=0], [
 #include <sys/types.h>
 #include <net/if.h>
 ])
     AC_CHECK_LIB([nl], [nl_connect], [],
-                 [opal_common_libfabric_happy=0])
+                 [opal_common_libfabric_usnic_happy=0])
 
     opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
     opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
@@ -288,7 +288,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
 # --------------------------------------------------------
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS],[
     AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC],
-                   [test $opal_common_libfabric_happy -eq 1])
+                   [test $opal_common_libfabric_usnic_happy -eq 1])
 ])
 
 # --------------------------------------------------------
