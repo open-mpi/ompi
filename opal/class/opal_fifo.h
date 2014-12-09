@@ -24,11 +24,7 @@
 #ifndef OPAL_FIFO_H_HAS_BEEN_INCLUDED
 #define OPAL_FIFO_H_HAS_BEEN_INCLUDED
 
-#include "opal_config.h"
 #include "opal/class/opal_lifo.h"
-
-#include "opal/sys/atomic.h"
-#include "opal/threads/mutex.h"
 
 BEGIN_C_DECLS
 
@@ -133,6 +129,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
         /* the head or next pointer are in an inconsistent state. keep looping. */
         if (tail.data.item != item && &fifo->opal_fifo_ghost != tail.data.item &&
             &fifo->opal_fifo_ghost == next) {
+            opal_thread_idle ();
             continue;
         }
 
@@ -140,6 +137,8 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
         if (opal_update_counted_pointer (&fifo->opal_fifo_head, head, next)) {
             break;
         }
+
+        opal_thread_idle ();
     } while (1);
 
     opal_atomic_wmb ();
@@ -153,6 +152,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 
             /* wait for next pointer to be updated by push */
             while (&fifo->opal_fifo_ghost == item->opal_list_next) {
+                opal_thread_idle ();
                 opal_atomic_rmb ();
             }
 
@@ -216,7 +216,8 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
             break;
         }
 
-        opal_atomic_wmb ();
+        opal_thread_idle ();
+        opal_atomic_rmb ();
     } while (1);
 
     item = opal_fifo_head (fifo);
@@ -231,6 +232,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
     if (&fifo->opal_fifo_ghost == next) {
         if (!opal_atomic_cmpset_ptr (&fifo->opal_fifo_tail.data.item, item, &fifo->opal_fifo_ghost)) {
             while (&fifo->opal_fifo_ghost == item->opal_list_next) {
+                opal_thread_idle ();
                 opal_atomic_rmb ();
             }
 

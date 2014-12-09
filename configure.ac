@@ -869,8 +869,9 @@ OPAL_SEARCH_LIBS_CORE([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OPAL_SEARCH_LIBS_CORE([ceil], [m])
 
-# -lrt might be needed for clock_gettime
+# -lrt might be needed for clock_gettime and nanosleep
 OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
+OPAL_SEARCH_LIBS_CORE([nanosleep], [rt])
 
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 
