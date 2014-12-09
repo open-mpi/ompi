@@ -31,6 +31,7 @@
 
 #include "opal/util/argv.h"
 
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
@@ -66,7 +67,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     FILE *fp;
     orte_app_context_t *app;
     struct stat buf;
-    orte_app_context_t *app;
     
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
