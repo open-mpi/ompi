@@ -327,8 +327,8 @@ struct sock_ep {
 
 	struct fi_info info;
 	struct fi_ep_attr ep_attr;
-	struct fi_tx_ctx_attr tx_attr;
-	struct fi_rx_ctx_attr rx_attr;
+	struct fi_tx_attr tx_attr;
+	struct fi_rx_attr rx_attr;
 
 	enum fi_ep_type ep_type;
 	struct sockaddr_in *src_addr;
@@ -407,7 +407,7 @@ struct sock_rx_ctx {
 	struct dlist_entry ep_list;
 	fastlock_t lock;
 
-	struct fi_rx_ctx_attr attr;
+	struct fi_rx_attr attr;
 };
 
 struct sock_tx_ctx {
@@ -446,7 +446,7 @@ struct sock_tx_ctx {
 	struct dlist_entry ep_list;
 	fastlock_t lock;
 
-	struct fi_tx_ctx_attr attr;
+	struct fi_tx_attr attr;
 };
 
 #define SOCK_WIRE_PROTO_VERSION (0)
@@ -544,8 +544,8 @@ int sock_verify_info(struct fi_info *hints);
 int sock_verify_fabric_attr(struct fi_fabric_attr *attr);
 int sock_verify_domain_attr(struct fi_domain_attr *attr);
 int sock_rdm_verify_ep_attr(struct fi_ep_attr *ep_attr, 
-			struct fi_tx_ctx_attr *tx_attr,
-			struct fi_rx_ctx_attr *rx_attr);
+			struct fi_tx_attr *tx_attr,
+			struct fi_rx_attr *rx_attr);
 
 
 int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
@@ -588,7 +588,7 @@ int sock_rdm_ep(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context);
 int sock_dgram_ep(struct fid_domain *domain, struct fi_info *info,
 		  struct fid_ep **ep, void *context);
-int sock_pendpoint(struct fid_fabric *fabric, struct fi_info *info,
+int sock_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 		   struct fid_pep **pep, void *context);
 
 
@@ -596,13 +596,13 @@ int sock_ep_connect(struct fid_ep *ep, const void *addr,
 		    const void *param, size_t paramlen);
 
 
-struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_ctx_attr *attr, 
+struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_attr *attr,
 				      void *context);
 void sock_rx_ctx_add_ep(struct sock_rx_ctx *rx_ctx, struct sock_ep *ep);
 void sock_rx_ctx_free(struct sock_rx_ctx *rx_ctx);
 
 
-struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_ctx_attr *attr, 
+struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr,
 				      void *context);
 void sock_tx_ctx_add_ep(struct sock_tx_ctx *tx_ctx, struct sock_ep *ep);
 void sock_tx_ctx_free(struct sock_tx_ctx *tx_ctx);

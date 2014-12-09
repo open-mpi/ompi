@@ -87,6 +87,8 @@ struct fi_ops_rma {
 	ssize_t	(*writedata)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 			void *context);
+	ssize_t	(*injectdata)(struct fid_ep *ep, const void *buf, size_t len,
+			uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key);
 };
 
 
@@ -148,6 +150,13 @@ fi_writedata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 {
 	return ep->rma->writedata(ep, buf, len, desc,data, dest_addr,
 				  addr, key, context);
+}
+
+static inline ssize_t
+fi_inject_writedata(struct fid_ep *ep, const void *buf, size_t len,
+		uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key)
+{
+	return ep->rma->injectdata(ep, buf, len, data, dest_addr, addr, key);
 }
 
 #else // FABRIC_DIRECT

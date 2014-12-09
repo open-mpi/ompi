@@ -72,7 +72,7 @@ const struct fi_ep_attr sock_rdm_ep_attr = {
 	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 };
 
-const struct fi_tx_ctx_attr sock_rdm_tx_attr = {
+const struct fi_tx_attr sock_rdm_tx_attr = {
 	.caps = SOCK_EP_RDM_CAP,
 	.op_flags = SOCK_OPS_CAP,
 	.msg_order = 0,
@@ -81,7 +81,7 @@ const struct fi_tx_ctx_attr sock_rdm_tx_attr = {
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
-const struct fi_rx_ctx_attr sock_rdm_rx_attr = {
+const struct fi_rx_attr sock_rdm_rx_attr = {
 	.caps = SOCK_EP_RDM_CAP,
 	.op_flags = SOCK_OPS_CAP,
 	.msg_order = 0,
@@ -90,7 +90,7 @@ const struct fi_rx_ctx_attr sock_rdm_rx_attr = {
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
-static int sock_rdm_verify_rx_attr(const struct fi_rx_ctx_attr *attr)
+static int sock_rdm_verify_rx_attr(const struct fi_rx_attr *attr)
 {
 	if (!attr)
 		return 0;
@@ -117,7 +117,7 @@ static int sock_rdm_verify_rx_attr(const struct fi_rx_ctx_attr *attr)
 	return 0;
 }
 
-static int sock_rdm_verify_tx_attr(const struct fi_tx_ctx_attr *attr)
+static int sock_rdm_verify_tx_attr(const struct fi_tx_attr *attr)
 {
 	if (!attr)
 		return 0;
@@ -145,8 +145,8 @@ static int sock_rdm_verify_tx_attr(const struct fi_tx_ctx_attr *attr)
 }
 
 int sock_rdm_verify_ep_attr(struct fi_ep_attr *ep_attr,
-			    struct fi_tx_ctx_attr *tx_attr,
-			    struct fi_rx_ctx_attr *rx_attr)
+			    struct fi_tx_attr *tx_attr,
+			    struct fi_rx_attr *rx_attr)
 {
 	if (ep_attr) {
 		switch (ep_attr->protocol) {
@@ -575,6 +575,7 @@ struct fi_ops_msg sock_rdm_ctx_msg_ops = {
 	.sendmsg = sock_rdm_ctx_sendmsg,
 	.inject = sock_rdm_ctx_inject,
 	.senddata = sock_rdm_ctx_senddata,
+	.injectdata = fi_no_msg_injectdata,
 };
 
 ssize_t sock_rdm_ctx_trecvmsg(struct fid_ep *ep, const struct fi_msg_tagged *msg,
@@ -823,6 +824,7 @@ struct fi_ops_tagged sock_rdm_ctx_tagged = {
 	.sendmsg = sock_rdm_ctx_tsendmsg,
 	.inject = sock_rdm_ctx_tinject,
 	.senddata = sock_rdm_ctx_tsenddata,
+	.injectdata = fi_no_tagged_injectdata,
 	.search = sock_rdm_ctx_tsearch,
 };
 
@@ -1280,7 +1282,7 @@ int sock_rdm_ep_setopt(fid_t fid, int level, int optname,
 	return 0;
 }
 
-int sock_rdm_ep_tx_ctx(struct fid_sep *sep, int index, struct fi_tx_ctx_attr *attr, 
+int sock_rdm_ep_tx_ctx(struct fid_sep *sep, int index, struct fi_tx_attr *attr, 
 		       struct fid_ep **tx_ep, void *context)
 {
 	struct sock_ep *sock_ep;
@@ -1313,7 +1315,7 @@ int sock_rdm_ep_tx_ctx(struct fid_sep *sep, int index, struct fi_tx_ctx_attr *at
 	return 0;
 }
 
-int sock_rdm_ep_rx_ctx(struct fid_sep *sep, int index, struct fi_rx_ctx_attr *attr,
+int sock_rdm_ep_rx_ctx(struct fid_sep *sep, int index, struct fi_rx_attr *attr,
 		       struct fid_ep **rx_ep, void *context)
 {
 	struct sock_ep *sock_ep;
@@ -1370,65 +1372,11 @@ int sock_rdm_ep_cm_getname(fid_t fid, void *addr, size_t *addrlen)
 	return 0;
 }
 
-int sock_rdm_ep_cm_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen)
-{
-	struct sock_ep *sock_ep;
-
-	if (*addrlen == 0) {
-		*addrlen = sizeof(struct sockaddr_in);
-		return -FI_ETOOSMALL;
-	}
-
-	sock_ep = container_of(ep, struct sock_ep, ep);
-	*addrlen = MIN(*addrlen, sizeof(struct sockaddr));
-	memcpy(addr, sock_ep->dest_addr, *addrlen);
-	return 0;
-}
-
-int sock_rdm_ep_cm_connect(struct fid_ep *ep, const void *addr,
-			   const void *param, size_t paramlen)
-{
-	struct sock_ep *sock_ep;
-
-	sock_ep = container_of(ep, struct sock_ep, ep);
-	if (sock_ep->info.addr_format == FI_SOCKADDR) {
-		if (memcmp((void*)sock_ep->dest_addr,
-			  addr, sizeof(struct sockaddr_in)) != 0) {
-			memcpy(sock_ep->dest_addr, addr, sizeof(struct sockaddr));
-		}
-	} else {
-		return -FI_EINVAL;
-	}
-	
-	if (paramlen > 0) {
-		int ret;
-		struct iovec msg_iov ={
-			.iov_base = (void*) param,
-			.iov_len = paramlen,
-		};
-		
-		struct msghdr msg = {
-			.msg_name = NULL,
-			.msg_namelen = 0,
-			.msg_iov = &msg_iov,
-			.msg_iovlen = 1,
-			.msg_control = NULL,
-			.msg_controllen = 0,
-			.msg_flags = 0,
-		};
-		ret = sendmsg(sock_ep->sock_fd, &msg, 0);
-		if (ret)
-			return -FI_EINVAL;
-	}
-	sock_ep->enabled = 1;
-	return 0;
-}
-
 struct fi_ops_cm sock_rdm_ep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
 	.getname = sock_rdm_ep_cm_getname,
-	.getpeer = sock_rdm_ep_cm_getpeer,
-	.connect = sock_rdm_ep_cm_connect,
+	.getpeer = fi_no_getpeer,
+	.connect = fi_no_connect,
 	.listen = fi_no_listen,
 	.accept = fi_no_accept,
 	.reject = fi_no_reject,
@@ -1518,6 +1466,7 @@ struct fi_ops_msg sock_rdm_ep_msg_ops = {
 	.sendv = sock_rdm_ep_msg_sendv,
 	.sendmsg = sock_rdm_ep_msg_sendmsg,
 	.inject = sock_rdm_ep_msg_inject,
+	.injectdata = fi_no_msg_injectdata,
 	.senddata = sock_rdm_ep_msg_senddata,
 };
 

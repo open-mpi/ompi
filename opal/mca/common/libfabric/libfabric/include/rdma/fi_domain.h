@@ -128,10 +128,10 @@ struct fi_ops_domain {
 	int	(*poll_open)(struct fid_domain *domain, struct fi_poll_attr *attr,
 			struct fid_poll **pollset);
 	int	(*stx_ctx)(struct fid_domain *domain,
-			struct fi_tx_ctx_attr *attr, struct fid_stx **stx,
+			struct fi_tx_attr *attr, struct fid_stx **stx,
 			void *context);
 	int	(*srx_ctx)(struct fid_domain *domain,
-			struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
+			struct fi_rx_attr *attr, struct fid_ep **rx_ep,
 			void *context);
 };
 

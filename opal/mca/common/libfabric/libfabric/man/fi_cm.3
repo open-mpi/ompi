@@ -1,4 +1,4 @@
-.TH fi_cm 3 "2014\-12\-03" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_cm 3 "2014\-12\-05" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_cm - Connection management operations
@@ -64,9 +64,8 @@ exchange.
 \f[I]context\f[] : User context associated with the request.
 .SH DESCRIPTION
 .PP
-Connection management functions are used to connect an endpoint to a
-remote address (in the case of a connectionless endpoint) or a peer
-endpoint (for connection-oriented endpoints).
+Connection management functions are used to connect an
+connection-oriented endpoint to a peer endpoint.
 .SS fi_listen
 .PP
 The fi_listen call indicates that the specified endpoint should be
@@ -81,12 +80,8 @@ The backlog is initialized based on administrative configuration values,
 but may be adjusted through the fi_control call.
 .SS fi_connect
 .PP
-For a connection-oriented endpoint, fi_connect initiates a connection
-request to the destination address.
-For a connectionless endpoint, fi_connect specifies the destination
-address that future data transfer operations will target.
-This avoids the need for the user to specify the address as part of the
-data transfer.
+The fi_connect call initiates a connection request on a
+connection-oriented endpoint to the destination address.
 .SS fi_accept / fi_reject
 .PP
 The fi_accept and fi_reject calls are used on the passive (listening)

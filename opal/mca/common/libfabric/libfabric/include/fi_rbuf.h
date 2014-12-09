@@ -101,9 +101,9 @@ static inline void rbwrite(struct ringbuf *rb, const void *buf, size_t len)
 
 	endlen = rb->size - (rb->wpos & rb->size_mask);
 	if (len <= endlen) {
-		memcpy(rb->buf + (rb->wpos & rb->size_mask), buf, len);
+		memcpy((char*)rb->buf + (rb->wpos & rb->size_mask), buf, len);
 	} else {
-		memcpy(rb->buf + (rb->wpos & rb->size_mask), buf, endlen);
+		memcpy((char*)rb->buf + (rb->wpos & rb->size_mask), buf, endlen);
 		memcpy(rb->buf, buf, len - endlen);
 	}
 	rb->wpos += len;
@@ -125,9 +125,9 @@ static inline void rbpeek(struct ringbuf *rb, void *buf, size_t len)
 
 	endlen = rb->size - (rb->rcnt & rb->size_mask);
 	if (len <= endlen) {
-		memcpy(buf, rb->buf + (rb->rcnt & rb->size_mask), len);
+		memcpy(buf, (char*)rb->buf + (rb->rcnt & rb->size_mask), len);
 	} else {
-		memcpy(buf, rb->buf + (rb->rcnt & rb->size_mask), endlen);
+		memcpy(buf, (char*)rb->buf + (rb->rcnt & rb->size_mask), endlen);
 		memcpy(buf, rb->buf, len - endlen);
 	}
 }

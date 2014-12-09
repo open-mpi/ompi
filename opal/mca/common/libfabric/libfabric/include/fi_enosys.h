@@ -64,13 +64,13 @@ int fi_no_ops_open(struct fid *fid, const char *name,
 static struct fi_ops_fabric X = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = fi_no_domain,
-	.endpoint = fi_no_pendpoint,
+	.endpoint = fi_no_passive_ep,
 	.eq_open = fi_no_eq_open,
 };
 */
 int fi_no_domain(struct fid_fabric *fabric, struct fi_domain_attr *attr,
 		struct fid_domain **dom, void *context);
-int fi_no_pendpoint(struct fid_fabric *fabric, struct fi_info *info,
+int fi_no_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 		struct fid_pep **pep, void *context);
 int fi_no_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 		struct fid_eq **eq, void *context);
@@ -209,9 +209,9 @@ int fi_no_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
 		struct fid_wait **waitset);
 int fi_no_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
 		struct fid_poll **pollset);
-int fi_no_stx_context(struct fid_domain *domain, struct fi_tx_ctx_attr *attr,
+int fi_no_stx_context(struct fid_domain *domain, struct fi_tx_attr *attr,
 		struct fid_stx **stx, void *context);
-int fi_no_srx_context(struct fid_domain *domain, struct fi_rx_ctx_attr *attr,
+int fi_no_srx_context(struct fid_domain *domain, struct fi_rx_attr *attr,
 		struct fid_ep **rx_ep, void *context);
 
 /*
@@ -250,10 +250,10 @@ int fi_no_getopt(fid_t fid, int level, int optname,
 int fi_no_setopt(fid_t fid, int level, int optname,
 		const void *optval, size_t optlen);
 int fi_no_tx_ctx(struct fid_sep *sep, int index,
-		struct fi_tx_ctx_attr *attr, struct fid_ep **tx_ep,
+		struct fi_tx_attr *attr, struct fid_ep **tx_ep,
 		void *context);
 int fi_no_rx_ctx(struct fid_sep *sep, int index,
-		struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
+		struct fi_rx_attr *attr, struct fid_ep **rx_ep,
 		void *context);
 
 /*
@@ -267,6 +267,7 @@ static struct fi_ops_msg X = {
 	.sendmsg = fi_no_msg_sendmsg,
 	.inject = fi_no_msg_inject,
 	.senddata = fi_no_msg_senddata,
+	.injectdata = fi_no_msg_injectdata,
 };
 */
 ssize_t fi_no_msg_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
@@ -285,6 +286,8 @@ ssize_t fi_no_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
 		fi_addr_t dest_addr);
 ssize_t fi_no_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, void *context);
+ssize_t fi_no_msg_injectdata(struct fid_ep *ep, const void *buf, size_t len,
+		uint64_t data, fi_addr_t dest_addr);
 
 /*
 static struct fi_ops_wait X = {
@@ -362,6 +365,7 @@ static struct fi_ops_rma X = {
 	.writemsg = fi_no_rma_writemsg,
 	.inject = fi_no_rma_inject,
 	.writedata = fi_no_rma_writedata,
+	.injectdata = fi_no_rma_injectdata,
 };
 */
 ssize_t fi_no_rma_read(struct fid_ep *ep, void *buf, size_t len, void *desc,
@@ -383,6 +387,8 @@ ssize_t fi_no_rma_inject(struct fid_ep *ep, const void *buf, size_t len,
 ssize_t fi_no_rma_writedata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key,
 		void *context);
+ssize_t fi_no_rma_injectdata(struct fid_ep *ep, const void *buf, size_t len,
+		uint64_t data, fi_addr_t dest_addr, uint64_t addr, uint64_t key);
 
 /*
 static struct fi_ops_tagged X = {
@@ -395,6 +401,7 @@ static struct fi_ops_tagged X = {
 	.sendmsg = fi_no_tagged_sendmsg,
 	.inject = fi_no_tagged_inject,
 	.senddata = fi_no_tagged_senddata,
+	.injectdata = fi_no_tagged_injectdata,
 	.search = fi_no_tagged_search,
 };
 */
@@ -415,6 +422,8 @@ ssize_t fi_no_tagged_inject(struct fid_ep *ep, const void *buf, size_t len,
 		fi_addr_t dest_addr, uint64_t tag);
 ssize_t fi_no_tagged_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 		uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context);
+ssize_t fi_no_tagged_injectdata(struct fid_ep *ep, const void *buf, size_t len,
+		uint64_t data, fi_addr_t dest_addr, uint64_t tag);
 ssize_t fi_no_tagged_search(struct fid_ep *ep, uint64_t *tag, uint64_t ignore,
 		uint64_t flags, fi_addr_t *src_addr, size_t *len, void *context);
 

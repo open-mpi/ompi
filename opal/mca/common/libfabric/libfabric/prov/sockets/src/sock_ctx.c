@@ -41,7 +41,7 @@
 #include "sock_util.h"
 
 
-struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_ctx_attr *attr, void *context)
+struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_attr *attr, void *context)
 {
 	struct sock_rx_ctx *rx_ctx;
 	rx_ctx = calloc(1, sizeof(*rx_ctx));
@@ -77,7 +77,7 @@ void sock_rx_ctx_free(struct sock_rx_ctx *rx_ctx)
 	free(rx_ctx);
 }
 
-struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_ctx_attr *attr, void *context)
+struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr, void *context)
 {
 	struct sock_tx_ctx *tx_ctx;
 

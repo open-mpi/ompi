@@ -229,8 +229,8 @@ ssize_t sock_ep_senddata(struct fid_ep *ep, const void *buf, size_t len,
 	return 0;
 }
 
-int sock_pendpoint(struct fid_fabric *fabric, struct fi_info *info,
-			struct fid_pep **pep, void *context)
+int sock_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
+		    struct fid_pep **pep, void *context)
 {
 	return -FI_ENOSYS;
 }

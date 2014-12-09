@@ -72,10 +72,10 @@ struct fi_ops_ep {
 	int	(*setopt)(fid_t fid, int level, int optname,
 			const void *optval, size_t optlen);
 	int	(*tx_ctx)(struct fid_sep *sep, int index,
-			struct fi_tx_ctx_attr *attr, struct fid_ep **tx_ep,
+			struct fi_tx_attr *attr, struct fid_ep **tx_ep,
 			void *context);
 	int	(*rx_ctx)(struct fid_sep *sep, int index,
-			struct fi_rx_ctx_attr *attr, struct fid_ep **rx_ep,
+			struct fi_rx_attr *attr, struct fid_ep **rx_ep,
 			void *context);
 };
 
@@ -97,6 +97,8 @@ struct fi_ops_msg {
 			fi_addr_t dest_addr);
 	ssize_t (*senddata)(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 			uint64_t data, fi_addr_t dest_addr, void *context);
+	ssize_t	(*injectdata)(struct fid_ep *ep, const void *buf, size_t len,
+			uint64_t data, fi_addr_t dest_addr);
 };
 
 struct fi_ops_cm;
@@ -144,10 +146,10 @@ struct fid_sep {
 #ifndef FABRIC_DIRECT
 
 static inline int
-fi_pendpoint(struct fid_fabric *fabric, struct fi_info *info,
+fi_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 	     struct fid_pep **pep, void *context)
 {
-	return fabric->ops->endpoint(fabric, info, pep, context);
+	return fabric->ops->passive_ep(fabric, info, pep, context);
 }
 
 static inline int
@@ -202,28 +204,28 @@ fi_getopt(fid_t fid, int level, int optname,
 }
 
 static inline int
-fi_tx_context(struct fid_sep *sep, int index, struct fi_tx_ctx_attr *attr,
+fi_tx_context(struct fid_sep *sep, int index, struct fi_tx_attr *attr,
 	      struct fid_ep **tx_ep, void *context)
 {
 	return sep->ops->tx_ctx(sep, index, attr, tx_ep, context);
 }
 
 static inline int
-fi_rx_context(struct fid_sep *sep, int index, struct fi_rx_ctx_attr *attr,
+fi_rx_context(struct fid_sep *sep, int index, struct fi_rx_attr *attr,
 	      struct fid_ep **rx_ep, void *context)
 {
 	return sep->ops->rx_ctx(sep, index, attr, rx_ep, context);
 }
 
 static inline int
-fi_stx_context(struct fid_domain *domain, struct fi_tx_ctx_attr *attr,
+fi_stx_context(struct fid_domain *domain, struct fi_tx_attr *attr,
 	       struct fid_stx **stx, void *context)
 {
 	return domain->ops->stx_ctx(domain, attr, stx, context);
 }
 
 static inline int
-fi_srx_context(struct fid_domain *domain, struct fi_rx_ctx_attr *attr,
+fi_srx_context(struct fid_domain *domain, struct fi_rx_attr *attr,
 	       struct fid_ep **rx_ep, void *context)
 {
 	return domain->ops->srx_ctx(domain, attr, rx_ep, context);
@@ -280,6 +282,13 @@ fi_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 	      uint64_t data, fi_addr_t dest_addr, void *context)
 {
 	return ep->msg->senddata(ep, buf, len, desc, data, dest_addr, context);
+}
+
+static inline ssize_t
+fi_injectdata(struct fid_ep *ep, const void *buf, size_t len,
+		uint64_t data, fi_addr_t dest_addr)
+{
+	return ep->msg->injectdata(ep, buf, len, data, dest_addr);
 }
 
 #else // FABRIC_DIRECT
