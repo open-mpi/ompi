@@ -155,15 +155,44 @@ libfabric_usnic_sources = \
 	libfabric/prov/usnic/src/usnic_direct/vnic_rq.c \
 	libfabric/prov/usnic/src/usnic_direct/vnic_wq.c
 
+libfabric_psm_headers = \
+	libfabric/prov/psm/src/psm_am.h \
+	libfabric/prov/psm/src/psmx.h
+
+libfabric_psm_sources = \
+	libfabric/prov/psm/src/psmx_init.c \
+	libfabric/prov/psm/src/psmx_domain.c \
+	libfabric/prov/psm/src/psmx_cq.c \
+	libfabric/prov/psm/src/psmx_cntr.c \
+	libfabric/prov/psm/src/psmx_av.c \
+	libfabric/prov/psm/src/psmx_ep.c \
+	libfabric/prov/psm/src/psmx_cm.c \
+	libfabric/prov/psm/src/psmx_tagged.c \
+	libfabric/prov/psm/src/psmx_msg.c \
+	libfabric/prov/psm/src/psmx_msg2.c \
+	libfabric/prov/psm/src/psmx_rma.c \
+	libfabric/prov/psm/src/psmx_atomic.c \
+	libfabric/prov/psm/src/psmx_am.c \
+	libfabric/prov/psm/src/psmx_mr.c \
+	libfabric/prov/psm/src/psmx_wait.c \
+	libfabric/prov/psm/src/psmx_poll.c \
+	libfabric/prov/psm/src/psmx_util.c
+
 sources = $(libfabric_core_sources)
 if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 sources += $(libfabric_usnic_sources)
 endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
+if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM
+sources += $(libfabric_psm_sources)
+endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM
 
 headers = $(libfabric_core_headers)
 if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 headers += $(libfabric_usnic_headers)
 endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
+if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM
+headers += $(libfabric_psm_headers)
+endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM
 
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_CPPFLAGS = $(cppflags)
