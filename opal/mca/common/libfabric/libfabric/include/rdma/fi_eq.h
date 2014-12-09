@@ -140,7 +140,6 @@ struct fi_eq_cm_entry {
 	struct fi_info		*info;
 	/* connection data placed here, up to space provided */
 	uint8_t			data[];
-#pragma GCC diagnostic pop
 };
 
 struct fi_ops_eq {
