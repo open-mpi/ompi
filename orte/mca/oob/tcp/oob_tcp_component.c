@@ -405,9 +405,9 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
-    mca_oob_tcp_component.connect_timeout.tv_sec = 0;
-    mca_oob_tcp_component.connect_timeout.tv_usec = 1000;
-    connection_timeout_string = "0:1000";
+    mca_oob_tcp_component.connect_timeout.tv_sec = 2;
+    mca_oob_tcp_component.connect_timeout.tv_usec = 0;
+    connection_timeout_string = "2:0";
     (void)mca_base_component_var_register(component, "connect_timeout",
                                           "Timeout for connection attempts to peer expressed as sec:usec",
                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
