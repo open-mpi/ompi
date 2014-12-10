@@ -221,7 +221,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                                     (int)mca_oob_tcp_component.connect_timeout.tv_usec,
                                     ORTE_NAME_PRINT(&peer->name));
                 /* do a select to wait */
-                if (0 > select(peer->sd + 1, &set, NULL, NULL, &mca_oob_tcp_component.connect_timeout)) {
+                rc = select(peer->sd + 1, &set, NULL, NULL, &mca_oob_tcp_component.connect_timeout);
+                if (0 > rc) {
                     /* didn't connect, let's move to next option */
                     addr->state = MCA_OOB_TCP_FAILED;
                     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -229,6 +230,17 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         ORTE_NAME_PRINT(&peer->name));
                     continue;
+                } else if (0 == rc) {
+                    if (mca_oob_tcp_component.max_retries < addr->retries) {
+                        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                            "%s orte_tcp_peer_try_connect: %s:%d retries exceeded",
+                                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                            opal_net_get_hostname((struct sockaddr*)&addr->addr),
+                                            opal_net_get_port((struct sockaddr*)&addr->addr));
+                        continue;
+                    } else {
+                        goto retry_connect;
+                    }
                 }
                 /* if we got a positive response, then we connected */
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,

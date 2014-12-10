@@ -436,7 +436,8 @@ static bool component_available(void)
     char name[32];
     struct sockaddr_storage my_ss;
     int kindex;
-
+    bool loopback = false;
+    
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
 
@@ -526,7 +527,11 @@ static bool component_available(void)
                 continue;
             }
         }
-
+        /* if this interface has loopback support, record that fact */
+        if (opal_ifisloopback(i)) {
+            loopback = true;
+        }
+        
         /* Refs ticket #3019
          * it would probably be worthwhile to print out a warning if OMPI detects multiple
          * IP interfaces that are "up" on the same subnet (because that's a Bad Idea). Note
@@ -560,7 +565,15 @@ static bool component_available(void)
         }
     }
 
-    /* cleanup */
+    if (!loopback) {
+        /* Solaris doesn't care, but warn if we are
+         * on any other type of system */
+#if !OPAL_HAVE_SOLARIS
+        orte_show_help("help-oob-tcp.txt", "no-loopback-found", true);
+#endif
+    }
+
+/* cleanup */
     if (NULL != interfaces) {
         opal_argv_free(interfaces);
     }

@@ -64,3 +64,13 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
+#
+[no-loopback-found]
+WARNING: No loopback interface was found. This can cause problems
+when we spawn processes as they are likely to be unable to connect
+back to their host daemon. Sadly, it may take awhile for the connect
+attempt to fail, so you may experience a significant hang time.
+
+You may wish to ctrl-c out of your job and activate loopback support
+on at least one interface before trying again.
+
