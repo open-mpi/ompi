@@ -17,8 +17,6 @@
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_frag.h"
 #include "btl_ugni_rdma.h"
-/* TODO: need to fix this one */
-#include "ompi/mca/pml/ob1/pml_ob1_hdr.h"
 
 typedef enum {
     MCA_BTL_UGNI_TAG_SEND,
@@ -84,7 +82,7 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
     return 1;
 }
 
-static void mca_btl_ugni_cqwrite_complete (mca_btl_ugni_base_frag_t *frag, int rc)
+static void mca_btl_ugni_cqwrite_complete (struct mca_btl_ugni_base_frag_t *frag, int rc)
 {
     frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
 
@@ -98,7 +96,6 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                mca_btl_ugni_smsg_tag_t tag)
 {
     int rc;
-    int pml_tag;
     gni_return_t grc;
     mca_btl_ugni_base_frag_t *cq_write_frag = NULL;
 
@@ -112,8 +109,7 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
         (void)opal_atomic_add_32(&frag->endpoint->btl->active_send_count, 1);
 
         if (howards_progress_var == 1 && (getenv("GENERATE_MDH_IRQS") != NULL)) {
-            pml_tag = frag->hdr.send.lag >> 24;
-            if (pml_tag > MCA_PML_OB1_HDR_TYPE_MATCH) {
+            if (frag->base.des_flags & MCA_BTL_DES_FLAGS_SIGNAL) {
                 rc = mca_btl_ugni_frag_alloc(frag->endpoint,
                                              &frag->endpoint->btl->rdma_frags,
                                              &cq_write_frag);
