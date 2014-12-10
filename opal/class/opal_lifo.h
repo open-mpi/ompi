@@ -139,8 +139,10 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
     do {
         opal_counted_pointer_t old_head;
 
+        opal_atomic_rmb ();
+
         old_head.value = lifo->opal_lifo_head.value;
-        item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
+        item = old_head.data.item;
 
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
