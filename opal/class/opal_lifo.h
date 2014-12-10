@@ -122,6 +122,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
         if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
+            opal_atomic_wmb ();
             return next;
         }
         /* DO some kind of pause to release the bus */
@@ -147,6 +148,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 
         if (opal_update_counted_pointer (&lifo->opal_lifo_head, old_head,
                                          (opal_list_item_t *) item->opal_list_next)) {
+            opal_atomic_wmb ();
             item->opal_list_next = NULL;
             return item;
         }
