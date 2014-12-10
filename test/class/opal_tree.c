@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
     test_data_t *elements;
     opal_tree_item_t *item, *rm_item;
 
-    rc = opal_init(&argc, &argv);
+    rc = opal_init_util(&argc, &argv);
     test_verify_int(OPAL_SUCCESS, rc);
     if (OPAL_SUCCESS != rc) {
         test_finalize();
