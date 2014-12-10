@@ -47,7 +47,7 @@ static void *thread_test (void *arg) {
     timing = ((double) total.tv_sec + (double) total.tv_usec * 1e-6) / (double) ITERATIONS;
 
     printf ("Atomics thread finished. Time: %d s %d us %d nsec/poppush\n", (int) total.tv_sec,
-            total.tv_usec, (int)(timing / 1e-9));
+            (int)total.tv_usec, (int)(timing / 1e-9));
 
     return NULL;
 }
@@ -130,7 +130,7 @@ int main (int argc, char *argv[]) {
     }
 
     printf ("Single thread test. Time: %d s %d us %d nsec/poppush\n", (int) total.tv_sec,
-            total.tv_usec, (int)(timing / 1e-9));
+            (int)total.tv_usec, (int)(timing / 1e-9));
 
     thread_test (&lifo);
 
@@ -163,7 +163,7 @@ int main (int argc, char *argv[]) {
     }
 
     printf ("All threads finished. Thread count: %d Time: %d s %d us %d nsec/poppush\n",
-             OPAL_LIFO_TEST_THREAD_COUNT, (int) total.tv_sec, total.tv_usec, (int)(timing / 1e-9));
+            OPAL_LIFO_TEST_THREAD_COUNT, (int) total.tv_sec, (int)total.tv_usec, (int)(timing / 1e-9));
 
     success = true;
     for (int i = 0 ; i < ITEM_COUNT ; ++i) {
