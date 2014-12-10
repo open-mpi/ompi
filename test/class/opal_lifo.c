@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
     double timing;
     int rc;
 
-    rc = opal_init (&argc, &argv);
+    rc = opal_init_util (&argc, &argv);
     test_verify_int(OPAL_SUCCESS, rc);
     if (OPAL_SUCCESS != rc) {
         test_finalize();
@@ -183,7 +183,7 @@ int main (int argc, char *argv[]) {
 
     OBJ_DESTRUCT(&lifo);
 
-    opal_finalize ();
+    opal_finalize_util ();
 
     return test_finalize ();
 }
