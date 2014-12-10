@@ -64,6 +64,17 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
     return OPAL_SUCCESS;
 }
 
+static void mca_btl_ugni_write_to_self_complete(struct mca_btl_ugni_base_frag_t *frag, int rc)
+{
+    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
+
+    BTL_VERBOSE(("cqwrite  frag complete"));
+#if 0
+    fprintf(stderr,"returning cq_frag %p\n",frag);
+#endif
+    mca_btl_ugni_frag_return (frag);
+}
+
 static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
                                          mca_btl_ugni_segment_t *lcl_seg, mca_btl_ugni_segment_t *rem_seg)
 {
