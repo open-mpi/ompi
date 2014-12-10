@@ -149,7 +149,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             rc = GNI_EpCreate (ugni_module->device->dev_handle, ugni_module->rdma_local_cq,
                                &ugni_module->local_ep);
             OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
                 BTL_ERROR(("error creating local ugni endpoint"));
                 return opal_common_rc_ugni_to_opal (rc);
             }
@@ -159,7 +159,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                              ugni_module->device->dev_addr,
                              getpid());
             OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
                 BTL_ERROR(("error binding local ugni endpoint"));
                 return opal_common_rc_ugni_to_opal (rc);
             }
@@ -185,7 +185,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             }
 
             OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
-            status = GNI_MemRegister(ugni_module->device->dev_handle,
+            rc = GNI_MemRegister(ugni_module->device->dev_handle,
                                      (unsigned long)howards_start_addr,
                                      4096,
                                      ugni_module->smsg_remote_irq_cq,
@@ -195,7 +195,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
 #if 1
             {
                 unsigned long *vec = (unsigned long *)&mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
-                fprintf(stderr,"status = %d memory handle contents 0x%lx 0x%lx\n",status,vec[0],vec[1]);
+                fprintf(stderr,"status = %d memory handle contents 0x%lx 0x%lx\n",rc,vec[0],vec[1]);
             }
 #endif
             OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);

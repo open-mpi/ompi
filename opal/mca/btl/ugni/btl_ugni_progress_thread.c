@@ -89,7 +89,7 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
     }
     rc = pthread_cond_signal(&progress_cond);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
@@ -113,7 +113,7 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
         fprintf(stderr,"Hey, pthread_attr_destroy returned with error %d (%s) \n",errno,strerror(errno));
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int mca_btl_ugni_kill_progress_thread(void)
@@ -163,11 +163,11 @@ int mca_btl_ugni_kill_progress_thread(void)
     OPAL_THREAD_LOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
     status =  GNI_EpDestroy (mca_btl_ugni_component.modules[0].local_ep);
     OPAL_THREAD_UNLOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != status)) {
         BTL_ERROR(("error destroy local ep endpoint - %s", gni_err_str[status]));
-        return opal_common_rc_ugni_to_opali (status);
+        return opal_common_rc_ugni_to_opal(status);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
