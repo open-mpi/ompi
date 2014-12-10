@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -14,9 +14,9 @@
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -39,19 +39,19 @@ check_PROGRAMS = \
 
 TESTS = $(check_PROGRAMS)
 
-opal_bitmap_SOURCES = opal_bitmap.c 
+opal_bitmap_SOURCES = opal_bitmap.c
 opal_bitmap_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_bitmap_DEPENDENCIES = $(opal_bitmap_LDADD)
 
-opal_list_SOURCES = opal_list.c 
+opal_list_SOURCES = opal_list.c
 opal_list_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_list_DEPENDENCIES = $(opal_list_LDADD)
 
-opal_tree_SOURCES = opal_tree.c 
+opal_tree_SOURCES = opal_tree.c
 opal_tree_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
