@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -37,9 +37,7 @@ check_PROGRAMS = \
 	opal_lifo \
 	opal_fifo
 
-# The tests are built, but since they're not actively maintained, they
-# are not run during "make check".
-TESTS = opal_lifo opal_fifo
+TESTS = $(check_PROGRAMS)
 
 opal_bitmap_SOURCES = opal_bitmap.c 
 opal_bitmap_LDADD = \
