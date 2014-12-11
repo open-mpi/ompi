@@ -387,6 +387,11 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             }
             break;
 
+        case ORTE_HOSTFILE_STRING:
+        case ORTE_HOSTFILE_INT:
+            /* just ignore it */
+            break;
+            
         default:
             hostfile_parse_error(token);
             opal_list_remove_item(updates, &node->super);

@@ -220,6 +220,8 @@ typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_NO_VM              0x4000
 #define ORTE_JOB_CONTROL_INDEX_ARGV         0x8000
 
+#define ORTE_JOB_CONTROL_PHYS_CPUS          0x0001
+
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
 /************
