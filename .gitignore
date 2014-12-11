@@ -766,7 +766,9 @@ test/class/ompi_fifo
 test/class/ompi_rb_tree
 test/class/ompi_bitmap
 test/class/opal_bitmap
+test/class/opal_fifo
 test/class/opal_hash_table
+test/class/opal_lifo
 test/class/opal_list
 test/class/opal_pointer_array
 test/class/opal_proc_table
