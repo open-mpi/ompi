@@ -1126,6 +1126,9 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_report_bindings");
         opal_argv_append(argc, argv, "1");
     }
+    /* pass our topology signature */
+    opal_argv_append(argc, argv, "--hnp-topo-sig");
+    opal_argv_append(argc, argv, orte_topo_signature);
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "orte_hetero_nodes");
