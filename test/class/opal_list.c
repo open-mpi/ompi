@@ -343,7 +343,7 @@ int main(int argc, char **argv)
 
     if (NULL != elements) free(elements);
 
-    opal_finalize();
+    opal_finalize_util ();
 
     return test_finalize();
 }

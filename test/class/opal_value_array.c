@@ -114,7 +114,7 @@ int main(int argc, char **argv)
     
     OBJ_DESTRUCT(&array);
 
-    opal_finalize();
+    opal_finalize_util ();
 
     return test_finalize();
 }

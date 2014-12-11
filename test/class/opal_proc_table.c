@@ -301,7 +301,7 @@ int main(int argc, char **argv)
     fclose( error_out );
 #endif
 
-    opal_finalize();
+    opal_finalize_util ();
     
     return test_finalize();
 }
