@@ -200,11 +200,14 @@ static char *dyn_port_string;
 static char *dyn_port_string6;
 #endif
 
+static char *connection_timeout_string;
+
 static int tcp_component_register(void)
 {
     mca_base_component_t *component = &mca_oob_tcp_component.super.oob_base;
     int var_id;
-
+    char **vals=NULL;
+    
     /* register oob module parameters */
     mca_oob_tcp_component.peer_limit = -1;
     (void)mca_base_component_var_register(component, "peer_limit",
@@ -402,6 +405,23 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
+    mca_oob_tcp_component.connect_timeout.tv_sec = 2;
+    mca_oob_tcp_component.connect_timeout.tv_usec = 0;
+    connection_timeout_string = "2:0";
+    (void)mca_base_component_var_register(component, "connect_timeout",
+                                          "Timeout for connection attempts to peer expressed as sec:usec",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &connection_timeout_string);
+
+    vals = opal_argv_split(connection_timeout_string, ':');
+    mca_oob_tcp_component.connect_timeout.tv_sec = strtol(vals[0], NULL, 10);
+    if (NULL != vals[1]) {
+        mca_oob_tcp_component.connect_timeout.tv_usec = strtol(vals[1], NULL, 10);
+    }
+    opal_argv_free(vals);
+    
     return ORTE_SUCCESS;
 }
 
@@ -416,7 +436,8 @@ static bool component_available(void)
     char name[32];
     struct sockaddr_storage my_ss;
     int kindex;
-
+    bool loopback = false;
+    
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
 
@@ -506,7 +527,11 @@ static bool component_available(void)
                 continue;
             }
         }
-
+        /* if this interface has loopback support, record that fact */
+        if (opal_ifisloopback(i)) {
+            loopback = true;
+        }
+        
         /* Refs ticket #3019
          * it would probably be worthwhile to print out a warning if OMPI detects multiple
          * IP interfaces that are "up" on the same subnet (because that's a Bad Idea). Note
@@ -540,7 +565,15 @@ static bool component_available(void)
         }
     }
 
-    /* cleanup */
+    if (!loopback) {
+        /* Solaris doesn't care, but warn if we are
+         * on any other type of system */
+#if !OPAL_HAVE_SOLARIS
+        orte_show_help("help-oob-tcp.txt", "no-loopback-found", true);
+#endif
+    }
+
+/* cleanup */
     if (NULL != interfaces) {
         opal_argv_free(interfaces);
     }

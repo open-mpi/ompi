@@ -77,6 +77,8 @@ typedef struct {
     bool               listen_thread_active;
     struct timeval     listen_thread_tv;       /**< Timeout when using listen thread */
     int                stop_thread[2];         /**< pipe used to exit the listen thread */
+    struct timeval     connect_timeout;        /**< timeout when attempting to connect to peer */
+    
 } mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
