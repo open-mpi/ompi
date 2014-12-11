@@ -274,6 +274,10 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
 
 #endif
 
+/* get the topology "signature" so we can check for differences - caller
+ * if responsible for freeing the returned string */
+OPAL_DECLSPEC char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo);
+
 END_C_DECLS
 
 #endif /* OPAL_HWLOC_BASE_H */

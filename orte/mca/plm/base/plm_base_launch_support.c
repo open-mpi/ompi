@@ -835,15 +835,28 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
 
 #if OPAL_HAVE_HWLOC
         {
-            char *coprocessors, **sns;
+            char *coprocessors, **sns, *sig;
             uint32_t h;
-            hwloc_topology_t topo, t;
+            hwloc_topology_t topo;
+            orte_topology_t *t;
             int i;
             bool found;
-
+            uint8_t tflag;
+            
             /* store the local resources for that node */
-            if (1 == dname.vpid || orte_hetero_nodes) {
-                 
+            idx=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &tflag, &idx, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            if (1 == tflag) {
+                idx=1;
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &idx, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
                 idx=1;
                 if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
                     ORTE_ERROR_LOG(rc);
@@ -856,31 +869,46 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
                     opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
                 }
-                /* do we already have this topology from some other node? */
-                found = false;
-                for (i=0; i < orte_node_topologies->size; i++) {
-                    if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
-                        continue;
-                    }
-                    if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
-                        /* yes - just point to it */
-                        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                             "%s TOPOLOGY MATCHES - DISCARDING",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                        found = true;
-                        node->topology = t;
-                        hwloc_topology_destroy(topo);
-                        break;
-                    }
-                }
-                if (!found) {
-                    /* nope - add it */
+                if (orte_hetero_nodes) {
+                    /* the user has told us that something is different, so just store it */
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                         "%s NEW TOPOLOGY - ADDING",
+                                         "%s ADDING TOPOLOGY PER USER REQUEST",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    
-                    opal_pointer_array_add(orte_node_topologies, topo);
+                    t = OBJ_NEW(orte_topology_t);
+                    t->topo = topo;
+                    t->sig = sig;
+                    opal_pointer_array_add(orte_node_topologies, t);
                     node->topology = topo;
+                } else {
+                    /* do we already have this topology from some other node? */
+                    found = false;
+                    for (i=0; i < orte_node_topologies->size; i++) {
+                        if (NULL == (t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, i))) {
+                            continue;
+                        }
+                        /* just check the signature */
+                        if (0 == strcmp(sig, t->sig)) {
+                            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                                 "%s TOPOLOGY ALREADY RECORDED",
+                                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                            found = true;
+                            node->topology = t->topo;
+                            hwloc_topology_destroy(topo);
+                            free(sig);
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        /* nope - add it */
+                        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                             "%s NEW TOPOLOGY - ADDING",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                        t = OBJ_NEW(orte_topology_t);
+                        t->topo = topo;
+                        t->sig = sig;
+                        opal_pointer_array_add(orte_node_topologies, t);
+                        node->topology = topo;
+                    }
                 }
             }
         
