@@ -204,7 +204,7 @@ void *psmx_resolve_name(const char *servername, int port)
 		return NULL;
 	}
 
-	dest_addr = calloc(1,sizeof(*dest_addr));
+	dest_addr = calloc(1,sizeof(psm_epid_t));
 	if (!dest_addr) {
 		close(sockfd);
 		return NULL;
