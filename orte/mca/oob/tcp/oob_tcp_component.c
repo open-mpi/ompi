@@ -460,6 +460,11 @@ static bool component_available(void)
 
     /* look at all available interfaces */ 
     for (i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)) {
+        /* if this interface has loopback support, record that fact */
+        if (opal_ifisloopback(i)) {
+            loopback = true;
+        }
+        
         if (OPAL_SUCCESS != opal_ifindextoaddr(i, (struct sockaddr*) &my_ss,
                                                sizeof (my_ss))) {
             opal_output (0, "oob_tcp: problems getting address for index %i (kernel index %i)\n",
@@ -527,11 +532,6 @@ static bool component_available(void)
                 continue;
             }
         }
-        /* if this interface has loopback support, record that fact */
-        if (opal_ifisloopback(i)) {
-            loopback = true;
-        }
-        
         /* Refs ticket #3019
          * it would probably be worthwhile to print out a warning if OMPI detects multiple
          * IP interfaces that are "up" on the same subnet (because that's a Bad Idea). Note
