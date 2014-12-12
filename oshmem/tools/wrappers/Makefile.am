@@ -24,7 +24,7 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) mpicc$(EXEEXT) oshcc$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) shmemfort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) oshfort$(EXEEXT))
-if OMPI_WANT_JAVA_BINDINGS
+if OSHMEM_WANT_JAVA_BINDINGS
 	(cd $(DESTDIR)$(bindir); rm -f shmemjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) shmemjavac$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) oshjavac$(EXEEXT))
 endif
