@@ -302,6 +302,7 @@ struct mca_btl_openib_component_t {
     int gid_index;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
+    bool allow_max_memory_registration;
     int memory_registration_verbose_level;
     int memory_registration_verbose;
     int ignore_locality;
