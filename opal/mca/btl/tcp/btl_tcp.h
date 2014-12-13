@@ -124,7 +124,7 @@ struct mca_btl_tcp_module_t {
 typedef struct mca_btl_tcp_module_t mca_btl_tcp_module_t;
 extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
-#define CLOSE_THE_SOCKET(socket)   close(socket)
+#define CLOSE_THE_SOCKET(socket)   {(void)shutdown(socket, SHUT_RDWR); (void)close(socket);}
 
 /**
  * TCP component initialization.

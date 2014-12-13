@@ -208,6 +208,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
 static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_endpoint)
 {
 #if MCA_BTL_TCP_ENDPOINT_CACHE
+    assert(NULL == btl_endpoint->endpoint_cache);
     btl_endpoint->endpoint_cache     = (char*)malloc(mca_btl_tcp_component.tcp_endpoint_cache);
     btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
@@ -254,7 +255,7 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
         rc = OPAL_ERR_UNREACH;
         break;
     case MCA_BTL_TCP_CONNECTED:
-        if (btl_endpoint->endpoint_send_frag == NULL) {
+        if (NULL == btl_endpoint->endpoint_send_frag) {
             if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
                mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd)) {
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -576,7 +577,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         addrlen = sizeof (struct sockaddr_in6);
     }
 #endif
-    
+    assert( btl_endpoint->endpoint_sd < 0 );
     btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
@@ -655,9 +656,6 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
 
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
-    /* unregister from receiving event notifications */
-    opal_event_del(&btl_endpoint->endpoint_send_event);
-
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
         BTL_ERROR(("getsockopt() to %s failed: %s (%d)", 
@@ -667,7 +665,6 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         return;
     }
     if(so_error == EINPROGRESS || so_error == EWOULDBLOCK) {
-        opal_event_add(&btl_endpoint->endpoint_send_event, 0);
         return;
     }
     if(so_error != 0) {
@@ -678,7 +675,12 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         return;
     }
 
-    if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
+    /* Do not unregister from receiving send event notifications, instead
+     * leave the event to trigger once more, and then it will get automatically
+     * deleted as no send fragments are available.
+     */
+
+     if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
     } else {
@@ -703,7 +705,25 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
     if( sd != btl_endpoint->endpoint_sd )
         return;
 
-    OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
+    /**
+     * There is an extremely rare race condition here, that can only be
+     * triggered during the initialization. If the two processes start their
+     * connection in same time, one of the processes will have to close it's
+     * previous endpoint (the one opened from the local send). As a result it
+     * might go in btl_endpoint_close and try to delete the recv_event. This
+     * call will go back in the libevent, and in a multithreaded case will try
+     * to lock the event. If another thread noticed the active event (and this
+     * is possible as during the initialization there will be 2 sockets), one
+     * thread might get stuck trying to lock the endpoint_recv_lock (while
+     * holding the event_base lock) while the other thread will try to lock the
+     * event_base lock (while holding the endpoint_recv lock).
+     *
+     * If we can't lock this mutex, it is OK to cancel the receive operation, it
+     * will be eventually triggered again shorthly.
+     */
+    if( OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock) )
+        return;
+
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
@@ -799,7 +819,11 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
 static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
 {
     mca_btl_tcp_endpoint_t* btl_endpoint = (mca_btl_tcp_endpoint_t *)user;
-    OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
+
+    /* if another thread is already here, give up */
+    if( OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock) )
+        return;
+
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECTING:
         mca_btl_tcp_endpoint_complete_connect(btl_endpoint);
@@ -824,8 +848,12 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             if( btl_ownership ) {
                 MCA_BTL_TCP_FRAG_RETURN(frag);
             }
-            OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-
+            /* if we fail to take the lock simply return. In the worst case the
+             * send_handler will be triggered once more, and as there will be
+             * nothing to send the handler will be deleted.
+             */
+            if( OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock) )
+                return;
         }
 
         /* if nothing else to do unregister for send event notifications */
