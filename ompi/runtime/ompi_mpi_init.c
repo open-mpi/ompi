@@ -543,7 +543,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                            ompi_mpi_thread_multiple))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
@@ -601,14 +601,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
                                    ompi_mpi_thread_multiple))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
                                    ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_select() failed";
         goto error;
@@ -658,14 +658,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                             ompi_mpi_thread_multiple))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                             ompi_mpi_thread_multiple))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
