@@ -2104,7 +2104,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
 
 char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 {
-    unsigned int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
+    int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
     char *sig=NULL, *arch=NULL;
     hwloc_obj_t obj;
     unsigned i;
@@ -2127,10 +2127,10 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
     }
 
     if (NULL == arch) {
-        asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH",
+        asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH",
                  nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt);
     } else {
-        asprintf(&sig, "%uN:%uS:%uL3:%uL2:%uL1:%uC:%uH:%s",
+        asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s",
                  nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch);
     }
     return sig;

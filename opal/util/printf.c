@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +41,14 @@
  */
 static int guess_strlen(const char *fmt, va_list ap)
 {
-    char *sarg;
+#if HAVE_VSNPRINTF
+    char dummy[1];
+
+    /* vsnprintf() returns the number of bytes that would have been
+       copied if the provided buffer were infinite. */
+    return 1 + vsnprintf(dummy, sizeof(dummy), fmt, ap);
+#else
+    char *sarg, carg;
     double darg;
     float farg;
     size_t i;
@@ -182,6 +190,7 @@ static int guess_strlen(const char *fmt, va_list ap)
     }
 
     return len;
+#endif
 }
 
 

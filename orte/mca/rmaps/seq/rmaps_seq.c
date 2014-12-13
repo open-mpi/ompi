@@ -329,7 +329,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 /* wasn't found - that is an error */
                 orte_show_help("help-orte-rmaps-seq.txt",
                                "orte-rmaps-seq:resource-not-found",
-                               true, nd->name);
+                               true, sq->hostname);
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
