@@ -433,7 +433,7 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "mark_incoming_completion marking passive incoming complete. source = %d, count = %d",
                              source, (int) module->passive_incoming_frag_count[source] + 1));
-        OPAL_THREAD_ADD32((int32_t *) (module->passive_incoming_frag_count + source), 1);
+        OPAL_THREAD_ADD32((int32_t *) module->passive_incoming_frag_count + source, 1);
         if (module->passive_incoming_frag_count[source] >= module->passive_incoming_frag_signal_count[source]) {
             opal_condition_broadcast(&module->cond);
         }
@@ -480,7 +480,7 @@ static inline void ompi_osc_signal_outgoing (ompi_osc_rdma_module_t *module, int
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "ompi_osc_signal_outgoing_passive: target = %d, count = %d, total = %d", target,
                              count, module->epoch_outgoing_frag_count[target] + count));
-        OPAL_THREAD_ADD32((int32_t *) (module->epoch_outgoing_frag_count + target), count);
+        OPAL_THREAD_ADD32((int32_t *) module->epoch_outgoing_frag_count + target, count);
     }
 }
 

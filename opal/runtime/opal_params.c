@@ -110,18 +110,6 @@ int opal_register_params(void)
 	return ret;
     }
 
-    opal_mutex_check_locks = false;
-    ret = mca_base_var_register ("opal", "opal", "debug", "locks",
-				 "Debug mutex usage within Open MPI.  On a "
-				 "non-threaded build, this enables integer counters and "
-				 "warning messages when double-locks are detected.",
-				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
-				 &opal_mutex_check_locks);
-    if (0 > ret) {
-	return ret;
-    }
-
     opal_debug_threads = false;
     ret = mca_base_var_register ("opal", "opal", "debug", "threads",
 				 "Debug thread usage within OPAL. Reports out "

@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -507,6 +507,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
     OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
 
+    /* If thread support was enabled, then setup OPAL to allow for
+       them. */
+    if (*provided != MPI_THREAD_SINGLE) {
+        opal_set_using_threads(true);
+    }
+
     /* add this bitflag to the modex */
     if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
         error = "ompi_mpi_init: modex send thread level";
@@ -538,7 +544,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     if (OMPI_SUCCESS != 
         (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
+                                           ompi_mpi_thread_multiple))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
     }
@@ -596,14 +602,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (OMPI_SUCCESS != 
         (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+                                   ompi_mpi_thread_multiple))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
         (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+                                   ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_select() failed";
         goto error;
     }
@@ -646,21 +652,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
-	(ret = mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE))) {
+	(ret = mca_pml_base_bsend_init(ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_bsend_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
         (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
+                                            ompi_mpi_thread_multiple))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
         (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
+                                            ompi_mpi_thread_multiple))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
@@ -747,13 +753,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = ompi_proc_complete_init())) {
         error = "ompi_proc_complete_init failed";
         goto error;
-    }
-
-    /* If thread support was enabled, then setup OPAL to allow for
-       them. */
-    if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
-        (*provided != MPI_THREAD_SINGLE)) {
-        opal_set_using_threads(true);
     }
 
     /* start PML/BTL's */

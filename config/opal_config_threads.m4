@@ -127,45 +127,12 @@ fi
 
 AM_CONDITIONAL(OPAL_HAVE_POSIX_THREADS, test "$THREAD_TYPE" = "posix")
 
-#
-# Now configure the whole OPAL and progress thread gorp
-#
-AC_MSG_CHECKING([if want OPAL thread support])
-AC_ARG_ENABLE([opal-multi-threads],
-    AC_HELP_STRING([--enable-opal-multi-threads],
-        [Enable thread support inside OPAL (default: disabled)]),
-    [enable_opal_multi_threads="$enableval"],
-    [enable_opal_multi_threads="undef"])
-
-if test "$enable_opal_multi_threads" = "undef" ; then 
-dnl    # no argument given either way.  Default to whether
-dnl    # we have threads or not
-dnl    if test "$THREAD_TYPE" != "none" ; then
-dnl        OPAL_ENABLE_MULTI_THREADS=1
-dnl        enable_opal_multi_threads="yes"
-dnl    else
-dnl        OPAL_ENABLE_MULTI_THREADS=0
-dnl        enable_opal_multi_threads="no"
-dnl    fi
-    # no argument - default to no, but leave
-    # enable_opal_multi_threads="undef" so we
-    # can later detect that it wasn't specified
-    OPAL_ENABLE_MULTI_THREADS=0
-elif test "$enable_opal_multi_threads" = "no" ; then
-    OPAL_ENABLE_MULTI_THREADS=0
-else
-    # they want OPAL thread support.  Make sure we have threads
-    if test "$THREAD_TYPE" != "none" ; then
-        OPAL_ENABLE_MULTI_THREADS=1
-        enable_opal_multi_threads="yes"
-    else
-        AC_MSG_ERROR([User requested MPI threads, but no threading model supported])
-    fi
+# Make sure we have threads
+if test "$THREAD_TYPE" = "none" ; then
+    AC_MSG_ERROR([User requested MPI threads, but no threading model supported])
 fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [$OPAL_ENABLE_MULTI_THREADS],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [1],
                    [Whether we should enable thread support within the OPAL code base])
-AC_MSG_RESULT([$enable_opal_multi_threads])
-
 
 # C/R is no longer supported
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [0],

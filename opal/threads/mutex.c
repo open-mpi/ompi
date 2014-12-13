@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,12 +24,12 @@
 #include "opal/threads/mutex.h"
 
 /*
- * If we have progress threads, always default to using threads.
- * Otherwise, wait and see if some upper layer wants to use threads.
+ * Wait and see if some upper layer wants to use threads, if support
+ * exists.
  */
+#if OMPI_ENABLE_THREAD_MULTIPLE
 bool opal_uses_threads = false;
-bool opal_mutex_check_locks = false;
-
+#endif
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
@@ -57,7 +58,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
 
 #endif
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
+#if OPAL_ENABLE_DEBUG
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
