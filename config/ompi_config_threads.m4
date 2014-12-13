@@ -39,37 +39,12 @@ AC_DEFUN([OMPI_CONFIG_THREADS],[
 AC_MSG_CHECKING([if want MPI_THREAD_MULTIPLE support])
 AC_ARG_ENABLE([mpi_thread_multiple],
     [AC_HELP_STRING([--enable-mpi-thread-multiple],
-                    [Enable MPI_THREAD_MULTIPLE support (default: disabled)])],
-    [enable_mpi_threads="$enableval"],
-    [enable_mpi_threads="undef"])
+                    [Enable MPI_THREAD_MULTIPLE support (default: disabled)])])
 
-# if they did not want OPAL thread support, then they cannot have this option
-if test "$enable_mpi_threads" = "yes" -a "$enable_opal_multi_threads" = "no"; then
-    AC_MSG_WARN(["failed"])
-    AC_MSG_WARN(["*** You have requested MPI_THREAD_MULTIPLE support but thread"])
-    AC_MSG_WARN(["*** support was disabled within the OPAL code base by"])
-    AC_MSG_WARN(["*** --disable-opal-multi-threads on your configure command."])
-    AC_MSG_ERROR(["*** Can not continue."])
-# if --disable-mpi-thread-multiple
-elif test "$enable_mpi_threads" = "no"; then
-    ompi_want_mpi_threads=0
-    OMPI_ENABLE_THREAD_MULTIPLE=0
-    AC_MSG_RESULT([Disabled])
-#if requested and OPAL thread support is enabled
-elif test "$enable_mpi_threads" = "yes" -a "$enable_opal_multi_threads" = "yes" ; then
+if test "$enable_mpi_thread_multiple" = "yes" ; then
     ompi_want_mpi_threads=1
     OMPI_ENABLE_THREAD_MULTIPLE=1
     AC_MSG_RESULT([Enabled])
-#if requested and OPAL thread support was not explicitly enabled or disabled
-elif test "$enable_mpi_threads" = "yes" -a "$enable_opal_multi_threads" = "undef" ; then
-   # ensure that OPAL thread support is turned on
-   OPAL_ENABLE_MULTI_THREADS=1
-   enable_opal_multi_threads="yes"
-   AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [$OPAL_ENABLE_MULTI_THREADS],
-                      [Whether we should enable thread support within the OPAL code base])
-    ompi_want_mpi_threads=1
-    OMPI_ENABLE_THREAD_MULTIPLE=1
-    AC_MSG_RESULT([Enabled - OPAL thread support automatically enabled])
 else
     # Default: disable
     ompi_want_mpi_threads=0

@@ -173,14 +173,7 @@ OPAL_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 OPAL_DECLSPEC int opal_progress_unregister(opal_progress_callback_t cb);
 
 
-OPAL_DECLSPEC extern volatile int32_t opal_progress_thread_count;
 OPAL_DECLSPEC extern int opal_progress_spin_count;
-
-static inline bool opal_progress_threads(void) 
-{ 
-    return (opal_progress_thread_count > 0); 
-}
-
 
 /**
  * Progress until flag is true or poll iterations completed
@@ -188,39 +181,15 @@ static inline bool opal_progress_threads(void)
 static inline bool opal_progress_spin(volatile bool* complete)
 {
     int32_t c;
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
+
     for (c = 0; c < opal_progress_spin_count; c++) {
         if (true == *complete) {
-             OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
              return true;
         }
         opal_progress();
     }
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+
     return false;
-}
-
-
-/**
- * \internal
- * Don't use this variable; use the opal_progress_recursion_depth()
- * function.
- */
-OPAL_DECLSPEC extern 
-#if OPAL_ENABLE_MULTI_THREADS
-volatile 
-#endif
-uint32_t opal_progress_recursion_depth_counter;
-
-/**
- * Return the current level of recursion -- 0 means that we are not
- * under an opal_progress() call at all.  1 means that you're in the
- * top-level opal_progress() function (i.e., not deep in recursion).
- * Higher values mean that you're that many levels deep in recursion.
- */
-static inline uint32_t opal_progress_recursion_depth(void) 
-{
-    return opal_progress_recursion_depth_counter;
 }
 
 

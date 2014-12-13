@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,7 +33,7 @@
 #include <net/uio.h>
 #endif
 
-#include "btl_tcp.h" 
+#include "btl_tcp.h"
 #include "btl_tcp_hdr.h"
 
 BEGIN_C_DECLS
@@ -44,33 +44,33 @@ BEGIN_C_DECLS
  * TCP fragment derived type.
  */
 struct mca_btl_tcp_frag_t {
-    mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segments[2]; 
-    struct mca_btl_base_endpoint_t *endpoint; 
+    mca_btl_base_descriptor_t base;
+    mca_btl_base_segment_t segments[2];
+    struct mca_btl_base_endpoint_t *endpoint;
     struct mca_btl_tcp_module_t* btl;
     mca_btl_tcp_hdr_t hdr;
     struct iovec iov[MCA_BTL_TCP_FRAG_IOVEC_NUMBER + 1];
     struct iovec *iov_ptr;
     size_t iov_cnt;
     size_t iov_idx;
-    size_t size; 
+    size_t size;
     int rc;
     ompi_free_list_t* my_list;
-}; 
-typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_t; 
-OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t); 
+};
+typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_t;
+OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t);
 
-typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_eager_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_eager_t); 
+typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_eager_t;
 
-typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_max_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_max_t); 
+OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_eager_t);
 
-typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_user_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t); 
+typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_max_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_max_t);
+
+typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_user_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
 
 
 /*
@@ -124,6 +124,7 @@ do {                                                                       \
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t*, int sd);
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t*, int sd);
 
+size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t*, char*, char*, size_t);
 
 END_C_DECLS
 #endif

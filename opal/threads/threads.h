@@ -55,10 +55,6 @@ struct opal_thread_t {
 
 typedef struct opal_thread_t opal_thread_t;
 
-#if OPAL_ENABLE_DEBUG
-OPAL_DECLSPEC extern bool opal_debug_threads;
-#endif
-
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 

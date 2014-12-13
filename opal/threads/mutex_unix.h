@@ -54,7 +54,7 @@ struct opal_mutex_t {
     pthread_mutex_t m_lock_pthread;
 #endif
 
-#if !OPAL_ENABLE_MULTI_THREADS && OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     int m_lock_debug;
     const char *m_lock_file;
     int m_lock_line;
