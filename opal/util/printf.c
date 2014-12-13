@@ -48,6 +48,13 @@ static int guess_strlen(const char *fmt, va_list ap)
     int len;
     long larg;
 
+#if HAVE_VSNPRINTF
+    {
+        char dummy[1];
+        return 1 + vsnprintf(dummy, sizeof(dummy), fmt, ap);
+    }
+#endif
+    
     /* Start off with a fudge factor of 128 to handle the % escapes that
        we aren't calculating here */
 
