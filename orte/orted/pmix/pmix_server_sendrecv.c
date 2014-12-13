@@ -1249,6 +1249,7 @@ static void process_message(pmix_server_peer_t *peer)
                                 ORTE_NAME_PRINT(&name));
             kvp = NULL;
             kvp2 = NULL;
+            data = NULL;
             /* retrieve the local blob for that proc */
             OBJ_CONSTRUCT(&values, opal_list_t);
             if (OPAL_SUCCESS == (ret = opal_dstore.fetch(pmix_server_local_handle, &idreq, "modex", &values))) {
@@ -1297,7 +1298,9 @@ static void process_message(pmix_server_peer_t *peer)
                     return;
                 }
             } else {
-                data = OBJ_NEW(opal_buffer_t);
+                if (NULL == data) {
+                    data = OBJ_NEW(opal_buffer_t);
+                }
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(data, &bptr, 1, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(reply);
@@ -1334,6 +1337,9 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                 } else {
+                    if (NULL == data) {
+                        data = OBJ_NEW(opal_buffer_t);
+                    }
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(data, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(reply);
@@ -1372,6 +1378,9 @@ static void process_message(pmix_server_peer_t *peer)
                         return;
                     }
                 } else {
+                    if (NULL == data) {
+                        data = OBJ_NEW(opal_buffer_t);
+                    }
                     if (OPAL_SUCCESS != (rc = opal_dss.pack(data, &bptr, 1, OPAL_BUFFER))) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(reply);

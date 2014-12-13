@@ -1221,9 +1221,9 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                     /* pass across any returned blobs */
                     opal_dss.copy_payload(reply, buffer);
                     stored = true;
+                    OBJ_RETAIN(reply);
+                    PMIX_SERVER_QUEUE_SEND(req->peer, req->tag, reply);
                 }
-                OBJ_RETAIN(reply);
-                PMIX_SERVER_QUEUE_SEND(req->peer, req->tag, reply);
             } else {
                 /* If peer has an access to shared memory dstore, check
                  * if we already stored data for the target process.
