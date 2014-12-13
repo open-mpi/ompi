@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -543,8 +543,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+                                           ompi_mpi_thread_multiple))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
     }
@@ -601,15 +601,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
+                                   ompi_mpi_thread_multiple))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+                                   ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_select() failed";
         goto error;
     }
@@ -652,21 +652,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
-	(ret = mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE))) {
+	(ret = mca_pml_base_bsend_init(ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_bsend_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+                                            ompi_mpi_thread_multiple))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+                                            ompi_mpi_thread_multiple))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
