@@ -333,7 +333,7 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
     int i;
     char **list;
     orte_process_name_t name;
-    opal_buffer_t buf;
+    opal_buffer_t buf, buf2;
 
     /* convenience def */
     node = proc->node;
@@ -388,17 +388,6 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
         return rc;
     }
     OBJ_DESTRUCT(&kv);
-    /* appnum */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(PMIX_APPNUM);
-    kv.type = OPAL_UINT32;
-    kv.data.uint32 = proc->app_idx;
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        return rc;
-    }
-    OBJ_DESTRUCT(&kv);
     /* rank */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(PMIX_RANK);
@@ -409,29 +398,6 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
         OBJ_DESTRUCT(&kv);
         return rc;
     }
-    OBJ_DESTRUCT(&kv);
-    /* global rank */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(PMIX_GLOBAL_RANK);
-    kv.type = OPAL_UINT32;
-    kv.data.uint32 = proc->name.vpid + jdata->offset;
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        return rc;
-    }
-    OBJ_DESTRUCT(&kv);
-    /* app rank */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(PMIX_APP_RANK);
-    kv.type = OPAL_UINT32;
-    kv.data.uint32 = proc->app_rank;
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        return rc;
-    }
-    OBJ_DESTRUCT(&kv);
     /* offset */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(PMIX_NPROC_OFFSET);
@@ -443,22 +409,110 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
         return rc;
     }
     OBJ_DESTRUCT(&kv);
-    /* local rank */
+    /* pass a blob - for each proc in this job, include the info describing
+     * it so the recipient has a complete picture */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* jobid, for simplicity when unpacking */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(PMIX_LOCAL_RANK);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = proc->local_rank;
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
+    kv.key = strdup(PMIX_JOBID);
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = proc->name.jobid;
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
         return rc;
     }
-    OBJ_DESTRUCT(&kv);
-    /* node rank */
+    for (i=0; i < jdata->procs->size; i++) {
+        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        /* rank */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_RANK);
+        kv.type = OPAL_UINT32;
+        kv.data.uint32 = pptr->name.vpid;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* create the buffer for this rank */
+        OBJ_CONSTRUCT(&buf2, opal_buffer_t);
+        /* appnum */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_APPNUM);
+        kv.type = OPAL_UINT32;
+        kv.data.uint32 = pptr->app_idx;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* global rank */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_GLOBAL_RANK);
+        kv.type = OPAL_UINT32;
+        kv.data.uint32 = pptr->name.vpid + jdata->offset;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* app rank */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_APP_RANK);
+        kv.type = OPAL_UINT32;
+        kv.data.uint32 = pptr->app_rank;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* local rank */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_LOCAL_RANK);
+        kv.type = OPAL_UINT16;
+        kv.data.uint16 = pptr->local_rank;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* node rank */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_NODE_RANK);
+        kv.type = OPAL_UINT16;
+        kv.data.uint16 = pptr->node_rank;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+        /* add the rank's blob */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_PROC_MAP);
+        kv.type = OPAL_BYTE_OBJECT;
+        opal_dss.unload(&buf2, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+        OBJ_DESTRUCT(&buf2);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
+    }
+    /* now pass the blob as the proc-map key */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(PMIX_NODE_RANK);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = proc->node_rank;
+    kv.key = strdup(PMIX_PROC_MAP);
+    kv.type = OPAL_BYTE_OBJECT;
+    opal_dss.unload(&buf, (void**)&kv.data.bo.bytes, &kv.data.bo.size);
+    OBJ_DESTRUCT(&buf);
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &kp, 1, OPAL_VALUE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
