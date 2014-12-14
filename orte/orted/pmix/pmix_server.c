@@ -54,6 +54,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
+#include "opal/util/fd.h"
 #include "opal/util/output.h"
 #include "opal/opal_socket_errno.h"
 #include "opal/util/if.h"
@@ -412,6 +413,16 @@ static int pmix_server_start_listening(struct sockaddr_un *address)
         }
         return ORTE_ERR_IN_ERRNO;
     }
+    /* Set the socket to close-on-exec so that no children inherit
+       this FD */
+    if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+        opal_output(0, "pmix_server: unable to set the "
+                    "listening socket to CLOEXEC (%s:%d)\n",
+                    strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
+        return ORTE_ERROR;
+    }
+
 
     addrlen = sizeof(struct sockaddr_un);
     if (bind(sd, (struct sockaddr*)address, addrlen) < 0) {
@@ -499,6 +510,15 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
                             strerror(opal_socket_errno), opal_socket_errno);
             }
         }
+        return;
+    }
+    /* Set the socket to close-on-exec so that no subsequent children inherit
+       this FD */
+    if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+        opal_output(0, "pmix_server_listen: unable to set the "
+                    "listening socket to CLOEXEC (%s:%d)\n",
+                    strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
 
