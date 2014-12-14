@@ -58,6 +58,7 @@
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
+#include "opal/util/fd.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
@@ -103,6 +104,14 @@ static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         return ORTE_ERR_UNREACH;
+    }
+    /* Set this fd to be close-on-exec so that subsequent children don't see it */
+    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(peer->sd);
+        peer->sd = -1;
+        return ORTE_ERROR;
     }
 
     /* setup event callbacks */

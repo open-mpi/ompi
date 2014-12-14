@@ -52,6 +52,7 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/opal_socket_errno.h"
+#include "opal/util/fd.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
@@ -95,6 +96,13 @@ int orte_oob_usock_start_listening(void)
                         strerror(opal_socket_errno), opal_socket_errno);
         }
         return ORTE_ERR_IN_ERRNO;
+    }
+    /* Set this fd to be close-on-exec so that children don't see it */
+    if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(sd);
+        return ORTE_ERROR;
     }
 
     addrlen = sizeof(struct sockaddr_un);
