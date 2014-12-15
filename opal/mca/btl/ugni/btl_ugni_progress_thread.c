@@ -100,8 +100,6 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-    fprintf(stderr,"Firing off the progress thread \n");
-
     rc = pthread_create(&mca_btl_ugni_progress_thread_id, 
                         &attr, mca_btl_ugni_prog_thread_fn, (void *)btl);
     if (rc != 0) {
@@ -122,8 +120,6 @@ int mca_btl_ugni_kill_progress_thread(void)
     static mca_btl_ugni_base_frag_t cq_write_frag;
 
     stop_progress_thread = 1;
-
-    fprintf(stderr,"async progress thread being killed off\n");
 
     /*
      * post a CQ to myself to wake my thread up
@@ -148,13 +144,13 @@ int mca_btl_ugni_kill_progress_thread(void)
         BTL_ERROR(("GNI_PostCqWrite returned error - %s",gni_err_str[status]));
     }
 
+    pthread_mutex_lock(&progress_mutex);
+
     while (!progress_thread_done) {
         pthread_cond_wait(&progress_cond, &progress_mutex);
     }
 
     pthread_mutex_unlock(&progress_mutex);
-
-    fprintf(stderr,"async progress thread killed off wakeups = %d\n",thread_wakeups);
 
     /*
      * destroy the local_ep
