@@ -3,7 +3,8 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -14,6 +15,10 @@
 #include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
+#if OPAL_USE_STDBOOL_H
+#include <stdbool.h>
+#endif
+
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/util/output.h"
@@ -195,9 +200,9 @@ static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
 #endif
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-extern int opal_unpack_debug;
-extern int opal_pack_debug;
-extern int opal_position_debug ;
+extern bool opal_unpack_debug;
+extern bool opal_pack_debug;
+extern bool opal_position_debug ;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 static char* bytes_dump( void* src, size_t cnt )
@@ -233,9 +238,9 @@ int main( int argc, char* argv[] )
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-    opal_unpack_debug   = 0;
-    opal_pack_debug     = 0;
-    opal_position_debug = 0;
+    opal_unpack_debug   = false;
+    opal_pack_debug     = false;
+    opal_position_debug = false;
 #endif  /* OPAL_ENABLE_DEBUG */
 
     create_segments( datatype, data_count, fragment_size,
