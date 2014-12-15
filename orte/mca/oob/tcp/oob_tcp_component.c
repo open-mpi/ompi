@@ -16,6 +16,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -545,7 +547,7 @@ static bool component_available(void)
         }
     }
 
-    if (!loopback) {
+    if (ORTE_PROC_IS_DAEMON && !loopback) {
         /* Solaris doesn't care, but warn if we are
          * on any other type of system */
 #if !OPAL_HAVE_SOLARIS
