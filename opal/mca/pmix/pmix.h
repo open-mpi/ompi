@@ -93,6 +93,8 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define PMIX_NODE_RANK       "pmix.nrank"       // (uint16_t) rank on this node spanning all jobs
 #define PMIX_LOCALLDR        "pmix.lldr"        // (uint64_t) opal_identifier of lowest rank on this node within this job
 #define PMIX_APPLDR          "pmix.aldr"        // (uint32_t) lowest rank in this app within this job
+#define PMIX_NODE_ID         "pmix.nodeid"      // (uint32_t) vpid of daemon hosting specified proc
+
 /* proc location-related info */
 #define PMIX_PROC_MAP        "pmix.map"         // (byte_object) packed map of proc locations within this job
 #define PMIX_LOCAL_PEERS     "pmix.lpeers"      // (char*) comma-delimited string of ranks on this node within this job

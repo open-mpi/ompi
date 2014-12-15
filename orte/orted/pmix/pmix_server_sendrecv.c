@@ -494,6 +494,17 @@ static int stuff_proc_values(opal_buffer_t *reply, orte_job_t *jdata, orte_proc_
             return rc;
         }
         OBJ_DESTRUCT(&kv);
+        /* node id */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(PMIX_NODE_ID);
+        kv.type = OPAL_UINT32;
+        kv.data.uint32 = pptr->node->daemon->name.vpid;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf2, &kp, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            return rc;
+        }
+        OBJ_DESTRUCT(&kv);
         /* add the rank's blob */
         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(PMIX_PROC_MAP);
