@@ -402,8 +402,14 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
-    /* add it to the array of known topologies */
-    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
+    {
+        orte_topology_t *t;
+        /* add it to the array of known topologies */
+        t = OBJ_NEW(orte_topology_t);
+        t->topo = opal_hwloc_topology;
+        t->sig = strdup(orte_topo_signature);
+        opal_pointer_array_add(orte_node_topologies, t);
+    }
 #endif
 
     /* create and store a proc object for us */

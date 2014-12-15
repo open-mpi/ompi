@@ -864,10 +864,17 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                     "%s RECEIVED TOPOLOGY FROM NODE %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+                                     "%s RECEIVED TOPOLOGY FROM NODE %s SIG %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename,
+                                     (NULL == sig) ? "NULL" : sig));
                 if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
                     opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
+                }
+                if (NULL == sig) {
+                    opal_output(0, "%s NULL TOPOLOGY SIGNATURE FROM NODE %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
                 }
                 if (orte_hetero_nodes) {
                     /* the user has told us that something is different, so just store it */
@@ -885,6 +892,11 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     for (i=0; i < orte_node_topologies->size; i++) {
                         if (NULL == (t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, i))) {
                             continue;
+                        }
+                        if (NULL == t->sig) {
+                            opal_output(0, "%s NULL sig on topology", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                            orted_failed_launch = true;
+                            goto CLEANUP;
                         }
                         /* just check the signature */
                         if (0 == strcmp(sig, t->sig)) {
