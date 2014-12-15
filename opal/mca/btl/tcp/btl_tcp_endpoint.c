@@ -352,7 +352,9 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
  * A blocking send on a non-blocking socket. Used to send the small amount of connection
  * information that identifies the endpoints endpoint.
  */
-static int mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint, void* data, size_t size)
+static int
+mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
+                                   void* data, size_t size)
 {
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
@@ -360,7 +362,8 @@ static int mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpo
         int retval = send(btl_endpoint->endpoint_sd, (const char *)ptr+cnt, size-cnt, 0);
         if(retval < 0) {
             if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                BTL_ERROR(("send() failed: %s (%d)",
+                BTL_ERROR(("send(%p, %lu) failed on socket %d: %s (%d)",
+                           data, size, btl_endpoint->endpoint_sd,
                            strerror(opal_socket_errno), opal_socket_errno));
                 btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
                 mca_btl_tcp_endpoint_close(btl_endpoint);
@@ -678,7 +681,15 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                         ntohs(btl_endpoint->endpoint_addr->addr_port));
 
-    if(connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr, addrlen) < 0) {
+    if(0 == connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr, addrlen)) {
+        /* send our globally unique process identifier to the endpoint */
+        if((rc = mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint)) == OPAL_SUCCESS) {
+            btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
+            MCA_BTL_TCP_ENDPOINT_DUMP(btl_endpoint, true, "event_add(recv) [start_connect]");
+            opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
+            return OPAL_SUCCESS;
+        }
+    } else {
         /* non-blocking so wait for completion */
         if(opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
             btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
@@ -686,29 +697,19 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
             opal_event_add(&btl_endpoint->endpoint_send_event, 0);
             return OPAL_SUCCESS;
         }
-        {
-            char *address;
-            address = opal_net_get_hostname((struct sockaddr*) &endpoint_addr);
-            BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_opal,
-                          ( "Unable to connect to the peer %s on port %d: %s\n",
-                            address,
-                           btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
-        }
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-        mca_btl_tcp_endpoint_close(btl_endpoint);
-        btl_endpoint->endpoint_retries++;
-        return OPAL_ERR_UNREACH;
     }
-
-    /* send our globally unique process identifier to the endpoint */
-    if((rc = mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint)) == OPAL_SUCCESS) {
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
-        MCA_BTL_TCP_ENDPOINT_DUMP(btl_endpoint, true, "event_add(recv) [start_connect]");
-        opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
-        return OPAL_SUCCESS;
+    btl_endpoint->endpoint_retries++;
+    {
+        char *address;
+        address = opal_net_get_hostname((struct sockaddr*) &endpoint_addr);
+        BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_opal,
+                      ( "Unable to connect to the peer %s on port %d: %s\n",
+                        address,
+                       btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
     }
     btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
     mca_btl_tcp_endpoint_close(btl_endpoint);
+    return OPAL_ERR_UNREACH;
 }
 
 
@@ -753,10 +754,10 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         MCA_BTL_TCP_ENDPOINT_DUMP(btl_endpoint, false, "event_add(recv) [complete_connect]");
-    } else {
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-        mca_btl_tcp_endpoint_close(btl_endpoint);
+        return;
     }
+    btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
+    mca_btl_tcp_endpoint_close(btl_endpoint);
 }
 
 
