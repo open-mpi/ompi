@@ -1,0 +1,19 @@
+# -*- text -*-
+#
+# Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[ofi init]
+Initialization of OFI library failed.
+
+  Error: %s
+#
+[debug level]
+Unable to set OFI debug level.
+
+  Error: %s
