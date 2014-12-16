@@ -546,6 +546,17 @@ static int create_listen6(void)
             }
             return ORTE_ERR_IN_ERRNO;
         }
+        /* Set the socket to close-on-exec so that no children inherit
+           this FD */
+        if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_create_listen6: unable to set the "
+                        "listening socket to CLOEXEC (%s:%d)\n",
+                        strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
+            return ORTE_ERROR;
+        }
+
 
         /* setup socket options */
         orte_oob_tcp_set_socket_options(sd);
