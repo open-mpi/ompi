@@ -843,7 +843,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
-            int rc = OPAL_ERROR;
+            int rc;
             rc = mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
             if( OPAL_SUCCESS == rc ) {
                 /* we are now connected. Start sending the data */
