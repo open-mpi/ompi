@@ -400,8 +400,8 @@ static void mca_btl_vader_check_single_copy (void)
             mca_btl_vader_select_next_single_copy_mechanism ();
 
             if (MCA_BTL_VADER_CMA == initial_mechanism) {
-	        opal_show_help("help-btl-vader.txt", "cma-permission-denied",
-			       true, opal_process_info.nodename);
+                opal_show_help("help-btl-vader.txt", "cma-permission-denied",
+                               true, opal_process_info.nodename);
             }
         } else {
             /* ptrace_scope will allow CMA */
@@ -418,7 +418,7 @@ static void mca_btl_vader_check_single_copy (void)
         if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_KNEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "knem requested but not available",
-			       true, opal_process_info.nodename);
+                               true, opal_process_info.nodename);
             }
 
             /* disable single copy */
