@@ -360,7 +360,7 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
     int y = 0;
     int r = 0;
    
-    MPI_Request *sendreq, *req;
+    MPI_Request *sendreq = NULL , *req = NULL;
   
 
 
