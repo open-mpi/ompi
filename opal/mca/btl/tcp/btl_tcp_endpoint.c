@@ -437,7 +437,6 @@ static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *conte
         }
         return NULL;
     }
-    opal_event_del(&btl_endpoint->endpoint_accept_event);
 
     cmpval = opal_compare_proc(btl_endpoint->endpoint_proc->proc_opal->proc_name,
                                this_proc->proc_opal->proc_name);
@@ -843,8 +842,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
-            int rc;
-            rc = mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
+            int rc = mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
             if( OPAL_SUCCESS == rc ) {
                 /* we are now connected. Start sending the data */
                 OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
