@@ -44,6 +44,7 @@ extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_num_aggregators;
 extern int mca_io_ompio_record_offset_info;
 extern int mca_io_ompio_sharedfp_lazy_open;
+extern int mca_io_ompio_grouping_option;
 OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 /*
@@ -91,7 +92,9 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 
 /*AGGREGATOR GROUPING DECISIONS*/
-#define OMPIO_GROUPING_OPTION           1 
+#define OMPIO_MERGE                     1
+#define OMPIO_SPLIT                     2
+#define OMPIO_RETAIN                    3
 #define DATA_VOLUME                     1
 #define UNIFORM_DISTRIBUTION            2
 #define OMPIO_UNIFORM_DIST_THRESHOLD  0.5
@@ -100,6 +103,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OPTIMIZE_GROUPING               4
 #define OMPIO_PROCS_PER_GROUP_TAG       0
 #define OMPIO_PROCS_IN_GROUP_TAG        1
+#define OMPIO_MERGE_THRESHOLD         0.5
 
 /*---------------------------*/
 
@@ -529,34 +533,16 @@ OMPI_DECLSPEC int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t
                                                       int num_aggregators,
                                                       size_t bytes_per_proc);
 
-OMPI_DECLSPEC int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
-		                             size_t bytes_per_proc);
 
-OMPI_DECLSPEC int mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh);
+int mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh);
 
-OMPI_DECLSPEC int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
+int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
 		                                    int *num_groups,
 						    contg *contg_groups);
 
-OMPI_DECLSPEC int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
-		                                         int num_groups,
-							 contg *contg_groups);
-
-OMPI_DECLSPEC int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
-		                          OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
-			                  OMPI_MPI_OFFSET_TYPE *end_offsets,
-		                          int size_new_group,
-			                  OMPI_MPI_OFFSET_TYPE *max_cci,
-			                  OMPI_MPI_OFFSET_TYPE *min_cci,
-			                  int *num_groups,
-			                  int *size_smallest_group);
-
-int mca_io_ompio_distribute_group(mca_io_ompio_file_t *fh,
-                                  int size_old_group,
-				  int size_new_group,
-				  int size_last_group);
-
-/*end of aggregator selection methods*/
+int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
+                                           int num_groups,
+                                           contg *contg_groups);
 
 
 OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
