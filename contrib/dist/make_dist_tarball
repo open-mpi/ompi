@@ -52,6 +52,7 @@ greekonly=0
 dirty_ok=0
 dist_target=distcheck
 distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
+git_update=1
 
 if test "`basename $0`" = "make_tarball"; then
     dist_target=dist
@@ -72,6 +73,7 @@ while test "$1" != ""; do
         --distdir) distdir=$2; shift ;;
         --dirtyok) dirty_ok=1 ;;
         --verok) gnu_version_ignore=1;;
+        --no-git-update) git_update=0;;
         *)
             cat <<EOF
 Unrecognized argument: $1
@@ -83,6 +85,8 @@ Valid arguments:
   --autogen-args  Arguments to pass to autogen
   --distdir       Move the tarball(s) to this directory when done
   --dirtyok       Ok if the source tree is dirty
+  --verok         Ignore result of autotools version checking
+  --no-git-update Skip "git pull" part, assume local repo is updated already
 EOF
             exit 1
             ;;
@@ -324,14 +328,17 @@ else
     exit 1
 fi
 
-#
-# Get the latest
-#
-echo "*** Git pull to get the latest..."
-git pull --rebase
-if test $? -ne 0; then
-    echo "*** Git pull failed.  Cannot continue."
-    exit 1
+if test $git_update -eq 1; then
+
+    #
+    # Get the latest
+    #
+    echo "*** Git pull to get the latest..."
+    git pull --rebase
+    if test $? -ne 0; then
+        echo "*** Git pull failed.  Cannot continue."
+        exit 1
+    fi
 fi
 
 #
