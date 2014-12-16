@@ -1136,9 +1136,6 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     }
 
     /* are there any existing peer instances will to accept this connection */
-    if(mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd) == false) {
-        CLOSE_THE_SOCKET(sd);
-        return;
-    }
+    (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
 }
 

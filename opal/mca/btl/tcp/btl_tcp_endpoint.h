@@ -52,6 +52,7 @@ struct mca_btl_base_endpoint_t {
     struct mca_btl_tcp_proc_t*      endpoint_proc;         /**< proc structure corresponding to endpoint */
     struct mca_btl_tcp_addr_t*      endpoint_addr;         /**< address of endpoint */
     int                             endpoint_sd;           /**< socket connection to endpoint */
+    int                             endpoint_sd_next;      /**< deadlock avoidance: socket connection to endpoint to set once the endpoint_sd has been correctly closed */
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     char*                           endpoint_cache;        /**< cache for the recv (reduce the number of recv syscall) */
     char*                           endpoint_cache_pos;    /**< current position in the cache */
@@ -64,6 +65,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                     endpoint_frags;        /**< list of pending frags to send */
     opal_mutex_t                    endpoint_send_lock;    /**< lock for concurrent access to endpoint state */
     opal_mutex_t                    endpoint_recv_lock;    /**< lock for concurrent access to endpoint state */
+    opal_event_t                    endpoint_accept_event;   /**< event for async processing of accept requests */
     opal_event_t                    endpoint_send_event;   /**< event for async processing of send frags */
     opal_event_t                    endpoint_recv_event;   /**< event for async processing of recv frags */
     bool                            endpoint_nbo;          /**< convert headers to network byte order? */
@@ -76,7 +78,7 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_endpoint_t);
 void mca_btl_tcp_set_socket_options(int sd);
 void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t*, struct mca_btl_tcp_frag_t*);
-bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t*, struct sockaddr*, int);
+void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t*, struct sockaddr*, int);
 void mca_btl_tcp_endpoint_shutdown(mca_btl_base_endpoint_t*);
 
 END_C_DECLS
