@@ -200,18 +200,18 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     cnt = -1;
     while( cnt < 0 ) {
         cnt = readv(sd, frag->iov_ptr, num_vecs);
-    if( 0 < cnt ) goto advance_iov_position;
-    if( cnt == 0 ) {
+	if( 0 < cnt ) goto advance_iov_position;
+	if( cnt == 0 ) {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-        mca_btl_tcp_endpoint_close(btl_endpoint);
-        return false;
-    }
-    switch(opal_socket_errno) {
-    case EINTR:
-        continue;
-    case EWOULDBLOCK:
-        return false;
-    case EFAULT:
+	    mca_btl_tcp_endpoint_close(btl_endpoint);
+	    return false;
+	}
+	switch(opal_socket_errno) {
+	case EINTR:
+	    continue;
+	case EWOULDBLOCK:
+	    return false;
+	case EFAULT:
             BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %lu)\n\t%s(%lu)\n",
                        frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
                        strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));

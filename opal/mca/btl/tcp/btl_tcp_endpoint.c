@@ -527,10 +527,8 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
 
             frag = (mca_btl_tcp_frag_t*)opal_list_remove_first(&btl_endpoint->endpoint_frags);
         }
-    } else {
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
     }
-
+    btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
 }
 
 /*
@@ -542,6 +540,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
 static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint)
 {
     /* setup socket options */
+    assert( MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state );
     btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTED;
     btl_endpoint->endpoint_retries = 0;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
