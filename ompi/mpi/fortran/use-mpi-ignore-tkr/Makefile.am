@@ -46,6 +46,10 @@ nodist_libmpi_usempi_ignore_tkr_la_SOURCES += \
         mpi-ignore-tkr-sizeof.f90
 endif
 
+libmpi_usempi_ignore_tkr_la_LDFLAGS = \
+        -version-info $(libmpi_usempi_ignore_tkr_so_version) \
+        $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
+
 #
 # mpi-ignore-tkr-sizeof.* are generated based on some results from
 # configure tests.
