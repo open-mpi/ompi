@@ -83,7 +83,7 @@ static int orte_rml_base_close(void)
     }
     OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
 
-    OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml, "RML");
+    OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml);
 
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
