@@ -344,6 +344,7 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     size_t i;
     opal_list_item_t *item;
 
+    oshmem_shmem_barrier();
 #if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_disconnect) {
         mxm_ep_powerdown(mca_spml_ikrit.mxm_ep);
