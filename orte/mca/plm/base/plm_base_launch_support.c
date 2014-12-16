@@ -83,30 +83,21 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     
 #if OPAL_HAVE_HWLOC
     {
-        hwloc_topology_t t;
+        orte_topology_t *t;
         orte_node_t *node;
         int i;
 
-        /* if the user didn't indicate that the node topologies were
-         * different, then set the nodes to point to the topology
-         * of the first node.
-         *
-         * NOTE: We do -not- point the nodes at the topology of
-         * mpirun because many "homogeneous" clusters have a head
-         * node that differs from all the compute nodes!
+        /* set the nodes to point to the topology
+         * of mpirun's node for any nodes that didn't send
+         * back their topology, thus indicating they are different
          */
-        if (!orte_hetero_nodes) {
-            if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 1))) {
-                /* all collapsed down into mpirun's topology */
-                t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 0);
+        t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
             }
-            for (i=1; i < orte_node_pool->size; i++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                    continue;
-                }
-                if (NULL == node->topology) {
-                    node->topology = t;
-                }
+            if (NULL == node->topology) {
+                node->topology = t->topo;
             }
         }
         /* if this is an unmanaged allocation, then set the default
