@@ -329,9 +329,6 @@ static int mca_btl_tcp_component_open(void)
 
 static int mca_btl_tcp_component_close(void)
 {
-    opal_list_item_t* item;
-    opal_list_item_t* next;
-
     if (NULL != mca_btl_tcp_component.tcp_btls)
         free(mca_btl_tcp_component.tcp_btls);
   
