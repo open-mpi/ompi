@@ -616,7 +616,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     *num_btl_modules = 0;
 
     /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
-    if (opal_using_threads() && !mca_btl_base_thread_multiple_override) {
+    if (want_mpi_threads && !mca_btl_base_thread_multiple_override) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: MPI_THREAD_MULTIPLE not supported; skipping this component");
         return NULL;
