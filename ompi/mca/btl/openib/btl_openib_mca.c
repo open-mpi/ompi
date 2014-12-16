@@ -537,6 +537,10 @@ int btl_openib_register_mca_params(void)
                    "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
                    0, &mca_btl_openib_component.max_hw_msg_size, 0));
 
+    CHECK(reg_bool("allow_max_memory_registration", NULL,
+                  "Allow maximum possible memory to register with HCA",
+                   1, &mca_btl_openib_component.allow_max_memory_registration));
+
     /* Help debug memory registration issues */
     CHECK(reg_int("memory_registration_verbose", NULL,
                   "Output some verbose memory registration information "

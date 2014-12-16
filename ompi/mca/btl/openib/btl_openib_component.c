@@ -38,6 +38,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stddef.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
@@ -62,6 +63,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/sys/atomic.h"
+#include "opal/util/sys_limits.h"
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 /* Define this before including hwloc.h so that we also get the hwloc
@@ -1432,6 +1434,120 @@ error:
     return ret;
 }
 
+/* read a single integer from a linux module parameters file */
+static uint64_t read_module_param(char *file, uint64_t value)
+{
+    int fd = open(file, O_RDONLY);
+    char buffer[64];
+    uint64_t ret;
+
+    if (0 > fd) {
+        return value;
+    }
+
+    read (fd, buffer, 64);
+
+    close (fd);
+
+    errno = 0;
+    ret = strtoull(buffer, NULL, 10);
+
+    return (0 == errno) ? ret : value;
+}
+
+/* calculate memory registation limits */
+static uint64_t calculate_total_mem (void)
+{
+#if OPAL_HAVE_HWLOC
+    hwloc_obj_t machine;
+
+    machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
+    if (NULL == machine) {
+        return 0;
+    }
+
+    return machine->memory.total_memory;
+#else
+    return 0;
+#endif
+}
+
+
+static uint64_t calculate_max_reg (const char *device_name)
+{
+    struct stat statinfo;
+    uint64_t mtts_per_seg = 1;
+    uint64_t num_mtt = 1 << 19;
+    uint64_t reserved_mtt = 0;
+    uint64_t max_reg, mem_total;
+
+    mem_total = calculate_total_mem ();
+
+    /* On older OFED(<2.0), may need to turn off this parameter*/
+    if (mca_btl_openib_component.allow_max_memory_registration) {
+        max_reg = 2 * mem_total;
+        /* Limit us to 87.5% of the registered memory (some fluff for QPs,
+        file systems, etc) */
+        return (max_reg * 7) >> 3;
+    }
+
+    if (!strncmp(device_name, "mlx5", 4)) {
+        max_reg = 2 * mem_total;
+
+    } else if (!strncmp(device_name, "mlx4", 4)) {
+        if (0 == stat("/sys/module/mlx4_core/parameters/log_num_mtt", &statinfo)) {
+            mtts_per_seg = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1);
+            num_mtt = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_num_mtt", 20);
+            if (1 == num_mtt) {
+                /* NTH: is 19 a minimum? when log_num_mtt is set to 0 use 19 */
+                num_mtt = 1 << 19;
+                max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
+            } else  {
+                max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
+            }
+        }
+
+    } else if (!strncmp(device_name, "mthca", 5)) {
+        if (0 == stat("/sys/module/ib_mthca/parameters/num_mtt", &statinfo)) {
+            mtts_per_seg = 1 << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1);
+            num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20);
+            reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0);
+
+            max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
+        } else {
+            max_reg = mem_total;
+        }
+
+    } else {
+        /* Need to update to determine the registration limit for this
+           configuration */
+        max_reg = mem_total;
+    }
+
+    /* Print a warning if we can't register more than 75% of physical
+       memory.  Abort if the abort_not_enough_reg_mem MCA param was
+       set. */
+    if (max_reg < mem_total * 3 / 4) {
+        char *action;
+
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            action = "Your MPI job will now abort.";
+        } else {
+            action = "Your MPI job will continue, but may be behave poorly and/or hang.";
+        }
+        opal_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
+                       ompi_process_info.nodename, (unsigned long)(max_reg >> 20),
+                       (unsigned long)(mem_total >> 20), action);
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            ompi_rte_abort(1, NULL);
+        }
+    }
+
+    /* Limit us to 87.5% of the registered memory (some fluff for QPs,
+       file systems, etc) */
+    return (max_reg * 7) >> 3;
+}
+
 static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 {
     struct mca_mpool_base_resources_t mpool_resources;
@@ -1467,8 +1583,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
     device->mem_reg_active = 0;
-    /* NTH: set some high default until we know how many local peers we have */
-    device->mem_reg_max    = 1ull << 48;
+    device->mem_reg_max    = calculate_max_reg(ibv_get_device_name(ib_dev));
 
     device->ib_dev = ib_dev;
     device->ib_dev_context = dev_context;
