@@ -62,7 +62,6 @@ struct mca_btl_tcp_component_t {
     int tcp_free_list_inc;                  /**< number of elements to alloc when growing free lists */
     int tcp_endpoint_cache;                 /**< amount of cache on each endpoint */
     opal_hash_table_t tcp_procs;            /**< hash table of tcp proc structures */
-    opal_list_t tcp_events;                 /**< list of pending tcp events */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
 
     opal_event_t tcp_recv_event;            /**< recv event for IPv4 listen socket */
@@ -118,6 +117,7 @@ struct mca_btl_tcp_module_t {
     struct sockaddr_storage tcp_ifaddr; /**< BTL interface address */
     uint32_t           tcp_ifmask;  /**< BTL interface netmask */
     opal_list_t        tcp_endpoints;
+    mca_btl_base_module_error_cb_fn_t tcp_error_cb;  /**< Upper layer error callback */
 #if MCA_BTL_TCP_STATISTICS
     size_t tcp_bytes_sent;
     size_t tcp_bytes_recv;
