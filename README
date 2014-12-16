@@ -1661,6 +1661,13 @@ environment variable or other operating system mechanism).
              CC=icc F77=ifort FC=ifort CXX=icpc \
              FFLAGS=i8 FCFLAGS=-i8 ...
 
+* The Fortran ABI was inadvertantly changed between Open MPI v1.8.2
+  and v1.8.3 for users who built Open MPI with gfortran >= v4.9.  In
+  particular, if an MPI application was built against Open MPI <=
+  v1.8.2 with gfotran >= v4.9, and the MPI application used
+  MPI_SIZEOF, it will not be ABI compatible with Open MPI v1.8.3.  The
+  ABI incompatibility problem was fixed in v1.8.4.
+
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
 (linked against Open MPI v1.7.2 shared libraries) will likely *not*
