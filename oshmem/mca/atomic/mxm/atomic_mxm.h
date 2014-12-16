@@ -66,7 +66,7 @@ END_C_DECLS
 static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
     if (0 == mkey->len) {
-        return MXM_INVALID_MEM_HANDLE;
+        return &mxm_empty_mem_key;
     }
     return (mxm_mem_key_t *)mkey->u.data;
 }
