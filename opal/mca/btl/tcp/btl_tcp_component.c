@@ -165,25 +165,8 @@ struct mca_btl_tcp_event_t {
 };
 typedef struct mca_btl_tcp_event_t mca_btl_tcp_event_t;
 
-static void mca_btl_tcp_event_construct(mca_btl_tcp_event_t* event)
-{
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_list_append(&mca_btl_tcp_component.tcp_events, &event->item);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-}
-
-static void mca_btl_tcp_event_destruct(mca_btl_tcp_event_t* event)
-{
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_list_remove_item(&mca_btl_tcp_component.tcp_events, &event->item);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-}
-
-OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_event_t,
-    opal_list_item_t,
-    mca_btl_tcp_event_construct,
-    mca_btl_tcp_event_destruct);
+OBJ_CLASS_INSTANCE( mca_btl_tcp_event_t, opal_list_item_t,
+                    NULL, NULL);
 
 
 /*
@@ -317,7 +300,6 @@ static int mca_btl_tcp_component_open(void)
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
@@ -366,21 +348,8 @@ static int mca_btl_tcp_component_close(void)
     }
 #endif
 
-    /* cleanup any pending events */
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
-        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events); 
-        item = next) {
-        mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
-        next = opal_list_get_next(item);
-        opal_event_del(&event->event);
-        OBJ_RELEASE(event);
-    }
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_procs);
-    OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_events);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_eager);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
@@ -1075,7 +1044,6 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         mca_btl_tcp_set_socket_options(sd);
 
         /* wait for receipt of peers process identifier to complete this connection */
-         
         event = OBJ_NEW(mca_btl_tcp_event_t);
         opal_event_set(opal_event_base, &event->event, sd, OPAL_EV_READ, mca_btl_tcp_component_recv_handler, event);
         opal_event_add(&event->event, 0);
