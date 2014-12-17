@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,7 +106,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
     fi_addr_t ep_name = 0;
-    char *null_addr;
+    char *null_addr = NULL;
     size_t namelen;
 
     /**
@@ -353,6 +354,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         goto error;
     }
     free(null_addr);
+    null_addr = NULL;
 
     /**
      * Activate progress callback.
