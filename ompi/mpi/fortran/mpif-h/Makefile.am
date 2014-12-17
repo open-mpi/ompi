@@ -119,7 +119,8 @@ libmpi_mpifh_sizeof_la_SOURCES = \
 # the use-mpi-tkr directory.
 libmpi_mpifh_sizeof_la_FCFLAGS = -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr
 if BUILD_FORTRAN_SIZEOF
-libmpi_mpifh_sizeof_la_SOURCES += sizeof_f.f90
+# Do not dist this file; it is generated
+nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
 endif
 libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 
