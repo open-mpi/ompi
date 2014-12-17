@@ -82,6 +82,10 @@ libmpi_mpifh_la_SOURCES =
 # sizeof_f.f90 is generated based on some results from configure tests.
 CLEANFILES += sizeof_f.f90
 
+# The sizeof-mpif08*f90 file will generate a module which needs to be
+# cleaned
+MOSTLYCLEANFILES = *.mod
+
 # If we're building the MPI_SIZEOF interfaces, generate the source
 # code in sizeof_f.f90 (via a perl script).  Normally, we'd just add
 # sizeof_f.f90 to the libmpi_mpif_la_SOURCES and be done with it.
