@@ -96,13 +96,6 @@ void* mca_mpool_sm_alloc(
 #endif
     }
 
-#if OPAL_CUDA_SUPPORT
-    if ((flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) && (NULL != mseg.mbs_start_addr)) {
-        mca_common_cuda_register(mseg.mbs_start_addr, size,
-                                 mpool->mpool_component->mpool_version.mca_component_name);
-    }
-#endif
-
     return mseg.mbs_start_addr;
 }
 
