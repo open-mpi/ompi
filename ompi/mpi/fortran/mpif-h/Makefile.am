@@ -101,12 +101,21 @@ CLEANFILES += sizeof_f.f90
 # All this being said, we can't rely on Automake/Libtool not figuring
 # out this workaround indefinitely.  So Jeff advised Absoft to fix
 # this bug in Sep 2014.
-noinst_LTLIBRARIES=
+noinst_LTLIBRARIES = libmpi_mpifh_sizeof.la
+
+# For ABI reasons, we *always* build the "old" MPI_SIZEOF symbols into
+# the mpifh library.  See ompi/mpi/fortran/README-v1.8-ABI.txt for
+# details.
+libmpi_mpifh_sizeof_la_SOURCES = \
+        sizeof-mpi-pre-1.8.4_f.f90 \
+        sizeof-mpif08-pre-1.8.4_f.F90
+# The sizeof-pre-1.8.4 source needs a header file that is generated in
+# the use-mpi-tkr directory.
+libmpi_mpifh_sizeof_la_FCFLAGS = -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr
 if BUILD_FORTRAN_SIZEOF
-noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
-libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
-libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
+libmpi_mpifh_sizeof_la_SOURCES += sizeof_f.f90
 endif
+libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 
 sizeof_pl = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
 

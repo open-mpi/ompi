@@ -22,6 +22,24 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
 
 lib_LTLIBRARIES = libmpi_usempi_ignore_tkr.la
 
+#
+# This library is built for ABI reasons in v1.8.4 and beyond.  See
+# ompi/mpi/fortran/README-v1.8-ABI.txt for details.
+#
+if OMPI_BUILD_FORTRAN_DUMMY_MPI_MODULE_LIBRARY
+lib_LTLIBRARIES += libmpi_usempi.la
+endif OMPI_BUILD_FORTRAN_DUMMY_MPI_MODULE_LIBRARY
+
+# Make the dummy library link against the real library so that it
+# implicitly pulls it in (since old apps compiled against the old
+# library name will not automatically pull in the new library).
+libmpi_usempi_la_SOURCES = usempi-dummy.c
+libmpi_usempi_la_DEPENDENCIES = libmpi_usempi_ignore_tkr.la
+libmpi_usempi_la_LIBADD = libmpi_usempi_ignore_tkr.la
+libmpi_usempi_la_LDFLAGS = \
+        -version-info $(libmpi_usempi_tkr_so_version) \
+        $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
+
 mpi-ignore-tkr-interfaces.h: mpi-ignore-tkr-interfaces.h.in
 mpi-ignore-tkr-file-interfaces.h: mpi-ignore-tkr-file-interfaces.h.in
 
@@ -34,6 +52,7 @@ mpi-ignore-tkr.lo: mpi-ignore-tkr-sizeof.f90
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
 
 libmpi_usempi_ignore_tkr_la_SOURCES = \
+        gratuitious-symbol.c \
         mpi-ignore-tkr.F90
 nodist_libmpi_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
@@ -45,6 +64,10 @@ nodist_libmpi_usempi_ignore_tkr_la_SOURCES += \
         mpi-ignore-tkr-sizeof.h \
         mpi-ignore-tkr-sizeof.f90
 endif
+
+libmpi_usempi_ignore_tkr_la_LDFLAGS = \
+        -version-info $(libmpi_usempi_ignore_tkr_so_version) \
+        $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
 
 #
 # mpi-ignore-tkr-sizeof.* are generated based on some results from

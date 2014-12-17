@@ -645,6 +645,22 @@ end type test_mpi_handle],
                    [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 -a \
                          $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
 
+    # A dummy library is built for ABI reasons in v1.8.4 and beyond.
+    # See ompi/mpi/fortran/README-v1.8-ABI.txt for details.
+
+    # NOTE: we are checking the *C* compiler vendor, not the *Fortran*
+    # compiler vendor.  This is because we don't have a good way to
+    # test for the fortran compiler vendor. :-( However, it's probably
+    # "good enough" to check the C compiler vendor because it's
+    # actually safe to *always* build this dummy library when we're
+    # building the ignore-tkr mpi module; it just isn't *needed* to
+    # fix ABI issues unless we're gfortran >= 4.9 (which will only be
+    # true if we're building the ignore-tkr mpi module and the Fortran
+    # compiler is gfortran).  So it's imprecise, but harmless.
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_DUMMY_MPI_MODULE_LIBRARY,
+                   [test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1 && \
+                    test "$ompi_c_vendor" = "gnu"])
+
     # -------------------
     # use mpi_f08 final setup
     # -------------------
