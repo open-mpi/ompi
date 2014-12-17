@@ -98,7 +98,7 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     # (the common/ configury is guaranteed to come first).  So we can
     # simply check to see if libfabric setup was happy.
     AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([if building embedded libfabric])
+          [AC_MSG_CHECKING([if building embedded libfabric with usnic provider])
            AS_IF([test $opal_common_libfabric_happy -eq 1 && \
                   test $opal_common_libfabric_usnic_happy -eq 1 && \
                   test $opal_common_libfabric_build_embedded -eq 1],
