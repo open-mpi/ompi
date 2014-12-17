@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Cisco Systems, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -25,7 +26,7 @@ OBJ_CLASS_DECLARATION(ompi_mtl_ofi_message_t);
 static inline ompi_mtl_ofi_message_t*
 ompi_mtl_ofi_message_alloc(const struct fi_cq_tagged_entry *wc)
 {
-    int rc;
+    int rc __opal_attribute_unused__;
     opal_free_list_item_t *tmp;
     ompi_mtl_ofi_message_t *message;
 
