@@ -2,6 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2014      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -9,8 +10,8 @@ dnl
 dnl $HEADER$
 dnl
 
-# Check whether or not the Fortran compiler implements or not
-# TS 29113 subclause 8.1 :
+# Check whether or not the Fortran compiler implements
+# TS 29113 subclause 8.1:
 # Removed restrictions on ISO_C_BINDING module procedures.
 
 # OMPI_FORTRAN_CHECK_C_FUNLOC([action if found],
@@ -19,7 +20,7 @@ dnl
 AC_DEFUN([OMPI_FORTRAN_CHECK_C_FUNLOC],[
     AS_VAR_PUSHDEF([c_funloc], [ompi_cv_fortran_c_funloc])
 
-    AC_CACHE_CHECK([if Fortran compiler implements TS 29113], c_funloc,
+    AC_CACHE_CHECK([if Fortran compiler supports C_FUNLOC/TS 29113], c_funloc,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program main
 abstract interface
