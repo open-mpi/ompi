@@ -52,6 +52,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 #
 
 lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
 CLEANFILES =
 libmpi_mpifh_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(OMPI_MPIEXT_MPIFH_LIBS)
 libmpi_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
@@ -101,7 +102,8 @@ CLEANFILES += sizeof_f.f90
 # All this being said, we can't rely on Automake/Libtool not figuring
 # out this workaround indefinitely.  So Jeff advised Absoft to fix
 # this bug in Sep 2014.
-noinst_LTLIBRARIES = libmpi_mpifh_sizeof.la
+if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
+noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
 
 # For ABI reasons, we *always* build the "old" MPI_SIZEOF symbols into
 # the mpifh library.  See ompi/mpi/fortran/README-v1.8-ABI.txt for
@@ -126,6 +128,7 @@ sizeof_f.f90:
 	    --impl=$@ --ierror=mandatory --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+endif OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 
 if BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER
 libmpi_mpifh_la_SOURCES += \
