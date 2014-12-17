@@ -82,6 +82,10 @@ libmpi_mpifh_la_SOURCES =
 # sizeof_f.f90 is generated based on some results from configure tests.
 CLEANFILES += sizeof_f.f90
 
+# The sizeof-mpif08*f90 file will generate a module which needs to be
+# cleaned
+MOSTLYCLEANFILES = *.mod
+
 # If we're building the MPI_SIZEOF interfaces, generate the source
 # code in sizeof_f.f90 (via a perl script).  Normally, we'd just add
 # sizeof_f.f90 to the libmpi_mpif_la_SOURCES and be done with it.
@@ -115,7 +119,8 @@ libmpi_mpifh_sizeof_la_SOURCES = \
 # the use-mpi-tkr directory.
 libmpi_mpifh_sizeof_la_FCFLAGS = -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr
 if BUILD_FORTRAN_SIZEOF
-libmpi_mpifh_sizeof_la_SOURCES += sizeof_f.f90
+# Do not dist this file; it is generated
+nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
 endif
 libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 
