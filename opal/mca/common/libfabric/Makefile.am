@@ -196,7 +196,8 @@ endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_PSM
 
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_CPPFLAGS = $(cppflags)
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LDFLAGS = -version-info 0:0:0
+lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LDFLAGS = \
+        -version-info $(libmca_opal_common_libfabric_so_version)
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LIBADD = $(libadd)
 
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_SOURCES = $(headers) $(sources)
