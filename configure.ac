@@ -152,6 +152,7 @@ AC_SUBST(libopen_pal_so_version)
 # right now.
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
+AC_SUBST(libmca_opal_common_libfabric_so_version)
 AC_SUBST(libmca_common_cuda_so_version)
 AC_SUBST(libmca_common_ofacm_so_version)
 AC_SUBST(libmca_common_sm_so_version)
