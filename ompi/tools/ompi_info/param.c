@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,6 +102,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_abstract;
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
+    char *fortran_have_c_funloc;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
     char *fortran_build_sizeof;
     char *java;
@@ -186,6 +189,7 @@ void ompi_info_do_config(bool want_all)
     fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
     fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
     fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
+    fortran_have_c_funloc = OMPI_FORTRAN_HAVE_C_FUNLOC ? "yes" : "no";
     fortran_08_using_wrappers_for_choice_buffer_functions = 
         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES ? "yes" : "no";
     fortran_build_sizeof = OMPI_FORTRAN_BUILD_SIZEOF ?
@@ -203,6 +207,7 @@ void ompi_info_do_config(bool want_all)
             OMPI_FORTRAN_HAVE_ABSTRACT &&
             OMPI_FORTRAN_HAVE_ASYNCHRONOUS &&
             OMPI_FORTRAN_HAVE_PROCEDURE &&
+            OMPI_FORTRAN_HAVE_C_FUNLOC &&
             OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
             fortran_usempif08_compliance = strdup("The mpi_f08 module is available, and is fully compliant.  w00t!");
         } else {
@@ -225,6 +230,9 @@ void ompi_info_do_config(bool want_all)
             }
             if (!OMPI_FORTRAN_HAVE_PROCEDURE) {
                 append(f08, sizeof(f08), &first, "PROCEDUREs");
+            }
+            if (!OMPI_FORTRAN_HAVE_C_FUNLOC) {
+                append(f08, sizeof(f08), &first, "C_FUNLOCs");
             }
             if (OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
                 append(f08, sizeof(f08), &first, "direct passthru (where possible) to underlying Open MPI's C functionality");
@@ -425,6 +433,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort PROCEDURE", 
                   "compiler:fortran:procedure",
                   fortran_have_procedure);
+    opal_info_out("Fort C_FUNLOC",
+                  "compiler:fortran:c_funloc",
+                  fortran_have_c_funloc);
     opal_info_out("Fort f08 using wrappers", 
                   "compiler:fortran:08_wrappers",
                   fortran_08_using_wrappers_for_choice_buffer_functions);
