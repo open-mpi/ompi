@@ -132,13 +132,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)
-          # It's icky that we have to hard-code the names of the
-          # common components here.  :-( This could probably be done
-          # transparently by adding some intelligence in autogen.pl
-          # and/or opal_mca.m4, but I don't have the cycles to do this
-          # right now.
-          AC_SUBST(libmca_common_mx_so_version)])
+          AC_SUBST(libmpi_java_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
@@ -150,15 +144,12 @@ AC_SUBST(libopen_pal_so_version)
 # transparently by adding some intelligence in autogen.pl
 # and/or opal_mca.m4, but I don't have the cycles to do this
 # right now.
-AC_SUBST(libmca_opal_common_hwloc_so_version)
-AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libmca_opal_common_libfabric_so_version)
 AC_SUBST(libmca_common_cuda_so_version)
 AC_SUBST(libmca_common_ofacm_so_version)
 AC_SUBST(libmca_common_sm_so_version)
 AC_SUBST(libmca_common_ugni_so_version)
 AC_SUBST(libmca_common_verbs_so_version)
-AC_SUBST(libmca_common_alps_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us
