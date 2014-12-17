@@ -22,6 +22,8 @@ AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
     # Initially state that we're unhappy
     opal_common_libfabric_happy=0
     opal_common_libfabric_build_embedded=0
+    _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_SETUP
+    _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM_SETUP
 
     # Setup the --with switches to allow users to specify where
     # libfabric stuff lives.
@@ -263,6 +265,13 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_CHECK_INCDIR],[
 ])
 
 # --------------------------------------------------------
+# Internal helper macro to setup the embedded usnic provider
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_SETUP],[
+    opal_common_libfabric_usnic_happy=0
+])
+
+# --------------------------------------------------------
 # Internal helper macro to look for the things the usnic provider
 # needs
 # --------------------------------------------------------
@@ -289,6 +298,13 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC_CONDITIONALS],[
     AM_CONDITIONAL([OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC],
                    [test $opal_common_libfabric_usnic_happy -eq 1])
+])
+
+# --------------------------------------------------------
+# Internal helper macro to setup the embedded PSM provider
+# --------------------------------------------------------
+AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM_SETUP],[
+    opal_common_libfabric_psm_happy=0
 ])
 
 # --------------------------------------------------------
