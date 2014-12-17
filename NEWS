@@ -56,6 +56,28 @@ included in the vX.Y.Z section and be denoted as:
 1.8.4
 -----
 
+- Fix MPI_SIZEOF; now available in mpif.h for modern Fortran compilers
+  (see README for more details).  Also fixed various compiler/linker
+  errors.
+- Fixed inadvertant Fortran ABI break between v1.8.1 and v1.8.2 in the
+  mpi interface module when compiled with gfortran >= v4.9.
+- Fix various MPI_THREAD_MULTIPLE issues in the TCP BTL.
+- mpirun no longer requires the --hetero-nodes switch; it will
+  automatically detect when running in heterogeneous scenarios.
+- Update LSF support, to include revamped affinity functionality.
+- Update embedded hwloc to v1.9.1.
+- Fixed max registerable memory computation in the openib BTL.
+- Updated error message when debuggers are unable to find various
+  symbols/types to be more clear.  Thanks to Dave Love for raising the
+  issue.
+- Added proper support for LSF and PBS/Torque libraries in static builds.
+- Rankfiles now support physical processor IDs.
+- Fixed potential hang in MPI_ABORT.
+- Fixed problems with the PSM MTL and "re-connect" scenarios, such as
+  MPI_INTERCOMM_CREATE.
+- Fix MPI_IREDUCE_SCATTER with a single process.
+- Fix (rare) race condition in stdout/stderr funneling to mpirun where
+  some trailing output could get lost when a process terminated.
 - Removed inadvertent change that set --enable-mpi-thread-multiple "on"
   by default, thus impacting performance for non-threaded apps.
 - Significantly reduced startup time by optimizing internal hash table
@@ -69,17 +91,19 @@ included in the vX.Y.Z section and be denoted as:
   topology is higher than the communicator size.  Thanks to Lisandro
   Dalcin for reporting the issue.
 - Fixed segfault in neighborhood collectives under certain use-cases.
-- Fixed Solaris support.
+- Fixed various issues regarding Solaris support.  Thanks to Siegmar
+  Gross for patiently identifying all the issues.
 - Fixed PMI configure tests for certain Slurm installation patterns.
 - Fixed param registration issue in Java bindings.  Thanks to Takahiro
   Kawashima and Siegmar Gross for identifying the issue.
 - Several man page fixes.
-- Silence several warnings and close some memory leaks.
+- Silence several warnings and close some memory leaks (more remain,
+  but it's better than it was).
 - Re-enabled the use of CMA and knem in the shared memory BTL.
 - Updated mpirun manpage to correctly explain new map/rank/binding options.
 - Fixed MPI_IALLGATHER problem with intercommunicators.  Thanks for
   Takahiro Kawashima for the patch.
-- Numerous updates and performance improvements to OSHMEM.
+- Numerous updates and performance improvements to OpenSHMEM.
 - Turned off message coalescing in the openib BTL until a proper fix
   for that capability can be provided (tentatively expected for 1.8.5)
 - Fix a bug in iof output that dates back to the dinosaurs which would
