@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -272,11 +274,11 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
                                                  int lid,
                                                  opal_hwloc_resource_type_t rtype);
 
-#endif
-
 /* get the topology "signature" so we can check for differences - caller
  * if responsible for freeing the returned string */
 OPAL_DECLSPEC char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo);
+
+#endif
 
 END_C_DECLS
 
