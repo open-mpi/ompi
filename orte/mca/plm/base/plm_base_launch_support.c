@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
@@ -687,7 +687,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_process_name_t dname;
     opal_buffer_t *relay;
-    uint8_t tflag;
     
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -845,6 +844,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             orte_topology_t *t;
             int i;
             bool found;
+            uint8_t tflag;
 
             /* store the local resources for that node */
             idx=1;
