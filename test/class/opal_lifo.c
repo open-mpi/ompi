@@ -27,6 +27,18 @@
 #define ITERATIONS 1000000
 #define ITEM_COUNT 100
 
+#if !defined(timersub)
+#define timersub(a, b, r) \
+    do {                  \
+        (r)->tv_sec = (a)->tv_sec - (b)->tv_sec;        \
+        if ((a)->tv_usec < (b)->tv_usec) {              \
+            (r)->tv_sec--;                              \
+            (a)->tv_usec += 1000000;                    \
+        }                                               \
+        (r)->tv_usec = (a)->tv_usec - (b)->tv_usec;     \
+    } while (0)
+#endif
+
 static void *thread_test (void *arg) {
     opal_lifo_t *lifo = (opal_lifo_t *) arg;
     opal_list_item_t *item;
