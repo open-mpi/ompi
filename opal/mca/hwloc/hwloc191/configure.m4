@@ -38,7 +38,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc191_POST_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_hwloc_hwloc191_basedir])
 
     # If we won, then do all the rest of the setup
-    AS_IF([test "$1" = "1" && test "opal_hwloc_hwloc191_support" = "yes"],
+    AS_IF([test "$1" = "1" && test "$opal_hwloc_hwloc191_support" = "yes"],
           [
            # Set this variable so that the framework m4 knows what
            # file to include in opal/mca/hwloc/hwloc.h
