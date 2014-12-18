@@ -35,7 +35,7 @@ create_struct_constant_gap_resized_ddt( int number,  /* IGNORED: number of repet
                                         int contig_size,  /* IGNORED: number of elements in a contiguous chunk */
                                         int gap_size )    /* IGNORED: number of elements in a gap */
 {
-    struct structure *data;
+    struct structure data[1];
     MPI_Datatype struct_type, temp_type;
     MPI_Datatype types[2] = {MPI_DOUBLE, MPI_DOUBLE};
     int blocklens[2] = {1, 1};

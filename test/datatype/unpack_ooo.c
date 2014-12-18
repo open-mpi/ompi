@@ -95,9 +95,9 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
             return 1;
         }
         memset(a.iov_base, 0xAA, 1024);
-        memcpy(a.iov_base+1024, (char *)pbar + arr[i][1], arr[i][0]);
-        memset(a.iov_base+1024+arr[i][0], 0xAA, 1024);
-        a.iov_base += 1024;
+        memcpy((char*)a.iov_base+1024, (char *)pbar + arr[i][1], arr[i][0]);
+        memset((char*)a.iov_base+1024+arr[i][0], 0xAA, 1024);
+        a.iov_base = (char*)a.iov_base + 1024;
         a.iov_len = arr[i][0];
         iov_count = 1;
         max_data = a.iov_len;
@@ -105,7 +105,7 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
         opal_convertor_set_position(pConv, &pos);
         assert(arr[i][1] == pos);
         opal_convertor_unpack( pConv, &a, &iov_count, &max_data );
-        a.iov_base -= 1024;
+        a.iov_base = (char*)a.iov_base - 1024;
         free(a.iov_base);
     }
 
@@ -119,7 +119,7 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
             if(0 == errors) {
                 fprintf(stderr, "ERROR ! count=%d, position=%d, ptr = %p"
                         " got (%d,%d,%d,%g,%g,%g) expected (%d,%d,%d,%g,%g,%g)\n", 
-                        N, j, &bar[j],
+                        N, j, (void*)&bar[j],
                         bar[j].i[0],
                         bar[j].i[1],
                         bar[j].i[2],
@@ -141,18 +141,14 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
     return errors;
 }
 
-static int unpack_ooo()
+static int unpack_ooo(void)
 {
     ompi_datatype_t * t1;
     ompi_datatype_t * t2;
     ompi_datatype_t * type[2];
     ompi_datatype_t * newtype;
     MPI_Aint disp[2];
-    int len[2];
-    size_t pos;
-
-    int rc;
-    unsigned int i, j, split_chunk, total_length;
+    int len[2], rc;
 
     rc = ompi_datatype_create_vector(2, 1, 2, MPI_INT, &t1);
     if (OMPI_SUCCESS != rc) {
@@ -164,7 +160,7 @@ static int unpack_ooo()
         fprintf(stderr, "could not commit vector t1\n");
         return 1;
     }
-    
+
     rc = ompi_datatype_create_vector(2, 1, 2, MPI_DOUBLE, &t2);
     if (OMPI_SUCCESS != rc) {
         fprintf(stderr, "could not create vector t2\n");
@@ -299,7 +295,6 @@ static int unpack_ooo()
 
 int main( int argc, char* argv[] )
 {
-    ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc;
 
     opal_init_util(&argc, &argv);
