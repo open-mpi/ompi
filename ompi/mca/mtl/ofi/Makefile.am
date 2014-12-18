@@ -50,5 +50,4 @@ mca_mtl_ofi_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
-libmca_mtl_ofi_la_LIBADD = $(opal_common_libfabric_LIBADD)
 libmca_mtl_ofi_la_LDFLAGS = -module -avoid-version
