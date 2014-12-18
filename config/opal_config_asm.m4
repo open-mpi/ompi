@@ -23,25 +23,56 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
 
   OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result CFLAGS_save])
 
-  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values])
-  AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
-    [AC_MSG_RESULT([yes])
-     sync_bool_compare_and_swap_128_result=1],
-    [AC_MSG_RESULT([no])
-     sync_bool_compare_and_swap_128_result=0])
+  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
+                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
 
-  if test $sync_bool_compare_and_swap_128_result = 0 ; then
-      CFLAGS_save=$CFLAGS
-      CFLAGS="$CFLAGS -mcx16"
+  sync_bool_compare_and_swap_128_result=0
 
-      AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+  if test ! "$enable_cross_cmpset128" = "yes" ; then
+      AC_MSG_CHECKING([for processor support of __sync builtin atomic compare-and-swap on 128-bit values])
+
+      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
+	  [AC_MSG_RESULT([yes])
+	      sync_bool_compare_and_swap_128_result=1],
+	  [AC_MSG_RESULT([no])],
+	  [AC_MSG_RESULT([no (cross compiling)])])
+
+      if test $sync_bool_compare_and_swap_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+	  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
+              [AC_MSG_RESULT([yes])
+		  sync_bool_compare_and_swap_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])],
+	      [AC_MSG_RESULT([no (cross compiling)])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  else
+      AC_MSG_CHECKING([for compiler support of __sync builtin atomic compare-and-swap on 128-bit values])
+
+      # Check if the compiler supports the __sync builtin
       AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
-        [AC_MSG_RESULT([yes])
-         sync_bool_compare_and_swap_128_result=1
-	 CFLAGS_save="$CFLAGS"],
-        [AC_MSG_RESULT([no])])
+	  [AC_MSG_RESULT([yes])
+	      sync_bool_compare_and_swap_128_result=1],
+	  [AC_MSG_RESULT([no])])
 
-      CFLAGS=$CFLAGS_save
+      if test $sync_bool_compare_and_swap_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+	  AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+              [AC_MSG_RESULT([yes])
+		  sync_bool_compare_and_swap_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
   fi
 
   AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128], [$sync_bool_compare_and_swap_128_result],
@@ -595,14 +626,31 @@ dnl OPAL_CHECK_CMPXCHG16B
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
-    AC_MSG_CHECKING([if have x86_64 16-byte compare-and-exchange])
     OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
-    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-            cmpxchg16b 0],
-        [AC_MSG_RESULT([yes])
-            cmpxchg16b_result=1],
-        [AC_MSG_RESULT([no])
-            cmpxchg16b_result=0])
+
+    AC_ARG_ENABLE([cross-cmpxchg16b],[AC_HELP_STRING([--enable-cross-cmpxchg16b],
+                  [enable the use of the cmpxchg16b instruction when cross compiling])])
+
+    if test ! "$enable_cross_cmpxchg16b" = "yes" ; then
+	AC_MSG_CHECKING([if processor supports x86_64 16-byte compare-and-exchange])
+	AC_RUN_IFELSE([AC_LANG_PROGRAM([[unsigned char tmp[16];]],[[
+    __asm__ __volatile__ ("lock cmpxchg16b (%%rsi)" : : "S" (tmp) : "memory", "cc");]])],
+            [AC_MSG_RESULT([yes])
+		cmpxchg16b_result=1],
+            [AC_MSG_RESULT([no])
+		cmpxchg16b_result=0],
+            [AC_MSG_RESULT([no (cross-compiling)])
+		cmpxchg16b_result=0])
+    else
+	AC_MSG_CHECKING([if assembler supports x86_64 16-byte compare-and-exchange])
+
+	OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
+		cmpxchg16b 0],
+            [AC_MSG_RESULT([yes])
+		cmpxchg16b_result=1],
+            [AC_MSG_RESULT([no])
+		cmpxchg16b_result=0])
+    fi
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
         [Whether the processor supports the cmpxchg16b instruction])
     OPAL_VAR_SCOPE_POP
