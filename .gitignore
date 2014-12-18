@@ -19,6 +19,7 @@
 *.out
 *.plist
 *~
+.DS_Store
 Makefile
 Makefile.in
 static-components.h
