@@ -293,6 +293,10 @@ mca_btl_ugni_component_init (int *num_btl_modules,
         mca_btl_ugni_component.ugni_fma_limit = 65536;
     }
 
+    if (enable_mpi_threads) {
+        mca_btl_ugni_component.progress_thread_allowed = 1;
+    }
+
     /* Initialize ugni library and create communication domain */
     rc = opal_common_ugni_init();
     if (OPAL_SUCCESS != rc) {
