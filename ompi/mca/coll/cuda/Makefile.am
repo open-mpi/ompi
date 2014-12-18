@@ -13,7 +13,7 @@ dist_ompidata_DATA = help-mpi-coll-cuda.txt
 
 sources = coll_cuda_module.c coll_cuda_reduce.c coll_cuda_allreduce.c \
           coll_cuda_reduce_scatter_block.c coll_cuda_component.c \
-          coll_cuda_scan.c coll_cuda_exscan.c
+          coll_cuda_scan.c coll_cuda_exscan.c coll_cuda.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
