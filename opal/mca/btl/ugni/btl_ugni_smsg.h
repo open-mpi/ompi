@@ -114,6 +114,7 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                              &frag->endpoint->btl->rdma_frags,
                                              &cq_write_frag);
                 if (rc == OPAL_SUCCESS) {
+                    cq_write_frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
                     cq_write_frag->registration = NULL;
                     cq_write_frag->endpoint = frag->endpoint;
                     cq_write_frag->post_desc.base.type = GNI_POST_CQWRITE;

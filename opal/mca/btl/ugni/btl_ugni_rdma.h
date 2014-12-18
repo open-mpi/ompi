@@ -112,11 +112,9 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
         rc = mca_btl_ugni_frag_alloc(frag->endpoint,
                                      &frag->endpoint->btl->rdma_frags,
                                      &cq_frag);
-#if 0
-        fprintf(stderr,"allocated cq_frag %p\n",cq_frag);
-#endif
         if (rc == OPAL_SUCCESS) {
             cq_frag->registration = NULL;
+            cq_frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
             cq_frag->post_desc.base.type = GNI_POST_RDMA_PUT;
             cq_frag->post_desc.base.length  = 4;
             cq_frag->post_desc.base.remote_addr  = (uint64_t)howards_start_addr;
