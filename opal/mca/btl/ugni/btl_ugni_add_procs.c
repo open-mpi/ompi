@@ -124,7 +124,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         }
 
         if (howards_progress_var) {
-            fprintf(stderr,"setting up irq cqs\n");
             OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
             rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.local_cq_size,
                                0, GNI_CQ_BLOCKING, NULL, NULL, &ugni_module->rdma_local_irq_cq);
@@ -133,8 +132,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                 BTL_ERROR(("error creating local BTE/FMA CQ"));
                 return opal_common_rc_ugni_to_opal (rc);
             }
-
-            fprintf(stderr,"created blocking cq 0x%lx\n",ugni_module->rdma_local_irq_cq);
 
             OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
             rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.remote_cq_size,
@@ -192,12 +189,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                                      GNI_MEM_READWRITE,
                                      -1,
                                      &ugni_module->device->smsg_irq_mhndl);
-#if 1
-            {
-                unsigned long *vec = (unsigned long *)&mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
-                fprintf(stderr,"status = %d memory handle contents 0x%lx 0x%lx\n",rc,vec[0],vec[1]);
-            }
-#endif
             OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
 
             mca_btl_ugni_spawn_progress_thread(btl);
