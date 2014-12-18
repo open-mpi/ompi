@@ -116,7 +116,10 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return rc;
     }
 
-    if (getenv("HOWARDS_PROGESS") != NULL) howards_progress_var = 1;
+    if (mca_btl_ugni_component.progress_thread_allowed && (NULL != getenv("HOWARDS_PROGESS"))) {
+        howards_progress_var = 1;
+    }
+
     return OPAL_SUCCESS;
 }
 

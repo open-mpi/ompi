@@ -180,6 +180,10 @@ typedef struct mca_btl_ugni_component_t {
 
     /* Number of mailboxes to allocate in each block */
     unsigned int mbox_increment;
+
+    /* Indicate whether progress thread allowed */
+    bool progress_thread_allowed;
+
 } mca_btl_ugni_component_t;
 
 int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
