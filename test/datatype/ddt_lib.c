@@ -577,7 +577,7 @@ struct structure {
 
 ompi_datatype_t* create_struct_constant_gap_resized_ddt( ompi_datatype_t* type )
 {
-    struct structure *data;
+    struct structure data[1];
     ompi_datatype_t *struct_type, *temp_type;
     ompi_datatype_t *types[2] = {type, type};
     int blocklens[2] = {1, 1};
