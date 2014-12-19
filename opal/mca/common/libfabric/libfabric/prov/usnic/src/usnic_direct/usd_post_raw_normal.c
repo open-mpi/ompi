@@ -46,8 +46,7 @@
 static int
 usd_post_send_one_prefixed_raw_normal(
     struct usd_qp *uqp,
-    struct usd_dest
-    __attribute__ ((unused)) * dest,
+    struct usd_dest __attribute__ ((unused)) * dest,
     const void *buf,
     size_t len,
     uint32_t flags,
