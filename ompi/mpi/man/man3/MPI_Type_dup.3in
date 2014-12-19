@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
 .\" $COPYRIGHT$
@@ -46,6 +46,15 @@ Fortran only: Error status (integer).
 .SH DESCRIPTION
 .ft R
 MPI_Type_dup is a type constructor that duplicates the existing type with associated key values. For each key value, the respective copy callback function determines the attribute value associated with this key in the new communicator. One particular action that a copy callback may take is to delete the attribute from the new data type. Returns in \fInewtype\fP a new data type with exactly the same properties as \fItype\fP, as well as any copied cached information. The new data type has identical upper bound and lower bound and yields the same net result when fully decoded with the functions described in Section 8.6 of the MPI-2 standard. \fInewtype\fP has the same committed state as the old \fItype\fP.
+
+
+.SH NOTES
+Note that it is not defined by the MPI standard what happens if the
+attribute copy callback invokes other MPI functions.  In Open MPI, it
+is not valid for attribute copy callbacks (or any of their children)
+to add or delete attributes on the same object on which the attribute
+copy callback is being invoked.
+
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
