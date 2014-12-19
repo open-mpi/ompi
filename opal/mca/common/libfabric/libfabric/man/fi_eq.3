@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2014\-12\-03" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_eq 3 "2014\-12\-15" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -144,7 +144,7 @@ routines.
 However, a provider may signal an FD wait object by marking it as
 readable, writable, or with an error.
 .IP \[bu] 2
-\f[I]FI_WAIT_MUT_COND\f[] : Specifies that the EQ should use a pthread
+\f[I]FI_WAIT_MUTEX_COND\f[] : Specifies that the EQ should use a pthread
 mutex and cond variable as a wait object.
 .PP
 \f[I]signaling_vector\f[] : Indicates which processor core interrupts
@@ -176,6 +176,17 @@ The format of the wait-object is specified during EQ creation, through
 the EQ attributes.
 The fi_control arg parameter should be an address where a pointer to the
 returned wait object will be written.
+This should be an \[aq]int *\[aq] for FI_WAIT_FD, or \[aq]struct
+fi_mutex_cond\[aq] for FI_WAIT_MUTEX_COND.
+.IP
+.nf
+\f[C]
+struct\ fi_mutex_cond\ {
+\ \ \ \ pthread_mutex_t\ \ \ \ \ *mutex;
+\ \ \ \ pthread_cond_t\ \ \ \ \ \ *cond;
+};
+\f[]
+.fi
 .SS fi_eq_read
 .PP
 The fi_eq_read operations performs a non-blocking read of event data

@@ -58,10 +58,12 @@
 #include "fi.h"
 #include "fi_enosys.h"
 
+#include "fi_usnic.h"
 #include "usnic_direct.h"
 #include "usd.h"
 #include "usdf.h"
 #include "usdf_cm.h"
+#include "usdf_msg.h"
 
 int
 usdf_pep_bind(fid_t fid, fid_t bfid, uint64_t flags)
@@ -73,7 +75,6 @@ usdf_pep_bind(fid_t fid, fid_t bfid, uint64_t flags)
 	switch (bfid->fclass) {
 
 	case FI_CLASS_EQ:
-printf("bind EQ!\n");
 		if (pep->pep_eq != NULL) {
 			return -FI_EINVAL;
 		}
@@ -88,12 +89,100 @@ printf("bind EQ!\n");
 	return 0;
 }
 
-/*
- * Report an error to the PEP's EQ
- */
-static void
-usdf_pep_accept_error(struct usdf_pep *pep, int error)
+static struct fi_info *
+usdf_pep_conn_info(struct usdf_connreq *crp)
 {
+	struct fi_info *ip;
+	struct usdf_pep *pep;
+	struct sockaddr_in *sin;
+	struct usdf_fabric *fp;
+	struct usdf_domain *udp;
+	struct usd_device_attrs *dap;
+	struct usdf_connreq_msg *reqp;
+
+	pep = crp->cr_pep;
+	fp = pep->pep_fabric;
+	udp = LIST_FIRST(&fp->fab_domain_list);
+	dap = fp->fab_dev_attrs;
+	reqp = (struct usdf_connreq_msg *)crp->cr_data;
+
+	/* If there is a domain, just copy info from there */
+	if (udp != NULL) {
+		ip = fi_dupinfo(udp->dom_info);
+		if (ip == NULL) {
+			return NULL;
+		}
+
+	/* no domains yet, make an info suitable for creating one */
+	} else {
+		ip = fi_allocinfo_internal();
+		if (ip == NULL) {
+			return NULL;
+		}
+
+		ip->caps = USDF_MSG_CAPS;
+		ip->mode = USDF_MSG_SUPP_MODE;
+		ip->ep_type = FI_EP_MSG;
+
+		ip->addr_format = FI_SOCKADDR_IN;
+		ip->src_addrlen = sizeof(struct sockaddr_in);
+		sin = calloc(1, ip->src_addrlen);
+		if (sin == NULL) {
+			goto fail;
+		}
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = dap->uda_ipaddr_be;
+		ip->src_addr = sin;
+		
+		ip->ep_attr->protocol = FI_PROTO_RUDP;
+
+		ip->fabric_attr->fabric = fab_utof(fp);
+		ip->fabric_attr->name = strdup(fp->fab_attr.name);
+		ip->fabric_attr->prov_name = strdup(fp->fab_attr.prov_name);
+		ip->fabric_attr->prov_version = fp->fab_attr.prov_version;
+		if (ip->fabric_attr->name == NULL ||
+				ip->fabric_attr->prov_name == NULL) {
+			goto fail;
+		}
+	}
+
+	/* fill in dest addr */
+	ip->dest_addrlen = ip->src_addrlen;
+	sin = calloc(1, ip->dest_addrlen);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = reqp->creq_ipaddr;
+	sin->sin_port = reqp->creq_port;
+
+	ip->connreq = crp;
+	return ip;
+fail:
+	fi_freeinfo(ip);
+	return NULL;
+}
+
+/*
+ * Remove connection request from epoll list if not done already.
+ * crp->cr_pollitem.pi_rtn is non-NULL when epoll() is active
+ */
+static int 
+usdf_pep_creq_epoll_del(struct usdf_connreq *crp)
+{
+	int ret;
+	struct usdf_pep *pep;
+
+	pep = crp->cr_pep;
+
+	if (crp->cr_pollitem.pi_rtn != NULL) {
+		ret = epoll_ctl(pep->pep_fabric->fab_epollfd, EPOLL_CTL_DEL,
+				crp->cr_sockfd, NULL);
+		crp->cr_pollitem.pi_rtn = NULL;
+		if (ret != 0) {
+			ret = -errno;
+		}
+	} else {
+		ret = 0;
+	}
+	return ret;
 }
 
 static int
@@ -102,6 +191,9 @@ usdf_pep_read_connreq(void *v)
 	struct usdf_connreq *crp;
 	struct usdf_pep *pep;
 	struct usdf_connreq_msg *reqp;
+	struct fi_eq_cm_entry *entry;
+	size_t entry_len;
+	int ret;
 	int n;
 
 	crp = v;
@@ -109,25 +201,51 @@ usdf_pep_read_connreq(void *v)
 
 	n = read(crp->cr_sockfd, crp->cr_ptr, crp->cr_resid);
 	if (n == -1) {
-		usdf_pep_accept_error(pep, -errno);
-		// XXX DEL epoll item
-		close(crp->cr_sockfd);
-		TAILQ_REMOVE(&pep->pep_cr_pending, crp, cr_link);
+		usdf_cm_msg_connreq_failed(crp, -errno);
 		return 0;
 	}
 
 	crp->cr_ptr += n;
 	crp->cr_resid -= n;
 
+	reqp = (struct usdf_connreq_msg *)crp->cr_data;
+
 	if (crp->cr_resid == 0 && crp->cr_ptr == crp->cr_data + sizeof(*reqp)) {
-		reqp = (struct usdf_connreq_msg *)crp->cr_data;
-		crp->cr_resid = ntohl(reqp->creq_data_len);
+		reqp->creq_datalen = ntohl(reqp->creq_datalen);
+		crp->cr_resid = reqp->creq_datalen;
 	}
 
 	/* if resid is 0 now, completely done */
 	if (crp->cr_resid == 0) {
-		// DEL epoll_wait
-		// create CONNREQ EQ entry
+		ret = usdf_pep_creq_epoll_del(crp);
+		if (ret != 0) {
+			usdf_cm_msg_connreq_failed(crp, ret);
+			return 0;
+		}
+	
+		/* create CONNREQ EQ entry */
+		entry_len = sizeof(*entry) + reqp->creq_datalen;
+		entry = malloc(entry_len);
+		if (entry == NULL) {
+			usdf_cm_msg_connreq_failed(crp, -errno);
+			return 0;
+		}
+
+		entry->fid = &pep->pep_fid.fid;
+		entry->info = usdf_pep_conn_info(crp);
+		if (entry->info == NULL) {
+			free(entry);
+			usdf_cm_msg_connreq_failed(crp, -FI_ENOMEM);
+			return 0;
+		}
+		memcpy(entry->data, reqp->creq_data, reqp->creq_datalen);
+		ret = usdf_eq_write_internal(pep->pep_eq, FI_CONNREQ, entry,
+				entry_len, 0);
+		free(entry);
+		if (ret != entry_len) {
+			usdf_cm_msg_connreq_failed(crp, ret);
+			return 0;
+		}
 	}
 
 	return 0;
@@ -149,21 +267,21 @@ usdf_pep_listen_cb(void *v)
 	socklen = sizeof(sin);
 	s = accept(pep->pep_sock, &sin, &socklen);
 	if (s == -1) {
-		usdf_pep_accept_error(pep, -errno);
+		/* ignore early failure */
 		return 0;
 	}
-printf("connreq on %p, s = %d (%x)!\n", pep, s, sin.sin_addr.s_addr);
 	crp = NULL;
 	pthread_spin_lock(&pep->pep_cr_lock);
 	if (!TAILQ_EMPTY(&pep->pep_cr_free)) {
 		crp = TAILQ_FIRST(&pep->pep_cr_free);
-		TAILQ_REMOVE(&pep->pep_cr_free, crp, cr_link);
+		TAILQ_REMOVE_MARK(&pep->pep_cr_free, crp, cr_link);
+		TAILQ_NEXT(crp, cr_link) = NULL;
 	}
 	pthread_spin_unlock(&pep->pep_cr_lock);
 
 	/* no room for request, just drop it */
 	if (crp == NULL) {
-		// send response?
+		/* XXX send response? */
 		close(s);
 		return 0;
 	}
@@ -181,9 +299,8 @@ printf("connreq on %p, s = %d (%x)!\n", pep, s, sin.sin_addr.s_addr);
 	ret = epoll_ctl(pep->pep_fabric->fab_epollfd, EPOLL_CTL_ADD,
 			crp->cr_sockfd, &ev);
 	if (ret == -1) {
-		usdf_pep_accept_error(pep, -errno);
-		close(crp->cr_sockfd);
-		TAILQ_INSERT_TAIL(&pep->pep_cr_free, crp, cr_link);
+		crp->cr_pollitem.pi_rtn = NULL;
+		usdf_cm_msg_connreq_failed(crp, -errno);
 		return 0;
 	}
 
@@ -208,7 +325,7 @@ usdf_pep_listen(struct fid_pep *fpep)
 		ret = -errno;
 	}
 
-	pep->pep_pollitem.pi_rtn = &usdf_pep_listen_cb;
+	pep->pep_pollitem.pi_rtn = usdf_pep_listen_cb;
 	pep->pep_pollitem.pi_context = pep;
 	ev.events = EPOLLIN;
 	ev.data.ptr = &pep->pep_pollitem;
@@ -224,12 +341,6 @@ ssize_t
 usdf_pep_cancel(fid_t fid, void *context)
 {
 	return -FI_EINVAL;
-}
-
-int
-usdf_pep_accept(struct fid_ep *ep, const void *param, size_t paramlen)
-{
-	return 0;
 }
 
 int
@@ -264,9 +375,6 @@ usdf_pep_grow_backlog(struct usdf_pep *pep)
 	size_t extra;
 
 	extra = sizeof(struct usdf_connreq_msg) + pep->pep_cr_max_data;
-	if (extra < sizeof(struct usdf_connresp_msg)) {
-		extra = sizeof(struct usdf_connresp_msg);
-	}
 
 	while (pep->pep_cr_alloced < pep->pep_backlog) {
 		crp = calloc(1, sizeof(*crp) + extra);
@@ -316,6 +424,8 @@ static struct fi_ops_ep usdf_pep_base_ops = {
 	.cancel = usdf_pep_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
+	.tx_ctx = fi_no_tx_ctx,
+	.rx_ctx = fi_no_rx_ctx,
 };
 
 static struct fi_ops_cm usdf_pep_cm_ops = {
@@ -324,7 +434,7 @@ static struct fi_ops_cm usdf_pep_cm_ops = {
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
 	.listen = usdf_pep_listen,
-	.accept = usdf_pep_accept,
+	.accept = fi_no_accept,
 	.reject = usdf_pep_reject,
 	.shutdown = fi_no_shutdown,
 	.join = fi_no_join,

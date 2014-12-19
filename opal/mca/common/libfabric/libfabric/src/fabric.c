@@ -44,6 +44,7 @@
 
 #include <rdma/fi_errno.h>
 #include "fi.h"
+#include "prov.h"
 
 #ifdef HAVE_LIBDL
 #include <dlfcn.h>
@@ -57,38 +58,47 @@ struct fi_prov {
 	struct fi_provider	*provider;
 };
 
-static struct fi_prov *prov_head, *prov_tail;
-
 static struct fi_prov *fi_getprov(const char *prov_name);
 
+static struct fi_prov *prov_head, *prov_tail;
+static volatile int init = 0;
+static pthread_mutex_t ini_lock = PTHREAD_MUTEX_INITIALIZER;
 
-__attribute__((visibility ("default")))
-int fi_register_provider_(uint32_t fi_version, struct fi_provider *provider)
+
+static int fi_register_provider(struct fi_provider *provider)
 {
 	struct fi_prov *prov;
+	int ret;
 
-	if (FI_MAJOR(fi_version) != FI_MAJOR_VERSION ||
-	    FI_MINOR(fi_version) > FI_MINOR_VERSION)
-		return -FI_ENOSYS;
+	if (!provider)
+		return -FI_EINVAL;
 
-	/* If a provider with this name is already registered:
-	 * - if the new provider has a lower version number, just fail
-	 *   to register it
-	 * - otherwise, just overwrite the old prov entry
-	 * If the provider is a new/unique name, calloc() a new prov entry.
-	 */
+	if (FI_MAJOR(provider->fi_version) != FI_MAJOR_VERSION ||
+	    FI_MINOR(provider->fi_version) > FI_MINOR_VERSION) {
+		ret = -FI_ENOSYS;
+		goto cleanup;
+	}
+
 	prov = fi_getprov(provider->name);
 	if (prov) {
-		if (FI_VERSION_GE(prov->provider->version, provider->version))
-			return -FI_EALREADY;
+		/* If we have two versions of the same provider,
+		 * keep the most recent
+		 */
+		if (FI_VERSION_GE(prov->provider->version, provider->version)) {
+			ret = -FI_EALREADY;
+			goto cleanup;
+		}
 
+		prov->provider->cleanup();
 		prov->provider = provider;
 		return 0;
 	}
 
 	prov = calloc(sizeof *prov, 1);
-	if (!prov)
-		return -FI_ENOMEM;
+	if (!prov) {
+		ret = -FI_ENOMEM;
+		goto cleanup;
+	}
 
 	prov->provider = provider;
 	if (prov_tail)
@@ -97,8 +107,11 @@ int fi_register_provider_(uint32_t fi_version, struct fi_provider *provider)
 		prov_head = prov;
 	prov_tail = prov;
 	return 0;
+
+cleanup:
+	provider->cleanup();
+	return ret;
 }
-default_symver(fi_register_provider_, fi_register_provider);
 
 #ifdef HAVE_LIBDL
 static int lib_filter(const struct dirent *entry)
@@ -111,13 +124,26 @@ static int lib_filter(const struct dirent *entry)
 	else
 		return 0;
 }
+#endif
 
-static void __attribute__((constructor)) fi_ini(void)
+static void fi_ini(void)
 {
+	pthread_mutex_lock(&ini_lock);
+
+	if (init)
+		goto unlock;
+
+	fi_register_provider(VERBS_INIT);
+	fi_register_provider(PSM_INIT);
+	fi_register_provider(SOCKETS_INIT);
+	fi_register_provider(USNIC_INIT);
+
+#ifdef HAVE_LIBDL
 	struct dirent **liblist;
 	int n, want_warn = 0;
 	char *lib, *extdir = getenv("FI_EXTDIR");
 	void *dlhandle;
+	struct fi_provider* (*inif)(void);
 
 	if (extdir) {
 		/* Warn if user specified $FI_EXTDIR, but there's a
@@ -130,7 +156,7 @@ static void __attribute__((constructor)) fi_ini(void)
 	/* If dlopen fails, assume static linking and just return
 	   without error */
 	if (dlopen(NULL, RTLD_NOW) == NULL) {
-		return;
+		goto done;
 	}
 
 	n = scandir(extdir, &liblist, lib_filter, NULL);
@@ -139,13 +165,14 @@ static void __attribute__((constructor)) fi_ini(void)
 			FI_WARN("scandir error reading %s: %s\n",
 				extdir, strerror(errno));
 		}
-		return;
+		goto done;
 	}
 
 	while (n--) {
 		if (asprintf(&lib, "%s/%s", extdir, liblist[n]->d_name) < 0) {
 			FI_WARN("asprintf failed to allocate memory\n");
-			return;
+			free(liblist[n]);
+			goto done;
 		}
 
 		dlhandle = dlopen(lib, RTLD_NOW);
@@ -154,14 +181,26 @@ static void __attribute__((constructor)) fi_ini(void)
 
 		free(liblist[n]);
 		free(lib);
+
+		inif = dlsym(dlhandle, "fi_prov_ini");
+		if (inif == NULL)
+			FI_WARN("dlsym: %s\n", dlerror());
+		else
+			fi_register_provider((inif)());
 	}
 
 	free(liblist);
-}
+done:
 #endif
+	init = 1;
+unlock:
+	pthread_mutex_unlock(&ini_lock);
+}
 
 static void __attribute__((destructor)) fi_fini(void)
 {
+	for (struct fi_prov *prov = prov_head; prov; prov = prov->next)
+		prov->provider->cleanup();
 }
 
 static struct fi_prov *fi_getprov(const char *prov_name)
@@ -182,7 +221,10 @@ int fi_getinfo_(uint32_t version, const char *node, const char *service,
 {
 	struct fi_prov *prov;
 	struct fi_info *tail, *cur;
-	int ret = -ENOSYS;
+	int ret = -FI_ENOSYS;
+
+	if (!init)
+		fi_ini();
 
 	*info = tail = NULL;
 	for (prov = prov_head; prov; prov = prov->next) {
@@ -344,6 +386,9 @@ int fi_fabric_(struct fi_fabric_attr *attr, struct fid_fabric **fabric, void *co
 
 	if (!attr || !attr->prov_name || !attr->name)
 		return -FI_EINVAL;
+
+	if (!init)
+		fi_ini();
 
 	prov = fi_getprov(attr->prov_name);
 	if (!prov || !prov->provider->fabric)

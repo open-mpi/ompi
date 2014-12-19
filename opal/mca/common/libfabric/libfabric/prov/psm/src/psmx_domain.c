@@ -54,6 +54,11 @@ static int psmx_domain_close(fid_t fid)
 	psm_mq_finalize(domain->psm_mq);
 #endif
 
+	/* workaround for:
+	 * Assertion failure at psm_ep.c:1059: ep->mctxt_master == ep
+	 */
+	sleep(1);
+
 	err = psm_ep_close(domain->psm_ep, PSM_EP_CLOSE_GRACEFUL,
 			   (int64_t) PSMX_TIME_OUT * 1000000000LL);
 	if (err != PSM_OK)

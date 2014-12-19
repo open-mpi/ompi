@@ -53,7 +53,7 @@ enum fi_wait_obj {
 	FI_WAIT_UNSPEC,
 	FI_WAIT_SET,
 	FI_WAIT_FD,
-	FI_WAIT_MUT_COND,	/* pthread mutex & cond */
+	FI_WAIT_MUTEX_COND,	/* pthread mutex & cond */
 };
 
 struct fi_wait_attr {
@@ -70,13 +70,11 @@ struct fid_wait {
 	struct fid		fid;
 	struct fi_ops_wait	*ops;
 };
-
-struct fi_wait_obj_set {
-	size_t			count;
-	enum fi_wait_obj	wait_obj;
-	void			*obj;
+	
+struct fi_mutex_cond {
+	pthread_mutex_t		*mutex;
+	pthread_cond_t		*cond;
 };
-
 
 /*
  * Poll Set
@@ -90,6 +88,10 @@ struct fi_poll_attr {
 struct fi_ops_poll {
 	size_t	size;
 	int	(*poll)(struct fid_poll *pollset, void **context, int count);
+	int	(*poll_add)(struct fid_poll *pollset, struct fid *event_fid, 
+			uint64_t flags);
+	int	(*poll_del)(struct fid_poll *pollset, struct fid *event_fid, 
+			uint64_t flags);
 };
 
 struct fid_poll {
@@ -301,6 +303,17 @@ fi_poll(struct fid_poll *pollset, void **context, int count)
 	return pollset->ops->poll(pollset, context, count);
 }
 
+static inline int
+fi_poll_add(struct fid_poll *pollset, struct fid *event_fid, uint64_t flags)
+{
+	return pollset->ops->poll_add(pollset, event_fid, flags);
+}
+
+static inline int
+fi_poll_del(struct fid_poll *pollset, struct fid *event_fid, uint64_t flags)
+{
+	return pollset->ops->poll_del(pollset, event_fid, flags);
+}
 
 static inline int
 fi_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,

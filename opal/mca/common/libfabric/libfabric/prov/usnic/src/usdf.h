@@ -40,24 +40,39 @@
 #include <pthread.h>
 
 #include "usdf_progress.h"
+#include "usd.h"
 
-#define USDF_FI_NAME "usnic"
+#define USDF_PROV_NAME "usnic"
+#define USDF_MAJOR_VERS 1
+#define USDF_MINOR_VERS 0
+#define USDF_PROV_VERSION FI_VERSION(USDF_MAJOR_VERS, USDF_MINOR_VERS)
+
 #define USDF_HDR_BUF_ENTRY 64
 #define USDF_EP_CAP_PIO (1ULL << 63)
+
+#define USDF_MAX_PEERS (16 * 1024)
 
 #define USDF_DGRAM_CAPS (FI_MSG | FI_SOURCE | FI_SEND | FI_RECV)
 
 #define USDF_DGRAM_SUPP_MODE (FI_LOCAL_MR | FI_MSG_PREFIX)
 #define USDF_DGRAM_REQ_MODE (FI_LOCAL_MR)
 
-#define USDF_MSG_CAPS (FI_MSG | FI_SOURCE | FI_SEND | FI_RECV)
-
-#define USDF_MSG_SUPP_MODE (FI_LOCAL_MR)
-#define USDF_MSG_REQ_MODE (FI_LOCAL_MR)
-
 /* usdf event flags */
 #define USDF_EVENT_FLAG_ERROR (1ULL << 62)
 #define USDF_EVENT_FLAG_FREE_BUF (1ULL << 63)
+
+/*
+ *  TAILQ stuff that should exist
+ */
+#define TAILQ_REMOVE_MARK(head, elm, link)	\
+	do {					\
+		TAILQ_REMOVE(head, elm, link);	\
+		(elm)->link.tqe_prev = NULL;    \
+	} while (0)
+
+#define TAILQ_ON_LIST(elm, link) ((elm)->link.tqe_prev != NULL)
+
+struct usdf_domain;
 
 struct usdf_dev_entry {
 	struct usd_device *ue_dev;
@@ -73,9 +88,11 @@ extern struct usdf_usnic_info *__usdf_devinfo;
 
 struct usdf_fabric {
 	struct fid_fabric   fab_fid;
+	struct fi_fabric_attr fab_attr;
 	struct usd_device_attrs *fab_dev_attrs;
 	int fab_arp_sockfd;
 	atomic_t fab_refcnt;
+	LIST_HEAD(,usdf_domain) fab_domain_list;
 
 	/* progression */
 	pthread_t fab_thread;
@@ -98,10 +115,25 @@ struct usdf_fabric {
 struct usdf_domain {
 	struct fid_domain   dom_fid;
 	struct usdf_fabric *dom_fabric;
+	struct fi_info *dom_info;
 	atomic_t dom_refcnt;
 	struct usdf_eq *dom_eq;
 	struct usd_device   *dom_dev;
-	struct usd_device_attrs dom_dev_attrs;
+
+	pthread_spinlock_t dom_progress_lock;
+	TAILQ_HEAD(,usdf_tx) dom_tx_ready;
+	TAILQ_HEAD(,usdf_cq_hard) dom_hcq_list;
+
+	struct usdf_rdm_connection **dom_rdc_hashtab;
+	SLIST_HEAD(,usdf_rdm_connection) dom_rdc_free;
+	atomic_t dom_rdc_free_cnt;
+	size_t dom_rdc_total;
+
+	/* used only by connected endpoints */
+	struct usdf_ep **dom_peer_tab;
+	uint32_t dom_next_peer;
+
+	LIST_ENTRY(usdf_domain) dom_link;
 };
 #define dom_ftou(FDOM) container_of(FDOM, struct usdf_domain, dom_fid)
 #define dom_utof(DOM) (&(DOM)->dom_fid)
@@ -125,41 +157,174 @@ struct usdf_pep {
 #define pep_ftou(FPEP) container_of(FPEP, struct usdf_pep, pep_fid)
 #define pep_fidtou(FID) container_of(FID, struct usdf_pep, pep_fid.fid)
 #define pep_utof(PEP) (&(PEP)->pep_fid)
+#define pep_utofid(PEP) (&(PEP)->pep_fid.fid)
+
+struct usdf_tx {
+	struct fid_stx tx_fid;
+	atomic_t tx_refcnt;
+	struct usdf_domain *tx_domain;
+	TAILQ_ENTRY(usdf_tx) tx_link;
+
+	struct fi_tx_attr tx_attr;
+	struct usd_qp *tx_qp;
+	void (*tx_progress)(struct usdf_tx *tx);
+
+	union {
+		struct {
+			struct usdf_cq_hard *tx_hcq;
+
+			struct usdf_msg_qe *tx_wqe_buf;
+			TAILQ_HEAD(,usdf_msg_qe) tx_free_wqe;
+			TAILQ_HEAD(,usdf_ep) tx_ep_ready;
+			TAILQ_HEAD(,usdf_ep) tx_ep_have_acks;
+		} msg;
+		struct {
+			struct usdf_cq_hard *tx_hcq;
+
+			atomic_t tx_next_msg_id;
+			struct usdf_rdm_qe *tx_wqe_buf;
+			TAILQ_HEAD(,usdf_rdm_qe) tx_free_wqe;
+			TAILQ_HEAD(,usdf_rdm_connection) tx_rdc_ready;
+			TAILQ_HEAD(,usdf_rdm_connection) tx_rdc_have_acks;
+		} rdm;
+	} t;
+};
+#define tx_ftou(FEP) container_of(FEP, struct usdf_tx, tx_fid)
+#define tx_fidtou(FID) container_of(FID, struct usdf_tx, tx_fid)
+#define tx_utof(RX) (&(RX)->tx_fid)
+#define tx_utofid(RX) (&(RX)->tx_fid.fid)
+
+struct usdf_rx {
+	struct fid_ep rx_fid;
+	atomic_t rx_refcnt;
+	struct usdf_domain *rx_domain;
+
+	struct fi_rx_attr rx_attr;
+	struct usd_qp *rx_qp;
+
+	union {
+		struct {
+			struct usdf_cq_hard *rx_hcq;
+
+			uint8_t *rx_bufs;
+			struct usdf_msg_qe *rx_rqe_buf;
+			TAILQ_HEAD(,usdf_msg_qe) rx_free_rqe;
+			TAILQ_HEAD(,usdf_msg_qe) rx_posted_rqe;
+		} msg;
+		struct {
+			int rx_sock;
+			struct usdf_cq_hard *rx_hcq;
+			struct usdf_tx *rx_tx;
+
+			uint8_t *rx_bufs;
+			struct usdf_rdm_qe *rx_rqe_buf;
+			TAILQ_HEAD(,usdf_rdm_qe) rx_free_rqe;
+			TAILQ_HEAD(,usdf_rdm_qe) rx_posted_rqe;
+		} rdm;
+	} r;
+};
+#define rx_ftou(FEP) container_of(FEP, struct usdf_rx, rx_fid)
+#define rx_fidtou(FID) container_of(FID, struct usdf_rx, rx_fid)
+#define rx_utof(RX) (&(RX)->rx_fid)
+#define rx_utofid(RX) (&(RX)->rx_fid.fid)
 
 struct usdf_ep {
 	struct fid_ep ep_fid;
+	struct usdf_domain *ep_domain;
 	atomic_t ep_refcnt;
 	uint64_t ep_caps;
 	uint64_t ep_mode;
-	int ep_sock;
-	int ep_conn_sock;
-	uint32_t ep_wqe;
+
+	uint32_t ep_wqe;	/* requested queue sizes */
 	uint32_t ep_rqe;
-	struct usdf_domain *ep_domain;
-	struct usdf_av *ep_av;
-	struct usdf_cq *ep_wcq;
-	struct usdf_cq *ep_rcq;
-	struct usdf_eq *ep_eq;
-	struct usd_qp *ep_qp;
-	struct usd_dest *ep_dest;
+
 	struct usd_qp_attrs ep_qp_attrs;
-	void *ep_hdr_buf;
-	struct usd_udp_hdr **ep_hdr_ptr;
+
+	struct usdf_eq *ep_eq;
+
+	struct usdf_tx *ep_tx;
+	struct usdf_rx *ep_rx;
+
+	union {
+		struct {
+			struct usd_qp *ep_qp;
+			struct usdf_cq *ep_wcq;
+			struct usdf_cq *ep_rcq;
+
+			int ep_sock;
+			struct usdf_av *ep_av;
+
+			void *ep_hdr_buf;
+			struct usd_udp_hdr **ep_hdr_ptr;
+		} dg;
+		struct {
+
+			struct usdf_connreq *ep_connreq;
+			struct usd_dest *ep_dest;
+			uint32_t ep_rem_peer_id;
+			uint32_t ep_lcl_peer_id;
+
+			TAILQ_HEAD(,usdf_msg_qe) ep_posted_wqe;
+			TAILQ_HEAD(usdf_msg_qe_head ,usdf_msg_qe) ep_sent_wqe;
+			uint32_t ep_fairness_credits;
+			uint32_t ep_seq_credits;
+			uint16_t ep_next_tx_seq;
+			uint16_t ep_last_rx_ack;
+			int ep_send_nak;
+
+			struct usdf_msg_qe *ep_cur_recv;
+			uint16_t ep_next_rx_seq;
+			TAILQ_ENTRY(usdf_ep) ep_ack_link;
+
+			struct usdf_timer_entry *ep_ack_timer;
+
+			TAILQ_ENTRY(usdf_ep) ep_link;
+		} msg;
+		struct {
+			int ep_sock;
+			struct usdf_av *ep_av;
+
+		} rdm;
+	 } e;
 };
 #define ep_ftou(FEP) container_of(FEP, struct usdf_ep, ep_fid)
 #define ep_fidtou(FID) container_of(FID, struct usdf_ep, ep_fid.fid)
 #define ep_utof(EP) (&(EP)->ep_fid)
+#define ep_utofid(EP) (&(EP)->ep_fid.fid)
 
 struct usdf_mr {
 	struct fid_mr mr_fid;
 	struct usd_mr *mr_mr;
 };
 
+struct usdf_cq_hard {
+	struct usdf_cq *cqh_cq;
+	struct usd_cq *cqh_ucq;
+	atomic_t cqh_refcnt;
+	void (*cqh_progress)(struct usdf_cq_hard *hcq);
+	void (*cqh_post)(struct usdf_cq_hard *hcq, void *context, size_t len);
+	TAILQ_ENTRY(usdf_cq_hard) cqh_link;
+	TAILQ_ENTRY(usdf_cq_hard) cqh_dom_link;
+};
+
 struct usdf_cq {
 	struct fid_cq cq_fid;
 	atomic_t cq_refcnt;
 	struct usdf_domain *cq_domain;
-	struct usd_cq *cq_cq;
+	struct fi_cq_attr cq_attr;
+
+	union {
+		struct {
+			struct usd_cq *cq_cq;
+		} hard;
+		struct {
+			void *cq_comps;
+			void *cq_end;
+			void *cq_head;
+			void *cq_tail;
+			TAILQ_HEAD(,usdf_cq_hard) cq_list;
+		} soft;
+	} c;
 	struct usd_completion cq_comp;
 };
 #define cq_ftou(FCQ) container_of(FCQ, struct usdf_cq, cq_fid)

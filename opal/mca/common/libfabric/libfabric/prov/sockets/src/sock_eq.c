@@ -143,8 +143,11 @@ ssize_t sock_eq_report_event(struct sock_eq *sock_eq, uint32_t event,
 	entry->len = len;
 	entry->flags = flags;
 	memcpy(entry->event, buf, len);
-
 	dlistfd_insert_tail(&entry->entry, &sock_eq->list);
+
+	if (sock_eq->signal) 
+		sock_wait_signal(sock_eq->waitset);
+
 	fastlock_release(&sock_eq->lock);
 	return 0;
 }
@@ -167,8 +170,11 @@ ssize_t sock_eq_report_error(struct sock_eq *sock_eq, fid_t fid, void *context,
 	err_entry->prov_errno = prov_errno;
 	err_entry->err_data = err_data;	
 	entry->len = sizeof(struct fi_eq_err_entry);
-
 	dlistfd_insert_tail(&entry->entry, &sock_eq->err_list);
+
+	if (sock_eq->signal) 
+		sock_wait_signal(sock_eq->waitset);
+
 	fastlock_release(&sock_eq->lock);
 	return 0;
 }
@@ -212,26 +218,43 @@ int sock_eq_fi_close(struct fid *fid)
 	fastlock_destroy(&sock_eq->lock);
 	atomic_dec(&sock_eq->sock_fab->ref);
 
+	if (sock_eq->signal && sock_eq->attr.wait_obj == FI_WAIT_MUTEX_COND)
+		sock_wait_close(&sock_eq->waitset->fid);
+	
 	free(sock_eq);
 	return 0;
 }
 
-int sock_eq_fi_control(struct fid *fid, int command, void *arg)
+int sock_eq_control(struct fid *fid, int command, void *arg)
 {
-	struct sock_eq *eq;
 	int ret = 0;
+	struct sock_eq *eq;
 
-	eq = container_of(fid, struct sock_eq, eq.fid);
-	
+	eq = container_of(fid, struct sock_eq, eq.fid);	
 	switch (command) {
 	case FI_GETWAIT:
-		*(void **) arg = &eq->list.fd[LIST_READ_FD];
+		switch (eq->attr.wait_obj) {
+		case FI_WAIT_NONE:
+		case FI_WAIT_UNSPEC:
+		case FI_WAIT_FD:
+			memcpy(arg, &eq->list.fd[LIST_READ_FD], sizeof(int));
+			break;
+
+		case FI_WAIT_SET:
+		case FI_WAIT_MUTEX_COND:
+			sock_wait_get_obj(eq->waitset, arg);
+			break;
+		
+		default:
+			ret = -FI_EINVAL;
+			break;
+		}
 		break;
+
 	default:
-		ret = -FI_ENOSYS;
+		ret = -FI_EINVAL;
 		break;
 	}
-
 	return ret;
 }
 
@@ -239,7 +262,7 @@ static struct fi_ops sock_eq_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = sock_eq_fi_close,
 	.bind = fi_no_bind,
-	.control = sock_eq_fi_control,
+	.control = sock_eq_control,
 	.ops_open = fi_no_ops_open,
 };
 
@@ -251,6 +274,8 @@ static int _sock_eq_verify_attr(struct fi_eq_attr *attr)
 	switch (attr->wait_obj) {
 	case FI_WAIT_NONE:
 	case FI_WAIT_FD:
+	case FI_WAIT_SET:
+	case FI_WAIT_MUTEX_COND:
 		break;
 	case FI_WAIT_UNSPEC:
 		attr->wait_obj = FI_WAIT_FD;
@@ -275,6 +300,7 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 {
 	int ret;
 	struct sock_eq *sock_eq;
+	struct fi_wait_attr wait_attr;
 
 	ret = _sock_eq_verify_attr(attr);
 	if (ret)
@@ -293,9 +319,9 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 
 	if(attr == NULL)
 		memcpy(&sock_eq->attr, &_sock_eq_def_attr,
-		       sizeof(struct fi_cq_attr));
-	else
-		memcpy(&sock_eq->attr, attr, sizeof(struct fi_cq_attr));
+		       sizeof(struct fi_eq_attr));
+	else 
+		memcpy(&sock_eq->attr, attr, sizeof(struct fi_eq_attr));
 
 	ret = dlistfd_head_init(&sock_eq->list);
 	if(ret)
@@ -307,6 +333,34 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	
 	fastlock_init(&sock_eq->lock);
 	atomic_inc(&sock_eq->sock_fab->ref);
+
+	switch (sock_eq->attr.wait_obj) {
+
+	case FI_WAIT_NONE:
+	case FI_WAIT_UNSPEC:
+	case FI_WAIT_FD:
+		sock_eq->signal = 0;
+		break;
+
+	case FI_WAIT_MUTEX_COND:
+		wait_attr.flags = 0;
+		wait_attr.wait_obj = FI_WAIT_MUTEX_COND;
+		/* FIXME: waitset is a domain object, but not EQ. This needs to be 
+		 updated based on #394 */
+		ret = sock_wait_open(NULL, &wait_attr, &sock_eq->waitset);
+		if (ret)
+			goto err2;
+		sock_eq->signal = 1;
+		break;
+
+	case FI_WAIT_SET:
+		sock_eq->waitset = attr->wait_set;
+		sock_eq->signal = 1;
+		break;
+
+	default:
+		break;
+	}
 	return 0;
 
 err2:

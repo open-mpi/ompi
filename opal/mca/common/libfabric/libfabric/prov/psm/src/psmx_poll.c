@@ -143,6 +143,8 @@ static struct fi_ops psmx_fi_ops = {
 static struct fi_ops_poll psmx_poll_ops = {
 	.size = sizeof(struct fi_ops_poll),
 	.poll = psmx_poll_poll,
+	.poll_add = psmx_poll_add,
+	.poll_del = psmx_poll_del,
 };
 
 int psmx_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,

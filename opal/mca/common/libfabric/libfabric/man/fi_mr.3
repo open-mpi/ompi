@@ -1,4 +1,4 @@
-.TH fi_mr 3 "2014-11-14" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_mr 3 "2014\-12\-19" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_mr - Memory region operations
@@ -90,7 +90,15 @@ In order to support as broad range of applications as possible, without
 unduly affecting their performance, applications that wish to manage
 their own local memory registrations may do so by using the memory
 registration calls.
-Applications may use the FI_LOCAL_MR domain capability bit as a guide.
+Applications may use the FI_LOCAL_MR domain mode bit as a guide.
+.PP
+When the FI_LOCAL_MR mode bit is set, applications must register all
+data buffers that will be accessed by the local hardware and provide a
+valid mem_desc parameter into applicable data transfer operations.
+When FI_LOCAL_MR is zero, applications are not required to register data
+buffers before using them for local operations (e.g.
+send and receive data buffers), and the mem_desc parameter into data
+transfer operations is ignored.
 .PP
 Providers may support applications registering any range of addresses in
 their virtual address space, whether or not those addresses are back by
@@ -177,6 +185,9 @@ Support for user requested keys is provider specific and is determined
 by the FI_PROV_MR_ATTR mode bit.
 Access domains must be opened with the FI_PROV_MR_ATTR mode cleared in
 order to enable support for application selectable MR keys.
+The requested_key parameter is ignored for memory registration calls
+unless the access flags include either FI_REMOTE_READ or
+FI_REMOTE_WRITE.
 .PP
 Remote RMA and atomic operations indicate the location within a
 registered memory region by specifying an address.
@@ -221,18 +232,10 @@ struct\ fi_mr_attr\ {
 .fi
 .SS fi_close
 .PP
-Fi_close may be used to release all resources associated with a
-registering a memory region.
+Fi_close is used to release all resources associated with a registering
+a memory region.
 Once unregistered, further access to the registered memory is not
 guaranteed.
-For performance reasons, unregistration processing may be done
-asynchronously or lazily.
-To force all queued unregistration requests to complete, applications
-may call fi_sync on the domain.
-Upon completion of a domain fi_sync call, all memory regions
-unregistered before fi_sync was invoked will have completed, and no
-further access to the registered region, either locally or remotely, via
-fabric resources will be possible.
 .SS fi_mr_desc / fi_mr_key
 .PP
 The local memory descriptor and remote protection key associated with a

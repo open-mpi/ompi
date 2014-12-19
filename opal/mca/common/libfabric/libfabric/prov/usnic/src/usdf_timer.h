@@ -61,6 +61,8 @@ void usdf_timer_free(struct usdf_fabric *fp, struct usdf_timer_entry *entry);
 
 int usdf_timer_set(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
 		uint32_t timeout);
+int usdf_timer_reset(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
+		uint32_t timeout);
 
 void usdf_timer_cancel(struct usdf_fabric *fp, struct usdf_timer_entry *entry);
 

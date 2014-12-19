@@ -41,6 +41,10 @@ int usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context);
 int usdf_ep_msg_open(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context);
+int usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
+		struct fid_ep **ep, void *context);
+int usdf_ep_msg_get_queues(struct usdf_ep *ep);
+void usdf_ep_msg_release_queues(struct usdf_ep *ep);
 
 extern struct fi_ops usdf_ep_ops;
 

@@ -158,7 +158,7 @@ usd_post_send_one_prefixed_udp_normal(
     hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
                              sizeof(struct ether_header) -
                              sizeof(struct iphdr)) + len);
-    hdr->uh_udp.source = 
+    hdr->uh_udp.source =
         qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
 
     last_post =
@@ -224,9 +224,59 @@ usd_post_send_two_copy_udp_normal(
     return 0;
 }
 
+static int
+usd_post_send_iov_udp_normal(struct usd_qp *uqp,
+            struct usd_dest *dest, const struct iovec* iov,
+            size_t iov_count, uint32_t flags, void *context)
+{
+    struct usd_qp_impl *qp;
+    struct usd_udp_hdr *hdr;
+    struct usd_wq *wq;
+    uint32_t last_post;
+    uint8_t *copybuf;
+    struct usd_wq_post_info *info;
+    struct iovec send_iov[USD_SEND_MAX_SGE + 1];
+    size_t len;
+    unsigned i;
+
+    qp = to_qpi(uqp);
+    wq = &qp->uq_wq;
+    copybuf = wq->uwq_copybuf + wq->uwq_post_index * USD_SEND_MAX_COPY;
+
+    for (i = 0, len = 0; i < iov_count; i++) {
+            len += iov[i].iov_len;
+    }
+
+    hdr = (struct usd_udp_hdr *)copybuf;
+    memcpy(hdr, &dest->ds_dest.ds_udp.u_hdr, sizeof(*hdr));
+
+    /* adjust lengths and insert source port */
+    hdr->uh_ip.tot_len = htons(len + sizeof(struct usd_udp_hdr) -
+                               sizeof(struct ether_header));
+    hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
+                             sizeof(struct ether_header) -
+                             sizeof(struct iphdr)) + len);
+    hdr->uh_udp.source =
+        qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
+
+    send_iov[0].iov_base = hdr;
+    send_iov[0].iov_len = sizeof(*hdr);
+    memcpy(&send_iov[1], iov, sizeof(struct iovec) * iov_count);
+
+    last_post = _usd_post_send_iov(wq, send_iov, iov_count + 1,
+                                        USD_SF_ISSET(flags, SIGNAL));
+    info = &wq->uwq_post_info[last_post];
+    info->wp_context = context;
+    info->wp_len = len;
+
+    return 0;
+}
+
+
 struct usd_qp_ops usd_qp_ops_udp_normal = {
     .qo_post_send_one = usd_post_send_one_udp_normal,
     .qo_post_send_one_prefixed = usd_post_send_one_prefixed_udp_normal,
     .qo_post_send_one_copy = usd_post_send_one_copy_udp_normal,
     .qo_post_send_two_copy = usd_post_send_two_copy_udp_normal,
+    .qo_post_send_iov = usd_post_send_iov_udp_normal,
 };

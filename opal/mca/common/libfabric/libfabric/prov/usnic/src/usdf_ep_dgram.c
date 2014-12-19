@@ -63,9 +63,11 @@
 #include "usdf.h"
 #include "usdf_endpoint.h"
 #include "usdf_dgram.h"
+#include "usdf_av.h"
+#include "usdf_cq.h"
 
 static int
-usdf_dgram_ep_enable(struct fid_ep *fep)
+usdf_ep_dgram_enable(struct fid_ep *fep)
 {
 	struct usdf_ep *ep;
 	struct usd_filter filt;
@@ -75,18 +77,18 @@ usdf_dgram_ep_enable(struct fid_ep *fep)
 	ep = ep_ftou(fep);
 
 	filt.uf_type = USD_FTY_UDP_SOCK;
-	filt.uf_filter.uf_udp_sock.u_sock = ep->ep_sock;
+	filt.uf_filter.uf_udp_sock.u_sock = ep->e.dg.ep_sock;
 
 	if (ep->ep_caps & USDF_EP_CAP_PIO) {
 		ret = usd_create_qp(ep->ep_domain->dom_dev,
 				USD_QTR_UDP,
 				USD_QTY_PIO,
-				ep->ep_wcq->cq_cq, 
-				ep->ep_rcq->cq_cq, 
+				ep->e.dg.ep_wcq->c.hard.cq_cq,
+				ep->e.dg.ep_rcq->c.hard.cq_cq,
 				127,	// XXX
 				127,	// XXX
 				&filt,
-				&ep->ep_qp);
+				&ep->e.dg.ep_qp);
 	} else {
 		ret = -EAGAIN;
 	}
@@ -95,33 +97,33 @@ usdf_dgram_ep_enable(struct fid_ep *fep)
 		ret = usd_create_qp(ep->ep_domain->dom_dev,
 				USD_QTR_UDP,
 				USD_QTY_NORMAL,
-				ep->ep_wcq->cq_cq, 
-				ep->ep_rcq->cq_cq, 
+				ep->e.dg.ep_wcq->c.hard.cq_cq,
+				ep->e.dg.ep_rcq->c.hard.cq_cq,
 				ep->ep_wqe,
 				ep->ep_rqe,
 				&filt,
-				&ep->ep_qp);
+				&ep->e.dg.ep_qp);
 	}
 	if (ret != 0) {
 		goto fail;
 	}
-	ep->ep_qp->uq_context = ep;
+	ep->e.dg.ep_qp->uq_context = ep;
 
 	/*
 	 * Allocate a memory region big enough to hold a header for each
-	 * RQ entry 
+	 * RQ entry
 	 */
-	uqp = to_qpi(ep->ep_qp);
-	ep->ep_hdr_ptr = calloc(uqp->uq_rq.urq_num_entries,
-			sizeof(ep->ep_hdr_ptr[0]));
-	if (ep->ep_hdr_ptr == NULL) {
+	uqp = to_qpi(ep->e.dg.ep_qp);
+	ep->e.dg.ep_hdr_ptr = calloc(uqp->uq_rq.urq_num_entries,
+			sizeof(ep->e.dg.ep_hdr_ptr[0]));
+	if (ep->e.dg.ep_hdr_ptr == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
 	}
 
 	ret = usd_alloc_mr(ep->ep_domain->dom_dev,
-			usd_get_recv_credits(ep->ep_qp) * USDF_HDR_BUF_ENTRY,
-			&ep->ep_hdr_buf);
+		usd_get_recv_credits(ep->e.dg.ep_qp) * USDF_HDR_BUF_ENTRY,
+			&ep->e.dg.ep_hdr_buf);
 	if (ret != 0) {
 		goto fail;
 	}
@@ -129,18 +131,143 @@ usdf_dgram_ep_enable(struct fid_ep *fep)
 	return 0;
 
 fail:
-	if (ep->ep_hdr_ptr != NULL) {
-		free(ep->ep_hdr_ptr);
+	if (ep->e.dg.ep_hdr_ptr != NULL) {
+		free(ep->e.dg.ep_hdr_ptr);
 	}
-	if (ep->ep_qp != NULL) {
-		usd_destroy_qp(ep->ep_qp);
+	if (ep->e.dg.ep_qp != NULL) {
+		usd_destroy_qp(ep->e.dg.ep_qp);
 	}
 	return ret;
 }
 
+static int
+usdf_ep_dgram_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
+{
+	struct usdf_ep *ep;
+	struct usdf_cq *cq;
+	int ret;
+
+	ep = ep_fidtou(fid);
+
+	switch (bfid->fclass) {
+
+	case FI_CLASS_AV:
+		if (ep->e.dg.ep_av != NULL) {
+			return -FI_EINVAL;
+		}
+		ep->e.dg.ep_av = av_fidtou(bfid);
+		break;
+
+	case FI_CLASS_CQ:
+		cq = cq_fidtou(bfid);
+
+		/* actually, could look through CQ list for a hard
+		 * CQ with function usd_poll_cq() and use that... XXX
+		 */
+		if (usdf_cq_is_soft(cq)) {
+			return -FI_EINVAL;
+		}
+		if (cq->c.hard.cq_cq == NULL) {
+			ret = usdf_cq_create_cq(cq);
+			if (ret != 0) {
+				return ret;
+			}
+		}
+
+		if (flags & FI_SEND) {
+			if (ep->e.dg.ep_wcq != NULL) {
+				return -FI_EINVAL;
+			}
+			ep->e.dg.ep_wcq = cq;
+			atomic_inc(&cq->cq_refcnt);
+		}
+
+		if (flags & FI_RECV) {
+			if (ep->e.dg.ep_rcq != NULL) {
+				return -FI_EINVAL;
+			}
+			ep->e.dg.ep_rcq = cq;
+			atomic_inc(&cq->cq_refcnt);
+		}
+		break;
+
+	case FI_CLASS_EQ:
+		if (ep->ep_eq != NULL) {
+			return -FI_EINVAL;
+		}
+		ep->ep_eq = eq_fidtou(bfid);
+		atomic_inc(&ep->ep_eq->eq_refcnt);
+		break;
+	default:
+		return -FI_EINVAL;
+	}
+
+	return 0;
+}
+
+static void
+usdf_ep_dgram_deref_cq(struct usdf_cq *cq)
+{
+	struct usdf_cq_hard *hcq;
+	void (*rtn)(struct usdf_cq_hard *hcq);
+
+	if (cq == NULL) {
+		return;
+	}
+	atomic_dec(&cq->cq_refcnt);
+
+        switch (cq->cq_attr.format) {
+        case FI_CQ_FORMAT_CONTEXT:
+                rtn = usdf_progress_hard_cq_context;
+                break;
+        case FI_CQ_FORMAT_MSG:
+                rtn = usdf_progress_hard_cq_msg;
+                break;
+        case FI_CQ_FORMAT_DATA:
+                rtn = usdf_progress_hard_cq_data;
+                break;
+        default:
+                return;
+        }
+
+	if (usdf_cq_is_soft(cq)) {
+		TAILQ_FOREACH(hcq, &cq->c.soft.cq_list, cqh_link) {
+			if (hcq->cqh_progress == rtn) {
+				atomic_dec(&hcq->cqh_refcnt);
+				return;
+			}
+		}
+	}
+}
+
+static int
+usdf_ep_dgram_close(fid_t fid)
+{
+	struct usdf_ep *ep;
+
+	ep = ep_fidtou(fid);
+
+	if (atomic_get(&ep->ep_refcnt) > 0) {
+		return -FI_EBUSY;
+	}
+
+	if (ep->e.dg.ep_qp != NULL) {
+		usd_destroy_qp(ep->e.dg.ep_qp);
+	}
+	atomic_dec(&ep->ep_domain->dom_refcnt);
+	if (ep->ep_eq != NULL) {
+		atomic_dec(&ep->ep_eq->eq_refcnt);
+	}
+	usdf_ep_dgram_deref_cq(ep->e.dg.ep_wcq);
+	usdf_ep_dgram_deref_cq(ep->e.dg.ep_rcq);
+
+	free(ep);
+	return 0;
+}
+
 static struct fi_ops_ep usdf_base_dgram_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_dgram_ep_enable,
+	.enable = usdf_ep_dgram_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
@@ -165,10 +292,10 @@ static struct fi_ops_msg usdf_dgram_prefix_ops = {
 	.size = sizeof(struct fi_ops_msg),
 	.recv = usdf_dgram_prefix_recv,
 	.recvv = usdf_dgram_prefix_recvv,
-	.recvmsg = usdf_dgram_recvmsg,
-	.send = usdf_dgram_send,
-	.sendv = usdf_dgram_sendv,
-	.sendmsg = usdf_dgram_sendmsg,
+	.recvmsg = usdf_dgram_prefix_recvmsg,
+	.send = usdf_dgram_prefix_send,
+	.sendv = usdf_dgram_prefix_sendv,
+	.sendmsg = usdf_dgram_prefix_sendmsg,
 	.inject = usdf_dgram_inject,
 	.senddata = usdf_dgram_senddata,
 	.injectdata = fi_no_msg_injectdata,
@@ -176,8 +303,16 @@ static struct fi_ops_msg usdf_dgram_prefix_ops = {
 
 static struct fi_ops_cm usdf_cm_dgram_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.connect = usdf_cm_dgram_connect,
-	.shutdown = usdf_cm_dgram_shutdown,
+	.connect = fi_no_connect,
+	.shutdown = fi_no_shutdown,
+};
+
+static struct fi_ops usdf_ep_dgram_ops = {
+	.size = sizeof(struct fi_ops),
+	.close = usdf_ep_dgram_close,
+	.bind = usdf_ep_dgram_bind,
+	.control = fi_no_control,
+	.ops_open = fi_no_ops_open
 };
 
 int
@@ -199,8 +334,8 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 		return -FI_ENOMEM;
 	}
 
-	ep->ep_sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (ep->ep_sock == -1) {
+	ep->e.dg.ep_sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (ep->e.dg.ep_sock == -1) {
 		ret = -errno;
 		goto fail;
 	}
@@ -216,7 +351,7 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 
 	ep->ep_fid.fid.fclass = FI_CLASS_EP;
 	ep->ep_fid.fid.context = context;
-	ep->ep_fid.fid.ops = &usdf_ep_ops;
+	ep->ep_fid.fid.ops = &usdf_ep_dgram_ops;
 	ep->ep_fid.ops = &usdf_base_dgram_ops;
 	ep->ep_fid.cm = &usdf_cm_dgram_ops;
 	ep->ep_domain = udp;
@@ -225,12 +360,14 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 	if (info->tx_attr != NULL && info->tx_attr->size != 0) {
 		ep->ep_wqe = info->tx_attr->size;
 	} else {
-		ep->ep_wqe = udp->dom_dev_attrs.uda_max_send_credits;
+		ep->ep_wqe =
+			udp->dom_fabric->fab_dev_attrs->uda_max_send_credits;
 	}
 	if (info->rx_attr != NULL && info->rx_attr->size != 0) {
 		ep->ep_rqe = info->rx_attr->size;
 	} else {
-		ep->ep_rqe = udp->dom_dev_attrs.uda_max_recv_credits;
+		ep->ep_rqe =
+			udp->dom_fabric->fab_dev_attrs->uda_max_recv_credits;
 	}
 
 	if (ep->ep_mode & FI_MSG_PREFIX) {
@@ -252,8 +389,8 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 
 fail:
 	if (ep != NULL) {
-		if (ep->ep_sock != -1) {
-			close(ep->ep_sock);
+		if (ep->e.dg.ep_sock != -1) {
+			close(ep->e.dg.ep_sock);
 		}
 		free(ep);
 	}

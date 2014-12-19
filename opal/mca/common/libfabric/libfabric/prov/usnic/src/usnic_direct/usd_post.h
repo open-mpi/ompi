@@ -43,6 +43,8 @@
 #ifndef _USD_POST_H_
 #define _USD_POST_H_
 
+#include <sys/uio.h>
+
 #include "usd.h"
 #include "usd_util.h"
 
@@ -94,7 +96,6 @@ _usd_post_send_two(
     struct vnic_wq *vwq;
     uint32_t index;
     struct wq_enet_desc *desc;
-    uint64_t wr;
     u_int8_t offload_mode = 0, eop;
     u_int16_t mss = 7, header_length = 0, vlan_tag = 0;
     u_int8_t vlan_tag_insert = 0, loopback = 0, fcoe_encap = 0;
@@ -119,13 +120,59 @@ _usd_post_send_two(
         vlan_tag_insert, vlan_tag, loopback);
     wmb();
 
-    wr = vnic_cached_posted_index((dma_addr_t)hdr, hdrlen, index);
-    iowrite64(wr, &vwq->ctrl->posted_index);
+    iowrite32(index, &vwq->ctrl->posted_index);
 
     wq->uwq_next_desc = (struct wq_enet_desc *)
         ((uintptr_t)wq->uwq_desc_ring + (index<<4));
     wq->uwq_post_index = (index+1) & wq->uwq_post_index_mask;
     wq->uwq_send_credits -= 2;
+
+    return index;
+}
+
+/*
+ * Consume iov count credits, assumes that iov[0] includes usnic header
+ */
+static inline uint32_t
+_usd_post_send_iov(
+    struct usd_wq *wq,
+    const struct iovec *iov,
+    size_t count,
+    u_int8_t cq_entry)
+{
+    struct vnic_wq *vwq;
+    uint32_t index;
+    struct wq_enet_desc *desc;
+    u_int8_t offload_mode = 0;
+    u_int16_t mss = 7, header_length = 0, vlan_tag = 0;
+    u_int8_t vlan_tag_insert = 0, loopback = 0, fcoe_encap = 0;
+    unsigned i;
+
+    vwq = &wq->uwq_vnic_wq;
+    desc = wq->uwq_next_desc;
+    index = wq->uwq_post_index;
+
+    for (i = 0; i < count - 1; i++) {
+        wq_enet_desc_enc(desc, (uintptr_t)(iov[i].iov_base),
+            iov[i].iov_len, mss, header_length, offload_mode,
+            0, 0, fcoe_encap, vlan_tag_insert, vlan_tag, loopback);
+        desc = (struct wq_enet_desc *) ((uintptr_t)wq->uwq_desc_ring
+                                            + (index<<4));
+        index = (index+1) & wq->uwq_post_index_mask;
+    }
+
+    wq_enet_desc_enc(desc, (uintptr_t)(iov[i].iov_base),
+	iov[i].iov_len, mss, header_length, offload_mode,
+	1, cq_entry, fcoe_encap, vlan_tag_insert, vlan_tag, loopback);
+
+    wmb();
+
+    iowrite32(index, &vwq->ctrl->posted_index);
+
+    wq->uwq_next_desc = (struct wq_enet_desc *)
+        ((uintptr_t)wq->uwq_desc_ring + (index<<4));
+    wq->uwq_post_index = (index+1) & wq->uwq_post_index_mask;
+    wq->uwq_send_credits -= count;
 
     return index;
 }

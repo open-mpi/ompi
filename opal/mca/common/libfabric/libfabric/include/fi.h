@@ -73,6 +73,8 @@ static inline uint64_t htonll(uint64_t x) { return x; }
 static inline uint64_t ntohll(uint64_t x) { return x; }
 #endif
 
+#define sizeof_field(type, field) sizeof(((type *)0)->field)
+
 #define MIN(a, b) ((a) < (b) ? a : b)
 #define MAX(a, b) ((a) > (b) ? a : b)
 
@@ -176,10 +178,7 @@ static inline int atomic_get(atomic_t *atomic)
 
 #endif // HAVE_ATOMICS
 
-
 /* non exported symbols */
-int fi_init(void);
-
 int fi_read_file(const char *dir, const char *file, char *buf, size_t size);
 int fi_poll_fd(int fd, int timeout);
 int fi_wait_cond(pthread_cond_t *cond, pthread_mutex_t *mut, int timeout);
@@ -190,8 +189,6 @@ int fi_sockaddr_len(struct sockaddr *addr);
 size_t fi_datatype_size(enum fi_datatype datatype);
 uint64_t fi_tag_bits(uint64_t mem_tag_format);
 uint64_t fi_tag_format(uint64_t tag_bits);
-
-int fi_version_register(uint32_t version, struct fi_provider *provider);
 
 #define RDMA_CONF_DIR  SYSCONFDIR "/" RDMADIR
 #define FI_CONF_DIR RDMA_CONF_DIR "/fabric"

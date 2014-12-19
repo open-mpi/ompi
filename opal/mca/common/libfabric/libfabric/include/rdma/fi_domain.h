@@ -193,6 +193,20 @@ fi_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 }
 
 static inline int
+fi_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
+	     struct fid_wait **waitset)
+{
+	return domain->ops->wait_open(domain, attr, waitset);
+}
+	
+static inline int
+fi_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
+	     struct fid_poll **pollset)
+{
+	return domain->ops->poll_open(domain, attr, pollset);
+}
+
+static inline int
 fi_mr_reg(struct fid_domain *domain, const void *buf, size_t len,
 	  uint64_t access, uint64_t offset, uint64_t requested_key,
 	  uint64_t flags, struct fid_mr **mr, void *context)

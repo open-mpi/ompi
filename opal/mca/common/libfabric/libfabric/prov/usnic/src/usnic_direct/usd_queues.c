@@ -1116,6 +1116,16 @@ usd_create_qp(
     }
     rq->urq_state |= USD_QS_FILTER_ALLOC;
 
+    /* Fill in some attrs */
+    switch (transport) {
+    case USD_QTR_UDP:
+        qp->uq_attrs.uqa_hdr_len = sizeof(struct usd_udp_hdr);
+        break;
+    case USD_QTR_RAW:
+        qp->uq_attrs.uqa_hdr_len = 0;
+        break;
+    }
+
     /*
      * Now, do the type-specific configuration
      */
@@ -1130,16 +1140,6 @@ usd_create_qp(
     default:
         ret = -EINVAL;
         goto fail;
-        break;
-    }
-
-    /* Fill in some attrs */
-    switch (transport) {
-    case USD_QTR_UDP:
-        qp->uq_attrs.uqa_hdr_len = sizeof(struct usd_udp_hdr);
-        break;
-    case USD_QTR_RAW:
-        qp->uq_attrs.uqa_hdr_len = 0;
         break;
     }
 

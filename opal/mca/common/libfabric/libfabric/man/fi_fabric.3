@@ -1,4 +1,4 @@
-.TH fi_fabric 3 "2014\-12\-04" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_fabric 3 "2014\-12\-12" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_fabric - Fabric domain operations
@@ -89,6 +89,11 @@ uint64_t flags
 \f[I]FI_TYPE_PROTO\f[] : struct fi_ep_attr::protocol field
 .PP
 \f[I]FI_TYPE_MSG_ORDER\f[] : struct fi_ep_attr::msg_order field
+.PP
+fi_tostr() will return a pointer to an internal libfabric buffer that
+should not be modified, and will be overwritten the next time fi_tostr()
+is invoked.
+fi_tostr() is not thread safe.
 .SH NOTES
 .PP
 The following resources are associated with fabric domains: access

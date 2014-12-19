@@ -1,4 +1,4 @@
-.TH fabric 7 "2014\-12\-05" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fabric 7 "2014\-12\-15" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 Fabric Interface Library
@@ -106,12 +106,13 @@ Endpoints are configured with specific communication capabilities and
 data transfer interfaces.
 .PP
 \f[I]fi_eq - Event Queue\f[] : Event queues, are used to collect and
-report the completion of asynchronous operations.
-For example, the completion of a data transfer operation submitted over
-a fabric endpoint may write an event to an event queue associated with
-the endpoint.
-There are multiple types of event queues, and the format of the events
-that they report are controlled by applications.
+report the completion of asynchronous operations and events.
+Event queues report events that are not directly associated with data
+transfer operations.
+.PP
+\f[I]fi_cq - Completion Queue\f[] : Completion queues are
+high-performance event queues used to report the completion of data
+transfer operations.
 .PP
 \f[I]fi_cntr - Event Counters\f[] : Event counters are used to report
 the number of completed asynchronous operations.
@@ -214,15 +215,13 @@ addresses must support FI_SOCKADDR_IN and FI_SOCKADDR_IN6 input formats.
 Address vectors must support FI_ADDR, FI_ADDR_INDEX, and FI_AV output
 formats.
 .IP \[bu] 2
-Access domains must support opening event queues and counters.
+Access domains must support opening completion queues and counters.
 .IP \[bu] 2
-Event queues must support the FI_EQ_FORMAT_CONTEXT format.
-.IP \[bu] 2
-Event queues associated with data transfer completions must support the
-FI_EQ_FORMAT_DATA format.
+Completion queues must support the FI_CQ_FORMAT_CONTEXT and
+FI_CQ_FORMAT_MSG formats.
 .IP \[bu] 2
 Event queues associated with tagged message transfers must support the
-FI_EQ_FORMAT_TAGGED format.
+FI_CQ_FORMAT_TAGGED format.
 .IP \[bu] 2
 A provider is expected to be forward compatible, and must be able to be
 compiled against expanded \f[C]fi_xxx_ops\f[] structures that define new
@@ -231,6 +230,7 @@ Any unknown functions must be set to NULL.
 .SH SEE ALSO
 .PP
 \f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
-\f[C]fi_av\f[](3), \f[C]fi_eq\f[](3), \f[C]fi_mr\f[](3)
+\f[C]fi_av\f[](3), \f[C]fi_eq\f[](3), \f[C]fi_cq\f[](3),
+\f[C]fi_cntr\f[](3), \f[C]fi_mr\f[](3)
 .SH AUTHORS
 OpenFabrics.
