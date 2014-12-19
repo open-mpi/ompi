@@ -635,6 +635,9 @@ found:
         int x;
         if (NULL != fs_type) {
             for (x = 0; x < FS_TYPES_NUM; x++) {
+                if (AUTOFS_SUPER_MAGIC == fs_types[x].f_fsid) {
+                    continue;
+                }
                 if (0 == strcasecmp(fs_types[x].f_fsname, fs_type)) {
                     OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n", fname, fs_type));
                     free(fs_type);
