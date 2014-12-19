@@ -31,6 +31,7 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#include <ctype.h>
 
 #include "opal/util/if.h"
 #include "opal/mca/hwloc/hwloc.h"
@@ -100,7 +101,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts, *hstname, *sep;
+    char *hosts, *hstname, *sep, *eptr;
     FILE *fp;
 #if OPAL_HAVE_HWLOC
     opal_hwloc_resource_type_t rtype;
@@ -173,6 +174,12 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             if (NULL != (sep = strchr(hstname, ' '))) {
                 *sep = '\0';
                 sep++;
+                /* remove any trailing space */
+                eptr = sep + strlen(sep) - 1;
+                while (eptr > sep && isspace(*eptr)) {
+                    eptr--;
+                }
+                *(eptr+1) = 0;
                 sq->cpuset = strdup(sep);
             }
             sq->hostname = strdup(hstname);
@@ -253,6 +260,12 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 if (NULL != (sep = strchr(hstname, ' '))) {
                     *sep = '\0';
                     sep++;
+                    /* remove any trailing space */
+                    eptr = sep + strlen(sep) - 1;
+                    while (eptr > sep && isspace(*eptr)) {
+                        eptr--;
+                    }
+                    *(eptr+1) = 0;
                     sq->cpuset = strdup(sep);
                 }
                 sq->hostname = strdup(hstname);
@@ -369,7 +382,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             {
                 /* record the cpuset, if given */
                 if (NULL != sq->cpuset) {
-                    /* setup the bitmap */
                     hwloc_cpuset_t bitmap;
                     char *cpu_bitmap;
                     if (NULL == node->topology) {
@@ -380,18 +392,28 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                         rc = ORTE_ERR_SILENT;
                         goto error;
                     }
-                    bitmap = hwloc_bitmap_alloc();
-                    /* parse the slot_list to find the socket and core */
-                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto error;
+                    /* if we are using hwthreads as cpus and binding to hwthreads, then
+                     * we can just copy the cpuset across as it already specifies things
+                     * at that level */
+                    if (opal_hwloc_use_hwthreads_as_cpus &&
+                        OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+                        cpu_bitmap = strdup(sq->cpuset);
+                    } else {
+                        /* setup the bitmap */
+                        bitmap = hwloc_bitmap_alloc();
+                        /* parse the slot_list to find the socket and core */
+                        if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto error;
+                        }
+                        /* note that we cannot set the proc locale to any specific object
+                         * as the slot list may have assigned it to more than one - so
+                         * leave that field NULL
+                         */
+                        /* set the proc to the specified map */
+                        hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
+                        hwloc_bitmap_free(bitmap);
                     }
-                    /* note that we cannot set the proc locale to any specific object
-                     * as the slot list may have assigned it to more than one - so
-                     * leave that field NULL
-                     */
-                    /* set the proc to the specified map */
-                    hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
                     orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:seq: binding proc %s to cpuset %s bitmap %s",
@@ -403,7 +425,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
                     /* cleanup */
                     free(cpu_bitmap);
-                    hwloc_bitmap_free(bitmap);
                 } else {
                     hwloc_obj_t locale;
 
