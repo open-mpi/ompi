@@ -53,6 +53,7 @@
 #define USD_MAX_DEVICES 8
 #define USD_MAX_DEVNAME 16
 #define USD_RECV_MAX_SGE 8
+#define USD_SEND_MAX_SGE 8
 
 enum usd_link_state {
     USD_LINK_DOWN,
@@ -147,6 +148,9 @@ struct usd_qp_ops {
     int (*qo_post_send_two_copy)(struct usd_qp *qp,
             struct usd_dest *dest, const void *hdr, size_t hdrlen,
             const void *pkt, size_t pktlen, uint32_t flags, void *context);
+    int (*qo_post_send_iov)(struct usd_qp *qp,
+            struct usd_dest *dest, const struct iovec* iov,
+            size_t iov_count, uint32_t flags, void *context);
 };
 
 /*
@@ -604,11 +608,16 @@ usd_post_send_two_copy(struct usd_qp *qp, struct usd_dest *dest,
 /*
  * Post an N-buffer send
  * All buffers must be in registered memory.
- * Requires iov_len + 1 send credits
+ * Requires iov_count + 1 send credits
  */
-int usd_post_send_sge(struct usd_qp *qp, struct usd_dest *dest,
-        const struct iovec *iov, size_t iov_len, uint32_t flags, void *context);
-
+static inline int
+usd_post_send_iov(struct usd_qp *qp, struct usd_dest *dest,
+    const struct iovec *iov, size_t iov_count, uint32_t flags,
+    void *context)
+{
+    return qp->uq_ops.qo_post_send_iov(
+            qp, dest, iov, iov_count, flags, context);
+}
 /****************************************************************
  * enum-to-string utility functions (for prettyprinting)
  ****************************************************************/

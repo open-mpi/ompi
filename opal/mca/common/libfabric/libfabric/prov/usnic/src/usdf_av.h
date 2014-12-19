@@ -36,13 +36,26 @@
 #ifndef _USDF_AV_H_
 #define _USDF_AV_H_
 
+#include "usd_dest.h"
+
 #define USDF_AV_MAX_ARPS 3
 #define USDF_AV_ARP_INTERVAL 1000
+
+struct usdf_rdm_connection;
+
+/*
+ * libfabric version of dest
+ */
+struct usdf_dest {
+	struct usd_dest ds_dest;
+
+	SLIST_HEAD(,usdf_rdm_connection) ds_rdm_rdc_list;
+};
 
 /* struct used to track async insert requests */
 struct usdf_av_req {
 	fi_addr_t *avr_fi_addr;
-	struct usd_dest *avr_dest;
+	struct usdf_dest *avr_dest;
 	int avr_status;
 
 	uint32_t avr_daddr_be;

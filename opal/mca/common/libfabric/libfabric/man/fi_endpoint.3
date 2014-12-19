@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2014\-12\-04" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2014\-12\-18" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -9,8 +9,8 @@ Allocate or close an endpoint.
 .RE
 .TP
 .B fi_ep_bind
-Associate an endpoint with an event queue, completion queue, address
-vector, or memory region
+Associate an endpoint with an event queue, completion queue, counter,
+address vector, or memory region
 .RS
 .RE
 .TP
@@ -227,14 +227,6 @@ completion of a subsequent operation.
 Use of this flag may improve performance by allowing the provider to
 avoid writing a completion entry for every operation.
 .PP
-The use of FI_COMPLETION is often paired with the call fi_sync.
-FI_COMPLETION allows the user to suppress completions from being
-generated.
-In order for the application to ensure that all previous operations have
-completed, the application may call fi_sync.
-The successful completion of fi_sync indicates that all prior operations
-have completed successfully.
-.PP
 An endpoint may also, or instead, be bound to a fabric counter.
 When binding an endpoint to a counter, the following flags may be
 specified.
@@ -346,6 +338,11 @@ The following option levels and option names and parameters are defined.
 \f[I]FI_OPT_MIN_MULTI_RECV - size_t\f[] : Defines the minimum receive
 buffer space available when the receive buffer is automatically freed
 (see FI_MULTI_RECV).
+Modifying this value is only guaranteed to set the minimum buffer space
+needed on receives posted after the value has been changed.
+It is recommended that applications that want to override the default
+MIN_MULTI_RECV value set this option before enabling the corresponding
+endpoint.
 .SH ENDPOINT ATTRIBUTES
 .PP
 The fi_ep_attr structure defines the set of attributes associated with
@@ -354,7 +351,8 @@ an endpoint.
 .nf
 \f[C]
 struct\ fi_ep_attr\ {
-\ \ \ \ uint64_t\ \ protocol;
+\ \ \ \ uint32_t\ \ protocol;
+\ \ \ \ uint32_t\ \ protocol_version;
 \ \ \ \ size_t\ \ \ \ max_msg_size;
 \ \ \ \ size_t\ \ \ \ inject_size;
 \ \ \ \ size_t\ \ \ \ total_buffered_recv;
@@ -376,8 +374,8 @@ A matching protocol must be used by communicating endpoints to ensure
 interoperability.
 The following protocol values are defined.
 Provider specific protocols are also allowed.
-Provider specific protocols will be indicated by having the upper 3
-bytes of the protocol value set to the vendor OUI.
+Provider specific protocols will be indicated by having the upper bit of
+the protocol value set to one.
 .PP
 \f[I]FI_PROTO_UNSPEC\f[] : The protocol is not specified.
 This is usually provided as input, with other attributes of the socket
@@ -397,6 +395,15 @@ datagram queue pairs.
 protocol known as PSM, performance scaled messaging.
 PSMX is an extended version of the PSM protocol to support the libfabric
 interfaces.
+.SS protocol_version - Protocol Version
+.PP
+Identifies which version of the protocol is employeed by the provider.
+The protocol version allows providers to extend an existing protocol, by
+adding support for additional features or functionality for example, in
+a backward compatible manner.
+Providers that support different versions of the same protocol should
+interoperate, but only when using the capabilities defined for the
+lesser version.
 .SS max_msg_size - Max Message Size
 .PP
 Defines the maximum size for an application data transfer as a single
@@ -584,7 +591,7 @@ submission.
 Number of transmit contexts to associate with the endpoint.
 If not specified (0), 1 context will be assigned if the endpoint
 supports outbound transfers.
-Transmit contexts are independent command queues that may be separately
+Transmit contexts are independent transmit queues that may be separately
 configured.
 Each transmit context may be bound to a separate CQ, and no ordering is
 defined between contexts.
@@ -637,7 +644,7 @@ and require the application to explicitly create transmit and receive
 contexts as described below.
 .SS fi_tx_context
 .PP
-Transmit contexts are independent command queues.
+Transmit contexts are independent transmit queues.
 Ordering and synchronization between contexts are not defined.
 Conceptually a transmit context behaves similar to a send-only endpoint.
 A transmit context may be configured with relaxed capabilities, and has
@@ -706,7 +713,7 @@ operation.
 (scatter-gather elements) that a single posted operation may reference.
 .SS fi_rx_context
 .PP
-Receive contexts are independent command queues for receiving incoming
+Receive contexts are independent receive queues for receiving incoming
 data.
 Ordering and synchronization between contexts are not guaranteed.
 Conceptually a receive context behaves similar to a receive-only
@@ -797,7 +804,7 @@ processing, with the potential cost of serializing access across
 multiple endpoints.
 Support for sharable contexts is domain specific.
 .PP
-Conceptually, sharable contexts are command queues that may be accessed
+Conceptually, sharable contexts are transmit queues that may be accessed
 by many endpoints.
 The use of a shared transmit context is mostly opaque to an application.
 Applications must allocate and bind shared transmit contexts to
@@ -935,6 +942,13 @@ such data transfers.
 Operations that complete in error that are not associated with valid
 operational context will use the endpoint context in any error reporting
 structures.
+.PP
+Users can attach both counters and completion queues to an endpoint.
+When both counter and completion queue are attached, a successful
+completion increments the counter and does not generate a completion
+entry in the completion queue.
+Operations that complete with an error increment the error counter and
+generate a completion event.
 .SH RETURN VALUES
 .PP
 Returns 0 on success.

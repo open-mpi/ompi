@@ -57,11 +57,14 @@
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 #include "fi.h"
+#include "fi_enosys.h"
 
 #include "usnic_direct.h"
 #include "usd.h"
 #include "usdf.h"
 #include "usdf_av.h"
+#include "usdf_progress.h"
+#include "usdf_cq.h"
 
 static ssize_t
 usdf_cq_readerr(struct fid_cq *fcq, struct fi_cq_err_entry *entry,
@@ -93,12 +96,23 @@ usdf_cq_sread(struct fid_cq *cq, void *buf, size_t count, const void *cond,
 	return -FI_ENOSYS;
 }
 
-static ssize_t
-usdf_cq_read_context(struct fid_cq *fcq, void *buf, size_t count)
+/*
+ * poll a hard CQ
+ * Since this routine is an inline and is always called with format as
+ * a constant, I am counting on the compiler optimizing away all the switches
+ * on format.
+ */
+static inline ssize_t
+usdf_cq_read_common(struct fid_cq *fcq, void *buf, size_t count,
+		enum fi_cq_format format)
 {
 	struct usdf_cq *cq;
-	struct fi_cq_entry *entry;
-	struct fi_cq_entry *last;
+	uint8_t *entry;
+	uint8_t *last;
+	size_t entry_len;
+	struct fi_cq_entry *ctx_entry;
+	struct fi_cq_msg_entry *msg_entry;
+	struct fi_cq_data_entry *data_entry;
 	ssize_t ret;
 
 	cq = cq_ftou(fcq);
@@ -106,11 +120,26 @@ usdf_cq_read_context(struct fid_cq *fcq, void *buf, size_t count)
 		return -FI_EAVAIL;
 	}
 
+	switch (format) {
+	case FI_CQ_FORMAT_CONTEXT:
+		entry_len = sizeof(struct fi_cq_entry);
+		break;
+	case FI_CQ_FORMAT_MSG:
+		entry_len = sizeof(struct fi_cq_msg_entry);
+		break;
+	case FI_CQ_FORMAT_DATA:
+		entry_len = sizeof(struct fi_cq_data_entry);
+		break;
+	default:
+		return 0;
+	}
+
 	ret = 0;
 	entry = buf;
-	last = entry + count;
+	last = entry + (entry_len * count);
+
 	while (entry < last) {
-		ret = usd_poll_cq(cq->cq_cq, &cq->cq_comp);
+		ret = usd_poll_cq(cq->c.hard.cq_cq, &cq->cq_comp);
 		if (ret == -EAGAIN) {
 			ret = 0;
 			break;
@@ -119,17 +148,54 @@ usdf_cq_read_context(struct fid_cq *fcq, void *buf, size_t count)
 			ret = -FI_EAVAIL;
 			break;
 		}
-
-		entry->op_context = cq->cq_comp.uc_context;
-
-		entry++;
+		switch (format) {
+		case FI_CQ_FORMAT_CONTEXT:
+			ctx_entry = (struct fi_cq_entry *)entry;
+			ctx_entry->op_context = cq->cq_comp.uc_context;
+			break;
+		case FI_CQ_FORMAT_MSG:
+			msg_entry = (struct fi_cq_msg_entry *)entry;
+			msg_entry->op_context = cq->cq_comp.uc_context;
+			msg_entry->flags = 0;
+			msg_entry->len = cq->cq_comp.uc_bytes;
+			break;
+		case FI_CQ_FORMAT_DATA:
+			data_entry = (struct fi_cq_data_entry *)entry;
+			data_entry->op_context = cq->cq_comp.uc_context;
+			data_entry->flags = 0;
+			data_entry->len = cq->cq_comp.uc_bytes;
+			data_entry->buf = 0; /* XXX */
+			data_entry->data = 0;
+			break;
+		default:
+			return 0;
+		}
+		entry += entry_len;
 	}
 
-	if (entry > (struct fi_cq_entry *)buf) {
-		return entry - (struct fi_cq_entry *)buf;
+	if (entry > (uint8_t *)buf) {
+		return (entry - (uint8_t *)buf) / entry_len;
 	} else {
 		return ret;
 	}
+}
+
+static ssize_t
+usdf_cq_read_context(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common(fcq, buf, count, FI_CQ_FORMAT_CONTEXT);
+}
+
+static ssize_t
+usdf_cq_read_msg(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common(fcq, buf, count, FI_CQ_FORMAT_MSG);
+}
+
+static ssize_t
+usdf_cq_read_data(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common(fcq, buf, count, FI_CQ_FORMAT_DATA);
 }
 
 static ssize_t
@@ -151,7 +217,7 @@ usdf_cq_readfrom_context(struct fid_cq *fcq, void *buf, size_t count,
 	if (cq->cq_comp.uc_status != 0) {
 		return -FI_EAVAIL;
 	}
-	ucq = to_cqi(cq->cq_cq);
+	ucq = to_cqi(cq->c.hard.cq_cq);
 
 	ret = 0;
 	entry = buf;
@@ -160,7 +226,7 @@ usdf_cq_readfrom_context(struct fid_cq *fcq, void *buf, size_t count,
 		cq_desc = (struct cq_desc *)((uint8_t *)ucq->ucq_desc_ring +
 				(ucq->ucq_next_desc << 4));
 
-		ret = usd_poll_cq(cq->cq_cq, &cq->cq_comp);
+		ret = usd_poll_cq(cq->c.hard.cq_cq, &cq->cq_comp);
 		if (ret == -EAGAIN) {
 			ret = 0;
 			break;
@@ -174,13 +240,13 @@ usdf_cq_readfrom_context(struct fid_cq *fcq, void *buf, size_t count,
 			index = le16_to_cpu(cq_desc->completed_index) &
 				CQ_DESC_COMP_NDX_MASK;
 			ep = cq->cq_comp.uc_qp->uq_context;
-			hdr = ep->ep_hdr_ptr[index];
+			hdr = ep->e.dg.ep_hdr_ptr[index];
 			memset(&sin, 0, sizeof(sin));
 
 			sin.sin_addr.s_addr = hdr->uh_ip.saddr;
 			sin.sin_port = hdr->uh_udp.source;
 
-			ret = fi_av_insert(av_utof(ep->ep_av), &sin, 1,
+			ret = fi_av_insert(av_utof(ep->e.dg.ep_av), &sin, 1,
 					src_addr, 0, NULL);
 			if (ret != 1) {
 				*src_addr = FI_ADDR_NOTAVAIL;
@@ -201,12 +267,174 @@ usdf_cq_readfrom_context(struct fid_cq *fcq, void *buf, size_t count,
 	}
 }
 
-static ssize_t
-usdf_cq_read_msg(struct fid_cq *fcq, void *buf, size_t count)
+/*****************************************************************
+ * "soft" CQ support
+ *****************************************************************/
+
+static inline void
+usdf_progress_hard_cq(struct usdf_cq_hard *hcq, enum fi_cq_format format)
+{
+	int ret;
+	struct usd_completion comp;
+	void *entry;
+	size_t entry_size;
+	struct fi_cq_entry *ctx_entry;
+	struct fi_cq_msg_entry *msg_entry;
+	struct fi_cq_data_entry *data_entry;
+	struct usdf_cq *cq;
+
+	cq = hcq->cqh_cq;
+
+	do {
+		ret = usd_poll_cq(hcq->cqh_ucq, &comp);
+		if (ret == 0) {
+			entry = cq->c.soft.cq_head;
+			switch (format) {
+			case FI_CQ_FORMAT_CONTEXT:
+				entry_size = sizeof(*ctx_entry);
+				ctx_entry = (struct fi_cq_entry *)entry;
+				ctx_entry->op_context = cq->cq_comp.uc_context;
+				break;
+			case FI_CQ_FORMAT_MSG:
+				entry_size = sizeof(*msg_entry);
+				msg_entry = (struct fi_cq_msg_entry *)entry;
+				msg_entry->op_context = cq->cq_comp.uc_context;
+				msg_entry->flags = 0;
+				msg_entry->len = cq->cq_comp.uc_bytes;
+				break;
+			case FI_CQ_FORMAT_DATA:
+				entry_size = sizeof(*data_entry);
+				data_entry = (struct fi_cq_data_entry *)entry;
+				data_entry->op_context = cq->cq_comp.uc_context;
+				data_entry->flags = 0;
+				data_entry->len = cq->cq_comp.uc_bytes;
+				data_entry->buf = 0; /* XXX */
+				data_entry->data = 0;
+				break;
+			default:
+				return;
+			}
+
+			/* update with wrap */
+			entry = (uint8_t *)entry + entry_size;
+			if (entry != cq->c.soft.cq_end) {
+				cq->c.soft.cq_head = entry;
+			} else {
+				cq->c.soft.cq_head = cq->c.soft.cq_comps;
+			}
+		}
+	} while (ret != -EAGAIN);
+}
+
+void
+usdf_progress_hard_cq_context(struct usdf_cq_hard *hcq)
+{
+	usdf_progress_hard_cq(hcq, FI_CQ_FORMAT_CONTEXT);
+}
+
+void
+usdf_progress_hard_cq_msg(struct usdf_cq_hard *hcq)
+{
+	usdf_progress_hard_cq(hcq, FI_CQ_FORMAT_MSG);
+}
+
+void
+usdf_progress_hard_cq_data(struct usdf_cq_hard *hcq)
+{
+	usdf_progress_hard_cq(hcq, FI_CQ_FORMAT_DATA);
+}
+
+static inline void
+usdf_cq_post_soft(struct usdf_cq_hard *hcq, void *context, size_t len,
+		enum fi_cq_format format)
+{
+	void *entry;
+	size_t entry_size;
+	struct fi_cq_entry *ctx_entry;
+	struct fi_cq_msg_entry *msg_entry;
+	struct fi_cq_data_entry *data_entry;
+	struct usdf_cq *cq;
+
+	cq = hcq->cqh_cq;
+
+	entry = cq->c.soft.cq_head;
+	switch (format) {
+	case FI_CQ_FORMAT_CONTEXT:
+		entry_size = sizeof(*ctx_entry);
+		ctx_entry = (struct fi_cq_entry *)entry;
+		ctx_entry->op_context = context;
+		break;
+	case FI_CQ_FORMAT_MSG:
+		entry_size = sizeof(*msg_entry);
+		msg_entry = (struct fi_cq_msg_entry *)entry;
+		msg_entry->op_context = context;
+		msg_entry->flags = 0;
+		msg_entry->len = len;
+		break;
+	case FI_CQ_FORMAT_DATA:
+		entry_size = sizeof(*data_entry);
+		data_entry = (struct fi_cq_data_entry *)entry;
+		data_entry->op_context = context;
+		data_entry->flags = 0;
+		data_entry->len = len;
+		data_entry->buf = NULL;
+		data_entry->data = 0;
+		break;
+	default:
+		return;
+	}
+
+	/* update with wrap */
+	entry = (uint8_t *)entry + entry_size;
+	if (entry != cq->c.soft.cq_end) {
+		cq->c.soft.cq_head = entry;
+	} else {
+		cq->c.soft.cq_head = cq->c.soft.cq_comps;
+	}
+
+}
+
+void
+usdf_cq_post_soft_context(struct usdf_cq_hard *hcq, void *context, size_t len)
+{
+	usdf_cq_post_soft(hcq, context, len, FI_CQ_FORMAT_CONTEXT);
+}
+
+void
+usdf_cq_post_soft_msg(struct usdf_cq_hard *hcq, void *context, size_t len)
+{
+	usdf_cq_post_soft(hcq, context, len, FI_CQ_FORMAT_MSG);
+}
+
+void
+usdf_cq_post_soft_data(struct usdf_cq_hard *hcq, void *context, size_t len)
+{
+	usdf_cq_post_soft(hcq, context, len, FI_CQ_FORMAT_DATA);
+}
+
+ssize_t
+usdf_cq_sread_soft(struct fid_cq *cq, void *buf, size_t count, const void *cond,
+		int timeout)
+{
+	return -FI_ENOSYS;
+}
+
+/*
+ * poll a soft CQ
+ * This will loop over all the hard CQs within, collecting results.
+ * Since this routine is an inline and is always called with format as
+ * a constant, I am counting on the compiler optimizing away all the switches
+ * on format.
+ */
+static inline ssize_t
+usdf_cq_read_common_soft(struct fid_cq *fcq, void *buf, size_t count,
+		enum fi_cq_format format)
 {
 	struct usdf_cq *cq;
-	struct fi_cq_msg_entry *entry;
-	struct fi_cq_msg_entry *last;
+	uint8_t *entry;
+	uint8_t *last;
+	void *tail;
+	size_t entry_len;
 	ssize_t ret;
 
 	cq = cq_ftou(fcq);
@@ -214,11 +442,94 @@ usdf_cq_read_msg(struct fid_cq *fcq, void *buf, size_t count)
 		return -FI_EAVAIL;
 	}
 
+	/* progress... */
+	usdf_domain_progress(cq->cq_domain);
+
+	switch (format) {
+	case FI_CQ_FORMAT_CONTEXT:
+		entry_len = sizeof(struct fi_cq_entry);
+		break;
+	case FI_CQ_FORMAT_MSG:
+		entry_len = sizeof(struct fi_cq_msg_entry);
+		break;
+	case FI_CQ_FORMAT_DATA:
+		entry_len = sizeof(struct fi_cq_data_entry);
+		break;
+	default:
+		return 0;
+	}
+
+	ret = 0;
+	entry = buf;
+	last = entry + (entry_len * count);
+	tail = cq->c.soft.cq_tail;
+
+	// XXX ... handle error comps
+	while (entry < last && tail != cq->c.soft.cq_head) {
+		memcpy(entry, tail, entry_len);
+		entry += entry_len;
+
+		tail = (uint8_t *)tail + entry_len;
+		if (tail == cq->c.soft.cq_end) {
+			tail = cq->c.soft.cq_comps;
+		}
+	}
+	cq->c.soft.cq_tail = tail;
+
+	if (entry > (uint8_t *)buf) {
+		return (entry - (uint8_t *)buf) / entry_len;
+	} else {
+		return ret;
+	}
+}
+
+static ssize_t
+usdf_cq_read_context_soft(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common_soft(fcq, buf, count, FI_CQ_FORMAT_CONTEXT);
+}
+
+static ssize_t
+usdf_cq_read_msg_soft(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common_soft(fcq, buf, count, FI_CQ_FORMAT_MSG);
+}
+
+static ssize_t
+usdf_cq_read_data_soft(struct fid_cq *fcq, void *buf, size_t count)
+{
+	return usdf_cq_read_common_soft(fcq, buf, count, FI_CQ_FORMAT_DATA);
+}
+
+static ssize_t
+usdf_cq_readfrom_context_soft(struct fid_cq *fcq, void *buf, size_t count,
+			fi_addr_t *src_addr)
+{
+	struct usdf_cq *cq;
+	struct usd_cq_impl *ucq;
+	struct fi_cq_entry *entry;
+	struct fi_cq_entry *last;
+	ssize_t ret;
+	struct cq_desc *cq_desc;
+	struct usdf_ep *ep;
+	struct sockaddr_in sin;
+	struct usd_udp_hdr *hdr;
+	uint16_t index;
+
+	cq = cq_ftou(fcq);
+	if (cq->cq_comp.uc_status != 0) {
+		return -FI_EAVAIL;
+	}
+	ucq = to_cqi(cq->c.hard.cq_cq);
+
 	ret = 0;
 	entry = buf;
 	last = entry + count;
 	while (entry < last) {
-		ret = usd_poll_cq(cq->cq_cq, &cq->cq_comp);
+		cq_desc = (struct cq_desc *)((uint8_t *)ucq->ucq_desc_ring +
+				(ucq->ucq_next_desc << 4));
+
+		ret = usd_poll_cq(cq->c.hard.cq_cq, &cq->cq_comp);
 		if (ret == -EAGAIN) {
 			ret = 0;
 			break;
@@ -228,62 +539,40 @@ usdf_cq_read_msg(struct fid_cq *fcq, void *buf, size_t count)
 			break;
 		}
 
+		if (cq->cq_comp.uc_type == USD_COMPTYPE_RECV) {
+			index = le16_to_cpu(cq_desc->completed_index) &
+				CQ_DESC_COMP_NDX_MASK;
+			ep = cq->cq_comp.uc_qp->uq_context;
+			hdr = ep->e.dg.ep_hdr_ptr[index];
+			memset(&sin, 0, sizeof(sin));
+
+			sin.sin_addr.s_addr = hdr->uh_ip.saddr;
+			sin.sin_port = hdr->uh_udp.source;
+
+			ret = fi_av_insert(av_utof(ep->e.dg.ep_av), &sin, 1,
+					src_addr, 0, NULL);
+			if (ret != 1) {
+				*src_addr = FI_ADDR_NOTAVAIL;
+			}
+			++src_addr;
+		}
+			
+
 		entry->op_context = cq->cq_comp.uc_context;
-		entry->flags = 0;
-		entry->len = cq->cq_comp.uc_bytes;
 
 		entry++;
 	}
 
-	if (entry > (struct fi_cq_msg_entry *)buf) {
-		return entry - (struct fi_cq_msg_entry *)buf;
+	if (entry > (struct fi_cq_entry *)buf) {
+		return entry - (struct fi_cq_entry *)buf;
 	} else {
 		return ret;
 	}
 }
 
-static ssize_t
-usdf_cq_read_data(struct fid_cq *fcq, void *buf, size_t count)
-{
-	struct usdf_cq *cq;
-	struct fi_cq_data_entry *entry;
-	struct fi_cq_data_entry *last;
-	ssize_t ret;
-
-	cq = cq_ftou(fcq);
-	if (cq->cq_comp.uc_status != 0) {
-		return -FI_EAVAIL;
-	}
-
-	ret = 0;
-	entry = buf;
-	last = entry + count;
-	while (entry < last) {
-		ret = usd_poll_cq(cq->cq_cq, &cq->cq_comp);
-		if (ret == -EAGAIN) {
-			ret = 0;
-			break;
-		}
-		if (cq->cq_comp.uc_status != 0) {
-			ret = -FI_EAVAIL;
-			break;
-		}
-
-		entry->op_context = cq->cq_comp.uc_context;
-		entry->flags = 0;
-		entry->len = cq->cq_comp.uc_bytes;
-		entry->buf = 0;	/* XXX */
-		entry->data = 0;
-
-		entry++;
-	}
-
-	if (entry > (struct fi_cq_data_entry *)buf) {
-		return entry - (struct fi_cq_data_entry *)buf;
-	} else {
-		return ret;
-	}
-}
+/*****************************************************************
+ * common CQ support
+ *****************************************************************/
 
 static const char *
 usdf_cq_strerror(struct fid_cq *eq, int prov_errno, const void *err_data,
@@ -293,31 +582,6 @@ usdf_cq_strerror(struct fid_cq *eq, int prov_errno, const void *err_data,
 	buf[len-1] = '\0';
 	return buf;
 }
-
-static struct fi_ops_cq usdf_cq_context_ops = {
-	.size = sizeof(struct fi_ops_cq),
-	.read = usdf_cq_read_context,
-	.sread = usdf_cq_sread,
-	.readfrom = usdf_cq_readfrom_context,
-	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
-};
-
-static struct fi_ops_cq usdf_cq_msg_ops = {
-	.size = sizeof(struct fi_ops_cq),
-	.read = usdf_cq_read_msg,
-	.sread = usdf_cq_sread,
-	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
-};
-
-static struct fi_ops_cq usdf_cq_data_ops = {
-	.size = sizeof(struct fi_ops_cq),
-	.read = usdf_cq_read_data,
-	.sread = usdf_cq_sread,
-	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
-};
 
 static int
 usdf_cq_control(fid_t fid, int command, void *arg)
@@ -329,13 +593,35 @@ static int
 usdf_cq_close(fid_t fid)
 {
 	struct usdf_cq *cq;
+	struct usdf_cq_hard *hcq;
 	int ret;
 
 	cq = container_of(fid, struct usdf_cq, cq_fid.fid);
-	if (cq->cq_cq) {
-		ret = usd_destroy_cq(cq->cq_cq);
-		if (ret != 0) {
-			return ret;
+	if (atomic_get(&cq->cq_refcnt) > 0) {
+		return -FI_EBUSY;
+	}
+
+	if (usdf_cq_is_soft(cq)) {
+		while (!TAILQ_EMPTY(&cq->c.soft.cq_list)) {
+			hcq = TAILQ_FIRST(&cq->c.soft.cq_list);
+			if (atomic_get(&hcq->cqh_refcnt) > 0) {
+				return -FI_EBUSY;
+			}
+			TAILQ_REMOVE(&cq->c.soft.cq_list, hcq, cqh_link);
+			if (hcq->cqh_ucq != NULL) {
+				ret = usd_destroy_cq(hcq->cqh_ucq);
+				if (ret != 0) {
+					return ret;
+				}
+			}
+			free(hcq);
+		}
+	} else {
+		if (cq->c.hard.cq_cq) {
+			ret = usd_destroy_cq(cq->c.hard.cq_cq);
+			if (ret != 0) {
+				return ret;
+			}
 		}
 	}
 
@@ -343,21 +629,206 @@ usdf_cq_close(fid_t fid)
 	return 0;
 }
 
+static struct fi_ops_cq usdf_cq_context_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_context,
+	.sread = usdf_cq_sread,
+	.readfrom = usdf_cq_readfrom_context,
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
+static struct fi_ops_cq usdf_cq_context_soft_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_context_soft,
+	.sread = usdf_cq_sread_soft,
+	.readfrom = usdf_cq_readfrom_context_soft,
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
+static struct fi_ops_cq usdf_cq_msg_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_msg,
+	.sread = usdf_cq_sread,
+	.readfrom = fi_no_cq_readfrom,  /* XXX */
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
+static struct fi_ops_cq usdf_cq_msg_soft_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_msg_soft,
+	.sread = usdf_cq_sread,
+	.readfrom = fi_no_cq_readfrom,  /* XXX */
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
+static struct fi_ops_cq usdf_cq_data_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_data,
+	.sread = usdf_cq_sread,
+	.readfrom = fi_no_cq_readfrom,  /* XXX */
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
+static struct fi_ops_cq usdf_cq_data_soft_ops = {
+	.size = sizeof(struct fi_ops_cq),
+	.read = usdf_cq_read_data_soft,
+	.sread = usdf_cq_sread,
+	.readfrom = fi_no_cq_readfrom,  /* XXX */
+	.readerr = usdf_cq_readerr,
+	.strerror = usdf_cq_strerror
+};
+
 static struct fi_ops usdf_cq_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_cq_close,
 	.control = usdf_cq_control,
 };
 
+/*
+ * Return true is this CQ is in "soft" (emulated) mode
+ */
+int
+usdf_cq_is_soft(struct usdf_cq *cq)
+{
+	struct fi_ops_cq *soft_ops;
+
+        switch (cq->cq_attr.format) {
+        case FI_CQ_FORMAT_CONTEXT:
+                soft_ops = &usdf_cq_context_soft_ops;
+                break;
+        case FI_CQ_FORMAT_MSG:
+                soft_ops = &usdf_cq_msg_soft_ops;
+                break;
+        case FI_CQ_FORMAT_DATA:
+                soft_ops = &usdf_cq_data_soft_ops;
+                break;
+	default:
+		return 0;
+        }
+
+	return cq->cq_fid.ops == soft_ops;
+}
+
+int
+usdf_cq_make_soft(struct usdf_cq *cq)
+{
+        struct fi_ops_cq *hard_ops;
+        struct fi_ops_cq *soft_ops;
+	struct usdf_cq_hard *hcq;
+	struct usd_cq *ucq;
+	size_t comp_size;
+	void (*rtn)(struct usdf_cq_hard *hcq);
+
+        switch (cq->cq_attr.format) {
+        case FI_CQ_FORMAT_CONTEXT:
+                hard_ops = &usdf_cq_context_ops;
+                soft_ops = &usdf_cq_context_soft_ops;
+		comp_size = sizeof(struct fi_cq_entry);
+		rtn = usdf_progress_hard_cq_context;
+                break;
+        case FI_CQ_FORMAT_MSG:
+                hard_ops = &usdf_cq_msg_ops;
+                soft_ops = &usdf_cq_msg_soft_ops;
+		comp_size = sizeof(struct fi_cq_msg_entry);
+		rtn = usdf_progress_hard_cq_msg;
+                break;
+        case FI_CQ_FORMAT_DATA:
+                hard_ops = &usdf_cq_data_ops;
+                soft_ops = &usdf_cq_data_soft_ops;
+		comp_size = sizeof(struct fi_cq_data_entry);
+		rtn = usdf_progress_hard_cq_data;
+                break;
+	default:
+		return 0;
+        }
+
+        if (cq->cq_fid.ops == hard_ops) {
+
+		/* save the CQ before we trash the union */
+		ucq = cq->c.hard.cq_cq;
+
+		/* fill in the soft part of union */
+		TAILQ_INIT(&cq->c.soft.cq_list);
+		cq->c.soft.cq_comps = calloc(cq->cq_attr.size, comp_size);
+		if (cq->c.soft.cq_comps == NULL) {
+			return -FI_ENOMEM;
+		}
+		cq->c.soft.cq_end = (void *)((uintptr_t)cq->c.soft.cq_comps +
+				(cq->cq_attr.size * comp_size));
+		cq->c.soft.cq_head = cq->c.soft.cq_comps;
+		cq->c.soft.cq_tail = cq->c.soft.cq_comps;
+
+		/* need to add hard queue to list? */
+		if (ucq != NULL) {
+			hcq = malloc(sizeof(*hcq));
+			if (hcq == NULL) {
+				free(cq->c.soft.cq_comps);
+				cq->c.hard.cq_cq = ucq;	/* restore */
+				return -FI_ENOMEM;
+			}
+
+			hcq->cqh_cq = cq;
+			hcq->cqh_ucq = ucq;
+			hcq->cqh_progress = rtn;
+
+			atomic_init(&hcq->cqh_refcnt,
+					atomic_get(&cq->cq_refcnt));
+			TAILQ_INSERT_HEAD(&cq->c.soft.cq_list, hcq, cqh_link);
+		}
+
+                cq->cq_fid.ops = soft_ops;
+        }
+	return 0;
+}
+
+static int
+usdf_cq_process_attr(struct fi_cq_attr *attr, struct usdf_domain *udp)
+{
+	/* no wait object yet */
+	if (attr->wait_obj != FI_WAIT_NONE) {
+		return -FI_ENOSYS;
+	}
+
+	/* bound and default size */
+	if (attr->size > udp->dom_fabric->fab_dev_attrs->uda_max_cqe) {
+		return -FI_EINVAL;
+	}
+	if (attr->size == 0) {
+		attr->size = udp->dom_fabric->fab_dev_attrs->uda_max_cqe;
+	}
+
+	/* default format is FI_CQ_FORMAT_CONTEXT */
+	if (attr->format == FI_CQ_FORMAT_UNSPEC) {
+
+		attr->format = FI_CQ_FORMAT_CONTEXT;
+	}
+	return 0;
+}
+
+int
+usdf_cq_create_cq(struct usdf_cq *cq)
+{
+	return usd_create_cq(cq->cq_domain->dom_dev, cq->cq_attr.size, -1,
+			&cq->c.hard.cq_cq);
+}
+
 int
 usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	    struct fid_cq **cq_o, void *context)
 {
 	struct usdf_cq *cq;
+	struct usdf_domain *udp;
 	int ret;
 
-	if (attr->wait_obj != FI_WAIT_NONE) {
-		return -FI_ENOSYS;
+	udp = dom_ftou(domain);
+	ret = usdf_cq_process_attr(attr, udp);
+	if (ret != 0) {
+		return ret;
 	}
 
 	cq = calloc(1, sizeof(*cq));
@@ -365,13 +836,7 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		return -FI_ENOMEM;
 	}
 
-	cq->cq_domain = container_of(domain, struct usdf_domain, dom_fid);
-
-	ret = usd_create_cq(cq->cq_domain->dom_dev, attr->size, -1, &cq->cq_cq);
-	if (ret != 0) {
-		goto fail;
-	}
-
+	cq->cq_domain = udp;
 	cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	cq->cq_fid.fid.context = context;
 	cq->cq_fid.fid.ops = &usdf_cq_fi_ops;
@@ -391,13 +856,14 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		goto fail;
 	}
 
+	cq->cq_attr = *attr;
 	*cq_o = &cq->cq_fid;
 	return 0;
 
 fail:
 	if (cq != NULL) {
-		if (cq->cq_cq != NULL) {
-			usd_destroy_cq(cq->cq_cq);
+		if (cq->c.hard.cq_cq != NULL) {
+			usd_destroy_cq(cq->c.hard.cq_cq);
 		}
 		free(cq);
 	}

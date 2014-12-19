@@ -111,7 +111,7 @@ usdf_fabric_progression_thread(void *v)
 		}
 
 		n = epoll_wait(epfd, &ev, 1, sleep_time);
-		if (n == -1) {
+		if (fp->fab_exit || (n == -1 && errno != EINTR)) {
 			pthread_exit(NULL);
 		}
 
@@ -126,9 +126,31 @@ usdf_fabric_progression_thread(void *v)
 
 		/* call timer progress each wakeup */
 		usdf_timer_progress(fp);
-
-		if (fp->fab_exit) {
-			pthread_exit(NULL);
-		}
 	}
+}
+
+/*
+ * Progress operations in this domain
+ */
+void
+usdf_domain_progress(struct usdf_domain *udp)
+{
+	struct usdf_tx *tx;
+	struct usdf_cq_hard *hcq;
+
+	/* one big hammer lock... */
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	TAILQ_FOREACH(hcq, &udp->dom_hcq_list, cqh_dom_link) {
+		hcq->cqh_progress(hcq);
+	}
+
+	while (!TAILQ_EMPTY(&udp->dom_tx_ready)) {
+		tx = TAILQ_FIRST(&udp->dom_tx_ready);
+		TAILQ_REMOVE_MARK(&udp->dom_tx_ready, tx, tx_link);
+
+		tx->tx_progress(tx);
+	}
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
 }

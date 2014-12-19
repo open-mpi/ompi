@@ -74,10 +74,12 @@ libfabric_usnic_headers = \
 	libfabric/prov/usnic/src/usdf.h \
 	libfabric/prov/usnic/src/usdf_av.h \
 	libfabric/prov/usnic/src/usdf_cm.h \
+	libfabric/prov/usnic/src/usdf_cq.h \
 	libfabric/prov/usnic/src/usdf_dgram.h \
 	libfabric/prov/usnic/src/usdf_endpoint.h \
 	libfabric/prov/usnic/src/usdf_msg.h \
 	libfabric/prov/usnic/src/usdf_progress.h \
+	libfabric/prov/usnic/src/usdf_rdm.h \
 	libfabric/prov/usnic/src/usdf_timer.h \
 	libfabric/prov/usnic/src/usnic_direct/cq_desc.h \
 	libfabric/prov/usnic/src/usnic_direct/cq_enet_desc.h \
@@ -126,6 +128,7 @@ libfabric_usnic_sources = \
 	libfabric/prov/usnic/src/usdf_endpoint.c \
 	libfabric/prov/usnic/src/usdf_ep_dgram.c \
 	libfabric/prov/usnic/src/usdf_ep_msg.c \
+	libfabric/prov/usnic/src/usdf_ep_rdm.c \
 	libfabric/prov/usnic/src/usdf_eq.c \
 	libfabric/prov/usnic/src/usdf_fabric.c \
 	libfabric/prov/usnic/src/usdf_mem.c \
@@ -133,6 +136,7 @@ libfabric_usnic_sources = \
 	libfabric/prov/usnic/src/usdf_pep.c \
 	libfabric/prov/usnic/src/usdf_progress.c \
 	libfabric/prov/usnic/src/usdf_timer.c \
+	libfabric/prov/usnic/src/usdf_rdm.c \
 	libfabric/prov/usnic/src/usnic_direct/libnl_utils_common.c \
 	libfabric/prov/usnic/src/usnic_direct/usd_caps.c \
 	libfabric/prov/usnic/src/usnic_direct/usd_dest.c \

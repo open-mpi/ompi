@@ -38,18 +38,24 @@
 
 #include <sys/queue.h>
 
-struct usdf_connreq_msg {
-	uint32_t creq_data_len;
-} __attribute__((packed));
+#define USDF_MAX_CONN_DATA 256
 
-struct usdf_connresp_msg {
-	uint32_t cresp_result;
-	uint32_t cresp_reason;
+struct usdf_connreq_msg {
+	uint32_t creq_peer_id;
+	uint32_t creq_ipaddr;
+	uint32_t creq_port;
+	uint8_t creq_mac[ETH_ALEN];
+	uint8_t pad[8 - ETH_ALEN];
+	uint32_t creq_result;
+	uint32_t creq_reason;
+	uint32_t creq_datalen;
+	uint8_t creq_data[0];
 } __attribute__((packed));
 
 struct usdf_connreq {
 	int cr_sockfd;
 	struct usdf_pep *cr_pep;
+	struct usdf_ep *cr_ep;
 	TAILQ_ENTRY(usdf_connreq) cr_link;
 
 	struct usdf_poll_item cr_pollitem;
@@ -57,7 +63,12 @@ struct usdf_connreq {
 	uint8_t *cr_ptr;
 	size_t cr_resid;
 
+	size_t cr_datalen;
 	uint8_t cr_data[0];
 };
+
+void usdf_cm_msg_connreq_failed(struct usdf_connreq *crp, int error);
+
+int usdf_cm_rdm_getname(fid_t fid, void *addr, size_t *addrlen);
 
 #endif /* _USDF_CM_H_ */

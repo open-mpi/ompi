@@ -1,50 +1,41 @@
-%define ver @VERSION@
-
 Name: libfabric
-Version: 0.0.2
+Version: @VERSION@
 Release: 1%{?dist}
-Summary: Userspace RDMA Fabric Interfaces
-
+Summary: User-space RDMA Fabric Interfaces
 Group: System Environment/Libraries
 License: GPLv2 or BSD
 Url: http://www.github.com/ofiwg/libfabric
-Source: http://www.openfabrics.org/downloads/fabrics/%{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source: http://www.openfabrics.org/downloads/fabrics/%{name}-%{version}.tar.bz2
+Prefix: ${_prefix}
 
 %description
-libfabric provides a userspace API to access high-performance fabric
+libfabric provides a user-space API to access high-performance fabric
 services, such as RDMA.
 
 %package devel
 Summary: Development files for the libfabric library
 Group: System Environment/Libraries
+Requires: libfabric = %{version}
 
 %description devel
 Development files for the libfabric library.
 
-%package utils
-Summary: Examples for the libfabric library
-Group: System Environment/Libraries
-Requires: %{name} = %{version}-%{release}
-
-%description utils
-Example test programs for the libfabric library.
-
 %prep
-%setup -q -n %{name}-%{ver}
+%setup -q -n %{name}-%{version}
 
 %build
-%configure
+# defaults: with-dlopen and without-valgrind can be over-rode:
+%configure %{?_without_dlopen} %{?_with_valgrind}
 make %{?_smp_mflags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-%makeinstall
+rm -rf %{buildroot}
+%makeinstall installdirs
 # remove unpackaged files from the buildroot
-rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
+rm -f %{buildroot}%{_libdir}/*.la
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
@@ -52,6 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{_libdir}/lib*.so.*
+%dir %{_libdir}/libfabric/
 %doc AUTHORS COPYING README
 
 %files devel
@@ -62,10 +54,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/*
 %{_mandir}/man7/*
 
-%files utils
-%defattr(-,root,root,-)
-%{_bindir}/*
-%{_mandir}/man1/*
-
 %changelog
-
+* Mon Jan 19 2015 Maintainer Name <email@intel.com> 1.0.0
+- TODO: Release manager fill this out for initial release

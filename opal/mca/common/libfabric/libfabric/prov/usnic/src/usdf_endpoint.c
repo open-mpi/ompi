@@ -58,90 +58,8 @@
 #include "fi.h"
 #include "fi_enosys.h"
 
-#include "usnic_direct.h"
-#include "usd.h"
 #include "usdf.h"
-#include "usdf_av.h"
 #include "usdf_endpoint.h"
-#include "usdf_progress.h"
-
-static int
-usdf_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
-{
-	struct usdf_ep *ep;
-
-	ep = ep_fidtou(fid);
-
-	switch (bfid->fclass) {
-
-	case FI_CLASS_AV:
-		if (ep->ep_av != NULL) {
-			return -FI_EINVAL;
-		}
-		ep->ep_av = av_fidtou(bfid);
-		break;
-
-	case FI_CLASS_CQ:
-		if (flags & FI_SEND) {
-			if (ep->ep_wcq != NULL) {
-				return -FI_EINVAL;
-			}
-			ep->ep_wcq = cq_fidtou(bfid);
-		}
-
-		if (flags & FI_RECV) {
-			if (ep->ep_rcq != NULL) {
-				return -FI_EINVAL;
-			}
-			ep->ep_rcq = cq_fidtou(bfid);
-		}
-		break;
-
-	case FI_CLASS_EQ:
-printf("bind EQ to ep!\n");
-		if (ep->ep_eq != NULL) {
-			return -FI_EINVAL;
-		}
-		ep->ep_eq = eq_fidtou(bfid);
-		atomic_inc(&ep->ep_eq->eq_refcnt);
-		break;
-	default:
-		return -FI_EINVAL;
-	}
-
-	return 0;
-}
-
-static int
-usdf_ep_close(fid_t fid)
-{
-	struct usdf_ep *ep;
-
-	ep = ep_fidtou(fid);
-
-	if (atomic_get(&ep->ep_refcnt) > 0) {
-		return -FI_EBUSY;
-	}
-
-	if (ep->ep_qp != NULL) {
-		usd_destroy_qp(ep->ep_qp);
-	}
-	atomic_dec(&ep->ep_domain->dom_refcnt);
-	if (ep->ep_eq != NULL) {
-		atomic_dec(&ep->ep_eq->eq_refcnt);
-	}
-	
-	free(ep);
-	return 0;
-}
-
-struct fi_ops usdf_ep_ops = {
-	.size = sizeof(struct fi_ops),
-	.close = usdf_ep_close,
-	.bind = usdf_ep_bind,
-	.control = fi_no_control,
-	.ops_open = fi_no_ops_open
-};
 
 int
 usdf_ep_port_bind(struct usdf_ep *ep, struct fi_info *info)
@@ -151,13 +69,13 @@ usdf_ep_port_bind(struct usdf_ep *ep, struct fi_info *info)
 	int ret;
 
 	sin = (struct sockaddr_in *)info->src_addr;
-	ret = bind(ep->ep_sock, (struct sockaddr *)sin, sizeof(*sin));
+	ret = bind(ep->e.dg.ep_sock, (struct sockaddr *)sin, sizeof(*sin));
 	if (ret == -1) {
 		return -errno;
 	}
 
 	addrlen = sizeof(*sin);
-	ret = getsockname(ep->ep_sock, (struct sockaddr *)sin, &addrlen);
+	ret = getsockname(ep->e.dg.ep_sock, (struct sockaddr *)sin, &addrlen);
 	if (ret == -1) {
 		return -errno;
 	}
@@ -174,6 +92,8 @@ usdf_endpoint_open(struct fid_domain *domain, struct fi_info *info,
 		return usdf_ep_dgram_open(domain, info, ep_o, context);
 	case FI_EP_MSG:
 		return usdf_ep_msg_open(domain, info, ep_o, context);
+	case FI_EP_RDM:
+		return usdf_ep_rdm_open(domain, info, ep_o, context);
 	default:
 		return -FI_ENODEV;
 	}

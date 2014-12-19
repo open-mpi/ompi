@@ -64,9 +64,9 @@
 #define TAB "    "
 
 #define CASEENUMSTR(SYM) \
-	case SYM: { strcat(buf, #SYM); break; }
+	case SYM: { strcatf(buf, #SYM); break; }
 #define IFFLAGSTR(flags, SYM) \
-	do { if (flags & SYM) strcat(buf, #SYM ", "); } while(0)
+	do { if (flags & SYM) strcatf(buf, #SYM ", "); } while(0)
 
 static void fi_remove_comma(char *buffer)
 {
@@ -81,7 +81,7 @@ static void strcatf(char *dest, const char *fmt, ...)
 	va_list arglist;
 
 	va_start (arglist, fmt);
-	vsprintf(&dest[len], fmt, arglist);
+	vsnprintf(&dest[len], BUFSIZ - 1 - len, fmt, arglist);
 	va_end (arglist);
 }
 
@@ -122,9 +122,9 @@ static void fi_tostr_addr_format(char *buf, uint32_t addr_format)
 	CASEENUMSTR(FI_ADDR_PSMX);
 	default:
 		if (addr_format & FI_PROV_SPECIFIC)
-			strcat(buf, "Provider specific");
+			strcatf(buf, "Provider specific");
 		else
-			strcat(buf, "Unknown");
+			strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -136,7 +136,7 @@ static void fi_tostr_progress(char *buf, enum fi_progress progress)
 	CASEENUMSTR(FI_PROGRESS_AUTO);
 	CASEENUMSTR(FI_PROGRESS_MANUAL);
 	default:
-		strcat(buf, "Unknown");
+		strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -148,7 +148,7 @@ static void fi_tostr_threading(char *buf, enum fi_threading threading)
 	CASEENUMSTR(FI_THREAD_SAFE);
 	CASEENUMSTR(FI_THREAD_PROGRESS);
 	default:
-		strcat(buf, "Unknown");
+		strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -191,7 +191,7 @@ static void fi_tostr_ep_type(char *buf, enum fi_ep_type ep_type)
 	CASEENUMSTR(FI_EP_DGRAM);
 	CASEENUMSTR(FI_EP_RDM);
 	default:
-		strcat(buf, "Unknown");
+		strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -207,9 +207,9 @@ static void fi_tostr_protocol(char *buf, uint32_t protocol)
 	CASEENUMSTR(FI_PROTO_UDP);
 	default:
 		if (protocol & FI_PROV_SPECIFIC)
-			strcat(buf, "Provider specific");
+			strcatf(buf, "Provider specific");
 		else
-			strcat(buf, "Unknown");
+			strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -231,7 +231,7 @@ static void fi_tostr_addr(char *buf, uint32_t addr_format,
 	p = buf + strlen(buf);
 
 	if (addr == NULL) {
-		strcat(p, "(null)");
+		strcatf(p, "(null)");
 		return;
 	}
 
@@ -275,15 +275,15 @@ static void fi_tostr_tx_attr(char *buf, const struct fi_tx_attr *attr,
 	strcatf(buf, "%sfi_tx_attr:\n", prefix);
 	strcatf(buf, "%s%scaps: [ ", prefix, TAB);
 	fi_tostr_caps(buf, attr->caps);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%sop_flags: [ ", prefix, TAB);
 	fi_tostr_flags(buf, attr->op_flags);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%smsg_order: [ ", prefix, TAB);
 	fi_tostr_order(buf, attr->msg_order);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%sinject_size: %zd\n", prefix, TAB, attr->inject_size);
 	strcatf(buf, "%s%ssize: %zd\n", prefix, TAB, attr->size);
@@ -301,15 +301,15 @@ static void fi_tostr_rx_attr(char *buf, const struct fi_rx_attr *attr,
 	strcatf(buf, "%sfi_rx_attr:\n", prefix);
 	strcatf(buf, "%s%scaps: [ ", prefix, TAB);
 	fi_tostr_caps(buf, attr->caps);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%sop_flags: [ ", prefix, TAB);
 	fi_tostr_flags(buf, attr->op_flags);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%smsg_order: [ ", prefix, TAB);
 	fi_tostr_order(buf, attr->msg_order);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%stotal_buffered_recv: %zd\n", prefix, TAB, attr->total_buffered_recv);
 	strcatf(buf, "%s%ssize: %zd\n", prefix, TAB, attr->size);
@@ -337,7 +337,7 @@ static void fi_tostr_ep_attr(char *buf, const struct fi_ep_attr *attr, const cha
 
 	strcatf(buf, "%s%smsg_order: [ ", prefix, TAB);
 	fi_tostr_order(buf, attr->msg_order);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%s%stx_ctx_cnt: %zd\n", prefix, TAB, attr->tx_ctx_cnt);
 	strcatf(buf, "%s%srx_ctx_cnt: %zd\n", prefix, TAB, attr->rx_ctx_cnt);
@@ -390,30 +390,30 @@ static void fi_tostr_fabric_attr(char *buf, const struct fi_fabric_attr *attr,
 
 static void fi_tostr_info(char *buf, const struct fi_info *info)
 {
-	strcat(buf, "fi_info:\n");
+	strcatf(buf, "fi_info:\n");
 	strcatf(buf, "%scaps: [ ", TAB);
 	fi_tostr_caps(buf, info->caps);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%smode: [ ", TAB);
 	fi_tostr_mode(buf, info->mode);
-	strcat(buf, " ]\n");
+	strcatf(buf, " ]\n");
 
 	strcatf(buf, "%sep_type: ", TAB);
 	fi_tostr_ep_type(buf, info->ep_type);
-	strcat(buf, "\n");
+	strcatf(buf, "\n");
 	strcatf(buf, "%sfi_addr_format: ", TAB);
 	fi_tostr_addr_format(buf, info->addr_format);
-	strcat(buf, "\n");
+	strcatf(buf, "\n");
 
 	strcatf(buf, "%ssrc_addrlen: %zd\n", TAB, info->src_addrlen);
 	strcatf(buf, "%sdest_addrlen: %zd\n", TAB, info->dest_addrlen);
 	strcatf(buf, "%ssrc_addr: ", TAB);
 	fi_tostr_addr(buf, info->addr_format, info->src_addr);
-	strcat(buf, "\n");
+	strcatf(buf, "\n");
 	strcatf(buf, "%sdest_addr: ", TAB);
 	fi_tostr_addr(buf, info->addr_format, info->dest_addr);
-	strcat(buf, "\n");
+	strcatf(buf, "\n");
 	strcatf(buf, "%sconnreq: %s\n", TAB, info->connreq);
 
 	fi_tostr_tx_attr(buf, info->tx_attr, TAB);
@@ -429,7 +429,7 @@ static void fi_tostr_av_type(char *buf, enum fi_av_type type)
 	CASEENUMSTR(FI_AV_MAP);
 	CASEENUMSTR(FI_AV_TABLE);
 	default:
-		strcat(buf, "Unknown");
+		strcatf(buf, "Unknown");
 		break;
 	}
 }
@@ -437,7 +437,7 @@ static void fi_tostr_av_type(char *buf, enum fi_av_type type)
 __attribute__((visibility ("default")))
 char *fi_tostr_(const void *data, enum fi_type datatype)
 {
-	char *buf;
+	static char *buf = NULL;
 	uint64_t val64 = *(const uint64_t *) data;
 	uint32_t val32 = *(const uint32_t *) data;
 	int enumval = *(const int *) data;
@@ -445,9 +445,12 @@ char *fi_tostr_(const void *data, enum fi_type datatype)
 	if (!data)
 		return NULL;
 
-	buf = calloc(4096, sizeof (*buf));
-	if (!buf)
-		return NULL;
+	if (!buf) {
+		buf = calloc(BUFSIZ, 1);
+		if (!buf)
+			return NULL;
+	}
+	buf[0] = '\0';
 
 	switch (datatype) {
 	case FI_TYPE_INFO:
@@ -499,7 +502,7 @@ char *fi_tostr_(const void *data, enum fi_type datatype)
 		fi_tostr_av_type(buf, enumval);
 		break;
 	default:
-		strcat(buf, "Unknown type");
+		strcatf(buf, "Unknown type");
 		break;
 	}
 	return buf;

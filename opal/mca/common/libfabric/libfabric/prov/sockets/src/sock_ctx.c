@@ -49,10 +49,12 @@ struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_attr *attr, void *context)
 		return NULL;
 
 	dlist_init(&rx_ctx->cq_entry);
+	dlist_init(&rx_ctx->cntr_entry);
 	dlist_init(&rx_ctx->pe_entry);
 
 	dlist_init(&rx_ctx->pe_entry_list);
 	dlist_init(&rx_ctx->rx_entry_list);
+	dlist_init(&rx_ctx->rx_buffered_list);
 	dlist_init(&rx_ctx->ep_list);
 
 	fastlock_init(&rx_ctx->lock);
@@ -63,21 +65,14 @@ struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_attr *attr, void *context)
 	return rx_ctx;
 }
 
-void sock_rx_ctx_add_ep(struct sock_rx_ctx *rx_ctx, struct sock_ep *ep)
-{
-	fastlock_acquire(&rx_ctx->lock);
-	dlist_insert_tail(&ep->rx_ctx_entry, &rx_ctx->ep_list);
-	atomic_inc(&ep->num_rx_ctx); 
-	fastlock_release(&rx_ctx->lock);
-}
-
 void sock_rx_ctx_free(struct sock_rx_ctx *rx_ctx)
 {
 	fastlock_destroy(&rx_ctx->lock);
 	free(rx_ctx);
 }
 
-struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr, void *context)
+static struct sock_tx_ctx *sock_tx_context_alloc(struct fi_tx_attr *attr, 
+					     void *context, size_t fclass)
 {
 	struct sock_tx_ctx *tx_ctx;
 
@@ -89,30 +84,44 @@ struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr, void *context)
 		goto err;
 
 	dlist_init(&tx_ctx->cq_entry);
+	dlist_init(&tx_ctx->cntr_entry);
 	dlist_init(&tx_ctx->pe_entry);
-
+	
 	dlist_init(&tx_ctx->pe_entry_list);
 	dlist_init(&tx_ctx->ep_list);
-
+	
 	fastlock_init(&tx_ctx->rlock);
 	fastlock_init(&tx_ctx->wlock);
 
-	tx_ctx->ctx.fid.fclass = FI_CLASS_TX_CTX;
-	tx_ctx->ctx.fid.context = context;
-	tx_ctx->attr = *attr;
-
+	switch (fclass) {
+	case FI_CLASS_TX_CTX:
+		tx_ctx->ctx.fid.fclass = FI_CLASS_TX_CTX;
+		tx_ctx->ctx.fid.context = context;
+		break;
+	case FI_CLASS_STX_CTX:
+		tx_ctx->stx.fid.fclass = FI_CLASS_TX_CTX;
+		tx_ctx->stx.fid.context = context;
+		break;
+	default:
+		goto err;
+	}
+	tx_ctx->attr = *attr;		
 	return tx_ctx;
+
 err:
 	free(tx_ctx);
 	return NULL;
 }
 
-void sock_tx_ctx_add_ep(struct sock_tx_ctx *tx_ctx, struct sock_ep *ep)
+
+struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr, void *context)
 {
-	fastlock_acquire(&tx_ctx->lock);
-	dlist_insert_tail(&ep->tx_ctx_entry, &tx_ctx->ep_list);
-	atomic_inc(&ep->num_tx_ctx); 
-	fastlock_release(&tx_ctx->lock);
+	return sock_tx_context_alloc(attr, context, FI_CLASS_TX_CTX);
+}
+
+struct sock_tx_ctx *sock_stx_ctx_alloc(struct fi_tx_attr *attr, void *context)
+{
+	return sock_tx_context_alloc(attr, context, FI_CLASS_STX_CTX);
 }
 
 void sock_tx_ctx_free(struct sock_tx_ctx *tx_ctx)
@@ -136,28 +145,12 @@ void sock_tx_ctx_write(struct sock_tx_ctx *tx_ctx, const void *buf, size_t len)
 void sock_tx_ctx_commit(struct sock_tx_ctx *tx_ctx)
 {
 	rbfdcommit(&tx_ctx->rbfd);
-	fastlock_release(&tx_ctx->rlock);
+	fastlock_release(&tx_ctx->wlock);
 }
 
 void sock_tx_ctx_abort(struct sock_tx_ctx *tx_ctx)
 {
 	rbfdabort(&tx_ctx->rbfd);
 	fastlock_release(&tx_ctx->rlock);
-}
-
-int sock_tx_ctx_read(struct sock_tx_ctx *tx_ctx, void *buf, size_t len)
-{
-	int ret;
-
-	fastlock_acquire(&tx_ctx->rlock);
-	if (rbfdused(&tx_ctx->rbfd) >= len) {
-		rbfdread(&tx_ctx->rbfd, buf, len);
-		ret = 0;
-	} else {
-		ret = -FI_EAGAIN;
-	}
-	fastlock_release(&tx_ctx->rlock);
-
-	return ret;
 }
 

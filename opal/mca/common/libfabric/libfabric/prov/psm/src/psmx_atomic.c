@@ -613,7 +613,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 	case PSMX_AM_REP_ATOMIC_COMPWRITE:
 		req = (struct psmx_am_request *)(uintptr_t)args[1].u64;
 		op_error = (int)args[0].u32w1;
-		assert(req->atomic.len == len);
+		assert(op_error || req->atomic.len == len);
 
 		if (!op_error)
 			memcpy(req->atomic.result, src, len);
@@ -795,7 +795,6 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 	size_t idx;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
-	assert(ep_priv->domain);
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -981,7 +980,6 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 	size_t idx;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
-	assert(ep_priv->domain);
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;
@@ -1167,7 +1165,6 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 	size_t idx;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
-	assert(ep_priv->domain);
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;

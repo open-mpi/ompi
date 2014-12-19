@@ -43,30 +43,32 @@ extern "C" {
 #endif
 
 /*
- * Extension that low-level drivers should add to their .so filename
- * (probably via libtool "-release" option).  For example a low-level
- * driver named "libfoo" should build a plug-in named "libfoo-fi.so".
+ * Extension that dl-loaded providers should add to their .so filename
+ * (probably via libtool "-release" option). For example a provider
+ * driver named "foo" should build a plug-in named "libfoo-fi.so", and
+ * place it in $prefix/$libdir/libfabric/
  */
 #define FI_LIB_EXTENSION "fi"
 #define FI_LIB_SUFFIX FI_LIB_EXTENSION ".so"
 
-#define FI_LIB_CLASS_NAME	"libfabric"
+/*
+ * Dynamically loaded providers must export the following entry point.
+ * This is invoked by the libfabric framework when the provider library
+ * is loaded.
+ */
+#define FI_EXT_INI \
+	__attribute__((visibility ("default"))) struct fi_provider* fi_prov_ini(void)
 
 struct fi_provider {
-	const char *name;
 	uint32_t version;
+	uint32_t fi_version;
+	const char *name;
 	int	(*getinfo)(uint32_t version, const char *node, const char *service,
 			uint64_t flags, struct fi_info *hints, struct fi_info **info);
 	int	(*fabric)(struct fi_fabric_attr *attr, struct fid_fabric **fabric,
 			void *context);
+	void	(*cleanup)(void);
 };
-
-int fi_register_provider(uint32_t fi_version, struct fi_provider *provider);
-static inline int fi_register(struct fi_provider *provider)
-{
-	return fi_register_provider(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),
-				    provider);
-}
 
 #ifdef __cplusplus
 }

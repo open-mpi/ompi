@@ -55,6 +55,8 @@
 
 #include "usnic_direct.h"
 #include "usdf.h"
+#include "usdf_rdm.h"
+#include "usdf_timer.h"
 
 static int
 usdf_domain_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
@@ -78,6 +80,81 @@ usdf_domain_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
         return 0;
 }
 
+static void
+usdf_dom_rdc_free_data(struct usdf_domain *udp)
+{
+	struct usdf_rdm_connection *rdc;
+	int i;
+
+	if (udp->dom_rdc_hashtab != NULL) {
+
+		pthread_spin_lock(&udp->dom_progress_lock);
+		for (i = 0; i < USDF_RDM_HASH_SIZE; ++i) {
+			rdc = udp->dom_rdc_hashtab[i];
+			while (rdc != NULL) {
+				usdf_timer_reset(udp->dom_fabric,
+						rdc->dc_timer, 0);
+				rdc = rdc->dc_hash_next;
+			}
+		}
+		pthread_spin_unlock(&udp->dom_progress_lock);
+
+		/* XXX probably want a timeout here... */
+		while (atomic_get(&udp->dom_rdc_free_cnt) < 
+		       udp->dom_rdc_total) {
+			pthread_yield();
+		}
+
+		free(udp->dom_rdc_hashtab);
+		udp->dom_rdc_hashtab = NULL;
+	}
+
+	while (!SLIST_EMPTY(&udp->dom_rdc_free)) {
+		rdc = SLIST_FIRST(&udp->dom_rdc_free);
+		SLIST_REMOVE_HEAD(&udp->dom_rdc_free, dc_addr_link);
+		usdf_timer_free(udp->dom_fabric, rdc->dc_timer);
+		free(rdc);
+	}
+}
+
+static int
+usdf_dom_rdc_alloc_data(struct usdf_domain *udp)
+{
+	struct usdf_rdm_connection *rdc;
+	int ret;
+	int i;
+
+	udp->dom_rdc_hashtab = calloc(USDF_RDM_HASH_SIZE,
+			sizeof(*udp->dom_rdc_hashtab));
+	if (udp->dom_rdc_hashtab == NULL) {
+		return -FI_ENOMEM;
+	}
+	SLIST_INIT(&udp->dom_rdc_free);
+	atomic_init(&udp->dom_rdc_free_cnt, 0);
+	for (i = 0; i < USDF_RDM_FREE_BLOCK; ++i) {
+		rdc = calloc(1, sizeof(*rdc));
+		if (rdc == NULL) {
+			return -FI_ENOMEM;
+		}
+		ret = usdf_timer_alloc(usdf_rdm_rdc_timeout, rdc,
+				&rdc->dc_timer);
+		if (ret != 0) {
+			free(rdc);
+			return ret;
+		}
+		rdc->dc_flags = USDF_DCS_UNCONNECTED | USDF_DCF_NEW_RX;
+		rdc->dc_next_rx_seq = 0;
+		rdc->dc_next_tx_seq = 0;
+		rdc->dc_last_rx_ack = rdc->dc_next_tx_seq - 1;
+		TAILQ_INIT(&rdc->dc_wqe_posted);
+		TAILQ_INIT(&rdc->dc_wqe_sent);
+		SLIST_INSERT_HEAD(&udp->dom_rdc_free, rdc, dc_addr_link);
+		atomic_inc(&udp->dom_rdc_free_cnt);
+	}
+	udp->dom_rdc_total = USDF_RDM_FREE_BLOCK;
+	return 0;
+}
+
 static int
 usdf_domain_close(fid_t fid)
 {
@@ -95,11 +172,14 @@ usdf_domain_close(fid_t fid)
 			return ret;
 		}
 	}
+	usdf_dom_rdc_free_data(udp);
 
 	if (udp->dom_eq != NULL) {
 		atomic_dec(&udp->dom_eq->eq_refcnt);
 	}
 	atomic_dec(&udp->dom_fabric->fab_refcnt);
+	LIST_REMOVE(udp, dom_link);
+	fi_freeinfo(udp->dom_info);
 	free(udp);
 
 	return 0;
@@ -132,6 +212,8 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct usdf_domain *udp;
 	struct usdf_usnic_info *dp;
 	struct usdf_dev_entry *dep;
+	struct sockaddr_in *sin;
+	size_t addrlen;
 	int d;
 	int ret;
 
@@ -142,6 +224,27 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	}
 
 	fp = fab_fidtou(fabric);
+
+	/*
+	 * Make sure address format is good and matches this fabric
+	 */
+	switch (info->addr_format) {
+	case FI_SOCKADDR:
+		addrlen = sizeof(struct sockaddr);
+		break;
+	case FI_SOCKADDR_IN:
+		addrlen = sizeof(struct sockaddr_in);
+		break;
+	default:
+		ret = -FI_EINVAL;
+		goto fail;
+	}
+	sin = info->src_addr;
+	if (info->src_addrlen != addrlen || sin->sin_family != AF_INET ||
+	    sin->sin_addr.s_addr != fp->fab_dev_attrs->uda_ipaddr_be) {
+		ret = -FI_EINVAL;
+		goto fail;
+	}
 
 	/* steal cached device from info if we can */
 	dp = __usdf_devinfo;
@@ -169,7 +272,32 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	udp->dom_fid.ops = &usdf_domain_ops;
 	udp->dom_fid.mr = &usdf_domain_mr_ops;
 
+	ret = pthread_spin_init(&udp->dom_progress_lock,
+			PTHREAD_PROCESS_PRIVATE);
+	if (ret != 0) {
+		ret = -ret;
+		goto fail;
+	}
+	TAILQ_INIT(&udp->dom_tx_ready);
+	TAILQ_INIT(&udp->dom_hcq_list);
+
+	udp->dom_info = fi_dupinfo(info);
+	if (udp->dom_info == NULL) {
+		ret = -FI_ENOMEM;
+		goto fail;
+	}
+	if (udp->dom_info->dest_addr != NULL) {
+		free(udp->dom_info->dest_addr);
+		udp->dom_info->dest_addr = NULL;
+	}
+
+	ret = usdf_dom_rdc_alloc_data(udp);
+	if (ret != 0) {
+		goto fail;
+	}
+
 	udp->dom_fabric = fp;
+	LIST_INSERT_HEAD(&fp->fab_domain_list, udp, dom_link);
 	atomic_init(&udp->dom_refcnt, 0);
 	atomic_inc(&fp->fab_refcnt);
 
@@ -178,6 +306,13 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 
 fail:
 	if (udp != NULL) {
+		if (udp->dom_info != NULL) {
+			fi_freeinfo(udp->dom_info);
+		}
+		if (udp->dom_dev != NULL) {
+			usd_close(udp->dom_dev);
+		}
+		usdf_dom_rdc_free_data(udp);
 		free(udp);
 	}
 	return ret;

@@ -384,7 +384,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		break;
 
 	case FI_WAIT_FD:
-	case FI_WAIT_MUT_COND:
+	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
 		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
@@ -394,7 +394,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	default:
 		psmx_debug("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__,
-			   attr->wait_obj, FI_WAIT_NONE, FI_WAIT_MUT_COND);
+			   attr->wait_obj, FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
 

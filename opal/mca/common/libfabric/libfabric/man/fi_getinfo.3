@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2014\-12\-08" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2014\-12\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -158,7 +158,7 @@ When provided as hints, requested values of struct fi_tx_ctx_attr should
 be set.
 On output, the actual transmit context attributes that can be provided
 will be returned.
-Output values will be greater than or or equal to the requested input
+Output values will be greater than or equal to the requested input
 values.
 .PP
 \f[I]rx_attr - receive context attributes\f[] : Optionally supplied
@@ -232,7 +232,7 @@ endpoint as send-only or receive-only.
 \f[I]FI_RMA\f[] : Specifies that the endpoint should support RMA read
 and write operations.
 Endpoints supporting this capability support operations defined by
-struct fi_rma_ops.
+struct fi_ops_rma.
 In the absence of any relevant flags, FI_RMA implies the ability to
 initiate and be the target of remote memory reads and writes.
 Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
@@ -241,10 +241,10 @@ by an endpoint.
 .PP
 \f[I]FI_TAGGED\f[] : Specifies that the endpoint should handle tagged
 message transfers.
-tagged message transfers associate a user-specified key or tag with each
+Tagged message transfers associate a user-specified key or tag with each
 message that is used for matching purposes at the remote side.
 Endpoints supporting this capability support operations defined by
-struct fi_tagged_ops.
+struct fi_ops_tagged.
 In the absence of any relevant flags, FI_TAGGED implies the ability to
 send and receive tagged messages.
 Applications can use the FI_SEND and FI_RECV flags to optimize an
@@ -253,7 +253,7 @@ endpoint as send-only or receive-only.
 \f[I]FI_ATOMICS\f[] : Specifies that the endpoint supports some set of
 atomic operations.
 Endpoints supporting this capability support operations defined by
-struct fi_atomic_ops.
+struct fi_ops_atomic.
 In the absence of any relevant flags, FI_ATOMICS implies the ability to
 initiate and be the target of remote atomic reads and writes.
 Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
@@ -263,7 +263,7 @@ supported by an endpoint.
 \f[I]FI_MULTICAST\f[] : Indicates that the endpoint should support
 multicast data transfers.
 Endpoints supporting this capability support multicast operations
-defined by struct fi_msg_ops, when a multicast address is specified as
+defined by struct fi_ops_msg, when a multicast address is specified as
 the destination address.
 In the absence of any relevant flags, FI_MULTICAST implies the ability
 to send and receive messages.
@@ -496,7 +496,7 @@ See \f[C]fi_av\f[](3).
 specific address format should be selected.
 Provider specific addresses may be protocol specific or a vendor
 proprietary format.
-Applications that select FI_FORMAT_UNSPEC should be prepared to be treat
+Applications that select FI_FORMAT_UNSPEC should be prepared to treat
 returned addressing data as opaque.
 FI_FORMAT_UNSPEC targets apps which make use of an out of band address
 exchange.
@@ -512,7 +512,7 @@ interfaces examining the sa_family field.
 \f[I]FI_SOCKADDR_IN6\f[] : Address is of type sockaddr_in6 (IPv6).
 .PP
 \f[I]FI_SOCKADDR_IB\f[] : Address is of type sockaddr_ib (defined in
-Linux kernel source
+Linux kernel source)
 .PP
 \f[I]FI_ADDR_PSMX\f[] : Address is an Intel proprietary format that is
 used with their PSMX (extended performance scaled messaging) protocol.

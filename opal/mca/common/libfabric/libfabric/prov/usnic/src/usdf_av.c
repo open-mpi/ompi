@@ -58,7 +58,6 @@
 #include "libnl_utils.h"
 #include "usd.h"
 #include "usd_queue.h"
-#include "usd_dest.h"
 
 #include "usdf.h"
 #include "usdf_av.h"
@@ -114,10 +113,26 @@ usdf_post_insert_request_error(struct usdf_av_insert *insert,
 	err_entry.data = req - (struct usdf_av_req *)(insert + 1);
 	err_entry.err = -req->avr_status;
 
-	usdf_eq_write_internal(av->av_eq, FI_COMPLETE,
+	usdf_eq_write_internal(av->av_eq, 0,
 		&err_entry, sizeof(err_entry),
 		USDF_EVENT_FLAG_ERROR);
 }
+
+static int
+usdf_av_alloc_dest(struct usdf_dest **dest_o)
+{
+	struct usdf_dest *dest;
+
+	dest = calloc(1, sizeof(**dest_o));
+	if (dest == NULL) {
+		return -errno;
+	}
+	SLIST_INIT(&dest->ds_rdm_rdc_list);
+
+	*dest_o = dest;
+	return 0;
+}
+
 
 /*
  * Called by progression thread to look for AV completions on this domain
@@ -128,7 +143,7 @@ usdf_av_insert_progress(void *v)
 	int ret;
 	struct usdf_av_insert *insert;
 	struct usdf_fabric *fp;
-	struct usd_dest *dest;
+	struct usdf_dest *dest;
 	struct usdf_av_req *req;
 	struct usdf_av_req *tmpreq;
 	struct usd_device_attrs *dap;
@@ -142,7 +157,7 @@ usdf_av_insert_progress(void *v)
 	TAILQ_FOREACH_SAFE(req, tmpreq, &insert->avi_req_list, avr_link) {
 
 		dest = req->avr_dest;
-		eth = &dest->ds_dest.ds_udp.u_hdr.uh_eth.ether_dhost[0];
+		eth = &dest->ds_dest.ds_dest.ds_udp.u_hdr.uh_eth.ether_dhost[0];
 		ret = usnic_arp_lookup(dap->uda_ifname,
 				req->avr_daddr_be, fp->fab_arp_sockfd, eth);
 
@@ -153,7 +168,7 @@ usdf_av_insert_progress(void *v)
 
 			if (ret == 0) {
 				++insert->avi_successes;
-				*(struct usd_dest **)req->avr_fi_addr = dest;
+				*(struct usdf_dest **)req->avr_fi_addr = dest;
 			} else {
 				usdf_post_insert_request_error(insert, req);
 			}
@@ -282,7 +297,7 @@ usdf_am_insert_async(struct fid_av *fav, const void *addr, size_t count,
 				ret = -FI_ENOMEM;
 				goto fail;
 			}
-			usd_fill_udp_dest(req->avr_dest, dap,
+			usd_fill_udp_dest(&req->avr_dest->ds_dest, dap,
 					sin->sin_addr.s_addr, sin->sin_port);
 
 			TAILQ_INSERT_TAIL(&insert->avi_req_list, req, avr_link);
@@ -313,7 +328,8 @@ usdf_am_insert_sync(struct fid_av *fav, const void *addr, size_t count,
 {
 	const struct sockaddr_in *sin;
 	struct usdf_av *av;
-	struct usd_dest *dest;
+	struct usd_dest *u_dest;
+	struct usdf_dest *dest = dest;	// supress uninit
 	int ret_count;
 	int ret;
 	int i;
@@ -327,16 +343,21 @@ usdf_am_insert_sync(struct fid_av *fav, const void *addr, size_t count,
 	ret_count = 0;
 	sin = addr;
 
-	/* XXX parallelize */
+	/* XXX parallelize, this will also eliminate u_dest silliness */
 	for (i = 0; i < count; i++) {
-		ret = usd_create_dest(av->av_domain->dom_dev,
+		ret = usdf_av_alloc_dest(&dest);
+		if (ret == 0) {
+			ret = usd_create_dest(av->av_domain->dom_dev,
 				sin->sin_addr.s_addr, sin->sin_port,
-				&dest);
-		if (ret != 0) {
-			fi_addr[i] = FI_ADDR_NOTAVAIL;
-		} else {
+				&u_dest);
+		}
+		if (ret == 0) {
+			dest->ds_dest = *u_dest;
+			free(u_dest);
 			fi_addr[i] = (fi_addr_t)dest;
 			++ret_count;
+		} else {
+			fi_addr[i] = FI_ADDR_NOTAVAIL;
 		}
 		++sin;
 	}
@@ -348,7 +369,7 @@ static int
 usdf_am_remove(struct fid_av *fav, fi_addr_t *fi_addr, size_t count,
 			  uint64_t flags)
 {
-	struct usd_dest *dest;
+	struct usdf_dest *dest;
 	struct usdf_av *av;
 
 	av = av_ftou(fav);
@@ -358,8 +379,8 @@ usdf_am_remove(struct fid_av *fav, fi_addr_t *fi_addr, size_t count,
 	}
 
 	// XXX
-	dest = (struct usd_dest *)(uintptr_t)fi_addr;
-	usd_destroy_dest(dest);
+	dest = (struct usdf_dest *)(uintptr_t)fi_addr;
+	free(dest);
 
 	return 0;
 }
@@ -368,11 +389,11 @@ static int
 usdf_am_lookup(struct fid_av *av, fi_addr_t fi_addr, void *addr,
 			  size_t *addrlen)
 {
-	struct usd_dest *dest;
+	struct usdf_dest *dest;
 	struct sockaddr_in sin;
 	size_t copylen;
 
-	dest = (struct usd_dest *)(uintptr_t)fi_addr;
+	dest = (struct usdf_dest *)(uintptr_t)fi_addr;
 
 	if (*addrlen < sizeof(sin)) {
 		copylen = *addrlen;
@@ -381,7 +402,7 @@ usdf_am_lookup(struct fid_av *av, fi_addr_t fi_addr, void *addr,
 	}
 
 	sin.sin_family = AF_INET;
-	usd_expand_dest(dest, &sin.sin_addr.s_addr, &sin.sin_port);
+	usd_expand_dest(&dest->ds_dest, &sin.sin_addr.s_addr, &sin.sin_port);
 	memcpy(addr, &sin, copylen);
 
 	*addrlen = sizeof(sin);
@@ -518,9 +539,6 @@ usdf_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	struct usdf_domain *udp;
 	struct usdf_av *av;
 
-	if (attr->name != NULL) {
-		return -FI_ENOSYS;
-	}
 	if ((attr->flags & ~(FI_EVENT | FI_READ)) != 0) {
 		return -FI_ENOSYS;
 	}

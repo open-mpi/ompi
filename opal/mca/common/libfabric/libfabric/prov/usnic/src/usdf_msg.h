@@ -36,9 +36,54 @@
 #ifndef _USDF_MSG_H_
 #define _USDF_MSG_H_
 
+#define USDF_MSG_CAPS (FI_MSG | FI_SOURCE | FI_SEND | FI_RECV)
+
+#define USDF_MSG_SUPP_MODE (FI_LOCAL_MR)
+#define USDF_MSG_REQ_MODE (FI_LOCAL_MR)
+
+#define USDF_MSG_MAX_SGE 8
+#define USDF_MSG_DFLT_SGE 8
+#define USDF_MSG_MAX_CTX_SIZE 1024
+#define USDF_MSG_DFLT_CTX_SIZE 128
+
+#define USDF_MSG_MAX_MSG UINT_MAX
+
+#define USDF_MSG_FAIRNESS_CREDITS 16
+
+#define USDF_MSG_RUDP_SEQ_CREDITS 256
+
+struct usdf_msg_qe {
+	void *ms_context;
+
+	struct iovec ms_iov[USDF_MSG_MAX_SGE];
+	size_t ms_last_iov;
+	size_t ms_length;
+
+	uint16_t ms_first_seq;
+	uint16_t ms_last_seq;
+
+	size_t ms_cur_iov;
+	const uint8_t *ms_cur_ptr;
+	size_t ms_resid;      	/* amount remaining in entire msg */
+	size_t ms_iov_resid;    /* amount remaining in current iov */
+
+	TAILQ_ENTRY(usdf_msg_qe) ms_link;
+};
+
+int usdf_msg_post_recv(struct usdf_rx *rx, void *buf, size_t len);
+int usdf_msg_fill_tx_attr(struct fi_tx_attr *txattr);
+int usdf_msg_fill_rx_attr(struct fi_rx_attr *rxattr);
+int usdf_cq_msg_poll(struct usd_cq *ucq, struct usd_completion *comp);
+void usdf_msg_ep_timeout(void *vep);
+
+void usdf_msg_hcq_progress(struct usdf_cq_hard *hcq);
+void usdf_msg_tx_progress(struct usdf_tx *tx);
+
+
 /* fi_ops_cm for RC */
 int usdf_cm_msg_connect(struct fid_ep *ep, const void *addr,
 	const void *param, size_t paramlen);
+int usdf_cm_msg_accept(struct fid_ep *fep, const void *param, size_t paramlen);
 int usdf_cm_msg_shutdown(struct fid_ep *ep, uint64_t flags);
 
 /* fi_ops_msg for RC */

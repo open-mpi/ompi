@@ -118,9 +118,10 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 {
 	struct psmx_fid_av *av_priv;
 	psm_error_t *errors;
+	int error_count = 0;
 	int *mask;
 	int err;
-	int i;
+	int i, j;
 	fi_addr_t *result = NULL;
 	struct psmx_epaddr_context *epaddr_context;
 
@@ -174,10 +175,17 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 			(psm_epaddr_t *) fi_addr, 30*1e9);
 
 	for (i=0; i<count; i++){
-		if (mask[i] && errors[i] == PSM_OK) {
+		if (!mask[i])
+			continue;
+
+		if (errors[i] == PSM_OK) {
 			psmx_set_epaddr_context(av_priv->domain,
 						((psm_epid_t *) addr)[i],
 						((psm_epaddr_t *) fi_addr)[i]);
+		}
+		else {
+			fi_addr[i] = FI_ADDR_NOTAVAIL;
+			error_count++;
 		}
 	}
 
@@ -185,14 +193,20 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 	free(errors);
 
 	if (av_priv->type == FI_AV_TABLE) {
+		/* NOTE: unresolved addresses are left in the AV table */
 		if (result) {
-			for (i=0; i<count; i++)
-				result[i] = av_priv->last + i;
+			for (i=0; i<count; i++) {
+				j = av_priv->last + i;
+				if ((fi_addr_t)av_priv->psm_epaddrs[j] == FI_ADDR_NOTAVAIL)
+					result[i] = FI_ADDR_NOTAVAIL;
+				else
+					result[i] = j;
+			}
 		}
 		av_priv->last += count;
 	}
 
-	return psmx_errno(err);
+	return count - error_count;
 }
 
 static int psmx_av_remove(struct fid_av *av, fi_addr_t *fi_addr, size_t count,

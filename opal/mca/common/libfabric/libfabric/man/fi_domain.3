@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2014\-11\-21" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_domain 3 "2014\-12\-19" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -160,6 +160,9 @@ For instance, endpoints that share the same event queue or poll set
 belong to the same progress domain.
 Applications that can allocate endpoint resources to specific threads
 can reduce provider locking by using FI_THREAD_PROGRESS.
+.PP
+\f[I]FI_THREAD_DOMAIN\f[] : A domain serialization model requires
+applications to serialize access to all objects belonging to a domain.
 .SS Progress Models (control_progress / data_progress)
 .PP
 Progress is the ability of the underlying implementation to complete
@@ -174,7 +177,7 @@ application threads.
 .PP
 Control progress indicates the method that the provider uses to make
 progress on asynchronous control operations.
-Control operations are function which do not directly involve the
+Control operations are functions which do not directly involve the
 transfer of application data between endpoints.
 They include address vector, memory registration, and connection
 management routines.
@@ -248,9 +251,9 @@ the provider.
 .PP
 The number of outbound command queues optimally supported by the
 provider.
-For a low-level provider, this represents the number command queues to
-the hardware and/or the number of parallel transmit engines effectively
-supported by the hardware and caches.
+For a low-level provider, this represents the number of command queues
+to the hardware and/or the number of parallel transmit engines
+effectively supported by the hardware and caches.
 Applications which allocate more transmit contexts than this value will
 end up sharing underlying resources.
 By default, there is a single transmit context associated with each

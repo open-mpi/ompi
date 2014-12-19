@@ -6,7 +6,6 @@ FABRIC_1.0 {
 		fi_fabric;
 		fi_version;
 		fi_strerror;
-		fi_register_provider;
 		fi_tostr;
 	local: *;
 };

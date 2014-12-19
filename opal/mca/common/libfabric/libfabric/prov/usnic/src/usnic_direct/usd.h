@@ -60,7 +60,7 @@
 #define USD_SF_ISSET(flags, flagname) \
     ((flags >> USD_SFS_##flagname) & 1)
 
-#define USD_SEND_MAX_COPY 1024
+#define USD_SEND_MAX_COPY 992
 #define USD_MAX_CQ_GROUP 1024
 #define USD_MAX_PRESEND 4
 

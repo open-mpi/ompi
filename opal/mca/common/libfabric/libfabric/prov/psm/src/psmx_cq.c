@@ -84,7 +84,7 @@ struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 		event->cqe.err.data = data;
 		event->cqe.err.tag = tag;
 		event->cqe.err.olen = olen;
-		event->cqe.err.prov_errno = 0;
+		event->cqe.err.prov_errno = PSM_INTERNAL_ERR;
 		goto out;
 	}
 
@@ -363,7 +363,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 				  if (mr->domain->rma_ep->remote_write_cntr)
 					psmx_cntr_inc(mr->domain->rma_ep->remote_write_cntr);
 				  if (!cq || mr->cq == cq)
-					return 1;
+					return psm_status.error_code ? -FI_EAVAIL : 1;
 				  continue;
 				}
 
@@ -375,7 +375,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 				  if (mr->domain->rma_ep->remote_read_cntr)
 					psmx_cntr_inc(mr->domain->rma_ep->remote_read_cntr);
 				  if (!cq)
-					return 1;
+					return psm_status.error_code ? -FI_EAVAIL : 1;
 				  continue;
 				}
 			}
@@ -434,7 +434,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 			}
 
 			if (!cq || tmp_cq == cq)
-				return 1;
+				return psm_status.error_code ? -FI_EAVAIL : 1;
 		}
 		else if (err == PSM_MQ_NO_COMPLETIONS) {
 			return 0;
@@ -454,7 +454,6 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 	ssize_t read_count;
 
 	cq_priv = container_of(cq, struct psmx_fid_cq, cq);
-	assert(cq_priv->domain);
 
 	if (PSMX_CQ_EMPTY(cq_priv) || !buf) {
 		ret = psmx_cq_poll_mq(cq_priv, cq_priv->domain,
@@ -601,7 +600,7 @@ static ssize_t psmx_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 		else {
 			clock_gettime(CLOCK_REALTIME, &ts0);
 			while (1) {
-				if (psmx_cq_poll_mq(cq_priv, cq_priv->domain, NULL, 0, NULL) > 0)
+				if (psmx_cq_poll_mq(cq_priv, cq_priv->domain, NULL, 0, NULL))
 					break;
 
 				/* CQ may be updated asynchronously by the AM handlers */
@@ -748,7 +747,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		break;
 
 	case FI_WAIT_FD:
-	case FI_WAIT_MUT_COND:
+	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
 		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
@@ -758,7 +757,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 
 	default:
 		psmx_debug("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__, attr->wait_obj,
-				FI_WAIT_NONE, FI_WAIT_MUT_COND);
+				FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
 

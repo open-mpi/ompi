@@ -201,7 +201,7 @@ enum {
 	FI_PROTO_IB_UD,
 	FI_PROTO_PSMX,
 	FI_PROTO_UDP,
-	FI_PROTO_SOCK_RDS,
+	FI_PROTO_SOCK_TCP
 };
 
 /* Mode bits */
@@ -232,6 +232,7 @@ struct fi_rx_attr {
 
 struct fi_ep_attr {
 	uint32_t		protocol;
+	uint32_t		protocol_version;
 	size_t			max_msg_size;
 	size_t			inject_size;
 	size_t			total_buffered_recv;

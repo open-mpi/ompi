@@ -33,6 +33,18 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* psm provider is built */
+#undef HAVE_PSM
+
+/* psm provider is built as DSO */
+#undef HAVE_PSM_DL
+
+/* sockets provider is built */
+#undef HAVE_SOCKETS
+
+/* sockets provider is built as DSO */
+#undef HAVE_SOCKETS_DL
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -56,6 +68,18 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* usnic provider is built */
+#undef HAVE_USNIC
+
+/* usnic provider is built as DSO */
+#undef HAVE_USNIC_DL
+
+/* verbs provider is built */
+#undef HAVE_VERBS
+
+/* verbs provider is built as DSO */
+#undef HAVE_VERBS_DL
 
 /* Define to 1 to enable valgrind annotations */
 #undef INCLUDE_VALGRIND

@@ -87,11 +87,38 @@ usd_desc_to_rq_comp(
         CQ_ENET_RQ_DESC_FLAGS_TCP_UDP_CSUM_OK;
     if (bytes_written_flags & CQ_ENET_RQ_DESC_FLAGS_TRUNCATED ||
             (edesc->flags & ipudpok) != ipudpok) {
-        if (edesc->flags & CQ_ENET_RQ_DESC_FLAGS_FCS_OK ||
-                bytes_written != 0)
+        if (((edesc->flags & CQ_ENET_RQ_DESC_FLAGS_FCS_OK) == 0) &&
+                bytes_written == 0) {
+            size_t rcvbuf_len;
+            dma_addr_t bus_addr;
+            u16 len;
+            u8 type;
+            uint16_t i;
+
+            i = q_index;
+            rcvbuf_len = 0;
+            do {
+                rq_enet_desc_dec( (struct rq_enet_desc *)
+                        ((uintptr_t)rq->urq_vnic_rq.ring.descs + (i<<4)),
+                        &bus_addr, &type, &len);
+                rcvbuf_len += len;
+                i = (i - 1) & rq->urq_post_index_mask;
+            } while (type == RQ_ENET_TYPE_NOT_SOP);
+
+            /*
+             * If only the paddings to meet 64-byte minimum eth frame
+             * requirement are truncated, do not mark packet as
+             * error due to truncation.
+             * The usnic hdr should not be split into multiple receive buffer
+             */
+            if (ntohs(((struct usd_udp_hdr *)bus_addr)->uh_ip.tot_len)
+                        + sizeof(struct ether_header) > rcvbuf_len)
+                comp->uc_status = USD_COMPSTAT_ERROR_TRUNC;
+            else
+                comp->uc_status = USD_COMPSTAT_SUCCESS;
+        } else {
             comp->uc_status = USD_COMPSTAT_ERROR_CRC;
-        else
-            comp->uc_status = USD_COMPSTAT_ERROR_TRUNC;
+	}
     } else {
         comp->uc_status = USD_COMPSTAT_SUCCESS;
     }

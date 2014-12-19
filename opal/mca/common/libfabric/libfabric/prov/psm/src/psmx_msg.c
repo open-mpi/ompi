@@ -206,7 +206,6 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 	size_t idx;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
-	assert(ep_priv->domain);
 
 	if (flags & FI_TRIGGER) {
 		struct psmx_trigger *trigger;

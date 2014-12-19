@@ -1,4 +1,4 @@
-.TH fi_cntr 3 "2014\-11\-21" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_cntr 3 "2014\-12\-15" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_cntr - Completion and event counter operations
@@ -105,7 +105,7 @@ Users may use fi_control to retrieve the underlying wait object
 associated with a counter, in order to use it in other system calls.
 The following values may be used to specify the type of wait object
 associated with a counter: FI_WAIT_NONE, FI_WAIT_UNSPEC, FI_WAIT_SET,
-FI_WAIT_FD, and FI_WAIT_MUT_COND.
+FI_WAIT_FD, and FI_WAIT_MUTEX_COND.
 .IP \[bu] 2
 \f[I]FI_WAIT_NONE\f[] : Used to indicate that the user will not block
 (wait) for events on the counter.
@@ -130,7 +130,7 @@ routines.
 However, a provider may signal an FD wait object by marking it as
 readable, writable, or with an error.
 .IP \[bu] 2
-\f[I]FI_WAIT_MUT_COND\f[] : Specifies that the counter should use a
+\f[I]FI_WAIT_MUTEX_COND\f[] : Specifies that the counter should use a
 pthread mutex and cond variable as a wait object.
 .PP
 \f[I]wait_set\f[] : If wait_obj is FI_WAIT_SET, this field references a
@@ -167,13 +167,7 @@ operational flags associated with the counter.
 the low-level wait object associated with the counter.
 The format of the wait-object is specified during counter creation,
 through the counter attributes.
-The fi_cntr_control arg parameter should be an address where a pointer
-to the returned wait object will be written.
-.PP
-\f[I]FI_CNTR_WAIT_MUT_COND\f[] : The counter wait is implemented using a
-pthread_mutex_t and pthread_cond_t.
-FI_GETWAIT will return two pointers, a reference to pthread_mutex_t *
-and pthread_cond_t *, respectively.
+See fi_eq.3 for addition details using control with FI_GETWAIT.
 .SS fi_cntr_read
 .PP
 The fi_cntr_read call returns the current value of the counter.

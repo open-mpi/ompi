@@ -131,21 +131,21 @@ usdf_timer_cancel(struct usdf_fabric *fp, struct usdf_timer_entry *entry)
  * be called again until usdf_timer_set() is called again to re-set it.
  * usdf_timer_set() is safe to call from timer service routine.
  */
-int
-usdf_timer_set(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
+static inline int
+_usdf_timer_do_set(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
 		uint32_t ms)
 {
 	int ret;
 	unsigned bucket;
 
-	pthread_spin_lock(&fp->fab_timer_lock);
-
 	/* If no timers active, cur_bucket_ms may need catchup */
-	if (fp->fab_active_timer_count == 0) {
+	++fp->fab_active_timer_count;
+	if (fp->fab_active_timer_count == 1) {
 		fp->fab_cur_bucket_ms = usdf_get_ms();
 		ret = usdf_fabric_wake_thread(fp);
 		if (ret != 0) {
-			goto out;
+			--fp->fab_active_timer_count;
+			return ret;
 		}
 	}
 
@@ -156,20 +156,46 @@ usdf_timer_set(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
 
 	// we could make "overflow" bucket...
 	if (ms >= USDF_NUM_TIMER_BUCKETS) {
-		ret = -FI_EINVAL;
-		goto out;
+		--fp->fab_active_timer_count;
+		return -FI_EINVAL;
 	}
 	bucket = (fp->fab_cur_bucket + ms) & (USDF_NUM_TIMER_BUCKETS - 1);
 
 	LIST_INSERT_HEAD(&fp->fab_timer_buckets[bucket], entry, te_link);
 	entry->te_flags |= USDF_TF_QUEUED;
-	++fp->fab_active_timer_count;
-	ret = 0;
+	return 0;
+}
 
-out:
+int
+usdf_timer_set(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
+		uint32_t ms)
+{
+	int ret;
+
+	pthread_spin_lock(&fp->fab_timer_lock);
+	if (entry->te_flags & USDF_TF_QUEUED) {
+		ret = 0;
+	} else {
+		ret = _usdf_timer_do_set(fp, entry, ms);
+	}
 	pthread_spin_unlock(&fp->fab_timer_lock);
+
 	return ret;
 }
+
+int
+usdf_timer_reset(struct usdf_fabric *fp, struct usdf_timer_entry *entry,
+		uint32_t ms)
+{
+	int ret;
+
+	pthread_spin_lock(&fp->fab_timer_lock);
+	ret = _usdf_timer_do_set(fp, entry, ms);
+	pthread_spin_unlock(&fp->fab_timer_lock);
+
+	return ret;
+}
+
 
 static inline void
 usdf_run_bucket(struct usdf_fabric *fp, struct usdf_timer_bucket *bp)

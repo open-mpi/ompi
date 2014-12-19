@@ -1,4 +1,4 @@
-.TH fi_trigger 3 "2014-11-14" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_trigger 3 "2014\-12\-10" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_trigger - Triggered operations
@@ -13,8 +13,7 @@ fi_trigger - Triggered operations
 .PP
 Triggered operations allow an application to queue a data transfer
 request that is deferred until a specified condition is met.
-It is often used to send a message, but only after receiving all input
-data.
+A typical use is to send a message only after receiving all input data.
 .PP
 A triggered operation may be requested by specifying the FI_TRIGGER flag
 as part of the operation.
@@ -23,7 +22,7 @@ FI_TRIGGER flag.
 Such an endpoint is referred to as a triggerable endpoint.
 All data transfer operations on a triggerable endpoint are deferred.
 .PP
-Any data transfer operation is potentially be triggerable, subject to
+Any data transfer operation is potentially triggerable, subject to
 provider constraints.
 Triggerable endpoints are initialized such that only those interfaces
 supported by the provider which are triggerable are available.
@@ -63,7 +62,7 @@ event type.
 .PP
 The following trigger events are defined.
 .PP
-\f[I]FI_TRIGGER_THRESHOL\f[] : This indicates that the data transfer
+\f[I]FI_TRIGGER_THRESHOLD\f[] : This indicates that the data transfer
 operation will be deferred until an event counter crosses an application
 specified threshold value.
 The threshold is specified using struct fi_trigger_threshold:

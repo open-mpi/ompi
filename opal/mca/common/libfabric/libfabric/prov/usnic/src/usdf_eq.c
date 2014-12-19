@@ -566,6 +566,9 @@ usdf_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	/*
 	 * Allocate and initialize event ring
 	 */
+	if (attr->size == 0) {
+		attr->size = 1024;	// XXX
+	}
 	eq->eq_ev_ring = calloc(attr->size, sizeof(*eq->eq_ev_ring));
 	eq->eq_ev_buf = calloc(attr->size, sizeof(*eq->eq_ev_buf));
 	if (eq->eq_ev_ring == NULL || eq->eq_ev_buf == NULL) {

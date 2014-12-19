@@ -100,7 +100,6 @@ usd_post_recv(
         vnic_rq_post(vrq, iovp[0].iov_base, 0,
                      (dma_addr_t) iovp[0].iov_base, iovp[0].iov_len, 0);
 
-
         for (i = 1; i < recv_list->urd_iov_cnt; ++i) {
 
             rq->urq_context[rq->urq_post_index] = recv_list->urd_context;
