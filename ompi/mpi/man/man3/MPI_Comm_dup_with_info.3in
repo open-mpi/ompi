@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -55,6 +55,12 @@ This operation is used to provide a parallel
 library call with a duplicate communication space that has the same properties as the original communicator. This includes any attributes (see below) and topologies (see Chapter 6, "Process Topologies," in the MPI-1 Standard). This call is valid even if there are pending point-to-point communications involving the communicator comm. A typical call might involve an MPI_Comm_dup_with_info at the beginning of the parallel call, and an MPI_Comm_free of that duplicated communicator at the end of the call. Other models of communicator management are also possible.
 .sp
 This call applies to both intra- and intercommunicators.
+
+Note that it is not defined by the MPI standard what happens if the
+attribute copy callback invokes other MPI functions.  In Open MPI, it
+is not valid for attribute copy callbacks (or any of their children)
+to add or delete attributes on the same object on which the attribute
+copy callback is being invoked.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
