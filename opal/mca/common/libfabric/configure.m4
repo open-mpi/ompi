@@ -165,21 +165,17 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
     AC_MSG_NOTICE([Setting up for EMBEDDED libfabric])
 
-    # Mostly replicate relevant parts from the libfabric configure.ac
-    # script.  Make a lot of simplifying assumptions, just for the
-    # sake of embedding here.
-    AC_DEFINE([INCLUDE_VALGRIND], 0, [no valgrind])
-    AC_DEFINE([STREAM_CLOEXEC], 0, [no streamcloexec])
-    AC_DEFINE([HAVE_ATOMICS], 0, [no atomics])
-    AC_DEFINE([HAVE_SYMVER_SUPPORT], 1, [assembler has .symver support])
-
     AC_CHECK_HEADER([infiniband/verbs.h],
         [opal_common_libfabric_happy=1],
         [opal_common_libfabric_happy=0])
 
     # Add flags for libfabric core
     AS_IF([test $opal_common_libfabric_happy -eq 1],
-           [opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include"
+           [ # Mostly replicate relevant parts from the libfabric
+             # configure.ac script by hard-coding -D's into the
+             # CPPFLAGS.  Make a lot of simplifying assumptions, just
+             # for the sake of embedding here.
+            opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include -DHAVE_ATOMICS=1"
             opal_common_libfabric_build_embedded=1
             opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
 
@@ -197,6 +193,18 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
             # Do stuff for specific providers
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM
+
+            # Hard-coding to not build the sockets or verbs providers
+            AC_DEFINE([HAVE_SOCKETS], [0],
+                [libfabric: do not build sockets provider])
+            AC_DEFINE([HAVE_SOCKETS_DL], [0],
+                [libfabric: do not build sockets provider])
+            AC_DEFINE([HAVE_VERBS], [0],
+                [libfabric: do not build verbs provider])
+            AC_DEFINE([HAVE_VERBS_DL], [0],
+                [libfabric: do not build verbs provider])
+
+            AC_CONFIG_HEADER([opal/mca/common/libfabric/libfabric/config.h])
            ])
 ])
 
@@ -286,8 +294,13 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
     AC_CHECK_LIB([nl], [nl_connect], [],
                  [opal_common_libfabric_usnic_happy=0])
 
+    AC_DEFINE_UNQUOTED([HAVE_USNIC], [$opal_common_libfabric_usnic_happy],
+          [libfabric: whether to build the usnic provider or not])
+    AC_DEFINE([HAVE_USNIC_DL], 0,
+          [libfabric: do not build usnic provider as a DL])
+
     AS_IF([test $opal_common_libfabric_usnic_happy -eq 1],
-          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct"
+          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct -DLIBNL3=0 -DWANT_DEBUG_MSGS=0"
            opal_common_libfabric_embedded_LIBADD="-lnl"])
 ])
 
@@ -316,6 +329,11 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM],[
     AC_CHECK_HEADER([psm.h], [], [opal_common_libfabric_psm_happy=0])
     AC_CHECK_LIB([psm_infinipath], [psm_init], [],
                  [opal_common_libfabric_psm_happy=0])
+
+    AC_DEFINE_UNQUOTED([HAVE_PSM], [$opal_common_libfabric_psm_happy],
+          [libfabric: whether to build the PSM provider or not])
+    AC_DEFINE([HAVE_PSM_DL], 0,
+          [libfabric: do not build PSM provider as a DL])
 
     AS_IF([test $opal_common_libfabric_psm_happy -eq 1],
           [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/psm/src"
