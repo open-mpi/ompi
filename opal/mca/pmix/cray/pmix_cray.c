@@ -63,14 +63,6 @@ static int cray_unpublish(const char service_name[],
                           opal_list_t *info);
 static bool cray_get_attr(const char *attr, opal_value_t **kv);
 static int kvs_get(const char key[], char value [], int maxvalue);
-#if 0
-static int cray_get_jobid(char jobId[], int jobIdSize);
-static int cray_get_rank(int *rank);
-static int cray_get_size(opal_pmix_scope_t scope, int *size);
-static int cray_get_appnum(int *appnum);
-static int cray_local_info(int vpid, int **ranks_ret,
-                           int *procs_ret, char **error);
-#endif
 
 const opal_pmix_base_module_t opal_pmix_cray_module = {
     cray_init,
@@ -295,31 +287,6 @@ static int cray_spawn(int count, const char * cmds[],
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-#if 0
-static int cray_get_jobid(char jobId[], int jobIdSize)
-{
-    return PMI2_Job_GetId(jobId,jobIdSize);
-}
-
-static int cray_get_rank(int *rank)
-{
-    *rank = pmix_rank;
-    return OPAL_SUCCESS;
-}
-
-static int cray_get_size(opal_pmix_scope_t scope, int *size)
-{
-    *size = pmix_size;
-    return OPAL_SUCCESS;
-}
-
-static int cray_get_appnum(int *appnum)
-{
-    *appnum = pmix_appnum;
-    return OPAL_SUCCESS;
-}
-#endif
-
 static int cray_job_connect(const char jobId[])
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
@@ -457,28 +424,6 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
 
     return OPAL_SUCCESS;
 }
-
-#if 0
-static int cray_fence(opal_process_name_t *procs, size_t nprocs)
-{
-    int rc;
-
-    /* check if there is partially filled meta key and put them */
-    if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        opal_pmix_base_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
-        pmix_packed_data_offset = 0;
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    }
-
-    if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
-        OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
-        return OPAL_ERROR;
-    }
-
-    return OPAL_SUCCESS;
-}
-#endif
 
 static int kvs_get(const char key[], char value [], int maxvalue)
 {
@@ -639,44 +584,6 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv)
 
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
-
-
-#if 0
-static int cray_local_info(int vpid, int **ranks_ret,
-                           int *procs_ret, char **error)
-{
-    int *ranks;
-    int procs = -1;
-    int rc;
-
-    char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-    if( pmapping == NULL ){
-        *error = "mca_common_pmix_local_info: could not get memory for PMIv2 process mapping";
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    int found;
-    int my_node;
-
-    rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-    if( !found || PMI_SUCCESS != rc ) {
-        /* can't check PMI_SUCCESS as some folks (i.e., Cray) don't define it */
-        OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttr");
-        *error = "mca_common_pmix_local_info: could not get PMI_process_mapping";
-        return OPAL_ERROR;
-    }
-
-    ranks = pmix_cray_parse_pmap(pmapping, vpid, &my_node, &procs);
-    if (NULL == ranks) {
-        *error = "mca_common_pmix_local_info: could not get memory for PMIv2 local ranks";
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    free(pmapping);
-    *ranks_ret = ranks;
-    *procs_ret = procs;
-    return OPAL_SUCCESS;
-}
-#endif
 
 static char* pmix_error(int pmix_err)
 {
