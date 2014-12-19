@@ -513,8 +513,14 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
 
     /* binding specification */
     if (NULL == spec) {
-        /* default to bind-to core, and that no binding policy was specified */
-        OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_CORE);
+        if (opal_hwloc_use_hwthreads_as_cpus) {
+            /* default to bind-to hwthread */
+            OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_HWTHREAD);
+        } else {
+            /* default to bind-to core */
+            OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_CORE);
+        }
+        /* note that no binding policy was specified */
         tmp &= ~OPAL_BIND_GIVEN;
     } else if (0 == strncasecmp(spec, "none", strlen("none"))) {
         OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_NONE);
