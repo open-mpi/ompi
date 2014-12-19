@@ -22,6 +22,9 @@
 
 typedef uint64_t opal_timer_t;
 
+/* Using RDTSC(P) results in non-monotonic timers across cores */
+#undef OPAL_TIMER_MONOTONIC
+#define OPAL_TIMER_MONOTONIC 0
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
@@ -31,11 +34,11 @@ typedef uint64_t opal_timer_t;
 static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
-     unsigned a, d;
-#if 1
+     unsigned l, h;
+#if !OPAL_ASSEMBLY_SUPPORTS_RDTSCP
      __asm__ __volatile__ ("cpuid\n\t"
                            "rdtsc\n\t"
-                           : "=a" (a), "=d" (d)
+                           : "=a" (l), "=d" (h)
                            :: "rbx", "rcx");
 #else
      /* If we need higher accuracy we should implement the algorithm proposed
@@ -47,10 +50,10 @@ opal_sys_timer_get_cycles(void)
                            "mov %%edx, %0\n\t"
                            "mov %%eax, %1\n\t"
                            "cpuid\n\t"
-                           : "=r" (a), "=r" (d)
+                           : "=r" (h), "=r" (l)
                            :: "rax", "rbx", "rcx", "rdx");
 #endif
-     return ((opal_timer_t)a) | (((opal_timer_t)d) << 32);
+     return ((opal_timer_t)l) | (((opal_timer_t)h) << 32);
 }
 
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1

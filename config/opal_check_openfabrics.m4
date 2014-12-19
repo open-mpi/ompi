@@ -152,7 +152,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
 
     # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO, IBV_TRANSPORT_USNIC, IBV_TRANSPORT_USNIC_UDP, IBV_NODE_USNIC], [], [],
+          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO], [], [],
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
 

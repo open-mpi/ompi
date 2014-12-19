@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -91,4 +91,5 @@ extern ompi_datatype_t* create_strange_dt( void );
 extern ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count );
 extern ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count,
                                             int length, int stride );
+extern ompi_datatype_t* create_struct_constant_gap_resized_ddt( ompi_datatype_t* type );
 

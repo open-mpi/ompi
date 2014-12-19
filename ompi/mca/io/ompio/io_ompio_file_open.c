@@ -121,6 +121,25 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompi_io_ompio_initialize_print_queue(coll_write_time);
     ompi_io_ompio_initialize_print_queue(coll_read_time);
 
+    /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
+    ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
+    ompio_fh->f_generate_current_file_view=ompi_io_ompio_generate_current_file_view;
+
+    ompio_fh->f_sort=ompi_io_ompio_sort;
+    ompio_fh->f_sort_iovec=ompi_io_ompio_sort_iovec;
+
+    ompio_fh->f_allgather_array=ompi_io_ompio_allgather_array;
+    ompio_fh->f_allgatherv_array=ompi_io_ompio_allgatherv_array;
+    ompio_fh->f_gather_array=ompi_io_ompio_gather_array;
+    ompio_fh->f_gatherv_array=ompi_io_ompio_gatherv_array;
+
+    ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
+    ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
+    ompio_fh->f_set_aggregator_props=ompi_io_ompio_set_aggregator_props;
+
+    ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
+    ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;   
+
     /*
     if (MPI_INFO_NULL != info)  {
         ret = ompi_info_dup (info, &ompio_fh->f_info);

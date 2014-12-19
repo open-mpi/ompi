@@ -354,9 +354,8 @@ static void mca_btl_vader_check_single_copy (void)
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         /* try to create an xpmem segment for the entire address space */
-        mca_btl_vader_component.my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
-
-        if (-1 == mca_btl_vader_component.my_seg_id) {
+        rc = mca_btl_vader_xpmem_init ();
+        if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_XPMEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "xpmem-make-failed",
                                true, opal_process_info.nodename, errno,
@@ -364,18 +363,14 @@ static void mca_btl_vader_check_single_copy (void)
             }
 
             mca_btl_vader_select_next_single_copy_mechanism ();
-        } else {
-            mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
-            mca_btl_vader.super.btl_put = mca_btl_vader_get_xpmem;
         }
-
     }
 #endif
 
 #if OPAL_BTL_VADER_HAVE_CMA
     if (MCA_BTL_VADER_CMA == mca_btl_vader_component.single_copy_mechanism) {
         /* Check if we have the proper permissions for CMA */
-        char buffer = {0};
+        char buffer = '0';
         bool cma_happy = false;
         int fd;
 
@@ -405,8 +400,8 @@ static void mca_btl_vader_check_single_copy (void)
             mca_btl_vader_select_next_single_copy_mechanism ();
 
             if (MCA_BTL_VADER_CMA == initial_mechanism) {
-	        opal_show_help("help-btl-vader.txt", "cma-permission-denied",
-			       true, opal_process_info.nodename);
+                opal_show_help("help-btl-vader.txt", "cma-permission-denied",
+                               true, opal_process_info.nodename);
             }
         } else {
             /* ptrace_scope will allow CMA */
@@ -423,7 +418,7 @@ static void mca_btl_vader_check_single_copy (void)
         if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_KNEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "knem requested but not available",
-			       true, opal_process_info.nodename);
+                               true, opal_process_info.nodename);
             }
 
             /* disable single copy */

@@ -82,20 +82,12 @@ enum {
     OPAL_COMMON_VERBS_FLAGS_UD = 0x4,
     OPAL_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x8,
     OPAL_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x10,
-    OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC = 0x20,
-    OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP = 0x40,
     /* Note that these 2 link layer flags will only be useful if
        defined(HAVE_IBV_LINK_LAYER_ETHERNET). Otherwise, they will be
        ignored. */
     OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x80,
     OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x100,
     OPAL_COMMON_VERBS_FLAGS_MAX
-};
-
-enum {
-    /* a constant used when probing the usNIC transport type (custom L2 vs.
-     * UDP/IP) */
-    OPAL_COMMON_VERBS_USNIC_PROBE_MAGIC = 42
 };
 
 /**

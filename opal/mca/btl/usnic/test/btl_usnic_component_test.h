@@ -42,8 +42,8 @@ static int test_parse_ifex_str(void *ctx)
     check(f->elts[0].is_netmask == false);
     check_str_eq(f->elts[0].if_name, "usnic_1");
     check(f->elts[1].is_netmask == true);
-    check(f->elts[1].addr == htonl(0x01020300));
-    check(f->elts[1].prefixlen == 24);
+    check(f->elts[1].addr_be == htonl(0x01020300));
+    check(f->elts[1].netmask_be == 24);
     free_filter(f);
 
     return 0;

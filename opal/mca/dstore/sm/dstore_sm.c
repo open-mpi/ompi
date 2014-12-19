@@ -129,7 +129,6 @@ static int store(struct opal_dstore_base_module_t *imod,
                  opal_value_t *val)
 {
     mca_dstore_sm_module_t *mod;
-    int rc;
     void *addr;
     int32_t data_size;
     opal_shmem_ds_t *seg_ds;
@@ -213,18 +212,17 @@ static int store(struct opal_dstore_base_module_t *imod,
             ch = strrchr(path, OPAL_PATH_SEP[0]) + 1;
             if (NULL != ch) {
                 *ch = '\0';
-                rc = asprintf(&sm_file, "%sdstore_segment.%d", path, cur_seg_index);
+                (void)asprintf(&sm_file, "%sdstore_segment.%d", path, cur_seg_index);
             }
             free(path);
         }
         if (NULL == sm_file) {
-            rc = asprintf(&sm_file, "%s", "noname");
+            (void)asprintf(&sm_file, "%s", "noname");
         }
-        if (0 <= rc && NULL != sm_file) {
+        if (NULL != sm_file) {
             seg_ds = (opal_shmem_ds_t*)malloc(sizeof(opal_shmem_ds_t));
             memset(seg_ds, 0, sizeof(opal_shmem_ds_t));
-            rc = opal_shmem_segment_create (seg_ds, sm_file, SHARED_SEGMENT_SIZE);
-            if (OPAL_SUCCESS != rc) {
+            if (OPAL_SUCCESS != opal_shmem_segment_create (seg_ds, sm_file, SHARED_SEGMENT_SIZE)) {
                 opal_output_verbose(0, opal_dstore_base_framework.framework_output,
                                  "%s dstore:sm:store: couldn't create new shared segment to store key %s on proc %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),

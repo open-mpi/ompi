@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -31,11 +31,11 @@ struct structure {
 };
 
 static MPI_Datatype
-create_struct_constant_gap_resized_ddt( int number,  /* number of repetitions */
+create_struct_constant_gap_resized_ddt( int number,  /* IGNORED: number of repetitions */
                                         int contig_size,  /* IGNORED: number of elements in a contiguous chunk */
                                         int gap_size )    /* IGNORED: number of elements in a gap */
 {
-    struct structure *data;
+    struct structure data[1];
     MPI_Datatype struct_type, temp_type;
     MPI_Datatype types[2] = {MPI_DOUBLE, MPI_DOUBLE};
     int blocklens[2] = {1, 1};
@@ -50,6 +50,8 @@ create_struct_constant_gap_resized_ddt( int number,  /* number of repetitions */
     MPI_Type_create_struct(2, blocklens, disps, types, &temp_type);
     MPI_Type_create_resized(temp_type, 0, sizeof(data[0]), &struct_type);
     MPI_Type_commit(&struct_type);
+    MPI_Type_free(&temp_type);
+    MPI_DDT_DUMP( struct_type );
 
     return struct_type;
 }
@@ -338,19 +340,19 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
     MPI_Type_get_extent( sddt, &lb, &extent );
     sbuf = (char*)malloc( length );
     rbuf = (char*)malloc( length );
-    printf( "# Isend recv\n" );
+    printf( "# Isend recv (length %d)\n", length );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         isend_recv( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
-    printf( "# Isend Irecv Wait\n" );
+    printf( "# Isend Irecv Wait (length %d)\n", length );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         isend_irecv_wait( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
-    printf( "# Irecv send\n" );
+    printf( "# Irecv send (length %d)\n", length );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         irecv_send( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
-    printf( "# Irecv Isend Wait\n" );
+    printf( "# Irecv Isend Wait (length %d)\n", length );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         irecv_isend_wait( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
@@ -365,12 +367,14 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 #define DO_OPTIMIZED_INDEXED_GAP        0x08
 #define DO_STRUCT_CONSTANT_GAP_RESIZED  0x10
 
+#define MIN_LENGTH   1024
+#define MAX_LENGTH   (1024*1024)
+
 int main( int argc, char* argv[] )
 {
-    int length = 111;
-    int rank, size;
-    MPI_Datatype ddt;
     int run_tests = 0xffffffff;  /* do all tests by default */
+    int length, rank, size;
+    MPI_Datatype ddt;
     /*int run_tests = DO_CONSTANT_GAP;*/
 
     MPI_Init (&argc, &argv);
@@ -385,14 +389,16 @@ int main( int argc, char* argv[] )
 
     if( run_tests & DO_CONTIG ) {
         printf( "\ncontiguous datatype\n\n" );
-        do_test_for_ddt( MPI_INT, MPI_INT, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( MPI_INT, MPI_INT, length );
     }
 
     if( run_tests & DO_INDEXED_GAP ) {
         printf( "\nindexed gap\n\n" );
         ddt = create_indexed_gap_ddt();
         MPI_DDT_DUMP( ddt );
-        do_test_for_ddt( ddt, ddt, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
 
@@ -400,7 +406,8 @@ int main( int argc, char* argv[] )
         printf( "\noptimized indexed gap\n\n" );
         ddt = create_indexed_gap_optimized_ddt();
         MPI_DDT_DUMP( ddt );
-        do_test_for_ddt( ddt, ddt, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
 
@@ -408,7 +415,8 @@ int main( int argc, char* argv[] )
         printf( "\nconstant indexed gap\n\n" );
         ddt = create_indexed_constant_gap_ddt( 80, 100, 1 );
         MPI_DDT_DUMP( ddt );
-        do_test_for_ddt( ddt, ddt, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
 
@@ -416,15 +424,17 @@ int main( int argc, char* argv[] )
         printf( "\noptimized constant indexed gap\n\n" );
         ddt = create_optimized_indexed_constant_gap_ddt( 80, 100, 1 );
         MPI_DDT_DUMP( ddt );
-        do_test_for_ddt( ddt, ddt, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
 
     if( run_tests & DO_STRUCT_CONSTANT_GAP_RESIZED ) {
         printf( "\nstruct constant gap resized\n\n" );
-        ddt = create_struct_constant_gap_resized_ddt( 80, 0 /* unused */, 0 /* unused */ );
+        ddt = create_struct_constant_gap_resized_ddt( 0 /* unused */, 0 /* unused */, 0 /* unused */ );
         MPI_DDT_DUMP( ddt );
-        do_test_for_ddt( ddt, ddt, length );
+        for( length = MIN_LENGTH; length < MAX_LENGTH; length <<=1 )
+            do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
 

@@ -183,7 +183,7 @@ void mca_mpool_gpusm_finalize(struct mca_mpool_base_module_t *mpool)
     /* Need to run the destructor on each item in the free list explicitly.
      * The destruction of the free list only runs the destructor on the
      * main free list, not each item. */
-    while (NULL != (item = (ompi_free_list_item_t *)opal_atomic_lifo_pop(&(mpool_gpusm->reg_list.super)))) {
+    while (NULL != (item = (ompi_free_list_item_t *)opal_lifo_pop(&(mpool_gpusm->reg_list.super)))) {
         OBJ_DESTRUCT(item);
     }
 

@@ -89,6 +89,7 @@
 #include "ompi/runtime/ompi_cr.h"
 
 extern bool ompi_enable_timing;
+extern bool ompi_enable_timing_ext;
 
 int ompi_mpi_finalize(void)
 {
@@ -151,7 +152,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* check to see if we want timing information */
-    OPAL_TIMING_EVENT((&tm,"Start barrier"));
+    OPAL_TIMING_MSTART((&tm,"time to execute finalize barrier"));
 
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
@@ -232,8 +233,9 @@ int ompi_mpi_finalize(void)
 
     /* check for timing request - get stop time and report elapsed
      time if so */
-    OPAL_TIMING_EVENT((&tm,"Finish barrier"));
-    OPAL_TIMING_REPORT(ompi_enable_timing, &tm, "MPI_Finish");
+    OPAL_TIMING_MSTOP(&tm);
+    OPAL_TIMING_DELTAS(ompi_enable_timing, &tm);
+    OPAL_TIMING_REPORT(ompi_enable_timing_ext, &tm);
     OPAL_TIMING_RELEASE(&tm);
 
     /*
@@ -341,11 +343,6 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    /* free proc resources */
-    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-        return ret;
-    }
-    
     /* finalize the pubsub functions */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
         return ret;
@@ -417,6 +414,11 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
+        return ret;
+    }
+
+    /* free proc resources */
+    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
         return ret;
     }
 

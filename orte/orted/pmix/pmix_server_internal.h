@@ -205,6 +205,10 @@ extern pmix_server_peer_t* pmix_server_peer_lookup(int sd);
 extern void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg);
 extern int pack_segment_info(opal_process_name_t id, opal_buffer_t *reply);
 
+extern int pmix_server_fetch_proc_map(opal_buffer_t *reply,
+                                      orte_job_t *jdata,
+                                      orte_proc_t *proc);
+extern void pmix_server_process_message(pmix_server_peer_t *peer);
 
 /* exposed shared variables */
 extern bool pmix_server_distribute_data;

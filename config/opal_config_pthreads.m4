@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
     pthread_attr_t attr;
 
     me = pthread_self(); 
+    pthread_atfork(NULL, NULL, NULL);
     pthread_attr_init(&attr); 
     pthread_cleanup_push(cleanup_routine, 0);
     pthread_create(&newthread, &attr, thread_main, 0); 

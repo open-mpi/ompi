@@ -104,7 +104,8 @@ CLEANFILES += sizeof_f.f90
 noinst_LTLIBRARIES=
 if BUILD_FORTRAN_SIZEOF
 noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
-libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
+# Do not dist this file; it is generated
+nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
 libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 endif
 

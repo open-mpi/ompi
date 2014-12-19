@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -32,7 +32,7 @@
 static void ompi_free_list_construct(ompi_free_list_t* fl);
 static void ompi_free_list_destruct(ompi_free_list_t* fl);
 
-OBJ_CLASS_INSTANCE(ompi_free_list_t, opal_atomic_lifo_t,
+OBJ_CLASS_INSTANCE(ompi_free_list_t, opal_lifo_t,
         ompi_free_list_construct, ompi_free_list_destruct);
 
 typedef struct ompi_free_list_item_t ompi_free_list_memory_t;
@@ -73,7 +73,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     }
 #endif
 
-    while(NULL != (item = opal_atomic_lifo_pop(&(fl->super)))) {
+    while(NULL != (item = opal_lifo_pop(&(fl->super)))) {
         fl_item = (ompi_free_list_item_t*)item;
 
         /* destruct the item (we constructed it), the underlying memory will be
@@ -257,13 +257,14 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         item->ptr = payload_ptr;
 
         OBJ_CONSTRUCT_INTERNAL(item, flist->fl_frag_class);
+        item->super.item_free = 0;
         
         /* run the initialize function if present */
         if(flist->item_init) { 
             flist->item_init(item, flist->ctx);
         }
 
-        opal_atomic_lifo_push(&(flist->super), &(item->super));
+        opal_lifo_push(&(flist->super), &(item->super));
         ptr += head_size;
         payload_ptr += elem_size;
         

@@ -58,6 +58,7 @@
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
+#include "opal/util/fd.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
@@ -66,7 +67,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "oob_usock.h"
@@ -104,6 +104,14 @@ static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         return ORTE_ERR_UNREACH;
+    }
+    /* Set this fd to be close-on-exec so that subsequent children don't see it */
+    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(peer->sd);
+        peer->sd = -1;
+        return ORTE_ERROR;
     }
 
     /* setup event callbacks */
@@ -706,9 +714,6 @@ static void usock_peer_connected(mca_oob_usock_peer_t* peer)
         peer->timer_ev_active = false;
     }
     peer->state = MCA_OOB_USOCK_CONNECTED;
-
-    /* update the route */
-    orte_routed.update_route(&peer->name, &peer->name);
 
     /* initiate send of first message on queue */
     if (NULL == peer->send_msg) {

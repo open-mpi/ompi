@@ -1,4 +1,3 @@
-#!/bin/sh
 #!/bin/bash
 #
 # Copyright (c) 2014      Artem Polyakov <artpol84@gmail.com>
@@ -54,8 +53,8 @@ syncfile=`pwd`"/ompi_clock_sync_data.$jobid"
 tmp_timings=`pwd`"/ompi_timing_temp_file.$jobid"
 tmp_out=`pwd`"/ompi_mpirun_prof.$jobid"
 
-timing_bkp=$OMPI_MCA_opal_timing_file
-export OMPI_MCA_opal_timing_file=$tmp_timings
+timing_bkp=$OMPI_MCA_opal_timing_output
+export OMPI_MCA_opal_timing_output=$tmp_timings
 
 opts=`extract_nodeset_opts $@`
 ${ompi_instdir}/mpirun --npernode 1 $opts ${ompi_instdir}/mpisync -o $syncfile >$tmp_out 2>&1

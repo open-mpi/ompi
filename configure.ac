@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2010 The University of Tennessee and The University
+# Copyright (c) 2004-2014 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -132,13 +132,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)
-          # It's icky that we have to hard-code the names of the
-          # common components here.  :-( This could probably be done
-          # transparently by adding some intelligence in autogen.pl
-          # and/or opal_mca.m4, but I don't have the cycles to do this
-          # right now.
-          AC_SUBST(libmca_common_mx_so_version)])
+          AC_SUBST(libmpi_java_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
@@ -150,13 +144,13 @@ AC_SUBST(libopen_pal_so_version)
 # transparently by adding some intelligence in autogen.pl
 # and/or opal_mca.m4, but I don't have the cycles to do this
 # right now.
-AC_SUBST(libmca_opal_common_hwloc_so_version)
-AC_SUBST(libmca_opal_common_pmi_so_version)
+AC_SUBST(libmca_opal_common_libfabric_so_version)
 AC_SUBST(libmca_common_cuda_so_version)
 AC_SUBST(libmca_common_ofacm_so_version)
 AC_SUBST(libmca_common_sm_so_version)
 AC_SUBST(libmca_common_ugni_so_version)
 AC_SUBST(libmca_common_verbs_so_version)
+AC_SUBST(libmca_common_alps_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us
@@ -365,6 +359,7 @@ AC_CHECK_TYPES(uint32_t)
 AC_CHECK_TYPES(int64_t)
 AC_CHECK_TYPES(uint64_t)
 AC_CHECK_TYPES(int128_t)
+AC_CHECK_TYPES(__int128)
 AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
@@ -648,6 +643,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h sys/un.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h crt_externs.h regex.h signal.h \
+    mntent.h paths.h \
     ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h])
 
 AC_CHECK_HEADERS([sys/mount.h], [], [],
@@ -866,6 +862,9 @@ OPAL_SEARCH_LIBS_CORE([dirname], [gen])
 
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OPAL_SEARCH_LIBS_CORE([ceil], [m])
+
+# -lrt might be needed for clock_gettime
+OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 

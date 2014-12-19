@@ -41,7 +41,7 @@ AC_DEFUN([MCA_opal_mpool_udreg_CONFIG],[
     AS_IF([test "$mpool_udreg_happy" = "yes"], [$1], [$2])
 
 
-    # substitute in the things needed to build ugni
+    # substitute in the things needed to build udreg/mpool
     AC_SUBST([mpool_udreg_CPPFLAGS])
     AC_SUBST([mpool_udreg_LDFLAGS])
     AC_SUBST([mpool_udreg_LIBS])

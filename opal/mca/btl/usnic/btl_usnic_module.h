@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,12 +24,19 @@
 #ifndef OPAL_BTL_USNIC_MODULE_H
 #define OPAL_BTL_USNIC_MODULE_H
 
-#include "opal/class/opal_pointer_array.h"
+#include <rdma/fabric.h>
+#include <rdma/fi_eq.h>
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_errno.h>
 
-#include "opal/mca/common/verbs/common_verbs.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "btl_usnic_endpoint.h"
 #include "btl_usnic_stats.h"
+#include "btl_usnic_util.h"
+
+/* In libfabric prov/usnic/src */
+#include "fi_usnic.h"
 
 /*
  * Default limits.
@@ -53,30 +58,30 @@ struct opal_btl_usnic_send_segment_t;
 struct opal_btl_usnic_recv_segment_t;
 
 /*
- * Abstraction of a set of IB queues
+ * Abstraction of a set of endpoints
  */
 typedef struct opal_btl_usnic_channel_t {
     int chan_index;
 
-    struct ibv_cq *cq;
+    struct fid_cq *cq;
 
-    int chan_mtu;
+    int chan_max_msg_size;
     int chan_rd_num;
     int chan_sd_num;
 
-    /** available send WQ entries */
-    int32_t sd_wqe;
+    int credits;  /* RFXXX until libfab credits fixed */
 
-    /* fastsend enabled if sd_wqe >= fastsend_wqe_thresh */
-    int fastsend_wqe_thresh;
+    /* fastsend enabled if num_credits_available >= fastsend_wqe_thresh */
+    unsigned fastsend_wqe_thresh;
 
-    /* pointer to receive segment whose bookkeeping has been deferred */
+    /** pointer to receive segment whose bookkeeping has been deferred */
     struct opal_btl_usnic_recv_segment_t *chan_deferred_recv;
 
-    /** queue pair */
-    struct ibv_qp* qp;
+    /** queue pair and attributes */
+    struct fi_info *info;
+    struct fid_ep *ep;
 
-    struct ibv_recv_wr *repost_recv_head;
+    struct opal_btl_usnic_recv_segment_t *repost_recv_head;
 
     /** receive segments & buffers */
     ompi_free_list_t recv_segs;
@@ -88,33 +93,33 @@ typedef struct opal_btl_usnic_channel_t {
 } opal_btl_usnic_channel_t;
 
 /**
- * usNIC verbs BTL interface
+ * usnic BTL module
  */
 typedef struct opal_btl_usnic_module_t {
     mca_btl_base_module_t super;
 
     /* Cache for use during component_init to associate a module with
-       the opal_common_verbs_port_item_t that it came from. */
-    opal_common_verbs_port_item_t *port;
+       the libfabric device that it came from. */
+    struct fid_fabric *fabric;
+    struct fid_domain *domain;
+    struct fi_info *fabric_info;
+    struct fi_usnic_ops_fabric *usnic_fabric_ops;
+    struct fi_usnic_ops_av *usnic_av_ops;
+    struct fi_usnic_info usnic_info;
+    struct fid_eq *dom_eq;
+    struct fid_eq *av_eq;
+    struct fid_av *av;
 
     mca_btl_base_module_error_cb_fn_t pml_error_callback;
 
-    /* Information about the usNIC verbs device */
-    uint8_t port_num;
-    struct ibv_device *device;
-    struct ibv_context *device_context;
+    /* Information about the events */
     struct event device_async_event;
     bool device_async_event_active;
-    struct ibv_pd *pd;
     int numa_distance; /* hwloc NUMA distance from this process */
 
-    /* Information about the IP interface corresponding to this USNIC
-       interface */
-    char if_name[64];
-    uint32_t if_ipv4_addr; /* in network byte order */
-    uint32_t if_cidrmask; /* X in "/X" CIDR addr fmt, host byte order */
-    uint8_t if_mac[6];
-    int if_mtu;
+    /** local address information */
+    struct opal_btl_usnic_modex_t local_modex;
+    char if_ipv4_addr_str[IPV4STRADDRLEN];
 
     /** desired send, receive, and completion queue entries (from MCA
         params; cached here on the component because the MCA param
@@ -131,16 +136,13 @@ typedef struct opal_btl_usnic_module_t {
      * segment is slightly less than what can be held in frag segment due
      * to fragment reassembly info.
      */
-    size_t tiny_mtu;
+    size_t max_tiny_msg_size;
     size_t max_frag_payload;    /* most that fits in a frag segment */
     size_t max_chunk_payload;   /* most that can fit in chunk segment */
     size_t max_tiny_payload;    /* threshold for using inline send */
 
     /** Hash table to keep track of senders */
-    opal_proc_table_t senders;
-
-    /** local address information */
-    struct opal_btl_usnic_addr_t local_addr;
+    opal_hash_table_t senders;
 
     /** list of all endpoints.  Note that the main application thread
         reads and writes to this list, and the connectivity agent
@@ -186,7 +188,8 @@ typedef struct opal_btl_usnic_module_t {
     /* abstract queue-pairs into channels */
     opal_btl_usnic_channel_t mod_channels[USNIC_NUM_CHANNELS];
 
-    uint32_t qp_max_inline;
+    /* Number of short/erroneous packets we've receive on this
+       interface */
     uint32_t num_short_packets;
 
     /* Performance / debugging statistics */

@@ -214,19 +214,19 @@ static void allocation_complete(int fd, short args, void *cbdata)
 
 #if OPAL_HAVE_HWLOC
     {
-        hwloc_topology_t t;
+        orte_topology_t *t;
         orte_node_t *node;
         int i;
 
         /* ensure that all nodes point to our topology - we
          * cannot support hetero nodes with this state machine
          */
-        t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 0);
+        t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
-            node->topology = t;
+            node->topology = t->topo;
         }
     }
 #endif

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,6 +121,31 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 
 #define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
 #define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
+
+#if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
+
+static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr, opal_int128_t oldval,
+                                          opal_int128_t newval)
+{
+    unsigned char ret;
+
+    /* cmpxchg16b compares the value at the address with eax:edx (low:high). if the values are
+     * the same the contents of ebx:ecx are stores at the address. in all cases the value stored
+     * at the address is returned in eax:edx. */
+    __asm__ __volatile__ (SMPLOCK "cmpxchg16b (%%rsi)   \n\t"
+                                  "sete     %0      \n\t"
+                          : "=qm" (ret)
+                          : "S" (addr), "b" (((int64_t *)&newval)[0]), "c" (((int64_t *)&newval)[1]),
+                            "a" (((int64_t *)&oldval)[0]), "d" (((int64_t *)&oldval)[1])
+                          : "memory", "cc");
+
+    return (int) ret;
+}
+
+#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 

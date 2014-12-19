@@ -55,6 +55,19 @@
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+
+#ifdef _PATH_MOUNTED
+#define MOUNTED_FILE _PATH_MOUNTED
+#else
+#define MOUNTED_FILE "/etc/mtab"
+#endif
+
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
@@ -392,6 +405,35 @@ char* opal_find_absolute_path( char* app_name )
     return NULL;
 }
 
+/**
+ * Read real FS type from /etc/mtab, needed to translate autofs fs type into real fs type
+ * TODO: solaris? OSX?
+ * Limitations: autofs on solaris/osx will be assumed as "nfs" type
+ */
+
+static char *opal_check_mtab(char *dev_path)
+{
+
+#ifdef HAVE_MNTENT_H
+    FILE * mtab = NULL;
+    struct mntent * part = NULL;
+
+    if ((mtab = setmntent(MOUNTED_FILE, "r")) != NULL) {
+        while (NULL != (part = getmntent(mtab))) {
+            if ((NULL != part->mnt_dir) &&
+                (NULL != part->mnt_type) &&
+                (0 == strcmp(part->mnt_dir, dev_path)))
+            {
+                endmntent(mtab);
+                return strdup(part->mnt_type);
+            }
+        }
+        endmntent(mtab);
+    }
+#endif
+    return NULL;
+}
+
 
 /**
  * @brief Figure out, whether fname is on network file system
@@ -448,6 +490,9 @@ char* opal_find_absolute_path( char* app_name )
 #ifndef GPFS_SUPER_MAGIC
 #define GPFS_SUPER_MAGIC  0x47504653    /* Thats GPFS in ASCII */
 #endif
+#ifndef AUTOFS_SUPER_MAGIC
+#define AUTOFS_SUPER_MAGIC 0x0187
+#endif
 
 #define MASK2        0xffff
 #define MASK4    0xffffffff
@@ -476,6 +521,7 @@ bool opal_path_nfs(char *fname)
     } fs_types[] = {
         {LL_SUPER_MAGIC,                   MASK4, "lustre"},
         {NFS_SUPER_MAGIC,                  MASK2, "nfs"},
+        {AUTOFS_SUPER_MAGIC,               MASK2, "autofs"},
         {PAN_KERNEL_FS_CLIENT_SUPER_MAGIC, MASK4, "panfs"},
         {GPFS_SUPER_MAGIC,                 MASK4, "gpfs"}
     };
@@ -566,9 +612,29 @@ again:
     return false;
 
 found:
-    OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n",
-                         fname, fs_types[i].f_fsname));
+
     free (file);
+    if (AUTOFS_SUPER_MAGIC == fs_types[i].f_fsid) {
+        char *fs_type = opal_check_mtab(fname);
+        int x;
+        if (NULL != fs_type) {
+            for (x = 0; x < FS_TYPES_NUM; x++) {
+                if (AUTOFS_SUPER_MAGIC == fs_types[x].f_fsid) {
+                    continue;
+                }
+                if (0 == strcasecmp(fs_types[x].f_fsname, fs_type)) {
+                    OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n", fname, fs_type));
+                    free(fs_type);
+                    return true;
+                }
+            }
+            free(fs_type);
+            return false;
+        }
+    }
+
+    OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n",
+                fname, fs_types[i].f_fsname));
     return true;
 
 #undef FS_TYPES_NUM

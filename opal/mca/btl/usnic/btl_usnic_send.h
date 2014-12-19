@@ -10,8 +10,6 @@
 #ifndef BTL_USNIC_SEND_H
 #define BTL_USNIC_SEND_H
 
-#include <infiniband/verbs.h>
-
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_ack.h"
@@ -53,23 +51,8 @@ opal_btl_usnic_check_rts(
     }
 }
 
-#if MSGDEBUG2
-static inline
-int sge_total(struct ibv_send_wr *wr)
-{
-    int i;
-    int len;
-    len=0;
-    for (i=0; i<wr->num_sge; ++i) {
-        len += wr->sg_list[i].length;
-    }
-
-    return len;
-}
-#endif
-
 /*
- * Common point for posting a segment to VERBS
+ * Common point for posting a segment
  */
 static inline void
 opal_btl_usnic_post_segment(
@@ -77,33 +60,31 @@ opal_btl_usnic_post_segment(
     opal_btl_usnic_endpoint_t *endpoint,
     opal_btl_usnic_send_segment_t *sseg)
 {
-    struct ibv_send_wr *bad_wr;
-    opal_btl_usnic_channel_t *channel;
-    struct ibv_send_wr *wr;
     int ret;
 
+    /* get channel and remote channel */
+    opal_btl_usnic_channel_id_t channel_id = sseg->ss_channel;
+    opal_btl_usnic_channel_t *channel = &module->mod_channels[channel_id];
+
 #if MSGDEBUG1
-    opal_output(0, "post_send: type=%s, addr=%p, len=%d, payload=%d\n",
-                usnic_seg_type(sseg->ss_base.us_type),
-                (void*) sseg->ss_send_desc.sg_list->addr,
-                sge_total(&sseg->ss_send_desc),
-                sseg->ss_base.us_btl_header->payload_len);
-    /*opal_btl_usnic_dump_hex((void *)(sseg->ss_send_desc.sg_list->addr + sizeof(opal_btl_usnic_btl_header_t)), 16); */
+    opal_output(0, "post_send: type=%s, ep=%p, remote_addr=%p, addr=%p, len=%"
+                PRIsize_t,
+                usnic_seg_type_str(sseg->ss_base.us_type),
+                (void*) channel->ep,
+                (void*) endpoint->endpoint_remote_addrs[channel_id],
+                (void*) sseg->ss_ptr,
+                sseg->ss_len);
 #endif
 
-    /* set target address */
-    wr = &sseg->ss_send_desc;
-    wr->wr.ud.ah = endpoint->endpoint_remote_ah;
-
-    /* get channel and remote QPN */
-    channel = &module->mod_channels[sseg->ss_channel];
-    wr->wr.ud.remote_qpn =
-        endpoint->endpoint_remote_addr.qp_num[sseg->ss_channel];
-
-    /* Post segment to the NIC */
-    ret = ibv_post_send(channel->qp, &sseg->ss_send_desc, &bad_wr);
+    /* Send the segment */
+    ret = fi_send(channel->ep,
+            sseg->ss_ptr,
+            sseg->ss_len,
+            NULL,
+            endpoint->endpoint_remote_addrs[channel_id],
+            sseg);
     if (OPAL_UNLIKELY(0 != ret)) {
-        opal_btl_usnic_util_abort("ibv_post_send() failed",
+        opal_btl_usnic_util_abort("fi_send() failed",
                                   __FILE__, __LINE__);
         /* Never returns */
     }
@@ -114,15 +95,57 @@ opal_btl_usnic_post_segment(
         ++sseg->ss_parent_frag->sf_seg_post_cnt;
     }
 
-    /* consume a WQE */
-    --channel->sd_wqe;
+    /* Stats */
+    ++module->stats.num_total_sends;
+    ++channel->num_channel_sends;
+    --channel->credits;
+}
+
+/*
+ * Common point for posting an ACK
+ */
+static inline void
+opal_btl_usnic_post_ack(
+    opal_btl_usnic_module_t *module,
+    opal_btl_usnic_endpoint_t *endpoint,
+    opal_btl_usnic_send_segment_t *sseg)
+{
+    int ret;
+
+    /* get channel and remote channel */
+    opal_btl_usnic_channel_id_t channel_id = sseg->ss_channel;
+    opal_btl_usnic_channel_t *channel = &module->mod_channels[channel_id];
+
+#if MSGDEBUG1
+    opal_output(0, "post_send ACK: type=%s, ep=%p, remote_addr=%p, addr=%p, len=%"
+                PRIsize_t,
+                usnic_seg_type_str(sseg->ss_base.us_type),
+                (void*) channel->ep,
+                (void*) endpoint->endpoint_remote_addrs[channel_id],
+                (void*) sseg->ss_ptr,
+                sseg->ss_len);
+#endif
+
+    ret = fi_send(channel->ep,
+            sseg->ss_ptr,
+            sseg->ss_len,
+            NULL,
+            endpoint->endpoint_remote_addrs[channel_id],
+            sseg);
+    if (OPAL_UNLIKELY(0 != ret)) {
+        opal_btl_usnic_util_abort("fi_send() failed",
+                                  __FILE__, __LINE__);
+        /* Never returns */
+    }
 
     /* Stats */
     ++module->stats.num_total_sends;
     ++channel->num_channel_sends;
+    --channel->credits;
 }
+
 /*
- * Post a send to the verbs work queue
+ * Post a send to the work queue
  */
 static inline void
 opal_btl_usnic_endpoint_send_segment(
@@ -174,23 +197,29 @@ opal_btl_usnic_endpoint_send_segment(
 
 #if MSGDEBUG1
     {
-        uint8_t mac[6];
-    char mac_str1[128];
-    char mac_str2[128];
-    opal_btl_usnic_sprintf_mac(mac_str1, module->local_addr.mac);
-        opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
-    opal_btl_usnic_sprintf_mac(mac_str2, mac);
+        char local_ip[32];
+        char remote_ip[32];
 
-        opal_output(0, "--> Sending %s: seq: %" UDSEQ ", sender: 0x%016lx from device %s MAC %s, qp %u, seg %p, room %d, wc len %u, remote MAC %s, qp %u",
+        opal_btl_usnic_snprintf_ipv4_addr(local_ip, sizeof(local_ip),
+                                          module->local_modex.ipv4_addr,
+                                          module->local_modex.netmask);
+        opal_btl_usnic_snprintf_ipv4_addr(remote_ip, sizeof(remote_ip),
+                                          endpoint->endpoint_remote_modex.ipv4_addr,
+                                          endpoint->endpoint_remote_modex.netmask);
+
+        opal_output(0, "--> Sending %s: seq: %" UDSEQ ", sender: 0x%016lx from device %s, IP %s, port %u, seg %p, room %d, wc len %u, remote IP %s, port %u",
             (sseg->ss_parent_frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_LARGE_SEND)?
-                "CHUNK" : "FRAG",
-            sseg->ss_base.us_btl_header->pkt_seq,
-            sseg->ss_base.us_btl_header->sender,
-            endpoint->endpoint_module->device->name,
-            mac_str1, module->local_addr.qp_num[sseg->ss_channel],
-            (void*)sseg, sseg->ss_hotel_room,
-            sseg->ss_base.us_sg_entry[0].length,
-            mac_str2, endpoint->endpoint_remote_addr.qp_num[sseg->ss_channel]);
+                    "CHUNK" : "FRAG",
+                    sseg->ss_base.us_btl_header->pkt_seq,
+                    sseg->ss_base.us_btl_header->sender,
+                    endpoint->endpoint_module->fabric_info->fabric_attr->name,
+                    local_ip,
+                    module->local_modex.ports[sseg->ss_channel],
+                    (void*)sseg,
+                    sseg->ss_hotel_room,
+                    sseg->ss_ptr,
+                    remote_ip,
+                    endpoint->endpoint_remote_modex.ports[sseg->ss_channel]);
     }
 #endif
 

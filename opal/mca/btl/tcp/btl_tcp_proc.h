@@ -108,7 +108,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc);
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t* name);
 int  mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
-bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t*, struct sockaddr*, int);
+void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t*, struct sockaddr*, int);
 bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t*, struct sockaddr_storage*);
 
 /**

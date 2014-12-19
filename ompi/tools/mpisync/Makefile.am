@@ -44,13 +44,15 @@ AM_CFLAGS = \
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+man_pages = mpisync.1
+EXTRA_DIST = $(man_pages:.1=.1in)\
+	     mpirun_prof \
+	     ompi_timing_post
+
 if OPAL_INSTALL_TIMING_BINARIES
 
 bin_PROGRAMS = mpisync 
 bin_SCRIPTS = mpirun_prof ompi_timing_post
-
-man_pages = mpisync.1
-EXTRA_DIST = $(man_pages:.1=.1in)
 
 nodist_man_MANS = $(man_pages)
 

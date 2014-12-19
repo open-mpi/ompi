@@ -10,26 +10,6 @@
 #
 # This is the US/English help file for the Open MPI usnic BTL.
 #
-[ibv API failed]
-Open MPI failed a basic verbs operation on a Cisco usNIC interface.
-This is highly unusual and shouldn't happen.  It suggests that there
-may be something wrong with the usNIC or OpenFabrics configuration on
-this server.
-
-In addition to any suggestions listed below, you might want to check
-the Linux "memlock" limits on your system (they should probably be
-"unlimited").  See this FAQ entry for details:
-
-    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
-
-Open MPI will skip this usNIC interface in the usnic BTL, which may
-result in either lower performance or your job aborting.
-
-  Server:          %s
-  usNIC interface: %s (which is %s)
-  Failed function: %s (%s:%d)
-  Description:     %s
-#
 [not enough usnic resources]
 There are not enough usNIC resources on a VIC for all the MPI
 processes on this server.
@@ -48,24 +28,24 @@ result in either lower performance or your job aborting.
   usNIC interface: %s
   Description:     %s
 #
-[create ibv resource failed]
-Open MPI failed to allocate a usNIC-related resource on a VIC.  This
-usually means one of two things:
+[libfabric API failed]
+Open MPI failed a basic API operation on a Cisco usNIC interface.
+This is highly unusual and shouldn't happen.  It suggests that there
+may be something wrong with the usNIC configuration on this server.
 
-1. You are running something other than this MPI job on this server
-   that is consuming usNIC resources.
-2. You have run out of locked Linux memory.  You should probably set
-   the Linux "memlock" limits to "unlimited".  See this FAQ entry for
-   details:
+In addition to any suggestions listed below, you might want to check
+the Linux "memlock" limits on your system (they should probably be
+"unlimited").  See this FAQ entry for details:
 
-     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 
-This Open MPI job will skip this usNIC interface in the usnic BTL,
-which may result in either lower performance or the job aborting.
+Open MPI will skip this usNIC interface in the usnic BTL, which may
+result in either lower performance or your job aborting.
 
   Server:          %s
-  usNIC interface: %s (which is %s)
+  usNIC interface: %s
   Failed function: %s (%s:%d)
+  Return status:   %d
   Description:     %s
 #
 [async event]
@@ -73,7 +53,7 @@ Open MPI detected a fatal error on a usNIC interface.  Your MPI job
 will now abort; sorry.
 
   Server:           %s
-  usNIC interface:  %s (which is %s)
+  usNIC interface:  %s
   Async event code: %s (%d)
 #
 [internal error during init]
@@ -86,8 +66,9 @@ Open MPI will skip this usNIC interface in the usnic BTL, which may
 result in either lower performance or your job aborting.
 
   Server:          %s
-  usNIC interface: %s (which is %s)
-  Failure:         %s (%s:%d)
+  usNIC interface: %s
+  Failure at:      %s (%s:%d)
+  Error:           %d (%s)
 #
 [internal error after init]
 An internal error has occurred in the Open MPI usNIC BTL.  This is
@@ -100,18 +81,6 @@ server.
   File:         %s
   Line:         %d
   Error:        %s
-#
-[verbs_port_bw failed]
-Open MPI failed to query the supported bandwidth of a usNIC interface.
-This is unusual and shouldn't happen.  It suggests that there may be
-something wrong with the usNIC or OpenFabrics configuration on this
-server.
-
-Open MPI will skip this usNIC interface in the usnic BTL, which may
-result in either lower performance or your job aborting.
-
-  Server:          %s
-  usNIC interface: %s (which is %s)
 #
 [check_reg_mem_basics fail]
 The usNIC BTL failed to initialize while trying to register some
@@ -136,6 +105,16 @@ value will be ignored.
   Value:      %s
   Message:    %s
 #
+[device present but not up]
+Open MPI has found a usNIC device that is present / listed in Linux,
+but in a "down" state.  It will not be used by this MPI job.
+
+You may wish to check this device, especially if it is unexpectedly
+down.
+
+  Local server: %s
+  Device name:  %s
+#
 [MTU mismatch]
 The MTU does not match on local and remote hosts.  All interfaces on
 all hosts participating in an MPI job must be configured with the same
@@ -143,16 +122,10 @@ MTU.  The usNIC interface listed below will not be used to communicate
 with this remote host.
 
   Local host:      %s
-  usNIC interface: %s (which is %s)
+  usNIC interface: %s
   Local MTU:       %d
   Remote host:     %s
   Remote MTU:      %d
-#
-[rtnetlink init fail]
-The usnic BTL failed to initialize the rtnetlink query subsystem.
-
-  Server:         %s
-  Error message:  %s
 #
 [connectivity error: small ok, large bad]
 The Open MPI usNIC BTL was unable to establish full connectivity
@@ -164,11 +137,9 @@ Your MPI job is going to abort now.
 
   Source:
     Hostname / IP:    %s (%s)
-    Host interfaces:  %s / %s
-    MAC address:      %s
+    Host interface:   %s
   Destination:
     Hostname / IP:    %s (%s)
-    MAC address:      %s
 
   Small message size: %u
   Large message size: %u
@@ -197,11 +168,9 @@ Your MPI job is going to abort now.
 
   Source:
     Hostname / IP:    %s (%s)
-    Host interfaces:  %s / %s
-    MAC address:      %s
+    Host interface:   %s
   Destination:
     Hostname / IP:    %s (%s)
-    MAC address:      %s
 
   Small message size: %u
   Large message size: %u
@@ -235,11 +204,9 @@ Your MPI job is going to abort now.
 
   Source:
     Hostname / IP:    %s (%s)
-    Host interfaces:  %s / %s
-    MAC address:      %s
+    Host interface:   %s
   Destination:
     Hostname / IP:    %s (%s)
-    MAC address:      %s
 
   Small message size: %u
   Large message size: %u
@@ -258,43 +225,23 @@ Check the resulting "mymap*" files to see the exact pairing of IP
 interfaces.  Inconsistent results may be indicative of underlying
 network misconfigurations.
 #
-[ibv_create_ah timeout]
+[fi_av_insert timeout]
 The usnic BTL failed to create addresses for remote peers within the
-specified timeout.  When using the usNIC/UDP transport, this usually
-means that ARP requests failed to resolve in time.  You may be able to
-solve the problem by increasing the usnic BTL's ARP timeout.  If that
-doesn't work, you should diagnose why ARP replies are apparently not
-being delivered in a timely manner.
+specified timeout.  This usually means that ARP requests failed to
+resolve in time.  You may be able to solve the problem by increasing
+the usnic BTL's ARP timeout.  If that doesn't work, you should
+diagnose why ARP replies are apparently not being delivered in a
+timely manner.
 
 The usNIC interface listed below will be ignored.  Your MPI
 application will likely either run with degraded performance and/or
 abort.
 
   Server:              %s
-  usNIC interface:     %s (which is %s)
+  usNIC interface:     %s
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
 #
-[transport mismatch]
-The underlying transports used by the usNIC driver stack on multiple
-servers do not match.  This configuration is unsupported and is almost
-certainly not what you want.
-
-This error indicates that the VIC firmware, Linux usNIC kernel driver,
-and/or Linux usNIC userspace drivers are not compatible between at
-least the following two servers:
-
-  Local server:  %s
-  Remote server: %s
-
-The usnic MPI transport will be deactivated in at least the one local
-MPI process that reported the problem.  This may lead to performance
-degradation, and may also result in aborting the overall MPI job.
-
-It is usually easiest to have the same VIC firmware, Linux usNIC
-kernel driver, and Linux usNIC userspace driver installed on all
-servers.
-#
-[create_ah failed]
+[unreachable peer IP]
 WARNING: Open MPI failed to find a route to a peer IP address via a
 specific usNIC interface.  This usually indicates a problem in the IP
 routing between these peers.
@@ -308,7 +255,7 @@ Note that this error message defaults to only printing for the *first*
 pair of MPI process peers that exhibit this problem; this same problem
 may exist for other peer pairs, too.
 
-  Local interface: %s:%s (which is %s and %s)
+  Local interface: %s:%s (which is %s)
   Peer:            %s:%s
 
 NOTE: You can set the MCA param btl_usnic_show_route_failures to 0 to
@@ -336,7 +283,7 @@ caused by higher-than-usual retransmission rates (to compensate for
 the corrupted received packets).
 
   Local server:       %s
-  usNIC interface:    %s (which is %s)
+  usNIC interface:    %s
   # of short packets
      received so far: %d
 
@@ -355,12 +302,29 @@ Your MPI job will continue, but you should monitor the job and ensure
 that it behaves correctly.
 
   Local server:       %s
-  usNIC interface:    %s (which is %s)
+  usNIC interface:    %s
   Channel index:      %d
-  Completion status:  %d
+  Completion status:  %s (%d)
   Work request ID:    %p
-  Opcode:             %d
-  Vendor error:       %d
+  Opcode:             %s (%d)
 
 If this error keeps happening, you should contact Cisco technical
 support.
+#
+[device present but not up]
+Open MPI has found a usNIC device that is present / listed in Linux,
+but in a "down" state.  It will not be used by this MPI job.
+
+You may wish to check this device, especially if it is unexpectedly
+down.
+
+  Local server: %s
+  Device name:  %s
+#
+[transport mismatch]
+Open MPI has found two servers with different underlying usNIC
+transports.  This is an unsupported configuration; all usNIC devices
+must have the same underlying transport in order to use the usNIC BTL.
+
+  Local server / transport:  %s / %s
+  Remote server / transport: %s / %s

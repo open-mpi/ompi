@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -247,6 +247,8 @@
  */
 
 #define DELETE_ATTR_CALLBACKS(type, attribute, keyval_obj, object, err)     \
+do { \
+    OPAL_THREAD_UNLOCK(&attribute_lock); \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
@@ -278,12 +280,16 @@
             ((ompi_##type##_t *)object,                                 \
              key, attr_val,                                             \
              keyval_obj->extra_state.c_ptr);                            \
-    }
+    } \
+    OPAL_THREAD_LOCK(&attribute_lock); \
+} while (0)
 
 /* See the big, long comment above from DELETE_ATTR_CALLBACKS -- most of
    that text applies here, too. */
 
 #define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, new_object, out_attr, err) \
+do { \
+    OPAL_THREAD_UNLOCK(&attribute_lock); \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
@@ -329,7 +335,9 @@
                in, &out, &flag, (ompi_##type##_t *)(new_object))) == MPI_SUCCESS) { \
             out_attr->av_value = out;                                   \
         }                                                               \
-    }
+    } \
+    OPAL_THREAD_LOCK(&attribute_lock); \
+} while (0)
 
 
 /* 
@@ -402,12 +410,9 @@ static int attr_sequence;
 static unsigned int int_pos = 12345;
 
 /*
- * We used to have multiple locks for semi-fine-grained locking.  But
- * the code got complex, and we had to spend time looking for subtle
- * bugs.  Craziness -- MPI attributes are *not* high performance, so
- * just use a One Big Lock approach: there is *no* concurrent access.
- * If you have the lock, you can do whatever you want and no data will
- * change/disapear from underneath you.
+ * MPI attributes are *not* high performance, so just use a One Big Lock
+ * approach. However, this lock is released before a user provided callback is
+ * triggered and acquired right after, allowing for recursive behaviors.
  */
 static opal_mutex_t attribute_lock;
 

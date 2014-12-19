@@ -149,7 +149,9 @@ int orte_ess_base_orted_setup(char **hosts)
                 goto error;
             }
         }
-        
+        /* generate the signature */
+        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+
         /* remove the hostname from the topology. Unfortunately, hwloc
          * decided to add the source hostname to the "topology", thus
          * rendering it unusable as a pure topological description. So
@@ -175,7 +177,7 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
         
-        if (4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }

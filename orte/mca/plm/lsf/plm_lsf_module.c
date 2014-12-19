@@ -299,14 +299,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
        the LSF plm) */
     cur_prefix = NULL;
     for (i=0; i < jdata->apps->size; i++) {
-        char *app_prefix_dir;
+        char *app_prefix_dir=NULL;
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&app_prefix_dir, OPAL_STRING);
-        /* Check for already set cur_prefix_dir -- if different,
-           complain */
-        if (NULL != app_prefix_dir) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&app_prefix_dir, OPAL_STRING) &&
+            NULL != app_prefix_dir) {
+            /* Check for already set cur_prefix_dir -- if different,
+               complain */
             if (NULL != cur_prefix &&
                 0 != strcmp (cur_prefix, app_prefix_dir)) {
                 orte_show_help("help-plm-lsf.txt", "multiple-prefixes",

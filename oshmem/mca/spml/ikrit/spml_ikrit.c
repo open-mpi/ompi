@@ -341,9 +341,11 @@ OBJ_CLASS_INSTANCE( mxm_peer_t,
 
 int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
 {
-    size_t i;
+    size_t i, n;
     opal_list_item_t *item;
+    int my_rank = oshmem_my_proc_id();
 
+    oshmem_shmem_barrier();
 #if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_disconnect) {
         mxm_ep_powerdown(mca_spml_ikrit.mxm_ep);
@@ -354,7 +356,8 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     };
     OBJ_DESTRUCT(&mca_spml_ikrit.active_peers);
 
-    for (i = 0; i < nprocs; i++) {
+    for (n = 0; n < nprocs; n++) {
+        i = (my_rank + n) % nprocs;
         if (mca_spml_ikrit.mxm_peers[i]->mxm_conn) {
             mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_conn);
         }
@@ -384,7 +387,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     size_t mxm_addr_len = MXM_MAX_ADDR_LEN;
 #endif
     mxm_error_t err;
-    size_t i;
+    size_t i, n;
     int rc = OSHMEM_ERROR;
     oshmem_proc_t *proc_self;
     int my_rank = oshmem_my_proc_id();
@@ -455,8 +458,11 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     opal_progress_register(spml_ikrit_progress);
 
     /* Get the EP connection requests for all the processes from modex */
-    for (i = 0; i < nprocs; ++i) {
+    for (n = 0; n < nprocs; ++n) {
 
+        /* mxm 2.0 keeps its connections on a list. Make sure
+         * that list have different order on every rank */
+        i = (my_rank + n) % nprocs;
         mca_spml_ikrit.mxm_peers[i] = OBJ_NEW(mxm_peer_t);
         if (NULL == mca_spml_ikrit.mxm_peers[i]) {
             rc = OSHMEM_ERR_OUT_OF_RESOURCE;

@@ -122,6 +122,8 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_INIT_BAR_ID            (ORTE_JOB_START_KEY + 31)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FINI_BAR_ID            (ORTE_JOB_START_KEY + 32)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FWDIO_TO_TOOL          (ORTE_JOB_START_KEY + 33)    // Forward IO for this job to the tool requesting its spawn
+#define ORTE_JOB_PHYSICAL_CPUIDS        (ORTE_JOB_START_KEY + 34)    // Hostfile contains physical jobids in cpuset
+#define ORTE_JOB_LAUNCHED_DAEMONS       (ORTE_JOB_START_KEY + 35)    // Job caused new daemons to be spawned
 
 #define ORTE_JOB_MAX_KEY   300
 
@@ -189,7 +191,7 @@ ORTE_DECLSPEC void orte_remove_attribute(opal_list_t *attributes, orte_attribute
  *
  * Handlers will be invoked by orte_attr_key_to_str to return the appropriate value.
  */
-typedef char* (*orte_attr2str_fn_t)(int key);
+typedef char* (*orte_attr2str_fn_t)(orte_attribute_key_t key);
 
 ORTE_DECLSPEC int orte_attr_register(const char *project,
                                      orte_attribute_key_t key_base,

@@ -84,8 +84,8 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
         opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, 
                                      tcp_proc->proc_opal->proc_name);
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-        /* Do not OBJ_RELEASE the proc_opal ! */
-        /* OBJ_RELEASE(tcp_proc->proc_opal); */
+        OBJ_RELEASE(tcp_proc->proc_opal);
+        tcp_proc->proc_opal = NULL;
     }
     /* release resources */
     if(NULL != tcp_proc->proc_endpoints) {
@@ -738,7 +738,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
  * loop through all available BTLs for one matching the source address
  * of the request.
  */
-bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
+void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
@@ -770,13 +770,13 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             ;
         }
 
-        if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
-            OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-            return true;
-        }
+        (void)mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+        return;
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-    return false;
+    /* No further use of this socket. Close it */
+    CLOSE_THE_SOCKET(sd);
 }
 
 /*

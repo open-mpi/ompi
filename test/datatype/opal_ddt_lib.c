@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2009      The University of Tennessee and The University
+ * Copyright (c) 2009-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -26,7 +26,7 @@
 #include "opal/datatype/opal_datatype.h"
 
 
-uint32_t outputFlags = 0;
+uint32_t outputFlags = VALIDATE_DATA | CHECK_PACK_UNPACK | RESET_CONVERTORS | QUIT_ON_FIRST_ERROR;
 
 static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType );
@@ -260,7 +260,7 @@ struct structure {
     double transfered_2;
 };
 
-opal_datatype_t* create_struct_constant_gap_resized_ddt( void )
+opal_datatype_t* create_struct_constant_gap_resized_ddt( const opal_datatype_t* type )
 {
     opal_datatype_t *struct_type;
 

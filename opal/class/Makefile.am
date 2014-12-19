@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,7 +33,8 @@ headers += \
         class/opal_list.h \
         class/opal_object.h \
         class/opal_graph.h\
-        class/opal_atomic_lifo.h \
+        class/opal_lifo.h \
+        class/opal_fifo.h \
         class/opal_pointer_array.h \
         class/opal_value_array.h \
         class/opal_ring_buffer.h \
@@ -47,7 +50,8 @@ lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         class/opal_list.c \
         class/opal_object.c \
         class/opal_graph.c\
-        class/opal_atomic_lifo.c \
+        class/opal_lifo.c \
+        class/opal_fifo.c \
         class/opal_pointer_array.c \
         class/opal_value_array.c \
         class/opal_ring_buffer.c \
