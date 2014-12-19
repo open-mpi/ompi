@@ -43,9 +43,9 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Comm_set_attr instead. 
-.sp
-This deprecated routine is not available in C++. 
+Note that use of this routine is \fIdeprecated\fP as of MPI-2, and
+was \fIdeleted\fP in MPI-3. Please use MPI_Comm_set_attr.  This
+function does not have a C++ or mpi_f08 binding.
 .sp
 MPI_Attr_put stores the stipulated attribute value attribute_val for subsequent retrieval by MPI_Attr_get. If the value is already present, then the outcome is as if MPI_Attr_delete was first called to delete the previous value (and the callback function delete_fn was executed), and a new value was next stored. The call is erroneous if there is no key with value keyval; in particular MPI_KEYVAL_INVALID is an erroneous key value. The call will fail if the delete_fn function returned an error code other than MPI_SUCCESS.
 

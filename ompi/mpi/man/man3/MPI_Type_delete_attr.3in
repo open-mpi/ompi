@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
 .\" $COPYRIGHT$
@@ -49,6 +49,15 @@ Fortran only: Error status (integer).
 .SH DESCRIPTION
 .ft R
 MPI_Type_delete_attr deletes a datatype-caching attribute value associated with a key. This routines partially replaces MPI_Attr_delete, which is now deprecated. 
+
+
+.SH NOTES
+Note that it is not defined by the MPI standard what happens if the
+delete_fn callback invokes other MPI functions.  In Open MPI, it is
+not valid for delete_fn callbacks (or any of their children) to add or
+delete attributes on the same object on which the delete_fn callback
+is being invoked.
+
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
