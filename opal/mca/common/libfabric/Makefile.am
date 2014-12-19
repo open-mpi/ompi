@@ -51,6 +51,7 @@ libfabric_core_headers = \
 	libfabric/include/fi_indexer.h \
 	libfabric/include/fi_list.h \
 	libfabric/include/fi_rbuf.h \
+	libfabric/include/prov.h \
 	libfabric/include/rdma/fabric.h \
 	libfabric/include/rdma/fi_atomic.h \
 	libfabric/include/rdma/fi_cm.h \
@@ -80,6 +81,7 @@ libfabric_usnic_headers = \
 	libfabric/prov/usnic/src/usdf_msg.h \
 	libfabric/prov/usnic/src/usdf_progress.h \
 	libfabric/prov/usnic/src/usdf_rdm.h \
+	libfabric/prov/usnic/src/usdf_rudp.h \
 	libfabric/prov/usnic/src/usdf_timer.h \
 	libfabric/prov/usnic/src/usnic_direct/cq_desc.h \
 	libfabric/prov/usnic/src/usnic_direct/cq_enet_desc.h \
@@ -135,8 +137,8 @@ libfabric_usnic_sources = \
 	libfabric/prov/usnic/src/usdf_msg.c \
 	libfabric/prov/usnic/src/usdf_pep.c \
 	libfabric/prov/usnic/src/usdf_progress.c \
-	libfabric/prov/usnic/src/usdf_timer.c \
 	libfabric/prov/usnic/src/usdf_rdm.c \
+	libfabric/prov/usnic/src/usdf_timer.c \
 	libfabric/prov/usnic/src/usnic_direct/libnl_utils_common.c \
 	libfabric/prov/usnic/src/usnic_direct/usd_caps.c \
 	libfabric/prov/usnic/src/usnic_direct/usd_dest.c \
