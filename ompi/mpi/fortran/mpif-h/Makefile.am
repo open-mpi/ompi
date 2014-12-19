@@ -112,9 +112,12 @@ noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
 # For ABI reasons, we *always* build the "old" MPI_SIZEOF symbols into
 # the mpifh library.  See ompi/mpi/fortran/README-v1.8-ABI.txt for
 # details.
-libmpi_mpifh_sizeof_la_SOURCES = \
-        sizeof-mpi-pre-1.8.4_f.f90 \
-        sizeof-mpif08-pre-1.8.4_f.F90
+libmpi_mpifh_sizeof_la_SOURCES = sizeof-mpi-pre-1.8.4_f.f90
+if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
+# If we're building the f08 bindings, then also build the "old"
+# MPI_SIZEOF symbols for the f08 bindings.
+libmpi_mpifh_sizeof_la_SOURCES += sizeof-mpif08-pre-1.8.4_f.F90
+endif OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 # The sizeof-pre-1.8.4 source needs a header file that is generated in
 # the use-mpi-tkr directory.
 libmpi_mpifh_sizeof_la_FCFLAGS = -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr
