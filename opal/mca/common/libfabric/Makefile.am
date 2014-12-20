@@ -20,6 +20,11 @@ noinst_LTLIBRARIES =
 # --pedantic (see configure.m4 for details).
 CFLAGS = $(opal_common_libfabric_embedded_CFLAGS)
 
+# Due to what might be a bug in Automake, we need to remove stamp-h?
+# files manually.  See
+# http://debbugs.gnu.org/cgi/bugreport.cgi?bug=19418.
+DISTCLEANFILES = libfabric/stamp-h?
+
 # Only build this embedded copy if we're not using an external
 # libfabric.
 if OPAL_COMMON_LIBFABRIC_BUILD_EMBEDDED
