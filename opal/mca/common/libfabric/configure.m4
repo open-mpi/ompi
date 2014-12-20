@@ -175,7 +175,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
              # configure.ac script by hard-coding -D's into the
              # CPPFLAGS.  Make a lot of simplifying assumptions, just
              # for the sake of embedding here.
-            opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include -DHAVE_ATOMICS=1"
+            opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include"
             opal_common_libfabric_build_embedded=1
             opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
 
@@ -189,6 +189,21 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
                 *) opal_common_libfabric_embedded_CFLAGS="$opal_common_libfabric_embedded_CFLAGS $flag" ;;
                 esac
             done
+
+            dnl Check for gcc atomic intrinsics
+            AC_MSG_CHECKING(compiler support for c11 atomics)
+            AC_TRY_LINK([#include <stdatomic.h>],
+                        [#ifdef __STDC_NO_ATOMICS__
+    return 1;
+#else
+    return 0;
+#endif
+                        ],
+                        [
+                         AC_MSG_RESULT(yes)
+                         AC_DEFINE(HAVE_ATOMICS, 1, [Set to use c11 atomic functions])
+                        ],
+                        [AC_MSG_RESULT(no)])
 
             # Do stuff for specific providers
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC
