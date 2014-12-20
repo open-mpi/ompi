@@ -1,13 +1,21 @@
 .libs
 .deps
 .libs
-.svn
+.dirstamp
+.DS_Store
+.cdt*
+.project
+.gdb*
+.hgrc
+.hgignore
+.hg
+.hgignore_local
+
 *.la
 *.lo
 *.o
 *.so
 *.a
-.dirstamp
 *.dwarf
 *.dSYM
 *.S
@@ -25,8 +33,12 @@
 *.i90
 *.ii
 *.ti
+*.exe
+*.log
+*.trs
 *~
-.DS_Store
+*\\#
+
 Makefile
 Makefile.in
 static-components.h
@@ -43,9 +55,6 @@ bin
 lib
 cscope.*
 etags
-.cdt*
-.project
-.gdb*
 GRTAGS
 GSYMS
 GTAGS
@@ -204,8 +213,6 @@ ompi/debuggers/*.in
 ompi/debuggers/dlopen_test
 ompi/debuggers/predefined_gap_test
 ompi/debuggers/predefined_pad_test
-ompi/debuggers/*.log
-ompi/debuggers/*.trs
 ompi/include/mpi.h
 ompi/include/mpif-config.h
 ompi/include/mpif.h
@@ -420,7 +427,6 @@ orte/test/mpi/slave
 orte/test/mpi/spawn_multiple
 orte/test/mpi/ziaprobe
 orte/test/mpi/ziatest
-orte/test/mpi/.gdb_history
 orte/test/mpi/*.dwarf
 orte/test/mpi/junk*
 orte/test/mpi/sio
@@ -451,7 +457,6 @@ orte/test/system/no_op
 orte/test/system/hello
 orte/test/system/hello_nodename
 orte/test/system/hello_null
-orte/test/system/.gdb*
 orte/test/system/spin
 orte/test/system/orte_nodename
 orte/test/system/orte_proc_subscribe
@@ -504,7 +509,6 @@ orte/tools/orte-checkpoint/ompi-checkpoint.1
 orte/tools/orte-clean/orte-clean
 orte/tools/orte-clean/orte-clean.1
 orte/tools/orte-info/orte-info
-orte/tools/orte-info/*.exe
 orte/tools/orte-info/orte-info.1
 orte/tools/orte-migrate/orte-migrate
 orte/tools/orte-migrate/orte-migrate.1
@@ -520,10 +524,7 @@ orte/tools/orte-top/orte-top
 orte/tools/orte-top/orte-top.1
 orte/tools/orted/orted
 orte/tools/orted/orted.1
-orte/tools/orted/.gdb_history
-orte/tools/orted/*.exe
 orte/tools/orterun/orterun
-orte/tools/orterun/*.exe
 orte/tools/orterun/orterun.1
 orte/tools/wrappers/ortecc-wrapper-data.txt
 orte/tools/wrappers/ortec++-wrapper-data.txt
@@ -560,7 +561,6 @@ oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
 oshmem/tools/wrappers/shmemfort-wrapper-data.txt
-test/asm/.gdb_history
 test/asm/atomic_math_noinline
 test/asm/atomic_barrier
 test/asm/atomic_cmpset_noinline
@@ -573,13 +573,8 @@ test/asm/atomic_cmpset_noinline.c
 test/asm/atomic_spinlock_noinline
 test/asm/atomic_barrier_noinline
 test/asm/atomic_spinlock
-test/asm/*.log
-test/asm/*.trs
 
 test/class/*.txt
-test/class/*.exe
-test/class/*.log
-test/class/*.trs
 test/class/ompi_bitmap_test_out.txt
 test/class/ompi_circular_buffer_fifo
 test/class/ompi_fifo
@@ -604,8 +599,6 @@ test/datatype/ddt_raw
 test/datatype/opal_datatype_test
 test/datatype/position_noncontig
 test/datatype/unpack_ooo
-test/datatype/*.log
-test/datatype/*.trs
 test/dss/dss_buffer
 test/dss/dss_copy
 test/dss/dss_size
@@ -617,9 +610,7 @@ test/dss/dss_print
 test/event/signal-test
 test/event/event-test
 test/event/time-test
-test/mpi/environment/.gdb_history
 test/mpi/environment/chello
-test/runtime/.gdb_history
 test/runtime/parse_context
 test/runtime/sigchld
 test/runtime/start_shut
@@ -627,8 +618,6 @@ test/runtime/opal_init_finalize
 test/runtime/orte_init_finalize
 test/threads/opal_condition
 test/threads/opal_thread
-test/threads/*.log
-test/threads/*.trs
 test/util/aaa
 test/util/test_session_dir_out
 test/util/opal_os_path
@@ -649,5 +638,3 @@ test/util/opal_sos
 test/util/opal_path_nfs
 test/util/opal_path_nfs.out
 test/util/opal_bit_ops
-test/util/*.log
-test/util/*.trs
