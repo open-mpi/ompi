@@ -43,6 +43,20 @@ gcc -DHAVE_CONFIG_H -I. -I../../include -I../.. -I../../include -I../../../ompi-
 
 uint32_t remote_arch;
 
+/**
+ * Generic function computing the amount of memory to be allocated to fit
+ * a contiguous memory layout of count times pdt.
+ */
+static size_t compute_memory_size( opal_datatype_t const * const pdt, int count )
+{
+    OPAL_PTRDIFF_TYPE extent, true_lb, true_extent;
+
+    opal_datatype_type_extent( pdt, &extent );
+    opal_datatype_get_true_extent( pdt, &true_lb, &true_extent );
+
+    return (size_t)(true_lb + true_extent + (count-1) * extent);
+}
+
 static int test_upper( unsigned int length )
 {
     double *mat1, *mat2, *inbuf;
@@ -127,21 +141,22 @@ static int test_upper( unsigned int length )
 static int local_copy_ddt_count( opal_datatype_t const * const pdt, int count )
 {
     OPAL_PTRDIFF_TYPE extent;
+    size_t malloced_size;
     void *pdst, *psrc;
     TIMER_DATA_TYPE start, end;
     long total_time;
     int errors = 0;
 
+    malloced_size = compute_memory_size(pdt, count);
     opal_datatype_type_extent( pdt, &extent );
 
-    pdst = malloc( extent * count );
-    psrc = malloc( extent * count );
+    pdst = malloc( malloced_size );
+    psrc = malloc( malloced_size );
 
     {
-        int i;
-        for( i = 0; i < (count * extent); i++ )
+        for( size_t i = 0; i < malloced_size; i++ )
             ((char*)psrc)[i] = i % 128 + 32;
-        memcpy(pdst, psrc, (count * extent));
+        memcpy(pdst, psrc, malloced_size);
     }
 
     cache_trash();  /* make sure the cache is useless */
@@ -155,12 +170,15 @@ static int local_copy_ddt_count( opal_datatype_t const * const pdt, int count )
     total_time = ELAPSED_TIME( start, end );
     printf( "direct local copy in %ld microsec\n", total_time );
     if(outputFlags & VALIDATE_DATA) {
-        for( int i = 0; i < (count * extent); i++ ) {
+        for( size_t i = 0; i < malloced_size; i++ ) {
             if( ((char*)pdst)[i] != ((char*)psrc)[i] ) {
-                printf("error at position %d (%d != %d)\n",
-                       i, (int)((char*)pdst)[i], (int)((char*)psrc)[i]);
+                printf("error at position %lu (%d != %d)\n",
+                       (unsigned long)i, (int)((char*)pdst)[i], (int)((char*)psrc)[i]);
                 errors++;
-                if(outputFlags & QUIT_ON_FIRST_ERROR) { assert(0); exit(-1); }
+                if(outputFlags & QUIT_ON_FIRST_ERROR) {
+                    opal_datatype_dump(pdt);
+                    assert(0); exit(-1);
+                }
             }
         }
         if( 0 == errors ) {
@@ -186,25 +204,27 @@ local_copy_with_convertor_2datatypes( opal_datatype_t const * const send_type, i
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
-    size_t max_data, length = 0;
+    size_t max_data, length = 0, send_malloced_size, recv_malloced_size;;
     int32_t done1 = 0, done2 = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
+    send_malloced_size = compute_memory_size(send_type, send_count);
+    recv_malloced_size = compute_memory_size(recv_type, recv_count);
+
     opal_datatype_type_extent( send_type, &send_extent );
     opal_datatype_type_extent( recv_type, &recv_extent );
 
-    pdst  = malloc( recv_extent * recv_count );
-    psrc  = malloc( send_extent * send_count );
+    pdst  = malloc( recv_malloced_size );
+    psrc  = malloc( send_malloced_size );
     ptemp = malloc( chunk );
 
     /* fill up the receiver with ZEROS */
     {
-        int i;
-        for( i = 0; i < (send_count * send_extent); i++ )
+        for( size_t i = 0; i < send_malloced_size; i++ )
             ((char*)psrc)[i] = i % 128 + 32;
     }
-    memset( pdst, 0, recv_count * recv_extent );
+    memset( pdst, 0, recv_malloced_size );
 
     send_convertor = opal_convertor_create( remote_arch, 0 );
     if( OPAL_SUCCESS != opal_convertor_prepare_for_send( send_convertor, send_type, send_count, psrc ) ) {
@@ -285,21 +305,21 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
-    size_t max_data, length = 0;
+    size_t max_data, length = 0, malloced_size;
     int32_t done1 = 0, done2 = 0, errors = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
+    malloced_size = compute_memory_size(pdt, count);
     opal_datatype_type_extent( pdt, &extent );
 
-    pdst  = malloc( extent * count );
-    psrc  = malloc( extent * count );
+    pdst  = malloc( malloced_size );
+    psrc  = malloc( malloced_size );
     ptemp = malloc( chunk );
 
     {
-        int i = 0;
-        for( ; i < (count * extent); ((char*)psrc)[i] = i % 128 + 32, i++ );
-        memcpy(pdst, psrc, (count * extent));
+        for( size_t i = 0; i < malloced_size; ((char*)psrc)[i] = i % 128 + 32, i++ );
+        memcpy(pdst, psrc, malloced_size);
     }
 
     send_convertor = opal_convertor_create( remote_arch, 0 );
@@ -429,15 +449,16 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
     printf( "\t unpack in %ld microsec [pack in %ld microsec]\n", unpack_time,
             total_time - unpack_time );
 
-    /******   GEORGE: PLEASE FIX ME   *****/
-#if 0
     if(outputFlags & VALIDATE_DATA) {
-        for( int i = errors = 0; i < (count * extent); i++ ) {
+        for( size_t i = errors = 0; i < malloced_size; i++ ) {
             if( ((char*)pdst)[i] != ((char*)psrc)[i] ) {
-                printf("error at position %d (%d != %d)\n",
-                       i, (int)((char*)pdst)[i], (int)((char*)psrc)[i]);
+                printf("error at position %lu (%d != %d)\n",
+                       (unsigned long)i, (int)((char*)pdst)[i], (int)((char*)psrc)[i]);
                 errors++;
-                if(outputFlags & QUIT_ON_FIRST_ERROR) { assert(0); exit(-1); }
+                if(outputFlags & QUIT_ON_FIRST_ERROR) {
+                    opal_datatype_dump(pdt);
+                    assert(0); exit(-1);
+                }
             }
         }
         if( 0 == errors ) {
@@ -447,7 +468,6 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
             exit(-1);
         }
     }
-#endif
  clean_and_return:
     if( NULL != send_convertor ) OBJ_RELEASE( send_convertor );
     if( NULL != recv_convertor ) OBJ_RELEASE( recv_convertor );
