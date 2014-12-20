@@ -18,6 +18,7 @@
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
     AC_CONFIG_FILES([opal/mca/common/libfabric/Makefile])
+    AC_CONFIG_HEADERS([opal/mca/common/libfabric/libfabric/config.h])
 
     # Initially state that we're unhappy
     opal_common_libfabric_happy=0
@@ -218,8 +219,6 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
                 [libfabric: do not build verbs provider])
             AC_DEFINE([HAVE_VERBS_DL], [0],
                 [libfabric: do not build verbs provider])
-
-            AC_CONFIG_HEADER([opal/mca/common/libfabric/libfabric/config.h])
            ])
 ])
 

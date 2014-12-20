@@ -359,6 +359,7 @@ opal/include/opal/sys/powerpc/atomic-32.s
 opal/include/opal/sys/powerpc/atomic-64.s
 opal/include/opal/sys/powerpc/atomic-32-64.s
 opal/mca/base/mca_base_parse_paramfile_lex.c
+opal/mca/common/libfabric/libfabric/config.h
 opal/mca/btl/openib/btl_openib_lex.c
 opal/mca/btl/usnic/usnic_btl_run_tests
 opal/mca/crs/opal_crs.7
