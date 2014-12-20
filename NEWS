@@ -110,6 +110,7 @@ included in the vX.Y.Z section and be denoted as:
   output extra bytes if the system was very heavily loaded
 - Fix a bug where specifying mca_component_show_load_errors=0 could
   cause ompi_info to segfault
+- Updated valgrind suppression file
 
 
 1.8.3
