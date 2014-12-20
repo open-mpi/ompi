@@ -166,17 +166,18 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED_CONDITIONALS],[
 AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
     AC_MSG_NOTICE([Setting up for EMBEDDED libfabric])
 
-    AC_CHECK_HEADER([infiniband/verbs.h],
-        [opal_common_libfabric_happy=1],
+    # Replicate a few libfabric configure tests
+    opal_common_libfabric_happy=1
+    AC_CHECK_HEADER([infiniband/verbs.h], [],
+        [opal_common_libfabric_happy=0])
+    AC_CHECK_LIB(pthread, pthread_mutex_init, [],
+        [opal_common_libfabric_happy=0])
+    AC_CHECK_LIB(rt, clock_gettime, [],
         [opal_common_libfabric_happy=0])
 
     # Add flags for libfabric core
     AS_IF([test $opal_common_libfabric_happy -eq 1],
-           [ # Mostly replicate relevant parts from the libfabric
-             # configure.ac script by hard-coding -D's into the
-             # CPPFLAGS.  Make a lot of simplifying assumptions, just
-             # for the sake of embedding here.
-            opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include"
+           [opal_common_libfabric_CPPFLAGS="-I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/include"
             opal_common_libfabric_build_embedded=1
             opal_common_libfabric_LIBADD="\$(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib${OPAL_LIB_PREFIX}mca_common_libfabric.la"
 
@@ -191,7 +192,11 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
                 esac
             done
 
-            dnl Check for gcc atomic intrinsics
+            # Specifically disabling (by not defining anything)
+            # libfabric features: valgrind support, symbol versioning
+            # support.
+
+            # Check for gcc atomic intrinsics
             AC_MSG_CHECKING(compiler support for c11 atomics)
             AC_TRY_LINK([#include <stdatomic.h>],
                         [#ifdef __STDC_NO_ATOMICS__
@@ -314,7 +319,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC],[
           [libfabric: do not build usnic provider as a DL])
 
     AS_IF([test $opal_common_libfabric_usnic_happy -eq 1],
-          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct -DLIBNL3=0 -DWANT_DEBUG_MSGS=0"
+          [opal_common_libfabric_CPPFLAGS="$opal_common_libfabric_CPPFLAGS -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src -I$OPAL_TOP_SRCDIR/opal/mca/common/libfabric/libfabric/prov/usnic/src/usnic_direct -D__LIBUSNIC__ -DLIBNL3=0 -DWANT_DEBUG_MSGS=0"
            opal_common_libfabric_embedded_LIBADD="-lnl"])
 ])
 
