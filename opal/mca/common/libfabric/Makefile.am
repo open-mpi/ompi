@@ -39,10 +39,6 @@ cppflags = \
 	-DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DRDMADIR=\"/tmp\" \
 	-DEXTDIR=\"$(pkglibdir)\"
-if OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
-cppflags += \
-	-D__LIBUSNIC__
-endif OPAL_COMMON_LIBFABRIC_HAVE_PROVIDER_USNIC
 libadd = $(opal_common_libfabric_embedded_LIBADD)
 
 libfabric_core_headers = \
