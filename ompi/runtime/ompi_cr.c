@@ -410,7 +410,7 @@ static int ompi_cr_coord_pre_continue(void) {
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_continue: ompi_cr_coord_pre_continue()");
 
-    if( orte_cr_continue_like_restart ) {
+    if (opal_cr_continue_like_restart) {
         /* Mimic ompi_cr_coord_pre_restart(); */
         if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;

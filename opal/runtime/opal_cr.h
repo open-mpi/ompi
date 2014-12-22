@@ -91,6 +91,12 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /* The current state of a checkpoint operation */
     OPAL_DECLSPEC extern int opal_cr_checkpointing_state;
 
+    /*
+     * If one of the BTLs that shutdown require a full, clean rebuild of the
+     * point-to-point stack on 'continue' as well as 'restart'.
+     */
+    OPAL_DECLSPEC extern bool opal_cr_continue_like_restart;
+
 #if OPAL_ENABLE_CRDEBUG == 1
     /* Whether or not C/R Debugging is enabled for this process */
     OPAL_DECLSPEC extern int MPIR_debug_with_checkpoint;

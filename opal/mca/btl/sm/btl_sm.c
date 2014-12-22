@@ -1281,13 +1281,16 @@ int mca_btl_sm_ft_event(int state) {
              * for these old file handles. The restart procedure will make sure
              * these files get cleaned up appropriately.
              */
+            /* Disabled to get FT code compiled again
+             * TODO: FIXIT soon
             orte_sstore.set_attr(orte_sstore_handle_current,
                                  SSTORE_METADATA_LOCAL_TOUCH,
                                  mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
+             */
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        if( orte_cr_continue_like_restart ) {
+        if (opal_cr_continue_like_restart) {
             if( NULL != mca_btl_sm_component.sm_seg ) {
                 /* Add shared memory file */
                 opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->shmem_ds.seg_name, false);

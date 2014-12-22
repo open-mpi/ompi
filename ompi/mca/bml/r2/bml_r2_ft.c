@@ -57,7 +57,7 @@ int mca_bml_r2_ft_event(int state)
         first_continue_pass = !first_continue_pass;
 
         /* Since nothing in Checkpoint, we are fine here (unless required by BTL) */
-        if( orte_cr_continue_like_restart && !first_continue_pass) {
+        if (opal_cr_continue_like_restart && !first_continue_pass) {
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -139,7 +139,7 @@ int mca_bml_r2_ft_event(int state)
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /* Matches OPAL_CRS_RESTART_PRE */
-        if( orte_cr_continue_like_restart && first_continue_pass) {
+        if (opal_cr_continue_like_restart && first_continue_pass) {
             if( OMPI_SUCCESS != (ret = mca_bml_r2_finalize()) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
                 return ret;
@@ -150,7 +150,7 @@ int mca_bml_r2_ft_event(int state)
             }
         }
         /* Matches OPAL_CRS_RESTART */
-        else if( orte_cr_continue_like_restart && !first_continue_pass ) {
+        else if (opal_cr_continue_like_restart && !first_continue_pass) {
             /*
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.

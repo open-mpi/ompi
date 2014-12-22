@@ -3076,7 +3076,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         first_continue_pass = !first_continue_pass;
 
         /* Only finalize the Protocol after the PML has been rebuilt */
-        if( orte_cr_continue_like_restart && first_continue_pass ) {
+        if (opal_cr_continue_like_restart && first_continue_pass) {
             goto DONE;
         }
 

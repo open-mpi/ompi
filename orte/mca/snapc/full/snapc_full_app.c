@@ -398,7 +398,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     }
 
     /* Default: use the fast way */
-    orte_cr_continue_like_restart = false;
+    opal_cr_continue_like_restart = false;
     orte_cr_flush_restart_files   = true;
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
@@ -480,7 +480,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
          * otherwise just continue.
          */
         if( currently_all_migrating ) {
-            orte_cr_continue_like_restart = true;
+            opal_cr_continue_like_restart = true;
             orte_cr_flush_restart_files   = false;
         }
         if( !currently_migrating && currently_all_migrating ) {

@@ -1743,7 +1743,7 @@ int mca_btl_openib_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Continue must reconstruct the routes (including modex), since we
          * have to tear down the devices completely. */
-        orte_cr_continue_like_restart = true;
+        opal_cr_continue_like_restart = true;
 
         /*
          * To keep the node from crashing we need to call ibv_close_device

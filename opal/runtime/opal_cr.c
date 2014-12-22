@@ -131,6 +131,8 @@ int    opal_cr_checkpoint_request  = OPAL_CR_STATUS_NONE;
 
 static bool   opal_cr_debug_sigpipe = false;
 
+bool opal_cr_continue_like_restart = false;
+
 #if OPAL_ENABLE_FT_THREAD == 1
 /*****************
  * Threading Functions and Variables
