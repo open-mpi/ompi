@@ -50,11 +50,6 @@ BEGIN_C_DECLS
     ORTE_DECLSPEC int orte_cr_entry_point_init(void);
     ORTE_DECLSPEC int orte_cr_entry_point_finalize(void);
 
-    /*
-     * If one of the BTLs that shutdown require a full, clean rebuild of the
-     * point-to-point stack on 'continue' as well as 'restart'.
-     */
-    ORTE_DECLSPEC extern bool orte_cr_continue_like_restart;
     ORTE_DECLSPEC extern bool orte_cr_flush_restart_files;
 
 END_C_DECLS

@@ -258,7 +258,7 @@ static int rte_ft_event(int state)
             goto cleanup;
         }
 
-        if( orte_cr_continue_like_restart ) {
+        if (opal_cr_continue_like_restart) {
             /*
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
