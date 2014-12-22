@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -160,6 +162,23 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
            AC_CHECK_HEADERS([infiniband/verbs.h])
 
+           AC_MSG_CHECKING([if external hwloc version is 1.8 or greater])
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [CFLAGS_save="$CFLAGS"
+                  CFLAGS="-I$opal_hwloc_dir/include $CFLAGS_save"])
+           AC_COMPILE_IFELSE(
+               [AC_LANG_PROGRAM([[#include <hwloc.h>]],
+                   [[
+#if HWLOC_API_VERSION < 0x00010800
+#error "hwloc API version is less than 0x00010800"
+#endif
+                   ]])],
+               [AC_MSG_RESULT([yes])],
+               [AC_MSG_RESULT([no])
+                AC_MSG_ERROR([Cannot continue])])
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [CFLAGS="$CFLAGS_save"
+                  unset CFLAGS_save])
            $1],
           [$2])
 
