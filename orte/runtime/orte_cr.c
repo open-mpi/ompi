@@ -75,7 +75,6 @@ static int orte_cr_coord_post_ckpt(void);
 static int orte_cr_coord_post_restart(void);
 static int orte_cr_coord_post_continue(void);
 
-bool orte_cr_continue_like_restart = false;
 bool orte_cr_flush_restart_files = true;
 
 /*************
@@ -137,7 +136,7 @@ int orte_cr_init(void)
     opal_cr_reg_coord_callback(orte_cr_coord, &prev_coord_callback);
 
     /* Typically this is not needed. Individual BTLs will set this as needed */
-    orte_cr_continue_like_restart = false;
+    opal_cr_continue_like_restart = false;
     orte_cr_flush_restart_files   = true;
     
  cleanup:
