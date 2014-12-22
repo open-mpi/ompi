@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -106,7 +108,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc191_CONFIG],[
         # hwloc checks for compiler visibility, and its needs to do
         # this without "picky" flags.
         opal_hwloc_hwloc191_save_cflags=$CFLAGS
-        CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
+        CFLAGS=$OMPI_CFLAGS_BEFORE_PICKY
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc191/hwloc], 
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([yes])
