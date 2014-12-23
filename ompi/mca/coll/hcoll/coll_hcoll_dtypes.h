@@ -73,41 +73,23 @@ static dte_data_representation_t ompi_dtype_2_dte_dtype(ompi_datatype_t *dtype){
     return *ompi_datatype_2_dte_data_rep[opal_type_id];
 }
 
-
-/*
-enum ompi_op_type {
-    OMPI_OP_BASE_FORTRAN_NULL = 0,
-    OMPI_OP_BASE_FORTRAN_MAX,
-    OMPI_OP_BASE_FORTRAN_MIN,
-    OMPI_OP_BASE_FORTRAN_SUM,
-    OMPI_OP_BASE_FORTRAN_PROD,
-    OMPI_OP_BASE_FORTRAN_LAND,
-    OMPI_OP_BASE_FORTRAN_BAND,
-    OMPI_OP_BASE_FORTRAN_LOR,
-    OMPI_OP_BASE_FORTRAN_BOR,
-    OMPI_OP_BASE_FORTRAN_LXOR,
-    OMPI_OP_BASE_FORTRAN_BXOR,
-    OMPI_OP_BASE_FORTRAN_MAXLOC,
-    OMPI_OP_BASE_FORTRAN_MINLOC,
-    OMPI_OP_BASE_FORTRAN_REPLACE,
-
-    OMPI_OP_BASE_FORTRAN_OP_MAX
-};*/
-static hcoll_dte_op_t* ompi_op_2_hcoll_op[OMPI_OP_BASE_FORTRAN_OP_MAX] = {
-   &hcoll_dte_op_null,
-   &hcoll_dte_op_max,
-   &hcoll_dte_op_min,
-   &hcoll_dte_op_sum,
-   &hcoll_dte_op_prod,
-   &hcoll_dte_op_land,
-   &hcoll_dte_op_band,
-   &hcoll_dte_op_lor,
-   &hcoll_dte_op_bor,
-   &hcoll_dte_op_lxor,
-   &hcoll_dte_op_bxor,
-   &hcoll_dte_op_null,
-   &hcoll_dte_op_null,
-   &hcoll_dte_op_null
+static hcoll_dte_op_t* ompi_op_2_hcoll_op[OMPI_OP_BASE_FORTRAN_OP_MAX + 1] = {
+   &hcoll_dte_op_null,          /* OMPI_OP_BASE_FORTRAN_NULL = 0 */
+   &hcoll_dte_op_max,           /* OMPI_OP_BASE_FORTRAN_MAX */
+   &hcoll_dte_op_min,           /* OMPI_OP_BASE_FORTRAN_MIN */
+   &hcoll_dte_op_sum,           /* OMPI_OP_BASE_FORTRAN_SUM */
+   &hcoll_dte_op_prod,          /* OMPI_OP_BASE_FORTRAN_PROD */
+   &hcoll_dte_op_land,          /* OMPI_OP_BASE_FORTRAN_LAND */
+   &hcoll_dte_op_band,          /* OMPI_OP_BASE_FORTRAN_BAND */
+   &hcoll_dte_op_lor,           /* OMPI_OP_BASE_FORTRAN_LOR */
+   &hcoll_dte_op_bor,           /* OMPI_OP_BASE_FORTRAN_BOR */
+   &hcoll_dte_op_lxor,          /* OMPI_OP_BASE_FORTRAN_LXOR */
+   &hcoll_dte_op_bxor,          /* OMPI_OP_BASE_FORTRAN_BXOR */
+   &hcoll_dte_op_null,          /* OMPI_OP_BASE_FORTRAN_MAXLOC */
+   &hcoll_dte_op_null,          /* OMPI_OP_BASE_FORTRAN_MINLOC */
+   &hcoll_dte_op_null,          /* OMPI_OP_BASE_FORTRAN_REPLACE */
+   &hcoll_dte_op_null,          /* OMPI_OP_BASE_FORTRAN_NO_OP */
+   &hcoll_dte_op_null           /* OMPI_OP_BASE_FORTRAN_OP_MAX */
 };
 static hcoll_dte_op_t* ompi_op_2_hcolrte_op(ompi_op_t *op){
     return ompi_op_2_hcoll_op[op->o_f_to_c_index];
