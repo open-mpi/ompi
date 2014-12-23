@@ -56,16 +56,10 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
                                      -1,
                                      &which);
 
-        if (which == 1) {
-            fprintf(stderr,"broke out of GNI_CqVectorMonitor which = %d status = %s\n",which,gni_err_str[status]);
-        }
-
         if (status == GNI_RC_NOT_DONE) continue;
 
         if ((status == GNI_RC_SUCCESS) && (stop_progress_thread == 0)) {
             thread_wakeups++;
-            if (which == 1)
-                fprintf(stderr,"Calling the progress function\n");
             opal_progress();
         }
     }
