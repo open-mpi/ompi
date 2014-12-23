@@ -23,7 +23,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
                 [Build with XPMEM kernel module support, searching for headers in DIR])])
-    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h include/sn/xpmem.h])
+    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
     AC_ARG_WITH([xpmem-libdir],
                 [AC_HELP_STRING([--with-xpmem-libdir=DIR],
@@ -41,7 +41,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	    opal_check_xpmem_libdir="$with_xpmem_libdir"
 	fi
 
-	OPAL_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
+	OPAL_CHECK_PACKAGE([$1],[xpmem.h],[xpmem],[xpmem_make],[],
 	    [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
 	if test "$opal_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
