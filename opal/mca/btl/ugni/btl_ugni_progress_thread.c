@@ -66,12 +66,7 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
             thread_wakeups++;
             if (which == 1)
                 fprintf(stderr,"Calling the progress function\n");
-#if 0
             opal_progress();
-#endif
-#if 1
-            mca_btl_ugni_component.super.btl_progress();  /* TODO: probably needs to be higher up */
-#endif
         }
     }
 
