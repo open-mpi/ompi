@@ -385,6 +385,10 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
                 ompi_found=0
                 ompi_i=`expr $ompi_count + 1`
                 ;;
+        --param)
+                ompi_found=0
+                ompi_i=`expr $ompi_count + 1`
+                ;;
         esac
 
         # If we didn't find the token, add it to the "array"
