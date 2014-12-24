@@ -62,10 +62,53 @@ value MPI_UNDEFINED, in which case newcomm returns MPI_COMM_NULL.
 
 .SH SPLIT TYPES
 .ft R
-
 .TP 1i
-MPI_COMM_TYPE_SHARED
+MPI_COMM_TYPE_SHARED|OMPI_COMM_TYPE_NODE
 This type splits the communicator into subcommunicators, each of which can create a shared memory region.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_HWTHREAD
+This type splits the communicator into subcommunicators, each of which belongs to the same hardware thread.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CORE
+This type splits the communicator into subcommunicators, each of which belongs to the same core/processing unit.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L1CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L1 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L2CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L2 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L3CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L3 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_SOCKET
+This type splits the communicator into subcommunicators, each of which belongs to the same socket.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_NUMA
+This type splits the communicator into subcommunicators, each of which belongs to the same NUMA-node.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_BOARD
+This type splits the communicator into subcommunicators, each of which belongs to the same board.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_HOST
+This type splits the communicator into subcommunicators, each of which belongs to the same host.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CU
+This type splits the communicator into subcommunicators, each of which belongs to the same computational unit.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CLUSTER
+This type splits the communicator into subcommunicators, each of which belongs to the same cluster.
 
 .SH NOTES
 .ft R
@@ -79,6 +122,8 @@ Multiple calls to MPI_Comm_split_type can be used to overcome the requirement th
 Note that keys need not be unique. It is MPI_Comm_split_type's responsibility to sort processes in ascending order according to this key, and to break ties in a consistent way. If all the keys are specified in the same way, then all the processes in a given color will have the relative rank order as they did in their parent group. (In general, they will have different ranks.)
 .sp
 Essentially, making the key value zero for all processes of a given split_type means that one needn't really pay attention to the rank-order of the processes in the new communicator.
+.sp
+The communicator coloring denoted with OMPI instead of MPI are specific to OpenMPI only and are not part of the standard. 
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
