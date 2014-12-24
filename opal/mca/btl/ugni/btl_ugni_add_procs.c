@@ -20,8 +20,6 @@
 #include "opal/include/opal/align.h"
 #include "opal/mca/dstore/dstore.h"
 
-extern int howards_progress_var;
-
 #define INITIAL_GNI_EPS 10000
 
 static int
@@ -29,8 +27,6 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module);
 static void
 mca_btl_ugni_module_set_max_reg (mca_btl_ugni_module_t *ugni_module, int nlocal_procs);
 static int mca_btl_ugni_smsg_setup (int nprocs);
-
-void *howards_start_addr;
 
 int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            size_t nprocs,
@@ -41,6 +37,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
     opal_proc_t *my_proc = opal_proc_local_get();
     size_t i;
     int rc;
+    void *mmap_start_addr;
 
     if (false == ugni_module->initialized) {
 
@@ -123,7 +120,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             return opal_common_rc_ugni_to_opal (rc);
         }
 
-        if (howards_progress_var) {
+        if (mca_btl_ugni_component.progress_thread_enabled) {
             OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
             rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.local_cq_size,
                                0, GNI_CQ_BLOCKING, NULL, NULL, &ugni_module->rdma_local_irq_cq);
@@ -175,15 +172,24 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             return rc;
         }
 
-        if (howards_progress_var) {
-            howards_start_addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-            if (howards_start_addr == NULL) {
-                fprintf(stderr,"Hey, mmap returned NULL!\b");
+        /*
+         * If progress thread enabled, registered a page of memory
+         * with the smsg_remote_irq_cq.  This memory handle is passed
+         * to ranks which want to communicate with this rank. A rank which
+         * posts a GNI_PostCqWrite targeting this memory handle generates
+         * an IRQ at the target node, which ultimately causes the progress
+         * thread in the target rank to become schedulable.
+         */
+        if (mca_btl_ugni_component.progress_thread_enabled) {
+            mmap_start_addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            if (NULL == mmap_start_addr) {
+                BTL_ERROR(("btl/ugni mmap returned error"));
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
             OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
             rc = GNI_MemRegister(ugni_module->device->dev_handle,
-                                     (unsigned long)howards_start_addr,
+                                     (unsigned long)mmap_start_addr,
                                      4096,
                                      ugni_module->smsg_remote_irq_cq,
                                      GNI_MEM_READWRITE,

@@ -108,7 +108,7 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
         /* increment the active send counter */
         (void)opal_atomic_add_32(&frag->endpoint->btl->active_send_count, 1);
 
-        if (howards_progress_var == 1 && (getenv("GENERATE_MDH_IRQS") != NULL)) {
+        if (mca_btl_ugni_component.progress_thread_enabled) {
             if (frag->base.des_flags & MCA_BTL_DES_FLAGS_SIGNAL) {
                 rc = mca_btl_ugni_frag_alloc(frag->endpoint,
                                              &frag->endpoint->btl->rdma_frags,
