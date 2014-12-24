@@ -189,6 +189,16 @@ btl_ugni_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.smsg_page_size);
 
+    mca_btl_ugni_component.progress_thread_requested = 0;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "request_progress_thread",
+                                           "Enable to request ugni btl progress thread - requires MPI_THREAD_MULTIPLE support",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_ugni_component.progress_thread_requested);
+
     /* btl/ugni can only support only a fixed set of mpools (these mpools have compatible resource
      * structures) */
     rc = mca_base_var_enum_create ("btl_ugni_mpool", mpool_values, &new_enum);
@@ -293,8 +303,8 @@ mca_btl_ugni_component_init (int *num_btl_modules,
         mca_btl_ugni_component.ugni_fma_limit = 65536;
     }
 
-    if (enable_mpi_threads) {
-        mca_btl_ugni_component.progress_thread_allowed = 1;
+    if (enable_mpi_threads && mca_btl_ugni_component.progress_thread_requested) {
+        mca_btl_ugni_component.progress_thread_enabled = 1;
     }
 
     /* Initialize ugni library and create communication domain */
@@ -568,7 +578,7 @@ static int mca_btl_ugni_component_progress (void)
         count += mca_btl_ugni_progress_local_smsg (ugni_module);
         count += mca_btl_ugni_progress_remote_smsg (ugni_module);
         count += mca_btl_ugni_progress_rdma (ugni_module, 0);
-        if (howards_progress_var) {
+        if (mca_btl_ugni_component.progress_thread_enabled) {
             count += mca_btl_ugni_progress_rdma (ugni_module, 1);
         }
     }

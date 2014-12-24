@@ -47,8 +47,6 @@
 #define MCA_BTL_UGNI_CONNECT_DIRECTED_ID 0x8000000000000000ull
 #define MCA_BTL_UGNI_DATAGRAM_MASK       0x8000000000000000ull
 
-extern int howards_progress_var;
-
 /* ompi and smsg endpoint attributes */
 typedef struct mca_btl_ugni_endpoint_attr_t {
     uint64_t proc_id;
@@ -181,8 +179,11 @@ typedef struct mca_btl_ugni_component_t {
     /* Number of mailboxes to allocate in each block */
     unsigned int mbox_increment;
 
+    /* Indicate whether progress thread requested */
+    bool progress_thread_requested;
+
     /* Indicate whether progress thread allowed */
-    bool progress_thread_allowed;
+    bool progress_thread_enabled;
 
 } mca_btl_ugni_component_t;
 

@@ -20,8 +20,6 @@
 #include "btl_ugni_prepare.h"
 #include "btl_ugni_smsg.h"
 
-int howards_progress_var = 0;
-
 static int
 mca_btl_ugni_free (struct mca_btl_base_module_t *btl,
                    mca_btl_base_descriptor_t *des);
@@ -116,10 +114,6 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return rc;
     }
 
-    if (mca_btl_ugni_component.progress_thread_allowed && (NULL != getenv("HOWARDS_PROGESS"))) {
-        howards_progress_var = 1;
-    }
-
     return OPAL_SUCCESS;
 }
 
@@ -151,7 +145,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
             rc = opal_hash_table_get_next_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, node, &node);
         }
 
-        if (howards_progress_var) {
+        if (mca_btl_ugni_component.progress_thread_enabled) {
             mca_btl_ugni_kill_progress_thread();
         }
 

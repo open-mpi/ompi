@@ -68,7 +68,7 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     gni_return_t status;
 
     /* Post descriptor */
-    if (howards_progress_var && (getenv("GENERATE_RDMA_IRQS") != NULL)) {
+    if (mca_btl_ugni_component.progress_thread_enabled) {
         init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
                             rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
                             frag->endpoint->btl->rdma_local_irq_cq);
