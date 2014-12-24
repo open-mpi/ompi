@@ -61,7 +61,19 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
                                           FUNC_NAME);
         }
 
-        if ( MPI_COMM_TYPE_SHARED != split_type &&  
+        if ( MPI_COMM_TYPE_SHARED != split_type && // Same as OMPI_COMM_TYPE_NODE
+	     OMPI_COMM_TYPE_CLUSTER != split_type &&  
+	     OMPI_COMM_TYPE_CU != split_type &&  
+	     OMPI_COMM_TYPE_HOST != split_type &&  
+	     OMPI_COMM_TYPE_BOARD != split_type &&  
+	     OMPI_COMM_TYPE_NODE != split_type && // Same as MPI_COMM_TYPE_SHARED
+	     OMPI_COMM_TYPE_NUMA != split_type &&  
+	     OMPI_COMM_TYPE_SOCKET != split_type && 
+	     OMPI_COMM_TYPE_L3CACHE != split_type && 
+	     OMPI_COMM_TYPE_L2CACHE != split_type && 
+	     OMPI_COMM_TYPE_L1CACHE != split_type && 
+	     OMPI_COMM_TYPE_CORE != split_type && 
+	     OMPI_COMM_TYPE_HWTHREAD != split_type && 
              MPI_UNDEFINED != split_type ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
