@@ -73,7 +73,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   /* copy data to redbuf if we only have a single node */
   if(p==1) {
     if(!inplace) {
-      res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+      res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
       if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
     }
     goto submit_and_return;
