@@ -125,15 +125,10 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                     cq_write_frag->post_desc.base.remote_mem_hndl = frag->endpoint->rmt_irq_mem_hndl;
                     cq_write_frag->post_desc.tries = 0;
                     cq_write_frag->cbfunc = mca_btl_ugni_cqwrite_complete;
-#if 0
-                fprintf(stderr,"doing a GNI_PostCqWrite to 0x%lx 0x%lx \n",cq_write_frag->post_desc.base.remote_mem_hndl.qword1,
-                                                                           cq_write_frag->post_desc.base.remote_mem_hndl.qword2);
-#endif
                     OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
                     grc = GNI_PostCqWrite(frag->endpoint->rdma_ep_handle, &cq_write_frag->post_desc.base);
                     OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
                     if (grc == GNI_RC_ERROR_RESOURCE) {   /* errors for PostCqWrite treated as non-fatal */
-                        fprintf(stderr,"GNI_PostCqWrite returned gni error %s\n",gni_err_str[grc]);
                         mca_btl_ugni_frag_return (cq_write_frag);
                     }
                 }
