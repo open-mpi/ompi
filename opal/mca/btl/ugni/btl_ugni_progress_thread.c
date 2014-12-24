@@ -30,7 +30,7 @@ static int thread_wakeups = 0;
 
 static void *mca_btl_ugni_prog_thread_fn(void * data)
 {
-    int rc;
+    int rc,ret = OPAL_SUCCESS;
     uint32_t which;
     gni_return_t status;
     gni_cq_handle_t cq_vec[2];
@@ -66,45 +66,65 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
 
     /* Send a signal to the main thread saying we are done */
     rc = pthread_mutex_lock(&progress_mutex);
-    if (rc != 0) {
-        fprintf(stderr,"Hey pthread_mutex_lock failed\n");
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_mutex_lock returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
     }
 
     progress_thread_done = 1;
 
     rc = pthread_mutex_unlock(&progress_mutex);
-    if (rc != 0) {
-        fprintf(stderr,"Hey pthread_mutex_unlock failed\n");
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_mutex_unlock returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
     }
-    rc = pthread_cond_signal(&progress_cond);
 
-    return OPAL_SUCCESS;
+    rc = pthread_cond_signal(&progress_cond);
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_cond_signal returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+    }
+
+   fn_exit:
+    return ret;
 }
 
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
 {
-    int rc;
+    int rc, ret=OPAL_SUCCESS;
     pthread_attr_t attr;
 
     pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_attr_setdetachstate returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
+    }
 
     rc = pthread_create(&mca_btl_ugni_progress_thread_id, 
                         &attr, mca_btl_ugni_prog_thread_fn, (void *)btl);
-    if (rc != 0) {
-        fprintf(stderr,"Hey, pthread_create returned with error %d (%s) \n",errno,strerror(errno));
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_create returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
     }
 
     rc = pthread_attr_destroy(&attr);
-    if (rc != 0) {
-        fprintf(stderr,"Hey, pthread_attr_destroy returned with error %d (%s) \n",errno,strerror(errno));
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_attr_destory returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
     }
 
-    return OPAL_SUCCESS;
+   fn_exit:
+    return ret;
 }
 
 int mca_btl_ugni_kill_progress_thread(void)
 {
+    int rc, ret=OPAL_SUCCESS;
     gni_return_t status;
     static mca_btl_ugni_base_frag_t cq_write_frag;
 
@@ -131,15 +151,32 @@ int mca_btl_ugni_kill_progress_thread(void)
      */
     if (GNI_RC_SUCCESS != status) {
         BTL_ERROR(("GNI_PostCqWrite returned error - %s",gni_err_str[status]));
+        ret = opal_common_rc_ugni_to_opal(status);
+        goto fn_exit;
     }
 
-    pthread_mutex_lock(&progress_mutex);
+    rc = pthread_mutex_lock(&progress_mutex);
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_mutex_lock returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
+    }
 
     while (!progress_thread_done) {
         pthread_cond_wait(&progress_cond, &progress_mutex);
+        if (0 != rc) {
+            BTL_ERROR(("btl/ugni pthread_cond_wait returned %s ",strerror(rc)));
+            ret = OPAL_ERROR;
+            goto fn_exit;
+        }
     }
 
-    pthread_mutex_unlock(&progress_mutex);
+    rc = pthread_mutex_unlock(&progress_mutex);
+    if (0 != rc) {
+        BTL_ERROR(("btl/ugni pthread_mutex_unlock returned %s ",strerror(rc)));
+        ret = OPAL_ERROR;
+        goto fn_exit;
+    }
 
     /*
      * destroy the local_ep
@@ -149,10 +186,12 @@ int mca_btl_ugni_kill_progress_thread(void)
     status =  GNI_EpDestroy (mca_btl_ugni_component.modules[0].local_ep);
     OPAL_THREAD_UNLOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != status)) {
-        BTL_ERROR(("error destroy local ep endpoint - %s", gni_err_str[status]));
-        return opal_common_rc_ugni_to_opal(status);
+        BTL_ERROR(("GNI_EpDestroy returned error - %s", gni_err_str[status]));
+        ret = opal_common_rc_ugni_to_opal(status);
+        goto fn_exit;
     }
 
-    return OPAL_SUCCESS;
+   fn_exit:
+    return ret;
 }
 

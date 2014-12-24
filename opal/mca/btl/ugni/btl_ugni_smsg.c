@@ -30,17 +30,8 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.smsg_attr.msg_buffer     = base_reg->base;
     mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
     mbox->attr.smsg_attr.mem_hndl       = ugni_reg->memory_hdl;
-#if 0
-    fprintf(stderr,"ugni_reg->memory_hdl 0x%lx 0x%lx\n",
-                    ugni_reg->memory_hdl.qword1,ugni_reg->memory_hdl.qword2);
-#endif
-
     mbox->attr.proc_id = mca_btl_ugni_proc_name_to_id (OPAL_PROC_MY_NAME);
     mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
-#if 0
-    fprintf(stderr,"Invoked mca_btl_ugni_smsg_mbox_construct with mbox->attr.rmt_irq_mem_hndl = 0x%lx 0x%lx\n",
-                    mbox->attr.rmt_irq_mem_hndl.qword1,mbox->attr.rmt_irq_mem_hndl.qword2);
-#endif
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, ompi_free_list_item_t,
@@ -94,8 +85,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
         }
 
         if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-            fprintf (stderr, "Unhandled Smsg error: %s\n", gni_err_str[rc]);
-            assert (0);
+            BTL_ERROR(("GNI_SmsgGetNextWTag returned error %s", gni_err_str[rc]));
             return OPAL_ERROR;
         }
 
