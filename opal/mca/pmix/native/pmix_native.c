@@ -1306,6 +1306,19 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     myrank = native_pname.vpid;
     id.jobid = native_pname.jobid;
 
+#if OPAL_HAVE_HWLOC
+    /* fetch my cpuset */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS == (rc = opal_dstore.fetch(opal_dstore_internal, &native_pname,
+                                                OPAL_DSTORE_CPUSET, &vals))) {
+        kp = (opal_value_t*)opal_list_get_first(&vals);
+        cpuset = strdup(kp->data.string);
+    } else {
+        cpuset = NULL;
+    }
+    OPAL_LIST_DESTRUCT(&vals);
+#endif
+
     /* we only need to set locality for each local rank as "not found"
      * equates to "non local" */
     ranks = opal_argv_split(lclpeers->data.string, ',');
@@ -1337,7 +1350,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             } else {
                 /* determine relative location on our node */
                 locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                 opal_process_info.cpuset,
+                                                                 cpuset,
                                                                  kp->data.string);
             }
             OPAL_LIST_DESTRUCT(&vals);
@@ -1359,6 +1372,11 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         (void)opal_dstore.store(opal_dstore_internal, &id, &kvn);
         OBJ_DESTRUCT(&kvn);
     }
+#if OPAL_HAVE_HWLOC
+    if (NULL != cpuset) {
+        free(cpuset);
+    }
+#endif
     opal_argv_free(ranks);
 
     return found;
