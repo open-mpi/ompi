@@ -703,6 +703,98 @@ int mca_btl_openib_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
+ * Initiate an asynchronous fetching atomic operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param op (IN)             Operation to perform
+ * @param operand (IN)        Operand for the operation
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ */
+int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                               void *local_address, uint64_t remote_address,
+                               struct mca_btl_base_registration_handle_t *local_handle,
+                               struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                               uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                               void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous compare and swap operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param compare (IN)        Operand for the operation
+ * @param value (IN)          Value to store on success
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with {value} if *remote_address == compare.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ */
+int mca_btl_openib_atomic_cswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                                 void *local_address, uint64_t remote_address,
+                                 struct mca_btl_base_registration_handle_t *local_handle,
+                                 struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+                                 uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                                 void *cbcontext, void *cbdata);
+
+/**
  * Allocate a descriptor.
  *
  * @param btl (IN)      BTL module

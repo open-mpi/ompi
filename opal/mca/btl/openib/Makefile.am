@@ -61,6 +61,7 @@ sources = \
     btl_openib_ip.c \
     btl_openib_put.c \
     btl_openib_get.c \
+    btl_openib_atomic.c \
     connect/base.h \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_empty.c \

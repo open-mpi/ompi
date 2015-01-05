@@ -580,6 +580,10 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
 
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+#endif
+
     if (device->mem_reg_max &&
         device->mem_reg_max < (device->mem_reg_active + size)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -811,6 +815,17 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             if (openib_btl->super.btl_put_limit > openib_btl->ib_port_attr.max_msg_sz) {
                 openib_btl->super.btl_put_limit = openib_btl->ib_port_attr.max_msg_sz;
             }
+
+#if HAVE_DECL_IBV_ATOMIC_HCA
+            if (openib_btl->device->ib_dev_attr.atomic_cap == IBV_ATOMIC_NONE) {
+                openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+                openib_btl->super.btl_atomic_flags = 0;
+                openib_btl->super.btl_atomic_fop = NULL;
+                openib_btl->super.btl_atomic_cswap = NULL;
+            } else if (IBV_ATOMIC_GLOB == openib_btl->device->ib_dev_attr.atomic_cap) {
+                openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
+            }
+#endif
 
             openib_btl->super.btl_put_alignment = 0;
 
@@ -3383,18 +3398,19 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     /* Handle work completions */
     switch(wc->opcode) {
         case IBV_WC_RDMA_READ:
-        case IBV_WC_RDMA_WRITE:
+        case IBV_WC_COMP_SWAP:
+        case IBV_WC_FETCH_ADD:
             OPAL_OUTPUT((-1, "Got WC: RDMA_READ or RDMA_WRITE"));
 
-            if (IBV_WC_RDMA_READ == wc->opcode) {
-                OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
+            OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
 
-                mca_btl_openib_get_frag_t *get_frag = to_get_frag(des);
+            mca_btl_openib_get_frag_t *get_frag = to_get_frag(des);
 
-                get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
-                                   get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
-                                   OPAL_SUCCESS);
-            } else if (MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
+            get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
+                               get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
+                               OPAL_SUCCESS);
+        case IBV_WC_RDMA_WRITE:
+            if (MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
                 mca_btl_openib_put_frag_t *put_frag = to_put_frag(des);
 
                 put_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
@@ -3431,7 +3447,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             /* Process a completed send/put/get */
             btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-                des->des_cbfunc(&openib_btl->super, endpoint, des,OPAL_SUCCESS);
+                des->des_cbfunc(&openib_btl->super, endpoint, des, OPAL_SUCCESS);
             }
             if( btl_ownership ) {
                 mca_btl_openib_free(&openib_btl->super, des);
