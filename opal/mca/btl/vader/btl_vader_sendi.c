@@ -98,7 +98,9 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
 
     /* write the fragment pointer to peer's the FIFO. the progress function will return the fragment */
     if (!vader_fifo_write_ep (frag->hdr, endpoint)) {
-        *descriptor = &frag->base;
+        if (descriptor) {
+            *descriptor = &frag->base;
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 

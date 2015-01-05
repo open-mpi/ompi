@@ -223,7 +223,9 @@ int mca_btl_scif_sendi (struct mca_btl_base_module_t *btl,
 
     rc = mca_btl_scif_send_get_buffer (endpoint, length, &base);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        *descriptor = NULL;
+        if (NULL != descriptor) {
+            *descriptor = NULL;
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
