@@ -40,7 +40,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
                         mca_btl_base_tag_t tag)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
-    const size_t total_size = frag->segments[0].base.seg_len;
+    const size_t total_size = frag->segments[0].seg_len;
 
     if (OPAL_LIKELY(frag->fbox)) {
         mca_btl_vader_fbox_send (frag->fbox, tag);

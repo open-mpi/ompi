@@ -48,23 +48,12 @@ static int vader_free (struct mca_btl_base_module_t* btl, mca_btl_base_descripto
 static struct mca_btl_base_descriptor_t *vader_prepare_src (
                                                             struct mca_btl_base_module_t *btl,
                                                             struct mca_btl_base_endpoint_t *endpoint,
-                                                            mca_mpool_base_registration_t *registration,
                                                             struct opal_convertor_t *convertor,
                                                             uint8_t order,
                                                             size_t reserve,
                                                             size_t *size,
                                                             uint32_t flags
                                                             );
-
-static struct mca_btl_base_descriptor_t *vader_prepare_dst (
-                                                            struct mca_btl_base_module_t *btl,
-                                                            struct mca_btl_base_endpoint_t *endpoint,
-                                                            struct mca_mpool_base_registration_t *registration,
-                                                            struct opal_convertor_t *convertor,
-                                                            uint8_t order,
-                                                            size_t reserve,
-                                                            size_t *size,
-                                                            uint32_t flags);
 
 static int vader_add_procs(struct mca_btl_base_module_t* btl,
                            size_t nprocs, struct opal_proc_t **procs,
@@ -82,7 +71,6 @@ mca_btl_vader_t mca_btl_vader = {
         .btl_alloc = mca_btl_vader_alloc,
         .btl_free = vader_free,
         .btl_prepare_src = vader_prepare_src,
-        .btl_prepare_dst = vader_prepare_dst,
         .btl_send = mca_btl_vader_send,
         .btl_sendi = mca_btl_vader_sendi,
         .btl_dump = mca_btl_base_dump,
@@ -108,21 +96,6 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     component->segment_offset = MCA_BTL_VADER_FIFO_SIZE;
 
     /* initialize fragment descriptor free lists */
-    /* initialize free list for single copy (get, put) */
-    if (MCA_BTL_VADER_NONE != mca_btl_vader_component.single_copy_mechanism) {
-        rc = ompi_free_list_init_ex_new (&component->vader_frags_rdma,
-                                         sizeof(mca_btl_vader_frag_t), 8,
-                                         OBJ_CLASS(mca_btl_vader_frag_t),
-                                         0, opal_cache_line_size,
-                                         component->vader_free_list_num,
-                                         component->vader_free_list_max,
-                                         component->vader_free_list_inc,
-                                         NULL, mca_btl_vader_frag_init, (void *) 0);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-    }
-
     /* initialize free list for small send and inline fragments */
     rc = ompi_free_list_init_ex_new(&component->vader_frags_user, 
                                     sizeof(mca_btl_vader_frag_t),
@@ -418,7 +391,7 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segments[0].base.seg_len  = size;
+        frag->segments[0].seg_len  = size;
 
         frag->base.des_flags   = flags;
         frag->base.order       = order;
@@ -440,56 +413,6 @@ static int vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descripto
     return OPAL_SUCCESS;
 }
 
-struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t *btl,
-                                                    struct mca_btl_base_endpoint_t *endpoint,
-                                                    struct mca_mpool_base_registration_t *registration,
-                                                    struct opal_convertor_t *convertor,
-                                                    uint8_t order, size_t reserve, size_t *size,
-                                                    uint32_t flags)
-{
-    mca_btl_vader_frag_t *frag;
-    void *data_ptr;
-
-    (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-    frag->segments[0].base.seg_len       = *size;
-
-#if OPAL_BTL_VADER_HAVE_KNEM
-    if (MCA_BTL_VADER_KNEM == mca_btl_vader_component.single_copy_mechanism) {
-        struct knem_cmd_create_region knem_cr;
-        struct knem_cmd_param_iovec knem_iov;
-
-        knem_iov.base = (uintptr_t) data_ptr;
-        knem_iov.len = *size;
-
-        knem_cr.iovec_array = (uintptr_t) &knem_iov;
-        knem_cr.iovec_nr = 1;
-        knem_cr.protection = PROT_WRITE;
-        /* Vader will explicitly destroy this cookie */
-        knem_cr.flags = 0;
-        if (OPAL_UNLIKELY(ioctl(mca_btl_vader.knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
-            MCA_BTL_VADER_FRAG_RETURN(frag);
-            return NULL;
-        }
-
-        frag->segments[0].cookie = knem_cr.cookie;
-        frag->segments[0].registered_base = (intptr_t) data_ptr;
-        frag->cookie = knem_cr.cookie;
-    }
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
-    
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
-
-    return &frag->base;
-}
-
 /**
  * Pack data
  *
@@ -497,7 +420,6 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
  */
 static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_module_t *btl,
                                                             struct mca_btl_base_endpoint_t *endpoint,
-                                                            mca_mpool_base_registration_t *registration,
                                                             struct opal_convertor_t *convertor,
                                                             uint8_t order, size_t reserve, size_t *size,
                                                             uint32_t flags)
@@ -510,118 +432,84 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    if (OPAL_LIKELY(reserve)) {
-        /* in place send fragment */
-        if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
-            uint32_t iov_count = 1;
-            struct iovec iov;
+    /* in place send fragment */
+    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+        uint32_t iov_count = 1;
+        struct iovec iov;
 
-            /* non-contiguous data requires the convertor */
-            if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism &&
-                total_size > mca_btl_vader.super.btl_eager_limit) {
-                (void) MCA_BTL_VADER_FRAG_ALLOC_MAX(frag, endpoint);
-            } else
-                (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, endpoint);
+        /* non-contiguous data requires the convertor */
+        if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism &&
+            total_size > mca_btl_vader.super.btl_eager_limit) {
+            (void) MCA_BTL_VADER_FRAG_ALLOC_MAX(frag, endpoint);
+        } else
+            (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, endpoint);
 
-            if (OPAL_UNLIKELY(NULL == frag)) {
-                return NULL;
-            }
-
-            iov.iov_len = *size;
-            iov.iov_base =
-                (IOVBASE_TYPE *)(((uintptr_t)(frag->segments[0].base.seg_addr.pval)) +
-                                 reserve);
-
-            rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-            if (OPAL_UNLIKELY(rc < 0)) {
-                MCA_BTL_VADER_FRAG_RETURN(frag);
-                return NULL;
-            }
-
-            frag->segments[0].base.seg_len = *size + reserve;
-        } else {
-            if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
-                if (OPAL_LIKELY(total_size <= mca_btl_vader.super.btl_eager_limit)) {
-                    (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, endpoint);
-                } else {
-                    (void) MCA_BTL_VADER_FRAG_ALLOC_MAX(frag, endpoint);
-                }
-            } else
-                (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint);
-
-            if (OPAL_UNLIKELY(NULL == frag)) {
-                return NULL;
-            }
-
-#if OPAL_BTL_VADER_HAVE_XPMEM
-            /* use xpmem to send this segment if it is above the max inline send size */
-            if (OPAL_UNLIKELY(MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism &&
-                total_size > (size_t) mca_btl_vader_component.max_inline_send)) {
-                /* single copy send */
-                frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
-
-                /* set up single copy io vector */
-                frag->hdr->sc_iov.iov_base = data_ptr;
-                frag->hdr->sc_iov.iov_len  = *size;
-
-                frag->segments[0].base.seg_len = reserve;
-                frag->segments[1].base.seg_len = *size;
-                frag->segments[1].base.seg_addr.pval = data_ptr;
-                frag->base.des_local_count = 2;
-            } else {
-#endif
-
-                /* inline send */
-                if (OPAL_LIKELY(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP & flags)) {
-                    /* try to reserve a fast box for this transfer only if the
-                     * fragment does not belong to the caller */
-                    fbox = mca_btl_vader_reserve_fbox (endpoint, total_size);
-                    if (OPAL_LIKELY(fbox)) {
-                        frag->segments[0].base.seg_addr.pval = fbox;
-                    }
-
-                    frag->fbox = fbox;
-                }
-
-                /* NTH: the covertor adds some latency so we bypass it here */
-                memcpy ((void *)((uintptr_t)frag->segments[0].base.seg_addr.pval + reserve), data_ptr, *size);
-                frag->segments[0].base.seg_len = total_size;
-#if OPAL_BTL_VADER_HAVE_XPMEM
-            }
-#endif
-        }
-    } else {
-        /* put/get fragment */
-        (void) MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint);
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
 
-        frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-        frag->segments[0].base.seg_len       = total_size;
-#if OPAL_BTL_VADER_HAVE_KNEM
-        if (MCA_BTL_VADER_KNEM == mca_btl_vader_component.single_copy_mechanism) {
-            struct knem_cmd_create_region knem_cr;
-            struct knem_cmd_param_iovec knem_iov;
+        iov.iov_len = *size;
+        iov.iov_base =
+            (IOVBASE_TYPE *)(((uintptr_t)(frag->segments[0].seg_addr.pval)) +
+                             reserve);
 
-            knem_iov.base = (uintptr_t) data_ptr;
-            knem_iov.len = total_size;
+        rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
+        if (OPAL_UNLIKELY(rc < 0)) {
+            MCA_BTL_VADER_FRAG_RETURN(frag);
+            return NULL;
+        }
 
-            knem_cr.iovec_array = (uintptr_t) &knem_iov;
-            knem_cr.iovec_nr = 1;
-            knem_cr.protection = PROT_READ | PROT_WRITE;
-            /* Vader will explicitly destroy this cookie */
-            knem_cr.flags = 0;
-            if (OPAL_UNLIKELY(ioctl(mca_btl_vader.knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
-                MCA_BTL_VADER_FRAG_RETURN(frag);
-                return NULL;
+        frag->segments[0].seg_len = *size + reserve;
+    } else {
+        if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
+            if (OPAL_LIKELY(total_size <= mca_btl_vader.super.btl_eager_limit)) {
+                (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, endpoint);
+            } else {
+                (void) MCA_BTL_VADER_FRAG_ALLOC_MAX(frag, endpoint);
+            }
+        } else
+            (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint);
+
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            return NULL;
+        }
+
+#if OPAL_BTL_VADER_HAVE_XPMEM
+        /* use xpmem to send this segment if it is above the max inline send size */
+        if (OPAL_UNLIKELY(MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism &&
+                          total_size > (size_t) mca_btl_vader_component.max_inline_send)) {
+            /* single copy send */
+            frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
+
+            /* set up single copy io vector */
+            frag->hdr->sc_iov.iov_base = data_ptr;
+            frag->hdr->sc_iov.iov_len  = *size;
+
+            frag->segments[0].seg_len = reserve;
+            frag->segments[1].seg_len = *size;
+            frag->segments[1].seg_addr.pval = data_ptr;
+            frag->base.des_segment_count = 2;
+        } else {
+#endif
+
+            /* inline send */
+            if (OPAL_LIKELY(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP & flags)) {
+                /* try to reserve a fast box for this transfer only if the
+                 * fragment does not belong to the caller */
+                fbox = mca_btl_vader_reserve_fbox (endpoint, total_size);
+                if (OPAL_LIKELY(fbox)) {
+                    frag->segments[0].seg_addr.pval = fbox;
+                }
+
+                frag->fbox = fbox;
             }
 
-            frag->segments[0].cookie = knem_cr.cookie;
-            frag->segments[0].registered_base = (intptr_t) data_ptr;
-            frag->cookie = knem_cr.cookie;
+            /* NTH: the covertor adds some latency so we bypass it here */
+            memcpy ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve), data_ptr, *size);
+            frag->segments[0].seg_len = total_size;
+#if OPAL_BTL_VADER_HAVE_XPMEM
         }
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
+#endif
     }
 
     frag->base.order       = order;
