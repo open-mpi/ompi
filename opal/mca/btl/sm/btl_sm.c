@@ -950,9 +950,12 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         return OPAL_SUCCESS;
     }
 
-    /* presumably, this code path will never get executed */
-    *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
-                                    payload_size + header_size, flags);
+    if (NULL != descriptor) {
+        /* presumably, this code path will never get executed */
+        *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
+                                        payload_size + header_size, flags);
+    }
+
     return OPAL_ERR_RESOURCE_BUSY;
 }
 

@@ -829,7 +829,8 @@ typedef int (*mca_btl_base_module_send_fn_t)(
  * @param flags (IN)           Flags.
  * @param tag (IN)             The tag value used to notify the peer.
  * @param descriptor (OUT)     The descriptor to be returned unable to be sent immediately
-
+ *                             (may be NULL).
+ *
  * @retval OPAL_SUCCESS           The send was successfully queued  
  * @retval OPAL_ERROR             The send failed 
  * @retval OPAL_ERR_UNREACH       The endpoint is not reachable 

@@ -1825,7 +1825,10 @@ cant_send_wqe:
 cant_send:
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
     /* We can not send the data directly, so we just return descriptor */
-    *descriptor = mca_btl_openib_alloc(btl, ep, order, size, flags);
+    if (NULL != descriptor) {
+        *descriptor = mca_btl_openib_alloc(btl, ep, order, size, flags);
+    }
+
     return OPAL_ERR_RESOURCE_BUSY;
 }
 /*

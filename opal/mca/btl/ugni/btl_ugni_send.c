@@ -135,7 +135,9 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         return OPAL_SUCCESS;
     } while (0);
 
-    *descriptor = NULL;
+    if (NULL != descriptor) {
+        *descriptor = NULL;
+    }
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
 
