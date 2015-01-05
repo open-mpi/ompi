@@ -36,9 +36,7 @@ static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
     frag->post_desc.base.remote_addr     = (uint64_t) rem_addr;
     frag->post_desc.base.remote_mem_hndl = rem_mdh;
     frag->post_desc.base.length          = bufsize;
-#if 0
-    frag->post_desc.base.rdma_mode       = GNI_RDMAMODE_FENCE;
-#endif
+    frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
     frag->post_desc.tries                = 0;
@@ -70,9 +68,15 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     gni_return_t status;
 
     /* Post descriptor */
-    init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
-                        rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
-                        frag->endpoint->btl->rdma_local_cq);
+    if (mca_btl_ugni_component.progress_thread_enabled) {
+        init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
+                            rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
+                            frag->endpoint->btl->rdma_local_irq_cq);
+    } else {
+        init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
+                            rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
+                            frag->endpoint->btl->rdma_local_cq);
+    }
 
     OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     status = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);

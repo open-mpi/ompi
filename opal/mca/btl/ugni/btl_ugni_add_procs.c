@@ -37,6 +37,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
     opal_proc_t *my_proc = opal_proc_local_get();
     size_t i;
     int rc;
+    void *mmap_start_addr;
 
     if (false == ugni_module->initialized) {
 
@@ -119,6 +120,46 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             return opal_common_rc_ugni_to_opal (rc);
         }
 
+        if (mca_btl_ugni_component.progress_thread_enabled) {
+            OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
+            rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.local_cq_size,
+                               0, GNI_CQ_BLOCKING, NULL, NULL, &ugni_module->rdma_local_irq_cq);
+            OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
+            if (GNI_RC_SUCCESS != rc) {
+                BTL_ERROR(("error creating local BTE/FMA CQ"));
+                return opal_common_rc_ugni_to_opal (rc);
+            }
+
+            OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
+            rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.remote_cq_size,
+                               0, GNI_CQ_BLOCKING, NULL, NULL, &ugni_module->smsg_remote_irq_cq);
+            OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
+            if (GNI_RC_SUCCESS != rc) {
+                BTL_ERROR(("error creating remote SMSG CQ"));
+                return opal_common_rc_ugni_to_opal (rc);
+            }
+
+            OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
+            rc = GNI_EpCreate (ugni_module->device->dev_handle, ugni_module->rdma_local_cq,
+                               &ugni_module->local_ep);
+            OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+                BTL_ERROR(("error creating local ugni endpoint"));
+                return opal_common_rc_ugni_to_opal (rc);
+            }
+
+            OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
+            rc = GNI_EpBind (ugni_module->local_ep,
+                             ugni_module->device->dev_addr,
+                             getpid());
+            OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+                BTL_ERROR(("error binding local ugni endpoint"));
+                return opal_common_rc_ugni_to_opal (rc);
+            }
+
+        }
+
         rc = mca_btl_ugni_setup_mpools (ugni_module);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
@@ -129,6 +170,34 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             BTL_ERROR(("btl/ugni error initializing SMSG"));
             return rc;
+        }
+
+        /*
+         * If progress thread enabled, registered a page of memory
+         * with the smsg_remote_irq_cq.  This memory handle is passed
+         * to ranks which want to communicate with this rank. A rank which
+         * posts a GNI_PostCqWrite targeting this memory handle generates
+         * an IRQ at the target node, which ultimately causes the progress
+         * thread in the target rank to become schedulable.
+         */
+        if (mca_btl_ugni_component.progress_thread_enabled) {
+            mmap_start_addr = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            if (NULL == mmap_start_addr) {
+                BTL_ERROR(("btl/ugni mmap returned error"));
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+
+            OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
+            rc = GNI_MemRegister(ugni_module->device->dev_handle,
+                                     (unsigned long)mmap_start_addr,
+                                     4096,
+                                     ugni_module->smsg_remote_irq_cq,
+                                     GNI_MEM_READWRITE,
+                                     -1,
+                                     &ugni_module->device->smsg_irq_mhndl);
+            OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
+
+            mca_btl_ugni_spawn_progress_thread(btl);
         }
 
         ugni_module->initialized = true;

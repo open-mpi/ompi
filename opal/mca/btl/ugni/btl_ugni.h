@@ -178,6 +178,13 @@ typedef struct mca_btl_ugni_component_t {
 
     /* Number of mailboxes to allocate in each block */
     unsigned int mbox_increment;
+
+    /* Indicate whether progress thread requested */
+    bool progress_thread_requested;
+
+    /* Indicate whether progress thread allowed */
+    bool progress_thread_enabled;
+
 } mca_btl_ugni_component_t;
 
 int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
@@ -310,6 +317,9 @@ static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
     /* Throw away the top bit of the jobid for the datagram type */
     return ((uint64_t) (name.jobid & 0x7fffffff) << 32 | name.vpid);
 }
+
+int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t* btl);
+int mca_btl_ugni_kill_progress_thread(void);
 
 
 #endif
