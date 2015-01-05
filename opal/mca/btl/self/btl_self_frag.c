@@ -23,8 +23,8 @@ static inline void mca_btl_self_frag_constructor(mca_btl_self_frag_t* frag)
 {
     frag->segment.seg_addr.pval = frag+1;
     frag->segment.seg_len       = (uint32_t)frag->size;
-    frag->base.des_local        = &frag->segment;
-    frag->base.des_local_count  = 1;
+    frag->base.des_segments        = &frag->segment;
+    frag->base.des_segment_count  = 1;
     frag->base.des_flags        = 0;
 }
 

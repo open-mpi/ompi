@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +43,7 @@ BEGIN_C_DECLS
  * Shared Memory (SELF) BTL module.
  */
 struct mca_btl_self_component_t {
-    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t super;  /**< base BTL component */
     int free_list_num;                     /**< initial size of free lists */
     int free_list_max;                     /**< maximum size of free lists */
     int free_list_inc;                     /**< number of elements to alloc when growing free lists */
@@ -165,24 +168,6 @@ int mca_btl_self_free(
 struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags
-);
-                                                                                                            
-/**
- * Prepare data for RDMA
- *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
- */
-struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
