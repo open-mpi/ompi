@@ -281,6 +281,22 @@ int mca_btl_ugni_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t
                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                       int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
+int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                      mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                       uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                       void *cbcontext, void *cbdata);
+
+int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                         void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value,
+                         int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
 int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
 mca_btl_base_descriptor_t *

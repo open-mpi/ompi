@@ -229,7 +229,11 @@ btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_min_rdma_pipeline_size    = 8 * 1024;
 
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND |
-        MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
+        MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_ATOMIC_OPS |
+        MCA_BTL_FLAGS_ATOMIC_FOPS;
+    mca_btl_ugni_module.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD |
+        MCA_BTL_ATOMIC_SUPPORTS_AND | MCA_BTL_ATOMIC_SUPPORTS_OR | MCA_BTL_ATOMIC_SUPPORTS_XOR |
+        MCA_BTL_ATOMIC_SUPPORTS_CSWAP;
 
     mca_btl_ugni_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 

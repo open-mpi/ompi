@@ -55,6 +55,9 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
         .btl_get            = mca_btl_ugni_get,
         .btl_register_mem   = mca_btl_ugni_register_mem,
         .btl_deregister_mem = mca_btl_ugni_deregister_mem,
+        .btl_atomic_op      = mca_btl_ugni_aop,
+        .btl_atomic_fop     = mca_btl_ugni_afop,
+        .btl_atomic_cswap   = mca_btl_ugni_acswap,
     }
 };
 

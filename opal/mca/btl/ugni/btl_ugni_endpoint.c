@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -9,8 +9,6 @@
  *
  * $HEADER$
  */
-
-#include "btl_ugni.h"
 
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_smsg.h"
@@ -90,10 +88,8 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
 static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    /* get the modex info for this endpoint and setup a ugni endpoint */
-    rc = opal_common_ugni_endpoint_for_proc (ep->btl->device, ep->peer_proc, &ep->common);
-    if (OPAL_SUCCESS != rc) {
-        assert (0);
+    rc = mca_btl_ugni_ep_connect_rdma (ep);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
@@ -103,11 +99,6 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     /* bind endpoint to remote address */
     /* we bind two endpoints to seperate out local smsg completion and local fma completion */
     rc = opal_common_ugni_ep_create (ep->common, ep->btl->smsg_local_cq, &ep->smsg_ep_handle);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        return rc;
-    }
-
-    rc = opal_common_ugni_ep_create (ep->common, ep->btl->rdma_local_cq, &ep->rdma_ep_handle);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
