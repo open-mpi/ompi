@@ -34,7 +34,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t **peers,
                            opal_bitmap_t *reachable) {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
-    opal_proc_t *my_proc = opal_proc_local_get();
     size_t i;
     int rc;
     void *mmap_start_addr;
@@ -67,11 +66,8 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         if (OPAL_PROC_ON_LOCAL_NODE(opal_proc->proc_flags)) {
             ugni_module->nlocal_procs++;
 
-            /* Do not use uGNI to communicate with local procs unless we are adding more ranks.
-             * Change this when sm and vader are updated to handle additional add procs. */
-            if (!ugni_module->initialized || my_proc == ompi_proc) {
-                continue;
-            }
+            /* ugni is allowed on local processes to provide support for network
+             * atomic operations */
         }
 
         /*  Create and Init endpoints */

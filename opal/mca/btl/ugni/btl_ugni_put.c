@@ -23,7 +23,7 @@ int mca_btl_ugni_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t
                  local_address, remote_address));
 
     /* cause endpoint to bind if it isn't already (bind is sufficient for rdma) */
-    (void) mca_btl_ugni_check_endpoint_state(endpoint);
+    (void) mca_btl_ugni_check_endpoint_state_rdma (endpoint);
 
     return mca_btl_ugni_post (endpoint, false, size, local_address, remote_address, local_handle,
                               remote_handle, order, cbfunc, cbcontext, cbdata);
