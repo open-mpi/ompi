@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -57,15 +57,6 @@ struct mca_btl_vader_hdr_t {
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
 
-struct mca_btl_vader_segment_t {
-    mca_btl_base_segment_t base;
-#if OPAL_BTL_VADER_HAVE_KNEM
-    uint64_t cookie;
-    intptr_t registered_base;
-#endif
-};
-typedef struct mca_btl_vader_segment_t mca_btl_vader_segment_t;
-
 /**
  * shared memory send fragment derived type.
  */
@@ -73,7 +64,7 @@ struct mca_btl_vader_frag_t {
     /** base object */
     mca_btl_base_descriptor_t base;
     /** storage for segment data (max 2) */
-    mca_btl_vader_segment_t segments[2];
+    mca_btl_base_segment_t segments[2];
     /** endpoint this fragment is active on */
     struct mca_btl_base_endpoint_t *endpoint;
     /** fast box in use (or NULL) */
@@ -82,9 +73,6 @@ struct mca_btl_vader_frag_t {
     mca_btl_vader_hdr_t *hdr;
     /** free list this fragment was allocated within */
     ompi_free_list_t *my_list;
-#if OPAL_BTL_VADER_HAVE_KNEM
-    uint64_t cookie;
-#endif
 };
 
 typedef struct mca_btl_vader_frag_t mca_btl_vader_frag_t;
@@ -108,36 +96,15 @@ static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_fr
     return OPAL_SUCCESS;
 }
 
-static inline int mca_btl_vader_frag_alloc_rdma (mca_btl_vader_frag_t **frag, ompi_free_list_t *list,
-                                                 struct mca_btl_base_endpoint_t *endpoint) {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_GET_MT(list, item);
-    *frag = (mca_btl_vader_frag_t *) item;
-    if (OPAL_LIKELY(NULL != item)) {
-        (*frag)->endpoint = endpoint;
-    }
-
-    return OPAL_SUCCESS;
-}
-
 static inline void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
 {
     if (frag->hdr) {
         frag->hdr->flags = 0;
     }
 
-    frag->segments[0].base.seg_addr.pval = (char *)(frag->hdr + 1);
-    frag->base.des_local_count = 1;
+    frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
+    frag->base.des_segment_count = 1;
     frag->fbox = NULL;
-
-#if OPAL_BTL_VADER_HAVE_KNEM
-    if (frag->cookie) {
-        /* NTH: explicity ignore the return code. Don't care about this cookie anymore anyway. */
-        (void) ioctl(mca_btl_vader.knem_fd, KNEM_CMD_DESTROY_REGION, &frag->cookie);
-        frag->cookie = 0;
-    }
-#endif
 
     OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *)frag);
 }
@@ -152,9 +119,6 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 
 #define MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint)                   \
     mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_user, endpoint)
-
-#define MCA_BTL_VADER_FRAG_ALLOC_RDMA(frag, endpoint)                   \
-    mca_btl_vader_frag_alloc_rdma (&(frag), &mca_btl_vader_component.vader_frags_rdma, endpoint)
 
 #define MCA_BTL_VADER_FRAG_RETURN(frag) mca_btl_vader_frag_return(frag)
 

@@ -31,11 +31,11 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
     if(frag->hdr != NULL) {
         frag->hdr->frag = frag;
         frag->hdr->flags = 0;
-        frag->segments[0].base.seg_addr.pval = (char *)(frag->hdr + 1);
+        frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
     }
 
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments      = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->fbox = NULL;
 }
 
@@ -65,8 +65,6 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
         frag->my_list = &mca_btl_vader_component.vader_frags_eager;
     } else if (mca_btl_vader.super.btl_max_send_size == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_max_send;
-    } else {
-        frag->my_list = &mca_btl_vader_component.vader_frags_rdma;
     }
 
     if (data_size) {
