@@ -42,7 +42,6 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         .btl_alloc = mca_btl_tcp_alloc,
         .btl_free = mca_btl_tcp_free,
         .btl_prepare_src = mca_btl_tcp_prepare_src,
-        .btl_prepare_dst = mca_btl_tcp_prepare_dst,
         .btl_send = mca_btl_tcp_send,
         .btl_put = mca_btl_tcp_put,
         .btl_dump = mca_btl_base_dump,
@@ -170,8 +169,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
-    frag->base.des_local = frag->segments;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_tcp_module_t*)btl;
@@ -202,7 +201,6 @@ int mca_btl_tcp_free(
 mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -238,7 +236,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     frag->segments[0].seg_addr.pval = (frag + 1);
     frag->segments[0].seg_len = reserve;
 
-    frag->base.des_local_count = 1;
+    frag->base.des_segment_count = 1;
     if(opal_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
@@ -268,65 +266,15 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
 
         frag->segments[1].seg_addr.pval = iov.iov_base;
         frag->segments[1].seg_len = max_data;
-        frag->base.des_local_count = 2;
+        frag->base.des_segment_count = 2;
     }
 
-    frag->base.des_local = frag->segments;
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
+    frag->base.des_segments = frag->segments;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     *size = max_data;
     return &frag->base;
 }
-
-
-/**
- * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
- * the descriptor may simply point to the user buffer. Otherwise,
- * this routine is responsible for allocating buffer space and
- * packing if required.
- *
- * @param btl (IN)          BTL module
- * @param endpoint (IN)     BTL peer addressing
- * @param convertor (IN)    Data type convertor
- * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
- */
-
-mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
-{
-    mca_btl_tcp_frag_t* frag;
-
-    if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {  /* limit the size to what we support */
-        *size = (size_t)UINT32_MAX;
-    }
-    MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
-    if( OPAL_UNLIKELY(NULL == frag) ) {
-        return NULL;
-    }
-
-    frag->segments->seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments->seg_addr.pval) );
-
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
-    frag->base.des_local = frag->segments;
-    frag->base.des_local_count = 1;
-    frag->base.des_flags = flags;
-    frag->base.order = MCA_BTL_NO_ORDER;
-    return &frag->base;
-}
-
 
 /**
  * Initiate an asynchronous send.
@@ -355,7 +303,7 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->hdr.size = 0;
-    for( i = 0; i < (int)frag->base.des_local_count; i++) {
+    for( i = 0; i < (int)frag->base.des_segment_count; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+1].iov_len = frag->segments[i].seg_len;
         frag->iov[i+1].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
@@ -368,22 +316,54 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
     return mca_btl_tcp_endpoint_send(endpoint,frag);
 }
 
+static void fake_rdma_complete (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                                mca_btl_base_descriptor_t *desc, int rc)
+{
+    mca_btl_tcp_frag_t *frag = (mca_btl_tcp_frag_t *) desc;
+
+    frag->cb.func (btl, endpoint, frag->segments[0].seg_addr.pval, NULL, frag->cb.context, frag->cb.data,
+                   rc);
+}
 
 /**
  * Initiate an asynchronous put.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
 
-int mca_btl_tcp_put( mca_btl_base_module_t* btl,
-                     mca_btl_base_endpoint_t* endpoint,
-                     mca_btl_base_descriptor_t* descriptor )
+int mca_btl_tcp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+		     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+		     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+		     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
-    mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
+    mca_btl_tcp_frag_t *frag = NULL;
     int i;
+
+    MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
+    if( OPAL_UNLIKELY(NULL == frag) ) {
+        return OPAL_ERR_OUT_OF_RESOURCE;;
+    }
+
+    frag->endpoint = endpoint;
+
+    frag->segments->seg_len = size;
+    frag->segments->seg_addr.pval = local_address;
+
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
+    frag->base.order = MCA_BTL_NO_ORDER;
+
+    frag->segments[0].seg_addr.pval = local_address;
+    frag->segments[0].seg_len = size;
+
+    frag->segments[1].seg_addr.lval = remote_address;
+    frag->segments[1].seg_len = size;
+
+    frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    frag->base.des_cbfunc = fake_rdma_complete;
+
+    frag->cb.func = cbfunc;
+    frag->cb.data = cbdata;
+    frag->cb.context = cbcontext;
 
     frag->btl = tcp_btl;
     frag->endpoint = endpoint;
@@ -394,9 +374,9 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     frag->iov_ptr = frag->iov;
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_remote;
-    frag->iov[1].iov_len = frag->base.des_remote_count * sizeof(mca_btl_base_segment_t);
-    for( i = 0; i < (int)frag->base.des_local_count; i++ ) {
+    frag->iov[1].iov_base = (IOVBASE_TYPE*) (frag->segments + 1);
+    frag->iov[1].iov_len = sizeof(mca_btl_base_segment_t);
+    for( i = 0; i < (int)frag->base.des_segment_count; i++ ) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+2].iov_len = frag->segments[i].seg_len;
         frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
@@ -404,7 +384,7 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     }
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
-    frag->hdr.count = frag->base.des_remote_count;
+    frag->hdr.count = 1;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return ((i = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OPAL_SUCCESS : i);
 }
@@ -412,21 +392,45 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
 
 /**
  * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- *
  */
 
-int mca_btl_tcp_get( 
-    mca_btl_base_module_t* btl,
-    mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
+int mca_btl_tcp_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+		     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+		     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+		     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
-    mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
+    mca_btl_tcp_frag_t* frag = NULL;
     int rc;
+
+    MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
+    if( OPAL_UNLIKELY(NULL == frag) ) {
+        return OPAL_ERR_OUT_OF_RESOURCE;;
+    }
+
+    frag->endpoint = endpoint;
+
+    frag->segments->seg_len = size;
+    frag->segments->seg_addr.pval = local_address;
+
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
+    frag->base.order = MCA_BTL_NO_ORDER;
+
+    frag->segments[0].seg_addr.pval = local_address;
+    frag->segments[0].seg_len = size;
+
+    frag->segments[1].seg_addr.lval = remote_address;
+    frag->segments[1].seg_len = size;
+
+    /* call the rdma callback through the descriptor callback. this is
+     * tcp so the extra latency is not an issue */
+    frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    frag->base.des_cbfunc = fake_rdma_complete;
+
+    frag->cb.func = cbfunc;
+    frag->cb.data = cbdata;
+    frag->cb.context = cbcontext;
 
     frag->btl = tcp_btl;
     frag->endpoint = endpoint;
@@ -437,11 +441,11 @@ int mca_btl_tcp_get(
     frag->iov_ptr = frag->iov;
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_remote;
-    frag->iov[1].iov_len = frag->base.des_remote_count * sizeof(mca_btl_base_segment_t);
+    frag->iov[1].iov_base = (IOVBASE_TYPE*) &frag->segments[1];
+    frag->iov[1].iov_len = sizeof(mca_btl_base_segment_t);
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
-    frag->hdr.count = frag->base.des_remote_count;
+    frag->hdr.count = 1;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return ((rc = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OPAL_SUCCESS : rc);
 }

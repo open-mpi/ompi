@@ -58,6 +58,12 @@ struct mca_btl_tcp_frag_t {
     size_t size;
     int rc;
     ompi_free_list_t* my_list;
+    /* fake rdma completion */
+    struct {
+        mca_btl_base_rdma_completion_fn_t func;
+        void *data;
+        void *context;
+    } cb;
 };
 typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t);
@@ -116,10 +122,8 @@ do {                                                                       \
     frag->iov_cnt = 1;                                                     \
     frag->iov_idx = 0;                                                     \
     frag->iov_ptr = frag->iov;                                             \
-    frag->base.des_remote = NULL;                                          \
-    frag->base.des_remote_count = 0;                                       \
-    frag->base.des_local = frag->segments;                                 \
-    frag->base.des_local_count = 1;                                        \
+    frag->base.des_segments = frag->segments;                                 \
+    frag->base.des_segment_count = 1;                                        \
 } while(0)
 
 
