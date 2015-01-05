@@ -31,7 +31,7 @@ greek=a1
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=gitclone
+repo_rev=
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -41,7 +41,7 @@ repo_rev=gitclone
 # tarball_version is not empty, the tarball filename will be of the
 # form openmpi-<tarball_version>.tar.*.
 
-tarball_version=
+tarball_version=gitclone
 
 # The date when this release was created
 
