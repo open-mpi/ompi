@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -82,22 +82,12 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
     return 1;
 }
 
-static void mca_btl_ugni_cqwrite_complete (struct mca_btl_ugni_base_frag_t *frag, int rc)
-{
-    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
-
-    BTL_VERBOSE(("cqwrite  frag complete"));
-    mca_btl_ugni_frag_return (frag);
-}
-
 static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                void *hdr, size_t hdr_len,
                                                void *payload, size_t payload_len,
                                                mca_btl_ugni_smsg_tag_t tag)
 {
-    int rc;
     gni_return_t grc;
-    mca_btl_ugni_base_frag_t *cq_write_frag = NULL;
 
     OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len,
@@ -110,28 +100,9 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
 
         if (mca_btl_ugni_component.progress_thread_enabled) {
             if (frag->base.des_flags & MCA_BTL_DES_FLAGS_SIGNAL) {
-                rc = mca_btl_ugni_frag_alloc(frag->endpoint,
-                                             &frag->endpoint->btl->rdma_frags,
-                                             &cq_write_frag);
-                if (rc == OPAL_SUCCESS) {
-                    cq_write_frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-                    cq_write_frag->registration = NULL;
-                    cq_write_frag->endpoint = frag->endpoint;
-                    cq_write_frag->post_desc.base.type = GNI_POST_CQWRITE;
-                    cq_write_frag->post_desc.base.cqwrite_value = 0xdead;   /* up to 48 bytes here, not used for now */
-                    cq_write_frag->post_desc.base.cq_mode = GNI_CQMODE_GLOBAL_EVENT;
-                    cq_write_frag->post_desc.base.dlvr_mode = GNI_DLVMODE_IN_ORDER;
-                    cq_write_frag->post_desc.base.src_cq_hndl = frag->endpoint->btl->rdma_local_cq;
-                    cq_write_frag->post_desc.base.remote_mem_hndl = frag->endpoint->rmt_irq_mem_hndl;
-                    cq_write_frag->post_desc.tries = 0;
-                    cq_write_frag->cbfunc = mca_btl_ugni_cqwrite_complete;
-                    OPAL_THREAD_LOCK(&frag->endpoint->common->dev->dev_lock);
-                    grc = GNI_PostCqWrite(frag->endpoint->rdma_ep_handle, &cq_write_frag->post_desc.base);
-                    OPAL_THREAD_UNLOCK(&frag->endpoint->common->dev->dev_lock);
-                    if (grc == GNI_RC_ERROR_RESOURCE) {   /* errors for PostCqWrite treated as non-fatal */
-                        mca_btl_ugni_frag_return (cq_write_frag);
-                    }
-                }
+                /* errors for PostCqWrite treated as non-fatal */
+                (void) mca_btl_ugni_post_cqwrite (frag->endpoint, frag->endpoint->btl->rdma_local_cq,
+                                                  frag->endpoint->rmt_irq_mem_hndl, 0xdead, NULL, NULL, NULL);
             }
         }
 
@@ -155,12 +126,13 @@ static inline int mca_btl_ugni_send_frag (struct mca_btl_base_endpoint_t *btl_pe
                                           mca_btl_ugni_base_frag_t *frag) {
     if (OPAL_LIKELY(!(frag->flags & MCA_BTL_UGNI_FRAG_EAGER))) {
         return opal_mca_btl_ugni_smsg_send (frag, &frag->hdr.send, frag->hdr_size,
-                                            frag->segments[1].base.seg_addr.pval,
-                                            frag->segments[1].base.seg_len,
+                                            frag->segments[1].seg_addr.pval,
+                                            frag->segments[1].seg_len,
                                             MCA_BTL_UGNI_TAG_SEND);
     }
 
-    frag->hdr.eager.src_seg = frag->segments[1];
+    frag->hdr.eager.size    = frag->segments[1].seg_len;
+    frag->hdr.eager.address = frag->segments[1].seg_addr.lval;
     frag->hdr.eager.ctx     = (void *) frag;
 
     return opal_mca_btl_ugni_smsg_send (frag, &frag->hdr.eager, frag->hdr_size,
