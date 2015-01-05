@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -88,7 +88,7 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
     }
 
    fn_exit:
-    return ret;
+    return (void *) (intptr_t) ret;
 }
 
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
@@ -125,8 +125,6 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
 int mca_btl_ugni_kill_progress_thread(void)
 {
     int rc, ret=OPAL_SUCCESS;
-    gni_return_t status;
-    static mca_btl_ugni_base_frag_t cq_write_frag;
 
     stop_progress_thread = 1;
 
@@ -134,24 +132,14 @@ int mca_btl_ugni_kill_progress_thread(void)
      * post a CQ to myself to wake my thread up
      */
 
-    cq_write_frag.post_desc.base.type = GNI_POST_CQWRITE;
-    cq_write_frag.post_desc.base.cqwrite_value = 0xdead;   /* up to 48 bytes here, not used for now */
-    cq_write_frag.post_desc.base.cq_mode = GNI_CQMODE_GLOBAL_EVENT;
-    cq_write_frag.post_desc.base.dlvr_mode = GNI_DLVMODE_IN_ORDER;
-    cq_write_frag.post_desc.base.src_cq_hndl = mca_btl_ugni_component.modules[0].rdma_local_cq;
-    cq_write_frag.post_desc.base.remote_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
-    cq_write_frag.post_desc.tries = 0;
-    cq_write_frag.cbfunc = NULL;
-    OPAL_THREAD_LOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
-    status = GNI_PostCqWrite(mca_btl_ugni_component.modules[0].local_ep,
-                             &cq_write_frag.post_desc.base);
-    OPAL_THREAD_UNLOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
+    ret = mca_btl_ugni_post_cqwrite (mca_btl_ugni_component.modules[0].local_ep,
+                                     mca_btl_ugni_component.modules[0].rdma_local_cq,
+                                     mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl,
+                                     0xdead, NULL, NULL, NULL);
     /*
      * TODO: if error returned, need to kill off thread manually
      */
-    if (GNI_RC_SUCCESS != status) {
-        BTL_ERROR(("GNI_PostCqWrite returned error - %s",gni_err_str[status]));
-        ret = opal_common_rc_ugni_to_opal(status);
+    if (OPAL_SUCCESS != ret) {
         goto fn_exit;
     }
 
@@ -175,19 +163,6 @@ int mca_btl_ugni_kill_progress_thread(void)
     if (0 != rc) {
         BTL_ERROR(("btl/ugni pthread_mutex_unlock returned %s ",strerror(rc)));
         ret = OPAL_ERROR;
-        goto fn_exit;
-    }
-
-    /*
-     * destroy the local_ep
-     */
-
-    OPAL_THREAD_LOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
-    status =  GNI_EpDestroy (mca_btl_ugni_component.modules[0].local_ep);
-    OPAL_THREAD_UNLOCK(&mca_btl_ugni_component.modules[0].device->dev_lock);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != status)) {
-        BTL_ERROR(("GNI_EpDestroy returned error - %s", gni_err_str[status]));
-        ret = opal_common_rc_ugni_to_opal(status);
         goto fn_exit;
     }
 

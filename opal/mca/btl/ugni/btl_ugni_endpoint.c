@@ -198,7 +198,7 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
         return OPAL_SUCCESS;
     }
 
-    if (MCA_BTL_UGNI_EP_STATE_INIT == ep->state) {
+    if (MCA_BTL_UGNI_EP_STATE_RDMA >= ep->state) {
         rc = mca_btl_ugni_ep_connect_start (ep);
         if (OPAL_SUCCESS != rc) {
             return rc;
