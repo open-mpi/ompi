@@ -312,6 +312,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Free providers info since it's not needed anymore.
      */
     fi_freeinfo(providers);
+    providers = NULL;
 
     /**
      * Get our address and publish it with modex.
