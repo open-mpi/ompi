@@ -1,6 +1,8 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -82,7 +84,9 @@ mpi-ignore-tkr-sizeof.h:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
-	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
+	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 mpi-ignore-tkr-sizeof.f90: $(top_builddir)/config.status
 mpi-ignore-tkr-sizeof.f90: $(sizeof_pl)
@@ -90,7 +94,9 @@ mpi-ignore-tkr-sizeof.f90:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --impl=$@ --ierror=mandatory --mpi --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
-	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
+	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 #
 # Clean up generated and module files
