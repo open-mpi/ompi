@@ -902,7 +902,6 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
     ADIO_Offset *fr_st_off_arr = fd->file_realm_st_offs;
     ADIO_Offset *agg_comm_cur_sz_arr = NULL;
     MPI_Datatype *fr_type_arr = fd->file_realm_types;
-    int cb_node_ct = fd->hints->cb_nodes;
     int *agg_ol_ct_arr = NULL;
     int *agg_ol_cur_ct_arr = NULL;
     int tmp_agg_fr_idx = -1;
@@ -984,7 +983,7 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
 	    for (j = 0; j < nprocs; j++)
 	    {
 		tmp_agg_fr_idx = ADIOI_Agg_idx(j, fd);
-		assert(tmp_agg_fr_idx < cb_node_ct);
+                assert(tmp_agg_fr_idx < fd->hints->cb_nodes);
 		
 		/* If this process is not an aggregator or we have
 		 * finished all the bytes for this aggregator, move

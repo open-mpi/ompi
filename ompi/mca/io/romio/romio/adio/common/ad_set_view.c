@@ -54,7 +54,7 @@ void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype,
                to be all contiguous. */
 	}
 
-	MPI_Type_size(fd->etype, &(fd->etype_size));
+	MPI_Type_size_x(fd->etype, &(fd->etype_size));
 	fd->disp = disp;
 
         /* reset MPI-IO file pointer to point to the first byte that can

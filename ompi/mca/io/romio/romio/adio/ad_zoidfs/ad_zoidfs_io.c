@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
  * 
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -18,7 +18,8 @@ static void ZOIDFS_IOContig(ADIO_File fd, void * buf, int count,
 	    ADIO_Offset offset, ADIO_Status *status,
 	    int flag, int *error_code)
 {
-    int ret, datatype_size;
+    int ret;
+    MPI_Count datatype_size;
     uint64_t file_len;
     size_t mem_len;
     ADIOI_ZOIDFS_object *zoidfs_obj_ptr;
@@ -27,7 +28,7 @@ static void ZOIDFS_IOContig(ADIO_File fd, void * buf, int count,
 
     zoidfs_obj_ptr = (ADIOI_ZOIDFS_object*)fd->fs_ptr;
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     file_len = mem_len = datatype_size * count;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {

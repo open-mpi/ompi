@@ -6,39 +6,31 @@
 
 #include "adio.h"
 
-#ifdef ROMIO_BGL
-void ADIOI_BGL_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp, int *error_code);
-#endif
-#ifdef ROMIO_BG
-void ADIOI_BG_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp, int *error_code);
-#endif
-
 /* returns the current location of the shared_fp in terms of the
    no. of etypes relative to the current view, and also increments the
    shared_fp by the number of etypes to be accessed (incr) in the read
    or write following this function. */
 
-void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp, 
+void ADIOI_NFS_Get_shared_fp(ADIO_File fd, ADIO_Offset incr, ADIO_Offset *shared_fp,
                              int *error_code);
 
-void ADIO_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp, 
+void ADIO_Get_shared_fp(ADIO_File fd, ADIO_Offset incr, ADIO_Offset *shared_fp,
 			 int *error_code)
 {
     ADIO_Status status;
     ADIO_Offset new_fp;
     MPI_Comm dupcommself;
 
+    /* Set the shared_fp in case this comes from an uninitialized stack variable
+       The read routines will not read into the address of this variable if the file
+       size of a shared pointer is 0, and if incr is always zero, this value will remain
+       uninitialized.  Initialize it here to prevent incorrect values
+    */
+    *shared_fp = 0;
+
 #ifdef ROMIO_NFS
     if (fd->file_system == ADIO_NFS) {
 	ADIOI_NFS_Get_shared_fp(fd, incr, shared_fp, error_code);
-	return;
-    }
-#endif
-
-#ifdef ROMIO_BGL
-    /* BGLOCKLESS won't support shared fp */
-    if (fd->file_system == ADIO_BGL) {
-	ADIOI_BGL_Get_shared_fp(fd, incr, shared_fp, error_code);
 	return;
     }
 #endif
@@ -54,7 +46,6 @@ void ADIO_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 				     MPI_INFO_NULL, 
 				     ADIO_PERM_NULL, error_code);
 	if (*error_code != MPI_SUCCESS) return;
-	*shared_fp = 0;
 	ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
 	ADIO_ReadContig(fd->shared_fp_fd, shared_fp, sizeof(ADIO_Offset), 
 		       MPI_BYTE, ADIO_EXPLICIT_OFFSET, 0, &status, error_code);

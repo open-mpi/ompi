@@ -40,11 +40,11 @@ void ADIOI_GEN_IreadContig(ADIO_File fd, void *buf, int count,
 			   ADIO_Offset offset, MPI_Request *request,
 			   int *error_code)  
 {
-    int len, typesize;
+    MPI_Count len, typesize;
     int aio_errno = 0;
     static char myname[] = "ADIOI_GEN_IREADCONTIG";
 
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     ADIOI_Assert((count * typesize) == ((ADIO_Offset)(unsigned)count * (ADIO_Offset)typesize));
     len = count * typesize;
 
@@ -74,7 +74,7 @@ void ADIOI_GEN_IreadStrided(ADIO_File fd, void *buf, int count,
 			    int *error_code)
 {
     ADIO_Status status;
-    int typesize;
+    MPI_Count typesize;
     MPI_Offset nbytes=0;
 
     /* Call the blocking function.  It will create an error code
@@ -84,7 +84,7 @@ void ADIOI_GEN_IreadStrided(ADIO_File fd, void *buf, int count,
 		     offset, &status, error_code);  
 
     if (*error_code == MPI_SUCCESS) {
-	MPI_Type_size(datatype, &typesize);
+	MPI_Type_size_x(datatype, &typesize);
 	nbytes = (MPI_Offset)count*(MPI_Offset)typesize;
     }
     MPIO_Completed_request_create(&fd, nbytes, error_code, request);

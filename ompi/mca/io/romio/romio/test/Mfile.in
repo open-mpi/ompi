@@ -24,7 +24,7 @@ srcdir     = @srcdir@
 @VPATH@
 
 PROFLIB =
-CFLAGS  = @CFLAGS@ @DEFS@ $(OPTFLAGS)
+CFLAGS  = @CFLAGS@ @DEFS@ $(OPTFLAGS) 
 CCFLAGS = $(CFLAGS)
 FFLAGS = $(OPTFLAGS) @FFLAGS@
 # Use LIBS to add any special libraries for C programs
@@ -32,18 +32,18 @@ LIBS = @LIB_PATH@ @LIB_LIST@
 # Use FLIBS to add any special libraries for Fortran programs
 FLIBS = @FLIB_PATH@ @LIB_LIST@ @F77EXTRALIBS@
 EXECS = $(CTESTS) $(FTESTS)
-OTHEREXECS =
+OTHEREXECS = 
 CTESTS = simple perf async coll_test coll_perf misc file_info excl \
        large_array \
      atomicity noncontig i_noncontig noncontig_coll split_coll shared_fp \
      large_file psimple error status noncontig_coll2
-FTESTS = fcoll_test fperf fmisc pfcoll_test
+FTESTS = fcoll_test fperf fmisc pfcoll_test 
 
 default: $(EXECS)
 
 #
 # Note that runtests builds the executables as required
-testing:
+testing: 
 	  -./runtests $(TESTARGS)
 
 all: testing
@@ -62,7 +62,7 @@ fcoll_test: fcoll_test.f
 fmisc: fmisc.f
 	$(F77) $(USER_FFLAGS) -o  fmisc fmisc.f $(FLIBS)
 
-pfcoll_test: pfcoll_test.f
+pfcoll_test: pfcoll_test.f	
 	$(F77) $(USER_FFLAGS) -o  pfcoll_test pfcoll_test.f $(FLIBS)
 
 #

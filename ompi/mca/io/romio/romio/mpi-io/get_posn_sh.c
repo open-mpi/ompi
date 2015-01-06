@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_get_position_shared as PMPI_File_get_position_shared
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset) __attribute__((weak,alias("PMPI_File_get_position_shared")));
 #endif
 
 /* Include mapping from MPI->PMPI */

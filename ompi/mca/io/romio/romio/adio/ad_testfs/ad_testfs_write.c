@@ -12,13 +12,14 @@ void ADIOI_TESTFS_WriteContig(ADIO_File fd, const void *buf, int count,
 			      ADIO_Offset offset, ADIO_Status *status, int
 			      *error_code)
 {
-    int myrank, nprocs, datatype_size;
+    int myrank, nprocs;
+    MPI_Count datatype_size;
 
     *error_code = MPI_SUCCESS;
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_WriteContig called on %s\n", myrank, 
 	    nprocs, fd->filename);
     FPRINTF(stdout, "[%d/%d]    writing (buf = %p, loc = %lld, sz = %lld)\n",

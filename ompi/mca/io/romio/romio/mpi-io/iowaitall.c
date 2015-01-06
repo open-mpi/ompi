@@ -55,8 +55,8 @@ int MPIO_Waitall( int count, MPIO_Request requests[], MPI_Status statuses[] )
 		if (statuses != MPI_STATUSES_IGNORE) {
 		    statuses[i].MPI_SOURCE = MPI_ANY_SOURCE;
 		    statuses[i].MPI_TAG    = MPI_ANY_TAG;
-		    statuses[i].count      = 0;
-		    statuses[i].cancelled  = 0;
+                    MPIR_STATUS_SET_COUNT(statuses[i], 0);
+                    MPIR_STATUS_SET_CANCEL_BIT(statuses[i], 0);
 		}
 #else
 		;

@@ -74,14 +74,9 @@ extern struct ADIOI_Fns_struct ADIO_TESTFS_operations;
 /* prototypes are in adio/ad_testfs/ad_testfs.h */
 #endif
 
-#ifdef ROMIO_BGL
-extern struct ADIOI_Fns_struct ADIO_BGL_operations;
-/* prototypes are in adio/ad_bgl/ad_bgl.h */
-#endif
-
-#ifdef ROMIO_BGLOCKLESS
-extern struct ADIOI_Fns_struct ADIO_BGLOCKLESS_operations;
-/* no extra prototypes for this fs at this time */
+#ifdef ROMIO_GPFS
+extern struct ADIOI_Fns_struct ADIO_GPFS_operations;
+/* prototypes are in adio/ad_gpfs/ad_gpfs.h */
 #endif
 
 #ifdef ROMIO_GRIDFTP

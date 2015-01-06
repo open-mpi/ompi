@@ -16,7 +16,7 @@ int main (int argc, char **argv)
     int rank;
     int nprocs_for_coll;
     int lb;
-    int size, extent;
+    MPI_Count size, extent;
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
@@ -55,7 +55,7 @@ int main (int argc, char **argv)
 	printf ("file_realm_st_offs[%d] = %lld\n", i, fd->file_realm_st_offs[i]);
     }
     for (i=0; i < nprocs_for_coll; i++) {
-	MPI_Type_size (fd->file_realm_types[i], &size);
+	MPI_Type_size_x (fd->file_realm_types[i], &size);
 	printf ("file_realm [%d] size = %d\n", i, size);
     }
     for (i=0; i < nprocs_for_coll; i++) {

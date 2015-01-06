@@ -335,8 +335,8 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, ADIO_Offset *len_
 	if (count_my_req_per_proc[i]) {
 	    my_req[i].offsets = (ADIO_Offset *)
 		ADIOI_Malloc(count_my_req_per_proc[i] * sizeof(ADIO_Offset));
-	    my_req[i].lens = (int *)
-		ADIOI_Malloc(count_my_req_per_proc[i] * sizeof(int));
+	    my_req[i].lens =
+		ADIOI_Malloc(count_my_req_per_proc[i] * sizeof(ADIO_Offset));
 	    count_my_req_procs++;
 	}	    
 	my_req[i].count = 0;  /* will be incremented where needed
@@ -373,8 +373,7 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, ADIO_Offset *len_
 	 * and the associated count. 
 	 */
 	my_req[proc].offsets[l] = off;
-  ADIOI_Assert(fd_len == (int) fd_len);
-	my_req[proc].lens[l] = (int) fd_len;
+	my_req[proc].lens[l] = fd_len;
 	my_req[proc].count++;
 
 	while (rem_len != 0) {
@@ -394,8 +393,7 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, ADIO_Offset *len_
 	    rem_len -= fd_len;
 
 	    my_req[proc].offsets[l] = off;
-      ADIOI_Assert(fd_len == (int) fd_len);
-	    my_req[proc].lens[l] = (int) fd_len;
+	    my_req[proc].lens[l] = fd_len;
 	    my_req[proc].count++;
 	}
     }
@@ -463,8 +461,8 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
 	    others_req[i].count = count_others_req_per_proc[i];
 	    others_req[i].offsets = (ADIO_Offset *)
 		ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(ADIO_Offset));
-	    others_req[i].lens = (int *)
-		ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(int)); 
+	    others_req[i].lens =
+		ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(ADIO_Offset));
 	    others_req[i].mem_ptrs = (MPI_Aint *)
 		ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(MPI_Aint)); 
 	    count_others_req_procs++;
@@ -485,7 +483,7 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
                       ADIO_OFFSET, i, i+myrank, fd->comm, &requests[j]);
 	    j++;
 	    MPI_Irecv(others_req[i].lens, others_req[i].count, 
-                      MPI_INT, i, i+myrank+1, fd->comm, &requests[j]);
+                      ADIO_OFFSET, i, i+myrank+1, fd->comm, &requests[j]);
 	    j++;
 	}
     }
@@ -496,7 +494,7 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
                       ADIO_OFFSET, i, i+myrank, fd->comm, &requests[j]);
 	    j++;
 	    MPI_Isend(my_req[i].lens, my_req[i].count, 
-                      MPI_INT, i, i+myrank+1, fd->comm, &requests[j]);
+                      ADIO_OFFSET, i, i+myrank+1, fd->comm, &requests[j]);
 	    j++;
 	}
     }
@@ -515,3 +513,141 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
     MPE_Log_event (5027, 0, NULL);
 #endif
 }
+
+
+/* Nonblocking version of ADIOI_Calc_others_req().
+   It consists of three functions - ADIOI_Icalc_others_req(),
+   ADIOI_Icalc_others_req_main(), and ADIOI_Icalc_others_req_fini(). */
+void ADIOI_Icalc_others_req(ADIOI_NBC_Request *nbc_req, int *error_code)
+{
+    ADIOI_Icalc_others_req_vars *vars = nbc_req->cor_vars;
+
+    /* count_others_req_per_proc[i] indicates how many separate contiguous
+       requests of proc. i lie in this process's file domain. */
+
+    /* first find out how much to send/recv and from/to whom */
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event(5026, 0, NULL);
+#endif
+    vars->count_others_req_per_proc =
+        (int *)ADIOI_Malloc(vars->nprocs * sizeof(int));
+
+    *error_code = MPI_Ialltoall(vars->count_my_req_per_proc, 1, MPI_INT,
+            vars->count_others_req_per_proc, 1, MPI_INT, vars->fd->comm,
+            &vars->req1);
+
+    if (nbc_req->rdwr == ADIOI_READ) {
+        nbc_req->data.rd.state = ADIOI_IRC_STATE_ICALC_OTHERS_REQ;
+    } else {
+        ADIOI_Assert(nbc_req->rdwr == ADIOI_WRITE);
+        nbc_req->data.wr.state = ADIOI_IWC_STATE_ICALC_OTHERS_REQ;
+    }
+}
+
+void ADIOI_Icalc_others_req_main(ADIOI_NBC_Request *nbc_req, int *error_code)
+{
+    ADIOI_Icalc_others_req_vars *vars = nbc_req->cor_vars;
+    ADIO_File fd = vars->fd;
+    int count_my_req_procs = vars->count_my_req_procs;
+    ADIOI_Access *my_req = vars->my_req;
+    int nprocs = vars->nprocs;
+    int myrank = vars->myrank;
+    ADIOI_Access **others_req_ptr = vars->others_req_ptr;
+
+    /* determine what requests of other processes lie in this process's
+       file domain */
+
+    /* count_others_req_procs = number of processes whose requests lie in
+       this process's file domain (including this process itself)
+       count_others_req_per_proc[i] indicates how many separate contiguous
+       requests of proc. i lie in this process's file domain. */
+
+    int *count_others_req_per_proc = vars->count_others_req_per_proc;
+    int count_others_req_procs;
+    int i, j;
+    ADIOI_Access *others_req;
+
+    *others_req_ptr = (ADIOI_Access *)ADIOI_Malloc(nprocs*sizeof(ADIOI_Access));
+    others_req = *others_req_ptr;
+
+    count_others_req_procs = 0;
+    for (i = 0; i < nprocs; i++) {
+        if (count_others_req_per_proc[i]) {
+            others_req[i].count = count_others_req_per_proc[i];
+            others_req[i].offsets = (ADIO_Offset *)
+                ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(ADIO_Offset));
+            others_req[i].lens =
+                ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(ADIO_Offset));
+            others_req[i].mem_ptrs = (MPI_Aint *)
+                ADIOI_Malloc(count_others_req_per_proc[i]*sizeof(MPI_Aint));
+            count_others_req_procs++;
+        }
+        else others_req[i].count = 0;
+    }
+    vars->count_others_req_procs = count_others_req_procs;
+
+    /* now send the calculated offsets and lengths to respective processes */
+
+    vars->req2 = (MPI_Request *)
+        ADIOI_Malloc(1+2*(count_my_req_procs+count_others_req_procs)
+                     *sizeof(MPI_Request));
+    /* +1 to avoid a 0-size malloc */
+
+    j = 0;
+    for (i = 0; i < nprocs; i++) {
+        if (others_req[i].count) {
+            MPI_Irecv(others_req[i].offsets, others_req[i].count,
+                    ADIO_OFFSET, i, i+myrank, fd->comm, &vars->req2[j]);
+            j++;
+            MPI_Irecv(others_req[i].lens, others_req[i].count,
+                    ADIO_OFFSET, i, i+myrank+1, fd->comm, &vars->req2[j]);
+            j++;
+        }
+    }
+
+    for (i=0; i < nprocs; i++) {
+        if (my_req[i].count) {
+            MPI_Isend(my_req[i].offsets, my_req[i].count,
+                    ADIO_OFFSET, i, i+myrank, fd->comm, &vars->req2[j]);
+            j++;
+            MPI_Isend(my_req[i].lens, my_req[i].count,
+                    ADIO_OFFSET, i, i+myrank+1, fd->comm, &vars->req2[j]);
+            j++;
+        }
+    }
+
+    /* keep the number of requests */
+    vars->num_req2 = j;
+
+    if (nbc_req->rdwr == ADIOI_READ) {
+        nbc_req->data.rd.state = ADIOI_IRC_STATE_ICALC_OTHERS_REQ_MAIN;
+    } else {
+        ADIOI_Assert(nbc_req->rdwr == ADIOI_WRITE);
+        nbc_req->data.wr.state = ADIOI_IWC_STATE_ICALC_OTHERS_REQ_MAIN;
+    }
+}
+
+void ADIOI_Icalc_others_req_fini(ADIOI_NBC_Request *nbc_req, int *error_code)
+{
+    ADIOI_Icalc_others_req_vars *vars = nbc_req->cor_vars;
+    void (*next_fn)(ADIOI_NBC_Request *, int *);
+
+    ADIOI_Free(vars->req2);
+    ADIOI_Free(vars->count_others_req_per_proc);
+
+    *vars->count_others_req_procs_ptr = vars->count_others_req_procs;
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event(5027, 0, NULL);
+#endif
+    /* end of the calculation */
+
+    next_fn = vars->next_fn;
+
+    /* free the struct for parameters and variables */
+    ADIOI_Free(vars);
+    nbc_req->cor_vars = NULL;
+
+    /* move to the next function */
+    next_fn(nbc_req, error_code);
+}
+

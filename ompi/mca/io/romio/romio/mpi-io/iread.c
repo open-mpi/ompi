@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_iread as PMPI_File_iread
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPIO_Request *request)
+    __attribute__((weak,alias("PMPI_File_iread")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -73,11 +76,11 @@ int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI
 int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *buf, int count,
 		     MPI_Datatype datatype, char *myname, MPI_Request *request)
 {
-    int error_code, bufsize, buftype_is_contig, filetype_is_contig;
-    int datatype_size;
+    int error_code, buftype_is_contig, filetype_is_contig;
+    MPI_Count datatype_size;
     ADIO_Status status;
     ADIO_File adio_fh;
-    ADIO_Offset off;
+    ADIO_Offset off, bufsize;
     MPI_Offset nbytes=0;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
@@ -98,7 +101,7 @@ int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *bu
     }
     /* --END ERROR HANDLING-- */
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);

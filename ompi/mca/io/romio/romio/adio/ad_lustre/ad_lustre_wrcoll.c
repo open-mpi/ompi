@@ -12,7 +12,7 @@
 #include "adio_extern.h"
 
 /* prototypes of functions used for collective writes only. */
-static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
 					MPI_Datatype datatype, int nprocs,
 					int myrank,
 					ADIOI_Access *others_req,
@@ -22,7 +22,7 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
 					int contig_access_count,
 					int *striping_info,
                                         int **buf_idx, int *error_code);
-static void ADIOI_LUSTRE_Fill_send_buffer(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_Fill_send_buffer(ADIO_File fd, const void *buf,
 					  ADIOI_Flatlist_node *flat_buf,
 					  char **send_buf,
 					  ADIO_Offset *offset_list,
@@ -35,14 +35,14 @@ static void ADIOI_LUSTRE_Fill_send_buffer(ADIO_File fd, void *buf,
                                           int *curr_to_proc,
 					  int *done_to_proc, int iter,
 					  MPI_Aint buftype_extent);
-static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, const void *buf,
 					 char *write_buf,
 					 ADIOI_Flatlist_node *flat_buf,
 					 ADIO_Offset *offset_list,
 					 ADIO_Offset *len_list, int *send_size,
 					 int *recv_size, ADIO_Offset off,
 					 int size, int *count,
-					 int *start_pos,
+					 int *start_pos, 
 					 int *sent_to_proc, int nprocs,
 					 int myrank, int buftype_is_contig,
 					 int contig_access_count,
@@ -59,7 +59,7 @@ void ADIOI_Heap_merge(ADIOI_Access *others_req, int *count,
                       ADIO_Offset *srt_off, int *srt_len, int *start_pos,
                       int nprocs, int nprocs_recv, int total_elements);
 
-void ADIOI_LUSTRE_WriteStridedColl(ADIO_File fd, void *buf, int count,
+void ADIOI_LUSTRE_WriteStridedColl(ADIO_File fd, const void *buf, int count,
 				   MPI_Datatype datatype,
 				   int file_ptr_type, ADIO_Offset offset,
 				   ADIO_Status *status, int *error_code)
@@ -266,9 +266,9 @@ void ADIOI_LUSTRE_WriteStridedColl(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     if (status) {
-	int bufsize, size;
+	MPI_Count bufsize, size;
 	/* Don't set status if it isn't needed */
-	MPI_Type_size(datatype, &size);
+	MPI_Type_size_x(datatype, &size);
 	bufsize = size * count;
 	MPIR_Status_set_bytes(status, datatype, bufsize);
     }
@@ -283,7 +283,7 @@ void ADIOI_LUSTRE_WriteStridedColl(ADIO_File fd, void *buf, int count,
 /* If successful, error_code is set to MPI_SUCCESS.  Otherwise an error
  * code is created and returned in error_code.
  */
-static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
 					MPI_Datatype datatype, int nprocs,
 					int myrank, ADIOI_Access *others_req,
                                         ADIOI_Access *my_req,
@@ -613,14 +613,14 @@ over:
 /* Sets error_code to MPI_SUCCESS if successful, or creates an error code
  * in the case of error.
  */
-static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, const void *buf,
 					 char *write_buf,
 					 ADIOI_Flatlist_node *flat_buf,
 					 ADIO_Offset *offset_list,
 					 ADIO_Offset *len_list, int *send_size,
 					 int *recv_size, ADIO_Offset off,
 					 int size, int *count,
-					 int *start_pos,
+					 int *start_pos, 
 					 int *sent_to_proc, int nprocs,
 					 int myrank, int buftype_is_contig,
 					 int contig_access_count,
@@ -656,7 +656,7 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
     j = 0;
     for (i = 0; i < nprocs; i++) {
 	if (recv_size[i]) {
-	    MPI_Type_hindexed(count[i],
+	    ADIOI_Type_create_hindexed_x(count[i],
 			      &(others_req[i].lens[start_pos[i]]),
 			      &(others_req[i].mem_ptrs[start_pos[i]]),
 			      MPI_BYTE, recv_types + j);
@@ -885,7 +885,7 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
     ADIOI_BUF_INCR \
 }
 
-static void ADIOI_LUSTRE_Fill_send_buffer(ADIO_File fd, void *buf,
+static void ADIOI_LUSTRE_Fill_send_buffer(ADIO_File fd, const void *buf,
 					  ADIOI_Flatlist_node *flat_buf,
 					  char **send_buf,
 					  ADIO_Offset *offset_list,
