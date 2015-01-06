@@ -347,6 +347,8 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
 int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
                                   opal_data_type_t type)
 {
+    *dest = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(*dest, src);
     return OPAL_SUCCESS;
 }
 
