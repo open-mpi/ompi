@@ -2534,6 +2534,7 @@ static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
         return OPAL_SUCCESS;
     }
 #else
+    int ret;
     BTL_VERBOSE(("Connecting receive qp: %d", lcl_ep->xrc_recv_qp_num));
     ret = ibv_reg_xrc_rcv_qp(openib_btl->device->xrc_domain, lcl_ep->xrc_recv_qp_num);
     if (ret) { /* failed to regester the qp, so it is already die and we should create new one */
@@ -2578,10 +2579,10 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr));
     /* Only xrc_domain is required, all other are ignored */
     qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
-    ret = ibv_create_xrc_rcv_qp(&qp_init_attr, &lcl_ep->xrc_recv_qp->qp_num);
+    ret = ibv_create_xrc_rcv_qp(&qp_init_attr, &lcl_ep->xrc_recv_qp_num);
     if (ret) {
         BTL_ERROR(("Error creating XRC recv QP[%x], errno says: %s [%d]",
-                   lcl_ep->xrc_recv_qp->qp_num, strerror(ret), ret));
+                   lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
         return OPAL_ERROR;
     }
 #endif
