@@ -481,19 +481,11 @@ export LDFLAGS
 export LD
 export with_gnu_ld
 
-# FIXME these variables refer to each other and prefixing breaks that, so we
-# will disable the prefixing for now
-## force all variables set in $2 to be prefixed with the compiler name instead of "acl_cv_"
-#PAC_CC_PREFIX=$1_
-PAC_CC_PREFIX=
-export PAC_CC_PREFIX
-
 AS_IF([$ac_aux_dir/config.rpath "$host" > $2],[:],[AC_MSG_ERROR([unable to execute $ac_aux_dir/config.rpath])])
 
 C_LINKPATH_SHL=""
 AC_SUBST([C_LINKPATH_SHL])
 
-AS_UNSET([PAC_CC_PREFIX])
 rm -f conftest.out
 
 # restore the old values

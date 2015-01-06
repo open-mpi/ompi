@@ -1,7 +1,7 @@
 dnl PAC_CXX_SEARCH_LIST - expands to a whitespace separated list of C++
 dnl compilers for use with AC_PROG_CXX that is more suitable for HPC software
 dnl packages
-AC_DEFUN([PAC_CXX_SEARCH_LIST],[$CCC icpc pgCC xlC pathCC c++ cxx CC g++ clang++ gcc cc++ cl])
+AC_DEFUN([PAC_CXX_SEARCH_LIST],[$CCC icpc pgCC xlC pathCC g++ clang++ c++ cc++ cxx CC cl])
 dnl PAC_PROG_CXX - reprioritize the C++ compiler search order
 dnl NOTE: this macro suffers from a basically intractable "expanded before it
 dnl was required" problem when libtool is also used

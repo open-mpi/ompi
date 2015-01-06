@@ -20,7 +20,7 @@
                                                   MPIR_ERR_RECOVERABLE, myname, \
                                                   __LINE__, MPI_ERR_IO, \
                                                   "**iowswc", 0); \
-               return; \
+               goto fn_exit; \
            } \
         } \
 	writebuf_off = req_off; \
@@ -33,7 +33,7 @@
 					       MPIR_ERR_RECOVERABLE, myname, \
 					       __LINE__, MPI_ERR_IO, \
 					       "**iowsrc", 0); \
-	    return; \
+	    goto fn_exit; \
 	} \
     } \
     write_sz = (unsigned) (ADIOI_MIN(req_len, writebuf_off + writebuf_len - req_off)); \
@@ -48,7 +48,7 @@
                                                MPIR_ERR_RECOVERABLE, myname, \
                                                __LINE__, MPI_ERR_IO, \
                                                "**iowswc", 0); \
-            return; \
+            goto fn_exit; \
         } \
         req_len -= write_sz; \
         userbuf_off += write_sz; \
@@ -62,7 +62,7 @@
 					       MPIR_ERR_RECOVERABLE, myname, \
 					       __LINE__, MPI_ERR_IO, \
 					       "**iowsrc", 0); \
-	    return; \
+	    goto fn_exit; \
 	} \
         write_sz = ADIOI_MIN(req_len, writebuf_len); \
         memcpy(writebuf, (char *)buf + userbuf_off, write_sz);\
@@ -82,7 +82,7 @@
                                                MPIR_ERR_RECOVERABLE, myname, \
                                                __LINE__, MPI_ERR_IO, \
                                                "**iowswc", 0); \
-            return; \
+            goto fn_exit; \
         } \
 	writebuf_off = req_off; \
         writebuf_len = (unsigned) (ADIOI_MIN(max_bufsize,end_offset-writebuf_off+1));\
@@ -98,7 +98,7 @@
                                                MPIR_ERR_RECOVERABLE, myname, \
                                                __LINE__, MPI_ERR_IO, \
                                                "**iowswc", 0); \
-            return; \
+            goto fn_exit; \
         } \
         req_len -= write_sz; \
         userbuf_off += write_sz; \
@@ -119,16 +119,16 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     ADIOI_Flatlist_node *flat_buf, *flat_file;
     ADIO_Offset i_offset, sum, size_in_filetype;
     int i, j, k, st_index=0;
-    int n_etypes_in_filetype;
     ADIO_Offset num, size, n_filetypes, etype_in_filetype, st_n_filetypes;
-    ADIO_Offset abs_off_in_filetype=0;
-    int filetype_size, etype_size, buftype_size;
+    ADIO_Offset n_etypes_in_filetype, abs_off_in_filetype=0;
+    MPI_Count filetype_size, etype_size, buftype_size;
     MPI_Aint filetype_extent, buftype_extent; 
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
-    char *writebuf;
-    unsigned bufsize, writebuf_len, max_bufsize, write_sz;
+    char *writebuf=NULL;
+    unsigned writebuf_len, max_bufsize, write_sz;
+    MPI_Aint bufsize;
     ADIO_Status status1;
     ADIO_Offset new_bwr_size, new_fwr_size, st_fwr_size, fwr_size=0, bwr_size, req_len;
     static char myname[] = "ADIOI_GEN_WriteStrided";
@@ -155,7 +155,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size_x(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
@@ -165,11 +165,11 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     }
 
     MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_size(datatype, &buftype_size);
+    MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
 
-    ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)(unsigned)buftype_size * (ADIO_Offset)count));
+    ADIOI_Assert((buftype_size * count) == ((MPI_Count)buftype_size * (ADIO_Offset)count));
     bufsize = buftype_size * count;
 
 /* get max_bufsize from the info object. */
@@ -215,9 +215,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	if (fd->atomicity) 
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
-	if (*error_code != MPI_SUCCESS) return;
-
-	ADIOI_Free(writebuf); 
+	if (*error_code != MPI_SUCCESS) goto fn_exit;
 
         if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
     }
@@ -285,7 +283,13 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	/* this could happen, for example, with subarray types that are
 	 * actually fairly contiguous */
         if (buftype_is_contig && bufsize <= fwr_size) {
-            ADIO_WriteContig(fd, buf, bufsize, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
+	    /* though MPI api has an integer 'count' parameter, derived
+	     * datatypes might describe more bytes than can fit into an integer.
+	     * if we've made it this far, we can pass a count of original
+	     * datatypes, instead of a count of bytes (which might overflow)
+	     * Other WriteContig calls in this path are operating on data
+	     * sieving buffer */
+            ADIO_WriteContig(fd, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
                              offset, status, error_code);
 
 	    if (file_ptr_type == ADIO_INDIVIDUAL) {
@@ -308,7 +312,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	    MPIR_Status_set_bytes(status, datatype, bufsize);
 #endif 
-            return;
+            goto fn_exit;
         }
 
        /* Calculate end_offset, the last byte-offset that will be accessed.
@@ -462,12 +466,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 			writebuf_off, &status1, error_code);
 	    if (!(fd->atomicity)) 
 		ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len);
-	    if (*error_code != MPI_SUCCESS) return;
+	    if (*error_code != MPI_SUCCESS) goto fn_exit;
 	}
 	if (fd->atomicity) 
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
-
-	ADIOI_Free(writebuf); 
 
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
     }
@@ -475,11 +477,14 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     fd->fp_sys_posn = -1;   /* set it to null. */
 
 #ifdef HAVE_STATUS_SET_BYTES
+    /* datatypes returning negagive values, probably related to tt 1893 */
     MPIR_Status_set_bytes(status, datatype, bufsize);
 /* This is a temporary way of filling in status. The right way is to 
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 
     if (!buftype_is_contig) ADIOI_Delete_flattened(datatype);
+fn_exit:
+    if (writebuf != NULL) ADIOI_Free(writebuf);
 }
 

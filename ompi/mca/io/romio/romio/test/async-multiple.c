@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *  
  *  (C) 2001 by Argonne National Laboratory.
@@ -16,9 +16,9 @@
    reads them back. The file name is taken as a command-line argument,
    and the process rank is appended to it.*/ 
 
-void handle_error(int errcode, char *str);
+void handle_error(int errcode, const char *str);
 
-void handle_error(int errcode, char *str) 
+void handle_error(int errcode, const char *str) 
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;

@@ -26,8 +26,10 @@ romio_other_sources +=                  \
     adio/common/ad_io_coll.c            \
     adio/common/ad_iopen.c              \
     adio/common/ad_iread.c              \
+    adio/common/ad_iread_coll.c         \
     adio/common/ad_iread_fake.c         \
     adio/common/ad_iwrite.c             \
+    adio/common/ad_iwrite_coll.c        \
     adio/common/ad_iwrite_fake.c        \
     adio/common/ad_open.c               \
     adio/common/ad_opencoll.c           \
@@ -65,5 +67,9 @@ romio_other_sources +=                  \
     adio/common/shfp_fname.c            \
     adio/common/status_setb.c           \
     adio/common/strfns.c                \
-    adio/common/system_hints.c
+    adio/common/system_hints.c          \
+    adio/common/hint_fns.c              \
+    adio/common/ad_threaded_io.c        \
+    adio/common/p2p_aggregation.c       \
+    adio/common/utils.c
 

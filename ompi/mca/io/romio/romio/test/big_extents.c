@@ -31,12 +31,12 @@ static void handle_error(int errcode, char *str)
 static void typestats(MPI_Datatype type) 
 {
     MPI_Aint lb, extent;
-    int size;
+    MPI_Count size;
 
     MPI_Type_get_extent(type, &lb, &extent);
-    MPI_Type_size(type, &size);
+    MPI_Type_size_x(type, &size);
 
-    printf("dtype %d: lb = %ld extent = %ld size = %d...", 
+    printf("dtype %d: lb = %ld extent = %ld size = %ld...",
 	    type, (long)lb, (long)extent, size);
 
 }
@@ -44,7 +44,8 @@ static void typestats(MPI_Datatype type)
 static int verify_type(char *filename, MPI_Datatype type, 
 	int64_t expected_extent, int do_coll)
 {
-    int rank, canary, tsize;
+    int rank, canary;
+    MPI_Count tsize;
     int compare=-1;
     int errs=0, toterrs=0;
     MPI_Status status;
@@ -57,7 +58,7 @@ static int verify_type(char *filename, MPI_Datatype type,
     CHECK( MPI_File_set_view(fh, rank*sizeof(int), 
 	    MPI_BYTE, type, "native", MPI_INFO_NULL)); 
 
-    MPI_Type_size(type, &tsize);
+    MPI_Type_size_x(type, &tsize);
 
     canary=rank+1000000;
 

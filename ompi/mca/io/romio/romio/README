@@ -492,7 +492,7 @@ to include the file mpio.h for C or mpiof.h for Fortran in your MPI-IO
 program.  
 
 Note that on HP machines running HPUX and on NEC SX-4, you need to
-compile Fortran programs with mpif90, because the f77 compilers on
+compile Fortran programs with mpifort, because the f77 compilers on
 these machines don't support 8-byte integers. 
 
 With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as 
@@ -500,9 +500,9 @@ With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as
 or 
    mpif77 foo.f
 or
-   mpif90 foo.f
+   mpifort foo.f
 
-As mentioned above, mpif90 is preferred over mpif77 on HPUX and NEC
+As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
 because the f77 compilers on those machines do not support 8-byte integers.
 
 With SGI MPI, you can compile MPI-IO programs as 
@@ -566,7 +566,7 @@ systems because they don't support fcntl file locks, and ROMIO uses
 that feature to implement shared file pointers.
 
 * On HP machines running HPUX and on NEC SX-4, you need to compile
-Fortran programs with mpif90 instead of mpif77, because the f77
+Fortran programs with mpifort instead of mpif77, because the f77
 compilers on these machines don't support 8-byte integers.
 
 * The file-open mode MPI_MODE_EXCL does not work on Intel PFS file system,

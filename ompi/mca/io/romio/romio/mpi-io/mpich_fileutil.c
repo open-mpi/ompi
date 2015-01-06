@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*
+/*  
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -14,13 +14,13 @@
  */
 int MPIR_ROMIO_Get_file_errhand( MPI_File, MPI_Errhandler * );
 int MPIR_ROMIO_Set_file_errhand( MPI_File, MPI_Errhandler );
-void MPIR_Get_file_error_routine( MPI_Errhandler,
-				  void (**)(MPI_File *, int *, ...),
+void MPIR_Get_file_error_routine( MPI_Errhandler, 
+				  void (**)(MPI_File *, int *, ...), 
 				  int * );
 
 /* These next two routines are used to allow MPICH to access/set the
    error handers in the MPI_File structure until MPICH knows about the
-   file structure, and to handle the errhandler structure, which
+   file structure, and to handle the errhandler structure, which 
    includes a reference count.  Not currently used. */
 int MPIR_ROMIO_Set_file_errhand( MPI_File file_ptr, MPI_Errhandler e )
 {
@@ -30,7 +30,7 @@ int MPIR_ROMIO_Set_file_errhand( MPI_File file_ptr, MPI_Errhandler e )
 	return MPI_ERR_FILE;
     }
     /* --END ERROR HANDLING-- */
-    else
+    else 
 	file_ptr->err_handler = e;
     return 0;
 }
@@ -49,7 +49,7 @@ int MPIR_ROMIO_Get_file_errhand( MPI_File file_ptr, MPI_Errhandler *e )
     }
     /* --END ERROR HANDLING-- */
     else {
-	if (file_ptr->err_handler == MPI_ERRORS_RETURN)
+	if (file_ptr->err_handler == MPI_ERRORS_RETURN) 
 	    *e = 0;
 	else
 	    *e = file_ptr->err_handler;

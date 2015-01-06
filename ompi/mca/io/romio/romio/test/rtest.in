@@ -28,7 +28,7 @@ makeeach=0
 writesummaryfile=no
 MAKE="@MAKE@"
 for arg in "$@" ; do
-    case $arg in
+    case $arg in 
 	-checkonly )
 	runtests=0
 	;;
@@ -60,7 +60,7 @@ for arg in "$@" ; do
 	;;
 	*)
 	if test -n "$arg" ; then
-	    echo "runtests: Unknown argument ($arg)"
+   	    echo "runtests: Unknown argument ($arg)"
 	    exit 1
         fi
 	;;
@@ -110,7 +110,7 @@ RunTest status 1 "**** Testing status.c ****" "-fname $FILENAME"
 
 #
 # Run Fortran tests ONLY if Fortran available
-if [ @HAS_FORTRAN@ = 1 ] ; then
+if [ @HAS_FORTRAN@ = 1 ] ; then 
     RunTest fmisc 4 "**** Testing fmisc.f ****" "-fname $FILENAME"
 
     RunTest fcoll_test 4 "**** Testing fcoll_test.f ****" "-fname $FILENAME"

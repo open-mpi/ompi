@@ -15,7 +15,7 @@ dnl.ve
 dnl If 'F77_GETARG' has a value, then that value and the values for these
 dnl other symbols will be used instead.  If no approach is found, all of these
 dnl variables will have empty values.
-dnl If no other approach works and a file 'f77argdef' is in the directory,
+dnl If no other approach works and a file 'f77argdef' is in the directory, 
 dnl that file will be sourced for the values of the above four variables.
 dnl
 dnl In most cases, you should add F77_GETARG_FFLAGS to the FFLAGS variable
@@ -24,13 +24,13 @@ dnl performed on the compiler version that will be used.
 dnl
 dnl 'AC_SUBST' is called for all six variables.
 dnl
-dnl One complication is that on systems with multiple Fortran compilers,
+dnl One complication is that on systems with multiple Fortran compilers, 
 dnl some libraries used by one Fortran compiler may have been (mis)placed
 dnl in a common location.  We have had trouble with libg2c in particular.
 dnl To work around this, we test whether iargc etc. work first.  This
 dnl will catch most systems and will speed up the tests.
 dnl
-dnl Next, the libraries are only added if they are needed to complete a
+dnl Next, the libraries are only added if they are needed to complete a 
 dnl link; they aren''t added just because they exist.
 dnl
 dnl f77argdef
@@ -55,11 +55,11 @@ AC_CACHE_VAL(pac_cv_prog_f77_cmdarg,
     f77_getargdecl="${F77_GETARGDECL:-external getarg}"
     f77_getarg="${F77_GETARG:-call GETARG(i,s)}"
     f77_iargc="${F77_IARGC:-IARGC()}"
-    #
+    #    
     # Grumble.  The Absoft Fortran compiler computes i - i as 0 and then
     # 1.0 / 0 at compile time, even though the code may never be executed.
     # What we need is a way to generate an error, so the second usage of i
-    # was replaced with f77_iargc.
+    # was replaced with f77_iargc.  
     cat > conftest.f <<EOF
         program main
 $fxx_module
@@ -82,7 +82,7 @@ EOF
     AC_MSG_CHECKING([whether ${F77-f77} $flags $libs works with GETARG and IARGC])
     if AC_TRY_EVAL(ac_fcompilelink) && test -x conftest ; then
 	# Check that cross != yes so that this works with autoconf 2.52
-	# Check that cross_compiling != yes so that this works with
+	# Check that cross_compiling != yes so that this works with 
 	# autoconf 2.6x for some (but almost certainly not all)x
 	# Question: why do we test that this runs?  It looks like we
 	# needed this for some old Fortran compilers that produced
@@ -96,9 +96,9 @@ EOF
 		F77_GETARG="$f77_getarg"
 		F77_IARGC="$f77_iargc"
 		AC_MSG_RESULT(yes)
-	    fi
+     	    fi
         fi
-    fi
+    fi    
     if test $found_answer = "no" ; then
 	AC_MSG_RESULT(no)
     # Grumph.  Here are a bunch of different approaches
@@ -106,7 +106,7 @@ EOF
     # Library to link with (none, -lU77 (HPUX), -lg2c (LINUX f77))
     # PEPCF90 (Intel ifc)
     # The first line is a dummy
-    # (we experimented with using a <space>, but this caused other
+    # (we experimented with using a <space>, but this caused other 
     # problems because we need <space> in the IFS)
     trial_LIBS="0 -lU77 -lPEPCF90"
     if test "$NOG2C" != "1" ; then
@@ -149,7 +149,7 @@ $libs"
     # The -N109 was used for getarg before we realized that GETARG
     # was necessary with the (non standard conforming) Absoft compiler
     # (Fortran is monocase; Absoft uses mixedcase by default)
-    # The -f is used by Absoft and is the compiler switch that folds
+    # The -f is used by Absoft and is the compiler switch that folds 
     # symbolic names to lower case.  Without this option, the compiler
     # considers upper- and lower-case letters to be unique.
     # The -YEXT_NAMES=LCS will cause external names to be output as lower
@@ -157,14 +157,14 @@ $libs"
     # The first line is "<space><newline>, the space is important
     # To make the Absoft f77 and f90 work together, we need to prefer the
     # upper case versions of the arguments.  They also require libU77.
-    # -YCFRL=1 causes Absoft f90 to work with g77 and similar (f2c-based)
+    # -YCFRL=1 causes Absoft f90 to work with g77 and similar (f2c-based) 
     # Fortran compilers
     #
     # Problem:  The Intel efc compiler hangs when presented with -N109 .
     # The only real fix for this is to detect this compiler and exclude
     # the test.  We may want to reorganize these tests so that if we
     # can compile code without special options, we never look for them.
-    #
+    # 
     using_intel_efc="no"
     pac_test_msg=`$F77 -V 2>&1 | grep 'Intel(R) Fortran Itanium'`
     if test "$pac_test_msg" != "" ; then
@@ -194,10 +194,10 @@ $libs"
             PAC_F77_CHECK_COMPILER_OPTION($flag,opt_ok=yes,opt_ok=no)
         fi
 	if test "$opt_ok" = "yes" ; then
-	    if test "$flag" = " " -o "$flag" = "000" ; then
-		fflag=""
-	    else
-		fflag="$flag"
+	    if test "$flag" = " " -o "$flag" = "000" ; then 
+		fflag="" 
+	    else 
+		fflag="$flag" 
 	    fi
 	    # discard options that don't allow mixed-case name matching
 	    cat > conftest.f <<EOF
@@ -228,15 +228,15 @@ $flag"
     # Name of routines.  Since these are in groups, we use a case statement
     # and loop until the end (accomplished by reaching the end of the
     # case statement
-    # For one version of Nag F90, the names are
+    # For one version of Nag F90, the names are 
     # call f90_unix_MP_getarg(i,s) and f90_unix_MP_iargc().
     trial=0
     while test -z "$pac_cv_prog_f77_cmdarg" ; do
-        case $trial in
+        case $trial in 
 	0) # User-specified values, if any
-	   if test -z "$F77_GETARG" -o -z "$F77_IARGC" ; then
+	   if test -z "$F77_GETARG" -o -z "$F77_IARGC" ; then 
 	       trial=`expr $trial + 1`
-	       continue
+	       continue 
            fi
            MSG="Using environment values of F77_GETARG etc."
 	   ;;
@@ -284,7 +284,7 @@ $flag"
 		continue
 	   fi
 	   ;;
-	7) # gfortran won't find getarg if it is marked as external
+	7) # gfortran won't find getarg if it is marked as external 
 	   FXX_MODULE=""
 	   F77_GETARGDECL="intrinsic GETARG"
 	   F77_GETARG="call GETARG(i,s)"
@@ -318,7 +318,7 @@ $FXX_MODULE
         end
 EOF
     #
-    # Now, try to find some way to compile and link that program, looping
+    # Now, try to find some way to compile and link that program, looping 
     # over the possibilities of options and libraries
         save_IFS="$IFS"
         IFS=" ""
@@ -334,12 +334,12 @@ EOF
 	        ac_fcompilelink_test="${F77-f77} -o conftest $FFLAGS $flags conftest.f $LDFLAGS $libs $LIBS 1>&AC_FD_CC"
 		found_answer="no"
                 if AC_TRY_EVAL(ac_fcompilelink_test) && test -x conftest ; then
-		    if test "$ac_cv_prog_f77_cross" != "yes" -a \
+		    if test "$ac_cv_prog_f77_cross" != "yes" -a \	 
 		            "$cross_compiling" != "yes" ; then
 			if ./conftest >/dev/null 2>&1 ; then
 			    found_answer="yes"
 			fi
-		    else
+		    else 
 			found_answer="yes"
 		    fi
                 fi
@@ -358,9 +358,9 @@ EOF
 	        fi
             done
         done
-        IFS="$save_IFS"
+        IFS="$save_IFS"   
 	rm -f conftest.*
-        trial=`expr $trial + 1`
+        trial=`expr $trial + 1`   
     done
 fi
 pac_cv_F77_GETARGDECL="$F77_GETARGDECL"
@@ -368,7 +368,7 @@ pac_cv_F77_IARGC="$F77_IARGC"
 pac_cv_F77_GETARG="$F77_GETARG"
 pac_cv_FXX_MODULE="$FXX_MODULE"
 ])
-if test "$found_cached" = "yes" ; then
+if test "$found_cached" = "yes" ; then 
     AC_MSG_RESULT([$pac_cv_prog_f77_cmdarg])
 elif test -z "$pac_cv_F77_IARGC" ; then
     AC_MSG_WARN([Could not find a way to access the command line from Fortran 77])

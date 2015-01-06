@@ -16,10 +16,10 @@ void ADIOI_PANFS_ReadContig(ADIO_File fd, void *buf, int count,
 			  ADIO_Offset offset, ADIO_Status *status,
 			  int *error_code)
 {
-    int err = -1, datatype_size, len;
+    MPI_Count err = -1, datatype_size, len;
     static char myname[] = "ADIOI_PANFS_READCONTIG";
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {

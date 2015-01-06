@@ -19,11 +19,12 @@ void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
-    int err=-1, datatype_size, len, diff, size, nbytes;
+    int diff, size, nbytes;
+    MPI_Count err=-1, datatype_size, len;
     void *newbuf;
     static char myname[] = "ADIOI_XFS_READCONTIG";
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     fd->fp_sys_posn = -1; /* set it to null, since we are using pread */

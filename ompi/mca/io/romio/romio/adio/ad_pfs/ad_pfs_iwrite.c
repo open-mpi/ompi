@@ -13,7 +13,8 @@ void ADIOI_PFS_IwriteContig(ADIO_File fd, void *buf, int count,
 {
     long *id_sys;
     ADIO_Offset off;
-    int len, typesize, err;
+    int err;
+    MPI_Count len, typesize;
     static char myname[] = "ADIOI_PFS_IWRITECONTIG";
 
     *request = ADIOI_Malloc_request();
@@ -21,7 +22,7 @@ void ADIOI_PFS_IwriteContig(ADIO_File fd, void *buf, int count,
     (*request)->fd = fd;
     (*request)->datatype = datatype;
 
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     len = count * typesize;
 
     id_sys = (long *) ADIOI_Malloc(sizeof(long));

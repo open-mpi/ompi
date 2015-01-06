@@ -153,7 +153,7 @@ int ADIOI_Set_lock(FDTYPE fd, int cmd, int type, ADIO_Offset offset, int whence,
     if (err && (errno != EBADF)) {
 	/* FIXME: This should use the error message system, 
 	   especially for MPICH */
-	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock(fd %X,cmd %s/%X,type %s/%X,whence %X) with return value %X and errno %X.\n"
+	FPRINTF(stderr, "This requires fcntl(2) to be implemented. As of 8/25/2011 it is not. Generic MPICH Message: File locking failed in ADIOI_Set_lock(fd %X,cmd %s/%X,type %s/%X,whence %X) with return value %X and errno %X.\n"
                   "- If the file system is NFS, you need to use NFS version 3, ensure that the lockd daemon is running on all the machines, and mount the directory with the 'noac' option (no attribute caching).\n"
                   "- If the file system is LUSTRE, ensure that the directory is mounted with the 'flock' option.\n",
           fd,

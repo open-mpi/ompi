@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_write_at_all_begin as PMPI_File_write_at_all_begin
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, const void *buf, int count,
+                                MPI_Datatype datatype) __attribute__((weak,alias("PMPI_File_write_at_all_begin")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -36,7 +39,7 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, const void *buf,
+int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, ROMIO_CONST void *buf,
 				int count, MPI_Datatype datatype)
 {
     int error_code;

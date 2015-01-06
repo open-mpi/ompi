@@ -54,7 +54,7 @@ AC_DEFUN([PAC_CONFIG_SUBDIR_ARGS],[
         # Adapted for MPICH from the autoconf-2.67 implementation of
         # AC_CONFIG_SUBDIRS.  Search for "MPICH note:" for relevant commentary and
         # local modifications.
-
+      
         # Remove --cache-file, --srcdir, and --disable-option-checking arguments
         # so they do not pile up.  Otherwise relative paths (like --srcdir=.. from
         # make distcheck) will be incorrect.
@@ -115,7 +115,7 @@ AC_DEFUN([PAC_CONFIG_SUBDIR_ARGS],[
             AS_VAR_APPEND([pac_sub_configure_args], [" '$pac_arg'"]) ;;
           esac
         done
-
+      
         # Always prepend --prefix to ensure using the same prefix
         # in subdir configurations.
         # MPICH note: see tt#983 for an example of why this is necessary
@@ -124,22 +124,22 @@ AC_DEFUN([PAC_CONFIG_SUBDIR_ARGS],[
         *\'*) pac_arg=`AS_ECHO(["$pac_arg"]) | sed "s/'/'\\\\\\\\''/g"` ;;
         esac
         pac_sub_configure_args="'$pac_arg' $pac_sub_configure_args"
-
+      
         # Pass --silent
         if test "$silent" = yes; then
           pac_sub_configure_args="--silent $pac_sub_configure_args"
         fi
-
+      
         # Always prepend --disable-option-checking to silence warnings, since
         # different subdirs can have different --enable and --with options.
         pac_sub_configure_args="--disable-option-checking $pac_sub_configure_args"
-
+      
         pac_popdir=`pwd`
-
+      
         # Do not complain, so a configure script can configure whichever
         # parts of a large source tree are present.
         test -d "$srcdir/$pac_dir" || continue
-
+      
         # MPICH note: modified to remove the internal "_AS_*" macro usage, also
         # msg is already printed at top
 dnl        _AS_ECHO_LOG([$pac_msg])
