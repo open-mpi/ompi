@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -218,6 +218,14 @@ static inline void opal_convertor_get_current_pointer( const opal_convertor_t* p
     unsigned char* base = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
     *position = (void*)base;
 }
+
+static inline void opal_convertor_get_offset_pointer( const opal_convertor_t* pConv,
+                                                      size_t offset, void** position )
+{
+    unsigned char* base = pConv->pBaseBuf + offset + pConv->pDesc->true_lb;
+    *position = (void*)base;
+}
+
 
 /*
  *
