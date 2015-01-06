@@ -266,6 +266,12 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                     0ULL,                 /* In:  No flags                   */
                     &ompi_mtl_ofi.mr,     /* Out: memregion object           */
                     NULL);                /* Context: memregion events       */
+    if (0 != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: fi_mr_reg failed: %s\n",
+                            __FILE__, __LINE__, fi_strerror(-ret));
+        goto error;
+    }
 
     /**
      * Bind the CQ and AV to the endpoint object.
