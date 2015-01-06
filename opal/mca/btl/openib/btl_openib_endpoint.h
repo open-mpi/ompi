@@ -625,6 +625,101 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
     return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
 }
 
+/* called with the endpoint lock held */
+static inline int mca_btl_openib_endpoint_credit_acquire (struct mca_btl_base_endpoint_t *endpoint, int qp,
+                                                          int prio, size_t size, bool *do_rdma,
+                                                          mca_btl_openib_send_frag_t *frag, bool queue_frag)
+{
+    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+    mca_btl_openib_header_t *hdr = frag->hdr;
+    size_t eager_limit;
+    int32_t cm_return;
+
+    eager_limit = mca_btl_openib_component.eager_limit +
+        sizeof(mca_btl_openib_header_coalesced_t) +
+        sizeof(mca_btl_openib_control_header_t);
+
+    if (!(prio && size < eager_limit && acquire_eager_rdma_send_credit(endpoint) == OPAL_SUCCESS)) {
+        *do_rdma = false;
+
+        if (BTL_OPENIB_QP_TYPE_PP(qp)) {
+            if (OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) < 0) {
+                OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
+                if (queue_frag) {
+                    opal_list_append(&endpoint->qps[qp].no_credits_pending_frags[prio],
+                                     (opal_list_item_t *)frag);
+                }
+
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+        } else {
+            if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0) {
+                OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+                if (queue_frag) {
+                    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+                    opal_list_append(&openib_btl->qps[qp].u.srq_qp.pending_frags[prio],
+                                     (opal_list_item_t *)frag);
+                    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+                }
+
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+        }
+    } else {
+        /* High priority frag. Try to send over eager RDMA */
+        *do_rdma = true;
+    }
+
+    /* Set all credits */
+    BTL_OPENIB_GET_CREDITS(endpoint->eager_rdma_local.credits, hdr->credits);
+    if (hdr->credits) {
+        hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
+    }
+
+    if (!*do_rdma) {
+        if (BTL_OPENIB_QP_TYPE_PP(qp) && 0 == hdr->credits) {
+            BTL_OPENIB_GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, hdr->credits);
+        }
+    } else {
+        hdr->credits |= (qp << 11);
+    }
+
+    BTL_OPENIB_GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
+    if(cm_return > 255) {
+        hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
+    } else {
+        hdr->cm_seen = cm_return;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/* called with the endpoint lock held. */
+static inline void mca_btl_openib_endpoint_credit_release (struct mca_btl_base_endpoint_t *endpoint, int qp,
+                                                           bool do_rdma, mca_btl_openib_send_frag_t *frag)
+{
+    mca_btl_openib_header_t *hdr = frag->hdr;
+
+    if (BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
+        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits, BTL_OPENIB_CREDITS(hdr->credits));
+    }
+
+    if (do_rdma) {
+        OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
+    } else {
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            OPAL_THREAD_ADD32 (&endpoint->qps[qp].u.pp_qp.rd_credits, hdr->credits);
+            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
+        } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
+            mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+            OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+        }
+    }
+}
+
 END_C_DECLS
 
 #endif
