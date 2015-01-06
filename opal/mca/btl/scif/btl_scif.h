@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -98,7 +98,7 @@ typedef struct mca_btl_scif_module_t {
 
 typedef struct mca_btl_scif_component_t {
     /* base BTL component */
-    mca_btl_base_component_2_0_0_t super;
+    mca_btl_base_component_3_0_0_t super;
 
     /* DMA free list settings */
     int scif_free_list_num;
@@ -197,29 +197,21 @@ int mca_btl_scif_sendi (struct mca_btl_base_module_t *btl,
  * Initiate a get operation.
  *
  * location: btl_scif_get.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
-int
-mca_btl_scif_get (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_scif_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate a put operation.
  *
  * location: btl_scif_put.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
-int
-mca_btl_scif_put (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_scif_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 mca_btl_base_descriptor_t *
 mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
@@ -228,9 +220,25 @@ mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
 
 int mca_btl_scif_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
+struct mca_btl_scif_reg_t;
+
+struct mca_btl_base_registration_handle_t {
+    /** scif offset */
+    off_t scif_offset;
+    /** base address of this scif region */
+    uintptr_t scif_base;
+};
+
+struct mca_btl_scif_registration_handle_t {
+    mca_btl_base_registration_handle_t btl_handle;
+    struct mca_btl_scif_reg_t *reg;
+};
+typedef struct mca_btl_scif_registration_handle_t mca_btl_scif_registration_handle_t;
+
 typedef struct mca_btl_scif_reg_t {
     mca_mpool_base_registration_t base;
-    off_t *registrations;
+    /** per-endpoint btl handles for this registration */
+    mca_btl_scif_registration_handle_t *handles;
 } mca_btl_scif_reg_t;
 
 /* Global structures */ 

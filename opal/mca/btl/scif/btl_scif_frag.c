@@ -15,13 +15,13 @@
 static inline void mca_btl_scif_base_frag_constructor (mca_btl_scif_base_frag_t *frag)
 {
     memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
+    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
 }
 
 static inline void mca_btl_scif_eager_frag_constructor (mca_btl_scif_base_frag_t *frag)
 {
     memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
+    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_scif_eager_frag_t, mca_btl_base_descriptor_t,

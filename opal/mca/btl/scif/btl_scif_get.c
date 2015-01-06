@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -20,18 +20,13 @@
 
 /**
  * Initiate a get operation.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
-int mca_btl_scif_get (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      struct mca_btl_base_descriptor_t *des) {
-    mca_btl_scif_segment_t *src = (mca_btl_scif_segment_t *) des->des_remote;
-    mca_btl_scif_segment_t *dst = (mca_btl_scif_segment_t *) des->des_local;
-    size_t len = lmin (src->base.seg_len, dst->base.seg_len);
-    int rc, mark, flags = 0;
+int mca_btl_scif_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+{
+    int rc, mark, scif_flags = 0;
     off_t roffset, loffset;
 #if defined(SCIF_TIMING)
     struct timespec ts;
@@ -41,30 +36,27 @@ int mca_btl_scif_get (struct mca_btl_base_module_t *btl,
     mca_btl_scif_component.get_count++;
 #endif
 
-    BTL_VERBOSE(("Using DMA Get for frag %p from offset %lu", (void *) des,
-                 (unsigned long) src->scif_offset));
+    BTL_VERBOSE(("Using DMA Get from remote address %" PRIx64 " to local address %p",
+                 remote_address, local_address));
 
-    roffset = src->scif_offset + (off_t)(src->orig_ptr - src->base.seg_addr.lval);
-    loffset = dst->scif_offset + (off_t)(dst->orig_ptr - dst->base.seg_addr.lval);
+    roffset = remote_handle->scif_offset + (off_t)(remote_address - remote_handle->scif_base);
+    loffset = local_handle->scif_offset + (off_t)((intptr_t)local_address - local_handle->scif_base);
         
     if (mca_btl_scif_component.rma_use_cpu) {
-        flags = SCIF_RMA_USECPU;
+        scif_flags = SCIF_RMA_USECPU;
     }
 
     if (mca_btl_scif_component.rma_sync) {
-        flags |= SCIF_RMA_SYNC;
+        scif_flags |= SCIF_RMA_SYNC;
     }
 
     /* start the read */
-    rc = scif_readfrom (endpoint->scif_epd, loffset, len, roffset, flags);
+    rc = scif_readfrom (endpoint->scif_epd, loffset, size, roffset, scif_flags);
     if (OPAL_UNLIKELY(-1 == rc)) {
         return OPAL_ERROR;
     }
 
-    /* always call the callback function */
-    des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
-
-    if (!(flags & SCIF_RMA_SYNC)) {
+    if (!(scif_flags & SCIF_RMA_SYNC)) {
         /* according to the scif documentation is is better to use a fence rather
          * than using the SCIF_RMA_SYNC flag with scif_readfrom */
         scif_fence_mark (endpoint->scif_epd, SCIF_FENCE_INIT_SELF, &mark);
@@ -76,8 +68,8 @@ int mca_btl_scif_get (struct mca_btl_base_module_t *btl,
                       mca_btl_scif_component.get_time_max, ts);
 #endif
 
-    /* since we completed the fence the RMA operation is complete */
-    mca_btl_scif_frag_complete ((mca_btl_scif_base_frag_t *) des, OPAL_SUCCESS);
+    /* always call the callback function */
+    cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
 
     return OPAL_SUCCESS;
 }

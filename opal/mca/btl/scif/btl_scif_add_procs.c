@@ -165,14 +165,14 @@ static int scif_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
 
     /* register the fragment with all connected endpoints */
     for (i = 0 ; i < (int) mca_btl_scif_module.endpoint_count ; ++i) {
-        if ((off_t)-1 != scif_reg->registrations[i] &&
+        if ((off_t)-1 != scif_reg->handles[i].btl_handle.scif_offset &&
             MCA_BTL_SCIF_EP_STATE_CONNECTED == mca_btl_scif_module.endpoints[i].state) {
             (void) scif_unregister(mca_btl_scif_module.endpoints[i].scif_epd,
-                                   scif_reg->registrations[i], size);
+                                   scif_reg->handles[i].btl_handle.scif_offset, size);
         }
     }
 
-    free (scif_reg->registrations);
+    free (scif_reg->handles);
 
     return OPAL_SUCCESS;
 }
@@ -184,17 +184,22 @@ static int scif_reg_mem (void *reg_data, void *base, size_t size,
     int rc = OPAL_SUCCESS;
     unsigned int i;
 
-    scif_reg->registrations = calloc (mca_btl_scif_module.endpoint_count,
-                                 sizeof (off_t));
-    memset (scif_reg->registrations, -1, mca_btl_scif_module.endpoint_count * sizeof (off_t));
+    scif_reg->handles = calloc (mca_btl_scif_module.endpoint_count, sizeof (scif_reg->handles[0]));
+
+    /* intialize all scif offsets to -1 and initialize the pointer back to the mpool registration */
+    for (i = 0 ; i < mca_btl_scif_module.endpoint_count ; ++i) {
+        scif_reg->handles[i].btl_handle.scif_offset = -1;
+        scif_reg->handles[i].btl_handle.scif_base = (intptr_t) base;
+        scif_reg->handles[i].reg = scif_reg;
+    }
 
     /* register the pointer with all connected endpoints */
     for (i = 0 ; i < mca_btl_scif_module.endpoint_count ; ++i) {
         if (MCA_BTL_SCIF_EP_STATE_CONNECTED == mca_btl_scif_module.endpoints[i].state) {
-            scif_reg->registrations[i] = scif_register(mca_btl_scif_module.endpoints[i].scif_epd,
-                                                       base, size, 0, SCIF_PROT_READ |
-                                                       SCIF_PROT_WRITE, 0);
-            if (SCIF_REGISTER_FAILED == scif_reg->registrations[i]) {
+            scif_reg->handles[i].btl_handle.scif_offset = scif_register (mca_btl_scif_module.endpoints[i].scif_epd,
+                                                                         base, size, 0, SCIF_PROT_READ |
+                                                                         SCIF_PROT_WRITE, 0);
+            if (SCIF_REGISTER_FAILED == scif_reg->handles[i].btl_handle.scif_offset) {
                 /* cleanup */
                 scif_dereg_mem (reg_data, reg);
                 rc = OPAL_ERR_OUT_OF_RESOURCE;
