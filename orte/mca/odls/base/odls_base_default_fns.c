@@ -1649,16 +1649,20 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
     /* if the child was previously flagged as dead, then just
      * update its exit status and
      * ensure that its exit state gets reported to avoid hanging
+     * don't forget to check if the process was signaled.
      */
     if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ALIVE)) {
         OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s odls:waitpid_fired child %s was already dead",
+                             "%s odls:waitpid_fired child %s was already dead exit code %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name)));
+                             ORTE_NAME_PRINT(&proc->name),proc->exit_code));
         if (WIFEXITED(proc->exit_code)) {
             proc->exit_code = WEXITSTATUS(proc->exit_code);
         } else {
-            proc->exit_code = WTERMSIG(proc->exit_code) + 128;
+            if (WIFSIGNALED(proc->exit_code)) {
+                state = ORTE_PROC_STATE_ABORTED_BY_SIG;
+                proc->exit_code = WTERMSIG(proc->exit_code) + 128;
+            }
         }
         goto MOVEON;
     }
