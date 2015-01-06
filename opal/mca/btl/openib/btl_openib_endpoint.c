@@ -89,7 +89,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     if(acquire_wqe(endpoint, frag) != OPAL_SUCCESS)
         return OPAL_ERR_RESOURCE_BUSY;
 
-    size = des->des_local->seg_len + frag->coalesced_length;
+    size = des->des_segments->seg_len + frag->coalesced_length;
 
     rc = mca_btl_openib_endpoint_credit_acquire (endpoint, qp, prio, size,
                                                  &do_rdma, frag, true);
