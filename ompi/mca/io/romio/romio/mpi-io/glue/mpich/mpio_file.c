@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*
+/* 
  *
- *   Copyright (C) 2004 University of Chicago.
+ *   Copyright (C) 2004 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -41,7 +41,7 @@ void MPIO_File_free(MPI_File *mpi_fh)
 MPI_File MPIO_File_f2c(MPI_Fint fh)
 {
 #ifndef INT_LT_POINTER
-    return (MPI_File) ((void *) fh);
+    return (MPI_File) ((void *) fh);  
     /* the extra cast is to get rid of a compiler warning on Exemplar.
        The warning is because MPI_File points to a structure containing
        longlongs, which may be 8-byte aligned. But MPI_Fint itself
@@ -72,15 +72,15 @@ MPI_Fint MPIO_File_c2f(MPI_File fh)
     if (!ADIOI_Ftable) {
 	ADIOI_Ftable_max = 1024;
 	ADIOI_Ftable = (MPI_File *)
-	    ADIOI_Malloc(ADIOI_Ftable_max*sizeof(MPI_File));
-        ADIOI_Ftable_ptr = 0;  /* 0 can't be used though, because
+	    ADIOI_Malloc(ADIOI_Ftable_max*sizeof(MPI_File)); 
+        ADIOI_Ftable_ptr = 0;  /* 0 can't be used though, because 
                                   MPI_FILE_NULL=0 */
 	for (i=0; i<ADIOI_Ftable_max; i++) ADIOI_Ftable[i] = MPI_FILE_NULL;
     }
     if (ADIOI_Ftable_ptr == ADIOI_Ftable_max-1) {
-	ADIOI_Ftable = (MPI_File *) ADIOI_Realloc(ADIOI_Ftable,
+	ADIOI_Ftable = (MPI_File *) ADIOI_Realloc(ADIOI_Ftable, 
                            (ADIOI_Ftable_max+1024)*sizeof(MPI_File));
-	for (i=ADIOI_Ftable_max; i<ADIOI_Ftable_max+1024; i++)
+	for (i=ADIOI_Ftable_max; i<ADIOI_Ftable_max+1024; i++) 
 	    ADIOI_Ftable[i] = MPI_FILE_NULL;
 	ADIOI_Ftable_max += 1024;
     }

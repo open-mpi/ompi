@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_get_view as PMPI_File_get_view
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype, MPI_Datatype *filetype,
+                      char *datarep) __attribute__((weak,alias("PMPI_File_get_view")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -67,7 +70,7 @@ int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype,
     /* --END ERROR HANDLING-- */
 
     *disp = adio_fh->disp;
-    ADIOI_Strncpy(datarep,
+    ADIOI_Strncpy(datarep, 
 	    (adio_fh->is_external32 ? "external32": "native"), MPI_MAX_DATAREP_STRING);
 
     MPI_Type_get_envelope(adio_fh->etype, &i, &j, &k, &combiner);

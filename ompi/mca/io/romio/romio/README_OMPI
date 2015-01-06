@@ -1,28 +1,11 @@
-Please note that this is *NOT* a vanilla MPICH 3.0.4 distribution of the
-ROMIO package from Argonne National Labs.  Various customizations had
-to be applied to the configuration process.  More to the point -- if
-replace this copy of ROMIO with a newer version, it will likely not
-work.  :-(
+Please note that this is *NOT* a vanilla MPICH v3.2a2-84-gef1cf14
+distribution of the ROMIO package from Argonne National Labs.
+Various customizations had to be applied to the configuration process.
+More to the point -- if replace this copy of ROMIO with a newer version,
+it will likely not work.  :-(
 
 - The Open MPI Team
 
 -----------------------------------------------------------------------------
 
-Local modifications:
-====================
-
-- Moved aclocal.m4 -> acinclude.m4
-- Bunches of changes in acinclude.m4 to make it work with modern
-  versions of the GNU auto tools -- see comments in file.
-- Bunches of changes in configure.ac to make it work with modern
-  versions of the GNU auto tools -- see comments in file.
-- We define MPI_MAX_DATAREP_STRING, therefore
-  protect the redefinition in include/mpio.h
-- Not all systems have snprintf(); include "opal/util/printf.h" in
-  test/noncontig_coll.c
-
-Patches past 3.0.4: (Update whenever ROMIO is updated)
-- Deal with endless ESTALE cases:
-  http://git.mpich.org/mpich.git/commit/b250d338e66667a8a1071a5f73a4151fd59f83b2
-- Fix compile error with Lustre 2.4
-  http://trac.mpich.org/projects/mpich/changeset/a0c4278f1400a73eb63c5106e2bd3b1a6565ad5a
+Local modifications are in ompi.patch

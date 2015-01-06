@@ -23,10 +23,5 @@ void ADIOI_TESTFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     FPRINTF(stdout, "[%d/%d]    calling ADIOI_GEN_SetInfo\n", 
 	    myrank, nprocs);
 
-#ifdef ROMIO_BGL   /* BlueGene support for pvfs through ufs */
-    /* BlueGene hack: force testfs to mimic BlueGene hints */
-    ADIOI_BGL_SetInfo(fd, users_info, error_code);
-#else
     ADIOI_GEN_SetInfo(fd, users_info, error_code);
-#endif
 }

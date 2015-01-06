@@ -23,7 +23,8 @@ int main(int argc, char **argv)
     int i, ndims, array_of_gsizes[3], array_of_distribs[3];
     int order, nprocs, len, flag, err;
     int array_of_dargs[3], array_of_psizes[3];
-    int *readbuf, *writebuf, bufcount, mynod;
+    int *readbuf, *writebuf, mynod;
+    MPI_Count bufcount;
     char filename[1024];
     MPI_File fh;
     MPI_Status status;
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
 
 /* initialize writebuf */
 
-    MPI_Type_size(newtype, &bufcount);
+    MPI_Type_size_x(newtype, &bufcount);
     bufcount = bufcount/sizeof(int);
     writebuf = (int *) malloc(bufcount * sizeof(int));
     if (!writebuf) fprintf(stderr, "Process %d, not enough memory for writebuf\n", mynod);

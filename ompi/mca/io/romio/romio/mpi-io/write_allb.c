@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_write_all_begin as PMPI_File_write_all_begin
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_write_all_begin(MPI_File fh, const void *buf, int count, MPI_Datatype datatype)
+    __attribute__((weak,alias("PMPI_File_write_all_begin")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -35,7 +38,7 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_write_all_begin(MPI_File fh, const void *buf, int count,
+int MPI_File_write_all_begin(MPI_File fh, ROMIO_CONST void *buf, int count,
 			     MPI_Datatype datatype)
 {
     int error_code;
@@ -58,7 +61,8 @@ int MPIOI_File_write_all_begin(MPI_File fh,
 			       MPI_Datatype datatype,
 			       char *myname)
 {
-    int error_code, datatype_size;
+    int error_code;
+    MPI_Count datatype_size;
     ADIO_File adio_fh;
     void *e32buf=NULL;
     const void *xbuf=NULL;
@@ -94,7 +98,7 @@ int MPIOI_File_write_all_begin(MPI_File fh,
 
     adio_fh->split_coll_count = 1;
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);
     MPIO_CHECK_COUNT_SIZE(adio_fh, count, datatype_size, myname, error_code);
@@ -104,7 +108,7 @@ int MPIOI_File_write_all_begin(MPI_File fh,
     xbuf = buf;
     if (adio_fh->is_external32) {
 	error_code = MPIU_external32_buffer_setup(buf, count, datatype, &e32buf);
-	if (error_code != MPI_SUCCESS)
+	if (error_code != MPI_SUCCESS) 
 	    goto fn_exit;
 
 	xbuf = e32buf;

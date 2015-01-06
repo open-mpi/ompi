@@ -25,7 +25,7 @@ void ADIO_Close(ADIO_File fd, int *error_code)
     }
 
     /* because of deferred open, this warants a bit of explaining.  First, if
-     * we've done aggregation (fd->agg_comm has a non-nulll communicator ),
+     * we've done aggregation,
      * then close the file.  Then, if any process left has done independent
      * i/o, close the file.  Otherwise, we'll skip the fs-specific close and
      * just say everything is a-ok.
@@ -35,7 +35,7 @@ void ADIO_Close(ADIO_File fd, int *error_code)
      * everyone who ever opened the file will close it. Is order important? Is
      * timing important?
      */
-    if (fd->agg_comm != MPI_COMM_NULL) {
+    if (fd->hints->deferred_open && fd->is_agg) {
 	    (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
     } else {
 	    if(fd->is_open)  {
@@ -64,6 +64,20 @@ void ADIO_Close(ADIO_File fd, int *error_code)
     if (fd->hints && fd->hints->ranklist) ADIOI_Free(fd->hints->ranklist);
     if (fd->hints && fd->hints->cb_config_list) ADIOI_Free(fd->hints->cb_config_list);
 
+    /* This BlueGene platform-specific free must be done in the common code
+     * because the malloc's for these hint data structures are done at the
+     * scope of ADIO_Open within the SetInfo call (ADIOI_GPFS_SetInfo which
+     * calls ADIOI_BG_gen_agg_ranklist).  They cannot be done in the
+     * ADIOI_GPFS_Close because of the file creation case where the
+     * ADIOI_GPFS_Close and re-open via ADIOI_GPFS_Open are done which results
+     * in a double-free - ADIOI_GPFS_Open does not redo the SetInfo...  */
+#ifdef BGQPLATFORM
+    if (fd->hints && fd->hints->fs_hints.bg.bridgelist)
+      ADIOI_Free(fd->hints->fs_hints.bg.bridgelist);
+    if (fd->hints && fd->hints->fs_hints.bg.bridgelistnum)
+      ADIOI_Free(fd->hints->fs_hints.bg.bridgelistnum);
+#endif
+
     /* Persistent File Realms */
     if (fd->hints->cb_pfr == ADIOI_HINT_ENABLE) {
 	/* AAR, FSIZE, and User provided uniform File realms */
@@ -87,10 +101,6 @@ void ADIO_Close(ADIO_File fd, int *error_code)
 
 
     MPI_Comm_free(&(fd->comm));
-    /* deferred open: if we created an aggregator communicator, free it */
-    if (fd->agg_comm != MPI_COMM_NULL) {
-	    MPI_Comm_free(&(fd->agg_comm));
-    }
     ADIOI_Free(fd->filename); 
 
     MPI_Type_get_envelope(fd->etype, &i, &j, &k, &combiner);
@@ -103,6 +113,8 @@ void ADIO_Close(ADIO_File fd, int *error_code)
     if (combiner != MPI_COMBINER_NAMED) MPI_Type_free(&(fd->filetype));
 
     MPI_Info_free(&(fd->info));
+
+    if (fd->io_buf != NULL) ADIOI_Free(fd->io_buf);
 
     /* memory for fd is freed in MPI_File_close */
 }

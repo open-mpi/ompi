@@ -171,11 +171,11 @@ void ADIOI_NTFS_IwriteContig(ADIO_File fd, void *buf, int count,
 			     ADIO_Offset offset, ADIO_Request *request,
 			     int *error_code)  
 {
-    int len, typesize;
+    MPI_Count len, typesize;
     int err;
     static char myname[] = "ADIOI_NTFS_IwriteContig";
 
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     len = count * typesize;
 
     if (file_ptr_type == ADIO_INDIVIDUAL)

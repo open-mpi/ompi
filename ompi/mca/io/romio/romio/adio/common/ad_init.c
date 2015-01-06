@@ -55,6 +55,10 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
 
     ADIOI_UNREFERENCED_ARG(argc);
     ADIOI_UNREFERENCED_ARG(argv);
+    
+#ifdef ROMIO_INSIDE_MPICH
+    MPIR_Ext_init();
+#endif
 
 /* initialize the linked list containing flattened datatypes */
     ADIOI_Flatlist = (ADIOI_Flatlist_node *) ADIOI_Malloc(sizeof(ADIOI_Flatlist_node));
@@ -74,11 +78,6 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
     else ADIOI_Direct_write = 0;
 #endif
 
-    /* Assume system-wide hints won't change between runs: move hint processing
-     * from ADIO_Open to here */
-    /* FIXME should be checking error code from MPI_Info_create here */
-    MPI_Info_create(&ADIOI_syshints);
-    ADIOI_process_system_hints(ADIOI_syshints);
 
 #ifdef ADIOI_MPE_LOGGING
     {

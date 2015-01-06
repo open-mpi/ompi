@@ -58,7 +58,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 #ifdef DEBUG2
     MPI_Aint bufextent;
 #endif
-    int size;
+    MPI_Count size;
     int agg_rank;
 
     ADIO_Offset agg_disp; /* aggregated file offset */
@@ -195,8 +195,8 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 #ifdef DEBUG2
     bufextent = extent * count;
 #endif
-    MPI_Type_size(datatype, &size);
-    bufsize = size * count;
+    MPI_Type_size_x(datatype, &size);
+    bufsize = size * (MPI_Count)count;
 
     /* Calculate file realms */
     if ((fd->hints->cb_pfr != ADIOI_HINT_ENABLE) ||
@@ -358,7 +358,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 #ifdef DEBUG
 	    fprintf (stderr, "expecting from [agg](disp,size,cnt)=");
 	    for (i=0; i < nprocs; i++) {
-		MPI_Type_size (agg_comm_dtype_arr[i], &size);
+		MPI_Type_size_x (agg_comm_dtype_arr[i], &size);
 		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
 			 size, agg_alltoallw_counts[i]);
 		if (i != nprocs - 1)
@@ -369,7 +369,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		fprintf (stderr, "sending to [client](disp,size,cnt)=");
 		for (i=0; i < nprocs; i++) {
 		    if (fd->is_agg)
-			MPI_Type_size (client_comm_dtype_arr[i], &size);
+			MPI_Type_size_x (client_comm_dtype_arr[i], &size);
 		    else
 			size = -1;
 		    
@@ -433,7 +433,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 #ifdef DEBUG
 	    fprintf (stderr, "sending to [agg](disp,size,cnt)=");
 	    for (i=0; i < nprocs; i++) {
-		MPI_Type_size (agg_comm_dtype_arr[i], &size);
+		MPI_Type_size_x (agg_comm_dtype_arr[i], &size);
 		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
 			 size, agg_alltoallw_counts[i]);
 		if (i != nprocs - 1)
@@ -443,7 +443,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	    fprintf (stderr, "expecting from [client](disp,size,cnt)=");
 	    for (i=0; i < nprocs; i++) {
 		if (fd->is_agg)
-		    MPI_Type_size (client_comm_dtype_arr[i], &size);
+		    MPI_Type_size_x (client_comm_dtype_arr[i], &size);
 		else
 		    size = -1;
 		
@@ -700,12 +700,12 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 			int file_ptr_type, ADIO_Offset offset,
 			ADIO_Offset *st_offset, ADIO_Offset *end_offset)
 {
-    int filetype_size, buftype_size, etype_size;
-    int i, sum;
+    MPI_Count filetype_size, buftype_size, etype_size;
+    int sum;
     MPI_Aint filetype_extent;
     ADIO_Offset total_io;
     int filetype_is_contig;
-    int remainder;
+    ADIO_Offset i, remainder;
     ADIOI_Flatlist_node *flat_file;
     
     ADIO_Offset st_byte_off, end_byte_off;
@@ -725,10 +725,10 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 
     ADIOI_Datatype_iscontig (fd->filetype, &filetype_is_contig);
     
-    MPI_Type_size (fd->filetype, &filetype_size);
+    MPI_Type_size_x (fd->filetype, &filetype_size);
     MPI_Type_extent (fd->filetype, &filetype_extent);
-    MPI_Type_size (fd->etype, &etype_size);
-    MPI_Type_size (buftype, &buftype_size);
+    MPI_Type_size_x (fd->etype, &etype_size);
+    MPI_Type_size_x (buftype, &buftype_size);
     
     total_io = buftype_size * count;
 
@@ -885,7 +885,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
     int f_is_contig, m_is_contig;
     int user_ds_read, user_ds_write;
     MPI_Aint f_extent;
-    int f_size;
+    MPI_Count f_size;
     int f_ds_percent; /* size/extent */
 
 #ifdef AGGREGATION_PROFILE
@@ -895,7 +895,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
 	MPE_Log_event(5008, 0, NULL);
 #endif
     MPI_Type_extent(custom_ftype, &f_extent);
-    MPI_Type_size(custom_ftype, &f_size);
+    MPI_Type_size_x(custom_ftype, &f_size);
     f_ds_percent = 100 * f_size / f_extent;
 
     /* temporarily store file view information */

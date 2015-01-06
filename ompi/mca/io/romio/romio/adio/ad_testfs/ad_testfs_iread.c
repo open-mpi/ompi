@@ -18,13 +18,14 @@ void ADIOI_TESTFS_IreadContig(ADIO_File fd, void *buf, int count,
 			      *error_code)
 {
     ADIO_Status status;
-    int myrank, nprocs, typesize, len;
+    int myrank, nprocs;
+    MPI_Count typesize, len;
 
     *error_code = MPI_SUCCESS;
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_IreadContig called on %s\n", 
 	    myrank, nprocs, fd->filename);
     FPRINTF(stdout, "[%d/%d]    calling ADIOI_TESTFS_ReadContig\n", 
@@ -44,11 +45,11 @@ void ADIOI_TESTFS_IreadStrided(ADIO_File fd, void *buf, int count,
 {
     ADIO_Status status;
     int myrank, nprocs;
-    int typesize;
+    MPI_Count typesize;
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_IreadStrided called on %s\n", 
 	    myrank, nprocs, fd->filename);
     FPRINTF(stdout, "[%d/%d]    calling ADIOI_TESTFS_ReadStrided\n", 

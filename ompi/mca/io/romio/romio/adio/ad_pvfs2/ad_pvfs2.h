@@ -23,13 +23,13 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
                       MPI_Datatype datatype, int file_ptr_type,
                      ADIO_Offset offset, ADIO_Status *status, int
 		     *error_code);
-void ADIOI_PVFS2_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_WriteContig(ADIO_File fd, const void *buf, int count,
                       MPI_Datatype datatype, int file_ptr_type,
                       ADIO_Offset offset, ADIO_Status *status, int
 		      *error_code);   
 void ADIOI_PVFS2_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int
 		*error_code); 
-void ADIOI_PVFS2_WriteStrided(ADIO_File fd, void *buf, int count,
+void ADIOI_PVFS2_WriteStrided(ADIO_File fd, const void *buf, int count,
 		       MPI_Datatype datatype, int file_ptr_type,
 		       ADIO_Offset offset, ADIO_Status *status, int
 		       *error_code);
@@ -38,7 +38,7 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 		       ADIO_Offset offset, ADIO_Status *status, int
 		       *error_code);
 void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code);
-void ADIOI_PVFS2_Delete(char *filename, int *error_code);
+void ADIOI_PVFS2_Delete(const char *filename, int *error_code);
 void ADIOI_PVFS2_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
 void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
 int ADIOI_PVFS2_Feature(ADIO_File fd, int flag);
@@ -47,7 +47,7 @@ void ADIOI_PVFS2_IReadContig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int *error_code);
-void ADIOI_PVFS2_IWriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_IWriteContig(ADIO_File fd, const void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int *error_code);
@@ -55,7 +55,7 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int flag, int *error_code);
-void ADIOI_PVFS2_OldWriteStrided(ADIO_File fd, void *buf, int count,
+void ADIOI_PVFS2_OldWriteStrided(ADIO_File fd, const void *buf, int count,
 		       MPI_Datatype datatype, int file_ptr_type,
 		       ADIO_Offset offset, ADIO_Status *status, int
 		       *error_code);
@@ -63,4 +63,14 @@ void ADIOI_PVFS2_OldReadStrided(ADIO_File fd, void *buf, int count,
 		       MPI_Datatype datatype, int file_ptr_type,
 		       ADIO_Offset offset, ADIO_Status *status, int
 		       *error_code);
+
+int ADIOI_PVFS2_WriteStridedListIO(ADIO_File fd, const void *buf, int count,
+				   MPI_Datatype datatype, int file_ptr_type,
+				   ADIO_Offset offset, ADIO_Status *status,
+				   int *error_code);
+int ADIOI_PVFS2_WriteStridedDtypeIO(ADIO_File fd, const void *buf, int count,
+				    MPI_Datatype datatype, int file_ptr_type,
+				    ADIO_Offset offset, ADIO_Status *status,
+				    int *error_code);
+
 #endif

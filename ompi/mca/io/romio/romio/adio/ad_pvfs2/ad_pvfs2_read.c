@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
  *     vim: ts=8 sts=4 sw=4 noexpandtab 
  * 
  *   Copyright (C) 1997 University of Chicago. 
@@ -16,7 +16,8 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
 			    ADIO_Offset offset, ADIO_Status *status,
 			    int *error_code)
 {
-    int ret, datatype_size, len;
+    int ret;
+    MPI_Count datatype_size, len;
     PVFS_Request file_req, mem_req;
     PVFS_sysresp_io resp_io;
     ADIOI_PVFS2_fs *pvfs_fs;
@@ -24,7 +25,7 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
 
     pvfs_fs = (ADIOI_PVFS2_fs*)fd->fs_ptr;
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     ret = PVFS_Request_contiguous(len, PVFS_BYTE, &mem_req);
@@ -82,7 +83,7 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
     fd->fp_sys_posn = offset + (int)resp_io.total_completed;
 
 #ifdef HAVE_STATUS_SET_BYTES
-    MPIR_Status_set_bytes(status, datatype, (int)resp_io.total_completed);
+    MPIR_Status_set_bytes(status, datatype, resp_io.total_completed);
 #endif
 
     *error_code = MPI_SUCCESS;

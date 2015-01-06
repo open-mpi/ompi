@@ -21,11 +21,12 @@ void ADIOI_TESTFS_IwriteContig(ADIO_File fd, const void *buf, int count,
 			       *error_code)
 {
     ADIO_Status status;
-    int myrank, nprocs, typesize, len;
+    int myrank, nprocs;
+    MPI_Count typesize, len;
 
     *error_code = MPI_SUCCESS;
 
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
     FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_IwriteContig called on %s\n", 
@@ -47,13 +48,13 @@ void ADIOI_TESTFS_IwriteStrided(ADIO_File fd, const void *buf, int count,
 {
     ADIO_Status status;
     int myrank, nprocs;
-    int typesize;
+    MPI_Count typesize;
 
     *error_code = MPI_SUCCESS;
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
 
     FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_IwriteStrided called on %s\n", 
 	    myrank, nprocs, fd->filename);

@@ -94,16 +94,6 @@
 #define FDTYPE int
 #endif
 
-/* Open MPI: MPI_Offset is defined by ompi_config.h.  Also, taking a
-   little liberty with the fact that we know ROMIO is a component
-   included in the Open MPI distribution, we've already figured out an
-   MPI datatype corresponding to MPI_Offset. */
-#if 1
-    typedef MPI_Offset ADIO_Offset;
-#   define ADIO_OFFSET OMPI_OFFSET_DATATYPE
-#else
-/* Open MPI: ignores all this stuff */
-
 #ifdef MPI_OFFSET_IS_INT
    typedef int ADIO_Offset;
 #  define ADIO_OFFSET MPI_INT
@@ -120,8 +110,6 @@
 #else
    typedef long ADIO_Offset;
 #  define ADIO_OFFSET MPI_LONG
-#endif
-/* Open MPI: end of section of ignored stuff */
 #endif
 
 #define ADIO_Status MPI_Status   
@@ -199,6 +187,7 @@ typedef struct ADIOI_Hints_struct ADIOI_Hints;
 typedef struct ADIOI_FileD {
     int cookie;              /* for error checking */
     FDTYPE fd_sys;              /* system file descriptor */
+    FDTYPE null_fd;          /* the null-device file descriptor: debug only (obviously)*/
     int fd_direct;           /* On XFS, this is used for direct I/O; 
                                 fd_sys is used for buffered I/O */
     int direct_read;         /* flag; 1 means use direct read */
@@ -207,12 +196,13 @@ typedef struct ADIOI_FileD {
     unsigned d_mem;          /* data buffer memory alignment */
     unsigned d_miniosz;      /* min xfer size, xfer size multiple,
                                 and file seek offset alignment */
+    long blksize;            /* some optimizations benefit from knowing
+				underlying block size */
     ADIO_Offset fp_ind;      /* individual file pointer in MPI-IO (in bytes)*/
     ADIO_Offset fp_sys_posn; /* current location of the system file-pointer
                                 in bytes */
     ADIOI_Fns *fns;          /* struct of I/O functions to use */
     MPI_Comm comm;           /* communicator indicating who called open */
-    MPI_Comm agg_comm;      /* deferred open: aggregators who called open */
     int is_open;	    /* deferred open: 0: not open yet 1: is open */
     int is_agg;              /* bool: if I am an aggregator */
     char *filename;          
@@ -221,7 +211,7 @@ typedef struct ADIOI_FileD {
     ADIO_Offset disp;        /* reqd. for MPI-IO */
     MPI_Datatype etype;      /* reqd. for MPI-IO */
     MPI_Datatype filetype;   /* reqd. for MPI-IO */
-    int etype_size;          /* in bytes */
+    MPI_Count etype_size;          /* in bytes */
     ADIOI_Hints *hints;      /* structure containing fs-indep. info values */
     MPI_Info info;
 
@@ -245,6 +235,7 @@ typedef struct ADIOI_FileD {
     ADIO_Offset *file_realm_st_offs; /* file realm starting offsets */
     MPI_Datatype *file_realm_types;  /* file realm datatypes */
     int my_cb_nodes_index; /* my index into cb_config_list. -1 if N/A */
+    char *io_buf;          /* two-phase buffer allocated out of i/o path */
     /* External32 */
     int is_external32;      /* bool:  0 means native view */
 
@@ -302,9 +293,11 @@ typedef struct {
 #define ADIO_PANFS               161   /* Panasas FS */
 #define ADIO_GRIDFTP             162   /* Globus GridFTP */
 #define ADIO_LUSTRE              163   /* Lustre */
-#define ADIO_BGL                 164   /* IBM BGL */
-#define ADIO_BGLOCKLESS          165   /* IBM BGL (lock-free) */
+/* #define ADIO_BGL              164 */  /* IBM BGL */
+/* #define ADIO_BGLOCKLESS       165 */  /* IBM BGL (lock-free) */
 #define ADIO_ZOIDFS              167   /* ZoidFS: the I/O forwarding fs */
+/* #define ADIO_BG               168 */
+#define ADIO_GPFS                  168
 
 #define ADIO_SEEK_SET            SEEK_SET
 #define ADIO_SEEK_CUR            SEEK_CUR
@@ -325,6 +318,11 @@ typedef struct {
 #define ADIO_UNLINK_AFTER_CLOSE  305 /* supports posix semantic of keeping a
 					deleted file around until all
 					processors have closed it */
+#define ADIO_TWO_PHASE           306 /* file system implements some version of
+					two-phase collective buffering with
+					aggregation */
+#define ADIO_SCALABLE_RESIZE     307 /* file system supports resizing from one
+					processor (nfs, e.g. does not) */
 
 /* for default file permissions */
 #define ADIO_PERM_NULL           -1
@@ -400,6 +398,14 @@ void ADIO_IwriteStrided(ADIO_File fd, void *buf, int count,
 		       MPI_Datatype datatype, int file_ptr_type,
 		       ADIO_Offset offset, ADIO_Request *request, int
 		       *error_code);
+void ADIO_IreadStridedColl(ADIO_File fd, void *buf, int count,
+               MPI_Datatype datatype, int file_ptr_type,
+               ADIO_Offset offset, ADIO_Request *request,
+               int *error_code);
+void ADIO_IwriteStridedColl(ADIO_File fd, void *buf, int count,
+               MPI_Datatype datatype, int file_ptr_type,
+               ADIO_Offset offset, ADIO_Request *request,
+               int *error_code);
 ADIO_Offset ADIO_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
                        int whence, int *error_code);
 void ADIO_Delete(char *filename, int *error_code);
@@ -408,7 +414,7 @@ void ADIO_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
 void ADIO_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
 void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
           ADIOI_Fns **ops, int *error_code);
-void ADIO_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp, 
+void ADIO_Get_shared_fp(ADIO_File fd, ADIO_Offset size, ADIO_Offset *shared_fp,
 			 int *error_code);
 void ADIO_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code);
 void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype, 

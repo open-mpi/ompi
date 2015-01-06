@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_write_ordered_begin as PMPI_File_write_ordered_begin
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count, MPI_Datatype datatype)
+    __attribute__((weak,alias("PMPI_File_write_ordered_begin")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -36,10 +39,12 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count,
+int MPI_File_write_ordered_begin(MPI_File fh, ROMIO_CONST void *buf, int count,
 				 MPI_Datatype datatype)
 {
-    int error_code, datatype_size, nprocs, myrank, incr;
+    int error_code, nprocs, myrank;
+    ADIO_Offset incr;
+    MPI_Count datatype_size;
     int source, dest;
     static char myname[] = "MPI_FILE_WRITE_ORDERED_BEGIN";
     ADIO_Offset shared_fp;
@@ -68,7 +73,7 @@ int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count,
 
     adio_fh->split_coll_count = 1;
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);
     MPIO_CHECK_FS_SUPPORTS_SHARED(adio_fh, myname, error_code);
@@ -105,7 +110,7 @@ int MPI_File_write_ordered_begin(MPI_File fh, const void *buf, int count,
     xbuf = buf;
     if (adio_fh->is_external32) {
 	error_code = MPIU_external32_buffer_setup(buf, count, datatype, &e32buf);
-	if (error_code != MPI_SUCCESS)
+	if (error_code != MPI_SUCCESS) 
 	    goto fn_exit;
 
 	xbuf = e32buf;

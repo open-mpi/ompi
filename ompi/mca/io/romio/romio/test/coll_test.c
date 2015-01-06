@@ -18,9 +18,9 @@
 
 /* Note that the file access pattern is noncontiguous. */
    
-void handle_error(int errcode, char *str);
+void handle_error(int errcode, const char *str);
 
-void handle_error(int errcode, char *str)
+void handle_error(int errcode, const char *str)
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;
@@ -35,7 +35,8 @@ int main(int argc, char **argv)
     int i, ndims, array_of_gsizes[3], array_of_distribs[3];
     int order, nprocs, j, len;
     int array_of_dargs[3], array_of_psizes[3];
-    int *readbuf, *writebuf, bufcount, mynod, *tmpbuf, array_size;
+    int *readbuf, *writebuf, mynod, *tmpbuf, array_size;
+    MPI_Count bufcount;
     char *filename;
     int errs=0, toterrs;
     MPI_File fh;
@@ -100,7 +101,7 @@ int main(int argc, char **argv)
 
 /* initialize writebuf */
 
-    MPI_Type_size(newtype, &bufcount);
+    MPI_Type_size_x(newtype, &bufcount);
     bufcount = bufcount/sizeof(int);
     writebuf = (int *) malloc(bufcount * sizeof(int));
     for (i=0; i<bufcount; i++) writebuf[i] = 1;

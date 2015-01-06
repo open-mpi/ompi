@@ -7,8 +7,7 @@
 
 #include "ad_pvfs2.h"
 
-/* adioi.h has the ADIOI_Fns_struct define */
-#include "adioi.h"
+#include "adio.h"
 
 struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_Open, /* Open */
@@ -23,8 +22,13 @@ struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_ReadStrided, /* ReadStrided */
     ADIOI_PVFS2_WriteStrided, /* WriteStrided */
     ADIOI_PVFS2_Close, /* Close */
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
     ADIOI_PVFS2_IReadContig, /* IreadContig */
     ADIOI_PVFS2_IWriteContig, /* IwriteContig */
+#else
+    ADIOI_FAKE_IreadContig, /* IreadContig */
+    ADIOI_FAKE_IwriteContig, /* IwriteContig */
+#endif
     ADIOI_FAKE_IODone, /* ReadDone */
     ADIOI_FAKE_IODone, /* WriteDone */
     ADIOI_FAKE_IOComplete, /* ReadComplete */
@@ -34,7 +38,10 @@ struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_Flush, /* Flush */
     ADIOI_PVFS2_Resize, /* Resize */
     ADIOI_PVFS2_Delete, /* Delete */
-    ADIOI_PVFS2_Feature, 
+    ADIOI_PVFS2_Feature,
+    "PVFS2: the PVFS v2 or OrangeFS file systems",
+    ADIOI_GEN_IreadStridedColl, /* IreadStridedColl */
+    ADIOI_GEN_IwriteStridedColl /* IwriteStridedColl */
 };
 
 /* 

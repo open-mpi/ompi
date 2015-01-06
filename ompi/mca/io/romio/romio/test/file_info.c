@@ -12,15 +12,45 @@
 #include <string.h>
 #include <stdlib.h>
 
+static void handle_error(int errcode, const char *str)
+{
+	char msg[MPI_MAX_ERROR_STRING];
+	int resultlen;
+	MPI_Error_string(errcode, msg, &resultlen);
+	fprintf(stderr, "%s: %s\n", str, msg);
+	MPI_Abort(MPI_COMM_WORLD, 1);
+}
 /* this test wants to compare the hints it gets from a file with a set of
- * default hints.  These hints are specific to the MPI-IO implementation, so
- * pick one of the following profiles to use */
+ * default hints.  These hints are specific to the MPI-IO implementation, so if
+ * you want to test something besides the default you'll have to use a command
+ * line argument */
 
-#   define DFLT_CB_BUFFER_SIZE     16777216
-#   define DFLT_IND_RD_BUFFER_SIZE 4194304
-#   define DFLT_IND_WR_BUFFER_SIZE 524288
-#   define DFLT_ROMIO_CB_READ      "automatic"
-#   define DFLT_ROMIO_CB_WRITE     "automatic"
+typedef struct hint_defaults {
+    int cb_buffer_size;
+    int ind_rd_buffer_size;
+    int ind_wr_buffer_size;
+    const char *romio_cb_read;
+    const char *romio_cb_write;
+    const char *cb_config_list;
+} hint_defaults;
+
+hint_defaults UFS_DEFAULTS = {
+    .cb_buffer_size = 16777216,
+    .ind_rd_buffer_size = 4194304,
+    .ind_wr_buffer_size = 524288,
+    .romio_cb_read = "automatic",
+    .romio_cb_write = "automatic",
+    .cb_config_list = "*:1"
+};
+
+hint_defaults BLUEGENE_DEFAULTS = {
+    .cb_buffer_size = 16777216, 
+    .ind_rd_buffer_size = 4194304, 
+    .ind_wr_buffer_size = 4194304, 
+    .romio_cb_read = "enable", 
+    .romio_cb_write = "enable",
+    .cb_config_list = NULL};
+
 /* #undef INFO_DEBUG */
 
 /* Test will print out information about unexpected hint keys or values that
@@ -29,6 +59,8 @@
  * but not print out these "interesting" non-error cases. */
 
 static int verbose = 0;
+static int test_ufs = 0;
+static int test_bluegene = 0;
 
 int main(int argc, char **argv)
 {
@@ -36,6 +68,8 @@ int main(int argc, char **argv)
     MPI_File fh;
     MPI_Info info, info_used;
     char *filename, key[MPI_MAX_INFO_KEY], value[MPI_MAX_INFO_VAL];
+    hint_defaults *defaults;
+    int ret;
 
     MPI_Init(&argc,&argv);
 
@@ -48,6 +82,8 @@ int main(int argc, char **argv)
 	i = 1;
 	while ((i < argc) && strcmp("-fname", *argv)) {
 	    if (!strcmp("-v", *argv)) verbose = 1;
+	    else if (!strcmp("-u", *argv)) test_ufs = 1;
+	    else if (!strcmp("-b", *argv)) test_bluegene = 1;
 	    i++;
 	    argv++;
 	}
@@ -62,118 +98,133 @@ int main(int argc, char **argv)
 	MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(filename, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&verbose, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&test_ufs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&test_bluegene, 1, MPI_INT, 0, MPI_COMM_WORLD);
     }
     else {
 	MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	filename = (char *) malloc(len+1);
 	MPI_Bcast(filename, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&verbose, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&test_ufs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&test_bluegene, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+    if (test_ufs) {
+	defaults = &UFS_DEFAULTS;
+    } else if (test_bluegene) {
+	defaults = &BLUEGENE_DEFAULTS;
+    } else {
+	defaults = NULL;
     }
 
+
 /* open the file with MPI_INFO_NULL */
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
                   MPI_INFO_NULL, &fh);
+    if (ret != MPI_SUCCESS) handle_error(ret, "MPI_File_open");
 
 /* check the default values set by ROMIO */
     MPI_File_get_info(fh, &info_used);
     MPI_Info_get_nkeys(info_used, &nkeys);
 
-    for (i=0; i<nkeys; i++) {
-	MPI_Info_get_nthkey(info_used, i, key);
-	MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
+    if (defaults != NULL) {
+	for (i=0; i<nkeys; i++) {
+	    MPI_Info_get_nthkey(info_used, i, key);
+	    MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
 #ifdef INFO_DEBUG
-	if (!mynod) 
-	    fprintf(stderr, "Process %d, Default:  key = %s, value = %s\n", mynod, 
-                key, value);
+	    if (!mynod) 
+		fprintf(stderr, "Process %d, Default:  key = %s, value = %s\n", mynod, 
+			key, value);
 #endif
-	if (!strcmp("striping_factor", key)) {
-	    default_striping_factor = atoi(value);
-	    /* no check */
-	}
-	else if (!strcmp("cb_buffer_size", key)) {
-	    if (atoi(value) != DFLT_CB_BUFFER_SIZE) {
-		errs++;
-		if (verbose) fprintf(stderr, "cb_buffer_size is %d; should be %d\n",
-				     atoi(value), DFLT_CB_BUFFER_SIZE);
+	    if (!strcmp("striping_factor", key)) {
+		default_striping_factor = atoi(value);
+		/* no check */
 	    }
-	}
-	else if (!strcmp("romio_cb_read", key)) {
-	    if (strcmp(DFLT_ROMIO_CB_READ, value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_cb_read is set to %s; should be %s\n",
-				     value, DFLT_ROMIO_CB_READ);
+	    else if (!strcmp("cb_buffer_size", key)) {
+		if (atoi(value) != defaults->cb_buffer_size) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "cb_buffer_size is %d; should be %d\n",
+			    atoi(value), defaults->cb_buffer_size);
+		}
 	    }
-	}
-	else if (!strcmp("romio_cb_write", key)) {
-	    if (strcmp(DFLT_ROMIO_CB_WRITE, value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_cb_write is set to %s; should be %s\n",
-				     value, DFLT_ROMIO_CB_WRITE);
+	    else if (!strcmp("romio_cb_read", key)) {
+		if (strcmp(defaults->romio_cb_read, value)) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "romio_cb_read is set to %s; should be %s\n",
+			    value, defaults->romio_cb_read);
+		}
 	    }
-	}
-	else if (!strcmp("cb_nodes", key)) {
-	    /* unreliable test -- just ignore value */
-	}
-	else if (!strcmp("romio_no_indep_rw", key)) {
-	    if (strcmp("false", value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_no_indep_rw is set to %s; should be %s\n",
-				     value, "false");
+	    else if (!strcmp("romio_cb_write", key)) {
+		if (strcmp(defaults->romio_cb_write, value)) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "romio_cb_write is set to %s; should be %s\n",
+			    value, defaults->romio_cb_write);
+		}
 	    }
-	}
-	else if (!strcmp("ind_rd_buffer_size", key)) {
-	    if (atoi(value) != DFLT_IND_RD_BUFFER_SIZE) {
-		errs++;
-		if (verbose) fprintf(stderr, "ind_rd_buffer_size is %d; should be %d\n",
-				     atoi(value), DFLT_IND_RD_BUFFER_SIZE);
+	    else if (!strcmp("cb_nodes", key)) {
+		/* unreliable test -- just ignore value */
 	    }
-	}
-	else if (!strcmp("ind_wr_buffer_size", key)) {
-	    if (atoi(value) != DFLT_IND_WR_BUFFER_SIZE) {
-		errs++;
-		if (verbose) fprintf(stderr, "ind_wr_buffer_size is %d; should be %d\n",
-				     atoi(value), DFLT_IND_WR_BUFFER_SIZE);
+	    else if (!strcmp("romio_no_indep_rw", key)) {
+		if (strcmp("false", value)) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "romio_no_indep_rw is set to %s; should be %s\n",
+			    value, "false");
+		}
 	    }
-	}
-	else if (!strcmp("romio_ds_read", key)) {
-	    if (strcmp("automatic", value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_ds_read is set to %s; should be %s\n",
-				     value, "automatic");
+	    else if (!strcmp("ind_rd_buffer_size", key)) {
+		if (atoi(value) != defaults->ind_rd_buffer_size) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "ind_rd_buffer_size is %d; should be %d\n",
+			    atoi(value), defaults->ind_rd_buffer_size);
+		}
 	    }
-	}
-	else if (!strcmp("romio_ds_write", key)) {
-	    /* Unreliable test -- value is file system dependent.  Ignore. */
-	}
-	else if (!strcmp("cb_config_list", key)) {
+	    else if (!strcmp("ind_wr_buffer_size", key)) {
+		if (atoi(value) != defaults->ind_wr_buffer_size) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "ind_wr_buffer_size is %d; should be %d\n",
+			    atoi(value), defaults->ind_wr_buffer_size);
+		}
+	    }
+	    else if (!strcmp("romio_ds_read", key)) {
+		if (strcmp("automatic", value)) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "romio_ds_read is set to %s; should be %s\n",
+			    value, "automatic");
+		}
+	    }
+	    else if (!strcmp("romio_ds_write", key)) {
+		/* Unreliable test -- value is file system dependent.  Ignore. */
+	    }
+	    else if (!strcmp("cb_config_list", key)) {
 #ifndef SKIP_CB_CONFIG_LIST_TEST
-	    if (strcmp("*:1", value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "cb_config_list is set to %s; should be %s\n",
-				     value, "*:1");
-	    }
+		if (strcmp(defaults->cb_config_list, value)) {
+		    errs++;
+		    if (verbose) fprintf(stderr, "cb_config_list is set to %s; should be %s\n",
+			    value, defaults->cb_config_list);
+		}
 #endif
-	}
-	/* don't care about the defaults for these keys */
-	else if (!strcmp("romio_cb_pfr", key)) {
-	}
-	else if (!strcmp("romio_cb_fr_types", key)) {
-	}
-	else if (!strcmp("romio_cb_fr_alignment", key)) {
-	}
-	else if (!strcmp("romio_cb_ds_threshold", key)) {
-	}
-	else if (!strcmp("romio_cb_alltoall", key)) {
-	}
-	else {
-	    if (verbose) fprintf(stderr, "unexpected key %s (not counted as an error)\n", key);
+	    }
+	    /* don't care about the defaults for these keys */
+	    else if (!strcmp("romio_cb_pfr", key)) {
+	    }
+	    else if (!strcmp("romio_cb_fr_types", key)) {
+	    }
+	    else if (!strcmp("romio_cb_fr_alignment", key)) {
+	    }
+	    else if (!strcmp("romio_cb_ds_threshold", key)) {
+	    }
+	    else if (!strcmp("romio_cb_alltoall", key)) {
+	    }
+	    else {
+		if (verbose) fprintf(stderr, "unexpected key %s (not counted as an error)\n", key);
+	    }
 	}
     }
     MPI_Info_free(&info_used);
 
     MPI_File_close(&fh);
-    
-/* delete the file */
+
+    /* delete the file */
     if (!mynod) MPI_File_delete(filename, MPI_INFO_NULL);
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -235,11 +286,13 @@ int main(int argc, char **argv)
     MPI_Info_set(info, "pfs_svr_buf", "true");
 
 /* open the file and set new info */
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
                   info, &fh);
+    if (ret != MPI_SUCCESS) handle_error(ret, "MPI_File_open");
 
 /* check the values set */
-    MPI_File_get_info(fh, &info_used);
+    ret = MPI_File_get_info(fh, &info_used);
+    if (ret != MPI_SUCCESS) handle_error(ret, "MPI_File_get_info");
     MPI_Info_get_nkeys(info_used, &nkeys);
 
     for (i=0; i<nkeys; i++) {
@@ -268,26 +321,9 @@ int main(int argc, char **argv)
 				     atoi(value), 8388608);
 	    }
 	}
-	else if (!strcmp("romio_cb_read", key)) {
-	    if (strcmp(DFLT_ROMIO_CB_READ, value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_cb_read is set to %s; should be %s\n",
-				     value, DFLT_ROMIO_CB_READ);
-	    }
-	}
-	else if (!strcmp("romio_cb_write", key)) {
-	    if (strcmp(DFLT_ROMIO_CB_WRITE, value)) {
-		errs++;
-		if (verbose) fprintf(stderr, "romio_cb_write is set to %s; should be %s\n",
-				     value, DFLT_ROMIO_CB_WRITE);
-	    }
-	}
+	/* only check the hints we set */
 	else if (!strcmp("cb_nodes", key)) {
-	    if (atoi(value) != (nprocs/2)) {
-		errs++;
-		if (verbose) fprintf(stderr, "cb_nodes is %d; should be %d\n", atoi(value),
-				     nprocs/2);
-	    }
+	    /* unreliable test: just skip */
 	}
 	else if (!strcmp("romio_no_indep_rw", key)) {
 	    if (strcmp("false", value)) {

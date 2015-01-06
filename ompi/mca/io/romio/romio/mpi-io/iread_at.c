@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_iread_at as PMPI_File_iread_at
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
+                      MPIO_Request *request) __attribute__((weak,alias("PMPI_File_iread_at")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -42,7 +45,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
+int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, 
                       MPIO_Request *request)
 {
     int error_code;

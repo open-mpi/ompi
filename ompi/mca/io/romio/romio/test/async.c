@@ -14,9 +14,9 @@
    reads them back. The file name is taken as a command-line argument,
    and the process rank is appended to it.*/ 
 
-void handle_error(int errcode, char *str);
+void handle_error(int errcode, const char *str);
 
-void handle_error(int errcode, char *str) 
+void handle_error(int errcode, const char *str) 
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;

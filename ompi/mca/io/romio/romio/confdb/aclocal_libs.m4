@@ -38,22 +38,17 @@ AC_DEFUN([PAC_SET_HEADER_LIB_PATH],[
     # taking priority
 
     AS_IF([test -n "${with_$1_include}"],
-          [PAC_APPEND_FLAG([-I${with_$1_include}],[CPPFLAGS])
-	   PAC_APPEND_FLAG([-I${with_$1_include}],[WRAPPER_CPPFLAGS])],
+          [PAC_APPEND_FLAG([-I${with_$1_include}],[CPPFLAGS])],
           [AS_IF([test -n "${with_$1}"],
-                 [PAC_APPEND_FLAG([-I${with_$1}/include],[CPPFLAGS])
-		  PAC_APPEND_FLAG([-I${with_$1}/include],[WRAPPER_CPPFLAGS])])])
+                 [PAC_APPEND_FLAG([-I${with_$1}/include],[CPPFLAGS])])])
 
     AS_IF([test -n "${with_$1_lib}"],
-          [PAC_APPEND_FLAG([-L${with_$1_lib}],[LDFLAGS])
-	   PAC_APPEND_FLAG([-L${with_$1_lib}],[WRAPPER_LDFLAGS])],
+          [PAC_APPEND_FLAG([-L${with_$1_lib}],[LDFLAGS])],
           [AS_IF([test -n "${with_$1}"],
                  dnl is adding lib64 by default really the right thing to do?  What if
                  dnl we are on a 32-bit host that happens to have both lib dirs available?
                  [PAC_APPEND_FLAG([-L${with_$1}/lib64],[LDFLAGS])
-		  PAC_APPEND_FLAG([-L${with_$1}/lib64],[WRAPPER_LDFLAGS])
-                  PAC_APPEND_FLAG([-L${with_$1}/lib],[LDFLAGS])
-		  PAC_APPEND_FLAG([-L${with_$1}/lib],[WRAPPER_LDFLAGS])])])
+                  PAC_APPEND_FLAG([-L${with_$1}/lib],[LDFLAGS])])])
 ])
 
 

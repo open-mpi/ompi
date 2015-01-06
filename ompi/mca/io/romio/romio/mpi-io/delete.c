@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_delete as PMPI_File_delete
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_delete(const char *filename, MPI_Info info) __attribute__((weak,alias("PMPI_File_delete")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -32,7 +34,7 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_delete(const char *filename, MPI_Info info)
+int MPI_File_delete(ROMIO_CONST char *filename, MPI_Info info)
 {
     int error_code, file_system;
     char *tmp;

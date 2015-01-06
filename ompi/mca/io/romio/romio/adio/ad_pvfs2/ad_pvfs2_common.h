@@ -5,8 +5,8 @@
  *   See COPYRIGHT notice in top-level directory.
  */
 
-#ifndef _AD_PVFS2_h
-#define _AD_PVFS2_H
+#ifndef _AD_PVFS2_COMMON_H
+#define _AD_PVFS2_COMMON_H
 #include "ad_pvfs2.h"
 
 /* useful values:

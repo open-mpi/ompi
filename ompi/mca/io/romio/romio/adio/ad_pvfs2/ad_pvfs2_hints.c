@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include "ad_pvfs2.h"
 
+#include "hint_fns.h"
+
 void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
     char *value;
@@ -45,8 +47,8 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	
 	/* any user-provided hints? */
 	if (users_info != MPI_INFO_NULL) {
-	    /* pvfs2 debugging */
 	    value = (char *) ADIOI_Malloc( (MPI_MAX_INFO_VAL+1)*sizeof(char));
+	    /* pvfs2 debugging */
 	    ADIOI_Info_get(users_info, "romio_pvfs2_debugmask", 
 		    MPI_MAX_INFO_VAL, value, &flag);
 	    if (flag) {
@@ -67,41 +69,13 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    }
 
 	    /* the striping factor */
-	    ADIOI_Info_get(users_info, "striping_factor", 
-		    MPI_MAX_INFO_VAL, value, &flag);
-	    if (flag) {
-		tmp_value = fd->hints->striping_factor =  atoi(value);
+	    ADIOI_Info_check_and_install_int(fd, users_info, "striping_factor",
+		    &(fd->hints->striping_factor), myname, error_code);
 
-		MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-		/* --BEGIN ERROR HANDLING-- */
-		if (tmp_value != fd->hints->striping_factor) {
-		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-						       "striping_factor",
-						       error_code);
-		    return;
-		}
-		/* --END ERROR HANDLING-- */
-		
-		ADIOI_Info_set(fd->info, "striping_factor", value);
-	    }
 
 	    /* the striping unit */
-	    ADIOI_Info_get(users_info, "striping_unit",
-		    MPI_MAX_INFO_VAL, value, &flag);
-	    if (flag) {
-		tmp_value = fd->hints->striping_unit = atoi(value);
-		MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-		/* --BEGIN ERROR HANDLING-- */
-		if (tmp_value != fd->hints->striping_unit) {
-		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname, 
-			                               "striping_unit",
-			                                error_code);
-		    return;
-		}
-		/* --END ERROR HANDLING-- */
-
-		ADIOI_Info_set(fd->info, "striping_unit", value);
-	    }
+	    ADIOI_Info_check_and_install_int(fd, users_info, "striping_unit",
+		    &(fd->hints->striping_unit), myname, error_code);
 
 	    /* distribution name */
 	    ADIOI_Info_get(users_info, "romio_pvfs2_distribution_name",
@@ -109,158 +83,30 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    if (flag) {
 	    }
 
-
 	    /* POSIX read */
-            ADIOI_Info_get(users_info, "romio_pvfs2_posix_read",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_posix_read", value);
-                    fd->hints->fs_hints.pvfs2.posix_read = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_posix_read", value);
-                    fd->hints->fs_hints.pvfs2.posix_read = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.posix_read;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.posix_read) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "posix_read",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_posix_read",
+		    &(fd->hints->fs_hints.pvfs2.posix_read), myname, error_code);
 
             /* POSIX write */
-            ADIOI_Info_get(users_info, "romio_pvfs2_posix_write",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_posix_write", value);
-                    fd->hints->fs_hints.pvfs2.posix_write = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_posix_write", value);
-                    fd->hints->fs_hints.pvfs2.posix_write = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.posix_write;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.posix_write) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "posix_write",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_posix_write",
+		    &(fd->hints->fs_hints.pvfs2.posix_write), myname, error_code);
 
 	    /* Datatype read */
-            ADIOI_Info_get(users_info, "romio_pvfs2_dtype_read",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_dtype_read", value);
-                    fd->hints->fs_hints.pvfs2.dtype_read = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_dtype_read", value);
-                    fd->hints->fs_hints.pvfs2.dtype_read = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.dtype_read;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.dtype_read) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "dtype_read",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_dtype_read",
+		    &(fd->hints->fs_hints.pvfs2.dtype_read), myname, error_code);
 
             /* Datatype write */
-            ADIOI_Info_get(users_info, "romio_pvfs2_dtype_write",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_dtype_write", value);
-                    fd->hints->fs_hints.pvfs2.dtype_write = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_dtype_write", value);
-                    fd->hints->fs_hints.pvfs2.dtype_write = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.dtype_write;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.dtype_write) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "dtype_write",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_dtype_write",
+		    &(fd->hints->fs_hints.pvfs2.dtype_write), myname, error_code);
 
 	    /* Listio read */
-            ADIOI_Info_get(users_info, "romio_pvfs2_listio_read",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_listio_read", value);
-                    fd->hints->fs_hints.pvfs2.listio_read = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_listio_read", value);
-                    fd->hints->fs_hints.pvfs2.listio_read = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.listio_read;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.listio_read) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "listio_read",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_listio_read",
+		    &(fd->hints->fs_hints.pvfs2.listio_read), myname, error_code);
 
             /* Datatype write */
-            ADIOI_Info_get(users_info, "romio_pvfs2_listio_write",
-                         MPI_MAX_INFO_VAL, value, &flag);
-            if (flag) {
-                if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
-                {
-                    ADIOI_Info_set(fd->info, "romio_pvfs2_listio_write", value);
-                    fd->hints->fs_hints.pvfs2.listio_write = ADIOI_HINT_ENABLE;
-                }
-                else if ( !strcmp(value, "disable") ||
-                          !strcmp(value, "DISABLE"))
-                {
-                    ADIOI_Info_set(fd->info , "romio_pvfs2_listio_write", value);
-                    fd->hints->fs_hints.pvfs2.listio_write = ADIOI_HINT_DISABLE;
-                }
-                tmp_value = fd->hints->fs_hints.pvfs2.listio_write;
-                MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
-                if (tmp_value != fd->hints->fs_hints.pvfs2.listio_write) {
-                    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
-                                                       "listio_write",
-                                                       error_code);
-                    return;
-                }
-            }
+	    ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_pvfs2_listio_write",
+		    &(fd->hints->fs_hints.pvfs2.listio_write), myname, error_code);
             ADIOI_Free(value);
-
 	}
     }
     /* set the values for collective I/O and data sieving parameters */

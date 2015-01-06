@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*
- *   Copyright (C) 2004 University of Chicago.
+/* 
+ *   Copyright (C) 2004 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,16 +11,16 @@
 #include "adio_extern.h"
 
 /* MPICH error handling implementation */
-/* FIXME: These external prototypes should be included from
+/* FIXME: These external prototypes should be included from 
    mpich/src/include/mpiext.h */
-int MPIR_Err_create_code_valist(int, int, const char [], int, int,
+int MPIR_Err_create_code_valist(int, int, const char [], int, int, 
 				const char [], const char [], va_list );
 int MPIR_Err_is_fatal(int);
 
-void MPIR_Get_file_error_routine( MPI_Errhandler,
-				  void (**)(MPI_File *, int *, ...),
+void MPIR_Get_file_error_routine( MPI_Errhandler, 
+				  void (**)(MPI_File *, int *, ...), 
 				  int * );
-int MPIR_File_call_cxx_errhandler( MPI_File *, int *,
+int MPIR_File_call_cxx_errhandler( MPI_File *, int *, 
 				   void (*)(MPI_File *, int *, ... ) );
 
 typedef int (* MPIR_Err_get_class_string_func_t)(int error, char *str, int length);
@@ -41,7 +41,7 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
     error_code = MPIR_Err_create_code_valist(lastcode, fatal, fcname, line,
 					     error_class, generic_msg,
 					     specific_msg, Argp);
-
+    
     va_end(Argp);
 
     return error_code;
@@ -56,9 +56,9 @@ int MPIO_Err_return_file(MPI_File mpi_fh, int error_code)
     int len;
 
     /* If the file pointer is not valid, we use the handler on
-       MPI_FILE_NULL (MPI-2, section 9.7).  For now, this code assumes that
+       MPI_FILE_NULL (MPI-2, section 9.7).  For now, this code assumes that 
        MPI_FILE_NULL has the default handler (return).  FIXME.  See
-       below - the set error handler uses ADIOI_DFLT_ERR_HANDLER;
+       below - the set error handler uses ADIOI_DFLT_ERR_HANDLER; 
     */
 
     /* First, get the handler and the corresponding function */
@@ -90,7 +90,7 @@ int MPIO_Err_return_file(MPI_File mpi_fh, int error_code)
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    if (MPIR_Err_is_fatal(error_code) || kind == 0)
+    if (MPIR_Err_is_fatal(error_code) || kind == 0) 
     {
 	ADIOI_Snprintf(error_msg, 4096, "I/O error: ");
 	len = (int)strlen(error_msg);
@@ -99,7 +99,7 @@ int MPIO_Err_return_file(MPI_File mpi_fh, int error_code)
     }
     /* --END ERROR HANDLING-- */
     else if (kind == 2) {
-	(*c_errhandler)( &mpi_fh, &error_code, 0 );
+	(*c_errhandler)( &mpi_fh, &error_code, 0 ); 
     }
     else if (kind == 3) {
 	MPIR_File_call_cxx_errhandler( &mpi_fh, &error_code, c_errhandler );

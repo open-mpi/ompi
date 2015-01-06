@@ -1,6 +1,6 @@
 /*
  *  This code was written by Intel Corporation. Copyright (C) 2011-2012 Intel Corporation.
- *  Intel provides this material to Argonne National Laboratory subject to
+ *  Intel provides this material to Argonne National Laboratory subject to 
  *  Software Grant and Corporate Contributor License Agreement dated February 8, 2012.
  *
  *  See COPYRIGHT in top-level directory.
@@ -27,7 +27,7 @@ static void handle_error(int errcode, char *str)
 
 
 
-void is_little_or_big_endian( char* datarep, char* c, char* c_le, int len ) {
+static void is_little_or_big_endian( const char* datarep, char* c, char* c_le, int len ) {
     int i, is_le = 1, is_be = 1;
     for( i = 0; i < len; i++ ) {
         is_le = is_le && ( c[i] == c_le[i] );
@@ -46,7 +46,7 @@ void is_little_or_big_endian( char* datarep, char* c, char* c_le, int len ) {
 int main( int argc, char* argv[] ) {
     int sample_i = 123456789, i, j;
     char sample_i_le[4] = {0x15,0xcd,0x5b,0x07}, c[4];
-    char* datarep[3] = { "native", "external32", "internal" };
+    const char* datarep[3] = { "native", "external32", "internal" };
     MPI_File fileh;
     int rank;
     FILE* fileh_std;
@@ -60,14 +60,14 @@ int main( int argc, char* argv[] ) {
     for( i = 0; i < 3; i++ ) {
 
         /* Open file */
-        CHECK(MPI_File_open( MPI_COMM_WORLD, TEST_FILENAME,
+        CHECK(MPI_File_open( MPI_COMM_WORLD, TEST_FILENAME, 
 		    MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &fileh ) );
 
         /* Set view */
 	CHECK(MPI_File_set_view( fileh, 0, MPI_INT, MPI_INT, datarep[i], MPI_INFO_NULL ));
 
         /* Write into file */
-	CHECK(MPI_File_write_at( fileh, (MPI_Offset)rank, (void*)&sample_i, 1,
+	CHECK(MPI_File_write_at( fileh, (MPI_Offset)rank, (void*)&sample_i, 1, 
 		    MPI_INT, MPI_STATUS_IGNORE ));
 
         /* Close file */

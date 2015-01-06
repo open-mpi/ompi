@@ -215,8 +215,8 @@ void ADIOI_LUSTRE_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list,
 	    my_req[i].offsets = (ADIO_Offset *)
 		                ADIOI_Malloc(count_my_req_per_proc[i] *
                                              sizeof(ADIO_Offset));
-	    my_req[i].lens = (int *) ADIOI_Malloc(count_my_req_per_proc[i] *
-				                  sizeof(int));
+	    my_req[i].lens = ADIOI_Malloc(count_my_req_per_proc[i] *
+				                  sizeof(ADIO_Offset));
 	    count_my_req_procs++;
 	}
 	my_req[i].count = 0;	/* will be incremented where needed later */

@@ -13,7 +13,8 @@ void ADIOI_PFS_IreadContig(ADIO_File fd, void *buf, int count,
 			   int *error_code)
 {
     long *id_sys;
-    int len, typesize, err=-1;
+    int err=-1;
+    MPI_Count len, typesize;
     ADIO_Offset off;
     static char myname[] = "ADIOI_PFS_IREADCONTIG";
 
@@ -22,7 +23,7 @@ void ADIOI_PFS_IreadContig(ADIO_File fd, void *buf, int count,
     (*request)->fd = fd;
     (*request)->datatype = datatype;
 
-    MPI_Type_size(datatype, &typesize);
+    MPI_Type_size_x(datatype, &typesize);
     len = count * typesize;
 
     id_sys = (long *) ADIOI_Malloc(sizeof(long));

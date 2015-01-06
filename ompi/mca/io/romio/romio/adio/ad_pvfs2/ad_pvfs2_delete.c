@@ -10,7 +10,7 @@
 
 #include "ad_pvfs2_common.h"
 
-void ADIOI_PVFS2_Delete(char *filename, int *error_code)
+void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
 {
     PVFS_credentials credentials;
     PVFS_sysresp_getparent resp_getparent;

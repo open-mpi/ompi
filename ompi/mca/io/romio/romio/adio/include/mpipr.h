@@ -290,13 +290,10 @@
 #define MPI_Waitany PMPI_Waitany
 #undef MPI_Waitsome
 #define MPI_Waitsome PMPI_Waitsome
-/* Open MPI: these functions are not supposed to be profiled */
-#if 0
 #undef MPI_Wtick
 #define MPI_Wtick PMPI_Wtick
 #undef MPI_Wtime
 #define MPI_Wtime PMPI_Wtime
-#endif
 
 /* commented out because these could be macros themselves, as in MPICH 
 #undef MPI_Type_c2f

@@ -12,10 +12,11 @@ void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
-    int err=-1, datatype_size, len;
+    int err=-1;
+    MPI_Count datatype_size, len;
     static char myname[] = "ADIOI_NFS_READCONTIG";
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
@@ -171,7 +172,8 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
     int bufsize, num, size, sum, n_etypes_in_filetype, size_in_filetype;
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
-    int filetype_size, etype_size, buftype_size, req_len, partial_read;
+    int req_len, partial_read;
+    MPI_Count filetype_size, etype_size, buftype_size;
     MPI_Aint filetype_extent, buftype_extent; 
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
@@ -185,7 +187,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size_x(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
@@ -195,7 +197,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
     }
 
     MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_size(datatype, &buftype_size);
+    MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
 

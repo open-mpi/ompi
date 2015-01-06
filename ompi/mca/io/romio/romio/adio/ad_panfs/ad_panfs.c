@@ -41,4 +41,7 @@ struct ADIOI_Fns_struct ADIO_PANFS_operations = {
     ADIOI_PANFS_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
     ADIOI_GEN_Feature,
+    "PANFS: Panasas PanFS",
+    ADIOI_GEN_IreadStridedColl, /* IreadStridedColl */
+    ADIOI_GEN_IwriteStridedColl /* IwriteStridedColl */
 };

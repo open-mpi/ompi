@@ -34,4 +34,6 @@ struct ADIOI_Fns_struct ADIO_GRIDFTP_operations = {
     ADIOI_GRIDFTP_Resize, /* Resize */
     ADIOI_GRIDFTP_Delete, /* Delete */
     ADIOI_GRIDFTP_Feature, /* Features */
+    ADIOI_GEN_IreadStridedColl, /* IreadStridedColl */
+    ADIOI_GEN_IwriteStridedColl /* IwriteStridedColl */
 };

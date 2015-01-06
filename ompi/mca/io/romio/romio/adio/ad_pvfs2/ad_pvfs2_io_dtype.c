@@ -18,13 +18,15 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 			       *error_code,
 			       int rw_type)
 {
-    int filetype_size = -1, ret = -1, filetype_is_contig = -1;
+    int ret = -1, filetype_is_contig = -1;
+    MPI_Count filetype_size = -1;
     int num_filetypes = 0, cur_flat_file_reg_off = 0;
     PVFS_Request tmp_mem_req, mem_req, tmp_file_req, file_req;
     PVFS_sysresp_io resp_io;
     ADIO_Offset off = -1, bytes_into_filetype = 0;
     MPI_Aint filetype_extent = -1;
-    int etype_size = -1, i = -1;
+    int i = -1;
+    MPI_Count etype_size;
     PVFS_size pvfs_disp = -1;
     ADIOI_Flatlist_node *flat_file_p = ADIOI_Flatlist;
 
@@ -47,13 +49,13 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 
     /* datatype is the memory type 
      * fd->filetype is the file type */
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size_x(fd->filetype, &filetype_size);
     if (filetype_size == 0) {
         *error_code = MPI_SUCCESS;
         return -1;
     }
     MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_size(fd->etype, &etype_size);
+    MPI_Type_size_x(fd->etype, &etype_size);
     if (filetype_size == 0) {
         *error_code = MPI_SUCCESS;
         return -1;
@@ -162,7 +164,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
     if (ret != 0) {
 	fprintf(stderr, "ADIOI_PVFS2_StridedDtypeIO: Warning - PVFS_sys_"
 		"read/write returned %d and completed %Ld bytes.\n", 
-		ret, resp_io.total_completed);
+		ret, (long long)resp_io.total_completed);
         *error_code = MPIO_Err_create_code(MPI_SUCCESS,
                                            MPIR_ERR_RECOVERABLE,
                                            myname, __LINE__,
@@ -189,7 +191,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 #endif
 
 #ifdef HAVE_STATUS_SET_BYTES
-    MPIR_Status_set_bytes(status, datatype, (int)resp_io.total_completed);
+    MPIR_Status_set_bytes(status, datatype, resp_io.total_completed);
     /* This is a temporary way of filling in status. The right way is to
      * keep track of how much data was actually acccessed by 
      * ADIOI_BUFFERED operations */
@@ -210,7 +212,8 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 {
     int num_int = -1, num_addr = -1, num_dtype = -1, 
 	combiner = -1, i = -1, ret = -1, leaf = -1;
-    int *arr_int = NULL, *arr_addr = NULL;
+    int *arr_int = NULL;
+    MPI_Aint *arr_addr = NULL;
     MPI_Datatype *arr_dtype = NULL;
     PVFS_Request *old_pvfs_dtype = NULL;
     PVFS_Request *old_pvfs_dtype_arr = NULL;
@@ -607,63 +610,63 @@ int convert_named(MPI_Datatype *mpi_dtype,
     }
     else if ( MPI_INT == *mpi_dtype )
     {
-            ret = PVFS_Request_contiguous(1, PVFS_INT, pvfs_dtype);	  
+            ret = PVFS_Request_contiguous(1, PVFS_INT, pvfs_dtype);
 #ifdef DEBUG_DTYPE
             fprintf(stderr, "-MPI_INT\n");
 #endif
     }
     else if ( MPI_LONG == *mpi_dtype )
     {
-            ret = PVFS_Request_contiguous(1, PVFS_LONG, pvfs_dtype);	  
+            ret = PVFS_Request_contiguous(1, PVFS_LONG, pvfs_dtype);
 #ifdef DEBUG_DTYPE
             fprintf(stderr, "-MPI_LONG\n");
 #endif
     }
-    else if ( MPI_FLOAT == *mpi_dtype ) 
+    else if ( MPI_FLOAT == *mpi_dtype )
     {
-	    ret  = PVFS_Request_contiguous(1, PVFS_FLOAT, pvfs_dtype);	  
+	    ret  = PVFS_Request_contiguous(1, PVFS_FLOAT, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_FLOAT\n");
 #endif
     }
-    else if ( MPI_DOUBLE == *mpi_dtype ) 
+    else if ( MPI_DOUBLE == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_DOUBLE, pvfs_dtype);	  
+	    ret = PVFS_Request_contiguous(1, PVFS_DOUBLE, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_DOUBLE\n");
 #endif
     }
     else if ( MPI_UNSIGNED_CHAR == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED_CHAR, pvfs_dtype);  
+	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED_CHAR, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_UNSIGNED_CHAR\n");
 #endif
     }
     else if ( MPI_UNSIGNED_SHORT == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED, pvfs_dtype); 
+	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_UNSIGNED_SHORT\n");
 #endif
     }
     else if ( MPI_UNSIGNED == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED, pvfs_dtype);  
+	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_SHORT\n");
 #endif
     }
     else if ( MPI_UNSIGNED_LONG == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED_LONG, pvfs_dtype);  
+	    ret = PVFS_Request_contiguous(1, PVFS_UNSIGNED_LONG, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_UNSIGNED_LONG\n");
 #endif
     }
     else if ( MPI_LONG_DOUBLE == *mpi_dtype )
     {
-	    ret = PVFS_Request_contiguous(1, PVFS_LONG_DOUBLE, pvfs_dtype);  
+	    ret = PVFS_Request_contiguous(1, PVFS_LONG_DOUBLE, pvfs_dtype);
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "-MPI_LONG_DOUBLE\n");
 #endif
@@ -697,34 +700,34 @@ void print_dtype_info(int combiner,
 		    arr_int[0], arr_int[1], arr_int[2]);
 	    break;
 	case MPI_COMBINER_HVECTOR:
-	    fprintf(stderr, "HVECTOR(%d,%d,%d)\n",
+	    fprintf(stderr, "HVECTOR(%d,%d,%ld)\n",
 		    arr_int[0], arr_int[1],arr_addr[0]);
 	    break;
 	case MPI_COMBINER_INDEXED:
 	    fprintf(stderr, "INDEXED(%d,[",
 		    arr_int[0]);
 	    for (i = 0; i < arr_int[0]; i++)
-		fprintf(stderr, "(%d,%Ld) ",
+		fprintf(stderr, "(%d,%d) ",
 			arr_int[1+i],
-			(int64_t) arr_int[arr_int[0]+1+i]);
+			arr_int[arr_int[0]+1+i]);
 	    fprintf(stderr, "]\n");
 	    break;
 	case MPI_COMBINER_HINDEXED:
 	    fprintf(stderr, "HINDEXED(%d,[",
 		    arr_int[0]);
 	    for (i = 0; i < arr_int[0]; i++)
-		fprintf(stderr, "(%d,%Ld) ",
+		fprintf(stderr, "(%d,%lld) ",
 			arr_int[1+i],
-			(int64_t) arr_addr[i]);
+			(long long)arr_addr[i]);
 	    fprintf(stderr, "]\n");
 	    break;
 	case MPI_COMBINER_STRUCT:
 	    fprintf(stderr, "STRUCT(%d,[",
 		    arr_int[0]);
 	    for (i = 0; i < arr_int[0]; i++)
-		fprintf(stderr, "(%d,%Ld) ",
+		fprintf(stderr, "(%d,%lld) ",
 			arr_int[1+i],
-			(int64_t) arr_addr[i]);
+			(long long) arr_addr[i]);
 	    fprintf(stderr, "]\n");
 	    break;
 	case MPI_COMBINER_DUP:

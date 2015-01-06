@@ -50,7 +50,7 @@ void *ADIOI_Malloc_fn(size_t size, int lineno, const char *fname)
     new = (void *) malloc(size);
 #endif
 #endif
-    if (!new) {
+    if (!new && size) {
 	FPRINTF(stderr, "Out of memory in file %s, line %d\n", fname, lineno);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -68,7 +68,7 @@ void *ADIOI_Calloc_fn(size_t nelem, size_t elsize, int lineno, const char *fname
 #else
     new = (void *) calloc(nelem, elsize);
 #endif
-    if (!new) {
+    if (!new && nelem) {
 	FPRINTF(stderr, "Out of memory in file %s, line %d\n", fname, lineno);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -86,7 +86,7 @@ void *ADIOI_Realloc_fn(void *ptr, size_t size, int lineno, const char *fname)
 #else
     new = (void *) realloc(ptr, size);
 #endif
-    if (!new) {
+    if (!new && size) {
 	FPRINTF(stderr, "realloc failed in file %s, line %d\n", fname, lineno);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }

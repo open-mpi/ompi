@@ -34,4 +34,6 @@ struct ADIOI_Fns_struct ADIO_PVFS_operations = {
     ADIOI_PVFS_Resize, /* Resize */
     ADIOI_PVFS_Delete, /* Delete */
     ADIOI_PVFS_Feature, /* Features */
+    ADIOI_GEN_IreadStridedColl, /* IreadStridedColl */
+    ADIOI_GEN_IwriteStridedColl /* IwriteStridedColl */
 };

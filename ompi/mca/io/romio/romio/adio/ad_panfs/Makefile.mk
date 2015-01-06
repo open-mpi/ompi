@@ -7,10 +7,6 @@
 
 if BUILD_AD_PANFS
 
-# I don't like this hard-coded path to the PANFS headers but I guess that's
-# where they always are?
-AM_CPPFLAGS += -I/opt/panfs/include
-
 noinst_HEADERS += adio/ad_panfs/ad_panfs.h
 
 romio_other_sources +=              \

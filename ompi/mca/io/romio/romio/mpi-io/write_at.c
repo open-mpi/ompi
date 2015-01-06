@@ -15,6 +15,10 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_write_at as PMPI_File_write_at
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void * buf, int count,
+                      MPI_Datatype datatype, MPI_Status *status)
+    __attribute__((weak,alias("PMPI_File_write_at")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -39,7 +43,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_write_at(MPI_File fh, MPI_Offset offset, const void *buf,
+int MPI_File_write_at(MPI_File fh, MPI_Offset offset, ROMIO_CONST void *buf,
                       int count, MPI_Datatype datatype, MPI_Status *status)
 {
     int error_code;

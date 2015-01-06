@@ -35,14 +35,16 @@ int ADIOI_Error(ADIO_File fd, int error_code, char *string)
 
     return error_code;
 }
-
-/* Returns an MPI error code corresponding to "my_errno", for function "myname"
+/* Check for special error codes for those MPI error
+   classes that relate to particular problems.
+   Returns an MPI error code corresponding to "my_errno", for function "myname"
  * and the given file, "filename".  */
 int ADIOI_Err_create_code(const char *myname, const char *filename, int my_errno)
 {
     int error_code = MPI_SUCCESS;
     if(!my_errno) return MPI_SUCCESS;
 
+    /* --BEGIN ERROR HANDLING-- */
     switch(my_errno) {
         case EACCES:
             error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -79,6 +81,7 @@ int ADIOI_Err_create_code(const char *myname, const char *filename, int my_errno
                                               filename);
             break;
         case EROFS:
+	    /* Read only file or file system and write access requested */
             error_code = MPIO_Err_create_code(MPI_SUCCESS,
                                               MPIR_ERR_RECOVERABLE, myname,
                                               __LINE__, MPI_ERR_READ_ONLY,
@@ -90,12 +93,35 @@ int ADIOI_Err_create_code(const char *myname, const char *filename, int my_errno
                                               __LINE__, MPI_ERR_FILE_EXISTS,
                                               "**fileexist", 0);
             break;
+	case ENOTDIR:
+	case ELOOP:
+	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE,
+					       myname, __LINE__,
+					       MPI_ERR_BAD_FILE,
+					       "**filenamedir",
+					       "**filenamedir %s",
+					       filename);
+            break;
+	case ENOSPC:
+	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+		    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+		    MPI_ERR_NO_SPACE,
+		    "**filenospace", 0);
+	    break;
+	case EDQUOT:
+	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
+		    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+		    MPI_ERR_QUOTA,
+		    "**filequota", 0);
+
         default:
             error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
                                               myname, __LINE__, MPI_ERR_IO, "**io",
                                               "**io %s", strerror(my_errno));
             break;
     }
+    /* --END ERROR HANDLING-- */
 
     return error_code;
 }

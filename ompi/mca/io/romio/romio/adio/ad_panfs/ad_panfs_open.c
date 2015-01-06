@@ -191,7 +191,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                 }
 
                 /* create PanFS object */
-                bzero(&file_create_args,sizeof(pan_fs_client_layout_create_args_t)); 
+                memset(&file_create_args,0,sizeof(pan_fs_client_layout_create_args_t));
                 /* open directory */
                 fd_dir = open(path, O_RDONLY);
                 if (fd_dir < 0) {
@@ -285,7 +285,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
         int rc;
         char temp_buffer[TEMP_BUFFER_SIZE];
         pan_fs_client_layout_query_args_t file_query_args;
-        bzero(&file_query_args,sizeof(pan_fs_client_layout_query_args_t));
+        memset(&file_query_args,0,sizeof(pan_fs_client_layout_query_args_t));
         file_query_args.version = PAN_FS_CLIENT_LAYOUT_VERSION;
         rc = ioctl(fd->fd_sys, PAN_FS_CLIENT_LAYOUT_QUERY_FILE, &file_query_args);
         if (rc < 0)
@@ -327,6 +327,10 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid10.layout_visit_policy);
                         ADIOI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
                         break;
+                    case PAN_FS_CLIENT_LAYOUT_TYPE__INVALID:
+                    case PAN_FS_CLIENT_LAYOUT_TYPE__DEFAULT:
+                        MPI_Info_set(fd->info, "panfs_layout_type",
+                                "PAN_FS_CLIENT_LAYOUT_TYPE__INVALID");
 		  default:
 			  break;
                 }
@@ -338,50 +342,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
 	fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
 
     if (fd->fd_sys == -1) {
-	if (errno == ENAMETOOLONG)
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE, myname,
-					       __LINE__, MPI_ERR_BAD_FILE,
-					       "**filenamelong",
-					       "**filenamelong %s %d",
-					       fd->filename,
-					       strlen(fd->filename));
-	else if (errno == ENOENT)
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE, myname,
-					       __LINE__, MPI_ERR_NO_SUCH_FILE,
-					       "**filenoexist",
-					       "**filenoexist %s",
-					       fd->filename);
-	else if (errno == ENOTDIR || errno == ELOOP)
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE,
-					       myname, __LINE__,
-					       MPI_ERR_BAD_FILE,
-					       "**filenamedir",
-					       "**filenamedir %s",
-					       fd->filename);
-	else if (errno == EACCES) {
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE, myname,
-					       __LINE__, MPI_ERR_ACCESS,
-					       "**fileaccess",
-					       "**fileaccess %s", 
-					       fd->filename );
-	}
-	else if (errno == EROFS) {
-	    /* Read only file or file system and write access requested */
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE, myname,
-					       __LINE__, MPI_ERR_READ_ONLY,
-					       "**ioneedrd", 0 );
-	}
-	else {
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					       MPIR_ERR_RECOVERABLE, myname,
-					       __LINE__, MPI_ERR_IO, "**io",
-					       "**io %s", strerror(errno));
-	}
+	*error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
     }
     else *error_code = MPI_SUCCESS;
 }

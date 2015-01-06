@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_get_type_extent as PMPI_File_get_type_extent
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *extent) __attribute__((weak,alias("PMPI_File_get_type_extent")));
 #endif
 
 /* Include mapping from MPI->PMPI */

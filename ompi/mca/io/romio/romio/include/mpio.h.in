@@ -102,9 +102,9 @@ typedef int MPI_Fint;
 #define MPI_SEEK_CUR            602
 #define MPI_SEEK_END            604
 
-/* Open MPI: don't define MPI_MAX_DATAREP_STRING here; it's defined in          
+/* Open MPI: don't define MPI_MAX_DATAREP_STRING here; it's defined in
    OMPI's mpi.h. */
-#if 0
+#ifndef OPEN_MPI
 #define MPI_MAX_DATAREP_STRING  128
 #endif
 
@@ -247,6 +247,20 @@ int MPI_File_sync(MPI_File fh);
 int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler);
 #endif
+
+/* For MPI 3.1 */
+int MPIX_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count,
+                           MPI_Datatype datatype, MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+int MPIX_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int count,
+                            MPI_Datatype datatype, MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+int MPIX_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
+                        MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+int MPIX_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
+                         MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 /* End Prototypes */
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
@@ -471,6 +485,20 @@ int PMPI_File_sync(MPI_File);
 int PMPI_File_set_errhandler( MPI_File, MPI_Errhandler );
 int PMPI_File_get_errhandler( MPI_File, MPI_Errhandler * );
 #endif
+
+/* For MPI 3.1 */
+int PMPIX_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+int PMPIX_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int count,
+                             MPI_Datatype datatype, MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
+int PMPIX_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
+                         MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
+int PMPIX_File_iwrite_all(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
+                          MPI_Request *request)
+    MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
 /* Section 4.14.4 */

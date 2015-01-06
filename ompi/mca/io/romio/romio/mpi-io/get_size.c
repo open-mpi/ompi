@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_get_size as PMPI_File_get_size
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_get_size(MPI_File fh, MPI_Offset *size) __attribute__((weak,alias("PMPI_File_get_size")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -51,6 +53,12 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
+    if(size == NULL){
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+                     myname, __LINE__, MPI_ERR_ARG,
+                     "**nullptr", "**nullptr %s", "size");
+        goto fn_fail;
+    }
     /* --END ERROR HANDLING-- */
 
     ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
@@ -70,4 +78,9 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 
 fn_exit:
     return error_code;
+fn_fail:
+    /* --BEGIN ERROR HANDLING-- */
+    error_code = MPIO_Err_return_file(fh, error_code);
+    goto fn_exit;
+    /* --END ERROR HANDLING-- */
 }
