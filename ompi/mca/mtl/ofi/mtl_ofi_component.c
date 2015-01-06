@@ -353,7 +353,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                        &ompi_mtl_ofi.any_addr,
                        0ULL,
                        NULL);
-    if (ret) {
+    if (1 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_av_insert failed: %s\n",
                             __FILE__, __LINE__, fi_strerror(-ret));
