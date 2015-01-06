@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -148,7 +148,7 @@ typedef struct mca_btl_openib_srq_manager_t {
 } mca_btl_openib_srq_manager_t;
 
 struct mca_btl_openib_component_t {
-    mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t          super;  /**< base BTL component */
 
     int                                ib_max_btls;
     /**< maximum number of devices available to openib component */
@@ -496,9 +496,15 @@ typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
+struct mca_btl_base_registration_handle_t {
+    uint32_t rkey;
+    uint32_t lkey;
+};
+
 struct mca_btl_openib_reg_t {
     mca_mpool_base_registration_t base;
     struct ibv_mr *mr;
+    mca_btl_base_registration_handle_t btl_handle;
 };
 typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
@@ -611,32 +617,90 @@ extern int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_base_descriptor_t** descriptor
 );
 
-/**
- * PML->BTL Initiate a put of the specified size.
- *
- * @param btl (IN)               BTL instance
- * @param btl_peer (IN)          BTL peer addressing
- * @param descriptor (IN)        Descriptor of data to be transmitted.
- */
-extern int mca_btl_openib_put(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor
-    );
+/* forward decaration for internal put/get */
+struct mca_btl_openib_put_frag_t;
+struct mca_btl_openib_get_frag_t;
 
 /**
- * PML->BTL Initiate a get of the specified size.
+ * @brief Schedule a put fragment with the HCA (internal)
  *
  * @param btl (IN)               BTL instance
- * @param btl_base_peer (IN)     BTL peer addressing
- * @param descriptor (IN)        Descriptor of data to be transmitted.
+ * @param ep (IN)                BTL endpoint
+ * @param frag (IN)              Fragment prepared by mca_btl_openib_put
+ *
+ * If the fragment can not be scheduled due to resource limitations then
+ * the fragment will be put on the pending put fragment list and retried
+ * when another get/put fragment has completed.
  */
-extern int mca_btl_openib_get(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor
-    );
+int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
+                                 struct mca_btl_openib_put_frag_t *frag);
 
+/**
+ * @brief Schedule an RDMA write with the HCA
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param local_address (IN)     Source address
+ * @param remote_address (IN)    Destination address
+ * @param local_handle (IN)      Registration handle for region containing the region {local_address, size}
+ * @param remote_handle (IN)     Registration handle for region containing the region {remote_address, size}
+ * @param size (IN)              Number of bytes to write
+ * @param flags (IN)             Transfer flags
+ * @param order (IN)             Ordering
+ * @param cbfunc (IN)            Function to call on completion
+ * @param cbcontext (IN)         Context for completion callback
+ * @param cbdata (IN)            Data for completion callback
+ *
+ * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
+ * @return OPAL_SUCCCESS if the operation was successfully scheduled
+ *
+ * This function will attempt to schedule a put operation with the HCA.
+ */
+int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+/**
+ * @brief Schedule a get fragment with the HCA (internal)
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param qp (IN)                ID of queue pair to schedule the get on
+ * @param frag (IN)              Fragment prepared by mca_btl_openib_get
+ *
+ * If the fragment can not be scheduled due to resource limitations then
+ * the fragment will be put on the pending get fragment list and retried
+ * when another get/put fragment has completed.
+ */
+int mca_btl_openib_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
+                                 struct mca_btl_openib_get_frag_t *frag);
+
+/**
+ * @brief Schedule an RDMA read with the HCA
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param local_address (IN)     Destination address
+ * @param remote_address (IN)    Source address
+ * @param local_handle (IN)      Registration handle for region containing the region {local_address, size}
+ * @param remote_handle (IN)     Registration handle for region containing the region {remote_address, size}
+ * @param size (IN)              Number of bytes to read
+ * @param flags (IN)             Transfer flags
+ * @param order (IN)             Ordering
+ * @param cbfunc (IN)            Function to call on completion
+ * @param cbcontext (IN)         Context for completion callback
+ * @param cbdata (IN)            Data for completion callback
+ *
+ * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
+ * @return OPAL_SUCCCESS if the operation was successfully scheduled
+ *
+ * This function will attempt to schedule a get operation with the HCA.
+ */
+int mca_btl_openib_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Allocate a descriptor.
@@ -673,29 +737,12 @@ extern int mca_btl_openib_free(
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                                       struct mca_btl_base_module_t* btl,
                                                       struct mca_btl_base_endpoint_t* peer,
-                                                      mca_mpool_base_registration_t* registration,
                                                       struct opal_convertor_t* convertor,
                                                       uint8_t order,
                                                       size_t reserve,
                                                       size_t* size,
                                                       uint32_t flags
                                                       );
-
-/**
- * Allocate a descriptor initialized for RDMA write.
- *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
- */
-extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
-                                                             struct mca_btl_base_module_t* btl,
-                                                             struct mca_btl_base_endpoint_t* peer,
-                                                             mca_mpool_base_registration_t* registration,
-                                                             struct opal_convertor_t* convertor,
-                                                             uint8_t order,
-                                                             size_t reserve,
-                                                             size_t* size,
-                                                             uint32_t flags);
 
 extern void mca_btl_openib_frag_progress_pending_put_get(
         struct mca_btl_base_endpoint_t*, const int);
