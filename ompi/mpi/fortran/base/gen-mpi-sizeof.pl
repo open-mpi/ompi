@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Script to generate the overloaded MPI_SIZEOF interfaces and
@@ -30,17 +32,21 @@ my $ierror_arg;
 my $maxrank_arg;
 my $generate_arg;
 my $mpi_arg;
+my $mpi_real16;
+my $mpi_complex32;
 my $pmpi_arg;
 my $help_arg = 0;
 
 &Getopt::Long::Configure("bundling");
-my $ok = Getopt::Long::GetOptions("header=s" => \$header_arg,
+my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
+                                  "header=s" => \$header_arg,
                                   "impl=s" => \$impl_arg,
                                   "ierror=s" => \$ierror_arg,
                                   "maxrank=s" => \$maxrank_arg,
                                   "generate=i" => \$generate_arg,
                                   "mpi" => \$mpi_arg,
                                   "pmpi" => \$pmpi_arg,
+                                  "real16=i" => \$mpi_real16,
                                   "help|h" => \$help_arg);
 
 die "Must specify header and/or impl filenames to output"
@@ -54,6 +60,8 @@ die "max array rank must be >= 4 and <=15"
 die "Must specify --pmpi and/or --mpi if --impl is specified"
     if (defined($generate_arg) && $generate_arg &&
         (defined($impl_arg) && !defined($mpi_arg) && !defined($pmpi_arg)));
+die "Must specify real16 and complex32"
+    if (!defined($mpi_real16) || !defined($mpi_complex32));
 
 #############################################################################
 
@@ -141,8 +149,12 @@ for my $size (qw/8 16 32 64/) {
     queue_sub("integer(int${size})", "int${size}", "int${size}");
 }
 for my $size (qw/32 64 128/) {
-    queue_sub("real(real${size})", "real${size}", "real${size}");
-    queue_sub("complex(real${size})", "complex${size}", "real${size}");
+    if ($size != 128 || $mpi_real16 == 1) {
+        queue_sub("real(real${size})", "real${size}", "real${size}");
+    }
+    if ($size != 128 || $mpi_complex32 == 1) {
+        queue_sub("complex(real${size})", "complex${size}", "real${size}");
+    }
 }
 
 #######################################################
