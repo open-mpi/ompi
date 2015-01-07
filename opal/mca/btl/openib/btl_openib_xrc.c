@@ -2,11 +2,9 @@
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +48,7 @@ bool mca_btl_openib_xrc_check_api()
         return false;
     }
 
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     if (NULL != dlsym(lib, "ibv_open_xrcd")) {
         BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED 3.12+)"));
         return false;
@@ -70,7 +68,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
     int len;
     char *xrc_file_name;
     const char *dev_name;
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     struct ibv_xrcd_init_attr xrcd_attr;
 #endif
 
@@ -91,7 +89,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
         free(xrc_file_name);
         return OPAL_ERROR;
     }
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     memset(&xrcd_attr, 0, sizeof xrcd_attr);
     xrcd_attr.comp_mask = IBV_XRCD_INIT_ATTR_FD | IBV_XRCD_INIT_ATTR_OFLAGS;
     xrcd_attr.fd = device->xrc_fd;
@@ -114,7 +112,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
 /* This func. closes XRC domain */
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device)
 {
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     if (NULL == device->xrcd) {
 #else
     if (NULL == device->xrc_domain) {
@@ -122,7 +120,7 @@ int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device)
         /* No XRC domain, just exit */
         return OPAL_SUCCESS;
     }
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     if (ibv_close_xrcd(device->xrcd)) {
 #else
     if (ibv_close_xrc_domain(device->xrc_domain)) {

@@ -151,7 +151,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
     $1_have_xrc=0
-    $1_have_xrcd=0
+    $1_have_xrc_domains=0
     $1_have_opensm_devel=0
 
     # If we have the openib stuff available, find out what we've got
@@ -170,7 +170,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd], [$1_have_xrc=1])
            fi
            if test "$enable_connectx_xrc" = "yes"; then
-               AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrcd=1])
+               AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrc_domains=1])
            fi
 
 
@@ -238,9 +238,9 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     fi
 
     AC_MSG_CHECKING([if ConnectIB XRC support is enabled])
-    AC_DEFINE_UNQUOTED([OPAL_HAVE_XRCD], [$$1_have_xrcd],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CONNECTX_XRC_DOMAINS], [$$1_have_xrc_domains],
         [Enable features required for XRC domains support])
-    if test "1" = "$$1_have_xrcd"; then
+    if test "1" = "$$1_have_xrc_domains"; then
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])
