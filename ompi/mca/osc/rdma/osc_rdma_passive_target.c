@@ -133,8 +133,9 @@ static inline int ompi_osc_rdma_lock_self (ompi_osc_rdma_module_t *module, ompi_
 
 static inline void ompi_osc_rdma_unlock_self (ompi_osc_rdma_module_t *module, ompi_osc_rdma_outstanding_lock_t *lock)
 {
-    if (!(MPI_LOCK_SHARED == lock->type && 0 == --module->shared_count)) {
+    if (lock->type == MPI_LOCK_EXCLUSIVE || 0 == --module->shared_count) {
         module->lock_status = 0;
+
         ompi_osc_activate_next_lock (module);
     }
 
