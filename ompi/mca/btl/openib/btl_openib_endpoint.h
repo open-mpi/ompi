@@ -15,6 +15,9 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +39,8 @@
 #include <string.h>
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "connect/base.h"
+
+#define QP_TX_BATCH_COUNT 64
 
 #define QP_TX_BATCH_COUNT 64
 
@@ -206,7 +211,11 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_lazy_frags;
 
     mca_btl_openib_endpoint_qp_t *qps;
+#if OMPI_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_qp *xrc_recv_qp;
+#else
     uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
+#endif
     uint32_t xrc_recv_psn;
 
     /** list of pending rget ops */
@@ -321,6 +330,7 @@ static inline void qp_reset_signal_count(mca_btl_openib_endpoint_t *ep, const in
 {
     ep->qps[qp].qp->wqe_count = QP_TX_BATCH_COUNT;
 }
+
 
 
 int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t*,
@@ -596,8 +606,13 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
     }
 
 #if HAVE_XRC
+#if OMPI_HAVE_CONNECTX_XRC_DOMAINS
+    if(BTL_OPENIB_QP_TYPE_XRC(qp))
+        sr_desc->qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#else
     if(BTL_OPENIB_QP_TYPE_XRC(qp))
         sr_desc->xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
 #endif
     assert(sg->addr == (uint64_t)(uintptr_t)frag->hdr);
 

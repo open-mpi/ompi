@@ -6,6 +6,9 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +120,7 @@ static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib
     return NULL;
 }
 
-#if HAVE_XRC
+#if HAVE_XRC && !OMPI_HAVE_CONNECTX_XRC_DOMAINS
 /* XRC recive QP to endpoint */
 static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_device_t *device)
 {
@@ -349,11 +352,14 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         event_type = event.event_type;
 #if HAVE_XRC
         /* is it XRC event ?*/
+#if OMPI_HAVE_CONNECTX_XRC_DOMAINS
+#else
         if (IBV_XRC_QP_EVENT_FLAG & event.event_type) {
             xrc_event = true;
             /* Clean the bitnd handel as usual */
             event_type ^= IBV_XRC_QP_EVENT_FLAG;
         }
+#endif
 #endif
         switch(event_type) {
             case IBV_EVENT_PATH_MIG:
@@ -363,7 +369,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                     if (!xrc_event)
                         mca_btl_openib_load_apm(event.element.qp,
                                 qp2endpoint(event.element.qp, device));
-#if HAVE_XRC
+#if HAVE_XRC && !OMPI_HAVE_CONNECTX_XRC_DOMAINS
                     else
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
                                 xrc_qp2endpoint(event.element.xrc_qp_num, device));
@@ -645,7 +651,7 @@ void mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep)
                    qp->qp_num, strerror(errno), errno));
 }
 
-#if HAVE_XRC
+#if HAVE_XRC && ! OMPI_HAVE_CONNECTX_XRC_DOMAINS
 void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep)
 {
     struct ibv_qp_init_attr qp_init_attr;
@@ -675,6 +681,7 @@ void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t 
     }
 
     ibv_modify_xrc_rcv_qp(btl->device->xrc_domain, qp_num, &attr, mask);
+
     /* Maybe the qp already was modified by other process - ignoring error */
 }
 #endif
