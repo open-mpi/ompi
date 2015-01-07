@@ -280,7 +280,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     }
 
     endpoint->ib_addr = NULL;
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     endpoint->xrc_recv_qp = NULL;
 #else
     endpoint->xrc_recv_qp_num = 0;
@@ -395,7 +395,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* unregister xrc recv qp */
 #if HAVE_XRC
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     if (NULL != endpoint->xrc_recv_qp) {
         if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
             BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp->qp_num));

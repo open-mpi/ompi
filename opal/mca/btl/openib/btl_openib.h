@@ -398,7 +398,7 @@ typedef struct mca_btl_openib_device_t {
     volatile bool got_port_event;
 #endif
 #if HAVE_XRC
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     struct ibv_xrcd *xrcd;
 #else
     struct ibv_xrc_domain *xrc_domain;

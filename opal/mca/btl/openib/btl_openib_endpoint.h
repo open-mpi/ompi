@@ -211,7 +211,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_lazy_frags;
 
     mca_btl_openib_endpoint_qp_t *qps;
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     struct ibv_qp *xrc_recv_qp;
 #else
     uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
@@ -606,7 +606,7 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
     }
 
 #if HAVE_XRC
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
     if(BTL_OPENIB_QP_TYPE_XRC(qp))
         sr_desc->qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
 #else

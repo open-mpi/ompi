@@ -325,7 +325,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
             openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
 #if HAVE_XRC
             if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
                 struct ibv_srq_init_attr_ex attr_ex;
                 memset(&attr_ex, 0, sizeof(struct ibv_srq_init_attr_ex));
                 attr_ex.attr.max_wr = attr.attr.max_wr;
@@ -1934,7 +1934,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
         frag->sr_desc.qp_type.xrc.remote_srqn=ep->rem_info.rem_srqs[qp].rem_srq_num;
 #else
         frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
@@ -2027,7 +2027,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
 
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
-#if OPAL_HAVE_XRCD
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
         frag->sr_desc.qp_type.xrc.remote_srqn=ep->rem_info.rem_srqs[qp].rem_srq_num;
 #else
         frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
