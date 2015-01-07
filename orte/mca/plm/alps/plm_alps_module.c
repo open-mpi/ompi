@@ -460,7 +460,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
 static int plm_alps_terminate_orteds(void)
 {
     int rc;
+    orte_job_t *jdata;
     
+    OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
+                            "%s plm:alps: terminating orteds",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* deregister the waitpid callback to ensure we don't make it look like
      * alps failed when it didn't. Since the alps may have already completed,
      * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
@@ -475,6 +480,12 @@ static int plm_alps_terminate_orteds(void)
         ORTE_ERROR_LOG(rc);
     }
     
+    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+
+    OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
+                            "%s plm:alps: terminated orteds",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return rc;
 }
 
