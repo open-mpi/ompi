@@ -25,7 +25,8 @@ headers += \
         threads/mutex.h \
         threads/mutex_unix.h \
         threads/threads.h \
-	threads/tsd.h
+	threads/tsd.h \
+	threads/thread_usage.h
 
 libopen_pal_la_SOURCES += \
         threads/condition.c \
