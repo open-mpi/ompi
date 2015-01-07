@@ -77,10 +77,10 @@ extern const struct eventop evportops;
 extern const struct eventop selectops;
 #endif
 #if defined(_EVENT_HAVE_EPOLL) && _EVENT_HAVE_EPOLL
-extern const struct eventop pollops;
+extern const struct eventop epollops;
 #endif
 #if defined(_EVENT_HAVE_POLL) && _EVENT_HAVE_POLL
-extern const struct eventop epollops;
+extern const struct eventop pollops;
 #endif
 #if defined(_EVENT_HAVE_WORKING_KQUEUE) && _EVENT_HAVE_WORKING_KQUEUE
 extern const struct eventop kqops;
