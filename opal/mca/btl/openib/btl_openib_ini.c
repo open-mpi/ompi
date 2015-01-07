@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -421,12 +421,6 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.ignore_device_set = true;
     }
 
-    else if (0 == strcasecmp(key_buffer, "ignore_device")) {
-        /* Single value */
-        sv->values.ignore_device = (bool) opal_btl_openib_ini_intify(value);
-        sv->values.ignore_device_set = true;
-    }
-
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -583,11 +577,6 @@ static int save_section(parsed_section_values_t *s)
                             s->values.rdmacm_reject_causes_connect_error;
                         h->values.rdmacm_reject_causes_connect_error_set =
                             true;
-                    }
-
-                    if (s->values.ignore_device_set) {
-                        h->values.ignore_device = s->values.ignore_device;
-                        h->values.ignore_device_set = true;
                     }
 
                     if (s->values.ignore_device_set) {
