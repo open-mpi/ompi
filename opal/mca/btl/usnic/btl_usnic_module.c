@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -224,7 +224,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                              struct mca_btl_base_endpoint_t **endpoints)
 {
     int ret = OPAL_SUCCESS;
-    int num_left = array_len;
+    int num_left;
     size_t i, channel;
     uint32_t event;
     struct fi_eq_entry entry;
@@ -232,33 +232,25 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
 
     bool error_occurred = false;
 
+    /* compute num fi_av_insert completions we are waiting for */
+    num_left = 0;
+    for (i = 0; i < array_len; ++i) {
+        if (NULL != endpoints[i]) {
+            num_left += USNIC_NUM_CHANNELS;
+        }
+    }
+
     /* Loop polling for USD destination creation completion (they were
        individually started in btl_usnic_proc.c) */
     while (num_left > 0) {
         opal_btl_usnic_addr_context_t *context;
 
-        ret = fi_eq_sread(module->av_eq, &event, &entry, sizeof(entry), 100, 0);
+        ret = fi_eq_sread(module->av_eq, &event, &entry, sizeof(entry), -1, 0);
         if (sizeof(entry) == ret) {
             context = entry.context;
             num_left -= entry.data;
             free(context);
             ret = 0;
-        }
-
-        /* Did we timeout?  )?  If so, we're probably never going to
-           finish, so just mark all remaining endpoints as unreachable
-           and bail. */
-        else if (-FI_ETIMEDOUT == ret) {
-            opal_show_help("help-mpi-btl-usnic.txt",
-                           "fi_av_insert timeout",
-                           true,
-                           opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
-                           mca_btl_usnic_component.arp_timeout);
-            /* Note: this is not an error; these endpoints are just
-               unreachable.  The desintations we've already created
-               are good, so we'll keep those. */
-            break;
         }
 
         else if (-FI_EAVAIL == ret) {
@@ -301,7 +293,8 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                                "Failed to insert address to AV");
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
                     error_occurred = true;
-                    break;
+                    /* we can't break here, need to finish reaping all inserts */
+                    continue;
                 }
             }
             else {
@@ -315,7 +308,8 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                             "Failed to insert address to AV");
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 error_occurred = true;
-                break;
+                /* we can't break here, need to finish reaping all inserts */
+                continue;
             }
         }
 
@@ -330,9 +324,9 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                         ret,
                         "Failed to insert address to AV");
             ret = OPAL_ERR_OUT_OF_RESOURCE;
-            /* JMS handle the error */
             error_occurred = true;
-            break;
+            /* we can't break here, need to finish reaping all inserts */
+            continue;
         }
     }
 
