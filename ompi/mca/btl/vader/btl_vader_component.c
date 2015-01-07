@@ -382,13 +382,13 @@ static void mca_btl_vader_check_single_copy (void)
 #if OMPI_BTL_VADER_HAVE_CMA
     if (MCA_BTL_VADER_CMA == mca_btl_vader_component.single_copy_mechanism) {
         /* Check if we have the proper permissions for CMA */
-        char buffer = {0};
+        char buffer = '0';
         bool cma_happy = false;
         int fd;
 
         /* check system setting for current ptrace scope */
         fd = open ("/proc/sys/kernel/yama/ptrace_scope", O_RDONLY);
-        if (0 > fd) {
+        if (0 < fd) {
             read (fd, &buffer, 1);
             close (fd);
         }
