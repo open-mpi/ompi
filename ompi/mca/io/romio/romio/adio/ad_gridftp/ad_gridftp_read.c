@@ -106,7 +106,8 @@ void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
 			     *error_code)
 {
     static char myname[]="ADIOI_GRIDFTP_ReadContig";
-    int myrank, nprocs, datatype_size;
+    int myrank, nprocs;
+    MPI_Count datatype_size;
     globus_size_t len,bytes_read=0;
     globus_off_t goff;
     globus_result_t result;
@@ -121,7 +122,7 @@ void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
 
     if (file_ptr_type != ADIO_EXPLICIT_OFFSET)
     {
@@ -219,11 +220,11 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
     MPI_Comm_size(fd->comm,&nprocs);
 
     etype_size=fd->etype_size;
-    MPI_Type_size(fd->filetype,&ftype_size);
+    MPI_Type_size_x(fd->filetype,&ftype_size);
     MPI_Type_extent(fd->filetype,&ftype_extent);
     /* This is arguably unnecessary, as this routine assumes that the
        buffer in memory is contiguous */
-    MPI_Type_size(datatype,&btype_size);
+    MPI_Type_size_x(datatype,&btype_size);
     MPI_Type_extent(datatype,&btype_extent);
     ADIOI_Datatype_iscontig(datatype,&buf_contig);
     
@@ -415,7 +416,7 @@ void ADIOI_GRIDFTP_ReadStrided(ADIO_File fd, void *buf, int count,
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
 
-    MPI_Type_size(datatype,&btype_size);
+    MPI_Type_size_x(datatype,&btype_size);
     bufsize=count*btype_size;
     ADIOI_Datatype_iscontig(fd->filetype,&file_contig);
     ADIOI_Datatype_iscontig(datatype,&buf_contig);

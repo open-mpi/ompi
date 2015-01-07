@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_get_group as PMPI_File_get_group
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_get_group(MPI_File fh, MPI_Group *group) __attribute__((weak,alias("PMPI_File_get_group")));
 #endif
 
 /* Include mapping from MPI->PMPI */

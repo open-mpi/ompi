@@ -376,7 +376,7 @@ static void mca_btl_vader_check_single_copy (void)
 
         /* check system setting for current ptrace scope */
         fd = open ("/proc/sys/kernel/yama/ptrace_scope", O_RDONLY);
-        if (0 > fd) {
+        if (0 < fd) {
             read (fd, &buffer, 1);
             close (fd);
         }

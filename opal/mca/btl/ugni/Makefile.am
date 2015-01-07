@@ -38,6 +38,7 @@ ugni_SOURCES = \
         btl_ugni.h \
         btl_ugni_smsg.h \
         btl_ugni_smsg.c \
+        btl_ugni_progress_thread.c \
         btl_ugni_prepare.h
 
 mcacomponentdir = $(opallibdir)

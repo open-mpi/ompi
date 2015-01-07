@@ -39,7 +39,7 @@ static void ADIOI_R_Exchange_data(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 				  ADIOI_Access *others_req, 
 				  int iter, 
 				  MPI_Aint buftype_extent, int *buf_idx);
-static void ADIOI_Fill_user_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
+void ADIOI_Fill_user_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 				   *flat_buf, char **recv_buf, ADIO_Offset 
 				   *offset_list, ADIO_Offset *len_list, 
 				   unsigned *recv_size, 
@@ -81,7 +81,7 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
     int *buf_idx = NULL;
 
 #ifdef HAVE_STATUS_SET_BYTES
-    int bufsize, size;
+    MPI_Count bufsize, size;
 #endif
 
     if (fd->hints->cb_pfr != ADIOI_HINT_DISABLE) {
@@ -263,7 +263,7 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
     ADIOI_Free(fd_end);
 
 #ifdef HAVE_STATUS_SET_BYTES
-    MPI_Type_size(datatype, &size);
+    MPI_Type_size_x(datatype, &size);
     bufsize = size * count;
     MPIR_Status_set_bytes(status, datatype, bufsize);
 /* This is a temporary way of filling in status. The right way is to 
@@ -281,8 +281,8 @@ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
 			    ADIO_Offset *end_offset_ptr, int
 			   *contig_access_count_ptr)
 {
-    int filetype_size, etype_size;
-    unsigned buftype_size;
+    MPI_Count filetype_size, etype_size;
+    MPI_Count buftype_size;
     int i, j, k;
     ADIO_Offset i_offset;
     ADIO_Offset frd_size=0, old_frd_size=0;
@@ -306,10 +306,10 @@ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
 
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size_x(fd->filetype, &filetype_size);
     MPI_Type_extent(fd->filetype, &filetype_extent);
     MPI_Type_lb(fd->filetype, &filetype_lb);
-    MPI_Type_size(datatype, (int*)&buftype_size);
+    MPI_Type_size_x(datatype, &buftype_size);
     etype_size = fd->etype_size;
 
     if ( ! filetype_size ) {
@@ -359,9 +359,9 @@ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
 #ifdef RDCOLL_DEBUG 
         {
             int ii;
-            DBG_FPRINTF(stderr, "flattened %3d : ", flat_file->count );
+            DBG_FPRINTF(stderr, "flattened %3lld : ", flat_file->count );
             for (ii=0; ii<flat_file->count; ii++) {
-                DBG_FPRINTF(stderr, "%16qd:%-16qd", flat_file->indices[ii], flat_file->blocklens[ii] );
+                DBG_FPRINTF(stderr, "%16lld:%-16lld", flat_file->indices[ii], flat_file->blocklens[ii] );
             }
             DBG_FPRINTF(stderr, "\n" );
         }
@@ -570,7 +570,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 
     MPI_Allreduce(&ntimes, &max_ntimes, 1, MPI_INT, MPI_MAX, fd->comm); 
 
-    if (ntimes) read_buf = (char *) ADIOI_Malloc(coll_bufsize);
+    read_buf = fd->io_buf;  /* Allocated at open time */
 
     curr_offlen_ptr = (int *) ADIOI_Calloc(nprocs, sizeof(int)); 
     /* its use is explained below. calloc initializes to 0. */
@@ -740,9 +740,10 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
       ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)read_buf)+real_size-for_next_iter) == (ADIO_Offset)(MPIR_Upint)(read_buf+real_size-for_next_iter));
       ADIOI_Assert((for_next_iter+coll_bufsize) == (size_t)(for_next_iter+coll_bufsize));
 	    memcpy(tmp_buf, read_buf+real_size-for_next_iter, for_next_iter);
-	    ADIOI_Free(read_buf);
-	    read_buf = (char *) ADIOI_Malloc(for_next_iter+coll_bufsize);
-	    memcpy(read_buf, tmp_buf, for_next_iter);
+	    ADIOI_Free(fd->io_buf);
+	    fd->io_buf = (char *) ADIOI_Malloc(for_next_iter+coll_bufsize);
+	    memcpy(fd->io_buf, tmp_buf, for_next_iter);
+	    read_buf = fd->io_buf;
 	    ADIOI_Free(tmp_buf);
 	}
 
@@ -762,7 +763,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 			    others_req, m,
                             buftype_extent, buf_idx); 
 
-    if (ntimes) ADIOI_Free(read_buf);
     ADIOI_Free(curr_offlen_ptr);
     ADIOI_Free(count);
     ADIOI_Free(partial_send);
@@ -853,8 +853,8 @@ static void ADIOI_R_Exchange_data(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 		tmp = others_req[i].lens[k];
 		others_req[i].lens[k] = partial_send[i];
 	    }
-	    MPI_Type_hindexed(count[i], 
-                 &(others_req[i].lens[start_pos[i]]),
+	    ADIOI_Type_create_hindexed_x(count[i],
+		  &(others_req[i].lens[start_pos[i]]),
 	            &(others_req[i].mem_ptrs[start_pos[i]]), 
 			 MPI_BYTE, &send_type);
 	    /* absolute displacement; use MPI_BOTTOM in send */
@@ -954,7 +954,7 @@ static void ADIOI_R_Exchange_data(ADIO_File fd, void *buf, ADIOI_Flatlist_node
     ADIOI_BUF_INCR \
 }
 
-static void ADIOI_Fill_user_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
+void ADIOI_Fill_user_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 				   *flat_buf, char **recv_buf, ADIO_Offset 
 				   *offset_list, ADIO_Offset *len_list, 
 				   unsigned *recv_size, 

@@ -18,10 +18,7 @@ void ADIOI_GEN_Delete(const char *filename, int *error_code)
 
     err = unlink(filename);
     if (err == -1) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__, MPI_ERR_IO, "**io",
-					   "**io %s", strerror(errno));
-	return;
+	*error_code = ADIOI_Err_create_code(myname, filename, errno);
     }
     else *error_code = MPI_SUCCESS;
 }

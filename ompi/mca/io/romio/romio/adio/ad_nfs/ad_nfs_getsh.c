@@ -12,11 +12,11 @@
    shared_fp by the number of etypes to be accessed (incr) in the read
    or write following this function. */
 
-void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp, 
+void ADIOI_NFS_Get_shared_fp(ADIO_File fd, ADIO_Offset incr, ADIO_Offset *shared_fp,
 			 int *error_code)
 {
     ADIO_Offset new_fp;
-    int err;
+    ssize_t err;
     MPI_Comm dupcommself;
     static char myname[] = "ADIOI_NFS_GET_SHARED_FP";
 

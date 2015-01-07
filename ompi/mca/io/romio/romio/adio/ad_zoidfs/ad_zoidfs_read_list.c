@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
  * vim: ts=8 sts=4 sw=4 noexpandtab 
  * 
  *   Copyright (C) 2008 University of Chicago. 
@@ -21,10 +21,11 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     /* offset is in units of etype relative to the filetype. */
     ADIOI_Flatlist_node *flat_buf, *flat_file;
     int i, j, k,  brd_size, frd_size=0, st_index=0;
-    int bufsize, sum, n_etypes_in_filetype, size_in_filetype;
+    int sum, n_etypes_in_filetype, size_in_filetype;
+    MPI_Count bufsize;
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
-    int filetype_size, etype_size, buftype_size;
+    MPI_Count filetype_size, etype_size, buftype_size;
     MPI_Aint filetype_extent, buftype_extent; 
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset off, disp, start_off, initial_off;
@@ -70,7 +71,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    filetype_is_contig = 1;
     }
 
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size_x(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
@@ -80,7 +81,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     }
 
     MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_size(datatype, &buftype_size);
+    MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
 

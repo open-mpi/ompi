@@ -55,8 +55,8 @@ int MPIO_Waitany(int count, MPIO_Request requests[], int *index,
 	if (status != MPI_STATUS_IGNORE) {
 	    status->MPI_SOURCE = MPI_ANY_SOURCE;
 	    status->MPI_TAG    = MPI_ANY_TAG;
-	    status->count      = 0;
-	    status->cancelled  = 0;
+            MPIR_STATUS_SET_COUNT(*status, 0);
+            MPIR_STATUS_SET_CANCEL_BIT(*status, 0);
 	}
 #endif
 	err = MPI_SUCCESS;

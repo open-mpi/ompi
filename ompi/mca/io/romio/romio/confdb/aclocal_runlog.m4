@@ -9,6 +9,7 @@ AC_DEFUN([PAC_RUNLOG],[
   ac_status=$?
   AS_ECHO(["$as_me:$LINENO: \$? = $ac_status"]) >&AS_MESSAGE_LOG_FD
   test $ac_status = 0; }])
+
 dnl
 dnl PAC_COMMAND_IFELSE is written to replace AC_TRY_EVAL with added logging
 dnl to config.log, i.e. AC_TRY_EVAL does not log anything to config.log.
@@ -18,8 +19,6 @@ dnl
 dnl PAC_COMMAND_IFELSE(COMMMAND,[ACTION-IF-RUN-OK],[ACTION-IF-RUN-FAIL])
 dnl
 AC_DEFUN([PAC_COMMAND_IFELSE],[
-dnl Should use _AC_DO_TOKENS but use AC_RUN_LOG instead
-dnl because _AC_XX is autoconf's undocumented macro.
 AS_IF([PAC_RUNLOG([$1])],[
     $2
 ],[
@@ -30,25 +29,7 @@ AS_IF([PAC_RUNLOG([$1])],[
     ])
 ])
 ])
-dnl
-dnl
-dnl
-AC_DEFUN([PAC_EVAL_IFELSE],[
-dnl Should use _AC_DO_TOKENS but use AC_RUN_LOG instead
-dnl because _AC_XX is autoconf's undocumented macro.
-AS_IF([PAC_RUNLOG([$$1])],[
-    $2
-],[
-    AS_ECHO(["$as_me: program exited with status $ac_status"]) >&AS_MESSAGE_LOG_FD
-    m4_ifvaln([$3],[
-        (exit $ac_status)
-        $3
-    ])
-])
-])
-dnl
-dnl
-dnl
+
 AC_DEFUN([PAC_RUNLOG_IFELSE],[
 dnl pac_TESTLOG is the internal temporary logfile for this macro.
 pac_TESTLOG="pac_test.log"
@@ -62,21 +43,8 @@ PAC_COMMAND_IFELSE([$1 > $pac_TESTLOG],[
 ])
 rm -f $pac_TESTLOG
 ])
-dnl
-dnl
-dnl
-dnl PAS_VAR_COPY -  A portable layer that mimics AS_VAR_COPY when it is not
-dnl                 defined as in older autoconf, e.g. 2.63 and older.
-dnl                 This macro is absolutely necessary, because AS_VAR_GET in
-dnl                 some newer autoconf, e.g. 2.64, seems to be totally broken,
-dnl                 or behave very different from older autoconf, i.e. 2.63.
-dnl
-AC_DEFUN([PAS_VAR_COPY],[
-m4_ifdef([AS_VAR_COPY], [AS_VAR_COPY([$1],[$2])], [$1=AS_VAR_GET([$2])])
-])
-dnl
-dnl
-dnl
+
+
 dnl PAC_VAR_PUSHVAL(VARNAME, [LastSavedValue]))
 dnl
 dnl Save the content of the shell variable, VARNAME, onto a stack.
@@ -96,8 +64,7 @@ AC_DEFUN([PAC_VAR_PUSHVAL],[
 dnl define local m4-name pac_stk_level.
 AS_VAR_PUSHDEF([pac_stk_level], [pac_stk_$1_level])
 AS_VAR_SET_IF([pac_stk_level],[
-    dnl autoconf < 2.64 does not have AS_VAR_ARITH, so use expr instead.
-    AS_VAR_SET([pac_stk_level], [`expr $pac_stk_level + 1`])
+    AS_VAR_ARITH([pac_stk_level], [$pac_stk_level + 1])
 ],[
     AS_VAR_SET([pac_stk_level], [0])
 ])
@@ -106,15 +73,15 @@ dnl Save the content of VARNAME, i.e. $VARNAME, onto the stack.
 AS_VAR_SET([pac_stk_$1_$pac_stk_level],[$$1])
 AS_VAR_IF([pac_stk_level], [0], [
     dnl Save the 1st pushed value of VARNAME as pac_FirstSavedValueOf_$VARNAME
-    PAS_VAR_COPY([pac_FirstSavedValueOf_$1],[pac_stk_$1_$pac_stk_level])
+    AS_VAR_COPY([pac_FirstSavedValueOf_$1],[pac_stk_$1_$pac_stk_level])
 ])
 ifelse([$2],[],[
     dnl Save the last pushed value of VARNAME as pac_LastSavedValueOf_$VARNAME
-    PAS_VAR_COPY([pac_LastSavedValueOf_$1],[pac_stk_$1_$pac_stk_level])
+    AS_VAR_COPY([pac_LastSavedValueOf_$1],[pac_stk_$1_$pac_stk_level])
     dnl AS_ECHO(["pac_LastSavedValueOf_$1 = $pac_LastSavedValueOf_$1"])
 ],[
     dnl Save the last pushed value of VARNAME as $2
-    PAS_VAR_COPY([$2],[pac_stk_$1_$pac_stk_level])
+    AS_VAR_COPY([$2],[pac_stk_$1_$pac_stk_level])
     dnl AS_ECHO(["$2 = $$2"])
 ])
 AS_VAR_POPDEF([pac_stk_level])
@@ -139,10 +106,9 @@ AS_VAR_SET_IF([pac_stk_level],[
         AC_MSG_WARN(["Imbalance of PUSHVAL/POPVAL of $1"])
     ],[
         dnl AS_ECHO_N(["POPVAL: pac_stk_level = $pac_stk_level, "])
-        PAS_VAR_COPY([$1],[pac_stk_$1_$pac_stk_level])
+        AS_VAR_COPY([$1],[pac_stk_$1_$pac_stk_level])
         dnl AS_ECHO(["popped_val = $$1"])
-        dnl autoconf < 2.64 does not have AS_VAR_ARITH, so use expr instead.
-        AS_VAR_SET([pac_stk_level], [`expr $pac_stk_level - 1`])
+        AS_VAR_ARITH([pac_stk_level], [ $pac_stk_level - 1 ])
     ])
 ],[
     AC_MSG_WARN(["Uninitialized PUSHVAL/POPVAL of $1"])

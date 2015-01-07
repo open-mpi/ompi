@@ -26,7 +26,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
     ADIO_Offset n_etypes_in_filetype, n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
     ADIO_Offset size_in_filetype, sum;
-    unsigned filetype_size;
+    MPI_Count filetype_size;
     int etype_size, filetype_is_contig;
     MPI_Aint filetype_extent;
 
@@ -41,7 +41,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
 
 	MPI_Type_extent(fd->filetype, &filetype_extent);
-	MPI_Type_size(fd->filetype, (int*)&filetype_size);
+	MPI_Type_size_x(fd->filetype, &filetype_size);
 	if ( ! filetype_size ) {
 	    /* Since offset relative to the filetype size, we can't
 	       do compute the offset when that result is zero.

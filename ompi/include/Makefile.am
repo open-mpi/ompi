@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
@@ -84,7 +84,9 @@ mpif-sizeof.h:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
-	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
+	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 if WANT_INSTALL_HEADERS 
 ompidir = $(ompiincludedir)

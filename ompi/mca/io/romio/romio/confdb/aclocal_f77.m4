@@ -104,7 +104,7 @@ if test  "$pac_found" != "yes" ; then
                     AC_LANG_PROGRAM([],[      call my_name(0)])
                 ],[
                     pac_found=yes
-                ])
+                ]) 
                 AC_LANG_POP([Fortran 77])
                 LIBS="$saved_LIBS"
                 rm -f cconftest.$OBJEXT
@@ -163,7 +163,7 @@ name_scheme="`echo $pac_cv_prog_f77_name_mangle | sed 's% %_%g'`"
 # Turn lowercase into uppercase.
 name_scheme="`echo $name_scheme | sed -e 'y%abcdefghijklmnopqrstuvwxyz%ABCDEFGHIJKLMNOPQRSTUVWXYZ%'`"
 F77_NAME_MANGLE="F77_NAME_${name_scheme}"
-AC_DEFINE_UNQUOTED([$F77_NAME_MANGLE])
+AC_DEFINE_UNQUOTED([$F77_NAME_MANGLE]) 
 AC_SUBST(F77_NAME_MANGLE)
 if test "X$pac_cv_prog_f77_name_mangle" = "X" ; then
     AC_MSG_WARN([Unknown Fortran naming scheme])
@@ -659,8 +659,8 @@ else
    ifelse([$2],[],[:],[$2])
 fi
 ])
-dnl PAC_PROG_F77_RUN_PROC_FROM_C( c main program, fortran routine,
-dnl                               [action-if-works], [action-if-fails],
+dnl PAC_PROG_F77_RUN_PROC_FROM_C( c main program, fortran routine, 
+dnl                               [action-if-works], [action-if-fails], 
 dnl                               [cross-action] )
 dnl Fortran routine MUST be named ftest unless you include code
 dnl to select the appropriate Fortran name.
@@ -991,7 +991,7 @@ dnl Endof ac_cache_check
 if test "$pac_cv_prog_f77_and_c_stdio_libs" != "none" \
      -a "$pac_cv_prog_f77_and_c_stdio_libs" != "unknown" ; then
     F77_OTHER_LIBS="$F77_OTHER_LIBS $pac_cv_prog_f77_and_c_stdio_libs"
-fi
+fi    
 ])
 dnl
 dnl Check that the FLIBS determined by AC_F77_LIBRARY_LDFLAGS is valid.
@@ -1205,7 +1205,7 @@ AC_LANG_POP([Fortran 77])
 AC_MSG_RESULT([$pac_cv_f77_accepts_F])
 ])
 dnl
-dnl /*D
+dnl /*D 
 dnl PAC_PROG_F77_CRAY_POINTER - Check if Fortran 77 supports Cray-style pointer.
 dnl                             If so, set pac_cv_prog_f77_has_pointer to yes
 dnl                             and find out if any extra compiler flag is
@@ -1325,16 +1325,16 @@ dnl PAC_F77_LOGICALS_IN_C(MPI_FINT)
 dnl
 dnl where MPI_FINT is the C type for Fortran integer.
 dnl
-dnl Use a Fortran main program.  This simplifies some steps,
-dnl since getting all of the Fortran libraries (including shared
-dnl libraries that are not in the default library search path) can
-dnl be tricky.  Specifically, The PROG_F77_RUN_PROC_FROM_C failed with
+dnl Use a Fortran main program.  This simplifies some steps, 
+dnl since getting all of the Fortran libraries (including shared 
+dnl libraries that are not in the default library search path) can 
+dnl be tricky.  Specifically, The PROG_F77_RUN_PROC_FROM_C failed with 
 dnl some installations of the Portland group compiler.
 dnl
 dnl We'd also like to check other values for .TRUE. and .FALSE. to see
 dnl if the compiler allows (or uses) more than one value (some DEC compilers,
-dnl for example, used the high (sign) bit to indicate true and false; the
-dnl rest of the bits were ignored.  For now, we'll assume that there are
+dnl for example, used the high (sign) bit to indicate true and false; the 
+dnl rest of the bits were ignored.  For now, we'll assume that there are 
 dnl unique true and false values.
 dnl
 AC_DEFUN([PAC_F77_LOGICALS_IN_C],[
@@ -1416,14 +1416,14 @@ if test -n "$true_val" -a -n "$false_val" ; then
 fi
 ])
 dnl/*D
-dnl PAC_PROG_F77_MISMATCHED_ARGS([option],[AllOnly]) - Determine whether the
-dnl Fortran compiler allows routines to be called with different
-dnl argument types.  If not, attempts to determine a command-line argument
-dnl that permits such use
+dnl PAC_PROG_F77_MISMATCHED_ARGS([option],[AllOnly]) - Determine whether the 
+dnl Fortran compiler allows routines to be called with different 
+dnl argument types.  If not, attempts to determine a command-line argument 
+dnl that permits such use 
 dnl (The Fortran standard prohibits this usage)
 dnl
 dnl option is set to the compiler option to use.
-dnl if AllOnly is yes (literal, not variable with value), then only consider
+dnl if AllOnly is yes (literal, not variable with value), then only consider 
 dnl options that turn off checking
 dnl for all routines
 dnl
@@ -1470,7 +1470,7 @@ if test "X$pac_cv_prog_f77_mismatched_args" = X ; then
             FFLAGS="$save_FFLAGS"
             if test "$testok" = yes ; then break ; fi
         done
-        if test "$testok" = yes ; then
+        if test "$testok" = yes ; then 
 	    pac_cv_prog_f77_mismatched_args_parm="$flags"
             pac_cv_prog_f77_mismatched_args="yes, with $pac_cv_prog_f77_mismatched_args_parm"
         fi
@@ -1479,7 +1479,7 @@ if test "X$pac_cv_prog_f77_mismatched_args" = X ; then
 fi
 AC_MSG_RESULT($pac_cv_prog_f77_mismatched_args)
 if test "$pac_cv_prog_f77_mismatched_args" = no ; then
-    AC_MSG_ERROR([The Fortran compiler $F77 will not compile files that call
+    AC_MSG_ERROR([The Fortran compiler $F77 will not compile files that call 
 the same routine with arguments of different types.])
 fi
 

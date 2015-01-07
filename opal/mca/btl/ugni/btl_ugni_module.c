@@ -145,21 +145,35 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
             rc = opal_hash_table_get_next_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, node, &node);
         }
 
+        if (mca_btl_ugni_component.progress_thread_enabled) {
+            mca_btl_ugni_kill_progress_thread();
+        }
+
         /* destroy all cqs */
         OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
         rc = GNI_CqDestroy (ugni_module->rdma_local_cq);
         if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down local BTE/FMA CQ"));
+            BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
         }
 
         rc = GNI_CqDestroy (ugni_module->smsg_local_cq);
         if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down local SMSG CQ"));
+            BTL_ERROR(("error tearing down TX SMSG CQ - %s",gni_err_str[rc]));
         }
 
         rc = GNI_CqDestroy (ugni_module->smsg_remote_cq);
         if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down remote SMSG CQ"));
+            BTL_ERROR(("error tearing down RX SMSG CQ - %s",gni_err_str[rc]));
+        }
+
+        rc = GNI_CqDestroy (ugni_module->rdma_local_irq_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
+        }
+
+        rc = GNI_CqDestroy (ugni_module->smsg_remote_irq_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error tearing down remote SMSG CQ - %s",gni_err_str[rc]));
         }
 
         /* cancel wildcard post */
@@ -173,7 +187,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         /* tear down wildcard endpoint */
         rc = GNI_EpDestroy (ugni_module->wildcard_ep);
         if (GNI_RC_SUCCESS != rc) {
-            BTL_VERBOSE(("btl/ugni error destroying endpoint"));
+            BTL_VERBOSE(("btl/ugni error destroying endpoint - %s",gni_err_str[rc]));
         }
         OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     }

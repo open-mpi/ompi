@@ -105,9 +105,7 @@ void ADIOI_XFS_Open(ADIO_File fd, int *error_code)
     fd->fp_sys_posn = -1; /* set it to null because we use pread/pwrite */
 
     if ((fd->fd_sys == -1) || (fd->fd_direct == -1)) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__, MPI_ERR_IO, "**io",
-					   "**io %s", strerror(errno));
+	*error_code = ADIOI_Err_create_code(mymame, fd->filename, errno);
     }
     else *error_code = MPI_SUCCESS;
 }

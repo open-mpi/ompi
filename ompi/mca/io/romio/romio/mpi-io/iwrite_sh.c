@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_iwrite_shared as PMPI_File_iwrite_shared
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count, MPI_Datatype datatype,
+                           MPIO_Request *request) __attribute__((weak,alias("PMPI_File_iwrite_shared")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -41,12 +44,13 @@ Output Parameters:
 #include "mpiu_greq.h"
 #endif
 
-int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
+int MPI_File_iwrite_shared(MPI_File fh, ROMIO_CONST void *buf, int count,
 			   MPI_Datatype datatype, MPIO_Request *request)
 {
-    int error_code, bufsize, buftype_is_contig, filetype_is_contig;
+    int error_code, buftype_is_contig, filetype_is_contig;
     ADIO_File adio_fh;
-    int datatype_size, incr;
+    ADIO_Offset incr, bufsize;
+    MPI_Count datatype_size;
     ADIO_Status status;
     ADIO_Offset off, shared_fp;
     static char myname[] = "MPI_FILE_IWRITE_SHARED";
@@ -61,7 +65,7 @@ int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
     MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
     /* --END ERROR HANDLING-- */
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);

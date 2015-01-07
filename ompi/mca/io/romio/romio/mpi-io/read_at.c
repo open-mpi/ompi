@@ -15,6 +15,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_read_at as PMPI_File_read_at
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
+                     MPI_Status *status) __attribute__((weak,alias("PMPI_File_read_at")));
 #endif
 
 /* Include mapping from MPI->PMPI */

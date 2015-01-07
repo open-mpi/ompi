@@ -13,7 +13,8 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 {
     LONG dwTemp;
     DWORD dwNumRead = 0;
-    int err=-1, datatype_size, len;
+    int err=-1;
+    MPI_Count datatype_size, len;
     static char myname[] = "ADIOI_NTFS_ReadContig";
     OVERLAPPED *pOvl;
 
@@ -23,7 +24,7 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	offset = fd->fp_ind;
     }
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     pOvl = (OVERLAPPED *) ADIOI_Calloc(sizeof(OVERLAPPED), 1);

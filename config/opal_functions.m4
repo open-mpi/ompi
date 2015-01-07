@@ -392,12 +392,18 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
 
         # Check for special cases where we do want to allow repeated
         # arguments (per
-        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
+        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php
+        # and
+        # https://github.com/open-mpi/ompi/issues/324).
 
         case $val in
         -Xclang)
                 opal_found=0
                 opal_i=`expr $opal_count + 1`
+                ;;
+        --param)
+                ompi_found=0
+                ompi_i=`expr $ompi_count + 1`
                 ;;
         esac
 
