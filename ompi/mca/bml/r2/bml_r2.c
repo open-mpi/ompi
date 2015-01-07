@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -413,8 +413,8 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                                (NULL != ompi_proc_local_proc->proc_hostname ?
                                 ompi_proc_local_proc->proc_hostname : "unknown!"),
                                OMPI_NAME_PRINT(&(proc->proc_name)),
-                               (NULL != ompi_proc_local_proc->proc_hostname ?
-                                ompi_proc_local_proc->proc_hostname : "unknown!"),
+                               (NULL != proc->proc_hostname ?
+                                proc->proc_hostname : "unknown!"),
                                btl_names);
             }
             break;
