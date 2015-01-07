@@ -19,7 +19,8 @@ noinst_HEADERS +=                      \
     adio/include/mpio_error.h          \
     adio/include/mpipr.h               \
     adio/include/mpiu_greq.h           \
-    adio/include/nopackage.h
+    adio/include/nopackage.h           \
+    adio/include/romioconf-undefs.h
 
 include $(top_srcdir)/adio/ad_gpfs/Makefile.mk
 include $(top_srcdir)/adio/ad_gpfs/bg/Makefile.mk
