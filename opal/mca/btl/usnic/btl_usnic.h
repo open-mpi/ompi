@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -207,9 +207,6 @@ typedef struct opal_btl_usnic_component_t {
     bool connectivity_enabled;
     int connectivity_ack_timeout;
     int connectivity_num_retries;
-
-    /* remote address handle (i.e., ARP) timeout */
-    int arp_timeout;
 
     /** how many short packets have to be received before outputting
         the "received short packets" warning? */

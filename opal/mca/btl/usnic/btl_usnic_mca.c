@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -262,10 +262,6 @@ int opal_btl_usnic_component_register(void)
     CHECK(reg_int("pack_lazy_threshold", "Convertor packing on-the-fly threshold (-1 = always pack eagerly, 0 = always pack lazily, otherwise will pack on the fly if fragment size is > limit)",
                   USNIC_DFLT_PACK_LAZY_THRESHOLD, &pack_lazy_threshold, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
     mca_btl_usnic_component.pack_lazy_threshold = pack_lazy_threshold;
-
-    CHECK(reg_int("arp_timeout", "Timeout, in seconds, for the maximum delay between ARP replies (must be >=1)",
-                  10, &mca_btl_usnic_component.arp_timeout,
-                  REGINT_GE_ONE, OPAL_INFO_LVL_6));
 
     CHECK(reg_int("max_short_packets", "Number of abnormally-short packets received before outputting a warning (0 = never show the warning)",
                   25, &max_short_packets,
