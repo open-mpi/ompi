@@ -77,8 +77,10 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     (void) opal_common_ugni_ep_destroy (&ep->rdma_ep_handle);
     OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
 
-    OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
-    ep->mailbox = NULL;
+    if (ep->mailbox) {
+        OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
+        ep->mailbox = NULL;
+    }
 
     ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
 
