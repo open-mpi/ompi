@@ -20,17 +20,13 @@
 
 
 static pthread_t mca_btl_ugni_progress_thread_id;
-static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t progress_cond = PTHREAD_COND_INITIALIZER;
 
 static volatile int stop_progress_thread = 0;
-static volatile int progress_thread_done = 0;
 
-static int thread_wakeups = 0;
+unsigned int mca_btl_ugni_progress_thread_wakeups;
 
 static void *mca_btl_ugni_prog_thread_fn(void * data)
 {
-    int rc,ret = OPAL_SUCCESS;
     uint32_t which;
     gni_return_t status;
     gni_cq_handle_t cq_vec[2];
@@ -59,36 +55,12 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
         if (status == GNI_RC_NOT_DONE) continue;
 
         if ((status == GNI_RC_SUCCESS) && (stop_progress_thread == 0)) {
-            thread_wakeups++;
+            mca_btl_ugni_progress_thread_wakeups++;
             opal_progress();
         }
     }
 
-    /* Send a signal to the main thread saying we are done */
-    rc = pthread_mutex_lock(&progress_mutex);
-    if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_mutex_lock returned %s ",strerror(rc)));
-        ret = OPAL_ERROR;
-        goto fn_exit;
-    }
-
-    progress_thread_done = 1;
-
-    rc = pthread_mutex_unlock(&progress_mutex);
-    if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_mutex_unlock returned %s ",strerror(rc)));
-        ret = OPAL_ERROR;
-        goto fn_exit;
-    }
-
-    rc = pthread_cond_signal(&progress_cond);
-    if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_cond_signal returned %s ",strerror(rc)));
-        ret = OPAL_ERROR;
-    }
-
-   fn_exit:
-    return (void *) (intptr_t) ret;
+    return (void *) (intptr_t) OPAL_SUCCESS;
 }
 
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
@@ -124,7 +96,8 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
 
 int mca_btl_ugni_kill_progress_thread(void)
 {
-    int rc, ret=OPAL_SUCCESS;
+    int ret=OPAL_SUCCESS;
+    void *thread_rc;
 
     stop_progress_thread = 1;
 
@@ -140,30 +113,15 @@ int mca_btl_ugni_kill_progress_thread(void)
      * TODO: if error returned, need to kill off thread manually
      */
     if (OPAL_SUCCESS != ret) {
+        /* force the thread to exit */
+        pthread_cancel (mca_btl_ugni_progress_thread_id);
         goto fn_exit;
     }
 
-    rc = pthread_mutex_lock(&progress_mutex);
-    if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_mutex_lock returned %s ",strerror(rc)));
-        ret = OPAL_ERROR;
-        goto fn_exit;
-    }
-
-    while (!progress_thread_done) {
-        pthread_cond_wait(&progress_cond, &progress_mutex);
-        if (0 != rc) {
-            BTL_ERROR(("btl/ugni pthread_cond_wait returned %s ",strerror(rc)));
-            ret = OPAL_ERROR;
-            goto fn_exit;
-        }
-    }
-
-    rc = pthread_mutex_unlock(&progress_mutex);
-    if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_mutex_unlock returned %s ",strerror(rc)));
-        ret = OPAL_ERROR;
-        goto fn_exit;
+    pthread_join (mca_btl_ugni_progress_thread_id, &thread_rc);
+    if (0 != (intptr_t) thread_rc) {
+        BTL_ERROR(("btl/ugni error returned from progress thread: %d", (int) (intptr_t) thread_rc));
+        ret = (int)(intptr_t) thread_rc;
     }
 
    fn_exit:

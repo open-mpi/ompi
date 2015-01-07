@@ -18,6 +18,8 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_params.h"
 
+#include "opal/mca/base/mca_base_pvar.h"
+
 static int btl_ugni_component_register(void);
 static int btl_ugni_component_open(void);
 static int btl_ugni_component_close(void);
@@ -190,6 +192,15 @@ btl_ugni_component_register(void)
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.progress_thread_requested);
+
+    /* performance variables */
+    mca_btl_ugni_progress_thread_wakeups = 0;
+    (void) mca_base_component_pvar_register(&mca_btl_ugni_component.super.btl_version,
+                                            "progress_thread_wakeups", "Number of times the progress thread "
+                                            "has been woken", OPAL_INFO_LVL_9, MCA_BASE_PVAR_CLASS_COUNTER,
+                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MCA_BASE_VAR_BIND_NO_OBJECT,
+                                            MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS, NULL,
+                                            NULL, NULL, &mca_btl_ugni_progress_thread_wakeups);
 
     /* btl/ugni can only support only a fixed set of mpools (these mpools have compatible resource
      * structures) */

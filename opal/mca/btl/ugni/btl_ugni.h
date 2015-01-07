@@ -328,5 +328,7 @@ static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t* btl);
 int mca_btl_ugni_kill_progress_thread(void);
 
+/** Number of times the progress thread has woken up */
+extern unsigned int mca_btl_ugni_progress_thread_wakeups;
 
 #endif
