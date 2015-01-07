@@ -2228,7 +2228,7 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
 	           }
 	           end = i;
 	       }
-	       merge_aggrs = (int *)malloc((end - start) * sizeof(int));
+	       merge_aggrs = (int *)malloc((end - start + 1) * sizeof(int));
 	       if (NULL == merge_aggrs) {
 		  opal_output (1, "OUT OF MEMORY\n");
 		  return OMPI_ERR_OUT_OF_RESOURCE;
