@@ -123,7 +123,7 @@ static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib
     return NULL;
 }
 
-#if HAVE_XRC
+#if HAVE_XRC && !OPAL_HAVE_CONNECTX_XRC_DOMAINS
 /* XRC recive QP to endpoint */
 static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_device_t *device)
 {
@@ -131,11 +131,7 @@ static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_open
     int  ep_i;
     for(ep_i = 0; ep_i < opal_pointer_array_get_size(device->endpoints); ep_i++) {
         ep = opal_pointer_array_get_item(device->endpoints, ep_i);
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        if (qp_num == ep->xrc_recv_qp->qp_num)
-#else
         if (qp_num == ep->xrc_recv_qp_num)
-#endif
             return ep;
     }
     return NULL;
@@ -376,13 +372,10 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                     if (!xrc_event)
                         mca_btl_openib_load_apm(event.element.qp,
                                 qp2endpoint(event.element.qp, device));
-#if HAVE_XRC
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-#else
+#if HAVE_XRC && !OPAL_HAVE_CONNECTX_XRC_DOMAINS
                     else
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
                                 xrc_qp2endpoint(event.element.xrc_qp_num, device));
-#endif
 #endif
                 }
                 break;
