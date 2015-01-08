@@ -149,6 +149,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     uint32_t iov_count=0,ti;
     struct iovec *decoded_iov=NULL, *temp_iov=NULL;
     size_t max_data = 0, total_bytes = 0; 
+    long long_max_data = 0, long_total_bytes = 0; 
     int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
     int count_other_req_procs,  ret=OMPI_SUCCESS;
     int two_phase_num_io_procs=1;
@@ -254,10 +255,11 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	goto exit;
     }
     
-    ret = fh->f_comm->c_coll.coll_allreduce (&max_data,
-					     &total_bytes,
+    long_max_data = (long) max_data;
+    ret = fh->f_comm->c_coll.coll_allreduce (&long_max_data,
+					     &long_total_bytes,
 					     1,
-					     MPI_DOUBLE,
+					     MPI_LONG,
 					     MPI_SUM,
 					     fh->f_comm,
 					     fh->f_comm->c_coll.coll_allreduce_module);
@@ -265,6 +267,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
+    total_bytes = (size_t) long_total_bytes;
     
     if ( 0 == total_bytes ) {
 	return OMPI_SUCCESS;
