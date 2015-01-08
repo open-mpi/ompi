@@ -1,6 +1,6 @@
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_end.c ompi/ompi/mca/io/romio/romio/adio/common/ad_end.c
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/common/ad_end.c ompi/ompi/mca/io/romio/romio/adio/common/ad_end.c
 --- mpich/src/mpi/romio/adio/common/ad_end.c	2014-12-25 16:45:58.224965512 +0900
-+++ ompi/ompi/mca/io/romio/romio/adio/common/ad_end.c	2015-01-06 19:41:59.287738412 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/common/ad_end.c	2015-01-06 19:43:31.734793345 +0900
 @@ -16,7 +16,12 @@
  
      /* if a default errhandler was set on MPI_FILE_NULL then we need to ensure
@@ -14,9 +14,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_end.c ompi/
  
  /* delete the flattened datatype list */
      curr = ADIOI_Flatlist;
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_iread_coll.c ompi/ompi/mca/io/romio/romio/adio/common/ad_iread_coll.c
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/common/ad_iread_coll.c ompi/ompi/mca/io/romio/romio/adio/common/ad_iread_coll.c
 --- mpich/src/mpi/romio/adio/common/ad_iread_coll.c	2014-12-25 16:45:58.225965642 +0900
-+++ ompi/ompi/mca/io/romio/romio/adio/common/ad_iread_coll.c	2015-01-06 19:41:59.287738412 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/common/ad_iread_coll.c	2015-01-07 11:01:28.116415010 +0900
 @@ -15,6 +15,8 @@
  #include "mpe.h"
  #endif
@@ -31,9 +31,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_iread_coll.
  }
  
 +#endif /* HAVE_MPI_GREQUEST_EXTENSIONS */
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_iwrite_coll.c ompi/ompi/mca/io/romio/romio/adio/common/ad_iwrite_coll.c
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/common/ad_iwrite_coll.c ompi/ompi/mca/io/romio/romio/adio/common/ad_iwrite_coll.c
 --- mpich/src/mpi/romio/adio/common/ad_iwrite_coll.c	2014-12-25 16:45:58.225965642 +0900
-+++ ompi/ompi/mca/io/romio/romio/adio/common/ad_iwrite_coll.c	2015-01-06 19:41:59.287738412 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/common/ad_iwrite_coll.c	2015-01-07 11:01:28.179454706 +0900
 @@ -12,6 +12,8 @@
  #include "mpe.h"
  #endif
@@ -48,9 +48,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/common/ad_iwrite_coll
  }
  
 +#endif /* HAVE_MPI_GREQUEST_EXTENSIONS */
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/include/adioi.h ompi/ompi/mca/io/romio/romio/adio/include/adioi.h
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/include/adioi.h ompi/ompi/mca/io/romio/romio/adio/include/adioi.h
 --- mpich/src/mpi/romio/adio/include/adioi.h	2014-12-25 16:45:58.228966032 +0900
-+++ ompi/ompi/mca/io/romio/romio/adio/include/adioi.h	2015-01-06 19:41:59.291738936 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/include/adioi.h	2015-01-07 11:01:28.353564349 +0900
 @@ -429,18 +429,26 @@
                         MPI_Datatype datatype, int file_ptr_type,
                         ADIO_Offset offset, ADIO_Status *status, int
@@ -78,9 +78,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/include/adioi.h ompi/
  void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
  			    datatype, int file_ptr_type, ADIO_Offset 
  			    offset, ADIO_Offset **offset_list_ptr, ADIO_Offset
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/include/romioconf-undefs.h ompi/ompi/mca/io/romio/romio/adio/include/romioconf-undefs.h
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/include/romioconf-undefs.h ompi/ompi/mca/io/romio/romio/adio/include/romioconf-undefs.h
 --- mpich/src/mpi/romio/adio/include/romioconf-undefs.h	1970-01-01 09:00:00.000000000 +0900
-+++ ompi/ompi/mca/io/romio/romio/adio/include/romioconf-undefs.h	2015-01-06 19:41:59.291738936 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/include/romioconf-undefs.h	2015-01-07 11:01:28.438617911 +0900
 @@ -0,0 +1,45 @@
 +/*
 + *  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
@@ -127,17 +127,32 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/adio/include/romioconf-und
 +#endif
 +
 +#endif /* ROMIOCONF_UNDEFS_H */
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/.config_params ompi/ompi/mca/io/romio/romio/.config_params
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/adio/Makefile.mk ompi/ompi/mca/io/romio/romio/adio/Makefile.mk
+--- mpich/src/mpi/romio/adio/Makefile.mk	2014-12-25 16:45:58.214964210 +0900
++++ ompi/ompi/mca/io/romio/romio/adio/Makefile.mk	2015-01-07 14:46:19.504816749 +0900
+@@ -19,7 +19,10 @@
+     adio/include/mpio_error.h          \
+     adio/include/mpipr.h               \
+     adio/include/mpiu_greq.h           \
+-    adio/include/nopackage.h
++    adio/include/nopackage.h           \
++    adio/include/romioconf-undefs.h    \
++    adio/include/mpiu_external32.h     \
++    adio/include/hint_fns.h
+ 
+ include $(top_srcdir)/adio/ad_gpfs/Makefile.mk
+ include $(top_srcdir)/adio/ad_gpfs/bg/Makefile.mk
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/.config_params ompi/ompi/mca/io/romio/romio/.config_params
 --- mpich/src/mpi/romio/.config_params	2014-12-25 16:45:58.214964210 +0900
-+++ ompi/ompi/mca/io/romio/romio/.config_params	2015-01-06 19:41:59.277737109 +0900
++++ ompi/ompi/mca/io/romio/romio/.config_params	2015-01-06 19:43:31.738793869 +0900
 @@ -36,3 +36,4 @@
  __hp_mpi
  __cray_mpi
  __lam_mpi
 +__open_mpi
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/configure.ac ompi/ompi/mca/io/romio/romio/configure.ac
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/configure.ac ompi/ompi/mca/io/romio/romio/configure.ac
 --- mpich/src/mpi/romio/configure.ac	2014-12-25 16:45:58.229966162 +0900
-+++ ompi/ompi/mca/io/romio/romio/configure.ac	2015-01-06 19:41:59.293739196 +0900
++++ ompi/ompi/mca/io/romio/romio/configure.ac	2015-01-07 11:01:28.602721250 +0900
 @@ -3,12 +3,21 @@
  # autoconf --localdir=../confdb configure.ac
  # (or wherever the confdb is)
@@ -483,7 +498,7 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/configure.ac ompi/ompi/mca
  AC_OUTPUT
  
  dnl PAC_SUBDIR_CACHE_CLEANUP
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/doc/Makefile ompi/ompi/mca/io/romio/romio/doc/Makefile
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/doc/Makefile ompi/ompi/mca/io/romio/romio/doc/Makefile
 --- mpich/src/mpi/romio/doc/Makefile	2014-12-25 16:45:58.229966162 +0900
 +++ ompi/ompi/mca/io/romio/romio/doc/Makefile	1970-01-01 09:00:00.000000000 +0900
 @@ -1,11 +0,0 @@
@@ -498,9 +513,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/doc/Makefile ompi/ompi/mca
 -	-rm -f users-guide.toc users-guide.log users-guide.dvi \
 -	       users-guide.aux users-guide.bbl users-guide.ps \
 -               users-guide.blg
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/doc/users-guide.tex ompi/ompi/mca/io/romio/romio/doc/users-guide.tex
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/doc/users-guide.tex ompi/ompi/mca/io/romio/romio/doc/users-guide.tex
 --- mpich/src/mpi/romio/doc/users-guide.tex	2014-12-25 16:45:58.230966293 +0900
-+++ ompi/ompi/mca/io/romio/romio/doc/users-guide.tex	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/doc/users-guide.tex	2015-01-07 11:01:28.619731962 +0900
 @@ -807,13 +807,19 @@
  your MPI-IO program.  
  
@@ -532,9 +547,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/doc/users-guide.tex ompi/o
  
  \item The file-open mode {\tt MPI\_MODE\_EXCL} does not work on Intel
  PFS file system, due to a bug in PFS.
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/.gitignore ompi/ompi/mca/io/romio/romio/.gitignore
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/.gitignore ompi/ompi/mca/io/romio/romio/.gitignore
 --- mpich/src/mpi/romio/.gitignore	1970-01-01 09:00:00.000000000 +0900
-+++ ompi/ompi/mca/io/romio/romio/.gitignore	2015-01-06 19:41:59.277737109 +0900
++++ ompi/ompi/mca/io/romio/romio/.gitignore	2015-01-07 11:01:26.982701076 +0900
 @@ -0,0 +1,13 @@
 +/Makefile
 +/.deps
@@ -549,9 +564,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/.gitignore ompi/ompi/mca/i
 +.state-cache
 +version.m4
 +confdb/config.rpath
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/include/io_romio_conv.h ompi/ompi/mca/io/romio/romio/include/io_romio_conv.h
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/include/io_romio_conv.h ompi/ompi/mca/io/romio/romio/include/io_romio_conv.h
 --- mpich/src/mpi/romio/include/io_romio_conv.h	1970-01-01 09:00:00.000000000 +0900
-+++ ompi/ompi/mca/io/romio/romio/include/io_romio_conv.h	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/include/io_romio_conv.h	2015-01-07 11:01:28.638743935 +0900
 @@ -0,0 +1,124 @@
 +/*
 + * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
@@ -677,9 +692,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/include/io_romio_conv.h om
 +#endif
 +
 +#endif /* MCA_IO_ROMIO_CONV_H */
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/include/mpio.h.in ompi/ompi/mca/io/romio/romio/include/mpio.h.in
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/include/mpio.h.in ompi/ompi/mca/io/romio/romio/include/mpio.h.in
 --- mpich/src/mpi/romio/include/mpio.h.in	2014-12-25 16:45:58.230966293 +0900
-+++ ompi/ompi/mca/io/romio/romio/include/mpio.h.in	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/include/mpio.h.in	2015-01-07 11:01:28.655754646 +0900
 @@ -11,6 +11,16 @@
  #define MPIO_INCLUDE
  
@@ -742,9 +757,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/include/mpio.h.in ompi/omp
  #if defined(__cplusplus)
  }
  #endif
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/localdefs.in ompi/ompi/mca/io/romio/romio/localdefs.in
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/localdefs.in ompi/ompi/mca/io/romio/romio/localdefs.in
 --- mpich/src/mpi/romio/localdefs.in	2014-12-25 16:45:58.230966293 +0900
-+++ ompi/ompi/mca/io/romio/romio/localdefs.in	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/localdefs.in	2015-01-06 19:43:31.743794524 +0900
 @@ -1,7 +1,4 @@
  #! /bin/sh
 -
@@ -754,9 +769,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/localdefs.in ompi/ompi/mca
 +LIBS="@LIBS@"
  MPI_OFFSET_TYPE="@MPI_OFFSET_TYPE@"
  FORTRAN_MPI_OFFSET="@FORTRAN_MPI_OFFSET@"
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/Makefile.am ompi/ompi/mca/io/romio/romio/Makefile.am
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/Makefile.am ompi/ompi/mca/io/romio/romio/Makefile.am
 --- mpich/src/mpi/romio/Makefile.am	2014-12-25 16:45:58.214964210 +0900
-+++ ompi/ompi/mca/io/romio/romio/Makefile.am	2015-01-06 19:41:59.277737109 +0900
++++ ompi/ompi/mca/io/romio/romio/Makefile.am	2015-01-07 11:01:27.001713046 +0900
 @@ -1,9 +1,28 @@
  # -*- Mode: Makefile; -*-
 +# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
@@ -816,9 +831,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/Makefile.am ompi/ompi/mca/
  
  ## NOTE: ROMIO's old build system builds a bunch of _foo.o objects that contain
  ## PMPI_ implementations as well as calls to only other PMPI routines.  In
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/Makefile.options ompi/ompi/mca/io/romio/romio/Makefile.options
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/Makefile.options ompi/ompi/mca/io/romio/romio/Makefile.options
 --- mpich/src/mpi/romio/Makefile.options	1970-01-01 09:00:00.000000000 +0900
-+++ ompi/ompi/mca/io/romio/romio/Makefile.options	2015-01-06 19:41:59.277737109 +0900
++++ ompi/ompi/mca/io/romio/romio/Makefile.options	2015-01-07 11:01:27.015721870 +0900
 @@ -0,0 +1,36 @@
 +# -*- makefile -*-
 +#
@@ -856,9 +871,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/Makefile.options ompi/ompi
 +        -I$(OMPI_TOP_BUILDDIR)/ompi/include \
 +	-I$(top_srcdir)/include \
 +	-I$(top_srcdir)/adio/include
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/close.c ompi/ompi/mca/io/romio/romio/mpi-io/close.c
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/mpi-io/close.c ompi/ompi/mca/io/romio/romio/mpi-io/close.c
 --- mpich/src/mpi/romio/mpi-io/close.c	2014-12-25 16:45:58.230966293 +0900
-+++ ompi/ompi/mca/io/romio/romio/mpi-io/close.c	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/mpi-io/close.c	2015-01-07 11:01:28.670764098 +0900
 @@ -76,8 +76,13 @@
       * somehow inform the MPI library that we no longer hold a reference to any
       * user defined error handler.  We do this by setting the errhandler at this
@@ -873,9 +888,20 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/close.c ompi/ompi/m
  
      ADIO_Close(adio_fh, &error_code);
      MPIO_File_free(fh);
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/iread_all.c ompi/ompi/mca/io/romio/romio/mpi-io/iread_all.c
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/mpi-io/glue/Makefile.mk ompi/ompi/mca/io/romio/romio/mpi-io/glue/Makefile.mk
+--- mpich/src/mpi/romio/mpi-io/glue/Makefile.mk	2014-12-25 16:45:58.232966555 +0900
++++ ompi/ompi/mca/io/romio/romio/mpi-io/glue/Makefile.mk	2015-01-08 14:02:47.060155366 +0900
+@@ -7,6 +7,7 @@
+ 
+ include $(top_srcdir)/mpi-io/glue/default/Makefile.mk
+ include $(top_srcdir)/mpi-io/glue/mpich/Makefile.mk
++include $(top_srcdir)/mpi-io/glue/openmpi/Makefile.mk
+ 
+ if !BUILD_ROMIO_EMBEDDED
+ romio_other_sources += \
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/mpi-io/iread_all.c ompi/ompi/mca/io/romio/romio/mpi-io/iread_all.c
 --- mpich/src/mpi/romio/mpi-io/iread_all.c	2014-12-25 16:45:58.233966685 +0900
-+++ ompi/ompi/mca/io/romio/romio/mpi-io/iread_all.c	2015-01-06 19:41:59.298739847 +0900
++++ ompi/ompi/mca/io/romio/romio/mpi-io/iread_all.c	2015-01-07 11:01:28.885899578 +0900
 @@ -26,7 +26,7 @@
  #include "mpioprof.h"
  #endif
@@ -885,9 +911,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/iread_all.c ompi/om
  #include "mpiu_greq.h"
  #endif
  
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/Makefile.mk ompi/ompi/mca/io/romio/romio/mpi-io/Makefile.mk
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/mpi-io/Makefile.mk ompi/ompi/mca/io/romio/romio/mpi-io/Makefile.mk
 --- mpich/src/mpi/romio/mpi-io/Makefile.mk	2014-12-25 16:45:58.230966293 +0900
-+++ ompi/ompi/mca/io/romio/romio/mpi-io/Makefile.mk	2015-01-06 19:41:59.294739326 +0900
++++ ompi/ompi/mca/io/romio/romio/mpi-io/Makefile.mk	2015-01-07 11:01:28.669763468 +0900
 @@ -14,8 +14,6 @@
  romio_mpi_sources +=          \
      mpi-io/close.c            \
@@ -897,9 +923,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/Makefile.mk ompi/om
      mpi-io/fsync.c            \
      mpi-io/get_amode.c        \
      mpi-io/get_atom.c         \
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/mpioprof.h ompi/ompi/mca/io/romio/romio/mpi-io/mpioprof.h
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/mpi-io/mpioprof.h ompi/ompi/mca/io/romio/romio/mpi-io/mpioprof.h
 --- mpich/src/mpi/romio/mpi-io/mpioprof.h	2014-12-25 16:45:58.233966685 +0900
-+++ ompi/ompi/mca/io/romio/romio/mpi-io/mpioprof.h	2015-01-06 19:41:59.298739847 +0900
++++ ompi/ompi/mca/io/romio/romio/mpi-io/mpioprof.h	2015-01-07 11:01:29.005975192 +0900
 @@ -10,6 +10,15 @@
     building the profiling interface
   */
@@ -921,9 +947,9 @@ diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/mpi-io/mpioprof.h ompi/omp
  
  #endif
 +#endif
-diff -x ompi.patch -x confdb -ruN mpich/src/mpi/romio/README_OMPI ompi/ompi/mca/io/romio/romio/README_OMPI
+diff -x ompi.patch -x confdb -x autom4te.cache -x version.m4 -x aclocal.m4 -ruN mpich/src/mpi/romio/README_OMPI ompi/ompi/mca/io/romio/romio/README_OMPI
 --- mpich/src/mpi/romio/README_OMPI	1970-01-01 09:00:00.000000000 +0900
-+++ ompi/ompi/mca/io/romio/romio/README_OMPI	2015-01-06 19:41:59.277737109 +0900
++++ ompi/ompi/mca/io/romio/romio/README_OMPI	2015-01-07 11:01:27.034733843 +0900
 @@ -0,0 +1,11 @@
 +Please note that this is *NOT* a vanilla MPICH v3.2a2-84-gef1cf14
 +distribution of the ROMIO package from Argonne National Labs.
