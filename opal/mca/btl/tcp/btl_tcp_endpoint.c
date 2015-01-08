@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,26 +182,33 @@ mca_btl_tcp_endpoint_dump(int level,
     sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
 #endif
 
-    used += snprintf(&outmsg[used], 1024 - used, "%s: %s - %s [%d",
+    used = snprintf(outmsg, 1024, "%s: %s - %s [%d",
                      msg, src, dst, btl_endpoint->endpoint_sd);
+    if (used >= 1024) goto out;
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECTING:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "connecting");
+        if (used >= 1024) goto out;
         break;
     case MCA_BTL_TCP_CONNECT_ACK:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "ack");
+        if (used >= 1024) goto out;
         break;
     case MCA_BTL_TCP_CLOSED:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "close");
+        if (used >= 1024) goto out;
         break;
     case MCA_BTL_TCP_FAILED:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "failed");
+        if (used >= 1024) goto out;
         break;
     case MCA_BTL_TCP_CONNECTED:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "connected");
+        if (used >= 1024) goto out;
         break;
     default:
         used += snprintf(&outmsg[used], 1024 - used, ":%s]", "unknown");
+        if (used >= 1024) goto out;
         break;
     }
 
@@ -238,26 +247,35 @@ mca_btl_tcp_endpoint_dump(int level,
 #endif
         used += snprintf(&outmsg[used], 1024 - used, " nodelay %d sndbuf %d rcvbuf %d flags %08x",
                          nodelay, sndbuf, rcvbuf, flags);
+        if (used >= 1024) goto out;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
         used += snprintf(&outmsg[used], 1024 - used, "\n\t[cache %p used %lu/%lu]",
                          btl_endpoint->endpoint_cache, btl_endpoint->endpoint_cache_pos - btl_endpoint->endpoint_cache,
                          btl_endpoint->endpoint_cache_length);
+        if (used >= 1024) goto out;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
         used += snprintf(&outmsg[used], 1024 - used, "{%s - retries %d}",
                          (btl_endpoint->endpoint_nbo ? "NBO" : ""), (int)btl_endpoint->endpoint_retries);
+        if (used >= 1024) goto out;
     }
     used += snprintf(&outmsg[used], 1024 - used, "\n");
+    if (used >= 1024) goto out;
 
     if( NULL != btl_endpoint->endpoint_recv_frag )
         used += mca_btl_tcp_frag_dump(btl_endpoint->endpoint_recv_frag, "active recv",
                                       &outmsg[used], 1024 - used);
+    if (used >= 1024) goto out;
 
     if( NULL != btl_endpoint->endpoint_send_frag )
         used += mca_btl_tcp_frag_dump(btl_endpoint->endpoint_send_frag, "active send (inaccurate iov)",
                                       &outmsg[used], 1024 - used);
+    if (used >= 1024) goto out;
     OPAL_LIST_FOREACH(item, &btl_endpoint->endpoint_frags, mca_btl_tcp_frag_t) {
         used += mca_btl_tcp_frag_dump(item, "pending send", &outmsg[used], 1024 - used);
+        if (used >= 1024) goto out;
     }
+out:
+    outmsg[1023] = '\0';
     opal_output_verbose(level, opal_btl_base_framework.framework_output,
                         "[%s:%d:%s][%s -> %s] %s",
                         fname, lineno, funcname,
