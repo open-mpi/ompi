@@ -122,7 +122,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user);
  * Diagnostics: change this to "1" to enable the function
  * mca_btl_tcp_endpoint_dump(), below
  */
-#define WANT_PEER_DUMP 1
+#define WANT_PEER_DUMP 0
 /*
  * diagnostics
  */
