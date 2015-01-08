@@ -373,9 +373,8 @@ static void mca_btl_vader_check_single_copy (void)
             mca_btl_vader_select_next_single_copy_mechanism ();
         } else {
             mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
-            mca_btl_vader.super.btl_put = mca_btl_vader_get_xpmem;
+            mca_btl_vader.super.btl_put = mca_btl_vader_put_xpmem;
         }
-
     }
 #endif
 
