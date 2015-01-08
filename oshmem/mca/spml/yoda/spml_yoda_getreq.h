@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,10 +54,11 @@ static inline mca_spml_yoda_get_request_t *mca_spml_yoda_getreq_alloc(int dst)
     return getreq;
 }
 
-void mca_spml_yoda_get_completion(mca_btl_base_module_t* btl,
-                                  struct mca_btl_base_endpoint_t* ep,
-                                  struct mca_btl_base_descriptor_t* des,
-                                  int status);
+void mca_spml_yoda_get_completion (struct mca_btl_base_module_t* module,
+                                   struct mca_btl_base_endpoint_t* endpoint,
+                                   void *local_address,
+                                   struct mca_btl_base_registration_handle_t *local_handle,
+                                   void *context, void *cbdata, int status);
 
 void mca_spml_yoda_get_response_completion(mca_btl_base_module_t* btl,
                                   struct mca_btl_base_endpoint_t* ep,
