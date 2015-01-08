@@ -30,7 +30,7 @@ int mca_btl_vader_xpmem_init (void)
     }
 
     mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
-    mca_btl_vader.super.btl_put = mca_btl_vader_get_xpmem;
+    mca_btl_vader.super.btl_put = mca_btl_vader_put_xpmem;
 
     return OPAL_SUCCESS;
 }
