@@ -49,6 +49,12 @@ void mca_spml_yoda_put_completion(mca_btl_base_module_t* btl,
                                   struct mca_btl_base_descriptor_t* des,
                                   int status);
 
+void mca_spml_yoda_put_completion_rdma (struct mca_btl_base_module_t* module,
+					struct mca_btl_base_endpoint_t* endpoint,
+					void *local_address,
+					struct mca_btl_base_registration_handle_t *local_handle,
+					void *context, void *cbdata, int status);
+
 END_C_DECLS
 
 #endif  /* OSHMEM_SPML_YODA_PUT_REQUEST_H */

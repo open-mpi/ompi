@@ -32,7 +32,7 @@ typedef union mca_spml_yoda_segment_t {
 
 struct mca_spml_yoda_rdma_frag_t {
     mca_spml_yoda_segment_t rdma_segs[2];
-    mca_btl_base_segment_t *btl_seg; /* save pointer to btl allocated descriptor segment */
+    mca_btl_base_registration_handle_t *local_handle;
     void *rdma_req;
     int allocated;
     int use_send;

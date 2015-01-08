@@ -91,3 +91,20 @@ void mca_spml_yoda_put_completion(mca_btl_base_module_t* btl,
     oshmem_request_free((oshmem_request_t**) &putreq);
     mca_bml_base_free(bml_btl, des);
 }
+
+void mca_spml_yoda_put_completion_rdma (struct mca_btl_base_module_t* module,
+					struct mca_btl_base_endpoint_t* endpoint,
+					void *local_address,
+					struct mca_btl_base_registration_handle_t *local_handle,
+					void *context, void *cbdata, int status)
+{
+    mca_btl_base_descriptor_t *des = (mca_btl_base_descriptor_t *) cbdata;
+    mca_bml_base_btl_t *bml_btl = (mca_bml_base_btl_t *) context;
+    des->des_context = context;
+
+    if (bml_btl->btl->btl_register_mem) {
+	bml_btl->btl->btl_deregister_mem (bml_btl->btl, local_handle);
+    }
+
+    des->des_cbfunc (module, endpoint, des, status);
+}
