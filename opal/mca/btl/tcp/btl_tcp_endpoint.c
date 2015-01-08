@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -128,6 +128,8 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user);
  */
 
 #if WANT_PEER_DUMP
+
+#define DEBUG_LENGTH  1024
 /**
  * The lack of protection in the mca_btl_tcp_endpoint_dump function is voluntary
  * so that it can be called regardless of the state of the mutexes. As a result,
@@ -145,7 +147,7 @@ mca_btl_tcp_endpoint_dump(int level,
                           bool full_info,
                           const char* msg)
 {
-    char src[64], dst[64], outmsg[1024];
+    char outmsg[DEBUG_LENGTH];
     int sndbuf, rcvbuf, nodelay, flags, used = 0;
 #if OPAL_ENABLE_IPV6
     struct sockaddr_storage inaddr;
@@ -157,17 +159,22 @@ mca_btl_tcp_endpoint_dump(int level,
     mca_btl_tcp_frag_t* item;
     mca_btl_tcp_proc_t* this_proc = mca_btl_tcp_proc_local();
 
+    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s: ", msg);
+    if (used >= DEBUG_LENGTH) goto out;
+
     getsockname(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
 #if OPAL_ENABLE_IPV6
     {
         char *address;
         address = (char *) opal_net_get_hostname((struct sockaddr*) &inaddr);
         if (NULL != address) {
-            sprintf(src, "%s", address);
+            used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s -", address);
+            if (used >= DEBUG_LENGTH) goto out;
         }
     }
 #else
-    sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
+    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s -", inet_ntoa(inaddr.sin_addr));
+    if (used >= DEBUG_LENGTH) goto out;
 #endif
     getpeername(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
 #if OPAL_ENABLE_IPV6
@@ -175,40 +182,41 @@ mca_btl_tcp_endpoint_dump(int level,
         char *address;
         address = (char *) opal_net_get_hostname ((struct sockaddr*) &inaddr);
         if (NULL != address) {
-            sprintf(dst, "%s", address);
+            used += snprintf(&outmsg[used], DEBUG_LENGTH - used, " %s", address);
+            if (used >= DEBUG_LENGTH) goto out;
         }
     }
 #else
-    sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
+    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, " %s", inet_ntoa(inaddr.sin_addr));
+    if (used >= DEBUG_LENGTH) goto out;
 #endif
 
-    used = snprintf(outmsg, 1024, "%s: %s - %s [%d",
-                     msg, src, dst, btl_endpoint->endpoint_sd);
-    if (used >= 1024) goto out;
+    used = snprintf(outmsg, DEBUG_LENGTH, "[%d", btl_endpoint->endpoint_sd);
+    if (used >= DEBUG_LENGTH) goto out;
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECTING:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "connecting");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "connecting");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     case MCA_BTL_TCP_CONNECT_ACK:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "ack");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "ack");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     case MCA_BTL_TCP_CLOSED:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "close");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "close");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     case MCA_BTL_TCP_FAILED:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "failed");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "failed");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     case MCA_BTL_TCP_CONNECTED:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "connected");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "connected");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     default:
-        used += snprintf(&outmsg[used], 1024 - used, ":%s]", "unknown");
-        if (used >= 1024) goto out;
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, ":%s]", "unknown");
+        if (used >= DEBUG_LENGTH) goto out;
         break;
     }
 
@@ -245,37 +253,37 @@ mca_btl_tcp_endpoint_dump(int level,
 #else
         nodelay = 0;
 #endif
-        used += snprintf(&outmsg[used], 1024 - used, " nodelay %d sndbuf %d rcvbuf %d flags %08x",
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, " nodelay %d sndbuf %d rcvbuf %d flags %08x",
                          nodelay, sndbuf, rcvbuf, flags);
-        if (used >= 1024) goto out;
+        if (used >= DEBUG_LENGTH) goto out;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
-        used += snprintf(&outmsg[used], 1024 - used, "\n\t[cache %p used %lu/%lu]",
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "\n\t[cache %p used %lu/%lu]",
                          btl_endpoint->endpoint_cache, btl_endpoint->endpoint_cache_pos - btl_endpoint->endpoint_cache,
                          btl_endpoint->endpoint_cache_length);
-        if (used >= 1024) goto out;
+        if (used >= DEBUG_LENGTH) goto out;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
-        used += snprintf(&outmsg[used], 1024 - used, "{%s - retries %d}",
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "{%s - retries %d}",
                          (btl_endpoint->endpoint_nbo ? "NBO" : ""), (int)btl_endpoint->endpoint_retries);
-        if (used >= 1024) goto out;
+        if (used >= DEBUG_LENGTH) goto out;
     }
-    used += snprintf(&outmsg[used], 1024 - used, "\n");
-    if (used >= 1024) goto out;
+    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "\n");
+    if (used >= DEBUG_LENGTH) goto out;
 
     if( NULL != btl_endpoint->endpoint_recv_frag )
         used += mca_btl_tcp_frag_dump(btl_endpoint->endpoint_recv_frag, "active recv",
-                                      &outmsg[used], 1024 - used);
-    if (used >= 1024) goto out;
+                                      &outmsg[used], DEBUG_LENGTH - used);
+    if (used >= DEBUG_LENGTH) goto out;
 
     if( NULL != btl_endpoint->endpoint_send_frag )
         used += mca_btl_tcp_frag_dump(btl_endpoint->endpoint_send_frag, "active send (inaccurate iov)",
-                                      &outmsg[used], 1024 - used);
-    if (used >= 1024) goto out;
+                                      &outmsg[used], DEBUG_LENGTH - used);
+    if (used >= DEBUG_LENGTH) goto out;
     OPAL_LIST_FOREACH(item, &btl_endpoint->endpoint_frags, mca_btl_tcp_frag_t) {
-        used += mca_btl_tcp_frag_dump(item, "pending send", &outmsg[used], 1024 - used);
-        if (used >= 1024) goto out;
+        used += mca_btl_tcp_frag_dump(item, "pending send", &outmsg[used], DEBUG_LENGTH - used);
+        if (used >= DEBUG_LENGTH) goto out;
     }
 out:
-    outmsg[1023] = '\0';
+    outmsg[ used >= DEBUG_LENGTH ? (DEBUG_LENGTH-1) : used ] = '\0';
     opal_output_verbose(level, opal_btl_base_framework.framework_output,
                         "[%s:%d:%s][%s -> %s] %s",
                         fname, lineno, funcname,
