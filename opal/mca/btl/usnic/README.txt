@@ -284,3 +284,11 @@ Things still to do:
 
 - component.c:usnic_handle_cq_error is using a USD_* constant from
   usnic_direct.  Need to get that value through libfabric somehow.
+
+======================================
+
+libfabric abstractions:
+
+fi_fabric: corresponds to a VIC PF
+fi_domain: corresponds to a VIC VF
+fi_endpoint: resources inside the VIC VF (basically a QP)
