@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -341,6 +341,15 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         }
     }
 #if OPAL_CUDA_SUPPORT
+    /* Register the entire shared memory region with the CUDA library which will
+     * force it to be pinned.  This aproach was chosen as there is no way for this
+     * local process to know which parts of the memory are being utilized by a
+     * remote process. */
+    opal_output_verbose(10, ompi_btl_base_framework.framework_output,
+                        "btl:smcuda: CUDA cuMemHostRegister address=%p, size=%d",
+                        mca_btl_smcuda_component.sm_mpool_base, (int)res->size);
+    mca_common_cuda_register(mca_btl_smcuda_component.sm_mpool_base, res->size, "smcuda");
+
     /* Create a local memory pool that sends handles to the remote
      * side.  Note that the res argument is not really used, but
      * needed to satisfy function signature. */

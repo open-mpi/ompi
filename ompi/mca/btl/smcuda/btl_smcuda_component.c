@@ -182,7 +182,7 @@ static int smcuda_register(void)
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_smcuda.super.btl_max_send_size = 32*1024;
+    mca_btl_smcuda.super.btl_max_send_size = 128*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_send_length = 64*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_smcuda.super.btl_min_rdma_pipeline_size = 64*1024;
