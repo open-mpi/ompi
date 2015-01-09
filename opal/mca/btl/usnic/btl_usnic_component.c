@@ -16,6 +16,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -622,14 +624,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
-    /* Do quick sanity check to ensure that we can lock memory (which
-       is required for registered memory). */
-    if (OPAL_SUCCESS != check_reg_mem_basics()) {
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: disqualifiying myself due to lack of lockable memory");
-        return NULL;
-    }
-
     memset(&hints, 0, sizeof(hints));
     hints.ep_type = FI_EP_DGRAM;
     hints.caps = FI_MSG;
@@ -649,6 +643,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     if (0 == num_devs) {
         opal_output_verbose(5, USNIC_OUT,
             "btl:usnic: disqualifiying myself due to lack of libfabric providers");
+        return NULL;
+    }
+
+    /* Do quick sanity check to ensure that we can lock memory (which
+       is required for registered memory). */
+    if (OPAL_SUCCESS != check_reg_mem_basics()) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: disqualifiying myself due to lack of lockable memory");
         return NULL;
     }
 
