@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,5 +48,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device);
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device);
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
         ompi_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep);
+
+bool mca_btl_openib_xrc_check_api(void);
 
 #endif

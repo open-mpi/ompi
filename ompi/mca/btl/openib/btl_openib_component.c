@@ -19,8 +19,9 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -988,6 +989,11 @@ static void device_destruct(mca_btl_openib_device_t *device)
     }
 
 #if HAVE_XRC
+
+    if (!mca_btl_openib_xrc_check_api()) {
+        return;
+    }
+
     if (MCA_BTL_XRC_ENABLED) {
         if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(device)) {
             BTL_VERBOSE(("XRC Internal error. Failed to close xrc domain"));
