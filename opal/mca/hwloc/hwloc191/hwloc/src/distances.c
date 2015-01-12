@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2014 Inria.  All rights reserved.
+ * Copyright © 2010-2015 Inria.  All rights reserved.
  * Copyright © 2011-2012 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -832,6 +832,7 @@ hwloc__groups_by_distances(struct hwloc_topology *topology,
       hwloc_obj_t *groupobjs = NULL;
       unsigned *groupsizes = NULL;
       float *groupdistances = NULL;
+      unsigned failed = 0;
 
       groupobjs = malloc(sizeof(hwloc_obj_t) * nbgroups);
       groupsizes = malloc(sizeof(unsigned) * nbgroups);
@@ -863,9 +864,16 @@ hwloc__groups_by_distances(struct hwloc_topology *topology,
                                   groupsizes[i], group_obj->cpuset);
           res_obj = hwloc__insert_object_by_cpuset(topology, group_obj,
 						   fromuser ? hwloc_report_user_distance_error : hwloc_report_os_error);
-	  /* res_obj may be different from group_objs if we got groups from XML import before grouping */
+	  /* res_obj may be NULL on failure to insert. */
+	  if (!res_obj)
+	    failed++;
+	  /* or it may be different from groupobjs if we got groups from XML import before grouping */
           groupobjs[i] = res_obj;
       }
+
+      if (failed)
+	/* don't try to group above if we got a NULL group here, just keep this incomplete level */
+	goto inner_free;
 
       /* factorize distances */
       memset(&(groupdistances[0]), 0, sizeof(groupdistances[0]) * nbgroups * nbgroups);
