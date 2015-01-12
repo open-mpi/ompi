@@ -28,14 +28,9 @@
 #include "opal/class/opal_list.h"
 
 #include "opal/sys/atomic.h"
-#include "opal/threads/mutex.h"
+#include "opal/threads/threads.h"
 
 BEGIN_C_DECLS
-
-/* NTH: temporarily suppress warnings about this not being defined */
-#if !defined(OPAL_HAVE_ATOMIC_CMPSET_128)
-#define OPAL_HAVE_ATOMIC_CMPSET_128 0
-#endif
 
 /**
  * Counted pointer to avoid the ABA problem.
@@ -124,7 +119,8 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
         if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
             return next;
         }
-        /* DO some kind of pause to release the bus */
+
+        opal_thread_idle ();
     } while (1);
 }
 
@@ -152,6 +148,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
             item->opal_list_next = NULL;
             return item;
         }
+
+        opal_thread_idle ();
     } while (1);
 }
 
@@ -176,7 +174,8 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
             item->item_free = 0;
             return next;
         }
-        /* DO some kind of pause to release the bus */
+
+        opal_thread_idle ();
     } while (1);
 }
 
@@ -191,6 +190,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 
         /* ensure it is safe to pop the head */
         if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
+            opal_thread_idle ();
             continue;
         }
 
@@ -201,7 +201,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         }
         /* NTH: don't need another atomic here */
         item->item_free = 0;
-        /* Do some kind of pause to release the bus */
+
+        opal_thread_idle ();
     }
 
     if (item == &lifo->opal_lifo_ghost) {
