@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or all its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,14 +101,16 @@ OBJ_CLASS_INSTANCE(
 
 size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, size_t length)
 {
-    int i, used = 0;
+    int i, used;
 
-    used += snprintf(&buf[used], length - used, "%s frag %p iov_cnt %d iov_idx %d size %lu\n",
-                     msg, (void*)frag, (int)frag->iov_cnt, (int)frag->iov_idx, frag->size);
+    used = snprintf(buf, length, "%s frag %p iov_cnt %d iov_idx %d size %lu\n",
+                    msg, (void*)frag, (int)frag->iov_cnt, (int)frag->iov_idx, frag->size);
+    if (used >= length) return length;
     for( i = 0; i < (int)frag->iov_cnt; i++ ) {
         used += snprintf(&buf[used], length - used, "[%s%p:%lu] ",
                          (i < (int)frag->iov_idx ? "*" : ""),
                          frag->iov[i].iov_base, frag->iov[i].iov_len);
+        if (used >= length) return length;
     }
     return used;
 }
