@@ -1124,7 +1124,8 @@ static char **split_and_resolve(char **orig_str, char *name)
                             argv_prefix);
             
         /* Go through all interfaces and see if we can find a match */
-        for (if_index = 0; if_index < opal_ifcount(); if_index++) {
+        for (if_index = opal_ifbegin(); if_index >= 0;
+             if_index = opal_ifnext(if_index)) {
             opal_ifindextoaddr(if_index, 
                                (struct sockaddr*) &if_inaddr,
                                sizeof(if_inaddr));
@@ -1136,7 +1137,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         }
         
         /* If we didn't find a match, keep trying */
-        if (if_index == opal_ifcount()) {
+        if (if_index < 0) {
             orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
                            true, name, orte_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");
