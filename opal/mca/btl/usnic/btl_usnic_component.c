@@ -770,21 +770,9 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         module->domain = domain;
         module->fabric_info = info;
 
-        /* respect if_include/if_exclude subnets/ifaces from the user */
-        if (filter != NULL) {
-            keep_module = filter_module(module, filter, filter_incl);
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic: %s %s due to %s",
-                                (keep_module ? "keeping" : "skipping"),
-                                info->fabric_attr->name,
-                                (filter_incl ? "if_include" : "if_exclude"));
-            if (!keep_module) {
-                fi_close(&domain->fid);
-                fi_close(&fabric->fid);
-                continue;
-            }
-        }
-
+        /* Obtain usnic-specific device info (e.g., netmask) that
+           doesn't come in the normal fi_getinfo(). This allows us to
+           do filtering, later. */
         ret = fi_open_ops(&fabric->fid, FI_USNIC_FABRIC_OPS_1, 0,
                 (void **)&module->usnic_fabric_ops, NULL);
         if (ret != 0) {
@@ -799,11 +787,35 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         ret = module->usnic_fabric_ops->getinfo(fabric, &module->usnic_info);
         if (ret != 0) {
             opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: device %s usnic_getinco failed %d (%s)",
+                        "btl:usnic: device %s usnic_getinfo failed %d (%s)",
                         info->fabric_attr->name, ret, fi_strerror(-ret));
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
             continue;
+        }
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: device %s usnic_info: link speed=%d, netmask=0x%x, ifname=%s, num_vf=%d, qp/vf=%d, cq/vf=%d",
+                            info->fabric_attr->name,
+                            (unsigned int) module->usnic_info.ui_link_speed,
+                            (unsigned int) module->usnic_info.ui_netmask_be,
+                            module->usnic_info.ui_ifname,
+                            module->usnic_info.ui_num_vf,
+                            module->usnic_info.ui_qp_per_vf,
+                            module->usnic_info.ui_cq_per_vf);
+
+        /* respect if_include/if_exclude subnets/ifaces from the user */
+        if (filter != NULL) {
+            keep_module = filter_module(module, filter, filter_incl);
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: %s %s due to %s",
+                                (keep_module ? "keeping" : "skipping"),
+                                info->fabric_attr->name,
+                                (filter_incl ? "if_include" : "if_exclude"));
+            if (!keep_module) {
+                fi_close(&domain->fid);
+                fi_close(&fabric->fid);
+                continue;
+            }
         }
 
         /* Check some usNIC configuration minimum settings */
