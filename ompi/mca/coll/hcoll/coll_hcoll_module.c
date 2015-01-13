@@ -182,11 +182,11 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 
 int mca_coll_hcoll_progress(void)
 {
-    if (!ompi_mpi_finalized){
-        (*hcoll_progress_fn)();
-    } else {
+    if (ompi_mpi_finalized){
         hcoll_rte_p2p_disabled_notify();
     }
+
+    (*hcoll_progress_fn)();
     return OMPI_SUCCESS;
 }
 
