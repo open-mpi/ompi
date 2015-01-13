@@ -1942,6 +1942,7 @@ static void finalize_one_channel(opal_btl_usnic_module_t *module,
 
     if (NULL != channel->info) {
         fi_freeinfo(channel->info);
+        channel->info = NULL;
     }
 
     /* gets set right after constructor called, lets us know recv_segs
@@ -2325,6 +2326,11 @@ static int init_channels(opal_btl_usnic_module_t *module)
     int rc;
     struct fi_av_attr av_attr;
     struct fi_eq_attr eq_attr;
+
+    memset(&module->mod_channels[0], 0,
+           sizeof(module->mod_channels[0]));
+    memset(&module->mod_channels[1], 0,
+           sizeof(module->mod_channels[1]));
 
     memset(&av_attr, 0, sizeof(av_attr));
     av_attr.type = FI_AV_MAP;
