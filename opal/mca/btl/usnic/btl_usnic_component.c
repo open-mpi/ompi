@@ -454,7 +454,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
             filter->elts[filter->n_elt].is_netmask = false;
             filter->elts[filter->n_elt].if_name = strdup(argv[i]);
             opal_output_verbose(20, USNIC_OUT,
-                                "btl:usnic:filter_module: parsed %s device name: %s",
+                                "btl:usnic:parse_ifex_str: parsed %s device name: %s",
                                 name, filter->elts[filter->n_elt].if_name);
 
             ++filter->n_elt;
@@ -495,7 +495,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
             continue;
         }
         opal_output_verbose(20, USNIC_OUT,
-                            "btl:usnic:filter_module: parsed %s address+prefix: %s / %u",
+                            "btl:usnic:parse_ifex_str: parsed %s address+prefix: %s / %u",
                             name,
                             opal_net_get_hostname((struct sockaddr*) &argv_inaddr),
                             argv_prefix);
