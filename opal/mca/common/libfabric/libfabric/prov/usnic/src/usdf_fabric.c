@@ -785,6 +785,7 @@ usdf_usnic_getinfo(struct fid_fabric *fabric, struct fi_usnic_info *uip)
 	dap = fp->fab_dev_attrs;
 
 	uip->ui_link_speed = dap->uda_bandwidth;
+	uip->ui_netmask_be = dap->uda_netmask_be;
 	strcpy(uip->ui_ifname, dap->uda_ifname);
 	uip->ui_num_vf = dap->uda_num_vf;
 	uip->ui_qp_per_vf = dap->uda_qp_per_vf;
