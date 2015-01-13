@@ -201,7 +201,9 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
             # Check for gcc atomic intrinsics
             AC_MSG_CHECKING(compiler support for c11 atomics)
             AC_TRY_LINK([#include <stdatomic.h>],
-                        [#ifdef __STDC_NO_ATOMICS__
+                        [atomic_int a;
+   atomic_init(&a, 0);
+#ifdef __STDC_NO_ATOMICS__
 #error c11 atomics are not supported
 #else
     return 0;
