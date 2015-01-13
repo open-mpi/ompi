@@ -12,10 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -608,7 +610,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     int min_distance, num_local_procs;
     struct fi_info *info_list;
     struct fi_info *info;
-    struct fi_info hints;
+    struct fi_info hints = {0};
+    struct fi_fabric_attr fabric_attr = {0};
     struct fid_fabric *fabric;
     struct fid_domain *domain;
     int ret;
@@ -622,19 +625,15 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
-    /* Do quick sanity check to ensure that we can lock memory (which
-       is required for registered memory). */
-    if (OPAL_SUCCESS != check_reg_mem_basics()) {
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: disqualifiying myself due to lack of lockable memory");
-        return NULL;
-    }
+    /* We only want providers named "usnic */
+    fabric_attr.prov_name = "usnic";
 
-    memset(&hints, 0, sizeof(hints));
     hints.ep_type = FI_EP_DGRAM;
     hints.caps = FI_MSG;
     hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
     hints.addr_format = FI_SOCKADDR;
+    hints.fabric_attr = &fabric_attr;
+
     ret = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
@@ -652,6 +651,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
+    /* Do quick sanity check to ensure that we can lock memory (which
+       is required for registered memory). */
+    if (OPAL_SUCCESS != check_reg_mem_basics()) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: disqualifiying myself due to lack of lockable memory");
+        return NULL;
+    }
+
     /************************************************************************
      * Below this line, we assume that usnic is loaded on all procs,
      * and therefore we will guarantee to the the modex send, even if
@@ -659,7 +666,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
      ************************************************************************/
 
     opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: usNIC support found");
+                        "btl:usnic: usNIC fabrics found");
 
     /* Setup the connectivity checking agent and client. */
     if (mca_btl_usnic_component.connectivity_enabled) {

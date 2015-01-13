@@ -166,14 +166,16 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
             BTL_ERROR(("error tearing down RX SMSG CQ - %s",gni_err_str[rc]));
         }
 
-        rc = GNI_CqDestroy (ugni_module->rdma_local_irq_cq);
-        if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
-        }
+        if (mca_btl_ugni_component.progress_thread_enabled) {
+            rc = GNI_CqDestroy (ugni_module->rdma_local_irq_cq);
+            if (GNI_RC_SUCCESS != rc) {
+                BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
+            }
 
-        rc = GNI_CqDestroy (ugni_module->smsg_remote_irq_cq);
-        if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down remote SMSG CQ - %s",gni_err_str[rc]));
+            rc = GNI_CqDestroy (ugni_module->smsg_remote_irq_cq);
+            if (GNI_RC_SUCCESS != rc) {
+                BTL_ERROR(("error tearing down remote SMSG CQ - %s",gni_err_str[rc]));
+            }
         }
 
         /* cancel wildcard post */

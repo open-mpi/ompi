@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -218,6 +218,8 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 
         opal_atomic_wmb ();
     } while (1);
+
+    opal_atomic_wmb();
 
     item = opal_fifo_head (fifo);
     if (&fifo->opal_fifo_ghost == item) {
