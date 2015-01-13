@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -200,7 +202,7 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
             AC_MSG_CHECKING(compiler support for c11 atomics)
             AC_TRY_LINK([#include <stdatomic.h>],
                         [#ifdef __STDC_NO_ATOMICS__
-    return 1;
+#error c11 atomics are not supported
 #else
     return 0;
 #endif
