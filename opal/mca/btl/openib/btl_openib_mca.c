@@ -518,7 +518,7 @@ int btl_openib_register_mca_params(void)
                    64, &mca_btl_openib_component.buffer_alignment, 0));
 
     CHECK(reg_bool("use_message_coalescing", NULL,
-                   "If nonzero, use message coalescing", true,
+                   "If nonzero, use message coalescing", false,
                    &mca_btl_openib_component.use_message_coalescing));
 
     CHECK(reg_uint("cq_poll_ratio", NULL,
