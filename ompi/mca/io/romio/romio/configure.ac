@@ -36,6 +36,7 @@ AM_MAINTAINER_MODE([enable])
 
 dnl must come before LT_INIT, which AC_REQUIREs AC_PROG_CC
 PAC_PROG_CC
+PAC_ARG_STRICT
 AM_PROG_CC_C_O
 
 AM_PROG_AR
@@ -227,7 +228,7 @@ AC_ARG_ENABLE(f77,
 AC_ARG_ENABLE(f90,
 [--enable-f90 - Turn on support for Fortran 90 (default)],,enable_f90=yes)
 AC_ARG_ENABLE(weak-symbols,
-[--enable-weak-symbols - Turn on support for weak symbols],,enable_weak_symbols=no)
+[--enable-weak-symbols - Turn on support for weak symbols],,enable_weak_symbols=yes)
 AC_ARG_ENABLE(debug,
 [--enable-debug - Build a debugging version],,)
 AC_ARG_WITH(file-system,[
