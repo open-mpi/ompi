@@ -57,6 +57,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     size_t i;
     size_t size;
     size_t namelen;
+    int count = 0;
     char *ep_name = NULL;
     char *ep_names = NULL;
     fi_addr_t *fi_addrs = NULL;
@@ -85,7 +86,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     /**
      * Retrieve the processes' EP names from modex.
      */
-    for (i = 0 ; i < nprocs ; ++i) {
+    for (i = 0; i < nprocs; ++i) {
         OPAL_MODEX_RECV(ret,
                         &mca_mtl_ofi_component.super.mtl_version,
                         &procs[i]->super,
@@ -103,11 +104,11 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     /**
      * Map the EP names to fi_addrs.
      */
-    ret = fi_av_insert(ompi_mtl_ofi.av, ep_names, nprocs, fi_addrs, 0, NULL);
-    if (nprocs != ret) {
+    count = fi_av_insert(ompi_mtl_ofi.av, ep_names, nprocs, fi_addrs, 0, NULL);
+    if (nprocs != count) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_av_insert failed: %s\n",
-                            __FILE__, __LINE__, fi_strerror(errno));
+                            __FILE__, __LINE__, count);
         ret = OMPI_ERROR;
         goto bail;
     }
@@ -115,7 +116,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     /**
      * Store the fi_addrs within the endpoint objects.
      */
-    for (i = 0; i < (int) nprocs; i++) {
+    for (i = 0; i < nprocs; ++i) {
         endpoint = OBJ_NEW(mca_mtl_ofi_endpoint_t);
         endpoint->mtl_ofi_module = &ompi_mtl_ofi;
         endpoint->peer_fiaddr = fi_addrs[i];
