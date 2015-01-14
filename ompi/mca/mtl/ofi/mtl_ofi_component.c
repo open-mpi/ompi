@@ -137,7 +137,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * op_flags:  Specifies default operation to set on all communication.
      *            In this case, we want remote completion to be set by default.
      */
-    domain_attr.threading        = FI_THREAD_PROGRESS;
+    domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
     tx_attr.op_flags             = FI_REMOTE_COMPLETE;
     hints.domain_attr            = &domain_attr;
