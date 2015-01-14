@@ -57,4 +57,3 @@ lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         class/opal_ring_buffer.c \
         class/opal_rb_tree.c \
         class/ompi_free_list.c
-
