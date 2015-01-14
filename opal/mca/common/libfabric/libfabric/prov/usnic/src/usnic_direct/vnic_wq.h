@@ -111,9 +111,9 @@ struct vnic_wq {
 	struct vnic_wq_buf *to_use;
 	struct vnic_wq_buf *to_clean;
 	unsigned int pkts_outstanding;
-#if defined(ENIC_NETQ)	
+#if defined(ENIC_NETQ)
 	unsigned int state;
-#endif    
+#endif
 #if defined(__VMKLNX__) && defined(ENIC_UPT)
 	int enabled;
 #endif
@@ -121,7 +121,7 @@ struct vnic_wq {
 	uint32_t qp_num;
 #endif
 #ifdef ENIC_PMD
-        unsigned int socket_id;
+	unsigned int socket_id;
 #endif
 };
 
@@ -290,8 +290,10 @@ static inline void vnic_wq_service(struct vnic_wq *wq,
 void vnic_wq_free(struct vnic_wq *wq);
 int vnic_wq_alloc(struct vnic_dev *vdev, struct vnic_wq *wq, unsigned int index,
 	unsigned int desc_count, unsigned int desc_size);
+#ifndef ENIC_PMD
 int vnic_wq_devcmd2_alloc(struct vnic_dev *vdev, struct vnic_wq *wq,
 	unsigned int desc_count, unsigned int desc_size);
+#endif
 #ifndef FOR_UPSTREAM_KERNEL
 void vnic_wq_init_start(struct vnic_wq *wq, unsigned int cq_index,
 	unsigned int fetch_index, unsigned int posted_index,

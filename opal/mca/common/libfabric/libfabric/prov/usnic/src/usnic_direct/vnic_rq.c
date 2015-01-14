@@ -133,7 +133,7 @@ int vnic_rq_alloc(struct vnic_dev *vdev, struct vnic_rq *rq, unsigned int index,
 	int err;
 #ifdef ENIC_PMD
 	char res_name[NAME_MAX];
-        static int instance = 0;
+	static int instance;
 #endif
 
 	rq->index = index;
@@ -150,7 +150,7 @@ int vnic_rq_alloc(struct vnic_dev *vdev, struct vnic_rq *rq, unsigned int index,
 #ifdef ENIC_PMD
 	snprintf(res_name, sizeof(res_name), "%d-rq-%d", instance++, index);
 	err = vnic_dev_alloc_desc_ring(vdev, &rq->ring, desc_count, desc_size,
-          rq->socket_id, res_name);
+		rq->socket_id, res_name);
 #else
 	err = vnic_dev_alloc_desc_ring(vdev, &rq->ring, desc_count, desc_size);
 #endif

@@ -107,7 +107,7 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 	int ep_type = FI_EP_RDM;
 	int caps = 0;
 	uint64_t max_tag_value = 0;
-	int err = -ENODATA;
+	int err = -FI_ENODATA;
 
 	psmx_debug("%s\n", __func__);
 
@@ -126,7 +126,6 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		case FI_EP_UNSPEC:
 		case FI_EP_RDM:
 			break;
-			break;
 		default:
 			psmx_debug("%s: hints->ep_type=%d, supported=%d,%d.\n",
 					__func__, hints->ep_type, FI_EP_UNSPEC,
@@ -143,6 +142,18 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 				psmx_debug("%s: hints->protocol=%d, supported=%d %d\n",
 						__func__, hints->ep_attr->protocol,
 						FI_PROTO_UNSPEC, FI_PROTO_PSMX);
+				goto err_out;
+			}
+
+			if (hints->ep_attr->tx_ctx_cnt > 1) {
+				psmx_debug("%s: hints->ep_attr->tx_ctx_cnt=%d, supported=0,1\n",
+						__func__, hints->ep_attr->tx_ctx_cnt);
+				goto err_out;
+			}
+
+			if (hints->ep_attr->rx_ctx_cnt > 1) {
+				psmx_debug("%s: hints->ep_attr->rx_ctx_cnt=%d, supported=0,1\n",
+						__func__, hints->ep_attr->rx_ctx_cnt);
 				goto err_out;
 			}
 		}
@@ -221,19 +232,17 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		goto err_out;
 	}
 
-	psmx_info->tx_attr->op_flags = (hints && hints->tx_attr && hints->tx_attr->op_flags)
-					? hints->tx_attr->op_flags : 0;
-	psmx_info->rx_attr->op_flags = (hints && hints->rx_attr && hints->tx_attr->op_flags)
-					? hints->tx_attr->op_flags : 0;
-
 	psmx_info->ep_attr->protocol = FI_PROTO_PSMX;
 	psmx_info->ep_attr->max_msg_size = PSMX_MAX_MSG_SIZE;
 	psmx_info->ep_attr->inject_size = PSMX_INJECT_SIZE;
 	psmx_info->ep_attr->total_buffered_recv = ~(0ULL); /* that's how PSM handles it internally! */
 	psmx_info->ep_attr->mem_tag_format = fi_tag_format(max_tag_value);
 	psmx_info->ep_attr->msg_order = FI_ORDER_SAS;
+	psmx_info->ep_attr->comp_order = FI_ORDER_NONE;
+	psmx_info->ep_attr->tx_ctx_cnt = 1;
+	psmx_info->ep_attr->rx_ctx_cnt = 1;
 
-	psmx_info->domain_attr->threading = FI_THREAD_PROGRESS;
+	psmx_info->domain_attr->threading = FI_THREAD_COMPLETION;
 	psmx_info->domain_attr->control_progress = FI_PROGRESS_MANUAL;
 	psmx_info->domain_attr->data_progress = FI_PROGRESS_MANUAL;
 	psmx_info->domain_attr->name = strdup("psm");
@@ -248,6 +257,27 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 	psmx_info->src_addr = NULL;
 	psmx_info->dest_addr = dest_addr;
 	psmx_info->fabric_attr->name = strdup("psm");
+	psmx_info->fabric_attr->prov_name = strdup("psm");
+
+	psmx_info->tx_attr->caps = psmx_info->caps;
+	psmx_info->tx_attr->mode = psmx_info->mode;
+	psmx_info->tx_attr->op_flags = (hints && hints->tx_attr && hints->tx_attr->op_flags)
+					? hints->tx_attr->op_flags : 0;
+	psmx_info->tx_attr->msg_order = psmx_info->ep_attr->msg_order;
+	psmx_info->tx_attr->comp_order = psmx_info->ep_attr->comp_order;
+	psmx_info->tx_attr->inject_size = psmx_info->ep_attr->inject_size;
+	psmx_info->tx_attr->size = UINT64_MAX;
+	psmx_info->tx_attr->iov_limit = 1;
+
+	psmx_info->rx_attr->caps = psmx_info->caps;
+	psmx_info->rx_attr->mode = psmx_info->mode;
+	psmx_info->rx_attr->op_flags = (hints && hints->rx_attr && hints->tx_attr->op_flags)
+					? hints->tx_attr->op_flags : 0;
+	psmx_info->rx_attr->msg_order = psmx_info->ep_attr->msg_order;
+	psmx_info->rx_attr->comp_order = psmx_info->ep_attr->comp_order;
+	psmx_info->rx_attr->total_buffered_recv = psmx_info->ep_attr->total_buffered_recv;
+	psmx_info->rx_attr->size = UINT64_MAX;
+	psmx_info->rx_attr->iov_limit = 1;
 
 	*info = psmx_info;
 	return 0;
@@ -270,6 +300,7 @@ static struct fi_ops psmx_fabric_fi_ops = {
 static struct fi_ops_fabric psmx_fabric_ops = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = psmx_domain_open,
+	.wait_open = psmx_wait_open,
 };
 
 static int psmx_fabric(struct fi_fabric_attr *attr,

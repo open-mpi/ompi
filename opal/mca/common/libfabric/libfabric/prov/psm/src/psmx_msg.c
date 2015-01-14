@@ -58,9 +58,9 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_RECV;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->recv.ep = ep;
 		trigger->recv.buf = buf;
 		trigger->recv.len = len;
@@ -216,9 +216,9 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_SEND;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->send.ep = ep;
 		trigger->send.buf = buf;
 		trigger->send.len = len;

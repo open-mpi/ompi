@@ -118,7 +118,7 @@ usd_desc_to_rq_comp(
                 comp->uc_status = USD_COMPSTAT_SUCCESS;
         } else {
             comp->uc_status = USD_COMPSTAT_ERROR_CRC;
-	}
+        }
     } else {
         comp->uc_status = USD_COMPSTAT_SUCCESS;
     }

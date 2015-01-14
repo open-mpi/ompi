@@ -5,7 +5,7 @@
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
  * COPYING in the main directory of this source tree, or the
- * OpenIB.org BSD license below:
+ * BSD license below:
  *
  *     Redistribution and use in source and binary forms, with or
  *     without modification, are permitted provided that the following
@@ -275,6 +275,7 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	struct sock_fid_list *list_entry;
 	struct sock_wait *wait;
 	
+	dom = container_of(domain, struct sock_domain, dom_fid);
 	if (attr && sock_cntr_verify_attr(attr))
 		return -FI_ENOSYS;
 
@@ -302,7 +303,8 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	case FI_WAIT_FD:
 		wait_attr.flags = 0;
 		wait_attr.wait_obj = FI_WAIT_FD;
-		ret = sock_wait_open(domain, &wait_attr, &_cntr->waitset);
+		ret = sock_wait_open(&dom->fab->fab_fid, &wait_attr,
+				     &_cntr->waitset);
 		if (ret)
 			goto err1;
 		_cntr->signal = 1;
@@ -338,7 +340,6 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	_cntr->cntr_fid.fid.ops = &sock_cntr_fi_ops;
 	_cntr->cntr_fid.ops = &sock_cntr_ops;
 
-	dom = container_of(domain, struct sock_domain, dom_fid);
 	atomic_inc(&dom->ref);
 	_cntr->domain = dom;
 	*cntr = &_cntr->cntr_fid;

@@ -51,23 +51,6 @@
 
 static pthread_mutex_t	psmx_atomic_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static size_t psmx_datatype_size[FI_DATATYPE_LAST] = {
-	sizeof(int8_t),			/* FI_INT8 */
-	sizeof(uint8_t),		/* FI_UINT8 */
-	sizeof(int16_t),		/* FI_INT16 */
-	sizeof(uint16_t),		/* FI_UINT16 */
-	sizeof(int32_t),		/* FI_INT32 */
-	sizeof(uint32_t),		/* FI_UINT32 */
-	sizeof(int64_t),		/* FI_INT64 */
-	sizeof(uint64_t),		/* FI_UINT64 */
-	sizeof(float),			/* FI_FLOAT */
-	sizeof(double),			/* FI_DOUBLE */
-	sizeof(float complex),		/* FI_FLOAT_COMPLEX */
-	sizeof(double complex),		/* FI_DOUBLE_COMPLEX */
-	sizeof(long double),		/* FI_LONG_DOUBLE */
-	sizeof(long double complex),	/* FI_LONG_DOUBLE_COMPLEX */
-};
-
 #define CASE_INT_TYPE(FUNC,...) \
 		case FI_INT8:	FUNC(__VA_ARGS__,int8_t); break; \
 		case FI_UINT8:	FUNC(__VA_ARGS__,uint8_t); break; \
@@ -406,7 +389,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
-		assert(len == psmx_datatype_size[datatype] * count);
+		assert(len == fi_datatype_size(datatype) * count);
 
 		mr = psmx_mr_hash_get(key);
 		op_error = mr ?
@@ -455,7 +438,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
-		assert(len == psmx_datatype_size[datatype] * count);
+		assert(len == fi_datatype_size(datatype) * count);
 
 		mr = psmx_mr_hash_get(key);
 		op_error = mr ?
@@ -528,7 +511,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
 		len /= 2;
-		assert(len == psmx_datatype_size[datatype] * count);
+		assert(len == fi_datatype_size(datatype) * count);
 
 		mr = psmx_mr_hash_get(key);
 		op_error = mr ?
@@ -672,7 +655,7 @@ static int psmx_atomic_self(int am_cmd,
 	else
 		access = FI_REMOTE_READ | FI_REMOTE_WRITE;
 
-	len = psmx_datatype_size[datatype] * count;
+	len = fi_datatype_size(datatype) * count;
 	mr = psmx_mr_hash_get(key);
 	op_error = mr ?  psmx_mr_validate(mr, addr, len, access) : -EINVAL;
 
@@ -805,9 +788,9 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_ATOMIC_WRITE;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->atomic_write.ep = ep;
 		trigger->atomic_write.buf = buf;
 		trigger->atomic_write.count = count;
@@ -854,7 +837,7 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 					context, flags);
 
 	chunk_size = MIN(PSMX_AM_CHUNK_SIZE, psmx_am_param.max_request_short);
-	len = psmx_datatype_size[datatype] * count;
+	len = fi_datatype_size(datatype)* count;
 	if (len > chunk_size)
 		return -FI_EMSGSIZE;
 
@@ -990,9 +973,9 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_ATOMIC_READWRITE;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->atomic_readwrite.ep = ep;
 		trigger->atomic_readwrite.buf = buf;
 		trigger->atomic_readwrite.count = count;
@@ -1041,7 +1024,7 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 					context, flags);
 
 	chunk_size = MIN(PSMX_AM_CHUNK_SIZE, psmx_am_param.max_request_short);
-	len = psmx_datatype_size[datatype] * count;
+	len = fi_datatype_size(datatype) * count;
 	if (len > chunk_size)
 		return -FI_EMSGSIZE;
 
@@ -1175,9 +1158,9 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_ATOMIC_COMPWRITE;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->atomic_compwrite.ep = ep;
 		trigger->atomic_compwrite.buf = buf;
 		trigger->atomic_compwrite.count = count;
@@ -1229,7 +1212,7 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 					context, flags);
 
 	chunk_size = MIN(PSMX_AM_CHUNK_SIZE, psmx_am_param.max_request_short);
-	len = psmx_datatype_size[datatype] * count;
+	len = fi_datatype_size(datatype) * count;
 	if (len * 2 > chunk_size)
 		return -FI_EMSGSIZE;
 
@@ -1387,7 +1370,7 @@ static int psmx_atomic_writevalid(struct fid_ep *ep,
 	if (count) {
 		chunk_size = MIN(PSMX_AM_CHUNK_SIZE,
 				 psmx_am_param.max_request_short);
-		*count = chunk_size / psmx_datatype_size[datatype];
+		*count = chunk_size / fi_datatype_size(datatype);
 	}
 	return 0;
 }
@@ -1423,7 +1406,7 @@ static int psmx_atomic_readwritevalid(struct fid_ep *ep,
 	if (count) {
 		chunk_size = MIN(PSMX_AM_CHUNK_SIZE,
 				 psmx_am_param.max_request_short);
-		*count = chunk_size / psmx_datatype_size[datatype];
+		*count = chunk_size / fi_datatype_size(datatype);
 	}
 	return 0;
 }
@@ -1469,7 +1452,7 @@ static int psmx_atomic_compwritevalid(struct fid_ep *ep,
 	if (count) {
 		chunk_size = MIN(PSMX_AM_CHUNK_SIZE,
 				 psmx_am_param.max_request_short);
-		*count = chunk_size / (2 * psmx_datatype_size[datatype]);
+		*count = chunk_size / (2 * fi_datatype_size(datatype));
 	}
 	return 0;
 }

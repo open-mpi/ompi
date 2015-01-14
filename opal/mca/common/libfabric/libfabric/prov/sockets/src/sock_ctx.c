@@ -95,12 +95,12 @@ static struct sock_tx_ctx *sock_tx_context_alloc(struct fi_tx_attr *attr,
 
 	switch (fclass) {
 	case FI_CLASS_TX_CTX:
-		tx_ctx->ctx.fid.fclass = FI_CLASS_TX_CTX;
-		tx_ctx->ctx.fid.context = context;
+		tx_ctx->fid.ctx.fid.fclass = FI_CLASS_TX_CTX;
+		tx_ctx->fid.ctx.fid.context = context;
 		break;
 	case FI_CLASS_STX_CTX:
-		tx_ctx->stx.fid.fclass = FI_CLASS_TX_CTX;
-		tx_ctx->stx.fid.context = context;
+		tx_ctx->fid.stx.fid.fclass = FI_CLASS_TX_CTX;
+		tx_ctx->fid.stx.fid.context = context;
 		break;
 	default:
 		goto err;

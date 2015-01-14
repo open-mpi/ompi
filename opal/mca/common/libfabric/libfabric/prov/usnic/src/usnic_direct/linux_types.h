@@ -43,19 +43,22 @@
 #ifndef __LINUX_TYPES_H__
 #define __LINUX_TYPES_H__
 
-#include <asm/byteorder.h>
-
 typedef u_int8_t u8;
 typedef u_int16_t u16;
 typedef u_int32_t u32;
 typedef u_int64_t u64;
 
-#define cpu_to_le16 __cpu_to_le16
-#define le16_to_cpu __le16_to_cpu
-#define cpu_to_le32 __cpu_to_le32
-#define le32_to_cpu __le32_to_cpu
-#define cpu_to_le64 __cpu_to_le64
-#define le64_to_cpu __le64_to_cpu
+typedef u_int16_t __le16;
+typedef u_int32_t __le32;
+#define __le64 ___le64
+typedef u_int64_t __le64;
+
+#define le16_to_cpu
+#define le32_to_cpu
+#define le64_to_cpu
+#define cpu_to_le16
+#define cpu_to_le32
+#define cpu_to_le64
 
 #if !defined(__LIBUSNIC__)
 #define rmb()                   asm volatile("" ::: "memory")

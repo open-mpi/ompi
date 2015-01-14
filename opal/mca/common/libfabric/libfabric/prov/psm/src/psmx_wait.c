@@ -184,15 +184,12 @@ static int psmx_wait_init(struct psmx_fid_wait *wait, int type)
 	return 0;
 }
 
-int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
+int psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
 		   struct fid_wait **waitset)
 {
-	struct psmx_fid_domain *domain_priv;
 	struct psmx_fid_wait *wait_priv;
 	int type = FI_WAIT_FD;
 	int err;
-
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 
 	if (attr) {
 		switch (attr->wait_obj) {
@@ -222,11 +219,11 @@ int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
 		return err;
 	}
 
+	wait_priv->fabric = container_of(fabric, struct psmx_fid_fabric, fabric);
 	wait_priv->wait.fid.fclass = FI_CLASS_WAIT;
 	wait_priv->wait.fid.context = 0;
 	wait_priv->wait.fid.ops = &psmx_fi_ops;
 	wait_priv->wait.ops = &psmx_wait_ops;
-	wait_priv->domain = domain_priv;
 
 	*waitset = &wait_priv->wait;
 	return 0;

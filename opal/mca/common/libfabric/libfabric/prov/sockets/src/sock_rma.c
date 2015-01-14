@@ -71,12 +71,12 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -214,12 +214,12 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -231,8 +231,11 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	assert(tx_ctx->enabled && 
 	       msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT &&
 	       msg->rma_iov_count <= SOCK_EP_MAX_IOV_LIMIT);
-
-	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	if (sock_ep->connected) {
+		conn = sock_ep_lookup_conn(sock_ep);
+	} else {
+		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	}
 	assert(conn);
 
 	flags |= tx_ctx->attr.op_flags;

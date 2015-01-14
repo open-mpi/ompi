@@ -66,8 +66,8 @@ const struct fi_ep_attr sock_msg_ep_attr = {
 	.max_order_waw_size = SOCK_EP_MAX_ORDER_WAW_SZ,
 	.mem_tag_format = SOCK_EP_MEM_TAG_FMT,
 	.msg_order = SOCK_EP_MSG_ORDER,
-	.tx_ctx_cnt = 0,
-	.rx_ctx_cnt = 0,
+	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
+	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 };
 
 const struct fi_tx_attr sock_msg_tx_attr = {
@@ -337,9 +337,18 @@ int sock_msg_getinfo(uint32_t version, const char *node, const char *service,
 			ret = FI_ENODATA;
 			goto err;
 		}
-		
 		close(udp_sock);
 		freeaddrinfo(result); 
+	}
+
+	if (hints->src_addr) {
+		assert(hints->src_addrlen == sizeof(struct sockaddr_in));
+		memcpy(src_addr, hints->src_addr, hints->src_addrlen);
+	}
+
+	if (hints->dest_addr) {
+		assert(hints->dest_addrlen == sizeof(struct sockaddr_in));
+		memcpy(dest_addr, hints->dest_addr, hints->dest_addrlen);
 	}
 
 	if (dest_addr) {
@@ -372,7 +381,7 @@ err:
 	return ret;	
 }
 
-static int sock_msg_ep_cm_getname(fid_t fid, void *addr, size_t *addrlen)
+static int sock_ep_cm_getname(fid_t fid, void *addr, size_t *addrlen)
 {
 	struct sock_ep *sock_ep;
 	if (*addrlen == 0) {
@@ -380,13 +389,13 @@ static int sock_msg_ep_cm_getname(fid_t fid, void *addr, size_t *addrlen)
 		return -FI_ETOOSMALL;
 	}
 
-	sock_ep = container_of(fid, struct sock_ep, ep.fid);
+	sock_ep = container_of(fid, struct sock_ep, fid.ep.fid);
 	*addrlen = MIN(*addrlen, sizeof(struct sockaddr_in));
 	memcpy(addr, sock_ep->src_addr, *addrlen);
 	return 0;
 }
 
-static int sock_msg_ep_cm_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen)
+static int sock_ep_cm_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen)
 {
 	struct sock_ep *sock_ep;
 
@@ -395,50 +404,99 @@ static int sock_msg_ep_cm_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen
 		return -FI_ETOOSMALL;
 	}
 
-	sock_ep = container_of(ep, struct sock_ep, ep);
+	sock_ep = container_of(ep, struct sock_ep, fid.ep);
 	*addrlen = MIN(*addrlen, sizeof(struct sockaddr_in));
 	memcpy(addr, sock_ep->dest_addr, *addrlen);
 	return 0;
 }
 
-static int sock_msg_ep_cm_connect(struct fid_ep *ep, const void *addr,
+static int sock_ep_cm_connect(struct fid_ep *ep, const void *addr,
 			   const void *param, size_t paramlen)
 {
-	return -FI_ENOSYS;
+	struct sock_conn_req req;
+	struct sock_ep *_ep;
+	struct sock_eq *_eq;
+	_ep = container_of(ep, struct sock_ep, fid.ep);
+	_eq = _ep->eq;
+	if (!_eq) {
+		SOCK_LOG_ERROR("no EQ bound with this ep\n");
+		return -FI_EINVAL;
+	}
+
+	if(((struct sockaddr *)addr)->sa_family != AF_INET) {
+		SOCK_LOG_ERROR("invalid address type to connect: only IPv4 supported\n");
+		return -FI_EINVAL;
+	}
+
+	req.type = SOCK_CONNREQ;
+	req.c_fid = &ep->fid;
+	req.s_fid = 0;
+	memcpy(&req.info, &_ep->info, sizeof(struct fi_info));
+	memcpy(&req.src_addr, _ep->info.src_addr, sizeof(struct sockaddr_in));
+	memcpy(&req.dest_addr, _ep->info.dest_addr, sizeof(struct sockaddr_in));
+	memcpy(&req.tx_attr, _ep->info.tx_attr, sizeof(struct fi_tx_attr));
+	memcpy(&req.rx_attr, _ep->info.rx_attr, sizeof(struct fi_rx_attr));
+	memcpy(&req.ep_attr, _ep->info.ep_attr, sizeof(struct fi_ep_attr));
+	memcpy(&req.domain_attr, _ep->info.domain_attr, sizeof(struct fi_domain_attr));
+	memcpy(&req.fabric_attr, _ep->info.fabric_attr, sizeof(struct fi_fabric_attr));
+
+	if (sock_util_sendto(_eq->wait_fd, &req, sizeof(struct sock_conn_req),
+				(struct sockaddr_in *)addr, sizeof(struct sockaddr_in), 0))
+		return -errno;
+
+	return 0;
 }
 
-static int sock_msg_ep_cm_listen(struct fid_pep *pep)
+static int sock_ep_cm_accept(struct fid_ep *ep, const void *param, size_t paramlen)
 {
-	return -FI_ENOSYS;
+	struct sock_conn_req *req;
+	struct sock_domain *_dom;
+	struct sockaddr_in *addr;
+	socklen_t addrlen;
+	struct sock_ep *_ep;
+	struct sock_eq *_eq;
+
+	_ep = container_of(ep, struct sock_ep, fid.ep);
+	_eq = _ep->eq;
+	if (!_eq) {
+		SOCK_LOG_ERROR("no EQ bound with this ep\n");
+		return -FI_EINVAL;
+	}
+
+	_dom = _ep->domain;
+	addr = _dom->info.dest_addr;
+	addrlen = _dom->info.dest_addrlen;
+	req = (struct sock_conn_req *)_dom->info.connreq;
+	if (!req) {
+		SOCK_LOG_ERROR("invalid connreq for cm_accept\n");
+		return -FI_EINVAL;
+	}
+
+	if (((struct sockaddr *)addr)->sa_family != AF_INET) {
+		SOCK_LOG_ERROR("invalid address type to connect: only IPv4 supported\n");
+		return -FI_EINVAL;
+	}
+
+	req->type = SOCK_ACCEPT;
+	req->s_fid = &ep->fid;
+
+	if (sock_util_sendto(_eq->wait_fd, req, sizeof(req->type) +
+				sizeof(req->c_fid) + sizeof(req->s_fid), addr, addrlen, 0))
+		return -errno;
+
+	free(req);
+	return 0;
 }
 
-static int sock_msg_ep_cm_accept(struct fid_ep *ep, const void *param, size_t paramlen)
-{
-	return -FI_ENOSYS;
-}
-
-static int sock_msg_ep_cm_reject(struct fid_pep *pep, fi_connreq_t connreq,
-			const void *param, size_t paramlen)
-{
-	return -FI_ENOSYS;
-}
-
-static int sock_msg_ep_cm_shutdown(struct fid_ep *ep, uint64_t flags)
-{
-	return -FI_ENOSYS;
-}
-
-struct fi_ops_cm sock_msg_ep_cm_ops = {
+struct fi_ops_cm sock_ep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = sock_msg_ep_cm_getname,
-	.getpeer = sock_msg_ep_cm_getpeer,
-	.connect = sock_msg_ep_cm_connect,
-	.listen = sock_msg_ep_cm_listen,
-	.accept = sock_msg_ep_cm_accept,
-	.reject = sock_msg_ep_cm_reject,
-	.shutdown = sock_msg_ep_cm_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
+	.getname = sock_ep_cm_getname,
+	.getpeer = sock_ep_cm_getpeer,
+	.connect = sock_ep_cm_connect,
+	.listen = fi_no_listen,
+	.accept = sock_ep_cm_accept,
+	.reject = fi_no_reject,
+	.shutdown = fi_no_shutdown,
 };
 
 int sock_msg_endpoint(struct fid_domain *domain, struct fi_info *info,
@@ -494,9 +552,104 @@ int sock_msg_ep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 	
-	*ep = &endpoint->ep;
+	*ep = &endpoint->fid.ep;
 	return 0;
 }
+
+static int sock_pep_fi_bind(fid_t fid, struct fid *bfid, uint64_t flags)
+{
+	struct sock_pep *pep;
+	struct sock_eq *eq;
+
+	pep = container_of(fid, struct sock_pep, pep.fid);
+
+	if (bfid->fclass != FI_CLASS_EQ)
+		return -FI_EINVAL;
+
+	eq = container_of(bfid, struct sock_eq, eq.fid);
+	if (pep->sock_fab != eq->sock_fab) {
+		SOCK_LOG_ERROR("Cannot bind Passive EP and EQ on different fabric\n");
+		return -FI_EINVAL;
+	}
+	pep->eq = eq;
+	if ((eq->attr.wait_obj == FI_WAIT_FD) && (eq->wait_fd < 0))
+		sock_eq_openwait(eq, (char *)&pep->service);
+
+	return 0;
+}
+
+static int sock_pep_fi_close(fid_t fid)
+{
+	struct sock_pep *pep;
+
+	pep = container_of(fid, struct sock_pep, pep.fid);
+	free(pep);
+
+	return 0;
+}
+
+static struct fi_ops sock_pep_fi_ops = {
+	.size = sizeof(struct fi_ops),
+	.close = sock_pep_fi_close,
+	.bind = sock_pep_fi_bind,
+	.control = fi_no_control,
+	.ops_open = fi_no_ops_open,
+};
+
+static int sock_pep_listen(struct fid_pep *pep)
+{
+	return 0;
+}
+
+static int sock_pep_reject(struct fid_pep *pep, fi_connreq_t connreq,
+		const void *param, size_t paramlen)
+{
+	struct sock_conn_req *req;
+	struct sockaddr_in *addr;
+	socklen_t addrlen;
+	struct sock_pep *_pep;
+	struct sock_eq *_eq;
+
+	_pep = container_of(pep, struct sock_pep, pep);
+	_eq = _pep->eq;
+	if (!_eq) {
+		SOCK_LOG_ERROR("no EQ bound with this pep\n");
+		return -FI_EINVAL;
+	}
+
+	req = (struct sock_conn_req *)connreq;
+	if (!req) {
+		SOCK_LOG_ERROR("invalid connreq for cm_accept\n");
+		return -FI_EINVAL;
+	}
+	addr = &req->src_addr;
+	addrlen = sizeof(struct sockaddr_in);
+	if (((struct sockaddr *)addr)->sa_family != AF_INET) {
+		SOCK_LOG_ERROR("invalid address type to connect: only IPv4 supported\n");
+		return -FI_EINVAL;
+	}
+
+	req->type = SOCK_REJECT;
+	req->s_fid = NULL;
+
+	if (sock_util_sendto(_eq->wait_fd, req, sizeof(req->type) +
+				sizeof(req->c_fid), addr, addrlen, 0))
+		return -errno;
+
+	free(req);
+	return 0;
+}
+
+static struct fi_ops_cm sock_pep_cm_ops = {
+	.size = sizeof(struct fi_ops_cm),
+	.getname = fi_no_getname,
+	.getpeer = fi_no_getpeer,
+	.connect = fi_no_connect,
+	.listen = sock_pep_listen,
+	.accept = fi_no_accept,
+	.reject = sock_pep_reject,
+	.shutdown = fi_no_shutdown,
+};
 
 int sock_msg_sep(struct fid_domain *domain, struct fi_info *info,
 		 struct fid_sep **sep, void *context)
@@ -508,12 +661,12 @@ int sock_msg_sep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 	
-	*sep = &endpoint->sep;
+	*sep = &endpoint->fid.sep;
 	return 0;
 }
 
-int sock_msg_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
-		    struct fid_pep **pep, void *context)
+int sock_msg_pep(struct fid_fabric *fabric, struct fi_info *info,
+			struct fid_pep **pep, void *context)
 {
 	int ret;
 	struct sock_ep *endpoint;
@@ -522,6 +675,91 @@ int sock_msg_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 	if (ret)
 		return ret;
 	
-	*pep = &endpoint->pep;
+	*pep = &endpoint->fid.pep;
 	return 0;
+}
+
+int sock_msg_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
+		    struct fid_pep **pep, void *context)
+{
+	struct sock_pep *_pep;
+	int ret;
+
+	if (info) {
+		ret = sock_verify_info(info);
+		if (ret) {
+			SOCK_LOG_INFO("Cannot support requested options!\n");
+			return -FI_EINVAL;
+		}
+	}
+
+	_pep = (struct sock_pep*)calloc(1, sizeof(*_pep));
+	if (!_pep)
+		return -FI_ENOMEM;
+
+	if(info) {
+		struct sockaddr *dest_addr = (struct sockaddr *)info->dest_addr;
+		struct sockaddr *src_addr = (struct sockaddr *)info->src_addr;
+		if (!dest_addr || !src_addr) {
+			SOCK_LOG_ERROR("invalid dest_addr or src_addr\n");
+			goto err;
+		}
+
+		if (!dest_addr->sa_family) {
+			if(getnameinfo(src_addr, sizeof(*src_addr), NULL, 0,
+				       _pep->service, 
+				       sizeof(_pep->service),
+				       NI_NUMERICSERV)) {
+				SOCK_LOG_ERROR("could not resolve src_addr\n");
+				goto err;
+			}
+		} else {
+			if(getnameinfo(dest_addr, sizeof(*dest_addr), NULL, 0,
+				       _pep->service, 
+				       sizeof(_pep->service),
+				       NI_NUMERICSERV)) {
+				SOCK_LOG_ERROR("could not resolve dest_addr\n");
+				goto err;
+			}
+		}
+		_pep->info = *info;
+	} else {
+		SOCK_LOG_ERROR("invalid fi_info\n");
+		goto err;
+	}
+	
+	_pep->pep.fid.fclass = FI_CLASS_PEP;
+	_pep->pep.fid.context = context;
+	_pep->pep.fid.ops = &sock_pep_fi_ops;
+	_pep->pep.cm = &sock_pep_cm_ops;
+	_pep->pep.ops = NULL;
+
+	_pep->sock_fab = container_of(fabric, struct sock_fabric, fab_fid);
+	*pep = &_pep->pep;
+
+	return 0;
+
+err:
+	free(_pep);
+	return -errno;
+}
+
+struct fi_info * sock_ep_msg_process_info(struct sock_conn_req *req)
+{
+	req->info.src_addr = &req->src_addr;
+	req->info.dest_addr = &req->dest_addr;
+	req->info.tx_attr = &req->tx_attr;
+	req->info.rx_attr = &req->rx_attr;
+	req->info.ep_attr = &req->ep_attr;
+	req->info.domain_attr = &req->domain_attr;
+	req->info.fabric_attr = &req->fabric_attr;
+	if (sock_verify_info(&req->info)) {
+		SOCK_LOG_INFO("incoming conn_req not supported\n");
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* reverse src_addr and dest_addr */
+	return sock_fi_info(FI_EP_MSG, &req->info, 
+			req->info.dest_addr, req->info.src_addr);
 }

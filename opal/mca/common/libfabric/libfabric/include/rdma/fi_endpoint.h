@@ -134,7 +134,7 @@ struct fid_pep {
 
 struct fid_stx {
 	struct fid		fid;
-	struct fi_ops_ep	ops;
+	struct fi_ops_ep	*ops;
 };
 
 struct fid_sep {

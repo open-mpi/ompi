@@ -36,7 +36,6 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,6 +125,10 @@ static int lib_filter(const struct dirent *entry)
 }
 #endif
 
+/*
+ * Initialize the sockets provider last.  This will result in it being
+ * the least preferred provider.
+ */
 static void fi_ini(void)
 {
 	pthread_mutex_lock(&ini_lock);
@@ -135,23 +138,14 @@ static void fi_ini(void)
 
 	fi_register_provider(VERBS_INIT);
 	fi_register_provider(PSM_INIT);
-	fi_register_provider(SOCKETS_INIT);
 	fi_register_provider(USNIC_INIT);
 
 #ifdef HAVE_LIBDL
 	struct dirent **liblist;
-	int n, want_warn = 0;
-	char *lib, *extdir = getenv("FI_EXTDIR");
+	int n;
+	char *lib, *provdir;
 	void *dlhandle;
 	struct fi_provider* (*inif)(void);
-
-	if (extdir) {
-		/* Warn if user specified $FI_EXTDIR, but there's a
-		 * problem with the value */
-		want_warn = 1;
-	} else {
-		extdir = EXTDIR;
-	}
 
 	/* If dlopen fails, assume static linking and just return
 	   without error */
@@ -159,17 +153,13 @@ static void fi_ini(void)
 		goto done;
 	}
 
-	n = scandir(extdir, &liblist, lib_filter, NULL);
-	if (n < 0) {
-		if (want_warn) {
-			FI_WARN("scandir error reading %s: %s\n",
-				extdir, strerror(errno));
-		}
+	provdir = PROVDLDIR;
+	n = scandir(provdir, &liblist, lib_filter, NULL);
+	if (n < 0)
 		goto done;
-	}
 
 	while (n--) {
-		if (asprintf(&lib, "%s/%s", extdir, liblist[n]->d_name) < 0) {
+		if (asprintf(&lib, "%s/%s", provdir, liblist[n]->d_name) < 0) {
 			FI_WARN("asprintf failed to allocate memory\n");
 			free(liblist[n]);
 			goto done;
@@ -192,6 +182,7 @@ static void fi_ini(void)
 	free(liblist);
 done:
 #endif
+	fi_register_provider(SOCKETS_INIT);
 	init = 1;
 unlock:
 	pthread_mutex_unlock(&ini_lock);
@@ -229,6 +220,10 @@ int fi_getinfo_(uint32_t version, const char *node, const char *service,
 	*info = tail = NULL;
 	for (prov = prov_head; prov; prov = prov->next) {
 		if (!prov->provider->getinfo)
+			continue;
+
+		if (hints->fabric_attr && hints->fabric_attr->prov_name &&
+		    strcmp(prov->provider->name, hints->fabric_attr->prov_name))
 			continue;
 
 		ret = prov->provider->getinfo(version, node, service, flags,
@@ -431,28 +426,4 @@ const char *fi_strerror_(int errnum)
 }
 default_symver(fi_strerror_, fi_strerror);
 
-static const size_t fi_datatype_size_table[] = {
-	[FI_INT8]   = sizeof(int8_t),
-	[FI_UINT8]  = sizeof(uint8_t),
-	[FI_INT16]  = sizeof(int16_t),
-	[FI_UINT16] = sizeof(uint16_t),
-	[FI_INT32]  = sizeof(int32_t),
-	[FI_UINT32] = sizeof(uint32_t),
-	[FI_INT64]  = sizeof(int64_t),
-	[FI_UINT64] = sizeof(uint64_t),
-	[FI_FLOAT]  = sizeof(float),
-	[FI_DOUBLE] = sizeof(double),
-	[FI_FLOAT_COMPLEX]  = sizeof(float complex),
-	[FI_DOUBLE_COMPLEX] = sizeof(double complex),
-	[FI_LONG_DOUBLE]    = sizeof(long double),
-	[FI_LONG_DOUBLE_COMPLEX] = sizeof(long double complex),
-};
 
-size_t fi_datatype_size(enum fi_datatype datatype)
-{
-	if (datatype >= FI_DATATYPE_LAST) {
-		errno = FI_EINVAL;
-		return 0;
-	}
-	return fi_datatype_size_table[datatype];
-}

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([libfabric], [0.0.2], [linux-rdma@vger.kernel.org])
+AC_INIT([libfabric], [0.0.2], [ofiwg@lists.openfabrics.org])
 AC_CONFIG_SRCDIR([src/fabric.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -75,8 +75,10 @@ AC_CHECK_LIB(rt, clock_gettime, [],
 dnl Check for gcc atomic intrinsics
 AC_MSG_CHECKING(compiler support for c11 atomics)
 AC_TRY_LINK([#include <stdatomic.h>],
-    [#ifdef __STDC_NO_ATOMICS__
-       return 1;
+    [atomic_int a;
+     atomic_init(&a, 0);
+     #ifdef __STDC_NO_ATOMICS__
+       #error c11 atomics are not supported
      #else
        return 0;
      #endif

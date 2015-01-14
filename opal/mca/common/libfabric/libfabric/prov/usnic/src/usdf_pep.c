@@ -437,8 +437,6 @@ static struct fi_ops_cm usdf_pep_cm_ops = {
 	.accept = fi_no_accept,
 	.reject = usdf_pep_reject,
 	.shutdown = fi_no_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
 };
 
 int

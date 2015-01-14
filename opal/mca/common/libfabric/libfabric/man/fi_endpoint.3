@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2014\-12\-18" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2015\-01\-08" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -215,10 +215,14 @@ This includes send message, RMA, and atomic operations.
 the specified completion queue.
 This includes received messages.
 .PP
-\f[I]FI_COMPLETION\f[] : If FI_COMPLETION is specified, the indicated
-data transfer operations won\[aq]t generate entries for successful
-completions in the completion queue unless FI_COMPLETION is set for that
-specific operation.
+\f[I]FI_COMPLETION\f[] : By default, data transfer operations generate
+completion entries into a completion queue after they have successfully
+completed.
+Applications can use this bind flag to selectively enable when
+completions are generated.
+If FI_COMPLETION is specified, data transfer operations will not
+generate entries for successful completions unless FI_COMPLETION is set
+as an operational flag for the given operation.
 FI_COMPLETION must be OR\[aq]ed with FI_SEND and/or FI_RECV flags.
 .PP
 When set the user must determine when a request that does NOT have
@@ -226,6 +230,32 @@ FI_COMPLETION set has completed indirectly, usually based on the
 completion of a subsequent operation.
 Use of this flag may improve performance by allowing the provider to
 avoid writing a completion entry for every operation.
+.PP
+Example: An application can selectively generate send completions by
+using the following general approach:
+.IP
+.nf
+\f[C]
+\ \ fi_tx_attr::op_flags\ =\ 0;\ //\ default\ -\ no\ completion
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
+\ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
+\ \ fi_sendmsg(ep,\ ...,\ FI_COMPLETION);\ //\ completion!
+\f[]
+.fi
+.PP
+Example: An application can selectively disable send completions by
+modifying the operational flags:
+.IP
+.nf
+\f[C]
+\ \ fi_tx_attr::op_flags\ =\ FI_COMPLETION;\ //\ default\ -\ completion
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ //\ completion
+\ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ //\ completion
+\ \ fi_sendmsg(ep,\ ...,\ 0);\ //\ no\ completion!
+\f[]
+.fi
 .PP
 An endpoint may also, or instead, be bound to a fabric counter.
 When binding an endpoint to a counter, the following flags may be
@@ -362,6 +392,7 @@ struct\ fi_ep_attr\ {
 \ \ \ \ size_t\ \ \ \ max_order_waw_size;
 \ \ \ \ uint64_t\ \ mem_tag_format;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ tx_ctx_cnt;
 \ \ \ \ size_t\ \ \ \ rx_ctx_cnt;
 };
@@ -397,12 +428,12 @@ PSMX is an extended version of the PSM protocol to support the libfabric
 interfaces.
 .SS protocol_version - Protocol Version
 .PP
-Identifies which version of the protocol is employeed by the provider.
+Identifies which version of the protocol is employed by the provider.
 The protocol version allows providers to extend an existing protocol, by
 adding support for additional features or functionality for example, in
 a backward compatible manner.
 Providers that support different versions of the same protocol should
-interoperate, but only when using the capabilities defined for the
+inter-operate, but only when using the capabilities defined for the
 lesser version.
 .SS max_msg_size - Max Message Size
 .PP
@@ -586,6 +617,46 @@ If set, message send operations, including tagged sends, are processed
 in the order submitted relative to other message send.
 If not set, message sends may be processed out of order from their
 submission.
+.SS comp_order - Completion Ordering
+.PP
+Completion ordering refers to the order in which completed requests are
+written into the completion queue.
+Completion ordering is similar to message order.
+Relaxed completion order may enable faster reporting of completed
+transfers, allow acknowledgments to be sent over different fabric paths,
+and support more sophisticated retry mechanisms.
+This can result in lower-latency completions, particularly when using
+unconnected endpoints.
+Strict completion ordering may require that providers queue completed
+operations or limit available optimizations
+.PP
+For transmit requests, completion ordering depends on the endpoint
+communication type.
+For unreliable communication, completion ordering applies to all data
+transfer requests submitted to an endpoint.
+For reliable communication, completion ordering only applies to requests
+that target a single destination endpoint.
+Completion ordering of requests that target different endpoints over a
+reliable transport is not defined.
+.PP
+Applications should specify the completion ordering that they support or
+require.
+Providers should return the completion order that they actually provide,
+with the constraint that the returned ordering is stricter than that
+specified by the application.
+Supported completion order values are:
+.PP
+\f[I]FI_ORDER_NONE\f[] : No ordering is defined for completed
+operations.
+Requests submitted to the transmit and receive queues may complete in
+any order.
+.PP
+\f[I]FI_ORDER_STRICT\f[] : Requests complete in the order in which they
+are submitted, in the case of transmit requests, or processed, in the
+case of receive operations, by the provider.
+Transmit operations complete in the order in which the requests were
+submitted.
+Receive operations complete in order, subject to buffer matching.
 .SS tx_ctx_cnt - Transmit Context Count
 .PP
 Number of transmit contexts to associate with the endpoint.
@@ -673,6 +744,7 @@ struct\ fi_tx_attr\ {
 \ \ \ \ uint64_t\ \ mode;
 \ \ \ \ uint64_t\ \ op_flags;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ inject_size;
 \ \ \ \ size_t\ \ \ \ size;
 \ \ \ \ size_t\ \ \ \ iov_limit;
@@ -697,6 +769,12 @@ Applicable flags are listed in the Operation Flags section.
 The message ordering must be the same or more relaxed than those
 specified of the associated endpoint.
 See the fi_endpoint Message Ordering section.
+.PP
+\f[I]comp_order\f[] : The completion ordering requirements of the
+context.
+The completion ordering must be the same or more relaxed than those
+specified of the associated endpoint.
+See the fi_endpoint Completion Ordering section.
 .PP
 \f[I]inject_size\f[] : The requested inject operation size (see the
 FI_INJECT flag) that the context will support.
@@ -754,6 +832,7 @@ struct\ fi_rx_attr\ {
 \ \ \ \ uint64_t\ \ mode;
 \ \ \ \ uint64_t\ \ op_flags;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ total_buffered_recv;
 \ \ \ \ size_t\ \ \ \ size;
 \ \ \ \ size_t\ \ \ \ iov_limit;
@@ -778,6 +857,12 @@ Applicable flags are listed in the Operation Flags section.
 The message ordering must be the same or more relaxed than those
 specified of the associated endpoint.
 See the fi_endpoint Message Ordering section.
+.PP
+\f[I]comp_order\f[] : The completion ordering requirements of the
+context.
+The completion ordering must be the same or more relaxed than those
+specified of the associated endpoint.
+See the fi_endpoint Completion Ordering section.
 .PP
 \f[I]total_buffered_recv\f[] : Defines the total available space
 allocated by the provider to buffer received messages on the context.

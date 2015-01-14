@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2014-2015, Cisco Systems, Inc. All rights reserved.
  *
  * LICENSE_BEGIN
  *
@@ -43,7 +43,9 @@
 #ifndef LIBNL_UTILS_H
 #define LIBNL_UTILS_H
 
-#if LIBNL3
+#if !defined (HAVE_LIBNL3)
+#error You must define HAVE_LIBNL3 to 0 or 1 before including libnl_utils.h
+#elif HAVE_LIBNL3
 #include "libnl3_utils.h"
 #else
 #include "libnl1_utils.h"

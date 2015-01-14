@@ -5,7 +5,7 @@
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
  * COPYING in the main directory of this source tree, or the
- * OpenIB.org BSD license below:
+ * BSD license below:
  *
  *     Redistribution and use in source and binary forms, with or
  *     without modification, are permitted provided that the following
@@ -55,3 +55,100 @@
 #include "sock_util.h"
 
 int sock_log_level = SOCK_ERROR;
+char host[128] = {0};
+#define SOCK_SENDTO_TIMEOUT 5
+
+int sock_util_sendto(int fd, void *buf, size_t len, struct sockaddr_in *addr,
+		socklen_t addrlen, int timeout)
+{
+	struct timeval tv;
+	fd_set writefds;
+	socklen_t optlen;
+	int optval;
+
+	if (sendto(fd, buf, len, 0, addr, addrlen) < 0) {
+		SOCK_LOG_ERROR("sendto failed with error %d - %s\n", errno,
+				strerror(errno));
+		return -errno;
+	}
+
+	if (timeout) {
+		tv.tv_sec = 0;
+		tv.tv_usec = timeout;
+	} else {
+		tv.tv_sec = SOCK_SENDTO_TIMEOUT;
+		tv.tv_usec = 0;
+	}
+	FD_ZERO(&writefds);
+	FD_SET(fd, &writefds);
+	if (select(fd+1, NULL, &writefds, NULL, &tv) > 0) {
+		optlen = sizeof(int);
+		getsockopt(fd, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+
+		if (optval) {
+			SOCK_LOG_ERROR("failed to sendto %d - %s\n", optval,
+					strerror(optval));
+			close(fd);
+			return -errno;
+		}
+	} else {
+		SOCK_LOG_ERROR("Timeout or error to sendto %d - %s\n", optval,
+				strerror(optval));
+		close(fd);
+		errno = ETIMEDOUT;
+		return -FI_ETIMEDOUT;
+	}
+
+	return 0;
+}
+
+int sock_util_recvfrom(int fd, void *buf, size_t len, struct sockaddr_in *addr,
+		socklen_t *addrlen, int timeout)
+{
+	struct timeval tv;
+	struct timeval *tv_ptr;
+	fd_set readfds;
+	socklen_t optlen;
+	int optval;
+	int ret;
+
+	if (timeout < 0) {
+		/* negative timeout means an infinite timeout */
+		tv_ptr = NULL;
+	} else {
+		tv.tv_sec = 0;
+		tv.tv_usec = timeout;
+		tv_ptr = &tv;
+	}
+
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	if (select(fd+1, &readfds, NULL, NULL, tv_ptr) > 0) {
+		optlen = sizeof(int);
+		getsockopt(fd, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+
+		if (optval) {
+			SOCK_LOG_ERROR("failed to connect %d - %s\n", optval,
+					strerror(optval));
+			close(fd);
+			return 0;
+		}
+
+	} else {
+		SOCK_LOG_ERROR("Timeout or error to connect %d - %s\n", optval,
+				strerror(optval));
+		close(fd);
+		errno = ETIMEDOUT;
+		return 0;
+	}
+
+	/* read */
+	ret = recvfrom(fd, buf, len, 0, addr, addrlen);
+	if (ret < 0) {
+		SOCK_LOG_ERROR("error recvfrom for sread: %d - %s\n", errno,
+				strerror(errno));
+		return 0;
+	} 
+
+	return ret;
+}

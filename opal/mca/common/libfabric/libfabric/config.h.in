@@ -15,8 +15,8 @@
 /* Define to 1 if you have the `ibverbs' library (-libverbs). */
 #undef HAVE_LIBIBVERBS
 
-/* Define to 1 if you have the `nl' library (-lnl). */
-#undef HAVE_LIBNL
+/* set to 1 if should use libnl v3, set to 0 for libnl v11 */
+#undef HAVE_LIBNL3
 
 /* Define to 1 if you have the `psm_infinipath' library (-lpsm_infinipath). */
 #undef HAVE_LIBPSM_INFINIPATH

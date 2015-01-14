@@ -116,8 +116,10 @@ struct sock_rx_entry *sock_rx_get_entry(struct sock_rx_ctx *rx_ctx,
 
 		if (((rx_entry->tag & ~rx_entry->ignore) == 
 		     (tag & ~rx_entry->ignore)) &&
-		    (rx_entry->addr == FI_ADDR_UNSPEC ||
-		     addr == FI_ADDR_UNSPEC || rx_entry->addr == addr)) {
+		    (rx_entry->addr == FI_ADDR_UNSPEC || addr == FI_ADDR_UNSPEC || 
+		     rx_entry->addr == addr ||
+		     (rx_ctx->av && 
+		      !sock_av_compare_addr(rx_ctx->av, addr, rx_entry->addr)))) {
 			break;
 		}
 	}

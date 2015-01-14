@@ -257,6 +257,7 @@ struct psmx_fid_fabric {
 
 struct psmx_fid_domain {
 	struct fid_domain	domain;
+	struct psmx_fid_fabric	*fabric;
 	psm_ep_t		psm_ep;
 	psm_epid_t		psm_epid;
 	psm_mq_t		psm_mq;
@@ -316,7 +317,7 @@ struct psmx_cq_event_queue {
 
 struct psmx_fid_wait {
 	struct fid_wait			wait;
-	struct psmx_fid_domain		*domain;
+	struct psmx_fid_fabric		*fabric;
 	int				type;
 	union {
 		int			fd[2];
@@ -572,6 +573,8 @@ extern struct psmx_env		psmx_env;
 
 int	psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 			 struct fid_domain **domain, void *context);
+int	psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
+		       struct fid_wait **waitset);
 int	psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 		     struct fid_ep **ep, void *context);
 int	psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
@@ -580,8 +583,6 @@ int	psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		     struct fid_av **av, void *context);
 int	psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		       struct fid_cntr **cntr, void *context);
-int	psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
-		       struct fid_wait **waitset);
 int	psmx_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
 		       struct fid_poll **pollset);
 

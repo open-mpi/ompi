@@ -74,7 +74,7 @@ usd_post_send_one_udp_normal(
     hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
                              sizeof(struct ether_header) -
                              sizeof(struct iphdr)) + len);
-    hdr->uh_udp.source = 
+    hdr->uh_udp.source =
         qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
 
     last_post = _usd_post_send_two(wq, hdr, sizeof(*hdr), buf, len,
@@ -117,7 +117,7 @@ usd_post_send_one_copy_udp_normal(
     hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
                              sizeof(struct ether_header) -
                              sizeof(struct iphdr)) + len);
-    hdr->uh_udp.source = 
+    hdr->uh_udp.source =
         qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
 
     last_post =
@@ -210,7 +210,7 @@ usd_post_send_two_copy_udp_normal(
     hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
                              sizeof(struct ether_header) -
                              sizeof(struct iphdr)) + tot_ulen);
-    hdr->uh_udp.source = 
+    hdr->uh_udp.source =
         qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
 
     last_post =
@@ -264,14 +264,13 @@ usd_post_send_iov_udp_normal(struct usd_qp *uqp,
     memcpy(&send_iov[1], iov, sizeof(struct iovec) * iov_count);
 
     last_post = _usd_post_send_iov(wq, send_iov, iov_count + 1,
-                                        USD_SF_ISSET(flags, SIGNAL));
+					USD_SF_ISSET(flags, SIGNAL));
     info = &wq->uwq_post_info[last_post];
     info->wp_context = context;
     info->wp_len = len;
 
     return 0;
 }
-
 
 struct usd_qp_ops usd_qp_ops_udp_normal = {
     .qo_post_send_one = usd_post_send_one_udp_normal,
