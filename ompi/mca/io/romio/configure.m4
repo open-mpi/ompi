@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -78,10 +80,10 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                        [AS_IF([test ! -z $build], [io_romio_flags="$io_romio_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio_flags="$io_romio_flags --host=$host"])
                         AS_IF([test ! -z $target], [io_romio_flags="$io_romio_flags --target=$target"])])
-                   io_romio_flags_define="$io_romio_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio"
+                   io_romio_flags_define="$io_romio_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio --disable-weak-symbols --enable-strict"
                    AC_DEFINE_UNQUOTED([MCA_io_romio_COMPLETE_CONFIGURE_FLAGS], ["$io_romio_flags_define"], [Complete set of command line arguments given to ROMIOs configure script])
 
-                   io_romio_flags="$io_romio_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio"
+                   io_romio_flags="$io_romio_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio --disable-weak-symbols --enable-strict"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
                    OPAL_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
