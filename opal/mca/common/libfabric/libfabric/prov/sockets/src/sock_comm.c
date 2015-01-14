@@ -63,7 +63,7 @@ static ssize_t sock_comm_send_socket(struct sock_conn *conn, const void *buf, si
 
 	while(rem > 0) {
 		len = MIN(rem, SOCK_COMM_BUF_SZ);
-		ret = send(conn->sock_fd, buf + offset, len, 0);
+		ret = send(conn->sock_fd, (char *)buf + offset, len, 0);
 		if (ret <= 0) 
 			break;
 		
@@ -188,6 +188,16 @@ ssize_t sock_comm_recv(struct sock_conn *conn, void *buf, size_t len)
 	}
 	SOCK_LOG_INFO("Read %lu from buffer\n", ret + read_len);
 	return ret + read_len;
+}
+
+ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
+{
+	sock_comm_recv_buffer(conn);
+	if (rbused(&conn->inbuf) >= len) {
+		rbpeek(&conn->inbuf, buf, len);
+		return len;
+	} 
+	return 0;
 }
 
 int sock_comm_buffer_init(struct sock_conn *conn)

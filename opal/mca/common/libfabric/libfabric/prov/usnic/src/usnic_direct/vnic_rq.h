@@ -113,7 +113,7 @@ struct vnic_rq {
 	unsigned int pkts_outstanding;
 #if defined(ENIC_NETQ)
 	unsigned int state;
-#endif    
+#endif
 #if defined(__VMKLNX__) && defined(ENIC_UPT)
 	int enabled;
 	unsigned int rxcons2;
@@ -139,7 +139,7 @@ struct vnic_rq {
 #endif /*CONFIG_NET_RX_BUSY_POLL*/
 #ifdef ENIC_PMD
 	unsigned int socket_id;
-        struct rte_mempool *mp;
+	struct rte_mempool *mp;
 #endif
 };
 
@@ -259,7 +259,7 @@ static inline void vnic_rq_service(struct vnic_rq *rq,
 	struct vnic_rq_buf *buf;
 	int skipped;
 #ifdef ENIC_PMD
-        int eop = 0;
+	int eop = 0;
 #endif
 
 	buf = rq->to_clean;
@@ -268,8 +268,8 @@ static inline void vnic_rq_service(struct vnic_rq *rq,
 		skipped = (buf->index != completed_index);
 
 #ifdef ENIC_PMD
-		if((*buf_service)(rq, cq_desc, buf, skipped, opaque))
-                    eop++;
+		if ((*buf_service)(rq, cq_desc, buf, skipped, opaque))
+			eop++;
 #else
 		(*buf_service)(rq, cq_desc, buf, skipped, opaque);
 #endif
@@ -285,7 +285,7 @@ static inline void vnic_rq_service(struct vnic_rq *rq,
 		buf = rq->to_clean;
 	}
 #ifdef ENIC_PMD
-        return eop;
+	return eop;
 #endif
 }
 

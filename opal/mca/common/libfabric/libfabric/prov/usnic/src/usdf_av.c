@@ -78,7 +78,7 @@ usdf_av_insert_async_complete(struct usdf_av_insert *insert)
 	entry.context = insert->avi_context;
 	entry.data = insert->avi_successes;
 	usdf_eq_write_internal(av->av_eq,
-		FI_COMPLETE, &entry, sizeof(entry), 0);
+		FI_AV_COMPLETE, &entry, sizeof(entry), 0);
 
 	pthread_spin_lock(&av->av_lock);
 

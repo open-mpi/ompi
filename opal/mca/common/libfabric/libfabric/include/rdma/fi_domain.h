@@ -123,8 +123,6 @@ struct fi_ops_domain {
 			struct fid_sep **sep, void *context);
 	int	(*cntr_open)(struct fid_domain *domain, struct fi_cntr_attr *attr,
 			struct fid_cntr **cntr, void *context);
-	int	(*wait_open)(struct fid_domain *domain, struct fi_wait_attr *attr,
-			struct fid_wait **waitset);
 	int	(*poll_open)(struct fid_domain *domain, struct fi_poll_attr *attr,
 			struct fid_poll **pollset);
 	int	(*stx_ctx)(struct fid_domain *domain,
@@ -193,12 +191,12 @@ fi_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 }
 
 static inline int
-fi_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
+fi_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
 	     struct fid_wait **waitset)
 {
-	return domain->ops->wait_open(domain, attr, waitset);
+	return fabric->ops->wait_open(fabric, attr, waitset);
 }
-	
+
 static inline int
 fi_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
 	     struct fid_poll **pollset)

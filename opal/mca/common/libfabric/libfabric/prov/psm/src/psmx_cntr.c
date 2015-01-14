@@ -357,6 +357,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	events = FI_CNTR_EVENTS_COMP;
 	flags = 0;
+	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 
 	switch (attr->events) {
 	case FI_CNTR_EVENTS_COMP:
@@ -387,7 +388,8 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
-		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
+		err = psmx_wait_open(&domain_priv->fabric->fabric,
+				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
 		break;
@@ -398,7 +400,6 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		return -FI_EINVAL;
 	}
 
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	cntr_priv = (struct psmx_fid_cntr *) calloc(1, sizeof *cntr_priv);
 	if (!cntr_priv)
 		return -ENOMEM;

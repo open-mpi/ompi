@@ -1,4 +1,4 @@
-.TH fi_rma 3 "2014\-12\-02" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_rma 3 "2015\-01\-07" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_rma - Remote memory access operations
@@ -146,7 +146,7 @@ struct\ fi_msg_rma\ {
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ **desc;\ \ \ \ \ \ \ /*\ operation\ descriptor\ */
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ iov_count;\ \ \ \ /*\ #\ elements\ in\ msg_iov\ */
 \ \ \ \ const\ void\ \ \ \ \ \ \ \ \ *addr;\ \ \ \ \ \ \ \ /*\ optional\ endpoint\ address\ */
-\ \ \ \ const\ struct\ fi_rma_iov\ rma_iov;\ /*\ remote\ SGL\ */
+\ \ \ \ const\ struct\ fi_rma_iov\ *rma_iov;/*\ remote\ SGL\ */
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ rma_iov_count;/*\ #\ elements\ in\ rma_iov\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *context;\ \ \ \ \ /*\ user-defined\ context\ */
 \ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ \ \ data;\ \ \ \ \ \ \ \ \ /*\ optional\ immediate\ data\ */

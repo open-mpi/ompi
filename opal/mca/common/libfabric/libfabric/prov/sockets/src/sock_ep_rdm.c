@@ -66,8 +66,8 @@ const struct fi_ep_attr sock_rdm_ep_attr = {
 	.max_order_waw_size = SOCK_EP_MAX_ORDER_WAW_SZ,
 	.mem_tag_format = SOCK_EP_MEM_TAG_FMT,
 	.msg_order = SOCK_EP_MSG_ORDER,
-	.tx_ctx_cnt = 0,
-	.rx_ctx_cnt = 0,
+	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
+	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 };
 
 const struct fi_tx_attr sock_rdm_tx_attr = {
@@ -205,14 +205,9 @@ static struct fi_info *sock_rdm_fi_info(struct fi_info *hints,
 	if (!hints->caps) 
 		_info->caps = SOCK_EP_RDM_CAP;
 	
-	if (!hints->tx_attr)
-		*(_info->tx_attr) = sock_rdm_tx_attr;
-
-	if (!hints->rx_attr)
-		*(_info->rx_attr) = sock_rdm_rx_attr;
-
-	if (!hints->ep_attr)
-		*(_info->ep_attr) = sock_rdm_ep_attr;
+	*(_info->tx_attr) = sock_rdm_tx_attr;
+	*(_info->rx_attr) = sock_rdm_rx_attr;
+	*(_info->ep_attr) = sock_rdm_ep_attr;
 
 	return _info;
 }
@@ -334,9 +329,18 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 			ret = FI_ENODATA;
 			goto err;
 		}
-		
 		close(udp_sock);
 		freeaddrinfo(result); 
+	}
+
+	if (hints->src_addr) {
+		assert(hints->src_addrlen == sizeof(struct sockaddr_in));
+		memcpy(src_addr, hints->src_addr, hints->src_addrlen);
+	}
+
+	if (hints->dest_addr) {
+		assert(hints->dest_addrlen == sizeof(struct sockaddr_in));
+		memcpy(dest_addr, hints->dest_addr, hints->dest_addrlen);
 	}
 
 	if (dest_addr) {
@@ -422,12 +426,12 @@ int sock_rdm_ep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 
-	*ep = &endpoint->ep;
+	*ep = &endpoint->fid.ep;
 	return 0;
 }
 
 int sock_rdm_sep(struct fid_domain *domain, struct fi_info *info,
-		struct fid_sep **sep, void *context)
+		 struct fid_sep **sep, void *context)
 {
 	int ret;
 	struct sock_ep *endpoint;
@@ -436,7 +440,7 @@ int sock_rdm_sep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 
-	*sep = &endpoint->sep;
+	*sep = &endpoint->fid.sep;
 	return 0;
 }
 

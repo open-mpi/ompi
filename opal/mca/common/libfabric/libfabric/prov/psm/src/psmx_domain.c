@@ -82,7 +82,6 @@ static struct fi_ops_domain psmx_domain_ops = {
 	.cq_open = psmx_cq_open,
 	.endpoint = psmx_ep_open,
 	.cntr_open = psmx_cntr_open,
-	.wait_open = psmx_wait_open,
 	.poll_open = psmx_poll_open,
 };
 
@@ -111,6 +110,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	domain_priv->domain.ops = &psmx_domain_ops;
 	domain_priv->domain.mr = &psmx_mr_ops;
 	domain_priv->mode = info->mode;
+	domain_priv->fabric = container_of(fabric, struct psmx_fid_fabric, fabric);
 
 	psm_ep_open_opts_get_defaults(&opts);
 

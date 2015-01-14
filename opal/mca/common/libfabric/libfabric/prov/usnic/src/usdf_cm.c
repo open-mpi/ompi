@@ -112,7 +112,7 @@ usdf_cm_msg_accept_complete(struct usdf_connreq *crp)
 	/* post EQ entry */
 	entry.fid = ep_utofid(ep);
 	entry.info = NULL;
-	ret = usdf_eq_write_internal(ep->ep_eq, FI_COMPLETE, &entry,
+	ret = usdf_eq_write_internal(ep->ep_eq, FI_CONNECTED, &entry,
 			sizeof(entry), 0);
 	if (ret != sizeof(entry)) {
 		usdf_cm_msg_connreq_failed(crp, ret);
@@ -299,7 +299,7 @@ usdf_cm_msg_connect_cb_rd(void *v)
 		entry->fid = ep_utofid(ep);
 		entry->info = NULL;
 		memcpy(entry->data, reqp->creq_data, reqp->creq_datalen);
-		ret = usdf_eq_write_internal(ep->ep_eq, FI_COMPLETE, entry,
+		ret = usdf_eq_write_internal(ep->ep_eq, FI_CONNECTED, entry,
 				entry_len, 0);
 		free(entry);
 		if (ret != entry_len) {

@@ -5,7 +5,7 @@
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
  * COPYING in the main directory of this source tree, or the
- * OpenIB.org BSD license below:
+ * BSD license below:
  *
  *     Redistribution and use in source and binary forms, with or
  *     without modification, are permitted provided that the following
@@ -488,7 +488,6 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	sock_cq->cq_fid.fid.context = context;
 	sock_cq->cq_fid.fid.ops = &sock_cq_fi_ops;
 	sock_cq->cq_fid.ops = &sock_cq_ops;
-	atomic_inc(&sock_dom->ref);
 
 	if (attr == NULL) 
 		sock_cq->attr = _sock_cq_def_attr;
@@ -529,7 +528,7 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	case FI_WAIT_MUTEX_COND:
 		wait_attr.flags = 0;
 		wait_attr.wait_obj = FI_WAIT_MUTEX_COND;
-		ret = sock_wait_open(&sock_dom->dom_fid, &wait_attr, 
+		ret = sock_wait_open(&sock_dom->fab->fab_fid, &wait_attr,
 				     &sock_cq->waitset);
 		if (ret)
 			goto err3;
@@ -585,9 +584,9 @@ int sock_cq_report_error(struct sock_cq *cq, struct sock_pe_entry *entry,
 	err_entry.op_context = (void*)entry->context;
 	
 	if (entry->type == SOCK_PE_RX) {
-		err_entry.buf = (void*)entry->rx.rx_iov[0].iov.addr;
+		err_entry.buf = (void*)entry->pe.rx.rx_iov[0].iov.addr;
 	}else {
-		err_entry.buf = (void*)entry->tx.tx_iov[0].src.iov.addr;
+		err_entry.buf = (void*)entry->pe.tx.data.tx_iov[0].src.iov.addr;
 	}
 
 	rbwrite(&cq->cqerr_rb, &err_entry, sizeof(struct fi_cq_err_entry));

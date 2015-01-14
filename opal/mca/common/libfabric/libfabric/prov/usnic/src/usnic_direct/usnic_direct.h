@@ -618,6 +618,7 @@ usd_post_send_iov(struct usd_qp *qp, struct usd_dest *dest,
     return qp->uq_ops.qo_post_send_iov(
             qp, dest, iov, iov_count, flags, context);
 }
+
 /****************************************************************
  * enum-to-string utility functions (for prettyprinting)
  ****************************************************************/

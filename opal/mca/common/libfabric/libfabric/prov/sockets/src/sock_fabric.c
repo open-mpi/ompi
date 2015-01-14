@@ -79,13 +79,26 @@ int sock_verify_info(struct fi_info *hints)
 	switch (hints->ep_type) {
 	case FI_EP_UNSPEC:
 	case FI_EP_MSG:
+		ret = sock_msg_verify_ep_attr(hints->ep_attr,
+					      hints->tx_attr,
+					      hints->rx_attr);
+		break;
 	case FI_EP_DGRAM:
+		ret = sock_dgram_verify_ep_attr(hints->ep_attr,
+						hints->tx_attr,
+						hints->rx_attr);
+		break;
 	case FI_EP_RDM:
+		ret = sock_rdm_verify_ep_attr(hints->ep_attr,
+					      hints->tx_attr,
+					      hints->rx_attr);
 		break;
 	default:
-		return -FI_ENODATA;
+		ret = -FI_ENODATA;
 	}
-	
+	if (ret)
+		return ret;
+
 	switch (hints->addr_format) {
 	case FI_FORMAT_UNSPEC:
 	case FI_SOCKADDR:
@@ -94,11 +107,6 @@ int sock_verify_info(struct fi_info *hints)
 	default:
 		return -FI_ENODATA;
 	}
-
-	if (!sock_rdm_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr) ||
-	    !sock_dgram_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr) ||
-	    !sock_msg_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr))
-		return 0;
 
 	ret = sock_verify_domain_attr(hints->domain_attr);
 	if (ret) 
@@ -116,6 +124,7 @@ static struct fi_ops_fabric sock_fab_ops = {
 	.domain = sock_domain,
 	.passive_ep = sock_msg_passive_ep,
 	.eq_open = sock_eq_open,
+	.wait_open = sock_wait_open,
 };
 
 static int sock_fabric_close(fid_t fid)

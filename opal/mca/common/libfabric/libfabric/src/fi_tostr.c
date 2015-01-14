@@ -5,7 +5,7 @@
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
  * COPYING in the main directory of this source tree, or the
- * OpenIB.org BSD license below:
+ * BSD license below:
  *
  *     Redistribution and use in source and binary forms, with or
  *     without modification, are permitted provided that the following
@@ -146,7 +146,10 @@ static void fi_tostr_threading(char *buf, enum fi_threading threading)
 	switch (threading) {
 	CASEENUMSTR(FI_THREAD_UNSPEC);
 	CASEENUMSTR(FI_THREAD_SAFE);
-	CASEENUMSTR(FI_THREAD_PROGRESS);
+	CASEENUMSTR(FI_THREAD_FID);
+	CASEENUMSTR(FI_THREAD_DOMAIN);
+	CASEENUMSTR(FI_THREAD_COMPLETION);
+	CASEENUMSTR(FI_THREAD_ENDPOINT);
 	default:
 		strcatf(buf, "Unknown");
 		break;
@@ -175,7 +178,6 @@ static void fi_tostr_caps(char *buf, uint64_t caps)
 	IFFLAGSTR(caps, FI_RMA);
 	IFFLAGSTR(caps, FI_TAGGED);
 	IFFLAGSTR(caps, FI_ATOMICS);
-	IFFLAGSTR(caps, FI_MULTICAST);
 	IFFLAGSTR(caps, FI_DYNAMIC_MR);
 	IFFLAGSTR(caps, FI_BUFFERED_RECV);
 	fi_tostr_flags(buf, caps);
@@ -434,6 +436,57 @@ static void fi_tostr_av_type(char *buf, enum fi_av_type type)
 	}
 }
 
+static void fi_tostr_atomic_type(char *buf, enum fi_datatype type)
+{
+	switch (type) {
+	CASEENUMSTR(FI_INT8);
+	CASEENUMSTR(FI_UINT8);
+	CASEENUMSTR(FI_INT16);
+	CASEENUMSTR(FI_UINT16);
+	CASEENUMSTR(FI_INT32);
+	CASEENUMSTR(FI_UINT32);
+	CASEENUMSTR(FI_INT64);
+	CASEENUMSTR(FI_UINT64);
+	CASEENUMSTR(FI_FLOAT);
+	CASEENUMSTR(FI_DOUBLE);
+	CASEENUMSTR(FI_FLOAT_COMPLEX);
+	CASEENUMSTR(FI_DOUBLE_COMPLEX);
+	CASEENUMSTR(FI_LONG_DOUBLE);
+	CASEENUMSTR(FI_LONG_DOUBLE_COMPLEX);
+	default:
+		strcatf(buf, "Unknown");
+		break;
+	}
+}
+
+static void fi_tostr_atomic_op(char *buf, enum fi_op op)
+{
+	switch (op) {
+	CASEENUMSTR(FI_MIN);
+	CASEENUMSTR(FI_MAX);
+	CASEENUMSTR(FI_SUM);
+	CASEENUMSTR(FI_PROD);
+	CASEENUMSTR(FI_LOR);
+	CASEENUMSTR(FI_LAND);
+	CASEENUMSTR(FI_BOR);
+	CASEENUMSTR(FI_BAND);
+	CASEENUMSTR(FI_LXOR);
+	CASEENUMSTR(FI_BXOR);
+	CASEENUMSTR(FI_ATOMIC_READ);
+	CASEENUMSTR(FI_ATOMIC_WRITE);
+	CASEENUMSTR(FI_CSWAP);
+	CASEENUMSTR(FI_CSWAP_NE);
+	CASEENUMSTR(FI_CSWAP_LE);
+	CASEENUMSTR(FI_CSWAP_LT);
+	CASEENUMSTR(FI_CSWAP_GE);
+	CASEENUMSTR(FI_CSWAP_GT);
+	CASEENUMSTR(FI_MSWAP);
+	default:
+		strcatf(buf, "Unknown");
+		break;
+	}
+}
+
 __attribute__((visibility ("default")))
 char *fi_tostr_(const void *data, enum fi_type datatype)
 {
@@ -500,6 +553,12 @@ char *fi_tostr_(const void *data, enum fi_type datatype)
 		break;
 	case FI_TYPE_AV_TYPE:
 		fi_tostr_av_type(buf, enumval);
+		break;
+	case FI_TYPE_ATOMIC_TYPE:
+		fi_tostr_atomic_type(buf, enumval);
+		break;
+	case FI_TYPE_ATOMIC_OP:
+		fi_tostr_atomic_op(buf, enumval);
 		break;
 	default:
 		strcatf(buf, "Unknown type");

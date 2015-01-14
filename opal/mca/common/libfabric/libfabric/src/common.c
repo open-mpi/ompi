@@ -36,6 +36,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,3 +130,28 @@ uint64_t fi_tag_format(uint64_t tag_bits)
 	return FI_TAG_GENERIC >> (ffsll(htonll(tag_bits)) - 1);
 }
 
+static const size_t fi_datatype_size_table[] = {
+	[FI_INT8]   = sizeof(int8_t),
+	[FI_UINT8]  = sizeof(uint8_t),
+	[FI_INT16]  = sizeof(int16_t),
+	[FI_UINT16] = sizeof(uint16_t),
+	[FI_INT32]  = sizeof(int32_t),
+	[FI_UINT32] = sizeof(uint32_t),
+	[FI_INT64]  = sizeof(int64_t),
+	[FI_UINT64] = sizeof(uint64_t),
+	[FI_FLOAT]  = sizeof(float),
+	[FI_DOUBLE] = sizeof(double),
+	[FI_FLOAT_COMPLEX]  = sizeof(float complex),
+	[FI_DOUBLE_COMPLEX] = sizeof(double complex),
+	[FI_LONG_DOUBLE]    = sizeof(long double),
+	[FI_LONG_DOUBLE_COMPLEX] = sizeof(long double complex),
+};
+
+size_t fi_datatype_size(enum fi_datatype datatype)
+{
+	if (datatype >= FI_DATATYPE_LAST) {
+		errno = FI_EINVAL;
+		return 0;
+	}
+	return fi_datatype_size_table[datatype];
+}
