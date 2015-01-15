@@ -33,6 +33,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/request/request.h"
 #include "ompi/mca/rte/rte.h"
@@ -3006,12 +3007,9 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
     static bool first_continue_pass = false;
     opal_list_item_t* item = NULL;
     int exit_status = OMPI_SUCCESS;
-    ompi_rte_collective_t coll;
     int ret;
 
     ft_event_state = state;
-    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-    coll.id = ompi_process_info.peer_init_barrier;
 
     if( step_to_return_to == 1 ) {
         goto STEP_1;
@@ -3030,8 +3028,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
+            opal_pmix.fence(NULL, 0);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
 
@@ -3099,8 +3096,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
+            opal_pmix.fence(NULL, 0);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
     }
@@ -3156,7 +3152,6 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
     }
 
  DONE:
-    OBJ_DESTRUCT(&coll);
     step_to_return_to = 0;
     ft_event_state = OPAL_CRS_RUNNING;
 
@@ -6212,19 +6207,15 @@ static void clear_timers(void) {
 static void display_all_timers(int state) {
     bool report_ready = false;
     double barrier_start, barrier_stop;
-    ompi_rte_collective_t coll;
     int i;
 
-    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-    coll.id = ompi_process_info.peer_init_barrier;
     if( 0 != OMPI_PROC_MY_NAME->vpid ) {
         if( 2 > timing_enabled ) {
-            goto done;
+            return;
         }
         else if( 2 == timing_enabled ) {
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
-            goto done;
+            opal_pmix.fence(NULL, 0);
+            return;
         }
     }
 
@@ -6234,7 +6225,7 @@ static void display_all_timers(int state) {
         }
     }
     if( !report_ready ) {
-        goto done;
+        return;
     }
 
     opal_output(0, "crcp:bkmrk: timing(%20s): ******************** Begin: [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
@@ -6244,8 +6235,7 @@ static void display_all_timers(int state) {
 
     if( timing_enabled >= 2) {
         barrier_start = get_time();
-        ompi_rte_barrier(&coll);
-        OMPI_WAIT_FOR_COMPLETION(coll.active);
+        opal_pmix.fence(NULL, 0);
         barrier_stop = get_time();
         opal_output(0,
                     "crcp:bkmrk: timing(%20s): %20s = %10.2f s\n",
@@ -6256,8 +6246,6 @@ static void display_all_timers(int state) {
 
     opal_output(0, "crcp:bkmrk: timing(%20s): ******************** End:   [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
 
-done:
-    OBJ_DESTRUCT(&coll);
 }
 
 static void display_indv_timer(int idx, int proc, int msgs) {
