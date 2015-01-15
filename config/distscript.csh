@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -108,14 +110,14 @@ chmod +x config.guess config.sub
 # unreleased software...
 
 set happy=0
-if (! -f config.guess || ! -s config.guess) then
+if (! -f config.guess || `test -s config.guess;echo $status`) then
     echo " - WARNING: Got bad config.guess from ftp.gnu.org (non-existent or empty)"
 else
     ./config.guess >& /dev/null
     if ($status != 0) then
         echo " - WARNING: Got bad config.guess from ftp.gnu.org (not executable)"
     else
-        if (! -f config.sub || ! -s config.sub) then
+        if (! -f config.sub || `test -s config.sub;echo $status`) then
             echo " - WARNING: Got bad config.sub from ftp.gnu.org (non-existent or empty)"
         else
             ./config.sub `./config.guess` >& /dev/null
