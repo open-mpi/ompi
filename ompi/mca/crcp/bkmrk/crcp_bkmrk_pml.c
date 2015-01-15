@@ -1446,8 +1446,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
     for( i = 0; i < nprocs; ++i) {
         HOKE_PEER_REF_ALLOC(new_peer_ref);
 
-        new_peer_ref->proc_name.jobid  = procs[i]->proc_name.jobid;
-        new_peer_ref->proc_name.vpid   = procs[i]->proc_name.vpid;
+        new_peer_ref->proc_name.jobid  = OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->jobid;
+        new_peer_ref->proc_name.vpid   = OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->vpid;
 
         opal_list_append(&ompi_crcp_bkmrk_pml_peer_refs, &(new_peer_ref->super));
     }
@@ -1475,11 +1475,11 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
                         "crcp:bkmrk: pml_del_procs()"));
 
     for( i = 0; i < nprocs; ++i) {
-        item = (opal_list_item_t*)find_peer(procs[i]->proc_name);
+        item = (opal_list_item_t*)find_peer(*(ompi_process_name_t*)&procs[i]->super.proc_name);
         if(NULL == item) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: del_procs: Unable to find peer %s\n",
-                        OMPI_NAME_PRINT(&(procs[i]->proc_name)));
+                        OMPI_NAME_PRINT(&procs[i]->super.proc_name));
             exit_status = OMPI_ERROR;
             goto DONE;
         }
@@ -3914,7 +3914,7 @@ static int drain_message_find_any(size_t count, int tag, int peer,
                 
             if( OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                             &(cur_peer_ref->proc_name),
-                                                            &(comm->c_local_group->grp_proc_pointers[peer]->proc_name)) ) {
+                                                            OMPI_CAST_RTE_NAME(&comm->c_local_group->grp_proc_pointers[peer]->super.proc_name))) {
                 continue;
             }
         }
@@ -4157,7 +4157,7 @@ static ompi_crcp_bkmrk_pml_peer_ref_t * find_peer(ompi_process_name_t proc)
 static int find_peer_in_comm(struct ompi_communicator_t* comm, int proc_idx,
                              ompi_crcp_bkmrk_pml_peer_ref_t **peer_ref)
 {
-    *peer_ref = find_peer(comm->c_remote_group->grp_proc_pointers[proc_idx]->proc_name);
+    *peer_ref = find_peer(*(ompi_process_name_t *)&comm->c_remote_group->grp_proc_pointers[proc_idx]->super.proc_name);
 
     if( NULL == *peer_ref) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
