@@ -531,10 +531,12 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
        if a user distributes different INI files or parameters for different node/procs,
        it is on his own responsibility */
     switch(mca_btl_openib_component.receive_queues_source) {
-        case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-        case MCA_BASE_VAR_SOURCE_ENV:
-        case MCA_BASE_VAR_SOURCE_MAX:
-            break;
+    case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
+    case MCA_BASE_VAR_SOURCE_ENV:
+    case MCA_BASE_VAR_SOURCE_FILE:
+    case MCA_BASE_VAR_SOURCE_SET:
+    case MCA_BASE_VAR_SOURCE_OVERRIDE:
+        break;
 
         /* If the queues configuration was set from command line
            (with --mca btl_openib_receive_queues parameter) => both sides have a same configuration */
@@ -543,40 +545,38 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
            not possible that remote side got its queues configuration from command line =>
            (by prio) the configuration was set from INI file or (if not configure)
            by default queues configuration */
-        case MCA_BASE_VAR_SOURCE_FILE:
-        case MCA_BASE_VAR_SOURCE_SET:
-        case MCA_BASE_VAR_SOURCE_OVERRIDE:
-            if(NULL != values.receive_queues) {
-                recv_qps = values.receive_queues;
-            } else {
-                recv_qps = mca_btl_openib_component.default_recv_qps;
-            }
+    case BTL_OPENIB_RQ_SOURCE_DEVICE_INI:
+        if(NULL != values.receive_queues) {
+            recv_qps = values.receive_queues;
+        } else {
+            recv_qps = mca_btl_openib_component.default_recv_qps;
+        }
 
-            if(0 != strcmp(mca_btl_openib_component.receive_queues,
-                                                         recv_qps)) {
-                opal_show_help("help-mpi-btl-openib.txt",
-                               "unsupported queues configuration", true,
-                               opal_process_info.nodename,
-                               ibv_get_device_name(openib_btl->device->ib_dev),
-                               (openib_btl->device->ib_dev_attr).vendor_id,
-                               (openib_btl->device->ib_dev_attr).vendor_part_id,
-                               mca_btl_openib_component.receive_queues,
-                               opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
-                               endpoint->rem_info.rem_vendor_id,
-                               endpoint->rem_info.rem_vendor_part_id,
-                               recv_qps);
+        if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                       recv_qps)) {
+            opal_show_help("help-mpi-btl-openib.txt",
+                           "unsupported queues configuration", true,
+                           opal_process_info.nodename,
+                           ibv_get_device_name(openib_btl->device->ib_dev),
+                           (openib_btl->device->ib_dev_attr).vendor_id,
+                           (openib_btl->device->ib_dev_attr).vendor_part_id,
+                           mca_btl_openib_component.receive_queues,
+                           opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
+                           endpoint->rem_info.rem_vendor_id,
+                           endpoint->rem_info.rem_vendor_part_id,
+                           recv_qps);
 
-                return OPAL_ERROR;
-            }
-            break;
+            return OPAL_ERROR;
+        }
+        break;
 
         /* If the local queues configuration was set
            by default queues => check all possible cases for remote side and compare */
-        case  MCA_BASE_VAR_SOURCE_DEFAULT:
-            if(NULL != values.receive_queues) {
-                if(0 != strcmp(mca_btl_openib_component.receive_queues,
-                                                values.receive_queues)) {
-                     opal_show_help("help-mpi-btl-openib.txt",
+    case  MCA_BASE_VAR_SOURCE_DEFAULT:
+        if(NULL != values.receive_queues) {
+            if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                           values.receive_queues)) {
+                opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
                                opal_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
@@ -588,10 +588,10 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                endpoint->rem_info.rem_vendor_part_id,
                                values.receive_queues);
 
-                    return OPAL_ERROR;
-                }
+                return OPAL_ERROR;
             }
-            break;
+        }
+        break;
     }
 
     return OPAL_SUCCESS;
@@ -634,7 +634,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
 
 #if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
-	mca_btl_openib_async_cmd_t async_command;
+        mca_btl_openib_async_cmd_t async_command;
 
         /* start the async even thread if it is not already started */
         if (start_async_event_thread() != OPAL_SUCCESS)
@@ -642,8 +642,8 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
 
         device->got_fatal_event = false;
         device->got_port_event = false;
-	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_ADD;
-	async_command.fd = device->ib_dev_context->async_fd;
+        async_command.a_cmd = OPENIB_ASYNC_CMD_FD_ADD;
+        async_command.fd = device->ib_dev_context->async_fd;
         if (write(mca_btl_openib_component.async_pipe[1],
                     &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
@@ -1133,15 +1133,16 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
 
 /* check if pending fragment has enough space for coalescing */
 static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
-        opal_mutex_t *lock, mca_btl_base_endpoint_t *ep, size_t size)
+    opal_mutex_t *lock, struct mca_btl_base_endpoint_t *ep, size_t size,
+    mca_btl_openib_coalesced_frag_t **cfrag)
 {
     mca_btl_openib_send_frag_t *frag = NULL;
 
-    if(opal_list_is_empty(frag_list))
+    if (opal_list_is_empty(frag_list))
         return NULL;
 
     OPAL_THREAD_LOCK(lock);
-    if(!opal_list_is_empty(frag_list)) {
+    if (!opal_list_is_empty(frag_list)) {
         int qp;
         size_t total_length;
         opal_list_item_t *i = opal_list_get_first(frag_list);
@@ -1158,10 +1159,20 @@ static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
 
         qp = to_base_frag(frag)->base.order;
 
-        if(total_length <= mca_btl_openib_component.qp_infos[qp].size)
-            opal_list_remove_first(frag_list);
-        else
+        if(total_length <= mca_btl_openib_component.qp_infos[qp].size) {
+            /* make sure we can allocate a coalescing frag before returning success */
+            *cfrag = alloc_coalesced_frag();
+            if (OPAL_LIKELY(NULL != cfrag)) {
+                (*cfrag)->send_frag = frag;
+                (*cfrag)->sent = false;
+
+                opal_list_remove_first(frag_list);
+            } else {
+                frag = NULL;
+            }
+        } else {
             frag = NULL;
+        }
     }
     OPAL_THREAD_UNLOCK(lock);
 
@@ -1188,7 +1199,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     int qp = frag_size_to_order(obtl, size);
     mca_btl_openib_send_frag_t *sfrag = NULL;
-    mca_btl_openib_coalesced_frag_t *cfrag;
+    mca_btl_openib_coalesced_frag_t *cfrag = NULL;
 
     assert(qp != MCA_BTL_NO_ORDER);
 
@@ -1197,26 +1208,25 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
 
         sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
-                &ep->endpoint_lock, ep, size);
+                                 &ep->endpoint_lock, ep, size, &cfrag);
 
-        if(NULL == sfrag) {
+        if (NULL == sfrag) {
             if(BTL_OPENIB_QP_TYPE_PP(qp)) {
                 sfrag = check_coalescing(&ep->qps[qp].no_credits_pending_frags[prio],
-                        &ep->endpoint_lock, ep, size);
+                                         &ep->endpoint_lock, ep, size, &cfrag);
             } else {
                 sfrag = check_coalescing(
                         &obtl->qps[qp].u.srq_qp.pending_frags[prio],
-                        &obtl->ib_lock, ep, size);
+                        &obtl->ib_lock, ep, size, &cfrag);
             }
         }
     }
 
-    if(NULL == sfrag)
+    if (NULL == sfrag) {
         return ib_frag_alloc((mca_btl_openib_module_t*)btl, size, order, flags);
+    }
 
     /* begin coalescing message */
-    cfrag = alloc_coalesced_frag();
-    cfrag->send_frag = sfrag;
 
     /* fix up new coalescing header if this is the first coalesced frag */
     if(sfrag->hdr != sfrag->chdr) {
@@ -1250,10 +1260,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     to_base_frag(cfrag)->segment.base.seg_addr.pval = cfrag->hdr + 1;
     to_base_frag(cfrag)->segment.base.seg_len = size;
 
-    /* save coalesced fragment on a main fragment; we will need it after send
-     * completion to free it and to call upper layer callback */
-    opal_list_append(&sfrag->coalesced_frags, (opal_list_item_t*)cfrag);
-    sfrag->coalesced_length += (size+sizeof(mca_btl_openib_header_coalesced_t));
+    /* NTH: there is no reason to append the coalesced fragment here. No more
+     * fragments will be added until either send or free has been called on
+     * the coalesced frag. */
 
     to_base_frag(cfrag)->base.des_flags = flags;
 
@@ -1306,6 +1315,15 @@ int mca_btl_openib_free(
         default:
             break;
     }
+
+    if (openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED && !to_coalesced_frag(des)->sent) {
+        mca_btl_openib_send_frag_t *sfrag = to_coalesced_frag(des)->send_frag;
+
+        /* the coalesced fragment would have sent the original fragment but that
+         * will not happen so send the fragment now */
+        mca_btl_openib_endpoint_send(to_com_frag(sfrag)->endpoint, sfrag);
+    }
+
     MCA_BTL_IB_FRAG_RETURN(des);
 
     return OPAL_SUCCESS;
@@ -1703,16 +1721,15 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
 {
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     size_t size = payload_size + header_size;
-    size_t eager_limit;
     int qp = frag_size_to_order(obtl, size),
         prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY),
         ib_rc;
-    int32_t cm_return;
     bool do_rdma = false;
     ompi_free_list_item_t* item = NULL;
     mca_btl_openib_frag_t *frag;
     mca_btl_openib_header_t *hdr;
     int send_signaled;
+    int rc;
 
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
 
@@ -1734,45 +1751,26 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
 
     /* Allocate WQE */
     if(OPAL_UNLIKELY(qp_get_wqe(ep, qp) < 0)) {
-        goto no_credits_or_wqe;
-    }
-
-    /* eager rdma or send ? Check eager rdma credits */
-    /* Note: Maybe we want to implement isend only for eager rdma ?*/
-    eager_limit = mca_btl_openib_component.eager_limit +
-        sizeof(mca_btl_openib_header_coalesced_t) +
-        sizeof(mca_btl_openib_control_header_t);
-
-    if(OPAL_LIKELY(size <= eager_limit)) {
-        if(acquire_eager_rdma_send_credit(ep) == OPAL_SUCCESS) {
-            do_rdma = true;
-        }
-    }
-
-    /* if(!do_rdma && acquire_send_credit(ep, frag) != OPAL_SUCCESS) { */
-    /* Check send credits if it is no rdma */
-    if(!do_rdma) {
-        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, -1) < 0)){
-                OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, 1);
-                goto no_credits_or_wqe;
-            }
-        } else {
-            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, -1) < 0)){
-                OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, 1);
-                goto no_credits_or_wqe;
-            }
-        }
+        goto cant_send_wqe;
     }
 
     /* Allocate fragment */
     OMPI_FREE_LIST_GET_MT(&obtl->device->qps[qp].send_free, item);
     if(OPAL_UNLIKELY(NULL == item)) {
         /* we don't return NULL because maybe later we will try to coalesce */
-        goto no_frags;
+        goto cant_send_wqe;
     }
     frag = to_base_frag(item);
     hdr = to_send_frag(item)->hdr;
+
+    /* eager rdma or send ? Check eager rdma credits */
+    /* Note: Maybe we want to implement isend only for eager rdma ?*/
+    rc = mca_btl_openib_endpoint_credit_acquire (ep, qp, prio, size, &do_rdma,
+                                                 to_send_frag(frag), false);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        goto cant_send_frag;
+    }
+
     frag->segment.base.seg_len = size;
     frag->base.order = qp;
     frag->base.des_flags = flags;
@@ -1797,29 +1795,6 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         assert(max_data == payload_size);
     }
 
-    /* Set all credits */
-    BTL_OPENIB_GET_CREDITS(ep->eager_rdma_local.credits, hdr->credits);
-    if(hdr->credits)
-        hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
-
-    if(!do_rdma) {
-        if(BTL_OPENIB_QP_TYPE_PP(qp) && 0 == hdr->credits) {
-            BTL_OPENIB_GET_CREDITS(ep->qps[qp].u.pp_qp.rd_credits, hdr->credits);
-        }
-    } else {
-        hdr->credits |= (qp << 11);
-    }
-
-    BTL_OPENIB_GET_CREDITS(ep->qps[qp].u.pp_qp.cm_return, cm_return);
-    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
-    if(cm_return > 255) {
-        hdr->cm_seen = 255;
-        cm_return -= 255;
-        OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.cm_return, cm_return);
-    } else {
-        hdr->cm_seen = cm_return;
-    }
-
 #if BTL_OPENIB_FAILOVER_ENABLED
     send_signaled = 1;
 #else
@@ -1827,7 +1802,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
 #endif
     ib_rc = post_send(ep, to_send_frag(item), do_rdma, send_signaled);
 
-    if(!ib_rc) {
+    if (!ib_rc) {
         if (0 == send_signaled) {
             MCA_BTL_IB_FRAG_RETURN(frag);
         }
@@ -1838,33 +1813,21 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         }
 #endif
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+
         return OPAL_SUCCESS;
     }
 
     /* Failed to send, do clean up all allocated resources */
-    if(ep->nbo) {
+    if (ep->nbo) {
         BTL_OPENIB_HEADER_NTOH(*hdr);
     }
-    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
-        OPAL_THREAD_ADD32(&ep->eager_rdma_local.credits,
-                BTL_OPENIB_CREDITS(hdr->credits));
-    }
-    if (!do_rdma && BTL_OPENIB_QP_TYPE_PP(qp)) {
-        OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.rd_credits,
-                hdr->credits);
-    }
-no_frags:
-    if(do_rdma) {
-        OPAL_THREAD_ADD32(&ep->eager_rdma_remote.tokens, 1);
-    } else {
-        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-            OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, 1);
-        } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
-            OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, 1);
-        }
-    }
-no_credits_or_wqe:
-    qp_put_wqe(ep, qp);
+
+    mca_btl_openib_endpoint_credit_release (ep, qp, do_rdma, to_send_frag(frag));
+
+cant_send_frag:
+    MCA_BTL_IB_FRAG_RETURN(frag);
+cant_send_wqe:
+    qp_put_wqe (ep, qp);
 cant_send:
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
     /* We can not send the data directly, so we just return descriptor */
@@ -1888,11 +1851,19 @@ int mca_btl_openib_send(
             openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED);
 
     if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_COALESCED) {
+        frag = to_coalesced_frag(des)->send_frag;
+
+        /* save coalesced fragment on a main fragment; we will need it after send
+         * completion to free it and to call upper layer callback */
+        opal_list_append(&frag->coalesced_frags, (opal_list_item_t*) des);
+        frag->coalesced_length += to_coalesced_frag(des)->hdr->alloc_size +
+                                   sizeof(mca_btl_openib_header_coalesced_t);
+
+        to_coalesced_frag(des)->sent = true;
         to_coalesced_frag(des)->hdr->tag = tag;
         to_coalesced_frag(des)->hdr->size = des->des_local->seg_len;
         if(ep->nbo)
             BTL_OPENIB_HEADER_COALESCED_HTON(*to_coalesced_frag(des)->hdr);
-        frag = to_coalesced_frag(des)->send_frag;
     } else {
         frag = to_send_frag(des);
         to_com_frag(des)->endpoint = ep;
