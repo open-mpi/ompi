@@ -45,6 +45,7 @@
 #include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_progress_threads.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -73,7 +74,6 @@
 
 #include "orte/mca/ess/base/base.h"
 
-static void* orte_progress_thread_engine(opal_object_t *obj);
 static bool progress_thread_running = false;
 
 int orte_ess_base_app_setup(bool db_restrict_local)
@@ -114,7 +114,8 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
 
     /* get a separate orte event base */
-    orte_event_base = opal_event_base_create();
+    orte_event_base = opal_start_progress_thread("orte", true);
+    progress_thread_running = true;
  
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
@@ -256,17 +257,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
-    /* construct the thread object */
-    OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
-    /* fork off a thread to progress it */
-    orte_progress_thread.t_run = orte_progress_thread_engine;
-    progress_thread_running = true;
-    if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
-        error = "orte progress thread start";
-        progress_thread_running = false;
-        goto error;
-    }
-
     /* enable communication via the rml */
     if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
@@ -376,12 +366,7 @@ int orte_ess_base_app_finalize(void)
          * sends a "sync" message to the local daemon. it
          * is now safe to stop the progress thread
          */
-        orte_event_base_active = false;
-        /* break the event loop */
-        opal_event_base_loopbreak(orte_event_base);
-        /* wait for thread to exit */
-        opal_thread_join(&orte_progress_thread, NULL);
-        OBJ_DESTRUCT(&orte_progress_thread);
+        opal_stop_progress_thread("orte", true);
         progress_thread_running = false;
     }
 
@@ -456,12 +441,4 @@ void orte_ess_base_app_abort(int status, bool report)
     
     /* Now Exit */
     _exit(status);
-}
-
-static void* orte_progress_thread_engine(opal_object_t *obj)
-{
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
-    return OPAL_THREAD_CANCELLED;
 }
