@@ -319,12 +319,16 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
         int num_local_procs)
 {
     char str[128];
-    unsigned unlp = (unsigned) num_local_procs;
+    unsigned unlp;
     struct fi_usnic_info *uip;
     struct fi_info *info;
 
     info = module->fabric_info;
     uip = &module->usnic_info;
+
+    /* Note: we add one to num_local_procs to account for *this*
+       process */
+    unlp = (unsigned) num_local_procs + 1;
 
     /* usNIC allocates QPs as a combination of PCI virtual functions
        (VFs) and resources inside those VFs.  Ensure that:
@@ -348,7 +352,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
 
     if (uip->ui_num_vf < unlp) {
         snprintf(str, sizeof(str), "Not enough usNICs (found %d, need %d)",
-                 uip->ui_num_vf, num_local_procs);
+                 uip->ui_num_vf, unlp);
         goto error;
     }
 
@@ -356,7 +360,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
         unlp * USNIC_NUM_CHANNELS) {
         snprintf(str, sizeof(str), "Not enough WQ/RQ (found %d, need %d)",
                  uip->ui_num_vf * uip->ui_qp_per_vf,
-                 num_local_procs * USNIC_NUM_CHANNELS);
+                 unlp * USNIC_NUM_CHANNELS);
         goto error;
     }
     if (uip->ui_num_vf * uip->ui_cq_per_vf <
@@ -364,7 +368,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
         snprintf(str, sizeof(str),
                  "Not enough CQ per usNIC (found %d, need %d)",
                  uip->ui_num_vf * uip->ui_cq_per_vf,
-                 num_local_procs * USNIC_NUM_CHANNELS);
+                 unlp * USNIC_NUM_CHANNELS);
         goto error;
     }
 
