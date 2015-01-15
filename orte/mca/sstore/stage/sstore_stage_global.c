@@ -1521,6 +1521,7 @@ static int xcast_remove_all(orte_sstore_stage_global_snapshot_info_t *handle_inf
     int ret, exit_status = ORTE_SUCCESS;
     opal_buffer_t *loc_buffer = NULL;
     orte_sstore_stage_cmd_flag_t command;
+    orte_grpcomm_signature_t *sig;
 
     handle_info->num_procs_done = 0;
 
@@ -1539,7 +1540,12 @@ static int xcast_remove_all(orte_sstore_stage_global_snapshot_info_t *handle_inf
         goto cleanup;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, loc_buffer, ORTE_RML_TAG_SSTORE_INTERNAL))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(sig, ORTE_RML_TAG_SSTORE_INTERNAL, loc_buffer))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -1553,6 +1559,8 @@ static int xcast_remove_all(orte_sstore_stage_global_snapshot_info_t *handle_inf
         OBJ_RELEASE(loc_buffer);
         loc_buffer = NULL;
     }
+
+    OBJ_RELEASE(sig);
 
     return exit_status;
 }
