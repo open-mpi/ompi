@@ -360,6 +360,11 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
 
+    (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
+    (void) mca_base_framework_close(&orte_state_base_framework);
+
+    /* release the event base */
     if (progress_thread_running) {
         /* we had to leave the progress thread running until
          * we closed the routed framework as that closure
@@ -369,13 +374,6 @@ int orte_ess_base_app_finalize(void)
         opal_stop_progress_thread("orte", true);
         progress_thread_running = false;
     }
-
-    (void) mca_base_framework_close(&orte_rml_base_framework);
-    (void) mca_base_framework_close(&orte_oob_base_framework);
-    (void) mca_base_framework_close(&orte_state_base_framework);
-
-    /* release the event base */
-    opal_event_base_free(orte_event_base);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         
