@@ -1763,11 +1763,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
         }
 #endif
 
-        orte_grpcomm.finalize();
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
-            ORTE_ERROR_LOG(ret);
-            goto cleanup;
-        }
         flushed_modex = true;
     }
 
