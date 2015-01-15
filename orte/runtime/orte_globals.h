@@ -139,8 +139,6 @@ ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
 
-ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
-
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
 
