@@ -690,8 +690,7 @@ int mca_pml_bfo_ft_event( int state )
              */
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto clean;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
             /*
@@ -709,7 +708,7 @@ int mca_pml_bfo_ft_event( int state )
                     OBJ_RELEASE(procs[p]);
                 }
                 free (procs);
-                goto clean;
+                return ret;
             }
         }
     }
@@ -722,8 +721,7 @@ int mca_pml_bfo_ft_event( int state )
          */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            goto clean;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         /*
@@ -749,7 +747,7 @@ int mca_pml_bfo_ft_event( int state )
                 OBJ_RELEASE(procs[p]);
             }
             free (procs);
-            goto clean;
+            return ret;
         }
     }
     else if(OPAL_CRS_TERM == state ) {
@@ -799,7 +797,7 @@ int mca_pml_bfo_ft_event( int state )
              */
             if( OMPI_SUCCESS != (ret = mca_pml_bfo_add_procs(procs, num_procs) ) ) {
                 opal_output(0, "pml:bfo: ft_event(Restart): Failed in add_procs (%d)", ret);
-                goto clean;
+                return ret;
             }
 
             /* Is this barrier necessary ? JJH */
@@ -837,7 +835,7 @@ int mca_pml_bfo_ft_event( int state )
          */
         if( OMPI_SUCCESS != (ret = mca_pml_bfo_add_procs(procs, num_procs) ) ) {
             opal_output(0, "pml:bfo: ft_event(Restart): Failed in add_procs (%d)", ret);
-            goto clean;
+            return ret;
         }
 
         /* Is this barrier necessary ? JJH */
@@ -858,10 +856,7 @@ int mca_pml_bfo_ft_event( int state )
         ;
     }
 
-    ret = OMPI_SUCCESS;
-
-clean:
-    return ret;
+    return OMPI_SUCCESS;
 }
 #endif /* OPAL_ENABLE_FT_CR */
 

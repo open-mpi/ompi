@@ -199,8 +199,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CHECKPOINT))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -208,8 +207,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CHECKPOINT))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -217,8 +215,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CHECKPOINT))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
     }
     /******** Continue Recovery ********/
@@ -232,8 +229,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CONTINUE))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -241,8 +237,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CONTINUE))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -250,8 +245,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CONTINUE))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         if (opal_cr_continue_like_restart) {
@@ -292,8 +286,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -304,14 +297,12 @@ static int rte_ft_event(int state)
         orte_process_info.proc_type = ORTE_PROC_TOOL;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
         orte_process_info.proc_type = svtype;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /* RHC: you can't pass NULL as the identifier - what you'll need to do is
@@ -330,14 +321,12 @@ static int rte_ft_event(int state)
          */
         if (ORTE_SUCCESS != (ret = orte_plm.finalize())) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         if (ORTE_SUCCESS != (ret = orte_plm.init())) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -345,8 +334,7 @@ static int rte_ft_event(int state)
          */
         if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -354,8 +342,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
 
         /*
@@ -394,8 +381,7 @@ static int rte_ft_event(int state)
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_RESTART))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return ret;
         }
     }
     else if (OPAL_CRS_TERM == state ) {
@@ -405,7 +391,6 @@ static int rte_ft_event(int state)
         /* Error state = Nothing */
     }
 
-cleanup:
     return exit_status;
 }
 #endif
