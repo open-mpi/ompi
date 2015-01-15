@@ -524,13 +524,6 @@ int global_coord_end_ckpt(orte_snapc_base_quiesce_t *datum)
         }
 #endif
 
-        orte_grpcomm.finalize();
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
         SNAPC_FULL_SET_TIMER(SNAPC_FULL_TIMER_ESTABLISH);
         if( ORTE_SUCCESS != (ret = orte_snapc_full_global_set_job_ckpt_info(current_global_jobid,
                                                                             ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL,

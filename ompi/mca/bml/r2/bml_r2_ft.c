@@ -27,6 +27,7 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"
@@ -48,7 +49,6 @@ int mca_bml_r2_ft_event(int state)
     int loc_state;
     int param_type = -1;
     const char **btl_list;
-    ompi_rte_collective_t coll;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
@@ -155,15 +155,7 @@ int mca_bml_r2_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-            coll.id = ompi_process_info.peer_init_barrier;
-            if (OMPI_SUCCESS != (ret = ompi_rte_barrier(&coll))) {
-                opal_output(0, "bml:r2: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
-                return ret;
-            }
-            while (coll.active) {
-                opal_progress();
-            }
+            opal_pmix.fence(NULL, 0);
 
             /*
              * Re-open the BTL framework to get the full list of components.
@@ -233,15 +225,7 @@ int mca_bml_r2_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-        coll.id = ompi_process_info.peer_init_barrier;
-        if (OMPI_SUCCESS != (ret = ompi_rte_barrier(&coll))) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
-            return ret;
-        }
-        while (coll.active) {
-            opal_progress();
-        }
+        opal_pmix.fence(NULL, 0);
 
         /*
          * Re-open the BTL framework to get the full list of components.
