@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2012 Inria.  All rights reserved.
- * Copyright © 2009-2011, 2013 Université Bordeaux 1
+ * Copyright © 2009-2015 Inria.  All rights reserved.
+ * Copyright © 2009-2011, 2013 Université Bordeaux
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -347,6 +347,7 @@ hwloc_aix_prepare_membind(hwloc_topology_t topology, rsethandle_t *rad, hwloc_co
   noderad = rs_alloc(RS_EMPTY);
 
   hwloc_bitmap_foreach_begin(node, nodeset)
+    /* we used MCMlevel rad number for node->os_index during lookup */
     rs_getrad(rset, noderad, MCMlevel, node, 0);
     rs_op(RS_UNION, noderad, *rad, 0, 0);
   hwloc_bitmap_foreach_end();
@@ -608,6 +609,9 @@ look_rset(int sdl, hwloc_obj_type_t type, struct hwloc_topology *topology, int l
   }
 
   for (i = 0; i < nbnodes; i++) {
+    hwloc_bitmap_t cpuset;
+    unsigned os_index = (unsigned) -1; /* no os_index except for PU and NODE below */
+
     if (rs_getrad(rset, rad, sdl, i, 0)) {
       fprintf(stderr,"rs_getrad(%d) failed: %s\n", i, strerror(errno));
       continue;
@@ -615,16 +619,28 @@ look_rset(int sdl, hwloc_obj_type_t type, struct hwloc_topology *topology, int l
     if (!rs_getinfo(rad, R_NUMPROCS, 0))
       continue;
 
-    /* It seems logical processors are numbered from 1 here, while the
-     * bindprocessor functions numbers them from 0... */
-    obj = hwloc_alloc_setup_object(type, i - (type == HWLOC_OBJ_PU));
-    obj->cpuset = hwloc_bitmap_alloc();
-    obj->os_level = sdl;
     maxcpus = rs_getinfo(rad, R_MAXPROCS, 0);
+    cpuset = hwloc_bitmap_alloc();
     for (j = 0; j < maxcpus; j++) {
       if (rs_op(RS_TESTRESOURCE, rad, NULL, R_PROCS, j))
-	hwloc_bitmap_set(obj->cpuset, j);
+	hwloc_bitmap_set(cpuset, j);
     }
+
+    if (type == HWLOC_OBJ_PU) {
+      os_index = hwloc_bitmap_first(cpuset);
+      hwloc_debug("Found PU #%u inside node %d for sdl %d\n", os_index, i, sdl);
+      assert(hwloc_bitmap_weight(cpuset) == 1);
+    } else if (type == HWLOC_OBJ_NODE) {
+      /* NUMA node os_index isn't used for binding, just use the rad number to get unique values.
+       * Note that we'll use that fact in hwloc_aix_prepare_membind(). */
+      os_index = i;
+      hwloc_debug("Using os_index #%u for NUMA node inside node %d for sdl %d\n", os_index, i, sdl);
+    }
+
+    obj = hwloc_alloc_setup_object(type, os_index);
+    obj->cpuset = cpuset;
+    obj->os_level = sdl;
+
     switch(type) {
       case HWLOC_OBJ_NODE:
 	obj->nodeset = hwloc_bitmap_alloc();
