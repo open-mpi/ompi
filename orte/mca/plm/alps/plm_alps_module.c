@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -522,6 +523,7 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
     
     if (0 != status) {
         if (failed_launch) {
+            /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
              */
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);            
