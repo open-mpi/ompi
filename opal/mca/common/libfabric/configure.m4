@@ -58,6 +58,10 @@ AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
     AC_SUBST(opal_common_libfabric_embedded_CFLAGS)
     AC_SUBST(opal_common_libfabric_embedded_LIBADD)
 
+    # Ensure that the wrappers get what they need (e.g., for static
+    # builds).
+    common_libfabric_WRAPPER_EXTRA_LIBS=$opal_common_libfabric_embedded_LIBADD
+
     # Did libfabric configure successfully?
     AS_IF([test $opal_common_libfabric_happy -eq 1],
           [$1],
