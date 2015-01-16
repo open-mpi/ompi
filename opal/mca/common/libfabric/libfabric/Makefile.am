@@ -3,7 +3,7 @@ AM_CPPFLAGS = \
 	-D_GNU_SOURCE \
 	-DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DRDMADIR=\"@rdmadir@\" \
-	-DEXTDIR=\"$(pkglibdir)\"
+	-DPROVDLDIR=\"$(pkglibdir)\"
 
 lib_LTLIBRARIES = src/libfabric.la
 
@@ -82,7 +82,7 @@ _verbs_files = prov/verbs/src/fi_verbs.c
 if HAVE_VERBS_DL
 pkglib_LTLIBRARIES += libverbs-fi.la
 libverbs_fi_la_SOURCES = $(_verbs_files) $(common_srcs)
-libverbs_fi_la_LIBADD = -libverbs -lrdmacm $(linkback)
+libverbs_fi_la_LIBADD = $(linkback)
 libverbs_fi_la_LDFLAGS = -module -avoid-version -shared -export-dynamic
 libverbs_fi_la_DEPENDENCIES = $(linkback)
 else !HAVE_VERBS_DL
@@ -186,6 +186,7 @@ _usnic_files = \
 
 _usnic_cppflags = \
         -D__LIBUSNIC__ \
+        -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(USNIC_LIBNL_CPPFLAGS) \
         -I$(top_srcdir)/prov/usnic/src/usnic_direct
 
 if HAVE_USNIC_DL
@@ -279,6 +280,7 @@ real_man_pages = \
         man/fi_direct.7 \
         man/fi_domain.3 \
         man/fi_endpoint.3 \
+        man/fi_errno.3 \
         man/fi_eq.3 \
         man/fi_fabric.3 \
         man/fi_getinfo.3 \

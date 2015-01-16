@@ -704,6 +704,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	int entry_size;
 	int err;
 
+	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	switch (attr->format) {
 	case FI_CQ_FORMAT_UNSPEC:
 		attr->format = FI_CQ_FORMAT_TAGGED;
@@ -750,7 +751,8 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
-		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
+		err = psmx_wait_open(&domain_priv->fabric->fabric,
+				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
 		break;
@@ -774,7 +776,6 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		}
 	}
 
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	cq_priv = (struct psmx_fid_cq *) calloc(1, sizeof *cq_priv);
 	if (!cq_priv) {
 		if (wait)

@@ -191,9 +191,6 @@ bool orte_map_stddiag_to_stderr = false;
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;
 
-/* progress thread */
-opal_thread_t orte_progress_thread;
-
 /* user debugger */
 char *orte_base_user_debugger = NULL;
 

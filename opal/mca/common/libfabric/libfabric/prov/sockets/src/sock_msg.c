@@ -67,7 +67,7 @@ static ssize_t sock_ep_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		rx_ctx = sock_ep->rx_ctx;
 		break;
 
@@ -157,12 +157,12 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -172,8 +172,11 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	}
 
 	assert(tx_ctx->enabled && msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT);
-
-	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	if (sock_ep->connected) {
+		conn = sock_ep_lookup_conn(sock_ep);
+	} else {
+		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	}
 	assert(conn);
 
 	SOCK_LOG_INFO("New sendmsg on TX: %p using conn: %p\n", 
@@ -326,7 +329,7 @@ static ssize_t sock_ep_trecvmsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		rx_ctx = sock_ep->rx_ctx;
 		break;
 
@@ -418,12 +421,12 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -574,7 +577,7 @@ static ssize_t sock_ep_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, ep);
+		sock_ep = container_of(ep, struct sock_ep, fid.ep);
 		rx_ctx = sock_ep->rx_ctx;
 		break;
 
@@ -588,6 +591,7 @@ static ssize_t sock_ep_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore
 		return -FI_EINVAL;
 	}
 
+	ret = -FI_ENOMSG;
 	fastlock_acquire(&rx_ctx->lock);
 	for (entry = rx_ctx->rx_buffered_list.next;
 	     entry != &rx_ctx->rx_buffered_list; entry = entry->next) {
@@ -599,25 +603,25 @@ static ssize_t sock_ep_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore
 		if (((rx_entry->tag & ~rx_entry->ignore) == 
 		     (*tag & ~rx_entry->ignore)) &&
 		    (rx_entry->addr == FI_ADDR_UNSPEC ||
-		     rx_entry->addr == *src_addr)) {
-
+		     (src_addr == NULL) || 
+		     (src_addr && 
+		      ((*src_addr == FI_ADDR_UNSPEC) ||
+		       (rx_entry->addr == *src_addr))))) {
+			
 			if (flags & FI_CLAIM)
 				rx_entry->is_claimed = 1;
 			*tag = rx_entry->tag;
-			*src_addr = rx_entry->addr;
+			if (src_addr)
+				*src_addr = rx_entry->addr;
 			*len = rx_entry->used;
 			ret = 1;
 			break;
 		}
 	}
 
-	if (entry == &rx_ctx->rx_entry_list)
-		ret = -FI_ENOENT;
-
 	fastlock_release(&rx_ctx->lock);
 	return ret;
 }
-
 
 struct fi_ops_tagged sock_ep_tagged = {
 	.size = sizeof(struct fi_ops_tagged),

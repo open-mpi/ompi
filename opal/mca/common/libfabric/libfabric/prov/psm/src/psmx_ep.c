@@ -248,22 +248,6 @@ static int psmx_ep_control(fid_t fid, int command, void *arg)
 		alias = arg;
 		*new_ep = *ep;
 		new_ep->flags = alias->flags;
-		/* REMOVE ME: [ temporary fix for backward compatibility */
-		if (new_ep->flags & FI_EVENT) {
-			if (psmx_env.warning) {
-			    printf("WARNING: deprecated FI_EVENT flag in fi_alias().\n"
-				"\tThe flag passed to fi_alias should only mean op flags.\n"
-				"\tHere temporary backward compatibility is provided, but\n"
-				"\tthis may go away at any time. The proper way to create\n"
-				"\tan alias that doesn't automatically generate events is:\n"
-				"\t(1) call fi_alias() to create the new EP\n"
-				"\t(2) bind the new EP to the EQ with FI_EVENT flag\n"
-				"\tSet SFI_PSM_WARNING=0 to suppress this message.\n");
-			}
-			new_ep->send_cq_event_flag = new_ep->recv_cq_event_flag = 1;
-			new_ep->flags &= ~FI_EVENT;
-		}
-		/* REMOVE ME: ] */
 		psmx_ep_optimize_ops(new_ep);
 		*alias->fid = &new_ep->ep.fid;
 		break;

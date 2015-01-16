@@ -460,9 +460,9 @@ ssize_t _psmx_read(struct fid_ep *ep, void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_READ;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->read.ep = ep;
 		trigger->read.buf = buf;
 		trigger->read.len = len;
@@ -628,9 +628,9 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_WRITE;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->write.ep = ep;
 		trigger->write.buf = buf;
 		trigger->write.len = len;

@@ -116,10 +116,6 @@ usdf_validate_hints(struct fi_info *hints, struct usd_device_attrs *dap)
 		    fattrp->prov_version != USDF_PROV_VERSION) {
 			return -FI_ENODATA;
 		}
-		if (fattrp->prov_name != NULL &&
-                    strcmp(fattrp->prov_name, USDF_PROV_NAME) != 0) {
-			return -FI_ENODATA;
-		}
 		if (fattrp->name != NULL &&
                     strcmp(fattrp->name, dap->uda_devname) != 0) {
 			return -FI_ENODATA;

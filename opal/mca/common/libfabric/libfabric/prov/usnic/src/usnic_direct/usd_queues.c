@@ -145,6 +145,15 @@ usd_map_vnic_res(struct usd_device *dev, struct usd_vf *vf,
             err = usd_map_one_res(dev, vf, &vfip->barres[i]);
             if (err)
                 return err;
+        } else {
+            /* Disable any other res not reported by kernel module */
+            struct vnic_dev_iomap_info iomap;
+            iomap.vaddr = 0;
+            iomap.bus_addr = vnic_dev_get_res_bus_addr(
+                                        vf->vf_vdev, i, 0);
+            iomap.len = vnic_dev_get_res_type_len(
+                                        vf->vf_vdev, i);
+            vnic_dev_upd_res_vaddr(vf->vf_vdev, &iomap);
         }
     }
 

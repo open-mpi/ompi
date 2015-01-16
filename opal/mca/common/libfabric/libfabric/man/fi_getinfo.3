@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2014\-12\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-01\-07" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -134,7 +134,7 @@ This field will be ignored in hints if FI_SOURCE is specified.
 .PP
 \f[I]dest_addrlen - destination address length\f[] : Indicates the
 length of the destination address (must be specified if
-\f[I]dst_addr\f[] is specified).
+\f[I]dest_addr\f[] is specified).
 This field will be ignored in hints unless FI_SOURCE is specified.
 .PP
 \f[I]src_addr - source address\f[] : If specified, indicates the source
@@ -259,16 +259,6 @@ initiate and be the target of remote atomic reads and writes.
 Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
 FI_REMOTE_WRITE flags to restrict the types of atomic operations
 supported by an endpoint.
-.PP
-\f[I]FI_MULTICAST\f[] : Indicates that the endpoint should support
-multicast data transfers.
-Endpoints supporting this capability support multicast operations
-defined by struct fi_ops_msg, when a multicast address is specified as
-the destination address.
-In the absence of any relevant flags, FI_MULTICAST implies the ability
-to send and receive messages.
-Applications can use the FI_SEND and FI_RECV flags to optimize an
-endpoint as send-only or receive-only.
 .PP
 \f[I]FI_DYNAMIC_MR\f[] : The provider supports applications registering
 any range of addresses in their virtual address space, whether or not

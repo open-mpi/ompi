@@ -58,9 +58,9 @@ ssize_t _psmx_tagged_recv(struct fid_ep *ep, void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_TRECV;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->trecv.ep = ep;
 		trigger->trecv.buf = buf;
 		trigger->trecv.len = len;
@@ -414,9 +414,9 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 			return -ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_TSEND;
-		trigger->cntr = container_of(ctxt->threshold.cntr,
+		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
 					     struct psmx_fid_cntr, cntr);
-		trigger->threshold = ctxt->threshold.threshold;
+		trigger->threshold = ctxt->trigger.threshold.threshold;
 		trigger->tsend.ep = ep;
 		trigger->tsend.buf = buf;
 		trigger->tsend.len = len;
@@ -889,7 +889,8 @@ static ssize_t psmx_tagged_search(struct fid_ep *ep, uint64_t *tag, uint64_t ign
 	case PSM_OK:
 		*tag = psm_status.msg_tag;
 		*len = psm_status.msg_length;
-		*src_addr = FI_ADDR_NOTAVAIL;
+		if (src_addr)
+			*src_addr = FI_ADDR_NOTAVAIL;
 		return 1;
 
 	case PSM_MQ_NO_COMPLETIONS:
