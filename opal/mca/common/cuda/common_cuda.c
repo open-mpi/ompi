@@ -1107,7 +1107,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
     }
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-mpi-common-cuda.txt", "cuIpcOpenMemHandle failed",
-                       true, result, base);
+                       true, OPAL_PROC_MY_HOSTNAME, result, base);
         /* Currently, this is a non-recoverable error */
         return OPAL_ERROR;
     } else {
