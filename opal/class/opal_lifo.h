@@ -14,8 +14,6 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reseved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +41,7 @@ BEGIN_C_DECLS
  * Counted pointer to avoid the ABA problem.
  */
 union opal_counted_pointer_t {
-    union {
+    struct {
         /** update counter used when cmpset_128 is available */
         uint64_t counter;
         /** list item pointer */
