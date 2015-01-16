@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -284,7 +284,7 @@ opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + 
 
         /* Valgrind help */
         opal_memchecker_base_mem_defined(
-                (void*)(seg->rs_rs_protocol_header), seg->rs_len);
+                (void*)(seg->rs_protocol_header), seg->rs_len);
 
         seq = seg->rs_base.us_btl_header->pkt_seq;
         delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
@@ -333,7 +333,7 @@ opal_btl_usnic_recv_frag_bookkeeping(
 
     /* Valgrind help */
     opal_memchecker_base_mem_defined(
-                (void*)(seg->rs_rs_protocol_header), seg->rs_len);
+                (void*)(seg->rs_protocol_header), seg->rs_len);
 
     ++module->stats.num_total_recvs;
 
