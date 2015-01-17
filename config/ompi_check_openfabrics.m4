@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -167,9 +167,15 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
            # ibv_cmd_open_xrcd (aka XRC Domains) was added in  OFED 3.12
            if test "$enable_connectx_xrc" = "yes"; then
-               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd], [$1_have_xrc=1])
+               $1_have_xrc=1
+               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd],
+                              [], [$1_have_xrc=0])
+               AC_CHECK_DECLS([IBV_SRQT_XRC],
+                              [], [$1_have_xrc=0])
+                              [#include <infiniband/verbs.h>])
            fi
-           if test "$enable_connectx_xrc" = "yes"; then
+           if test "$enable_connectx_xrc" = "yes" \
+               && test $$1_have_xrc -eq 1; then
                AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrc_domains=1])
            fi
 
