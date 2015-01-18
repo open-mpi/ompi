@@ -1026,14 +1026,16 @@ hwloc__insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t obj,
 {
   struct hwloc_obj *result;
   /* Start at the top.  */
-  /* Add the cpuset to the top */
-  hwloc_bitmap_or(topology->levels[0][0]->complete_cpuset, topology->levels[0][0]->complete_cpuset, obj->cpuset);
-  if (obj->nodeset)
-    hwloc_bitmap_or(topology->levels[0][0]->complete_nodeset, topology->levels[0][0]->complete_nodeset, obj->nodeset);
   result = hwloc___insert_object_by_cpuset(topology, topology->levels[0][0], obj, report_error);
-  if (result != obj)
+  if (result != obj) {
     /* either failed to insert, or got merged, free the original object */
     hwloc_free_unlinked_object(obj);
+  } else {
+    /* Add the cpuset to the top */
+    hwloc_bitmap_or(topology->levels[0][0]->complete_cpuset, topology->levels[0][0]->complete_cpuset, obj->cpuset);
+    if (obj->nodeset)
+      hwloc_bitmap_or(topology->levels[0][0]->complete_nodeset, topology->levels[0][0]->complete_nodeset, obj->nodeset);
+  }
   return result;
 }
 
