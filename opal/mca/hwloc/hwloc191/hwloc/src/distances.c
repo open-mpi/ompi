@@ -852,11 +852,21 @@ hwloc__groups_by_distances(struct hwloc_topology *topology,
 	    if (groupids[j] == i+1) {
 	      /* assemble the group cpuset */
 	      hwloc_bitmap_or(group_obj->cpuset, group_obj->cpuset, objs[j]->cpuset);
+	      if (objs[i]->complete_cpuset) {
+		if (!group_obj->complete_cpuset)
+		  group_obj->complete_cpuset = hwloc_bitmap_alloc();
+		hwloc_bitmap_or(group_obj->complete_cpuset, group_obj->complete_cpuset, objs[j]->complete_cpuset);
+	      }
 	      /* if one obj has a nodeset, assemble a group nodeset */
 	      if (objs[j]->nodeset) {
 		if (!group_obj->nodeset)
 		  group_obj->nodeset = hwloc_bitmap_alloc();
 		hwloc_bitmap_or(group_obj->nodeset, group_obj->nodeset, objs[j]->nodeset);
+	      }
+	      if (objs[i]->complete_nodeset) {
+		if (!group_obj->complete_nodeset)
+		  group_obj->complete_nodeset = hwloc_bitmap_alloc();
+		hwloc_bitmap_or(group_obj->complete_nodeset, group_obj->complete_nodeset, objs[j]->complete_nodeset);
 	      }
               groupsizes[i]++;
             }
@@ -1010,11 +1020,21 @@ hwloc_group_by_distances(struct hwloc_topology *topology)
       for(i=0; i<nbobjs; i++) {
 	/* assemble the group cpuset */
 	hwloc_bitmap_or(group_obj->cpuset, group_obj->cpuset, osdist->objs[i]->cpuset);
+	if (osdist->objs[i]->complete_cpuset) {
+	  if (!group_obj->complete_cpuset)
+	    group_obj->complete_cpuset = hwloc_bitmap_alloc();
+	  hwloc_bitmap_or(group_obj->complete_cpuset, group_obj->complete_cpuset, osdist->objs[i]->complete_cpuset);
+	}
 	/* if one obj has a nodeset, assemble a group nodeset */
 	if (osdist->objs[i]->nodeset) {
 	  if (!group_obj->nodeset)
 	    group_obj->nodeset = hwloc_bitmap_alloc();
 	  hwloc_bitmap_or(group_obj->nodeset, group_obj->nodeset, osdist->objs[i]->nodeset);
+	}
+	if (osdist->objs[i]->complete_nodeset) {
+	  if (!group_obj->complete_nodeset)
+	    group_obj->complete_nodeset = hwloc_bitmap_alloc();
+	  hwloc_bitmap_or(group_obj->complete_nodeset, group_obj->complete_nodeset, osdist->objs[i]->complete_nodeset);
 	}
       }
       hwloc_debug_1arg_bitmap("adding Group object (as root of distance matrix with %u objects) with cpuset %s\n",
