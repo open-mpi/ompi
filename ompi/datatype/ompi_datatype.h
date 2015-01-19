@@ -200,14 +200,14 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_a
                                                     int const* start_array, int order,
                                                     const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
-ompi_datatype_create_resized( const ompi_datatype_t* oldType, OPAL_PTRDIFF_TYPE lb, OPAL_PTRDIFF_TYPE extent, ompi_datatype_t** newType )
+ompi_datatype_create_resized( const ompi_datatype_t* oldType,
+                              OPAL_PTRDIFF_TYPE lb,
+                              OPAL_PTRDIFF_TYPE extent,
+                              ompi_datatype_t** newType )
 {
-    ompi_datatype_t * type;
-    ompi_datatype_duplicate( oldType, &type );
-    if ( NULL == type) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    opal_datatype_resize ( &type->super, lb, extent );
+    ompi_datatype_t* type = ompi_datatype_create( oldType->super.desc.used );
+
+    ompi_datatype_add( type, oldType, 1, lb, extent );
     *newType = type;
     return OMPI_SUCCESS;
 }
