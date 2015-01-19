@@ -12,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,14 +73,15 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
     mca_bml_base_btl_t *bml_btl;
     OPAL_PTRDIFF_TYPE lb, extent;
     opal_convertor_t convertor;
-    size_t size = 0;
+    size_t size;
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
 
     ompi_datatype_get_extent (datatype, &lb, &extent);
+    ompi_datatype_type_size (datatype, &size);
 
-    if (OPAL_UNLIKELY((extent * count) > 256 || !bml_btl->btl->btl_sendi)) {
+    if (OPAL_UNLIKELY((extent * count) > 256 || (size * count) > 256 || !bml_btl->btl->btl_sendi)) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
@@ -92,6 +95,8 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
                                                   (const struct opal_datatype_t *) datatype,
 						  count, buf, 0, &convertor);
         opal_convertor_get_packed_size (&convertor, &size);
+    } else {
+        size = 0;
     }
 
     match.hdr_common.hdr_flags = 0;
