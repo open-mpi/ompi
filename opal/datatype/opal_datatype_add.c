@@ -109,16 +109,15 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     OPAL_PTRDIFF_TYPE lb, ub, true_lb, true_ub, epsilon, old_true_ub;
 
     /**
-     *from MPI-3, page 84, lines 18-20: Most datatype constructors have
+     * From MPI-3, page 84, lines 18-20: Most datatype constructors have
      * replication count or block length arguments. Allowed values are
      * non-negative integers. If the value is zero, no elements are generated in
      * the type map and there is no effect on datatype bounds or extent.
      */
     if( 0 == count ) return OPAL_SUCCESS;
 
-    /* the extent should always be positive. So a negative
-     * value here have a special meaning ie. default extent as
-     * computed by ub - lb
+    /* the extent should always be positive. So a negative value here have a
+     * special meaning ie. default extent as computed by ub - lb
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
