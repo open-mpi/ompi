@@ -21,6 +21,9 @@ int32_t opal_datatype_resize( opal_datatype_t* type, OPAL_PTRDIFF_TYPE lb, OPAL_
     type->lb = lb;
     type->ub = lb + extent;
 
+    type->true_lb += lb;
+    type->true_ub += lb;
+
     type->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
     if( (extent == (OPAL_PTRDIFF_TYPE)type->size) &&
         (type->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
