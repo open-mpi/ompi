@@ -53,6 +53,17 @@ int orte_odls_alps_get_rdma_creds(void)
     alpsAppGni_t *rdmacred_buf;
     char *ptr;
     char env_buffer[1024];
+    static int already_got_creds = 0;
+
+    /*
+     * If we already put the GNI RDMA credentials into orte_launch_environ,
+     * no need to do anything.
+     * TODO: kind of ugly, need to implement an opal_getenv
+     */
+
+    if (1 == already_got_creds) {
+        return ORTE_SUCCESS;
+    }
 
     /*
      * get the Cray HSN RDMA credentials here and stuff them in to the
@@ -234,6 +245,7 @@ int orte_odls_alps_get_rdma_creds(void)
     } 
 
    fn_exit:
+    if (ORTE_SUCCESS == ret) already_got_creds = 1;
     return ret;
 }
 
