@@ -59,6 +59,15 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
 static int
 ompi_mtl_ofi_component_register(void)
 {
+
+    ompi_mtl_ofi.provider_name = NULL;
+    (void) mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                           "provider",
+                                           "Name of OFI provider to use",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_ofi.provider_name);
     return OMPI_SUCCESS;
 }
 
@@ -102,6 +111,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info hints = {0};
     struct fi_info *providers = NULL, *prov = NULL;
     struct fi_domain_attr domain_attr = {0};
+    struct fi_fabric_attr fabric_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
     fi_addr_t ep_name = 0;
@@ -134,7 +144,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
+    fabric_attr.prov_name        = ompi_mtl_ofi.provider_name;
     hints.domain_attr            = &domain_attr;
+    hints.fabric_attr            = &fabric_attr;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
