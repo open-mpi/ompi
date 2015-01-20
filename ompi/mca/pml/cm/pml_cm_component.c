@@ -157,6 +157,7 @@ mca_pml_cm_component_init(int* priority,
         return NULL;
     } else if((strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) ||
               (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "mxm") == 0) ||
+              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) ||
               (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "portals4") == 0)) {
         /*
          * If MTL is MXM or PSM then up our priority
