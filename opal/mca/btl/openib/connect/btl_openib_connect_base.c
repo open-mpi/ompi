@@ -46,11 +46,19 @@ static opal_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
+#if OPAL_HAVE_RDMACM
     &opal_btl_openib_connect_rdmacm,
+#else
+    &opal_btl_openib_connect_empty,
+#endif
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if UD CM is not enabled, use the "empty" CPC */
+#if OPAL_HAVE_UDCM
     &opal_btl_openib_connect_udcm,
+#else
+    &opal_btl_openib_connect_empty,
+#endif
 
     NULL
 };
