@@ -56,6 +56,10 @@ typedef struct mca_mtl_ofi_module_t {
 
     /** List of free messages for matched probe */
     opal_free_list_t free_messages;
+
+    /** Optional user-specified OFI provider name */
+    char *provider_name;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
