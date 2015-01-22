@@ -3,6 +3,8 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,10 +78,6 @@ ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module,
     int ret;
 
     assert(0 == frag->pending && peer->active_frag != frag);
-
-    /* we need to signal now that a frag is outgoing to ensure the count sent
-     * with the unlock message is correct */
-    ompi_osc_signal_outgoing (module, frag->target, 1);
 
     /* if eager sends are not active, can't send yet, so buffer and
        get out... */
