@@ -16,4 +16,4 @@ support this scenario, similar to how it is done for MCA components.
 :-)
 
 If it has an autogen.subdirs file, then it needs to be a subdirectory
-that is autogen-able (see the vt project for an example).
+that is autogen-able.
