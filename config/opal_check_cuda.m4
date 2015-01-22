@@ -93,6 +93,13 @@ AC_COMPILE_IFELSE(
         [CUDA_VERSION_60_OR_GREATER=1],
         [CUDA_VERSION_60_OR_GREATER=0])
 
+# If we have CUDA support, check to see if we have support for cuPointerGetAttributes
+# which was first introduced in CUDA 7.0.
+AS_IF([test "$opal_check_cuda_happy"="yes"],
+    AC_CHECK_DECL([cuPointerGetAttributes], [CUDA_GET_ATTRIBUTES=1], [CUDA_GET_ATTRIBUTES=0],
+        [#include <$opal_cuda_incdir/cuda.h>]),
+    [])
+
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$with_cuda)])
@@ -115,6 +122,10 @@ AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
 AM_CONDITIONAL([OPAL_cuda_sync_memops], [test "x$CUDA_SYNC_MEMOPS" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SYNC_MEMOPS],$CUDA_SYNC_MEMOPS,
                    [Whether we have CUDA CU_POINTER_ATTRIBUTE_SYNC_MEMOPS support available])
+
+AM_CONDITIONAL([OPAL_cuda_get_attributes], [test "x$CUDA_GET_ATTRIBUTES" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_GET_ATTRIBUTES],$CUDA_GET_ATTRIBUTES,
+                   [Whether we have CUDA cuPointerGetAttributes function available])
 
 # There is nothing specific we can check for to see if GPU Direct RDMA is available.
 # Therefore, we check to see whether we have CUDA 6.0 or later.
