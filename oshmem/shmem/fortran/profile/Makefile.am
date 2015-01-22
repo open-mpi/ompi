@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=1
 
 # This is guaranteed to be false if we're not building OSHMEM at all
@@ -120,7 +122,7 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 # Sym link in the sources from the real OSHMEM directory
 #
 $(nodist_liboshmem_fortran_pshmem_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '2-'` ; \
 		$(LN_S) $(top_srcdir)/oshmem/shmem/fortran/$$pname $@ ; \
 	fi
