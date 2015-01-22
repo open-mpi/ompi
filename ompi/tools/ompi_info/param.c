@@ -129,7 +129,6 @@ void ompi_info_do_config(bool want_all)
     char *ft_support;
     char *crdebug_support;
     char *topology_support;
-    char *vt_support;
 
     /* Do a little preprocessor trickery here to figure opal_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
@@ -264,7 +263,6 @@ void ompi_info_do_config(bool want_all)
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     topology_support = OPAL_HAVE_HWLOC ? "yes" : "no";
-    vt_support = OMPI_ENABLE_CONTRIB_vt ? "yes" : "no";
     
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) {
@@ -638,8 +636,6 @@ void ompi_info_do_config(bool want_all)
 
     opal_info_out("C/R Enabled Debugging", "options:crdebug_support", crdebug_support);
     free(crdebug_support);
-
-    opal_info_out("VampirTrace support", "options:vt", vt_support);
 
     opal_info_out_int("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name", 
                   MPI_MAX_PROCESSOR_NAME);

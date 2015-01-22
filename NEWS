@@ -59,7 +59,8 @@ Trunk (not on release branches yet)
   support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
-
+- Remove embedded VampirTrace.  It is in maintenance mode since 2013.
+  Please consider Score-P (score-p.org) as an external replacement.
 
 1.8.4
 -----

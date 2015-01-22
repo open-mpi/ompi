@@ -7,7 +7,7 @@
  *  - Delete version tests for older PGI versions (#include "omp.h" not acceptabe)
  *  - Indent ('#' should be in column 0)
  *
- * External packages (vt, romio) depend on top_build_dir/ompi/include, therefore
+ * External packages (i.e., romio) depend on top_build_dir/ompi/include, therefore
  * although this is not changed in the configure process, this has to be set as
  * a .in file...
  * ---------------------------------------------------------------------------

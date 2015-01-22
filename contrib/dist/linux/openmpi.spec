@@ -563,13 +563,11 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 
 # Runtime files.  This should generally be library files and some
 # executables (no man pages, no doc files, no header files).  Do *not*
-# include wrapper compilers.  Note that the VT files are variable; if
-# they're there, then take them (e.g., VT build may have been disabled
-# via a configure option).
+# include wrapper compilers.
 cat all.files | egrep '/lib/|/lib64/|/lib32/|/bin/|/etc/|/help-' > tmp.files | /bin/true
 # Snip out a bunch of executables (e.g., wrapper compilers, pkgconfig
 # files, .la and .a files)
-egrep -vi 'mpic|mpif|ortec|vtc|vtfort|f77|f90|pkgconfig|\.la$|\.a$' tmp.files > runtime.files | /bin/true
+egrep -vi 'mpic|mpif|ortec|f77|f90|pkgconfig|\.la$|\.a$' tmp.files > runtime.files | /bin/true
 rm -f tmp.files
 
 # Now take the runtime files out of all.files so that we don't get
@@ -758,6 +756,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Jan 20 2015 Bert Wesarg <bert.wesarg@tu-dresden.de>
+- Remove VampirTrace wrapper from package.
+
 * Mon Jul 07 2014 Jeff Squyres <jsquyres@cisco.com>
 - Several minor fixes from Oliver Lahaye: fix dates in changelog,
   added %{?dist} tag to the Release field, and added some Provides

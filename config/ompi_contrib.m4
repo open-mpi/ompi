@@ -46,7 +46,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     if test "$enable_contrib_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-contrib-no-build flag requires an explicit list
-*** of packages to not build.  For example, --enable-contrib-no-build=vt])
+*** of packages to not build.  For example, --enable-contrib-no-build=libompitrace])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"

@@ -37,7 +37,6 @@ fi
   host_alias=x86_64-cray-linux-gnu \
   --enable-ltdl-convenience --no-recursion" \
   --with-alps=yes \
-  --with-contrib-vt-flags="--with-platform=linux" \
 --prefix="$SW_INSTALL_ROOT/$VER" | tee build.log
 
 #gmake all install | tee -a build.log

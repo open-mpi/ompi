@@ -1,6 +1,6 @@
 with_memory_manager=no
 enable_mca_no_build=bml,btl,coll-hierarch,coll-sm,common-sm,mpool,pml-bfo,pml-csum,pml-dr,pml-ob1,osc-rdma,rcache,vprotocol
-enable_contrib_no_build=libnbc,vt
+enable_contrib_no_build=libnbc
 enable_heterogeneous=no
 enable_mem_debug=no
 enable_mem_profile=no
