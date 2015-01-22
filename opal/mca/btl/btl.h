@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -770,6 +771,11 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
  * the btl_put, btl_get, btl_atomic_cas, btl_atomic_op, and btl_atomic_fop
  * functions. Care should be taken to not hold an excessive number of registrations
  * as they may use limited system/NIC resources.
+ *
+ * Ownership of the memory pointed to by the returned (struct
+ * mca_btl_base_registration_handle_t*) is passed to the caller.  The
+ * BTL module cannot free or reuse the handle until it is returned via
+ * the mca_btl_base_module_deregister_mem_fn_t function.
  */
 typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_register_mem_fn_t)(
     struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
@@ -785,6 +791,11 @@ typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_registe
  * should be taken to not perform any RDMA or atomic operation on this memory region
  * after it is deregistered. It is erroneous to specify a memory handle associated with
  * a remote node.
+ *
+ * The handle passed in will be a value previously returned by the
+ * mca_btl_base_module_register_mem_fn_t function.  Ownership of the
+ * memory pointed to by handle passes to the BTL module; this function
+ * is now is allowed to free the memory, return it to a freelist, etc.
  */
 typedef int (*mca_btl_base_module_deregister_mem_fn_t)(
     struct mca_btl_base_module_t* btl, struct mca_btl_base_registration_handle_t *handle);
