@@ -18,7 +18,6 @@ enable_mpi_cxx_seek=no
 enable_cxx_exceptions=no
 enable_mpi_java=yes
 enable_io_romio=no
-enable_vt=no
 enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
 with_memory_manager=no
 with_tm=no
