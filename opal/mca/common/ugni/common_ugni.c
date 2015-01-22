@@ -190,7 +190,12 @@ static int opal_common_ugni_send_modex (int my_cdm_id)
         msg_offset += modex_size;
     }
 
-    OPAL_MODEX_SEND(rc, PMIX_ASYNC_RDY, PMIX_REMOTE,
+    /*
+     * need global for edge cases like MPI_Comm_spawn support with
+     * new ranks started on the same nodes as the spawnee ranks, etc.
+     */
+
+    OPAL_MODEX_SEND(rc, PMIX_ASYNC_RDY, PMIX_GLOBAL,
                     &opal_common_ugni_component,
                     modex_msg, total_msg_size);
 
