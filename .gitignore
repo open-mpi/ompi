@@ -206,7 +206,6 @@ ompi/contrib/vt/vt/vtlib/vt_fmpiwrap.gen.c
 ompi/contrib/vt/vt/vtlib/vt_mpireg.gen.c
 ompi/contrib/vt/vt/vtlib/vt_mpireg.gen.h
 ompi/contrib/vt/vt/vtlib/vt_mpiwrap.gen.c
-ompi/contrib/vt/wrappers/mpi*txt
 
 ompi/debuggers/*.in
 ompi/debuggers/dlopen_test
