@@ -83,7 +83,6 @@ $SRC_DIR/configure \
 	--with-platform=${SRC_DIR}/contrib/platform/${PLATFORM} \
 	--with-io-romio-flags="host_alias=${ID} build_alias=${JD} \
 		--enable-ltdl-convenience --no-recursion" \
-	--with-contrib-vt-flags="--with-platform=linux" \
 	--with-wrapper-cflags="${SCI_INC}" \
 	--with-wrapper-ldflags="-Bstatic ${SCI_LIB} ${BASE_LPATHS}" \
 	--with-wrapper-libs="-lsci_quadcore" \

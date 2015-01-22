@@ -15,7 +15,6 @@ enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
 enable_mpi_java=yes
 enable_memchecker=no
-enable_vt=no
 enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
 with_memory_manager=no
 with_devel_headers=yes
