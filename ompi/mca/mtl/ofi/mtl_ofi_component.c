@@ -276,9 +276,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /**
      * Bind the CQ and AV to the endpoint object.
      */
-    ret = fi_bind((fid_t)ompi_mtl_ofi.ep,
-                  (fid_t)ompi_mtl_ofi.cq,
-                  FI_SEND | FI_RECV);
+    ret = fi_ep_bind(ompi_mtl_ofi.ep,
+                     (fid_t)ompi_mtl_ofi.cq,
+                     FI_SEND | FI_RECV);
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_bind CQ-EP failed: %s\n",
@@ -286,9 +286,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    ret = fi_bind((fid_t)ompi_mtl_ofi.ep,
-                  (fid_t)ompi_mtl_ofi.av,
-                  0);
+    ret = fi_ep_bind(ompi_mtl_ofi.ep,
+                     (fid_t)ompi_mtl_ofi.av,
+                     0);
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_bind AV-EP failed: %s\n",
