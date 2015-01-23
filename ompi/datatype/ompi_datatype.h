@@ -205,9 +205,12 @@ ompi_datatype_create_resized( const ompi_datatype_t* oldType,
                               OPAL_PTRDIFF_TYPE extent,
                               ompi_datatype_t** newType )
 {
-    ompi_datatype_t* type = ompi_datatype_create( oldType->super.desc.used );
-
-    ompi_datatype_add( type, oldType, 1, lb, extent );
+    ompi_datatype_t * type;
+    ompi_datatype_duplicate( oldType, &type );
+    if ( NULL == type) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    opal_datatype_resize ( &type->super, lb, extent );
     *newType = type;
     return OMPI_SUCCESS;
 }
