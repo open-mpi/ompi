@@ -14,7 +14,7 @@
  * common cuda code is initialized.  This removes any dependency on <cuda.h>
  * in the opal cuda datatype code. */
 struct opal_common_cuda_function_table {
-    int (*gpu_is_gpu_buffer)(const void*);
+    int (*gpu_is_gpu_buffer)(const void*, opal_convertor_t*);
     int (*gpu_cu_memcpy_async)(void*, const void*, size_t, opal_convertor_t*);
     int (*gpu_cu_memcpy)(void*, const void*, size_t);
     int (*gpu_memmove)(void*, void*, size_t);

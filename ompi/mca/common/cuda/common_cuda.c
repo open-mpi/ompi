@@ -98,6 +98,9 @@ struct cudaFunctionTable {
     int (*cuEventSynchronize)(CUevent);
     int (*cuStreamSynchronize)(CUstream);
     int (*cuStreamDestroy)(CUstream);
+#if OPAL_CUDA_GET_ATTRIBUTES
+    int (*cuPointerGetAttributes)(unsigned int, CUpointer_attribute *, void **, CUdeviceptr);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -117,7 +120,7 @@ static CUstream htodStream;
 static CUstream memcpyStream;
 
 /* Functions called by opal layer - plugged into opal function table */
-static int mca_common_cuda_is_gpu_buffer(const void*);
+static int mca_common_cuda_is_gpu_buffer(const void*, opal_convertor_t*);
 static int mca_common_cuda_memmove(void*, void*, size_t);
 static int mca_common_cuda_cu_memcpy_async(void*, const void*, size_t, opal_convertor_t*);
 static int mca_common_cuda_cu_memcpy(void*, const void*, size_t);
@@ -503,6 +506,9 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuEventSynchronize);
     OMPI_CUDA_DLSYM(libcuda_handle, cuStreamSynchronize);
     OMPI_CUDA_DLSYM(libcuda_handle, cuStreamDestroy);
+#if OPAL_CUDA_GET_ATTRIBUTES
+    OMPI_CUDA_DLSYM(libcuda_handle, cuPointerGetAttributes);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
     return 0;
 }
 
@@ -1626,13 +1632,44 @@ static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
 /* Routines that get plugged into the opal datatype code */
-static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
+static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t *convertor)
 {
     int res;
-    CUmemorytype memType;
+    CUmemorytype memType = 0;
     CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
     CUcontext ctx = NULL;
+#if OPAL_CUDA_GET_ATTRIBUTES
+    uint32_t isManaged = 0;
+    /* With CUDA 7.0, we can get multiple attributes with a single call */
+    CUpointer_attribute attributes[3] = {CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
+                                         CU_POINTER_ATTRIBUTE_CONTEXT,
+                                         CU_POINTER_ATTRIBUTE_IS_MANAGED};
+    void *attrdata[] = {(void *)&memType, (void *)&ctx, (void *)&isManaged};
 
+    res = cuFunc.cuPointerGetAttributes(3, attributes, attrdata, dbuf);
+
+    /* Mark unified memory buffers with a flag.  This will allow all unified
+     * memory to be forced through host buffers.  Note that this memory can
+     * be either host or device so we need to set this flag prior to that check. */
+    if (1 == isManaged) {
+        if (NULL != convertor) {
+            convertor->flags |= CONVERTOR_CUDA_UNIFIED;
+        }
+    }
+    if (res != CUDA_SUCCESS) {
+        /* If we cannot determine it is device pointer,
+         * just assume it is not. */
+        return 0;
+    } else if (memType == CU_MEMORYTYPE_HOST) {
+        /* Host memory, nothing to do here */
+        return 0;
+    } else if (memType == 0) {
+        /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
+        return 0;
+    }
+    /* Must be a device pointer */
+    assert(memType == CU_MEMORYTYPE_DEVICE);
+#else /* OPAL_CUDA_GET_ATTRIBUTES */
     res = cuFunc.cuPointerGetAttribute(&memType,
                                        CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (res != CUDA_SUCCESS) {
@@ -1655,6 +1692,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
      * and set the current context to that.  It is rare that we will not
      * have a context. */
     res = cuFunc.cuCtxGetCurrent(&ctx);
+#endif /* OPAL_CUDA_GET_ATTRIBUTES */
     if (OPAL_UNLIKELY(NULL == ctx)) {
         if (CUDA_SUCCESS == res) {
             res = cuFunc.cuPointerGetAttribute(&ctx,
