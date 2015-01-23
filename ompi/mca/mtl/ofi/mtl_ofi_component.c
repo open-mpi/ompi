@@ -102,7 +102,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info hints = {0};
     struct fi_info *providers = NULL, *prov = NULL;
     struct fi_domain_attr domain_attr = {0};
-    struct fi_tx_attr tx_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
     fi_addr_t ep_name = 0;
@@ -116,9 +115,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.  The bits specified
-     *           with buffered receive, cancel, and remote complete
-     *           implements MPI semantics. Tagged is used to support tag
-     *           matching.
+     *           with buffered receive and cancel implement MPI semantics.
+     *           Tagged is used to support tag matching.
      *           We expect to register all memory up front for use with this
      *           endpoint, so the MTL requires dynamic memory regions
      */
@@ -126,7 +124,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints.ep_type   = FI_EP_RDM;          /* Reliable datagram         */
     hints.caps      = FI_TAGGED;          /* Tag matching interface    */
     hints.caps     |= FI_BUFFERED_RECV;   /* Buffered receives         */
-    hints.caps     |= FI_REMOTE_COMPLETE; /* Remote completion         */
     hints.caps     |= FI_CANCEL;          /* Support cancel            */
     hints.caps     |= FI_DYNAMIC_MR;      /* Global dynamic mem region */
 
@@ -134,14 +131,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Refine filter for additional capabilities
      * threading:  Disable locking
      * control_progress:  enable async progress
-     * op_flags:  Specifies default operation to set on all communication.
-     *            In this case, we want remote completion to be set by default.
      */
     domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
-    tx_attr.op_flags             = FI_REMOTE_COMPLETE;
     hints.domain_attr            = &domain_attr;
-    hints.tx_attr                = &tx_attr;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
