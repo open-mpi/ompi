@@ -446,6 +446,7 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct usdf_pep *pep;
 	struct usdf_fabric *fp;
 	int ret;
+	int optval;
 
 	if (info->ep_type != FI_EP_MSG) {
 		return -FI_ENODEV;
@@ -484,6 +485,16 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
                 ret = -errno;
                 goto fail;
         }
+
+	/* set SO_REUSEADDR to prevent annoying "Address already in use" errors
+	 * on successive runs of programs listening on a well known port */
+	optval = 1;
+	ret = setsockopt(pep->pep_sock, SOL_SOCKET, SO_REUSEADDR, &optval,
+				sizeof(optval));
+	if (ret == -1) {
+		ret = -errno;
+		goto fail;
+	}
 
 	ret = bind(pep->pep_sock, (struct sockaddr *)info->src_addr,
 			info->src_addrlen);

@@ -1,4 +1,4 @@
-.TH fi_msg 3 "2014\-12\-08" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_msg 3 "2015\-01\-23" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_msg - Message data transfer operations
@@ -42,6 +42,10 @@ ssize_t\ fi_inject(struct\ fid_ep\ *ep,\ void\ *buf,\ size_t\ len,
 
 ssize_t\ fi_senddata(struct\ fid_ep\ *ep,\ void\ *buf,\ size_t\ len,
 \ \ \ \ void\ *desc,\ uint64_t\ data,\ fi_addr_t\ dest_addr,\ void\ *context);
+
+ssize_t\ fi_rx_size_left(struct\ fid_ep\ *ep);
+
+ssize_t\ fi_tx_size_left(struct\ fid_ep\ *ep);
 \f[]
 .fi
 .SH ARGUMENTS
@@ -96,6 +100,10 @@ Similar to the send operations, receive operations operate
 asynchronously.
 Users should not touch the posted data buffer(s) until the receive
 operation has completed.
+.PP
+The "size_left" functions -- fi_rx_size_left, fi_tx_size_left -- return
+a lower bound on the number of receive/send operations that may be
+posted to the given endpoint without returning -FI_EAGAIN.
 .PP
 Completed message operations are reported to the user through one or
 more event collectors associated with the endpoint.
@@ -173,6 +181,26 @@ The fi_recvmsg call supports posting buffers over both connected and
 unconnected endpoints, with the ability to control the receive operation
 per call through the use of flags.
 The fi_recvmsg function takes a struct fi_msg as input.
+.SS fi_rx_size_left
+.PP
+The fi_rx_size_left call returns a lower bound on the number of receive
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted receive
+operations (e.g., number of iov entries, which receive function is
+called, etc.)
+, it may be possible to post more receive operations than originally
+indicated by fi_rx_size_left.
+.SS fi_tx_size_left
+.PP
+The fi_tx_size_left call returns a lower bound on the number of send
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted send
+operations (e.g., number of iov entries, which send function is called,
+etc.)
+, it may be possible to post more send operations than originally
+indicated by fi_tx_size_left.
 .SH FLAGS
 .PP
 The fi_recvmsg and fi_sendmsg calls allow the user to specify flags

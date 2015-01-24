@@ -349,6 +349,14 @@ ssize_t fi_no_msg_injectdata(struct fid_ep *ep, const void *buf, size_t len,
 {
 	return -FI_ENOSYS;
 }
+ssize_t fi_no_msg_rx_size_left(struct fid_ep *ep)
+{
+	return -FI_ENOSYS;
+}
+ssize_t fi_no_msg_tx_size_left(struct fid_ep *ep)
+{
+	return -FI_ENOSYS;
+}
 
 /*
  * struct fi_ops_wait

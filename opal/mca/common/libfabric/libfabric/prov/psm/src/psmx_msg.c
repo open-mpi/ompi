@@ -359,5 +359,7 @@ struct fi_ops_msg psmx_msg_ops = {
 	.inject = psmx_inject,
 	.senddata = fi_no_msg_senddata,
 	.injectdata = fi_no_msg_injectdata,
+	.rx_size_left = fi_no_msg_rx_size_left,
+	.tx_size_left = fi_no_msg_tx_size_left,
 };
 

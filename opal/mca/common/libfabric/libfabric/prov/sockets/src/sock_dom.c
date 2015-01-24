@@ -133,10 +133,9 @@ static int sock_dom_close(struct fid *fid)
 		return -FI_EBUSY;
 	}
 
-	if (dom->u_cmap.size)
-		sock_conn_map_destroy(&dom->u_cmap);
 	if (dom->r_cmap.size)
 		sock_conn_map_destroy(&dom->r_cmap);
+	fastlock_destroy(&dom->r_cmap.lock);
 
 	sock_pe_finalize(dom->pe);
 	fastlock_destroy(&dom->lock);
@@ -267,7 +266,8 @@ static int sock_regattr(struct fid_domain *domain, const struct fi_mr_attr *attr
 	_mr->access = attr->access;
 	_mr->flags = flags;
 	_mr->offset = (flags & FI_MR_OFFSET) ?
-		      attr->offset : (uintptr_t) attr->mr_iov[0].iov_base;
+		(uintptr_t) attr->mr_iov[0].iov_base + attr->offset : 
+		(uintptr_t) attr->mr_iov[0].iov_base;
 
 	fastlock_acquire(&dom->lock);
 	key = (dom->info.mode & FI_PROV_MR_ATTR) ?
@@ -456,8 +456,7 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 	}
 
 	sock_domain->r_cmap.domain = sock_domain;
-	sock_domain->u_cmap.domain = sock_domain;
-
+	fastlock_init(&sock_domain->r_cmap.lock);
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_domain->signal_fds) < 0)
 		goto err;
 

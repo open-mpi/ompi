@@ -191,12 +191,14 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 
 	case FI_CQ_FORMAT_MSG:
 		event->cqe.msg.op_context = op_context;
+		event->cqe.msg.flags = 0;
 		event->cqe.msg.len = psm_status->nbytes;
 		break;
 
 	case FI_CQ_FORMAT_DATA:
 		event->cqe.data.op_context = op_context;
 		event->cqe.data.buf = buf;
+		event->cqe.data.flags = 0;
 		event->cqe.data.len = psm_status->nbytes;
 		if (data)
 			event->cqe.data.data = data;
@@ -205,6 +207,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	case FI_CQ_FORMAT_TAGGED:
 		event->cqe.tagged.op_context = op_context;
 		event->cqe.tagged.buf = buf;
+		event->cqe.tagged.flags = 0;
 		event->cqe.tagged.len = psm_status->nbytes;
 		event->cqe.tagged.tag = psm_status->msg_tag;
 		if (data)

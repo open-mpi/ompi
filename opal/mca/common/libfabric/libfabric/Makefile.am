@@ -371,6 +371,7 @@ dummy_man_pages = \
         man/fi_recvv.3 \
         man/fi_reject.3 \
         man/fi_rx_addr.3 \
+        man/fi_rx_size_left.3 \
         man/fi_send.3 \
         man/fi_senddata.3 \
         man/fi_sendmsg.3 \
@@ -389,6 +390,7 @@ dummy_man_pages = \
         man/fi_tsenddata.3 \
         man/fi_tsendmsg.3 \
         man/fi_tsendv.3 \
+        man/fi_tx_size_left.3 \
         man/fi_wait.3 \
         man/fi_wait_open.3 \
         man/fi_write.3 \

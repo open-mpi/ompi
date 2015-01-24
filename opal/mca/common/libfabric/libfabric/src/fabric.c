@@ -136,10 +136,6 @@ static void fi_ini(void)
 	if (init)
 		goto unlock;
 
-	fi_register_provider(VERBS_INIT);
-	fi_register_provider(PSM_INIT);
-	fi_register_provider(USNIC_INIT);
-
 #ifdef HAVE_LIBDL
 	struct dirent **liblist;
 	int n;
@@ -182,8 +178,14 @@ static void fi_ini(void)
 	free(liblist);
 done:
 #endif
+
+	fi_register_provider(PSM_INIT);
+	fi_register_provider(USNIC_INIT);
+
+	fi_register_provider(VERBS_INIT);
 	fi_register_provider(SOCKETS_INIT);
 	init = 1;
+
 unlock:
 	pthread_mutex_unlock(&ini_lock);
 }
@@ -205,50 +207,6 @@ static struct fi_prov *fi_getprov(const char *prov_name)
 
 	return NULL;
 }
-
-__attribute__((visibility ("default")))
-int fi_getinfo_(uint32_t version, const char *node, const char *service,
-	       uint64_t flags, struct fi_info *hints, struct fi_info **info)
-{
-	struct fi_prov *prov;
-	struct fi_info *tail, *cur;
-	int ret = -FI_ENOSYS;
-
-	if (!init)
-		fi_ini();
-
-	*info = tail = NULL;
-	for (prov = prov_head; prov; prov = prov->next) {
-		if (!prov->provider->getinfo)
-			continue;
-
-		if (hints->fabric_attr && hints->fabric_attr->prov_name &&
-		    strcmp(prov->provider->name, hints->fabric_attr->prov_name))
-			continue;
-
-		ret = prov->provider->getinfo(version, node, service, flags,
-					      hints, &cur);
-		if (ret) {
-			if (ret == -FI_ENODATA)
-				continue;
-			break;
-		}
-
-		if (!*info)
-			*info = cur;
-		else
-			tail->next = cur;
-		for (tail = cur; tail->next; tail = tail->next) {
-			tail->fabric_attr->prov_name = strdup(prov->provider->name);
-			tail->fabric_attr->prov_version = prov->provider->version;
-		}
-		tail->fabric_attr->prov_name = strdup(prov->provider->name);
-		tail->fabric_attr->prov_version = prov->provider->version;
-	}
-
-	return *info ? 0 : ret;
-}
-default_symver(fi_getinfo_, fi_getinfo);
 
 __attribute__((visibility ("default")))
 void fi_freeinfo_(struct fi_info *info)
@@ -276,6 +234,55 @@ void fi_freeinfo_(struct fi_info *info)
 	}
 }
 default_symver(fi_freeinfo_, fi_freeinfo);
+
+__attribute__((visibility ("default")))
+int fi_getinfo_(uint32_t version, const char *node, const char *service,
+	       uint64_t flags, struct fi_info *hints, struct fi_info **info)
+{
+	struct fi_prov *prov;
+	struct fi_info *tail, *cur;
+	int ret = -FI_ENOSYS;
+
+	if (!init)
+		fi_ini();
+
+	*info = tail = NULL;
+	for (prov = prov_head; prov; prov = prov->next) {
+		if (!prov->provider->getinfo)
+			continue;
+
+		if (hints->fabric_attr && hints->fabric_attr->prov_name &&
+		    strcmp(prov->provider->name, hints->fabric_attr->prov_name))
+			continue;
+
+		ret = prov->provider->getinfo(version, node, service, flags,
+					      hints, &cur);
+		if (ret) {
+			if (ret == -FI_ENODATA) {
+				continue;
+			} else {
+				/* a provider has an error, clean up and bail */
+				fi_freeinfo_(*info);
+				*info = NULL;
+				return ret;
+			}
+		}
+
+		if (!*info)
+			*info = cur;
+		else
+			tail->next = cur;
+		for (tail = cur; tail->next; tail = tail->next) {
+			tail->fabric_attr->prov_name = strdup(prov->provider->name);
+			tail->fabric_attr->prov_version = prov->provider->version;
+		}
+		tail->fabric_attr->prov_name = strdup(prov->provider->name);
+		tail->fabric_attr->prov_version = prov->provider->version;
+	}
+
+	return *info ? 0 : ret;
+}
+default_symver(fi_getinfo_, fi_getinfo);
 
 __attribute__((visibility ("default")))
 struct fi_info *fi_dupinfo_(const struct fi_info *info)

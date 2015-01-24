@@ -438,6 +438,10 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
+
+		if (op == FI_ATOMIC_READ)
+			len = fi_datatype_size(datatype) * count;
+
 		assert(len == fi_datatype_size(datatype) * count);
 
 		mr = psmx_mr_hash_get(key);
@@ -994,7 +998,7 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 		return 0;
 	}
 
-	if (!buf)
+	if (!buf && op != FI_ATOMIC_READ)
 		return -EINVAL;
 
 	if (datatype < 0 || datatype >= FI_DATATYPE_LAST)
@@ -1062,7 +1066,7 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 	args[4].u32w1 = op;
 	err = psm_am_request_short((psm_epaddr_t) dest_addr,
 				PSMX_AM_ATOMIC_HANDLER, args, 5,
-				(void *)buf, len, am_flags, NULL, NULL);
+				(void *)buf, (buf?len:0), am_flags, NULL, NULL);
 
 	return 0;
 }

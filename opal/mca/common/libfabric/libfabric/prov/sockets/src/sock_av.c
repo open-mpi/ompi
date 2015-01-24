@@ -60,9 +60,9 @@ fi_addr_t sock_av_lookup_key(struct sock_av *av, int key)
 		
 		idx = av_addr - &av->table[0];
 		if (!av->key[idx]) {
-			av->key[idx] = sock_conn_map_match_or_connect(
-				av->domain, av->cmap,
-				(struct sockaddr_in*)&av_addr->addr, 1);
+			av->key[idx] = sock_conn_map_lookup(
+				av->cmap,
+				(struct sockaddr_in*)&av_addr->addr);
 			if (!av->key[idx]) {
 				continue;
 			}
@@ -123,7 +123,7 @@ struct sock_conn *sock_av_lookup_addr(struct sock_av *av,
 	if (!av->key[idx]) {
 		av->key[idx] = sock_conn_map_match_or_connect(
 			av->domain, av->cmap, 
-			(struct sockaddr_in*)&av_addr->addr, 0);
+			(struct sockaddr_in*)&av_addr->addr);
 		if (!av->key[idx]) {
 			SOCK_LOG_ERROR("failed to match or connect to addr %lu\n", addr);
 			errno = EINVAL;
