@@ -1868,36 +1868,36 @@ static int create_ep(opal_btl_usnic_module_t* module,
     }
 
     /* attach CQ to EP */
-    rc = fi_bind(&channel->ep->fid, &channel->cq->fid, FI_SEND);
+    rc = fi_ep_bind(channel->ep, &channel->cq->fid, FI_SEND);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
                        module->fabric_info->fabric_attr->name,
-                       "fi_bind() SCQ to EP failed", __FILE__, __LINE__,
+                       "fi_ep_bind() SCQ to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = fi_bind(&channel->ep->fid, &channel->cq->fid, FI_RECV);
+    rc = fi_ep_bind(channel->ep, &channel->cq->fid, FI_RECV);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
                        module->fabric_info->fabric_attr->name,
-                       "fi_bind() RCQ to EP failed", __FILE__, __LINE__,
+                       "fi_ep_bind() RCQ to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = fi_bind(&channel->ep->fid, &module->av->fid, FI_RECV);
+    rc = fi_ep_bind(channel->ep, &module->av->fid, FI_RECV);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
                        module->fabric_info->fabric_attr->name,
-                       "fi_bind() AV to EP failed", __FILE__, __LINE__,
+                       "fi_ep_bind() AV to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -2359,12 +2359,12 @@ static int init_channels(opal_btl_usnic_module_t *module)
         goto destroy;
     }
 
-    rc = fi_bind(&module->av->fid, &module->av_eq->fid, 0);
+    rc = fi_av_bind(module->av, &module->av_eq->fid, 0);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
 
-    rc = fi_bind(&module->domain->fid, &module->dom_eq->fid, 0);
+    rc = fi_domain_bind(module->domain, &module->dom_eq->fid, 0);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
