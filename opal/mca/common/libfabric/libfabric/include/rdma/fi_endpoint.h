@@ -99,6 +99,8 @@ struct fi_ops_msg {
 			uint64_t data, fi_addr_t dest_addr, void *context);
 	ssize_t	(*injectdata)(struct fid_ep *ep, const void *buf, size_t len,
 			uint64_t data, fi_addr_t dest_addr);
+	ssize_t (*rx_size_left)(struct fid_ep *ep);
+	ssize_t (*tx_size_left)(struct fid_ep *ep);
 };
 
 struct fi_ops_cm;
@@ -169,6 +171,11 @@ fi_scalable_ep(struct fid_domain *domain, struct fi_info *info,
 static inline int fi_ep_bind(struct fid_ep *ep, struct fid *bfid, uint64_t flags)
 {
 	return ep->fid.ops->bind(&ep->fid, bfid, flags);
+}
+
+static inline int fi_pep_bind(struct fid_pep *pep, struct fid *bfid, uint64_t flags)
+{
+	return pep->fid.ops->bind(&pep->fid, bfid, flags);
 }
 
 static inline int fi_scalable_ep_bind(struct fid_sep *sep, struct fid *bfid, uint64_t flags)
@@ -289,6 +296,18 @@ fi_injectdata(struct fid_ep *ep, const void *buf, size_t len,
 		uint64_t data, fi_addr_t dest_addr)
 {
 	return ep->msg->injectdata(ep, buf, len, data, dest_addr);
+}
+
+static inline ssize_t
+fi_rx_size_left(struct fid_ep *ep)
+{
+	return ep->msg->rx_size_left(ep);
+}
+
+static inline ssize_t
+fi_tx_size_left(struct fid_ep *ep)
+{
+	return ep->msg->tx_size_left(ep);
 }
 
 #else // FABRIC_DIRECT

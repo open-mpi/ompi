@@ -136,6 +136,7 @@ struct sock_conn_map {
         int used;
         int size;
 	struct sock_domain *domain;
+	fastlock_t lock;
 };
 
 struct sock_domain {
@@ -151,7 +152,6 @@ struct sock_domain {
 	enum fi_progress progress_mode;
 	struct index_map mr_idm;
 	struct sock_pe *pe;
-	struct sock_conn_map u_cmap;
 	struct sock_conn_map r_cmap;
 	pthread_t listen_thread;
 	int listening;
@@ -848,9 +848,14 @@ int sock_av_compare_addr(struct sock_av *av,
 
 struct sock_conn *sock_conn_map_lookup_key(struct sock_conn_map *conn_map, 
 					   uint16_t key);
+uint16_t sock_conn_map_connect(struct sock_domain *dom,
+			       struct sock_conn_map *map, 
+			       struct sockaddr_in *addr);
+uint16_t sock_conn_map_lookup(struct sock_conn_map *map,
+			      struct sockaddr_in *addr);
 uint16_t sock_conn_map_match_or_connect(struct sock_domain *dom,
 					struct sock_conn_map *map, 
-					struct sockaddr_in *addr, int match_only);
+					struct sockaddr_in *addr);
 int sock_conn_listen(struct sock_domain *domain);
 int sock_conn_map_clear_pe_entry(struct sock_conn *conn_entry, uint16_t key);
 void sock_conn_map_destroy(struct sock_conn_map *cmap);

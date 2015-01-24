@@ -317,6 +317,8 @@ struct fi_ops_msg sock_ep_msg_ops = {
 	.sendmsg = sock_ep_sendmsg,
 	.inject = sock_ep_inject,
 	.senddata = sock_ep_senddata,
+	.rx_size_left = fi_no_msg_rx_size_left,
+	.tx_size_left = fi_no_msg_tx_size_left,
 };
 
 static ssize_t sock_ep_trecvmsg(struct fid_ep *ep, 

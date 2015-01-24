@@ -527,6 +527,11 @@ struct psmx_fid_ep {
 	size_t			min_multi_recv;
 };
 
+struct psmx_fid_stx {
+	struct fid_stx		stx;
+	struct psmx_fid_domain	*domain;
+};
+
 struct psmx_fid_mr {
 	struct fid_mr		mr;
 	struct psmx_fid_domain	*domain;
@@ -577,6 +582,8 @@ int	psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
 		       struct fid_wait **waitset);
 int	psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 		     struct fid_ep **ep, void *context);
+int	psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
+		     struct fid_stx **stx, void *context);
 int	psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		     struct fid_cq **cq, void *context);
 int	psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,

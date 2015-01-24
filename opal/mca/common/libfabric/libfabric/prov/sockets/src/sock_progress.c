@@ -552,23 +552,26 @@ static int sock_pe_process_rx_write(struct sock_pe *pe, struct sock_rx_ctx *rx_c
 	rem = pe_entry->msg_hdr.msg_len - len;
 	for (i = 0; rem > 0 && i < pe_entry->msg_hdr.dest_iov_len; i++) {
 
-		mr = sock_mr_verify_key(rx_ctx->domain, 
-					pe_entry->pe.rx.rx_iov[i].iov.key,
-					(void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
-					pe_entry->pe.rx.rx_iov[i].iov.len,
-					FI_REMOTE_WRITE);
-		if (!mr) {
-			SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %lu\n",
-				       (void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
-				       pe_entry->pe.rx.rx_iov[i].iov.len,
-				       pe_entry->pe.rx.rx_iov[i].iov.key);
-			sock_pe_send_response(pe, pe_entry, 0, SOCK_OP_WRITE_ERROR);
-			break;
+		if ((len - pe_entry->done_len) == pe_entry->pe.rx.rx_iov[i].iov.addr) {
+			mr = sock_mr_verify_key(rx_ctx->domain, 
+						pe_entry->pe.rx.rx_iov[i].iov.key,
+						(void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
+						pe_entry->pe.rx.rx_iov[i].iov.len,
+						FI_REMOTE_WRITE);
+			if (!mr) {
+				SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %lu\n",
+					       (void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
+					       pe_entry->pe.rx.rx_iov[i].iov.len,
+					       pe_entry->pe.rx.rx_iov[i].iov.key);
+				sock_pe_send_response(pe, pe_entry, 0, 
+						      SOCK_OP_WRITE_ERROR);
+				break;
+			}
+			
+			if (mr->flags & FI_MR_OFFSET)
+				pe_entry->pe.rx.rx_iov[i].iov.addr += mr->offset;
 		}
-		
-		if (mr->flags & FI_MR_OFFSET)
-			pe_entry->pe.rx.rx_iov[i].iov.addr += mr->offset;
-
+			
 		if (sock_pe_recv_field(pe_entry, 
 					(void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
 					pe_entry->pe.rx.rx_iov[i].iov.len, len))

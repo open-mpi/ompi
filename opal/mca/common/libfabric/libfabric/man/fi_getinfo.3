@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-01\-07" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-01\-20" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -11,7 +11,7 @@ fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
 int\ fi_getinfo(int\ version,\ const\ char\ *node,\ const\ char\ *service,
 \ \ \ \ \ \ \ \ uint64_t\ flags,\ struct\ fi_info\ *hints,\ struct\ fi_info\ **info);
 
-int\ fi_freeinfo(struct\ fi_info\ *info);
+void\ fi_freeinfo(struct\ fi_info\ *info);
 
 struct\ fi_info\ *fi_dupinfo(const\ struct\ fi_info\ *info);
 \f[]
@@ -435,10 +435,10 @@ Such received messages will indicate a transfer size of 0 bytes.
 .PP
 \f[I]FI_PROV_MR_ATTR\f[] : The provider assigns one or more attributes
 associated with a memory registration request.
-The provider will set this mode if it returns the the memory
-registration keys that applications must use, or if it requires that the
-MR offset associated with a memory region be the same as the virtual
-address of the memory.
+The provider will set this mode if it returns the memory registration
+keys that applications must use, or if it requires that the MR offset
+associated with a memory region be the same as the virtual address of
+the memory.
 .PP
 Applications that support provider MR attributes will need to exchange
 MR parameters with remote peers for RMA and atomic operations.
@@ -479,7 +479,7 @@ these operations.
 .PP
 A provider may support one or more of the following addressing formats.
 In some cases, a selected addressing format may need to be translated or
-mapped into into an address which is native to the fabric.
+mapped into an address which is native to the fabric.
 See \f[C]fi_av\f[](3).
 .PP
 \f[I]FI_FORMAT_UNSPEC\f[] : FI_FORMAT_UNSPEC indicates that a provider

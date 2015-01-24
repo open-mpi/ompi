@@ -315,6 +315,44 @@ usdf_dgram_inject(struct fid_ep *fep, const void *buf, size_t len,
 	return 0;
 }
 
+ssize_t usdf_dgram_rx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+
+	if (fep == NULL)
+		return -FI_EINVAL;
+
+	ep = ep_ftou(fep);
+
+	if (ep->e.dg.ep_qp == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	/* NOTE-SIZE-LEFT: divide by constant right now, rather than keeping
+	 * track of the rx_attr->iov_limit value we gave to the user.  This
+	 * sometimes under-reports the number of RX ops that could be posted,
+	 * but it avoids touching a cache line that we don't otherwise need.
+	 *
+	 * sendv/recvv could potentially post iov_limit+1 descriptors
+	 */
+	return usd_get_recv_credits(ep->e.dg.ep_qp) / (USDF_DGRAM_DFLT_SGE + 1);
+}
+
+ssize_t usdf_dgram_tx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+
+	if (fep == NULL)
+		return -FI_EINVAL;
+
+	ep = ep_ftou(fep);
+
+	if (ep->e.dg.ep_qp == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	/* see NOTE-SIZE-LEFT */
+	return usd_get_send_credits(ep->e.dg.ep_qp) / (USDF_DGRAM_DFLT_SGE + 1);
+}
+
 /*
  * Versions that rely on user to reserve space for header at start of buffer
  */
@@ -480,6 +518,42 @@ usdf_dgram_prefix_sendmsg(struct fid_ep *fep, const struct fi_msg *msg, uint64_t
 {
 	return usdf_dgram_prefix_sendv(fep, msg->msg_iov, msg->desc, msg->iov_count,
 				(fi_addr_t)msg->addr, msg->context);
+}
+
+ssize_t usdf_dgram_prefix_rx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+
+	if (fep == NULL)
+		return -FI_EINVAL;
+
+	ep = ep_ftou(fep);
+
+	if (ep->e.dg.ep_qp == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	/* prefix_recvv can post up to iov_limit descriptors
+	 *
+	 * also see NOTE-SIZE-LEFT */
+	return (usd_get_recv_credits(ep->e.dg.ep_qp) / USDF_DGRAM_DFLT_SGE);
+}
+
+ssize_t usdf_dgram_prefix_tx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+
+	if (fep == NULL)
+		return -FI_EINVAL;
+
+	ep = ep_ftou(fep);
+
+	if (ep->e.dg.ep_qp == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	/* prefix_sendvcan post up to iov_limit descriptors
+	 *
+	 * also see NOTE-SIZE-LEFT */
+	return (usd_get_send_credits(ep->e.dg.ep_qp) / USDF_DGRAM_DFLT_SGE);
 }
 
 

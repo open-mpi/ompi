@@ -952,6 +952,8 @@ int sock_stx_ctx(struct fid_domain *domain,
 		return -FI_ENOMEM;
 
 	tx_ctx->domain = dom;
+	tx_ctx->fid.ctx.fid.fclass = FI_CLASS_STX_CTX;
+	
 	tx_ctx->fid.stx.fid.ops = &sock_ctx_ops;
 	tx_ctx->fid.stx.ops = &sock_ep_ops;
 	atomic_inc(&dom->ref);
@@ -1188,7 +1190,7 @@ struct sock_conn *sock_ep_lookup_conn(struct sock_ep *ep)
 {
 	if (!ep->key) {
 		ep->key = sock_conn_map_match_or_connect(
-			ep->domain, &ep->domain->r_cmap, ep->dest_addr, 0);
+			ep->domain, &ep->domain->r_cmap, ep->dest_addr);
 		if (!ep->key) {
 			SOCK_LOG_ERROR("failed to match or connect to addr\n");
 			errno = EINVAL;

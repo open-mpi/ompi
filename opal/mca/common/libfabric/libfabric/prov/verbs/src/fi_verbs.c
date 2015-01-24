@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel Corporation, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel Corporation, Inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -72,7 +72,7 @@
 
 #define VERBS_CAPS (FI_MSG | FI_RMA | FI_ATOMICS | FI_READ | FI_WRITE | \
 		FI_SEND | FI_RECV | FI_REMOTE_READ | FI_REMOTE_WRITE | \
-		FI_REMOTE_CQ_DATA | FI_REMOTE_COMPLETE)
+		FI_REMOTE_CQ_DATA | FI_REMOTE_SIGNAL)
 #define VERBS_MODE (FI_LOCAL_MR | FI_PROV_MR_ATTR)
 #define VERBS_MSG_ORDER (FI_ORDER_RAR | FI_ORDER_RAW | FI_ORDER_RAS | \
 		FI_ORDER_WAW | FI_ORDER_WAS | FI_ORDER_SAW | FI_ORDER_SAS )
@@ -127,6 +127,7 @@ struct fi_ibv_msg_ep {
 	uint32_t		inline_size;
 };
 
+static const char *local_node = "localhost";
 static char def_send_wr[16] = "384";
 static char def_recv_wr[16] = "384";
 static char def_send_sge[16] = "4";
@@ -371,7 +372,10 @@ static int fi_ibv_check_info(struct fi_info *info)
 		return -FI_ENODATA;
 	}
 
-	if (!(info->caps & VERBS_CAPS) && info->caps)
+	if (info->caps && (info->caps & ~VERBS_CAPS))
+		return -FI_ENODATA;
+
+	if ((info->mode & VERBS_MODE) != VERBS_MODE)
 		return -FI_ENODATA;
 
 	if (info->fabric_attr) {
@@ -433,9 +437,6 @@ static int fi_ibv_check_dev_limits(struct fi_domain_attr *domain_attr,
 	return 0;
 }
 
-/*
- * TODO: this is not the full set of checks which are needed
- */
 static int fi_ibv_fi_to_rai(struct fi_info *fi, uint64_t flags, struct rdma_addrinfo *rai)
 {
 	memset(rai, 0, sizeof *rai);
@@ -443,30 +444,19 @@ static int fi_ibv_fi_to_rai(struct fi_info *fi, uint64_t flags, struct rdma_addr
 		rai->ai_flags = RAI_PASSIVE;
 	if (flags & FI_NUMERICHOST)
 		rai->ai_flags |= RAI_NUMERICHOST;
-//	if (fi->flags & FI_FAMILY)
-//		rai->ai_flags |= RAI_FAMILY;
 
-//	rai->ai_family = fi->sa_family;
-	if (fi->ep_type == FI_EP_MSG || fi->caps & FI_RMA || (fi->ep_attr &&
-	    (fi->ep_attr->protocol == FI_PROTO_RDMA_CM_IB_RC ||
-	     fi->ep_attr->protocol == FI_PROTO_IWARP))) {
-		rai->ai_qp_type = IBV_QPT_RC;
-		rai->ai_port_space = RDMA_PS_TCP;
-	} else if (fi->ep_type == FI_EP_DGRAM || (fi->ep_attr &&
-		   fi->ep_attr->protocol == FI_PROTO_IB_UD)) {
-		rai->ai_qp_type = IBV_QPT_UD;
-		rai->ai_port_space = RDMA_PS_UDP;
-	}
+	rai->ai_qp_type = IBV_QPT_RC;
+	rai->ai_port_space = RDMA_PS_TCP;
 
-	if (fi->src_addrlen) {
+	if (fi && fi->src_addrlen) {
 		if (!(rai->ai_src_addr = malloc(fi->src_addrlen)))
-			return ENOMEM;
+			return -FI_ENOMEM;
 		memcpy(rai->ai_src_addr, fi->src_addr, fi->src_addrlen);
 		rai->ai_src_len = fi->src_addrlen;
 	}
-	if (fi->dest_addrlen) {
+	if (fi && fi->dest_addrlen) {
 		if (!(rai->ai_dst_addr = malloc(fi->dest_addrlen)))
-			return ENOMEM;
+			return -FI_ENOMEM;
 		memcpy(rai->ai_dst_addr, fi->dest_addr, fi->dest_addrlen);
 		rai->ai_dst_len = fi->dest_addrlen;
 	}
@@ -477,27 +467,20 @@ static int fi_ibv_fi_to_rai(struct fi_info *fi, uint64_t flags, struct rdma_addr
 static int fi_ibv_rai_to_fi(struct rdma_addrinfo *rai, struct fi_info *hints,
 			    struct fi_info *fi)
 {
- //	fi->sa_family = rai->ai_family;
-	if (rai->ai_qp_type == IBV_QPT_RC || rai->ai_port_space == RDMA_PS_TCP) {
-		fi->caps |= FI_MSG | FI_RMA;
-		fi->ep_type = FI_EP_MSG;
-	} else if (rai->ai_qp_type == IBV_QPT_UD ||
-		   rai->ai_port_space == RDMA_PS_UDP) {
-		fi->ep_attr->protocol = FI_PROTO_IB_UD;
-		fi->caps |= FI_MSG;
-		fi->ep_type = FI_EP_DGRAM;
-	}
+	fi->caps = VERBS_CAPS;
+	fi->mode = VERBS_MODE;
+	fi->ep_type = FI_EP_MSG;
 
  	if (rai->ai_src_len) {
  		if (!(fi->src_addr = malloc(rai->ai_src_len)))
- 			return ENOMEM;
+ 			return -FI_ENOMEM;
  		memcpy(fi->src_addr, rai->ai_src_addr, rai->ai_src_len);
  		fi->src_addrlen = rai->ai_src_len;
  		fi->addr_format = FI_SOCKADDR;
  	}
  	if (rai->ai_dst_len) {
  		if (!(fi->dest_addr = malloc(rai->ai_dst_len)))
- 			return ENOMEM;
+ 			return -FI_ENOMEM;
  		memcpy(fi->dest_addr, rai->ai_dst_addr, rai->ai_dst_len);
  		fi->dest_addrlen = rai->ai_dst_len;
  		fi->addr_format = FI_SOCKADDR;
@@ -603,17 +586,19 @@ fi_ibv_getepinfo(const char *node, const char *service,
 		ret = fi_ibv_check_info(hints);
 		if (ret)
 			return ret;
-
-		ret = fi_ibv_fi_to_rai(hints, flags, &rai_hints);
-		if (ret)
-			return ret;
-
-		ret = rdma_getaddrinfo((char *) node, (char *) service,
-					&rai_hints, &rai);
-	} else {
-		ret = rdma_getaddrinfo((char *) node, (char *) service,
-					NULL, &rai);
 	}
+
+	ret = fi_ibv_fi_to_rai(hints, flags, &rai_hints);
+	if (ret)
+		return ret;
+
+	if (!node && !rai_hints.ai_src_addr && !rai_hints.ai_dst_addr) {
+		node = local_node;
+		rai_hints.ai_flags |= RAI_PASSIVE;
+	}
+
+	ret = rdma_getaddrinfo((char *) node, (char *) service,
+				&rai_hints, &rai);
 	if (ret)
 		return (errno == ENODEV) ? -FI_ENODATA : -errno;
 
@@ -923,6 +908,8 @@ static struct fi_ops_msg fi_ibv_msg_ep_msg_ops = {
 	.inject = fi_no_msg_inject,
 	.senddata = fi_ibv_msg_ep_senddata,
 	.injectdata = fi_no_msg_injectdata,
+	.rx_size_left = fi_no_msg_rx_size_left,
+	.tx_size_left = fi_no_msg_tx_size_left,
 };
 
 static ssize_t
@@ -2498,6 +2485,9 @@ static int fi_ibv_open_device_by_name(struct fi_ibv_domain *domain, const char *
 {
 	struct ibv_context **dev_list;
 	int i, ret = -FI_ENODEV;
+
+	if (!name)
+		return -FI_EINVAL;
 
 	dev_list = rdma_get_devices(NULL);
 	if (!dev_list)

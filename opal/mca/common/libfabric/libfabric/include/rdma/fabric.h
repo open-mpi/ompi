@@ -376,11 +376,6 @@ static inline int fi_close(struct fid *fid)
 	return fid->ops->close(fid);
 }
 
-static inline int fi_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
-{
-	return fid->ops->bind(fid, bfid, flags);
-}
-
 struct fi_alias {
 	struct fid 		**fid;
 	uint64_t		flags;
