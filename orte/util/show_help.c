@@ -666,6 +666,8 @@ int orte_show_help_norender(const char *filename, const char *topic,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
+                /* okay, that didn't work, just process locally error, just ignore return  */
+                show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
             } else {
                 rc = ORTE_SUCCESS;
             }
@@ -732,6 +734,8 @@ int orte_show_help_suppress(const char *filename, const char *topic)
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
+                /* okay, that didn't work, just process locally error, just ignore return  */
+                show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
             }
             am_inside = false;
         }
