@@ -105,9 +105,9 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
      * Map the EP names to fi_addrs.
      */
     count = fi_av_insert(ompi_mtl_ofi.av, ep_names, nprocs, fi_addrs, 0, NULL);
-    if (nprocs != count) {
+    if ((count < 0) || (nprocs != (size_t)count)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_av_insert failed: %s\n",
+                            "%s:%d: fi_av_insert failed: %d\n",
                             __FILE__, __LINE__, count);
         ret = OMPI_ERROR;
         goto bail;
