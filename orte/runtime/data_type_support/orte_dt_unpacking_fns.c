@@ -83,7 +83,12 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* unpack the personality */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &jobs[i]->personality, &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* unpack the num apps */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
