@@ -190,7 +190,7 @@ static int native_init(void)
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                             "%s pmix:native NULL uri",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-        if (!opal_pmix_base_allow_delayed_server) {
+        if (opal_pmix_base_allow_delayed_server) {
             /* not ready yet, so decrement our init_cntr so we can come thru
              * here again */
             --init_cntr;
