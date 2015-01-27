@@ -37,13 +37,23 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 
 static int opal_pmix_base_frame_close(void)
 {
-    return mca_base_framework_components_close(&opal_pmix_base_framework, NULL);
+    int rc;
+    
+    rc = mca_base_framework_components_close(&opal_pmix_base_framework, NULL);
+    /* reset the opal_pmix function pointers to NULL */
+    memset(&opal_pmix, 0, sizeof(opal_pmix));
+    return rc;
 }
 
 static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
 {
+    int rc;
+    
     /* Open up all available components */
-    return mca_base_framework_components_open(&opal_pmix_base_framework, flags);
+    rc = mca_base_framework_components_open(&opal_pmix_base_framework, flags);
+    /* ensure the function pointers are NULL */
+    memset(&opal_pmix, 0, sizeof(opal_pmix));
+    return rc;
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
