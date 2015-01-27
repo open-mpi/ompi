@@ -120,17 +120,13 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
     /* open and setup pmix */
     if (NULL == opal_pmix.initialized) {
         if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            *priority = -1;
-            *module = NULL;
-            return ret;
+            /* if PMIx is not available, then we are indeed a singleton */
+            goto single;
         }
         if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            *priority = -1;
-            *module = NULL;
+            /* if PMIx is not available, then we are indeed a singleton */
             (void) mca_base_framework_close(&opal_pmix_base_framework);
-            return ret;
+            goto single;
         }
     }
     if (opal_pmix.initialized()) {
@@ -141,6 +137,7 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
         return ORTE_ERROR;
     }
 
+  single:
     /* okay, we could still be an application process,
      * but launched in "standalone" mode - i.e., directly
      * launched by an environment instead of via mpirun.
