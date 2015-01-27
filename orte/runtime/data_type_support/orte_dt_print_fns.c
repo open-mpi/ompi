@@ -186,8 +186,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
-             ORTE_JOBID_PRINT(src->jobid),
+    asprintf(&tmp, "\n%sData for job: %s\tPersonality: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+             ORTE_JOBID_PRINT(src->jobid), src->personality,
              (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_RECOVERABLE)) ? "ENABLED" : "DISABLED",
              (orte_get_attribute(&src->attributes, ORTE_JOB_RECOVER_DEFINED, NULL, OPAL_BOOL)) ? "DEFINED" : "DEFAULT",
              pfx2,

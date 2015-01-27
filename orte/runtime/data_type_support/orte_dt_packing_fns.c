@@ -80,7 +80,11 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* pack the personality */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &jobs[i]->personality, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* pack the number of apps */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(jobs[i]->num_apps)), 1, ORTE_APP_IDX))) {
