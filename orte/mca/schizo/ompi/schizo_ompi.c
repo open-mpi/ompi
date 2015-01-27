@@ -29,658 +29,604 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#include <fcntl.h>
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #include <ctype.h>
 
+#include "opal/util/opal_environ.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"
-#include "opal/util/error.h"
-#include "opal/util/output.h"
-#include "opal/opal_socket_errno.h"
-#include "opal/util/if.h"
-#include "opal/util/net.h"
-#include "opal/util/argv.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/mca/sec/sec.h"
+#include "opal/mca/shmem/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
+#include "orte/mca/ess/base/base.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/parse_options.h"
+#include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "orte/mca/oob/tcp/oob_tcp.h"
-#include "orte/mca/oob/tcp/oob_tcp_component.h"
-#include "orte/mca/oob/tcp/oob_tcp_peer.h"
-#include "orte/mca/oob/tcp/oob_tcp_common.h"
-#include "orte/mca/oob/tcp/oob_tcp_connection.h"
-#include "orte/mca/oob/tcp/oob_tcp_ping.h"
+#include "orte/mca/schizo/schizo.h"
 
-static void tcp_init(void);
-static void tcp_fini(void);
-static void accept_connection(const int accepted_fd,
-                              const struct sockaddr *addr);
-static void set_peer(const orte_process_name_t* name,
-                     const uint16_t af_family,
-                     const char *net, const char *ports);
-static void ping(const orte_process_name_t *proc);
-static void send_nb(orte_rml_send_t *msg);
-static void resend(struct mca_oob_tcp_msg_error_t *mop);
-static void ft_event(int state);
+static int parse_cli(char *personality,
+                     int argc, int start, char **argv);
+static int parse_env(char *personality,
+                     char *path,
+                     opal_cmd_line_t *cmd_line,
+                     char *server,
+                     char **srcenv,
+                     char ***dstenv);
+static int setup_fork(orte_job_t *jdata,
+                      orte_app_context_t *context);
+static int setup_child(orte_job_t *jobdat,
+                       orte_proc_t *child,
+                       orte_app_context_t *app);
 
-mca_oob_tcp_module_t mca_oob_tcp_module = {
-    {
-        tcp_init,
-        tcp_fini,
-        accept_connection,
-        set_peer,
-        ping,
-        send_nb,
-        resend,
-        ft_event
-    }
+orte_schizo_base_module_t orte_schizo_ompi_module = {
+    parse_cli,
+    parse_env,
+    setup_fork,
+    setup_child
 };
 
-/*
- * Local utility functions
- */
-static void recv_handler(int sd, short flags, void* user);
-static void* progress_thread_engine(opal_object_t *obj)
+static int parse_cli(char *personality,
+                     int argc, int start, char **argv)
 {
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s TCP OOB PROGRESS THREAD RUNNING",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    while (mca_oob_tcp_module.ev_active) {
-        opal_event_loop(mca_oob_tcp_module.ev_base, OPAL_EVLOOP_ONCE);
-    }
-    return OPAL_THREAD_CANCELLED;
-}
-
-
-/*
- * Initialize global variables used w/in this module.
- */
-static void tcp_init(void)
-{
-    /* setup the module's state variables */
-    OBJ_CONSTRUCT(&mca_oob_tcp_module.peers, opal_hash_table_t);
-    opal_hash_table_init(&mca_oob_tcp_module.peers, 32);
-    mca_oob_tcp_module.ev_active = false;
-
-    if (orte_oob_base.use_module_threads) {
-        /* if we are to use independent progress threads at
-         * the module level, start it now
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s STARTING TCP PROGRESS THREAD",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        mca_oob_tcp_module.ev_base = opal_event_base_create();
-        /* construct the thread object */
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.progress_thread, opal_thread_t);
-        /* fork off a thread to progress it */
-        mca_oob_tcp_module.progress_thread.t_run = progress_thread_engine;
-        mca_oob_tcp_module.ev_active = true;
-        if (OPAL_SUCCESS != opal_thread_start(&mca_oob_tcp_module.progress_thread)) {
-            opal_output(0, "%s progress thread failed to start",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    int i, j, k;
+    bool ignore;
+    char *no_dups[] = {
+        "grpcomm",
+        "odls",
+        "rml",
+        "routed",
+        NULL
+    };
+    
+    for (i = 0; i < (argc-start); ++i) {
+        if (0 == strcmp("-mca",  argv[i]) ||
+            0 == strcmp("--mca", argv[i]) ) {
+            /* ignore this one */
+            if (0 == strcmp(argv[i+1], "mca_base_env_list")) {
+                i += 2;
+                continue;
+            }
+            /* It would be nice to avoid increasing the length
+             * of the orted cmd line by removing any non-ORTE
+             * params. However, this raises a problem since
+             * there could be OPAL directives that we really
+             * -do- want the orted to see - it's only the OMPI
+             * related directives we could ignore. This becomes
+             * a very complicated procedure, however, since
+             * the OMPI mca params are not cleanly separated - so
+             * filtering them out is nearly impossible.
+             *
+             * see if this is already present so we at least can
+             * avoid growing the cmd line with duplicates
+             */
+            ignore = false;
+            if (NULL != orted_cmd_line) {
+                for (j=0; NULL != orted_cmd_line[j]; j++) {
+                    if (0 == strcmp(argv[i+1], orted_cmd_line[j])) {
+                        /* already here - if the value is the same,
+                         * we can quitely ignore the fact that they
+                         * provide it more than once. However, some
+                         * frameworks are known to have problems if the
+                         * value is different. We don't have a good way
+                         * to know this, but we at least make a crude
+                         * attempt here to protect ourselves.
+                         */
+                        if (0 == strcmp(argv[i+2], orted_cmd_line[j+1])) {
+                            /* values are the same */
+                            ignore = true;
+                            break;
+                        } else {
+                            /* values are different - see if this is a problem */
+                            for (k=0; NULL != no_dups[k]; k++) {
+                                if (0 == strcmp(no_dups[k], argv[i+1])) {
+                                    /* print help message
+                                     * and abort as we cannot know which one is correct
+                                     */
+                                    orte_show_help("help-orterun.txt", "orterun:conflicting-params",
+                                                   true, orte_basename, argv[i+1],
+                                                   argv[i+2], orted_cmd_line[j+1]);
+                                    return ORTE_ERR_BAD_PARAM;
+                                }
+                            }
+                            /* this passed muster - just ignore it */
+                            ignore = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!ignore) {
+                opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+            }
+            i += 2;
         }
     }
+    return ORTE_SUCCESS;
 }
 
-/*
- * Module cleanup.
- */
-static void tcp_fini(void)
+static int parse_env(char *personality,
+                     char *path,
+                     opal_cmd_line_t *cmd_line,
+                     char *ompi_server,
+                     char **srcenv,
+                     char ***dstenv)
 {
-    uint64_t ui64;
-    char *nptr;
-    mca_oob_tcp_peer_t *peer;
-
-    /* cleanup all peers */
-    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                             (void**)&peer, (void**)&nptr)) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s RELEASING PEER OBJ %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-        if (NULL != peer) {
-            OBJ_RELEASE(peer);
+    int i, j;
+    char *param;
+    char *value;
+    char *env_set_flag;
+    char **vars;
+    
+    for (i = 0; NULL != srcenv[i]; ++i) {
+        if (0 == strncmp("OMPI_", srcenv[i], 5)) {
+            /* check for duplicate in app->env - this
+             * would have been placed there by the
+             * cmd line processor. By convention, we
+             * always let the cmd line override the
+             * environment
+             */
+            param = strdup(srcenv[i]);
+            value = strchr(param, '=');
+            *value = '\0';
+            value++;
+            opal_setenv(param, value, false, dstenv);
+            free(param);
         }
-        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                                   (void**)&peer, nptr, (void**)&nptr)) {
-            opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                "%s RELEASING PEER OBJ %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-            if (NULL != peer) {
-                OBJ_RELEASE(peer);
+    }
+    
+    /* add the ompi-server, if provided */
+    if (NULL != ompi_server) {
+        opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, dstenv);
+    }
+
+    /* Did the user request to export any environment variables on the cmd line? */
+    env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
+    if (opal_cmd_line_is_taken(cmd_line, "x")) {
+        if (NULL != env_set_flag) {
+            orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
+            return ORTE_ERR_FATAL;
+        }
+        j = opal_cmd_line_get_ninsts(cmd_line, "x");
+        for (i = 0; i < j; ++i) {
+            param = opal_cmd_line_get_param(cmd_line, "x", i, 0);
+
+            if (NULL != (value = strchr(param, '='))) {
+                /* terminate the name of the param */
+                *value = '\0';
+                /* step over the equals */
+                value++;
+                /* overwrite any prior entry */
+                opal_setenv(param, value, true, dstenv);
+                /* save it for any comm_spawn'd apps */
+                opal_setenv(param, value, true, &orte_forwarded_envars);
+            } else {
+                value = getenv(param);
+                if (NULL != value) {
+                    /* overwrite any prior entry */
+                    opal_setenv(param, value, true, dstenv);
+                    /* save it for any comm_spawn'd apps */
+                    opal_setenv(param, value, true, &orte_forwarded_envars);
+                } else {
+                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
+                }
             }
         }
-    }
-    OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
-
-    if (mca_oob_tcp_module.ev_active) {
-        /* if we used an independent progress thread at
-         * the module level, stop it now
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s STOPPING TCP PROGRESS THREAD",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        /* stop the progress thread */
-        mca_oob_tcp_module.ev_active = false;
-        /* break the event loop */
-        opal_event_base_loopexit(mca_oob_tcp_module.ev_base);
-        /* wait for thread to exit */
-        opal_thread_join(&mca_oob_tcp_module.progress_thread, NULL);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.progress_thread);
-        /* release the event base */
-        opal_event_base_free(mca_oob_tcp_module.ev_base);
-    }
-}
-
-/* Called by mca_oob_tcp_accept() and connection_handler() on
- * a socket that has been accepted.  This call finishes processing the
- * socket, including setting socket options and registering for the
- * OOB-level connection handshake.  Used in both the threaded and
- * event listen modes.
- */
-static void accept_connection(const int accepted_fd,
-                              const struct sockaddr *addr)
-{
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s accept_connection: %s:%d\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        opal_net_get_hostname(addr),
-                        opal_net_get_port(addr));
-
-   /* setup socket options */
-    orte_oob_tcp_set_socket_options(accepted_fd);
-
-    /* use a one-time event to wait for receipt of peer's
-     *  process ident message to complete this connection
-     */
-    ORTE_ACTIVATE_TCP_ACCEPT_STATE(accepted_fd, addr, recv_handler);
-}
-
-static int parse_uri(const uint16_t af_family,
-                     const char* host,
-                     const char *port,
-                     struct sockaddr* inaddr)
-{
-    struct sockaddr_in *in;
-#if OPAL_ENABLE_IPV6
-    struct addrinfo hints, *res;
-    int ret;
-#endif
-
-    if (AF_INET == af_family) {
-        memset(inaddr, 0, sizeof(struct sockaddr_in));
-        in = (struct sockaddr_in*) inaddr;
-        in->sin_family = AF_INET;
-        in->sin_addr.s_addr = inet_addr(host);
-        if (in->sin_addr.s_addr == INADDR_NONE) {
-            return ORTE_ERR_BAD_PARAM;
+    } else if (NULL != env_set_flag) {
+        /* set necessary env variables for external usage */
+        vars = NULL;
+        if (OPAL_SUCCESS == mca_base_var_process_env_list(&vars) &&
+            NULL != vars) {
+            for (i=0; NULL != vars[i]; i++) {
+                value = strchr(vars[i], '=');
+                /* terminate the name of the param */
+                *value = '\0';
+                /* step over the equals */
+                value++;
+                /* overwrite any prior entry */
+                opal_setenv(vars[i], value, true, dstenv);
+                /* save it for any comm_spawn'd apps */
+                opal_setenv(vars[i], value, true, &orte_forwarded_envars);
+            }
         }
-        ((struct sockaddr_in*) inaddr)->sin_port = htons(atoi(port));
+        opal_argv_free(vars);
     }
-#if OPAL_ENABLE_IPV6
-    else if (AF_INET6 == af_family) {
-        size_t len;
-        memset(inaddr, 0, sizeof(struct sockaddr_in6));
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = af_family;
-        hints.ai_socktype = SOCK_STREAM;
-        ret = getaddrinfo(host, NULL, &hints, &res);
-        
-        if (ret) {
-            opal_output (0, "oob_tcp_parse_uri: Could not resolve %s. [Error: %s]\n",
-                         host, gai_strerror (ret));
-            return ORTE_ERR_BAD_PARAM;
-        }
-        len = (res->ai_addrlen < sizeof(struct sockaddr_in6)) ? res->ai_addrlen : sizeof(struct sockaddr_in6);
-        memcpy(inaddr, res->ai_addr, len);
-        freeaddrinfo(res);
+
+    /* If the user specified --path, store it in the user's app
+       environment via the OMPI_exec_path variable. */
+    if (NULL != path) {
+        asprintf(&value, "OMPI_exec_path=%s", path);
+        opal_argv_append_nosize(dstenv, value);
+        /* save it for any comm_spawn'd apps */
+        opal_argv_append_nosize(&orte_forwarded_envars, value);
+        free(value);
     }
-#endif
-    else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-        
 
     return ORTE_SUCCESS;
 }
 
-/*
- * Record listening address for this peer - the connection
- * is created on first-send
- */
-static void process_set_peer(int fd, short args, void *cbdata)
+static int setup_fork(orte_job_t *jdata,
+                      orte_app_context_t *app)
 {
-    mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
-    struct sockaddr inaddr;
-    mca_oob_tcp_peer_t *peer;
-    int rc=ORTE_SUCCESS;
-    uint64_t *ui64 = (uint64_t*)(&pop->peer);
-    mca_oob_tcp_addr_t *maddr;
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:processing set_peer cmd",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    if (AF_INET != pop->af_family) {
-            opal_output_verbose(20, orte_oob_base_framework.framework_output,
-	                        "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        goto cleanup;
+    int i;
+    char *param;
+    bool oversubscribed;
+    orte_node_t *node;
+    char **envcpy, **nps, **firstranks;
+    char *npstring, *firstrankstring;
+    char *num_app_ctx;
+    
+    /* see if the mapper thinks we are oversubscribed */
+    oversubscribed = false;
+    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_OVERSUBSCRIBED)) {
+        oversubscribed = true;
     }
 
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&pop->peer))) {
-        peer = OBJ_NEW(mca_oob_tcp_peer_t);
-        peer->name.jobid = pop->peer.jobid;
-        peer->name.vpid = pop->peer.vpid;
-        opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                            "%s SET_PEER ADDING PEER %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&pop->peer));
-        if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), peer)) {
-            OBJ_RELEASE(peer);
-            return;
+    /* setup base environment: copy the current environ and merge
+       in the app context environ */
+    if (NULL != app->env) {
+        /* manually free original context->env to avoid a memory leak */
+        char **tmp = app->env;
+        envcpy = opal_environ_merge(orte_launch_environ, app->env);
+        if (NULL != tmp) {
+            opal_argv_free(tmp);
         }
+    } else {
+        envcpy = opal_argv_copy(orte_launch_environ);
     }
-
-    if ((rc = parse_uri(pop->af_family, pop->net, pop->port, (struct sockaddr*) &inaddr)) != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                        "%s set_peer: peer %s is listening on net %s port %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&pop->peer),
-                        (NULL == pop->net) ? "NULL" : pop->net,
-                        (NULL == pop->port) ? "NULL" : pop->port);
-    maddr = OBJ_NEW(mca_oob_tcp_addr_t);
-    memcpy(&maddr->addr, &inaddr, sizeof(inaddr));
-    opal_list_append(&peer->addrs, &maddr->super);
-
- cleanup:
-    OBJ_RELEASE(pop);
-}
-
-static void set_peer(const orte_process_name_t *name,
-                     const uint16_t af_family,
-                     const char *net, const char *ports)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:tcp set addr for peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(name));
-
-    /* have to push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_PEER_OP(name, af_family, net, ports, process_set_peer);
-}
-
-
-/* API functions */
-static void process_ping(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_ping_t *op = (mca_oob_tcp_ping_t*)cbdata;
-    mca_oob_tcp_peer_t *peer;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing ping to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->peer));
-
-    /* do we know this peer? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&op->peer))) {
-        /* push this back to the component so it can try
-         * another module within this transport. If no
-         * module can be found, the component can push back
-         * to the framework so another component can try
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] hop %s unknown",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        ORTE_ACTIVATE_TCP_MSG_ERROR(NULL, NULL, &op->peer, mca_oob_tcp_component_hop_unknown);
-        goto cleanup;
-    }
-
-    /* if we are already connected, there is nothing to do */
-    if (MCA_OOB_TCP_CONNECTED == peer->state) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] already connected to peer %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        goto cleanup;
-    }
-
-    /* if we are already connecting, there is nothing to do */
-    if (MCA_OOB_TCP_CONNECTING == peer->state &&
-        MCA_OOB_TCP_CONNECT_ACK == peer->state) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] already connecting to peer %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        goto cleanup;
-    }
-
-    /* attempt the connection */
-    peer->state = MCA_OOB_TCP_CONNECTING;
-    ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-
- cleanup:
-    OBJ_RELEASE(op);
-}
-
-static void ping(const orte_process_name_t *proc)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] pinging peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(proc));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_PING(proc, process_ping);
-}
-
-static void process_send(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_msg_op_t *op = (mca_oob_tcp_msg_op_t*)cbdata;
-    mca_oob_tcp_peer_t *peer;
-    orte_process_name_t hop;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag);
-
-    /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(&op->msg->dst);
-    /* do we know this hop? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&hop))) {
-        /* push this back to the component so it can try
-         * another module within this transport. If no
-         * module can be found, the component can push back
-         * to the framework so another component can try
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] hop %s unknown",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&hop));
-        ORTE_ACTIVATE_TCP_NO_ROUTE(op->msg, &hop, mca_oob_tcp_component_no_route);
-        goto cleanup;
-    }
-
-    /* add the msg to the hop's send queue */
-    if (MCA_OOB_TCP_CONNECTED == peer->state) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:send_nb: already connected to %s - queueing for send",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        MCA_OOB_TCP_QUEUE_SEND(op->msg, peer);
-        goto cleanup;
-    }
-
-    /* add the message to the queue for sending after the
-     * connection is formed
-     */
-    MCA_OOB_TCP_QUEUE_PENDING(op->msg, peer);
-
-    if (MCA_OOB_TCP_CONNECTING != peer->state &&
-        MCA_OOB_TCP_CONNECT_ACK != peer->state) {
-        /* we have to initiate the connection - again, we do not
-         * want to block while the connection is created.
-         * So throw us into an event that will create
-         * the connection via a mini-state-machine :-)
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:send_nb: initiating connection to %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        peer->state = MCA_OOB_TCP_CONNECTING;
-        ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-    }
-
- cleanup:
-    OBJ_RELEASE(op);
-}
-
-static void send_nb(orte_rml_send_t *msg)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s tcp:send_nb to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_POST_SEND(msg, process_send);
-}
-
-static void process_resend(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_msg_error_t *op = (mca_oob_tcp_msg_error_t*)cbdata;
-    mca_oob_tcp_peer_t *peer;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:tcp processing resend to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&op->hop));
-
-    /* do we know this peer? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&op->hop))) {
-        /* push this back to the component so it can try
-         * another module within this transport. If no
-         * module can be found, the component can push back
-         * to the framework so another component can try
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] peer %s unknown",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->hop));
-        ORTE_ACTIVATE_TCP_MSG_ERROR(op->snd, NULL, &op->hop, mca_oob_tcp_component_hop_unknown);
-        goto cleanup;
-    }
-
-    /* add the msg to this peer's send queue */
-    if (MCA_OOB_TCP_CONNECTED == peer->state) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:resend: already connected to %s - queueing for send",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        MCA_OOB_TCP_QUEUE_MSG(peer, op->snd, true);
-        goto cleanup;
-    }
-
-    if (MCA_OOB_TCP_CONNECTING != peer->state &&
-        MCA_OOB_TCP_CONNECT_ACK != peer->state) {
-        /* add the message to the queue for sending after the
-         * connection is formed
-         */
-        MCA_OOB_TCP_QUEUE_MSG(peer, op->snd, false);
-        /* we have to initiate the connection - again, we do not
-         * want to block while the connection is created.
-         * So throw us into an event that will create
-         * the connection via a mini-state-machine :-)
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:send_nb: initiating connection to %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        peer->state = MCA_OOB_TCP_CONNECTING;
-        ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-    }
-
- cleanup:
-    OBJ_RELEASE(op);
-}
-
-static void resend(struct mca_oob_tcp_msg_error_t *mp)
-{
-    mca_oob_tcp_msg_error_t *mop = (mca_oob_tcp_msg_error_t*)mp;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s tcp:resend to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&mop->hop));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_POST_RESEND(mop, process_resend);
-}
-
-/*
- * Event callback when there is data available on the registered
- * socket to recv.  This is called for the listen sockets to accept an
- * incoming connection, on new sockets trying to complete the software
- * connection process, and for probes.  Data on an established
- * connection is handled elsewhere. 
- */
-static void recv_handler(int sd, short flg, void *cbdata)
-{
-    mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
-    int flags;
-    uint64_t *ui64;
-    mca_oob_tcp_hdr_t hdr;
-    mca_oob_tcp_peer_t *peer;
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:recv:handler called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* get the handshake */
-    if (ORTE_SUCCESS != mca_oob_tcp_peer_recv_connect_ack(NULL, sd, &hdr)) {
-        goto cleanup;
-    }
-
-    /* finish processing ident */
-    if (MCA_OOB_TCP_IDENT == hdr.type) {
-        if (NULL == (peer = mca_oob_tcp_peer_lookup(&hdr.origin))) {
-            /* should never happen */
-            mca_oob_tcp_peer_close(peer);
-            goto cleanup;
-        }
-        /* set socket up to be non-blocking */
-        if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-            opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_GETFL) failed: %s (%d)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-        } else {
-            flags |= O_NONBLOCK;
-            if (fcntl(sd, F_SETFL, flags) < 0) {
-                opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_SETFL) failed: %s (%d)",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-            }
+    app->env = envcpy;
+    
+    /* special case handling for --prefix: this is somewhat icky,
+       but at least some users do this.  :-\ It is possible that
+       when using --prefix, the user will also "-x PATH" and/or
+       "-x LD_LIBRARY_PATH", which would therefore clobber the
+       work that was done in the prior pls to ensure that we have
+       the prefix at the beginning of the PATH and
+       LD_LIBRARY_PATH.  So examine the context->env and see if we
+       find PATH or LD_LIBRARY_PATH.  If found, that means the
+       prior work was clobbered, and we need to re-prefix those
+       variables. */
+    param = NULL;
+    orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING);
+    for (i = 0; NULL != param && NULL != app->env && NULL != app->env[i]; ++i) {
+        char *newenv;
+        
+        /* Reset PATH */
+        if (0 == strncmp("PATH=", app->env[i], 5)) {
+            asprintf(&newenv, "%s/bin:%s", param, app->env[i] + 5);
+            opal_setenv("PATH", newenv, true, &app->env);
+            free(newenv);
         }
         
-        /* is the peer instance willing to accept this connection */
-        peer->sd = sd;
-        if (mca_oob_tcp_peer_accept(peer) == false) {
-            if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
-                opal_output(0, "%s-%s mca_oob_tcp_recv_connect: "
-                            "rejected connection from %s connection state %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer->name)),
-                            ORTE_NAME_PRINT(&(hdr.origin)),
-                            peer->state);
+        /* Reset LD_LIBRARY_PATH */
+        else if (0 == strncmp("LD_LIBRARY_PATH=", app->env[i], 16)) {
+            asprintf(&newenv, "%s/lib:%s", param, app->env[i] + 16);
+            opal_setenv("LD_LIBRARY_PATH", newenv, true, &app->env);
+            free(newenv);
+        }
+    }
+    if (NULL != param) {
+        free(param);
+    }
+
+    /* pass my contact info to the local proc so we can talk */
+    opal_setenv("OMPI_MCA_orte_local_daemon_uri", orte_process_info.my_daemon_uri, true, &app->env);
+    
+    /* pass the hnp's contact info to the local proc in case it
+     * needs it
+     */
+    if (NULL != orte_process_info.my_hnp_uri) {
+        opal_setenv("OMPI_MCA_orte_hnp_uri", orte_process_info.my_hnp_uri, true, &app->env);
+    }
+    
+    /* setup yield schedule - do not override any user-supplied directive! */
+    if (oversubscribed) {
+        opal_setenv("OMPI_MCA_mpi_yield_when_idle", "1", false, &app->env);
+    } else {
+        opal_setenv("OMPI_MCA_mpi_yield_when_idle", "0", false, &app->env);
+    }
+    
+    /* set the app_context number into the environment */
+    asprintf(&param, "%ld", (long)app->idx);
+    opal_setenv("OMPI_MCA_orte_app_num", param, true, &app->env);
+    free(param);
+    
+    /* although the total_slots_alloc is the universe size, users
+     * would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here. Also required by the ompi_attributes code!
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    asprintf(&param, "%ld", (long)jdata->total_slots_alloc);
+    opal_setenv("OMPI_UNIVERSE_SIZE", param, true, &app->env);
+    free(param);
+    
+    /* pass the number of nodes involved in this job */
+    asprintf(&param, "%ld", (long)(jdata->map->num_nodes));
+    opal_setenv("OMPI_MCA_orte_num_nodes", param, true, &app->env);
+    free(param);
+
+#if OPAL_HAVE_HWLOC
+    {
+        /* pass a param telling the child what type and model of cpu we are on,
+         * if we know it. If hwloc has the value, use what it knows. Otherwise,
+         * see if we were explicitly given it and use that value.
+         */
+        hwloc_obj_t obj;
+        char *htmp;
+        if (NULL != opal_hwloc_topology) {
+            obj = hwloc_get_root_obj(opal_hwloc_topology);
+            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
+                NULL != (htmp = orte_local_cpu_type)) {
+                opal_setenv("OMPI_MCA_orte_cpu_type", htmp, true, &app->env);
             }
-            CLOSE_THE_SOCKET(sd);
-            ui64 = (uint64_t*)(&peer->name);
-            opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), NULL);
-            OBJ_RELEASE(peer);
+            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
+                NULL != (htmp = orte_local_cpu_model)) {
+                opal_setenv("OMPI_MCA_orte_cpu_model", htmp, true, &app->env);
+            }
+        } else {
+            if (NULL != orte_local_cpu_type) {
+                opal_setenv("OMPI_MCA_orte_cpu_type", orte_local_cpu_type, true, &app->env);
+            }
+            if (NULL != orte_local_cpu_model) {
+                opal_setenv("OMPI_MCA_orte_cpu_model", orte_local_cpu_model, true, &app->env);
+            }
         }
     }
+#endif
 
- cleanup:
-    OBJ_RELEASE(op);
+    /* get shmem's best component name so we can provide a hint to the shmem
+     * framework. the idea here is to have someone figure out what component to
+     * select (via the shmem framework) and then have the rest of the
+     * components in shmem obey that decision. for more details take a look at
+     * the shmem framework in opal.
+     */
+    if (NULL != (param = opal_shmem_base_best_runnable_component_name())) {
+        opal_setenv("OMPI_MCA_shmem_RUNTIME_QUERY_hint", param, true, &app->env);
+        free(param);
+    }
+    
+    /* Set an info MCA param that tells the launched processes that
+     * any binding policy was applied by us (e.g., so that
+     * MPI_INIT doesn't try to bind itself)
+     */
+    opal_setenv("OMPI_MCA_orte_bound_at_launch", "1", true, &app->env);
+
+    /* tell the ESS to select the pmi component - but don't override
+     * anything that may have been provided elsewhere
+     */
+    opal_setenv("OMPI_MCA_ess", "pmi", false, &app->env);
+
+    /* since we want to pass the name as separate components, make sure
+     * that the "name" environmental variable is cleared!
+     */
+    opal_unsetenv("OMPI_MCA_orte_ess_name", &app->env);
+
+    asprintf(&param, "%ld", (long)jdata->num_procs);
+    opal_setenv("OMPI_MCA_orte_ess_num_procs", param, true, &app->env);
+
+    /* although the num_procs is the comm_world size, users
+     * would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    opal_setenv("OMPI_COMM_WORLD_SIZE", param, true, &app->env);
+    free(param);
+
+    /* users would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    asprintf(&param, "%ld", (long)jdata->num_local_procs);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", param, true, &app->env);
+    free(param);
+        
+    /* forcibly set the local tmpdir base to match ours */
+    opal_setenv("OMPI_MCA_orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
+
+    /* MPI-3 requires we provide some further info to the procs,
+     * so we pass them as envars to avoid introducing further
+     * ORTE calls in the MPI layer
+     */
+    asprintf(&num_app_ctx, "%lu", (unsigned long)jdata->num_apps);
+
+    /* build some common envars we need to pass for MPI-3 compatibility */
+    nps = NULL;
+    firstranks = NULL;
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        opal_argv_append_nosize(&nps, ORTE_VPID_PRINT(app->num_procs));
+        opal_argv_append_nosize(&firstranks, ORTE_VPID_PRINT(app->first_rank));
+    }
+    npstring = opal_argv_join(nps, ' ');
+    firstrankstring = opal_argv_join(firstranks, ' ');
+    opal_argv_free(nps);
+    opal_argv_free(firstranks);
+
+    /* add the MPI-3 envars */
+    opal_setenv("OMPI_NUM_APP_CTX", num_app_ctx, true, &app->env);
+    opal_setenv("OMPI_FIRST_RANKS", firstrankstring, true, &app->env);
+    opal_setenv("OMPI_APP_CTX_NUM_PROCS", npstring, true, &app->env);
+    free(num_app_ctx);
+    free(firstrankstring);
+    free(npstring);
+    return ORTE_SUCCESS;
 }
 
-/* Dummy function for when we are not using FT. */
-#if OPAL_ENABLE_FT_CR == 0
-static void ft_event(int state)
+
+static int setup_child(orte_job_t *jdata,
+                       orte_proc_t *child,
+                       orte_app_context_t *app)
 {
-    return;
-}
+    char *param, *value;
+    int rc;
+    int32_t nrestarts=0, *nrptr;
 
-#else
-static void ft_event(int state) {
-#if 0
-    opal_list_item_t *item;
-#endif
+    /* setup the jobid */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&value, child->name.jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    opal_setenv("OMPI_MCA_ess_base_jobid", value, true, &app->env);
+    free(value);
 
-    if(OPAL_CRS_CHECKPOINT == state) {
-#if 0
-        /*
-         * Disable event processing while we are working
-         */
-        opal_event_disable();
-#endif
+    /* setup the vpid */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&value, child->name.vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    else if(OPAL_CRS_CONTINUE == state) {
-#if 0
-        /*
-         * Resume event processing
-         */
-        opal_event_enable();
+    opal_setenv("OMPI_MCA_ess_base_vpid", value, true, &app->env);
+
+    /* although the vpid IS the process' rank within the job, users
+     * would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    opal_setenv("OMPI_COMM_WORLD_RANK", value, true, &app->env);
+    free(value);  /* done with this now */
+    
+    /* users would appreciate being given a public environmental variable
+     * that also represents the local rank value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    if (ORTE_LOCAL_RANK_INVALID == child->local_rank) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        return rc;
     }
-    else if(OPAL_CRS_RESTART == state) {
-        /*
-         * Clean out cached connection information
-         * Select pieces of finalize/init
+    asprintf(&value, "%lu", (unsigned long) child->local_rank);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
+    free(value);
+    
+    /* users would appreciate being given a public environmental variable
+     * that also represents the node rank value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    if (ORTE_NODE_RANK_INVALID == child->node_rank) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        return rc;
+    }
+    asprintf(&value, "%lu", (unsigned long) child->node_rank);
+    opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, &app->env);
+    /* set an mca param for it too */
+    opal_setenv("OMPI_MCA_orte_ess_node_rank", value, true, &app->env);
+    free(value);
+
+    /* provide the identifier for the PMIx connection - the
+     * PMIx connection is made prior to setting the process
+     * name itself. Although in most cases the ID and the
+     * process name are the same, it isn't necessarily
+     * required */
+    orte_util_convert_process_name_to_string(&value, &child->name);
+    opal_setenv("PMIX_ID", value, true, &app->env);
+    free(value);
+
+    nrptr = &nrestarts;
+    if (orte_get_attribute(&child->attributes, ORTE_PROC_NRESTARTS, (void**)&nrptr, OPAL_INT32)) {
+        /* pass the number of restarts for this proc - will be zero for
+         * an initial start, but procs would like to know if they are being
+         * restarted so they can take appropriate action
          */
-        for (item = opal_list_remove_first(&mca_oob_tcp_module.peer_list);
-            item != NULL;
-            item = opal_list_remove_first(&mca_oob_tcp_module.peer_list)) {
-            mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
-            /* JJH: Use the below command for debugging restarts with invalid sockets
-             * mca_oob_tcp_peer_dump(peer, "RESTART CLEAN")
+        asprintf(&value, "%d", nrestarts);
+        opal_setenv("OMPI_MCA_orte_num_restarts", value, true, &app->env);
+        free(value);
+    }
+    
+    /* if the proc should not barrier in orte_init, tell it */
+    if (orte_get_attribute(&child->attributes, ORTE_PROC_NOBARRIER, NULL, OPAL_BOOL)
+        || 0 < nrestarts) {
+        opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, &app->env);
+    }
+    
+    /* if we are using staged execution, tell it */
+    if (orte_staged_execution) {
+        opal_setenv("OMPI_MCA_orte_staged_execution", "1", true, &app->env);
+        free(param);
+    }
+
+    /* if the proc isn't going to forward IO, then we need to flag that
+     * it has "completed" iof termination as otherwise it will never fire
+     */
+    if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
+        ORTE_FLAG_SET(child, ORTE_PROC_FLAG_IOF_COMPLETE);
+    }
+
+    /* construct the proc's session dir name */
+    if (NULL != orte_process_info.tmpdir_base) {
+        value = strdup(orte_process_info.tmpdir_base);
+    } else {
+        value = NULL;
+    }
+    param = NULL;
+    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&param, &value, NULL,
+                                                        orte_process_info.nodename,
+                                                        NULL, &child->name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(value);
+    /* pass an envar so the proc can find any files it had prepositioned */
+    opal_setenv("OMPI_FILE_LOCATION", param, true, &app->env);
+
+    /* if the user wanted the cwd to be the proc's session dir, then
+     * switch to that location now
+     */
+    if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL)) {
+        /* create the session dir - may not exist */
+        if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(param, S_IRWXU))) {
+            ORTE_ERROR_LOG(rc);
+            /* doesn't exist with correct permissions, and/or we can't
+             * create it - either way, we are done
              */
-            MCA_OOB_TCP_PEER_RETURN(peer);
+            free(param);
+            return rc;
         }
-
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_free);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_names);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_list);
-
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_list,     opal_list_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peers,         opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_names,    opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_free,     opal_free_list_t);
-
-        /*
-         * Resume event processing
+        /* change to it */
+        if (0 != chdir(param)) {
+            free(param);
+            return ORTE_ERROR;
+        }
+        /* It seems that chdir doesn't
+         * adjust the $PWD enviro variable when it changes the directory. This
+         * can cause a user to get a different response when doing getcwd vs
+         * looking at the enviro variable. To keep this consistent, we explicitly
+         * ensure that the PWD enviro variable matches the CWD we moved to.
+         *
+         * NOTE: if a user's program does a chdir(), then $PWD will once
+         * again not match getcwd! This is beyond our control - we are only
+         * ensuring they start out matching.
          */
-        opal_event_enable();
-#endif
+        opal_setenv("PWD", param, true, &app->env);
+        /* update the initial wdir value too */
+        opal_setenv("OMPI_MCA_initial_wdir", param, true, &app->env);
     }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return;
+    free(param);
+    return ORTE_SUCCESS;
 }
-#endif

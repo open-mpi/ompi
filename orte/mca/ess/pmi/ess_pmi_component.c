@@ -89,7 +89,7 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
         }
         if (!opal_pmix.initialized()) {
             /* we may have everything setup, but we are not
-             * in a PMI environment and so we need to disqualify
+             * in a PMIx environment and so we need to disqualify
              * ourselves - we are likely a singleton and will
              * pick things up from there */
             *priority = -1;

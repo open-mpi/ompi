@@ -1,18 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
- *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,105 +20,92 @@
 #include "orte/util/show_help.h"
 
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
-
+#include "orte/mca/schizo/schizo.h"
+#include "orte/mca/schizo/base/base.h"
 
 /**
  * Function for selecting all runnable modules from those that are
  * available.
- *
- * Call the init function on all available modules.
  */
-int orte_oob_base_select(void)
+
+static bool selected = false;
+
+int orte_schizo_base_select(void)
 {
-    mca_base_component_list_item_t *cli, *cmp, *c2;
-    mca_oob_base_component_t *component, *c3;
-    bool added;
-    int i;
+    mca_base_component_list_item_t *cli = NULL;
+    mca_base_component_t *component = NULL;
+    mca_base_module_t *module = NULL;
+    orte_schizo_base_module_t *nmodule;
+    orte_schizo_base_active_module_t *newmodule, *mod;
+    int rc, priority;
+    bool inserted;
 
-    /* Query all available components and ask if their transport is available */
-    OPAL_LIST_FOREACH(cli, &orte_oob_base_framework.framework_components, mca_base_component_list_item_t) {
-        component = (mca_oob_base_component_t *) cli->cli_component;
+    if (selected) {
+        /* ensure we don't do this twice */
+        return ORTE_SUCCESS;
+    }
+    selected = true;
 
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "mca:oob:select: checking available component %s",
-                            component->oob_base.mca_component_name);
+    /* Query all available components and ask if they have a module */
+    OPAL_LIST_FOREACH(cli, &orte_schizo_base_framework.framework_components, mca_base_component_list_item_t) {
+        component = (mca_base_component_t *) cli->cli_component;
+
+        opal_output_verbose(5, orte_schizo_base_framework.framework_output,
+                            "mca:schizo:select: checking available component %s", component->mca_component_name);
 
         /* If there's no query function, skip it */
-        if (NULL == component->available) {
-            opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Skipping component [%s]. It does not implement a query function",
-                                component->oob_base.mca_component_name );
+        if (NULL == component->mca_query_component) {
+            opal_output_verbose(5, orte_schizo_base_framework.framework_output,
+                                "mca:schizo:select: Skipping component [%s]. It does not implement a query function",
+                                component->mca_component_name );
             continue;
         }
 
         /* Query the component */
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "mca:oob:select: Querying component [%s]",
-                            component->oob_base.mca_component_name);
+        opal_output_verbose(5, orte_schizo_base_framework.framework_output,
+                            "mca:schizo:select: Querying component [%s]",
+                            component->mca_component_name);
+        rc = component->mca_query_component(&module, &priority);
 
-        /* If the component is not available, then skip it as
-         * it has no available interfaces
-         */
-        if (!component->available()) {
-            opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Skipping component [%s] - no available interfaces",
-                                component->oob_base.mca_component_name );
+        /* If no module was returned, then skip component */
+        if (ORTE_SUCCESS != rc || NULL == module) {
+            opal_output_verbose(5, orte_schizo_base_framework.framework_output,
+                                "mca:schizo:select: Skipping component [%s]. Query failed to return a module",
+                                component->mca_component_name );
             continue;
         }
 
-        /* if it fails to startup, then skip it */
-        if (ORTE_SUCCESS != component->startup()) {
-            opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Skipping component [%s] - failed to startup",
-                                component->oob_base.mca_component_name );
-            continue;
-        }
+        /* If we got a module, keep it */
+        nmodule = (orte_schizo_base_module_t*) module;
+        /* add to the list of active modules */
+        newmodule = OBJ_NEW(orte_schizo_base_active_module_t);
+        newmodule->pri = priority;
+        newmodule->module = nmodule;
+        newmodule->component = component;
 
-        /* record it, but maintain priority order */
-        added = false;
-        OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {
-            c3 = (mca_oob_base_component_t *) cmp->cli_component;
-            if (c3->priority > component->priority) {
-                continue;
+        /* maintain priority order */
+        inserted = false;
+        OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+            if (priority > mod->pri) {
+                opal_list_insert_pos(&orte_schizo_base.active_modules,
+                                     (opal_list_item_t*)mod, &newmodule->super);
+                inserted = true;
+                break;
             }
-            opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Inserting component");
-            c2 = OBJ_NEW(mca_base_component_list_item_t);
-            c2->cli_component = (mca_base_component_t*)component;
-            opal_list_insert_pos(&orte_oob_base.actives,
-                                 &cmp->super, &c2->super);
-            added = true;
-            break;
         }
-        if (!added) {
-            /* add to end */
-            opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Adding component to end");
-            c2 = OBJ_NEW(mca_base_component_list_item_t);
-            c2->cli_component = (mca_base_component_t*)component;
-            opal_list_append(&orte_oob_base.actives, &c2->super);
+        if (!inserted) {
+            /* must be lowest priority - add to end */
+            opal_list_append(&orte_schizo_base.active_modules, &newmodule->super);
         }
     }
 
-    if (0 == opal_list_get_size(&orte_oob_base.actives)) {
-        /* no support available means we really cannot run */
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "mca:oob:select: Init failed to return any available transports");
-        orte_show_help("help-oob-base.txt", "no-interfaces-avail", true);
-        return ORTE_ERR_SILENT;
+    if (4 < opal_output_get_verbosity(orte_schizo_base_framework.framework_output)) {
+        opal_output(0, "%s: Final mapper priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* show the prioritized list */
+        OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+            opal_output(0, "\tMapper: %s Priority: %d", mod->component->mca_component_name, mod->pri);
+        }
     }
 
-    /* provide them an index so we can track their usability in a bitmap */
-    i=0;
-    OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {
-        c3 = (mca_oob_base_component_t *) cmp->cli_component;
-        c3->idx = i++;
-    }
-
-    opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "mca:oob:select: Found %d active transports",
-                        (int)opal_list_get_size(&orte_oob_base.actives));
-    return ORTE_SUCCESS;
+    return ORTE_SUCCESS;;
 }

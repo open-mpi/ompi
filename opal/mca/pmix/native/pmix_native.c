@@ -187,6 +187,9 @@ static int native_init(void)
      * needed for singletons as they will start without a server
      * to support them, but may have one assigned at a later time */
     if (NULL == mca_pmix_native_component.uri) {
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native NULL uri",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         if (!opal_pmix_base_allow_delayed_server) {
             /* not ready yet, so decrement our init_cntr so we can come thru
              * here again */
