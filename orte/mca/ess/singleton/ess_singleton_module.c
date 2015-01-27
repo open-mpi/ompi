@@ -192,6 +192,7 @@ static int rte_init(void)
 
     /* check and ensure pmix was initialized */
     if (NULL == opal_pmix.initialized || !opal_pmix.initialized()) {
+        putenv("OMPI_MCA_pmix=native");
         /* tell the pmix framework to allow delayed connection to a server
          * in case we need one */
         opal_pmix_base_allow_delayed_server = true;
