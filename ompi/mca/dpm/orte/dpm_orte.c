@@ -868,6 +868,12 @@ static int spawn(int count, const char *array_of_commands[],
         have_wdir = 0;
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
+            /* check for personality */
+            ompi_info_get (array_of_info[i], "personality", sizeof(host) - 1, host, &flag);
+            if ( flag ) {
+                jdata->personality = strdup(host);
+            }
+            
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
@@ -1119,6 +1125,11 @@ static int spawn(int count, const char *array_of_commands[],
          */
     } /* for (i = 0 ; i < count ; ++i) */
 
+    /* default the personality */
+    if (NULL == jdata->personality) {
+        jdata->personality = strdup("ompi");
+    }
+    
     /* spawn procs */
     rc = orte_plm.spawn(jdata);
     OBJ_RELEASE(jdata);
