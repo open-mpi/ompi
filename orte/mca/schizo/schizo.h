@@ -36,25 +36,35 @@ BEGIN_C_DECLS
 * SCHIZO module functions - the modules are accessed via
 * the base stub functions
 */
-typedef int (*orte_schizo_base_module_parse_cli_fn_t)();
+typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char *personality,
+                                                      int argc, int start,
+                                                      char **argv);
 
-typedef int (*orte_schizo_base_module_parse_env_fn_t)(char ***env);
+typedef int (*orte_schizo_base_module_parse_env_fn_t)(char *personality,
+                                                      char *path,
+                                                      opal_cmd_line_t *cmd_line,
+                                                      char *server,
+                                                      char **srcenv,
+                                                      char ***dstenv);
 
-typedef int (*orte_schizo_base_module_prep_spawn_fn_t)(orte_job_t *jdata,
-                                                       orte_proc_t *proc);
+typedef int (*orte_schizo_base_module_setup_fork_fn_t)(orte_job_t *jdata,
+                                                       orte_app_context_t *context);
+
+typedef int (*orte_schizo_base_module_setup_child_fn_t)(orte_job_t *jdata,
+                                                        orte_proc_t *child,
+                                                        orte_app_context_t *app);
 
 /*
  * schizo module version 1.3.0
  */
-struct orte_schizo_base_module_1_3_0_t {
-    /** Mapping function pointer */
-    orte_schizo_base_module_map_fn_t         	map_job;
-};
-/** Convenience typedef */
-typedef struct orte_schizo_base_module_1_3_0_t orte_schizo_base_module_1_3_0_t;
-/** Convenience typedef */
-typedef orte_schizo_base_module_1_3_0_t orte_schizo_base_module_t;
+typedef struct {
+    orte_schizo_base_module_parse_cli_fn_t     parse_cli;
+    orte_schizo_base_module_parse_env_fn_t     parse_env;
+    orte_schizo_base_module_setup_fork_fn_t    setup_fork;
+    orte_schizo_base_module_setup_child_fn_t   setup_child;
+} orte_schizo_base_module_t;
 
+ORTE_DECLSPEC extern orte_schizo_base_module_t orte_schizo;
 
 /*
  * schizo component
@@ -63,16 +73,19 @@ typedef orte_schizo_base_module_1_3_0_t orte_schizo_base_module_t;
 /**
  * schizo component version 1.3.0
  */
-struct orte_schizo_base_component_2_0_0_t {
+typedef struct {
     /** Base MCA structure */
     mca_base_component_t base_version;
     /** Base MCA data */
     mca_base_component_data_t base_data;
-};
-/** Convenience typedef */
-typedef struct orte_schizo_base_component_2_0_0_t orte_schizo_base_component_2_0_0_t;
-/** Convenience typedef */
-typedef orte_schizo_base_component_2_0_0_t orte_schizo_base_component_t;
+} orte_schizo_base_component_t;
+
+/**
+ * Macro for use in components that are of type schizo
+ */
+#define MCA_SCHIZO_BASE_VERSION_1_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "schizo", 1, 0, 0
 
 
 END_C_DECLS

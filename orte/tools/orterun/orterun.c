@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +97,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/schizo/schizo.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -544,6 +545,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },
 
+    { NULL, '\0', "personality", "personality", 1,
+      &orterun_globals.personality, OPAL_CMD_LINE_TYPE_STRING,
+      "Programming model/language being used (default=\"ompi\")" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -785,6 +790,36 @@ int orterun(int argc, char *argv[])
     /* Setup MCA params */
     orte_register_params();
 
+    /* save the environment for launch purposes. This MUST be
+     * done so that we can pass it to any local procs we
+     * spawn - otherwise, those local procs won't see any
+     * non-MCA envars were set in the enviro prior to calling
+     * orterun
+     */
+    orte_launch_environ = opal_argv_copy(environ);
+    
+    /* Intialize our Open RTE environment
+     * Set the flag telling orte_init that I am NOT a
+     * singleton, but am "infrastructure" - prevents setting
+     * up incorrect infrastructure that only a singleton would
+     * require
+     */
+    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
+        /* cannot call ORTE_ERROR_LOG as it could be the errmgr
+         * never got loaded!
+         */
+        return rc;
+    }
+    /* finalize OPAL. As it was opened again from orte_init->opal_init
+     * we continue to have a reference count on it. So we have to finalize it twice...
+     */
+    opal_finalize();
+
+    /* default our personality to OMPI */
+    if (NULL == orterun_globals.personality) {
+        orterun_globals.personality = strdup("ompi");
+    }
+
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);
@@ -800,6 +835,7 @@ int orterun(int argc, char *argv[])
          */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    jdata->personality = strdup(orterun_globals.personality);
     
     /* check what user wants us to do with stdin */
     if (0 == strcmp(orterun_globals.stdin_target, "all")) {
@@ -826,19 +862,6 @@ int orterun(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* save the environment for launch purposes. This MUST be
-     * done so that we can pass it to any local procs we
-     * spawn - otherwise, those local procs won't see any
-     * non-MCA envars were set in the enviro prior to calling
-     * orterun
-     */
-    orte_launch_environ = opal_argv_copy(environ);
-    
-    /* purge any ess flag set externally */
-    opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
-    /* purge the env list, if set */
-    opal_unsetenv(OPAL_MCA_PREFIX"mca_base_env_list", &orte_launch_environ);
-    
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
@@ -848,29 +871,6 @@ int orterun(int argc, char *argv[])
                 true, &environ);
     free(tmp_env_var);
 #endif
-
-    /* force selection of the HNP ess module to avoid
-     * the PMI component attempting to initialize and
-     * generating a false error message */
-    putenv(OPAL_MCA_PREFIX"ess=hnp");
-
-    /* Intialize our Open RTE environment
-     * Set the flag telling orte_init that I am NOT a
-     * singleton, but am "infrastructure" - prevents setting
-     * up incorrect infrastructure that only a singleton would
-     * require
-     */
-    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
-        /* cannot call ORTE_ERROR_LOG as it could be the errmgr
-         * never got loaded!
-         */
-        return rc;
-    }
-    /* finalize OPAL. As it was opened again from orte_init->opal_init
-     * we continue to have a reference count on it. So we have to finalize it twice...
-     */
-    opal_finalize();
-
 
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -1130,6 +1130,7 @@ static int init_globals(void)
         orterun_globals.disable_recovery = false;
         orterun_globals.index_argv = false;
         orterun_globals.run_as_root = false;
+        orterun_globals.personality = NULL;
     }
 
     /* Reset the other fields every time */
@@ -1525,88 +1526,6 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
 }
 
 
-static int capture_cmd_line_params(int argc, int start, char **argv)
-{
-    int i, j, k;
-    bool ignore;
-    char *no_dups[] = {
-        "grpcomm",
-        "odls",
-        "rml",
-        "routed",
-        NULL
-    };
-    
-    for (i = 0; i < (argc-start); ++i) {
-        if (0 == strcmp("-"OPAL_MCA_CMD_LINE_ID,  argv[i]) ||
-            0 == strcmp("--"OPAL_MCA_CMD_LINE_ID, argv[i]) ) {
-            /* ignore this one */
-            if (0 == strcmp(argv[i+1], "mca_base_env_list")) {
-                i += 2;
-                continue;
-            }
-            /* It would be nice to avoid increasing the length
-             * of the orted cmd line by removing any non-ORTE
-             * params. However, this raises a problem since
-             * there could be OPAL directives that we really
-             * -do- want the orted to see - it's only the OMPI
-             * related directives we could ignore. This becomes
-             * a very complicated procedure, however, since
-             * the OMPI mca params are not cleanly separated - so
-             * filtering them out is nearly impossible.
-             *
-             * see if this is already present so we at least can
-             * avoid growing the cmd line with duplicates
-             */
-            ignore = false;
-            if (NULL != orted_cmd_line) {
-                for (j=0; NULL != orted_cmd_line[j]; j++) {
-                    if (0 == strcmp(argv[i+1], orted_cmd_line[j])) {
-                        /* already here - if the value is the same,
-                         * we can quitely ignore the fact that they
-                         * provide it more than once. However, some
-                         * frameworks are known to have problems if the
-                         * value is different. We don't have a good way
-                         * to know this, but we at least make a crude
-                         * attempt here to protect ourselves.
-                         */
-                        if (0 == strcmp(argv[i+2], orted_cmd_line[j+1])) {
-                            /* values are the same */
-                            ignore = true;
-                            break;
-                        } else {
-                            /* values are different - see if this is a problem */
-                            for (k=0; NULL != no_dups[k]; k++) {
-                                if (0 == strcmp(no_dups[k], argv[i+1])) {
-                                    /* print help message
-                                     * and abort as we cannot know which one is correct
-                                     */
-                                    orte_show_help("help-orterun.txt", "orterun:conflicting-params",
-                                                   true, orte_basename, argv[i+1],
-                                                   argv[i+2], orted_cmd_line[j+1]);
-                                    return ORTE_ERR_BAD_PARAM;
-                                }
-                            }
-                            /* this passed muster - just ignore it */
-                            ignore = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (!ignore) {
-                opal_argv_append_nosize(&orted_cmd_line, argv[i]);
-                opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
-                opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
-            }
-            i += 2;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-
 /*
  * This function takes a "char ***app_env" parameter to handle the
  * specific case:
@@ -1641,8 +1560,6 @@ static int create_app(int argc, char* argv[],
     bool cmd_line_made = false;
     bool found = false;
     char *appname;
-    char **vars;
-    char *env_set_flag;
 
     *made_app = false;
 
@@ -1657,7 +1574,7 @@ static int create_app(int argc, char* argv[],
      * Only pick up '-mca foo bar' on this pass.
      */
     if (NULL != orterun_globals.appfile) {
-        if (ORTE_SUCCESS != (rc = capture_cmd_line_params(argc, 0, argv))) {
+        if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orterun_globals.personality, argc, 0, argv))) {
             goto cleanup;
         }
     }
@@ -1702,96 +1619,21 @@ static int create_app(int argc, char* argv[],
      *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
      * We want to pick up '-mca foo bar' but not '-mca bip bop'
      */
-    if (ORTE_SUCCESS != (rc = capture_cmd_line_params(argc, count, argv))) {
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orterun_globals.personality,
+                                                    argc, count, argv))) {
         goto cleanup;
     }
     
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);
-    for (i = 0; NULL != environ[i]; ++i) {
-        if (0 == strncmp("OMPI_", environ[i], 5)) {
-            /* check for duplicate in app->env - this
-             * would have been placed there by the
-             * cmd line processor. By convention, we
-             * always let the cmd line override the
-             * environment
-             */
-            param = strdup(environ[i]);
-            value = strchr(param, '=');
-            *value = '\0';
-            value++;
-            opal_setenv(param, value, false, &app->env);
-            free(param);
-        }
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orterun_globals.personality,
+                                                    orterun_globals.path,
+                                                    &cmd_line, ompi_server,
+                                                    environ, &app->env))) {
+        goto cleanup;
     }
     
-    /* add the ompi-server, if provided */
-    if (NULL != ompi_server) {
-        opal_setenv(OPAL_MCA_PREFIX"pubsub_orte_server", ompi_server, true, &app->env);
-    }
-
-    /* Did the user request to export any environment variables on the cmd line? */
-    env_set_flag = getenv(OPAL_MCA_PREFIX"mca_base_env_list");
-    if (opal_cmd_line_is_taken(&cmd_line, "x")) {
-        if (NULL != env_set_flag) {
-            orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
-            return ORTE_ERR_FATAL;
-        }
-        j = opal_cmd_line_get_ninsts(&cmd_line, "x");
-        for (i = 0; i < j; ++i) {
-            param = opal_cmd_line_get_param(&cmd_line, "x", i, 0);
-
-            if (NULL != (value = strchr(param, '='))) {
-                /* terminate the name of the param */
-                *value = '\0';
-                /* step over the equals */
-                value++;
-                /* overwrite any prior entry */
-                opal_setenv(param, value, true, &app->env);
-                /* save it for any comm_spawn'd apps */
-                opal_setenv(param, value, true, &orte_forwarded_envars);
-            } else {
-                value = getenv(param);
-                if (NULL != value) {
-                    /* overwrite any prior entry */
-                    opal_setenv(param, value, true, &app->env);
-                    /* save it for any comm_spawn'd apps */
-                    opal_setenv(param, value, true, &orte_forwarded_envars);
-                } else {
-                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
-                }
-            }
-        }
-    } else if (NULL != env_set_flag) {
-        /* set necessary env variables for external usage */
-        vars = NULL;
-        if (OPAL_SUCCESS == mca_base_var_process_env_list(&vars) &&
-            NULL != vars) {
-            for (i=0; NULL != vars[i]; i++) {
-                value = strchr(vars[i], '=');
-                /* terminate the name of the param */
-                *value = '\0';
-                /* step over the equals */
-                value++;
-                /* overwrite any prior entry */
-                opal_setenv(vars[i], value, true, &app->env);
-                /* save it for any comm_spawn'd apps */
-                opal_setenv(vars[i], value, true, &orte_forwarded_envars);
-            }
-        }
-        opal_argv_free(vars);
-    }
-
-    /* If the user specified --path, store it in the user's app
-       environment via the OMPI_exec_path variable. */
-    if (NULL != orterun_globals.path) {
-        asprintf(&value, "OMPI_exec_path=%s", orterun_globals.path);
-        opal_argv_append_nosize(&app->env, value);
-        /* save it for any comm_spawn'd apps */
-        opal_argv_append_nosize(&orte_forwarded_envars, value);
-        free(value);
-    }
 
     /* Did the user request a specific wdir? */
 
