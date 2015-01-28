@@ -37,8 +37,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static int param_priority;
+
 static int ompi_mtl_psm_component_open(void);
 static int ompi_mtl_psm_component_close(void);
+static int ompi_mtl_psm_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_psm_component_register(void);
 
 static mca_mtl_base_module_t* ompi_mtl_psm_component_init( bool enable_progress_threads, 
@@ -53,14 +56,14 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
         {
             MCA_MTL_BASE_VERSION_2_0_0,
             
-            "psm", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            ompi_mtl_psm_component_open,  /* component open */
-            ompi_mtl_psm_component_close,  /* component close */
-	    NULL,
-	    ompi_mtl_psm_component_register
+            .mca_component_name = "psm",
+            .mca_component_major_version = OMPI_MAJOR_VERSION,
+            .mca_component_minor_version = OMPI_MINOR_VERSION,
+            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            .mca_open_component = ompi_mtl_psm_component_open,
+            .mca_close_component = ompi_mtl_psm_component_close,
+            .mca_query_component = ompi_mtl_psm_component_query,
+            .mca_register_component_params = ompi_mtl_psm_component_register,
         },
         {
             /* The component is not checkpoint ready */
@@ -86,6 +89,15 @@ ompi_mtl_psm_component_register(void)
     mca_base_var_enum_t *new_enum;
 #endif
     
+
+    param_priority = 100;
+    (void) mca_base_component_var_register (&mca_mtl_psm_component.super.mtl_version,
+                                            "priority", "Priority of the PSM MTL component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &param_priority);
+
     ompi_mtl_psm.connect_timeout = 180;
     (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
                                            "connect_timeout",
@@ -179,6 +191,19 @@ ompi_mtl_psm_component_open(void)
     return OPAL_ERR_NOT_AVAILABLE;
   }
 }
+
+static int
+ompi_mtl_psm_component_query(mca_base_module_t **module, int *priority)
+{
+    /*
+     * if we get here it means that PSM is available so give high priority
+     */
+
+    *priority = param_priority;
+    *module = (mca_base_module_t *)&ompi_mtl_psm.super;
+    return OMPI_SUCCESS;
+}
+
 
 static int
 ompi_mtl_psm_component_close(void)
