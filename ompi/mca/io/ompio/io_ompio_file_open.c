@@ -764,20 +764,51 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 }
 
 int
-mca_io_ompio_file_seek_shared (ompi_file_t *fh,
+mca_io_ompio_file_seek_shared (ompi_file_t *fp,
                                OMPI_MPI_OFFSET_TYPE offset,
                                int whence)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
+    ret = shared_fp_base_module->sharedfp_seek(fh,offset,whence);
+
     return ret;
 }
 
 
 int
-mca_io_ompio_file_get_position_shared (ompi_file_t *fh,
+mca_io_ompio_file_get_position_shared (ompi_file_t *fp,
                                        OMPI_MPI_OFFSET_TYPE * offset)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
+    ret = shared_fp_base_module->sharedfp_get_position(fh,offset);
+    *offset = *offset / fh->f_etype_size;
+
     return ret;
 }
 
