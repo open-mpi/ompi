@@ -58,7 +58,7 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *
  * Initialization routine for MTL component.  This function should
  * allocate resources for communication and try to do all local setup.
- * It should not attempt to contract it's peers, as that should be
+ * It should not attempt to contact it's peers, as that should be
  * done at add_procs time.  Contact information should be published
  * during this initialization function.  It will be made available
  * during add_procs().
