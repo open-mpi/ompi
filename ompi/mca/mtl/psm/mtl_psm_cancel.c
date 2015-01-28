@@ -31,6 +31,11 @@ int ompi_mtl_psm_cancel(struct mca_mtl_base_module_t* mtl,
   mca_mtl_psm_request_t *mtl_psm_request = 
     (mca_mtl_psm_request_t*) mtl_request; 
   
+  /* PSM does not support canceling sends */
+  if(OMPI_MTL_PSM_ISEND == mtl_psm_request->type) {
+    return OMPI_SUCCESS;
+  }
+
   err = psm_mq_cancel(&mtl_psm_request->psm_request); 
   if(PSM_OK == err) { 
     err = psm_mq_test(&mtl_psm_request->psm_request, &status);
