@@ -56,6 +56,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_FILE_VIEW_IS_SET  0x00000008
 #define OMPIO_CONTIGUOUS_FVIEW  0x00000010
 #define OMPIO_AGGREGATOR_IS_SET 0x00000020
+#define OMPIO_SHAREDFP_IS_SET   0x00000040
 #define QUEUESIZE 2048
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
