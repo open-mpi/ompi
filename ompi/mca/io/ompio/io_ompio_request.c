@@ -51,6 +51,7 @@ void mca_io_ompio_request_construct(mca_ompio_request_t* req)
     OMPI_REQUEST_INIT (&(req->req_ompi), false );
     req->req_ompi.req_free   = mca_io_ompio_request_free;
     req->req_ompi.req_cancel = mca_io_ompio_request_cancel;
+    req->req_ompi.req_type   = OMPI_REQUEST_IO;
     req->req_data            = NULL;
     req->req_progress_fn     = NULL;
     req->req_free_fn         = NULL;
