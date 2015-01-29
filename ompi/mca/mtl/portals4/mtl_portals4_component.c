@@ -29,9 +29,12 @@
 #include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
 
+static int param_priority;
+
 static int ompi_mtl_portals4_component_register(void);
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
+static int ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority);
 static mca_mtl_base_module_t* 
 ompi_mtl_portals4_component_init(bool enable_progress_threads, 
                                  bool enable_mpi_threads);
@@ -51,8 +54,8 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         ompi_mtl_portals4_component_open,  /* component open */
+        ompi_mtl_portals4_component_query,  /* component close */
         ompi_mtl_portals4_component_close, /* component close */
-        NULL,
         ompi_mtl_portals4_component_register
     },
     {
@@ -74,6 +77,14 @@ ompi_mtl_portals4_component_register(void)
 {
     mca_base_var_enum_t *new_enum;
     int ret;
+
+    param_priority = 10;
+    (void) mca_base_component_var_register (&mca_mtl_portals4_component.mtl_version,
+                                            "priority", "Priority of the Portals4 MTL component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &param_priority);
 
     ompi_mtl_portals4.eager_limit = 2 * 1024;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
@@ -208,6 +219,18 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
 
+    return OMPI_SUCCESS;
+}
+
+static int
+ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
+{
+    /*
+     * assume if portals4 MTL was compiled, the user wants it
+     */
+ 
+    *priority = param_priority;
+    *module = &ompi_mtl_portals4.base;
     return OMPI_SUCCESS;
 }
 
