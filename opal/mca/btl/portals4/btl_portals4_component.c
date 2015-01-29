@@ -67,6 +67,18 @@ mca_btl_portals4_component_t mca_btl_portals4_component = {
 static int
 mca_btl_portals4_component_register(void)
 {
+    mca_btl_portals4_component.use_logical = 0;
+    (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
+                           "use_logical",
+                           "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
+                           MCA_BASE_VAR_TYPE_INT,
+                           NULL,
+                           0,
+                           0,
+                           OPAL_INFO_LVL_5,
+                           MCA_BASE_VAR_SCOPE_READONLY,
+                           &mca_btl_portals4_component.use_logical);
+
     mca_btl_portals4_component.max_btls = 1;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
                            "max_btls",
@@ -268,7 +280,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_init\n");
 
-    if (enable_progress_threads || enable_mpi_threads) {
+    if (enable_mpi_threads && !mca_btl_base_thread_multiple_override) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
                             "btl portals4 disabled because threads enabled");
         return NULL;
@@ -291,7 +303,15 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     portals4_nis_h = malloc(mca_btl_portals4_component.max_btls * sizeof(ptl_handle_ni_t));
     for (interface=0; interface<mca_btl_portals4_component.max_btls; interface++) {
 
-        ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
+        if (mca_btl_portals4_component.use_logical)
+            ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
+                    PTL_NI_LOGICAL | PTL_NI_MATCHING,
+                    PTL_PID_ANY,       /* let library assign our pid */
+                    NULL,              /* no desired limits */
+                    NULL,              /* actual limits */
+                    &portals4_nis_h[*num_btls] /* our interface handle */
+                    );
+        else ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
                     PTL_NI_PHYSICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
@@ -388,12 +408,12 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
             "PtlEQAlloc (recv_eq=%d) OK for NI %d\n", portals4_btl->recv_eq_h, interface));
 
-        /* Create recv_idx portal table entrie */
+        /* Create recv_idx portal table entry */
         ret = PtlPTAlloc(portals4_btl->portals_ni_h,
                      PTL_PT_ONLY_USE_ONCE | 
                      PTL_PT_ONLY_TRUNCATE,
                      portals4_btl->recv_eq_h,
-                     PTL_PT_ANY,
+                     REQ_BTL_TABLE_ID,
                      &portals4_btl->recv_idx);
         if (PTL_OK != ret) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
@@ -403,6 +423,13 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
         }
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
             "PtlPTAlloc (recv_idx) OK for NI %d recv_idx=%d\n", interface, portals4_btl->recv_idx));
+
+        if (portals4_btl->recv_idx != REQ_BTL_TABLE_ID) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, portals4_btl->recv_idx);
+            goto error;
+        }
 
         /* bind zero-length md for sending acks */
         md.start     = NULL;
@@ -496,8 +523,12 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
             PTL_ME_EVENT_LINK_DISABLE |
             PTL_ME_EVENT_COMM_DISABLE |
             PTL_ME_EVENT_UNLINK_DISABLE;
-        me.match_id.phys.nid = PTL_NID_ANY;
-        me.match_id.phys.pid = PTL_PID_ANY;
+        if (mca_btl_portals4_component.use_logical) {
+            me.match_id.rank = PTL_RANK_ANY;
+        } else {
+            me.match_id.phys.nid = PTL_NID_ANY;
+            me.match_id.phys.pid = PTL_PID_ANY;
+        }
         me.match_bits = BTL_PORTALS4_LONG_MSG;
         me.ignore_bits = BTL_PORTALS4_CONTEXT_MASK |
             BTL_PORTALS4_SOURCE_MASK |
@@ -522,19 +553,22 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     /* Publish our NID(s)/PID(s) in the modex */
     for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
         portals4_btl = mca_btl_portals4_component.btls[interface];
-        ret = PtlGetId(portals4_btl->portals_ni_h ,&ptl_process_ids[interface]);
+
+        ret = PtlGetPhysId(portals4_btl->portals_ni_h ,&ptl_process_ids[interface]);
         if (PTL_OK != ret) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlGetId for NI %d failed: %d\n",
+                            "%s:%d: PtlGetPhysId for NI %d failed: %d\n",
                             __FILE__, __LINE__, interface, ret);
             goto error;
         }
+
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                  "PtlGetId NI number %d: ni_h=%d PtlGetId : nid=%x pid=%x\n",
+                  "PtlGetPhysId NI number %d: ni_h=%d rank=%x nid=%x pid=%x\n",
                   interface, portals4_btl->portals_ni_h,
+                  ptl_process_ids[interface].rank,
                   ptl_process_ids[interface].phys.nid, ptl_process_ids[interface].phys.pid));
     }
-    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_REMOTE,
+    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
                     &mca_btl_portals4_component.super.btl_version,
                     ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
     if (OPAL_SUCCESS != ret) {
@@ -648,12 +682,13 @@ mca_btl_portals4_component_progress(void)
     unsigned int which;
     mca_btl_active_message_callback_t* reg;
     mca_btl_base_segment_t seg[2];
+    mca_btl_base_descriptor_t btl_base_descriptor;
 
     while (true) {
         ret = PtlEQPoll(mca_btl_portals4_component.eqs_h, mca_btl_portals4_component.num_btls, 0, &ev, &which);
 
         if (PTL_OK == ret) {
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlEQPoll Event received: %d (%d) on NI %d\n",
+            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlEQPoll Event received: %d (fail=%d) on NI %d\n",
                 ev.type, ev.ni_fail_type, which));
             num_progressed++;
             portals4_btl = mca_btl_portals4_component.btls[which];
@@ -663,6 +698,10 @@ mca_btl_portals4_component_progress(void)
             case PTL_EVENT_SEND:   /* generated on source (origin) when put stops sending */
 
                 frag = ev.user_ptr;
+                if (NULL == frag) {
+                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_SEND event with NULL user_ptr");
+                    break;
+                }
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
                 if (!mca_btl_portals4_component.portals_need_ack) {
@@ -692,6 +731,10 @@ mca_btl_portals4_component_progress(void)
             case PTL_EVENT_ACK:   /* Ack that a put as completed on other side. We just call the callback function */
 
                 frag = ev.user_ptr;
+                if (NULL == frag) {
+                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_ACK event with NULL user_ptr");
+                    break;
+                }
                 OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                     "PTL_EVENT_ACK received rlength=%ld mlength=%ld des_flags=%d\n", ev.rlength, ev.mlength, frag->base.des_flags));
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -722,19 +765,17 @@ mca_btl_portals4_component_progress(void)
 
             case PTL_EVENT_PUT:   /* Generated on destination (target) when a put into memory ends */
 
-                frag = ev.user_ptr;
                 tag = (unsigned char) (ev.hdr_data);
 
-                frag->base.des_local = seg;
+                btl_base_descriptor.des_local = seg;
+                btl_base_descriptor.des_local_count = 1;
                 seg[0].seg_addr.pval = ev.start;
                 seg[0].seg_len = ev.mlength;
 
-                frag->base.des_local_count = 1;
-
                 reg = mca_btl_base_active_message_trigger + tag;
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
-                                     "PTL_EVENT_PUT: tag=%x frag=%p cbfunc: %lx\n", tag, (void*)frag, (uint64_t)reg->cbfunc));
-                reg->cbfunc(&portals4_btl->super, tag, &(frag->base), reg->cbdata);
+                    "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag, (void*)&btl_base_descriptor, (uint64_t)reg->cbfunc));
+                reg->cbfunc(&portals4_btl->super, tag, &btl_base_descriptor, reg->cbdata);
 
                 goto done;
                 break;
@@ -746,6 +787,11 @@ mca_btl_portals4_component_progress(void)
 
             case PTL_EVENT_LINK:
                 /* */
+                frag = ev.user_ptr;
+                if (NULL == frag) {
+                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_LINK event with NULL user_ptr");
+                    break;
+                }
                 goto done;
                 break;
 
@@ -794,8 +840,9 @@ mca_btl_portals4_component_progress(void)
                     }
 
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "Re-issued PtlGet length=%ld recv_idx=%d pid=%x match_bits=%lx\n",
-                        frag->length, portals4_btl->recv_idx, frag->peer_proc.phys.pid, frag->match_bits));
+                        "Re-issued PtlGet length=%ld recv_idx=%d rank=%x pid=%x nid=%x match_bits=%lx\n",
+                        frag->length, portals4_btl->recv_idx,
+                        frag->peer_proc.rank, frag->peer_proc.phys.pid, frag->peer_proc.phys.nid, frag->match_bits));
                 }
                 else {
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,

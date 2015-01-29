@@ -44,6 +44,9 @@ struct mca_btl_portals4_component_t {
 
     struct mca_btl_portals4_module_t** btls; /* array of available BTL modules */
 
+    /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
+    int use_logical;
+
     /* initial size of free lists */
     int portals_free_list_init_num;
     /* max size of free lists */
@@ -167,6 +170,8 @@ typedef struct mca_btl_portals4_module_t mca_btl_portals4_module_t;
         hdr_data = (hdr_data << 48);                                 \
         hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
     }
+
+#define REQ_BTL_TABLE_ID	2
 
 /*
  * See note in ompi/mtl/portals4/mtl_portals4.h for how we deal with
