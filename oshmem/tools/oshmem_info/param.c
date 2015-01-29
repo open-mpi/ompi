@@ -2,7 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -109,6 +109,7 @@ void oshmem_info_do_config(bool want_all)
     char *cxxexceptions;
     char *threads;
     char *want_libltdl;
+    char *have_ltdl_advise;
 #if OMPI_RTE_ORTE
     char *mpirun_prefix_by_default;
 #endif
@@ -230,6 +231,7 @@ void oshmem_info_do_config(bool want_all)
     fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
+    have_ltdl_advise = OPAL_HAVE_LTDL_ADVISE ? "yes" : "no";
 #if OMPI_RTE_ORTE
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
 #endif
@@ -566,6 +568,7 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Memory profiling support", "option:mem-profile", memprofile);
     opal_info_out("Memory debugging support", "option:mem-debug", memdebug);
     opal_info_out("libltdl support", "option:dlopen", want_libltdl);
+    opal_info_out("lt_dladvise support", "option:lt_dladvise", have_ltdl_advise);
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
 #if OMPI_RTE_ORTE
     opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default",
