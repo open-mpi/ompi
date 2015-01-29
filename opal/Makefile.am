@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,7 +19,6 @@
 
 SUBDIRS = \
 	include \
-        $(LIBLTDL_SUBDIR) \
 	asm \
         datatype \
         etc \
@@ -30,12 +29,8 @@ SUBDIRS = \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
-	$(LIBLTDL_SUBDIR) \
 	asm \
         datatype \
         etc \
@@ -49,7 +44,6 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES =
 lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
-        $(LIBLTDL) \
         asm/libasm.la \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
@@ -69,11 +63,6 @@ lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += $(headers)
 if WANT_INSTALL_HEADERS
 opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
-
-# This is somewhat of a hack -- libltdl is installed by libtoolize,
-# and us installing the header here is slightly less kludgey than
-# hacking their Makefile.am.
-nobase_opal_HEADERS += libltdl/ltdl.h
 endif
 
 include class/Makefile.am

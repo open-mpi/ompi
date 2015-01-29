@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -294,13 +294,17 @@ AC_ARG_ENABLE([dlopen],
                      Disabling dlopen implies --disable-mca-dso.
                      (default: enabled)])])
 if test "$enable_dlopen" = "no" ; then
-    enable_mca_dso="no"
-    enable_mca_static="yes"
     OPAL_ENABLE_DLOPEN_SUPPORT=0
     AC_MSG_RESULT([no])
-else
+elif test "$enable_dlopen" = "yes"; then
     OPAL_ENABLE_DLOPEN_SUPPORT=1
     AC_MSG_RESULT([yes])
+elif test $OPAL_DEVEL -eq 1; then
+    OPAL_ENABLE_DLOPEN_SUPPORT=1
+    AC_MSG_RESULT([yes (devel build default)])
+else
+    OPAL_ENABLE_DLOPEN_SUPPORT=-1
+    AC_MSG_RESULT([if available])
 fi
 
 

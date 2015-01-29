@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -47,8 +47,7 @@ headers = \
 # This test is only built if we have libltdl support.
 
 dlopen_test_SOURCES = dlopen_test.c
-dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
-dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
+dlopen_test_LDADD = -lltdl
 
 predefined_gap_test_SOURCES = predefined_gap_test.c
 predefined_gap_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)

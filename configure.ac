@@ -867,6 +867,13 @@ OPAL_SEARCH_LIBS_CORE([ceil], [m])
 # -lrt might be needed for clock_gettime
 OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
+# See if we can find libltdl
+OPAL_SETUP_LIBLTDL
+
+# Do some more CUDA checks after we determine whether we have libltdl
+# support or not
+OPAL_CHECK_CUDA_AFTER_LIBLTDL
+
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
@@ -1225,8 +1232,6 @@ fi
 # a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
 
-LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
-LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
 
 # What's the suffix of shared libraries?  Inspired by generated
@@ -1262,8 +1267,6 @@ hpux9* | hpux10* | hpux11*)
 esac
 AC_SUBST(OPAL_DYN_LIB_PREFIX)
 AC_SUBST(OPAL_DYN_LIB_SUFFIX)
-
-OPAL_SETUP_LIBLTDL
 
 # Need the libtool binary before the rpathify stuff
 LT_OUTPUT

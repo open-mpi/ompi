@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -72,10 +72,11 @@ AS_IF([test "$with_cuda" = "no" || test "x$with_cuda" = "x"],
                             opal_cuda_incdir="$with_cuda/include"
                             AC_MSG_RESULT([found ($opal_cuda_incdir/cuda.h)])])])])])
 
-# We cannot have CUDA support without dlopen support.  Check for that and
-# error out if the user has also set --disable-dlopen.
-AS_IF([test "$enable_dlopen" = "no" && test "$opal_check_cuda_happy" = "yes"],
-    [AC_MSG_ERROR([--with-cuda cannot be used with --disable-dlopen.  Remove one of them and reconfigure.])])
+dnl We cannot have CUDA support without dlopen support.  HOWEVER, we
+dnl have not determined whether we have libltdl support yet (i.e.,
+dnl whether we have dlopen support or not).  So we have to defer this
+dnl check until later (see the OPAL_CHECK_CUDA_AFTER_LIBLTDL m4 macro,
+dnl below).  :-(
 
 # If we have CUDA support, check to see if we have CUDA 4.1 support
 AS_IF([test "$opal_check_cuda_happy"="yes"],
@@ -141,4 +142,25 @@ AM_CONDITIONAL([OPAL_cuda_gdr_support], [test "x$CUDA_VERSION_60_OR_GREATER" = "
 AC_DEFINE_UNQUOTED([OPAL_CUDA_GDR_SUPPORT],$CUDA_VERSION_60_OR_GREATER,
                    [Whether we have CUDA GDR support available])
 
+])
+
+dnl
+dnl CUDA support requires libltdl support.  But we do not check for
+dnl libltdl support until lafter the initial OPAL_CHECK_CUDA is called.
+dnl So put the CUDA+libltdl check in a separate macro that can be called
+dnl after the main libltdl check in the top-level configure.ac.
+dnl
+AC_DEFUN([OPAL_CHECK_CUDA_AFTER_LIBLTDL],[
+
+    # We cannot have CUDA support without dlopen support.  When this
+    # macro is invoked, we will know if we have libltdl (i.e., dlopen)
+    # support.
+
+    # Error out if the user wants CUDA but we do not have libltdl
+    # support.
+    AS_IF([test $OPAL_ENABLE_DLOPEN_SUPPORT -eq 0 && \
+           test "$opal_check_cuda_happy" = "yes"],
+          [AC_MSG_WARN([--with-cuda was specified, but dlopen support has been disabled.])
+           AC_MSG_WARN([You must enable dlopen support and reconfigure.])
+           AC_MSG_ERROR([Cannot continue.])])
 ])
