@@ -40,8 +40,7 @@ fs_plfs_sources = \
 	fs_plfs_file_delete.c \
 	fs_plfs_file_sync.c \
 	fs_plfs_file_set_size.c \
-        fs_plfs_file_get_size.c \
-        fs_plfs_file_set_info.c
+        fs_plfs_file_get_size.c 
 
 AM_CPPFLAGS = $(fs_plfs_CPPFLAGS)
 

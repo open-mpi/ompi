@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,7 +58,6 @@ static mca_fs_base_module_1_0_0_t plfs =  {
     mca_fs_plfs_file_delete,
     mca_fs_plfs_file_set_size,
     mca_fs_plfs_file_get_size,
-    mca_fs_plfs_file_set_info,
     mca_fs_plfs_file_sync
 };
 /*
