@@ -151,7 +151,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 3. You MUST install the last three tools (Autoconf, Automake, Libtool)
    into the same prefix directory.  These three tools are somewhat
    inter-related, and if they're going to be used together, they MUST
-   share a common installation prefix.  
+   share a common installation prefix.
 
    You can install m4 anywhere as long as it can be found in the path;
    it may be convenient to install it in the same prefix as the other
