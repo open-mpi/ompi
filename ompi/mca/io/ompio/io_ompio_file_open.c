@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -148,14 +148,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
     ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;   
 
-    /*
-    if (MPI_INFO_NULL != info)  {
-        ret = ompi_info_dup (info, &ompio_fh->f_info);
-	if (OMPI_SUCCESS != ret) {
-             goto fn_fail;
-	}
-    }
-    */
     /* This fix is needed for data seiving to work with 
        two-phase collective I/O */
      if ((amode & MPI_MODE_WRONLY)){
@@ -373,15 +365,6 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     if (MPI_COMM_NULL != ompio_fh->f_comm && (ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
-
-
-    /*
-    if (MPI_INFO_NULL != ompio_fh->f_info)
-    {
-        ompi_info_free (&ompio_fh->f_info);
-    }
-    */
-    
     
     return ret;
 }
@@ -560,31 +543,38 @@ mca_io_ompio_file_get_amode (ompi_file_t *fh,
 }
 
 
-int
-mca_io_ompio_file_set_info (ompi_file_t *fh,
-                            ompi_info_t *info)
+int mca_io_ompio_file_set_info (ompi_file_t *fh,
+				ompi_info_t *info)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
-    ret = data->ompio_fh.f_fs->fs_file_set_info (&data->ompio_fh, info);
+    
+    if ( MPI_INFO_NULL == fh->f_info ) {
+	/* OBJ_RELEASE(MPI_INFO_NULL); */
+    }
+    else {
+	ompi_info_free ( &fh->f_info);
+	fh->f_info = OBJ_NEW(ompi_info_t);
+	ret = ompi_info_dup (info, &fh->f_info);
+    }
 
     return ret;
 }
 
 
-int
-mca_io_ompio_file_get_info (ompi_file_t *fh,
-                            ompi_info_t ** info_used)
+int mca_io_ompio_file_get_info (ompi_file_t *fh,
+				ompi_info_t ** info_used)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
-    ret = ompi_info_dup (data->ompio_fh.f_info, info_used);
+    ompi_info_t *info=NULL;
+    
+    if ( MPI_INFO_NULL == fh->f_info  ) {
+	*info_used = MPI_INFO_NULL;
+    }
+    else {
+	info = OBJ_NEW(ompi_info_t);
+	ret = ompi_info_dup (fh->f_info, &info);
+	*info_used = info;
+    }
 
     return ret;
 }
