@@ -194,6 +194,8 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
             for flag in $CFLAGS; do
                 case $flag in
                 -pedantic) ;;
+                -Wmissing-prototypes) ;;
+                -Wsign-compare) ;;
                 *) opal_common_libfabric_embedded_CFLAGS="$opal_common_libfabric_embedded_CFLAGS $flag" ;;
                 esac
             done
