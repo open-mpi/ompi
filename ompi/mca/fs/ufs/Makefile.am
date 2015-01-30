@@ -49,5 +49,4 @@ sources = \
 	fs_ufs_file_delete.c \
 	fs_ufs_file_sync.c \
 	fs_ufs_file_set_size.c \
-        fs_ufs_file_get_size.c \
-        fs_ufs_file_set_info.c
+        fs_ufs_file_get_size.c

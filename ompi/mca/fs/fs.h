@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -114,8 +114,6 @@ typedef int (*mca_fs_base_module_file_set_size_fn_t)
     (struct mca_io_ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size);
 typedef int (*mca_fs_base_module_file_get_size_fn_t)
     (struct mca_io_ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *size);
-typedef int (*mca_fs_base_module_file_set_info_fn_t)
-    (struct mca_io_ompio_file_t *fh, struct ompi_info_t *info);
 typedef int (*mca_fs_base_module_file_sync_fn_t)
     (struct mca_io_ompio_file_t *fh);
 
@@ -139,7 +137,6 @@ struct mca_fs_base_module_1_0_0_t {
     mca_fs_base_module_file_delete_fn_t      fs_file_delete;
     mca_fs_base_module_file_set_size_fn_t    fs_file_set_size;
     mca_fs_base_module_file_get_size_fn_t    fs_file_get_size;
-    mca_fs_base_module_file_set_info_fn_t    fs_file_set_info;
     mca_fs_base_module_file_sync_fn_t        fs_file_sync;
 };
 typedef struct mca_fs_base_module_1_0_0_t mca_fs_base_module_1_0_0_t;

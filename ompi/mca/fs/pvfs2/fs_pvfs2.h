@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -81,9 +81,6 @@ int mca_fs_pvfs2_file_set_size (mca_io_ompio_file_t *fh,
 
 int mca_fs_pvfs2_file_get_size (mca_io_ompio_file_t *fh, 
                                 OMPI_MPI_OFFSET_TYPE *size);
-
-int mca_fs_pvfs2_file_set_info (mca_io_ompio_file_t *fh, 
-                                struct ompi_info_t *info);
 
 int mca_fs_pvfs2_file_sync (mca_io_ompio_file_t *fh);
 
