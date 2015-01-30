@@ -701,7 +701,7 @@ AC_INCLUDES_DEFAULT[
 [OPAL_USE_STDBOOL_H=1 MSG=yes],[OPAL_USE_STDBOOL_H=0 MSG=no])
 else
     OPAL_USE_STDBOOL_H=0
-    MSG="no (don't have <stdbool.h>)"
+    MSG="no (do not have <stdbool.h>)"
 fi
 AC_DEFINE_UNQUOTED(OPAL_USE_STDBOOL_H, $OPAL_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
