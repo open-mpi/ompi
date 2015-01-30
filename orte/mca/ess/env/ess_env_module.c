@@ -112,64 +112,22 @@ static int rte_init(void)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (ORTE_PROC_IS_DAEMON) {
-        if (NULL != orte_node_regex) {
-            /* extract the nodes */
-            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
-                error = "orte_regex_extract_node_names";
-                goto error;
-            }
-        }
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_orted_setup";
+    if (NULL != orte_node_regex) {
+        /* extract the nodes */
+        if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
+            error = "orte_regex_extract_node_names";
             goto error;
         }
-        opal_argv_free(hosts);
-        return ORTE_SUCCESS;
     }
-    
-    if (ORTE_PROC_IS_TOOL) {
-        /* otherwise, if I am a tool proc, use that procedure */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_tool_setup";
-            goto error;
-        }
-        return ORTE_SUCCESS;
-        
-    }
-    
-    /* use the default procedure to finish my setup */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(true))) {
+    if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_ess_base_app_setup";
+        error = "orte_ess_base_orted_setup";
         goto error;
     }
-    
-    /* setup process binding */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
-        error = "proc_binding";
-        goto error;
-    }
-
-    /* if we are an ORTE app - and not an MPI app - then
-     * we need to exchange our connection info here.
-     * MPI_Init has its own modex, so we don't need to do
-     * two of them. However, if we don't do a modex at all,
-     * then processes have no way to communicate
-     *
-     * NOTE: only do this when the process originally launches.
-     * Cannot do this on a restart as the rest of the processes
-     * in the job won't be executing this step, so we would hang
-     */
-    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
-        opal_pmix.fence(NULL, 0);
-    }
-    
+    opal_argv_free(hosts);
     return ORTE_SUCCESS;
 
-error:
+ error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
@@ -183,29 +141,10 @@ static int rte_finalize(void)
 {
     int ret;
 
-    /* if I am a daemon, finalize using the default procedure */
-    if (ORTE_PROC_IS_DAEMON) {
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
-        return ret;
-    } else if (ORTE_PROC_IS_TOOL) {
-        /* otherwise, if I am a tool proc, use that procedure */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
-        /* as a tool, I didn't create a nidmap - so just return now */
-        return ret;
-    }
-
-    /* otherwise, I must be an application process
-     * use the default procedure to finish
-     */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+    if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
         ORTE_ERROR_LOG(ret);
     }
-
-    return ORTE_SUCCESS;
+    return ret;
 }
 
 static int env_set_name(void)

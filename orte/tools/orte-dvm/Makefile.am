@@ -30,12 +30,12 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(DEBUGGER_CFLAGS)
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-man_pages = orterun.1
+man_pages = orte-dvm.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
 if OPAL_INSTALL_BINARIES
 
-bin_PROGRAMS = orterun
+bin_PROGRAMS = orte-dvm
 
 nodist_man_MANS = $(man_pages)
 
@@ -44,16 +44,12 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-dist_ortedata_DATA = help-orterun.txt
-
 endif # OPAL_INSTALL_BINARIES
 
-orterun_SOURCES = \
-        main.c \
-        orterun.c \
-        orterun.h
+orte_dvm_SOURCES = \
+        orte-dvm.c
 
-orterun_LDADD = \
+orte_dvm_LDADD = \
 	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 

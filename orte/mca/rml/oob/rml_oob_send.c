@@ -270,7 +270,7 @@ int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    if( NULL == peer ||
+    if (NULL == peer ||
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
         /* cannot send to an invalid peer */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

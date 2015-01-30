@@ -71,6 +71,7 @@ orte_routed_module_t orte_routed_direct_module = {
 #endif
 };
 
+static orte_process_name_t mylifeline;
 static orte_process_name_t *lifeline = NULL;
 static opal_list_t my_children;
 
@@ -509,7 +510,12 @@ static bool route_is_defined(const orte_process_name_t *target)
 
 static int set_lifeline(orte_process_name_t *proc)
 {
-    /* there is no lifeline */
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
+                         "%s routed:direct: set lifeline to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    mylifeline = *proc;
+    lifeline = &mylifeline;
     return ORTE_SUCCESS;
 }
 

@@ -66,21 +66,11 @@ orte_ess_env_component_open(void)
 
 int orte_ess_env_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we are the env module, so set the priority to
-     * be higher than the tool component so that a
-     * tool launched as a distributed set of procs
-     * (i.e., a "tool with name") will select this
-     * module, but low enough that any other environment
-     * will override us
-     */
-
-    /* if we don't have a path back to the HNP, then we
-     * were not launched by mpirun, so don't pick us as
-     * it would be impossible for the correct env vars
-     * to have been set!
-     */
-    if (NULL != orte_process_info.my_hnp_uri) {
-        *priority = 20;
+    /* we are the env module, only used by daemons that are
+     * launched by ssh so allow any enviro-specifc modules
+     * to override us */
+    if (ORTE_PROC_IS_DAEMON) {
+        *priority = 1;
         *module = (mca_base_module_t *)&orte_ess_env_module;
         return ORTE_SUCCESS;
     }
