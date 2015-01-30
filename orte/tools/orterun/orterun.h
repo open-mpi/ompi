@@ -65,6 +65,7 @@ struct orterun_globals_t {
     bool index_argv;
     bool run_as_root;
     char *personality;
+    bool dvm;
 };
 
 /**
