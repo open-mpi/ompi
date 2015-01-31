@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel Corporation. All rights reserved.
  * $COPYRIGHT$
