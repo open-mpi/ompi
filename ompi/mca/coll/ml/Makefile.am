@@ -3,6 +3,7 @@
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -15,8 +16,6 @@ LEX_OUTPUT_ROOT = lex.coll_ml_config_yy
 dist_ompidata_DATA = \
         mca-coll-ml.config \
 		help-mpi-coll-ml.txt
-
-not_used_yet = 
 
 sources = coll_ml.h \
         coll_ml_inlines.h \
