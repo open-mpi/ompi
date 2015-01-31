@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -24,12 +24,16 @@
 #endif
 
 #if OPAL_WANT_LIBLTDL
-struct opal_lt_dlhandle_st {lt_dlhandle dlhandle;};
-struct opal_lt_dladvise_st {lt_dladvise dladvise;};
-#else
-struct opal_lt_dlhandle_st {void *dlhandle;};
-struct opal_lt_dladvise_st {void *dladvise;};
+struct opal_lt_dlhandle_st { lt_dlhandle dlhandle; };
+#else /* OPAL_WANT_LIBLTDL */
+struct opal_lt_dlhandle_st { void *dlhandle; };
 #endif /* OPAL_WANT_LIBLTDL */
+
+#if OPAL_WANT_LIBLTDL && OPAL_HAVE_LTDL_ADVISE
+struct opal_lt_dladvise_st { lt_dladvise dladvise; };
+#else /* OPAL_WANT_LIBLTDL && OPAL_HAVE_LTDL_ADVISE */
+struct opal_lt_dladvise_st { void *dladvise; };
+#endif /* OPAL_WANT_LIBLTDL && OPAL_HAVE_LTDL_ADVISE */
 
 OPAL_DECLSPEC int opal_lt_dlinit(void)
 {
