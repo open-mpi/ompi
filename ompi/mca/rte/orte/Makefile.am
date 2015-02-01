@@ -27,7 +27,7 @@ libmca_rte_orte_la_SOURCES =$(sources) $(headers)
 libmca_rte_orte_la_LDFLAGS = -module -avoid-version
 libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 
-man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1 ompi-server.1
+man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1 ompi-server.1 ompi-dvm.1 ompi-submit.1
 
 if WANT_FT
 man_pages += ompi-checkpoint.1 ompi-restart.1
@@ -43,6 +43,8 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f ompi-clean$(EXEEXT); $(LN_S) orte-clean$(EXEEXT) ompi-clean$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-top$(EXEEXT); $(LN_S) orte-top$(EXEEXT) ompi-top$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-server$(EXEEXT); $(LN_S) orte-server$(EXEEXT) ompi-server$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f ompi-dvm$(EXEEXT); $(LN_S) orte-dvm$(EXEEXT) ompi-dvm$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f ompi-submit$(EXEEXT); $(LN_S) orte-submit$(EXEEXT) ompi-submit$(EXEEXT))
 if WANT_FT
 	(cd $(DESTDIR)$(bindir); rm -f ompi-checkpoint$(EXEEXT); $(LN_S) orte-checkpoint$(EXEEXT) ompi-checkpoint$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-restart$(EXEEXT); $(LN_S) orte-restart$(EXEEXT) ompi-restart$(EXEEXT))
@@ -55,7 +57,9 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-top$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-server$(EXEEXT)
+		$(DESTDIR)$(bindir)/ompi-server$(EXEEXT) \
+		$(DESTDIR)$(bindir)/ompi-dvm$(EXEEXT) \
+		$(DESTDIR)$(bindir)/ompi-submit$(EXEEXT)
 if WANT_FT
 	rm -f $(DESTDIR)$(bindir)/ompi-checkpoint$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-restart$(EXEEXT) \
@@ -114,6 +118,12 @@ $(top_builddir)/orte/tools/orte-server/orte-server.1:
 
 ompi-server.1: $(top_builddir)/orte/tools/orte-server/orte-server.1
 	cp -f $(top_builddir)/orte/tools/orte-server/orte-server.1 ompi-server.1
+
+ompi-dvm.1: $(top_builddir)/orte/tools/orte-dvm/orte-dvm.1
+	cp -f $(top_builddir)/orte/tools/orte-dvm/orte-dvm.1 ompi-dvm.1
+
+ompi-submit.1: $(top_builddir)/orte/tools/orte-submit/orte-submit.1
+	cp -f $(top_builddir)/orte/tools/orte-submit/orte-submit.1 ompi-submit.1
 
 clean-local:
 	rm -f $(man_pages)

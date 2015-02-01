@@ -478,6 +478,7 @@ orte/tools/orte-clean/orte-clean
 orte/tools/orte-clean/orte-clean.1
 orte/tools/orte-dvm/orte-dvm
 orte/tools/orte-dvm/orte-dvm.1
+ompi/mca/rte/orte/ompi-dvm.1
 orte/tools/orte-info/orte-info
 orte/tools/orte-info/orte-info.1
 orte/tools/orte-migrate/orte-migrate
@@ -492,6 +493,7 @@ orte/tools/orte-server/orte-server
 orte/tools/orte-server/orte-server.1
 orte/tools/orte-submit/orte-submit
 orte/tools/orte-submit/orte-submit.1
+ompi/mca/rte/orte/ompi-submit.1
 orte/tools/orte-top/orte-top
 orte/tools/orte-top/orte-top.1
 orte/tools/orted/orted
