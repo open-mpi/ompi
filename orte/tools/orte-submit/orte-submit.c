@@ -83,6 +83,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -130,6 +131,7 @@ static struct {
     char *personality;
     char *basename;
     char *prefix;
+    bool terminate;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -183,6 +185,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "hnp", "hnp", 1,
       &myglobals.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
+    
+    /* uri of Open MPI HNP, or at least where to get it */
+    { NULL, '\0', "terminate", "terminate", 0,
+      &myglobals.terminate, OPAL_CMD_LINE_TYPE_BOOL,
+      "Terminate the DVM" },
+    
 
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
@@ -465,6 +473,24 @@ int main(int argc, char *argv[])
     
      /* set the target hnp as our lifeline so we will terminate if it exits */
     orte_routed.set_lifeline(ORTE_PROC_MY_HNP);
+
+    /* setup to listen for HNP response to my commands */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
+                            ORTE_RML_PERSISTENT, local_recv, NULL);
+
+    /* set a timeout event in case the HNP doesn't answer */
+    
+    /* if this is the terminate command, just send it */
+    if (myglobals.terminate) {
+        opal_buffer_t *buf;
+        orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_HALT_VM_CMD;
+        buf = OBJ_NEW(opal_buffer_t);
+        opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD_T);
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                ORTE_RML_TAG_DAEMON,
+                                orte_rml_send_callback, NULL);
+        goto waiting;
+    }
     
     /* default our personality to OMPI */
     if (NULL == myglobals.personality) {
@@ -511,10 +537,6 @@ int main(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* setup to listen for HNP response to my commands */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
-                            ORTE_RML_PERSISTENT, local_recv, NULL);
-    
     /* check for a job timeout specification, to be provided in seconds
      * as that is what MPICH used
      */
@@ -537,11 +559,10 @@ int main(int argc, char *argv[])
         ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_RECOVERABLE);
     }
 
-    /* setup an event to wake us up when we get an answer from the DVM */
-    
     /* ask the HNP to spawn the job for us */
     rc = orte_plm.spawn(jdata);
 
+ waiting:
     /* loop the event lib until an exit event is detected */
     while (orte_event_base_active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
