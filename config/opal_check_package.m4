@@ -32,7 +32,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
 
     # so this sucks, but there's no way to get through the progression
     # of header includes without killing off the cache variable and trying
-    # again...  
+    # again...
     unset opal_Header
 
     opal_check_package_header_happy="no"
@@ -52,7 +52,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
 	  AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])],
           [$4])
     unset opal_check_package_header_happy
-    
+
     AS_VAR_POPDEF([opal_Header])dnl
 ])
 
@@ -76,8 +76,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
           [ # libdir was specified - search only there
            $1_LDFLAGS="$$1_LDFLAGS -L$6"
            LDFLAGS="$LDFLAGS -L$6"
-           AC_CHECK_LIB([$2], [$3], 
-                        [opal_check_package_lib_happy="yes"], 
+           AC_CHECK_LIB([$2], [$3],
+                        [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
            AS_IF([test "$opal_check_package_lib_happy" = "no"],
                  [LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
@@ -88,8 +88,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
            AS_IF([test "$opal_check_package_libdir" = "" -o "$opal_check_package_libdir" = "/usr" -o "$opal_check_package_libdir" = "/usr/local"],
                [ # try as is...
                 AC_VERBOSE([looking for library without search path])
-                AC_CHECK_LIB([$2], [$3], 
-                        [opal_check_package_lib_happy="yes"], 
+                AC_CHECK_LIB([$2], [$3],
+                        [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
                 AS_IF([test "$opal_check_package_lib_happy" = "no"],
                     [ # no go on the as is..  see what happens later...
@@ -102,8 +102,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib"
                      AC_VERBOSE([looking for library in lib])
-                     AC_CHECK_LIB([$2], [$3], 
-                               [opal_check_package_lib_happy="yes"], 
+                     AC_CHECK_LIB([$2], [$3],
+                               [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$opal_check_package_lib_happy" = "no"],
                          [ # no go on the as is..  see what happens later...
@@ -116,8 +116,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib64"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib64"
                      AC_VERBOSE([looking for library in lib64])
-                     AC_CHECK_LIB([$2], [$3], 
-                               [opal_check_package_lib_happy="yes"], 
+                     AC_CHECK_LIB([$2], [$3],
+                               [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$opal_check_package_lib_happy" = "no"],
                          [ # no go on the as is..  see what happens later...
@@ -131,7 +131,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
 
     AS_VAR_POPDEF([opal_Lib])dnl
 ])
-    
+
 
 dnl FI_CHECK_PACKAGE(prefix,
 dnl                    header,
@@ -187,7 +187,7 @@ AC_DEFUN([OPAL_CHECK_PACKAGE],[
     opal_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
     opal_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    _OPAL_CHECK_PACKAGE_HEADER([$1], [$2], [$6], 
+    _OPAL_CHECK_PACKAGE_HEADER([$1], [$2], [$6],
           [_OPAL_CHECK_PACKAGE_LIB([$1], [$3], [$4], [$5], [$6], [$7],
                 [opal_check_package_happy="yes"],
                 [opal_check_package_happy="no"])],
@@ -204,4 +204,4 @@ AC_DEFUN([OPAL_CHECK_PACKAGE],[
     CPPFLAGS="$opal_check_package_$1_save_CPPFLAGS"
     LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
     LIBS="$opal_check_package_$1_save_LIBS"
-]) 
+])
