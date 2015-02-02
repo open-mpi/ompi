@@ -549,6 +549,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.personality, OPAL_CMD_LINE_TYPE_STRING,
       "Programming model/language being used (default=\"ompi\")" },
 
+    { NULL, '\0', "dvm", "dvm", 0,
+      &orterun_globals.dvm, OPAL_CMD_LINE_TYPE_BOOL,
+      "Programming model/language being used (default=\"ompi\")" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -1131,6 +1135,7 @@ static int init_globals(void)
         orterun_globals.index_argv = false;
         orterun_globals.run_as_root = false;
         orterun_globals.personality = NULL;
+        orterun_globals.dvm = false;
     }
 
     /* Reset the other fields every time */
