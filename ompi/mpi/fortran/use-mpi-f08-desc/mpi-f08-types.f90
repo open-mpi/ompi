@@ -3,6 +3,8 @@
 ! Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2014      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
 ! variables (e.g., MPI_COMM_WORLD) and corresponding Fortran names
@@ -13,6 +15,7 @@ module mpi_f08_types
    use, intrinsic :: ISO_C_BINDING
 
    include "mpif-config.h"
+   include "opal/include/opal_fortran_config.h"
 
    !
    ! constants (these must agree with those in mpif-common.h, mpif-config.h)
@@ -151,7 +154,48 @@ module mpi_f08_types
 !
 ! STATUS/STATUSES_IGNORE
 !
-  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore")   :: MPI_STATUS_IGNORE
+#if OMPI_FORTRAN_CAPS
+  type(MPI_STATUS), bind(C, name="MPI_FORTRAN_STATUS_IGNORE") :: MPI_STATUS_IGNORE
+  type(MPI_STATUS), bind(C, name="MPI_FORTRAN_STATUSES_IGNORE") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="MPI_FORTRAN_BOTTOM")          :: MPI_BOTTOM
+  integer, bind(C, name="MPI_FORTRAN_IN_PLACE")        :: MPI_IN_PLACE
+  integer, bind(C, name="MPI_FORTRAN_ARGV_NULL")       :: MPI_ARGV_NULL
+  integer, bind(C, name="MPI_FORTRAN_ARGVS_NULL")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="MPI_FORTRAN_ERRCODES_IGNORE") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="MPI_FORTRAN_UNWEIGHTED")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="MPI_FORTRAN_WEIGHTS_EMPTY")   :: MPI_WEIGHTS_EMPTY
+#elif OMPI_FORTRAN_PLAIN
+  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore") :: MPI_STATUS_IGNORE
   type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="mpi_fortran_bottom")          :: MPI_BOTTOM
+  integer, bind(C, name="mpi_fortran_in_place")        :: MPI_IN_PLACE
+  integer, bind(C, name="mpi_fortran_argv_null")       :: MPI_ARGV_NULL
+  integer, bind(C, name="mpi_fortran_argvs_null")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="mpi_fortran_errcodes_ignore") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="mpi_fortran_unweighted")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="mpi_fortran_weights_empty")   :: MPI_WEIGHTS_EMPTY
+#elif OMPI_FORTRAN_SINGLE_UNDERSCORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore_") :: MPI_STATUS_IGNORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore_") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="mpi_fortran_bottom_")          :: MPI_BOTTOM
+  integer, bind(C, name="mpi_fortran_in_place_")        :: MPI_IN_PLACE
+  integer, bind(C, name="mpi_fortran_argv_null_")       :: MPI_ARGV_NULL
+  integer, bind(C, name="mpi_fortran_argvs_null_")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="mpi_fortran_errcodes_ignore_") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="mpi_fortran_unweighted_")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="mpi_fortran_weights_empty_")   :: MPI_WEIGHTS_EMPTY
+#elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore__") :: MPI_STATUS_IGNORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore__") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="mpi_fortran_bottom__")          :: MPI_BOTTOM
+  integer, bind(C, name="mpi_fortran_in_place__")        :: MPI_IN_PLACE
+  integer, bind(C, name="mpi_fortran_argv_null__")       :: MPI_ARGV_NULL
+  integer, bind(C, name="mpi_fortran_argvs_null__")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="mpi_fortran_errcodes_ignore__") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="mpi_fortran_unweighted__")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="mpi_fortran_weights_empty__")   :: MPI_WEIGHTS_EMPTY
+#else
+#error Unrecognized Fortran name mangling scheme
+#endif
 
 end module mpi_f08_types

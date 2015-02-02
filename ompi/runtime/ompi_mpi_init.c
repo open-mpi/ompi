@@ -61,7 +61,9 @@
 #include "opal/util/timings.h"
 
 #include "ompi/constants.h"
+#if OMPI_BUILD_FORTRAN_BINDINGS
 #include "ompi/mpi/fortran/base/constants.h"
+#endif
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -256,11 +258,22 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
    ompi/include/mpif-common.h.
  */
 
+#if OMPI_BUILD_FORTRAN_BINDINGS
+#  if OMPI_FORTRAN_CAPS
 #define INST(type, upper_case, lower_case, single_u, double_u)   \
-type lower_case; \
-type upper_case; \
-type single_u;  \
+type lower_case
+#  elif OMPI_FORTRAN_PLAIN
+#define INST(type, upper_case, lower_case, single_u, double_u)   \
+type upper_case
+#  elif OMPI_FORTRAN_SINGLE_UNDERSCORE
+#define INST(type, upper_case, lower_case, single_u, double_u)   \
+type single_u
+#  elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
+#define INST(type, upper_case, lower_case, single_u, double_u)   \
 type double_u
+#  else
+#    error Unrecognized Fortran name mangling scheme
+#  endif
 
 INST(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
@@ -280,6 +293,7 @@ INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
 INST(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
       mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
+#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */
 
 /*
  * Hash tables for MPI_Type_create_f90* functions

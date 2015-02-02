@@ -1,0 +1,31 @@
+! -*- fortran -*-
+!
+! Copyright (c) 2014      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
+!
+! $COPYRIGHT$
+!
+! Additional copyrights may follow
+! 
+! $HEADER$
+!
+
+!     This file exists to have a Fortran-safe header file that has
+!     results from configure tests.
+
+#ifndef OMPI_FORTRAN_CONFIGURE_H
+#define OMPI_FORTRAN_CONFIGURE_H
+
+! Whether fortran symbols are all caps or not
+#define OMPI_FORTRAN_CAPS @OMPI_FORTRAN_CAPS@
+
+! Whether fortran symbols have no trailing underscore or not
+#define OMPI_FORTRAN_PLAIN @OMPI_FORTRAN_PLAIN@
+
+! Whether fortran symbols have a trailing underscore or not
+#define OMPI_FORTRAN_SINGLE_UNDERSCORE @OMPI_FORTRAN_SINGLE_UNDERSCORE@
+
+! Whether fortran symbols have a trailing double underscore or not
+#define OMPI_FORTRAN_DOUBLE_UNDERSCORE @OMPI_FORTRAN_DOUBLE_UNDERSCORE@
+
+#endif

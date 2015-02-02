@@ -15,6 +15,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -103,7 +105,6 @@ libmpi_c_mpi_la_SOURCES = \
         cart_sub.c \
         close_port.c \
         comm_accept.c \
-        comm_c2f.c \
         comm_call_errhandler.c \
         comm_compare.c \
         comm_connect.c \
@@ -116,7 +117,6 @@ libmpi_c_mpi_la_SOURCES = \
         comm_dup.c \
         comm_dup_with_info.c \
         comm_idup.c \
-        comm_f2c.c \
         comm_free.c \
         comm_free_keyval.c \
         comm_get_attr.c \
@@ -145,9 +145,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_test_inter.c \
 	compare_and_swap.c \
         dims_create.c \
-        errhandler_c2f.c \
         errhandler_create.c \
-        errhandler_f2c.c \
         errhandler_free.c \
         errhandler_get.c \
         errhandler_set.c \
@@ -179,11 +177,9 @@ libmpi_c_mpi_la_SOURCES = \
         graphdims_get.c \
         grequest_complete.c \
         grequest_start.c \
-        group_c2f.c \
         group_compare.c \
         group_difference.c \
         group_excl.c \
-        group_f2c.c \
         group_free.c \
         group_incl.c \
         group_intersection.c \
@@ -196,11 +192,9 @@ libmpi_c_mpi_la_SOURCES = \
         ibsend.c \
         improbe.c \
         imrecv.c \
-        info_c2f.c \
         info_create.c \
         info_delete.c \
         info_dup.c \
-        info_f2c.c \
         info_free.c \
         info_get.c \
         info_get_nkeys.c \
@@ -221,8 +215,6 @@ libmpi_c_mpi_la_SOURCES = \
         keyval_create.c \
         keyval_free.c \
         lookup_name.c \
-        message_f2c.c \
-        message_c2f.c \
         mprobe.c \
         mrecv.c \
         neighbor_allgather.c \
@@ -235,10 +227,8 @@ libmpi_c_mpi_la_SOURCES = \
         ineighbor_alltoallv.c \
         neighbor_alltoallw.c \
         ineighbor_alltoallw.c \
-        op_c2f.c \
         op_commutative.c \
         op_create.c \
-        op_f2c.c \
         op_free.c \
         open_port.c \
         pack_external.c \
@@ -259,8 +249,6 @@ libmpi_c_mpi_la_SOURCES = \
         ireduce_scatter.c \
         reduce_scatter_block.c \
         ireduce_scatter_block.c \
-        request_c2f.c \
-        request_f2c.c \
         request_free.c \
         request_get_status.c \
 	rget.c \
@@ -282,8 +270,6 @@ libmpi_c_mpi_la_SOURCES = \
         ssend.c \
         start.c \
         startall.c \
-        status_c2f.c \
-        status_f2c.c \
         status_set_cancelled.c \
         status_set_elements.c \
         status_set_elements_x.c \
@@ -293,7 +279,6 @@ libmpi_c_mpi_la_SOURCES = \
         test_cancelled.c \
         testsome.c \
         topo_test.c \
-        type_c2f.c \
         type_commit.c \
         type_contiguous.c \
         type_create_darray.c \
@@ -311,7 +296,6 @@ libmpi_c_mpi_la_SOURCES = \
         type_delete_attr.c \
         type_dup.c \
         type_extent.c \
-        type_f2c.c \
         type_free.c \
         type_free_keyval.c \
         type_get_attr.c \
@@ -349,7 +333,6 @@ libmpi_c_mpi_la_SOURCES = \
 	win_allocate.c \
 	win_allocate_shared.c \
 	win_attach.c \
-        win_c2f.c \
         win_call_errhandler.c \
         win_complete.c  \
         win_create_errhandler.c \
@@ -358,7 +341,6 @@ libmpi_c_mpi_la_SOURCES = \
 	win_create_dynamic.c \
         win_delete_attr.c \
 	win_detach.c \
-        win_f2c.c \
         win_fence.c \
 	win_flush.c \
 	win_flush_all.c \
@@ -386,14 +368,36 @@ libmpi_c_mpi_la_SOURCES = \
 	win_unlock_all.c \
         win_wait.c
 
+if OMPI_BUILD_FORTRAN_BINDINGS
+libmpi_c_mpi_la_SOURCES += \
+        comm_c2f.c \
+        comm_f2c.c \
+        errhandler_c2f.c \
+        errhandler_f2c.c \
+        group_c2f.c \
+        group_f2c.c \
+        info_f2c.c \
+        info_c2f.c \
+        message_c2f.c \
+        message_f2c.c \
+        op_c2f.c \
+        op_f2c.c \
+        request_c2f.c \
+        request_f2c.c \
+        status_c2f.c \
+        status_f2c.c \
+        type_c2f.c \
+        type_f2c.c \
+        win_c2f.c \
+        win_f2c.c
+endif
+
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
 libmpi_c_mpi_la_SOURCES += \
-        file_c2f.c \
         file_call_errhandler.c \
         file_close.c \
         file_create_errhandler.c \
         file_delete.c \
-        file_f2c.c \
         file_get_amode.c \
         file_get_atomicity.c \
         file_get_byte_offset.c \
@@ -446,6 +450,13 @@ libmpi_c_mpi_la_SOURCES += \
         file_write_ordered_end.c \
         file_write_shared.c \
         register_datarep.c
+
+if OMPI_BUILD_FORTRAN_BINDINGS
+libmpi_c_mpi_la_SOURCES += \
+        file_c2f.c \
+        file_f2c.c
+endif
+
 endif
 
 # Conditionally install the header files
