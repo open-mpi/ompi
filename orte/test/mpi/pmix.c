@@ -87,8 +87,11 @@ int main(int argc, char* argv[])
   
     /* using fence as a barrier */
     opal_pmix.fence(NULL, 0);
-    if (0 == my_rank) {
-        fprintf(stderr, "[%d] Test passed. MODEX_SEND - %f, FENCE - %f, MODEX_RECV - %f, total - %f\n", my_rank, t1-t0, t3-t2, t5-t4, t5-t0);
-    }
+    fprintf(stderr, "[%d] Test passed.\n", my_rank);
+    fprintf(stderr, "[%d] \"MODEX_SEND\" %f\n", my_rank, t1-t0);
+    fprintf(stderr, "[%d] \"FENCE\" %f\n", my_rank, t3-t2);
+    fprintf(stderr, "[%d] \"MODEX_RECV\" %f\n", my_rank, t5-t4);
+    fprintf(stderr, "[%d] \"TOTAL\" %f\n", my_rank, t5-t0);
+
     DO_FINALIZE(0, 0, 0, 0);
 }
