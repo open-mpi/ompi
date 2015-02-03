@@ -77,8 +77,7 @@ int orte_ess_base_tool_setup(void)
     opal_proc_local_set(&orte_process_info.super);
 
     if (NULL != orte_process_info.my_hnp_uri) {
-        /* if we were given an HNP, then we were launched
-         * by mpirun in some fashion - in this case, we want
+        /* if we were given an HNP, then we want
          * to look like an application as well as being a tool.
          * Need to do this before opening the routed framework
          * so it will do the right things.
@@ -87,6 +86,7 @@ int orte_ess_base_tool_setup(void)
         /* get a separate orte event base */
         orte_event_base = opal_start_progress_thread("orte", true);
         progress_thread_running = true;
+        orte_event_base_active = true;
     }
     
     /* open and setup the state machine */
