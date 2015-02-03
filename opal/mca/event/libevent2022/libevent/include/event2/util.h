@@ -676,6 +676,7 @@ void evutil_secure_rng_get_bytes(void *buf, size_t n);
  */
 int evutil_secure_rng_init(void);
 
+/****     OMPI CHANGE     *****/
 /* Unused by OPAL and cannot support on OpenBSD.
  * See https://svn.open-mpi.org/trac/ompi/ticket/4829
  */
