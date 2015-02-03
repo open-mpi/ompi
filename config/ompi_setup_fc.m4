@@ -14,6 +14,8 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -64,7 +66,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
            ompi_fc_happy=0],
           [ompi_fc_happy=1])
 
-    AS_IF([test $ompi_fc_happy -eq 1 -a "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no"],
+    AS_IF([test $ompi_fc_happy -eq 1 && test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no"],
           [FCFLAGS="$FCFLAGS -g"
            OPAL_FLAGS_UNIQ(FCFLAGS)
            AC_MSG_WARN([-g has been added to FCFLAGS (--enable-debug)])

@@ -1,12 +1,14 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 AC_DEFUN([OMPI_REQUIRE_ENDPOINT_TAG_INIT], [
     ompi_endpoint_tag_counter=0
@@ -38,7 +40,7 @@ dnl    AS_IF([test "$enable_endpoint_information" != "no"],
 dnl          [OMPI_REQUIRE_ENDPOINT_TAG(DYNAMIC)])
 
     AC_MSG_CHECKING([for size of endpoint array])
-    AS_IF([test -z "$ompi_endpoint_tag_counter" -o "$ompi_endpoint_tag_counter" = "0"],
+    AS_IF([test -z "$ompi_endpoint_tag_counter" || test "$ompi_endpoint_tag_counter" = "0"],
           [AC_MSG_ERROR([Endpoint index count is 0.  This means no MPI communication would be possible.  Aborting.])])
     AC_MSG_RESULT([$ompi_endpoint_tag_counter])
     AC_DEFINE_UNQUOTED([OMPI_PROC_ENDPOINT_TAG_MAX], [$ompi_endpoint_tag_counter],

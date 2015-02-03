@@ -14,6 +14,8 @@ dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -42,14 +44,14 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
                        [enable Java MPI bindings (default: disabled)]))
 
     # check for required support
-    if test "$opal_java_happy" = "no" -a "$enable_mpi_java" = "yes"; then
+    if test "$opal_java_happy" = "no" && test "$enable_mpi_java" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_WARN([Java bindings requested but no Java support found])
         AC_MSG_ERROR([cannot continue])
     fi
 
     # Only build the Java bindings if requested
-    if test "$opal_java_happy" = "yes" -a "$enable_mpi_java" = "yes"; then
+    if test "$opal_java_happy" = "yes" && test "$enable_mpi_java" = "yes"; then
         AC_MSG_RESULT([yes])
         WANT_MPI_JAVA_SUPPORT=1
         AC_MSG_CHECKING([if shared libraries are enabled])

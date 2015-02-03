@@ -9,6 +9,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -31,7 +33,7 @@ AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
 
     AC_CACHE_CHECK([Fortran value for .TRUE. logical type],
         fortran_true_var,
-        [if test "$1" = "none" -o $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -o $ompi_fortran_happy -eq 0 ; then
+        [if test "$1" = "none" || test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 || test $ompi_fortran_happy -eq 0 ; then
              value=77
          else
              #
@@ -105,7 +107,7 @@ EOF
                       [happy=1], [happy=0])],
                  [happy=0])
 
-             AS_IF([test $happy -eq 0 -a $ompi_fortran_happy -eq 1],
+             AS_IF([test $happy -eq 0 && test $ompi_fortran_happy -eq 1],
                           [AC_MSG_ERROR([Could not compile Fortran .TRUE. test.  Aborting.])
                           ])
 

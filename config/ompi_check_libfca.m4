@@ -1,14 +1,15 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-
-# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+dnl Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OMPI_CHECK_FCA(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -24,7 +25,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
     OPAL_CHECK_WITHDIR([fca], [$with_fca], [lib/libfca.so])
 
     AS_IF([test "$with_fca" != "no"],
-          [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "yes"],
+          [AS_IF([test ! -z "$with_fca" && test "$with_fca" != "yes"],
 			  [ompi_check_fca_dir=$with_fca
 			   ompi_check_fca_libdir="$ompi_check_fca_dir/lib"
 			   ompi_check_fca_incdir="$ompi_check_fca_dir/include"
@@ -60,13 +61,13 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 			   [ompi_check_fca_happy="no"])
           ])
 
-    AS_IF([test "$ompi_check_fca_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+    AS_IF([test "$ompi_check_fca_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([fca driver does not currently support progress threads.  Disabling FCA.])
            ompi_check_fca_happy="no"])
 
     AS_IF([test "$ompi_check_fca_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "no"],
+          [AS_IF([test ! -z "$with_fca" && test "$with_fca" != "no"],
                  [AC_MSG_ERROR([FCA support requested but not found.  Aborting])])
            $3])
 

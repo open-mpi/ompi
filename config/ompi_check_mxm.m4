@@ -1,12 +1,14 @@
-# -*- shell-script -*-
-#
-# Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OMPI_CHECK_MXM(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -28,12 +30,12 @@ AC_DEFUN([OMPI_CHECK_MXM],[
     ompi_check_mxm_$1_save_LIBS="$LIBS"
 
     AS_IF([test "$with_mxm" != "no"],
-          [AS_IF([test ! -z "$with_mxm" -a "$with_mxm" != "yes"],
+          [AS_IF([test ! -z "$with_mxm" && test "$with_mxm" != "yes"],
                  [
                     ompi_check_mxm_dir="$with_mxm"
                     ompi_check_mxm_libdir="$with_mxm/lib"
                  ])
-           AS_IF([test ! -z "$with_mxm_libdir" -a "$with_mxm_libdir" != "yes"],
+           AS_IF([test ! -z "$with_mxm_libdir" && test "$with_mxm_libdir" != "yes"],
                  [ompi_check_mxm_libdir="$with_mxm_libdir"])
 
            ompi_check_mxm_extra_libs="-L$ompi_check_mxm_libdir"
@@ -80,7 +82,7 @@ AC_DEFUN([OMPI_CHECK_MXM],[
 
     AS_IF([test "$ompi_check_mxm_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_mxm" -a "$with_mxm" != "no"],
+          [AS_IF([test ! -z "$with_mxm" && test "$with_mxm" != "no"],
                  [AC_MSG_ERROR([MXM support requested but not found.  Aborting])])
            $3])
 ])

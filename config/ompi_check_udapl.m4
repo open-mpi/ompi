@@ -1,22 +1,24 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OMPI_CHECK_UDAPL(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -58,9 +60,9 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
                   ;;
            esac])
 
-    AS_IF([test ! -z "$with_udapl" -a "$with_udapl" != "yes"],
+    AS_IF([test ! -z "$with_udapl" && test "$with_udapl" != "yes"],
           [ompi_check_udapl_dir="$with_udapl"])
-    AS_IF([test ! -z "$with_udapl_libdir" -a "$with_udapl_libdir" != "yes"],
+    AS_IF([test ! -z "$with_udapl_libdir" && test "$with_udapl_libdir" != "yes"],
           [ompi_check_udapl_libdir="$with_udapl_libdir"])
     AS_IF([test "$with_udapl" = "no"],
           [ompi_check_udapl_happy="no"],
@@ -111,7 +113,7 @@ dnl out we need -ldapl to link (looks like udapl over GM).
 
     AS_IF([test "$ompi_check_udapl_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_udapl" -a "$with_udapl" != "no"],
+          [AS_IF([test ! -z "$with_udapl" && test "$with_udapl" != "no"],
                  [AC_MSG_ERROR([uDAPL support requested but not found.  Aborting])])
            $3])
 ])
