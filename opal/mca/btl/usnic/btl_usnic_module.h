@@ -35,8 +35,11 @@
 #include "btl_usnic_stats.h"
 #include "btl_usnic_util.h"
 
-/* In libfabric prov/usnic/src */
-#include "fi_ext_usnic.h"
+/* When using the embedded libfabric, this file will be in
+   opal/mca/common/libfabric/libfabric/prov/usnic/src/fi_ext_usnic.h.
+   When using the external libfabric, this file will be in
+   rdma/fi_ext_usnic.h. */
+#include OPAL_BTL_USNIC_FI_EXT_USNIC_H
 
 /*
  * Default limits.
