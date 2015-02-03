@@ -1,7 +1,9 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -86,7 +88,7 @@ EOF
                             [opal_output="`strings -a conftest.${OBJEXT} | grep $opal_ident`"
                              grep $opal_ident conftest.${OBJEXT} 2>&1 1>/dev/null
                              opal_status=$?
-                             AS_IF([test "$opal_output" != "" -o "$opal_status" = "0"],
+                             AS_IF([test "$opal_output" != "" || test "$opal_status" = "0"],
                                    [$6],
                                    [$7])],
                             [OPAL_LOG_MSG([the failed program was:])

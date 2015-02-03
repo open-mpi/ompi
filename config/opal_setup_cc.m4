@@ -14,6 +14,8 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -115,7 +117,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     fi
 
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
+    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
         if test "$opal_c_vendor" = "gnu"; then
             CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
         else
@@ -129,7 +131,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 -a "$opal_c_vendor" = "gnu" ; then
+    if test "$WANT_PICKY_COMPILER" = 1 && test "$opal_c_vendor" = "gnu" ; then
         add="-Wall -Wundef -Wno-long-long -Wsign-compare"
         add="$add -Wmissing-prototypes -Wstrict-prototypes"
         add="$add -Wcomment -pedantic"

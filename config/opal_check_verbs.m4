@@ -1,26 +1,28 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
-#                         reserved.
-# Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
-# Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
+dnl Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 
 # Internal helper macro to look for the verbs libdir
@@ -84,24 +86,24 @@ AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
           ])
 
     opal_verbs_dir=
-    AS_IF([test -n "$with_verbs" -a "$with_verbs" != "yes" -a "$with_verbs" != "no"],
+    AS_IF([test -n "$with_verbs" && test "$with_verbs" != "yes" && test "$with_verbs" != "no"],
           [opal_verbs_dir=$with_verbs])
 
     opal_verbs_libdir=
-    AS_IF([test -n "$with_verbs_libdir" -a "$with_verbs_libdir" != "yes" -a "$with_verbs_libdir" != "no"],
+    AS_IF([test -n "$with_verbs_libdir" && test "$with_verbs_libdir" != "yes" && test "$with_verbs_libdir" != "no"],
           [opal_verbs_libdir=$with_verbs_libdir])
 
     # If the top dir was specified but the libdir was not, look for
     # it.  Note that if the user needs a specific libdir (i.e., if our
     # hueristic ordering below is not sufficient), they need to
     # specify it.
-    AS_IF([test -z "$opal_verbs_libdir" -a -n "$opal_verbs_dir"],
+    AS_IF([test -z "$opal_verbs_libdir" && test -n "$opal_verbs_dir"],
           [_OPAL_CHECK_VERBS_LIBDIR(["$opal_verbs_dir/lib"])])
-    AS_IF([test -z "$opal_verbs_libdir" -a -n "$opal_verbs_dir"],
+    AS_IF([test -z "$opal_verbs_libdir" && test -n "$opal_verbs_dir"],
           [_OPAL_CHECK_VERBS_LIBDIR(["$opal_verbs_dir/lib64"])])
-    AS_IF([test -z "$opal_verbs_libdir" -a -n "$opal_verbs_dir"],
+    AS_IF([test -z "$opal_verbs_libdir" && test -n "$opal_verbs_dir"],
           [_OPAL_CHECK_VERBS_LIBDIR(["$opal_verbs_dir/lib32"])])
-    AS_IF([test -z "$opal_verbs_libdir" -a -n "$opal_verbs_dir"],
+    AS_IF([test -z "$opal_verbs_libdir" && test -n "$opal_verbs_dir"],
           [AC_MSG_WARN([Could not find libibverbs in the usual locations under $opal_verbs_dir])
            AC_MSG_ERROR([Cannot continue])
           ])
@@ -109,9 +111,9 @@ AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
     # If the libdir was specified, but the top dir was not, look for
     # it.  Note that if the user needs a specific top dir (i.e., if
     # our hueristic below is not sufficient), they need to specify it.
-    AS_IF([test -z "$opal_verbs" -a -n "$opal_verbs_libdir"],
+    AS_IF([test -z "$opal_verbs" && test -n "$opal_verbs_libdir"],
           [_OPAL_CHECK_VERBS_DIR([`dirname "$opal_verbs_libdir"`])])
-    AS_IF([test -z "$opal_verbs_dir" -a -n "$opal_verbs_libdir"],
+    AS_IF([test -z "$opal_verbs_dir" && test -n "$opal_verbs_libdir"],
           [AC_MSG_WARN([Could not find verbs.h in the usual locations under $opal_verbs_dir])
            AC_MSG_ERROR([Cannot continue])
           ])

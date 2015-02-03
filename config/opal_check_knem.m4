@@ -1,18 +1,20 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2009      The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
-# Copyright (c) 2014      Los Alamos National Security, LLC. All rights
-#                         reserved.
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2009      The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+dnl                         reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OPAL_CHECK_KNEM(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -29,7 +31,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
     opal_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"
 
     AS_IF([test "$with_knem" != "no"],
-          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "yes"],
+          [AS_IF([test ! -z "$with_knem" && test "$with_knem" != "yes"],
                  [opal_check_knem_dir="$with_knem"])
 
            _OPAL_CHECK_PACKAGE_HEADER([$1],
@@ -58,9 +60,9 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
     CPPFLAGS="$opal_check_knem_$1_save_CPPFLAGS"
 
-    AS_IF([test "$opal_check_knem_happy" = "yes" -a "$opal_cv_knem_version_ok" = "yes"],
+    AS_IF([test "$opal_check_knem_happy" = "yes" && test "$opal_cv_knem_version_ok" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "no"],
+          [AS_IF([test ! -z "$with_knem" && test "$with_knem" != "no"],
                  [AC_MSG_ERROR([KNEM support requested but not found.  Aborting])])
            $3])
     OPAL_VAR_SCOPE_POP

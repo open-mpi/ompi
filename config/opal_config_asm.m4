@@ -11,6 +11,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -386,13 +388,13 @@ foo$opal_cv_asm_label_suffix
         [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
-    if test "$opal_asm_addr" = "16" -o "$opal_asm_addr" = "10" ; then
+    if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
        opal_cv_asm_align_log="yes"
     else
         opal_cv_asm_align_log="no"
     fi])
 
-    if test "$opal_cv_asm_align_log" = "yes" -o "$opal_cv_asm_align_log" = "1" ; then
+    if test "$opal_cv_asm_align_log" = "yes" || test "$opal_cv_asm_align_log" = "1" ; then
         opal_asm_align_log_result=1
     else
         opal_asm_align_log_result=0
@@ -1039,7 +1041,7 @@ AC_MSG_ERROR([Can not continue.])
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
          asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
          asm_format="${asm_format}-${opal_asm_align_log_result}"
-         if test "$opal_cv_asm_arch" = "POWERPC32" -o "$opal_cv_asm_arch" = "POWERPC64" ; then
+         if test "$opal_cv_asm_arch" = "POWERPC32" || test "$opal_cv_asm_arch" = "POWERPC64" ; then
              asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
              asm_format="${asm_format}-1"
@@ -1068,7 +1070,7 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" -o "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
            AC_TRY_RUN([[
@@ -1114,7 +1116,7 @@ AC_DEFUN([OPAL_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_SYNC" -a "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
+if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_SYNC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already

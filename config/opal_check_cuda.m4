@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -17,13 +17,16 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
+
 AC_DEFUN([OPAL_CHECK_CUDA],[
 #
 # Check to see if user wants CUDA support
@@ -42,7 +45,7 @@ AC_MSG_CHECKING([if --with-cuda is set])
 # macro as that would error out after not finding it in the first directory.
 # Note that anywhere CUDA aware code is in the Open MPI repository requires
 # us to make use of AC_REQUIRE to ensure this check has been done.
-AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
+AS_IF([test "$with_cuda" = "no" || test "x$with_cuda" = "x"],
       [opal_check_cuda_happy="no"
        AC_MSG_RESULT([not set (--with-cuda=$with_cuda)])],
       [AS_IF([test "$with_cuda" = "yes"],
@@ -71,7 +74,7 @@ AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
 
 # We cannot have CUDA support without dlopen support.  Check for that and
 # error out if the user has also set --disable-dlopen.
-AS_IF([test "$enable_dlopen" = "no" -a "$opal_check_cuda_happy" = "yes"],
+AS_IF([test "$enable_dlopen" = "no" && test "$opal_check_cuda_happy" = "yes"],
     [AC_MSG_ERROR([--with-cuda cannot be used with --disable-dlopen.  Remove one of them and reconfigure.])])
 
 # If we have CUDA support, check to see if we have CUDA 4.1 support
