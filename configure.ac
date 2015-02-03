@@ -20,7 +20,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
@@ -266,7 +266,7 @@ AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshme
 m4_ifndef([project_oshmem], [project_oshmem_amc=false])
 AM_CONDITIONAL([PROJECT_OSHMEM], [test "$project_oshmem_amc" = "true"])
 
-if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
+if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
     AC_MSG_ERROR([Cannot continue])
 fi
@@ -618,9 +618,10 @@ OPAL_CONFIG_ASM
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
-    [test "$enable_oshmem" = "yes" -a "$ompi_fortran_happy" = "1" -a \
-          "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a \
-          "$enable_oshmem_fortran" != "no"])
+    [test "$enable_oshmem" = "yes" && \
+     test "$ompi_fortran_happy" = "1" && \
+     test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && \
+     test "$enable_oshmem_fortran" != "no"])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -820,7 +821,7 @@ if test $ac_cv_type_ptrdiff_t = yes ; then
 elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
     opal_ptrdiff_t="long"
     opal_ptrdiff_size=$ac_cv_sizeof_long
-elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
+elif test $ac_cv_type_long_long = yes && test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
     opal_ptrdiff_t="long long"
     opal_ptrdiff_size=$ac_cv_sizeof_long_long
 else
@@ -869,7 +870,7 @@ OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
-if test $ac_cv_func_statfs = no -a $ac_cv_func_statvfs = no; then
+if test $ac_cv_func_statfs = no && test $ac_cv_func_statvfs = no; then
     AC_MSG_WARN([neither statfs() and statvfs() were found])
     AC_MSG_ERROR([Cannot continue])
 fi
@@ -895,7 +896,7 @@ AC_CACHE_CHECK([for htonl define],
 #endif
 ])], [ompi_cv_htonl_define=yes], [ompi_cv_htonl_define=no])])
 AC_CHECK_FUNC([htonl], [ompi_have_htonl=yes], [ompi_have_htonl=no])
-AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
+AS_IF([test "$ompi_cv_htonl_define" = "yes" || test "$ompi_have_htonl" = "yes"],
     [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
         [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
@@ -1015,8 +1016,9 @@ AM_PROG_LEX
 # is *only* required for developers, we decided that it really was not
 # worth it to be portable between different versions of lex ;-).
 
-if test -z "$LEX" -o -n "`echo $LEX | $GREP missing`" -o \
-    "`basename $LEX`" != "flex"; then
+if test -z "$LEX" || \
+   test -n "`echo $LEX | $GREP missing`" || \
+   test "`basename $LEX`" != "flex"; then
     if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
         AC_MSG_WARN([*** Could not find GNU Flex on your system.])
         AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
