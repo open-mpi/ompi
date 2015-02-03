@@ -14,6 +14,8 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -225,7 +227,7 @@ dnl #######################################################################
 
 AC_DEFUN([OPAL_LOG_FILE],[
 # 1 is the filename
-if test -n "$1" -a -f "$1"; then
+if test -n "$1" && test -f "$1"; then
     cat $1 >&5
 fi])dnl
 
@@ -268,7 +270,7 @@ for val in ${$1}; do
     # Loop over every token we've seen so far
 
     opal_done="`expr $opal_i \> $opal_count`"
-    while test "$opal_found" = "0" -a "$opal_done" = "0"; do
+    while test "$opal_found" = "0" && test "$opal_done" = "0"; do
 
 	# Have we seen this token already?  Prefix the comparison with
 	# "x" so that "-Lfoo" values won't be cause an error.
@@ -373,7 +375,7 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
         # Loop over every token we've seen so far
 
         opal_done="`expr $opal_i \> $opal_count`"
-        while test "$opal_found" = "0" -a "$opal_done" = "0"; do
+        while test "$opal_found" = "0" && test "$opal_done" = "0"; do
 
             # Have we seen this token already?  Prefix the comparison
             # with "x" so that "-Lfoo" values won't be cause an error.
@@ -464,7 +466,7 @@ AC_DEFUN([OPAL_FLAGS_APPEND_UNIQ], [
     for arg in $2; do
         opal_tmp=`echo $arg | cut -c1-2`
         opal_append=1
-        AS_IF([test "$opal_tmp" = "-I" -o "$opal_tmp" = "-L" -o "$opal_tmp" = "-l"],
+        AS_IF([test "$opal_tmp" = "-I" || test "$opal_tmp" = "-L" || test "$opal_tmp" = "-l"],
               [for val in ${$1}; do
                    AS_IF([test "x$val" = "x$arg"], [opal_append=0])
                done])
@@ -584,11 +586,11 @@ AC_DEFUN([OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
         AC_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
                        [maximum length of ]m4_translit($1, [_], [ ])[s.  VALUE argument has to be specified (default: [$2]).]))
-    if test ! -z "$with_max_[$1]" -a "$with_max_[$1]" != "no" ; then
+    if test ! -z "$with_max_[$1]" && test "$with_max_[$1]" != "no" ; then
         # Ensure it's a number (hopefully an integer!), and >0
         expr $with_max_[$1] + 1 > /dev/null 2> /dev/null
         AS_IF([test "$?" != "0"], [happy=0],
-              [AS_IF([test $with_max_[$1] -ge $3 -a $with_max_[$1] -le $4],
+              [AS_IF([test $with_max_[$1] -ge $3 && test $with_max_[$1] -le $4],
                      [happy=1], [happy=0])])
 
         # If badness in the above tests, bail

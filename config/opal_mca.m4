@@ -122,7 +122,7 @@ AC_DEFUN([OPAL_MCA],[
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-direct flag requires an explicit list of
 *** type-component pairs.  For example, --enable-mca-direct=pml-ob1,coll-basic])
-    elif test ! -z "$enable_mca_direct" -a "$enable_mca_direct" != "" ; then
+    elif test ! -z "$enable_mca_direct" && test "$enable_mca_direct" != "" ; then
         #
         # we need to add this into the static list, unless the static list
         # is everything
@@ -142,7 +142,7 @@ AC_DEFUN([OPAL_MCA],[
         for item in $enable_mca_direct; do
             type="`echo $item | cut -f1 -d-`"
             comp="`echo $item | cut -f2- -d-`"
-            if test -z $type -o -z $comp ; then
+            if test -z $type || test -z $comp ; then
                 AC_MSG_ERROR([*** The enable-mca-direct flag requires a
 *** list of type-component pairs.  Invalid input detected.])
             else
@@ -164,7 +164,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_static" != "no"; then
         DSO_all=0
         msg=none
-    elif test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes"; then
+    elif test -z "$enable_mca_dso" || test "$enable_mca_dso" = "yes"; then
         DSO_all=1
         msg=all
     elif test "$enable_mca_dso" = "no"; then
@@ -193,7 +193,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_mca_static" = "yes"; then
         STATIC_all=1
         msg=all
-    elif test -z "$enable_mca_static" -o "$enable_mca_static" = "no"; then
+    elif test -z "$enable_mca_static" || test "$enable_mca_static" = "no"; then
         STATIC_all=0
         msg=none
     else
@@ -225,7 +225,7 @@ AC_DEFUN([OPAL_MCA],[
                [# BWB: Until projects have seperate configure scripts
                 # and can skip running all of ORTE, just avoid recursing
                 # into orte sub directory if orte disabled
-                if test "mca_project" = "ompi" -a "$enable_mpi" != "no" || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
+                if (test "mca_project" = "ompi" && test "$enable_mpi" != "no") || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
@@ -631,7 +631,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
 AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
     for component_path in $srcdir/$1/mca/$2/* ; do
         component="`basename $component_path`"
-        if test -d $component_path -a -x $component_path/configure ; then
+        if test -d $component_path && test -x $component_path/configure ; then
             opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
 
             opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: before, should_build=$8"
@@ -656,7 +656,7 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 
                     # First check for the ABORT tag
                     line="`$GREP ABORT= $infile | cut -d= -f2-`"
-                    if test -n "$line" -a "$line" != "no"; then
+                    if test -n "$line" && test "$line" != "no"; then
                         AC_MSG_WARN([MCA component configure script told me to abort])
                         AC_MSG_ERROR([cannot continue])
                     fi
@@ -701,14 +701,14 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     shared_mode_override=static
 
     # Setup for either shared or static
-    if test "$STATIC_FRAMEWORK" = "1" -o \
-        "$STATIC_COMPONENT" = "1" -o \
-        "$STATIC_all" = "1" ; then
+    if test "$STATIC_FRAMEWORK" = "1" || \
+       test "$STATIC_COMPONENT" = "1" || \
+       test "$STATIC_all" = "1" ; then
         $4="static"
-    elif test "$shared_mode_override" = "dso" -o \
-        "$SHARED_FRAMEWORK" = "1" -o \
-        "$SHARED_COMPONENT" = "1" -o \
-        "$DSO_all" = "1"; then
+    elif test "$shared_mode_override" = "dso" || \
+         test "$SHARED_FRAMEWORK" = "1" || \
+         test "$SHARED_COMPONENT" = "1" || \
+         test "$DSO_all" = "1"; then
         $4="dso"
     else
         $4="static"
@@ -820,7 +820,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     AS_LITERAL_IF([$3],
         [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""], 
            [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
-            AS_IF([test "$8" = "static" -a "$stop_at_first" = "1"],
+            AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
               [AS_IF([test "$with_devel_headers" = "yes"], 
                      [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
               [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])

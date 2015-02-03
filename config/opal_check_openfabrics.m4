@@ -26,7 +26,6 @@
 # $HEADER$
 #
 
-
 # OPAL_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if OPENIB support can be found.  sets prefix_{CPPFLAGS, 
@@ -428,6 +427,6 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
           [AC_MSG_RESULT([yes])],
           [AC_MSG_RESULT([no])])
 
-    AS_IF([test "1" = "$$1_have_mverbs" -a "1" = $$1_have_mqe],
+    AS_IF([test "1" = "$$1_have_mverbs" && test "1" = $$1_have_mqe],
             [$2], [$3])
 ])dnl

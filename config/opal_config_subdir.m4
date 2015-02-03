@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -37,7 +39,7 @@ subdir_failure="$4"
 # Sanity checks
 #
 
-if test "$subdir_dir" != ":" -a -d $srcdir/$subdir_dir; then
+if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
     AC_MSG_NOTICE([OPAL configuring in $subdir_dir])
 
     #

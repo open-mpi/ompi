@@ -18,6 +18,8 @@ dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -99,7 +101,7 @@ else
     WANT_MEM_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a "$OPAL_DEVEL" = 1; then
+if test "$WANT_MEM_DEBUG" = "0" && test -z "$enable_mem_debug" && test "$OPAL_DEVEL" = 1; then
     WANT_MEM_DEBUG=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -123,7 +125,7 @@ else
     WANT_MEM_PROFILE=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a "$OPAL_DEVEL" = 1; then
+if test "$WANT_MEM_PROFILE" = "0" && test -z "$enable_mem_profile" && test "$OPAL_DEVEL" = 1; then
     WANT_MEM_PROFILE=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -147,7 +149,7 @@ else
     WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
-if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$OPAL_DEVEL" = 1; then
+if test "$WANT_PICKY_COMPILER" = "0" && test -z "$enable_picky" && test "$OPAL_DEVEL" = 1; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
@@ -186,11 +188,11 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
     [Whether we want developer-level timing framework or not])
 
 AM_CONDITIONAL([OPAL_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
-AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" -a "$enable_binaries" != "no"])
+AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" && test "$enable_binaries" != "no"])
 
 
 #################### Early development override ####################
-if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$OPAL_DEVEL" = 1; then
+if test "$WANT_DEBUG" = "0" && test -z "$enable_debug" && test "$OPAL_DEVEL" = 1; then
     WANT_DEBUG=1
     echo "--> developer override: enable debugging code by default"
 fi
@@ -401,7 +403,7 @@ AC_MSG_CHECKING([if want package/brand string])
 AC_ARG_WITH([package-string],
      [AC_HELP_STRING([--with-package-string=STRING],
                      [Use a branding string throughout Open MPI])])
-if test "$with_package_string" = "" -o "$with_package_string" = "no"; then
+if test "$with_package_string" = "" || test "$with_package_string" = "no"; then
     with_package_string="Open MPI $OPAL_CONFIGURE_USER@$OPAL_CONFIGURE_HOST Distribution"
 fi
 AC_DEFINE_UNQUOTED([OPAL_PACKAGE_STRING], ["$with_package_string"],
@@ -415,7 +417,7 @@ AC_MSG_CHECKING([if want ident string])
 AC_ARG_WITH([ident-string],
      [AC_HELP_STRING([--with-ident-string=STRING],
                      [Embed an ident string into Open MPI object files])])
-if test "$with_ident_string" = "" -o "$with_ident_string" = "no"; then
+if test "$with_ident_string" = "" || test "$with_ident_string" = "no"; then
     with_ident_string="%VERSION%"
 fi
 # This is complicated, because $OPAL_VERSION may have spaces in it.

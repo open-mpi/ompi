@@ -1,23 +1,25 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OPAL_SETUP_COMPONENT_PACKAGE(1: framework_name, 
 #                              2: component_name,
@@ -66,9 +68,9 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
                         [Search for the $3 libraries in DIR])])
     OPAL_CHECK_WITHDIR([$3-libdir], [$with_$3_libdir], [$5])
 
-    AS_IF([test ! -z "$with_$3" -a "$with_$3" != "yes"],
+    AS_IF([test ! -z "$with_$3" && test "$with_$3" != "yes"],
           [$1_$2_dir="$with_$3"])
-    AS_IF([test ! -z "$with_$3_libdir" -a "$with_$3_libdir" != "yes"],
+    AS_IF([test ! -z "$with_$3_libdir" && test "$with_$3_libdir" != "yes"],
           [$1_$2_libdir="$with_$3_libdir"])
 
     AS_IF([test "$with_$3" = "no"],
@@ -92,7 +94,7 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
 
     # sanity check
     AS_IF([test "$$1_$2_happy" = "no"],
-          [AS_IF([test "$with_$3" != "no" -a ! -z "$with_$3"],
+          [AS_IF([test "$with_$3" != "no" && test ! -z "$with_$3"],
                  [AC_MSG_WARN([$1:$2 requested but not found])
                   AC_MSG_ERROR([Cannot continue])])])
 
