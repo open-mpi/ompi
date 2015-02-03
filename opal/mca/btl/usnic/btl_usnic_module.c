@@ -2117,9 +2117,9 @@ static void init_local_modex_part1(opal_btl_usnic_module_t *module)
 
     sin = info->src_addr;
     modex->ipv4_addr =       sin->sin_addr.s_addr;
-    modex->netmask =         uip->ui_netmask_be;
+    modex->netmask =         uip->ui.v1.ui_netmask_be;
     modex->max_msg_size =    info->ep_attr->max_msg_size;
-    modex->link_speed_mbps = uip->ui_link_speed;
+    modex->link_speed_mbps = uip->ui.v1.ui_link_speed;
 
     opal_btl_usnic_snprintf_ipv4_addr(module->if_ipv4_addr_str,
                                       sizeof(module->if_ipv4_addr_str),

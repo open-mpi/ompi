@@ -343,31 +343,31 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
        3. num_vfs * num_cqs_per_vf >= num_local_procs * NUM_CHANNELS
           (to ensure that each MPI process will be able to get the
           number of CQs that it needs) */
-    if (uip->ui_num_vf < 0 ||
-        uip->ui_qp_per_vf < 0 ||
-        uip->ui_cq_per_vf < 0) {
+    if (uip->ui.v1.ui_num_vf < 0 ||
+        uip->ui.v1.ui_qp_per_vf < 0 ||
+        uip->ui.v1.ui_cq_per_vf < 0) {
         snprintf(str, sizeof(str), "Cannot read usNIC resources");
         goto error;
     }
 
-    if (uip->ui_num_vf < unlp) {
+    if (uip->ui.v1.ui_num_vf < unlp) {
         snprintf(str, sizeof(str), "Not enough usNICs (found %d, need %d)",
-                 uip->ui_num_vf, unlp);
+                 uip->ui.v1.ui_num_vf, unlp);
         goto error;
     }
 
-    if (uip->ui_num_vf * uip->ui_qp_per_vf <
+    if (uip->ui.v1.ui_num_vf * uip->ui.v1.ui_qp_per_vf <
         unlp * USNIC_NUM_CHANNELS) {
         snprintf(str, sizeof(str), "Not enough WQ/RQ (found %d, need %d)",
-                 uip->ui_num_vf * uip->ui_qp_per_vf,
+                 uip->ui.v1.ui_num_vf * uip->ui.v1.ui_qp_per_vf,
                  unlp * USNIC_NUM_CHANNELS);
         goto error;
     }
-    if (uip->ui_num_vf * uip->ui_cq_per_vf <
+    if (uip->ui.v1.ui_num_vf * uip->ui.v1.ui_cq_per_vf <
         unlp * USNIC_NUM_CHANNELS) {
         snprintf(str, sizeof(str),
                  "Not enough CQ per usNIC (found %d, need %d)",
-                 uip->ui_num_vf * uip->ui_cq_per_vf,
+                 uip->ui.v1.ui_num_vf * uip->ui.v1.ui_cq_per_vf,
                  unlp * USNIC_NUM_CHANNELS);
         goto error;
     }
@@ -550,12 +550,12 @@ static bool filter_module(opal_btl_usnic_module_t *module,
     info = module->fabric_info;
     uip = &module->usnic_info;
     src = info->src_addr;
-    module_mask = src->sin_addr.s_addr & uip->ui_netmask_be;
+    module_mask = src->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
     match = false;
     for (i = 0; i < filter->n_elt; ++i) {
         if (filter->elts[i].is_netmask) {
             /* conservative: we also require the netmask to match */
-            if (filter->elts[i].netmask_be == uip->ui_netmask_be &&
+            if (filter->elts[i].netmask_be == uip->ui.v1.ui_netmask_be &&
                 filter->elts[i].addr_be == module_mask) {
                 match = true;
                 break;
@@ -800,12 +800,12 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: device %s usnic_info: link speed=%d, netmask=0x%x, ifname=%s, num_vf=%d, qp/vf=%d, cq/vf=%d",
                             info->fabric_attr->name,
-                            (unsigned int) module->usnic_info.ui_link_speed,
-                            (unsigned int) module->usnic_info.ui_netmask_be,
-                            module->usnic_info.ui_ifname,
-                            module->usnic_info.ui_num_vf,
-                            module->usnic_info.ui_qp_per_vf,
-                            module->usnic_info.ui_cq_per_vf);
+                            (unsigned int) module->usnic_info.ui.v1.ui_link_speed,
+                            (unsigned int) module->usnic_info.ui.v1.ui_netmask_be,
+                            module->usnic_info.ui.v1.ui_ifname,
+                            module->usnic_info.ui.v1.ui_num_vf,
+                            module->usnic_info.ui.v1.ui_qp_per_vf,
+                            module->usnic_info.ui.v1.ui_cq_per_vf);
 
         /* respect if_include/if_exclude subnets/ifaces from the user */
         if (filter != NULL) {

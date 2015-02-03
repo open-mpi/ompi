@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -68,7 +68,7 @@ static void map_output_modules(FILE *fp)
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         uip = &modules[i]->usnic_info;
         sin = modules[i]->fabric_info->src_addr;
-        prefix_len = usnic_netmask_to_cidrlen(uip->ui_netmask_be);
+        prefix_len = usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be);
 
         opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN,
                                         sin->sin_addr.s_addr,

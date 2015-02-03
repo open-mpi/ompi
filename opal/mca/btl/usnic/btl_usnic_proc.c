@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -304,12 +304,12 @@ static uint64_t compute_weight(
 
     /* Just compare the CIDR-masked IP address to see if they're on
        the same network.  If so, we're good. */
-    mynet = sinp->sin_addr.s_addr & uip->ui_netmask_be;
+    mynet = sinp->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
     peernet = proc_modex_addr->ipv4_addr & proc_modex_addr->netmask;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:%s: checking my IP address/subnet (%s/%d) vs. peer (%s/%d): %s",
                         __func__, my_ip_string,
-                        usnic_netmask_to_cidrlen(uip->ui_netmask_be),
+                        usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be),
                         peer_ip_string,
                         usnic_netmask_to_cidrlen(proc_modex_addr->netmask),
                         (mynet == peernet ? "match" : "DO NOT match"));
