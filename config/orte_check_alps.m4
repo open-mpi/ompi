@@ -1,22 +1,25 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
+
 # ORTE_CHECK_ALPS_CLE4([action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
@@ -41,14 +44,14 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
           [default_alps_dir="/usr"])
 
      AS_IF([test -z "$with_alps_libdir"],
-           [AS_IF([test "$with_alps" != "yes" -a "$with_alps" != "auto"],
+           [AS_IF([test "$with_alps" != "yes" && test "$with_alps" != "auto"],
                   [AS_IF([test -d "$with_alps_libdir/lib64"],
                          [orte_check_alps_libdir="$with_alps_libdir/lib64"],
                          [orte_check_alps_libdir="$with_alps_libdir/lib"])],
                   [ orte_check_alps_libdir="$default_alps_dir/lib/alps"])
            ],[])
 
-     AS_IF([test "$with_alps" = "yes" -o "$with_alps" = "auto"],
+     AS_IF([test "$with_alps" = "yes" || test "$with_alps" = "auto"],
            [orte_check_alps_dir=$default_alps_dir],
            [orte_check_alps_dir=$with_alps])
 
@@ -64,7 +67,7 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
           [orte_check_alps_dir_cle4_happy="no"
            AC_MSG_RESULT([no])])
 
-    AS_IF([test "$orte_check_alps_libdir_cle4_happy" = "yes" -a "$orte_check_alps_dir_cle4_happy" = "yes"],
+    AS_IF([test "$orte_check_alps_libdir_cle4_happy" = "yes" && test "$orte_check_alps_dir_cle4_happy" = "yes"],
           [CRAY_ALPSLLI_CFLAGS="-I$orte_check_alps_dir/include"
            CRAY_ALPSLLI_LIBS="-L$orte_check_alps_libdir -lalpslli -lalpsutil"
            CRAY_ALPSLLI_STATIC_LIBS="-L$orte_check_alps_libdir -lalpslli -lalpsutil"
@@ -91,13 +94,13 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
         fi
 
         AC_MSG_CHECKING([for ALPS support cle level $cle_level])
-        AS_IF([test "$cle_level" = "4" -a "$with_alps" != "no"],
+        AS_IF([test "$cle_level" = "4" && test "$with_alps" != "no"],
               [ORTE_CHECK_ALPS_CLE4([orte_check_cray_alps_happy="yes"],
                                     [orte_check_cray_alps_happy="no"])],
               [AS_IF([test "$with_alps" = "no"],
                      [AC_MSG_RESULT([no])
                       $3],
-                     [AS_IF([test "$with_alps" = "auto" -o "$with_alps" = "yes"],
+                     [AS_IF([test "$with_alps" = "auto" || test "$with_alps" = "yes"],
                             [PKG_CHECK_MODULES_STATIC([CRAY_ALPSLLI], [cray-alpslli],
                                                       [orte_check_cray_alps_happy="yes"],
                                                       [orte_check_cray_alps_happy="no"]
@@ -136,7 +139,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 
         AC_MSG_RESULT([orte_check_cray_alps_happy = $orte_check_cray_alps_happy])
 
-        AS_IF([test "$orte_check_cray_alps_happy" = "yes" -a "$enable_static" = "yes"],
+        AS_IF([test "$orte_check_cray_alps_happy" = "yes" && test "$enable_static" = "yes"],
               [CRAY_ALPSLLI_LIBS = $CRAY_ALPSLLI_STATIC_LIBS
                CRAY_ALPSUTIL_LIBS = $CRAY_ALPSUTIL_STATIC_LIBS],
               [])
