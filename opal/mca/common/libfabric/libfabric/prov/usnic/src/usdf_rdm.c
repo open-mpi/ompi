@@ -391,11 +391,16 @@ _usdf_rdm_post_recv(struct usdf_rx *rx, void *buf, size_t len)
 	rq->urq_post_index = (rq->urq_post_index + 1)
 		& rq->urq_post_index_mask;
 
-	desc = vnic_rq_next_desc(vrq);
+	desc = rq->urq_next_desc;
 	rq_enet_desc_enc(desc, (dma_addr_t) buf,
 			RQ_ENET_TYPE_ONLY_SOP, len);
 	wmb();
-	vnic_rq_post(vrq, buf, 0, (dma_addr_t) buf, len, 0);
+	iowrite32(rq->urq_post_index, &vrq->ctrl->posted_index);
+
+	rq->urq_next_desc = (struct rq_enet_desc *)
+				((uintptr_t)rq->urq_desc_ring
+					+ ((rq->urq_post_index)<<4));
+	rq->urq_recv_credits -= 1;
 
 	return 0;
 }

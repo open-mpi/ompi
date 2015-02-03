@@ -1,9 +1,11 @@
-.TH fi_cq 3 "2014\-12\-15" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_cq 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_cq - Completion queue operations
 .PP
 fi_cq_open / fi_close : Open/close a completion queue
+.PP
+fi_control : Control CQ operation or attributes.
 .PP
 fi_cq_read / fi_cq_readfrom / fi_cq_readerr : Read a completion from a
 completion queue
@@ -77,6 +79,10 @@ information.
 \f[I]src_addr\f[] : Source address of a completed receive operation
 .PP
 \f[I]flags\f[] : Additional flags to apply to the operation
+.PP
+\f[I]command\f[] : Command of control operation to perform on CQ.
+.PP
+\f[I]arg\f[] : Optional control argument
 .PP
 \f[I]cond\f[] : Condition that must be met before a completion is
 generated
@@ -288,8 +294,12 @@ This field is ignored if wait_obj is not FI_WAIT_SET.
 .PP
 The fi_close call releases all resources associated with a completion
 queue.
-The CQ must not be bound to any other resources prior to being closed.
 Any completions which remain on the CQ when it is closed are lost.
+.PP
+When closing the CQ, there must be no opened endpoints, transmit
+contexts, or receive contexts associated with the CQ.
+If resources are still associated with the CQ when attempting to close,
+the call will return -FI_EBUSY.
 .SS fi_control
 .PP
 The fi_control call is used to access provider or implementation
@@ -298,11 +308,13 @@ Access to the CQ should be serialized across all calls when fi_control
 is invoked, as it may redirect the implementation of CQ operations.
 The following control commands are usable with an CQ.
 .PP
-*FI_GETWAIT (void *\f[I])\f[] : This command allows the user to retrieve
+\f[I]FI_GETWAIT (void **)\f[] : This command allows the user to retrieve
 the low-level wait object associated with the CQ.
 The format of the wait-object is specified during CQ creation, through
 the CQ attributes.
-See fi_eq.3 for addition details using control with FI_GETWAIT.
+The fi_control arg parameter should be an address where a pointer to the
+returned wait object will be written.
+See fi_eq.3 for addition details using fi_control with FI_GETWAIT.
 .SS fi_cq_read / fi_cq_readfrom
 .PP
 The fi_cq_read and fi_cq_readfrom operations perform a non-blocking read

@@ -120,7 +120,7 @@ struct fi_ops_domain {
 	int	(*endpoint)(struct fid_domain *domain, struct fi_info *info,
 			struct fid_ep **ep, void *context);
 	int	(*scalable_ep)(struct fid_domain *domain, struct fi_info *info,
-			struct fid_sep **sep, void *context);
+			struct fid_ep **sep, void *context);
 	int	(*cntr_open)(struct fid_domain *domain, struct fi_cntr_attr *attr,
 			struct fid_cntr **cntr, void *context);
 	int	(*poll_open)(struct fid_domain *domain, struct fi_poll_attr *attr,
@@ -221,6 +221,11 @@ static inline void *fi_mr_desc(struct fid_mr *mr)
 static inline uint64_t fi_mr_key(struct fid_mr *mr)
 {
 	return mr->key;
+}
+
+static inline int fi_mr_bind(struct fid_mr *mr, struct fid *bfid, uint64_t flags)
+{
+	return mr->fid.ops->bind(&mr->fid, bfid, flags);
 }
 
 static inline int

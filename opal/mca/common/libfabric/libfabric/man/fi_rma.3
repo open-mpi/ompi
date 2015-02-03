@@ -1,4 +1,4 @@
-.TH fi_rma 3 "2015\-01\-07" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_rma 3 "2015\-01\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_rma - Remote memory access operations
@@ -231,6 +231,10 @@ data into a local buffer and transfer out of that buffer.
 \f[I]FI_REMOTE_COMPLETE\f[] : Applies to fi_writemsg.
 Indicates that a completion should not be generated until the operation
 has completed on the remote side.
+.PP
+\f[I]FI_FENCE\f[] : Indicates that the requested operation, also known
+as the fenced operation, be deferred until all previous operations
+targeting the same target endpoint have completed.
 .SH RETURN VALUE
 .PP
 Returns 0 on success.

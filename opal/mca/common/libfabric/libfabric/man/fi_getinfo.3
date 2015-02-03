@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-01\-20" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -250,11 +250,11 @@ send and receive tagged messages.
 Applications can use the FI_SEND and FI_RECV flags to optimize an
 endpoint as send-only or receive-only.
 .PP
-\f[I]FI_ATOMICS\f[] : Specifies that the endpoint supports some set of
+\f[I]FI_ATOMIC\f[] : Specifies that the endpoint supports some set of
 atomic operations.
 Endpoints supporting this capability support operations defined by
 struct fi_ops_atomic.
-In the absence of any relevant flags, FI_ATOMICS implies the ability to
+In the absence of any relevant flags, FI_ATOMIC implies the ability to
 initiate and be the target of remote atomic reads and writes.
 Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
 FI_REMOTE_WRITE flags to restrict the types of atomic operations
@@ -306,11 +306,11 @@ data, which may adversely affect performance.
 .PP
 \f[I]FI_READ\f[] : Indicates that the user requires an endpoint capable
 of initiating reads against remote memory regions.
-Remote reads include some RMA and atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_WRITE\f[] : Indicates that the user requires an endpoint capable
 of initiating writes against remote memory regions.
-Remote writes include some RMA and most atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_SEND\f[] : Indicates that the user requires an endpoint capable
 of sending message data transfers.
@@ -324,12 +324,11 @@ message functionality.
 .PP
 \f[I]FI_REMOTE_READ\f[] : Indicates that the user requires an endpoint
 capable of receiving read memory operations from remote endpoints.
-Remote read operations include some RMA and atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_REMOTE_WRITE\f[] : Indicates that the user requires an endpoint
 capable of receiving write memory operations from remote endpoints.
-Remote write operations include some RMA operations and most atomic
-operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_REMOTE_CQ_DATA\f[] : Applications may include a small message
 with a data transfer that is placed directly into a remote event queue
@@ -362,6 +361,15 @@ assumption that fi_cancel will not be used by the application.
 triggered operations.
 Endpoints support this capability must meet the usage model as described
 by fi_trigger.3.
+.PP
+\f[I]FI_FENCE\f[] : Indicates that the endpoint support the FI_FENCE
+flag on data transfer operations.
+Support requires tracking that all previous transmit requests to a
+specified remote endpoint complete prior to initiating the fenced
+operation.
+Fenced operations are often used to enforce ordering between operations
+that are not otherwise guaranteed by the underlying provider or
+protocol.
 .SH MODE
 .PP
 The operational mode bits are used to convey requirements that an
@@ -449,6 +457,18 @@ associated with a registration request, and the resulting memory region
 will start at a base address of 0.
 Applications can request that providers select MR attributes by forcing
 this bit set after fi_getinfo returns.
+.PP
+\f[I]FI_ASYNC_IOV\f[] : Applications can reference multiple data buffers
+as part of a single transmit operation through the use of IO vectors
+(SGEs).
+Typically, the contents of an IO vector are copied by the provider into
+an internal buffer area, or directly to the underlying hardware.
+However, when a large number of IOV entries are supported, IOV buffering
+may have a negative impact on performance and memory consumption.
+The FI_ASYNC_IOV mode indicates that the application must provide the
+buffering needed for the IO vectors.
+When set, an application must not modify an IO vector until the
+associated operation has completed.
 .SH ENDPOINT TYPES
 .PP
 \f[I]FI_EP_UNSPEC\f[] : The type of endpoint is not specified.

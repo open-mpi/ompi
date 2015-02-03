@@ -58,7 +58,7 @@
 #include "fi.h"
 #include "fi_enosys.h"
 
-#include "fi_usnic.h"
+#include "fi_ext_usnic.h"
 #include "usnic_direct.h"
 #include "usd.h"
 #include "usdf.h"

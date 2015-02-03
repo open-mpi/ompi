@@ -487,6 +487,11 @@ static void fi_tostr_atomic_op(char *buf, enum fi_op op)
 	}
 }
 
+static void fi_tostr_version(char *buf)
+{
+	strcatf(buf, VERSION);
+}
+
 __attribute__((visibility ("default")))
 char *fi_tostr_(const void *data, enum fi_type datatype)
 {
@@ -559,6 +564,9 @@ char *fi_tostr_(const void *data, enum fi_type datatype)
 		break;
 	case FI_TYPE_ATOMIC_OP:
 		fi_tostr_atomic_op(buf, enumval);
+		break;
+	case FI_TYPE_VERSION:
+		fi_tostr_version(buf);
 		break;
 	default:
 		strcatf(buf, "Unknown type");

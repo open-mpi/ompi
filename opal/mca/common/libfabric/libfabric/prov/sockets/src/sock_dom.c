@@ -47,7 +47,7 @@ const struct fi_domain_attr sock_domain_attr = {
 	.threading = FI_THREAD_SAFE,
 	.control_progress = FI_PROGRESS_AUTO,
 	.data_progress = FI_PROGRESS_AUTO,
-	.mr_key_size = 0,
+	.mr_key_size = sizeof(uint16_t),
 	.cq_data_size = sizeof(uint64_t),
 	.ep_cnt = SOCK_EP_MAX_EP_CNT,
 	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
@@ -72,6 +72,7 @@ int sock_verify_domain_attr(struct fi_domain_attr *attr)
 	case FI_THREAD_FID:
 	case FI_THREAD_DOMAIN:
 	case FI_THREAD_COMPLETION:
+	case FI_THREAD_ENDPOINT:
 		break;
 	default:
 		SOCK_LOG_INFO("Invalid threading model!\n");
@@ -180,13 +181,15 @@ static int sock_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	case FI_CLASS_CQ:
 		cq = container_of(bfid, struct sock_cq, cq_fid.fid);
 		assert(mr->domain == cq->domain);
-		mr->cq = cq;
+		if (flags & FI_REMOTE_WRITE)
+			mr->cq = cq;
 		break;
 
 	case FI_CLASS_CNTR:
 		cntr = container_of(bfid, struct sock_cntr, cntr_fid.fid);
 		assert(mr->domain == cntr->domain);
-		mr->cntr = cntr;
+		if (flags & FI_REMOTE_WRITE)
+			mr->cntr = cntr;
 		break;
 
 	default:
@@ -361,7 +364,7 @@ int sock_endpoint(struct fid_domain *domain, struct fi_info *info,
 }
 
 int sock_scalable_ep(struct fid_domain *domain, struct fi_info *info,
-		     struct fid_sep **sep, void *context)
+		     struct fid_ep **sep, void *context)
 {
 	switch (info->ep_type) {
 	case FI_EP_RDM:
@@ -406,7 +409,6 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		struct fid_domain **dom, void *context)
 {
 	int ret, flags;
-	char service[NI_MAXSERV];
 	struct sock_domain *sock_domain;
 
 	if(info && info->domain_attr){
@@ -424,11 +426,11 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 
 	if(info && info->src_addr) {
 		if (getnameinfo(info->src_addr, info->src_addrlen, NULL, 0,
-				service, sizeof(service), NI_NUMERICSERV)) {
+				sock_domain->service, sizeof(sock_domain->service),
+				NI_NUMERICSERV)) {
 			SOCK_LOG_ERROR("could not resolve src_addr\n");
 			goto err;
 		}
-		sock_domain->service = atoi(service);
 		sock_domain->info = *info;
 		memcpy(&sock_domain->src_addr, info->src_addr, 
 		       sizeof(struct sockaddr_in));
@@ -455,6 +457,7 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		goto err;
 	}
 
+	sock_domain->ep_count = AF_INET;
 	sock_domain->r_cmap.domain = sock_domain;
 	fastlock_init(&sock_domain->r_cmap.lock);
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_domain->signal_fds) < 0)

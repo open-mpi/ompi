@@ -277,4 +277,10 @@ static inline size_t rbfdsread(struct ringbuffd *rbfd, void *buf, size_t len,
 	return ret;
 }
 
+static inline size_t rbfdwait(struct ringbuffd *rbfd, int timeout)
+{
+	return  fi_poll_fd(rbfd->fd[RB_READ_FD], timeout);
+}
+
+
 #endif /* RBUF_H */

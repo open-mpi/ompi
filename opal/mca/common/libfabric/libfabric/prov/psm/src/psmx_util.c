@@ -82,10 +82,10 @@ static void psmx_name_server_cleanup(void *args)
 /*************************************************************
  * A simple name resolution mechanism for client-server style
  * applications. The server side has to run first. The client
- * side then passes the server name as the first parameter
+ * side then passes the server name as the "node" parameter
  * of fi_getinfo call and the resulting provider info should
- * have the transport address of the server in the dest_addr
- * field. Both side has to use the same UUID.
+ * have the transport address of the server in the "dest_addr"
+ * field. Both sides have to use the same UUID.
  *************************************************************/
 void *psmx_name_server(void *args)
 {
@@ -181,7 +181,7 @@ void *psmx_resolve_name(const char *servername, int port)
 
 	n = getaddrinfo(servername, service, &hints, &res);
 	if (n < 0) {
-		fprintf(stderr, "%s:(%s:%d):%s\n", __func__, servername, port, gai_strerror(n));
+		psmx_debug("%s:(%s:%d):%s\n", __func__, servername, port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -200,7 +200,7 @@ void *psmx_resolve_name(const char *servername, int port)
 	free(service);
 
 	if (sockfd < 0) {
-		fprintf(stderr, "%s: couldn't connect to %s:%d\n", __func__, servername, port);
+		psmx_debug("%s: couldn't connect to %s:%d\n", __func__, servername, port);
 		return NULL;
 	}
 

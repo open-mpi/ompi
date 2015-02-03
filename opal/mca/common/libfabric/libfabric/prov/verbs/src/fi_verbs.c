@@ -689,6 +689,9 @@ static int fi_ibv_msg_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 
 	switch (bfid->fclass) {
 	case FI_CLASS_CQ:
+		if (!(flags & (FI_RECV|FI_SEND))) {
+			return -EINVAL;
+		}
 		if (flags & FI_RECV) {
 			if (ep->rcq)
 				return -EINVAL;
@@ -908,8 +911,6 @@ static struct fi_ops_msg fi_ibv_msg_ep_msg_ops = {
 	.inject = fi_no_msg_inject,
 	.senddata = fi_ibv_msg_ep_senddata,
 	.injectdata = fi_no_msg_injectdata,
-	.rx_size_left = fi_no_msg_rx_size_left,
-	.tx_size_left = fi_no_msg_tx_size_left,
 };
 
 static ssize_t
@@ -1678,7 +1679,7 @@ static int fi_ibv_msg_ep_shutdown(struct fid_ep *ep, uint64_t flags)
 
 static struct fi_ops_cm fi_ibv_msg_ep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = NULL, /* TODO */
+	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_ibv_msg_ep_connect,
 	.listen = fi_no_listen,
@@ -1720,6 +1721,8 @@ static int fi_ibv_msg_ep_enable(struct fid_ep *ep)
 	_ep = container_of(ep, struct fi_ibv_msg_ep, ep_fid);
 	if (!_ep->eq)
 		return -FI_ENOEQ;
+	if (!_ep->scq || !_ep->rcq)
+		return -FI_ENOCQ;
 
 	return fi_ibv_msg_ep_create_qp(_ep);
 }
@@ -1730,6 +1733,8 @@ static struct fi_ops_ep fi_ibv_msg_ep_base_ops = {
 	.cancel = fi_no_cancel,
 	.getopt = fi_ibv_msg_ep_getopt,
 	.setopt = fi_ibv_msg_ep_setopt,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static int fi_ibv_msg_ep_close(fid_t fid)
@@ -1880,20 +1885,20 @@ fi_ibv_eq_cm_process_event(struct fi_ibv_eq *eq, struct rdma_cm_event *cma_event
 	case RDMA_CM_EVENT_UNREACHABLE:
 		eq->err.fid = fid;
 		eq->err.err = cma_event->status;
-		return -EIO;
+		return -FI_EAVAIL;
 	case RDMA_CM_EVENT_REJECTED:
 		eq->err.fid = fid;
 		eq->err.err = ECONNREFUSED;
 		eq->err.prov_errno = cma_event->status;
-		return -EIO;
+		return -FI_EAVAIL;
 	case RDMA_CM_EVENT_DEVICE_REMOVAL:
 		eq->err.fid = fid;
 		eq->err.err = ENODEV;
-		return -EIO;
+		return -FI_EAVAIL;
 	case RDMA_CM_EVENT_ADDR_CHANGE:
 		eq->err.fid = fid;
 		eq->err.err = EADDRNOTAVAIL;
-		return -EIO;
+		return -FI_EAVAIL;
 	default:
 		return 0;
 	}
@@ -1917,7 +1922,7 @@ fi_ibv_eq_read(struct fid_eq *eq, uint32_t *event,
 	_eq = container_of(eq, struct fi_ibv_eq, eq_fid.fid);
 	entry = (struct fi_eq_cm_entry *) buf;
 	if (_eq->err.err)
-		return -FI_EIO;
+		return -FI_EAVAIL;
 
 	ret = rdma_get_cm_event(_eq->channel, &cma_event);
 	if (ret)
@@ -2025,6 +2030,7 @@ fi_ibv_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	_eq->fab = container_of(fabric, struct fi_ibv_fabric, fabric_fid);
 
 	switch (attr->wait_obj) {
+	case FI_WAIT_UNSPEC:
 	case FI_WAIT_FD:
 		_eq->channel = rdma_create_event_channel();
 		if (!_eq->channel) {
@@ -2338,6 +2344,7 @@ fi_ibv_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	_cq->domain = container_of(domain, struct fi_ibv_domain, domain_fid);
 
 	switch (attr->wait_obj) {
+	case FI_WAIT_UNSPEC:
 	case FI_WAIT_FD:
 		_cq->channel = ibv_create_comp_channel(_cq->domain->verbs);
 		if (!_cq->channel) {
@@ -2572,7 +2579,7 @@ static int fi_ibv_pep_listen(struct fid_pep *pep)
 
 static struct fi_ops_cm fi_ibv_pep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = NULL, /* TODO */
+	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
 	.listen = fi_ibv_pep_listen,

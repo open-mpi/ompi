@@ -44,17 +44,16 @@
 #include <rdma/fi_errno.h>
 #include "fi.h"
 #include "prov.h"
+#include "fi_log.h"
 
 #ifdef HAVE_LIBDL
 #include <dlfcn.h>
 #endif
 
-#define FI_WARN(fmt, ...) \
-	do { fprintf(stderr, "%s: " fmt, PACKAGE, ##__VA_ARGS__); } while (0)
-
 struct fi_prov {
 	struct fi_prov		*next;
 	struct fi_provider	*provider;
+	void			*dlhandle;
 };
 
 static struct fi_prov *fi_getprov(const char *prov_name);
@@ -64,31 +63,62 @@ static volatile int init = 0;
 static pthread_mutex_t ini_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
-static int fi_register_provider(struct fi_provider *provider)
+static void cleanup_provider(struct fi_provider *provider, void *dlhandle)
+{
+	if (provider && provider->cleanup)
+		provider->cleanup();
+
+#ifdef HAVE_LIBDL
+	if (dlhandle)
+		dlclose(dlhandle);
+#endif
+}
+
+static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 {
 	struct fi_prov *prov;
 	int ret;
 
-	if (!provider)
-		return -FI_EINVAL;
+	if (!provider) {
+		ret = -FI_EINVAL;
+		goto cleanup;
+	}
+
+	FI_LOG(2, NULL, "registering provider: %s (%d.%d)\n", provider->name,
+		FI_MAJOR(provider->version), FI_MINOR(provider->version));
 
 	if (FI_MAJOR(provider->fi_version) != FI_MAJOR_VERSION ||
 	    FI_MINOR(provider->fi_version) > FI_MINOR_VERSION) {
+		FI_LOG(2, NULL, "provider has unsupported FI version (provider %d.%d != libfabric %d.%d); ignoring\n",
+			FI_MAJOR(provider->fi_version),
+			FI_MINOR(provider->fi_version),
+			FI_MAJOR_VERSION, FI_MINOR_VERSION);
+
 		ret = -FI_ENOSYS;
 		goto cleanup;
 	}
 
 	prov = fi_getprov(provider->name);
 	if (prov) {
-		/* If we have two versions of the same provider,
-		 * keep the most recent
+		/* If this provider is older than an already-loaded
+		 * provider of the same name, then discard this one.
 		 */
 		if (FI_VERSION_GE(prov->provider->version, provider->version)) {
+			FI_LOG(2, NULL, "a newer %s provider was already loaded; ignoring this one\n",
+				provider->name);
 			ret = -FI_EALREADY;
 			goto cleanup;
 		}
 
-		prov->provider->cleanup();
+		/* This provider is newer than an already-loaded
+		 * provider of the same name, so discard the
+		 * already-loaded one.
+		 */
+		FI_LOG(2, NULL, "an older %s provider was already loaded; keeping this one and ignoring the older one\n",
+			provider->name);
+		cleanup_provider(prov->provider, prov->dlhandle);
+
+		prov->dlhandle = dlhandle;
 		prov->provider = provider;
 		return 0;
 	}
@@ -99,6 +129,7 @@ static int fi_register_provider(struct fi_provider *provider)
 		goto cleanup;
 	}
 
+	prov->dlhandle = dlhandle;
 	prov->provider = provider;
 	if (prov_tail)
 		prov_tail->next = prov;
@@ -108,7 +139,8 @@ static int fi_register_provider(struct fi_provider *provider)
 	return 0;
 
 cleanup:
-	provider->cleanup();
+	cleanup_provider(provider, dlhandle);
+
 	return ret;
 }
 
@@ -136,6 +168,8 @@ static void fi_ini(void)
 	if (init)
 		goto unlock;
 
+	fi_log_init();
+
 #ifdef HAVE_LIBDL
 	struct dirent **liblist;
 	int n;
@@ -156,34 +190,35 @@ static void fi_ini(void)
 
 	while (n--) {
 		if (asprintf(&lib, "%s/%s", provdir, liblist[n]->d_name) < 0) {
-			FI_WARN("asprintf failed to allocate memory\n");
+			FI_WARN(NULL, "asprintf failed to allocate memory\n");
 			free(liblist[n]);
 			goto done;
 		}
+		FI_DEBUG(NULL, "opening provider lib %s\n", lib);
 
 		dlhandle = dlopen(lib, RTLD_NOW);
 		if (dlhandle == NULL)
-			FI_WARN("dlopen(%s): %s\n", lib, dlerror());
+			FI_WARN(NULL, "dlopen(%s): %s\n", lib, dlerror());
 
 		free(liblist[n]);
 		free(lib);
 
 		inif = dlsym(dlhandle, "fi_prov_ini");
 		if (inif == NULL)
-			FI_WARN("dlsym: %s\n", dlerror());
+			FI_WARN(NULL, "dlsym: %s\n", dlerror());
 		else
-			fi_register_provider((inif)());
+			fi_register_provider((inif)(), dlhandle);
 	}
 
 	free(liblist);
 done:
 #endif
 
-	fi_register_provider(PSM_INIT);
-	fi_register_provider(USNIC_INIT);
+	fi_register_provider(PSM_INIT, NULL);
+	fi_register_provider(USNIC_INIT, NULL);
 
-	fi_register_provider(VERBS_INIT);
-	fi_register_provider(SOCKETS_INIT);
+	fi_register_provider(VERBS_INIT, NULL);
+	fi_register_provider(SOCKETS_INIT, NULL);
 	init = 1;
 
 unlock:
@@ -193,7 +228,7 @@ unlock:
 static void __attribute__((destructor)) fi_fini(void)
 {
 	for (struct fi_prov *prov = prov_head; prov; prov = prov->next)
-		prov->provider->cleanup();
+		cleanup_provider(prov->provider, prov->dlhandle);
 }
 
 static struct fi_prov *fi_getprov(const char *prov_name)
@@ -258,6 +293,8 @@ int fi_getinfo_(uint32_t version, const char *node, const char *service,
 		ret = prov->provider->getinfo(version, node, service, flags,
 					      hints, &cur);
 		if (ret) {
+			FI_LOG(1, NULL, "fi_getinfo: provider %s returned -%d (%s)\n",
+				prov->provider->name, -ret, fi_strerror(-ret));
 			if (ret == -FI_ENODATA) {
 				continue;
 			} else {

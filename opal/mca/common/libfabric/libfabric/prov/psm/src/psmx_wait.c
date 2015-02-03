@@ -32,6 +32,78 @@
 
 #include "psmx.h"
 
+/* It is necessary to have a separate thread making progress in order
+ * for the wait functions to succeed. This thread is only created when
+ * wait functions are called and. In order to minimize performance
+ * impact, it only goes active during te time when wait calls are
+ * blocked.
+ */
+static pthread_t	psmx_wait_thread;
+static pthread_mutex_t	psmx_wait_mutex;
+static pthread_cond_t	psmx_wait_cond;
+static volatile int	psmx_wait_thread_ready = 0;
+static volatile int	psmx_wait_thread_enabled = 0;
+static volatile int	psmx_wait_thread_busy = 0;
+
+static void *psmx_wait_progress(void *args)
+{
+	struct psmx_fid_domain *domain = args;
+
+	psmx_wait_thread_ready = 1;
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+	while (1) {
+		pthread_mutex_lock(&psmx_wait_mutex);
+		pthread_cond_wait(&psmx_wait_cond, &psmx_wait_mutex);
+		pthread_mutex_unlock(&psmx_wait_mutex);
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
+		psmx_wait_thread_busy = 1;
+		while (psmx_wait_thread_enabled)
+			psmx_progress(domain);
+
+		psmx_wait_thread_busy = 0;
+
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	}
+
+	return NULL;
+}
+
+static void psmx_wait_start_progress(struct psmx_fid_domain *domain)
+{
+	pthread_attr_t attr;
+	int err;
+
+	if (!domain)
+		return;
+
+	if (!psmx_wait_thread) {
+		pthread_mutex_init(&psmx_wait_mutex, NULL);
+		pthread_cond_init(&psmx_wait_cond, NULL);
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+		err = pthread_create(&psmx_wait_thread, &attr, psmx_wait_progress, (void *)domain);
+		if (err)
+			fprintf(stderr, "%s: cannot create wait progress thread\n", __func__);
+		pthread_attr_destroy(&attr);
+		while (!psmx_wait_thread_ready)
+			;
+	}
+
+	psmx_wait_thread_enabled = 1;
+	pthread_cond_signal(&psmx_wait_cond);
+}
+
+static void psmx_wait_stop_progress(void)
+{
+	psmx_wait_thread_enabled = 0;
+
+	while (psmx_wait_thread_busy)
+		;
+}
+
 int psmx_wait_get_obj(struct psmx_fid_wait *wait, void *arg)
 {
 	void *obj_ptr;
@@ -76,6 +148,9 @@ int psmx_wait_wait(struct fid_wait *wait, int timeout)
 	int err = 0;
 	
 	wait_priv = container_of(wait, struct psmx_fid_wait, wait.fid);
+
+	psmx_wait_start_progress(wait_priv->fabric->active_domain);
+
 	switch (wait_priv->type) {
 	case FI_WAIT_UNSPEC:
 		/* TODO: optimized custom wait */
@@ -97,6 +172,8 @@ int psmx_wait_wait(struct fid_wait *wait, int timeout)
 	default:
 		break;
 	}
+
+	psmx_wait_stop_progress();
 
 	return err;
 }

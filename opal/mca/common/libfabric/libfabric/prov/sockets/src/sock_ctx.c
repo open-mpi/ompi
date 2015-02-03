@@ -41,7 +41,7 @@
 #include "sock_util.h"
 
 
-struct sock_rx_ctx *sock_rx_ctx_alloc(struct fi_rx_attr *attr, void *context)
+struct sock_rx_ctx *sock_rx_ctx_alloc(const struct fi_rx_attr *attr, void *context)
 {
 	struct sock_rx_ctx *rx_ctx;
 	rx_ctx = calloc(1, sizeof(*rx_ctx));
@@ -71,7 +71,7 @@ void sock_rx_ctx_free(struct sock_rx_ctx *rx_ctx)
 	free(rx_ctx);
 }
 
-static struct sock_tx_ctx *sock_tx_context_alloc(struct fi_tx_attr *attr, 
+static struct sock_tx_ctx *sock_tx_context_alloc(const struct fi_tx_attr *attr, 
 					     void *context, size_t fclass)
 {
 	struct sock_tx_ctx *tx_ctx;
@@ -80,7 +80,9 @@ static struct sock_tx_ctx *sock_tx_context_alloc(struct fi_tx_attr *attr,
 	if (!tx_ctx)
 		return NULL;
 
-	if (rbfdinit(&tx_ctx->rbfd, attr->size))
+	if (rbfdinit(&tx_ctx->rbfd, 
+		     (attr->size) ? attr->size : 
+		     SOCK_EP_TX_SZ * SOCK_EP_TX_ENTRY_SZ))
 		goto err;
 
 	dlist_init(&tx_ctx->cq_entry);
@@ -99,7 +101,7 @@ static struct sock_tx_ctx *sock_tx_context_alloc(struct fi_tx_attr *attr,
 		tx_ctx->fid.ctx.fid.context = context;
 		break;
 	case FI_CLASS_STX_CTX:
-		tx_ctx->fid.stx.fid.fclass = FI_CLASS_TX_CTX;
+		tx_ctx->fid.stx.fid.fclass = FI_CLASS_STX_CTX;
 		tx_ctx->fid.stx.fid.context = context;
 		break;
 	default:
@@ -114,12 +116,12 @@ err:
 }
 
 
-struct sock_tx_ctx *sock_tx_ctx_alloc(struct fi_tx_attr *attr, void *context)
+struct sock_tx_ctx *sock_tx_ctx_alloc(const struct fi_tx_attr *attr, void *context)
 {
 	return sock_tx_context_alloc(attr, context, FI_CLASS_TX_CTX);
 }
 
-struct sock_tx_ctx *sock_stx_ctx_alloc(struct fi_tx_attr *attr, void *context)
+struct sock_tx_ctx *sock_stx_ctx_alloc(const struct fi_tx_attr *attr, void *context)
 {
 	return sock_tx_context_alloc(attr, context, FI_CLASS_STX_CTX);
 }
@@ -151,6 +153,6 @@ void sock_tx_ctx_commit(struct sock_tx_ctx *tx_ctx)
 void sock_tx_ctx_abort(struct sock_tx_ctx *tx_ctx)
 {
 	rbfdabort(&tx_ctx->rbfd);
-	fastlock_release(&tx_ctx->rlock);
+	fastlock_release(&tx_ctx->wlock);
 }
 

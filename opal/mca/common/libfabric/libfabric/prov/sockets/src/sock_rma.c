@@ -71,7 +71,7 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, fid.ep);
+		sock_ep = container_of(ep, struct sock_ep, ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
@@ -90,7 +90,8 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 	       msg->rma_iov_count <= SOCK_EP_MAX_IOV_LIMIT);
 
 	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
-	assert(conn);
+	if (!conn)
+		return -FI_EAGAIN;
 
 	total_len = sizeof(struct sock_op_send) + 
 		(msg->iov_count * sizeof(union sock_iov)) +
@@ -214,7 +215,7 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, fid.ep);
+		sock_ep = container_of(ep, struct sock_ep, ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
@@ -236,7 +237,9 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	} else {
 		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
 	}
-	assert(conn);
+
+	if (!conn)
+		return -FI_EAGAIN;
 
 	flags |= tx_ctx->attr.op_flags;
 	memset(&tx_op, 0, sizeof(struct sock_op));
@@ -244,7 +247,7 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	tx_op.dest_iov_len = msg->rma_iov_count;
 	
 	total_len = 0;
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			total_len += msg->msg_iov[i].iov_len;
 		}
@@ -277,11 +280,11 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	}
 
 	src_len = 0;
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			sock_tx_ctx_write(tx_ctx, msg->msg_iov[i].iov_base,
 					  msg->msg_iov[i].iov_len);
-			src_len += tx_iov.iov.len;
+			src_len += msg->msg_iov[i].iov_len;
 		}
 	} else {
 		for (i = 0; i< msg->iov_count; i++) {
@@ -349,16 +352,22 @@ static ssize_t sock_ep_rma_writev(struct fid_ep *ep,
 				   size_t count, fi_addr_t dest_addr, uint64_t addr, 
 				   uint64_t key, void *context)
 {
+	int i;
+	size_t len;
 	struct fi_msg_rma msg;
 	struct fi_rma_iov rma_iov;
 
 	msg.msg_iov = iov;
 	msg.desc = desc;
 	msg.iov_count = count;
+	msg.rma_iov_count = 1;
+
+	for (i = 0, len = 0; i < count; i++) 
+		len += iov[i].iov_len;
 
 	rma_iov.addr = addr;
 	rma_iov.key = key;
-	rma_iov.len = 1;
+	rma_iov.len = len;
 	
 	msg.rma_iov = &rma_iov;
 	msg.context = context;
@@ -380,10 +389,11 @@ static ssize_t sock_ep_rma_writedata(struct fid_ep *ep, const void *buf,
 	msg_iov.iov_len = len;
 	msg.desc = &desc;
 	msg.iov_count = 1;
+	msg.rma_iov_count = 1;
 
 	rma_iov.addr = addr;
 	rma_iov.key = key;
-	rma_iov.len = 1;
+	rma_iov.len = len;
 
 	msg.rma_iov = &rma_iov;
 	msg.msg_iov = &msg_iov;
@@ -407,10 +417,11 @@ static ssize_t sock_ep_rma_inject(struct fid_ep *ep, const void *buf,
 	msg_iov.iov_len = len;
 	msg.msg_iov = &msg_iov;
 	msg.iov_count = 1;
+	msg.rma_iov_count = 1;
 
 	rma_iov.addr = addr;
 	rma_iov.key = key;
-	rma_iov.len = 1;
+	rma_iov.len = len;
 
 	msg.rma_iov = &rma_iov;
 	msg.msg_iov = &msg_iov;
@@ -431,10 +442,11 @@ static ssize_t sock_ep_rma_injectdata(struct fid_ep *ep, const void *buf,
 	msg_iov.iov_len = len;
 	msg.msg_iov = &msg_iov;
 	msg.iov_count = 1;
+	msg.rma_iov_count = 1;
 
 	rma_iov.addr = addr;
 	rma_iov.key = key;
-	rma_iov.len = 1;
+	rma_iov.len = len;
 
 	msg.rma_iov = &rma_iov;
 	msg.msg_iov = &msg_iov;

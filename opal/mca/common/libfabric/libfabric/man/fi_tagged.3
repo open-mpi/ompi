@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-01\-06" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_tagged 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -224,6 +224,10 @@ When set, FI_CLAIM indicates that when a search successfully finds a
 matching message, the message is claimed by caller.
 Subsequent searches cannot find the same message, although they may
 match other messages that have the same tag.
+.PP
+An application can request that a buffered message be discarded by using
+the FI_DISCARD flag as part of the search.
+When set, FI_DISCARD indicates that any matching message be dropped.
 .SH FLAGS
 .PP
 The fi_trecvmsg and fi_tsendmsg calls allow the user to specify flags
@@ -265,12 +269,21 @@ data into a local buffer and transfer out of that buffer.
 Indicates that a completion should not be generated until the operation
 has completed on the remote side.
 .PP
+\f[I]FI_FENCE\f[] : Applies to transmits.
+Indicates that the requested operation, also known as the fenced
+operation, be deferred until all previous operations targeting the same
+target endpoint have completed.
+.PP
 The following flags may be used with fi_tsearch.
 .PP
 \f[I]FI_CLAIM\f[] : Indicates that when a search successfully finds a
 matching message, the message is claimed by caller.
 Subsequent searches cannot find the same message, although they may
 match other messages that have the same tag.
+.PP
+\f[I]FI_DISCARD\f[] : Indicates that if a search successfully finds a
+matching message, that the message is discarded by the provider, as the
+data is not needed by the application.
 .SH RETURN VALUE
 .PP
 The tagged send and receive calls return 0 on success.

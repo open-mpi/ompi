@@ -1,6 +1,6 @@
 Name: libfabric
-Version: 0.0.2
-Release: 1%{?dist}
+Version: 1.0.0-rc1
+Release: 1.rc1%{?dist}
 Summary: User-space RDMA Fabric Interfaces
 Group: System Environment/Libraries
 License: GPLv2 or BSD

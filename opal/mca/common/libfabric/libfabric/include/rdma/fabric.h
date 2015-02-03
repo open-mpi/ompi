@@ -77,7 +77,6 @@ struct fid_cntr;
 struct fid_ep;
 struct fid_pep;
 struct fid_stx;
-struct fid_sep;
 struct fid_mr;
 
 typedef struct fid *fid_t;
@@ -96,7 +95,8 @@ typedef struct fid *fid_t;
 #define FI_MSG			(1ULL << 1)
 #define FI_RMA			(1ULL << 2)
 #define FI_TAGGED		(1ULL << 3)
-#define FI_ATOMICS		(1ULL << 4)
+#define FI_ATOMIC		(1ULL << 4)
+#define FI_ATOMICS		FI_ATOMIC
 #define FI_DYNAMIC_MR		(1ULL << 7)
 #define FI_NAMED_RX_CTX		(1ULL << 8)
 #define FI_BUFFERED_RECV	(1ULL << 9)
@@ -121,6 +121,7 @@ typedef struct fid *fid_t;
 #define FI_WRITE		(1ULL << 17)
 #define FI_RECV			(1ULL << 18)
 #define FI_SEND			(1ULL << 19)
+#define FI_TRANSMIT		FI_SEND
 #define FI_REMOTE_READ		(1ULL << 20)
 #define FI_REMOTE_WRITE		(1ULL << 21)
 
@@ -133,6 +134,7 @@ typedef struct fid *fid_t;
 #define FI_MORE			(1ULL << 29)
 #define FI_PEEK			(1ULL << 30)
 #define FI_TRIGGER		(1ULL << 31)
+#define FI_FENCE		(1ULL << 32)
 
 
 struct fi_ioc {
@@ -220,6 +222,7 @@ enum {
 #define FI_LOCAL_MR		(1ULL << 1)
 #define FI_PROV_MR_ATTR		(1ULL << 2)
 #define FI_MSG_PREFIX		(1ULL << 3)
+#define FI_ASYNC_IOV		(1ULL << 4)
 
 struct fi_tx_attr {
 	uint64_t		caps;
@@ -230,6 +233,7 @@ struct fi_tx_attr {
 	size_t			inject_size;
 	size_t			size;
 	size_t			iov_limit;
+	size_t			rma_iov_limit;
 };
 
 struct fi_rx_attr {
@@ -435,6 +439,7 @@ enum fi_type {
 	FI_TYPE_AV_TYPE,
 	FI_TYPE_ATOMIC_TYPE,
 	FI_TYPE_ATOMIC_OP,
+	FI_TYPE_VERSION,
 };
 
 char *fi_tostr(const void *data, enum fi_type datatype);

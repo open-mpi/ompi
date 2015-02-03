@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2015\-01\-12" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_domain 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -81,8 +81,8 @@ then memory registration requests complete synchronously.
 .PP
 The fi_close call is used to release all resources associated with a
 domain or interface.
-All items associated with the opened domain must be released prior to
-calling fi_close.
+All objects associated with the opened domain must be released prior to
+calling fi_close, otherwise the call will return -FI_EBUSY.
 .SH DOMAIN ATTRIBUTES
 .PP
 The \f[C]fi_domain_attr\f[] structure defines the set of attributes
@@ -238,9 +238,11 @@ allocated below the fabric interfaces.
 provider requires the use of an application thread to complete an
 asynchronous request.
 When manual progress is set, the provider will attempt to advance an
-asynchronous operation forward when the application invokes any event
-queue read or wait operation where the completion will be reported.
-Progress also occurs when the application processes a poll or wait set.
+asynchronous operation forward when the application attempts to wait on
+or read an event queue, completion queue, or counter where the completed
+operation will be reported.
+Progress also occurs when the application processes a poll or wait set
+that has been associated with the event or completion queue.
 .PP
 Only wait operations defined by the fabric interface will result in an
 operation progressing.

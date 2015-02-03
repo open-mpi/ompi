@@ -102,22 +102,27 @@ struct sock_conn *sock_conn_map_lookup_key(struct sock_conn_map *conn_map,
 #define SOCK_ADDR_IN_PORT(sa)SOCK_ADDR_IN_PTR(sa)->sin_port
 #define SOCK_ADDR_IN_ADDR(sa)SOCK_ADDR_IN_PTR(sa)->sin_addr
 
+static int sock_compare_addr(struct sockaddr_in *addr1,
+			     struct sockaddr_in *addr2)
+{
+		if ((SOCK_ADDR_IN_ADDR(addr1).s_addr == 
+		     SOCK_ADDR_IN_ADDR(addr2).s_addr) &&
+		    (SOCK_ADDR_IN_PORT(addr1) == SOCK_ADDR_IN_PORT(addr2))) 
+			return 1;
+		return 0;
+}
+
 uint16_t sock_conn_map_lookup(struct sock_conn_map *map,
 			      struct sockaddr_in *addr)
 {
 	int i;
 	struct sockaddr_in *entry;
-	fastlock_acquire(&map->lock);
 	for (i=0; i < map->used; i++) {
 		entry = (struct sockaddr_in *)&(map->table[i].addr);
-		if ((SOCK_ADDR_IN_ADDR(entry).s_addr == 
-		     SOCK_ADDR_IN_ADDR(addr).s_addr) &&
-		    (SOCK_ADDR_IN_PORT(entry) == SOCK_ADDR_IN_PORT(addr))) {
-			fastlock_release(&map->lock);
+		if (sock_compare_addr(entry, addr)) {
 			return i+1;
 		}
 	}
-	fastlock_release(&map->lock);
 	return 0;
 }
 
@@ -126,11 +131,8 @@ static int sock_conn_map_insert(struct sock_conn_map *map,
 				int conn_fd)
 {
 	int index;
-	fastlock_acquire(&map->lock);
-
 	if (map->size == map->used) {
 		if (sock_conn_map_increase(map, map->size * 2)) {
-			fastlock_release(&map->lock);
 			return 0;
 		}
 	}
@@ -140,7 +142,6 @@ static int sock_conn_map_insert(struct sock_conn_map *map,
 	map->table[index].sock_fd = conn_fd;
 	sock_comm_buffer_init(&map->table[index]);
 	map->used++;
-	fastlock_release(&map->lock);
 	return index + 1;
 }				 
 
@@ -171,6 +172,10 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 
 	flags = fcntl(conn_fd, F_GETFL, 0);
 	fcntl(conn_fd, F_SETFL, flags | O_NONBLOCK);
+
+	fastlock_acquire(&map->lock);
+	memcpy(&map->curr_addr, addr, sizeof(struct sockaddr_in));
+	fastlock_release(&map->lock);
 
 	if (connect(conn_fd, addr, sizeof *addr) < 0) {
 		if (errno == EINPROGRESS) {
@@ -224,12 +229,24 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 
 	reply = ntohs(reply);
 	SOCK_LOG_INFO("Connect response: %d\n", ntohs(reply));
+
+
 	if (reply == 0) {
+		fastlock_acquire(&map->lock);
 		ret = sock_conn_map_insert(map, addr, conn_fd);
+		fastlock_release(&map->lock);
 	} else {
-		ret = sock_conn_map_lookup(map, addr);
+		ret = 0;
 		close(conn_fd);
+		SOCK_LOG_INFO("waiting for an accept\n");
+		while (!ret) {
+			fastlock_acquire(&map->lock);
+			ret = sock_conn_map_lookup(map, addr);
+			fastlock_release(&map->lock);
+		}
+		SOCK_LOG_INFO("got accept\n");
 	}
+
 	return ret;
 }
 
@@ -238,8 +255,13 @@ uint16_t sock_conn_map_match_or_connect(struct sock_domain *dom,
 					struct sockaddr_in *addr)
 {
 	uint16_t index;
-	return (index = sock_conn_map_lookup(map, addr)) ?
-		index : sock_conn_map_connect(dom, map, addr);
+	fastlock_acquire(&map->lock);
+	index = sock_conn_map_lookup(map, addr);
+	fastlock_release(&map->lock);
+
+	if (!index)
+		index = sock_conn_map_connect(dom, map, addr);
+	return index;
 }
 
 static void *_sock_conn_listen(void *arg)
@@ -253,10 +275,9 @@ static void *_sock_conn_listen(void *arg)
 	struct sockaddr_in remote;
 	socklen_t addr_size;
 	struct pollfd poll_fds[2];
-	char service[NI_MAXSERV];
 	struct sockaddr_in addr;
 	char sa_ip[INET_ADDRSTRLEN];
-	unsigned short port;
+	unsigned short port, response;
 	uint16_t index;
 
 	memset(&hints, 0, sizeof(hints));
@@ -264,14 +285,14 @@ static void *_sock_conn_listen(void *arg)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	sprintf(service, "%d", domain->service);
-	if(getaddrinfo(NULL, service, &hints, &s_res)) {
-		SOCK_LOG_ERROR("no available AF_INET address\n");
-		perror("no available AF_INET address");
+	ret = getaddrinfo(NULL, domain->service, &hints, &s_res);
+	if (ret) {
+		SOCK_LOG_ERROR("no available AF_INET address, service %s, %s\n",
+				domain->service, gai_strerror(ret));
 		return NULL;
 	}
 
-	SOCK_LOG_INFO("Binding listener thread to port: %d\n", domain->service);
+	SOCK_LOG_INFO("Binding listener thread to port: %s\n", domain->service);
 	for (p=s_res; p; p=p->ai_next) {
 		listen_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (listen_fd >= 0) {
@@ -291,16 +312,17 @@ static void *_sock_conn_listen(void *arg)
 	freeaddrinfo(s_res);
 
 	if (listen_fd < 0) {
-		SOCK_LOG_ERROR("failed to listen to port: %d\n", domain->service);
+		SOCK_LOG_ERROR("failed to listen to port: %s\n", domain->service);
 		goto err;
 	}
 	
-	if (domain->service == 0) {
+	if (atoi(domain->service) == 0) {
 		addr_size = sizeof(struct sockaddr_in);
 		if (getsockname(listen_fd, (struct sockaddr*)&addr, &addr_size))
 			goto err;
-		domain->service = ntohs(addr.sin_port);
-		SOCK_LOG_INFO("Bound to port: %d\n", domain->service);
+		snprintf(domain->service, sizeof domain->service, "%d",
+			 ntohs(addr.sin_port));
+		SOCK_LOG_INFO("Bound to port: %s\n", domain->service);
 	}
 
 	if (listen(listen_fd, 0)) {
@@ -309,7 +331,7 @@ static void *_sock_conn_listen(void *arg)
 	}
 
 	((struct sockaddr_in*)&(domain->src_addr))->sin_port = 
-		htons(domain->service);
+		htons(atoi(domain->service));
 	domain->listening = 1;
 
 	poll_fds[0].fd = listen_fd;
@@ -343,15 +365,34 @@ static void *_sock_conn_listen(void *arg)
 
 		remote.sin_port = port;
 		SOCK_LOG_INFO("Remote port: %d\n", ntohs(port));
-		index = sock_conn_map_lookup(map, &remote);
-		port = (index) ? 1 : 0;
-		ret = send(conn_fd, &port, sizeof(port), 0);
-		if (ret != sizeof(port)) 
-			SOCK_LOG_ERROR("Cannot exchange port\n");
 
-		if (index == 0)
+		fastlock_acquire(&map->lock);
+		index = sock_conn_map_lookup(map, &remote);
+		response = (index) ? 1 : 0;
+		if (response == 0) {
+			if (sock_compare_addr((struct sockaddr_in*)&map->curr_addr,
+					      &remote)) {
+				ret = memcmp(&domain->src_addr, &remote, 
+					     sizeof(struct sockaddr_in));
+				
+				if (ret > 0 || 
+				    (ret == 0 && atoi(domain->service) > port)) {
+					response = 1;
+					SOCK_LOG_INFO("Rejecting accept\n");
+				}
+			}
+		}
+		fastlock_release(&map->lock);
+
+		ret = send(conn_fd, &response, sizeof(response), 0);
+		if (ret != sizeof(response)) 
+			SOCK_LOG_ERROR("Cannot exchange port\n");
+		
+		if (!response) {
+			fastlock_acquire(&map->lock);
 			sock_conn_map_insert(map, &remote, conn_fd);
-		else
+			fastlock_release(&map->lock);
+		} else
 			close(conn_fd);
 	}
 

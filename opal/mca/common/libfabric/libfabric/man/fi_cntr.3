@@ -1,4 +1,4 @@
-.TH fi_cntr 3 "2014\-12\-15" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_cntr 3 "2015\-01\-29" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_cntr - Completion and event counter operations
@@ -146,8 +146,11 @@ This field is ignored if wait_obj is not FI_WAIT_SET.
 .SS fi_close
 .PP
 The fi_close call releases all resources associated with a counter.
-The counter must not be bound to any other resources prior to being
-freed.
+When closing the counter, there must be no opened endpoints, transmit
+contexts, receive contexts or memory regions associated with the
+counter.
+If resources are still associated with the counter when attempting to
+close, the call will return -FI_EBUSY.
 .SS fi_cntr_control
 .PP
 The fi_cntr_control call is used to access provider or implementation

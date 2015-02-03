@@ -155,3 +155,63 @@ size_t fi_datatype_size(enum fi_datatype datatype)
 	}
 	return fi_datatype_size_table[datatype];
 }
+
+int fi_send_allowed(uint64_t caps)
+{
+	if (caps & FI_MSG ||
+		caps & FI_TAGGED) {
+		if (caps & FI_SEND)
+			return 1;
+		if (caps & FI_RECV)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_recv_allowed(uint64_t caps)
+{
+	if (caps & FI_MSG ||
+		caps & FI_TAGGED) {
+		if (caps & FI_RECV)
+			return 1;
+		if (caps & FI_SEND)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_rma_initiate_allowed(uint64_t caps)
+{
+	if (caps & FI_RMA ||
+		caps & FI_ATOMICS) {
+		if (caps & FI_WRITE ||
+			caps & FI_READ)
+			return 1;
+		if (caps & FI_REMOTE_WRITE ||
+			caps & FI_REMOTE_READ)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_rma_target_allowed(uint64_t caps)
+{
+	if (caps & FI_RMA ||
+		caps & FI_ATOMICS) {
+		if (caps & FI_REMOTE_WRITE ||
+			caps & FI_REMOTE_READ)
+			return 1;
+		if (caps & FI_WRITE ||
+			caps & FI_READ)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}

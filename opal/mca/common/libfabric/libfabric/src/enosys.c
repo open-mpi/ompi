@@ -288,15 +288,23 @@ int fi_no_setopt(fid_t fid, int level, int optname,
 {
 	return -FI_ENOSYS;
 }
-int fi_no_tx_ctx(struct fid_sep *sep, int index,
+int fi_no_tx_ctx(struct fid_ep *sep, int index,
 		struct fi_tx_attr *attr, struct fid_ep **tx_ep,
 		void *context)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_rx_ctx(struct fid_sep *sep, int index,
+int fi_no_rx_ctx(struct fid_ep *sep, int index,
 		struct fi_rx_attr *attr, struct fid_ep **rx_ep,
 		void *context)
+{
+	return -FI_ENOSYS;
+}
+ssize_t fi_no_rx_size_left(struct fid_ep *ep)
+{
+	return -FI_ENOSYS;
+}
+ssize_t fi_no_tx_size_left(struct fid_ep *ep)
 {
 	return -FI_ENOSYS;
 }
@@ -346,14 +354,6 @@ ssize_t fi_no_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void 
 }
 ssize_t fi_no_msg_injectdata(struct fid_ep *ep, const void *buf, size_t len,
 		uint64_t data, fi_addr_t dest_addr)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_rx_size_left(struct fid_ep *ep)
-{
-	return -FI_ENOSYS;
-}
-ssize_t fi_no_msg_tx_size_left(struct fid_ep *ep)
 {
 	return -FI_ENOSYS;
 }

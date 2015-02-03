@@ -162,8 +162,8 @@ _usd_post_send_iov(
     }
 
     wq_enet_desc_enc(desc, (uintptr_t)(iov[i].iov_base),
-	iov[i].iov_len, mss, header_length, offload_mode,
-	1, cq_entry, fcoe_encap, vlan_tag_insert, vlan_tag, loopback);
+            iov[i].iov_len, mss, header_length, offload_mode,
+	        1, cq_entry, fcoe_encap, vlan_tag_insert, vlan_tag, loopback);
 
     wmb();
 

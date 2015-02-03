@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-01\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -16,6 +16,11 @@ address vector, or memory region
 .TP
 .B fi_scalable_ep_bind
 Associate a scalable endpoint with an address vector
+.RS
+.RE
+.TP
+.B fi_pep_bind
+Associate a passive endpoint with an event queue
 .RS
 .RE
 .TP
@@ -48,6 +53,12 @@ Get or set endpoint options.
 Open a transmit or receive context.
 .RS
 .RE
+.TP
+.B fi_rx_size_left / fi_tx_size_left
+Query the lower bound on how many RX/TX operations may be posted without
+an operation returning -FI_EAGAIN.
+.RS
+.RE
 .SH SYNOPSIS
 .IP
 .nf
@@ -60,16 +71,16 @@ int\ fi_endpoint(struct\ fid_domain\ *domain,\ struct\ fi_info\ *info,
 \ \ \ \ struct\ fid_ep\ **ep,\ void\ *context);
 
 int\ fi_scalable_ep(struct\ fid_domain\ *domain,\ struct\ fi_info\ *info,
-\ \ \ \ struct\ fid_sep\ **ep,\ void\ *context);
+\ \ \ \ struct\ fid_ep\ **sep,\ void\ *context);
 
 int\ fi_passive_ep(struct\ fi_fabric\ *fabric,\ struct\ fi_info\ *info,
 \ \ \ \ struct\ fid_pep\ **pep,\ void\ *context);
 
-int\ fi_tx_context(struct\ fid_ep\ *ep,\ int\ index,
+int\ fi_tx_context(struct\ fid_ep\ *sep,\ int\ index,
 \ \ \ \ struct\ fi_tx_attr\ *attr,\ struct\ fid_ep\ **tx_ep,
 \ \ \ \ void\ *context);
 
-int\ fi_rx_context(struct\ fid_ep\ *ep,\ int\ index,
+int\ fi_rx_context(struct\ fid_ep\ *sep,\ int\ index,
 \ \ \ \ struct\ fi_rx_attr\ *attr,\ struct\ fid_ep\ **rx_ep,
 \ \ \ \ void\ *context);
 
@@ -85,7 +96,9 @@ int\ fi_close(struct\ fid\ *ep);
 
 int\ fi_ep_bind(struct\ fid_ep\ *ep,\ struct\ fid\ *fid,\ uint64_t\ flags);
 
-int\ fi_scalable_ep_bind(struct\ fid_sep\ *sep,\ struct\ fid\ *fid,\ uint64_t\ flags);
+int\ fi_scalable_ep_bind(struct\ fid_ep\ *sep,\ struct\ fid\ *fid,\ uint64_t\ flags);
+
+int\ fi_pep_bind(struct\ fid_pep\ *pep,\ struct\ fid\ *fid,\ uint64_t\ flags);
 
 int\ fi_enable(struct\ fid_ep\ *ep);
 
@@ -100,6 +113,10 @@ int\ fi_getopt(struct\ fid_\ *ep,\ int\ level,\ int\ optname,
 
 int\ fi_setopt(struct\ fid\ *ep,\ int\ level,\ int\ optname,
 \ \ \ \ const\ void\ *optval,\ size_t\ optlen);
+
+ssize_t\ fi_rx_size_left(struct\ fid_ep\ *ep);
+
+ssize_t\ fi_tx_size_left(struct\ fid_ep\ *ep);
 \f[]
 .fi
 .SH ARGUMENTS
@@ -114,6 +131,8 @@ opened, obtained from fi_getinfo.
 \f[I]ep\f[] : A fabric endpoint.
 .PP
 \f[I]sep\f[] : A scalable fabric endpoint.
+.PP
+\f[I]pep\f[] : A passive fabric endpoint.
 .PP
 \f[I]fid\f[] : Fabric identifier of an associated resource.
 .PP
@@ -142,9 +161,19 @@ incoming connection requests.
 Active endpoints belong to access domains and can perform data
 transfers.
 .PP
-Data transfer interfaces are bound to active endpoints.
 Active endpoints may be connection-oriented or connectionless, and may
 provide data reliability.
+The data transfer interfaces -- messages (fi_msg), tagged messages
+(fi_tagged), RMA (fi_rma), and atomics (fi_atomic) -- are associated
+with active endpoints.
+In basic configurations, an active endpoint has transmit and receive
+queues.
+In general, operations that generate traffic on the fabric are posted to
+the transmit queue.
+This includes all RMA and atomic operations, along with sent messages
+and sent tagged messages.
+Operations that post buffers for receiving incoming data are submitted
+to the receive queue.
 .PP
 Active endpoints are created in the disabled state.
 They must transition into an enabled state before accepting data
@@ -188,6 +217,11 @@ fi_info connreq must reference the corresponding request.
 .SS fi_close
 .PP
 Closes an endpoint and release all resources associated with it.
+.PP
+When closing a scalable endpoint, there must be no opened transmit
+contexts, or receive contexts associated with the scalable endpoint.
+If resources are still associated with the scalable endpoint when
+attempting to close, the call will return -FI_EBUSY.
 .SS fi_ep_bind
 .PP
 fi_ep_bind is used to associate an endpoint with hardware resources.
@@ -207,9 +241,10 @@ This is specified using fi_ep_bind flags.
 The following flags may be used separately or OR\[aq]ed together when
 binding an endpoint to a completion domain CQ.
 .PP
-\f[I]FI_SEND\f[] : Directs the completion of outbound data transfer
+\f[I]FI_TRANSMIT\f[] : Directs the completion of outbound data transfer
 requests to the specified completion queue.
 This includes send message, RMA, and atomic operations.
+The FI_SEND flag may be used interchangeably.
 .PP
 \f[I]FI_RECV\f[] : Directs the notification of inbound data transfers to
 the specified completion queue.
@@ -285,6 +320,10 @@ successful RMA write or atomic operation is initiated from a remote
 endpoint that targets the given endpoint.
 .PP
 Connectionless endpoints must be bound to a single address vector.
+If an endpoint is using a shared transmit and/or receive context, the
+shared contexts must be bound to the endpoint.
+CQs, counters, AV, and shared contexts must be bound to endpoints before
+they are enabled.
 .SS fi_scalable_ep_bind
 .PP
 fi_scalable_ep_bind is used to associate a scalable endpoint with an
@@ -314,6 +353,9 @@ The endpoint must have been configured to support cancelable operations
 Canceling an operation causes the fabric provider to search for the
 operation and, if it is still pending, complete it as having been
 canceled.
+If multiple outstanding operations match the context parameter, only one
+will be canceled.
+In this case, the operation which is canceled is provider specific.
 The cancel operation will complete within a bounded period of time.
 .SS fi_alias
 .PP
@@ -373,6 +415,26 @@ needed on receives posted after the value has been changed.
 It is recommended that applications that want to override the default
 MIN_MULTI_RECV value set this option before enabling the corresponding
 endpoint.
+.SS fi_rx_size_left
+.PP
+The fi_rx_size_left call returns a lower bound on the number of receive
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted receive
+operations (e.g., number of iov entries, which receive function is
+called, etc.)
+, it may be possible to post more receive operations than originally
+indicated by fi_rx_size_left.
+.SS fi_tx_size_left
+.PP
+The fi_tx_size_left call returns a lower bound on the number of transmit
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted transmit
+operations (e.g., number of iov entries, which transmit function is
+called, etc.)
+, it may be possible to post more transmit operations than originally
+indicated by fi_tx_size_left.
 .SH ENDPOINT ATTRIBUTES
 .PP
 The fi_ep_attr structure defines the set of attributes associated with
@@ -755,6 +817,7 @@ struct\ fi_tx_attr\ {
 \ \ \ \ size_t\ \ \ \ inject_size;
 \ \ \ \ size_t\ \ \ \ size;
 \ \ \ \ size_t\ \ \ \ iov_limit;
+\ \ \ \ size_t\ \ \ \ rma_iov_limit;
 };
 \f[]
 .fi
@@ -796,6 +859,17 @@ operation.
 .PP
 \f[I]iov_limit\f[] : This is the maximum number of IO vectors
 (scatter-gather elements) that a single posted operation may reference.
+.PP
+\f[I]rma_iov_limit\f[] : This is the maximum number of RMA IO vectors
+(scatter-gather elements) that an RMA or atomic operation may reference.
+The rma_iov_limit corresponds to the rma_iov_count values in RMA and
+atomic operations.
+See struct fi_msg_rma and struct fi_msg_atomic in fi_rma.3 and
+fi_atomic.3, for additional details.
+This limit applies to both the number of RMA IO vectors that may be
+specified when initiating an operation from the local endpoint, as well
+as the maximum number of IO vectors that may be carried in a single
+request from a remote endpoint.
 .SS fi_rx_context
 .PP
 Receive contexts are independent receive queues for receiving incoming
@@ -896,12 +970,14 @@ processing, with the potential cost of serializing access across
 multiple endpoints.
 Support for sharable contexts is domain specific.
 .PP
-Conceptually, sharable contexts are transmit queues that may be accessed
-by many endpoints.
+Conceptually, sharable transmit contexts are transmit queues that may be
+accessed by many endpoints.
 The use of a shared transmit context is mostly opaque to an application.
 Applications must allocate and bind shared transmit contexts to
-endpoints, but otherwise transmit operations are posted directly to the
-endpoint.
+endpoints, but operations are posted directly to the endpoint.
+Shared transmit contexts are not associated with completion queues or
+counters.
+Completed operations are posted to the CQs bound to the endpoint.
 An endpoint may only be associated with a single shared transmit
 context.
 .PP
@@ -909,7 +985,13 @@ Unlike shared transmit contexts, applications interact directly with
 shared receive contexts.
 Users post receive buffers directly to a shared receive context, with
 the buffers usable by any endpoint bound to the shared receive context.
-An endpoint may only be associated with a single receive context.
+Shared receive contexts are not associated with completion queues or
+counters.
+Completed receive operations are posted to the CQs bound to the
+endpoint.
+An endpoint may only be associated with a single receive context, and
+all connectless endpoints associated with a shared receive context must
+also share the same address vector.
 .PP
 Endpoints associated with a shared transmit context may use dedicated
 receive contexts, and vice-versa.

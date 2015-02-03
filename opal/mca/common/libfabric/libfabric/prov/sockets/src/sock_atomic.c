@@ -74,7 +74,7 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 
 	switch (ep->fid.fclass) {
 	case FI_CLASS_EP:
-		sock_ep = container_of(ep, struct sock_ep, fid.ep);
+		sock_ep = container_of(ep, struct sock_ep, ep);
 		tx_ctx = sock_ep->tx_ctx;
 		break;
 
@@ -97,11 +97,13 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	} else {
 		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
 	}
-	assert(conn);
+
+	if (!conn)
+		return -FI_EAGAIN;
 
 	src_len = 0;
 	datatype_sz = fi_datatype_size(msg->datatype);
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			src_len += (msg->msg_iov[i].count * datatype_sz);
 		}
@@ -130,7 +132,7 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	tx_op.atomic.res_iov_len = result_count;
 	tx_op.atomic.cmp_iov_len = compare_count;
 
-	if (flags & FI_INJECT)
+	if (SOCK_INJECT_OK(flags))
 		tx_op.src_iov_len = src_len;
 	else 
 		tx_op.src_iov_len = msg->iov_count;
@@ -147,7 +149,8 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		sock_tx_ctx_write(tx_ctx, &msg->data, sizeof(uint64_t));
 	}
 	
-	if (flags & FI_INJECT) {
+	src_len = 0;
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			sock_tx_ctx_write(tx_ctx, msg->msg_iov[i].addr,
 					  msg->msg_iov[i].count * datatype_sz);
@@ -469,6 +472,7 @@ static int sock_ep_atomic_valid(struct fid_ep *ep, enum fi_datatype datatype,
 	switch(datatype){
 	case FI_FLOAT:
 	case FI_DOUBLE:
+	case FI_LONG_DOUBLE:
 		if (op == FI_BOR || op == FI_BAND ||
 		    op == FI_BXOR || op == FI_MSWAP)
 			return -FI_ENOENT;
@@ -476,7 +480,6 @@ static int sock_ep_atomic_valid(struct fid_ep *ep, enum fi_datatype datatype,
 		
 	case FI_FLOAT_COMPLEX:
 	case FI_DOUBLE_COMPLEX:
-	case FI_LONG_DOUBLE:
 	case FI_LONG_DOUBLE_COMPLEX:
 		return -FI_ENOENT;
 	default:
