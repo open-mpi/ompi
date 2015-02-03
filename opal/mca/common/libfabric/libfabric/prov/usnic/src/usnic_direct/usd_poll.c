@@ -99,7 +99,7 @@ usd_desc_to_rq_comp(
             rcvbuf_len = 0;
             do {
                 rq_enet_desc_dec( (struct rq_enet_desc *)
-                        ((uintptr_t)rq->urq_vnic_rq.ring.descs + (i<<4)),
+                        ((uintptr_t)rq->urq_desc_ring + (i<<4)),
                         &bus_addr, &type, &len);
                 rcvbuf_len += len;
                 i = (i - 1) & rq->urq_post_index_mask;
@@ -127,7 +127,7 @@ usd_desc_to_rq_comp(
      * reported as released until next RX
      */
     credits = (q_index - rq->urq_last_comp) & rq->urq_post_index_mask;
-    rq->urq_vnic_rq.ring.desc_avail += credits;
+    rq->urq_recv_credits += credits;
     rq->urq_last_comp = q_index;
 
     return 0;

@@ -55,6 +55,10 @@ int sock_cq_progress(struct sock_cq *cq)
 	struct sock_rx_ctx *rx_ctx;
 	struct dlist_entry *entry;
 
+	if (cq->domain->progress_mode == FI_PROGRESS_AUTO && 
+	    !sock_progress_thread_wait)
+		return 0;
+
 	for (entry = cq->tx_list.next; entry != &cq->tx_list;
 	     entry = entry->next) {
 		tx_ctx = container_of(entry, struct sock_tx_ctx, cq_entry);
@@ -111,12 +115,14 @@ static ssize_t _sock_cq_write(struct sock_cq *cq, fi_addr_t addr,
 		goto out;
 	}
 
-	rbfdwrite(&cq->cq_rbfd, buf, len);
-	rbfdcommit(&cq->cq_rbfd);
-	ret = len;
 
 	rbwrite(&cq->addr_rb, &addr, sizeof(fi_addr_t));
 	rbcommit(&cq->addr_rb);
+
+
+	rbfdwrite(&cq->cq_rbfd, buf, len);
+	rbfdcommit(&cq->cq_rbfd);
+	ret = len;
 
 	if (cq->signal) 
 		sock_wait_signal(cq->waitset);
@@ -218,16 +224,31 @@ static void sock_cq_set_report_fn(struct sock_cq *sock_cq)
 	}
 }
 
+static inline ssize_t sock_cq_rbuf_read(struct sock_cq *cq, void *buf,
+					size_t count, fi_addr_t *src_addr,
+					size_t cq_entry_len)
+{
+	ssize_t i;
+	fi_addr_t addr;
+
+	rbfdread(&cq->cq_rbfd, buf, cq_entry_len * count);
+	for(i = 0; i < count; i++) {
+		rbread(&cq->addr_rb, &addr, sizeof(fi_addr_t));
+		if (src_addr)
+			src_addr[i] = addr;
+	}
+	return count;
+}
+
 ssize_t sock_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 			fi_addr_t *src_addr, const void *cond, int timeout)
 {
-	int ret;
-	fi_addr_t addr;
+	int ret = 0;
 	int64_t threshold;
 	struct timeval now;
 	struct sock_cq *sock_cq;
 	double start_ms, end_ms;
-	ssize_t i, bytes_read, num_read, cq_entry_len;
+	ssize_t cq_entry_len, avail;
 	
 	sock_cq = container_of(cq, struct sock_cq, cq_fid);
 	cq_entry_len = sock_cq->cq_entry_size;
@@ -246,8 +267,9 @@ ssize_t sock_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 			timeout -=  (end_ms - start_ms);
 			timeout = timeout < 0 ? 0 : timeout;
 		}
-	}
-
+	} else
+		sock_cq_progress(sock_cq);
+	
 	if (sock_cq->attr.wait_cond == FI_CQ_COND_THRESHOLD) {
 		threshold = MIN((int64_t)cond, count);
 	}else{
@@ -255,23 +277,21 @@ ssize_t sock_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 	}
 
 	fastlock_acquire(&sock_cq->lock);
-	bytes_read = rbfdsread(&sock_cq->cq_rbfd, buf, 
-			       cq_entry_len*threshold, timeout);
-
-	if (bytes_read == 0) {
-		ret = -FI_ETIMEDOUT;
-		goto out;
-	}
-
-	num_read = bytes_read/cq_entry_len;
-	for(i=0; i < num_read; i++) {
-		rbread(&sock_cq->addr_rb, &addr, sizeof(fi_addr_t));
-		if (src_addr)
-			src_addr[i] = addr;
-	}
-	ret = num_read;
-out:
+	if ((avail = rbfdused(&sock_cq->cq_rbfd)))
+		ret = sock_cq_rbuf_read(sock_cq, buf, 
+					MIN(threshold, avail / cq_entry_len),
+					src_addr, cq_entry_len);
 	fastlock_release(&sock_cq->lock);
+
+	if (ret == 0) {
+		ret = rbfdwait(&sock_cq->cq_rbfd, timeout);
+		fastlock_acquire(&sock_cq->lock);
+		if (ret != -FI_ETIMEDOUT && (avail = rbfdused(&sock_cq->cq_rbfd)))
+			ret = sock_cq_rbuf_read(sock_cq, buf, 
+						MIN(threshold, avail / cq_entry_len),
+						src_addr, cq_entry_len);
+		fastlock_release(&sock_cq->lock);
+	}
 	return ret;
 }
 

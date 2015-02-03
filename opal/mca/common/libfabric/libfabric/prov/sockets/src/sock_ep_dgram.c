@@ -71,16 +71,16 @@ const struct fi_ep_attr sock_dgram_ep_attr = {
 
 const struct fi_tx_attr sock_dgram_tx_attr = {
 	.caps = SOCK_EP_DGRAM_CAP,
-	.op_flags = SOCK_DGRAM_DEF_OPS,
+	.op_flags = SOCK_DEF_OPS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
-	.size = SOCK_EP_MAX_TX_CTX_SZ,
+	.size = SOCK_EP_TX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
 const struct fi_rx_attr sock_dgram_rx_attr = {
 	.caps = SOCK_EP_DGRAM_CAP,
-	.op_flags = SOCK_DGRAM_DEF_OPS,
+	.op_flags = SOCK_DEF_OPS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.total_buffered_recv = SOCK_EP_MAX_BUFF_RECV,
 	.size = SOCK_EP_MAX_MSG_SZ,
@@ -200,18 +200,12 @@ static struct fi_info *sock_dgram_fi_info(struct fi_info *hints,
 	if (!_info)
 		return NULL;
 	
-	if (!hints->caps) 
-		_info->caps = SOCK_EP_DGRAM_CAP;
-	
-	if (!hints->tx_attr)
-		*(_info->tx_attr) = sock_dgram_tx_attr;
+	_info->caps = SOCK_EP_DGRAM_CAP;
+	*(_info->tx_attr) = sock_dgram_tx_attr;
+	*(_info->rx_attr) = sock_dgram_rx_attr;
+	*(_info->ep_attr) = sock_dgram_ep_attr;
 
-	if (!hints->rx_attr)
-		*(_info->rx_attr) = sock_dgram_rx_attr;
-
-	if (!hints->ep_attr)
-		*(_info->ep_attr) = sock_dgram_ep_attr;
-
+	_info->caps |= (_info->rx_attr->caps | _info->tx_attr->caps);
 	return _info;
 }
 
@@ -256,9 +250,6 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 			return ret;
 	}
 
-	src_addr = calloc(1, sizeof(struct sockaddr_in));
-	dest_addr = calloc(1, sizeof(struct sockaddr_in));
-
 	memset(&sock_hints, 0, sizeof(struct addrinfo));
 	sock_hints.ai_family = AF_INET;
 	sock_hints.ai_socktype = SOCK_STREAM;
@@ -293,6 +284,11 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 		
+		src_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!src_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		memcpy(src_addr, result->ai_addr, result->ai_addrlen);
 		freeaddrinfo(result); 
 	} else if (node || service) {
@@ -317,6 +313,11 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 		
+		dest_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!dest_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		memcpy(dest_addr, result->ai_addr, result->ai_addrlen);
 		
 		udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -328,7 +329,12 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 
-		len = sizeof(struct sockaddr_in);				
+		len = sizeof(struct sockaddr_in);		
+		src_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!src_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}		
 		ret = getsockname(udp_sock, (struct sockaddr*)src_addr, &len);
 		if (ret != 0) {
 			SOCK_LOG_ERROR("getsockname failed\n");
@@ -341,11 +347,25 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 	}
 
 	if (hints->src_addr) {
+		if (!src_addr) {
+			src_addr = calloc(1, sizeof(struct sockaddr_in));				
+			if (!src_addr) {
+				ret = -FI_ENOMEM;
+				goto err;
+			}
+		}
 		assert(hints->src_addrlen == sizeof(struct sockaddr_in));
 		memcpy(src_addr, hints->src_addr, hints->src_addrlen);
 	}
 
 	if (hints->dest_addr) {
+		if (!dest_addr) {
+			dest_addr = calloc(1, sizeof(struct sockaddr_in));
+			if (!dest_addr) {
+				ret = -FI_ENOMEM;
+				goto err;
+			}
+		}
 		assert(hints->dest_addrlen == sizeof(struct sockaddr_in));
 		memcpy(dest_addr, hints->dest_addr, hints->dest_addrlen);
 	}
@@ -368,14 +388,18 @@ int sock_dgram_getinfo(uint32_t version, const char *node, const char *service,
 		goto err;
 	}
 
+	if (src_addr)
+		free(src_addr);
+	if (dest_addr)
+		free(dest_addr);
 	*info = _info;
-	free(src_addr);
-	free(dest_addr);
 	return 0;
 
 err:
-	free(src_addr);
-	free(dest_addr);
+	if (src_addr)
+		free(src_addr);
+	if (dest_addr)
+		free(dest_addr);
 	SOCK_LOG_ERROR("fi_getinfo failed\n");
 	return ret;	
 }
@@ -433,12 +457,12 @@ int sock_dgram_ep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 
-	*ep = &endpoint->fid.ep;
+	*ep = &endpoint->ep;
 	return 0;
 }
 
 int sock_dgram_sep(struct fid_domain *domain, struct fi_info *info,
-		struct fid_sep **sep, void *context)
+		struct fid_ep **sep, void *context)
 {
 	int ret;
 	struct sock_ep *endpoint;
@@ -447,6 +471,6 @@ int sock_dgram_sep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 
-	*sep = &endpoint->fid.sep;
+	*sep = &endpoint->ep;
 	return 0;
 }

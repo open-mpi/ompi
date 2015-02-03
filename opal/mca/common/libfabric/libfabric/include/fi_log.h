@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Intel Corporation, Inc.  All rights reserved.
+ * Copyright (c) 2015, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -28,44 +28,38 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
  */
+
+#if !defined(FI_LOG_H)
+#define FI_LOG_H
 
 #if HAVE_CONFIG_H
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifndef _SOCK_UTIL_H_
-#define _SOCK_UTIL_H_
+extern int fi_log_level;
 
-#include <stdio.h>
+void fi_log_init(void);
+void fi_warn_impl(const char *prov, const char *fmt, ...);
+void fi_log_impl(int level, const char *prov, const char *fmt, ...);
+void fi_debug_impl(const char *prov, const char *fmt, ...);
 
-#define SOCK_ERROR (1)
-#define SOCK_WARN (2)
-#define SOCK_INFO (3)
+/* Callers are responsible for including their own trailing "\n".  Non-provider
+ * code should pass prov=NULL.
+ */
+#define FI_WARN(prov, ...) fi_warn_impl(prov, __VA_ARGS__)
 
-extern int sock_log_level;
-extern useconds_t sock_progress_thread_wait;
-
-#define SOCK_LOG_INFO(...) do {						\
-		if (sock_log_level >= SOCK_INFO) {			\
-			fprintf(stderr, "[SOCK_INFO - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
+#define FI_LOG(level, prov, ...) \
+	do { \
+		if ((level) <= fi_log_level) \
+			fi_log_impl(level, prov, __VA_ARGS__); \
 	} while (0)
 
-#define SOCK_LOG_WARN(...) do {						\
-		if (sock_log_level >= SOCK_WARN) {			\
-			fprintf(stderr, "[SOCK_WARN - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
-	} while (0)
-
-#define SOCK_LOG_ERROR(...) do {					\
-		if (sock_log_level >= SOCK_ERROR) {			\
-			fprintf(stderr, "[SOCK_ERROR - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
-	} while (0)
-
+#if ENABLE_DEBUG
+#  define FI_DEBUG(prov, ...) fi_debug_impl(prov, __VA_ARGS__)
+#else
+#  define FI_DEBUG(prov, ...) do {} while (0)
 #endif
 
+#endif /* !defined(FI_LOG_H) */

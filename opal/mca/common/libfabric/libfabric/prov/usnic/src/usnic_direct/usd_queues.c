@@ -472,27 +472,76 @@ usd_create_wq(
     return ret;
 }
 
+static int
+usd_vnic_rq_init(
+    struct usd_rq *rq,
+    struct usd_vf *vf,
+    uint64_t desc_ring)
+{
+    struct vnic_rq *vrq;
+    int ret;
+
+    vrq = &rq->urq_vnic_rq;
+
+    /* get address of control register */
+    vrq->ctrl = vnic_dev_get_res(vf->vf_vdev, RES_TYPE_RQ, rq->urq_index);
+    if (vrq->ctrl == NULL)
+        return -EINVAL;
+
+    ret = vnic_rq_disable(vrq);
+    if (ret != 0)
+        return ret;
+
+    writeq(desc_ring, &vrq->ctrl->ring_base);
+    iowrite32(rq->urq_num_entries, &vrq->ctrl->ring_size);
+    iowrite32(0, &vrq->ctrl->fetch_index);
+    iowrite32(0, &vrq->ctrl->posted_index);
+    iowrite32(rq->urq_cq->ucq_index, &vrq->ctrl->cq_index);
+    iowrite32(0, &vrq->ctrl->error_interrupt_enable);
+    iowrite32(0, &vrq->ctrl->error_interrupt_offset);
+    iowrite32(0, &vrq->ctrl->dropped_packet_count);
+    iowrite32(0, &vrq->ctrl->error_status);
+
+    rq->urq_state |= USD_QS_VNIC_INITIALIZED;
+    rq->urq_next_desc = rq->urq_desc_ring;
+    rq->urq_recv_credits = rq->urq_num_entries - 1;
+
+    return 0;
+}
+
 /*
  * Allocate the resources for a previously created RQ
  */
 static int
-usd_create_vnic_rq(
-    struct usd_rq *rq,
-    struct usd_vf *vf)
+usd_create_rq(struct usd_qp_impl *qp)
 {
+    struct usd_rq *rq;
+    uint32_t ring_size;
     int ret;
 
-    /* Allocate resources for RQ */
-    ret = vnic_rq_alloc(vf->vf_vdev, &rq->urq_vnic_rq,
-            rq->urq_index, rq->urq_num_entries, sizeof(struct rq_enet_desc));
-    if (ret != 0) {
-        return ret;
-    }
+    rq = &qp->uq_rq;
 
-    vnic_rq_init(&rq->urq_vnic_rq, rq->urq_cq->ucq_index, 0, 0);
-    rq->urq_state |= USD_QS_VNIC_INITIALIZED;
+    /* Allocate resources for RQ */
+    ring_size = sizeof(struct rq_enet_desc) * rq->urq_num_entries;
+    ret = usd_alloc_mr(qp->uq_dev, ring_size, (void **)&rq->urq_desc_ring);
+    if (ret != 0)
+        return ret;
+
+    ret = usd_vnic_rq_init(rq, qp->uq_vf, (uint64_t)rq->urq_desc_ring);
+    if (ret != 0)
+        goto out;
+
+    rq->urq_post_index_mask = (rq->urq_num_entries-1);
+    rq->urq_post_index = 0;
+    rq->urq_last_comp = (rq->urq_num_entries-1);
 
     return 0;
+out:
+    if (rq->urq_desc_ring != NULL) {
+        usd_free_mr(rq->urq_desc_ring);
+        rq->urq_desc_ring = NULL;
+    }
+    return ret;
 }
 
 static int
@@ -952,12 +1001,6 @@ usd_create_qp_normal(
     }
 
     num_wq_entries = wq->uwq_num_entries;
-
-    copybuf_size = USD_SEND_MAX_COPY * num_wq_entries;
-    ret = usd_alloc_mr(dev, copybuf_size, (void **)&wq->uwq_copybuf);
-    if (ret != 0)
-        goto fail;
-
     num_rq_entries = rq->urq_num_entries;
 
     rq->urq_context = calloc(sizeof(void *), num_rq_entries);
@@ -966,10 +1009,6 @@ usd_create_qp_normal(
         ret = -ENOMEM;
         goto fail;
     }
-
-    rq->urq_post_index_mask = (rq->urq_num_entries-1);
-    rq->urq_post_index = 0;
-    rq->urq_last_comp = (rq->urq_num_entries-1);
 
     /*
      * Issue verbs command to create the QP.  This does not actually
@@ -985,6 +1024,16 @@ usd_create_qp_normal(
     /* verbs create_qp command has been completed */
     rq->urq_state |= USD_QS_VERBS_CREATED;
     wq->uwq_state |= USD_QS_VERBS_CREATED;
+
+    /*
+     * Create/regmr for wq copybuf after verbs QP is created
+     * because QP number information may be needed to register
+     * mr under shared PD
+     */
+    copybuf_size = USD_SEND_MAX_COPY * num_wq_entries;
+    ret = usd_alloc_mr(dev, copybuf_size, (void **)&wq->uwq_copybuf);
+    if (ret != 0)
+        goto fail;
 
     ret = usd_map_vf(dev, &vf_info, &vf);
     if (ret != 0) {
@@ -1013,7 +1062,7 @@ usd_create_qp_normal(
     if (ret != 0) {
         goto fail;
     }
-    ret = usd_create_vnic_rq(&qp->uq_rq, qp->uq_vf);
+    ret = usd_create_rq(qp);
     if (ret != 0) {
         goto fail;
     }

@@ -66,7 +66,7 @@
 #include "libnl_utils.h"
 
 #include "usdf.h"
-#include "fi_usnic.h"
+#include "fi_ext_usnic.h"
 #include "usdf_progress.h"
 #include "usdf_timer.h"
 #include "usdf_dgram.h"
@@ -780,12 +780,12 @@ usdf_usnic_getinfo(struct fid_fabric *fabric, struct fi_usnic_info *uip)
 	fp = fab_ftou(fabric);
 	dap = fp->fab_dev_attrs;
 
-	uip->ui_link_speed = dap->uda_bandwidth;
-	uip->ui_netmask_be = dap->uda_netmask_be;
-	strcpy(uip->ui_ifname, dap->uda_ifname);
-	uip->ui_num_vf = dap->uda_num_vf;
-	uip->ui_qp_per_vf = dap->uda_qp_per_vf;
-	uip->ui_cq_per_vf = dap->uda_cq_per_vf;
+	uip->ui.v1.ui_link_speed = dap->uda_bandwidth;
+	uip->ui.v1.ui_netmask_be = dap->uda_netmask_be;
+	strcpy(uip->ui.v1.ui_ifname, dap->uda_ifname);
+	uip->ui.v1.ui_num_vf = dap->uda_num_vf;
+	uip->ui.v1.ui_qp_per_vf = dap->uda_qp_per_vf;
+	uip->ui.v1.ui_cq_per_vf = dap->uda_cq_per_vf;
 
 	return 0;
 }

@@ -30,18 +30,20 @@
  * SOFTWARE.
  */
 
-#ifndef _FI_USNIC_H_
-#define _FI_USNIC_H_
+#ifndef _FI_EXT_USNIC_H_
+#define _FI_EXT_USNIC_H_
 
 #include <stdint.h>
 #include <net/if.h>
 
 #define FI_PROTO_RUDP 100
 
+#define FI_USNIC_INFO_VERSION 1
+
 /*
  * usNIC specific info
  */
-struct fi_usnic_info {
+struct fi_usnic_info_v1 {
 	uint32_t ui_link_speed;
 	uint32_t ui_netmask_be;
 	char ui_ifname[IFNAMSIZ];
@@ -49,6 +51,13 @@ struct fi_usnic_info {
 	uint32_t ui_num_vf;
 	uint32_t ui_qp_per_vf;
 	uint32_t ui_cq_per_vf;
+};
+
+struct fi_usnic_info {
+	uint32_t ui_version;
+	union {
+		struct fi_usnic_info_v1 v1;
+	} ui;
 };
 
 /*
@@ -69,4 +78,4 @@ struct fi_usnic_ops_av {
 	int (*get_distance)(struct fid_av *av, void *addr, int *metric);
 };
 
-#endif /* _FI_USNIC_H_ */
+#endif /* _FI_EXT_USNIC_H_ */

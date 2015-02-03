@@ -133,6 +133,25 @@ struct sock_conn *sock_av_lookup_addr(struct sock_av *av,
 	return sock_conn_map_lookup_key(av->cmap, av->key[idx]);
 }
 
+uint16_t sock_av_lookup_ep_id(struct sock_av *av, fi_addr_t addr)
+{
+	int index = ((uint64_t)addr & av->mask);
+	struct sock_av_addr *av_addr;
+
+	if (index >= av->table_hdr->stored || index < 0) {
+		return AF_INET;
+	}
+
+	if (!av->cmap) {
+		SOCK_LOG_ERROR("EP with no AV bound\n");
+		return 0;
+	}
+
+	av_addr = idm_lookup(&av->addr_idm, index);
+	return av_addr->rem_ep_id;
+}
+
+
 static inline void sock_av_report_success(struct sock_av *av, 
 					  int *index, uint64_t flags)
 {
@@ -158,6 +177,7 @@ static int sock_check_table_in(struct sock_av *_av, struct sockaddr_in *addr,
 	char sa_ip[INET_ADDRSTRLEN];
 	struct sock_av_addr *av_addr;
 	size_t new_count, table_sz;
+	uint16_t rem_ep_id;
 
 	if ((_av->attr.flags & FI_EVENT) && !_av->eq)
 		return -FI_ENOEQ;
@@ -166,8 +186,13 @@ static int sock_check_table_in(struct sock_av *_av, struct sockaddr_in *addr,
 		for (i = 0; i < count; i++) {
 			for (j = 0; j < _av->table_hdr->stored; j++) {
 				av_addr = &_av->table[j];
-				if (memcmp(&av_addr->addr, &addr[i], 
-					   sizeof(struct sockaddr_in)) == 0) {
+
+				rem_ep_id = ((struct sockaddr_in*)&addr[i])->sin_family;
+				((struct sockaddr_in*)&addr[i])->sin_family = AF_INET;
+
+				if ((memcmp(&av_addr->addr, &addr[i], 
+					    sizeof(struct sockaddr_in)) == 0) && 
+				    av_addr->rem_ep_id == rem_ep_id) {
 					SOCK_LOG_INFO("Found addr in shared av\n");
 					if (idm_set(&_av->addr_idm, _av->key[j], av_addr) < 0) {
 						if (fi_addr)
@@ -215,6 +240,9 @@ static int sock_check_table_in(struct sock_av *_av, struct sockaddr_in *addr,
 			}
 		}
 
+		rem_ep_id = ((struct sockaddr_in*)&addr[i])->sin_family;
+		((struct sockaddr_in*)&addr[i])->sin_family = AF_INET;
+
 		av_addr = &_av->table[_av->table_hdr->stored];		
 		memcpy(sa_ip, inet_ntoa((&addr[i])->sin_addr), INET_ADDRSTRLEN);
 		SOCK_LOG_INFO("AV-INSERT:src_addr: family: %d, IP is %s, port: %d\n",
@@ -222,6 +250,7 @@ static int sock_check_table_in(struct sock_av *_av, struct sockaddr_in *addr,
 			      ntohs(((struct sockaddr_in*)&addr[i])->sin_port));
 		
 		memcpy(&av_addr->addr, &addr[i], sizeof(struct sockaddr_in));
+		av_addr->rem_ep_id = rem_ep_id;
 		if (idm_set(&_av->addr_idm, _av->table_hdr->stored, av_addr) < 0) {
 			if (fi_addr)
 				fi_addr[i] = FI_ADDR_NOTAVAIL;

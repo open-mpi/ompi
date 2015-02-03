@@ -63,8 +63,7 @@
 #include "usdf_av.h"
 #include "usdf_timer.h"
 
-/* would like to move to include/rdma */
-#include "fi_usnic.h"
+#include "fi_ext_usnic.h"
 
 static void
 usdf_av_insert_async_complete(struct usdf_av_insert *insert)

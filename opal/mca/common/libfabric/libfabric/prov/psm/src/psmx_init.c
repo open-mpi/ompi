@@ -53,7 +53,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			psmx_debug("%s: unable to reserve tag bit for FI_MSG support.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or remove FI_MSG from the asked capabilities, "
-				   "or set SFI_PSM_AM_MSG=1 to use an alternative (but less "
+				   "or set OFI_PSM_AM_MSG=1 to use an alternative (but less "
 				   "optimized) message queue implementation.\n",
 				   __func__);
 			return -1;
@@ -62,7 +62,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			psmx_debug("%s: unable to reserve tag bit for FI_MSG support. "
 				   "FI_MSG is removed from the capabilities.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
-				   "or set SFI_PSM_AM_MSG=1 to use an alternative (but less "
+				   "or set OFI_PSM_AM_MSG=1 to use an alternative (but less "
 				   "optimized) message queue implementation.\n",
 				   __func__);
 			ret_caps &= ~FI_MSG;
@@ -77,7 +77,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			psmx_debug("%s: unable to reserve tag bit for tagged RMA acceleration.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or remove FI_RMA from the asked capabilities, "
-				   "or set SFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
+				   "or set OFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
 				   __func__);
 			return -1;
 		}
@@ -85,7 +85,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			psmx_debug("%s: unable to reserve tag bit for tagged RMA acceleration. "
 				   "FI_RMA is removed from the capabilities.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
-				   "or set SFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
+				   "or set OFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
 				   __func__);
 			ret_caps &= ~FI_RMA;
 		}
@@ -369,12 +369,12 @@ PSM_INI
 
 	psmx_debug("%s\n", __func__);
 
-	psmx_env.name_server	= psmx_get_int_env("SFI_PSM_NAME_SERVER", 0);
-	psmx_env.am_msg		= psmx_get_int_env("SFI_PSM_AM_MSG", 0);
-	psmx_env.tagged_rma	= psmx_get_int_env("SFI_PSM_TAGGED_RMA", 0);
-	psmx_env.debug		= psmx_get_int_env("SFI_PSM_DEBUG", 0);
-	psmx_env.warning	= psmx_get_int_env("SFI_PSM_WARNING", 1);
-	psmx_env.uuid		= getenv("SFI_PSM_UUID");
+	psmx_env.name_server	= psmx_get_int_env("OFI_PSM_NAME_SERVER", 0);
+	psmx_env.am_msg		= psmx_get_int_env("OFI_PSM_AM_MSG", 0);
+	psmx_env.tagged_rma	= psmx_get_int_env("OFI_PSM_TAGGED_RMA", 0);
+	psmx_env.debug		= psmx_get_int_env("OFI_PSM_DEBUG", 0);
+	psmx_env.warning	= psmx_get_int_env("OFI_PSM_WARNING", 1);
+	psmx_env.uuid		= getenv("OFI_PSM_UUID");
 
         psm_error_register_handler(NULL, PSM_ERRHANDLER_NO_HANDLER);
 
@@ -388,12 +388,12 @@ PSM_INI
 		return NULL;
 	}
 
-	check_version = psmx_get_int_env("SFI_PSM_VERSION_CHECK", 1);
+	check_version = psmx_get_int_env("OFI_PSM_VERSION_CHECK", 1);
 
 	if (check_version && major != PSM_VERNO_MAJOR) {
 		fprintf(stderr, "%s: PSM version mismatch: header %d.%d, library %d.%d.\n",
 			__func__, PSM_VERNO_MAJOR, PSM_VERNO_MINOR, major, minor);
-		fprintf(stderr, "\tSet envar SFI_PSM_VERSION_CHECK=0 to bypass version check.\n");
+		fprintf(stderr, "\tSet envar OFI_PSM_VERSION_CHECK=0 to bypass version check.\n");
 		return NULL;
 	}
 

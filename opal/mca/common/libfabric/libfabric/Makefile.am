@@ -18,6 +18,10 @@ else !HAVE_LD_VERSION_SCRIPT
     libfabric_version_script =
 endif !HAVE_LD_VERSION_SCRIPT
 
+rdmaincludedir = $(includedir)/rdma
+
+rdmainclude_HEADERS =
+
 # internal utility functions shared by in-tree providers:
 common_srcs = \
 	src/common.c \
@@ -31,10 +35,12 @@ src_libfabric_la_SOURCES = \
 	include/fi_enosys.h \
 	include/fi_indexer.h \
 	include/fi_list.h \
+	include/fi_log.h \
 	include/fi_rbuf.h \
 	include/prov.h \
 	src/fabric.c \
 	src/fi_tostr.c \
+	src/log.c \
 	$(common_srcs)
 
 if HAVE_SOCKETS
@@ -154,7 +160,7 @@ libusnic_direct_sources = \
 
 _usnic_files = \
 	$(libusnic_direct_sources) \
-	prov/usnic/src/fi_usnic.h \
+	prov/usnic/src/fi_ext_usnic.h \
 	prov/usnic/src/usdf.h \
 	prov/usnic/src/usdf_av.c \
 	prov/usnic/src/usdf_av.h \
@@ -188,6 +194,9 @@ _usnic_cppflags = \
         -D__LIBUSNIC__ \
         -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(USNIC_LIBNL_CPPFLAGS) \
         -I$(top_srcdir)/prov/usnic/src/usnic_direct
+
+rdmainclude_HEADERS += \
+	prov/usnic/src/fi_ext_usnic.h
 
 if HAVE_USNIC_DL
 pkglib_LTLIBRARIES += libusnic-fi.la
@@ -242,9 +251,7 @@ src_libfabric_la_LDFLAGS = -version-info 1 -export-dynamic \
 			   $(libfabric_version_script)
 src_libfabric_la_DEPENDENCIES = $(srcdir)/libfabric.map
 
-rdmaincludedir = $(includedir)/rdma
-
-rdmainclude_HEADERS = \
+rdmainclude_HEADERS += \
 	$(top_srcdir)/include/rdma/fabric.h \
 	$(top_srcdir)/include/rdma/fi_atomic.h \
 	$(top_srcdir)/include/rdma/fi_cm.h \

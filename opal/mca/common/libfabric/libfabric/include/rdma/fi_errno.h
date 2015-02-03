@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2014 Intel Corporation. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -40,6 +41,8 @@ extern "C" {
 #endif
 
 /* FI directly mapped errno values */
+
+#define	FI_SUCCESS		0
 
 //#define	FI_EPERM		EPERM		/* Operation not permitted */
 #define	FI_ENOENT		ENOENT		/* No such file or directory */
@@ -183,6 +186,8 @@ extern "C" {
 #define FI_ENOEQ		261		/* Missing or unavailable event queue */
 #define FI_EDOMAIN		262		/* Invalid resource domain */
 #define FI_ENOCQ		263		/* Missing or unavailable completion queue */
+#define FI_ECRC			264		/* CRC error */
+#define FI_ETRUNC		265		/* Truncation error */
 
 const char *fi_strerror(int errnum);
 

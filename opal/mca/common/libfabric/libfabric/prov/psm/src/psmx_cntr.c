@@ -193,11 +193,18 @@ void psmx_cntr_add_trigger(struct psmx_fid_cntr *cntr, struct psmx_trigger *trig
 	psmx_cntr_check_trigger(cntr);
 }
 
+#define PSMX_CNTR_POLL_THRESHOLD 100
 static uint64_t psmx_cntr_read(struct fid_cntr *cntr)
 {
 	struct psmx_fid_cntr *cntr_priv;
+	static int poll_cnt = 0;
 
 	cntr_priv = container_of(cntr, struct psmx_fid_cntr, cntr);
+
+	if (poll_cnt++ == PSMX_CNTR_POLL_THRESHOLD) {
+		psmx_progress(cntr_priv->domain);
+		poll_cnt = 0;
+	}
 
 	cntr_priv->counter_last_read = cntr_priv->counter;
 
@@ -264,8 +271,7 @@ static int psmx_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout
 				break;
 		}
 		else {
-			psmx_cq_poll_mq(NULL, cntr_priv->domain, NULL, 0, NULL);
-			psmx_am_progress(cntr_priv->domain);
+			psmx_progress(cntr_priv->domain);
 		}
 
 		if (cntr_priv->counter >= threshold)
@@ -292,6 +298,9 @@ static int psmx_cntr_close(fid_t fid)
 	struct psmx_fid_cntr *cntr;
 
 	cntr = container_of(fid, struct psmx_fid_cntr, cntr.fid);
+
+	if (cntr->wait && cntr->wait_is_local)
+		fi_close((fid_t)cntr->wait);
 
 	pthread_mutex_destroy(&cntr->trigger_lock);
 	free(cntr);
@@ -351,6 +360,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	struct psmx_fid_cntr *cntr_priv;
 	struct psmx_fid_wait *wait = NULL;
 	struct fi_wait_attr wait_attr;
+	int wait_is_local = 0;
 	int events;
 	uint64_t flags;
 	int err;
@@ -392,6 +402,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
+		wait_is_local = 1;
 		break;
 
 	default:
@@ -407,6 +418,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	cntr_priv->domain = domain_priv;
 	cntr_priv->events = events;
 	cntr_priv->wait = wait;
+	cntr_priv->wait_is_local = wait_is_local;
 	cntr_priv->flags = flags;
 	cntr_priv->cntr.fid.fclass = FI_CLASS_CNTR;
 	cntr_priv->cntr.fid.context = context;

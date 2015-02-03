@@ -1,5 +1,9 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* defined to 1 if libfabric was configured with --enable-debug, 0 otherwise
+   */
+#undef ENABLE_DEBUG
+
 /* Set to 1 to use c11 atomic functions */
 #undef HAVE_ATOMICS
 

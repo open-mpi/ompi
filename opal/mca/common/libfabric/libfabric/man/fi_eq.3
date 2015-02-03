@@ -1,9 +1,11 @@
-.TH fi_eq 3 "2015\-01\-01" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_eq 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
 .SH NAME
 .PP
 fi_eq - Event queue operations
 .PP
 fi_eq_open / fi_close : Open/close an event queue
+.PP
+fi_control : Control operation of EQ
 .PP
 fi_eq_read / fi_eq_readerr : Read an event from an event queue
 .PP
@@ -65,6 +67,10 @@ information.
 \f[I]len\f[] : Length of data buffer
 .PP
 \f[I]flags\f[] : Additional flags to apply to the operation
+.PP
+\f[I]command\f[] : Command of control operation to perform on EQ.
+.PP
+\f[I]arg\f[] : Optional control argument
 .PP
 \f[I]prov_errno\f[] : Provider specific error value
 .PP
@@ -160,8 +166,10 @@ This field is ignored if wait_obj is not FI_WAIT_SET.
 .SS fi_close
 .PP
 The fi_close call releases all resources associated with an event queue.
-The EQ must not be bound to any other resources prior to being closed.
 Any events which remain on the EQ when it is closed are lost.
+.PP
+The EQ must not be bound to any other objects prior to being closed,
+otherwise the call will return -FI_EBUSY.
 .SS fi_control
 .PP
 The fi_control call is used to access provider or implementation

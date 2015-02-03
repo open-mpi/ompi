@@ -142,9 +142,11 @@ usdf_ep_dgram_enable(struct fid_ep *fep)
 fail:
 	if (ep->e.dg.ep_hdr_ptr != NULL) {
 		free(ep->e.dg.ep_hdr_ptr);
+		ep->e.dg.ep_hdr_ptr = NULL;
 	}
 	if (ep->e.dg.ep_qp != NULL) {
 		usd_destroy_qp(ep->e.dg.ep_qp);
+		ep->e.dg.ep_qp = NULL;
 	}
 	return ret;
 }
@@ -286,6 +288,20 @@ static struct fi_ops_ep usdf_base_dgram_ops = {
 	.setopt = fi_no_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = usdf_dgram_rx_size_left,
+	.tx_size_left = usdf_dgram_tx_size_left,
+};
+
+static struct fi_ops_ep usdf_base_dgram_prefix_ops = {
+	.size = sizeof(struct fi_ops_ep),
+	.enable = usdf_ep_dgram_enable,
+	.cancel = fi_no_cancel,
+	.getopt = fi_no_getopt,
+	.setopt = fi_no_setopt,
+	.tx_ctx = fi_no_tx_ctx,
+	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = usdf_dgram_prefix_rx_size_left,
+	.tx_size_left = usdf_dgram_prefix_tx_size_left,
 };
 
 static struct fi_ops_msg usdf_dgram_ops = {
@@ -299,8 +315,6 @@ static struct fi_ops_msg usdf_dgram_ops = {
 	.inject = usdf_dgram_inject,
 	.senddata = usdf_dgram_senddata,
 	.injectdata = fi_no_msg_injectdata,
-	.rx_size_left = usdf_dgram_rx_size_left,
-	.tx_size_left = usdf_dgram_tx_size_left,
 };
 
 static struct fi_ops_msg usdf_dgram_prefix_ops = {
@@ -314,8 +328,6 @@ static struct fi_ops_msg usdf_dgram_prefix_ops = {
 	.inject = usdf_dgram_inject,
 	.senddata = usdf_dgram_senddata,
 	.injectdata = fi_no_msg_injectdata,
-	.rx_size_left = usdf_dgram_prefix_rx_size_left,
-	.tx_size_left = usdf_dgram_prefix_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_cm_dgram_ops = {
@@ -369,7 +381,6 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 	ep->ep_fid.fid.fclass = FI_CLASS_EP;
 	ep->ep_fid.fid.context = context;
 	ep->ep_fid.fid.ops = &usdf_ep_dgram_ops;
-	ep->ep_fid.ops = &usdf_base_dgram_ops;
 	ep->ep_fid.cm = &usdf_cm_dgram_ops;
 	ep->ep_domain = udp;
 	ep->ep_caps = info->caps;
@@ -393,9 +404,11 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 			goto fail;
 		}
 
+		ep->ep_fid.ops = &usdf_base_dgram_prefix_ops;
 		info->ep_attr->msg_prefix_size = USDF_HDR_BUF_ENTRY;
 		ep->ep_fid.msg = &usdf_dgram_prefix_ops;
 	} else {
+		ep->ep_fid.ops = &usdf_base_dgram_ops;
 		ep->ep_fid.msg = &usdf_dgram_ops;
 	}
 	atomic_init(&ep->ep_refcnt, 0);

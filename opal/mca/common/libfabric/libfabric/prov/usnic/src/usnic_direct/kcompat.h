@@ -201,11 +201,19 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 	return true;
 }
 #endif /*CONFIG_RFS_ACCEL*/
-
-#if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(6, 5)))
-#define skb_get_rxhash(skb) (skb)->rxhash
-#endif /*RHEL_RELEASE_VERSION == 6.5*/
 #endif /*LINUX >= 3.3.0*/
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0))
+#define skb_get_hash_raw(skb) (skb)->rxhash
+#endif
+
+#if !defined(__VMKLNX__) && (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
+#define enic_wq_lock(wq_lock) spin_lock_irqsave(wq_lock, flags)
+#define enic_wq_unlock(wq_lock) spin_unlock_irqrestore(wq_lock, flags)
+#else
+#define enic_wq_lock(wq_lock) spin_lock(wq_lock)
+#define enic_wq_unlock(wq_lock) spin_unlock(wq_lock)
+#endif /* ! vmklnx && kernel < 2.6.24 */
 
 #ifdef CONFIG_RFS_ACCEL
 #if ((RHEL_RELEASE_CODE && RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(6, 5) \
@@ -235,9 +243,25 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 #define napi_hash_add(napi) do {} while(0)
 #define skb_mark_napi_id(skb, napi) do {} while(0)
 #endif /*CONFIG_NET_RX_BUSY_POLL*/
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 00))
 #define __vlan_hwaccel_put_tag(a, b, c) __vlan_hwaccel_put_tag(a, c);
 #endif /* KERNEL < 3.9.0 */
+
+#if ((LINUX_VERSION_CODE <= KERNEL_VERSION(3, 4, 0)) &&		\
+     (!RHEL_RELEASE_CODE || RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(6, 0)))
+#define net_warn_ratelimited(fmt, ...)			\
+	do {						\
+		if (net_ratelimit())			\
+			pr_warn(fmt, ##__VA_ARGS__);	\
+	} while (0)
+#endif /* kernel <= 3.4 && rhel < 6.0 */
+
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 26))
+#define enic_pci_dma_mapping_error(pdev, dma) pci_dma_mapping_error(dma)
+#else
+#define enic_pci_dma_mapping_error(pdev, dma) pci_dma_mapping_error(pdev, dma)
+#endif /* Kernel version <= 2.6.26 */
 
 /* Kernel version-specific definitions */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 14))
@@ -454,6 +478,8 @@ struct napi_struct {
 #undef pr_err
 #define pr_err(fmt, ...) \
 	printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+#undef pr_warn
+#define pr_warn pr_warning
 #undef pr_warning
 #define pr_warning(fmt, ...) \
 	printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)

@@ -32,40 +32,25 @@
 
 #include "psmx.h"
 
-#define PSMX_CQ_EMPTY(cq) (!cq->event_queue.head)
-
 void psmx_cq_enqueue_event(struct psmx_fid_cq *cq, struct psmx_cq_event *event)
 {
-	struct psmx_cq_event_queue *ceq = &cq->event_queue;
-
-	if (ceq->tail) {
-		ceq->tail->next = event;
-		ceq->tail = event;
-	}
-	else {
-		ceq->head = ceq->tail = event;
-	}
-	ceq->count++;
+	slist_insert_tail(&event->list_entry, &cq->event_queue);
+	cq->event_count++;
 	if (cq->wait)
 		psmx_wait_signal((struct fid_wait *)cq->wait);
 }
 
 static struct psmx_cq_event *psmx_cq_dequeue_event(struct psmx_fid_cq *cq)
 {
-	struct psmx_cq_event_queue *ceq = &cq->event_queue;
-	struct psmx_cq_event *event;
+	struct slist_entry *entry;
 
-	if (!ceq->head)
+	if (slist_empty(&cq->event_queue))
 		return NULL;
 
-	event = ceq->head;
-	ceq->head = event->next;
-	ceq->count--;
-	if (!ceq->head)
-		ceq->tail = NULL;
+	entry = slist_remove_head(&cq->event_queue);
+	cq->event_count--;
 
-	event->next = NULL;
-	return event;
+	return container_of(entry, struct psmx_cq_event, list_entry);
 }
 
 struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
@@ -76,7 +61,17 @@ struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 {
 	struct psmx_cq_event *event;
 
-	PSMX_FREE_LIST_GET(cq->free_list.head, cq->free_list.tail, struct psmx_cq_event, event);
+	if (!slist_empty(&cq->free_list)) {
+		event = container_of(slist_remove_head(&cq->free_list),
+				     struct psmx_cq_event, list_entry);
+	}
+	else {
+		event = calloc(1, sizeof(*event));
+		if (!event) {
+			fprintf(stderr, "%s: out of memory.\n", __func__);
+			exit(-1);
+		}
+	}
 
 	if ((event->error = !!err)) {
 		event->cqe.err.op_context = op_context;
@@ -117,7 +112,7 @@ struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 		break;
 
 	default:
-		fprintf(stderr, "%s: unsupported CC format %d\n", __func__, cq->format);
+		fprintf(stderr, "%s: unsupported CQ format %d\n", __func__, cq->format);
 		return NULL;
 	}
 
@@ -168,8 +163,18 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 		event = event_in;
 	}
 	else {
-		PSMX_FREE_LIST_GET(cq->free_list.head, cq->free_list.tail,
-				   struct psmx_cq_event, event);
+		if (!slist_empty(&cq->free_list)) {
+			event = container_of(slist_remove_head(&cq->free_list),
+					     struct psmx_cq_event, list_entry);
+		}
+		else {
+			event = calloc(1, sizeof(*event));
+			if (!event) {
+				fprintf(stderr, "%s: out of memory.\n", __func__);
+				exit(-1);
+			}
+		}
+
 		event->error = !!psm_status->error_code;
 	}
 
@@ -458,7 +463,7 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 
 	cq_priv = container_of(cq, struct psmx_fid_cq, cq);
 
-	if (PSMX_CQ_EMPTY(cq_priv) || !buf) {
+	if (slist_empty(&cq_priv->event_queue) || !buf) {
 		ret = psmx_cq_poll_mq(cq_priv, cq_priv->domain,
 				      (struct psmx_cq_event *)buf, count, src_addr);
 		if (ret > 0)
@@ -482,10 +487,8 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 				if (psmx_cq_get_event_src_addr(cq_priv, event, src_addr))
 					*src_addr = FI_ADDR_NOTAVAIL;
 
-				PSMX_FREE_LIST_PUT(cq_priv->free_list.head,
-						   cq_priv->free_list.tail,
-						   struct psmx_cq_event,
-						   event);
+				memset(event, 0, sizeof(*event));
+				slist_insert_tail(&event->list_entry, &cq_priv->free_list);
 
 				read_count++;
 				buf += cq_priv->entry_size;
@@ -595,7 +598,7 @@ static ssize_t psmx_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 		threshold = 1;
 
 	/* NOTE: "cond" is only a hint, not a mandatory condition. */
-	event_count = cq_priv->event_queue.count;
+	event_count = cq_priv->event_count;
 	if (event_count < threshold) {
 		if (cq_priv->wait) {
 			psmx_wait_wait((struct fid_wait *)cq_priv->wait, timeout);
@@ -607,7 +610,7 @@ static ssize_t psmx_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 					break;
 
 				/* CQ may be updated asynchronously by the AM handlers */
-				if (cq_priv->event_queue.count > event_count)
+				if (cq_priv->event_count > event_count)
 					break;
 
 				if (timeout < 0)
@@ -641,18 +644,19 @@ static const char *psmx_cq_strerror(struct fid_cq *cq, int prov_errno, const voi
 static int psmx_cq_close(fid_t fid)
 {
 	struct psmx_fid_cq *cq;
+	struct slist_entry *entry;
+	struct psmx_cq_event *item;
 
 	cq = container_of(fid, struct psmx_fid_cq, cq.fid);
 
-	PSMX_FREE_LIST_FINALIZE(cq->free_list.head, cq->free_list.tail, struct psmx_cq_event);
-
-	if (cq->wait) {
-		if (cq->wait->type == FI_WAIT_FD) {
-			close(cq->wait->fd[0]);
-			close(cq->wait->fd[1]);
-		}
-		free(cq->wait);
+	while (!slist_empty(&cq->free_list)) {
+		entry = slist_remove_head(&cq->free_list);
+		item = container_of(entry, struct psmx_cq_event, list_entry);
+		free(item);
 	}
+
+	if (cq->wait && cq->wait_is_local)
+		fi_close((fid_t)cq->wait);
 
 	free(cq);
 
@@ -703,9 +707,12 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	struct psmx_fid_domain *domain_priv;
 	struct psmx_fid_cq *cq_priv;
 	struct psmx_fid_wait *wait = NULL;
+	struct psmx_cq_event *event;
 	struct fi_wait_attr wait_attr;
+	int wait_is_local = 0;
 	int entry_size;
 	int err;
+	int i;
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	switch (attr->format) {
@@ -758,6 +765,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
+		wait_is_local = 1;
 		break;
 
 	default:
@@ -792,14 +800,25 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	cq_priv->wait = wait;
 	if (wait)
 		cq_priv->wait_cond = attr->wait_cond;
+	cq_priv->wait_is_local = wait_is_local;
 
 	cq_priv->cq.fid.fclass = FI_CLASS_CQ;
 	cq_priv->cq.fid.context = context;
 	cq_priv->cq.fid.ops = &psmx_fi_ops;
 	cq_priv->cq.ops = &psmx_cq_ops;
 
-	PSMX_FREE_LIST_INIT(cq_priv->free_list.head, cq_priv->free_list.tail,
-			    struct psmx_cq_event, 64);
+	slist_init(&cq_priv->event_queue);
+	slist_init(&cq_priv->free_list);
+
+#define PSMX_FREE_LIST_SIZE	64
+	for (i=0; i<PSMX_FREE_LIST_SIZE; i++) {
+		event = calloc(1, sizeof(*event));
+		if (!event) {
+			fprintf(stderr, "%s: out of memory.\n", __func__);
+			exit(-1);
+		}
+		slist_insert_tail(&event->list_entry, &cq_priv->free_list);
+	}
 
 	*cq = &cq_priv->cq;
 	return 0;

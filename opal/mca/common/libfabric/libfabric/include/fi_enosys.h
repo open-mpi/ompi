@@ -235,6 +235,8 @@ static struct fi_ops_ep X = {
 	.setopt = fi_no_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 */
 int fi_no_enable(struct fid_ep *ep);
@@ -243,12 +245,14 @@ int fi_no_getopt(fid_t fid, int level, int optname,
 		void *optval, size_t *optlen);
 int fi_no_setopt(fid_t fid, int level, int optname,
 		const void *optval, size_t optlen);
-int fi_no_tx_ctx(struct fid_sep *sep, int index,
+int fi_no_tx_ctx(struct fid_ep *sep, int index,
 		struct fi_tx_attr *attr, struct fid_ep **tx_ep,
 		void *context);
-int fi_no_rx_ctx(struct fid_sep *sep, int index,
+int fi_no_rx_ctx(struct fid_ep *sep, int index,
 		struct fi_rx_attr *attr, struct fid_ep **rx_ep,
 		void *context);
+ssize_t fi_no_rx_size_left(struct fid_ep *ep);
+ssize_t fi_no_tx_size_left(struct fid_ep *ep);
 
 /*
 static struct fi_ops_msg X = {
@@ -262,8 +266,6 @@ static struct fi_ops_msg X = {
 	.inject = fi_no_msg_inject,
 	.senddata = fi_no_msg_senddata,
 	.injectdata = fi_no_msg_injectdata,
-	.rx_size_left = fi_no_msg_rx_size_left,
-	.tx_size_left = fi_no_msg_tx_size_left,
 };
 */
 ssize_t fi_no_msg_recv(struct fid_ep *ep, void *buf, size_t len, void *desc,
@@ -284,8 +286,6 @@ ssize_t fi_no_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void 
 		uint64_t data, fi_addr_t dest_addr, void *context);
 ssize_t fi_no_msg_injectdata(struct fid_ep *ep, const void *buf, size_t len,
 		uint64_t data, fi_addr_t dest_addr);
-ssize_t fi_no_msg_rx_size_left(struct fid_ep *ep);
-ssize_t fi_no_msg_tx_size_left(struct fid_ep *ep);
 
 /*
 static struct fi_ops_wait X = {

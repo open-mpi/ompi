@@ -1096,11 +1096,28 @@ static ssize_t psmx_atomic_readwritemsg(struct fid_ep *ep,
 				    size_t result_count,
 				    uint64_t flags)
 {
-	if (!msg || msg->iov_count != 1)
+	void *buf;
+	size_t count;
+
+	if (!msg)
 		return -EINVAL;
 
-	return _psmx_atomic_readwrite(ep, msg->msg_iov[0].addr,
-					msg->msg_iov[0].count,
+	if (msg->op == FI_ATOMIC_READ) {
+		if (result_count != 1)
+			return -EINVAL;
+
+		buf = NULL;
+		count = resultv[0].count;
+	}
+	else {
+		if (msg->iov_count != 1)
+			return -EINVAL;
+
+		buf = msg->msg_iov[0].addr;
+		count = msg->msg_iov[0].count;
+	}
+
+	return _psmx_atomic_readwrite(ep, buf, count,
 					msg->desc ? msg->desc[0] : NULL,
 					resultv[0].addr,
 					result_desc ? result_desc[0] : NULL,

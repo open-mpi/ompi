@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 #include "sock.h"
+#include "sock_util.h"
 
 const struct fi_cntr_attr sock_cntr_attr = {
 	.events = FI_CNTR_EVENTS_COMP,
@@ -55,6 +56,10 @@ int sock_cntr_progress(struct sock_cntr *cntr)
 	struct sock_tx_ctx *tx_ctx;
 	struct sock_rx_ctx *rx_ctx;
 	struct dlist_entry *entry;
+
+	if (cntr->domain->progress_mode == FI_PROGRESS_AUTO && 
+	    !sock_progress_thread_wait)
+		return 0;
 
 	for (entry = cntr->tx_list.next; entry != &cntr->tx_list;
 	     entry = entry->next) {
@@ -74,8 +79,7 @@ static uint64_t sock_cntr_read(struct fid_cntr *cntr)
 {
 	struct sock_cntr *_cntr;
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
-	if (_cntr->domain->progress_mode == FI_PROGRESS_MANUAL)
-		sock_cntr_progress(_cntr);
+	sock_cntr_progress(_cntr);
 	return atomic_get(&_cntr->value);
 }
 

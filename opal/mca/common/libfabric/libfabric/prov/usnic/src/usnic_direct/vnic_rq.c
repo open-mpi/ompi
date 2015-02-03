@@ -46,7 +46,7 @@
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/pci.h>
-#if __KERNEL__
+#ifdef __KERNEL__
 #include <linux/delay.h>
 #include <linux/slab.h>
 #endif

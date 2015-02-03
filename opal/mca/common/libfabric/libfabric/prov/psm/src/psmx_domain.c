@@ -64,6 +64,7 @@ static int psmx_domain_close(fid_t fid)
 	if (err != PSM_OK)
 		psm_ep_close(domain->psm_ep, PSM_EP_CLOSE_FORCE, 0);
 
+	domain->fabric->active_domain = NULL;
 	free(domain);
 
 	return 0;
@@ -90,12 +91,19 @@ static struct fi_ops_domain psmx_domain_ops = {
 int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		     struct fid_domain **domain, void *context)
 {
+	struct psmx_fid_fabric *fabric_priv;
 	struct psmx_fid_domain *domain_priv;
 	struct psm_ep_open_opts opts;
 	psm_uuid_t uuid;
 	int err = -ENOMEM;
 
 	psmx_debug("%s\n", __func__);
+
+	fabric_priv = container_of(fabric, struct psmx_fid_fabric, fabric);
+	if (fabric_priv->active_domain) {
+		psmx_debug("%s: a domain has been opened for the fabric\n");
+		return -EBUSY;
+	}
 
 	if (!info->domain_attr->name || strncmp(info->domain_attr->name, "psm", 3))
 		return -EINVAL;
@@ -112,7 +120,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	domain_priv->domain.ops = &psmx_domain_ops;
 	domain_priv->domain.mr = &psmx_mr_ops;
 	domain_priv->mode = info->mode;
-	domain_priv->fabric = container_of(fabric, struct psmx_fid_fabric, fabric);
+	domain_priv->fabric = fabric_priv;
 
 	psm_ep_open_opts_get_defaults(&opts);
 
@@ -154,6 +162,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		goto err_out_close_ep;
 	}
 
+	fabric_priv->active_domain = domain_priv;
 	*domain = &domain_priv->domain;
 	return 0;
 
@@ -171,6 +180,10 @@ err_out:
 
 int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 {
+	int rma_target;
+
+	rma_target = fi_rma_target_allowed(ep_cap);
+
 	if ((ep_cap & PSMX_CAPS) != ep_cap)
 		return -EINVAL;
 
@@ -180,10 +193,10 @@ int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 	if ((ep_cap & FI_MSG) && domain->msg_ep)
 		return -EBUSY;
 
-	if ((ep_cap & FI_RMA) && domain->rma_ep)
+	if ((ep_cap & FI_RMA) && rma_target && domain->rma_ep)
 		return -EBUSY;
 
-	if ((ep_cap & FI_ATOMICS) && domain->atomics_ep)
+	if ((ep_cap & FI_ATOMICS) && rma_target && domain->atomics_ep)
 		return -EBUSY;
 
 	return 0;
@@ -192,6 +205,7 @@ int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 int psmx_domain_enable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep)
 {
 	uint64_t ep_cap = 0;
+	int rma_target;
 
 	if (ep)
 		ep_cap = ep->caps;
@@ -214,10 +228,12 @@ int psmx_domain_enable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep
 		domain->am_initialized = 1;
 	}
 
-	if (ep_cap & FI_RMA)
+	rma_target = fi_rma_target_allowed(ep_cap);
+
+	if ((ep_cap & FI_RMA) && rma_target)
 		domain->rma_ep = ep;
 
-	if (ep_cap & FI_ATOMICS)
+	if ((ep_cap & FI_ATOMICS) && rma_target)
 		domain->atomics_ep = ep;
 
 	if (ep_cap & FI_TAGGED)

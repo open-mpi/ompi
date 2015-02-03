@@ -581,6 +581,8 @@ static struct fi_ops_ep usdf_base_msg_ops = {
 	.setopt = usdf_ep_msg_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_cm_msg_ops = {

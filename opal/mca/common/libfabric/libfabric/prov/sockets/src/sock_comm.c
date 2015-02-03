@@ -202,16 +202,21 @@ ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
 
 int sock_comm_buffer_init(struct sock_conn *conn)
 {
+	int optval;
 	uint64_t flags;
 	socklen_t size = SOCK_COMM_BUF_SZ;
 	socklen_t optlen = sizeof(socklen_t);
+
+	optval = 1;
+	setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
+		   &optval, sizeof optval);
 
 	flags = fcntl(conn->sock_fd, F_GETFL, 0);
 	fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK);
 
 	rbinit(&conn->inbuf, SOCK_COMM_BUF_SZ);
 	rbinit(&conn->outbuf, SOCK_COMM_BUF_SZ);
-		
+
 	setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen);
 	setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen);
 
@@ -221,9 +226,9 @@ int sock_comm_buffer_init(struct sock_conn *conn)
 	optlen = sizeof(socklen_t);
 	getsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, &optlen);
 	SOCK_LOG_INFO("SO_SNDBUF: %d\n", size);
+
 	return 0;
 }
-
 
 void sock_comm_buffer_finalize(struct sock_conn *conn)
 {

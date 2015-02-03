@@ -201,6 +201,9 @@ struct usd_rq {
 
     char *urq_rxbuf;
     char **urq_post_addr;
+    uint32_t urq_recv_credits;  /* number of available descriptors */
+    struct rq_enet_desc *urq_desc_ring;
+    struct rq_enet_desc *urq_next_desc;
     uint32_t urq_post_index;    /* next rxbuf to post */
     uint32_t urq_post_index_mask;
     uint32_t urq_last_comp;

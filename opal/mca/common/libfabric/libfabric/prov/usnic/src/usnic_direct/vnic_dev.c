@@ -110,6 +110,7 @@ struct vnic_dev {
 	struct vnic_intr_coal_timer_info intr_coal_timer_info;
 	struct devcmd2_controller *devcmd2;
 	int (*devcmd_rtn)(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd, int wait);
+	struct vnic_gen_stats gen_stats;
 };
 
 #define VNIC_MAX_RES_HDR_SIZE \

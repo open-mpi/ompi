@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([libfabric], [0.0.2], [ofiwg@lists.openfabrics.org])
+AC_INIT([libfabric], [1.0.0-rc1], [ofiwg@lists.openfabrics.org])
 AC_CONFIG_SRCDIR([src/fabric.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -13,8 +13,13 @@ AC_ARG_ENABLE([debug],
 	      [AS_HELP_STRING([--enable-debug],
 			      [Enable debugging @<:@default=no@:>@])
 	      ],
-	      [CFLAGS="$CFLAGS -g -O0 -Wall"],
-	      [enable_debug=no])
+	      [CFLAGS="$CFLAGS -g -O0 -Wall"
+	       dbg=1],
+	      [enable_debug=no
+               dbg=0])
+
+AC_DEFINE_UNQUOTED([ENABLE_DEBUG],[$dbg],
+                   [defined to 1 if libfabric was configured with --enable-debug, 0 otherwise])
 
 dnl Fix autoconf's habit of adding -g -O2 by default
 AS_IF([test -z "$CFLAGS"],
