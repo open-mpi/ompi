@@ -109,6 +109,7 @@ static void local_recv(int status, orte_process_name_t* sender,
 static char **global_mca_env = NULL;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
+static volatile bool mywait = true;
 
 /*
  * Globals
@@ -485,7 +486,7 @@ int main(int argc, char *argv[])
         opal_buffer_t *buf;
         orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_HALT_VM_CMD;
         buf = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD_T);
+        opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                 ORTE_RML_TAG_DAEMON,
                                 orte_rml_send_callback, NULL);
@@ -563,12 +564,10 @@ int main(int argc, char *argv[])
     rc = orte_plm.spawn(jdata);
 
  waiting:
-    /* loop the event lib until an exit event is detected */
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
+    ORTE_WAIT_FOR_COMPLETION(mywait);
 
  DONE:
+    opal_output(0, "FINALIZING");
     /* cleanup and leave */
     orte_finalize();
 
@@ -1445,7 +1444,7 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
     orte_show_help("help-orterun.txt", "orterun:timeout",
                    true, (NULL == tm) ? "NULL" : tm);
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-    orte_event_base_active = false;
+    exit(orte_exit_status);
 }
 
 static void local_recv(int status, orte_process_name_t* sender,
@@ -1454,7 +1453,7 @@ static void local_recv(int status, orte_process_name_t* sender,
 {
     int rc, ret;
     int32_t cnt;
-    
+
     /* unpack the completion status of the job */
     cnt = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ret, &cnt, OPAL_INT))) {
@@ -1463,6 +1462,6 @@ static void local_recv(int status, orte_process_name_t* sender,
     /* update our exit status to match */
     ORTE_UPDATE_EXIT_STATUS(ret);
 
-    /* eject us from the event loop - we are done */
+    exit(orte_exit_status);
 }
 
