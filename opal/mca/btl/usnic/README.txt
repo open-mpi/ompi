@@ -251,6 +251,7 @@ could be many on the receiver
 ======================================
 
 November 2014 / SC 2014
+Update February 2015
 
 The usnic BTL code has been unified across master and the v1.8
 branches.  That is, you can copy the code from
@@ -259,6 +260,12 @@ have to make 3 changes in the resulting code in master:
 
 1. Edit Makefile.am: s/ompi/opal/gi
 2. Edit configure.m4: s/ompi/opal/gi
+   --> EXCEPT for:
+       - opal_common_libfabric_* (which will eventually be removed,
+         when the embedded libfabric goes away)
+       - OPAL_BTL_USNIC_FI_EXT_USNIC_H (which will eventually be
+         removed, when the embedded libfabric goes away)
+       - OPAL_VAR_SCOPE_*
 3. Edit Makefile.am: change -DBTL_IN_OPAL=0 to -DBTL_IN_OPAL=1
 
 *** Note: the BTL_IN_OPAL preprocessor macro is set in Makefile.am
