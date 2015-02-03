@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,7 +43,10 @@ cppflags = \
 	-D_GNU_SOURCE \
 	-DSYSCONFDIR=\"$(sysconfdir)\" \
 	-DRDMADIR=\"/tmp\" \
-	-DEXTDIR=\"$(pkglibdir)\"
+	-DEXTDIR=\"$(pkglibdir)\" \
+	-DENABLE_DEBUG=0 \
+	'-DVERSION="embedded libfabric de8444c9771ab9022d952a27134e44e5d8a5d722"' \
+	'-DPACKAGE="embedded libfabric de8444c9771ab9022d952a27134e44e5d8a5d722"'
 libadd = $(opal_common_libfabric_embedded_LIBADD)
 
 libfabric_core_headers = \
@@ -69,7 +72,8 @@ libfabric_core_sources = \
 	libfabric/src/fabric.c \
 	libfabric/src/fi_tostr.c \
 	libfabric/src/common.c \
-	libfabric/src/enosys.c
+	libfabric/src/enosys.c \
+	libfabric/src/log.c
 
 libfabric_usnic_headers = \
 	libfabric/prov/usnic/src/fi_usnic.h \
