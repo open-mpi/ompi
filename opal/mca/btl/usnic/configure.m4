@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -47,7 +47,7 @@ AC_DEFUN([MCA_opal_btl_usnic_CONFIG],[
 ])
 
 AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([unit_tests])
+    OPAL_VAR_SCOPE_PUSH([unit_tests opal_btl_usnic_CPPFLAGS_save])
 
     # see README.test for information about this scheme
     AC_ARG_ENABLE([opal-btl-usnic-unit-tests],
@@ -93,20 +93,55 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
            AC_MSG_RESULT([$btl_usnic_happy])
           ])
 
-    # The usnic BTL requires libfabric support.  libfabric is in the
-    # opal/mca/common tree, so it should have been configured already
-    # (the common/ configury is guaranteed to come first).  So we can
-    # simply check to see if libfabric setup was happy.
+    # The usnic BTL requires libfabric support.  libfabric should
+    # already have been configured, so just see if it was happy.
     AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([if building embedded libfabric with usnic provider])
-           AS_IF([test $opal_common_libfabric_happy -eq 1 && \
-                  test $opal_common_libfabric_usnic_happy -eq 1 && \
-                  test $opal_common_libfabric_build_embedded -eq 1],
+          [AC_MSG_CHECKING([if libfabric support is available])
+           AS_IF([test $opal_common_libfabric_happy -eq 1],
                  [AC_MSG_RESULT([yes])],
                  [AC_MSG_RESULT([no])
                   btl_usnic_happy=no])
           ])
 
+    # Are we building embedded or external libfabric?  (this is really
+    # just for output / user info purposes)
+    AS_IF([test "$btl_usnic_happy" = "yes"],
+          [AC_MSG_CHECKING([if building embedded or external libfabric])
+           AS_IF([test $opal_common_libfabric_build_embedded -eq 1],
+                 [AC_MSG_RESULT([embedded])],
+                 [AC_MSG_RESULT([external])])
+          ])
+
+    AH_TEMPLATE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
+                [Path by which to include fi_ext_usnic.h])
+
+    # If we're building the embedded libfabric, see if
+    # it contains usnic support.
+    AS_IF([test "$btl_usnic_happy" = "yes" && \
+           test $opal_common_libfabric_build_embedded -eq 1],
+          [AC_MSG_CHECKING([if embedded libfabric has usnic support])
+           AS_IF([test $opal_common_libfabric_usnic_happy -eq 1],
+                 [AC_MSG_RESULT([yes])
+                  AC_DEFINE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
+                            ["fi_ext_usnic.h"])],
+                 [AC_MSG_RESULT([no])
+                  btl_usnic_happy=no])
+          ])
+
+
+    # If we're building external libfabric, see if it has fi_ext_usnic.h
+    AS_IF([test "$btl_usnic_happy" = "yes" && \
+           test $opal_common_libfabric_build_embedded -eq 0],
+          [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
+           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
+           AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
+                            [AC_DEFINE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
+                                       ["rdma/fi_ext_usnic.h"])],
+                            [btl_usnic_happy=no])
+           CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
+          ])
+
+    # All done
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [$1],
           [AS_IF([test "$with_usnic" = "yes"],

@@ -84,9 +84,6 @@
 #include "btl_usnic_proc.h"
 #include "btl_usnic_test.h"
 
-/* In libfabric prov/usnic/src */
-#include "usnic_direct/usnic_direct.h"
-
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
 /* RNG buffer definition */
@@ -1148,7 +1145,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
             rseg->rs_next = channel->repost_recv_head;
             channel->repost_recv_head = rseg;
         }
-    } else if (USD_COMPSTAT_ERROR_TRUNC == err_entry.prov_errno) {
+    } else if (FI_ETRUNC == err_entry.prov_errno) {
         /* This error is usually a different symptom of a CRC error */
 #if MSGDEBUG1
         static int once = 0;
