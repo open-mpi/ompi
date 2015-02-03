@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -32,7 +34,7 @@ AC_DEFUN([OMPI_FORTRAN_FIND_EXT_SYMBOL_CONVENTION], [
 
     AC_CACHE_CHECK([$FORTRAN external symbol convention],
         [ompi_cv_fortran_external_symbol],
-        [if test "$FC" = "none" -o "$OMPI_WANT_FORTRAN_BINDINGS" = "0"; then
+        [if test "$FC" = "none" || test "$OMPI_WANT_FORTRAN_BINDINGS" = "0"; then
              ompi_cv_fortran_external_symbol="skipped"
          else
              cat >conftest.f <<EOF
