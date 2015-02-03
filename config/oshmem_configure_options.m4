@@ -4,7 +4,7 @@ dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
-dnl Copyright (c) 2014      Research Organization for Information Science
+dnl Copyright (c) 2014-2015 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -56,7 +56,7 @@ AC_MSG_CHECKING([if want SGI/Quadrics compatibility mode])
 AC_ARG_ENABLE(oshmem-compat,
         AC_HELP_STRING([--enable-oshmem-compat],
             [enable compatibility mode (default: enabled)]))
-if test "$enable_oshmem" != "no" -a "$enable_oshmem_compat" != "no"; then
+if test "$enable_oshmem" != "no" && test "$enable_oshmem_compat" != "no"; then
     AC_MSG_RESULT([yes])
     OSHMEM_SPEC_COMPAT=1
 else
@@ -76,13 +76,13 @@ AC_ARG_WITH(oshmem-param-check,
     AC_HELP_STRING([--oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
 if test "$enable_oshmem" != "no"; then
-    if test "$with_oshmem_param_check" = "no" -o \
-        "$with_oshmem_param_check" = "never"; then
+    if test "$with_oshmem_param_check" = "no" || \
+       test "$with_oshmem_param_check" = "never"; then
         shmem_param_check=0
         AC_MSG_RESULT([never])
-    elif test "$with_oshmem_param_check" = "yes" -o \
-        "$with_oshmem_param_check" = "always" -o \
-        -z "$with_oshmem_param_check"; then
+    elif test "$with_oshmem_param_check" = "yes" || \
+         test "$with_oshmem_param_check" = "always" || \
+         test -z "$with_oshmem_param_check"; then
         shmem_param_check=1
         AC_MSG_RESULT([always])
     else
@@ -131,9 +131,9 @@ AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if test "$enable_oshmem" != "no" -a "$enable_oshmem_fortran" != "no"; then
+if test "$enable_oshmem" != "no" && test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
-   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -a "$enable_oshmem_fortran" = "yes"],
+   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 && test "$enable_oshmem_fortran" = "yes"],
                [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
                 AC_MSG_WARN([Your request to --enable-oshmem-fortran can only be satisfied if fortran support is enabled in OMPI.
 You see this message because OMPI fortran support has been explicitly disabled via --disable-mpi-fortran and OSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
