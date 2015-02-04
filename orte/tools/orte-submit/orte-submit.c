@@ -97,19 +97,14 @@
 #include "orte/runtime/orte_quit.h"
 #include "orte/util/show_help.h"
 
-/* local functions */
-static void orte_timeout_wakeup(int sd, short args, void *cbdata);
-static void local_recv(int status, orte_process_name_t* sender,
-                       opal_buffer_t *buffer,
-                       orte_rml_tag_t tag, void *cbdata);
-
 /*
  * Globals
  */
 static char **global_mca_env = NULL;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
-static volatile bool mywait = true;
+volatile bool mywait = true;
+volatile bool myspawn = true;
 
 /*
  * Globals
@@ -330,6 +325,13 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(orte_job_t *jdata, int argc, char* argv[]);
 static void set_classpath_jar_file(orte_app_context_t *app, int index, char *jarfile);
 static int parse_appfile(orte_job_t *jdata, char *filename, char ***env);
+static void orte_timeout_wakeup(int sd, short args, void *cbdata);
+static void local_recv(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer,
+                       orte_rml_tag_t tag, void *cbdata);
+static void spawn_recv(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer,
+                       orte_rml_tag_t tag, void *cbdata);
 
 
 int main(int argc, char *argv[])
@@ -339,6 +341,8 @@ int main(int argc, char *argv[])
     char *param;
     orte_job_t *jdata=NULL;
     char *hnpenv;
+    opal_buffer_t *req;
+    orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
     
     /* Setup and parse the command line */
     memset(&myglobals, 0, sizeof(myglobals));
@@ -561,13 +565,29 @@ int main(int argc, char *argv[])
     }
 
     /* ask the HNP to spawn the job for us */
-    rc = orte_plm.spawn(jdata);
-
+    // post recv on tag_confirm_spawn, pass jdata as cbdata
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_CONFIRM_SPAWN,
+                            ORTE_RML_PERSISTENT, spawn_recv, jdata);
+    // pack the ORTE_DAEMON_SPAWN_JOB_CMD command and job object and send to HNP at tag ORTE_RML_TAG_DAEMON
+    req = OBJ_NEW(opal_buffer_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(req, &cmd, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        exit(rc);
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(req, &jdata, 1, ORTE_JOB))) {
+        ORTE_ERROR_LOG(rc);
+        exit(rc);
+    }
+    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
+    
+    // wait for response and unpack the status, jobid
+    ORTE_WAIT_FOR_COMPLETION(myspawn);
+    opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
+    
  waiting:
     ORTE_WAIT_FOR_COMPLETION(mywait);
 
  DONE:
-    opal_output(0, "FINALIZING");
     /* cleanup and leave */
     orte_finalize();
 
@@ -1465,3 +1485,17 @@ static void local_recv(int status, orte_process_name_t* sender,
     exit(orte_exit_status);
 }
 
+static void spawn_recv(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer,
+                       orte_rml_tag_t tag, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)cbdata;
+    int32_t cnt;
+
+    // extract the returned jobid
+    cnt = 1;
+    opal_dss.unpack(buffer, &jdata->jobid, &cnt, ORTE_JOBID);
+
+    // release the wait
+    myspawn = false;
+}

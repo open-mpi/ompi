@@ -60,6 +60,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/iof/iof_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -505,8 +506,49 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 goto ANSWER_LAUNCH;
             }
-                    
-            /* launch it */
+            /* point the originator to the sender */
+            jdata->originator = *sender;
+            /* assign a jobid to it */
+            if (ORTE_SUCCESS != (ret = orte_plm_base_create_jobid(jdata))) {
+                ORTE_ERROR_LOG(ret);
+                goto ANSWER_LAUNCH;
+            }
+            /* store it on the global job data pool */
+            opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
+            /* before we launch it, tell the IOF to forward all output to the requestor */
+            /* setup the tag to pull from HNP */
+            {
+                orte_iof_tag_t ioftag;
+                opal_buffer_t *iofbuf;
+                orte_process_name_t source;
+                
+                ioftag = ORTE_IOF_STDOUTALL | ORTE_IOF_PULL;
+                iofbuf = OBJ_NEW(opal_buffer_t);
+                /* pack the tag */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(iofbuf, &ioftag, 1, ORTE_IOF_TAG))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(iofbuf);
+                    goto ANSWER_LAUNCH;
+                }
+                /* pack the name of the source */
+                source.jobid = jdata->jobid;
+                source.vpid = ORTE_VPID_WILDCARD;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(iofbuf, &source, 1, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(iofbuf);
+                    goto ANSWER_LAUNCH;
+                }
+                /* pack the sender as the sink */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(iofbuf, sender, 1, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(iofbuf);
+                    goto ANSWER_LAUNCH;
+                }
+                /* send the buffer to our IOF */
+                orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, iofbuf, ORTE_RML_TAG_IOF_HNP,
+                                        orte_rml_send_callback, NULL);
+            }
+            /* now launch the job - this will just push it into our state machine */
             if (ORTE_SUCCESS != (ret = orte_plm.spawn(jdata))) {
                 ORTE_ERROR_LOG(ret);
                 goto ANSWER_LAUNCH;
@@ -521,7 +563,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         /* return response */
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_CONFIRM_SPAWN,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);
