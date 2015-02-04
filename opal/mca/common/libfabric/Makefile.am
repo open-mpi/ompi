@@ -76,7 +76,7 @@ libfabric_core_sources = \
 	libfabric/src/log.c
 
 libfabric_usnic_headers = \
-	libfabric/prov/usnic/src/fi_usnic.h \
+	libfabric/prov/usnic/src/fi_ext_usnic.h \
 	libfabric/prov/usnic/src/usdf.h \
 	libfabric/prov/usnic/src/usdf_av.h \
 	libfabric/prov/usnic/src/usdf_cm.h \
