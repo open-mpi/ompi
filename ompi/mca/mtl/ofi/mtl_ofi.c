@@ -68,7 +68,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     /**
      * Create array of EP names.
      */
-    ep_names = malloc(nprocs * sizeof(namelen));
+    ep_names = malloc(nprocs * namelen);
     if (NULL == ep_names) {
         ret = OMPI_ERROR;
         goto bail;
