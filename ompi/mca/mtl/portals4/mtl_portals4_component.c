@@ -56,8 +56,8 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         ompi_mtl_portals4_component_open,  /* component open */
+        ompi_mtl_portals4_component_close,  /* component close */
         ompi_mtl_portals4_component_query,  /* component close */
-        ompi_mtl_portals4_component_close, /* component close */
         ompi_mtl_portals4_component_register
     },
     {
