@@ -200,7 +200,7 @@ ompi_mtl_psm_component_query(mca_base_module_t **module, int *priority)
      */
 
     *priority = param_priority;
-    *module = &ompi_mtl_psm.super;
+    *module = (mca_base_module_t *)&ompi_mtl_psm.super;
     return OMPI_SUCCESS;
 }
 
