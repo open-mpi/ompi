@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/base.h"
 
 
@@ -26,7 +28,11 @@
 
 #include "opal/mca/pmix/base/static-components.h"
 
-opal_pmix_base_module_t opal_pmix;
+/* Note that this initializer is important -- do not remove it!  See
+   https://github.com/open-mpi/ompi/issues/375 for details. */
+opal_pmix_base_module_t opal_pmix = {
+    .init = (opal_pmix_base_module_init_fn_t) NULL
+};
 bool opal_pmix_use_collective = false;
 bool opal_pmix_base_allow_delayed_server = false;
 
