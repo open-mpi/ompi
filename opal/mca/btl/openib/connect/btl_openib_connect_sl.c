@@ -241,16 +241,16 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
 
     rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
     if (0 != rc) {
-        BTL_ERROR(("error posting receive on QP [0x%x] errno says: %s [%d]",
-                   cache->qp->qp_num, strerror(errno), errno));
+        BTL_ERROR(("error posting receive on QP [0x%x] rc says: %s [%d]",
+                   cache->qp->qp_num, strerror(rc), rc));
         return OPAL_ERROR;
     }
 
     while (0 == got_sl_value) {
         rc = ibv_post_send(cache->qp, swr, &bswr);
         if (0 != rc) {
-            BTL_ERROR(("error posting send on QP [0x%x] errno says: %s [%d]",
-                       cache->qp->qp_num, strerror(errno), errno));
+            BTL_ERROR(("error posting send on QP [0x%x] rc says: %s [%d]",
+                       cache->qp->qp_num, strerror(rc), rc));
             return OPAL_ERROR;
         }
         gettimeofday(&get_sl_rec_last_sent, NULL);
@@ -277,8 +277,8 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
                 }
                 rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
                 if (0 != rc) {
-                    BTL_ERROR(("error posing receive on QP[%x] errno says: %s [%d]",
-                               cache->qp->qp_num, strerror(errno), errno));
+                    BTL_ERROR(("error posing receive on QP[%x] rc says: %s [%d]",
+                               cache->qp->qp_num, strerror(rc), rc));
                     return OPAL_ERROR;
                 }
             } else if (0 == ne) {    /* poll did not find anything */
@@ -299,8 +299,7 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
                 }
                 usleep(100);  /* otherwise pause before polling again */
             } else if (ne < 0) {
-                BTL_ERROR(("error polling CQ with %d: %s\n",
-                    ne, strerror(errno)));
+                BTL_ERROR(("error polling CQ returned %d\n", ne));
                 return OPAL_ERROR;
             }
         }
