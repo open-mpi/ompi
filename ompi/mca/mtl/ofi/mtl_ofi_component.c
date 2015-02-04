@@ -132,8 +132,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_fabric_attr fabric_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
-    fi_addr_t ep_name = 0;
-    char *null_addr = NULL;
+    char ep_name[FI_NAME_MAX] = {0};
     size_t namelen;
 
     /**
@@ -341,7 +340,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Get our address and publish it with modex.
      */
     namelen = sizeof(ep_name);
-    ret = fi_getname((fid_t)ompi_mtl_ofi.ep, &ep_name, &namelen);
+    ret = fi_getname((fid_t)ompi_mtl_ofi.ep, &ep_name[0], &namelen);
     if (ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_getname failed: %s\n",
@@ -351,7 +350,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
                     &mca_mtl_ofi_component.super.mtl_version,
-                    &ep_name, namelen);
+                    &ep_name[0], namelen);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: opal_modex_send failed: %d\n",
