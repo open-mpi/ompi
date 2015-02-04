@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
@@ -118,11 +118,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
-        if test "$opal_c_vendor" = "gnu"; then
-            CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
-        else
-            CFLAGS="$CFLAGS -g"
-        fi
+        CFLAGS="$CFLAGS -g"
 
         OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
@@ -134,7 +130,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # If we want picky, see if the -fno-common flag is supported
     if test $WANT_PICKY_COMPILER -eq 1; then
-        CFLAGS_orig="$CFLAGS"
+        CFLAGS_orig=$CFLAGS
+        add=
+
         CFLAGS="$CFLAGS -fno-common"
         AC_CACHE_CHECK([if $CC supports -fno-common],
             [opal_cv_cc_fno_common],
@@ -143,26 +141,26 @@ AC_DEFUN([OPAL_SETUP_CC],[
                 [opal_cv_cc_fno_common=no])
             ])
         if test "$opal_cv_cc_fno_common" = "yes" ; then
-            AC_MSG_WARN([-fno-common has been added to CFLAGS (--enable-picky)])
-        else
-            CFLAGS=$CFLAGS_orig
+            add="-fno-common"
         fi
-    fi
 
-    if test "$WANT_PICKY_COMPILER" = 1 && test "$opal_c_vendor" = "gnu" ; then
-        add="-Wall -Wundef -Wno-long-long -Wsign-compare"
-        add="$add -Wmissing-prototypes -Wstrict-prototypes"
-        add="$add -Wcomment -pedantic"
+        # These flags are likely GCC-specific (or, more specifically,
+        # we don't have general tests for each one, and we know they
+        # work with all versions of GCC that we have used throughout
+        # the years, so we'll keep them limited just to GCC).
+        if test "$opal_c_vendor" = "gnu" ; then
+            add="$add -Wall -Wundef -Wno-long-long -Wsign-compare"
+            add="$add -Wmissing-prototypes -Wstrict-prototypes"
+            add="$add -Wcomment -pedantic"
+        fi
 
         # see if -Wno-long-double works...
-        CFLAGS_orig="$CFLAGS"
-        # CFLAGS="$CFLAGS -Wno-long-double"
         # Starting with GCC-4.4, the compiler complains about not
         # knowing -Wno-long-double, only if -Wstrict-prototypes is set, too.
         #
         # Actually, this is not real fix, as GCC will pass on any -Wno- flag,
         # have fun with the warning: -Wno-britney
-        CFLAGS="$CFLAGS $add -Wno-long-double -Wstrict-prototypes"
+        CFLAGS="$CFLAGS_orig $add -Wno-long-double -Wstrict-prototypes"
 
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
             [opal_cv_cc_wno_long_double],
@@ -189,14 +187,17 @@ AC_DEFUN([OPAL_SETUP_CC],[
                 [opal_cv_cc_wno_long_double="no"])
             ])
 
-        CFLAGS="$CFLAGS_orig"
         if test "$opal_cv_cc_wno_long_double" = "yes" ; then
             add="$add -Wno-long-double"
         fi
 
-        add="$add -Werror-implicit-function-declaration "
+        # Per above, we know that this flag works with GCC / haven't
+        # really tested it elsewhere.
+        if test "$opal_c_vendor" = "gnu" ; then
+            add="$add -Werror-implicit-function-declaration "
+        fi
 
-        CFLAGS="$CFLAGS $add"
+        CFLAGS="$CFLAGS_orig $add"
         OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
         unset add
