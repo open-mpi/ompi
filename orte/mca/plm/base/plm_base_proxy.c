@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -410,10 +411,24 @@ int orte_plm_base_fork_hnp(void)
          * if/when we attempt to send to it
          */
         orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+        /* and set the name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                           ORTE_PROC_MY_DAEMON, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
-        
+        /* set that contact info */
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+        /* and set the name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                           ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;
