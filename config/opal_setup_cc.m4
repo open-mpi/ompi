@@ -6,20 +6,20 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -166,12 +166,12 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
             [opal_cv_cc_wno_long_double],
-            [AC_TRY_COMPILE([], [], 
+            [AC_TRY_COMPILE([], [],
                 [
                  dnl So -Wno-long-double did not produce any errors...
-                 dnl We will try to extract a warning regarding 
+                 dnl We will try to extract a warning regarding
                  dnl unrecognized or ignored options
-                 AC_TRY_COMPILE([], [long double test;], 
+                 AC_TRY_COMPILE([], [long double test;],
                      [
                       opal_cv_cc_wno_long_double="yes"
                       if test -s conftest.err ; then
@@ -253,7 +253,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         add=
         AC_CACHE_CHECK([if $CC supports $RESTRICT_CFLAGS],
                    [opal_cv_cc_restrict_cflags],
-                   [AC_TRY_COMPILE([], [], 
+                   [AC_TRY_COMPILE([], [],
                                    [opal_cv_cc_restrict_cflags="yes"],
                                    [opal_cv_cc_restrict_cflags="no"])])
         if test "$opal_cv_cc_restrict_cflags" = "yes" ; then
@@ -345,7 +345,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
 
 AC_DEFUN([_OPAL_START_SETUP_CC],[
-    opal_show_subtitle "C compiler and preprocessor" 
+    opal_show_subtitle "C compiler and preprocessor"
 
 	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.
