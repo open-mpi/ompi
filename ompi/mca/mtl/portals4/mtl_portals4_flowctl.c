@@ -324,7 +324,7 @@ start_recover(void)
     epoch_counter = opal_atomic_add_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Entering flowctl_start_recover %d",
+                        "Entering flowctl_start_recover %ld",
                         epoch_counter);
 
     /* re-arm trigger/alarm for next time */
@@ -398,7 +398,7 @@ start_recover(void)
 
  error:
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Exiting flowctl_start_recover %d",
+                         "Exiting flowctl_start_recover %ld",
                          epoch_counter));
 
     return ret;
@@ -584,7 +584,7 @@ flowctl_fanout_callback(ptl_event_t *ev,
     ompi_mtl_portals4_pending_list_progress();
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Exiting flowctl_fanout_callback %d",
+                         "Exiting flowctl_fanout_callback %ld",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 
     return OMPI_SUCCESS;
