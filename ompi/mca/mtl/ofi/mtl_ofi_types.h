@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +71,7 @@ typedef struct mca_mtl_ofi_component_t {
 } mca_mtl_ofi_component_t;
 
 
-OMPI_DECLSPEC mca_mtl_ofi_component_t mca_mtl_ofi_component;
+OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
 /* match/ignore bit manipulation
  *
