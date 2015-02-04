@@ -12,6 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -95,6 +96,7 @@ typedef struct {
     orte_iof_tag_t tag;
     orte_iof_write_event_t *wev;
     bool xoff;
+    bool exclusive;
 } orte_iof_sink_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 

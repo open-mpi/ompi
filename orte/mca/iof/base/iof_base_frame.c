@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,6 +101,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
     ptr->daemon.vpid = ORTE_VPID_INVALID;
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
     ptr->xoff = false;
+    ptr->exclusive = false;
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
