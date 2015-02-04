@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
@@ -180,7 +180,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     orte_process_name_t port;
     orte_rml_tag_t tag=ORTE_RML_TAG_INVALID;
     opal_buffer_t *nbuf=NULL, *nrbuf=NULL;
-    ompi_proc_t **proc_list=NULL, **new_proc_list;
+    ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
     int32_t i,j, new_proc_len;
     ompi_group_t *new_group_pointer;
 
