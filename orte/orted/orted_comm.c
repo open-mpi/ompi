@@ -515,14 +515,14 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             }
             /* store it on the global job data pool */
             opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
-            /* before we launch it, tell the IOF to forward all output to the requestor */
-            /* setup the tag to pull from HNP */
+            /* before we launch it, tell the IOF to forward all output exclusively
+             * to the requestor */
             {
                 orte_iof_tag_t ioftag;
                 opal_buffer_t *iofbuf;
                 orte_process_name_t source;
                 
-                ioftag = ORTE_IOF_STDOUTALL | ORTE_IOF_PULL;
+                ioftag = ORTE_IOF_EXCLUSIVE | ORTE_IOF_STDOUTALL | ORTE_IOF_PULL;
                 iofbuf = OBJ_NEW(opal_buffer_t);
                 /* pack the tag */
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(iofbuf, &ioftag, 1, ORTE_IOF_TAG))) {

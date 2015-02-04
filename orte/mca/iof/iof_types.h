@@ -30,21 +30,22 @@
 BEGIN_C_DECLS
 
 /* Predefined tag values */
-typedef uint8_t orte_iof_tag_t;
-#define ORTE_IOF_TAG_T  OPAL_UINT8
+typedef uint16_t orte_iof_tag_t;
+#define ORTE_IOF_TAG_T  OPAL_UINT16
 
-#define ORTE_IOF_STDIN      0x01
-#define ORTE_IOF_STDOUT     0x02
-#define ORTE_IOF_STDERR     0x04
-#define ORTE_IOF_STDDIAG    0x08
-#define ORTE_IOF_STDOUTALL  0x0e
+#define ORTE_IOF_STDIN      0x0001
+#define ORTE_IOF_STDOUT     0x0002
+#define ORTE_IOF_STDERR     0x0004
+#define ORTE_IOF_STDDIAG    0x0008
+#define ORTE_IOF_STDOUTALL  0x000e
+#define ORTE_IOF_EXCLUSIVE  0x0100
 
 /* flow control flags */
-#define ORTE_IOF_XON        0x10
-#define ORTE_IOF_XOFF       0x20
+#define ORTE_IOF_XON        0x1000
+#define ORTE_IOF_XOFF       0x2000
 /* tool requests */
-#define ORTE_IOF_PULL       0x40
-#define ORTE_IOF_CLOSE      0x80
+#define ORTE_IOF_PULL       0x4000
+#define ORTE_IOF_CLOSE      0x8000
 
 END_C_DECLS
 
