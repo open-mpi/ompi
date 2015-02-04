@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -568,7 +568,6 @@ static int setup_child(orte_job_t *jdata,
     /* if we are using staged execution, tell it */
     if (orte_staged_execution) {
         opal_setenv("OMPI_MCA_orte_staged_execution", "1", true, &app->env);
-        free(param);
     }
 
     /* if the proc isn't going to forward IO, then we need to flag that
