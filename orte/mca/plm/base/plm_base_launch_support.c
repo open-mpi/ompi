@@ -243,20 +243,22 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     caddy->jdata->state = caddy->job_state;
 
     /* start by getting a jobid */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(caddy->jdata))) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
+    if (ORTE_JOBID_INVALID == caddy->jdata->jobid) {
+        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(caddy->jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+
+        /* store it on the global job data pool - this is the key
+         * step required before we launch the daemons. It allows
+         * the orte_rmaps_base_setup_virtual_machine routine to
+         * search all apps for any hosts to be used by the vm
+         */
+        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
     }
-
-    /* store it on the global job data pool - this is the key
-     * step required before we launch the daemons. It allows
-     * the orte_rmaps_base_setup_virtual_machine routine to
-     * search all apps for any hosts to be used by the vm
-     */
-    opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
-
+    
     /* if job recovery is not enabled, set it to default */
     if (!ORTE_FLAG_TEST(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE) &&
         orte_enable_recovery) {

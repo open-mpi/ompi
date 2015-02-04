@@ -105,13 +105,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         return;
     }
 
-    if (ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == caddy->proc_state) {
-        /* do nothing - the util/comm library knows how to handle this */
-        OBJ_RELEASE(caddy);
-        return;
-    }
-
-    /* all other errors require abort */
+    /* all errors require abort */
     orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
 
     OBJ_RELEASE(caddy);

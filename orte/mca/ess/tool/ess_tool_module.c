@@ -147,6 +147,6 @@ static void rte_abort(int status, bool report)
     orte_proc_info_finalize();
     
     /* Now just exit */
-    exit(0);
+    exit(status);
 }
 

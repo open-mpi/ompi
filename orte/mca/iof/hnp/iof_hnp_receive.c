@@ -63,7 +63,11 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     opal_list_item_t *item, *next;
     int rc;
 
-    
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s received IOF from proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+
     /* unpack the stream first as this may be flow control info */
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &stream, &count, ORTE_IOF_TAG))) {
@@ -96,6 +100,12 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s received IOF cmd from sender %s for source %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&requestor),
+                         ORTE_NAME_PRINT(&origin)));
     
     /* check to see if a tool has requested something */
     if (ORTE_IOF_PULL & stream) {
@@ -210,6 +220,6 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         }
     }
     
-CLEAN_RETURN:
+ CLEAN_RETURN:
     return;
 }
