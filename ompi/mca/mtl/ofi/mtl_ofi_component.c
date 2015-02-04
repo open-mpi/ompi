@@ -361,29 +361,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     ompi_mtl_ofi.epnamelen = namelen;
 
     /**
-     * Insert the ANY_SRC address.
+     * Set the ANY_SRC address.
      */
-    null_addr = malloc(namelen);
-    if (!null_addr) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: malloc failed\n", __FILE__, __LINE__);
-        goto error;
-    }
-    memset(null_addr, 0, namelen);
-    ret = fi_av_insert(ompi_mtl_ofi.av,
-                       null_addr,
-                       1,
-                       &ompi_mtl_ofi.any_addr,
-                       0ULL,
-                       NULL);
-    if (1 != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_av_insert failed: %s\n",
-                            __FILE__, __LINE__, fi_strerror(-ret));
-        goto error;
-    }
-    free(null_addr);
-    null_addr = NULL;
+    ompi_mtl_ofi.any_addr = FI_ADDR_UNSPEC;
 
     /**
      * Activate progress callback.
@@ -399,9 +379,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     return &ompi_mtl_ofi.base;
 
 error:
-    if (null_addr) {
-        free(null_addr);
-    }
     if (providers) {
         (void) fi_freeinfo(providers);
     }
