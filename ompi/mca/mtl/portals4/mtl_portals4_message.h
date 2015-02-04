@@ -22,7 +22,7 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_message_t);
 static inline ompi_mtl_portals4_message_t*
 ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
 {
-    int rc;
+    int rc __opal_attribute_unused__;
     opal_free_list_item_t *tmp;
     ompi_mtl_portals4_message_t* message;
 
