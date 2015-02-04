@@ -54,6 +54,7 @@ libfabric_core_headers = \
 	libfabric/include/fi_enosys.h \
 	libfabric/include/fi_indexer.h \
 	libfabric/include/fi_list.h \
+	libfabric/include/fi_log.h \
 	libfabric/include/fi_rbuf.h \
 	libfabric/include/prov.h \
 	libfabric/include/rdma/fabric.h \
