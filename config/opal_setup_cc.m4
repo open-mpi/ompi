@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
@@ -131,6 +131,24 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
+
+    # If we want picky, see if the -fno-common flag is supported
+    if test $WANT_PICKY_COMPILER -eq 1; then
+        CFLAGS_orig="$CFLAGS"
+        CFLAGS="$CFLAGS -fno-common"
+        AC_CACHE_CHECK([if $CC supports -fno-common],
+            [opal_cv_cc_fno_common],
+            [AC_TRY_COMPILE([], [],
+                [opal_cv_cc_fno_common=yes],
+                [opal_cv_cc_fno_common=no])
+            ])
+        if test "$opal_cv_cc_fno_common" = "yes" ; then
+            AC_MSG_WARN([-fno-common has been added to CFLAGS (--enable-picky)])
+        else
+            CFLAGS=$CFLAGS_orig
+        fi
+    fi
+
     if test "$WANT_PICKY_COMPILER" = 1 && test "$opal_c_vendor" = "gnu" ; then
         add="-Wall -Wundef -Wno-long-long -Wsign-compare"
         add="$add -Wmissing-prototypes -Wstrict-prototypes"
