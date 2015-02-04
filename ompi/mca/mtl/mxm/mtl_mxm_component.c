@@ -267,7 +267,7 @@ static int ompi_mtl_mxm_component_query(mca_base_module_t **module, int *priorit
      */
 
     *priority = param_priority;
-    *module = &ompi_mtl_mxm.super;
+    *module = (mca_base_module_t *)&ompi_mtl_mxm.super;
     return OMPI_SUCCESS;
 }
 

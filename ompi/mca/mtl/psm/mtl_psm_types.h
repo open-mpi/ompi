@@ -70,7 +70,7 @@ struct mca_mtl_psm_component_t {
 };
 typedef struct mca_mtl_psm_component_t mca_mtl_psm_component_t;
 
-OMPI_DECLSPEC mca_mtl_psm_component_t mca_mtl_psm_component;
+OMPI_DECLSPEC extern mca_mtl_psm_component_t mca_mtl_psm_component;
     
 #define PSM_MAKE_MQTAG(ctxt,rank,utag)		    \
         ( (((ctxt)&0xffffULL)<<48)| (((rank)&0xffffULL)<<32)| \

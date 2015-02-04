@@ -232,7 +232,7 @@ ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
      */
  
     *priority = param_priority;
-    *module = &ompi_mtl_portals4.base;
+    *module = (mca_base_module_t *)&ompi_mtl_portals4.base;
     return OMPI_SUCCESS;
 }
 

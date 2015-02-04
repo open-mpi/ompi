@@ -108,7 +108,7 @@ static int
 ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = param_priority;
-    *module = &ompi_mtl_ofi.base;
+    *module = (mca_base_module_t *)&ompi_mtl_ofi.base;
     return OMPI_SUCCESS;
 }
 
