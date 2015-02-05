@@ -153,6 +153,15 @@ void opal_stop_progress_thread(char *name, bool cleanup)
     /* find the specified engine */
     OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
+            /* if it is already inactive, then just cleanup if that
+             * is the request */
+            if (!trk->ev_active) {
+                if (cleanup) {
+                    opal_list_remove_item(&tracking, &trk->super);
+                    OBJ_RELEASE(trk);
+                }
+                return;
+            }
             /* mark it as inactive */
             trk->ev_active = false;
             /* break the event loop - this will cause the loop to exit

@@ -345,6 +345,13 @@ int orte_ess_base_app_finalize(void)
 {
     orte_cr_finalize();
 
+    /* release the event base so we stop all potential
+     * race conditions in the messaging teardown */
+    if (progress_thread_running) {
+        opal_stop_progress_thread("orte", false);
+        progress_thread_running = false;
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
     (void) mca_base_framework_close(&orte_snapc_base_framework);
     (void) mca_base_framework_close(&orte_sstore_base_framework);
@@ -364,19 +371,10 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
-    /* release the event base */
-    if (progress_thread_running) {
-        /* we had to leave the progress thread running until
-         * we closed the routed framework as that closure
-         * sends a "sync" message to the local daemon. it
-         * is now safe to stop the progress thread
-         */
-        opal_stop_progress_thread("orte", true);
-        progress_thread_running = false;
-    }
-
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-        
+
+    /* free the event base to cleanup memory */
+    opal_stop_progress_thread("orte", true);
     return ORTE_SUCCESS;    
 }
 
