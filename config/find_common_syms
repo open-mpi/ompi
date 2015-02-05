@@ -1,0 +1,143 @@
+#!/usr/bin/env perl
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# Common symbols cause linking issues on some platforms, including OS X.  See
+# this issue for more background:
+#   https://github.com/open-mpi/ompi/issues/375
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Basename qw(basename);
+
+sub is_whitelisted;
+
+my $MAX_BRIEF = 10;
+
+my @orig_argv = @ARGV;
+my @sym_whitelist = ();
+
+sub usage {
+    print STDERR <<EOT;
+Usage: $0 --top_builddir=BUILDDIR --top_srcdir=SRCDIR [--objext=OBJEXT] [--brief] [--full-path]
+
+Searches for all ".OBJEXT" files in BUILDDIR and checks for the existence of
+common symbols.  Common symbols are problematic for some platforms, including
+OS X.
+
+OBJEXT defaults to 'o' if not specified.
+EOT
+    exit 1;
+}
+
+my $all = 0;
+my $brief = 0;
+my $objext = 'o';
+my $top_builddir = '';
+my $top_srcdir = '';
+my $print_full_obj_path = 0;
+GetOptions(
+    "all!" => \$all,
+    "brief!" => \$brief,
+    "full-path!" => \$print_full_obj_path,
+    "objext=s" => \$objext,
+    "top_builddir=s" => \$top_builddir,
+    "top_srcdir=s" => \$top_srcdir,
+) || usage();
+
+if (!$top_builddir or !$top_srcdir) {
+    usage();
+}
+
+if (0 != system("command -v nm >/dev/null 2>&1")) {
+    print STDERR "NOTE: nm not found, skipping common symbol check\n";
+    # Makefile usage should prefix this command with "-" to ignore this exit status
+    exit 1;
+}
+
+# load the common symbol whitelist from files scattered around the codebase
+#
+# It would be better to load these into some sort of tree and then have those
+# whitelists only apply to objects that are found in the same directory or
+# subdirectories.  That way a whitelisted symbol in one component doesn't
+# "shadow" a symbol that should not be whitelisted in another component.  If we
+# find this is actually a problem in practice then we can write a v2 update.
+my @wl_files = `find '${top_srcdir}' -name 'common_sym_whitelist'`;
+foreach my $wl_file (@wl_files) {
+    chomp $wl_file;
+    my @lines = `cat $wl_file`;
+    foreach my $line (@lines) {
+        chomp $line;
+        next if ($line =~ m/^\s*#/); # skip comments
+        push @sym_whitelist, $line;
+    }
+}
+
+my $n = 0;
+open(FIND, '-|', "find ${top_builddir} -name '*.${objext}'");
+OBJECT: while (my $obj_line = <FIND>) {
+    my $obj = $obj_line;
+    chomp $obj;
+
+    # This pattern may not be 100% robust for all implementations of nm.  If
+    # that turns out to be the case, we can try switching to "nm -P", which is
+    # supposed to activate the "portable" (yet ugly) format.  It's also unclear
+    # at this point how common support for "nm -P" is.
+    open(NM, '-|', "nm '${obj}' 2>/dev/null | egrep '\\s[cC]\\s'");
+    SYMBOL: while (my $sym_line = <NM>) {
+        if (!$all and is_whitelisted($sym_line)) {
+            next SYMBOL;
+        }
+
+        if ($n == 0) {
+            print STDERR "WARNING!  Common symbols found:\n";
+        }
+        if ($brief and $n == $MAX_BRIEF) {
+            print STDERR "[...]\n";
+            print STDERR "skipping remaining symbols. To see all symbols, run:\n";
+            print STDERR "  " . join(" ", ($0, grep {!/--brief/} @orig_argv)) . "\n";
+            last OBJECT;
+        }
+        if ($print_full_obj_path) {
+            print STDERR "$obj: $sym_line";
+        } else {
+            my $obj_basename = basename($obj);
+            printf STDERR "%25s: %s", $obj_basename, $sym_line;
+        }
+        ++$n;
+    }
+    close(NM);
+}
+close(FIND);
+
+if ($n > 0) {
+    exit 1;
+} else {
+    exit 0;
+}
+
+sub is_whitelisted {
+    my $line = shift;
+
+    foreach my $wl_sym (@sym_whitelist) {
+        if ($line =~ m/\b\Q$wl_sym\E\b/) {
+            return 1;
+        }
+    }
+
+    # Look for symbol names ending in one or more underscores and assume they
+    # are "Fortran-shaped".  This won't match the hex output from most nm's and
+    # shouldn't match the single characters that indicate symbol type.
+    if ($line =~ m/\b[A-Za-z_]+[A-Za-z0-9_]*_+\b/) {
+        return 1;
+    }
+
+    return 0;
+}

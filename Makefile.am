@@ -27,4 +27,13 @@ include examples/Makefile.include
 dist-hook:
 	env LS_COLORS= csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(OMPI_VERSION)" "$(OMPI_REPO_REV)"
 
+# Check for common symbols.  Use a "-hook" to increase the odds that a
+# developer will see it at the end of their installation process.
+install-exec-hook:
+	-@$(top_srcdir)/config/find_common_syms \
+	    --brief \
+	    --top_builddir=$(top_builddir) \
+	    --top_srcdir=$(top_srcdir) \
+	    --objext=$(OBJEXT)
+
 ACLOCAL_AMFLAGS = -I config
