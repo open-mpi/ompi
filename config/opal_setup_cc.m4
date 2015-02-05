@@ -128,21 +128,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # gcc-impersonating compilers won't accept them.
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
 
-    # If we want picky, see if the -fno-common flag is supported
     if test $WANT_PICKY_COMPILER -eq 1; then
         CFLAGS_orig=$CFLAGS
         add=
-
-        CFLAGS="$CFLAGS -fno-common"
-        AC_CACHE_CHECK([if $CC supports -fno-common],
-            [opal_cv_cc_fno_common],
-            [AC_TRY_COMPILE([], [],
-                [opal_cv_cc_fno_common=yes],
-                [opal_cv_cc_fno_common=no])
-            ])
-        if test "$opal_cv_cc_fno_common" = "yes" ; then
-            add="-fno-common"
-        fi
 
         # These flags are likely GCC-specific (or, more specifically,
         # we don't have general tests for each one, and we know they
