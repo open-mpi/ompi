@@ -20,8 +20,6 @@
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
 
-#if OPAL_WANT_SMP_LOCKS
-
 /* BWB - FIX ME! */
 #ifdef __linux__
 #define MB() __asm__ __volatile__(".set mips2; sync; .set mips0": : :"memory")
@@ -33,15 +31,6 @@
 #define RMB() __asm__ __volatile__("sync": : :"memory")
 #define WMB() __asm__ __volatile__("sync": : :"memory")
 #define SMP_SYNC "sync"
-#endif
-
-#else
-
-#define MB()
-#define RMB()
-#define WMB()
-#define SMP_SYNC  ""
-
 #endif
 
 

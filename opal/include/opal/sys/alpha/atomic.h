@@ -23,20 +23,9 @@
  * On alpha, everything is load-locked, store-conditional...
  */
 
-#if OPAL_WANT_SMP_LOCKS
-
 #define MB()  __asm__ __volatile__ ("mb");
 #define RMB() __asm__ __volatile__ ("mb");
 #define WMB() __asm__ __volatile__ ("wmb");
-
-#else
-
-#define MB()
-#define RMB()
-#define WMB()
-
-#endif
-
 
 /**********************************************************************
  *
