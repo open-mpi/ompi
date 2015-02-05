@@ -653,6 +653,54 @@ AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
             [AC_MSG_RESULT([no])
 		cmpxchg16b_result=0])
     fi
+    if test "$cmpxchg16b_result" = 1; then
+        AC_MSG_CHECKING([if compiler correctly handles volatile 128bits])
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>
+#include <assert.h>
+
+union opal_counted_pointer_t {
+    struct {
+        uint64_t counter;
+        uint64_t item;
+    } data;
+#if defined(HAVE___INT128) && HAVE___INT128
+    __int128 value;
+#elif defined(HAVE_INT128_T) && HAVE_INT128_T
+    int128_t value;
+#endif
+};
+typedef union opal_counted_pointer_t opal_counted_pointer_t;],
+                                       [volatile opal_counted_pointer_t a;
+    opal_counted_pointer_t b;
+
+    a.data.counter = 0;
+    a.data.item = 0x1234567890ABCDEF;
+
+    b.data.counter = a.data.counter;
+    b.data.item = a.data.item;
+
+    /* bozo checks */
+    assert(16 == sizeof(opal_counted_pointer_t));
+    assert(a.data.counter == b.data.counter);
+    assert(a.data.item == b.data.item);
+    /*
+     * the following test fails on buggy compilers
+     * so far, with icc -o conftest conftest.c
+     *  - intel icc 14.0.0.080 (aka 2013sp1)
+     *  - intel icc 14.0.1.106 (aka 2013sp1u1)
+     * older and more recents compilers work fine
+     * buggy compilers work also fine but only with -O0
+     */
+#if (defined(HAVE___INT128) && HAVE___INT128) || (defined(HAVE_INT128_T) && HAVE_INT128_T)
+    return (a.value != b.value);
+#else
+    return 0;
+#endif])],
+                    [AC_MSG_RESULT([yes])],
+                    [AC_MSG_RESULT([no])
+                     cmpxchg16b_result=0],
+                    [AC_MSG_RESULT([untested, assuming ok])])
+    fi
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
         [Whether the processor supports the cmpxchg16b instruction])
     OPAL_VAR_SCOPE_POP
