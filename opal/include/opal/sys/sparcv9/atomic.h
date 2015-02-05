@@ -26,11 +26,7 @@
 
 #define ASI_P "0x80"
 
-#if OPAL_WANT_SMP_LOCKS
 #define MEMBAR(type) __asm__  __volatile__ ("membar " type : : : "memory")
-#else
-#define MEMBAR(type)
-#endif
 
 
 /**********************************************************************

@@ -29,7 +29,6 @@ cat > $CFILE<<EOF
 #define static
 #define inline
 #define OPAL_GCC_INLINE_ASSEMBLY 1
-#define OPAL_WANT_SMP_LOCKS 1
 #include "atomic.h"
 EOF
 

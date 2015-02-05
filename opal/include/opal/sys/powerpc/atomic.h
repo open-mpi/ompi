@@ -24,23 +24,11 @@
  * On powerpc ...
  */
 
-#if OPAL_WANT_SMP_LOCKS
-
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
 #define WMB() __asm__ __volatile__ ("eieio" : : : "memory")
 #define SMP_SYNC  "sync \n\t"
 #define SMP_ISYNC "\n\tisync"
-
-#else
-
-#define MB()
-#define RMB()
-#define WMB()
-#define SMP_SYNC  ""
-#define SMP_ISYNC
-
-#endif
 
 
 /**********************************************************************

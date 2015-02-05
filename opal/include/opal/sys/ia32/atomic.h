@@ -29,13 +29,8 @@
  * On ia32, we use cmpxchg.
  */
 
-#if OPAL_WANT_SMP_LOCKS
 #define SMPLOCK "lock; "
 #define MB() __asm__ __volatile__("": : :"memory")
-#else
-#define SMPLOCK
-#define MB()
-#endif
 
 
 /**********************************************************************

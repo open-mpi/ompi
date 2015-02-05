@@ -45,11 +45,7 @@ static inline void opal_atomic_wmb(void)
     __sync_synchronize();
 }
 
-#if OPAL_WANT_SMP_LOCKS
 #define MB() opal_atomic_mb()
-#else
-#define MB()
-#endif
 
 /**********************************************************************
  *
