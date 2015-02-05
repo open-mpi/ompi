@@ -96,9 +96,10 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
 {
     opal_buffer_t *buf;
     orte_plm_cmd_flag_t command;
-    int rc;
+    int rc, i;
     orte_proxy_spawn_t *ps;
-
+    orte_app_context_t *app;
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -132,6 +133,14 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         goto CLEANUP;
+    }
+
+    /* ensure that our prefix is passed along so that any launching daemons
+     * use the correct path */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            app->prefix_dir = strdup(opal_install_dirs.prefix);
+        }
     }
     
     /* pack the jdata object */
@@ -210,7 +219,6 @@ int orte_plm_base_fork_hnp(void)
     int buffer_length, num_chars_read, chunk;
     char *orted_uri;
     int rc;
-    char *foo;
     orte_jobid_t jobid;
 
     /* A pipe is used to communicate between the parent and child to
@@ -251,7 +259,7 @@ int orte_plm_base_fork_hnp(void)
     
     /* okay, setup an appropriate argv */
     opal_argv_append(&argc, &argv, "orted");
-    
+
     /* tell the daemon it is to be the HNP */
     opal_argv_append(&argc, &argv, "--hnp");
 
@@ -301,10 +309,6 @@ int orte_plm_base_fork_hnp(void)
     }
     opal_argv_append(&argc, &argv, param);
     free(param);
-
-    foo = opal_argv_join(argv, ' ');
-    opal_output(0, "%s FORKING HNP: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), foo);
-    free(foo);
 
     /* Fork off the child */
     orte_process_info.hnp_pid = fork();
