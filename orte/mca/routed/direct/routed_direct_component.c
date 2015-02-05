@@ -49,7 +49,6 @@ orte_routed_component_t mca_routed_direct_component = {
 
 static int orte_routed_direct_component_query(mca_base_module_t **module, int *priority)
 {
-    opal_output(0, "DIRECT TYPE: %x", orte_process_info.proc_type);
     if (ORTE_PROC_IS_SINGLETON) {
         /* we must be selected */
         *priority = 100;
