@@ -30,9 +30,7 @@
 
 /* Note that this initializer is important -- do not remove it!  See
    https://github.com/open-mpi/ompi/issues/375 for details. */
-opal_pmix_base_module_t opal_pmix = {
-    .init = (opal_pmix_base_module_init_fn_t) NULL
-};
+opal_pmix_base_module_t opal_pmix = { 0 };
 bool opal_pmix_use_collective = false;
 bool opal_pmix_base_allow_delayed_server = false;
 
