@@ -3,6 +3,7 @@
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,14 +50,15 @@ orte_routed_component_t mca_routed_direct_component = {
 
 static int orte_routed_direct_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are an app and no daemon URI has been provided, then
-     * we must be chosen */
-    if (ORTE_PROC_IS_APP && !ORTE_PROC_IS_SINGLETON &&
-        NULL == orte_process_info.my_daemon_uri) {
+    /* if we are an app and no daemon URI has been provided, or
+     * we are a singleton, then we must be chosen */
+    if (ORTE_PROC_IS_APP && NULL == orte_process_info.my_daemon_uri) {
         /* we are direct launched, so set some arbitrary value
          * for the daemon name */
         ORTE_PROC_MY_DAEMON->jobid = 0;
         ORTE_PROC_MY_DAEMON->vpid = 0;
+        *priority = 100;
+    } else if (ORTE_PROC_IS_SINGLETON) {
         *priority = 100;
     } else {
         /* allow selection only when specifically requested */

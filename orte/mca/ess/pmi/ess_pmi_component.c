@@ -80,7 +80,7 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
                 return ret;
             }
             if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-                ORTE_ERROR_LOG(ret);
+                /* don't error log this as it might not be an error at all */
                 *priority = -1;
                 *module = NULL;
                 (void) mca_base_framework_close(&opal_pmix_base_framework);
