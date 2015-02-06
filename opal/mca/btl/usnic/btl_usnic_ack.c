@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,11 +147,13 @@ opal_btl_usnic_handle_ack(
          * fragment really needs to be freed, we'll take care of it in a few
          * lines below.
          */
-        if (frag->sf_ack_bytes_left == bytes_acked &&
-            ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
-             (frag->sf_base.uf_base.des_flags &
-              MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
-            OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+        if (frag->sf_ack_bytes_left == bytes_acked) {
+            if (frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) {
+                OPAL_BTL_USNIC_DO_PUT_FRAG_CB(module, frag, "put completion");
+            } else if (frag->sf_base.uf_base.des_flags &
+                       MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
         }
 
         /* free this segment */
