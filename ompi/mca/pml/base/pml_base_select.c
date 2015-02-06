@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -166,7 +167,10 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
     
     if( NULL == best_component ) {
-        opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
+        opal_show_help("help-mca-base.txt", "find-available:none found",
+                       true, "pml",
+                       opal_process_info.nodename,
+                       "pml");
         for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
