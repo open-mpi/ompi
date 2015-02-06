@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,7 +87,7 @@ usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
 
 typedef struct opal_btl_usnic_reg_t {
     mca_mpool_base_registration_t base;
-    struct fid_mr *mr;
+    struct fid_mr *ur_mr;
 } opal_btl_usnic_reg_t;
 
 
