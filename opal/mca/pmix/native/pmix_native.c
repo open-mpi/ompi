@@ -190,19 +190,18 @@ static int native_init(void)
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                             "%s pmix:native NULL uri",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-        if (opal_pmix_base_allow_delayed_server) {
+        if (NULL != (srv = getenv("PMIX_SERVER_URI"))) {
+            mca_pmix_native_component.uri = strdup(srv);
+            mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
+        } else if (opal_pmix_base_allow_delayed_server) {
             /* not ready yet, so decrement our init_cntr so we can come thru
              * here again */
             --init_cntr;
             /* let the caller know that the server isn't available yet */
             return OPAL_ERR_SERVER_NOT_AVAIL;
-        }
-        if (NULL == (srv = getenv("PMIX_SERVER_URI"))) {
-            /* error out - should have been here, but isn't */
+        } else {
             return OPAL_ERROR;
         }
-        mca_pmix_native_component.uri = strdup(srv);
-        mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
     }
 
     /* if we have it, setup the path to the daemon rendezvous point */
