@@ -277,6 +277,10 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
 opal_output(0, "fast recv %d bytes:\n", bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
 opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
 #endif
+    /* If this is a short incoming message (i.e., the message is
+       wholly contained in this one message -- it is not chunked
+       across multiple messages), and it's not a PUT from the sender,
+       then just handle it here. */
     if (endpoint != NULL && !endpoint->endpoint_exiting &&
             (OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG ==
                 bseg->us_btl_header->payload_type) &&
@@ -311,8 +315,10 @@ opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + 
 
 drop:
         channel->chan_deferred_recv = seg;
+    }
 
-    } else {
+    /* Otherwise, handle all the other cases the "normal" way */
+    else {
         opal_btl_usnic_recv_call(module, seg, channel);
     }
 }
@@ -382,6 +388,10 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
     endpoint = lookup_sender(module, bseg);
     seg->rs_endpoint = endpoint;
 
+    /* If this is a short incoming message (i.e., the message is
+       wholly contained in this one message -- it is not chunked
+       across multiple messages), and it's not a PUT from the sender,
+       then just handle it here. */
     if (endpoint != NULL && !endpoint->endpoint_exiting &&
             (OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG ==
                 bseg->us_btl_header->payload_type) &&
@@ -408,7 +418,10 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
         reg->cbfunc(&module->super, bseg->us_btl_header->tag,
                     &seg->rs_desc, reg->cbdata);
 
-    } else {
+    }
+
+    /* Otherwise, handle all the other cases the "normal" way */
+    else {
         opal_btl_usnic_recv_call(module, seg, channel);
     }
 }

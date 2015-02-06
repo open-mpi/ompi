@@ -145,7 +145,7 @@ typedef struct {
 
 /**
  * Descriptor for a common segment.  This is exactly one packet and may
- * be send or receive
+ * be sent or received.
  */
 typedef struct opal_btl_usnic_segment_t {
     ompi_free_list_item_t us_list;
@@ -221,7 +221,7 @@ typedef struct opal_btl_usnic_frag_t {
     /* fragment descriptor type */
     opal_btl_usnic_frag_type_t uf_type;
 
-    /* utility segments */
+    /* utility segments (just seg_addr/seg_len) */
     mca_btl_base_segment_t uf_local_seg[2];
     mca_btl_base_segment_t uf_remote_seg[1];
 
