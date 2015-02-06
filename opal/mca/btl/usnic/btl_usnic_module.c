@@ -1698,13 +1698,13 @@ static int usnic_sendi(struct mca_btl_base_module_t* btl,
  * RDMA Memory Pool (de)register callbacks
  */
 static int usnic_reg_mr(void* reg_data, void* base, size_t size,
-                          mca_mpool_base_registration_t* reg)
+                        mca_mpool_base_registration_t* reg)
 {
     opal_btl_usnic_module_t* mod = (opal_btl_usnic_module_t*)reg_data;
-    opal_btl_usnic_reg_t* ud_reg = (opal_btl_usnic_reg_t*)reg;
+    opal_btl_usnic_reg_t* ur = (opal_btl_usnic_reg_t*)reg;
     int rc;
 
-    rc = fi_mr_reg(mod->domain, base, size, 0, 0, 0, 0, &ud_reg->mr, NULL);
+    rc = fi_mr_reg(mod->domain, base, size, 0, 0, 0, 0, &ur->ur_mr, NULL);
     if (0 != rc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -1712,21 +1712,20 @@ static int usnic_reg_mr(void* reg_data, void* base, size_t size,
     return OPAL_SUCCESS;
 }
 
-
 static int usnic_dereg_mr(void* reg_data,
-                            mca_mpool_base_registration_t* reg)
+                          mca_mpool_base_registration_t* reg)
 {
-    opal_btl_usnic_reg_t* ud_reg = (opal_btl_usnic_reg_t*)reg;
+    opal_btl_usnic_reg_t* ur = (opal_btl_usnic_reg_t*)reg;
 
-    if (ud_reg->mr != NULL) {
-        if (0 != fi_close(&ud_reg->mr->fid)) {
+    if (ur->ur_mr != NULL) {
+        if (0 != fi_close(&ur->ur_mr->fid)) {
             opal_output(0, "%s: error unpinning USD memory mr=%p: %s\n",
-                        __func__, (void*) ud_reg->mr, strerror(errno));
+                        __func__, (void*) ur->ur_mr, strerror(errno));
             return OPAL_ERROR;
         }
     }
 
-    ud_reg->mr = NULL;
+    ur->ur_mr = NULL;
     return OPAL_SUCCESS;
 }
 
