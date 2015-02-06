@@ -644,24 +644,7 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
     return OPAL_SUCCESS;
 }
 
-/*
- * Notes from george:
- *
- * - BTL ALLOC: allocating control messages or eager frags if BTL
-     does not have INPLACE flag.  To be clear: max it will ever alloc
-     is eager_limit.  THEREFORE: eager_limit is the max that ALLOC
-     must always be able to alloc.
-     --> Contraction in the btl.h documentation.
- *
- * - BTL PREPARE SRC: max_send_size frags go through here.  Can return
-     a smaller size than was asked for.
- *
- * - BTL PREPARE DEST: not used if you don't have PUT/GET
- *
- * - BTL SEND: will be used after ALLOC / PREPARE
- */
-
-/* Responsible for handling "small" frags (reserve + *size <= max_frag_payload)
+/* Responsible for sending "small" frags (reserve + *size <= max_frag_payload)
  * in the same manner as btl_prepare_src.  Must return a smaller amount than
  * requested if the given convertor cannot process the entire (*size).
  */
@@ -670,7 +653,6 @@ opal_btl_usnic_send_frag_t *
 prepare_src_small(
     struct opal_btl_usnic_module_t* module,
     struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -865,7 +847,7 @@ pack_chunk_seg_chain_with_reserve(
         seg_space = module->max_chunk_payload;
         copyptr = seg->ss_base.us_payload.raw;
 
-        if (first_pass && reserve_len > 0) {
+        if (first_pass) {
             /* logic could accommodate >max, but currently doesn't */
             assert(reserve_len <= module->max_chunk_payload);
             ret_ptr = copyptr;
@@ -923,7 +905,6 @@ opal_btl_usnic_send_frag_t *
 prepare_src_large(
     struct opal_btl_usnic_module_t* module,
     struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -1000,30 +981,41 @@ prepare_src_large(
 }
 
 
-/**
- * Note the "user" data the PML wishes to communicate and return a descriptor
- * that can be used for send or put.  We create a frag (which is also a
- * descriptor by virtue of its base class) and populate it with enough
- * source information to complete a future send/put.
+/*
+ * BTL 3.0 prepare_src function.
  *
- * We will create either a small send frag if < than an MTU, otherwise a large
- * send frag.  The convertor will be saved for deferred packing if the user
- * buffer is noncontiguous.  Otherwise it will be saved in one of the
+ * This function is only used for sending PML fragments (not putting
+ * or getting fragments).
+ *
+ * Note the "user" data the PML wishes to communicate and return a
+ * descriptor.  We create a frag (which is also a descriptor by virtue
+ * of its base class) and populate it with enough source information
+ * to complete a future send.
+ *
+ * Recall that the usnic BTL's max_send_size is almost certainly
+ * larger than the MTU (by default, max_send_size is either 25K or
+ * 150K).  Therefore, the PML may give us a fragment up to
+ * max_send_size in this function.  Hence, we make the decision here
+ * as to whether it's a "small" fragment (i.e., size <= MTU, meaning
+ * that it fits in a single datagram) or a "large" fragment (i.e.,
+ * size > MTU, meaning that it must be chunked into multiple
+ * datagrams).
+ *
+ * The convertor will be saved for deferred packing if the user buffer
+ * is noncontiguous.  Otherwise, it will be saved in one of the
  * descriptor's SGEs.
  *
  * NOTE that the *only* reason this routine is allowed to return a size smaller
  * than was requested is if the convertor cannot process the entire amount.
  */
-static mca_btl_base_descriptor_t*
-usnic_prepare_src(
-    struct mca_btl_base_module_t* base_module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
+static struct mca_btl_base_descriptor_t *
+usnic_prepare_src(struct mca_btl_base_module_t *base_module,
+                  struct mca_btl_base_endpoint_t *endpoint,
+                  struct opal_convertor_t *convertor,
+                  uint8_t order,
+                  size_t reserve,
+                  size_t *size,
+                  uint32_t flags)
 {
     opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) base_module;
     opal_btl_usnic_send_frag_t *frag;
@@ -1042,10 +1034,10 @@ usnic_prepare_src(
      */
     payload_len = *size + reserve;
     if (payload_len <= module->max_frag_payload) {
-        frag = prepare_src_small(module, endpoint, registration, convertor,
+        frag = prepare_src_small(module, endpoint, convertor,
                                  order, reserve, size, flags);
     } else {
-        frag = prepare_src_large(module, endpoint, registration, convertor,
+        frag = prepare_src_large(module, endpoint, convertor,
                                  order, reserve, size, flags);
     }
 
@@ -1071,98 +1063,81 @@ usnic_prepare_src(
     return &frag->sf_base.uf_base;
 }
 
-static mca_btl_base_descriptor_t*
-usnic_prepare_dst(
-    struct mca_btl_base_module_t* base_module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
-{
-    opal_btl_usnic_put_dest_frag_t *pfrag;
-    opal_btl_usnic_module_t *module;
-    void *data_ptr;
-
-    module = (opal_btl_usnic_module_t *)base_module;
-
-    /* allocate a fragment for this */
-    pfrag = (opal_btl_usnic_put_dest_frag_t *)
-        opal_btl_usnic_put_dest_frag_alloc(module);
-    if (NULL == pfrag) {
-        return NULL;
-    }
-
-    /* find start of the data */
-    opal_convertor_get_current_pointer(convertor, (void **) &data_ptr);
-
-    /* make a seg entry pointing at data_ptr */
-    pfrag->uf_remote_seg[0].seg_addr.pval = data_ptr;
-    pfrag->uf_remote_seg[0].seg_len = *size;
-
-    pfrag->uf_base.order       = order;
-    pfrag->uf_base.des_flags   = flags;
-
-#if MSGDEBUG2
-    opal_output(0, "prep_dst size=%d, addr=%p, pfrag=%p\n", (int)*size,
-            data_ptr, (void *)pfrag);
-#endif
-
-    return &pfrag->uf_base;
-}
-
-
 /*
- * Emulate an RDMA put.  We'll send the remote address
- * across to the other side so it will know where to put the data
+ * Emulate an RDMA put.  We'll send the remote address across to the
+ * other side so it will know where to put the data.
+ *
+ * Note that this function is only ever called with contiguous
+ * buffers, so a convertor is not necessary.
  */
 static int
-usnic_put(
-    struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint,
-    struct mca_btl_base_descriptor_t *desc)
+usnic_put(struct mca_btl_base_module_t *base_module,
+          struct mca_btl_base_endpoint_t *endpoint,
+          void *local_address, uint64_t remote_address,
+          struct mca_btl_base_registration_handle_t *local_handle,
+          struct mca_btl_base_registration_handle_t *remote_handle,
+          size_t size, int flags, int order,
+          mca_btl_base_rdma_completion_fn_t cbfunc,
+          void *cbcontext, void *cbdata)
 {
-    int rc;
-    opal_btl_usnic_send_frag_t *frag;
+    opal_btl_usnic_send_frag_t *sfrag;
+    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) base_module;
 
-    frag = (opal_btl_usnic_send_frag_t *)desc;
-
-    compute_sf_size(frag);
-    frag->sf_ack_bytes_left = frag->sf_size;
-
-#if MSGDEBUG2
-    opal_output(0, "usnic_put, frag=%p, size=%d\n", (void *)frag,
-            (int)frag->sf_size);
-#if MSGDEBUG1
-    { unsigned i;
-        for (i=0; i<desc->USNIC_PUT_LOCAL_COUNT; ++i) {
-            opal_output(0, "  %d: ptr:%p len:%d%s\n", i,
-                    desc->USNIC_PUT_LOCAL[i].seg_addr.pval,
-                    desc->USNIC_PUT_LOCAL[i].seg_len,
-                    (i==0)?" (put local)":"");
+    /* At least for the moment, continue to make a descriptor, like we
+       used to in BTL 2.0 */
+    if (size <= module->max_frag_payload) {
+        /* Small send fragment -- the whole thing fits in one MTU
+           (i.e., a single chunk) */
+        opal_btl_usnic_small_send_frag_t *ssfrag;
+        ssfrag = opal_btl_usnic_small_send_frag_alloc(module);
+        if (OPAL_UNLIKELY(NULL == ssfrag)) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        for (i=0; i<desc->USNIC_PUT_REMOTE_COUNT; ++i) {
-            opal_output(0, "  %d: ptr:%p len:%d%s\n", i,
-                    desc->USNIC_PUT_REMOTE[i].seg_addr.pval,
-                    desc->USNIC_PUT_REMOTE[i].seg_len,
-                    (i==0)?" (put remote)":"");
+
+        sfrag = &ssfrag->ssf_base;
+    } else {
+        /* Large send fragment -- need more than one MTU (i.e.,
+           multiple chunks) */
+        opal_btl_usnic_large_send_frag_t *lsfrag;
+        lsfrag = opal_btl_usnic_large_send_frag_alloc(module);
+        if (OPAL_UNLIKELY(NULL == lsfrag)) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
+
+        lsfrag->lsf_pack_on_the_fly = true;
+
+        sfrag = &lsfrag->lsf_base;
     }
-#endif
-#endif
 
-    /* RFXX copy out address - why does he not use our provided holder? */
-    /* JMS What does this mean? ^^ */
-    frag->sf_base.uf_remote_seg[0].seg_addr.pval =
-        desc->USNIC_PUT_REMOTE->seg_addr.pval;
+    sfrag->sf_endpoint = endpoint;
+    sfrag->sf_size = size;
+    sfrag->sf_ack_bytes_left = size;
 
-    rc = opal_btl_usnic_finish_put_or_send((opal_btl_usnic_module_t *)btl,
+    opal_btl_usnic_frag_t *frag;
+    frag = &sfrag->sf_base;
+    frag->uf_local_seg[0].seg_len = size;
+    frag->uf_local_seg[0].seg_addr.pval = local_address;
+    frag->uf_remote_seg[0].seg_len = size;
+    frag->uf_remote_seg[0].seg_addr.pval =
+        (void *)(uintptr_t) remote_address;
+
+    mca_btl_base_descriptor_t *desc;
+    desc = &frag->uf_base;
+    desc->des_segment_count = 1;
+    desc->des_segments = &frag->uf_local_seg[0];
+    /* This is really the wrong cbfunc type, but we'll cast it to
+       the Right type before we use it.  So it'll be ok. */
+    desc->des_cbfunc = (mca_btl_base_completion_fn_t) cbfunc;
+    desc->des_cbdata = cbdata;
+    desc->des_context = cbcontext;
+    desc->des_flags = flags;
+    desc->order = order;
+
+    int rc;
+    rc = opal_btl_usnic_finish_put_or_send(module,
                                            (opal_btl_usnic_endpoint_t *)endpoint,
-                                           frag,
+                                           sfrag,
                                            /*tag=*/MCA_BTL_NO_ORDER);
-
     return rc;
 }
 
@@ -2242,7 +2217,9 @@ static void init_pml_values(opal_btl_usnic_module_t *module)
 
     /* Since we emulate PUT, max_send_size can be same as
        eager_limit */
-    module->super.btl_max_send_size = module->super.btl_eager_limit;
+    module->super.btl_max_send_size =
+        module->super.btl_put_limit =
+        module->super.btl_eager_limit;
 }
 
 static void init_senders(opal_btl_usnic_module_t *module)
@@ -2625,22 +2602,39 @@ static int usnic_ft_event(int state)
 opal_btl_usnic_module_t opal_btl_usnic_module_template = {
     .super = {
         .btl_component = &mca_btl_usnic_component.super,
+
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
         .btl_flags =
             MCA_BTL_FLAGS_SEND |
             MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
-        .btl_seg_size = sizeof(mca_btl_base_segment_t),
+        .btl_atomic_flags = 0,
+        .btl_registration_handle_size = 0,
+
+        .btl_get_limit = 0,
+        .btl_get_alignment = 0,
+        .btl_put_limit = 0,
+        .btl_put_alignment = 0,
+
         .btl_add_procs = usnic_add_procs,
         .btl_del_procs = usnic_del_procs,
+        .btl_register = NULL,
         .btl_finalize = usnic_finalize,
+
         .btl_alloc = usnic_alloc,
         .btl_free = usnic_free,
         .btl_prepare_src = usnic_prepare_src,
-        .btl_prepare_dst = usnic_prepare_dst,
         .btl_send = usnic_send,
+        .btl_sendi = NULL,
         .btl_put = usnic_put,
+        .btl_get = NULL,
         .btl_dump = mca_btl_base_dump,
+
+        .btl_atomic_op = NULL,
+        .btl_atomic_fop = NULL,
+        .btl_atomic_cswap = NULL,
+
+        .btl_mpool = NULL,
         .btl_register_error = usnic_register_pml_err_cb,
         .btl_ft_event = usnic_ft_event
     }

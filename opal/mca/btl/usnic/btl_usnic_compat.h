@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,20 +40,20 @@
 #endif
 #  define USNIC_BTL_DEFAULT_VERSION(name) MCA_BTL_DEFAULT_VERSION(name)
 
-#  define USNIC_SEND_LOCAL        des_local
-#  define USNIC_SEND_LOCAL_COUNT  des_local_count
-#  define USNIC_SEND_REMOTE       des_remote
-#  define USNIC_SEND_REMOTE_COUNT des_remote_count
+#  define USNIC_SEND_LOCAL        des_segments
+#  define USNIC_SEND_LOCAL_COUNT  des_segment_count
+#  define USNIC_SEND_REMOTE       des_segments
+#  define USNIC_SEND_REMOTE_COUNT des_segment_count
 
-#  define USNIC_RECV_LOCAL        des_local
-#  define USNIC_RECV_LOCAL_COUNT  des_local_count
-#  define USNIC_RECV_REMOTE       des_remote
-#  define USNIC_RECV_REMOTE_COUNT des_remote_count
+#  define USNIC_RECV_LOCAL        des_segments
+#  define USNIC_RECV_LOCAL_COUNT  des_segment_count
+#  define USNIC_RECV_REMOTE       des_segments
+#  define USNIC_RECV_REMOTE_COUNT des_segment_count
 
-#  define USNIC_PUT_LOCAL         des_local
-#  define USNIC_PUT_LOCAL_COUNT   des_local_count
-#  define USNIC_PUT_REMOTE        des_remote
-#  define USNIC_PUT_REMOTE_COUNT  des_remote_count
+#  define USNIC_PUT_LOCAL         des_segments
+#  define USNIC_PUT_LOCAL_COUNT   des_segment_count
+#  define USNIC_PUT_REMOTE        des_segments
+#  define USNIC_PUT_REMOTE_COUNT  des_segments_count
 
 /*
  * Performance critical; needs to be inline

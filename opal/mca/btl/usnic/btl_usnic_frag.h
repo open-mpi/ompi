@@ -85,6 +85,25 @@ usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
 }
 
 
+/*
+ * usnic registration handle (passed over the network to peers as a
+ * cookie).
+ *
+ * Currently, this struct is meaningless (but it must be defined /
+ * exist) because we are emulating RDMA and do not have
+ * btl_register_mem and btl_deregister_mem functions (and we set
+ * module.btl_registration_handle_size to 0, not sizeof(struct
+ * mca_btl_base_registration_handle_t)).
+ */
+struct mca_btl_base_registration_handle_t {
+    /* Maybe we'll need fields like this */
+    uint32_t lkey;
+    uint32_t rkey;
+};
+
+/*
+ * usnic local registration
+ */
 typedef struct opal_btl_usnic_reg_t {
     mca_mpool_base_registration_t base;
     struct fid_mr *ur_mr;
