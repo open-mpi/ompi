@@ -17,6 +17,7 @@
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_endpoint.h"
+#include "btl_usnic_compat.h"
 
 /* Invoke the descriptor callback for a (non-PUT) send frag, updating
  * stats and clearing the _CALLBACK flag in the process. */
@@ -34,6 +35,7 @@
         ++((module)->stats.pml_send_callbacks);                               \
     } while (0)
 
+#if BTL_VERSION == 30
 /* Invoke the descriptor callback for a send frag that was a PUT,
  * updating stats and clearing the _CALLBACK flag in the process. */
 #define OPAL_BTL_USNIC_DO_PUT_FRAG_CB(module, send_frag, comment)             \
@@ -53,6 +55,7 @@
              OPAL_SUCCESS);                                             \
         ++((module)->stats.pml_send_callbacks);                         \
     } while (0)
+#endif
 
 /*
  * Reap an ACK send that is complete
