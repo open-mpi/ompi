@@ -587,6 +587,31 @@ opal_btl_usnic_ack_segment_return(
     OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
 }
 
+/* Compute and set the proper value for sfrag->sf_size.  This must not be used
+ * during usnic_alloc, since the PML might change the segment size after
+ * usnic_alloc returns. */
+static inline void
+opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
+{
+    opal_btl_usnic_frag_t *frag;
+
+    frag = &sfrag->sf_base;
+
+    /* JMS This can be a put or a send, and the buffers are different... */
+#if 0
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT > 0);
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT <= 2);
+
+    /* belt and suspenders: second len should be zero if only one SGE */
+    assert(2 == frag->uf_base.USNIC_SEND_LOCAL_COUNT ||
+        0 == frag->uf_local_seg[1].seg_len);
+#endif
+
+    sfrag->sf_size = 0;
+    sfrag->sf_size += frag->uf_local_seg[0].seg_len;
+    sfrag->sf_size += frag->uf_local_seg[1].seg_len;
+}
+
 END_C_DECLS
 
 #endif

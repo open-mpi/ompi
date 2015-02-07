@@ -55,6 +55,8 @@
 #  define USNIC_PUT_REMOTE        des_segments
 #  define USNIC_PUT_REMOTE_COUNT  des_segments_count
 
+#  define BTL_VERSION 30
+
 /*
  * Performance critical; needs to be inline
  */
@@ -134,6 +136,8 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 #  define USNIC_PUT_REMOTE        des_dst
 #  define USNIC_PUT_REMOTE_COUNT  des_dst_cnt
 
+#  define BTL_VERSION 20
+
 #  define USNIC_COMPAT_BASE_VERSION                                 \
     MCA_BTL_BASE_VERSION_2_0_0,                                     \
         .mca_type_name = "btl",                                     \
@@ -206,5 +210,83 @@ void usnic_compat_modex_recv(int *rc,
 
 uint64_t usnic_compat_rte_hash_name(opal_process_name_t *pname);
 const char *usnic_compat_proc_name_print(opal_process_name_t *pname);
+
+/************************************************************************/
+
+/* BTL 2.0 vs 3.0 compatibilty functions (specifically: some BTL API
+   functions changed signatures between 2.0 and 3.0) */
+
+struct mca_btl_base_module_t;
+struct mca_btl_base_endpoint_t;
+
+/* BTL 2.0 (i.e., v1.7/v1.8, but listed separately because these are
+   really BTL API issues) */
+
+#if BTL_VERSION == 20
+
+#include "ompi/mca/btl/btl.h"
+
+/* This function changed signature in BTL 3.0 */
+mca_btl_base_descriptor_t*
+opal_btl_usnic_prepare_src(
+    struct mca_btl_base_module_t* base_module,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_mpool_base_registration_t* registration,
+    struct opal_convertor_t* convertor,
+    uint8_t order,
+    size_t reserve,
+    size_t* size,
+    uint32_t flags);
+
+/* This function no longer exists in BTL 3.0 */
+mca_btl_base_descriptor_t*
+opal_btl_usnic_prepare_dst(
+    struct mca_btl_base_module_t* base_module,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_mpool_base_registration_t* registration,
+    struct opal_convertor_t* convertor,
+    uint8_t order,
+    size_t reserve,
+    size_t* size,
+    uint32_t flags);
+
+/* This function changed signature in BTL 3.0 */
+int
+opal_btl_usnic_put(
+    struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint,
+    struct mca_btl_base_descriptor_t *desc);
+
+/************************************************************************/
+
+/* BTL 3.0 (i.e., >=v1.9, but listed separately because these are
+   really BTL API issues) */
+
+#elif BTL_VERSION == 30
+
+#include "opal/mca/btl/btl.h"
+
+/* This function changed signature compared to BTL 2.0 */
+struct mca_btl_base_descriptor_t *
+opal_btl_usnic_prepare_src(struct mca_btl_base_module_t *base_module,
+                           struct mca_btl_base_endpoint_t *endpoint,
+                           struct opal_convertor_t *convertor,
+                           uint8_t order,
+                           size_t reserve,
+                           size_t *size,
+                           uint32_t flags);
+
+/* This function changed signature compared to BTL 2.0 */
+int
+opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
+                   struct mca_btl_base_endpoint_t *endpoint,
+                   void *local_address, uint64_t remote_address,
+                   struct mca_btl_base_registration_handle_t *local_handle,
+                   struct mca_btl_base_registration_handle_t *remote_handle,
+                   size_t size, int flags, int order,
+                   mca_btl_base_rdma_completion_fn_t cbfunc,
+                   void *cbcontext, void *cbdata);
+
+#endif /* BTL_VERSION */
 
 #endif /* BTL_USNIC_COMPAT_H */

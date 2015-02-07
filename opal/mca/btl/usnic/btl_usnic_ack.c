@@ -148,12 +148,20 @@ opal_btl_usnic_handle_ack(
          * lines below.
          */
         if (frag->sf_ack_bytes_left == bytes_acked) {
+#if BTL_VERSION == 30
             if (frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) {
                 OPAL_BTL_USNIC_DO_PUT_FRAG_CB(module, frag, "put completion");
             } else if (frag->sf_base.uf_base.des_flags &
                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
                 OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
             }
+#else
+            if ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
+                (frag->sf_base.uf_base.des_flags &
+                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
+#endif
         }
 
         /* free this segment */
