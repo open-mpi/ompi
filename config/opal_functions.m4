@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -18,9 +18,9 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 dnl Portions of this file derived from GASNet v1.12 (see "GASNet"
@@ -31,7 +31,7 @@ dnl IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
 dnl DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
 dnl OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
 dnl CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-dnl 
+dnl
 dnl THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 dnl INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 dnl AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
@@ -147,19 +147,19 @@ unset opal_prefix_save
 case "$prefix" in
   /*/bin)
     prefix="`dirname $prefix`"
-    echo installing to directory \"$prefix\" 
+    echo installing to directory \"$prefix\"
     ;;
-  /*) 
-    echo installing to directory \"$prefix\" 
+  /*)
+    echo installing to directory \"$prefix\"
     ;;
   NONE)
-    echo installing to directory \"$ac_default_prefix\" 
+    echo installing to directory \"$ac_default_prefix\"
     ;;
   @<:@a-zA-Z@:>@:*)
-    echo installing to directory \"$prefix\" 
+    echo installing to directory \"$prefix\"
     ;;
-  *) 
-    AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path) 
+  *)
+    AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path)
     ;;
 esac
 
