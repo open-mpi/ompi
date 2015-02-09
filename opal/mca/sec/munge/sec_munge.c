@@ -90,7 +90,7 @@ static int authenticate(opal_sec_cred_t *cred)
     munge_err_t rc;
     
     opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                        "sec: munge validate_cred %s", cred);
+                        "sec: munge validate_cred %s", cred->credential);
 
     /* parse the inbound string */
     if (EMUNGE_SUCCESS != (rc = munge_decode(cred->credential, NULL, NULL, NULL, NULL, NULL))) {
