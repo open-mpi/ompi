@@ -120,6 +120,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.prefix, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix to be used to look for ORTE executables" },
 
+    { "orte_debug_daemons", '\0', "debug-daemons", "debug-daemons", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Debug daemons" },
+
     { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
        NULL, OPAL_CMD_LINE_TYPE_BOOL,
        "Enable debugging of OpenRTE" },
