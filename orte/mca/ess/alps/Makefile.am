@@ -38,7 +38,7 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_alps_la_SOURCES = $(sources)
-mca_ess_alps_la_CPPFLAGS = $(ess_alps_CPPFLAGS) -fno-ident
+mca_ess_alps_la_CPPFLAGS = $(ess_alps_CPPFLAGS)
 mca_ess_alps_la_LDFLAGS = -module -avoid-version $(ess_alps_LDFLAGS)
 mca_ess_alps_la_LIBADD = $(ess_alps_LDFLAGS) \
     $(ORTE_TOP_BUILDDIR)/orte/mca/common/alps/lib@ORTE_LIB_PREFIX@mca_common_alps.la
