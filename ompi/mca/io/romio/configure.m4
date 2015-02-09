@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -21,10 +21,7 @@
 #
 
 AC_DEFUN([MCA_ompi_io_romio_POST_CONFIG], [
-    AS_IF([test $1 -eq 0 -a "$enable_dist" = "yes"],
-          [AC_MSG_ERROR([ROMIO disabled but --enable-dist specifed.  This will result in a bad tarball.  Aborting configure.])])
     AM_CONDITIONAL([MCA_io_romio_SHOULD_BUILD], [test $1 -eq 1])
-
 ])
 
 

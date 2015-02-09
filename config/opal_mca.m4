@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -583,8 +583,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
              [MCA_$1_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
              [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
 
-    # try to configure the component.  pay no attention to
-    # --enable-dist, since we'll always have makefiles.
+    # try to configure the component
     m4_ifdef([MCA_$1_$2_$3_CONFIG],
              [MCA_$1_$2_$3_CONFIG([should_build=$should_build], 
                                   [should_build=0])],
