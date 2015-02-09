@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -162,18 +162,6 @@ case "$prefix" in
     AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path) 
     ;;
 esac
-
-# Allow the --enable-dist flag to be passed in
-
-AC_ARG_ENABLE(dist, 
-    AC_HELP_STRING([--enable-dist],
-		   [guarantee that that the "dist" make target will be functional, although may not guarantee that any other make target will be functional.]),
-    OPAL_WANT_DIST=yes, OPAL_WANT_DIST=no)
-
-if test "$OPAL_WANT_DIST" = "yes"; then
-    AC_MSG_WARN([Configuring in 'make dist' mode])
-    AC_MSG_WARN([Most make targets may be non-functional!])
-fi
 
 # BEGIN: Derived from GASNet
 

@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -361,8 +361,7 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 
     EXT_COMPONENT_BUILD_CHECK($1, [should_build=1], [should_build=0])
 
-    # try to configure the component.  pay no attention to
-    # --enable-dist, since we'll always have makefiles.
+    # try to configure the component
     m4_ifdef([OMPI_MPIEXT_$1_CONFIG], [],
              [m4_fatal([Could not find OMPI_MPIEXT_]$1[_CONFIG macro for ]$1[ component])])
 
