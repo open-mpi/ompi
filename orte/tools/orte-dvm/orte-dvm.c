@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     char *param, *value;
     orte_job_t *jdata=NULL;
     orte_app_context_t *app;
-    char *uri;
+    char *uri, *ptr;
 
     /* Setup and parse the command line */
     memset(&myglobals, 0, sizeof(myglobals));
@@ -254,6 +254,17 @@ int main(int argc, char *argv[])
         } else if (0 == strcmp(myglobals.report_uri, "+")) {
             /* if '+', output to stderr */
             fprintf(stderr, "VMURI: %s\n", uri);
+        } else if (0 == strncasecmp(myglobals.report_uri, "file:", strlen("file:"))) {
+            ptr = strchr(myglobals.report_uri, ':');
+            ++ptr;
+            fp = fopen(ptr, "w");
+            if (NULL == fp) {
+                orte_show_help("help-orterun.txt", "orterun:write_file", false,
+                               myglobals.basename, "pid", ptr);
+                exit(0);
+            }
+            fprintf(fp, "%s\n", uri);
+            fclose(fp);
         } else {
             fp = fopen(myglobals.report_uri, "w");
             if (NULL == fp) {
