@@ -487,7 +487,7 @@ int main(int argc, char *argv[])
     /* if this is the terminate command, just send it */
     if (myglobals.terminate) {
         opal_buffer_t *buf;
-        orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_HALT_VM_CMD;
+        orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_HALT_DVM_CMD;
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
