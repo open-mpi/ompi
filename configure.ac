@@ -6,11 +6,11 @@
 # Copyright (c) 2004-2014 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -23,9 +23,9 @@
 # Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -110,7 +110,7 @@ m4_ifdef([project_ompi],
                             [ompi/include/ompi/version.h])])
 
 m4_ifdef([project_orte],
-         [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
+         [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment],
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
 
@@ -1369,7 +1369,7 @@ fi
 # the following in opal_mca.m4 (when we're already m4 looping over the
 # project list):
 #
-# m4_foreach(mca_project, [mca_project_list], 
+# m4_foreach(mca_project, [mca_project_list],
 #           [m4_ifdef(mca_project[_CONFIG_LOCAL], mca_project[_CONFIG_LOCAL])])
 #
 # Meaning that aclocal doesn't see that, for example,

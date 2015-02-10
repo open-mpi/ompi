@@ -460,6 +460,11 @@ arc4random_stir(void)
 }
 #endif
 
+/****    OMPI CHANGE    ****/
+/* We don't use arc4random_addrandom anywhere,
+ * and some OS's don't like it - so just don't
+ * build the darn thing */
+#if 0
 #ifndef ARC4RANDOM_NOADDRANDOM
 ARC4RANDOM_EXPORT void
 arc4random_addrandom(const unsigned char *dat, int datlen)
@@ -477,6 +482,7 @@ arc4random_addrandom(const unsigned char *dat, int datlen)
 	}
 	_ARC4_UNLOCK();
 }
+#endif
 #endif
 
 #ifndef ARC4RANDOM_NORANDOM

@@ -120,9 +120,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.prefix, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix to be used to look for ORTE executables" },
 
-    { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Enable debugging of OpenRTE" },
+    { "orte_debug_daemons", '\0', "debug-daemons", "debug-daemons", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Debug daemons" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
@@ -427,10 +427,6 @@ static void notify_requestor(int sd, short args, void *cbdata)
     int ret;
     opal_buffer_t *reply;
     
-    opal_output(0, "%s dvm: job %s has completed",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
-
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);
     /* see if there was any problem */

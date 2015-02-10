@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
- * Copyright (c) 2013-2014 Intel Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel Inc. All rights reserved
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -18,6 +18,7 @@
 #include "opal_stdint.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
