@@ -85,6 +85,9 @@
 
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/rmaps/base/base.h"
+
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -141,6 +144,7 @@ static struct {
     char *binding_policy;
     bool report_bindings;
     char *slot_list;
+    bool debug;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -306,7 +310,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.personality, OPAL_CMD_LINE_TYPE_STRING,
       "Programming model/language being used (default=\"ompi\")" },
 
-    /* End of list */
+    { NULL, 'd', "debug-devel", "debug-devel", 0,
+      &myglobals.debug, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE" },
+    
+/* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
@@ -387,7 +395,7 @@ int main(int argc, char *argv[])
     
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
-
+    
     /* if they didn't point us at an HNP, that's an error */
     if (NULL == myglobals.hnp) {
         fprintf(stderr, "orte-submit: required option --hnp not provided\n");
@@ -441,7 +449,11 @@ int main(int argc, char *argv[])
 
     /* flag that I am a TOOL */
     orte_process_info.proc_type = ORTE_PROC_TOOL;
-    
+
+    if (myglobals.debug) {
+        orte_devel_level_output = true;
+    }
+
    /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
@@ -536,6 +548,34 @@ int main(int argc, char *argv[])
 
     /* Parse each app, adding it to the job object */
     parse_locals(jdata, argc, argv);
+
+    /* create the map object to communicate policies */
+    jdata->map = OBJ_NEW(orte_job_map_t);
+    
+    /* if they asked for nolocal, mark it so */
+    if (NULL != myglobals.mapping_policy) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, myglobals.mapping_policy))) {
+            ORTE_ERROR_LOG(rc);
+            exit(rc);
+        }
+    }
+    if (NULL != myglobals.ranking_policy) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
+                                                                     jdata->map->mapping,
+                                                                     myglobals.ranking_policy))) {
+            ORTE_ERROR_LOG(rc);
+            exit(rc);
+        }
+    }
+    if (myglobals.nolocal) {
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
+    }
+    if (myglobals.no_oversubscribe) {
+        ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+    }
+    if (myglobals.oversubscribe) {
+        ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+    }
 
     opal_dss.dump(0, jdata, ORTE_JOB);
     exit(0);
