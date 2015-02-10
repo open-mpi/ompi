@@ -127,8 +127,8 @@ static int init_ud_qp(struct ibv_context *context_arg,
     memset(&iattr, 0, sizeof(iattr));
     iattr.send_cq = cache->cq;
     iattr.recv_cq = cache->cq;
-    iattr.cap.max_send_wr = 2;
-    iattr.cap.max_recv_wr = 2;
+    iattr.cap.max_send_wr = 1;
+    iattr.cap.max_recv_wr = 1;
     iattr.cap.max_send_sge = 1;
     iattr.cap.max_recv_sge = 1;
     iattr.qp_type = IBV_QPT_UD;
@@ -257,24 +257,24 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
 
         while (0 == got_sl_value) {
             ne = ibv_poll_cq(cache->cq, 1, &wc);
-            if (ne > 0 &&
-                IBV_WC_SUCCESS == wc.status &&
-                IBV_WC_RECV == wc.opcode &&
-                wc.byte_len >= MAD_BLOCK_SIZE &&
-                resp_mad->trans_id == req_mad->trans_id) {
+            if (ne > 0 && IBV_WC_RECV == wc.opcode) {
+                /* We only care about the status of receive work requests.    */
+                /* If the status of the send work request was anything other  */
+                /* than success, we'll eventually retransmit, so ignore them. */
                 if (0 == resp_mad->status &&
                     req_path_record->slid == htons(lid) &&
-                    req_path_record->dlid == htons(rem_lid)) {
+                    req_path_record->dlid == htons(rem_lid) &&
+                    IBV_WC_SUCCESS == wc.status &&
+                    wc.byte_len >= MAD_BLOCK_SIZE &&
+                    resp_mad->trans_id == req_mad->trans_id) {
                     /* Everything matches, so we have the desired SL */
                     cache->sl_values[rem_lid] = ib_path_rec_sl(resp_path_record);
-                    got_sl_value = 1; /* still must repost recieve buf */
-                } else {
-                    /* Probably bad status, unlikely bad lid match. We will */
-                    /* ignore response and let it time out so that we do a  */
-                    /* retry, but after a delay. We must make a new TID so  */
-                    /* the SM doesn't see it as the same request.           */
-                    req_mad->trans_id += hton64(1);
+                    got_sl_value = 1;
+                    break;
                 }
+                /* Probably bad status, unlikely bad lid match. We will */
+                /* ignore response and let it time out so that we do a  */
+                /* retry, but after a delay. Need to repost receive WR. */
                 rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
                 if (0 != rc) {
                     BTL_ERROR(("error posing receive on QP[%x] rc says: %s [%d]",
@@ -295,7 +295,10 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
                                 MAX_GET_SL_REC_RETRIES));
                         return OPAL_ERROR;
                     }
-                    break;  /* retransmit request */
+                    /* Need to retransmit request. We must make a new TID */
+                    /* so the SM doesn't see it as the same request.      */
+                    req_mad->trans_id += hton64(1);
+                    break;
                 }
                 usleep(100);  /* otherwise pause before polling again */
             } else if (ne < 0) {
