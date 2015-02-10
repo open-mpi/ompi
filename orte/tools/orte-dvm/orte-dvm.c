@@ -124,6 +124,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Debug daemons" },
 
+    { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
