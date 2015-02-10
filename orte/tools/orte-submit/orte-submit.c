@@ -552,7 +552,6 @@ int main(int argc, char *argv[])
     /* create the map object to communicate policies */
     jdata->map = OBJ_NEW(orte_job_map_t);
     
-    /* if they asked for nolocal, mark it so */
     if (NULL != myglobals.mapping_policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, myglobals.mapping_policy))) {
             ORTE_ERROR_LOG(rc);
@@ -567,6 +566,15 @@ int main(int argc, char *argv[])
             exit(rc);
         }
     }
+    if (NULL != myglobals.binding_policy) {
+        if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
+                                                                     myglobals.binding_policy))) {
+            ORTE_ERROR_LOG(rc);
+            exit(rc);
+        }
+    }
+    
+    /* if they asked for nolocal, mark it so */
     if (myglobals.nolocal) {
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
     }
@@ -576,7 +584,19 @@ int main(int argc, char *argv[])
     if (myglobals.oversubscribe) {
         ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
     }
-
+    if (myglobals.report_bindings) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_REPORT_BINDINGS, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
+    if (myglobals.slot_list) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, myglobals.slot_list, OPAL_STRING);
+    }
+    if (NULL == myglobals.personality) {
+        /* default to ompi */
+        jdata->personality = strdup("ompi");
+    } else {
+        jdata->personality = strdup(myglobals.personality);
+    }
+    
     opal_dss.dump(0, jdata, ORTE_JOB);
     exit(0);
     
