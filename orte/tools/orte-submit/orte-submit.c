@@ -128,6 +128,19 @@ static struct {
     char *basename;
     char *prefix;
     bool terminate;
+    bool nolocal;
+    bool no_oversubscribe;
+    bool oversubscribe;
+    int cpus_per_proc;
+    bool pernode;
+    int npernode;
+    bool use_hwthreads_as_cpus;
+    int npersocket;
+    char *mapping_policy;
+    char *ranking_policy;
+    char *binding_policy;
+    bool report_bindings;
+    char *slot_list;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -195,94 +208,79 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
 
       /* Mapping controls */
-    { "rmaps_base_display_map", '\0', "display-map", "display-map", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display the process map just before launch"},
-    { "rmaps_base_display_devel_map", '\0', "display-devel-map", "display-devel-map", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a detailed process map (mostly intended for developers) just before launch"},
-    { "rmaps_base_display_topo_with_map", '\0', "display-topo", "display-topo", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display the topology as part of the process map (mostly intended for developers) just before launch"},
-    { "rmaps_base_display_diffable_map", '\0', "display-diffable-map", "display-diffable-map", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a diffable process map (mostly intended for developers) just before launch"},
     { NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
-    { "rmaps_base_no_schedule_local", '\0', "nolocal", "nolocal", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "nolocal", "nolocal", 0,
+      &myglobals.nolocal, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
-    { "rmaps_base_no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
+      &myglobals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
-    { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "oversubscribe", "oversubscribe", 0,
+      &myglobals.oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements"},
-    { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
+    { NULL, '\0', "cpus-per-proc", "cpus-per-proc", 1,
+      &myglobals.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
       "Number of cpus to use for each process [default=1]" },
-    { "rmaps_base_cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Synonym for cpus-per-proc" },
 
     /* Nperxxx options that do not require topology and are always
      * available - included for backwards compatibility
      */
-    { "rmaps_ppr_pernode", '\0', "pernode", "pernode", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "pernode", "pernode", 0,
+      &myglobals.pernode, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch one process per available node" },
-    { "rmaps_ppr_n_pernode", '\0', "npernode", "npernode", 1,
-        NULL, OPAL_CMD_LINE_TYPE_INT,
-        "Launch n processes per node on all allocated nodes" },
-    { "rmaps_ppr_n_pernode", '\0', "N", NULL, 1,
-        NULL, OPAL_CMD_LINE_TYPE_INT,
+    { NULL, '\0', "npernode", "npernode", 1,
+      &myglobals.npernode, OPAL_CMD_LINE_TYPE_INT,
+      "Launch n processes per node on all allocated nodes" },
+    { NULL, '\0', "N", NULL, 1,
+      &myglobals.npernode, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
 #if OPAL_HAVE_HWLOC
     /* declare hardware threads as independent cpus */
-    { "hwloc_base_use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
+      &myglobals.use_hwthreads_as_cpus, OPAL_CMD_LINE_TYPE_BOOL,
       "Use hardware threads as independent cpus" },
 
     /* include npersocket for backwards compatibility */
-    { "rmaps_ppr_n_persocket", '\0', "npersocket", "npersocket", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
+    { NULL, '\0', "npersocket", "npersocket", 1,
+      &myglobals.npersocket, OPAL_CMD_LINE_TYPE_INT,
       "Launch n processes per socket on all allocated nodes" },
 
     /* Mapping options */
-    { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', NULL, "map-by", 1,
+      &myglobals.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]" },
 
       /* Ranking options */
-    { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', NULL, "rank-by", 1,
+      &myglobals.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
 
       /* Binding options */
-    { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', NULL, "bind-to", 1,
+      &myglobals.binding_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported" },
 
-    { "hwloc_base_report_bindings", '\0', "report-bindings", "report-bindings", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, '\0', "report-bindings", "report-bindings", 0,
+      &myglobals.report_bindings, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to report process bindings to stderr" },
 
     /* slot list option */
-    { "hwloc_base_slot_list", '\0', "slot-list", "slot-list", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', "slot-list", "slot-list", 1,
+      &myglobals.slot_list, OPAL_CMD_LINE_TYPE_STRING,
       "List of processor IDs to bind processes to [default=NULL]"},
 
 #else
     /* Mapping options */
-    { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', NULL, "map-by", 1,
+      &myglobals.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping Policy [slot (default) | node]" },
 
       /* Ranking options */
-    { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+    { NULL, '\0', NULL, "rank-by", 1,
+      &myglobals.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Ranking Policy [slot (default) | node]" },
 #endif
 
@@ -336,7 +334,7 @@ static void spawn_recv(int status, orte_process_name_t* sender,
 
 int main(int argc, char *argv[])
 {
-    int rc;
+    int rc, i;
     opal_cmd_line_t cmd_line;
     char *param;
     orte_job_t *jdata=NULL;
@@ -437,7 +435,7 @@ int main(int argc, char *argv[])
         asprintf(&hnpenv, "OMPI_MCA_orte_hnp_uri=%s", myglobals.hnp);
     }
     putenv(hnpenv);  // must not free
-    
+
     /* Setup MCA params */
     orte_register_params();
 
@@ -461,6 +459,12 @@ int main(int argc, char *argv[])
      */
     opal_finalize();
 
+    for (i=0; NULL != environ[i]; i++) {
+        if (0 == strncmp(environ[i], "OMPI", 4)) {
+            fprintf(stderr, "%s\n", environ[i]);
+        }
+    }
+    
     /* set the info in our contact table */
     orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
     /* extract the name */
@@ -532,6 +536,9 @@ int main(int argc, char *argv[])
 
     /* Parse each app, adding it to the job object */
     parse_locals(jdata, argc, argv);
+
+    opal_dss.dump(0, jdata, ORTE_JOB);
+    exit(0);
     
     if (0 == jdata->num_apps) {
         /* This should never happen -- this case should be caught in
@@ -1064,7 +1071,7 @@ static int create_app(int argc, char* argv[],
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
-            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, value, OPAL_STRING);
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_GLOBAL, value, OPAL_STRING);
         }
     }
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
@@ -1074,7 +1081,7 @@ static int create_app(int argc, char* argv[],
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
-            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, value, OPAL_STRING);
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_GLOBAL, value, OPAL_STRING);
         }
     }
  
@@ -1086,7 +1093,7 @@ static int create_app(int argc, char* argv[],
             opal_argv_append_nosize(&targ, value);
         }
         tval = opal_argv_join(targ, ',');
-        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, tval, OPAL_STRING);
+        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_GLOBAL, tval, OPAL_STRING);
         opal_argv_free(targ);
         free(tval);
     }
@@ -1104,7 +1111,7 @@ static int create_app(int argc, char* argv[],
 
     /* Capture any preload flags */
     if (myglobals.preload_binaries) {
-        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
     /* if we were told to cwd to the session dir and the app was given in
      * relative syntax, then we need to preload the binary to
@@ -1117,11 +1124,11 @@ static int create_app(int argc, char* argv[],
         if (myglobals.preload_binaries) {
             orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL)) {
-            orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+            orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         }
     }
     if (NULL != myglobals.preload_files) {
-        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_LOCAL,
+        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_GLOBAL,
                            myglobals.preload_files, OPAL_STRING);
     }
 
