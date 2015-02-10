@@ -30,6 +30,7 @@ const char *opal_pmix_cray_component_version_string =
 /*
  * Local function
  */
+static int pmix_cray_component_open(void);
 static int pmix_cray_component_query(mca_base_module_t **module, int *priority);
 static int pmix_cray_component_close(void);
 
@@ -39,37 +40,45 @@ static int pmix_cray_component_close(void);
  * and pointers to our public functions in it
  */
 
-const opal_pmix_base_component_t mca_pmix_cray_component = {
-
+opal_pmix_cray_component_t mca_pmix_cray_component = {
+    {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
-        /* Indicate that we are a pmix v1.1.0 component (which also
-           implies a specific MCA version) */
+        {
+            /* Indicate that we are a pmix v1.1.0 component (which also
+               implies a specific MCA version) */
         
-        OPAL_PMIX_BASE_VERSION_2_0_0,
+            OPAL_PMIX_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
+            /* Component name and version */
 
-        "cray",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+            "cray",
+            OPAL_MAJOR_VERSION,
+            OPAL_MINOR_VERSION,
+            OPAL_RELEASE_VERSION,
 
-        /* Component open and close functions */
+            /* Component open and close functions */
 
-        NULL,
-        pmix_cray_component_close,
-        pmix_cray_component_query,
-        NULL
+            pmix_cray_component_open,
+            pmix_cray_component_close,
+            pmix_cray_component_query,
+            NULL
+        },
+        /* Next the MCA v1.0.0 component meta data */
+        {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     },
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    .cache_local = NULL,
+    .cache_global = NULL,
 };
+
+static int pmix_cray_component_open(void)
+{
+    return OPAL_SUCCESS;
+}
 
 static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
 {
