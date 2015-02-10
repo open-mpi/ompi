@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +38,7 @@
 #include "opal/mca/mca.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
+#include "opal/util/argv.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"

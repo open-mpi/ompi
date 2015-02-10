@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +31,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"

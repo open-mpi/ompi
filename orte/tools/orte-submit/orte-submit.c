@@ -397,8 +397,7 @@ int main(int argc, char *argv[])
     }
     OBJ_DESTRUCT(&cmd_line);
 
-    if (0 == strncmp(myglobals.hnp, "file", strlen("file")) ||
-        0 == strncmp(myglobals.hnp, "FILE", strlen("FILE"))) {
+    if (0 == strncasecmp(myglobals.hnp, "file", strlen("file"))) {
         char input[1024], *filename;
         FILE *fp;
             

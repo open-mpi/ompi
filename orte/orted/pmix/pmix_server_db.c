@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -35,6 +35,7 @@
 
 #include "opal_stdint.h"
 #include "opal/types.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/mca/dstore/dstore.h"
