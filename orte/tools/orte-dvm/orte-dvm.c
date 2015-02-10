@@ -431,10 +431,6 @@ static void notify_requestor(int sd, short args, void *cbdata)
     int ret;
     opal_buffer_t *reply;
     
-    opal_output(0, "%s dvm: job %s has completed",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
-
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);
     /* see if there was any problem */

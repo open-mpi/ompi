@@ -113,6 +113,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     orte_std_cntr_t num_procs, num_new_procs = 0, p;
     orte_proc_t *cur_proc = NULL, *prev_proc = NULL;
     bool found = false;
+    orte_node_t *node;
 
     /* unpack the command */
     n = 1;
@@ -547,6 +548,11 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 /* send the buffer to our IOF */
                 orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, iofbuf, ORTE_RML_TAG_IOF_HNP,
                                         orte_rml_send_callback, NULL);
+            }
+            for (i=1; i < orte_node_pool->size; i++) {
+                if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    node->state = ORTE_NODE_STATE_ADDED;
+                }
             }
             /* now launch the job - this will just push it into our state machine */
             if (ORTE_SUCCESS != (ret = orte_plm.spawn(jdata))) {
