@@ -597,9 +597,6 @@ int main(int argc, char *argv[])
         jdata->personality = strdup(myglobals.personality);
     }
     
-    opal_dss.dump(0, jdata, ORTE_JOB);
-    exit(0);
-    
     if (0 == jdata->num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
