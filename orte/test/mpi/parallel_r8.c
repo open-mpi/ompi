@@ -69,7 +69,7 @@ main(int argc, char* argv[])
         printf(" number of PE's in x direction: %3d\n",npx);
         printf(" number of PE's in y direction: %3d\n",npy);
         printf(" number of PE's in z direction: %3d\n",npz);
-        printf(" global grid size: %dx%dx%d 4 byte integers (total %lld)\n",X,Y,Z,(unsigned long)X*Y*Z);
+        printf(" global grid size: %dx%dx%d 4 byte integers (total %lu)\n",X,Y,Z,(unsigned long)X*Y*Z);
         printf("  local grid size: %dx%dx%d 4 byte integers (total %d)\n",nx,ny,nz,ng);
        }
      else
@@ -85,7 +85,7 @@ main(int argc, char* argv[])
     }
  if ( MPI_Get_processor_name(process_name, &count) != MPI_SUCCESS)
    {
-    sprintf(process_name, rr_empty);
+    sprintf(process_name, "%s", rr_empty);
    }
  else
    {
