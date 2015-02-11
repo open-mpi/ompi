@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -71,6 +71,15 @@
 #include "btl_smcuda_frag.h"
 #include "btl_smcuda_fifo.h"
 
+#if OPAL_CUDA_SUPPORT
+static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
+    struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
+    size_t size, uint32_t flags);
+
+static int mca_btl_smcuda_deregister_mem (struct mca_btl_base_module_t* btl,
+                                          struct mca_btl_base_registration_handle_t *handle);
+#endif
+
 mca_btl_smcuda_t mca_btl_smcuda = {
     .super = {
         .btl_component = &mca_btl_smcuda_component.super,
@@ -80,9 +89,10 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         .btl_alloc = mca_btl_smcuda_alloc,
         .btl_free = mca_btl_smcuda_free,
         .btl_prepare_src = mca_btl_smcuda_prepare_src,
-#if OPAL_CUDA_SUPPORT || OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
-        .btl_prepare_dst = mca_btl_smcuda_prepare_dst,
-#endif /* OPAL_CUDA_SUPPORT || OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA */
+#if OPAL_CUDA_SUPPORT
+        .btl_register_mem = mca_btl_smcuda_register_mem,
+        .btl_deregister_mem = mca_btl_smcuda_deregister_mem,
+#endif /* OPAL_CUDA_SUPPORT */
         .btl_send = mca_btl_smcuda_send,
         .btl_sendi = mca_btl_smcuda_sendi,
         .btl_dump = mca_btl_smcuda_dump,
@@ -741,7 +751,7 @@ extern mca_btl_base_descriptor_t* mca_btl_smcuda_alloc(
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segment.base.seg_len = size;
+        frag->segment.seg_len = size;
         frag->base.des_flags = flags;
     }
     return (mca_btl_base_descriptor_t*)frag;
@@ -772,7 +782,6 @@ extern int mca_btl_smcuda_free(
 struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -784,68 +793,33 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     uint32_t iov_count = 1;
     size_t max_data = *size;
     int rc;
-#if OPAL_CUDA_SUPPORT
-    if (0 != reserve) {
-#endif /* OPAL_CUDA_SUPPORT */
-        if ( reserve + max_data <= mca_btl_smcuda_component.eager_limit ) {
-            MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
-        } else {
-            MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag);
-        }
-        if( OPAL_UNLIKELY(NULL == frag) ) {
-            return NULL;
-        }
 
-        if( OPAL_UNLIKELY(reserve + max_data > frag->size) ) {
-            max_data = frag->size - reserve;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base =
-            (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.base.seg_addr.pval)) + reserve);
-
-        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        if( OPAL_UNLIKELY(rc < 0) ) {
-            MCA_BTL_SMCUDA_FRAG_RETURN(frag);
-            return NULL;
-        }
-        frag->segment.base.seg_len = reserve + max_data;
-#if OPAL_CUDA_SUPPORT
+    if ( reserve + max_data <= mca_btl_smcuda_component.eager_limit ) {
+        MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
     } else {
-        /* Normally, we are here because we have a GPU buffer and we are preparing
-         * to send it.  However, we can also be there because we have received a 
-         * PUT message because we are trying to send a host buffer.  Therefore,
-         * we need to again check to make sure buffer is GPU.  If not, then return
-         * NULL. We can just check the convertor since we have that. */
-        if (!(convertor->flags & CONVERTOR_CUDA)) {
-            return NULL;
-        }
-
-        MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag);
-        if( OPAL_UNLIKELY(NULL == frag) ) {
-            return NULL;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
-        if( OPAL_UNLIKELY(rc < 0) ) {
-           MCA_BTL_SMCUDA_FRAG_RETURN(frag);
-            return NULL;
-        }
-        frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) iov.iov_base;
-        frag->segment.base.seg_len = max_data;
-        memcpy(frag->segment.key, ((mca_mpool_common_cuda_reg_t *)registration)->memHandle,
-               sizeof(((mca_mpool_common_cuda_reg_t *)registration)->memHandle) + 
-               sizeof(((mca_mpool_common_cuda_reg_t *)registration)->evtHandle));
-        frag->segment.memh_seg_addr.pval = registration->base;
-        frag->segment.memh_seg_len = registration->bound - registration->base + 1;
-
+        MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag);
     }
-#endif /* OPAL_CUDA_SUPPORT */
-    frag->base.des_local = &(frag->segment.base);
-    frag->base.des_local_count = 1;
+    if( OPAL_UNLIKELY(NULL == frag) ) {
+        return NULL;
+    }
+
+    if( OPAL_UNLIKELY(reserve + max_data > frag->size) ) {
+        max_data = frag->size - reserve;
+    }
+    iov.iov_len = max_data;
+    iov.iov_base =
+        (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) + reserve);
+
+    rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
+    if( OPAL_UNLIKELY(rc < 0) ) {
+        MCA_BTL_SMCUDA_FRAG_RETURN(frag);
+        return NULL;
+    }
+
+    frag->segment.seg_len = reserve + max_data;
+    frag->base.des_segments = &frag->segment;
+    frag->base.des_segment_count = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
     frag->base.des_flags = flags;
     *size = max_data;
     return &frag->base;
@@ -854,8 +828,8 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 #if 0
 #define MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)          \
     do {                                                                \
-        char* _memory = (char*)(sm_frag)->segment.base.seg_addr.pval +  \
-            (sm_frag)->segment.base.seg_len;                            \
+        char* _memory = (char*)(sm_frag)->segment.seg_addr.pval +       \
+            (sm_frag)->segment.seg_len;                                 \
         int* _intmem;                                                   \
         size_t align = (intptr_t)_memory & 0xFUL;                       \
         switch( align & 0x3 ) {                                         \
@@ -926,7 +900,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         }
 
         /* fill in fragment fields */
-        frag->segment.base.seg_len = length;
+        frag->segment.seg_len = length;
         frag->hdr->len        = length;
         assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
         frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;   /* why do any flags matter here other than OWNERSHIP? */
@@ -934,7 +908,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         frag->endpoint = endpoint;
 
         /* write the match header (with MPI comm/tag/etc. info) */
-        memcpy( frag->segment.base.seg_addr.pval, header, header_size );
+        memcpy( frag->segment.seg_addr.pval, header, header_size );
 
         /* write the message data if there is any */
         /*
@@ -945,7 +919,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
             struct iovec iov;
             uint32_t iov_count;
             /* pack the data into the supplied buffer */
-            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.base.seg_addr.pval + header_size);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
             iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
@@ -1000,7 +974,7 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
 #endif /* OPAL_CUDA_SUPPORT */
 
     /* available header space */
-    frag->hdr->len = frag->segment.base.seg_len;
+    frag->hdr->len = frag->segment.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
@@ -1024,65 +998,76 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
      */
     return 0;
 }
+
 #if OPAL_CUDA_SUPPORT
-struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst( 
-        struct mca_btl_base_module_t* btl,
-        struct mca_btl_base_endpoint_t* endpoint,
-        struct mca_mpool_base_registration_t* registration,
-        struct opal_convertor_t* convertor,
-        uint8_t order,
-        size_t reserve,
-        size_t* size,
-        uint32_t flags)
+static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
+    struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
+    size_t size, uint32_t flags)
 {
-    void *ptr;
-    mca_btl_smcuda_frag_t* frag;
+    mca_mpool_common_cuda_reg_t *reg;
+    int mpool_flags = 0;
 
-    /* Only support GPU buffers */
-    if (!(convertor->flags & CONVERTOR_CUDA)) {
+    if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
+        mpool_flags |= MCA_MPOOL_FLAGS_CUDA_GPU_MEM;
+    }
+
+    btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mpool_flags,
+                                    (mca_mpool_base_registration_t **) &reg);
+    if (OPAL_UNLIKELY(NULL == reg)) {
         return NULL;
     }
 
-    MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag);
-    if(OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-    
-    frag->segment.base.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, &ptr );
-    frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
-
-    frag->base.des_remote = NULL;
-    frag->base.des_remote_count = 0;
-    frag->base.des_local = &frag->segment.base;
-    frag->base.des_local_count = 1;
-    frag->base.des_flags = flags;
-    return &frag->base;
+    return (mca_btl_base_registration_handle_t *) &reg->data;
 }
-#endif /* OPAL_CUDA_SUPPORT */
 
-
-#if OPAL_CUDA_SUPPORT
-int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
-                        struct mca_btl_base_endpoint_t* ep,
-                        struct mca_btl_base_descriptor_t* descriptor)
+static int mca_btl_smcuda_deregister_mem (struct mca_btl_base_module_t* btl,
+                                          struct mca_btl_base_registration_handle_t *handle)
 {
-    mca_btl_smcuda_segment_t *src_seg = (mca_btl_smcuda_segment_t *) descriptor->des_remote;
-    mca_btl_smcuda_segment_t *dst_seg = (mca_btl_smcuda_segment_t *) descriptor->des_local;
+    mca_mpool_common_cuda_reg_t *reg = (mca_mpool_common_cuda_reg_t *)
+        ((intptr_t) handle - offsetof (mca_mpool_common_cuda_reg_t, data));
+
+    btl->btl_mpool->mpool_deregister (btl->btl_mpool, &reg->base);
+
+    return OPAL_SUCCESS;
+}
+
+int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *ep, void *local_address,
+    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+{
     mca_mpool_common_cuda_reg_t rget_reg;
     mca_mpool_common_cuda_reg_t *reg_ptr = &rget_reg;
-    int btl_ownership;
     int rc, done;
     void *remote_memory_address;
     size_t offset;
-    mca_btl_smcuda_frag_t* frag = (mca_btl_smcuda_frag_t*)descriptor;
+    mca_btl_smcuda_frag_t *frag;
+
+    /* NTH: copied from old prepare_dst function */
+    MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag);
+    if(OPAL_UNLIKELY(NULL == frag)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* shove all the info needed for completion callbacks into the fragment */
+    frag->segment.seg_len = size;
+    frag->segment.seg_addr.pval = local_address;
+    frag->base.des_segments = &frag->segment;
+    frag->base.des_segment_count = 1;
+    frag->base.des_flags = flags;
+    frag->base.des_cbfunc = (mca_btl_base_completion_fn_t) cbfunc;
+    frag->base.des_cbdata = cbdata;
+    frag->base.des_context = cbcontext;
+    frag->local_handle = local_handle;
  
     /* Set to 0 for debugging since it is a list item but I am not
      * intializing it properly and it is annoying to see all the
      * garbage in the debugger.  */
     
     memset(&rget_reg, 0, sizeof(rget_reg));
-    memcpy(&rget_reg.memHandle, src_seg->key, sizeof(src_seg->key));
+    memcpy(&rget_reg.data.memHandle, remote_handle->reg_data.memHandle,
+           sizeof(remote_handle->reg_data.memHandle));
 
     /* Open the memory handle to the remote memory.  If it is cached, then
      * we just retrieve it from cache and avoid a call to open the handle.  That
@@ -1091,8 +1076,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * remote memory which may lie somewhere in the middle. This is taken care of
      * a few lines down. Note that we hand in the peer rank just for debugging
      * support. */
-    rc = ep->mpool->mpool_register(ep->mpool, src_seg->memh_seg_addr.pval,
-                                   src_seg->memh_seg_len, ep->peer_smp_rank,
+    rc = ep->mpool->mpool_register(ep->mpool, remote_handle->reg_data.memh_seg_addr.pval,
+                                   remote_handle->reg_data.memh_seg_len, ep->peer_smp_rank,
                                    (mca_mpool_base_registration_t **)&reg_ptr);
 
     if (OPAL_SUCCESS != rc) {
@@ -1107,7 +1092,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * not equal the address that was used to retrieve the block.
      * Therefore, compute the offset and add it to the address of the
      * memory handle. */
-    offset = (unsigned char *)src_seg->base.seg_addr.lval - reg_ptr->base.base;
+    offset = (size_t) ((intptr_t) remote_address - (intptr_t) reg_ptr->base.base);
     remote_memory_address = (unsigned char *)reg_ptr->base.alloc_base + offset;
     if (0 != offset) {
         opal_output(-1, "OFFSET=%d", (int)offset);
@@ -1120,8 +1105,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * rget_reg, not reg_ptr, as we do not cache the event. */
     mca_common_wait_stream_synchronize(&rget_reg);
 
-    rc = mca_common_cuda_memcpy((void *)(uintptr_t) dst_seg->base.seg_addr.lval,
-				remote_memory_address, dst_seg->base.seg_len,
+    rc = mca_common_cuda_memcpy(local_address, remote_memory_address, size,
 				"mca_btl_smcuda_get", (mca_btl_base_descriptor_t *)frag,
 				&done);
     if (OPAL_SUCCESS != rc) {
@@ -1133,17 +1117,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
     }
 
     if (OPAL_UNLIKELY(1 == done)) {
-        /* This should only be true when experimenting with synchronous copies. */
-        btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-        if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-            frag->base.des_cbfunc(&mca_btl_smcuda.super, 
-                                  frag->endpoint, &frag->base, 
-                                  OPAL_SUCCESS);
-        }
-
-        if (btl_ownership) {
-            mca_btl_smcuda_free(btl, (mca_btl_base_descriptor_t *)frag);
-        }
+        cbfunc (btl, ep, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
+        mca_btl_smcuda_free(btl, (mca_btl_base_descriptor_t *)frag);
     }
 
     return OPAL_SUCCESS;
@@ -1208,7 +1183,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
     frag->endpoint = endpoint;
     ctrlhdr.ctag = IPC_REQ;
     ctrlhdr.cudev = mydevnum;
-    memcpy(frag->segment.base.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
+    memcpy(frag->segment.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
 
     MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
     /* write the fragment pointer to the FIFO */

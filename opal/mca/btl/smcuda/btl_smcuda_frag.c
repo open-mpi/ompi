@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,13 +30,13 @@ static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t*
     if(frag->hdr != NULL) {
         frag->hdr->frag = (mca_btl_smcuda_frag_t*)((uintptr_t)frag |
             MCA_BTL_SMCUDA_FRAG_ACK);
-        frag->segment.base.seg_addr.pval = ((char*)frag->hdr) +
+        frag->segment.seg_addr.pval = ((char*)frag->hdr) +
             sizeof(mca_btl_smcuda_hdr_t);
         frag->hdr->my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
     }
-    frag->segment.base.seg_len = frag->size;
-    frag->base.des_local = &frag->segment.base;
-    frag->base.des_local_count = 1;
+    frag->segment.seg_len = frag->size;
+    frag->base.des_segments = &frag->segment;
+    frag->base.des_segment_count = 1;
     frag->base.des_flags = 0;
 #if OPAL_CUDA_SUPPORT
     frag->registration = NULL;

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -438,7 +439,6 @@ extern int mca_btl_smcuda_free(
 struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -481,19 +481,11 @@ extern int mca_btl_smcuda_send(
 /**
  * Remote get using device memory.
  */
-extern int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
-							   struct mca_btl_base_endpoint_t* ep,
-							   struct mca_btl_base_descriptor_t* descriptor);
-
-extern struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
-		struct mca_btl_base_module_t* btl,
-		struct mca_btl_base_endpoint_t* endpoint,
-		struct mca_mpool_base_registration_t* registration,
-		struct opal_convertor_t* convertor,
-		uint8_t order,
-		size_t reserve,
-		size_t* size,
-		uint32_t flags);
+int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *ep, void *local_address,
+    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /* CUDA IPC control message tags */
 enum ipcCtrlMsg {

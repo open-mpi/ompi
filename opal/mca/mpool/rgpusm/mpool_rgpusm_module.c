@@ -212,7 +212,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         rgpusm_reg->base.flags = flags;
 
         /* Copy the memory handle received into the registration */
-        memcpy(rgpusm_reg->memHandle, rget_reg->memHandle, sizeof(rget_reg->memHandle));
+        memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
 
         /* The rget_reg registration is holding the memory handle needed
          * to register the remote memory.  This was received from the remote
@@ -325,7 +325,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     rgpusm_reg->base.flags = flags;
 
     /* Need the memory handle saved in the registration */
-    memcpy(rgpusm_reg->memHandle, rget_reg->memHandle, sizeof(rget_reg->memHandle));
+    memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
 
     /* Actually register the memory, which opens the memory handle.
      * Need to do this prior to putting in the cache as the base and

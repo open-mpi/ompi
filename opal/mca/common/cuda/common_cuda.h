@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,11 +27,19 @@
 
 #define MEMHANDLE_SIZE 8
 #define EVTHANDLE_SIZE 8
-struct mca_mpool_common_cuda_reg_t {
-    mca_mpool_base_registration_t base;
+
+struct mca_mpool_common_cuda_reg_data_t {
     uint64_t memHandle[MEMHANDLE_SIZE];
     uint64_t evtHandle[EVTHANDLE_SIZE];
     uint64_t event;
+    opal_ptr_t memh_seg_addr;
+    size_t memh_seg_len;
+};
+typedef struct mca_mpool_common_cuda_reg_data_t mca_mpool_common_cuda_reg_data_t;
+
+struct mca_mpool_common_cuda_reg_t {
+    mca_mpool_base_registration_t base;
+    mca_mpool_common_cuda_reg_data_t data;
 };
 typedef struct mca_mpool_common_cuda_reg_t mca_mpool_common_cuda_reg_t;
 extern bool mca_common_cuda_enabled;
