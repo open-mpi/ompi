@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 
     /* setup the job object */
     jdata = OBJ_NEW(orte_job_t);
-    jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
 
     /* create an app_context that defines the app to be run */
     app = OBJ_NEW(orte_app_context_t);
@@ -47,12 +47,10 @@ int main(int argc, char* argv[])
     
     getcwd(cwd, sizeof(cwd));
     app->cwd = strdup(cwd);
-    app->user_specified_cwd = false;
     /*===================================*/
-    char *host_list[] = {"vm2", "vm3", "vm4", NULL};
-    app->dash_host = host_list;
-    jdata->dyn_alloc_enabled = 1;
-	/*==================================*/
+    char *host_list = "vm,vm3,vm4";
+    orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_GLOBAL, host_list, OPAL_STRING);
+    /*==================================*/
 
     /* add the app to the job data */
     opal_pointer_array_add(jdata->apps, app);

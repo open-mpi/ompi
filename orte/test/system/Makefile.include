@@ -34,15 +34,12 @@ EXTRA_DIST += \
         test/system/iof_stress.c \
         test/system/oob_stress.c \
         test/system/orte_abort.c \
-        test/system/orte_barrier.c \
         test/system/orte_loop_child.c \
         test/system/orte_loop_spawn.c \
         test/system/orte_nodename.c \
         test/system/orte_no_op.c \
-        test/system/orte_ring.c \
         test/system/orte_spawn.c \
         test/system/sigusr_trap.c \
-        test/system/spawn_child.c \
         test/system/spin.c \
 	test/system/mapper.c \
 	test/system/mapr.py \
