@@ -42,6 +42,7 @@ opal_sec_base_module_t opal_sec_munge_module = {
 
 static opal_sec_cred_t my_cred;
 static bool initialized = false;
+static bool refresh = false;
 
 static int init(void)
 {
@@ -60,6 +61,7 @@ static int init(void)
                             munge_strerror(rc));
         return OPAL_ERR_SERVER_NOT_AVAIL;
     }
+    my_cred.size = strlen(my_cred.credential);
     initialized = true;
     
     return OPAL_SUCCESS;
@@ -76,8 +78,24 @@ static int get_my_cred(int dstorehandle,
                        opal_process_name_t *my_id,
                        opal_sec_cred_t **cred)
 {
+    int rc;
+    
     if (initialized) {
-        *cred = &my_cred;
+        if (!refresh) {
+            *cred = &my_cred;
+            refresh = true;
+        } else {
+            /* get a new credential as munge will not
+             * allow us to reuse them */
+            if (EMUNGE_SUCCESS != (rc = munge_encode(&my_cred.credential, NULL, NULL, 0))) {
+                opal_output_verbose(2, opal_sec_base_framework.framework_output,
+                                    "sec: munge failed to create credential: %s",
+                                    munge_strerror(rc));
+                return OPAL_ERR_SERVER_NOT_AVAIL;
+            }
+            my_cred.size = strlen(my_cred.credential);
+            *cred = &my_cred;
+        }
     } else {
         *cred = NULL;
     }
