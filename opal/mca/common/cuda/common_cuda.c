@@ -230,7 +230,7 @@ int mca_common_cuda_stage_one_init(void)
     opal_lt_dladvise advise;
     int retval, i, j;
     int advise_support = 1;
-    char *cudalibs[] = {"libcuda.so.1", NULL};
+    char *cudalibs[] = {"libcuda.so.1", "libcuda.dylib", NULL};
     char *searchpaths[] = {"", "/usr/lib64", NULL};
     char **errmsgs = NULL;
     char *errmsg = NULL;
@@ -1027,7 +1027,9 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     /* Store all the information in the registration */
     cuda_reg->base.base = (void *)pbase;
     cuda_reg->base.bound = (unsigned char *)pbase + psize - 1;
-    memcpy(&cuda_reg->memHandle, &memHandle, sizeof(memHandle));
+    memcpy(&cuda_reg->data.memHandle, &memHandle, sizeof(memHandle));
+    cuda_reg->data.memh_seg_addr.pval = (void *) pbase;
+    cuda_reg->data.memh_seg_len = psize;
 
 #if OPAL_CUDA_SYNC_MEMOPS
     /* With CUDA 6.0, we can set an attribute on the memory pointer that will
@@ -1051,7 +1053,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
      * Note that this needs to be the NULL stream to make since it is
      * unknown what stream any copies into the device memory were done
      * with. */
-    result = cuFunc.cuEventRecord((CUevent)cuda_reg->event, 0);
+    result = cuFunc.cuEventRecord((CUevent)cuda_reg->data.event, 0);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                        true, result, base);
@@ -1068,7 +1070,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
  */
 int cuda_ungetmemhandle(void *reg_data, mca_mpool_base_registration_t *reg) 
 {
-    CUDA_DUMP_EVTHANDLE((100, ((mca_mpool_common_cuda_reg_t *)reg)->evtHandle, "cuda_ungetmemhandle"));
+    CUDA_DUMP_EVTHANDLE((100, ((mca_mpool_common_cuda_reg_t *)reg)->data.evtHandle, "cuda_ungetmemhandle"));
     opal_output_verbose(10, mca_common_cuda_output,
                         "CUDA: cuda_ungetmemhandle (no-op): base=%p", reg->base);
 
@@ -1089,7 +1091,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
     mca_mpool_common_cuda_reg_t *cuda_newreg = (mca_mpool_common_cuda_reg_t*)newreg;
 
     /* Need to copy into memory handle for call into CUDA library. */
-    memcpy(&memHandle, cuda_newreg->memHandle, sizeof(memHandle));
+    memcpy(&memHandle, cuda_newreg->data.memHandle, sizeof(memHandle));
     CUDA_DUMP_MEMHANDLE((100, &memHandle, "Before call to cuIpcOpenMemHandle"));
 
     /* Open the memory handle and store it into the registration structure. */
@@ -1137,7 +1139,7 @@ int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
         opal_output_verbose(10, mca_common_cuda_output,
                             "CUDA: cuIpcCloseMemHandle passed: base=%p",
                             cuda_reg->base.alloc_base);
-        CUDA_DUMP_MEMHANDLE((100, cuda_reg->memHandle, "cuIpcCloseMemHandle"));
+        CUDA_DUMP_MEMHANDLE((100, cuda_reg->data.memHandle, "cuIpcCloseMemHandle"));
     }
 
     return OPAL_SUCCESS;
@@ -1189,7 +1191,7 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
     CUevent event;
     CUresult result;
 
-    memcpy(&evtHandle, rget_reg->evtHandle, sizeof(evtHandle));
+    memcpy(&evtHandle, rget_reg->data.evtHandle, sizeof(evtHandle));
     CUDA_DUMP_EVTHANDLE((100, &evtHandle, "stream_synchronize"));
 
     result = cuFunc.cuIpcOpenEventHandle(&event, evtHandle);
@@ -1613,7 +1615,7 @@ int mca_common_cuda_memhandle_matches(mca_mpool_common_cuda_reg_t *new_reg,
                                       mca_mpool_common_cuda_reg_t *old_reg)
 {
 
-    if (0 == memcmp(new_reg->memHandle, old_reg->memHandle, sizeof(new_reg->memHandle))) {
+    if (0 == memcmp(new_reg->data.memHandle, old_reg->data.memHandle, sizeof(new_reg->data.memHandle))) {
         return 1;
     } else {
         return 0;
