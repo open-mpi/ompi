@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,12 +30,12 @@ SUBDIRS = \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
+# Note that if we were configured with --disable-dlopen or
+# --with-libltdl=external, there will be no Makefile in libltdl/, and
+# "make dist" will fail.
 DIST_SUBDIRS = \
 	include \
-	$(LIBLTDL_SUBDIR) \
+	libltdl \
 	asm \
         datatype \
         etc \

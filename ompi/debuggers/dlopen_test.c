@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +13,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "opal/libltdl/ltdl.h"
+#if OPAL_WANT_LIBLTDL
+#include <ltdl.h>
+#endif
 
 #if !OPAL_WANT_LIBLTDL
 int main(int argc, char *argv[])

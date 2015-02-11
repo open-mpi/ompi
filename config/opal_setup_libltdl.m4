@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
@@ -190,6 +190,18 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         AC_MSG_ERROR([Cannot continue])
     fi
     CFLAGS=$CFLAGS_save
+
+    # These variables used to be set by libtoolize (when we had
+    # Libtool insertted at autogen time).  But now we have a
+    # hard-coded/embeded version of libltdl from Libtool 2.4.2.  And
+    # we don't use the embed-libltdl-at-libtoolize-time functionality
+    # any more.  So we have to set these values ourselves.
+    LIBLTDL='${top_build_prefix}opal/libltdl/libltdlc.la'
+    LTDLDEPS=$LIBLTDL
+    LTDLINCL='-I${top_srcdir}/opal/libltdl'
+    AC_SUBST(LIBLTDL)
+    AC_SUBST(LTDLDEPS)
+    AC_SUBST(LTDLINCL)
 
     OPAL_VAR_SCOPE_POP
 ])dnl
