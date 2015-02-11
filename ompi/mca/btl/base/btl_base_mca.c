@@ -119,11 +119,16 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_min_rdma_pipeline_size);
 
-      (void) mca_base_component_var_register(version, "bandwidth", "Approximate maximum bandwidth of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)",
+      (void) mca_base_component_var_register(version, "latency", "Approximate latency of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = latency in microseconds)",
                                              MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
                                              OPAL_INFO_LVL_5,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_latency);
+      (void) mca_base_component_var_register(version, "bandwidth", "Approximate maximum bandwidth of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)",
+                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                             OPAL_INFO_LVL_5,
+                                             MCA_BASE_VAR_SCOPE_READONLY,
+                                             &module->btl_bandwidth);
     }
 
     return mca_btl_base_param_verify(module);
