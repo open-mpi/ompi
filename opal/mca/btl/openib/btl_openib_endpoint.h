@@ -18,6 +18,7 @@
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -641,6 +642,7 @@ static inline int mca_btl_openib_endpoint_credit_acquire (struct mca_btl_base_en
 
     if (!(prio && size < eager_limit && acquire_eager_rdma_send_credit(endpoint) == OPAL_SUCCESS)) {
         *do_rdma = false;
+        prio = !prio;
 
         if (BTL_OPENIB_QP_TYPE_PP(qp)) {
             if (OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) < 0) {

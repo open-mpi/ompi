@@ -18,7 +18,7 @@
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved
@@ -1716,7 +1716,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     size_t size = payload_size + header_size;
     int qp = frag_size_to_order(obtl, size),
-        prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY),
+        prio = flags & MCA_BTL_DES_FLAGS_PRIORITY,
         ib_rc;
     bool do_rdma = false;
     ompi_free_list_item_t* item = NULL;
