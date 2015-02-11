@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     MPI_Abort(MPI_COMM_WORLD, -1);
    }
 
- MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+ MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
  mpierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
  if (mpierr != MPI_SUCCESS || rank < 0)
