@@ -199,27 +199,32 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
 
 static void fill_cache_line_size(void)
 {
-    int i = 0;
+    int i = 0, cache_level = 2;
     unsigned size;
     hwloc_obj_t obj;
     bool found = false;
 
     /* Look for the smallest L2 cache size */
     size = 4096;
-    while (1) {
-        obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
-                                              HWLOC_OBJ_CACHE, 2,
-                                              i, OPAL_HWLOC_LOGICAL);
-        if (NULL == obj) {
-            break;
-        } else { 
-            found = true;
-            if (NULL != obj->attr &&
-                size > obj->attr->cache.linesize) {
-                size = obj->attr->cache.linesize;
+    while (cache_level > 0 && !found) {
+        i=0;
+        while (1) {
+            obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+                                                  HWLOC_OBJ_CACHE, cache_level,
+                                                  i, OPAL_HWLOC_LOGICAL);
+            if (NULL == obj) {
+                --cache_level;
+                break;
+            } else {
+                if (NULL != obj->attr &&
+                    obj->attr->cache.linesize > 0 &&
+                    size > obj->attr->cache.linesize) {
+                    size = obj->attr->cache.linesize;
+                    found = true;
+                }
             }
+            ++i;
         }
-        ++i;
     }
 
     /* If we found an L2 cache size in the hwloc data, save it in
