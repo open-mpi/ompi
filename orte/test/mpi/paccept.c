@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
                            MPI_COMM_SELF,           /* old communicator */
                            NULL,                    /* bridge comm */
                            &rank,                   /* local leader */
-                           &sender->proc_name,      /* remote leader */
+                           &sender->super.proc_name,      /* remote leader */
                            OMPI_COMM_CID_INTRA_OOB, /* mode */
                            false);                  /* send or recv first */
     if ( OMPI_SUCCESS != rc ) {
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
                             MPI_COMM_SELF,           /* old communicator */
                             NULL,                    /* bridge comm */
                             &rank,                   /* local leader */
-                            &sender->proc_name,      /* remote leader */
+                            &sender->super.proc_name,      /* remote leader */
                             OMPI_COMM_CID_INTRA_OOB, /* mode */
                             false);                  /* send or recv first */
     if ( OMPI_SUCCESS != rc ) {
