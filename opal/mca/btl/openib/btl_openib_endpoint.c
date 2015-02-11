@@ -18,7 +18,7 @@
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -74,7 +74,7 @@ static inline int acquire_wqe(mca_btl_openib_endpoint_t *ep,
 int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
         mca_btl_openib_send_frag_t *frag)
 {
-    int prio = !(to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY);
+    int prio = to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY;
     mca_btl_openib_header_t *hdr = frag->hdr;
     mca_btl_base_descriptor_t *des = &to_base_frag(frag)->base;
     int qp, ib_rc, rc;
