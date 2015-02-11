@@ -481,7 +481,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 type = description[pos_desc].elem.common.type;
-                OPAL_DATATYPE_SAFEGUARD_POINTER( conv_ptr, pData->size, pConvertor->pBaseBuf,
+                OPAL_DATATYPE_SAFEGUARD_POINTER( conv_ptr + pElem->elem.disp, pData->size, pConvertor->pBaseBuf,
                                                  pData, pConvertor->count );
                 DO_DEBUG( opal_output( 0, "unpack (%p, %ld) -> (%p:%ld, %d, %ld) type %s\n",
                                        iov_ptr, iov_len_local,
