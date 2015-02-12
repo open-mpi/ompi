@@ -37,6 +37,12 @@ if (!$ok || $help_arg) {
     exit($ok);
 }
 
+die "Cannot read $filename_arg"
+    if (! -r $filename_arg);
+
+$verbose_arg = 1
+    if ($debug_arg);
+
 ######################################################################
 
 sub verbose {
@@ -216,9 +222,6 @@ $ENV{PATH} = "$cov_dir:$ENV{PATH}";
 ######################################################################
 
 # Expand the OMPI tarball, build it
-
-die "Cannot read $filename_arg"
-    if (! -r $filename_arg);
 
 verbose "*** Extracting OMPI tarball\n";
 safe_system("tar xf $filename_arg");
