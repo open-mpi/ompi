@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -171,6 +171,7 @@ static int process_arg(const char *param, const char *value,
                     "try again.\n"
                     "---------------------------------------------------------------------------\n",
                     param);
+            free(p1);
             return OPAL_ERROR;
         }
     }
