@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1003,7 +1003,7 @@ static void agent_thread_accept(int fd, short flags, void *context)
 
     len = sizeof(addr);
     int client_fd = accept(fd, &addr, &len);
-    if (-1 == client_fd) {
+    if (client_fd < 0) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("accept() failed");
         /* Will not return */
