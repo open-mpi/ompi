@@ -546,8 +546,6 @@ static int match_modex(opal_btl_usnic_module_t *module,
     size_t i;
     uint32_t num_modules;
     opal_btl_usnic_graph_t *g = NULL;
-    int nme;
-    int *me;
     bool proc_is_left;
 
     if (NULL == index_out) {
@@ -597,7 +595,8 @@ static int match_modex(opal_btl_usnic_module_t *module,
             goto out_free_table;
         }
 
-        nme = 0;
+        int nme = 0;
+        int *me = NULL;
         err = opal_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
@@ -605,6 +604,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         }
 
         edge_pairs_to_match_table(proc, proc_is_left, nme, me);
+        free(me);
 
         err = opal_btl_usnic_gr_free(g);
         if (OPAL_SUCCESS != err) {
