@@ -324,7 +324,7 @@ static int mca_btl_base_vader_modex_send (void)
         modex.xpmem.seg_id = mca_btl_vader_component.my_seg_id;
         modex.xpmem.segment_base = mca_btl_vader_component.my_segment;
 
-        modex_size = sizeof (modex);
+        modex_size = sizeof (modex.xpmem);
     } else {
 #endif
         /* need to pack the modex data in 1.8 since seg_name is not at the end of the stuct */
