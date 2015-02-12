@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -427,6 +427,7 @@ static void setup_mpit_pvars_enum(void)
     for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         free((char*) devices[i].string);
     }
+    free(devices);
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar
