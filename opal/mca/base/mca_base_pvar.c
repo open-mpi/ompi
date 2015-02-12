@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -962,7 +963,9 @@ static void mca_base_pvar_handle_destructor (mca_base_pvar_handle_t *handle)
     }
 
     /* remove this handle from the pvar list */
-    opal_list_remove_item (&handle->pvar->bound_handles, &handle->list2);
+    if (handle->pvar) {
+        opal_list_remove_item (&handle->pvar->bound_handles, &handle->list2);
+    }
 
     OBJ_DESTRUCT(&handle->list2);
 
