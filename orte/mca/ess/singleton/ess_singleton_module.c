@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -209,6 +210,37 @@ static int rte_init(void)
     putenv("OMPI_APP_CTX_NUM_PROCS=1");
     putenv("OMPI_MCA_orte_ess_num_procs=1");
 
+    /* push some useful info */
+
+    /* store the name of the local leader */
+    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_SCOPE_INTERNAL,
+                                            OPAL_DB_LOCALLDR, (opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_ID_T))) {
+        return rc;
+    }
+    /* store our hostname */
+    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                            OPAL_SCOPE_GLOBAL, ORTE_DB_HOSTNAME,
+                                            orte_process_info.nodename, OPAL_STRING))) {
+        return rc;
+    }
+    /* store our cpuset */
+    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                            OPAL_SCOPE_GLOBAL, OPAL_DB_CPUSET,
+                                            orte_process_info.cpuset, OPAL_STRING))) {
+        return rc;
+    }
+    /* store our local rank */
+    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                            OPAL_SCOPE_GLOBAL, ORTE_DB_LOCALRANK,
+                                            &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
+        return rc;
+    }
+    /* store our node rank */
+    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                            OPAL_SCOPE_GLOBAL, ORTE_DB_NODERANK,
+                                            &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
+        return rc;
+    }
     return ORTE_SUCCESS;
 }
 

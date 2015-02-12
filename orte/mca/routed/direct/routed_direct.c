@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -117,6 +118,11 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
+    /* if we are a proc and have a daemon, then route it there */
+    if (ORTE_PROC_IS_APP && NULL != orte_process_info.my_daemon_uri) {
+        ret = ORTE_PROC_MY_DAEMON;
+        goto found;
+    }
     /* all routes go direct */
     ret = target;
 

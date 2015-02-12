@@ -3,6 +3,7 @@
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -14,6 +15,8 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/routed/base/base.h"
 #include "routed_direct.h"
@@ -46,8 +49,13 @@ orte_routed_component_t mca_routed_direct_component = {
 
 static int orte_routed_direct_component_query(mca_base_module_t **module, int *priority)
 {
-    /* allow selection only when specifically requested */
-    *priority = 0;
+    if (ORTE_PROC_IS_SINGLETON) {
+        /* we must be selected */
+        *priority = 100;
+    } else {
+        /* allow selection only when specifically requested */
+        *priority = 0;
+    }
     *module = (mca_base_module_t *) &orte_routed_direct_module;
     return ORTE_SUCCESS;
 }

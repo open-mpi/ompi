@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -95,9 +96,10 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
 {
     opal_buffer_t *buf;
     orte_plm_cmd_flag_t command;
-    int rc;
+    int rc, i;
     orte_proxy_spawn_t *ps;
-
+    orte_app_context_t *app;
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -131,6 +133,14 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         goto CLEANUP;
+    }
+
+    /* ensure that our prefix is passed along so that any launching daemons
+     * use the correct path */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            app->prefix_dir = strdup(opal_install_dirs.prefix);
+        }
     }
     
     /* pack the jdata object */
@@ -209,7 +219,6 @@ int orte_plm_base_fork_hnp(void)
     int buffer_length, num_chars_read, chunk;
     char *orted_uri;
     int rc;
-    char *foo;
     orte_jobid_t jobid;
 
     /* A pipe is used to communicate between the parent and child to
@@ -250,7 +259,7 @@ int orte_plm_base_fork_hnp(void)
     
     /* okay, setup an appropriate argv */
     opal_argv_append(&argc, &argv, "orted");
-    
+
     /* tell the daemon it is to be the HNP */
     opal_argv_append(&argc, &argv, "--hnp");
 
@@ -300,10 +309,6 @@ int orte_plm_base_fork_hnp(void)
     }
     opal_argv_append(&argc, &argv, param);
     free(param);
-
-    foo = opal_argv_join(argv, ' ');
-    opal_output(0, "%s FORKING HNP: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), foo);
-    free(foo);
 
     /* Fork off the child */
     orte_process_info.hnp_pid = fork();
@@ -410,10 +415,24 @@ int orte_plm_base_fork_hnp(void)
          * if/when we attempt to send to it
          */
         orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+        /* and set the name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                           ORTE_PROC_MY_DAEMON, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
-        
+        /* set that contact info */
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+        /* and set the name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                           ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;
