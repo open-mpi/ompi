@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -550,7 +550,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
             /* Build up the output line */
 
             filled = false;
-            line[0] = '\0';
+            memset(line, 0, sizeof(line));
             if ('\0' != option->clo_short_name) {
                 line[0] = '-';
                 line[1] = option->clo_short_name;
@@ -559,32 +559,30 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 line[0] = ' ';
                 line[1] = ' ';
             }
-            line[2] = '\0';
-            line[3] = '\0';
             if (NULL != option->clo_single_dash_name) {
                 line[2] = (filled) ? '|' : ' ';
-                strcat(line, "-");
-                strcat(line, option->clo_single_dash_name);
+                strncat(line, "-", sizeof(line) - 1);
+                strncat(line, option->clo_single_dash_name, sizeof(line) - 1);
                 filled = true;
             }
             if (NULL != option->clo_long_name) {
                 if (filled) {
-                    strcat(line, "|");
+                    strncat(line, "|", sizeof(line) - 1);
                 } else {
-                    strcat(line, " ");
+                    strncat(line, " ", sizeof(line) - 1);
                 }
-                strcat(line, "--");
-                strcat(line, option->clo_long_name);
+                strncat(line, "--", sizeof(line) - 1);
+                strncat(line, option->clo_long_name, sizeof(line) - 1);
                 filled = true;
             }
-            strcat(line, " ");
+                   strncat(line, " ", sizeof(line) - 1);
             for (i = 0; (int)i < option->clo_num_params; ++i) {
                 len = sizeof(temp);
                 snprintf(temp, len, "<arg%d> ", (int)i);
-                strcat(line, temp);
+                strncat(line, temp, sizeof(line) - 1);
             }
             if (option->clo_num_params > 0) {
-                strcat(line, " ");
+                strncat(line, " ", sizeof(line) - 1);
             }
 
             /* If we're less than param width, then start adding the
@@ -640,7 +638,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 /* Last line */
 
                 if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
-                    strcat(line, start);
+                    strncat(line, start, sizeof(line) - 1);
                     opal_argv_append(&argc, &argv, line);
                     break;
                 }
@@ -653,7 +651,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                      ptr > start; --ptr) {
                     if (isspace(*ptr)) {
                         *ptr = '\0';
-                        strcat(line, start);
+                        strncat(line, start, sizeof(line) - 1);
                         opal_argv_append(&argc, &argv, line);
 
                         start = ptr + 1;
@@ -673,7 +671,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                         if (isspace(*ptr)) {
                             *ptr = '\0';
 
-                            strcat(line, start);
+                            strncat(line, start, sizeof(line) - 1);
                             opal_argv_append(&argc, &argv, line);
                             
                             start = ptr + 1;
@@ -687,7 +685,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                        whitespace, then just add it on and be done */
 
                     if (ptr >= start + len) {
-                        strcat(line, start);
+                        strncat(line, start, sizeof(line) - 1);
                         opal_argv_append(&argc, &argv, line);
                         start = desc + len + 1;
                     }
