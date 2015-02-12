@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -211,7 +211,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
     }
 
 out:
-    if ((char *)-1 != addr) {
+    if (NULL != addr && (char *)-1 != addr) {
         shmdt(addr);
     }
     return OPAL_SUCCESS;
