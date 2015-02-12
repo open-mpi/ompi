@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -1243,6 +1243,12 @@ static int register_variable (const char *project_name, const char *framework_na
 
     if (0 != align) {
         assert(((uintptr_t) storage) % align == 0);
+    }
+
+    /* Also check to ensure that synonym_for>=0 when
+       MCA_BCASE_VAR_FLAG_SYNONYM is specified */
+    if (flags & MCA_BASE_VAR_FLAG_SYNONYM && synonym_for < 0) {
+        assert((flags & MCA_BASE_VAR_FLAG_SYNONYM) && synonym_for >= 0);
     }
 #endif
 
