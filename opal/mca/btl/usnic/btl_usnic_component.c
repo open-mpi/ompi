@@ -340,13 +340,6 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
        3. num_vfs * num_cqs_per_vf >= num_local_procs * NUM_CHANNELS
           (to ensure that each MPI process will be able to get the
           number of CQs that it needs) */
-    if (uip->ui.v1.ui_num_vf < 0 ||
-        uip->ui.v1.ui_qp_per_vf < 0 ||
-        uip->ui.v1.ui_cq_per_vf < 0) {
-        snprintf(str, sizeof(str), "Cannot read usNIC resources");
-        goto error;
-    }
-
     if (uip->ui.v1.ui_num_vf < unlp) {
         snprintf(str, sizeof(str), "Not enough usNICs (found %d, need %d)",
                  uip->ui.v1.ui_num_vf, unlp);
