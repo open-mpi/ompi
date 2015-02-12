@@ -521,7 +521,7 @@ int mca_base_var_get_value (int vari, const void *value,
 
 static int var_set_string (mca_base_var_t *var, char *value)
 {
-    char *tmp, *p=NULL;
+    char *tmp;
     int ret;
 
     if (NULL != var->mbv_storage->stringval) {
@@ -558,8 +558,7 @@ static int var_set_string (mca_base_var_t *var, char *value)
         tmp[0] = '\0';
         tmp += 3;
 
-        ret = asprintf (&tmp, "%s:%s%s%s",
-                        (NULL == p) ? "" : p,
+        ret = asprintf (&tmp, "%s:%s%s%s", value,
                         home ? home : "", home ? "/" : "", tmp);
 
         free (value);
