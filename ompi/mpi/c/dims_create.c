@@ -12,6 +12,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,6 +119,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
 
     /* Assign free processes to free dimensions */
     if (MPI_SUCCESS != (err = assignnodes(freedims, nfactors, factors, &procs))) {
+       free(factors);
        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
                                      FUNC_NAME);
     }
