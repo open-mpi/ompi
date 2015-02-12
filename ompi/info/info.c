@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -261,6 +261,7 @@ int ompi_info_set (ompi_info_t *info, const char *key, const char *value)
     } else {
         new_info = OBJ_NEW(ompi_info_entry_t);
         if (NULL == new_info) {
+            free(new_value);
             OPAL_THREAD_UNLOCK(info->i_lock);
             return MPI_ERR_NO_MEM;
         }
