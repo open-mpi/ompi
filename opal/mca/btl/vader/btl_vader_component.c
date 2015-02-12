@@ -319,7 +319,7 @@ static int mca_btl_base_vader_modex_send (void)
         modex.xpmem.seg_id = mca_btl_vader_component.my_seg_id;
         modex.xpmem.segment_base = mca_btl_vader_component.my_segment;
 
-        modex_size = sizeof (modex);
+        modex_size = sizeof (modex.xpmem);
     } else {
 #endif
         modex_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
