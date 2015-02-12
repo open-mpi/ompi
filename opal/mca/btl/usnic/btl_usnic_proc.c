@@ -238,7 +238,9 @@ static int create_proc(opal_proc_t *opal_proc,
         uint64_t proto;
         char protostr[32];
         proto = mca_btl_usnic_component.transport_protocol;
-        strcpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL));
+        memset(protostr, 0, sizeof(protostr));
+        strncpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
+                sizeof(protostr) - 1);
         proto = proc->proc_modex->protocol;
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",
