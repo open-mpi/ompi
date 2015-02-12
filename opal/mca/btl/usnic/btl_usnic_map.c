@@ -37,7 +37,7 @@ static int map_compare_modules(const void *aa, const void *bb)
 /*
  * Helper function to output "device:" lines
  */
-static void map_output_modules(FILE *fp)
+static int map_output_modules(FILE *fp)
 {
     int i;
     size_t size;
@@ -55,8 +55,7 @@ static void map_output_modules(FILE *fp)
         sizeof(opal_btl_usnic_module_t*);
     modules = calloc(1, size);
     if (NULL == modules) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     memcpy(modules, mca_btl_usnic_component.usnic_active_modules, size);
@@ -81,6 +80,8 @@ static void map_output_modules(FILE *fp)
 
     /* Free the temp array */
     free(modules);
+
+    return OPAL_SUCCESS;
 }
 
 /************************************************************************/
@@ -108,7 +109,7 @@ static int map_compare_endpoints(const void *aa, const void *bb)
 /*
  * Helper function to output devices for a single peer
  */
-static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
+static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
 {
     size_t i;
     size_t num_output;
@@ -124,8 +125,7 @@ static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
     size = proc->proc_endpoint_count * sizeof(opal_btl_usnic_endpoint_t *);
     eps = calloc(1, size);
     if (NULL == eps) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     memcpy(eps, proc->proc_endpoints, size);
@@ -156,6 +156,8 @@ static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
 
     /* Free the temp array */
     free(eps);
+
+    return OPAL_SUCCESS;
 }
 
 /************************************************************************/
@@ -182,7 +184,7 @@ static int map_compare_procs(const void *aa, const void *bb)
 /*
  * Helper function to output "peer:" lines
  */
-static void map_output_procs(FILE *fp)
+static int map_output_procs(FILE *fp)
 {
     size_t i;
     size_t num_procs;
@@ -196,8 +198,7 @@ static void map_output_procs(FILE *fp)
     num_procs = opal_list_get_size(&mca_btl_usnic_component.usnic_procs);
     procs = calloc(num_procs, sizeof(opal_btl_usnic_proc_t*));
     if (NULL == procs) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     i = 0;
@@ -210,14 +211,19 @@ static void map_output_procs(FILE *fp)
           map_compare_procs);
 
     /* Loop over and print the sorted module device information */
+    int ret = OPAL_SUCCESS;
     for (i = 0; i < num_procs; ++i) {
         fprintf(fp, "peer=%d,", procs[i]->proc_opal->proc_name.vpid);
         fprintf(fp, "hostname=%s,", opal_get_proc_hostname(procs[i]->proc_opal));
-        map_output_endpoints(fp, procs[i]);
+        if (OPAL_SUCCESS != map_output_endpoints(fp, procs[i])) {
+            break;
+        }
     }
 
     /* Free the temp array */
     free(procs);
+
+    return ret;
 }
 
 /************************************************************************/
@@ -261,8 +267,9 @@ void opal_btl_usnic_connectivity_map(void)
         return;
     }
 
-    map_output_modules(fp);
-    map_output_procs(fp);
+    if (OPAL_SUCCESS == map_output_modules(fp)) {
+        map_output_procs(fp);
+    }
 
     fclose(fp);
 }
