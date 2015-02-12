@@ -450,6 +450,7 @@ static int query(pid_t pid,
             opal_list_append(&nstats->netstats, &ns->super);
             opal_argv_free(fields);
         }
+        fclose(fp);
     }
 
  complete:
