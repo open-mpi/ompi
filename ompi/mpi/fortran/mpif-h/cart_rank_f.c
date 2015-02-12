@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,7 +74,11 @@ void ompi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
 
     c_comm = MPI_Comm_f2c(*comm);
 
-    MPI_Cartdim_get(c_comm, &ndims);
+    c_ierr = MPI_Cartdim_get(c_comm, &ndims);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        return;
+    }
     OMPI_ARRAY_FINT_2_INT(coords, ndims);
 
     c_ierr = MPI_Cart_rank(c_comm, 
