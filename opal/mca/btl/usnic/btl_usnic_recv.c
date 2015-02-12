@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -224,11 +224,12 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                         fip->rfi_fl_elt = item;
                         fip->rfi_data = rx_buf->buf;
                         fip->rfi_data_pool = pool;
+                        fip->rfi_data_in_pool = true;
                     }
                 }
                 if (fip->rfi_data == NULL) {
                     fip->rfi_data = malloc(chunk_hdr->ch_frag_size);
-                    fip->rfi_data_pool = 0;
+                    fip->rfi_data_in_pool = false;
                 }
                 if (fip->rfi_data == NULL) {
                     abort();
@@ -302,12 +303,12 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                         &desc, reg->cbdata);
 
                 /* free temp buffer for non-put */
-                if (0 == fip->rfi_data_pool) {
-                    free(fip->rfi_data);
-                } else {
+                if (fip->rfi_data_in_pool) {
                     OMPI_FREE_LIST_RETURN_MT(
                             &module->module_recv_buffers[fip->rfi_data_pool],
                             fip->rfi_fl_elt);
+                } else {
+                    free(fip->rfi_data);
                 }
 
 #if MSGDEBUG1
