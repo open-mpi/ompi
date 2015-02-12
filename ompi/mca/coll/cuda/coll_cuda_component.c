@@ -2,7 +2,7 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,8 +67,8 @@ mca_coll_cuda_component_t mca_coll_cuda_component = {
 
     /* cuda-specific component information */
 
-    /* Priority: use a low priority, but allow others to be lower */
-    50,
+    /* Priority: make it above all point to point collectives including self */
+    78,
 };
 
 
