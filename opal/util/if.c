@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -235,6 +235,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                 
                 if (inaddr->sin_addr.s_addr == ipv4.sin_addr.s_addr) {
                     strncpy(if_name, intf->if_name, length);
+                    freeaddrinfo (res);
                     return OPAL_SUCCESS;
                 }
             }
@@ -243,6 +244,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                 if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
                     &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
                     strncpy(if_name, intf->if_name, length);
+                    freeaddrinfo (res);
                     return OPAL_SUCCESS;
                 }
             }
