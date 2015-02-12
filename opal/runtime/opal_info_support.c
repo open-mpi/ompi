@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
@@ -790,6 +790,11 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         }
     }
 #endif
+
+    /* Sanity check (allow NULL to mean "") */
+    if (NULL == value) {
+        value = "";
+    }
 
     /* Strip leading and trailing whitespace from the string value */
     value_offset = strspn(value, " ");
