@@ -4,11 +4,23 @@
    */
 #undef ENABLE_DEBUG
 
+/* Define to 1 if the linker supports alias attribute. */
+#undef HAVE_ALIAS_ATTRIBUTE
+
 /* Set to 1 to use c11 atomic functions */
 #undef HAVE_ATOMICS
 
+/* Define HAVE_CLOCK_GETTIME to 1 if available. */
+#undef HAVE_CLOCK_GETTIME
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define HAVE_HOST_GET_CLOCK_SERVICE to 1 if available. */
+#undef HAVE_HOST_GET_CLOCK_SERVICE
+
+/* Define to 1 if you have the <infiniband/verbs.h> header file. */
+#undef HAVE_INFINIBAND_VERBS_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -16,23 +28,11 @@
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
-/* Define to 1 if you have the `ibverbs' library (-libverbs). */
-#undef HAVE_LIBIBVERBS
-
 /* set to 1 if should use libnl v3, set to 0 for libnl v11 */
 #undef HAVE_LIBNL3
 
-/* Define to 1 if you have the `psm_infinipath' library (-lpsm_infinipath). */
-#undef HAVE_LIBPSM_INFINIPATH
-
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
-
-/* Define to 1 if you have the `rdmacm' library (-lrdmacm). */
-#undef HAVE_LIBRDMACM
-
-/* Define to 1 if you have the `rt' library (-lrt). */
-#undef HAVE_LIBRT
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -42,6 +42,12 @@
 
 /* psm provider is built as DSO */
 #undef HAVE_PSM_DL
+
+/* Define to 1 if you have the <psm.h> header file. */
+#undef HAVE_PSM_H
+
+/* Define to 1 if you have the <rdma/rsocket.h> header file. */
+#undef HAVE_RDMA_RSOCKET_H
 
 /* sockets provider is built */
 #undef HAVE_SOCKETS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Intel Corporation, Inc.  All rights reserved.
+ * Copyright (c) 2015 Los Alamos Nat. Security, LLC. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -30,29 +30,20 @@
  * SOFTWARE.
  */
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
+#include "osx/osd.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <stdlib.h>
+int clock_gettime(clockid_t clk_id, struct timespec *tp) {
+	int retval;
 
-#include "sock.h"
-#include "sock_util.h"
+	clock_serv_t cclock;
+	mach_timespec_t mts;
 
-int sock_log_level = SOCK_ERROR;
-useconds_t sock_progress_thread_wait = 0;
+	host_get_clock_service(mach_host_self(), clk_id, &cclock);
+	retval = clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+
+	tp->tv_sec = mts.tv_sec;
+	tp->tv_nsec = mts.tv_nsec;
+
+	return retval;
+}

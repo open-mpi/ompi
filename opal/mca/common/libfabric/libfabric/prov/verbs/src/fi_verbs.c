@@ -57,13 +57,14 @@
 
 #include "fi.h"
 #include "fi_enosys.h"
+#include "fi_log.h"
 #include "prov.h"
+#include "fi_log.h"
 
 #define VERBS_PROV_NAME "verbs"
 #define VERBS_PROV_VERS FI_VERSION(1,0)
 
-#define VERBS_WARN(fmt, ...) \
-	do { fprintf(stderr, "%s:%s: " fmt, PACKAGE, VERBS_PROV_NAME, ##__VA_ARGS__); } while (0)
+#define VERBS_WARN(...) FI_WARN(VERBS_PROV_NAME, __VA_ARGS__)
 
 #define VERBS_MSG_SIZE (1ULL << 31)
 #define VERBS_IB_PREFIX "IB-0x"
@@ -592,8 +593,10 @@ fi_ibv_getepinfo(const char *node, const char *service,
 	if (ret)
 		return ret;
 
-	if (!node && !rai_hints.ai_src_addr && !rai_hints.ai_dst_addr) {
-		node = local_node;
+	if (!node && !rai_hints.ai_dst_addr) {
+		if (!rai_hints.ai_src_addr) {
+			node = local_node;
+		}
 		rai_hints.ai_flags |= RAI_PASSIVE;
 	}
 
@@ -614,6 +617,12 @@ fi_ibv_getepinfo(const char *node, const char *service,
 	ret = rdma_create_ep(id, rai, NULL, NULL);
 	if (ret) {
 		ret = -errno;
+		if (ret == -ENOENT) {
+			FI_LOG(1, "verbs",
+				"rdma_create_ep()-->ENOENT; likely usnic bug, "
+				"skipping verbs provider.\n");
+			ret = -FI_ENODATA;
+		}
 		goto err2;
 	}
 
@@ -1611,6 +1620,44 @@ static struct fi_ops_atomic fi_ibv_msg_ep_atomic_ops = {
 	.compwritevalid = fi_ibv_msg_ep_atomic_compwritevalid
 };
 
+static int fi_ibv_copy_addr(void *dst_addr, size_t *dst_addrlen, void *src_addr)
+{
+	size_t src_addrlen = fi_ibv_sockaddr_len(src_addr);
+
+	if (*dst_addrlen == 0) {
+		*dst_addrlen = src_addrlen;
+		return -FI_ETOOSMALL;
+	}
+
+	if (*dst_addrlen < src_addrlen) {
+		memcpy(dst_addr, src_addr, *dst_addrlen);
+	} else {
+		memcpy(dst_addr, src_addr, src_addrlen);
+	}
+	*dst_addrlen = src_addrlen;
+	return 0;
+}
+
+static int fi_ibv_msg_ep_getname(fid_t ep, void *addr, size_t *addrlen)
+{
+	struct fi_ibv_msg_ep *_ep;
+	struct sockaddr *sa;
+
+	_ep = container_of(ep, struct fi_ibv_msg_ep, ep_fid);
+	sa = rdma_get_local_addr(_ep->id);
+	return fi_ibv_copy_addr(addr, addrlen, sa);
+}
+
+static int fi_ibv_msg_ep_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen)
+{
+	struct fi_ibv_msg_ep *_ep;
+	struct sockaddr *sa;
+
+	_ep = container_of(ep, struct fi_ibv_msg_ep, ep_fid);
+	sa = rdma_get_peer_addr(_ep->id);
+	return fi_ibv_copy_addr(addr, addrlen, sa);
+}
+
 static int
 fi_ibv_msg_ep_connect(struct fid_ep *ep, const void *addr,
 		   const void *param, size_t paramlen)
@@ -1621,7 +1668,7 @@ fi_ibv_msg_ep_connect(struct fid_ep *ep, const void *addr,
 
 	_ep = container_of(ep, struct fi_ibv_msg_ep, ep_fid);
 	if (!_ep->id->qp) {
-		ret = ep->ops->enable(ep);
+		ret = ep->fid.ops->control(&ep->fid, FI_ENABLE, NULL);
 		if (ret)
 			return ret;
 	}
@@ -1647,7 +1694,7 @@ fi_ibv_msg_ep_accept(struct fid_ep *ep, const void *param, size_t paramlen)
 
 	_ep = container_of(ep, struct fi_ibv_msg_ep, ep_fid);
 	if (!_ep->id->qp) {
-		ret = ep->ops->enable(ep);
+		ret = ep->fid.ops->control(&ep->fid, FI_ENABLE, NULL);
 		if (ret)
 			return ret;
 	}
@@ -1679,8 +1726,8 @@ static int fi_ibv_msg_ep_shutdown(struct fid_ep *ep, uint64_t flags)
 
 static struct fi_ops_cm fi_ibv_msg_ep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = fi_no_getname,
-	.getpeer = fi_no_getpeer,
+	.getname = fi_ibv_msg_ep_getname,
+	.getpeer = fi_ibv_msg_ep_getpeer,
 	.connect = fi_ibv_msg_ep_connect,
 	.listen = fi_no_listen,
 	.accept = fi_ibv_msg_ep_accept,
@@ -1729,7 +1776,6 @@ static int fi_ibv_msg_ep_enable(struct fid_ep *ep)
 
 static struct fi_ops_ep fi_ibv_msg_ep_base_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = fi_ibv_msg_ep_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_ibv_msg_ep_getopt,
 	.setopt = fi_ibv_msg_ep_setopt,
@@ -1749,11 +1795,31 @@ static int fi_ibv_msg_ep_close(fid_t fid)
 	return 0;
 }
 
+static int fi_ibv_msg_ep_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return fi_ibv_msg_ep_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops fi_ibv_msg_ep_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = fi_ibv_msg_ep_close,
 	.bind = fi_ibv_msg_ep_bind,
-	.control = fi_no_control,
+	.control = fi_ibv_msg_ep_control,
 	.ops_open = fi_no_ops_open,
 };
 
@@ -2569,6 +2635,16 @@ err:
 	return ret;
 }
 
+static int fi_ibv_pep_getname(fid_t pep, void *addr, size_t *addrlen)
+{
+	struct fi_ibv_pep *_pep;
+	struct sockaddr *sa;
+
+	_pep = container_of(pep, struct fi_ibv_pep, pep_fid);
+	sa = rdma_get_local_addr(_pep->id);
+	return fi_ibv_copy_addr(addr, addrlen, sa);
+}
+
 static int fi_ibv_pep_listen(struct fid_pep *pep)
 {
 	struct fi_ibv_pep *_pep;
@@ -2579,7 +2655,7 @@ static int fi_ibv_pep_listen(struct fid_pep *pep)
 
 static struct fi_ops_cm fi_ibv_pep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = fi_no_getname,
+	.getname = fi_ibv_pep_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
 	.listen = fi_ibv_pep_listen,
@@ -2715,5 +2791,6 @@ static struct fi_provider fi_ibv_prov = {
 
 VERBS_INI
 {
+	fi_log_init();
 	return &fi_ibv_prov;
 }

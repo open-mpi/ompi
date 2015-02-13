@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
- * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013 Intel Corp., Inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -244,7 +244,7 @@ static struct fi_prov *fi_getprov(const char *prov_name)
 }
 
 __attribute__((visibility ("default")))
-void fi_freeinfo_(struct fi_info *info)
+void DEFAULT_SYMVER_PRE(fi_freeinfo)(struct fi_info *info)
 {
 	struct fi_info *next;
 
@@ -268,10 +268,10 @@ void fi_freeinfo_(struct fi_info *info)
 		free(info);
 	}
 }
-default_symver(fi_freeinfo_, fi_freeinfo);
+DEFAULT_SYMVER(fi_freeinfo_, fi_freeinfo);
 
 __attribute__((visibility ("default")))
-int fi_getinfo_(uint32_t version, const char *node, const char *service,
+int DEFAULT_SYMVER_PRE(fi_getinfo)(uint32_t version, const char *node, const char *service,
 	       uint64_t flags, struct fi_info *hints, struct fi_info **info)
 {
 	struct fi_prov *prov;
@@ -299,7 +299,7 @@ int fi_getinfo_(uint32_t version, const char *node, const char *service,
 				continue;
 			} else {
 				/* a provider has an error, clean up and bail */
-				fi_freeinfo_(*info);
+				fi_freeinfo(*info);
 				*info = NULL;
 				return ret;
 			}
@@ -319,10 +319,10 @@ int fi_getinfo_(uint32_t version, const char *node, const char *service,
 
 	return *info ? 0 : ret;
 }
-default_symver(fi_getinfo_, fi_getinfo);
+DEFAULT_SYMVER(fi_getinfo_, fi_getinfo);
 
 __attribute__((visibility ("default")))
-struct fi_info *fi_dupinfo_(const struct fi_info *info)
+struct fi_info *DEFAULT_SYMVER_PRE(fi_dupinfo)(const struct fi_info *info)
 {
 	struct fi_info *dup;
 
@@ -416,10 +416,10 @@ fail:
 	fi_freeinfo(dup);
 	return NULL;
 }
-default_symver(fi_dupinfo_, fi_dupinfo);
+DEFAULT_SYMVER(fi_dupinfo_, fi_dupinfo);
 
 __attribute__((visibility ("default")))
-int fi_fabric_(struct fi_fabric_attr *attr, struct fid_fabric **fabric, void *context)
+int DEFAULT_SYMVER_PRE(fi_fabric)(struct fi_fabric_attr *attr, struct fid_fabric **fabric, void *context)
 {
 	struct fi_prov *prov;
 
@@ -435,14 +435,14 @@ int fi_fabric_(struct fi_fabric_attr *attr, struct fid_fabric **fabric, void *co
 
 	return prov->provider->fabric(attr, fabric, context);
 }
-default_symver(fi_fabric_, fi_fabric);
+DEFAULT_SYMVER(fi_fabric_, fi_fabric);
 
 __attribute__((visibility ("default")))
-uint32_t fi_version_(void)
+uint32_t DEFAULT_SYMVER_PRE(fi_version)(void)
 {
 	return FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION);
 }
-default_symver(fi_version_, fi_version);
+DEFAULT_SYMVER(fi_version_, fi_version);
 
 #define FI_ERRNO_OFFSET	256
 #define FI_ERRNO_MAX	FI_ENOCQ
@@ -456,10 +456,13 @@ static const char *const errstr[] = {
 	[FI_ENOEQ - FI_ERRNO_OFFSET] = "Missing or unavailable event queue",
 	[FI_EDOMAIN - FI_ERRNO_OFFSET] = "Invalid resource domain",
 	[FI_ENOCQ - FI_ERRNO_OFFSET] = "Missing or unavailable completion queue",
+	[FI_ECRC - FI_ERRNO_OFFSET] = "CRC error",
+	[FI_ETRUNC - FI_ERRNO_OFFSET] = "Truncation error",
+	[FI_ENOKEY - FI_ERRNO_OFFSET] = "Required key not available",
 };
 
 __attribute__((visibility ("default")))
-const char *fi_strerror_(int errnum)
+const char *DEFAULT_SYMVER_PRE(fi_strerror)(int errnum)
 {
 	if (errnum < FI_ERRNO_OFFSET)
 		return strerror(errnum);
@@ -468,6 +471,6 @@ const char *fi_strerror_(int errnum)
 	else
 		return errstr[FI_EOTHER - FI_ERRNO_OFFSET];
 }
-default_symver(fi_strerror_, fi_strerror);
+DEFAULT_SYMVER(fi_strerror_, fi_strerror);
 
 

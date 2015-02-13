@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
+.TH fi_getinfo 3 "2015\-02\-11" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc1"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -37,6 +37,8 @@ Returns information about available fabric services for reaching the
 specified node or service, subject to any provided hints.
 Callers must provide at least one of the node, service, or hints
 parameters.
+If node and service are NULL, then the hints src_addr and/or dest_addr
+fields of the fi_info structure must be specified.
 If no matching fabric information is available, info will be set to
 NULL.
 .PP
@@ -135,7 +137,8 @@ This field will be ignored in hints if FI_SOURCE is specified.
 \f[I]dest_addrlen - destination address length\f[] : Indicates the
 length of the destination address (must be specified if
 \f[I]dest_addr\f[] is specified).
-This field will be ignored in hints unless FI_SOURCE is specified.
+This field will be ignored in hints unless the node and service
+parameters are NULL or FI_SOURCE is specified.
 .PP
 \f[I]src_addr - source address\f[] : If specified, indicates the source
 address.
@@ -143,7 +146,8 @@ This field will be ignored in hints if FI_SOURCE is specified.
 .PP
 \f[I]dest_addr - destination address\f[] : If specified, indicates the
 destination address.
-This field will be ignored in hints unless FI_SOURCE is specified.
+This field will be ignored in hints unless the node and service
+parameters are NULL or FI_SOURCE is specified.
 .PP
 \f[I]connreq - connection request\f[] : References a specific connection
 request, otherwise the field must be NULL.
@@ -539,6 +543,7 @@ Use of this flag will suppress any lengthy name resolution protocol.
 .PP
 \f[I]FI_SOURCE\f[] : Indicates that the node and service parameters
 specify the local source address to associate with an endpoint.
+If specified, either the node and/or service parameter must be non-NULL.
 This flag is often used with passive endpoints.
 .SH RETURN VALUE
 .PP

@@ -1,4 +1,4 @@
-.TH fi_av 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
+.TH fi_av 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc1"
 .SH NAME
 .PP
 fi_av - Address vector operations
@@ -247,9 +247,6 @@ The addr parameter references an array of addresses to insert into the
 AV.
 Addresses inserted into an address vector must be in the same format as
 specified in struct fi_info:addr_format for the corresponding domain.
-A NULL value for an address may be used to indicate that an entry should
-be associated with \[aq]any\[aq] address (similar to the IPv4 address of
-0.0.0.0).
 .PP
 For AV\[aq]s of type FI_AV_MAP, once inserted addresses have been
 mapped, the mapped values are written into the buffer referenced by

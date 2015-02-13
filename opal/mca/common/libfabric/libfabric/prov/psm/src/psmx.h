@@ -34,11 +34,17 @@ extern "C" {
 #include <psm.h>
 #include <psm_mq.h>
 #include "psm_am.h"
+
 #include "fi.h"
 #include "fi_enosys.h"
 #include "fi_list.h"
+#include "fi_log.h"
 
-#define PSM_PFX "libfabric:psm"
+#define PSMX_PROVNAME "psm"
+#define PSMX_DEFAULT_UUID	"0FFF0FFF-0000-0000-0000-0FFF0FFF0FFF"
+
+#define PSMX_DEBUG(...) FI_LOG(2, PSMX_PROVNAME, __VA_ARGS__)
+#define PSMX_WARN(...)	FI_WARN(PSMX_PROVNAME, __VA_ARGS__)
 
 #define PSMX_TIME_OUT	120
 
@@ -55,6 +61,8 @@ extern "C" {
 			 FI_CANCEL | FI_TRIGGER | \
 			 FI_DYNAMIC_MR | \
 			 PSMX_CAP_EXT)
+
+#define PSMX_CAPS2	((PSMX_CAPS | FI_DIRECTED_RECV) & ~FI_TAGGED)
 
 #define PSMX_MODE	(FI_CONTEXT)
 
@@ -80,8 +88,13 @@ enum psmx_context_type {
 	PSMX_REMOTE_READ_CONTEXT,
 };
 
+union psmx_pi {
+	void	*p;
+	int	i;
+};
+
 #define PSMX_CTXT_REQ(fi_context)	((fi_context)->internal[0])
-#define PSMX_CTXT_TYPE(fi_context)	(*(int *)&(fi_context)->internal[1])
+#define PSMX_CTXT_TYPE(fi_context)	(((union psmx_pi *)&(fi_context)->internal[1])->i)
 #define PSMX_CTXT_USER(fi_context)	((fi_context)->internal[2])
 #define PSMX_CTXT_EP(fi_context)	((fi_context)->internal[3])
 
@@ -172,16 +185,24 @@ struct psmx_am_request {
 	};
 	struct fi_context fi_context;
 	struct psmx_fid_ep *ep;
-	struct psmx_am_request *next;
 	int state;
 	int no_event;
 	int error;
+	struct slist_entry list_entry;
+};
+
+struct psmx_unexp {
+	psm_epaddr_t		sender_addr;
+	uint64_t		sender_context;
+	uint32_t		len_received;
+	uint32_t		done;
+	struct slist_entry	list_entry;
+	char			buf[0];
 };
 
 struct psmx_req_queue {
-	pthread_mutex_t		lock;
-	struct psmx_am_request	*head;
-	struct psmx_am_request	*tail;
+	pthread_mutex_t	lock;
+	struct slist	list;
 };
 
 struct psmx_multi_recv {
@@ -546,7 +567,6 @@ int	psmx_errno(int err);
 int	psmx_epid_to_epaddr(struct psmx_fid_domain *domain,
 			    psm_epid_t epid, psm_epaddr_t *epaddr);
 void	psmx_query_mpi(void);
-void	psmx_debug(char *fmt, ...);
 
 void	psmx_cq_enqueue_event(struct psmx_fid_cq *cq, struct psmx_cq_event *event);
 struct	psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
@@ -562,17 +582,6 @@ void	psmx_wait_signal(struct fid_wait *wait);
 
 int	psmx_am_init(struct psmx_fid_domain *domain);
 int	psmx_am_fini(struct psmx_fid_domain *domain);
-int	psmx_am_enqueue_recv(struct psmx_fid_domain *domain,
-				struct psmx_am_request *req);
-struct psmx_am_request *
-	psmx_am_search_and_dequeue_recv(struct psmx_fid_domain *domain,
-					const void *src_addr);
-#if PSMX_AM_USE_SEND_QUEUE
-int	psmx_am_enqueue_send(struct psmx_fid_domain *domain,
-				  struct psmx_am_request *req);
-#endif
-int	psmx_am_enqueue_rma(struct psmx_fid_domain *domain,
-				  struct psmx_am_request *req);
 int	psmx_am_progress(struct psmx_fid_domain *domain);
 int	psmx_am_process_send(struct psmx_fid_domain *domain,
 				struct psmx_am_request *req);

@@ -93,7 +93,8 @@ static ssize_t sock_ep_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 
 	rx_entry->flags = flags;
 	rx_entry->context = (uint64_t)msg->context;
-	rx_entry->addr = msg->addr;
+	rx_entry->addr = (rx_ctx->attr.caps & FI_DIRECTED_RECV) ? 
+		msg->addr : FI_ADDR_UNSPEC;
 	rx_entry->data = msg->data;
 	rx_entry->ignore = 0xFFFFFFFF;
 
@@ -239,6 +240,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	return 0;
 
 err:
+	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -356,7 +358,8 @@ static ssize_t sock_ep_trecvmsg(struct fid_ep *ep,
 
 	rx_entry->flags = flags;
 	rx_entry->context = (uint64_t)msg->context;
-	rx_entry->addr = msg->addr;
+	rx_entry->addr = (rx_ctx->attr.caps & FI_DIRECTED_RECV) ? 
+		msg->addr : FI_ADDR_UNSPEC;
 	rx_entry->data = msg->data;
 	rx_entry->tag = msg->tag;
 	rx_entry->ignore = msg->ignore;
@@ -437,7 +440,11 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	}
 
 	assert(tx_ctx->enabled && msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT);
-	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	if (sock_ep->connected) {
+		conn = sock_ep_lookup_conn(sock_ep);
+	} else {
+		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	}
 	if (!conn)
 		return -FI_EAGAIN;
 
@@ -496,6 +503,7 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	return 0;
 
 err:
+	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }

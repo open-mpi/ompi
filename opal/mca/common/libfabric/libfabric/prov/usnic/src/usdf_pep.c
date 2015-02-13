@@ -420,7 +420,6 @@ struct fi_ops usdf_pep_ops = {
 
 static struct fi_ops_ep usdf_pep_base_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = fi_no_enable,
 	.cancel = usdf_pep_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,

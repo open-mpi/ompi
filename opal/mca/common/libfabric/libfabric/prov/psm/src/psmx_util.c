@@ -50,8 +50,8 @@ static void psmx_string_to_uuid(const char *s, psm_uuid_t uuid)
 		&uuid[10], &uuid[11], &uuid[12], &uuid[13], &uuid[14], &uuid[15]);
 
 	if (n != 16) {
-		fprintf(stderr, "%s: wrong uuid format: %s\n", __func__, s);
-		fprintf(stderr, "%s: correct uuid format is: "
+		PSMX_WARN("%s: wrong uuid format: %s\n", __func__, s);
+		PSMX_WARN("%s: correct uuid format is: "
 			"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n",
 			__func__);
 	}
@@ -111,7 +111,7 @@ void *psmx_name_server(void *args)
 
 	n = getaddrinfo(NULL, service, &hints, &res);
 	if (n < 0) {
-		fprintf(stderr, "%s: port %d: %s\n", __func__, port, gai_strerror(n));
+		PSMX_DEBUG("%s: port %d: %s\n", __func__, port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -132,7 +132,7 @@ void *psmx_name_server(void *args)
 	free(service);
 
 	if (listenfd < 0) {
-		fprintf(stderr, "%s: couldn't listen to port %d\n", __func__, port);
+		PSMX_DEBUG("%s: couldn't listen to port %d\n", __func__, port);
 		return NULL;
 	}
 
@@ -181,7 +181,7 @@ void *psmx_resolve_name(const char *servername, int port)
 
 	n = getaddrinfo(servername, service, &hints, &res);
 	if (n < 0) {
-		psmx_debug("%s:(%s:%d):%s\n", __func__, servername, port, gai_strerror(n));
+		PSMX_DEBUG("%s:(%s:%d):%s\n", __func__, servername, port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -200,7 +200,7 @@ void *psmx_resolve_name(const char *servername, int port)
 	free(service);
 
 	if (sockfd < 0) {
-		psmx_debug("%s: couldn't connect to %s:%d\n", __func__, servername, port);
+		PSMX_DEBUG("%s: couldn't connect to %s:%d\n", __func__, servername, port);
 		return NULL;
 	}
 
@@ -305,16 +305,5 @@ void psmx_query_mpi(void)
 	}
 
 	/* TODO: check other MPI */
-}
-
-void psmx_debug(char *fmt, ...)
-{
-	va_list ap;
-
-	if (psmx_env.debug) {
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	}
 }
 

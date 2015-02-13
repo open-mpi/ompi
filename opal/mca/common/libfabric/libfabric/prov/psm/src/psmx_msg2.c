@@ -32,6 +32,90 @@
 
 #include "psmx.h"
 
+#if PSMX_AM_USE_SEND_QUEUE
+static inline void psmx_am_enqueue_send(struct psmx_fid_domain *domain,
+					struct psmx_am_request *req)
+{
+	pthread_mutex_lock(&domain->send_queue.lock);
+	req->state = PSMX_AM_STATE_QUEUED;
+	slist_insert_tail(&req->list_entry, &domain->send_queue.list);
+	pthread_mutex_unlock(&domain->send_queue.lock);
+}
+#endif
+
+static inline void psmx_am_enqueue_recv(struct psmx_fid_domain *domain,
+					struct psmx_am_request *req)
+{
+	pthread_mutex_lock(&domain->recv_queue.lock);
+	slist_insert_tail(&req->list_entry, &domain->recv_queue.list);
+	pthread_mutex_unlock(&domain->recv_queue.lock);
+}
+
+static int match_recv(struct slist_entry *item, const void *src_addr)
+{
+	struct psmx_am_request *req;
+
+	req = container_of(item, struct psmx_am_request, list_entry);
+	if (!req->recv.src_addr || req->recv.src_addr == src_addr)
+		return 1;
+
+	return 0;
+}
+
+static struct psmx_am_request *psmx_am_search_and_dequeue_recv(
+				struct psmx_fid_domain *domain,
+				const void *src_addr)
+{
+	struct slist_entry *item;
+
+	pthread_mutex_lock(&domain->recv_queue.lock);
+	item = slist_remove_first_match(&domain->recv_queue.list,
+					match_recv, src_addr);
+	pthread_mutex_unlock(&domain->recv_queue.lock);
+
+	if (!item)
+		return NULL;
+
+	return container_of(item, struct psmx_am_request, list_entry);
+}
+
+static inline void psmx_am_enqueue_unexp(struct psmx_fid_domain *domain,
+					 struct psmx_unexp *unexp)
+{
+	pthread_mutex_lock(&domain->unexp_queue.lock);
+	slist_insert_tail(&unexp->list_entry, &domain->unexp_queue.list);
+	pthread_mutex_unlock(&domain->unexp_queue.lock);
+}
+
+static int match_unexp(struct slist_entry *item, const void *src_addr)
+{
+	struct psmx_unexp *unexp;
+
+	unexp = container_of(item, struct psmx_unexp, list_entry);
+
+	if (!src_addr || src_addr == unexp->sender_addr)
+		return 1;
+
+	return 0;
+}
+
+static struct psmx_unexp *psmx_am_search_and_dequeue_unexp(
+				struct psmx_fid_domain *domain,
+				const void *src_addr)
+{
+	struct slist_entry *item;
+
+	pthread_mutex_lock(&domain->unexp_queue.lock);
+	item = slist_remove_first_match(&domain->unexp_queue.list,
+					match_unexp, src_addr);
+	pthread_mutex_unlock(&domain->unexp_queue.lock);
+
+	if (!item)
+		return NULL;
+
+	return container_of(item, struct psmx_unexp, list_entry);
+}
+
 /* Message protocol:
  *
  * Send REQ:
@@ -48,64 +132,6 @@
  *	args[2].u64	recv_req
  */
 
-struct psmx_unexp {
-	psm_epaddr_t	sender_addr;
-	uint64_t	sender_context;
-	uint32_t	len_received;
-	uint32_t	done;
-	struct psmx_unexp *next;
-	char		buf[0];
-};
-
-static struct psmx_unexp *psmx_unexp_head = NULL;
-static struct psmx_unexp *psmx_unexp_tail = NULL;
-static pthread_mutex_t psmx_unexp_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static void psmx_unexp_enqueue(struct psmx_unexp *unexp)
-{
-	pthread_mutex_lock(&psmx_unexp_lock);
-
-	if (!psmx_unexp_head)
-		psmx_unexp_head = psmx_unexp_tail = unexp;
-	else
-		psmx_unexp_tail->next = unexp;
-
-	pthread_mutex_unlock(&psmx_unexp_lock);
-}
-
-static struct psmx_unexp *psmx_unexp_dequeue(fi_addr_t src_addr)
-{
-	struct psmx_unexp *unexp = NULL;
-	struct psmx_unexp *prev;
-
-	pthread_mutex_lock(&psmx_unexp_lock);
-
-	if (psmx_unexp_head) {
-		prev = NULL;
-		unexp = psmx_unexp_head;
-		while (unexp) {
-			if (!src_addr || src_addr == (fi_addr_t)unexp->sender_addr) {
-				if (prev)
-					prev->next = unexp->next;
-				else
-					psmx_unexp_head = unexp->next;
-
-				if (psmx_unexp_tail == unexp)
-					psmx_unexp_tail = prev;
-
-				unexp->next = NULL;
-				break;
-			}
-			prev = unexp;
-			unexp = unexp->next;
-		}
-	}
-
-	pthread_mutex_unlock(&psmx_unexp_lock);
-
-	return unexp;
-}
-
 int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 			psm_amarg_t *args, int nargs, void *src, uint32_t len)
 {
@@ -114,7 +140,6 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
         struct psmx_cq_event *event;
 	struct psmx_epaddr_context *epaddr_context;
 	struct psmx_fid_domain *domain;
-	int msg_len;
 	int copy_len;
 	uint64_t offset;
 	int cmd, eom;
@@ -124,8 +149,8 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 
 	epaddr_context = psm_epaddr_getctxt(epaddr);
 	if (!epaddr_context) {
-		fprintf(stderr, "%s: NULL context for epaddr %p\n", __func__, epaddr);
-		return -EIO;
+		PSMX_WARN("%s: NULL context for epaddr %p\n", __func__, epaddr);
+		return -FI_EIO;
 	}
 
 	domain = epaddr_context->domain;
@@ -135,9 +160,8 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 
 	switch (cmd) {
 	case PSMX_AM_REQ_SEND:
-		msg_len = args[0].u32w1;
+		assert(len == args[0].u32w1);
                 offset = args[3].u64;
-                assert(len == msg_len);
 		if (offset == 0) {
 			/* this is the first packet */
 			req = psmx_am_search_and_dequeue_recv(domain, (const void *)epaddr);
@@ -149,7 +173,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 			else {
 				unexp = malloc(sizeof(*unexp) + len);
 				if (!unexp) {
-					op_error = -ENOBUFS;
+					op_error = -FI_ENOSPC;
 				}
 				else  {
 					memcpy(unexp->buf, src, len);
@@ -157,8 +181,8 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 					unexp->sender_context = args[1].u64;
 					unexp->len_received = len;
 					unexp->done = !!eom;
-					unexp->next = NULL;
-					psmx_unexp_enqueue(unexp);
+					unexp->list_entry.next = NULL;
+					psmx_am_enqueue_unexp(domain, unexp);
 
 					if (!eom) {
 						/* stop here. will reply when recv is posted */
@@ -186,8 +210,8 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 				req->recv.len_received += copy_len;
 			}
 			else {
-				fprintf(stderr, "%s: NULL recv_req in follow-up packets.\n", __func__);
-				op_error = -EBADMSG;
+				PSMX_WARN("%s: NULL recv_req in follow-up packets.\n", __func__);
+				op_error = -FI_ENOMSG;
 			}
 		}
 
@@ -206,7 +230,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 				if (event)
 					psmx_cq_enqueue_event(req->ep->recv_cq, event);
 				else
-					err = -ENOMEM;
+					err = -FI_ENOMEM;
 			}
 
 			if (req->ep->recv_cntr)
@@ -260,7 +284,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 				if (event)
 					psmx_cq_enqueue_event(req->ep->send_cq, event);
 				else
-					err = -ENOMEM;
+					err = -FI_ENOMEM;
 			}
 
 			if (req->ep->send_cntr)
@@ -274,7 +298,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		break;
 
 	default:
-		err = -EINVAL;
+		err = -FI_EINVAL;
 	}
 
 	return err;
@@ -324,8 +348,6 @@ int psmx_am_process_send(struct psmx_fid_domain *domain, struct psmx_am_request 
 				(void *)req->send.buf+offset, len,
 				am_flags, NULL, NULL);
 
-	free(req);
-
 	return psmx_errno(err);
 }
 
@@ -345,20 +367,23 @@ static ssize_t _psmx_recv2(struct fid_ep *ep, void *buf, size_t len,
 
         ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
-        if (src_addr) {
+        if ((ep_priv->caps & FI_DIRECTED_RECV) && src_addr != FI_ADDR_UNSPEC) {
 		av = ep_priv->av;
 		if (av && av->type == FI_AV_TABLE) {
 			idx = (size_t)src_addr;
 			if (idx >= av->last)
-				return -EINVAL;
+				return -FI_EINVAL;
 
 			src_addr = (fi_addr_t)av->psm_epaddrs[idx];
 		}
 	}
+	else {
+		src_addr = 0;
+	}
 
 	req = calloc(1, sizeof(*req));
 	if (!req)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	req->op = PSMX_AM_REQ_SEND;
 	req->recv.buf = (void *)buf;
@@ -370,7 +395,8 @@ static ssize_t _psmx_recv2(struct fid_ep *ep, void *buf, size_t len,
 	if (ep_priv->recv_cq_event_flag && !(flags & FI_EVENT))
 		req->no_event = 1;
 
-	unexp = psmx_unexp_dequeue(src_addr);
+	unexp = psmx_am_search_and_dequeue_unexp(ep_priv->domain,
+						 (const void *)src_addr);
 	if (!unexp) {
 		psmx_am_enqueue_recv(ep_priv->domain, req);
 		return 0;
@@ -412,7 +438,7 @@ static ssize_t _psmx_recv2(struct fid_ep *ep, void *buf, size_t len,
 			if (event)
 				psmx_cq_enqueue_event(req->ep->recv_cq, event);
 			else
-				err = -ENOMEM;
+				err = -FI_ENOMEM;
 		}
 
 		if (req->ep->recv_cntr)
@@ -440,7 +466,7 @@ static ssize_t psmx_recvmsg2(struct fid_ep *ep, const struct fi_msg *msg,
 	size_t len;
 
 	if (!msg || msg->iov_count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (msg->iov_count) {
 		buf = msg->msg_iov[0].iov_base;
@@ -463,7 +489,7 @@ static ssize_t psmx_recvv2(struct fid_ep *ep, const struct iovec *iov,
 	size_t len;
 
 	if (!iov || count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (count) {
 		buf = iov[0].iov_base;
@@ -493,18 +519,18 @@ static ssize_t _psmx_send2(struct fid_ep *ep, const void *buf, size_t len,
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
 	if (!buf)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	av = ep_priv->av;
 	if (av && av->type == FI_AV_TABLE) {
 		idx = dest_addr;
 		if (idx >= av->last)
-			return -EINVAL;
+			return -FI_EINVAL;
 
 		dest_addr = (fi_addr_t) av->psm_epaddrs[idx];
 	}
 	else if (!dest_addr) {
-		return -EINVAL;
+		return -FI_EINVAL;
 	}
 
 	chunk_size = MIN(PSMX_AM_CHUNK_SIZE, psmx_am_param.max_request_short);
@@ -512,7 +538,7 @@ static ssize_t _psmx_send2(struct fid_ep *ep, const void *buf, size_t len,
 
 	req = calloc(1, sizeof(*req));
 	if (!req)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	req->op = PSMX_AM_REQ_SEND;
 	req->send.buf = (void *)buf;
@@ -566,7 +592,7 @@ static ssize_t psmx_sendmsg2(struct fid_ep *ep, const struct fi_msg *msg,
 	size_t len;
 
 	if (!msg || msg->iov_count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (msg->iov_count) {
 		buf = msg->msg_iov[0].iov_base;
@@ -589,7 +615,7 @@ static ssize_t psmx_sendv2(struct fid_ep *ep, const struct iovec *iov,
 	size_t len;
 
 	if (!iov || count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (count) {
 		buf = iov[0].iov_base;

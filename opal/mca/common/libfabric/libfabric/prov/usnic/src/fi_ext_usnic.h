@@ -38,7 +38,7 @@
 
 #define FI_PROTO_RUDP 100
 
-#define FI_USNIC_INFO_VERSION 1
+#define FI_EXT_USNIC_INFO_VERSION 1
 
 /*
  * usNIC specific info
@@ -66,7 +66,8 @@ struct fi_usnic_info {
 #define FI_USNIC_FABRIC_OPS_1 "fabric_ops 1"
 struct fi_usnic_ops_fabric {
 	size_t size;
-	int (*getinfo)(struct fid_fabric *fabric, struct fi_usnic_info *info);
+	int (*getinfo)(uint32_t version, struct fid_fabric *fabric,
+				struct fi_usnic_info *info);
 };
 
 /*

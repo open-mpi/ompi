@@ -121,10 +121,11 @@ usd_alloc_mr(
     void *base_addr;
     struct usd_mr *mr;
     size_t true_size;
+    size_t metadata_size;
     int ret;
 
-    true_size = size + sizeof(struct usd_mr) + 2 * sizeof(uintptr_t) +
-        sysconf(_SC_PAGESIZE) - 1;
+    metadata_size = sizeof(struct usd_mr) + 2 * sizeof(uintptr_t);
+    true_size = size + metadata_size + sysconf(_SC_PAGESIZE) - 1;
     base_addr = mmap(NULL, true_size, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (base_addr == NULL || base_addr == MAP_FAILED) {
@@ -133,7 +134,7 @@ usd_alloc_mr(
     }
     mr = base_addr;
     vaddr =
-        (void *) ALIGN((uintptr_t) base_addr + sizeof(*mr) + sizeof(mr),
+        (void *) ALIGN((uintptr_t) base_addr + metadata_size,
                        sysconf(_SC_PAGESIZE));
     ((uintptr_t *) vaddr)[-1] = (uintptr_t) mr;
     ((uintptr_t *) vaddr)[-2] = true_size;

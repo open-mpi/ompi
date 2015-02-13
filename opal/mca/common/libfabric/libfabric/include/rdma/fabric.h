@@ -398,6 +398,7 @@ enum {
 	 */
 	FI_ALIAS,		/* struct fi_alias * */
 	FI_GETWAIT,		/* void * wait object */
+	FI_ENABLE,		/* NULL */
 };
 
 static inline int fi_control(struct fid *fid, int command, void *arg)

@@ -65,7 +65,6 @@ enum {
 
 struct fi_ops_ep {
 	size_t	size;
-	int	(*enable)(struct fid_ep *ep);
 	ssize_t	(*cancel)(fid_t fid, void *context);
 	int	(*getopt)(fid_t fid, int level, int optname,
 			void *optval, size_t *optlen);
@@ -179,7 +178,7 @@ static inline int fi_scalable_ep_bind(struct fid_ep *sep, struct fid *bfid, uint
 
 static inline int fi_enable(struct fid_ep *ep)
 {
-	return ep->ops->enable(ep);
+	return ep->fid.ops->control(&ep->fid, FI_ENABLE, NULL);
 }
 
 static inline ssize_t fi_cancel(fid_t fid, void *context)

@@ -36,7 +36,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "fi.h"
 #include "fi_log.h"
@@ -78,27 +77,29 @@ void fi_warn_impl(const char *prov, const char *fmt, ...)
 	va_end(vargs);
 }
 
-void fi_log_impl(int level, const char *prov, const char *fmt, ...)
+void fi_log_impl(int level, const char *prov, const char *func, int line, 
+		 const char *fmt, ...)
 {
 	va_list vargs;
 
 	if (prov != NULL)
-		fprintf(stderr, "%s:%s:<%d> ", PACKAGE, prov, level);
+		fprintf(stderr, "%s:%s:%s():%d<%d> ", PACKAGE, prov, 
+			func, line, level);
 	else
-		fprintf(stderr, "%s:<%d> ", PACKAGE, level);
+		fprintf(stderr, "%s:%s():%d<%d> ", PACKAGE, func, line, level);
 	va_start(vargs, fmt);
 	vfprintf(stderr, fmt, vargs);
 	va_end(vargs);
 }
 
-void fi_debug_impl(const char *prov, const char *fmt, ...)
+void fi_debug_impl(const char *prov, const char *func, int line, const char *fmt, ...)
 {
 	va_list vargs;
 
 	if (prov != NULL)
-		fprintf(stderr, "%s:%s:<DBG> ", PACKAGE, prov);
+		fprintf(stderr, "%s:%s:%s():%d<DBG> ", PACKAGE, prov, func, line);
 	else
-		fprintf(stderr, "%s:<DBG> ", PACKAGE);
+		fprintf(stderr, "%s:%s():%d<DBG> ", PACKAGE, func, line);
 	va_start(vargs, fmt);
 	vfprintf(stderr, fmt, vargs);
 	va_end(vargs);

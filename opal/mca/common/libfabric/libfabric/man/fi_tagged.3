@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
+.TH fi_tagged 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc1"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -315,15 +315,6 @@ the user.
 .PP
 \f[I]-FI_EOTHER\f[] : Indicates that an unspecified error occurred.
 .SH NOTES
-.SS Any source
-.PP
-The function fi_trecv() may be used to receive a message from a specific
-source address.
-If the user wishes to receive a message from any source on an
-unconnected fabric endpoint the function fi_recv() may be used, or
-fi_trecv() may be used with the src_addr set to a wildcard address that
-has been inserted into an address vector.
-See fi_av.3 for more details.
 .SS Ordering
 .PP
 The order in which tags are matched is only defined for a pair of

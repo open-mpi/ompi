@@ -84,7 +84,7 @@ const struct fi_rx_attr sock_msg_rx_attr = {
 	.op_flags = SOCK_DEF_OPS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.total_buffered_recv = SOCK_EP_MAX_BUFF_RECV,
-	.size = SOCK_EP_MAX_MSG_SZ,
+	.size = SOCK_EP_RX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
@@ -469,7 +469,8 @@ static int sock_ep_cm_send_msg(int sock_fd,
 		      sa_ip, ntohs(addr->sin_port));
 
 	while (retry < SOCK_EP_MAX_RETRY) {
-		ret = sendto(sock_fd, (char *)msg, len, 0, addr, sizeof *addr);
+		ret = sendto(sock_fd, (char *)msg, len, 0,
+			     (struct sockaddr *) addr, sizeof *addr);
 		SOCK_LOG_INFO("Total Sent: %d\n", ret);
 		if (ret < 0) 
 			return -1;
@@ -482,7 +483,7 @@ static int sock_ep_cm_send_msg(int sock_fd,
 
 		addr_len = sizeof(struct sockaddr_in);
 		ret = recvfrom(sock_fd, &response, sizeof(response), 0,
-			       &from_addr, &addr_len);
+			       (struct sockaddr *) &from_addr, &addr_len);
 		SOCK_LOG_INFO("Received ACK: %d\n", ret);
 		if (ret == sizeof(response))
 			return 0;
@@ -497,7 +498,7 @@ static int sock_ep_cm_send_ack(int sock_fd, struct sockaddr_in *addr)
 
 	while(!ack_sent && retry < SOCK_EP_MAX_RETRY) {
 		ret = sendto(sock_fd, &response, sizeof(response), 0,
-			     addr, sizeof *addr);
+			     (struct sockaddr *) addr, sizeof *addr);
 		retry++;
 
 		SOCK_LOG_INFO("ack: %d\n", ret);
@@ -548,7 +549,7 @@ static void *sock_msg_ep_listener_thread (void *data)
 		addr_len = sizeof(struct sockaddr_in);
 		ret = recvfrom(ep->socket, (char*)conn_response, 
 			       sizeof(*conn_response) + SOCK_EP_MAX_CM_DATA_SZ,
-			       0, &from_addr, &addr_len);
+			       0, (struct sockaddr *) &from_addr, &addr_len);
 		if (ret <= 0)
 			continue;
 		
@@ -911,7 +912,7 @@ static void *sock_pep_listener_thread (void *data)
 		addr_len = sizeof(struct sockaddr_in);
 		ret = recvfrom(pep->socket, (char*)conn_req, 
 			       sizeof(*conn_req) + SOCK_EP_MAX_CM_DATA_SZ, 0, 
-			       &from_addr, &addr_len);
+			       (struct sockaddr *) &from_addr, &addr_len);
 		if (ret <= 0)
 			continue;
 		memcpy(&conn_req->from_addr, &from_addr, sizeof(struct sockaddr_in));

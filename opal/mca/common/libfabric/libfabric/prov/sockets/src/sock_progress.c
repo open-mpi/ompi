@@ -51,6 +51,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #include "sock.h"
 #include "sock_util.h"
@@ -107,14 +108,19 @@ static void sock_pe_release_entry(struct sock_pe *pe,
 	dlist_remove(&pe_entry->ctx_entry);
 
 	if (pe_entry->type == SOCK_PE_TX)
-		pe_entry->conn->tx_pe_entry = NULL;
-	else
+	{
+		if (pe_entry->conn->tx_pe_entry == pe_entry)
+			pe_entry->conn->tx_pe_entry = NULL;
+	} else {
 		pe_entry->conn->rx_pe_entry = NULL;
+	}
 
 	pe->num_free_entries++;
 	pe_entry->conn = NULL;
+
 	memset(&pe_entry->pe.rx, 0, sizeof(pe_entry->pe.rx));
 	memset(&pe_entry->pe.tx, 0, sizeof(pe_entry->pe.tx));
+	memset(&pe_entry->msg_hdr, 0, sizeof(pe_entry->msg_hdr));
 	memset(&pe_entry->response, 0, sizeof(pe_entry->response));
 
 	pe_entry->type =0;
@@ -123,6 +129,7 @@ static void sock_pe_release_entry(struct sock_pe *pe,
 	pe_entry->total_len = 0;
 	pe_entry->data_len = 0;
 	pe_entry->buf = 0;
+	pe_entry->flags = 0;
 
 	dlist_remove(&pe_entry->entry);
 	dlist_insert_head(&pe_entry->entry, &pe->free_list);
@@ -576,7 +583,7 @@ static int sock_pe_process_rx_read(struct sock_pe *pe, struct sock_rx_ctx *rx_ct
 					pe_entry->pe.rx.rx_iov[i].iov.len,
 					FI_REMOTE_READ);
 		if (!mr) {
-			SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %lu\n",
+			SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %" PRIu64 "\n",
 				       (void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
 				       pe_entry->pe.rx.rx_iov[i].iov.len,
 				       pe_entry->pe.rx.rx_iov[i].iov.key);
@@ -633,7 +640,7 @@ static int sock_pe_process_rx_write(struct sock_pe *pe, struct sock_rx_ctx *rx_c
 						pe_entry->pe.rx.rx_iov[i].iov.len,
 						FI_REMOTE_WRITE);
 			if (!mr) {
-				SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %lu\n",
+				SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %" PRIu64 "\n",
 					       (void*)pe_entry->pe.rx.rx_iov[i].iov.addr,
 					       pe_entry->pe.rx.rx_iov[i].iov.len,
 					       pe_entry->pe.rx.rx_iov[i].iov.key);
@@ -1047,7 +1054,7 @@ static int sock_pe_process_rx_atomic(struct sock_pe *pe, struct sock_rx_ctx *rx_
 						pe_entry->pe.rx.rx_iov[i].ioc.count * datatype_sz,
 						FI_REMOTE_WRITE);
 			if (!mr) {
-				SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %lu\n",
+				SOCK_LOG_ERROR("Remote memory access error: %p, %lu, %" PRIu64 "\n",
 					       (void*)pe_entry->pe.rx.rx_iov[i].ioc.addr,
 					       pe_entry->pe.rx.rx_iov[i].ioc.count * datatype_sz,
 					       pe_entry->pe.rx.rx_iov[i].ioc.key);
@@ -1132,6 +1139,8 @@ int sock_pe_progress_buffered_rx(struct sock_rx_ctx *rx_ctx)
 		rem = rx_buffered->iov[0].iov.len;
 		rx_ctx->buffered_len -= rem;
 		used_len = rx_posted->used;
+		pe_entry.data_len = 0;
+		pe_entry.buf = 0L;
 		for (i = 0; i < rx_posted->rx_op.dest_iov_len && rem > 0; i++) {
 			if (used_len >= rx_posted->rx_op.dest_iov_len) {
 				used_len -= rx_posted->rx_op.dest_iov_len;
@@ -1405,7 +1414,7 @@ static int sock_pe_peek_hdr(struct sock_pe *pe,
 	msg_hdr->pe_entry_id = ntohs(msg_hdr->pe_entry_id);
 	msg_hdr->ep_id = ntohs(msg_hdr->ep_id);
 	
-	SOCK_LOG_INFO("PE RX (Hdr peek): MsgLen: %lu, TX-ID: %d, Type: %d\n", 
+	SOCK_LOG_INFO("PE RX (Hdr peek): MsgLen:  %" PRIu64 ", TX-ID: %d, Type: %d\n", 
 		      msg_hdr->msg_len, msg_hdr->rx_id, msg_hdr->op_type);
 	return 0;
 }
@@ -1463,7 +1472,7 @@ static int sock_pe_read_hdr(struct sock_pe *pe, struct sock_rx_ctx *rx_ctx,
 	msg_hdr->ep_id = ntohs(msg_hdr->ep_id);
 	pe_entry->pe.rx.header_read = 1;
 	
-	SOCK_LOG_INFO("PE RX (Hdr read): MsgLen: %lu, TX-ID: %d, Type: %d\n", 
+	SOCK_LOG_INFO("PE RX (Hdr read): MsgLen:  %" PRIu64 ", TX-ID: %d, Type: %d\n", 
 		      msg_hdr->msg_len, msg_hdr->rx_id, msg_hdr->op_type);
 	return 0;
 }
