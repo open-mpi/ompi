@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -150,17 +150,19 @@ ompi_osc_sm_unlock(int target,
     /* ensure all memory operations have completed */
     opal_atomic_mb();
 
+    if (lock_none == module->outstanding_locks[target]) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     if (module->outstanding_locks[target] == lock_nocheck) {
         ret = OMPI_SUCCESS;
     } else if (module->outstanding_locks[target] == lock_exclusive) {
         ret = end_exclusive(module, target);
-        module->outstanding_locks[target] = lock_none;
     } else if (module->outstanding_locks[target] == lock_shared) {
         ret = end_shared(module, target);
-	module->outstanding_locks[target] = lock_none;
-    } else {
-        ret = OMPI_ERR_RMA_SYNC;
     }
+
+    module->outstanding_locks[target] = lock_none;
 
     return ret;
 }
