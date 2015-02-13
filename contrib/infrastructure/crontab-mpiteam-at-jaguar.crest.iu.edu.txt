@@ -78,16 +78,8 @@
 #######################################################################
 # Build nightly tarballs
 #######################################################################
-0 21 * * * $HOME/scripts/netloc-nightly-tarball.sh </dev/null >/dev/null 2>&1
 1 21 * * * $HOME/scripts/hwloc-nightly-tarball.sh </dev/null >/dev/null 2>&1
 5 21 * * * $HOME/scripts/openmpi-nightly-tarball.sh </dev/null >/dev/null 2>&1
-
-
-#######################################################################
-# Keep OMPI svn:ignore properties in sync with .gitignore_global and
-# .hgignore_global
-#######################################################################
-0 1 * * * $HOME/scripts/openmpi-nightly-githgignore.sh
 
 
 #######################################################################
@@ -96,12 +88,6 @@
 */15 * * * * $HOME/scripts/openmpi-update-www.open-mpi.org.sh < /dev/null > $HOME/tmp/git-www-ompi.log 2>&1
 */10 * * * * $HOME/scripts/forum-update-meetings.mpi-forum.org.sh  < /dev/null > $HOME/tmp/svn-up-forum.log 2>&1
 
-#######################################################################
-# Github does not send diff emails, so send our own
-#######################################################################
-
-# The script takes a list of local repo directories.
-*/5 * * * * /u/mpiteam/scripts/github-send-commit-mails.pl /u/mpiteam/git/hwloc /u/mpiteam/git/hwloc-debian /u/mpiteam/git/netloc /u/mpiteam/git/docs /u/mpiteam/git/ompi-www
 
 #=====================================================================
 #=====================================================================
@@ -125,9 +111,3 @@
 # JJH: 11/7/2011 - Disabled due to long runtime causing submission errors
 #########################
 #0 4 * * 0  if [ `date +\%d` -lt 8 ]; then /l/osl/www/mtt.open-mpi.org/cron/periodic-maintenance.pl -month 1> /dev/null 2> /dev/null; fi
-
-#30 20 * * * $HOME/scripts/openmpi-nightly-tmpbranch-tarball.sh </dev/null >/dev/null 2>&1
-#0 0 * * * $HOME/scripts/openmpi-ft-cr-tarball.sh </dev/null >/dev/null 2>&1
-
-# Don't build any more LAM/MPI tarballs!
-#0 4 * * * $HOME/scripts/lammpi-nightly-tarball.sh </dev/null >/dev/null 2>&1
