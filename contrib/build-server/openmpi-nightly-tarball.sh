@@ -52,9 +52,16 @@ module use ~/modules
 mkdir -p $build_root
 cd $build_root
 
+pending_coverity=$build_root/tarballs-to-run-through-coverity.txt
+rm -f $pending_coverity
+touch $pending_coverity
+
 # Loop making the tarballs
 module unload autotools
 for branch in $branches; do
+    # Get the last tarball version that was made
+    prev_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
+
     if test "$branch" = "master"; then
         code_uri=$master_code_uri
         raw_uri=$master_raw_uri
@@ -93,9 +100,22 @@ for branch in $branches; do
     module unload autotools
     echo "=== Done running script"
 
+    # Did the script generate a new tarball?  If so, save it so that we can
+    # spawn the coverity checker on it afterwards.
+    latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
+    if test "$prev_snapshot" != "$latest_snapshot"; then
+        echo "$outputroot/$branch/openmpi-$latest_snapshot.tar.bz2" >> $pending_coverity
+    fi
+
     # Failed builds are not removed.  But if a human forgets to come
     # in here and clean up the old failed builds, we can accumulate
     # many over time.  So remove any old failed bbuilds that are over
     # 4 weeks old.
     ${script_dir}/remove-old.pl 28 $build_root/$branch
+done
+
+# If we had any new snapshots to send to coverity, process them now
+
+for tarball in `cat $pending_coverity`; do
+    $HOME/scripts/openmpi-nightly-coverity.pl --filename=$tarball  --coverity-token=`cat $HOME/coverity-token.txt` --verbose --make-args=-j8
 done
