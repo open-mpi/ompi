@@ -117,5 +117,11 @@ done
 # If we had any new snapshots to send to coverity, process them now
 
 for tarball in `cat $pending_coverity`; do
-    $HOME/scripts/openmpi-nightly-coverity.pl --filename=$tarball  --coverity-token=`cat $HOME/coverity-token.txt` --verbose --make-args=-j8
+    $HOME/scripts/openmpi-nightly-coverity.pl \
+        --filename=$tarball \
+        --coverity-token=`cat $HOME/coverity-token.txt` \
+        --debug \
+        --logfile-dir=$HOME/coverity \
+        --make-args=-j8 \
+        --configure-args="--enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --enable-oshmem-java --with-mxm=/opt/mellanox/mxm --with-psm --with-usnic"
 done
