@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -68,7 +68,7 @@ ompi_mtl_ofi_component_register(void)
                                            "provider",
                                            "Name of OFI provider to use",
                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_ofi.provider_name);
     param_priority = 10;   /* for now give a lower priority than the psm mtl */
