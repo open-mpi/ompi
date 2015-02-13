@@ -55,7 +55,7 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 
 		trigger = calloc(1, sizeof(*trigger));
 		if (!trigger)
-			return -ENOMEM;
+			return -FI_ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_RECV;
 		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
@@ -73,12 +73,12 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 		return 0;
 	}
 
-	if (src_addr) {
+	if ((ep_priv->caps & FI_DIRECTED_RECV) && src_addr != FI_ADDR_UNSPEC) {
 		av = ep_priv->av;
 		if (av && av->type == FI_AV_TABLE) {
 			idx = (size_t)src_addr;
 			if (idx >= av->last)
-				return -EINVAL;
+				return -FI_EINVAL;
 
 			src_addr = (fi_addr_t)av->psm_epaddrs[idx];
 		}
@@ -96,7 +96,7 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 	}
 	else {
 		if (!context)
-			return -EINVAL;
+			return -FI_EINVAL;
 
 		fi_context = context;
 		user_fi_context = 1;
@@ -105,7 +105,7 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 
 			req = calloc(1, sizeof(*req));
 			if (!req)
-				return -ENOMEM;
+				return -FI_ENOMEM;
 
 			req->tag = psm_tag;
 			req->tagsel = psm_tagsel;
@@ -153,7 +153,7 @@ static ssize_t psmx_recvmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_
 	size_t len;
 
 	if (!msg || msg->iov_count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (msg->iov_count) {
 		buf = msg->msg_iov[0].iov_base;
@@ -176,7 +176,7 @@ static ssize_t psmx_recvv(struct fid_ep *ep, const struct iovec *iov, void **des
 	size_t len;
 
 	if (!iov || count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (count) {
 		buf = iov[0].iov_base;
@@ -213,7 +213,7 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 
 		trigger = calloc(1, sizeof(*trigger));
 		if (!trigger)
-			return -ENOMEM;
+			return -FI_ENOMEM;
 
 		trigger->op = PSMX_TRIGGERED_SEND;
 		trigger->cntr = container_of(ctxt->trigger.threshold.cntr,
@@ -235,7 +235,7 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 	if (av && av->type == FI_AV_TABLE) {
 		idx = (size_t)dest_addr;
 		if (idx >= av->last)
-			return -EINVAL;
+			return -FI_EINVAL;
 
 		psm_epaddr = av->psm_epaddrs[idx];
 	}
@@ -248,7 +248,7 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 	if (flags & FI_INJECT) {
 		fi_context = malloc(sizeof(*fi_context) + len);
 		if (!fi_context)
-			return -ENOMEM;
+			return -FI_ENOMEM;
 
 		memcpy((void *)fi_context + sizeof(*fi_context), buf, len);
 		buf = (void *)fi_context + sizeof(*fi_context);
@@ -261,7 +261,7 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 	}
 	else {
 		if (!context)
-			return -EINVAL;
+			return -FI_EINVAL;
 
 		fi_context = context;
 		if (fi_context != &ep_priv->sendimm_context) {
@@ -300,7 +300,7 @@ static ssize_t psmx_sendmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_
 	size_t len;
 
 	if (!msg || msg->iov_count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (msg->iov_count) {
 		buf = msg->msg_iov[0].iov_base;
@@ -323,7 +323,7 @@ static ssize_t psmx_sendv(struct fid_ep *ep, const struct iovec *iov, void **des
 	size_t len;
 
 	if (!iov || count > 1)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (count) {
 		buf = iov[0].iov_base;

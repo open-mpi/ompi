@@ -177,7 +177,7 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 	memcpy(&map->curr_addr, addr, sizeof(struct sockaddr_in));
 	fastlock_release(&map->lock);
 
-	if (connect(conn_fd, addr, sizeof *addr) < 0) {
+	if (connect(conn_fd, (struct sockaddr *) addr, sizeof *addr) < 0) {
 		if (errno == EINPROGRESS) {
 			/* timeout after 5 secs */
 			tv.tv_sec = 5;
@@ -355,7 +355,7 @@ static void *_sock_conn_listen(void *arg)
 		}
 		
 		addr_size = sizeof(struct sockaddr_in);
-		getpeername(conn_fd, &remote, &addr_size);
+		getpeername(conn_fd, (struct sockaddr *) &remote, &addr_size);
 		memcpy(sa_ip, inet_ntoa(remote.sin_addr), INET_ADDRSTRLEN);
 		SOCK_LOG_INFO("ACCEPT: %s, %d\n", sa_ip, ntohs(remote.sin_port));
 

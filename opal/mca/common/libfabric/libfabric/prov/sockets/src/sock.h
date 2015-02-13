@@ -34,6 +34,8 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <pthread.h>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_atomic.h>
 #include <rdma/fi_cm.h>
@@ -68,7 +70,9 @@
 #define SOCK_EP_MAX_RX_CNT (16)
 #define SOCK_EP_MAX_IOV_LIMIT (8)
 #define SOCK_EP_TX_SZ (256)
+#define SOCK_EP_RX_SZ (256)
 #define SOCK_EP_TX_ENTRY_SZ (256)
+#define SOCK_EP_RX_ENTRY_SZ (256)
 #define SOCK_EP_MIN_MULTI_RECV (64)
 #define SOCK_EP_MAX_ATOMIC_SZ (256)
 #define SOCK_EP_MAX_CTX_BITS (16)
@@ -120,7 +124,7 @@
 #define SOCK_MAJOR_VERSION 1
 #define SOCK_MINOR_VERSION 0
 
-#define SOCK_INJECT_OK(_flgs)  (((_flgs) & FI_INJECT) && ((!(_flgs)) & FI_FENCE))
+#define SOCK_INJECT_OK(_flgs)  ((_flgs) & FI_INJECT)
 
 struct sock_fabric{
 	struct fid_fabric fab_fid;

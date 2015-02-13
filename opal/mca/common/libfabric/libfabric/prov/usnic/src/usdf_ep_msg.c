@@ -575,7 +575,6 @@ usdf_ep_msg_close(fid_t fid)
 
 static struct fi_ops_ep usdf_base_msg_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_msg_enable,
 	.cancel = usdf_ep_msg_cancel,
 	.getopt = usdf_ep_msg_getopt,
 	.setopt = usdf_ep_msg_setopt,
@@ -609,11 +608,31 @@ static struct fi_ops_msg usdf_msg_ops = {
 	.injectdata = fi_no_msg_injectdata,
 };
 
+static int usdf_ep_msg_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_msg_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_msg_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_msg_close,
 	.bind = usdf_ep_msg_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_msg_control,
 	.ops_open = fi_no_ops_open
 };
 

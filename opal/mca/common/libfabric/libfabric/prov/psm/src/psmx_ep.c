@@ -37,35 +37,35 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 	if (ep->ep.tagged) {
 		if (ep->flags) {
 			ep->ep.tagged = &psmx_tagged_ops;
-			psmx_debug("%s: generic tagged ops.\n", __func__);
+			PSMX_DEBUG("%s: generic tagged ops.\n", __func__);
 		}
 		else if (ep->send_cq_event_flag && ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_map;
-			psmx_debug("%s: tagged ops optimized for op_flags=0 and event suppression\n", __func__);
+			PSMX_DEBUG("%s: tagged ops optimized for op_flags=0 and event suppression\n", __func__);
 		}
 		else if (ep->send_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_map;
-			psmx_debug("%s: tagged ops optimized for op_flags=0 and send event suppression\n", __func__);
+			PSMX_DEBUG("%s: tagged ops optimized for op_flags=0 and send event suppression\n", __func__);
 		}
 		else if (ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_map;
-			psmx_debug("%s: tagged ops optimized for op_flags=0 and recv event suppression\n", __func__);
+			PSMX_DEBUG("%s: tagged ops optimized for op_flags=0 and recv event suppression\n", __func__);
 		}
 		else {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_map;
-			psmx_debug("%s: tagged ops optimized for op_flags=0\n", __func__);
+			PSMX_DEBUG("%s: tagged ops optimized for op_flags=0\n", __func__);
 		}
 	}
 }
@@ -79,10 +79,10 @@ static ssize_t psmx_ep_cancel(fid_t fid, void *context)
 
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
 	if (!ep->domain)
-		return -EBADF;
+		return -FI_EBADF;
 
 	if (!fi_context)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	err = psm_mq_cancel((psm_mq_req_t *)&PSMX_CTXT_REQ(fi_context));
 	if (err == PSM_OK)
@@ -99,7 +99,7 @@ static int psmx_ep_getopt(fid_t fid, int level, int optname,
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
 
 	if (level != FI_OPT_ENDPOINT)
-		return -ENOPROTOOPT;
+		return -FI_ENOPROTOOPT;
 
 	switch (optname) {
 	case FI_OPT_MIN_MULTI_RECV:
@@ -108,7 +108,7 @@ static int psmx_ep_getopt(fid_t fid, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -FI_ENOPROTOOPT;
 	}
 
 	return 0;
@@ -122,7 +122,7 @@ static int psmx_ep_setopt(fid_t fid, int level, int optname,
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
 
 	if (level != FI_OPT_ENDPOINT)
-		return -ENOPROTOOPT;
+		return -FI_ENOPROTOOPT;
 
 	switch (optname) {
 	case FI_OPT_MIN_MULTI_RECV:
@@ -130,14 +130,9 @@ static int psmx_ep_setopt(fid_t fid, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -FI_ENOPROTOOPT;
 	}
 
-	return 0;
-}
-
-static int psmx_ep_enable(struct fid_ep *ep)
-{
 	return 0;
 }
 
@@ -166,7 +161,7 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
 
 	if (!bfid)
-		return -EINVAL;
+		return -FI_EINVAL;
 	switch (bfid->fclass) {
 	case FI_CLASS_EQ:
 		return -FI_ENOSYS;
@@ -174,7 +169,7 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	case FI_CLASS_CQ:
 		cq = container_of(bfid, struct psmx_fid_cq, cq.fid);
 		if (ep->domain != cq->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		if (flags & FI_SEND) {
 			ep->send_cq = cq;
 			if (flags & FI_EVENT)
@@ -191,7 +186,7 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	case FI_CLASS_CNTR:
 		cntr = container_of(bfid, struct psmx_fid_cntr, cntr.fid);
 		if (ep->domain != cntr->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		if (flags & FI_SEND)
 			ep->send_cntr = cntr;
 		if (flags & FI_RECV)
@@ -210,14 +205,14 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		av = container_of(bfid,
 				struct psmx_fid_av, av.fid);
 		if (ep->domain != av->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		ep->av = av;
 		psmx_ep_optimize_ops(ep);
 		break;
 
 	case FI_CLASS_MR:
 		if (!bfid->ops || !bfid->ops->bind)
-			return -EINVAL;
+			return -FI_EINVAL;
 		err = bfid->ops->bind(bfid, fid, flags);
 		if (err)
 			return err;
@@ -227,11 +222,11 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		stx = container_of(bfid,
 				   struct psmx_fid_stx, stx.fid);
 		if (ep->domain != stx->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		break;
 
 	default:
-		return -ENOSYS;
+		return -FI_ENOSYS;
 	}
 
 	return 0;
@@ -247,7 +242,7 @@ static int psmx_ep_control(fid_t fid, int command, void *arg)
 	case FI_ALIAS:
 		new_ep = (struct psmx_fid_ep *) calloc(1, sizeof *ep);
 		if (!new_ep)
-			return -ENOMEM;
+			return -FI_ENOMEM;
 		alias = arg;
 		*new_ep = *ep;
 		new_ep->flags = alias->flags;
@@ -262,12 +257,15 @@ static int psmx_ep_control(fid_t fid, int command, void *arg)
 
 	case FI_GETFIDFLAG:
 		if (!arg)
-			return -EINVAL;
+			return -FI_EINVAL;
 		*(uint64_t *)arg = ep->flags;
 		break;
 
+	case FI_ENABLE:
+		return 0;
+
 	default:
-		return -ENOSYS;
+		return -FI_ENOSYS;
 	}
 
 	return 0;
@@ -285,7 +283,6 @@ static struct fi_ops_ep psmx_ep_ops = {
 	.cancel = psmx_ep_cancel,
 	.getopt = psmx_ep_getopt,
 	.setopt = psmx_ep_setopt,
-	.enable = psmx_ep_enable,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
 	.rx_size_left = fi_no_rx_size_left,
@@ -307,7 +304,7 @@ int psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain.fid);
 	if (!domain_priv)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	err = psmx_domain_check_features(domain_priv, ep_cap);
 	if (err)
@@ -315,7 +312,7 @@ int psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 
 	ep_priv = (struct psmx_fid_ep *) calloc(1, sizeof *ep_priv);
 	if (!ep_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	ep_priv->ep.fid.fclass = FI_CLASS_EP;
 	ep_priv->ep.fid.context = context;
@@ -392,11 +389,11 @@ int psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
 {
 	struct psmx_fid_stx *stx_priv;
 
-	psmx_debug("%s\n", __func__);
+	PSMX_DEBUG("%s\n", __func__);
 
 	stx_priv = (struct psmx_fid_stx *) calloc(1, sizeof *stx_priv);
 	if (!stx_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	stx_priv->stx.fid.fclass = FI_CLASS_STX_CTX;
 	stx_priv->stx.fid.context = context;

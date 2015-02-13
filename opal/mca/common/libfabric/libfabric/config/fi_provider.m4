@@ -9,6 +9,8 @@ AC_DEFUN([FI_PROVIDER_INIT],[
 	PROVIDERS_DL=
 	PROVIDERS_STATIC=
 	PROVIDERS_COUNT=
+
+	m4_include(config/fi_check_package.m4)
 ])
 
 dnl

@@ -42,9 +42,11 @@
 #include "sock.h"
 #include "sock_util.h"
 
-const char const sock_fab_name[] = "IP";
-const char const sock_dom_name[] = "sockets";
-const char const sock_prov_name[] = "sockets";
+const char sock_fab_name[] = "IP";
+const char sock_dom_name[] = "sockets";
+const char sock_prov_name[] = "sockets";
+
+useconds_t sock_progress_thread_wait = 0;
 
 const struct fi_fabric_attr sock_fabric_attr = {
 	.fabric = NULL,
@@ -246,20 +248,15 @@ struct fi_provider sock_prov = {
 	.cleanup = fi_sockets_fini
 };
 
-
 SOCKETS_INI
 {
-	char *tmp = getenv("OFI_SOCK_LOG_LEVEL");
-	if (tmp) {
-		sock_log_level = atoi(tmp);
-	} else {
-		sock_log_level = SOCK_ERROR;
-	}
+	char *tmp;
+
+	fi_log_init();
 
 	tmp = getenv("OFI_SOCK_PROGRESS_YIELD_TIME");
-	if (tmp) {
+	if (tmp)
 		sock_progress_thread_wait = atoi(tmp);
-	}
 
 	return (&sock_prov);
 }

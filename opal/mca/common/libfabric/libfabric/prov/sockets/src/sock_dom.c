@@ -40,8 +40,6 @@
 #include "sock.h"
 #include "sock_util.h"
 
-extern const char const sock_dom_name[];
-
 const struct fi_domain_attr sock_domain_attr = {
 	.name = NULL,
 	.threading = FI_THREAD_SAFE,

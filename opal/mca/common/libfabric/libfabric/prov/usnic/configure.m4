@@ -113,11 +113,12 @@ AC_DEFUN([FI_USNIC_CONFIGURE],[
     AS_IF([test "x$enable_usnic" != "xno"],
 	[usnic_happy=1
 	 AC_CHECK_HEADER([infiniband/verbs.h], [], [usnic_happy=0])
-	 CHECK_LIBNL3([USNIC_LIBNL_CPPFLAGS],
-		      [USNIC_LIBNL_LIBS], [0])
-	 AS_IF([test "$USNIC_LIBNL_LIBS" != ""],
-	       [CPPFLAGS="$USNIC_LIBNL_CPPFLAGS $CPPFLAGS"
-	        LIBS="$USNIC_LIBNL_LIBS $LIBS"],
+	 CHECK_LIBNL3([usnic_libnl_CPPFLAGS],
+		      [usnic_libnl_LIBS], [0])
+	 AC_SUBST(usnic_libnl_CPPFLAGS)
+	 AC_SUBST(usnic_libnl_LIBS)
+
+	 AS_IF([test "$usnic_libnl_LIBS" = ""],
 	       [usnic_happy=0])
 	])
 ])

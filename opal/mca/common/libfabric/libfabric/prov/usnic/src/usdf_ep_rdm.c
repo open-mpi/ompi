@@ -632,7 +632,6 @@ usdf_ep_rdm_close(fid_t fid)
 
 static struct fi_ops_ep usdf_base_rdm_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_rdm_enable,
 	.cancel = usdf_ep_rdm_cancel,
 	.getopt = usdf_ep_rdm_getopt,
 	.setopt = usdf_ep_rdm_setopt,
@@ -666,11 +665,31 @@ static struct fi_ops_msg usdf_rdm_ops = {
 	.injectdata = fi_no_msg_injectdata,
 };
 
+static int usdf_ep_rdm_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_rdm_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_rdm_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_rdm_close,
 	.bind = usdf_ep_rdm_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_rdm_control,
 	.ops_open = fi_no_ops_open
 };
 

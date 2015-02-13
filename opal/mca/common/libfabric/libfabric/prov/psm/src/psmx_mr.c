@@ -56,7 +56,7 @@ static int psmx_mr_hash_add(struct psmx_fid_mr *mr)
 
 	entry = calloc(1, sizeof(*entry));
 	if (!entry)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	entry->mr = mr;
 	entry->next = head->next;
@@ -99,7 +99,7 @@ static int psmx_mr_hash_del(struct psmx_fid_mr *mr)
 		entry = entry->next;
 	}
 
-	return -ENOENT;
+	return -FI_ENOENT;
 }
 
 struct psmx_fid_mr *psmx_mr_hash_get(uint64_t key)
@@ -126,10 +126,10 @@ int psmx_mr_validate(struct psmx_fid_mr *mr, uint64_t addr, size_t len, uint64_t
 	addr += mr->offset;
 
 	if (!addr)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if ((access & mr->access) != access)
-		return -EACCES;
+		return -FI_EACCES;
 
 	for (i = 0; i < mr->iov_count; i++) {
 		if ((uint64_t)mr->iov[i].iov_base <= addr &&
@@ -137,7 +137,7 @@ int psmx_mr_validate(struct psmx_fid_mr *mr, uint64_t addr, size_t len, uint64_t
 			return 0;
 	}
 
-	return -EACCES;
+	return -FI_EACCES;
 }
 
 static int psmx_mr_close(fid_t fid)
@@ -161,34 +161,34 @@ static int psmx_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	mr = container_of(fid, struct psmx_fid_mr, mr.fid);
 
 	if (!bfid)
-		return -EINVAL;
+		return -FI_EINVAL;
 	switch (bfid->fclass) {
 	case FI_CLASS_EP:
 		ep = container_of(bfid, struct psmx_fid_ep, ep.fid);
 		if (mr->domain != ep->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		break;
 
 	case FI_CLASS_CQ:
 		cq = container_of(bfid, struct psmx_fid_cq, cq.fid);
 		if (mr->cq && mr->cq != cq)
-			return -EEXIST;
+			return -FI_EBUSY;
 		if (mr->domain != cq->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		mr->cq = cq;
 		break;
 
 	case FI_CLASS_CNTR:
 		cntr = container_of(bfid, struct psmx_fid_cntr, cntr.fid);
 		if (mr->cntr && mr->cntr != cntr)
-			return -EEXIST;
+			return -FI_EBUSY;
 		if (mr->domain != cntr->domain)
-			return -EINVAL;
+			return -FI_EINVAL;
 		mr->cntr = cntr;
 		break;
 
 	default:
-		return -ENOSYS;
+		return -FI_ENOSYS;
 	}
 
 	return 0;
@@ -279,7 +279,7 @@ static int psmx_mr_reg(struct fid_domain *domain, const void *buf, size_t len,
 
 	mr_priv = (struct psmx_fid_mr *) calloc(1, sizeof(*mr_priv) + sizeof(struct iovec));
 	if (!mr_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	mr_priv->mr.fid.fclass = FI_CLASS_MR;
 	mr_priv->mr.fid.context = context;
@@ -330,13 +330,13 @@ static int psmx_mr_regv(struct fid_domain *domain,
 	}
 
 	if (count == 0 || iov == NULL)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	mr_priv = (struct psmx_fid_mr *)
 			calloc(1, sizeof(*mr_priv) +
 				  sizeof(struct iovec) * count);
 	if (!mr_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	mr_priv->mr.fid.fclass = FI_CLASS_MR;
 	mr_priv->mr.fid.context = context;
@@ -386,16 +386,16 @@ static int psmx_mr_regattr(struct fid_domain *domain, const struct fi_mr_attr *a
 	}
 
 	if (!attr)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (attr->iov_count == 0 || attr->mr_iov == NULL)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	mr_priv = (struct psmx_fid_mr *)
 			calloc(1, sizeof(*mr_priv) +
 				  sizeof(struct iovec) * attr->iov_count);
 	if (!mr_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	mr_priv->mr.fid.fclass = FI_CLASS_MR;
 	mr_priv->mr.fid.context = attr->context;

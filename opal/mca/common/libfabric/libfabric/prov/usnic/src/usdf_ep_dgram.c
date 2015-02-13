@@ -282,7 +282,6 @@ usdf_ep_dgram_close(fid_t fid)
 
 static struct fi_ops_ep usdf_base_dgram_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_dgram_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
@@ -294,7 +293,6 @@ static struct fi_ops_ep usdf_base_dgram_ops = {
 
 static struct fi_ops_ep usdf_base_dgram_prefix_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_dgram_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
@@ -336,11 +334,31 @@ static struct fi_ops_cm usdf_cm_dgram_ops = {
 	.shutdown = fi_no_shutdown,
 };
 
+static int usdf_ep_dgram_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_dgram_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_dgram_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_dgram_close,
 	.bind = usdf_ep_dgram_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_dgram_control,
 	.ops_open = fi_no_ops_open
 };
 

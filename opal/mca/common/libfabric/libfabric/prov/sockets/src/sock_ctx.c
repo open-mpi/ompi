@@ -81,7 +81,7 @@ static struct sock_tx_ctx *sock_tx_context_alloc(const struct fi_tx_attr *attr,
 		return NULL;
 
 	if (rbfdinit(&tx_ctx->rbfd, 
-		     (attr->size) ? attr->size : 
+		     (attr->size) ? attr->size * SOCK_EP_TX_ENTRY_SZ: 
 		     SOCK_EP_TX_SZ * SOCK_EP_TX_ENTRY_SZ))
 		goto err;
 

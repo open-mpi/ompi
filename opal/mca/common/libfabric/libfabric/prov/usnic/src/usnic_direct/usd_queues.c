@@ -801,6 +801,7 @@ usd_finish_create_cq(
                 cq_intr_enable, cq_entry_enable, cq_msg_enable,
                 cq_intr_offset, cq_msg_addr);
     }
+    cq->ucq_state |= USD_QS_VNIC_INITIALIZED;
 
     return 0;
 }
@@ -962,6 +963,8 @@ usd_destroy_qp(
         usd_free_mr(wq->uwq_copybuf);
     if (wq->uwq_desc_ring != NULL)
         usd_free_mr(wq->uwq_desc_ring);
+    if (rq->urq_desc_ring != NULL)
+        usd_free_mr(rq->urq_desc_ring);
 
     free(qp);
 

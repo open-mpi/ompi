@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0-rc1"
+.TH fi_endpoint 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc1"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -1047,12 +1047,6 @@ The buffer will be returned to the application\[aq]s control, and an
 \f[I]FI_MULTI_RECV\f[] completion will be generated, when a message is
 received that cannot fit into the remaining free buffer space.
 .PP
-\f[I]FI_BUFFERED_RECV\f[] : If set, the communication interface
-implementation should attempt to queue inbound data that arrives before
-a receive buffer has been posted.
-In the absence of this flag, any messages that arrive before a receive
-is posted are lost.
-.PP
 \f[I]FI_COMPLETION\f[] : Indicates that a completion entry should be
 generated for data transfer operations.
 .PP
@@ -1073,33 +1067,6 @@ initiator.
 For example, if the receive data is truncated at the target because the
 provided receive buffer is too small, the initiator will be notified of
 the truncation.
-.PP
-\f[I]FI_READ\f[] : Indicates that the user wants to initiate reads
-against remote memory regions.
-Remote reads include some RMA and atomic operations.
-.PP
-\f[I]FI_WRITE\f[] : Indicates that the user wants to initiate writes
-against remote memory regions.
-Remote writes include some RMA and most atomic operations.
-.PP
-\f[I]FI_SEND\f[] : Indicates that the endpoint will be used to send
-message data transfers.
-Message transfers include base message operations as well as tagged
-message functionality.
-.PP
-\f[I]FI_RECV\f[] : Indicates that the endpoint will be used to receive
-message data transfers.
-Message transfers include base message operations as well as tagged
-message functionality.
-.PP
-\f[I]FI_REMOTE_READ\f[] : Indicates that the endpoint should allow
-remote endpoints to read memory regions exposed by this endpoint.
-Remote read operations include some RMA and atomic operations.
-.PP
-\f[I]FI_REMOTE_WRITE\f[] : Indicates that the endpoint should allow
-remote endpoints to write to memory regions exposed by this endpoint.
-Remote write operations include some RMA operations and most atomic
-operations.
 .SH NOTES
 .PP
 Users should call fi_close to release all resources allocated to the

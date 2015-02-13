@@ -30,42 +30,25 @@
  * SOFTWARE.
  */
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
-
 #ifndef _SOCK_UTIL_H_
 #define _SOCK_UTIL_H_
 
-#include <stdio.h>
+#include "fi_log.h"
 
 #define SOCK_ERROR (1)
 #define SOCK_WARN (2)
 #define SOCK_INFO (3)
 
-extern int sock_log_level;
 extern useconds_t sock_progress_thread_wait;
 
-#define SOCK_LOG_INFO(...) do {						\
-		if (sock_log_level >= SOCK_INFO) {			\
-			fprintf(stderr, "[SOCK_INFO - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
-	} while (0)
+extern const char sock_fab_name[];
+extern const char sock_dom_name[];
+extern const char sock_prov_name[];
 
-#define SOCK_LOG_WARN(...) do {						\
-		if (sock_log_level >= SOCK_WARN) {			\
-			fprintf(stderr, "[SOCK_WARN - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
-	} while (0)
+#define SOCK_LOG_INFO(...) FI_LOG(SOCK_INFO, sock_prov_name, __VA_ARGS__)
 
-#define SOCK_LOG_ERROR(...) do {					\
-		if (sock_log_level >= SOCK_ERROR) {			\
-			fprintf(stderr, "[SOCK_ERROR - %s:%d]: ", __func__, __LINE__); \
-			fprintf(stderr, __VA_ARGS__);			\
-		}							\
-	} while (0)
+#define SOCK_LOG_WARN(...) FI_WARN(sock_prov_name, __VA_ARGS__)
+
+#define SOCK_LOG_ERROR(...) FI_WARN(sock_prov_name, __VA_ARGS__)
 
 #endif
-

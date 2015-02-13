@@ -50,7 +50,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			reserved_bits |= PSMX_MSG_BIT;
 		}
 		else if (ask_caps) {
-			psmx_debug("%s: unable to reserve tag bit for FI_MSG support.\n"
+			PSMX_DEBUG("%s: unable to reserve tag bit for FI_MSG support.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or remove FI_MSG from the asked capabilities, "
 				   "or set OFI_PSM_AM_MSG=1 to use an alternative (but less "
@@ -59,7 +59,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			return -1;
 		}
 		else {
-			psmx_debug("%s: unable to reserve tag bit for FI_MSG support. "
+			PSMX_DEBUG("%s: unable to reserve tag bit for FI_MSG support. "
 				   "FI_MSG is removed from the capabilities.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or set OFI_PSM_AM_MSG=1 to use an alternative (but less "
@@ -74,7 +74,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			reserved_bits |= PSMX_RMA_BIT;
 		}
 		else if (ask_caps) {
-			psmx_debug("%s: unable to reserve tag bit for tagged RMA acceleration.\n"
+			PSMX_DEBUG("%s: unable to reserve tag bit for tagged RMA acceleration.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or remove FI_RMA from the asked capabilities, "
 				   "or set OFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
@@ -82,7 +82,7 @@ static int psmx_reserve_tag_bits(int *caps, uint64_t *max_tag_value)
 			return -1;
 		}
 		else {
-			psmx_debug("%s: unable to reserve tag bit for tagged RMA acceleration. "
+			PSMX_DEBUG("%s: unable to reserve tag bit for tagged RMA acceleration. "
 				   "FI_RMA is removed from the capabilities.\n"
 				   "ADVICE: please reduce the asked max_tag_value, "
 				   "or set OFI_PSM_TAGGED_RMA=0 to disable RMA acceleration.\n",
@@ -109,12 +109,12 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 	uint64_t max_tag_value = 0;
 	int err = -FI_ENODATA;
 
-	psmx_debug("%s\n", __func__);
+	PSMX_DEBUG("%s\n", __func__);
 
 	*info = NULL;
 
 	if (psm_ep_num_devunits(&cnt) || !cnt) {
-		psmx_debug("%s: no PSM device is found.\n", __func__);
+		PSMX_DEBUG("%s: no PSM device is found.\n", __func__);
 		return -FI_ENODATA;
 	}
 
@@ -127,7 +127,7 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		case FI_EP_RDM:
 			break;
 		default:
-			psmx_debug("%s: hints->ep_type=%d, supported=%d,%d.\n",
+			PSMX_DEBUG("%s: hints->ep_type=%d, supported=%d,%d.\n",
 					__func__, hints->ep_type, FI_EP_UNSPEC,
 					FI_EP_RDM);
 			goto err_out;
@@ -139,35 +139,36 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 			case FI_PROTO_PSMX:
 				break;
 			default:
-				psmx_debug("%s: hints->protocol=%d, supported=%d %d\n",
+				PSMX_DEBUG("%s: hints->protocol=%d, supported=%d %d\n",
 						__func__, hints->ep_attr->protocol,
 						FI_PROTO_UNSPEC, FI_PROTO_PSMX);
 				goto err_out;
 			}
 
 			if (hints->ep_attr->tx_ctx_cnt > 1) {
-				psmx_debug("%s: hints->ep_attr->tx_ctx_cnt=%d, supported=0,1\n",
+				PSMX_DEBUG("%s: hints->ep_attr->tx_ctx_cnt=%d, supported=0,1\n",
 						__func__, hints->ep_attr->tx_ctx_cnt);
 				goto err_out;
 			}
 
 			if (hints->ep_attr->rx_ctx_cnt > 1) {
-				psmx_debug("%s: hints->ep_attr->rx_ctx_cnt=%d, supported=0,1\n",
+				PSMX_DEBUG("%s: hints->ep_attr->rx_ctx_cnt=%d, supported=0,1\n",
 						__func__, hints->ep_attr->rx_ctx_cnt);
 				goto err_out;
 			}
 		}
 
-		if ((hints->caps & PSMX_CAPS) != hints->caps) {
-			psmx_debug("%s: hints->caps=0x%llx, supported=0x%llx\n",
-					__func__, hints->caps, PSMX_CAPS);
+		if ((hints->caps & PSMX_CAPS) != hints->caps &&
+		    (hints->caps & PSMX_CAPS2) != hints->caps) {
+			PSMX_DEBUG("%s: hints->caps=0x%llx, supported=0x%llx,0x%llx\n",
+					__func__, hints->caps, PSMX_CAPS, PSMX_CAPS2);
 			goto err_out;
 		}
 
 		if (hints->tx_attr &&
 		    (hints->tx_attr->op_flags & PSMX_OP_FLAGS) !=
 		     hints->tx_attr->op_flags) {
-			psmx_debug("%s: hints->tx->flags=0x%llx, supported=0x%llx\n",
+			PSMX_DEBUG("%s: hints->tx->flags=0x%llx, supported=0x%llx\n",
 					__func__, hints->tx_attr->op_flags, PSMX_OP_FLAGS);
 			goto err_out;
 		}
@@ -175,41 +176,41 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		if (hints->rx_attr &&
 		    (hints->rx_attr->op_flags & PSMX_OP_FLAGS) !=
 		     hints->rx_attr->op_flags) {
-			psmx_debug("%s: hints->rx->flags=0x%llx, supported=0x%llx\n",
+			PSMX_DEBUG("%s: hints->rx->flags=0x%llx, supported=0x%llx\n",
 					__func__, hints->rx_attr->op_flags, PSMX_OP_FLAGS);
 			goto err_out;
 		}
 
 		if ((hints->mode & PSMX_MODE) != PSMX_MODE) {
-			psmx_debug("%s: hints->mode=0x%llx, required=0x%llx\n",
+			PSMX_DEBUG("%s: hints->mode=0x%llx, required=0x%llx\n",
 					__func__, hints->mode, PSMX_MODE);
 			goto err_out;
 		}
 
 		if (hints->fabric_attr && hints->fabric_attr->name &&
 		    strncmp(hints->fabric_attr->name, "psm", 3)) {
-			psmx_debug("%s: hints->fabric_name=%s, supported=psm\n",
+			PSMX_DEBUG("%s: hints->fabric_name=%s, supported=psm\n",
 					__func__, hints->fabric_attr->name);
 			goto err_out;
 		}
 
 		if (hints->domain_attr && hints->domain_attr->name &&
 		    strncmp(hints->domain_attr->name, "psm", 3)) {
-			psmx_debug("%s: hints->domain_name=%s, supported=psm\n",
+			PSMX_DEBUG("%s: hints->domain_name=%s, supported=psm\n",
 					__func__, hints->domain_attr->name);
 			goto err_out;
 		}
 
 		if (hints->ep_attr) {
 			if (hints->ep_attr->max_msg_size > PSMX_MAX_MSG_SIZE) {
-				psmx_debug("%s: hints->ep_attr->max_msg_size=%ld,"
+				PSMX_DEBUG("%s: hints->ep_attr->max_msg_size=%ld,"
 						"supported=%ld.\n", __func__,
 						hints->ep_attr->max_msg_size,
 						PSMX_MAX_MSG_SIZE);
 				goto err_out;
 			}
 			if (hints->ep_attr->inject_size > PSMX_INJECT_SIZE) {
-				psmx_debug("%s: hints->ep_attr->inject_size=%ld,"
+				PSMX_DEBUG("%s: hints->ep_attr->inject_size=%ld,"
 						"supported=%ld.\n", __func__,
 						hints->ep_attr->inject_size,
 						PSMX_INJECT_SIZE);
@@ -228,7 +229,7 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 
 	psmx_info = fi_allocinfo_internal();
 	if (!psmx_info) {
-		err = -ENOMEM;
+		err = -FI_ENOMEM;
 		goto err_out;
 	}
 
@@ -308,7 +309,7 @@ static int psmx_fabric(struct fi_fabric_attr *attr,
 {
 	struct psmx_fid_fabric *fabric_priv;
 
-	psmx_debug("%s\n", __func__);
+	PSMX_DEBUG("%s\n", __func__);
 
 	if (strncmp(attr->name, "psm", 3))
 		return -FI_ENODATA;
@@ -327,14 +328,14 @@ static int psmx_fabric(struct fi_fabric_attr *attr,
 
 static void psmx_fini(void)
 {
-	psmx_debug("%s\n", __func__);
+	PSMX_DEBUG("%s\n", __func__);
 
 	if (! --init_count)
 		psm_finalize();
 }
 
 static struct fi_provider psmx_prov = {
-	.name = "PSM",
+	.name = PSMX_PROVNAME,
 	.version = FI_VERSION(0, 9),
 	.fi_version = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),
 	.getinfo = psmx_getinfo,
@@ -367,14 +368,17 @@ PSM_INI
 	int check_version;
 	int err;
 
-	psmx_debug("%s\n", __func__);
+	fi_log_init();
 
-	psmx_env.name_server	= psmx_get_int_env("OFI_PSM_NAME_SERVER", 0);
+	psmx_env.name_server	= psmx_get_int_env("OFI_PSM_NAME_SERVER", 1);
 	psmx_env.am_msg		= psmx_get_int_env("OFI_PSM_AM_MSG", 0);
 	psmx_env.tagged_rma	= psmx_get_int_env("OFI_PSM_TAGGED_RMA", 0);
-	psmx_env.debug		= psmx_get_int_env("OFI_PSM_DEBUG", 0);
 	psmx_env.warning	= psmx_get_int_env("OFI_PSM_WARNING", 1);
 	psmx_env.uuid		= getenv("OFI_PSM_UUID");
+	if (!psmx_env.uuid)
+		psmx_env.uuid	= PSMX_DEFAULT_UUID;
+
+	PSMX_DEBUG("%s\n", __func__);
 
         psm_error_register_handler(NULL, PSM_ERRHANDLER_NO_HANDLER);
 
@@ -383,19 +387,28 @@ PSM_INI
 
         err = psm_init(&major, &minor);
 	if (err != PSM_OK) {
-		fprintf(stderr, "%s: psm_init failed: %s\n", __func__,
+		PSMX_WARN("%s: psm_init failed: %s\n", __func__,
 			psm_error_get_string(err));
 		return NULL;
 	}
 
+	PSMX_DEBUG("%s: PSM header version = (%d, %d)\n", __func__, PSM_VERNO_MAJOR, PSM_VERNO_MINOR);
+	PSMX_DEBUG("%s: PSM library version = (%d, %d)\n", __func__, major, minor);
+
 	check_version = psmx_get_int_env("OFI_PSM_VERSION_CHECK", 1);
 
 	if (check_version && major != PSM_VERNO_MAJOR) {
-		fprintf(stderr, "%s: PSM version mismatch: header %d.%d, library %d.%d.\n",
+		FI_WARN(PSMX_PROVNAME, "%s: PSM version mismatch: header %d.%d, library %d.%d.\n",
 			__func__, PSM_VERNO_MAJOR, PSM_VERNO_MINOR, major, minor);
-		fprintf(stderr, "\tSet envar OFI_PSM_VERSION_CHECK=0 to bypass version check.\n");
+		FI_WARN(PSMX_PROVNAME, "\tSet envar OFI_PSM_VERSION_CHECK=0 to bypass version check.\n");
 		return NULL;
 	}
+
+	PSMX_DEBUG("%s: OFI_PSM_NAME_SERVER = %d\n", __func__, psmx_env.name_server);
+	PSMX_DEBUG("%s: OFI_PSM_AM_MSG = %d\n", __func__, psmx_env.am_msg);
+	PSMX_DEBUG("%s: OFI_PSM_TAGGED_RMA = %d\n", __func__, psmx_env.tagged_rma);
+	PSMX_DEBUG("%s: OFI_PSM_WARNING = %d\n", __func__, psmx_env.warning);
+	PSMX_DEBUG("%s: OFI_PSM_UUID = %s\n", __func__, psmx_env.uuid);
 
 	init_count++;
 	return (&psmx_prov);

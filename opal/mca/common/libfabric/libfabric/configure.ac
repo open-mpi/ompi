@@ -1,13 +1,33 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([libfabric], [1.0.0-rc1], [ofiwg@lists.openfabrics.org])
+AC_INIT([libfabric], [1.0.0rc1], [ofiwg@lists.openfabrics.org])
 AC_CONFIG_SRCDIR([src/fabric.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([1.11 dist-bzip2 foreign -Wall -Werror subdir-objects parallel-tests])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+AC_CANONICAL_HOST
+
+macos=0
+linux=0
+
+case $host_os in
+*darwin*)
+	macos=1
+	;;
+*linux*)
+	linux=1
+	;;
+*)
+	AC_MSG_ERROR([libfabric only builds on Linux & OS X])
+	;;
+esac
+
+AM_CONDITIONAL([MACOS], [test "x$macos" = "x1"])
+AM_CONDITIONAL([LINUX], [test "x$linux" = "x1"])
 
 AC_ARG_ENABLE([debug],
 	      [AS_HELP_STRING([--enable-debug],
@@ -54,10 +74,6 @@ AC_PROG_CC_C99
 dnl Checks for header files.
 AC_HEADER_STDC
 
-dnl Only build on Linux
-AC_CHECK_HEADER([linux/types.h], [],
-	[AC_MSG_ERROR([libfabric only builds on Linux])])
-
 LT_INIT
 
 dnl dlopen support is optional
@@ -74,8 +90,21 @@ AC_CHECK_LIB(dl, dlopen, [],
 dnl Checks for libraries
 AC_CHECK_LIB(pthread, pthread_mutex_init, [],
     AC_MSG_ERROR([pthread_mutex_init() not found.  libfabric requires libpthread.]))
-AC_CHECK_LIB(rt, clock_gettime, [],
-    AC_MSG_ERROR([clock_gettime() not found.  libfabric requires librt.]))
+
+have_clock_gettime=0
+have_host_get_clock_service=0
+
+AC_SEARCH_LIBS([clock_gettime],[rt],
+		[have_clock_gettime=1],
+		[AC_CHECK_FUNCS([host_get_clock_service],
+			[have_host_get_clock_service=1],
+			[AC_MSG_ERROR([clock_gettime or host_get_clock_service
+			 not found.])])])
+
+AC_DEFINE_UNQUOTED(HAVE_CLOCK_GETTIME, [$have_clock_gettime],
+		   [Define HAVE_CLOCK_GETTIME to 1 if available.])
+AC_DEFINE_UNQUOTED(HAVE_HOST_GET_CLOCK_SERVICE, [$have_host_get_clock_service],
+		   [Define HAVE_HOST_GET_CLOCK_SERVICE to 1 if available.])
 
 dnl Check for gcc atomic intrinsics
 AC_MSG_CHECKING(compiler support for c11 atomics)
@@ -129,6 +158,18 @@ if test x$ac_cv_asm_symver_support = xyes; then
 	AC_DEFINE([HAVE_SYMVER_SUPPORT], 1, [assembler has .symver support])
 fi
 
+AC_LINK_IFELSE(
+	[AC_LANG_SOURCE[
+		int foo(int arg);
+		int foo(int arg) { return arg + 3; };
+		int foo2(int arg) __attribute__ (( __alias__("foo")));
+	]],
+	[ac_cv_prog_cc_alias_symbols=1],
+	[ac_cv_prog_cc_alias_symbols=0])
+
+AC_DEFINE_UNQUOTED([HAVE_ALIAS_ATTRIBUTE], [$ac_cv_prog_cc_alias_symbols],
+	  	   [Define to 1 if the linker supports alias attribute.])
+
 dnl Provider-specific checks
 FI_PROVIDER_INIT
 FI_PROVIDER_SETUP([psm])
@@ -158,21 +199,17 @@ if test "$PROVIDERS_TO_BUILD" = ""; then
 	exit 1
 fi
 
-echo "***"
-for i in $PROVIDERS_TO_BUILD; do
-	v=${i}_dl
-	if test `eval echo \\$${v}` != "1"; then
-		builtin="$i ${builtin}"
-	fi
-done
-echo -e "*** Built-in providers:\t${builtin}"
-echo "***"
-
 for i in $PROVIDERS_TO_BUILD; do
 	v=${i}_dl
 	if test `eval echo \\$${v}` == "1"; then
 		dso="$i ${dso}"
+	else
+		builtin="$i ${builtin}"
 	fi
 done
-echo -e "*** DSO providers:\t${dso}"
-echo "***"
+cat <<EOF
+***
+*** Built-in providers:	${builtin}
+*** DSO providers:	${dso}
+***
+EOF

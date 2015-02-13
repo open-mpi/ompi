@@ -38,6 +38,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -125,7 +126,8 @@ struct sock_conn *sock_av_lookup_addr(struct sock_av *av,
 			av->domain, av->cmap, 
 			(struct sockaddr_in*)&av_addr->addr);
 		if (!av->key[idx]) {
-			SOCK_LOG_ERROR("failed to match or connect to addr %lu\n", addr);
+			SOCK_LOG_ERROR("failed to match or connect to addr %"
+					PRIu64 "\n", addr);
 			errno = EINVAL;
 			return NULL;
 		}
@@ -295,7 +297,7 @@ static int sock_av_lookup(struct fid_av *av, fi_addr_t fi_addr, void *addr,
 	}
 
 	av_addr = idm_lookup(&_av->addr_idm, index);
-	addr = &av_addr->addr;
+        memcpy(addr, &av_addr->addr, MIN(*addrlen, _av->addrlen));
 	*addrlen = _av->addrlen;
 	return 0;
 }
@@ -447,11 +449,11 @@ static int sock_av_close(struct fid *fid)
 	if (!av->name) 
 		free(av->table_hdr);
 	else {
+		shm_unlink(av->name);
 		free(av->name);
 		munmap(av->table_hdr, sizeof(struct sock_av_table_hdr) +
 		       av->attr.count * sizeof(struct sock_av_addr));
 		close(av->shared_fd);
-		shm_unlink(av->name);
 	}
 
 	atomic_dec(&av->domain->ref);
@@ -561,8 +563,8 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		
 		if (ftruncate(_av->shared_fd, table_sz) == -1) {
 			SOCK_LOG_ERROR("ftruncate failed\n");
-			free(_av);
 			shm_unlink(_av->name);
+			free(_av);
 			return -FI_EINVAL;
 		}
 		
@@ -578,8 +580,8 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 
 		if (_av->table_hdr == MAP_FAILED) {
 			SOCK_LOG_ERROR("mmap failed\n");
-			free(_av);
 			shm_unlink(_av->name);
+			free(_av);
 			return -FI_EINVAL;
 		}
 	} else {

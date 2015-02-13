@@ -9,14 +9,30 @@ dnl $2: action if not configured successfully
 dnl
 AC_DEFUN([FI_VERBS_CONFIGURE],[
 	# Determine if we can support the verbs provider
-	verbs_happy=0
+	verbs_ibverbs_happy=0
+	verbs_rdmacm_happy=0
 	AS_IF([test x"$enable_verbs" != x"no"],
-	      [verbs_happy=1
-	       AC_CHECK_HEADER([infiniband/verbs.h], [], [verbs_happy=0])
-	       AC_CHECK_HEADER([rdma/rsocket.h], [], [verbs_happy=0])
-	       AC_CHECK_LIB([ibverbs], [ibv_open_device], [], [verbs_happy=0])
-	       AC_CHECK_LIB([rdmacm], [rsocket], [], [verbs_happy=0])
+	      [FI_CHECK_PACKAGE([verbs_ibverbs],
+				[infiniband/verbs.h],
+				[ibverbs],
+				[ibv_open_device],
+				[],
+				[],
+				[],
+				[verbs_ibverbs_happy=1],
+				[verbs_ibverbs_happy=0])
+
+	       FI_CHECK_PACKAGE([verbs_rdmacm],
+				[rdma/rsocket.h],
+				[rdmacm],
+				[rsocket],
+				[],
+				[],
+				[],
+				[verbs_rdmacm_happy=1],
+				[verbs_rdmacm_happy=0])
 	      ])
 
-	AS_IF([test $verbs_happy -eq 1], [$1], [$2])
+	AS_IF([test $verbs_ibverbs_happy -eq 1 && \
+	       test $verbs_rdmacm_happy -eq 1], [$1], [$2])
 ])

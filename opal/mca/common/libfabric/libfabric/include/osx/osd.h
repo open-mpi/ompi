@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015 Los Alamos Nat. Security, LLC. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -28,39 +28,44 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
 
-#if !defined(FI_LOG_H)
-#define FI_LOG_H
+#ifndef _MACH_CLOCK_GETTIME_H_
+#define _MACH_CLOCK_GETTIME_H_
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
+#include <sys/time.h>
+#include <time.h>
+#include <mach/clock.h>
+#include <mach/mach.h>
 
-extern int fi_log_level;
+#include <machine/endian.h>
+#include <libkern/OSByteOrder.h>
 
-void fi_log_init(void);
-void fi_warn_impl(const char *prov, const char *fmt, ...);
-void fi_log_impl(int level, const char *prov, const char *func, int line,
-		 const char *fmt, ...);
-void fi_debug_impl(const char *prov, const char *func, int line, const char *fmt, ...);
+#include <pthread.h>
 
-/* Callers are responsible for including their own trailing "\n".  Non-provider
- * code should pass prov=NULL.
- */
-#define FI_WARN(prov, ...) fi_warn_impl(prov, __VA_ARGS__)
+#define CLOCK_REALTIME CALENDAR_CLOCK
+#define CLOCK_MONOTONIC SYSTEM_CLOCK
 
-#define FI_LOG(level, prov, ...) \
-	do { \
-		if ((level) <= fi_log_level) \
-			fi_log_impl(level, prov, __func__, __LINE__, __VA_ARGS__); \
-	} while (0)
+#define pthread_yield pthread_yield_np
 
-#if ENABLE_DEBUG
-#  define FI_DEBUG(prov, ...) fi_debug_impl(prov, __func__, __LINE__, __VA_ARGS__)
+#define bswap_64 OSSwapInt64
+
+#ifdef _POSIX_HOST_NAME_MAX
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
 #else
-#  define FI_DEBUG(prov, ...) do {} while (0)
+#define HOST_NAME_MAX 255
 #endif
 
-#endif /* !defined(FI_LOG_H) */
+typedef int clockid_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
