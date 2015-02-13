@@ -324,7 +324,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     opal_buffer_t *send_buffer = NULL;
     opal_buffer_t *buf = NULL;
     void *sbuf_ptr;
-    char *cptr, *foo_ptr, *rcv_buff = NULL;
+    char *cptr, *rcv_buff = NULL;
     opal_process_name_t id;
     typedef struct {
         uint32_t pmix_rank;
@@ -409,25 +409,18 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     OBJ_RELEASE(send_buffer);
     send_buffer  = NULL;
 
-    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
-                        "%s pmix:cray rcv_buff = %p",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), rcv_buff);
-
+    buf = OBJ_NEW(opal_buffer_t);
+    if (buf == NULL) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
+    }
 
     for (cptr = rcv_buff, i=0; i < pmix_size; i++) {
 
-        foo_ptr = (char *)malloc(r_bytes_and_ranks[i].nbytes);
-        memcpy(foo_ptr,cptr,r_bytes_and_ranks[i].nbytes);
-
         id = r_bytes_and_ranks[i].name;
 
-        buf = OBJ_NEW(opal_buffer_t);
-        if (buf == NULL) {
-            rc = OPAL_ERR_OUT_OF_RESOURCE;
-            goto fn_exit;
-        }
-
-        if (OPAL_SUCCESS != (rc = opal_dss.load(buf, (void *)foo_ptr, r_bytes_and_ranks[i].nbytes))) {
+        buf->base_ptr = NULL;  /* TODO: ugh */
+        if (OPAL_SUCCESS != (rc = opal_dss.load(buf, (void *)cptr, r_bytes_and_ranks[i].nbytes))) {
             OPAL_PMI_ERROR(rc,"pmix:cray opal_dss.load failed");
             goto fn_exit;
         }
@@ -448,12 +441,12 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
              cnt = 1;
         }
 
-        /* free up the memory used by the opal buffer */
         cptr += r_bytes_and_ranks[i].nbytes;
-        OBJ_RELEASE(buf);
-        buf = NULL;
 
     }
+
+    buf->base_ptr = NULL;  /* TODO: ugh */
+    OBJ_RELEASE(buf);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray kvs_fence complete",
@@ -479,9 +472,6 @@ static int cray_get(const opal_process_name_t *id, const char *key, opal_value_t
     rc = opal_dstore.fetch(opal_dstore_internal, id, key, &vals);
     if (OPAL_SUCCESS == rc) {
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                "%s pmix:cray value retrieved from dstore",
-                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         return OPAL_SUCCESS;
     } else {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
