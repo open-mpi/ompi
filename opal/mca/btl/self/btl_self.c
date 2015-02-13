@@ -38,13 +38,15 @@
 #include "btl_self_frag.h"
 #include "opal/util/proc.h"
 
-static int mca_btl_self_put (struct mca_btl_base_module_t* btl,
-                             struct mca_btl_base_endpoint_t* endpoint,
-                             struct mca_btl_base_descriptor_t* des);
+static int mca_btl_self_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-static int mca_btl_self_get (struct mca_btl_base_module_t* btl,
-                             struct mca_btl_base_endpoint_t* endpoint,
-                             struct mca_btl_base_descriptor_t* des);
+static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 mca_btl_base_module_t mca_btl_self = {
     .btl_component = &mca_btl_self_component.super,
@@ -54,7 +56,6 @@ mca_btl_base_module_t mca_btl_self = {
     .btl_alloc = mca_btl_self_alloc,
     .btl_free = mca_btl_self_free,
     .btl_prepare_src = mca_btl_self_prepare_src,
-    .btl_prepare_dst = mca_btl_self_prepare_dst,
     .btl_send = mca_btl_self_send,
     .btl_put = mca_btl_self_put,
     .btl_get = mca_btl_self_get,
@@ -135,8 +136,8 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
     
     frag->segment.seg_len = size;
     frag->base.des_flags       = flags;
-    frag->base.des_local       = &(frag->segment);
-    frag->base.des_local_count = 1;
+    frag->base.des_segments       = &(frag->segment);
+    frag->base.des_segment_count = 1;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -151,10 +152,8 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
 {
     mca_btl_self_frag_t* frag = (mca_btl_self_frag_t*)des;
 
-    frag->base.des_local        = NULL;
-    frag->base.des_local_count  = 0;
-    frag->base.des_remote       = NULL;
-    frag->base.des_remote_count = 0;
+    frag->base.des_segments        = NULL;
+    frag->base.des_segment_count  = 0;
 
     if(frag->size == mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_RETURN_EAGER(frag);
@@ -175,7 +174,6 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
 struct mca_btl_base_descriptor_t*
 mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
-                          mca_mpool_base_registration_t* registration,
                           struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
@@ -231,42 +229,9 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         *size = max_data;
     }
     frag->base.des_flags = flags;
-    frag->base.des_local       = &frag->segment;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments       = &frag->segment;
+    frag->base.des_segment_count = 1;
 
-    return &frag->base;
-}
-
-/**
- * Prepare data for receive.
- */
-struct mca_btl_base_descriptor_t*
-mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
-                          struct mca_btl_base_endpoint_t* endpoint,
-                          mca_mpool_base_registration_t* registration,
-                          struct opal_convertor_t* convertor,
-                          uint8_t order,
-                          size_t reserve,
-                          size_t* size,
-                          uint32_t flags )
-{
-    mca_btl_self_frag_t* frag;
-    size_t max_data = *size;
-    void *ptr;
-
-    MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag);
-    if(OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    /* setup descriptor to point directly to user buffer */
-    opal_convertor_get_current_pointer( convertor, &ptr );
-    frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
-
-    frag->segment.seg_len = reserve + max_data;
-    frag->base.des_local = &frag->segment;
-    frag->base.des_local_count = 1;
-    frag->base.des_flags = flags;
     return &frag->base;
 }
  
@@ -285,12 +250,6 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     mca_btl_active_message_callback_t* reg;
     int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
-    /**
-     * We have to set the dst before the call to the function and reset them
-     * after.
-     */
-    des->des_remote       = des->des_local;
-    des->des_remote_count = des->des_local_count;
     /* upcall */
     reg = mca_btl_base_active_message_trigger + tag;
     reg->cbfunc( btl, tag, des, reg->cbdata );
@@ -305,100 +264,29 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     return 1;
 }
 
-/**
- * Initiate a put to the peer.
- *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
- */
 
-static int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
-                              struct mca_btl_base_endpoint_t* endpoint,
-                              struct mca_btl_base_descriptor_t* des,
-                              mca_btl_base_segment_t* src, size_t src_cnt,
-                              mca_btl_base_segment_t* dst, size_t dst_cnt)
+static int mca_btl_self_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    unsigned char* src_addr = (unsigned char *)(uintptr_t) src->seg_addr.lval;
-    size_t src_len = src->seg_len;
-    unsigned char* dst_addr = (unsigned char *)(uintptr_t) dst->seg_addr.lval;
-    size_t dst_len = dst->seg_len;
-    int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+    memcpy ((void *)(intptr_t) remote_address, local_address, size);
 
-    while(src_len && dst_len) {
+    cbfunc (btl, endpoint, local_address, NULL, cbcontext, cbdata, OPAL_SUCCESS);
 
-        if(src_len == dst_len) {
-            memcpy(dst_addr, src_addr, src_len);
-
-            /* advance src */
-            if(--src_cnt != 0) {
-                src++;
-                src_addr = (unsigned char*)src->seg_addr.pval;
-                src_len = src->seg_len;
-            } else {
-                src_len = 0;
-            }
-
-            /* advance dst */
-            if(--dst_cnt != 0) {
-                dst++;
-                dst_addr = (unsigned char*)dst->seg_addr.pval;
-                dst_len = dst->seg_len;
-            } else {
-                dst_len = 0;
-            }
-                
-        } else {
-            size_t bytes = src_len < dst_len ? src_len : dst_len;
-            memcpy(dst_addr, src_addr, bytes);
-
-            /* advance src */
-            src_len -= bytes;
-            if(src_len == 0) {
-                if(--src_cnt != 0) {
-                    src++;
-                    src_addr = (unsigned char*)src->seg_addr.pval;
-                    src_len = src->seg_len;
-                }
-            } else {
-                src_addr += bytes;
-            }
-
-            /* advance dst */
-            dst_len -= bytes;
-            if(dst_len == 0) {
-                if(--dst_cnt != 0) {
-                    dst++;
-                    dst_addr = (unsigned char*)src->seg_addr.pval;
-                    dst_len = src->seg_len;
-                }
-            } else {
-                dst_addr += bytes;
-            }
-        }
-    }
-
-    /* rdma completion */
-    des->des_cbfunc( btl, endpoint, des, OPAL_SUCCESS );
-    if( btl_ownership ) {
-        mca_btl_self_free( btl, des );
-    }
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_self_put (struct mca_btl_base_module_t* btl,
-                             struct mca_btl_base_endpoint_t* endpoint,
-                             struct mca_btl_base_descriptor_t* des)
+static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    return mca_btl_self_rdma (btl, endpoint, des, des->des_local, des->des_local_count,
-                              des->des_remote, des->des_remote_count);
-}
+    memcpy (local_address, (void *)(intptr_t) remote_address, size);
 
-static int mca_btl_self_get (struct mca_btl_base_module_t *btl,
-                             struct mca_btl_base_endpoint_t *endpoint,
-                             struct mca_btl_base_descriptor_t *des)
-{
-    return mca_btl_self_rdma (btl, endpoint, des, des->des_remote, des->des_remote_count,
-                              des->des_local, des->des_local_count);
+    cbfunc (btl, endpoint, local_address, NULL, cbcontext, cbdata, OPAL_SUCCESS);
+
+    return OPAL_SUCCESS;
 }
 
 int mca_btl_self_ft_event(int state) {

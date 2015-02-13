@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -122,10 +122,17 @@ recv_seg_constructor(
         mca_btl_usnic_component.transport_header_len);
 
     /* initialize descriptor */
-    seg->rs_desc.USNIC_RECV_LOCAL = &seg->rs_segment;
-    seg->rs_desc.USNIC_RECV_LOCAL_COUNT = 1;
+    /* JMS Initializing RECV_REMOTE for receive frags is unnecessary
+       with BTL 3.0.  The only reason to keep this here would be for
+       compatibility with the BTL 2.0 usnic-v1.8 git branch (i.e.,
+       it's harmless to do this assignment first, before the
+       RECV_LOCAL assignments -- the compiler will likely compile out
+       this dead code, anyway). */
     seg->rs_desc.USNIC_RECV_REMOTE = NULL;
     seg->rs_desc.USNIC_RECV_REMOTE_COUNT = 0;
+
+    seg->rs_desc.USNIC_RECV_LOCAL = &seg->rs_segment;
+    seg->rs_desc.USNIC_RECV_LOCAL_COUNT = 1;
 
     /*
      * This pointer is only correct for incoming segments of type
@@ -144,12 +151,20 @@ send_frag_constructor(opal_btl_usnic_send_frag_t *frag)
 
     /* Fill in source descriptor */
     desc = &frag->sf_base.uf_base;
+
+    /* JMS Initializing SEND_REMOTE for receive frags is unnecessary
+       with BTL 3.0.  The only reason to keep this here would be for
+       compatibility with the BTL 2.0 usnic-v1.8 git branch (i.e.,
+       it's harmless to do this assignment first, before the
+       SEND_LOCAL assignments -- the compiler will likely compile out
+       this dead code, anyway). */
+    desc->USNIC_SEND_REMOTE = frag->sf_base.uf_remote_seg;
+    desc->USNIC_SEND_REMOTE_COUNT = 0;
+
     desc->USNIC_SEND_LOCAL = frag->sf_base.uf_local_seg;
     frag->sf_base.uf_local_seg[0].seg_len = 0;
     frag->sf_base.uf_local_seg[1].seg_len = 0;
     desc->USNIC_SEND_LOCAL_COUNT = 2;
-    desc->USNIC_SEND_REMOTE = frag->sf_base.uf_remote_seg;
-    desc->USNIC_SEND_REMOTE_COUNT = 0;
 
     desc->order = MCA_BTL_NO_ORDER;
     desc->des_flags = 0;

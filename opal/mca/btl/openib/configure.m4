@@ -119,7 +119,6 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
                        [enable openib BTL failover])
     AM_CONDITIONAL([MCA_btl_openib_enable_failover], [test "x$btl_openib_failover_enabled" = "x1"])
 
-
     # Check for __malloc_hook availability
     AC_ARG_ENABLE(btl-openib-malloc-alignment,
     	AC_HELP_STRING([--enable-btl-openib-malloc-alignment], [Enable support for allocated memory alignment. Default: enabled if supported, disabled otherwise.]))

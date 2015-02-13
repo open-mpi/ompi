@@ -15,16 +15,6 @@
 #include "btl_scif.h"
 #include "btl_scif_endpoint.h"
 
-typedef struct mca_btl_scif_segment_t {
-    mca_btl_base_segment_t base;
-
-    /* scif offset */
-    off_t                  scif_offset;
-
-    /* original pointer */
-    uint64_t               orig_ptr;
-} mca_btl_scif_segment_t;
-
 typedef struct mca_btl_scif_frag_hdr_t {
 #if defined(SCIF_USE_SEQ)
     uint32_t seq;
@@ -41,7 +31,7 @@ typedef void (*frag_cb_t) (struct mca_btl_scif_base_frag_t *, int);
 typedef struct mca_btl_scif_base_frag_t {
     mca_btl_base_descriptor_t    base;
     mca_btl_scif_frag_hdr_t      hdr;
-    mca_btl_scif_segment_t       segments[2];
+    mca_btl_base_segment_t       segments[2];
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_scif_reg_t          *registration;
     ompi_free_list_t            *my_list;
@@ -78,9 +68,9 @@ static inline int mca_btl_scif_frag_return (mca_btl_scif_base_frag_t *frag)
         frag->registration = NULL;
     }
 
-    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
-    frag->segments[0].base.seg_len = 0;
-    frag->segments[1].base.seg_len = 0;
+    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
+    frag->segments[0].seg_len = 0;
+    frag->segments[1].seg_len = 0;
 
     OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *) frag);
 

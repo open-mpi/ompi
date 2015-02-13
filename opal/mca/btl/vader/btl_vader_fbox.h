@@ -204,7 +204,7 @@ static inline bool mca_btl_vader_check_fboxes (void)
             /* the 0xff tag indicates we should skip the rest of the buffer */
             if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
                 mca_btl_base_segment_t segment;
-                mca_btl_base_descriptor_t desc = {.des_local = &segment, .des_local_count = 1};
+                mca_btl_base_descriptor_t desc = {.des_segments = &segment, .des_segment_count = 1};
                 const mca_btl_active_message_callback_t *reg =
                     mca_btl_base_active_message_trigger + hdr.data.tag;
 

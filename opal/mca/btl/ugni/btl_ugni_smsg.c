@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -26,7 +26,7 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.smsg_attr.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) base_reg->base;
     mbox->attr.smsg_attr.msg_buffer     = base_reg->base;
     mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
-    mbox->attr.smsg_attr.mem_hndl       = ugni_reg->memory_hdl;
+    mbox->attr.smsg_attr.mem_hndl       = ugni_reg->handle.gni_handle;
     mbox->attr.proc_id = mca_btl_ugni_proc_name_to_id (OPAL_PROC_MY_NAME);
     mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
 }
@@ -106,8 +106,8 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             BTL_VERBOSE(("received smsg fragment. hdr = {len = %u, tag = %d}", len, tag));
 
             reg = mca_btl_base_active_message_trigger + tag;
-            frag.base.des_local       = &seg;
-            frag.base.des_local_count = 1;
+            frag.base.des_segments       = &seg;
+            frag.base.des_segment_count = 1;
 
             seg.seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
             seg.seg_len       = len;

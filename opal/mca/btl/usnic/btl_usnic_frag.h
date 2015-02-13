@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,9 +85,28 @@ usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
 }
 
 
+/*
+ * usnic registration handle (passed over the network to peers as a
+ * cookie).
+ *
+ * Currently, this struct is meaningless (but it must be defined /
+ * exist) because we are emulating RDMA and do not have
+ * btl_register_mem and btl_deregister_mem functions (and we set
+ * module.btl_registration_handle_size to 0, not sizeof(struct
+ * mca_btl_base_registration_handle_t)).
+ */
+struct mca_btl_base_registration_handle_t {
+    /* Maybe we'll need fields like this */
+    uint32_t lkey;
+    uint32_t rkey;
+};
+
+/*
+ * usnic local registration
+ */
 typedef struct opal_btl_usnic_reg_t {
     mca_mpool_base_registration_t base;
-    struct fid_mr *mr;
+    struct fid_mr *ur_mr;
 } opal_btl_usnic_reg_t;
 
 
@@ -145,7 +164,7 @@ typedef struct {
 
 /**
  * Descriptor for a common segment.  This is exactly one packet and may
- * be send or receive
+ * be sent or received.
  */
 typedef struct opal_btl_usnic_segment_t {
     ompi_free_list_item_t us_list;
@@ -221,7 +240,7 @@ typedef struct opal_btl_usnic_frag_t {
     /* fragment descriptor type */
     opal_btl_usnic_frag_type_t uf_type;
 
-    /* utility segments */
+    /* utility segments (just seg_addr/seg_len) */
     mca_btl_base_segment_t uf_local_seg[2];
     mca_btl_base_segment_t uf_remote_seg[1];
 
@@ -566,6 +585,31 @@ opal_btl_usnic_ack_segment_return(
     assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
     OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
+}
+
+/* Compute and set the proper value for sfrag->sf_size.  This must not be used
+ * during usnic_alloc, since the PML might change the segment size after
+ * usnic_alloc returns. */
+static inline void
+opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
+{
+    opal_btl_usnic_frag_t *frag;
+
+    frag = &sfrag->sf_base;
+
+    /* JMS This can be a put or a send, and the buffers are different... */
+#if 0
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT > 0);
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT <= 2);
+
+    /* belt and suspenders: second len should be zero if only one SGE */
+    assert(2 == frag->uf_base.USNIC_SEND_LOCAL_COUNT ||
+        0 == frag->uf_local_seg[1].seg_len);
+#endif
+
+    sfrag->sf_size = 0;
+    sfrag->sf_size += frag->uf_local_seg[0].seg_len;
+    sfrag->sf_size += frag->uf_local_seg[1].seg_len;
 }
 
 END_C_DECLS

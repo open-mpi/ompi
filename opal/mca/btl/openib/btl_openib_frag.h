@@ -349,7 +349,15 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_t);
 
 #define to_recv_frag(f) ((mca_btl_openib_recv_frag_t*)(f))
 
-typedef struct mca_btl_openib_out_frag_t mca_btl_openib_put_frag_t;
+typedef struct mca_btl_openib_put_frag_t {
+    mca_btl_openib_out_frag_t super;
+    struct {
+	mca_btl_base_rdma_completion_fn_t func;
+	mca_btl_base_registration_handle_t *local_handle;
+	void *context;
+	void *data;
+    } cb;
+} mca_btl_openib_put_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_put_frag_t);
 
 #define to_put_frag(f) ((mca_btl_openib_put_frag_t*)(f))
@@ -357,6 +365,12 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_put_frag_t);
 typedef struct mca_btl_openib_get_frag_t {
     mca_btl_openib_in_frag_t super;
     struct ibv_send_wr sr_desc;
+    struct {
+	mca_btl_base_rdma_completion_fn_t func;
+	mca_btl_base_registration_handle_t *local_handle;
+	void *context;
+	void *data;
+    } cb;
 } mca_btl_openib_get_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_get_frag_t);
 

@@ -141,9 +141,12 @@ After the checks above are done, the fragment is enqueued to be sent
 via opal_btl_usnic_endpoint_enqueue_frag()
 
 usnic_put()
-PML will have filled in destination address in descriptor.  This is saved
-and the fragment is enqueued for processing.
-
+Do a fast version of what happens in prepare_src() (can take shortcuts
+because we know it will always be a contiguous buffer / no convertor
+needed).  PML gives us the destination address, which we save on the
+fragment (which is the sentinel value that the underlying engine uses
+to know that this is a PUT and not a SEND), and the fragment is
+enqueued for processing.
 
 opal_btl_usnic_endpoint_enqueue_frag()
 This appends the fragment to the "to be sent" list of the endpoint and
@@ -200,8 +203,6 @@ opal_btl_usnic_recv_fast() called fastpath_ok which is set to false every time
 the fastpath is taken.  A call into the regular progress routine will set this
 flag back to true.
 
-
-
 ======================================
 reliability:
 
@@ -233,7 +234,6 @@ rcvr:
 sender:
 duplicate ACK triggers immediate retrans if one is not pending for that segment
 
-
 ======================================
 Reordering induced by two queues and piggy-backing:
 
@@ -247,6 +247,42 @@ of the large sends.  smalls would have to be paced pretty precisely to
 keep command queue empty enough and also beat out the large sends.
 send credits limit how many larges can be queued on the sender, but there
 could be many on the receiver
+
+
+======================================
+RDMA emulation
+
+We emulate the RDMA PUT because it's more efficient than regular send:
+it allows the receive to copy directly to the target buffer
+(vs. making an intermediate copy out of the bounce buffer).
+
+It would actually be better to morph this PUT into a GET -- GET would
+be slightly more efficient.  In short, when the target requests the
+actual RDMA data, with PUT, the request has to go up to the PML, which
+will then invoke PUT on the source's BTL module.  With GET, the target
+issues the GET, and the source BTL module can reply without needing to
+go up the stack to the PML.
+
+Once we start supporting RDMA in hardware:
+
+- we need to provide module.btl_register_mem and
+  module.btl_deregister_mem functions (see openib for an example)
+- we need to put something meaningful in
+  btl_usnic_frag.h:mca_btl_base_registration_handle_t.
+- we need to set module.btl_registration_handle_size to sizeof(struct
+  mca_btl_base_registration_handle_t).
+- module.btl_put / module.btl_get will receive the
+  mca_btl_base_registration_handle_t from the peer as a cookie.
+
+Also, module.btl_put / module.btl_get do not need to make descriptors
+(this was an optimization added in BTL 3.0).  They are now called with
+enough information to do whatever they need to do.  module.btl_put
+still makes a descriptor and submits it to the usnic sending engine so
+as to utilize a common infrastructure for send and put.
+
+But it doesn't necessarily have to be that way -- we could optimize
+out the use of the descriptors.  Have not investigated how easy/hard
+that would be.
 
 ======================================
 
