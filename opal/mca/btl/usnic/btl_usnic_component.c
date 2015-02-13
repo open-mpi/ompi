@@ -778,7 +778,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             continue;
         }
 
-        ret = module->usnic_fabric_ops->getinfo(fabric, &module->usnic_info);
+        ret =
+            module->usnic_fabric_ops->getinfo(FI_EXT_USNIC_INFO_VERSION,
+                                            fabric,
+                                            &module->usnic_info);
         if (ret != 0) {
             opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: device %s usnic_getinfo failed %d (%s)",
