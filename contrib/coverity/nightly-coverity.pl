@@ -247,12 +247,16 @@ if ($dry_run_arg) {
     verbose "*** Submitting results\n";
     safe_system("curl --form token=$coverity_token_arg " .
                 "--form email=jsquyres\@cisco.com " .
-                "--form file=\@tarball/file/location " .
-                "--form version=\"Version\" " .
-                "--form description=\"Description\" " .
-                "https://scan.coverity.com/builds?project=OpenMPI");
+                "--form file=\@$ompi_ver-analyzed.tar.bz2 " .
+                "--form version=$ompi_ver " .
+                "--form description=nightly-master " .
+                "https://scan.coverity.com/builds?project=OpenMPI",
+                "coverity");
 }
 
 verbose("*** All done\n");
+
+# Chdir out of the tempdir so that it can be removed
 chdir("/");
+
 exit(0);
