@@ -633,12 +633,15 @@ JNIEXPORT jboolean JNICALL Java_shmem_Addr_testLock(
 {
     int r = shmem_test_lock((long*)addr);
 
-    if(r == 0)
+    if (0 == r) {
         return JNI_FALSE;
-    else if(r == 1)
+    } else if (1 == r) {
         return JNI_TRUE;
-    else
-        assert(0);
+    }
+
+    /* Should never get here */
+    opal_output(0, "*** Java lock is neither true nor false; something is very wrong!");
+    abort();
 }
 
 JNIEXPORT void JNICALL Java_shmem_Addr_waitShort(
