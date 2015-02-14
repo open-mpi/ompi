@@ -57,6 +57,8 @@ libfabric_core_headers = \
 	libfabric/include/fi_log.h \
 	libfabric/include/fi_rbuf.h \
 	libfabric/include/prov.h \
+	libfabric/include/linux/osd.h \
+	libfabric/include/osx/osd.h \
 	libfabric/include/rdma/fabric.h \
 	libfabric/include/rdma/fi_atomic.h \
 	libfabric/include/rdma/fi_cm.h \
