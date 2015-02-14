@@ -52,148 +52,29 @@ sub verbose {
 
 # run a command and save the stdout / stderr
 sub safe_system {
-    my ($cmd) = shift;
-    my ($logfilename) = shift;
+    my $allowed_to_fail = shift;
+    my $cmd = shift;
+    my $stdout_file = shift;
 
-    print "*** Running command: $cmd\n" if ($debug_arg);
-    pipe OUTread, OUTwrite;
-
-    # Child
-
-    my $pid;
-    if (($pid = fork()) == 0) {
-        close OUTread;
-
-        close(STDERR);
-        open STDERR, ">&OUTwrite"
-            || die "Can't redirect stderr\n";
-        select STDERR;
-        $| = 1;
-
-        close(STDOUT);
-        open STDOUT, ">&OUTwrite"
-            || die "Can't redirect stdout\n";
-        select STDOUT;
-        $| = 1;
-
-        # Turn shell-quoted words ("foo bar baz") into individual tokens
-
-        my @tokens;
-        while ($cmd =~ /\".*\"/) {
-            my $prefix;
-            my $middle;
-            my $suffix;
-
-            $cmd =~ /(.*?)\"(.*?)\"(.*)/;
-            $prefix = $1;
-            $middle = $2;
-            $suffix = $3;
-
-            if ($prefix) {
-                foreach my $token (split(' ', $prefix)) {
-                    push(@tokens, $token);
-                }
-            }
-            if ($middle) {
-                push(@tokens, $middle);
-            } else {
-                push(@tokens, "");
-            }
-            $cmd = $suffix;
-        }
-        if ($cmd) {
-            push(@tokens, split(' ', $cmd));
-        }
-
-        # Run it!
-
-        exec(@tokens) ||
-            die "Can't execute command: $cmd\n";
+    # Redirect stdout if requested or not verbose
+    if (defined($stdout_file)) {
+        $stdout_file = "$logfile_dir_arg/$stdout_file";
+        unlink($stdout_file);
+        $cmd .= " >$stdout_file";
+    } elsif (!$debug_arg) {
+        $cmd .= " >/dev/null";
     }
-    close OUTwrite;
+    $cmd .= " 2>&1";
 
-    # Parent
-
-    my (@out);
-    my ($rin, $rout);
-    my $done = 1;
-
-    # Keep watching over the pipe(s)
-
-    $rin = '';
-    vec($rin, fileno(OUTread), 1) = 1;
-
-    while ($done > 0) {
-        my $nfound = select($rout = $rin, undef, undef, undef);
-
-        if (vec($rout, fileno(OUTread), 1) == 1) {
-            my $data = <OUTread>;
-            if (!defined($data)) {
-                vec($rin, fileno(OUTread), 1) = 0;
-                --$done;
-            } else {
-                push(@out, $data);
-                print "OUT:$data" if ($debug_arg);
-            }
-        }
-    }
-
-    # The pipes are closed, so the process should be dead.  Reap it.
-
-    waitpid($pid, 0);
-    my $status = $?;
-    print "*** Command complete, exit status: $status\n" if ($debug_arg);
-
-    # Return an anonymous hash containing the relevant data
-
-    my $ret = {
-        stdout_and_stderr => \@out,
-        status => $status
-        };
-
-    # If the command failed, just quit
-    if ($status != 0) {
-        print "*** Command \"$cmd\" exited with non-zero status ($status); exiting\n";
+    my $rc = system($cmd);
+    if (0 != $rc && !$allowed_to_fail) {
+        # If we die/fail, ensure to change out of the temp tree so
+        # that it can be removed upon exit.
         chdir("/");
-        exit($status);
+        die "Command $cmd failed: exit status $rc";
     }
-
-    # If a log filename was given, and we have a logfile dir, then
-    # write logfiles for stdout/stderr.
-    if (defined($logfilename) && defined($logfile_dir_arg)) {
-        my $filename = "$logfile_dir_arg/$logfilename";
-
-        # Exit status
-        open(OUT, ">$filename-status.out") ||
-            die "Can't write to $filename-status.out";
-        print OUT "Exit status: $status\n";
-        close(OUT);
-
-        # Stdout+stderr
-        if ($#out >= 0) {
-            open(OUT, ">$filename-stdout-stderr.out") ||
-                die "Can't write to $filename-stdout-stderr.out";
-            print OUT @out;
-            close(OUT);
-        }
-    }
-
-    # If we failed, just die
-    if ($ret->{status} != 0) {
-        print "=== Failed to $cmd\n";
-        print "=== Last few lines of stdout/stderr:\n";
-        my $i = $#{$ret->{stdout}} - 500;
-        $i = 0
-            if ($i < 0);
-        while ($i <= $#{$ret->{stdout}}) {
-            print $ret->{stdout}[$i];
-            ++$i;
-        }
-        chdir("/");
-        exit(1);
-    }
-
-    return $ret;
+    system("cat $stdout_file")
+        if ($debug_arg && -f $stdout_file);
 }
 
 ######################################################################
@@ -209,8 +90,8 @@ verbose "*** Working in $dir\n";
 # Get the coverity tool, put it in our path
 
 verbose "*** Downloading coverity tool\n";
-safe_system("wget https://scan.coverity.com/download/linux-64 --post-data \"token=$coverity_token_arg\&project=OpenMPI\" -O coverity_tool.tgz");
-safe_system("tar xf coverity_tool.tgz");
+safe_system(0, "wget https://scan.coverity.com/download/linux-64 --post-data \"token=$coverity_token_arg\&project=OpenMPI\" -O coverity_tool.tgz");
+safe_system(0, "tar xf coverity_tool.tgz");
 opendir(my $dh, ".") ||
     die "Can't opendir .";
 my @files = grep { /^cov/ && -d "./$_" } readdir($dh);
@@ -224,34 +105,34 @@ $ENV{PATH} = "$cov_dir:$ENV{PATH}";
 # Expand the OMPI tarball, build it
 
 verbose "*** Extracting OMPI tarball\n";
-safe_system("tar xf $filename_arg");
+safe_system(0, "tar xf $filename_arg");
 my $tarball_filename = basename($filename_arg);
-$tarball_filename =~ m/^(.+)\.tar.+$/;
+$tarball_filename =~ m/^openmpi-(.+)\.tar.+$/;
 my $ompi_ver = $1;
-chdir($ompi_ver);
+chdir("openmpi-$ompi_ver");
 
 verbose "*** Configuring OMPI tarball\n";
-safe_system("./configure $configure_args");
+safe_system(0, "./configure $configure_args", "configure");
 
 verbose "*** Building OMPI tarball\n";
-safe_system("cov-build --dir cov-int make $make_args");
+safe_system(0, "cov-build --dir cov-int make $make_args", "cov-build");
 
 # Tar up the Coverity results
 verbose "*** Tarring up results\n";
-safe_system("tar jcf $ompi_ver-analyzed.tar.bz2 cov-int");
+safe_system(0, "tar jcf $ompi_ver-analyzed.tar.bz2 cov-int");
 
 # If not dry-run, submit to Coverity
 if ($dry_run_arg) {
     verbose "*** Would have submitted, but this is a dry run\n";
 } else {
     verbose "*** Submitting results\n";
-    safe_system("curl --form token=$coverity_token_arg " .
+    safe_system(0, "curl --form token=$coverity_token_arg " .
                 "--form email=jsquyres\@cisco.com " .
                 "--form file=\@$ompi_ver-analyzed.tar.bz2 " .
                 "--form version=$ompi_ver " .
                 "--form description=nightly-master " .
                 "https://scan.coverity.com/builds?project=OpenMPI",
-                "coverity");
+                "coverity-submit");
 }
 
 verbose("*** All done\n");
