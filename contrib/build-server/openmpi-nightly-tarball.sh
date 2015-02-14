@@ -101,9 +101,11 @@ for branch in $branches; do
     echo "=== Done running script"
 
     # Did the script generate a new tarball?  If so, save it so that we can
-    # spawn the coverity checker on it afterwards.
+    # spawn the coverity checker on it afterwards.  Only for this for the
+    # master (for now).
     latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
-    if test "$prev_snapshot" != "$latest_snapshot"; then
+    if test "$prev_snapshot" != "$latest_snapshot" && \
+        test "$branch" = "master"; then
         echo "$outputroot/$branch/openmpi-$latest_snapshot.tar.bz2" >> $pending_coverity
     fi
 
