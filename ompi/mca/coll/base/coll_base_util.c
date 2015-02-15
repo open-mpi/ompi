@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,17 +19,17 @@
  */
 
 #include "ompi_config.h"
-#include "coll_tuned.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_tuned_util.h"
+#include "coll_base_util.h"
 
-int ompi_coll_tuned_sendrecv_nonzero_actual( void* sendbuf, size_t scount, 
+int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount, 
                                              ompi_datatype_t* sdatatype,
                                              int dest, int stag,
                                              void* recvbuf, size_t rcount, 
@@ -91,14 +91,14 @@ int ompi_coll_tuned_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
             *status = statuses[err_index];
         }
         err = statuses[err_index].MPI_ERROR;
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
-                                              " stage of ompi_coll_tuned_sendrecv_zero\n",
+        OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred in the %s"
+                                              " stage of ompi_coll_base_sendrecv_zero\n",
                       __FILE__, line, err, (0 == err_index ? "receive" : "send")));
     } else {
         /* Error discovered during the posting of the irecv or isend,
          * and no status is available.
          */
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
+        OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n",
                       __FILE__, line, err));
         if (MPI_STATUS_IGNORE != status) {
             status->MPI_ERROR = err;

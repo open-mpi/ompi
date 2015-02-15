@@ -18,8 +18,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_COLL_TUNED_UTIL_EXPORT_H
-#define MCA_COLL_TUNED_UTIL_EXPORT_H
+#ifndef MCA_COLL_BASE_UTIL_EXPORT_H
+#define MCA_COLL_BASE_UTIL_EXPORT_H
 
 #include "ompi_config.h"
 
@@ -36,7 +36,7 @@ BEGIN_C_DECLS
  * If one of the communications results in a zero-byte message the
  * communication is ignored, and no message will cross to the peer.
  */
-int ompi_coll_tuned_sendrecv_nonzero_actual( void* sendbuf, size_t scount, 
+int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount, 
                                              ompi_datatype_t* sdatatype,
                                              int dest, int stag,
                                              void* recvbuf, size_t rcount, 
@@ -53,7 +53,7 @@ int ompi_coll_tuned_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
  * communications.
  */
 static inline int
-ompi_coll_tuned_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatype,
+ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatype,
                           int dest, int stag,
                           void* recvbuf, size_t rcount, ompi_datatype_t* rdatatype,
                           int source, int rtag, 
@@ -64,13 +64,13 @@ ompi_coll_tuned_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdataty
         return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
                                           recvbuf, (int32_t) rcount, rdatatype);
     }
-    return ompi_coll_tuned_sendrecv_nonzero_actual (sendbuf, scount, sdatatype, 
+    return ompi_coll_base_sendrecv_nonzero_actual (sendbuf, scount, sdatatype, 
                                             dest, stag, 
                                             recvbuf, rcount, rdatatype,
                                             source, rtag, comm, status);
 }
 
 END_C_DECLS
-#endif /* MCA_COLL_TUNED_UTIL_EXPORT_H */
+#endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
 
 

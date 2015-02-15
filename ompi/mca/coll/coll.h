@@ -470,6 +470,9 @@ struct mca_coll_base_module_2_1_0_t {
         be used for the given communicator */
     mca_coll_base_module_disable_1_1_0_fn_t coll_module_disable;
 
+    /** Data storage for all the algorithms defined in the base. Should
+        not be used by other modules */
+    struct mca_coll_base_comm_t* base_data;
 };
 typedef struct mca_coll_base_module_2_1_0_t mca_coll_base_module_2_1_0_t;
 
