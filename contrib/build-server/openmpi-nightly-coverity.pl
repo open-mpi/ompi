@@ -74,7 +74,7 @@ sub safe_system {
         die "Command $cmd failed: exit status $rc";
     }
     system("cat $stdout_file")
-        if ($debug_arg && -f $stdout_file);
+        if ($debug_arg && defined($stdout_file) && -f $stdout_file);
 }
 
 ######################################################################
