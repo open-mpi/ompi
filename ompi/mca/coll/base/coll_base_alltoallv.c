@@ -36,7 +36,7 @@
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
 
-static int
+int
 mca_coll_base_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, const int *rdisps,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,

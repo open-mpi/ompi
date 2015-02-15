@@ -631,10 +631,10 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
  *  Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_bcast_intra_basic_linear (void *buff, int count,
-                                          struct ompi_datatype_t *datatype, int root,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
+ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
+                                        struct ompi_datatype_t *datatype, int root,
+                                        struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module)
 {
     int i, size, rank, err;
     mca_coll_base_comm_t *data = module->base_data;
