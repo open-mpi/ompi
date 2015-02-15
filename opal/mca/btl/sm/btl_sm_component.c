@@ -741,9 +741,9 @@ mca_btl_sm_component_init(int *num_btls,
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
     uint32_t my_local_rank = UINT32_MAX;
-#if OPAL_BTL_SM_HAVE_KNEM
+#if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
     int rc;
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
+#endif /* OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA */
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
