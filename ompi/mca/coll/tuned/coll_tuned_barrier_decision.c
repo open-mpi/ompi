@@ -98,7 +98,7 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
 
     switch (tuned_module->user_forced[BARRIER].algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed(comm, module);
-    case (1):   return ompi_coll_base_barrier_intra_linear(comm, module);
+    case (1):   return ompi_coll_base_barrier_intra_basic_linear(comm, module);
     case (2):   return ompi_coll_base_barrier_intra_doublering(comm, module);
     case (3):   return ompi_coll_base_barrier_intra_recursivedoubling(comm, module);
     case (4):   return ompi_coll_base_barrier_intra_bruck(comm, module);
@@ -122,7 +122,7 @@ int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
 
     switch (algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed(comm, module);
-    case (1):   return ompi_coll_base_barrier_intra_linear(comm, module);
+    case (1):   return ompi_coll_base_barrier_intra_basic_linear(comm, module);
     case (2):   return ompi_coll_base_barrier_intra_doublering(comm, module);
     case (3):   return ompi_coll_base_barrier_intra_recursivedoubling(comm, module);
     case (4):   return ompi_coll_base_barrier_intra_bruck(comm, module);

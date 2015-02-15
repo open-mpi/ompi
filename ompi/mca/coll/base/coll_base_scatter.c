@@ -194,12 +194,12 @@ ompi_coll_base_scatter_intra_binomial(void *sbuf, int scount,
  */
 int
 ompi_coll_base_scatter_intra_basic_linear(void *sbuf, int scount,
-                                           struct ompi_datatype_t *sdtype,
-                                           void *rbuf, int rcount,
-                                           struct ompi_datatype_t *rdtype,
-                                           int root,
-                                           struct ompi_communicator_t *comm,
-                                           mca_coll_base_module_t *module)
+                                          struct ompi_datatype_t *sdtype,
+                                          void *rbuf, int rcount,
+                                          struct ompi_datatype_t *rdtype,
+                                          int root,
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
 {
     int i, rank, size, err;
     ptrdiff_t lb, incr;

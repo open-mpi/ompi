@@ -593,12 +593,12 @@ int ompi_coll_base_allgatherv_intra_two_procs(void *sbuf, int scount,
  */
 int
 ompi_coll_base_allgatherv_intra_basic_default(void *sbuf, int scount,
-                                               struct ompi_datatype_t *sdtype,
-                                               void *rbuf, int *rcounts,
-                                               int *disps,
-                                               struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm,
-                                               mca_coll_base_module_t *module)
+                                              struct ompi_datatype_t *sdtype,
+                                              void *rbuf, int *rcounts,
+                                              int *disps,
+                                              struct ompi_datatype_t *rdtype,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
 {
     int i, size, rank, err;
     MPI_Aint extent, lb;

@@ -35,11 +35,11 @@
 #include "coll_base_util.h"
 
 /* MPI_IN_PLACE all to all algorithm. TODO: implement a better one. */
-static int
+int
 mca_coll_base_alltoall_intra_basic_inplace(void *rbuf, int rcount,
-                                            struct ompi_datatype_t *rdtype,
-                                            struct ompi_communicator_t *comm,
-                                            mca_coll_base_module_t *module)
+                                           struct ompi_datatype_t *rdtype,
+                                           struct ompi_communicator_t *comm,
+                                           mca_coll_base_module_t *module)
 {
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
@@ -567,11 +567,11 @@ int ompi_coll_base_alltoall_intra_two_procs(void *sbuf, int scount,
 /* copied function (with appropriate renaming) starts here */
 
 int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
-                                                struct ompi_datatype_t *sdtype,
-                                                void* rbuf, int rcount,
-                                                struct ompi_datatype_t *rdtype,
-                                                struct ompi_communicator_t *comm,
-                                                mca_coll_base_module_t *module)
+                                               struct ompi_datatype_t *sdtype,
+                                               void* rbuf, int rcount,
+                                               struct ompi_datatype_t *rdtype,
+                                               struct ompi_communicator_t *comm,
+                                               mca_coll_base_module_t *module)
 {
     int i, rank, size, err, nreqs;
     char *psnd, *prcv;
@@ -592,7 +592,6 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_alltoall_intra_basic_linear rank %d", rank));
-
 
     err = ompi_datatype_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
