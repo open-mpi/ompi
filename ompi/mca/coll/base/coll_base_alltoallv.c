@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -32,29 +32,17 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_tuned.h"
-#include "coll_tuned_topo.h"
-#include "coll_tuned_util.h"
-
-/* alltoallv algorithm variables */
-static int coll_tuned_alltoallv_algorithm_count = 2;
-static int coll_tuned_alltoallv_forced_algorithm = 0;
-
-/* valid values for coll_tuned_alltoallv_forced_algorithm */
-static mca_base_var_enum_value_t alltoallv_algorithms[] = {
-    {0, "ignore"},
-    {1, "basic_linear"},
-    {2, "pairwise"},
-    {0, NULL}
-};
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "coll_base_topo.h"
+#include "coll_base_util.h"
 
 static int
-mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, const int *rdisps,
+mca_coll_base_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, const int *rdisps,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module)
 {
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
     MPI_Request *preq;
     char *tmp_buffer;
@@ -90,7 +78,7 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
             /* Initiate all send/recv to/from others. */
-            preq = tuned_module->tuned_data->mcct_reqs;
+            preq = base_module->base_data->mcct_reqs;
 
             if (i == rank && rcounts[j]) {
                 /* Copy the data into the temporary buffer */
@@ -127,11 +115,8 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
             }
 
             /* Wait for the requests to complete */
-            err = ompi_request_wait_all (2, tuned_module->tuned_data->mcct_reqs, MPI_STATUSES_IGNORE);
+            err = ompi_request_wait_all (2, base_module->base_data->mcct_reqs, MPI_STATUSES_IGNORE);
             if (MPI_SUCCESS != err) { goto error_hndl; }
-
-            /* Free the requests. */
-            mca_coll_tuned_free_reqs(tuned_module->tuned_data->mcct_reqs, 2);
         }
     }
 
@@ -145,7 +130,7 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
 }
 
 int
-ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
+ompi_coll_base_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
                                          struct ompi_datatype_t *sdtype,
                                          void* rbuf, int *rcounts, int *rdisps,
                                          struct ompi_datatype_t *rdtype,
@@ -157,15 +142,15 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     ptrdiff_t sext, rext;
 
     if (MPI_IN_PLACE == sbuf) {
-        return mca_coll_tuned_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
+        return mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
                                                              rdtype, comm, module);
     }
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:alltoallv_intra_pairwise rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:alltoallv_intra_pairwise rank %d", rank));
 
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
@@ -182,34 +167,33 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
         prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
 
         /* send and receive */
-        err = ompi_coll_tuned_sendrecv( psnd, scounts[sendto], sdtype, sendto, 
+        err = ompi_coll_base_sendrecv( psnd, scounts[sendto], sdtype, sendto,
                                         MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        prcv, rcounts[recvfrom], rdtype, recvfrom, 
+                                        prcv, rcounts[recvfrom], rdtype, recvfrom,
                                         MCA_COLL_BASE_TAG_ALLTOALLV,
                                         comm, MPI_STATUS_IGNORE, rank);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     }
 
     return MPI_SUCCESS;
- 
+
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line, 
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line,
                  err, rank, step));
     return err;
 }
 
-/*  
+/**
  * Linear functions are copied from the basic coll module.  For
  * some small number of nodes and/or small data sizes they are just as
- * fast as tuned/tree based segmenting operations and as such may be
+ * fast as base/tree based segmenting operations and as such may be
  * selected by the decision functions.  These are copied into this module
  * due to the way we select modules in V1. i.e. in V2 we will handle this
- * differently and so will not have to duplicate code.  
- * GEF Oct05 after asking Jeff.  
+ * differently and so will not have to duplicate code.
  */
 int
-ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdisps,
+ompi_coll_base_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdisps,
                                             struct ompi_datatype_t *sdtype,
                                             void *rbuf, int *rcounts, int *rdisps,
                                             struct ompi_datatype_t *rdtype,
@@ -220,19 +204,19 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
     char *psnd, *prcv;
     ptrdiff_t sext, rext;
     MPI_Request *preq;
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_comm_t *data = base_module->base_data;
 
     if (MPI_IN_PLACE == sbuf) {
-        return  mca_coll_tuned_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
+        return  mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
                                                               rdtype, comm, module);
     }
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:alltoallv_intra_basic_linear rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:alltoallv_intra_basic_linear rank %d", rank));
 
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
@@ -269,7 +253,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_tuned_free_reqs(data->mcct_reqs, nreqs);
+            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
             return err;
         }
     }
@@ -287,7 +271,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_tuned_free_reqs(data->mcct_reqs, nreqs);
+            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
             return err;
         }
     }
@@ -305,128 +289,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
                                 MPI_STATUSES_IGNORE);
 
     /* Free the requests. */
-    ompi_coll_tuned_free_reqs(data->mcct_reqs, nreqs);
+    ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
 
     return err;
-}
-
-/* 
- * The following are used by dynamic and forced rules.  Publish
- * details of each algorithm and if its forced/fixed/locked in as you add
- * methods/algorithms you must update this and the query/map routines.
- * This routine is called by the component only.  This makes sure that
- * the mca parameters are set to their initial values and perms.
- * Module does not call this.  They call the forced_getvalues routine
- * instead.
- */
-int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t
-                                                      *mca_param_indices)
-{
-    mca_base_var_enum_t *new_enum;
-
-    ompi_coll_tuned_forced_max_algorithms[ALLTOALLV] = coll_tuned_alltoallv_algorithm_count;
-
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "alltoallv_algorithm_count",
-                                           "Number of alltoallv algorithms available",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &coll_tuned_alltoallv_algorithm_count);
-
-    /* MPI_T: This variable should eventually be bound to a communicator */
-    coll_tuned_alltoallv_forced_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_tuned_alltoallv_algorithms", alltoallv_algorithms, &new_enum);
-    mca_param_indices->algorithm_param_index =
-        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                        "alltoallv_algorithm",
-                                        "Which alltoallv algorithm is used. "
-                                        "Can be locked down to choice of: 0 ignore, "
-                                        "1 basic linear, 2 pairwise.",
-                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
-                                        OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
-                                        &coll_tuned_alltoallv_forced_algorithm);
-    OBJ_RELEASE(new_enum);
-    if (mca_param_indices->algorithm_param_index < 0) {
-        return mca_param_indices->algorithm_param_index;
-    }
-    
-    return (MPI_SUCCESS);
-}
-
-
-
-int ompi_coll_tuned_alltoallv_intra_do_forced(void *sbuf, int *scounts, int *sdisps, 
-                                              struct ompi_datatype_t *sdtype,
-                                              void* rbuf, int *rcounts, int *rdisps, 
-                                              struct ompi_datatype_t *rdtype,
-                                              struct ompi_communicator_t *comm,
-                                              mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:alltoallv_intra_do_forced selected algorithm %d",
-                 data->user_forced[ALLTOALLV].algorithm));
-
-    switch (data->user_forced[ALLTOALLV].algorithm) {
-    case (0):   
-        return ompi_coll_tuned_alltoallv_intra_dec_fixed(sbuf, scounts, sdisps, sdtype, 
-                                                         rbuf, rcounts, rdisps, rdtype,
-                                                         comm, module);
-    case (1):
-        return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype,
-                                                            rbuf, rcounts, rdisps, rdtype,      
-                                                            comm, module);
-    case (2): 
-        return ompi_coll_tuned_alltoallv_intra_pairwise(sbuf, scounts, sdisps, sdtype,
-                                                        rbuf, rcounts, rdisps, rdtype,
-                                                        comm, module);
-    default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:alltoallv_intra_do_forced attempt to "
-                     "select algorithm %d when only 0-%d is valid.", 
-                     data->user_forced[ALLTOALLV].algorithm,
-                     ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));
-        return (MPI_ERR_ARG);
-    }
-}
-
-/* If the user selects dynamic rules and specifies the algorithm to
- * use, then this function is called.  */
-int ompi_coll_tuned_alltoallv_intra_do_this(void *sbuf, int *scounts, int *sdisps,
-                                            struct ompi_datatype_t *sdtype,
-                                            void* rbuf, int *rcounts, int *rdisps,
-                                            struct ompi_datatype_t *rdtype,
-                                            struct ompi_communicator_t *comm,
-                                            mca_coll_base_module_t *module,
-                                            int algorithm)
-{
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:alltoallv_intra_do_this selected algorithm %d ",
-                 algorithm));
-
-    switch (algorithm) {
-    case (0):
-        return ompi_coll_tuned_alltoallv_intra_dec_fixed(sbuf, scounts, sdisps, sdtype,
-                                                         rbuf, rcounts, rdisps, rdtype,
-                                                         comm, module);
-    case (1):
-        return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype,
-                                                            rbuf, rcounts, rdisps, rdtype,
-                                                            comm, module);
-    case (2):
-        return ompi_coll_tuned_alltoallv_intra_pairwise(sbuf, scounts, sdisps, sdtype,
-                                                        rbuf, rcounts, rdisps, rdtype,
-                                                        comm, module);
-    default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:alltoall_intra_do_this attempt to select "
-                     "algorithm %d when only 0-%d is valid.", 
-                     algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));
-        return (MPI_ERR_ARG);
-    }
 }

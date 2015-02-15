@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,8 +25,8 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "coll_tuned.h"
-#include "coll_tuned_topo.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "coll_base_topo.h"
 
 /*
  * Some static helpers.
@@ -75,36 +75,36 @@ static int calculate_num_nodes_up_to_level( int fanout, int level )
  */
 
 ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_tree( int fanout,
+ompi_coll_base_topo_build_tree( int fanout,
                                  struct ompi_communicator_t* comm,
                                  int root )
 {
     int rank, size, schild, sparent, shiftedrank, i;
     int level; /* location of my rank in the tree structure of size */
     int delta; /* number of nodes on my level */
-    int slimit; /* total number of nodes on levels above me */ 
+    int slimit; /* total number of nodes on levels above me */
     ompi_coll_tree_t* tree;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:topo_build_tree Building fo %d rt %d", fanout, root));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:topo_build_tree Building fo %d rt %d", fanout, root));
 
     if (fanout<1) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:topo_build_tree invalid fanout %d", fanout));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:topo_build_tree invalid fanout %d", fanout));
         return NULL;
     }
     if (fanout>MAXTREEFANOUT) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo_build_tree invalid fanout %d bigger than max %d", fanout, MAXTREEFANOUT));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo_build_tree invalid fanout %d bigger than max %d", fanout, MAXTREEFANOUT));
         return NULL;
     }
 
-    /* 
-     * Get size and rank of the process in this communicator 
+    /*
+     * Get size and rank of the process in this communicator
      */
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!tree) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo_build_tree PANIC::out of memory"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo_build_tree PANIC::out of memory"));
         return NULL;
     }
 
@@ -115,8 +115,8 @@ ompi_coll_tuned_topo_build_tree( int fanout,
      * Set root
      */
     tree->tree_root = root;
-  
-    /* 
+
+    /*
      * Initialize tree
      */
     tree->tree_fanout   = fanout;
@@ -132,11 +132,11 @@ ompi_coll_tuned_topo_build_tree( int fanout,
     if( size < 2 ) {
         return tree;
     }
-  
+
     /*
-     * Shift all ranks by root, so that the algorithm can be 
+     * Shift all ranks by root, so that the algorithm can be
      * designed as if root would be always 0
-     * shiftedrank should be used in calculating distances 
+     * shiftedrank should be used in calculating distances
      * and position in tree
      */
     shiftedrank = rank - root;
@@ -158,7 +158,7 @@ ompi_coll_tuned_topo_build_tree( int fanout,
             break;
         }
     }
-    
+
     /* find my parent */
     slimit = calculate_num_nodes_up_to_level( fanout, level );
     sparent = shiftedrank;
@@ -170,12 +170,12 @@ ompi_coll_tuned_topo_build_tree( int fanout,
         }
     }
     tree->tree_prev = (sparent+root)%size;
-  
+
     return tree;
 }
 
 /*
- * Constructs in-order binary tree which can be used for non-commutative reduce 
+ * Constructs in-order binary tree which can be used for non-commutative reduce
  * operations.
  * Root of this tree is always rank (size-1) and fanout is 2.
  * Here are some of the examples of this tree:
@@ -189,28 +189,28 @@ ompi_coll_tuned_topo_build_tree( int fanout,
  *                                                        4     0
  */
 ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
+ompi_coll_base_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
 {
     int rank, size, myrank, rightsize, delta, parent, lchild, rchild;
     ompi_coll_tree_t* tree;
 
-    /* 
-     * Get size and rank of the process in this communicator 
+    /*
+     * Get size and rank of the process in this communicator
      */
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!tree) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:topo_build_tree PANIC::out of memory"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:topo_build_tree PANIC::out of memory"));
         return NULL;
     }
 
     tree->tree_root     = MPI_UNDEFINED;
     tree->tree_nextsize = MPI_UNDEFINED;
 
-    /* 
+    /*
      * Initialize tree
      */
     tree->tree_fanout   = 2;
@@ -220,11 +220,11 @@ ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
     tree->tree_nextsize = 0;
     tree->tree_next[0]  = -1;
     tree->tree_next[1]  = -1;
-    OPAL_OUTPUT((ompi_coll_tuned_stream, 
-                 "coll:tuned:topo_build_in_order_tree Building fo %d rt %d", 
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:topo_build_in_order_tree Building fo %d rt %d",
                  tree->tree_fanout, tree->tree_root));
 
-    /* 
+    /*
      * Build the tree
      */
     myrank = rank;
@@ -240,18 +240,18 @@ ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
         rchild = -1;
         if (size - 1 > 0) {
             lchild = parent - 1;
-            if (lchild > 0) { 
+            if (lchild > 0) {
                 rchild = rightsize - 1;
             }
         }
-       
-        /* The following cases are possible: myrank can be 
+
+        /* The following cases are possible: myrank can be
            - a parent,
            - belong to the left subtree, or
            - belong to the right subtee
            Each of the cases need to be handled differently.
         */
-          
+
         if (myrank == parent) {
             /* I am the parent:
                - compute real ranks of my children, and exit the loop. */
@@ -262,7 +262,7 @@ ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
         if (myrank > rchild) {
             /* I belong to the left subtree:
                - If I am the left child, compute real rank of my parent
-               - Iterate down through tree: 
+               - Iterate down through tree:
                compute new size, shift ranks down, and update delta.
             */
             if (myrank == lchild) {
@@ -276,8 +276,8 @@ ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
         } else {
             /* I belong to the right subtree:
                - If I am the right child, compute real rank of my parent
-               - Iterate down through tree:  
-               compute new size and parent, 
+               - Iterate down through tree:
+               compute new size and parent,
                but the delta and rank do not need to change.
             */
             if (myrank == rchild) {
@@ -287,14 +287,14 @@ ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
             parent = rchild;
         }
     }
-    
+
     if (tree->tree_next[0] >= 0) { tree->tree_nextsize = 1; }
     if (tree->tree_next[1] >= 0) { tree->tree_nextsize += 1; }
 
     return tree;
 }
 
-int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
+int ompi_coll_base_topo_destroy_tree( ompi_coll_tree_t** tree )
 {
     ompi_coll_tree_t *ptr;
 
@@ -311,7 +311,7 @@ int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
 }
 
 /*
- * 
+ *
  * Here are some of the examples of this tree:
  * size == 2                   size = 4                 size = 8
  *      0                           0                        0
@@ -323,16 +323,16 @@ int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
  *                                                                7
  */
 ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
+ompi_coll_base_topo_build_bmtree( struct ompi_communicator_t* comm,
                                    int root )
 {
     int childs = 0, rank, size, mask = 1, index, remote, i;
     ompi_coll_tree_t *bmtree;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree rt %d", root));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree rt %d", root));
 
-    /* 
-     * Get size and rank of the process in this communicator 
+    /*
+     * Get size and rank of the process in this communicator
      */
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -341,7 +341,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!bmtree) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree PANIC out of memory"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree PANIC out of memory"));
         return NULL;
     }
 
@@ -372,7 +372,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
         remote += root;
         if( remote >= size ) remote -= size;
         if (childs==MAXTREEFANOUT) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d", MAXTREEFANOUT, childs));
+            OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree max fanout incorrect %d needed %d", MAXTREEFANOUT, childs));
             free(bmtree);
             return NULL;
         }
@@ -388,7 +388,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 /*
  * Constructs in-order binomial tree which can be used for gather/scatter
  * operations.
- * 
+ *
  * Here are some of the examples of this tree:
  * size == 2                   size = 4                 size = 8
  *      0                           0                        0
@@ -400,16 +400,16 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
  *                                                                 7
  */
 ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
+ompi_coll_base_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
                                             int root )
 {
     int childs = 0, rank, vrank, size, mask = 1, remote, i;
     ompi_coll_tree_t *bmtree;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_in_order_bmtree rt %d", root));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_in_order_bmtree rt %d", root));
 
-    /* 
-     * Get size and rank of the process in this communicator 
+    /*
+     * Get size and rank of the process in this communicator
      */
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -418,7 +418,7 @@ ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
 
     bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!bmtree) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree PANIC out of memory"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_bmtree PANIC out of memory"));
         return NULL;
     }
 
@@ -442,8 +442,8 @@ ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
             bmtree->tree_next[childs] = (remote + root) % size;
             childs++;
             if (childs==MAXTREEFANOUT) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,
-                             "coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d",
+                OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                             "coll:base:topo:build_bmtree max fanout incorrect %d needed %d",
                              MAXTREEFANOUT, childs));
                 free (bmtree);
                 return NULL;
@@ -459,36 +459,36 @@ ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
 
 
 ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_chain( int fanout,
+ompi_coll_base_topo_build_chain( int fanout,
                                   struct ompi_communicator_t* comm,
                                   int root )
 {
     int i, maxchainlen, mark, head, len, rank, size, srank /* shifted rank */;
     ompi_coll_tree_t *chain;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain fo %d rt %d", fanout, root));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_chain fo %d rt %d", fanout, root));
 
-    /* 
-     * Get size and rank of the process in this communicator 
+    /*
+     * Get size and rank of the process in this communicator
      */
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     if( fanout < 1 ) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain WARNING invalid fanout of ZERO, forcing to 1 (pipeline)!"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_chain WARNING invalid fanout of ZERO, forcing to 1 (pipeline)!"));
         fanout = 1;
     }
     if (fanout>MAXTREEFANOUT) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain WARNING invalid fanout %d bigger than max %d, forcing to max!", fanout, MAXTREEFANOUT));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_chain WARNING invalid fanout %d bigger than max %d, forcing to max!", fanout, MAXTREEFANOUT));
         fanout = MAXTREEFANOUT;
     }
 
     /*
-     * Allocate space for topology arrays if needed 
+     * Allocate space for topology arrays if needed
      */
     chain = (ompi_coll_tree_t*)malloc( sizeof(ompi_coll_tree_t) );
     if (!chain) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain PANIC out of memory"));
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:topo:build_chain PANIC out of memory"));
         fflush(stdout);
         return NULL;
     }
@@ -496,17 +496,17 @@ ompi_coll_tuned_topo_build_chain( int fanout,
     chain->tree_nextsize = -1;
     for(i=0;i<fanout;i++) chain->tree_next[i] = -1;
 
-    /* 
+    /*
      * Set root & numchain
      */
     chain->tree_root = root;
-    if( (size - 1) < fanout ) { 
+    if( (size - 1) < fanout ) {
         chain->tree_nextsize = size-1;
         fanout = size-1;
     } else {
         chain->tree_nextsize = fanout;
     }
-    
+
     /*
      * Shift ranks
      */
@@ -577,7 +577,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
                 chain->tree_nextsize = 1;
             } else {
                 chain->tree_next[0] = -1;
-                chain->tree_nextsize = 0;    
+                chain->tree_nextsize = 0;
             }
         }
         chain->tree_prev = (chain->tree_prev+root)%size;
@@ -586,7 +586,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
         }
     } else {
         /*
-         * Unshift values 
+         * Unshift values
          */
         chain->tree_prev = -1;
         chain->tree_next[0] = (root+1)%size;
@@ -603,17 +603,62 @@ ompi_coll_tuned_topo_build_chain( int fanout,
     return chain;
 }
 
-int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank)
+int ompi_coll_base_topo_dump_tree (ompi_coll_tree_t* tree, int rank)
 {
     int i;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:topo:topo_dump_tree %1d tree root %d"
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:topo:topo_dump_tree %1d tree root %d"
                  " fanout %d BM %1d nextsize %d prev %d",
                  rank, tree->tree_root, tree->tree_bmtree, tree->tree_fanout,
                  tree->tree_nextsize, tree->tree_prev));
     if( tree->tree_nextsize ) {
         for( i = 0; i < tree->tree_nextsize; i++ )
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"[%1d] %d", i, tree->tree_next[i]));
+            OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"[%1d] %d", i, tree->tree_next[i]));
     }
     return (0);
+}
+
+mca_coll_base_comm_t* ompi_coll_base_topo_construct( mca_coll_base_comm_t* data )
+{
+    if( NULL == data ) {
+        data = (mca_coll_base_comm_t*)calloc(1, sizeof(mca_coll_base_comm_t));
+    }
+    return data;
+}
+
+void ompi_coll_base_topo_destruct( mca_coll_base_comm_t* data )
+{
+    if(NULL == data) return;
+    
+#if OPAL_ENABLE_DEBUG
+    /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
+       the generel c_coll_selected_data */
+    data->mcct_reqs = NULL;
+    data->mcct_num_reqs = 0;
+#endif
+
+    /* free any cached information that has been allocated */
+    if (data->cached_ntree) { /* destroy general tree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_ntree);
+    }
+    if (data->cached_bintree) { /* destroy bintree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_bintree);
+    }
+    if (data->cached_bmtree) { /* destroy bmtree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_bmtree);
+    }
+    if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bmtree);
+    }
+    if (data->cached_chain) { /* destroy general chain if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_chain);
+    }
+    if (data->cached_pipeline) { /* destroy pipeline if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_pipeline);
+    }
+    if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
+        ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bintree);
+    }
+    
+    free(data);
 }
