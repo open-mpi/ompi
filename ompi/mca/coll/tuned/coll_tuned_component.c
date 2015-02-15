@@ -272,56 +272,13 @@ static int tuned_close(void)
 static void
 mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
 {
-    module->tuned_data = NULL;
-}
-
-
-static void
-mca_coll_tuned_module_destruct(mca_coll_tuned_module_t *module)
-{
-    mca_coll_tuned_comm_t *data;
-
-    /* Free the space in the data mpool and the data hanging off the
-       communicator */
-
-    data = module->tuned_data;
-    if (NULL != data) {
-#if OPAL_ENABLE_DEBUG
-        /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
-           the generel c_coll_selected_data */
-        data->mcct_reqs = NULL;
-        data->mcct_num_reqs = 0;
-#endif
-
-        /* free any cached information that has been allocated */
-        if (data->cached_ntree) { /* destroy general tree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_ntree);
-        }
-        if (data->cached_bintree) { /* destroy bintree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_bintree);
-        }
-        if (data->cached_bmtree) { /* destroy bmtree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_bmtree);
-        }
-        if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bmtree);
-        }
-        if (data->cached_chain) { /* destroy general chain if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_chain);
-        }
-        if (data->cached_pipeline) { /* destroy pipeline if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_pipeline);
-        }
-        if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bintree);
-        }
-
-        free(data);
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    
+    for( int i = 0; i < COLLCOUNT; i++ ) {
+        tuned_module->user_forced[i].algorithm = 0;
+        tuned_module->com_rules[i] = NULL;
     }
 }
 
-
-OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t,
-                   mca_coll_base_module_t,
-                   mca_coll_tuned_module_construct,
-                   mca_coll_tuned_module_destruct);
+OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t,
+                   mca_coll_tuned_module_construct, NULL);

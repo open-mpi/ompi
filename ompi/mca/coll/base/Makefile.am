@@ -22,7 +22,8 @@ headers += \
         base/base.h \
         base/coll_tags.h \
         base/coll_base_topo.h \
-        base/coll_base_util.h
+        base/coll_base_util.h \
+        base/coll_base_functions.h
 
 libmca_coll_la_SOURCES += \
         base/coll_base_comm_select.c \
