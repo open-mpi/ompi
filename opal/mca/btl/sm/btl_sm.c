@@ -1006,7 +1006,6 @@ mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base
                                                              void *base, size_t size, uint32_t flags)
 {
     mca_btl_sm_registration_handle_t *handle;
-    mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     ompi_free_list_item_t *item = NULL;
 
     OMPI_FREE_LIST_GET_MT(&mca_btl_sm_component.registration_handles, item);
@@ -1035,7 +1034,7 @@ mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base
             knem_cr.protection |= PROT_WRITE;
         }
 
-       if (OPAL_UNLIKELY(ioctl(sm_btl->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
+       if (OPAL_UNLIKELY(ioctl(((mca_btl_sm_t*)btl)->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
            OMPI_FREE_LIST_RETURN_MT(&mca_btl_sm_component.registration_handles, item);
            return NULL;
         }
@@ -1058,11 +1057,10 @@ int mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_r
 {
     mca_btl_sm_registration_handle_t *sm_handle =
         (mca_btl_sm_registration_handle_t *)((intptr_t) handle - offsetof (mca_btl_sm_registration_handle_t, btl_handle));
-    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
 
 #if OPAL_BTL_SM_HAVE_KNEM
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
-        (void) ioctl(sm_btl->knem_fd, KNEM_CMD_DESTROY_REGION, &handle->data.knem.cookie);
+        (void) ioctl(((mca_btl_sm_t*)btl)->knem_fd, KNEM_CMD_DESTROY_REGION, &handle->data.knem.cookie);
     }
 #endif
 
@@ -1123,7 +1121,7 @@ int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
     if (OPAL_LIKELY(mca_btl_sm_component.use_cma)) {
         struct iovec local, remote;
         pid_t remote_pid;
-        int val;
+        ssize_t val;
 
         remote_pid = remote_handle->data.pid;
         remote.iov_base = (void *) (intptr_t) remote_address;
@@ -1133,14 +1131,14 @@ int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
 
         val = process_vm_readv(remote_pid, &local, 1, &remote, 1, 0);
 
-        if (val != size) {
-            if (val<0) {
-              opal_output(0, "mca_btl_sm_get_sync: process_vm_readv failed: %i",
-                          errno);
+        if (val != (ssize_t)size) {
+            if (val < 0) {
+                opal_output(0, "mca_btl_sm_get_sync: process_vm_readv failed: %i",
+                            errno);
             } else {
-              /* Should never get a short read from process_vm_readv */
-              opal_output(0, "mca_btl_sm_get_sync: process_vm_readv short read: %i",
-                          val);
+                /* Should never get a short read from process_vm_readv */
+                opal_output(0, "mca_btl_sm_get_sync: process_vm_readv short read: %i",
+                            (int)val);
             }
             return OPAL_ERROR;
         }

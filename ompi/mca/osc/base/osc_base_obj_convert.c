@@ -79,7 +79,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
         struct ompi_datatype_t *primitive_datatype = NULL;
         struct iovec iov[OMPI_OSC_BASE_DECODE_MAX];
         uint32_t iov_count;
-        size_t max_data, size, primitive_size;
+        size_t size, primitive_size;
         OPAL_PTRDIFF_TYPE lb, extent;
         bool done;
 
