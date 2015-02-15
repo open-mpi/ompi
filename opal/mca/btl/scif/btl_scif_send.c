@@ -100,7 +100,7 @@ static void mark_buffer (struct mca_btl_base_endpoint_t *endpoint)
 {
     if (endpoint->port_id.node != mca_btl_scif_module.port_id.node) {
         /* force the PCIe bus to flush by reading from the remote node */
-        volatile uint32_t start = endpoint->send_buffer.startp[0];
+        volatile uint32_t start = endpoint->send_buffer.startp[0]; (void)start;
 
         endpoint->send_buffer.endp[0] = endpoint->send_buffer.end;
 
