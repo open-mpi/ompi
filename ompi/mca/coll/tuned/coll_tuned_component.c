@@ -44,7 +44,6 @@ const char *ompi_coll_tuned_component_version_string =
  */
 int   ompi_coll_tuned_stream = -1;
 int   ompi_coll_tuned_priority = 30;
-int   ompi_coll_tuned_preallocate_memory_comm_size_limit = (32 * 1024);
 bool  ompi_coll_tuned_use_dynamic_rules = false;
 char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
@@ -121,16 +120,6 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_priority);
 
-    /* parameter for pre-allocated memory requests etc */
-    ompi_coll_tuned_preallocate_memory_comm_size_limit = (32 * 1024);
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "pre_allocate_memory_comm_size_limit",
-                                           "Size of communicator were we stop pre-allocating memory for the fixed internal buffer used for message requests etc that is hung off the communicator data segment. I.e. if you have a 100'000 nodes you might not want to pre-allocate 200'000 request handle slots per communicator instance!",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_preallocate_memory_comm_size_limit);
-    
     /* some initial guesses at topology parameters */
     ompi_coll_tuned_init_tree_fanout = 4;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
