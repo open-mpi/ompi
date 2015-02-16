@@ -66,6 +66,20 @@ OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t,
 
 
 static void
+coll_base_comm_construct(mca_coll_base_comm_t *data)
+{
+    data->mcct_reqs = NULL;
+    data->mcct_num_reqs = 0;
+    data->cached_ntree = NULL;
+    data->cached_bintree = NULL;
+    data->cached_bmtree = NULL;
+    data->cached_in_order_bmtree = NULL;
+    data->cached_chain = NULL;
+    data->cached_pipeline = NULL;
+    data->cached_in_order_bintree = NULL;
+}
+
+static void
 coll_base_comm_destruct(mca_coll_base_comm_t *data)
 {
     if( NULL != data->mcct_reqs ) {
@@ -104,7 +118,7 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t,
-                   NULL, coll_base_comm_destruct);
+                   coll_base_comm_construct, coll_base_comm_destruct);
 
 ompi_request_t** coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
 {
