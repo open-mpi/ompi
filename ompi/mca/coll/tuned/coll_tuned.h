@@ -28,7 +28,6 @@ BEGIN_C_DECLS
 /* these are the same across all modules and are loaded at component query time */
 extern int   ompi_coll_tuned_stream;
 extern int   ompi_coll_tuned_priority;
-extern int   ompi_coll_tuned_preallocate_memory_comm_size_limit;
 extern bool  ompi_coll_tuned_use_dynamic_rules;
 extern char* ompi_coll_tuned_dynamic_rules_filename;
 extern int   ompi_coll_tuned_init_tree_fanout;
