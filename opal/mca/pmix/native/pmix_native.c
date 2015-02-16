@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -216,10 +216,12 @@ static int native_init(void)
         mca_pmix_native_component.address.sun_family = AF_UNIX;
         uri = opal_argv_split(mca_pmix_native_component.uri, ':');
         if (2 != opal_argv_count(uri)) {
+            opal_argv_free(uri);
             return OPAL_ERROR;
         }
         /* if the rendezvous file doesn't exist, that's an error */
         if (0 != access(uri[1], R_OK)) {
+            opal_argv_free(uri);
             return OPAL_ERR_NOT_FOUND;
         }
         opal_convert_string_to_process_name(&mca_pmix_native_component.server, uri[0]);

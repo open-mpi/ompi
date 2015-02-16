@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -171,6 +171,7 @@ int opal_pmix_base_commit_packed( char** data, int* data_offset,
         if (OPAL_SUCCESS != rc) {
             *pack_key = pkey;
             free(tmp);
+            free(encoded_data);
             return rc;
         }
 
@@ -187,6 +188,7 @@ int opal_pmix_base_commit_packed( char** data, int* data_offset,
     memcpy(tmp+*enc_data_offset, encoded_data, encoded_data_len+1);
     tmp[*enc_data_offset+encoded_data_len+1] = '\0';
     tmp[*enc_data_offset+encoded_data_len] = '-';
+    free(encoded_data);
 
     sprintf (tmp_key, "key%d", pkey);
 
@@ -206,7 +208,6 @@ int opal_pmix_base_commit_packed( char** data, int* data_offset,
     }
 
     pkey++;
-    free(encoded_data);
     free(*data);
     *data = NULL;
     *data_offset = 0;
@@ -272,6 +273,7 @@ int opal_pmix_base_partial_commit_packed( char** data, int* data_offset,
         if (OPAL_SUCCESS != rc) {
             *pack_key = pkey;
             free(tmp);
+            free(encoded_data);
             return rc;
         }
 
@@ -316,6 +318,10 @@ int opal_pmix_base_get_packed(const opal_process_name_t* proc, char **packed_dat
         if (NULL == (pmikey = setup_key(proc, tmp_key, vallen))) {
             rc = OPAL_ERR_OUT_OF_RESOURCE;
             OPAL_ERROR_LOG(rc);
+            free(pmi_tmp);
+            if (NULL != tmp_encoded) {
+                free(tmp_encoded);
+            }
             return rc;
         }
 
