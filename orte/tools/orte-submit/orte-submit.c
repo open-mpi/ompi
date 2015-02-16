@@ -15,6 +15,8 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -566,6 +568,7 @@ int main(int argc, char *argv[])
             exit(rc);
         }
     }
+#if OPAL_HAVE_HWLOC
     if (NULL != myglobals.binding_policy) {
         if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
                                                                      myglobals.binding_policy))) {
@@ -573,6 +576,7 @@ int main(int argc, char *argv[])
             exit(rc);
         }
     }
+#endif /* OPAL_HAVE_HWLOC */
     
     /* if they asked for nolocal, mark it so */
     if (myglobals.nolocal) {
