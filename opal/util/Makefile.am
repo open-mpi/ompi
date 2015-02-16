@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved
 # $COPYRIGHT$
@@ -40,7 +40,6 @@ headers = \
         bit_ops.h \
         cmd_line.h \
         crc.h \
-        convert.h \
         daemon_init.h \
         error.h \
         few.h \
@@ -78,7 +77,6 @@ libopalutil_la_SOURCES = \
         basename.c \
         cmd_line.c \
         crc.c \
-        convert.c \
         daemon_init.c \
         error.c \
         few.c \
