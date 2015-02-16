@@ -638,7 +638,7 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
 {
     int i, size, rank, err;
     mca_coll_base_comm_t *data = module->base_data;
-    ompi_request_t **preq, **reqs = data->mcct_reqs;
+    ompi_request_t **preq, **reqs;
 
 
     size = ompi_comm_size(comm);
@@ -655,8 +655,8 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
     }
 
     /* Root sends data to all others. */
-
-    for (i = 0, preq = reqs; i < size; ++i) {
+    preq = reqs = coll_base_comm_get_reqs(data, size-1);
+    for (i = 0; i < size; ++i) {
         if (i == rank) {
             continue;
         }
@@ -666,6 +666,7 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
                                       MCA_PML_BASE_SEND_STANDARD,
                                       comm, preq++));
         if (MPI_SUCCESS != err) {
+            ompi_coll_base_free_reqs(data->mcct_reqs, i);
             return err;
         }
     }

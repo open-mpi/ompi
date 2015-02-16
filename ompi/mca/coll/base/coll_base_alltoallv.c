@@ -78,7 +78,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, cons
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
             /* Initiate all send/recv to/from others. */
-            preq = base_module->base_data->mcct_reqs;
+            preq = coll_base_comm_get_reqs(base_module->base_data, 2);
 
             if (i == rank && rcounts[j]) {
                 /* Copy the data into the temporary buffer */
@@ -239,7 +239,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdisp
 
     /* Now, initiate all send/recv to/from others. */
     nreqs = 0;
-    preq = data->mcct_reqs;
+    preq = coll_base_comm_get_reqs(data, 2 * size);
 
     /* Post all receives first */
     for (i = 0; i < size; ++i) {

@@ -206,9 +206,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
         return OMPI_ERROR;
     }
     if( size <= ompi_coll_tuned_preallocate_memory_comm_size_limit ) {
-        data->mcct_num_reqs = size * 2;
-        data->mcct_reqs = (ompi_request_t**)malloc(sizeof(ompi_request_t*) * data->mcct_num_reqs);
-        if (NULL == data->mcct_reqs) {
+        if (NULL == coll_base_comm_get_reqs(data, size * 2)) {
             OBJ_RELEASE(data);
             return OMPI_ERROR;
         }
