@@ -159,6 +159,9 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
                     opal_argv_free(ranges);
                     opal_argv_free(range);
+                    hwloc_bitmap_free(avail);
+                    hwloc_bitmap_free(res);
+                    hwloc_bitmap_free(pucpus);
                     return OPAL_ERR_SILENT;
                 }
                 hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
@@ -174,6 +177,8 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         opal_argv_free(ranges);
                         opal_argv_free(range);
                         hwloc_bitmap_free(avail);
+                        hwloc_bitmap_free(res);
+                        hwloc_bitmap_free(pucpus);
                         return OPAL_ERR_SILENT;
                     }
                     hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
@@ -182,6 +187,11 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 }
                 break;
             default:
+                hwloc_bitmap_free(avail);
+                hwloc_bitmap_free(res);
+                hwloc_bitmap_free(pucpus);
+                opal_argv_free(ranges);
+                opal_argv_free(range);
                 return OPAL_ERR_BAD_PARAM;
             }
             opal_argv_free(range);
@@ -1147,6 +1157,9 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                     if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                                   core_id, OPAL_HWLOC_AVAILABLE,
                                                   &idx, NULL))) {
+                        opal_argv_free(list);
+                        opal_argv_free(range);
+                        opal_argv_free(socket_core);
                         return OPAL_ERR_NOT_FOUND;
                     }
                     /* get the cpus */
@@ -1168,6 +1181,8 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                     if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                                   core_id, OPAL_HWLOC_AVAILABLE,
                                                   &idx, NULL))) {
+                        opal_argv_free(range);
+                        opal_argv_free(socket_core);
                         return OPAL_ERR_NOT_FOUND;
                     }
                     /* get the cpus */
@@ -1289,6 +1304,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                             opal_argv_free(range);
                             opal_argv_free(item);
                             opal_argv_free(rngs);
+                            opal_argv_free(list);
                             return OPAL_ERR_SILENT;
                         }
                         /* get the available cpus for that object */
@@ -1324,6 +1340,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                     return OPAL_ERROR;
                 }
             }
+            opal_argv_free(range);
             opal_argv_free(rngs);
         }
     }
