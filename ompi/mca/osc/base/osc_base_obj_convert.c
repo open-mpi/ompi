@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,11 +109,6 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
         OBJ_CONSTRUCT(&convertor, opal_convertor_t);
         opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor, &datatype->super,
                                                  count, outbuf, 0, &convertor);
-
-        MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                      &convertor.convertor);
-        );
 
         do {
             iov_count = OMPI_OSC_BASE_DECODE_MAX;
