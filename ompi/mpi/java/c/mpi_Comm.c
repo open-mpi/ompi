@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -146,7 +148,8 @@ static void getNeighbors(JNIEnv *env, MPI_Comm comm, int *out, int *in)
             rc = MPI_Dist_graph_neighbors_count(comm, in, out, &weighted);
             break;
         default:
-            assert(0);
+            rc = MPI_ERR_TOPOLOGY;
+            break;
     }
 
     ompi_java_exceptionCheck(env, rc);
@@ -1072,7 +1075,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
     int rootOrInter = rank == root || inter;
 
     void *sPtr = NULL, *rPtr;
-    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_buffer_t *sItem, *rItem = NULL;
     MPI_Datatype rType;
 
     if(rjType == 0)
@@ -1120,7 +1123,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
                                   sOff, sCount, sType, sBType);
     }
 
-    if(rBuf != NULL)
+    if(rItem != NULL && rBuf != NULL)
     {
         ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
                                   rOff, rCount, rType, rBType);
@@ -1189,7 +1192,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
     int size = rootOrInter ? getSize(env, comm, inter) : 0;
 
     void *sPtr = NULL, *rPtr;
-    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_buffer_t *sItem, *rItem = NULL;
     MPI_Datatype rType;
 
     if(rjType == 0)
@@ -1223,7 +1226,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
 
     ompi_java_exceptionCheck(env, rc);
 
-    if(rBuf != NULL)
+    if(rItem != NULL && rBuf != NULL)
     {
         ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
                                   rOff, rCount, rType, rBType);
