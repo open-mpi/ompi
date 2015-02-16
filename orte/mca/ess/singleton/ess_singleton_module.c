@@ -12,6 +12,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -223,12 +225,14 @@ static int rte_init(void)
                                             orte_process_info.nodename, OPAL_STRING))) {
         return rc;
     }
+#if OPAL_HAVE_HWLOC
     /* store our cpuset */
     if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
                                             OPAL_SCOPE_GLOBAL, OPAL_DB_CPUSET,
                                             orte_process_info.cpuset, OPAL_STRING))) {
         return rc;
     }
+#endif /* OPAL_HAVE_HWLOC */
     /* store our local rank */
     if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
                                             OPAL_SCOPE_GLOBAL, ORTE_DB_LOCALRANK,
