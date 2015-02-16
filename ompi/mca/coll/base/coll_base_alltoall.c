@@ -72,7 +72,7 @@ mca_coll_base_alltoall_intra_basic_inplace(void *rbuf, int rcount,
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
             /* Initiate all send/recv to/from others. */
-            preq = base_module->base_data->mcct_reqs;
+            preq = coll_base_comm_get_reqs(base_module->base_data, size * 2);
 
             if (i == rank) {
                 /* Copy the data into the temporary buffer */
@@ -188,15 +188,11 @@ int ompi_coll_base_alltoall_intra_bruck(void *sbuf, int scount,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int i, k, line = -1, rank, size, err = 0, weallocated = 0;
+    int i, k, line = -1, rank, size, err = 0;
     int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
     ptrdiff_t rlb, slb, tlb, sext, rext, tsext;
     struct ompi_datatype_t *new_ddt;
-#ifdef blahblah
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
-    mca_coll_base_comm_t *data = base_module->base_data;
-#endif
 
     if (MPI_IN_PLACE == sbuf) {
         return mca_coll_base_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
@@ -219,25 +215,10 @@ int ompi_coll_base_alltoall_intra_bruck(void *sbuf, int scount,
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
 
-#ifdef blahblah
-    /* try and SAVE memory by using the data segment hung off
-       the communicator if possible */
-    if (data->mcct_num_reqs >= size) {
-        /* we have enought preallocated for displments and lengths */
-        displs = (int*) data->mcct_reqs;
-        blen = (int *) (displs + size);
-        weallocated = 0;
-    }
-    else { /* allocate the buffers ourself */
-#endif
-        displs = (int *) malloc(size * sizeof(int));
-        if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-        blen = (int *) malloc(size * sizeof(int));
-        if (blen == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-        weallocated = 1;
-#ifdef blahblah
-    }
-#endif
+    displs = (int *) malloc(size * sizeof(int));
+    if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
+    blen = (int *) malloc(size * sizeof(int));
+    if (blen == NULL) { line = __LINE__; err = -1; goto err_hndl; }
 
     /* tmp buffer allocation for message data */
     tmpbuf_free = (char *) malloc(tsext + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sext);
@@ -312,10 +293,8 @@ int ompi_coll_base_alltoall_intra_bruck(void *sbuf, int scount,
 
     /* Step 4 - clean up */
     if (tmpbuf != NULL) free(tmpbuf_free);
-    if (weallocated) {
-        if (displs != NULL) free(displs);
-        if (blen != NULL) free(blen);
-    }
+    if (displs != NULL) free(displs);
+    if (blen != NULL) free(blen);
     return OMPI_SUCCESS;
 
  err_hndl:
@@ -623,7 +602,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
 
-    req = rreq = data->mcct_reqs;
+    req = rreq = coll_base_comm_get_reqs(data, (size - 1) * 2);
     sreq = rreq + size - 1;
 
     prcv = (char *) rbuf;
@@ -638,7 +617,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
                          (prcv + (ptrdiff_t)i * rcvinc, rcount, rdtype, i,
                           MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, rreq - req);
+            ompi_coll_base_free_reqs(req, nreqs);
             return err;
         }
     }
@@ -655,12 +634,11 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
                           MCA_COLL_BASE_TAG_ALLTOALL,
                           MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, sreq - req);
+            ompi_coll_base_free_reqs(req, nreqs);
             return err;
         }
     }
 
-    nreqs = (size - 1) * 2;
     /* Start your engines.  This will never return an error. */
 
     MCA_PML_CALL(start(nreqs, req));
