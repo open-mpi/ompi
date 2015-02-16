@@ -205,12 +205,6 @@ tuned_module_enable( mca_coll_base_module_t *module,
     if (NULL == data) {
         return OMPI_ERROR;
     }
-    if( size <= ompi_coll_tuned_preallocate_memory_comm_size_limit ) {
-        if (NULL == coll_base_comm_get_reqs(data, size * 2)) {
-            OBJ_RELEASE(data);
-            return OMPI_ERROR;
-        }
-    }
 
     if (ompi_coll_tuned_use_dynamic_rules) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
