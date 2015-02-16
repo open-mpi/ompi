@@ -603,7 +603,6 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
     /* Initiate all send/recv to/from others. */
 
     req = rreq = coll_base_comm_get_reqs(data, (size - 1) * 2);
-    sreq = rreq + size - 1;
 
     prcv = (char *) rbuf;
     psnd = (char *) sbuf;
@@ -612,10 +611,9 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     for (nreqs = 0, i = (rank + 1) % size; i != rank;
          i = (i + 1) % size, ++rreq, ++nreqs) {
-        err =
-            MCA_PML_CALL(irecv_init
-                         (prcv + (ptrdiff_t)i * rcvinc, rcount, rdtype, i,
-                          MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+        err = MCA_PML_CALL(irecv_init
+                           (prcv + (ptrdiff_t)i * rcvinc, rcount, rdtype, i,
+                           MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (MPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(req, nreqs);
             return err;
@@ -626,13 +624,13 @@ int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
        - We would like to minimize the search time through message queue
          when messages actually arrive in the order in which they were posted.
      */
-    for (nreqs = 0, i = (rank + size - 1) % size; i != rank;
+    sreq = rreq;
+    for (i = (rank + size - 1) % size; i != rank;
          i = (i + size - 1) % size, ++sreq, ++nreqs) {
-        err =
-            MCA_PML_CALL(isend_init
-                         (psnd + (ptrdiff_t)i * sndinc, scount, sdtype, i,
-                          MCA_COLL_BASE_TAG_ALLTOALL,
-                          MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+        err = MCA_PML_CALL(isend_init
+                           (psnd + (ptrdiff_t)i * sndinc, scount, sdtype, i,
+                           MCA_COLL_BASE_TAG_ALLTOALL,
+                           MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (MPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(req, nreqs);
             return err;
