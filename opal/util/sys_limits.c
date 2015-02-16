@@ -213,6 +213,8 @@ int opal_util_init_sys_limits(char **errmsg)
             *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-unrecognized", true, lim[0], setlim);
             goto out;
         }
+        opal_argv_free(lim);
+        lim = NULL;
     }
 
     /* indicate we initialized the limits structure */
@@ -221,9 +223,6 @@ int opal_util_init_sys_limits(char **errmsg)
     rc = OPAL_SUCCESS;
 
 out:
-    if (NULL != lim) {
-        opal_argv_free(lim);
-    }
     if (NULL != lims) {
         opal_argv_free(lims);
     }
