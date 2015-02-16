@@ -78,7 +78,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
     /* NOTE: hwloc defines topology_t as a pointer to a struct! */
     hwloc_topology_t t, *tarray  = (hwloc_topology_t*)dest;
     int rc=OPAL_SUCCESS, i, cnt, j;
-    char *xmlbuffer=NULL;
+    char *xmlbuffer;
     struct hwloc_topology_support *support;
 
     for (i=0, j=0; i < *num_vals; i++) {
@@ -91,6 +91,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         /* convert the xml */
         if (0 != hwloc_topology_init(&t)) {
             rc = OPAL_ERROR;
+            free(xmlbuffer);
             goto cleanup;
         }
         if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer))) {
@@ -99,24 +100,20 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
             hwloc_topology_destroy(t);
             goto cleanup;
         }
+        free(xmlbuffer);
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
          */
         if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) {
-            free(xmlbuffer);
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
             goto cleanup;
         }
         /* now load the topology */
         if (0 != hwloc_topology_load(t)) {
-            free(xmlbuffer);
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
             goto cleanup;
-        }
-        if (NULL != xmlbuffer) {
-            free(xmlbuffer);
         }
 
         /* get the available support - hwloc unfortunately does

@@ -13,6 +13,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1650,6 +1652,7 @@ static char *bitmap2rangestr(int bitmap)
                 /* A range just ended; output it */
                 if (!first) {
                     strncat(ret, ",", sizeof(ret) - strlen(ret) - 1);
+                } else {
                     first = false;
                 }
 
@@ -1801,13 +1804,14 @@ int opal_hwloc_base_cset2str(char *str, int len,
     root = hwloc_get_root_obj(topo);
     if (NULL == root->userdata) {
         opal_hwloc_base_filter_cpus(topo);
-    }
-    sum = (opal_hwloc_topo_data_t*)root->userdata;
-    if (NULL == sum->available) {
-       return OPAL_ERROR;
-    }
-    if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-        return OPAL_ERR_NOT_BOUND;
+    } else {
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        if (NULL == sum->available) {
+           return OPAL_ERROR;
+        }
+        if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+            return OPAL_ERR_NOT_BOUND;
+        }
     }
 
     if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map, topo))) {
@@ -1867,13 +1871,14 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
     root = hwloc_get_root_obj(topo);
     if (NULL == root->userdata) {
         opal_hwloc_base_filter_cpus(topo);
-    }
-    sum = (opal_hwloc_topo_data_t*)root->userdata;
-    if (NULL == sum->available) {
-       return OPAL_ERROR;
-    }
-    if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-        return OPAL_ERR_NOT_BOUND;
+    } else {
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        if (NULL == sum->available) {
+           return OPAL_ERROR;
+        }
+        if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+            return OPAL_ERR_NOT_BOUND;
+        }
     }
 
     /* Iterate over all existing sockets */
@@ -2008,15 +2013,15 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
     }
 }
 
-static int find_devices(hwloc_topology_t topo, char* device_name) 
+static int find_devices(hwloc_topology_t topo, char** device_name) 
 {
     hwloc_obj_t device_obj = NULL;
     int count = 0;
     for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
         if (device_obj->attr->osdev.type == HWLOC_OBJ_OSDEV_OPENFABRICS) {
             count++;
-            free(device_name);
-            device_name = strdup(device_obj->name);
+            free(*device_name);
+            *device_name = strdup(device_obj->name);
         }
     }
     return count;
@@ -2054,10 +2059,10 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                     /* don't already know it - go get it */
                     /* firstly we check if we need to autodetect OpenFabrics  devices or we have the specified one */
                     if (!strcmp(device_name, "auto")) {
-                        count = find_devices(topo, device_name);
-                       if (count > 1) {
-                           return count;
-                       }
+                        count = find_devices(topo, &device_name);
+                        if (count > 1) {
+                            return count;
+                        }
                     }
                     if (!device_name || (strlen(device_name) == 0)) {
                         return OPAL_ERR_NOT_FOUND;
