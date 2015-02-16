@@ -11,6 +11,8 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -125,7 +127,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
 
         MEMCHECKER(
             memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                      &convertor.convertor);
+                                      &convertor);
         );
 
         opal_convertor_cleanup (&convertor);
