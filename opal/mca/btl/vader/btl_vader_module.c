@@ -15,7 +15,7 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -86,10 +86,14 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* generate the endpoints */
     component->endpoints = (struct mca_btl_base_endpoint_t *) calloc (n + 1, sizeof (struct mca_btl_base_endpoint_t));
+    if (NULL == component->endpoints) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     component->endpoints[n].peer_smp_rank = -1;
-    component->fbox_in_endpoints = calloc (n + 1, sizeof (void *));
 
-    if (NULL == component->endpoints || NULL == component->fbox_in_endpoints) {
+    component->fbox_in_endpoints = calloc (n + 1, sizeof (void *));
+    if (NULL == component->fbox_in_endpoints) {
+        free(component->endpoints);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
