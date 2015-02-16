@@ -90,7 +90,7 @@ verbose "*** Working in $dir\n";
 # Get the coverity tool, put it in our path
 
 verbose "*** Downloading coverity tool\n";
-safe_system(0, "wget https://scan.coverity.com/download/linux-64 --post-data \"token=$coverity_token_arg\&project=OpenMPI\" -O coverity_tool.tgz");
+safe_system(0, "wget https://scan.coverity.com/download/linux-64 --post-data \"token=$coverity_token_arg\&project=Open+MPI\" -O coverity_tool.tgz");
 safe_system(0, "tar xf coverity_tool.tgz");
 opendir(my $dh, ".") ||
     die "Can't opendir .";
@@ -131,7 +131,7 @@ if ($dry_run_arg) {
                 "--form file=\@$ompi_ver-analyzed.tar.bz2 " .
                 "--form version=$ompi_ver " .
                 "--form description=nightly-master " .
-                "https://scan.coverity.com/builds?project=OpenMPI",
+                "https://scan.coverity.com/builds?project=Open+MPI",
                 "coverity-submit");
 }
 
