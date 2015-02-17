@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -12,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,16 +71,16 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
     mca_btl_base_descriptor_t *des = NULL;
     mca_pml_ob1_match_hdr_t match;
     mca_bml_base_btl_t *bml_btl;
-    OPAL_PTRDIFF_TYPE lb, extent;
     opal_convertor_t convertor;
-    size_t size = 0;
+    size_t size;
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+    if( NULL == bml_btl->btl->btl_sendi)
+        return OMPI_ERR_NOT_AVAILABLE;
 
-    ompi_datatype_get_extent (datatype, &lb, &extent);
-
-    if (OPAL_UNLIKELY((extent * count) > 256 || !bml_btl->btl->btl_sendi)) {
+    ompi_datatype_type_size (datatype, &size);
+    if ((size * count) > 256) {  /* some random number */
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
@@ -90,8 +92,10 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         /* remote architecture and prepared with the datatype.   */
         opal_convertor_copy_and_prepare_for_send (dst_proc->proc_convertor,
                                                   (const struct opal_datatype_t *) datatype,
-						  count, buf, 0, &convertor);
+                                                  count, buf, 0, &convertor);
         opal_convertor_get_packed_size (&convertor, &size);
+    } else {
+        size = 0;
     }
 
     match.hdr_common.hdr_flags = 0;
