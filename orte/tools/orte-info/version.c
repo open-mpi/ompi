@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -275,14 +277,12 @@ static void show_mca_version(const mca_base_component_t* component,
             asprintf(&tmp, "%s)", content);
             free(content);
         } else {
-            tmp = NULL;
+            asprintf(&tmp, ")");
         }
         
         orte_info_out(message, NULL, tmp);
         free(message);
-        if (NULL != tmp) {
-            free(tmp);
-        }
+        free(tmp);
         
     } else {
         asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
