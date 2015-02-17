@@ -218,13 +218,6 @@ lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_SOURCES = $(headers) $(source
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_CPPFLAGS = $(cppflags)
 lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_LIBADD = $(libadd)
 
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-opaldir = $(opalincludedir)/$(subdir)
-opal_HEADERS = $(headers)
-endif
-
 # These two rules will sym link the "noinst" libtool library filename
 # to the installable libtool library filename in the case where we are
 # compiling this component statically (case 2), described above).
