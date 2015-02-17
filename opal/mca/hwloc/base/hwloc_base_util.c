@@ -2078,6 +2078,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                     if (!strcmp(device_name, "auto")) {
                         count = find_devices(topo, &device_name);
                         if (count > 1) {
+                            free(device_name);
                             return count;
                         }
                     }
