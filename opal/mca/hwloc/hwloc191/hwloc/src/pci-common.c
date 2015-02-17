@@ -32,14 +32,6 @@ hwloc_pci_traverse_print_cb(void * cbdata __hwloc_attribute_unused,
 }
 
 static void
-hwloc_pci_traverse_setbridgedepth_cb(void * cbdata __hwloc_attribute_unused,
-				     struct hwloc_obj *pcidev, int depth)
-{
-  if (pcidev->type == HWLOC_OBJ_BRIDGE)
-    pcidev->attr->bridge.depth = depth;
-}
-
-static void
 hwloc_pci_traverse_lookuposdevices_cb(void * cbdata,
 				      struct hwloc_obj *pcidev, int depth __hwloc_attribute_unused)
 {
@@ -305,8 +297,7 @@ hwloc_insert_pci_device_list(struct hwloc_backend *backend,
   hwloc_debug("%s", "\nPCI hierarchy under fake parent:\n");
   hwloc_pci_traverse(NULL, &fakeparent, hwloc_pci_traverse_print_cb);
 
-  /* walk the hierarchy, set bridge depth and lookup OS devices */
-  hwloc_pci_traverse(NULL, &fakeparent, hwloc_pci_traverse_setbridgedepth_cb);
+  /* walk the hierarchy, and lookup OS devices */
   hwloc_pci_traverse(backend, &fakeparent, hwloc_pci_traverse_lookuposdevices_cb);
 
   /*

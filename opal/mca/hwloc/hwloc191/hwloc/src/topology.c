@@ -1984,6 +1984,8 @@ hwloc_propagate_bridge_depth(hwloc_topology_t topology, hwloc_obj_t root, unsign
     if (child->type == HWLOC_OBJ_BRIDGE) {
       child->attr->bridge.depth = depth;
       hwloc_propagate_bridge_depth(topology, child, depth+1);
+    } else if (!hwloc_obj_type_is_io(child->type)) {
+      hwloc_propagate_bridge_depth(topology, child, 0);
     }
     child = child->next_sibling;
   }
