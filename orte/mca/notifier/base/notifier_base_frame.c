@@ -51,13 +51,10 @@
  */
 opal_list_t orte_notifier_base_components_available;
 
-orte_notifier_base_API_module_t orte_notifier = {
-    orte_notifier_base_log
-};
-
 orte_notifier_base_t orte_notifier_base;
 
 static char *notifier_severity = NULL;
+static bool use_progress_thread = false;
 
 /**
  * Function for selecting a set of components from all those that are
@@ -70,6 +67,13 @@ static char *notifier_severity = NULL;
  */
 static int orte_notifier_base_register(mca_base_register_flag_t flags)
 {
+    (void) mca_base_var_register("orte", "notifier", "base", "use_progress_thread",
+                                 "Use a dedicated progress thread for notifications [default: false]",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &use_progress_thread);
+
     /* let the user define a base level of severity to report */
     (void) mca_base_var_register("orte", "notifier", "base", "severity_level",
                                  "Report all events at or above this severity [default: error]",
@@ -187,25 +191,19 @@ static int orte_notifier_base_register(mca_base_register_flag_t flags)
 static int orte_notifier_base_close(void)
 {
     orte_notifier_active_module_t *i_module;
-    int i;
 
-    for (i = 0; i < orte_notifier_base.modules.size; i++) {
-        if (NULL == (i_module = (orte_notifier_active_module_t*) 
-                     opal_pointer_array_get_item(&orte_notifier_base.modules, 
-                     i))) {
-            continue;
-        }
-        if (NULL != i_module->module->finalize) {
-            i_module->module->finalize();
-        }
-    }
-    OBJ_DESTRUCT(&orte_notifier_base.modules);
-    
     if (orte_notifier_base.ev_base_active) {
         orte_notifier_base.ev_base_active = false;
         opal_stop_progress_thread("notifier", true);
     }
 
+    OPAL_LIST_FOREACH(i_module, &orte_notifier_base.modules, orte_notifier_active_module_t) {
+        if (NULL != i_module->module->finalize) {
+            i_module->module->finalize();
+        }
+    }
+    OPAL_LIST_DESTRUCT(&orte_notifier_base.modules);
+    
     /* close all remaining available components */
     return mca_base_framework_components_close(&orte_notifier_base_framework, NULL);
 }
@@ -217,15 +215,18 @@ static int orte_notifier_base_close(void)
 static int orte_notifier_base_open(mca_base_open_flag_t flags)
 {
     /* construct the array of modules */
-    OBJ_CONSTRUCT(&orte_notifier_base.modules, opal_pointer_array_t);
-    opal_pointer_array_init (&orte_notifier_base.modules, 3, INT_MAX, 1);
+    OBJ_CONSTRUCT(&orte_notifier_base.modules, opal_list_t);
 
-    /* create our own event base */
-    orte_notifier_base.ev_base_active = true;
-    if (NULL == (orte_notifier_base.ev_base = 
-            opal_start_progress_thread("notifier", true))) {
-        orte_notifier_base.ev_base_active = false;
-        return ORTE_ERROR;
+    /* if requested, create our own event base */
+    if (use_progress_thread) {
+        orte_notifier_base.ev_base_active = true;
+        if (NULL == (orte_notifier_base.ev_base = 
+                     opal_start_progress_thread("notifier", true))) {
+            orte_notifier_base.ev_base_active = false;
+            return ORTE_ERROR;
+        }
+    } else {
+        orte_notifier_base.ev_base = orte_event_base;
     }
 
     /* Open up all available components */
@@ -239,16 +240,22 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, notifier, "ORTE Notifier Framework",
                            mca_notifier_base_static_components, 0);
 
 
-static void cons (orte_notifier_active_module_t *t)
-{
-}
 OBJ_CLASS_INSTANCE (orte_notifier_active_module_t,
-                    opal_object_t,
-                    cons, NULL);
+                    opal_list_item_t,
+                    NULL, NULL);
 
-static void req_cons (orte_notifier_request_t *t)
+static void req_cons (orte_notifier_request_t *r)
 {
+    r->jdata = NULL;
+    r->msg = NULL;
+    r->t = 0;
+}
+static void req_des(orte_notifier_request_t *r)
+{
+    if (NULL != r->jdata) {
+        OBJ_RELEASE(r->jdata);
+    }
 }
 OBJ_CLASS_INSTANCE (orte_notifier_request_t,
                     opal_object_t,
-                    req_cons, NULL);
+                    req_cons, req_des);

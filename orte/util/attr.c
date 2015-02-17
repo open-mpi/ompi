@@ -249,6 +249,12 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-PHYSICAL-CPUIDS";
         case ORTE_JOB_LAUNCHED_DAEMONS:
             return "JOB-LAUNCHED-DAEMONS";
+        case ORTE_JOB_REPORT_BINDINGS:
+            return "JOB-REPORT-BINDINGS";
+        case ORTE_JOB_SLOT_LIST:
+            return "JOB-SLOT-LIST";
+        case ORTE_JOB_NOTIFICATIONS:
+            return "JOB-NOTIFICATIONS";
             
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
