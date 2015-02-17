@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -812,19 +812,27 @@ INSTALLATION OPTIONS
 
 --enable-dlopen
   Build all of Open MPI's components as standalone Dynamic Shared
-  Objects (DSO's) that are loaded at run-time (this is the default).
+  Objects (DSO's) that are loaded at run-time.  configure will abort
+  if proper DSO support cannot be found on the build system (i.e., the
+  GNU Libltdl library and header files).
+
   The opposite of this option, --disable-dlopen, causes two things:
 
   1. All of Open MPI's components will be built as part of Open MPI's
      normal libraries (e.g., libmpi).  
   2. Open MPI will not attempt to open any DSO's at run-time.
 
-  Note that this option does *not* imply that OMPI's libraries will be
-  built as static objects (e.g., libmpi.a).  It only specifies the
-  location of OMPI's components: standalone DSOs or folded into the
-  Open MPI libraries.  You can control whether Open MPI's libraries
-  are build as static or dynamic via --enable|disable-static and
-  --enable|disable-shared.
+  Note that --disable-dlopen does *not* imply that OMPI's libraries
+  will be built as static objects (e.g., libmpi.a).  It only specifies
+  the location of OMPI's components: standalone DSOs or folded into
+  the Open MPI libraries.  You can control whether Open MPI's
+  libraries are build as static or dynamic via --enable|disable-static
+  and --enable|disable-shared.
+
+  If neither --enable-dlopen nor --disable-dlopen are specified, Open
+  MPI will enable dlopen support if it can find proper DSO support on
+  the build system, or behave as if --disable-dlopen was specified if
+  it cannot find proper DSO support on the build system.
 
 --with-platform=FILE
   Load configure options for the build from FILE.  Options on the
@@ -1135,28 +1143,6 @@ MISCELLANEOUS SUPPORT LIBRARIES
 
   hwloc can discover PCI devices and locality, which can be useful for
   Open MPI in assigning message passing resources to MPI processes.
-
---with-libltdl(=value)
-  This option specifies where to find the GNU Libtool libltdl support
-  library.  The following values are permitted:
-
-    internal:    Use Open MPI's internal copy of libltdl.
-    external:    Use an external libltdl installation (rely on default
-                 compiler and linker paths to find it)
-    <no value>:  Same as "internal".
-    <directory>: Specify the location of a specific libltdl
-                 installation to use
-
-  By default (or if --with-libltdl is specified with no VALUE), Open
-  MPI will build and use the copy of libltdl that it has in its source
-  tree.  However, if the VALUE is "external", Open MPI will look for
-  the relevant libltdl header file and library in default compiler /
-  linker locations.  Or, VALUE can be a directory tree where the
-  libltdl header file and library can be found.  This option allows
-  operating systems to include Open MPI and use their default libltdl
-  installation instead of Open MPI's bundled libltdl.
-
-  Note that this option is ignored if --disable-dlopen is specified.
 
 --disable-libompitrace
   Disable building the simple "libompitrace" library (see note above

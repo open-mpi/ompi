@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,19 +19,15 @@
 
 
 #include "opal_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 #if OPAL_WANT_LIBLTDL
-  #if OPAL_LIBLTDL_INTERNAL
-    #include "opal/libltdl/ltdl.h"
-  #else
-    #include "ltdl.h"
-  #endif
+#include <ltdl.h>
 #endif
 
 #include "opal/class/opal_list.h"

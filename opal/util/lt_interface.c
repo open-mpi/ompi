@@ -9,19 +9,16 @@
  */
 
 #include "opal_config.h"
+
 #include <assert.h>
 #include <stdio.h>
+#if OPAL_WANT_LIBLTDL
+#include <ltdl.h>
+#endif
+
 #include "opal/constants.h"
 #include "opal/util/lt_interface.h"
 #include "opal/util/output.h"
-
-#if OPAL_WANT_LIBLTDL
-  #if OPAL_LIBLTDL_INTERNAL
-    #include "opal/libltdl/ltdl.h"
-  #else
-    #include "ltdl.h"
-  #endif
-#endif
 
 #if OPAL_WANT_LIBLTDL
 struct opal_lt_dlhandle_st { lt_dlhandle dlhandle; };
