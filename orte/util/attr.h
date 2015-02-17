@@ -126,6 +126,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_LAUNCHED_DAEMONS       (ORTE_JOB_START_KEY + 35)    // bool - Job caused new daemons to be spawned
 #define ORTE_JOB_REPORT_BINDINGS        (ORTE_JOB_START_KEY + 36)    // bool - Report process bindings
 #define ORTE_JOB_SLOT_LIST              (ORTE_JOB_START_KEY + 37)    // string - constraints on cores to use
+#define ORTE_JOB_NOTIFICATIONS          (ORTE_JOB_START_KEY + 38)    // string - comma-separated list of desired notifications+methods
 
 #define ORTE_JOB_MAX_KEY   300
 

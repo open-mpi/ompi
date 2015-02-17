@@ -54,28 +54,22 @@ int orte_notifier_base_select(void)
     mca_base_component_list_item_t *cli = NULL;
     orte_notifier_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
-    orte_notifier_active_module_t *i_module;
-    int priority = 0, i, j, low_i;
-    opal_pointer_array_t tmp_array;
-    bool none_found;
-    orte_notifier_active_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
-
+    int priority;
+    orte_notifier_active_module_t *tmp_module;
+    orte_notifier_base_module_t *bmod;
 
     if (orte_notifier_base_selected) {
         return ORTE_SUCCESS;
     }
     orte_notifier_base_selected = true;
 
-    OBJ_CONSTRUCT(&tmp_array, opal_pointer_array_t);
-
     opal_output_verbose(10, orte_notifier_base_framework.framework_output,
                         "notifier:base:select: Auto-selecting components");
 
     /*
      * Traverse the list of available components.
-     * For each call their 'query' functions to determine relative priority.
+     * For each call their 'query' functions to see if they are available.
      */
-    none_found = true;
     OPAL_LIST_FOREACH(cli, &orte_notifier_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (orte_notifier_base_component_t *) cli->cli_component;
 
@@ -107,89 +101,28 @@ int orte_notifier_base_select(void)
                                 component->base_version.mca_component_name );
             continue;
         }
-
+        bmod = (orte_notifier_base_module_t*)module;
+        
+        /* see if it can be init'd */
+        if (NULL != bmod->init) {
+            opal_output_verbose(5, orte_notifier_base_framework.framework_output,
+                                "notifier:base:init module called with priority [%s] %d",
+                                component->base_version.mca_component_name, priority);
+            if (ORTE_SUCCESS != bmod->init()) {
+                continue;
+            }
+        }
         /*
-         * Append them to the temporary list, we will sort later
+         * Append them to the list
          */
         opal_output_verbose(5, orte_notifier_base_framework.framework_output,
-                            "notifier:base:select Query of component [%s] set priority to %d", 
-                            component->base_version.mca_component_name, priority);
+                            "notifier:base:select adding component [%s]", 
+                            component->base_version.mca_component_name);
         tmp_module = OBJ_NEW(orte_notifier_active_module_t);
         tmp_module->component = component;
         tmp_module->module    = (orte_notifier_base_module_t*)module;
-        tmp_module->priority  = priority;
 
-        opal_pointer_array_add(&tmp_array, (void*)tmp_module);
-        none_found = false;
-    }
-
-    if (none_found) {
-        /* okay for no modules to be found */
-        return ORTE_SUCCESS;
-    }
-
-    /*
-     * Sort the list by decending priority
-     */
-    priority = 0;
-    for(j = 0; j < tmp_array.size; ++j) {
-        tmp_module_sw = (orte_notifier_active_module_t*)opal_pointer_array_get_item(&tmp_array, j);
-        if( NULL == tmp_module_sw ) {
-            continue;
-        }
-
-        low_i   = -1;
-        priority = tmp_module_sw->priority;
-
-        for(i = 0; i < tmp_array.size; ++i) {
-            tmp_module = (orte_notifier_active_module_t*)opal_pointer_array_get_item(&tmp_array, i);
-            if( NULL == tmp_module ) {
-                continue;
-            }
-            if( tmp_module->priority > priority ) {
-                low_i = i;
-                priority = tmp_module->priority;
-            }
-        }
-
-        if( low_i >= 0 ) {
-            tmp_module = (orte_notifier_active_module_t*)opal_pointer_array_get_item(&tmp_array, low_i);
-            if ( NULL == tmp_module ) {
-                continue;
-            }
-            opal_pointer_array_set_item(&tmp_array, low_i, NULL);
-            j--; /* Try this entry again, if it is not the lowest */
-        } else {
-            tmp_module = tmp_module_sw;
-            opal_pointer_array_set_item(&tmp_array, j, NULL);
-        }
-        if ( tmp_module ) {
-            opal_output_verbose(5, orte_notifier_base_framework.framework_output,
-                                "notifier:base:select Add module with priority [%s] %d",
-                                tmp_module->component->base_version.mca_component_name, tmp_module->priority);
-            opal_pointer_array_add(&orte_notifier_base.modules, tmp_module);
-        }
-    }
-    OBJ_DESTRUCT(&tmp_array);
-
-    /*
-     * Initialize each of the modules in priority order from
-     * highest to lowest
-     */
-    for(i = 0; i < orte_notifier_base.modules.size; ++i) {
-        i_module = (orte_notifier_active_module_t*)opal_pointer_array_get_item(&orte_notifier_base.modules, i);
-        if( NULL == i_module ) {
-            continue;
-        }
-        if( NULL != i_module->module->init ) {
-            opal_output_verbose(5, orte_notifier_base_framework.framework_output,
-                                "notifier:base:init module called with priority [%s] %d",
-                                i_module->component->base_version.mca_component_name, i_module->priority);
-            if (ORTE_SUCCESS != i_module->module->init()) {
-                opal_pointer_array_set_item(&orte_notifier_base.modules, i, NULL);
-                OBJ_RELEASE(i_module);
-            }
-        }
+        opal_list_append(&orte_notifier_base.modules, (void*)tmp_module);
     }
 
     return ORTE_SUCCESS;

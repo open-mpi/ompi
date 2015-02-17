@@ -46,7 +46,7 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_notifier_base_framework;
 typedef struct {
     opal_event_base_t *ev_base;
     bool ev_base_active;
-    opal_pointer_array_t modules;
+    opal_list_t modules;
     orte_notifier_severity_t severity_level;
     char *default_actions;
     char *emerg_actions;
@@ -68,29 +68,18 @@ typedef struct {
     orte_notifier_base_component_t *component;
     /* Module */
     orte_notifier_base_module_t *module;
-    /* Priority */
-    int priority;
 } orte_notifier_active_module_t;
 OBJ_CLASS_DECLARATION(orte_notifier_active_module_t);
 
-typedef struct {
-    opal_object_t super;
-    opal_event_t ev;
-    char **modules;
-    orte_notifier_severity_t severity;
-    int errcode;
-    const char *msg;
-    va_list *ap;
-} orte_notifier_request_t;
-OBJ_CLASS_DECLARATION(orte_notifier_request_t);
-
 ORTE_DECLSPEC extern orte_notifier_base_t orte_notifier_base;
-ORTE_DECLSPEC extern orte_notifier_severity_t orte_notifier_severity;
+
 /* select a component */
 ORTE_DECLSPEC int orte_notifier_base_select(void);
-/* log function */
-ORTE_DECLSPEC void orte_notifier_base_log(orte_notifier_severity_t severity, 
-                                          int errcode, const char *msg, ...);
+
+/* base functions */
+ORTE_DECLSPEC void orte_notifier_base_log(int sd, short args, void *cbdata);
+ORTE_DECLSPEC void orte_notifier_base_report(int sd, short args, void *cbdata);
+
 /* severity to string */
 ORTE_DECLSPEC const char* orte_notifier_base_sev2str(orte_notifier_severity_t severity);
 END_C_DECLS

@@ -20,81 +20,54 @@
 
 
 #include "orte_config.h"
-
-#include "opal/mca/event/event.h"
-#include "opal/runtime/opal_progress_threads.h"
-
 #include "orte/constants.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/util/error_strings.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
+
+#include "opal/util/argv.h"
 
 #include "orte/mca/notifier/base/base.h"
 
 
-static void process_log(int fd, short args, void *cbdata)
+void orte_notifier_base_log(int sd, short args, void *cbdata)
 {
-    int i = 0, j = 0;
-    orte_notifier_active_module_t *i_module;
-    orte_notifier_request_t *req = (orte_notifier_request_t *)cbdata;
-    char **modules = req->modules;
-
-    /* call the log function of all modules in priority order */
-    for (i = 0; i < orte_notifier_base.modules.size; i++) {
-        if (NULL == (i_module = (orte_notifier_active_module_t*)opal_pointer_array_get_item (&orte_notifier_base.modules, i))) {
-            continue;
-        }
-        for (j = 0; NULL != modules[j]; j++) {
-            if (0 == strncasecmp(i_module->component->base_version.mca_component_name, modules[j], strlen(modules[j]))) {
-                if (NULL != i_module->module->log) {
-                    i_module->module->log(req->severity, req->errcode, req->msg, req->ap);
-                    va_end(*req->ap);
-                }
-            }
-        }
-    }
-}
-
-void orte_notifier_base_log(orte_notifier_severity_t severity, 
-                            int errcode, const char *msg, ...)
-{
-    va_list ap;
-    char **modules;
-    orte_notifier_request_t *req;
-
+    orte_notifier_request_t *req = (orte_notifier_request_t*)cbdata;
+    char **modules = NULL;
+    orte_notifier_active_module_t *imod;
+    int i;
+    
     /* if no modules are active, then there is nothing to do */
-    if (0 == orte_notifier_base.modules.size) {
+    if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
         return;
     }
 
-    /* check if the severity is >= severity level set for reporting */
-    if (orte_notifier_base.severity_level < severity ) {
+    /* check if the severity is >= severity level set for
+     * reporting - note that the severity enum value goes up
+     * as severity goes down */
+    if (orte_notifier_base.severity_level < req->severity ) {
         return;
     }
 
-    if (ORTE_NOTIFIER_EMERG == severity &&  
+    if (ORTE_NOTIFIER_EMERG == req->severity &&  
         (NULL != orte_notifier_base.emerg_actions)) {
         modules = opal_argv_split(orte_notifier_base.emerg_actions, ',');    
-    } else if (ORTE_NOTIFIER_ALERT == severity &&  
+    } else if (ORTE_NOTIFIER_ALERT == req->severity &&  
                (NULL != orte_notifier_base.alert_actions)) {
         modules = opal_argv_split(orte_notifier_base.alert_actions, ',');    
-    } else if (ORTE_NOTIFIER_CRIT == severity &&  
+    } else if (ORTE_NOTIFIER_CRIT == req->severity &&  
                (NULL != orte_notifier_base.crit_actions)) {
         modules = opal_argv_split(orte_notifier_base.crit_actions, ',');    
-    } else if (ORTE_NOTIFIER_WARN == severity &&  
+    } else if (ORTE_NOTIFIER_WARN == req->severity &&  
                (NULL != orte_notifier_base.warn_actions)) {
         modules = opal_argv_split(orte_notifier_base.warn_actions, ',');    
-    } else if (ORTE_NOTIFIER_NOTICE == severity &&  
+    } else if (ORTE_NOTIFIER_NOTICE == req->severity &&  
                (NULL != orte_notifier_base.notice_actions)) {
         modules = opal_argv_split(orte_notifier_base.notice_actions, ',');    
-    } else if (ORTE_NOTIFIER_INFO == severity &&  
+    } else if (ORTE_NOTIFIER_INFO == req->severity &&  
                (NULL != orte_notifier_base.info_actions)) {
         modules = opal_argv_split(orte_notifier_base.info_actions, ',');    
-    } else if (ORTE_NOTIFIER_DEBUG == severity &&  
+    } else if (ORTE_NOTIFIER_DEBUG == req->severity &&  
                (NULL != orte_notifier_base.debug_actions)) {
         modules = opal_argv_split(orte_notifier_base.debug_actions, ',');    
-    } else if (ORTE_NOTIFIER_ERROR == severity &&  
+    } else if (ORTE_NOTIFIER_ERROR == req->severity &&  
                (NULL != orte_notifier_base.error_actions)) {
         modules = opal_argv_split(orte_notifier_base.error_actions, ',');    
     } else if (NULL != orte_notifier_base.default_actions) {
@@ -104,27 +77,44 @@ void orte_notifier_base_log(orte_notifier_severity_t severity,
         return;
     }
 
-    /* set the event base and push this request into event base
-     */
-    req = OBJ_NEW(orte_notifier_request_t);
-
-    req->modules = modules;
-    req->severity = severity;
-    req->errcode = errcode;
-    req->msg = msg;
-    va_start(ap, msg);
-    req->ap = &ap;
-
-    /*
-     * set the event and activate
-     */
-    opal_event_set(orte_notifier_base.ev_base, &req->ev, -1, 
-                    OPAL_EV_WRITE,
-                    process_log, req);
-    opal_event_set_priority(&req->ev, OPAL_EV_SYS_HI_PRI);
-    opal_event_active (&req->ev, OPAL_EV_WRITE, 1);
+    for (i=0; NULL != modules[i]; i++) {
+        OPAL_LIST_FOREACH(imod, &orte_notifier_base.modules, orte_notifier_active_module_t) {
+            if (NULL != imod->module->log &&
+                0 == strcmp(imod->component->base_version.mca_component_name, modules[i]))
+                imod->module->log(req);
+        }
+    }
+    opal_argv_free(modules);
 }
 
+void orte_notifier_base_report(int sd, short args, void *cbdata)
+{
+    orte_notifier_request_t *req = (orte_notifier_request_t*)cbdata;
+    char **modules = NULL;
+    char *notifies = NULL;
+    orte_notifier_active_module_t *imod;
+    int i;
+    
+    /* if no modules are active, then there is nothing to do */
+    if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
+        return;
+    }
+
+    /* see if the job requested any notifications */
+    if (!orte_get_attribute(&req->jdata->attributes, ORTE_JOB_NOTIFICATIONS, (void**)notifies, OPAL_STRING)) {
+        return;
+    }
+
+    /* need to process the notification string to get the names of the modules */
+    return;
+    
+    OPAL_LIST_FOREACH(imod, &orte_notifier_base.modules, orte_notifier_active_module_t) {
+        if (NULL != imod->module->report &&
+            0 == strcmp(imod->component->base_version.mca_component_name, modules[i]))
+            imod->module->report(req);
+    }
+
+}
 
 const char* orte_notifier_base_sev2str(orte_notifier_severity_t severity)
 {
