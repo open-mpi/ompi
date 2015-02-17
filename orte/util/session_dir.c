@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -318,6 +320,12 @@ orte_session_dir_get_name(char **fulldirpath,
                 orte_show_help("help-orte-runtime.txt",
                                "orte:session:dir:prohibited",
                                true, prefix, orte_prohibited_session_dirs);
+                opal_argv_free(list);
+                free(prefix);
+                free(sessions);
+                free(hostname);
+                free(batchname);
+                free(frontend);
                 return ORTE_ERR_FATAL;
             }
         }
