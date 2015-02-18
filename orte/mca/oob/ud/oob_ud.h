@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -136,6 +136,8 @@ struct mca_oob_ud_port_t {
     int                  mtu;
     uint16_t             lid;
     uint8_t              port_num;
+    /** current send buffer index. used by init function for free_msgs member */
+    int                  send_buffer_index;
 
     mca_oob_ud_reg_mem_t grh_buf;
     mca_oob_ud_reg_mem_t msg_buf;

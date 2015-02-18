@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
@@ -1054,7 +1054,7 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
 
-        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+        opal_free_list_return (&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
 
         if ( OPAL_SUCCESS != rc )
             return;

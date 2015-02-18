@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +44,7 @@ ompi_mtl_portals4_flowctl_init(void)
     opal_free_list_init(&ompi_mtl_portals4.flowctl.pending_fl,
                         sizeof(ompi_mtl_portals4_pending_request_t),
                         OBJ_CLASS(ompi_mtl_portals4_pending_request_t),
-                        1, -1, 1);
+                        0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
     ompi_mtl_portals4.flowctl.max_send_slots = (ompi_mtl_portals4.send_queue_size - 3) / 3;
     ompi_mtl_portals4.flowctl.send_slots = ompi_mtl_portals4.flowctl.max_send_slots;
