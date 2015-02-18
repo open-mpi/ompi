@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -345,10 +345,8 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, 
                  rank));
     if (tmpbuf != NULL) free(tmpbuf_free);
-    if (weallocated) {
-        if (displs != NULL) free(displs);
-        if (blen != NULL) free(blen);
-    }
+    if (displs != NULL) free(displs);
+    if (blen != NULL) free(blen);
     return err;
 }
 

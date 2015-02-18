@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,6 +232,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
     int i, ret, line, rank, size, first_segment_count;
     MPI_Aint extent, lb;
     size_t typelng;
+    ompi_request_t **reqs = NULL;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -278,7 +281,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
            - Waitall for all the second segments to complete.
         */
         char *ptmp;
-        ompi_request_t **reqs = NULL, *first_segment_req;
+        ompi_request_t *first_segment_req;
         reqs = (ompi_request_t**) calloc(size, sizeof(ompi_request_t*));
         if (NULL == reqs) { ret = -1; line = __LINE__; goto error_hndl; }
         
@@ -340,6 +343,9 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
 
     return MPI_SUCCESS;
  error_hndl:
+    if (NULL != reqs) {
+        free(reqs);
+    }
     OPAL_OUTPUT (( ompi_coll_tuned_stream, 
                    "ERROR_HNDL: node %d file %s line %d error %d\n", 
                    rank, __FILE__, line, ret ));

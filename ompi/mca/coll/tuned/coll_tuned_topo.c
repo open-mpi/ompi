@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -371,6 +373,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
         if( remote >= size ) remote -= size;
         if (childs==MAXTREEFANOUT) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d", MAXTREEFANOUT, childs));
+            free(bmtree);
             return NULL;
         }
         bmtree->tree_next[childs] = remote;
@@ -442,6 +445,7 @@ ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
                 OPAL_OUTPUT((ompi_coll_tuned_stream,
                              "coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d",
                              MAXTREEFANOUT, childs));
+                free (bmtree);
                 return NULL;
             }
         }
@@ -576,12 +580,14 @@ ompi_coll_tuned_topo_build_chain( int fanout,
                 chain->tree_nextsize = 0;    
             }
         }
-    }
-    
-    /*
-     * Unshift values 
-     */
-    if( rank == root ) {
+        chain->tree_prev = (chain->tree_prev+root)%size;
+        if( chain->tree_next[0] != -1 ) {
+            chain->tree_next[0] = (chain->tree_next[0]+root)%size;
+        }
+    } else {
+        /*
+         * Unshift values 
+         */
         chain->tree_prev = -1;
         chain->tree_next[0] = (root+1)%size;
         for( i = 1; i < fanout; i++ ) {
@@ -592,11 +598,6 @@ ompi_coll_tuned_topo_build_chain( int fanout,
             chain->tree_next[i] %= size;
         }
         chain->tree_nextsize = fanout;
-    } else {
-        chain->tree_prev = (chain->tree_prev+root)%size;
-        if( chain->tree_next[0] != -1 ) {
-            chain->tree_next[0] = (chain->tree_next[0]+root)%size;
-        }
     }
 
     return chain;
