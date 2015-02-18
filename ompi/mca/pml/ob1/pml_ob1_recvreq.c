@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
@@ -684,6 +684,13 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     /* try to register the entire buffer */
     if (rdma_bml->btl->btl_register_mem) {
         void *data_ptr;
+        uint32_t flags = MCA_BTL_REG_FLAG_LOCAL_WRITE | MCA_BTL_REG_FLAG_REMOTE_WRITE;
+#if OPAL_CUDA_GDR_SUPPORT
+        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+            flags |= MCA_BTL_REG_FLAG_CUDA_GPU_MEM;
+        }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
+
 
         offset = 0;
 
@@ -692,8 +699,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &data_ptr);
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
-        mca_bml_base_register_mem (rdma_bml, data_ptr, bytes_remaining, MCA_BTL_REG_FLAG_LOCAL_WRITE |
-                                   MCA_BTL_REG_FLAG_REMOTE_WRITE, &recvreq->local_handle);
+        mca_bml_base_register_mem (rdma_bml, data_ptr, bytes_remaining, flags, &recvreq->local_handle);
         /* It is not an error if the memory region can not be registered here. The registration will
          * be attempted again for each get fragment. */
     }
