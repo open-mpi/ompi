@@ -17,7 +17,7 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -948,6 +948,7 @@ mca_btl_sm_component_init(int *num_btls,
         opal_show_help("help-mpi-btl-sm.txt",
                        "CMA requested but not available",
                        true, opal_process_info.nodename);
+        free(btls);
         return NULL;
     }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
@@ -994,6 +995,7 @@ mca_btl_sm_component_init(int *num_btls,
         opal_show_help("help-mpi-btl-sm.txt",
                        "knem requested but not available",
                        true, opal_process_info.nodename);
+        free(btls);
         return NULL;
     } else if (0 == mca_btl_sm_component.use_cma) {
         /* disable get when not using knem or cma */

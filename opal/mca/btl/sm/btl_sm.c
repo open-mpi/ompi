@@ -17,7 +17,7 @@
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1246,10 +1246,10 @@ void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
     opal_list_item_t *item;
     mca_btl_sm_frag_t* frag;
 
-    mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
-                     (void*) btl, (void*) endpoint, 
-                     endpoint->my_smp_rank, endpoint->peer_smp_rank);
     if( NULL != endpoint ) {
+        mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
+                         (void*) btl, (void*) endpoint, 
+                         endpoint->my_smp_rank, endpoint->peer_smp_rank);
         for(item =  opal_list_get_first(&endpoint->pending_sends);
             item != opal_list_get_end(&endpoint->pending_sends); 
             item = opal_list_get_next(item)) {
