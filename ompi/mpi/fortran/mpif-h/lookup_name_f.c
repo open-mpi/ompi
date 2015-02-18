@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,6 +81,7 @@ void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
     c_port_name = (char *) malloc (port_name_len+1);
     if ( NULL == c_port_name ) {
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_ERR_OTHER);
+        free (c_service_name);
 	return;
     }
 
