@@ -427,7 +427,9 @@ static int orte_attr_unload(orte_attribute_t *kv,
         return OPAL_ERR_TYPE_MISMATCH;
     }
     if (NULL == data  ||
-        (NULL == *data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type && OPAL_BUFFER != type)) {
+        (NULL == *data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type &&
+         OPAL_BUFFER != type && OPAL_PTR != type)) {
+        assert(0);
         OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return OPAL_ERR_BAD_PARAM;
     }
