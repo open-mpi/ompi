@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +69,8 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
     /* post new irecv */
     err = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
                               comm, &reqs[0]));
+    /* try to silence CID 1269934 */
+    assert( MPI_ERR_IN_STATUS != err );
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     /* send data to children */

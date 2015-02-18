@@ -13,6 +13,8 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -201,6 +203,8 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
                                        rbuf, 1, new_rdtype, recvfrom,
                                        MCA_COLL_BASE_TAG_ALLGATHERV,
                                        comm, MPI_STATUS_IGNORE, rank);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
         ompi_datatype_destroy(&new_sdtype);
         ompi_datatype_destroy(&new_rdtype);
 

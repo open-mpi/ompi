@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,6 +98,11 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
     alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
 
+    if (NULL == alg_rules) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
+        goto on_file_error;
+    }
+
     X = (int)getnext(fptr);
     if (X<0) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of collectives in configuration file around line %d\n", fileline));
@@ -120,7 +127,9 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
         if (alg_rules[CI].alg_rule_id != CI) {
             OPAL_OUTPUT((ompi_coll_tuned_stream, "Internal error in handling collective ID %d\n", CI));
-            ompi_coll_tuned_free_all_rules (*rules, n_collectives);
+            fclose(fptr);
+            ompi_coll_tuned_free_all_rules (alg_rules, n_collectives);
+            *rules = (ompi_coll_alg_rule_t*) NULL;
             return (-4);
         }
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %d\n", CI));
@@ -277,6 +286,7 @@ static long getnext (FILE *fptr)
         if (1 == rc) return val;
         /* in all other cases, skip to the end */
         rc = fread(&trash, 1, 1, fptr);
+        if (rc == EOF) return MYEOF;
         if ('\n' == trash) fileline++;
         if ('#' == trash) skiptonewline (fptr);
     } while (1);
