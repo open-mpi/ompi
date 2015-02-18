@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,9 @@
 #define MCA_BASE_COMPONENT_REPOSITORY_H
 
 #include "opal_config.h"
+
+#include "opal/mca/dl/dl.h"
+#include "opal/mca/dl/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -33,37 +37,9 @@ BEGIN_C_DECLS
  * the functions exported from one header file rather than to separate
  * retain_component() and retain() into two separate header files
  * (i.e., have a separate header file just for retain()).
- *
- * Note that internal to opal/mca/base, <ltdl.h> will *always* be
- * included before this file, and <ltdl.h> is not included anywhere
- * else in the OMPI tree.  So checking for the LTDL_H preprocessor
- * macro is a good indicator as to whether this file is being included
- * from an opal/mca/base source file or not.  If we are, then we need
- * already have a real definition of lt_dlhandle.  If we are being
- * included from elsewhere, then <ltdl.h> will not previously have
- * been included, LTDL_H will not be defined, and we need a fake
- * definition of lt_dlhandle (or we'll get compile errors).  So just
- * typedef it to (void*).
- *
- * One more case that this handles is the --disable-dlopen case.  In
- * that case, even in opal/mca/base, we *won't* be including <ltdl.h>.
- * Hence, LTDL_H won't be defined, so we'll end up typedefing
- * lt_dlhandle to (void *).  "But why does that matter?" you ask, "If
- * we configure with --disable-dlopen, then lt_dlhandle shouldn't be
- * used anywhere."  Incorrect, Grasshopper.  A small number of places
- * (like the retain() function) are still prototyped, but have 99% of
- * their innards #if'ed out -- i.e., they just return
- * OPAL_ERR_NOT_SUPPORTED.  Why was it coded up this way?  I'm not
- * entirely sure -- there may be a reason (and that reason may just be
- * conservative coding), but I'm not really too inspired to look into
- * it any further at this point.  :-)
  */
-#if !defined(LTDL_H)
-    typedef void *lt_dlhandle;
-#endif
-
     OPAL_DECLSPEC int mca_base_component_repository_retain(char *type, 
-                              lt_dlhandle component_handle, 
+                              opal_dl_handle_t *component_handle,
                               const mca_base_component_t *component_struct);
 
     OPAL_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
