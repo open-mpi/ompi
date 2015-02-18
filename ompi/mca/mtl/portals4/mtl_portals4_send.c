@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,8 +121,8 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         *complete = true;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
-        OPAL_FREE_LIST_RETURN(&ompi_mtl_portals4.flowctl.pending_fl,
-                              &ptl_request->pending->super);
+        opal_free_list_return (&ompi_mtl_portals4.flowctl.pending_fl,
+                               &ptl_request->pending->super);
 
         if (OPAL_UNLIKELY(0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
             ompi_mtl_portals4_pending_list_progress();
@@ -423,7 +426,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
                          (int)length));
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    OPAL_FREE_LIST_GET(&ompi_mtl_portals4.flowctl.pending_fl, item, ret);
+    item = opal_free_list_get (&ompi_mtl_portals4.flowctl.pending_fl);
     if (NULL == item) return OMPI_ERR_OUT_OF_RESOURCE;
 
     pending = (ompi_mtl_portals4_pending_request_t*) item;

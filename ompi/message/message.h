@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,13 +59,7 @@ static inline
 ompi_message_t*
 ompi_message_alloc(void)
 {
-    int rc;
-    opal_free_list_item_t *tmp;
-    OPAL_FREE_LIST_GET(&ompi_message_free_list,
-                       tmp,
-                       rc);
-    (void)rc;  /* prevent "set but not used" compiler complaints */
-    return (ompi_message_t*) tmp;
+    return (ompi_message_t *) opal_free_list_get (&ompi_message_free_list);
 }
 
 static inline
@@ -75,8 +72,8 @@ ompi_message_return(ompi_message_t* msg)
         msg->m_f_to_c_index = MPI_UNDEFINED;
     }
 
-    OPAL_FREE_LIST_RETURN(&ompi_message_free_list, 
-                          &msg->super);
+    opal_free_list_return (&ompi_message_free_list,
+                           &msg->super);
 }
 
 

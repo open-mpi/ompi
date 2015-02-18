@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -413,7 +413,8 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     i = opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
                             sizeof(btl_sm_pending_send_item_t),
                             OBJ_CLASS(opal_free_list_item_t),
-                            16, -1, 32);
+                            0, 0, 16, -1, 32, NULL, 0, NULL, NULL
+                            NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 

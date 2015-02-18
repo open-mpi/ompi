@@ -441,7 +441,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     i = opal_free_list_init(&mca_btl_smcuda_component.pending_send_fl,
                             sizeof(btl_smcuda_pending_send_item_t),
                             OBJ_CLASS(opal_free_list_item_t),
-                            16, -1, 32);
+                            0, 0, 16, -1, 32, NULL, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 

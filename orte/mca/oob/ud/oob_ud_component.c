@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -355,11 +355,11 @@ static int mca_oob_ud_component_startup(void)
             }
 
             rc = opal_free_list_init (&port->data_qps,
-                                      sizeof (mca_oob_ud_qp_t),
-                                      OBJ_CLASS(mca_oob_ud_qp_t),
+                                      sizeof (mca_oob_ud_qp_t), 8,
+                                      OBJ_CLASS(mca_oob_ud_qp_t), 0, 0,
                                       mca_oob_ud_component.ud_min_qp,
                                       mca_oob_ud_component.ud_max_qp,
-                                      2);
+                                      2, NULL, 0, NULL, NULL, NULL);
             if (OPAL_SUCCESS != rc) {
                 mca_oob_ud_listen_destroy (port);
                 continue;
@@ -506,8 +506,7 @@ static int   mca_oob_ud_component_ft_event(int state) {
 static int mca_oob_ud_port_alloc_buffers (mca_oob_ud_port_t *port) {
     int total_buffer_count = mca_oob_ud_component.ud_recv_buffer_count +
         mca_oob_ud_component.ud_send_buffer_count;
-    opal_list_item_t *item;
-    int rc, i;
+    int rc;
 
     rc = mca_oob_ud_alloc_reg_mem (port->device->ib_pd, &port->grh_buf,
                                    mca_oob_ud_component.ud_recv_buffer_count * sizeof (struct ibv_grh));
@@ -522,21 +521,13 @@ static int mca_oob_ud_port_alloc_buffers (mca_oob_ud_port_t *port) {
         return rc;
     }
 
-    rc = opal_free_list_init (&port->free_msgs, sizeof (mca_oob_ud_msg_t),
-                              OBJ_CLASS(mca_oob_ud_msg_t), mca_oob_ud_component.ud_send_buffer_count,
-                              mca_oob_ud_component.ud_send_buffer_count, 0);
+    port->send_buffer_index = 0;
+    rc = opal_free_list_init (&port->free_msgs, sizeof (mca_oob_ud_msg_t), 8,
+                              OBJ_CLASS(mca_oob_ud_msg_t), 0, 0, mca_oob_ud_component.ud_send_buffer_count,
+                              mca_oob_ud_component.ud_send_buffer_count, 0, NULL, 0, NULL, mca_oob_ud_msg_init,
+                              port);
     if (ORTE_SUCCESS != rc) {
         return rc;
-    }
-
-    for (i = 0, item = opal_list_get_first (&port->free_msgs.super) ;
-         item != opal_list_get_end (&port->free_msgs.super) ;
-         item = opal_list_get_next (item), ++i) {
-        char *ptr = port->msg_buf.ptr + (i + mca_oob_ud_component.ud_recv_buffer_count) *
-            port->mtu;
-
-        mca_oob_ud_msg_init ((mca_oob_ud_msg_t *) item, port,
-                             ptr, port->msg_buf.mr);
     }
 
     return rc;
