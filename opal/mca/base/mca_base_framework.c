@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -55,6 +55,10 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
 
     if (framework_is_registered (framework)) {
         return OPAL_SUCCESS;
+    }
+
+    if (framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
+        flags |= MCA_BASE_REGISTER_STATIC_ONLY;
     }
 
     if (!(MCA_BASE_FRAMEWORK_FLAG_NOREGISTER & framework->framework_flags)) {
