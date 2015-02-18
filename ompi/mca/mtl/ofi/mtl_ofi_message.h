@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Cisco Systems, Inc. All rights reserved
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -26,13 +29,10 @@ OBJ_CLASS_DECLARATION(ompi_mtl_ofi_message_t);
 static inline ompi_mtl_ofi_message_t*
 ompi_mtl_ofi_message_alloc(const struct fi_cq_tagged_entry *wc)
 {
-    int rc __opal_attribute_unused__;
     opal_free_list_item_t *tmp;
     ompi_mtl_ofi_message_t *message;
 
-    OPAL_FREE_LIST_GET(&ompi_mtl_ofi.free_messages,
-                       tmp,
-                       rc);
+    tmp = opal_free_list_get (&ompi_mtl_ofi.free_messages);
     if (NULL == tmp) return NULL;
 
     message = (ompi_mtl_ofi_message_t*) tmp;
@@ -45,8 +45,8 @@ ompi_mtl_ofi_message_alloc(const struct fi_cq_tagged_entry *wc)
 static inline void
 ompi_mtl_ofi_message_free(ompi_mtl_ofi_message_t *message)
 {
-    OPAL_FREE_LIST_RETURN(&ompi_mtl_ofi.free_messages,
-                          &message->super);
+    opal_free_list_return (&ompi_mtl_ofi.free_messages,
+                           &message->super);
 }
 
 #endif
