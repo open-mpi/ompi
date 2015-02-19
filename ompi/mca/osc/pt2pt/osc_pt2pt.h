@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -59,10 +59,10 @@ struct ompi_osc_pt2pt_component_t {
     int module_count;
 
     /** free list of ompi_osc_pt2pt_frag_t structures */
-    ompi_free_list_t frags;
+    opal_free_list_t frags;
 
     /** Free list of requests */
-    ompi_free_list_t requests;
+    opal_free_list_t requests;
 
     /** PT2PT component buffer size */
     unsigned int buffer_size;

@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -86,7 +89,7 @@ typedef struct {
     mqs_tword_t fl_num_per_alloc;      /* size_t */
     mqs_tword_t fl_num_allocated;      /* size_t */
     mqs_tword_t fl_num_initial_alloc;  /* size_t */
-} mqs_ompi_free_list_t_pos;
+} mqs_opal_free_list_t_pos;
 
 
 /* Information for a single process, a list of communicators, some
@@ -112,7 +115,7 @@ typedef struct
   int world_proc_array_entries;
   mqs_taddr_t* world_proc_array;
     
-  mqs_ompi_free_list_t_pos next_msg;            /* And state for the message iterator */
+  mqs_opal_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */
 } mpi_process_info_extra;
 

@@ -30,7 +30,7 @@
 
 #include "ompi/mca/bml/base/base.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef OSHMEM_WAIT_COMPLETION_DEBUG
@@ -79,7 +79,7 @@ struct mca_spml_yoda_t {
     opal_mutex_t lock;
 
     /* free lists */
-    ompi_free_list_t rdma_frags;
+    opal_free_list_t rdma_frags;
     /* number of outstanding put requests */
     int32_t n_active_puts;
     int32_t n_active_gets;

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +27,6 @@
 
 #define MCA_MPOOL_BASE_TREE_MAX 8
 #include "opal/mca/mca.h"
-#include "opal/class/ompi_free_list.h" 
 #include "opal/mca/mpool/mpool.h"
 
 BEGIN_C_DECLS
@@ -39,7 +41,7 @@ BEGIN_C_DECLS
  */
 struct mca_mpool_base_tree_item_t
 {
-    ompi_free_list_item_t super;   /**< the parent class */
+    opal_free_list_item_t super;   /**< the parent class */
     void* key; /**< the address this was alloc'd on */
     size_t num_bytes; /**< the number of bytes in this alloc, only for
                            debugging reporting with

@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,7 +48,7 @@ struct ompi_osc_portals4_component_t {
     ptl_size_t matching_fetch_atomic_max;
     ptl_size_t matching_atomic_ordered_size;
 
-    ompi_free_list_t requests; /* request free list for the r* communication variants */
+    opal_free_list_t requests; /* request free list for the r* communication variants */
 };
 typedef struct ompi_osc_portals4_component_t ompi_osc_portals4_component_t;
 OMPI_DECLSPEC extern ompi_osc_portals4_component_t mca_osc_portals4_component;

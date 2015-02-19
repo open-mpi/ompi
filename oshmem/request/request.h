@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +23,7 @@
 #include "oshmem_config.h"
 #include "oshmem/constants.h"
 
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
 
@@ -108,7 +111,7 @@ typedef union oshmem_shmem_object_t {
  * Main top-level request struct definition 
  */
 struct oshmem_request_t {
-    ompi_free_list_item_t super; /**< Base type *//*TODO: Implement in shmem */
+    opal_free_list_item_t super; /**< Base type *//*TODO: Implement in shmem */
     oshmem_request_type_t req_type; /**< Enum indicating the type of the request */
     oshmem_status_public_t req_status; /**< Completion status */
     volatile bool req_complete; /**< Flag indicating completion on a request */

@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -860,9 +863,9 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
 
 #if defined(CODE_NOT_USED)
 /**
- * Parsing the ompi_free_list lists.
+ * Parsing the opal_free_list lists.
  */
-static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
+static void opal_free_list_t_dump_position( mqs_opal_free_list_t_pos* position )
 {
     printf( "position->opal_list_t_pos.current_item = 0x%llx\n", (long long)position->opal_list_t_pos.current_item );
     printf( "position->opal_list_t_pos.list         = 0x%llx\n", (long long)position->opal_list_t_pos.list );
@@ -881,8 +884,8 @@ static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
 }
 #endif  /* CODE_NOT_USED */
 
-static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
-                                         mqs_ompi_free_list_t_pos* position, mqs_taddr_t free_list )
+static int opal_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
+                                         mqs_opal_free_list_t_pos* position, mqs_taddr_t free_list )
 {
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
@@ -891,22 +894,22 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     position->free_list = free_list;
 
     position->fl_frag_size =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_size,
+        ompi_fetch_size_t( proc, position->free_list + i_info->opal_free_list_t.offset.fl_frag_size,
                            p_info );
     position->fl_frag_alignment =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_alignment,
+        ompi_fetch_size_t( proc, position->free_list + i_info->opal_free_list_t.offset.fl_frag_alignment,
                            p_info );
     position->fl_frag_class =
-        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_class,
+        ompi_fetch_pointer( proc, position->free_list + i_info->opal_free_list_t.offset.fl_frag_class,
                             p_info );
     position->fl_mpool =
-        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
+        ompi_fetch_pointer( proc, position->free_list + i_info->opal_free_list_t.offset.fl_mpool,
                             p_info );
     position->fl_num_per_alloc =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
+        ompi_fetch_size_t( proc, position->free_list + i_info->opal_free_list_t.offset.fl_num_per_alloc,
                            p_info );
     position->fl_num_allocated =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
+        ompi_fetch_size_t( proc, position->free_list + i_info->opal_free_list_t.offset.fl_num_allocated,
                            p_info );
 
     if( 0 == position->fl_mpool ) {
@@ -919,7 +922,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
                                          position->fl_frag_alignment, mqs_taddr_t );
 
     /**
-     * Work around the strange ompi_free_list_t way to allocate elements. The first chunk is
+     * Work around the strange opal_free_list_t way to allocate elements. The first chunk is
      * not required to have the same size as the others.
      * A similar work around should be set for the last chunk of allocations too !!! But how
      * can we solve ONE equation with 2 unknowns ?
@@ -931,7 +934,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         if( 0 == position->fl_num_initial_alloc )
             position->fl_num_initial_alloc = position->fl_num_per_alloc;
     }
-    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_frag_size = %lld fl_header_space = %lld\n"
+    DEBUG(VERBOSE_LISTS,("opal_free_list_t fl_frag_size = %lld fl_header_space = %lld\n"
                          "                 fl_frag_alignment = %lld fl_num_per_alloc = %lld\n"
                          "                 fl_num_allocated = %lld fl_num_initial_alloc = %lld\n"
                          "                 header_space = %lld\n",
@@ -944,7 +947,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
      * Initialize the pointer to the opal_list_t.
      */
     opal_list_t_init_parser( proc, p_info, &position->opal_list_t_pos,
-                             position->free_list + i_info->ompi_free_list_t.offset.fl_allocations );
+                             position->free_list + i_info->opal_free_list_t.offset.fl_allocations );
     next_item_opal_list_t( proc, p_info, &position->opal_list_t_pos, &active_allocation );
     DEBUG(VERBOSE_LISTS,("active_allocation 0x%llx header_space %d\n",
                          (long long)active_allocation, (int)position->header_space));
@@ -954,7 +957,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         /**
          * Handle alignment issues...
          */
-        active_allocation += i_info->ompi_free_list_item_t.size;
+        active_allocation += i_info->opal_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
                                         position->fl_frag_alignment, mqs_taddr_t );
         /**
@@ -968,15 +971,15 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     }
     position->current_item = active_allocation;
     
-    /*ompi_free_list_t_dump_position( position );*/
+    /*opal_free_list_t_dump_position( position );*/
     return mqs_ok;
 }
 
 /**
  * Return the current position and move the internal counter to the next element.
  */
-static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_info,
-                                       mqs_ompi_free_list_t_pos* position, mqs_taddr_t* active_item )
+static int opal_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_info,
+                                       mqs_opal_free_list_t_pos* position, mqs_taddr_t* active_item )
 {
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
@@ -988,7 +991,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
 
     position->current_item += position->header_space;
     if( position->current_item >= position->upper_bound ) {
-        DEBUG(VERBOSE_LISTS,("Reach the end of one of the ompi_free_list_t "
+        DEBUG(VERBOSE_LISTS,("Reach the end of one of the opal_free_list_t "
                              "allocations. Go to the next one\n"));
         /* we should go to the next allocation */
         next_item_opal_list_t( proc, p_info,
@@ -1000,7 +1003,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
         /**
          * Handle alignment issues...
          */
-        active_allocation += i_info->ompi_free_list_item_t.size;
+        active_allocation += i_info->opal_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
                                         position->fl_frag_alignment, mqs_taddr_t );
         /**
@@ -1012,7 +1015,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
         DEBUG(VERBOSE_LISTS,("there are more elements in the list "
                              "active_allocation = %llx upper_bound = %llx\n",
                              (long long)active_allocation, (long long)position->upper_bound));
-        /*ompi_free_list_t_dump_position( position );*/
+        /*opal_free_list_t_dump_position( position );*/
     }
     DEBUG(VERBOSE_LISTS,("Free list actual position 0x%llx next element at 0x%llx\n",
                          (long long)*active_item, (long long)position->current_item));
@@ -1079,7 +1082,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     /* If we get a PML request with an internal tag we will jump back here */
   rescan_requests:
     while( 1 ) {
-        ompi_free_list_t_next_item( proc, p_info,
+        opal_free_list_t_next_item( proc, p_info,
                                     &extra->next_msg, &current_item );
         if( 0 == current_item ) {
             DEBUG(VERBOSE_REQ,("no more items in the %s request queue\n",
@@ -1239,12 +1242,12 @@ int mqs_setup_operation_iterator (mqs_process *proc, int op)
     switch (op) {
     case mqs_pending_sends:
         DEBUG(VERBOSE_REQ,("setup the send queue iterator\n"));
-        ompi_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->send_queue_base );
+        opal_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->send_queue_base );
         return mqs_ok;
 
     case mqs_pending_receives:
         DEBUG(VERBOSE_REQ,("setup the receive queue iterator\n"));
-        ompi_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->recv_queue_base );
+        opal_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->recv_queue_base );
         return mqs_ok;
 
     case mqs_unexpected_messages:  /* TODO */

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -34,7 +34,7 @@ typedef struct mca_btl_scif_base_frag_t {
     mca_btl_base_segment_t       segments[2];
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_scif_reg_t          *registration;
-    ompi_free_list_t            *my_list;
+    opal_free_list_t            *my_list;
 } mca_btl_scif_base_frag_t;
 
 typedef mca_btl_scif_base_frag_t mca_btl_scif_dma_frag_t;
@@ -44,14 +44,11 @@ OBJ_CLASS_DECLARATION(mca_btl_scif_dma_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_scif_eager_frag_t);
 
 static inline int mca_btl_scif_frag_alloc (mca_btl_base_endpoint_t *ep,
-                                           ompi_free_list_t *list,
+                                           opal_free_list_t *list,
                                            mca_btl_scif_base_frag_t **frag)
 {
-    ompi_free_list_item_t *item = NULL;
-
-    OMPI_FREE_LIST_GET_MT(list, item);
-    *frag = (mca_btl_scif_base_frag_t *) item;
-    if (OPAL_LIKELY(NULL != item)) {
+    *frag = (mca_btl_scif_base_frag_t *) opal_free_list_get (list);
+    if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
         return OPAL_SUCCESS;
@@ -72,7 +69,7 @@ static inline int mca_btl_scif_frag_return (mca_btl_scif_base_frag_t *frag)
     frag->segments[0].seg_len = 0;
     frag->segments[1].seg_len = 0;
 
-    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *) frag);
+    opal_free_list_return (frag->my_list, (opal_free_list_item_t *) frag);
 
     return OPAL_SUCCESS;
 }

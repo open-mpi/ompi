@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -668,6 +671,6 @@ static void ompi_mtl_mxm_mem_release_cb(void *buf, size_t length,
 
 OBJ_CLASS_INSTANCE(
         ompi_mtl_mxm_message_t,
-        ompi_free_list_item_t,
+        opal_free_list_item_t,
         NULL,
         NULL);

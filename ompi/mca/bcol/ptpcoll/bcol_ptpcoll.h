@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,7 +77,7 @@ struct mca_bcol_ptpcoll_component_t {
 };
 
 struct mca_bcol_ptpcoll_collreq_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
 
     int tag;
     int num_reqs;
@@ -342,7 +345,7 @@ struct mca_bcol_ptpcoll_module_t {
 	int **allgather_offsets;
 
     /* Free lists of outstanding collective operations */
-    ompi_free_list_t collreqs_free;
+    opal_free_list_t collreqs_free;
 
     int log_group_size;
     struct iovec *alltoall_iovec;

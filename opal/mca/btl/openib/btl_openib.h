@@ -38,7 +38,6 @@
 #include <infiniband/verbs.h>
 
 /* Open MPI includes */
-#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
@@ -285,11 +284,11 @@ struct mca_btl_openib_component_t {
     int credits_qp; /* qp used for software flow control */
     bool cpc_explicitly_defined;
     /**< free list of frags only; used for pining user memory */
-    ompi_free_list_t send_user_free;
+    opal_free_list_t send_user_free;
     /**< free list of frags only; used for pining user memory */
-    ompi_free_list_t recv_user_free;
+    opal_free_list_t recv_user_free;
     /**< frags for coalesced massages */
-    ompi_free_list_t send_free_coalesced;
+    opal_free_list_t send_free_coalesced;
     /** Default receive queues */
     char* default_recv_qps;
     /** GID index to use */
@@ -358,8 +357,8 @@ typedef struct mca_btl_openib_modex_message_t {
     } while (0)
 
 typedef struct mca_btl_openib_device_qp_t {
-    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
-    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
+    opal_free_list_t send_free;     /**< free lists of send buffer descriptors */
+    opal_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
 } mca_btl_openib_device_qp_t;
 
 struct mca_btl_base_endpoint_t;
@@ -403,7 +402,7 @@ typedef struct mca_btl_openib_device_t {
     int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
-    ompi_free_list_t send_free_control;
+    opal_free_list_t send_free_control;
     /* QP types and attributes that will be used on this device */
     mca_btl_openib_device_qp_t *qps;
     /* Maximum value supported by this device for max_inline_data */

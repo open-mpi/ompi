@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,8 +27,8 @@
  * If you wonder why these 2 freelists are declared here read the comment
  * in the pml_base_request.h file.
  */
-ompi_free_list_t mca_pml_base_send_requests = {{{0}}};
-ompi_free_list_t mca_pml_base_recv_requests = {{{0}}};
+opal_free_list_t mca_pml_base_send_requests = {{{0}}};
+opal_free_list_t mca_pml_base_recv_requests = {{{0}}};
 
 static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {

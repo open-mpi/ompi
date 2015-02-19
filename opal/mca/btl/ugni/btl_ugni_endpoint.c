@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -31,9 +31,9 @@ OBJ_CLASS_INSTANCE(mca_btl_ugni_endpoint_t, opal_list_item_t,
 
 static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     mca_btl_ugni_module_t *ugni_module = ep->btl;
-    ompi_free_list_item_t *mbox;
+    opal_free_list_item_t *mbox;
 
-    OMPI_FREE_LIST_GET_MT(&ugni_module->smsg_mboxes, mbox);
+    mbox = opal_free_list_get (&ugni_module->smsg_mboxes);
     if (OPAL_UNLIKELY(NULL == mbox)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -76,7 +76,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
 
     if (ep->mailbox) {
-        OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
+        opal_free_list_return (&ep->btl->smsg_mboxes, ((opal_free_list_item_t *) ep->mailbox));
         ep->mailbox = NULL;
     }
 

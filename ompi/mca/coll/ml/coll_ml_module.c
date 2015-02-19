@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -120,9 +120,9 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 
     OBJ_CONSTRUCT(&module->active_bcols_list, opal_list_t);
     OBJ_CONSTRUCT(&module->waiting_for_memory_list, opal_list_t);
-    OBJ_CONSTRUCT(&module->fragment_descriptors, ompi_free_list_t);
-    OBJ_CONSTRUCT(&module->message_descriptors, ompi_free_list_t);
-    OBJ_CONSTRUCT(&module->coll_ml_collective_descriptors, ompi_free_list_t);
+    OBJ_CONSTRUCT(&module->fragment_descriptors, opal_free_list_t);
+    OBJ_CONSTRUCT(&module->message_descriptors, opal_free_list_t);
+    OBJ_CONSTRUCT(&module->coll_ml_collective_descriptors, opal_free_list_t);
 
     memset (&module->fallback, 0, sizeof (module->fallback));
 }
@@ -260,8 +260,8 @@ static int mca_coll_ml_request_free(ompi_request_t** request)
     ML_VERBOSE(10, ("Releasing Master %p", ml_request));
     /* Mark the request as invalid */
     OMPI_REQUEST_FINI(&ml_request->full_message.super);
-    OMPI_FREE_LIST_RETURN_MT(&(ml_module->coll_ml_collective_descriptors),
-                             (ompi_free_list_item_t *)ml_request);
+    opal_free_list_return (&(ml_module->coll_ml_collective_descriptors),
+                           (opal_free_list_item_t *)ml_request);
 
     /* MPI needs to return with the request object set to MPI_REQUEST_NULL
      */
@@ -326,20 +326,20 @@ static void mca_coll_ml_collective_operation_progress_destruct
 /* initialize the full message descriptor - can pass in module specific
  * initialization data
  */
-static void init_ml_fragment_desc(ompi_free_list_item_t *desc , void* ctx);
-static void init_ml_message_desc(ompi_free_list_item_t *desc , void* ctx)
+static void init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx);
+static void init_ml_message_desc(opal_free_list_item_t *desc , void* ctx)
 {
     mca_coll_ml_module_t *module= (mca_coll_ml_module_t *) ctx;
     mca_coll_ml_descriptor_t *msg_desc = (mca_coll_ml_descriptor_t *) desc;
 
     /* finish setting up the fragment descriptor */
-    init_ml_fragment_desc((ompi_free_list_item_t*)&(msg_desc->fragment),module);
+    init_ml_fragment_desc((opal_free_list_item_t*)&(msg_desc->fragment),module);
 }
 
 /* initialize the fragment descriptor - can pass in module specific
  * initialization data
  */
-static void init_ml_fragment_desc(ompi_free_list_item_t *desc , void* ctx)
+static void init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx)
 {
     mca_coll_ml_module_t *module= (mca_coll_ml_module_t *) ctx;
     mca_coll_ml_fragment_t *frag_desc = (mca_coll_ml_fragment_t *) desc;
@@ -2614,14 +2614,14 @@ static int init_lists(mca_coll_ml_module_t *ml_module)
     /* no data associated with the message descriptor */
 
     length = sizeof(mca_coll_ml_descriptor_t);
-    ret = ompi_free_list_init_ex_new(&(ml_module->message_descriptors), length,
-                                     opal_cache_line_size, OBJ_CLASS(mca_coll_ml_descriptor_t),
-                                     length_payload, 0,
-                                     num_elements, max_elements, elements_per_alloc,
-                                     NULL,
-                                     init_ml_message_desc, ml_module);
+    ret = opal_free_list_init(&(ml_module->message_descriptors), length,
+                              opal_cache_line_size, OBJ_CLASS(mca_coll_ml_descriptor_t),
+                              length_payload, 0,
+                              num_elements, max_elements, elements_per_alloc,
+                              NULL, 0, NULL,
+                              init_ml_message_desc, ml_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_ERROR(("ompi_free_list_init_ex_new exit with error"));
+        ML_ERROR(("opal_free_list_init exit with error"));
         return ret;
     }
 
@@ -2632,14 +2632,14 @@ static int init_lists(mca_coll_ml_module_t *ml_module)
     /* create a free list of fragment descriptors */
     /*length_payload=sizeof(something);*/
     length = sizeof(mca_coll_ml_fragment_t);
-    ret = ompi_free_list_init_ex_new(&(ml_module->fragment_descriptors), length,
-                                     opal_cache_line_size, OBJ_CLASS(mca_coll_ml_fragment_t),
-                                     length_payload, 0,
-                                     num_elements, max_elements, elements_per_alloc,
-                                     NULL,
-                                     init_ml_fragment_desc, ml_module);
+    ret = opal_free_list_init (&(ml_module->fragment_descriptors), length,
+                               opal_cache_line_size, OBJ_CLASS(mca_coll_ml_fragment_t),
+                               length_payload, 0,
+                               num_elements, max_elements, elements_per_alloc,
+                               NULL, 0, NULL,
+                               init_ml_fragment_desc, ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("ompi_free_list_init_ex_new exit with error"));
+        ML_ERROR(("opal_free_list_init exit with error"));
         return ret;
     }
 

@@ -26,7 +26,6 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/class/ompi_free_list.h"
 
 #include <scif.h>
 #include <errno.h>
@@ -85,10 +84,10 @@ typedef struct mca_btl_scif_module_t {
     opal_list_t failed_frags;
 
     /* fragments for DMA */
-    ompi_free_list_t dma_frags;
+    opal_free_list_t dma_frags;
 
     /* fragments for eager send */
-    ompi_free_list_t eager_frags;
+    opal_free_list_t eager_frags;
 
     pthread_t listen_thread;
 

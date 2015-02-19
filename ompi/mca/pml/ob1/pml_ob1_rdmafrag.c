@@ -31,6 +31,6 @@ static void mca_pml_ob1_rdma_frag_constructor (mca_pml_ob1_rdma_frag_t *frag)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_rdma_frag_t,
-    ompi_free_list_item_t,
+    opal_free_list_item_t,
     mca_pml_ob1_rdma_frag_constructor,
     NULL);

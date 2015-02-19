@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -636,8 +636,8 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
     }
 
     for (int qp_index = 0 ; qp_index < mca_btl_openib_component.num_qps ; qp_index++) {
-        OBJ_CONSTRUCT(&device->qps[qp_index].send_free, ompi_free_list_t);
-        OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, ompi_free_list_t);
+        OBJ_CONSTRUCT(&device->qps[qp_index].send_free, opal_free_list_t);
+        OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, opal_free_list_t);
     }
 
     if(mca_btl_openib_component.use_async_event_thread) {
@@ -726,13 +726,13 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
     init_data->order = MCA_BTL_NO_ORDER;
     init_data->list = &device->send_free_control;
 
-    rc = ompi_free_list_init_ex_new(&device->send_free_control,
+    rc = opal_free_list_init(&device->send_free_control,
                 sizeof(mca_btl_openib_send_control_frag_t), opal_cache_line_size,
                 OBJ_CLASS(mca_btl_openib_send_control_frag_t), length,
                 mca_btl_openib_component.buffer_alignment,
                 mca_btl_openib_component.ib_free_list_num, -1,
                 mca_btl_openib_component.ib_free_list_inc,
-                device->mpool, mca_btl_openib_frag_init,
+                device->mpool, 0, NULL, mca_btl_openib_frag_init,
                 init_data);
     if (OPAL_SUCCESS != rc) {
         /* If we're "out of memory", this usually means that we ran
@@ -741,7 +741,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
             OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc) {
             errno = ENOMEM;
             mca_btl_openib_show_init_error(__FILE__, __LINE__,
-                                           "ompi_free_list_init_ex_new",
+                                           "opal_free_list_init",
                                            ibv_get_device_name(device->ib_dev));
         }
         return rc;
@@ -765,15 +765,15 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
         init_data->order = qp;
         init_data->list = &device->qps[qp].send_free;
 
-        rc = ompi_free_list_init_ex_new(init_data->list,
+        rc = opal_free_list_init (init_data->list,
                     sizeof(mca_btl_openib_send_frag_t), opal_cache_line_size,
                     OBJ_CLASS(mca_btl_openib_send_frag_t), length,
                     mca_btl_openib_component.buffer_alignment,
                     mca_btl_openib_component.ib_free_list_num,
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, mca_btl_openib_frag_init,
-                                        init_data);
+                    device->mpool, 0, NULL, mca_btl_openib_frag_init,
+                    init_data);
         if (OPAL_SUCCESS != rc) {
             /* If we're "out of memory", this usually means that we
                ran out of registered memory, so show that error
@@ -782,7 +782,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
                 OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc) {
                 errno = ENOMEM;
                 mca_btl_openib_show_init_error(__FILE__, __LINE__,
-                                               "ompi_free_list_init_ex_new",
+                                               "opal_free_list_init",
                                                ibv_get_device_name(device->ib_dev));
             }
             return OPAL_ERROR;
@@ -798,14 +798,14 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
         init_data->order = qp;
         init_data->list = &device->qps[qp].recv_free;
 
-        if(OPAL_SUCCESS != ompi_free_list_init_ex_new(init_data->list,
+        if(OPAL_SUCCESS != opal_free_list_init (init_data->list,
                     sizeof(mca_btl_openib_recv_frag_t), opal_cache_line_size,
                     OBJ_CLASS(mca_btl_openib_recv_frag_t),
                     length, mca_btl_openib_component.buffer_alignment,
                     mca_btl_openib_component.ib_free_list_num,
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, mca_btl_openib_frag_init,
+                    device->mpool, 0, NULL, mca_btl_openib_frag_init,
                     init_data)) {
             return OPAL_ERROR;
         }
@@ -1117,11 +1117,11 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
         uint32_t flags)
 {
     int qp;
-    ompi_free_list_item_t* item = NULL;
+    opal_free_list_item_t* item = NULL;
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
          if(mca_btl_openib_component.qp_infos[qp].size >= size) {
-             OMPI_FREE_LIST_GET_MT(&btl->device->qps[qp].send_free, item);
+             item = opal_free_list_get (&btl->device->qps[qp].send_free);
              if(item)
                  break;
          }
@@ -1547,7 +1547,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         prio = flags & MCA_BTL_DES_FLAGS_PRIORITY,
         ib_rc;
     bool do_rdma = false;
-    ompi_free_list_item_t* item = NULL;
+    opal_free_list_item_t* item = NULL;
     mca_btl_openib_frag_t *frag;
     mca_btl_openib_header_t *hdr;
     int send_signaled;
@@ -1577,7 +1577,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     }
 
     /* Allocate fragment */
-    OMPI_FREE_LIST_GET_MT(&obtl->device->qps[qp].send_free, item);
+    item = opal_free_list_get (&obtl->device->qps[qp].send_free);
     if(OPAL_UNLIKELY(NULL == item)) {
         /* we don't return NULL because maybe later we will try to coalesce */
         goto cant_send_wqe;

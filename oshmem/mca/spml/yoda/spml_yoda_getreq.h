@@ -42,10 +42,10 @@ OBJ_CLASS_DECLARATION(mca_spml_yoda_get_request_t);
 
 static inline mca_spml_yoda_get_request_t *mca_spml_yoda_getreq_alloc(int dst)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_spml_yoda_get_request_t *getreq;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_spml_base_get_requests, item);
+    item = opal_free_list_wait (&mca_spml_base_get_requests);
     getreq = (mca_spml_yoda_get_request_t*) item;
     assert(getreq);
     getreq->req_get.req_base.req_free_called = false;

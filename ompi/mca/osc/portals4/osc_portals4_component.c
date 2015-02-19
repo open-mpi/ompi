@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -317,17 +320,14 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
         return ret;
     }
 
-    OBJ_CONSTRUCT(&mca_osc_portals4_component.requests, ompi_free_list_t);
-    ret = ompi_free_list_init(&mca_osc_portals4_component.requests,
-                              sizeof(ompi_osc_portals4_request_t),
-                              OBJ_CLASS(ompi_osc_portals4_request_t),
-                              8,
-                              0,
-                              8,
-                              NULL);
+    OBJ_CONSTRUCT(&mca_osc_portals4_component.requests, opal_free_list_t);
+    ret = opal_free_list_init (&mca_osc_portals4_component.requests,
+                               sizeof(ompi_osc_portals4_request_t),
+                               OBJ_CLASS(ompi_osc_portals4_request_t),
+                               0, 0, 8, 0, 8, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ompi_free_list_init failed: %d\n",
+                            "%s:%d: opal_free_list_init failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
     }

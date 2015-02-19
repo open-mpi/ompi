@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +62,7 @@
  * debuggers will be unable to initialize the Open MPI debug library.
  */
 #include "opal/class/opal_list.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
@@ -110,8 +110,8 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
  */
 OMPI_DECLSPEC opal_list_item_t* opal_list_item_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC opal_list_t* opal_list_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_free_list_item_t* ompi_free_list_item_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_free_list_t* ompi_free_list_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_free_list_item_t* opal_free_list_item_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_free_list_t* opal_free_list_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_request_t* ompi_request_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC mca_pml_base_request_t* mca_pml_base_request_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC mca_pml_base_send_request_t* mca_pml_base_send_request_t_type_force_inclusion = NULL;

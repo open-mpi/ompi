@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +69,7 @@ static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_
 
 OBJ_CLASS_INSTANCE(
     mca_mpool_base_registration_t,
-    ompi_free_list_item_t,
+    opal_free_list_item_t,
     mca_mpool_base_registration_constructor,
     mca_mpool_base_registration_destructor);
 

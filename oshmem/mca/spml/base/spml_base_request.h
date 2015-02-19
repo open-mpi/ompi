@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,7 +21,7 @@
 
 #include "opal/datatype/opal_convertor.h"
 
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 
 BEGIN_C_DECLS
@@ -29,11 +32,11 @@ BEGIN_C_DECLS
  * the list. Beware these free lists have to be initialized
  * directly by the SPML who win the SPML election.
  */
-OSHMEM_DECLSPEC extern ompi_free_list_t mca_spml_base_put_requests;
-OSHMEM_DECLSPEC extern ompi_free_list_t mca_spml_base_get_requests;
-OSHMEM_DECLSPEC extern ompi_free_list_t mca_spml_base_send_requests;
-OSHMEM_DECLSPEC extern ompi_free_list_t mca_spml_base_recv_requests;
-OSHMEM_DECLSPEC extern ompi_free_list_t mca_spml_base_atomic_requests;
+OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_put_requests;
+OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_get_requests;
+OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_send_requests;
+OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_recv_requests;
+OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_atomic_requests;
 
 /* TODO: Consider to add requests lists 
  * 1. List of Non blocking requests with NULL handle.

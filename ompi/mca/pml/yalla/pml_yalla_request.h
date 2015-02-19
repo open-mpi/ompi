@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +34,7 @@ struct pml_yalla_send_request {
 };
 
 struct pml_yalla_bsend_request {
-    ompi_free_list_item_t        super;
+    opal_free_list_item_t        super;
     mxm_send_req_t               mxm;
 };
 

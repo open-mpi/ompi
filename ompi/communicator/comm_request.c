@@ -32,7 +32,7 @@ static int ompi_comm_request_progress (void);
 void ompi_comm_request_init (void)
 {
     OBJ_CONSTRUCT(&ompi_comm_requests, opal_free_list_t);
-    (void) opal_free_list_init (&ompi_comm_requests, sizeof (ompi_comm_request_t),
+    (void) opal_free_list_init (&ompi_comm_requests, sizeof (ompi_comm_request_t), 8,
                                 OBJ_CLASS(ompi_comm_request_t), 0, 0, 0, -1, 8,
                                 NULL, 0, NULL, NULL, NULL);
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,11 +52,10 @@ static void opal_rb_tree_construct(opal_object_t * object)
 {
     opal_rb_tree_t * tree = (opal_rb_tree_t *) object;
     tree->root_ptr = NULL;
-    OBJ_CONSTRUCT(&(tree->free_list), ompi_free_list_t);
-    ompi_free_list_init_new(&(tree->free_list), sizeof(opal_rb_tree_node_t),
+    OBJ_CONSTRUCT(&(tree->free_list), opal_free_list_t);
+    opal_free_list_init (&(tree->free_list), sizeof(opal_rb_tree_node_t),
             opal_cache_line_size, OBJ_CLASS(opal_rb_tree_node_t),
-            0,opal_cache_line_size,
-            0, -1 , 128, NULL);
+            0,opal_cache_line_size, 0, -1 , 128, NULL, 0, NULL, NULL, NULL);
 }
 
 /**
@@ -71,7 +73,7 @@ static void opal_rb_tree_destruct(opal_object_t * object)
 }
 
 /* declare the instance of the classes  */
-OBJ_CLASS_INSTANCE(opal_rb_tree_node_t, ompi_free_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(opal_rb_tree_node_t, opal_free_list_item_t, NULL, NULL);
 OBJ_CLASS_INSTANCE(opal_rb_tree_t, opal_object_t, opal_rb_tree_construct,
                    opal_rb_tree_destruct);
 
@@ -79,17 +81,17 @@ OBJ_CLASS_INSTANCE(opal_rb_tree_t, opal_object_t, opal_rb_tree_construct,
 int opal_rb_tree_init(opal_rb_tree_t * tree,
                       opal_rb_tree_comp_fn_t comp)
 {
-    ompi_free_list_item_t * node;
+    opal_free_list_item_t * node;
     /* we need to get memory for the root pointer from the free list */
-    OMPI_FREE_LIST_GET_MT(&(tree->free_list), node);
+    node = opal_free_list_get (&(tree->free_list));
     tree->root_ptr = (opal_rb_tree_node_t *) node;
     if (NULL == node) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    OMPI_FREE_LIST_GET_MT(&(tree->free_list), node);
+    node = opal_free_list_get (&(tree->free_list));
     if (NULL == node) {
-        OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), (ompi_free_list_item_t*)tree->root_ptr);
+        opal_free_list_return (&tree->free_list, (opal_free_list_item_t*)tree->root_ptr);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     tree->nill = (opal_rb_tree_node_t *) node;
@@ -119,10 +121,10 @@ int opal_rb_tree_insert(opal_rb_tree_t *tree, void * key, void * value)
 {
     opal_rb_tree_node_t * y;
     opal_rb_tree_node_t * node;
-    ompi_free_list_item_t * item;
+    opal_free_list_item_t * item;
 
     /* get the memory for a node */
-    OMPI_FREE_LIST_GET_MT(&(tree->free_list), item);
+    item = opal_free_list_get (&tree->free_list);
     if (NULL == item) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -226,7 +228,7 @@ int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
     opal_rb_tree_node_t * p;
     opal_rb_tree_node_t * todelete;
     opal_rb_tree_node_t * y;
-    ompi_free_list_item_t * item;
+    opal_free_list_item_t * item;
 
     p = opal_rb_tree_find_node(tree, key);
     if (NULL == p) {
@@ -264,8 +266,8 @@ int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
     if (todelete->color == BLACK) {
         btree_delete_fixup(tree, y);
     }
-    item = (ompi_free_list_item_t *) todelete;
-    OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), item);
+    item = (opal_free_list_item_t *) todelete;
+    opal_free_list_return (&(tree->free_list), item);
     --tree->tree_size;
     return OPAL_SUCCESS;
 }
@@ -274,18 +276,18 @@ int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
 /* Destroy the hashmap    */
 int opal_rb_tree_destroy(opal_rb_tree_t *tree)
 {
-    ompi_free_list_item_t * item;
+    opal_free_list_item_t * item;
     /* Recursive inorder traversal for delete    */
 
     inorder_destroy(tree, tree->root_ptr);
     /* Now free the root -- root does not get free'd in the above
      * inorder destroy    */
-    item = (ompi_free_list_item_t *) tree->root_ptr;
-    OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), item);
+    item = (opal_free_list_item_t *) tree->root_ptr;
+    opal_free_list_return(&(tree->free_list), item);
 
     /* free the tree->nill node */
-    item = (ompi_free_list_item_t *) tree->nill;
-    OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), item);
+    item = (opal_free_list_item_t *) tree->nill;
+    opal_free_list_return (&(tree->free_list), item);
     return OPAL_SUCCESS;
 }
 
@@ -419,7 +421,7 @@ static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
 static void
 inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
 {
-    ompi_free_list_item_t * item;
+    opal_free_list_item_t * item;
 
     if (node == tree->nill) {
         return;
@@ -428,16 +430,16 @@ inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
     inorder_destroy(tree, node->left);
 
     if (node->left != tree->nill) {
-        item = (ompi_free_list_item_t *) node->left;
+        item = (opal_free_list_item_t *) node->left;
         --tree->tree_size;
-        OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), item);
+        opal_free_list_return (&tree->free_list, item);
     }
 
     inorder_destroy(tree, node->right);
     if (node->right != tree->nill) {
-        item = (ompi_free_list_item_t *) node->right;
+        item = (opal_free_list_item_t *) node->right;
         --tree->tree_size;
-        OMPI_FREE_LIST_RETURN_MT(&(tree->free_list), item);
+        opal_free_list_return (&tree->free_list, item);
     }
 }
 

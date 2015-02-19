@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -233,26 +233,26 @@ mca_btl_scif_setup_mpools (mca_btl_scif_module_t *scif_module)
     /* setup free lists for fragments. dma fragments will be used for
      * rma operations and in-place sends. eager frags will be used for
      * buffered sends. */
-    rc = ompi_free_list_init_new (&scif_module->dma_frags,
-                                  sizeof (mca_btl_scif_dma_frag_t), 64,
-                                  OBJ_CLASS(mca_btl_scif_dma_frag_t),
-                                  128, opal_getpagesize (),
-                                  mca_btl_scif_component.scif_free_list_num,
-                                  mca_btl_scif_component.scif_free_list_max,
-                                  mca_btl_scif_component.scif_free_list_inc,
-                                  NULL);
+    rc = opal_free_list_init (&scif_module->dma_frags,
+                              sizeof (mca_btl_scif_dma_frag_t), 64,
+                              OBJ_CLASS(mca_btl_scif_dma_frag_t),
+                              128, opal_getpagesize (),
+                              mca_btl_scif_component.scif_free_list_num,
+                              mca_btl_scif_component.scif_free_list_max,
+                              mca_btl_scif_component.scif_free_list_inc,
+                              NULL, 0, NULL, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
-    rc = ompi_free_list_init_new (&scif_module->eager_frags,
-                                  sizeof (mca_btl_scif_eager_frag_t), 8,
-                                  OBJ_CLASS(mca_btl_scif_eager_frag_t),
-                                  128 + scif_module->super.btl_eager_limit, 64,
-                                  mca_btl_scif_component.scif_free_list_num,
-                                  mca_btl_scif_component.scif_free_list_max,
-                                  mca_btl_scif_component.scif_free_list_inc,
-                                  NULL);
+    rc = opal_free_list_init (&scif_module->eager_frags,
+                              sizeof (mca_btl_scif_eager_frag_t), 8,
+                              OBJ_CLASS(mca_btl_scif_eager_frag_t),
+                              128 + scif_module->super.btl_eager_limit, 64,
+                              mca_btl_scif_component.scif_free_list_num,
+                              mca_btl_scif_component.scif_free_list_max,
+                              mca_btl_scif_component.scif_free_list_inc,
+                              NULL, 0, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating eager receive fragment free list"));
         return rc;

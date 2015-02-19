@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -28,7 +28,7 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/util/proc.h"
@@ -94,7 +94,7 @@ OBJ_CLASS_DECLARATION(mca_mpool_udreg_hugepage_pool_item_t);
 struct mca_mpool_udreg_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t resources;
-    ompi_free_list_t reg_list;
+    opal_free_list_t reg_list;
     mca_mpool_udreg_hugepage_t *huge_page;
     opal_mutex_t lock;
     void *udreg_handle;

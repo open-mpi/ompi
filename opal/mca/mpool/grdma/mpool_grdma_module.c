@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
@@ -94,11 +94,12 @@ void mca_mpool_grdma_module_init(mca_mpool_grdma_module_t* mpool, mca_mpool_grdm
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
 
-    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t);
-    ompi_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
-                            opal_cache_line_size,
-                            OBJ_CLASS(mca_mpool_base_registration_t), 
-                            0, opal_cache_line_size, 0, -1, 32, NULL);
+    OBJ_CONSTRUCT(&mpool->reg_list, opal_free_list_t);
+    opal_free_list_init (&mpool->reg_list, mpool->resources.sizeof_reg,
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_mpool_base_registration_t),
+                         0, opal_cache_line_size, 0, -1, 32, NULL, 0,
+                         NULL, NULL, NULL);
 }
 
 static inline int dereg_mem(mca_mpool_base_registration_t *reg)
@@ -116,8 +117,8 @@ static inline int dereg_mem(mca_mpool_base_registration_t *reg)
     OPAL_THREAD_LOCK(&reg->mpool->rcache->lock);
 
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
-        OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list,
-                              (ompi_free_list_item_t *) reg);
+        opal_free_list_return (&mpool_grdma->reg_list,
+                               (opal_free_list_item_t *) reg);
     }
 
     return rc;
@@ -220,7 +221,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     const bool bypass_cache = !!(flags & MCA_MPOOL_FLAGS_CACHE_BYPASS);
     const bool persist = !!(flags & MCA_MPOOL_FLAGS_PERSIST);
     mca_mpool_base_registration_t *grdma_reg;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     unsigned char *base, *bound;
     int rc;
 
@@ -273,7 +274,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
          * here is !mca_mpool_grdma_component.leave_pinned. */
     }
 
-    OMPI_FREE_LIST_GET_MT(&mpool_grdma->reg_list, item);
+    item = opal_free_list_get (&mpool_grdma->reg_list);
     if(NULL == item) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -295,7 +296,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
 
         if (OPAL_UNLIKELY(rc != OPAL_SUCCESS)) {
             OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-            OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list, item);
+            opal_free_list_return (&mpool_grdma->reg_list, item);
             return rc;
         }
     }
@@ -314,7 +315,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
             mpool->rcache->rcache_delete(mpool->rcache, grdma_reg);
         }
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list, item);
+        opal_free_list_return (&mpool_grdma->reg_list, item);
         return rc;
     }
 

@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -57,10 +60,10 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
     mxm_error_t err;
     mxm_recv_req_t req;
 
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     ompi_mtl_mxm_message_t *msgp;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_mtl_mxm_component.mxm_messages, item);
+    item = opal_free_list_wait (&mca_mtl_mxm_component.mxm_messages);
     if (OPAL_UNLIKELY(NULL == item)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
@@ -77,48 +78,43 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
  * Macros to allocate/return descriptors from module specific
  * free list(s).
  */
-#define OPAL_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                                    \
-{                                                                                               \
-                                                                                                \
-    ompi_free_list_item_t *item;                                                                \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, item); \
-    frag = (mca_btl_portals4_frag_t*) item;                                                     \
-    if (NULL == frag) {                                                  \
-        OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);                                  \
-    }                                                                                           \
+#define OPAL_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                                \
+{                                                                                          \
+    frag = (mca_btl_portals4_frag_t *)                                                     \
+        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager); \
+    if (NULL == frag) {                                                                    \
+        OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);                                 \
+    }                                                                                      \
 }
 
 
 #define OPAL_BTL_PORTALS4_FRAG_RETURN_EAGER(btl_macro, frag)                            \
 {                                                                                       \
     assert(BTL_PORTALS4_FRAG_TYPE_EAGER == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, \
-        (ompi_free_list_item_t*)(frag));                                                \
+    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, \
+        (opal_free_list_item_t*)(frag));                                                \
 }
 
 
 #define OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag)                                           \
 {                                                                                                   \
-                                                                                                    \
-    ompi_free_list_item_t *item_macro;                                                              \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, item_macro); \
-    frag = (mca_btl_portals4_frag_t*) item_macro;                                                   \
+    frag = (mca_btl_portals4_frag_t*)                                                               \
+        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max);            \
 }
 
 
 #define OPAL_BTL_PORTALS4_FRAG_RETURN_MAX(btl_macro, frag)                            \
 {                                                                                     \
     assert(BTL_PORTALS4_FRAG_TYPE_MAX == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, \
-        (ompi_free_list_item_t*)(frag));                                              \
+    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, \
+        (opal_free_list_item_t*)(frag));                                              \
 }
 
 
 #define OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(btl_macro, frag)                                      \
 {                                                                                               \
-    ompi_free_list_item_t *item;                                                                \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, item); \
-    frag = (mca_btl_portals4_frag_t*) item;                                                     \
+    frag = (mca_btl_portals4_frag_t*)                                                           \
+        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user);       \
     frag->base.des_cbfunc = NULL;                                                               \
 }
 
@@ -126,8 +122,8 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
 #define OPAL_BTL_PORTALS4_FRAG_RETURN_USER(btl_macro, frag)                            \
 {                                                                                      \
     assert(BTL_PORTALS4_FRAG_TYPE_USER == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, \
-        (ompi_free_list_item_t*)(frag));                                               \
+    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, \
+        (opal_free_list_item_t*)(frag));                                               \
 }
 
 

@@ -40,7 +40,6 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"
@@ -89,9 +88,9 @@ struct mca_btl_tcp_component_t {
     int    tcp_disable_family;              /**< disabled AF_family */
 
     /* free list of fragment descriptors */
-    ompi_free_list_t tcp_frag_eager;
-    ompi_free_list_t tcp_frag_max;
-    ompi_free_list_t tcp_frag_user;
+    opal_free_list_t tcp_frag_eager;
+    opal_free_list_t tcp_frag_max;
+    opal_free_list_t tcp_frag_user;
 
     /* Do we want to use TCP_NODELAY? */
     int    tcp_not_use_nodelay;

@@ -934,27 +934,27 @@ int mca_spml_yoda_enable(bool enable)
      * initialize them with the size of our own requests.
      */
 
-    ompi_free_list_init_new(&mca_spml_base_put_requests,
-                            sizeof(mca_spml_yoda_put_request_t),
-                            opal_cache_line_size,
-                            OBJ_CLASS(mca_spml_yoda_put_request_t),
-                            0,
-                            opal_cache_line_size,
-                            mca_spml_yoda.free_list_num,
-                            mca_spml_yoda.free_list_max,
-                            mca_spml_yoda.free_list_inc,
-                            NULL );
+    opal_free_list_init (&mca_spml_base_put_requests,
+                         sizeof(mca_spml_yoda_put_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_spml_yoda_put_request_t),
+                         0,
+                         opal_cache_line_size,
+                         mca_spml_yoda.free_list_num,
+                         mca_spml_yoda.free_list_max,
+                         mca_spml_yoda.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
-    ompi_free_list_init_new(&mca_spml_base_get_requests,
-                            sizeof(mca_spml_yoda_get_request_t),
-                            opal_cache_line_size,
-                            OBJ_CLASS(mca_spml_yoda_get_request_t),
-                            0,
-                            opal_cache_line_size,
-                            mca_spml_yoda.free_list_num,
-                            mca_spml_yoda.free_list_max,
-                            mca_spml_yoda.free_list_inc,
-                            NULL );
+    opal_free_list_init (&mca_spml_base_get_requests,
+                         sizeof(mca_spml_yoda_get_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_spml_yoda_get_request_t),
+                         0,
+                         opal_cache_line_size,
+                         mca_spml_yoda.free_list_num,
+                         mca_spml_yoda.free_list_max,
+                         mca_spml_yoda.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
     mca_spml_yoda.enabled = true;
 

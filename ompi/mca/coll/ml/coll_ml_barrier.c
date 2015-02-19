@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +38,7 @@ static void mca_coll_ml_barrier_task_setup(
 static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
                                      ompi_request_t **req)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_coll_ml_collective_operation_progress_t *coll_op;
     mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     
@@ -49,8 +52,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
 
     
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
-                        item);
+    item = opal_free_list_wait (&(ml_module->coll_ml_collective_descriptors));
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;
     assert(NULL != coll_op);

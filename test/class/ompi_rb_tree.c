@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +31,6 @@
 #endif
 #include <string.h>
 #include "support.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_rb_tree.h"
 #include "opal/mca/mpool/base/base.h"
 
@@ -281,14 +283,14 @@ typedef struct opal_test_rb_key_t opal_test_rb_key_t;
 
 struct opal_test_rb_value_t
 {
-    ompi_free_list_item_t super; /* the parent class */
+    opal_free_list_item_t super; /* the parent class */
     opal_test_rb_key_t key; /* the key which holds the memory pointers */
     mca_mpool_base_module_t* registered_mpools[MAX_REGISTRATIONS]; 
                             /* the mpools the memory is registered with */
 };
 typedef struct opal_test_rb_value_t opal_test_rb_value_t;
 
-OBJ_CLASS_INSTANCE(opal_test_rb_value_t, ompi_free_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(opal_test_rb_value_t, opal_free_list_item_t, NULL, NULL);
 
 int mem_node_compare(void * key1, void * key2)
 {
@@ -307,21 +309,21 @@ int mem_node_compare(void * key1, void * key2)
 
 void test2(void)
 {
-    ompi_free_list_t key_list;
-    ompi_free_list_item_t * new_value;
+    opal_free_list_t key_list;
+    opal_free_list_item_t * new_value;
     opal_rb_tree_t tree;
     int rc, i, size;
     void * result, * lookup;
     void * mem[NUM_ALLOCATIONS];
-    ompi_free_list_item_t * key_array[NUM_ALLOCATIONS];
+    opal_free_list_item_t * key_array[NUM_ALLOCATIONS];
     struct timeval start, end;
     
-    OBJ_CONSTRUCT(&key_list, ompi_free_list_t);
-    ompi_free_list_init_new(&key_list, sizeof(opal_test_rb_value_t),
+    OBJ_CONSTRUCT(&key_list, opal_free_list_t);
+    opal_free_list_init (&key_list, sizeof(opal_test_rb_value_t),
             opal_cache_line_size,
             OBJ_CLASS(opal_test_rb_value_t), 
             0,opal_cache_line_size,
-            0, -1 , 128, NULL);
+            0, -1 , 128, NULL, 0, NULL, NULL, NULL);
     
     OBJ_CONSTRUCT(&tree, opal_rb_tree_t);
     rc = opal_rb_tree_init(&tree, mem_node_compare);
@@ -338,7 +340,7 @@ void test2(void)
             test_failure("system out of memory");
             return;
         }   
-        OMPI_FREE_LIST_GET_MT(&key_list, new_value);
+        new_value = opal_free_list_get (&key_list);
         if(NULL == new_value)
         {
             test_failure("failed to get memory from free list");
@@ -394,7 +396,7 @@ void test2(void)
         {
             free(mem[i]);
         }
-        OMPI_FREE_LIST_RETURN_MT(&(key_list), key_array[i]);
+        opal_free_list_return (&(key_list), key_array[i]);
     }
 
     OBJ_DESTRUCT(&tree);

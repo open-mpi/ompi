@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,7 +160,7 @@ void mca_pml_yalla_init_datatype(void)
 }
 
 OBJ_CLASS_INSTANCE(mca_pml_yalla_convertor_t,
-                   ompi_free_list_item_t,
+                   opal_free_list_item_t,
                    mca_pml_yalla_convertor_construct,
                    mca_pml_yalla_convertor_destruct);
 

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -28,7 +28,6 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/mpool/mpool.h"
 #if HAVE_SYS_MMAN_H
@@ -77,7 +76,7 @@ struct mca_mpool_grdma_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t resources;
     mca_mpool_grdma_pool_t *pool;
-    ompi_free_list_t reg_list;
+    opal_free_list_t reg_list;
     uint32_t stat_cache_hit;
     uint32_t stat_cache_miss;
     uint32_t stat_evicted;

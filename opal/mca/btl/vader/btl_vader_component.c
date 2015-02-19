@@ -268,9 +268,9 @@ static int mca_btl_vader_component_register (void)
 static int mca_btl_vader_component_open(void)
 {
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_fragments, opal_list_t);

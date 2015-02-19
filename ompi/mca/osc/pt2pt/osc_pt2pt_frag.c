@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -26,7 +26,7 @@ static void ompi_osc_pt2pt_frag_constructor (ompi_osc_pt2pt_frag_t *frag){
     frag->buffer = frag->super.ptr;
 }
 
-OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_frag_t, ompi_free_list_item_t,
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_frag_t, opal_free_list_item_t,
                    ompi_osc_pt2pt_frag_constructor, NULL);
 
 static int frag_send_cb (ompi_request_t *request)
@@ -40,7 +40,7 @@ static int frag_send_cb (ompi_request_t *request)
                          frag->target, (void *) frag, (void *) request));
 
     mark_outgoing_completion(module);
-    OMPI_FREE_LIST_RETURN_MT(&mca_osc_pt2pt_component.frags, &frag->super);
+    opal_free_list_return (&mca_osc_pt2pt_component.frags, &frag->super);
 
 
     /* put this request on the garbage colletion list */

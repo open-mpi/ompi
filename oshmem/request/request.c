@@ -1,7 +1,9 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,7 +86,7 @@ int oshmem_request_persistent_proc_null_free(oshmem_request_t** request)
 
 /*TODO: define under class oshmem_free_list_item_t */
 OBJ_CLASS_INSTANCE( oshmem_request_t,
-                   ompi_free_list_item_t,
+                   opal_free_list_item_t,
                    oshmem_request_construct,
                    oshmem_request_destruct);
 

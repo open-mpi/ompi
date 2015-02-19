@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,46 +63,41 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
  * free list(s).
  */
 
-#define MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag)               \
-{                                                                  \
-                                                                   \
-    ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_template_module_t*)btl)->template_frag_eager, item); \
-    frag = (mca_btl_template_frag_t*) item;                        \
+#define MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag)                    \
+{                                                                       \
+    frag = (mca_btl_template_frag_t *)                                  \
+        opal_free_list_get (&((mca_btl_template_module_t*)btl)->template_frag_eager); \
 }
 
-#define MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag)              \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_template_module_t*)btl)->template_frag_eager, \
-        (ompi_free_list_item_t*)(frag));                                \
+#define MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag)                   \
+{                                                                       \
+    opal_free_list_return (&((mca_btl_template_module_t*)btl)->template_frag_eager, \
+                           (opal_free_list_item_t*)(frag));             \
 }
 
-#define MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag)                 \
-{                                                                  \
-                                                                   \
-    ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_template_module_t*)btl)->template_frag_max, item); \
-    frag = (mca_btl_template_frag_t*) item;                        \
+#define MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag)                      \
+{                                                                       \
+    frag = (mca_btl_template_frag_t *)                                  \
+        opal_free_list_get (&((mca_btl_template_module_t*)btl)->template_frag_max); \
 }
 
-#define MCA_BTL_TEMPLATE_FRAG_RETURN_MAX(btl, frag)                \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_template_module_t*)btl)->template_frag_max, \
-        (ompi_free_list_item_t*)(frag));                                \
+#define MCA_BTL_TEMPLATE_FRAG_RETURN_MAX(btl, frag)                     \
+{                                                                       \
+    opal_free_list_return (&((mca_btl_template_module_t*)btl)->template_frag_max, \
+                           (opal_free_list_item_t*)(frag));             \
 }
 
 
-#define MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag)                \
-{                                                                  \
-    ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_GET_MT(&((mca_btl_template_module_t*)btl)->template_frag_user, item); \
-    frag = (mca_btl_template_frag_t*) item;                        \
+#define MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag)                     \
+{                                                                       \
+    frag = (mca_btl_template_frag_t*)                                   \
+            opal_free_list_get (&((mca_btl_template_module_t*)btl)->template_frag_user); \
 }
 
-#define MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl, frag)               \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_template_module_t*)btl)->template_frag_user, \
-        (ompi_free_list_item_t*)(frag)); \
+#define MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl, frag)                    \
+{                                                                       \
+    opal_free_list_return (&((mca_btl_template_module_t*)btl)->template_frag_user, \
+                           (opal_free_list_item_t*)(frag));             \
 }
 
 

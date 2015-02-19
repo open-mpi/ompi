@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -300,9 +300,9 @@ static int mca_btl_tcp_component_open(void)
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, opal_free_list_t);
     opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
     /* if_include and if_exclude need to be mutually exclusive */
@@ -934,7 +934,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
 
     /* initialize free lists */
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_eager,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_eager,
                          sizeof (mca_btl_tcp_frag_eager_t) + 
                          mca_btl_tcp_module.super.btl_eager_limit,
                          opal_cache_line_size,
@@ -943,9 +943,9 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_max,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_max,
                          sizeof (mca_btl_tcp_frag_max_t) + 
                          mca_btl_tcp_module.super.btl_max_send_size,
                          opal_cache_line_size,
@@ -954,9 +954,9 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_user,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_user,
                          sizeof (mca_btl_tcp_frag_user_t),
                          opal_cache_line_size,
                          OBJ_CLASS (mca_btl_tcp_frag_user_t),
@@ -964,7 +964,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
     /* create a BTL TCP module for selected interfaces */
     if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_create_instances() )) {

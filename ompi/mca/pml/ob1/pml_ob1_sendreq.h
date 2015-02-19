@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -62,7 +62,7 @@ typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 struct mca_pml_ob1_send_range_t {
-    ompi_free_list_item_t base;
+    opal_free_list_item_t base;
     uint64_t range_send_offset;
     uint64_t range_send_length;
     int range_btl_idx;
@@ -121,11 +121,10 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                         sendreq)                        \
     {                                                                   \
         ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );         \
-        ompi_free_list_item_t* item;                                    \
                                                                         \
         if( OPAL_LIKELY(NULL != proc) ) {                               \
-            OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);  \
-            sendreq = (mca_pml_ob1_send_request_t*)item;                \
+            sendreq = (mca_pml_ob1_send_request_t*)                     \
+                opal_free_list_wait (&mca_pml_base_send_requests);      \
             sendreq->req_send.req_base.req_proc = proc;                 \
         }                                                               \
     }
@@ -226,8 +225,8 @@ do {                                                                            
             MCA_PML_OB1_RDMA_FRAG_RETURN (sendreq->rdma_frag);          \
             sendreq->rdma_frag = NULL;                                  \
         }                                                               \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,          \
-                                  (ompi_free_list_item_t*)sendreq);     \
+        opal_free_list_return ( &mca_pml_base_send_requests,            \
+                                (opal_free_list_item_t*)sendreq);       \
     } while(0)
 
 

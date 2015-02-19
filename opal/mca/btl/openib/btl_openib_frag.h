@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2006-2009 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -294,7 +295,7 @@ typedef struct mca_btl_openib_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_openib_segment_t segment;
     mca_btl_openib_frag_type_t type;
-    ompi_free_list_t* list;
+    opal_free_list_t* list;
 } mca_btl_openib_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
 
@@ -399,11 +400,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
 static inline mca_btl_openib_send_control_frag_t *
 alloc_control_frag(mca_btl_openib_module_t *btl)
 {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_WAIT_MT(&btl->device->send_free_control, item);
-
-    return to_send_control_frag(item);
+    return to_send_control_frag(opal_free_list_wait (&btl->device->send_free_control));
 }
 
 static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
@@ -419,35 +416,23 @@ static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
 
 static inline mca_btl_openib_com_frag_t *alloc_send_user_frag(void)
 {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_GET_MT(&mca_btl_openib_component.send_user_free, item);
-
-    return to_com_frag(item);
+    return to_com_frag(opal_free_list_get (&mca_btl_openib_component.send_user_free));
 }
 
 static inline mca_btl_openib_com_frag_t *alloc_recv_user_frag(void)
 {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_GET_MT(&mca_btl_openib_component.recv_user_free, item);
-
-    return to_com_frag(item);
+    return to_com_frag(opal_free_list_get (&mca_btl_openib_component.recv_user_free));
 }
 
 static inline mca_btl_openib_coalesced_frag_t *alloc_coalesced_frag(void)
 {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_GET_MT(&mca_btl_openib_component.send_free_coalesced, item);
-
-    return to_coalesced_frag(item);
+    return to_coalesced_frag(opal_free_list_get (&mca_btl_openib_component.send_free_coalesced));
 }
 
 #define MCA_BTL_IB_FRAG_RETURN(frag)                                    \
     do {                                                                \
-        OMPI_FREE_LIST_RETURN_MT(to_base_frag(frag)->list,                 \
-                (ompi_free_list_item_t*)(frag));                        \
+        opal_free_list_return (to_base_frag(frag)->list,                \
+                (opal_free_list_item_t*)(frag));                        \
     } while(0);
 
 #define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(list)                         \
@@ -461,11 +446,11 @@ struct mca_btl_openib_module_t;
 
 struct mca_btl_openib_frag_init_data_t {
     uint8_t order;
-    ompi_free_list_t* list;
+    opal_free_list_t* list;
 };
 typedef struct mca_btl_openib_frag_init_data_t mca_btl_openib_frag_init_data_t;
 
-void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx);
+int mca_btl_openib_frag_init(opal_free_list_item_t* item, void* ctx);
 
 
 END_C_DECLS

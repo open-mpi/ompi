@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,9 +92,9 @@ struct mca_btl_portals4_module_t {
     uint32_t interface_num;
 
     /* fragment free lists */
-    ompi_free_list_t portals_frag_eager;
-    ompi_free_list_t portals_frag_max;
-    ompi_free_list_t portals_frag_user;
+    opal_free_list_t portals_frag_eager;
+    opal_free_list_t portals_frag_max;
+    opal_free_list_t portals_frag_user;
 
     opal_list_t portals_recv_blocks;
 

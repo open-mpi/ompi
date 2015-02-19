@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -51,11 +54,11 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
         **rank_exchanges = my_exchange_node->rank_exchanges;
 
     ompi_request_t **requests;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT_MT(&ptpcoll_module->collreqs_free, item);
+    item = opal_free_list_wait (&ptpcoll_module->collreqs_free);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -213,7 +216,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
         }
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    opal_free_list_return (&ptpcoll_module->collreqs_free, (opal_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -382,11 +385,11 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
     int *extra_sources_array = my_exchange_node->rank_extra_sources_array;
 
     ompi_request_t **requests;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT_MT(&ptpcoll_module->collreqs_free, item);
+    item = opal_free_list_wait (&ptpcoll_module->collreqs_free);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -440,7 +443,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
         return BCOL_FN_STARTED;
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    opal_free_list_return (&ptpcoll_module->collreqs_free, (opal_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -464,11 +467,11 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
         n_exchange = ptp_module->super.sbgp_partner_module->n_levels_pow2;
 
     ompi_request_t **requests;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT_MT(&ptp_module->collreqs_free, item);
+    item = opal_free_list_wait (&ptp_module->collreqs_free);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -618,7 +621,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
         }
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    opal_free_list_return (&ptp_module->collreqs_free, (opal_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -765,7 +768,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
         tag, my_extra_partner_comm_rank;
 
     ompi_request_t **requests;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
@@ -773,7 +776,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
                          (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
     ompi_communicator_t *comm = ptp_module->super.sbgp_partner_module->group_comm;
 
-    OMPI_FREE_LIST_WAIT_MT(&ptp_module->collreqs_free, item);
+    item = opal_free_list_wait (&ptp_module->collreqs_free);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -829,7 +832,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
         return BCOL_FN_STARTED;
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    opal_free_list_return (&ptp_module->collreqs_free, (opal_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +30,7 @@
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"
 
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 mca_pml_crcpw_module_t mca_pml_crcpw_module = {
     {
@@ -61,17 +64,16 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
 #define PML_CRCP_STATE_ALLOC(pml_state)             \
 do {                                                \
   if( !pml_crcpw_is_finalized ) {                   \
-    ompi_free_list_item_t* item;                    \
-    OMPI_FREE_LIST_WAIT_MT(&pml_state_list, item);     \
-    pml_state = (ompi_crcp_base_pml_state_t*)item;  \
+      pml_state = (ompi_crcp_base_pml_state_t*)     \
+        opal_free_list_wait (&pml_state_list);      \
   }                                                 \
 } while(0); 
 
 #define PML_CRCP_STATE_RETURN(pml_state)    \
 do {                                        \
   if( !pml_crcpw_is_finalized ) {           \
-    OMPI_FREE_LIST_RETURN_MT(&pml_state_list,  \
-    (ompi_free_list_item_t*)pml_state);     \
+    opal_free_list_return (&pml_state_list, \
+    (opal_free_list_item_t*)pml_state);     \
   }                                         \
 } while(0);
 

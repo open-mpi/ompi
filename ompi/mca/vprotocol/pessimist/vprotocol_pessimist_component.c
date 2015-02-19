@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,16 +130,16 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
     mca_vprotocol_pessimist.replay = false;
     OBJ_CONSTRUCT(&mca_vprotocol_pessimist.replay_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_vprotocol_pessimist.pending_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_vprotocol_pessimist.events_pool, ompi_free_list_t);
-    ompi_free_list_init_new(&mca_vprotocol_pessimist.events_pool,
-                        sizeof(mca_vprotocol_pessimist_event_t),
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_vprotocol_pessimist_event_t),
-                        0,opal_cache_line_size,
-                        _free_list_num,
-                        _free_list_max,
-                        _free_list_inc,
-                        NULL);
+    OBJ_CONSTRUCT(&mca_vprotocol_pessimist.events_pool, opal_free_list_t);
+    opal_free_list_init (&mca_vprotocol_pessimist.events_pool,
+			 sizeof(mca_vprotocol_pessimist_event_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_vprotocol_pessimist_event_t),
+                         0,opal_cache_line_size,
+                         _free_list_num,
+                         _free_list_max,
+                         _free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
     mca_vprotocol_pessimist.event_buffer_max_length = 
                 _event_buffer_size / sizeof(vprotocol_pessimist_mem_event_t);
     mca_vprotocol_pessimist.event_buffer_length = 0;

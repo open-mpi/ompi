@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +26,7 @@
 #define MCA_PML_BASE_REQUEST_H
 
 #include "ompi_config.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "opal/datatype/opal_convertor.h"
@@ -37,8 +39,8 @@ BEGIN_C_DECLS
  * the list. Beware these free lists have to be initialized
  * directly by the PML who win the PML election.
  */
-OMPI_DECLSPEC extern ompi_free_list_t mca_pml_base_send_requests;
-OMPI_DECLSPEC extern ompi_free_list_t mca_pml_base_recv_requests;
+OMPI_DECLSPEC extern opal_free_list_t mca_pml_base_send_requests;
+OMPI_DECLSPEC extern opal_free_list_t mca_pml_base_recv_requests;
 
 /**
  * Type of request.

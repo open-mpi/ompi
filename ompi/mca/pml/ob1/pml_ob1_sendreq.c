@@ -36,7 +36,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
 
-OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, ompi_free_list_item_t,
+OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, opal_free_list_item_t,
         NULL, NULL);
 
 void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
@@ -830,7 +830,7 @@ void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
                                            uint64_t send_length )
 {
     mca_pml_ob1_send_range_t *sr;
-    ompi_free_list_item_t *i;
+    opal_free_list_item_t *i;
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
     int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
     int n;
@@ -839,7 +839,7 @@ void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
     if( OPAL_UNLIKELY(0 == send_length) )
         return;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_ob1.send_ranges, i);
+    i = opal_free_list_wait (&mca_pml_ob1.send_ranges);
 
     sr = (mca_pml_ob1_send_range_t*)i;
 
@@ -893,7 +893,7 @@ get_next_send_range(mca_pml_ob1_send_request_t* sendreq,
 {
     OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
     opal_list_remove_item(&sendreq->req_send_ranges, (opal_list_item_t *)range);
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_ob1.send_ranges, &range->base);
+    opal_free_list_return (&mca_pml_ob1.send_ranges, &range->base);
     range = get_send_range_nolock(sendreq);
     OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
 

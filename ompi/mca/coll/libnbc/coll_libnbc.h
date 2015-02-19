@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -69,7 +69,7 @@ BEGIN_C_DECLS
 
 struct ompi_coll_libnbc_component_t {
     mca_coll_base_component_2_0_0_t super;
-    ompi_free_list_t requests;
+    opal_free_list_t requests;
     opal_list_t active_requests;
     int32_t active_comms;
     opal_atomic_lock_t progress_lock;
@@ -123,8 +123,8 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 
 #define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, req)                       \
     do {                                                                \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT_MT(&mca_coll_libnbc_component.requests, item); \
+        opal_free_list_item_t *item;                                    \
+        item = opal_free_list_wait (&mca_coll_libnbc_component.requests); \
         req = (ompi_coll_libnbc_request_t*) item;                       \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.comm = comm;                          \
@@ -135,8 +135,8 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
     do {                                                                \
         OMPI_REQUEST_FINI(&request->super);                             \
-        OMPI_FREE_LIST_RETURN_MT(&mca_coll_libnbc_component.requests,      \
-                              (ompi_free_list_item_t*) req);            \
+        opal_free_list_return (&mca_coll_libnbc_component.requests,     \
+                               (opal_free_list_item_t*) req);           \
     } while (0)
 
 int ompi_coll_libnbc_progress(void);

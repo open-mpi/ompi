@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -40,7 +40,7 @@
 #include "opal/runtime/opal_params.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
-                    ompi_free_list_item_t,
+                    opal_free_list_item_t,
                     NULL,
                     NULL );
 

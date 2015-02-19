@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -26,7 +29,6 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/mpool/mpool.h"
 
 BEGIN_C_DECLS
@@ -61,7 +63,7 @@ typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;
 struct mca_mpool_gpusm_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t resources;
-    ompi_free_list_t reg_list;
+    opal_free_list_t reg_list;
 }; typedef struct mca_mpool_gpusm_module_t mca_mpool_gpusm_module_t;
 
 /*

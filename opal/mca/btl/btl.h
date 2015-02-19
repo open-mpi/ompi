@@ -380,7 +380,7 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
  */
 
 struct mca_btl_base_descriptor_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_btl_base_segment_t *des_segments;     /**< local segments */
     size_t des_segment_count;                 /**< number of local segments */
     mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */

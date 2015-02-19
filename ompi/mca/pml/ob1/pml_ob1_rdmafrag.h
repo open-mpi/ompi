@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -42,7 +42,7 @@ typedef void (*mca_pml_ob1_rdma_frag_callback_t)(struct mca_pml_ob1_rdma_frag_t 
  * Used to keep track of local and remote RDMA operations.
  */
 struct mca_pml_ob1_rdma_frag_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_bml_base_btl_t *rdma_bml;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
@@ -65,10 +65,9 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 #define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                          \
     do {                                                           \
-    ompi_free_list_item_t* item;                                   \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_ob1.rdma_frags, item);         \
-    frag = (mca_pml_ob1_rdma_frag_t*)item;                         \
-} while(0)
+        frag = (mca_pml_ob1_rdma_frag_t *)                         \
+            opal_free_list_wait (&mca_pml_ob1.rdma_frags);         \
+    } while(0)
 
 #define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                              \
     do {                                                                \
@@ -77,8 +76,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
             mca_bml_base_deregister_mem (frag->rdma_bml, frag->local_handle); \
             frag->local_handle = NULL;                                  \
         }                                                               \
-        OMPI_FREE_LIST_RETURN_MT(&mca_pml_ob1.rdma_frags,               \
-                                 (ompi_free_list_item_t*)frag);         \
+        opal_free_list_return (&mca_pml_ob1.rdma_frags,                 \
+                               (opal_free_list_item_t*)frag);           \
     } while (0)
 
 END_C_DECLS

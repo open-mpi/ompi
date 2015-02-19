@@ -32,7 +32,6 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/common/ugni/common_ugni.h"
 
@@ -84,10 +83,10 @@ typedef struct mca_btl_ugni_module_t {
     opal_mutex_t pending_descriptors_lock;
     opal_list_t pending_descriptors;
 
-    ompi_free_list_t post_descriptors;
+    opal_free_list_t post_descriptors;
 
     mca_mpool_base_module_t *smsg_mpool;
-    ompi_free_list_t         smsg_mboxes;
+    opal_free_list_t         smsg_mboxes;
 
     gni_ep_handle_t wildcard_ep;
     struct mca_btl_base_endpoint_t *local_ep;
@@ -101,15 +100,15 @@ typedef struct mca_btl_ugni_module_t {
     gni_cq_handle_t rdma_local_irq_cq;
 
     /* eager fragment list (registered) */
-    ompi_free_list_t eager_frags_send;
-    ompi_free_list_t eager_frags_recv;
+    opal_free_list_t eager_frags_send;
+    opal_free_list_t eager_frags_recv;
 
     /* SMSG fragment list (unregistered) */
-    ompi_free_list_t smsg_frags;
+    opal_free_list_t smsg_frags;
 
     /* RDMA fragment list */
-    ompi_free_list_t rdma_frags;
-    ompi_free_list_t rdma_int_frags;
+    opal_free_list_t rdma_frags;
+    opal_free_list_t rdma_int_frags;
 
 
     /* lock for this list */

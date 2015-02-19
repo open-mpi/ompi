@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -24,7 +25,7 @@
 #include "btl_openib_frag.h"
 #include "btl_openib_eager_rdma.h"
 
-void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
+int mca_btl_openib_frag_init(opal_free_list_item_t* item, void* ctx)
 {
     mca_btl_openib_frag_init_data_t* init_data = (mca_btl_openib_frag_init_data_t *) ctx;
     mca_btl_openib_frag_t *frag = to_base_frag(item);
@@ -42,6 +43,8 @@ void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
         to_send_frag(frag)->qp_idx = init_data->order;
 
     frag->list = init_data->list;
+
+    return OPAL_SUCCESS;
 }
 
 static void base_constructor(mca_btl_openib_frag_t *frag)
