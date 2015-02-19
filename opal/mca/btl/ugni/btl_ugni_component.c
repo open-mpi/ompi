@@ -251,6 +251,9 @@ btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_ugni_module.super.btl_latency   = 2;     /* Microsecs */
 
+    mca_btl_ugni_module.super.btl_get_local_registration_threshold = 0;
+    mca_btl_ugni_module.super.btl_put_local_registration_threshold = mca_btl_ugni_component.ugni_fma_limit;
+
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_ugni_component.super.btl_version,
                                 &mca_btl_ugni_module.super);
@@ -320,6 +323,8 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     if (65536 < mca_btl_ugni_component.ugni_fma_limit) {
         mca_btl_ugni_component.ugni_fma_limit = 65536;
     }
+
+    mca_btl_ugni_module.super.btl_put_local_registration_threshold = mca_btl_ugni_component.ugni_fma_limit;
 
     if (enable_mpi_threads && mca_btl_ugni_component.progress_thread_requested) {
         mca_btl_ugni_component.progress_thread_enabled = 1;
