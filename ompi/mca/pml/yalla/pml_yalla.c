@@ -522,7 +522,7 @@ int mca_pml_yalla_probe(int src, int tag, struct ompi_communicator_t* comm,
             PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
-            continue;
+            break;
         default:
             return OMPI_ERROR;
         }
@@ -575,14 +575,13 @@ int mca_pml_yalla_mprobe(int src, int tag, struct ompi_communicator_t* comm,
             PML_YALLA_SET_MESSAGE(&rreq, comm, mxm_msg, message);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
-            continue;
+            break;
         default:
             return OMPI_ERROR;
         }
 
         opal_progress();
     }
-    return OMPI_SUCCESS;
 }
 
 int mca_pml_yalla_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
