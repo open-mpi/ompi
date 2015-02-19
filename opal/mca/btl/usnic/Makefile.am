@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -88,7 +88,9 @@ endif
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
-mca_btl_usnic_la_LDFLAGS = -module -avoid-version
+mca_btl_usnic_la_LDFLAGS = \
+        $(opal_common_libfabric_LDFLAGS) \
+        -module -avoid-version
 mca_btl_usnic_la_LIBADD = $(opal_common_libfabric_LIBADD)
 
 noinst_LTLIBRARIES = $(lib)

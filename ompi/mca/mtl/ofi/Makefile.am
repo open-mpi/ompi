@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2013-2014 Intel, Inc. All rights reserved
 #
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,8 +45,10 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
+mca_mtl_ofi_la_LDFLAGS = \
+        $(opal_common_libfabric_LDFLAGS) \
+        -module -avoid-version
 mca_mtl_ofi_la_LIBADD = $(opal_common_libfabric_LIBADD)
-mca_mtl_ofi_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
