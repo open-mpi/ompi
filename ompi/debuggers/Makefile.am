@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,10 +20,7 @@
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 ompilib_LTLIBRARIES = libompi_dbg_msgq.la
 
-check_PROGRAMS = predefined_gap_test predefined_pad_test
-if OPAL_HAVE_DLOPEN
-check_PROGRAMS += dlopen_test
-endif
+check_PROGRAMS = predefined_gap_test predefined_pad_test dlopen_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -44,11 +41,10 @@ headers = \
         msgq_interface.h ompi_msgq_dll_defs.h
 
 # Simple checks to ensure that the DSOs are functional
-# This test is only built if we have libltdl support.
 
 dlopen_test_SOURCES = dlopen_test.c
-dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
-dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
+dlopen_test_LDADD = $(top_builddir)/ompi/libmpi.la
+dlopen_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 predefined_gap_test_SOURCES = predefined_gap_test.c
 predefined_gap_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
