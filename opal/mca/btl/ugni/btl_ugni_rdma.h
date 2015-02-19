@@ -53,7 +53,12 @@ static inline int mca_btl_ugni_post_fma (struct mca_btl_base_endpoint_t *endpoin
                                          void *cbcontext, void *cbdata)
 {
     mca_btl_ugni_post_descriptor_t *post_desc;
+    gni_mem_handle_t local_gni_handle = {0, 0};
     gni_return_t grc;
+
+    if (local_handle) {
+        local_gni_handle = local_handle->gni_handle;
+    }
 
     mca_btl_ugni_alloc_post_descriptor (endpoint, local_handle, cbfunc, cbcontext, cbdata, &post_desc);
     if (OPAL_UNLIKELY(NULL == post_desc)) {
@@ -62,7 +67,7 @@ static inline int mca_btl_ugni_post_fma (struct mca_btl_base_endpoint_t *endpoin
 
     /* Post descriptor (CQ is ignored for FMA transactions) -- The CQ associated with the endpoint
      * is used. */
-    init_gni_post_desc (&post_desc->desc, order, op_type, (intptr_t) local_address, local_handle->gni_handle,
+    init_gni_post_desc (&post_desc->desc, order, op_type, (intptr_t) local_address, local_gni_handle,
                         remote_address, remote_handle->gni_handle, size, 0);
 
     OPAL_THREAD_LOCK(&endpoint->btl->device->dev_lock);

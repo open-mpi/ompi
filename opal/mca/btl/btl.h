@@ -1119,6 +1119,10 @@ struct mca_btl_base_module_t {
     size_t      btl_put_limit;        /**< maximum size supported by the btl_put function */
     size_t      btl_put_alignment;    /**< minimum alignment/size needed by btl_put (power of 2) */
 
+    /* minimum transaction sizes for which registration is required for local memory */
+    size_t      btl_get_local_registration_threshold;
+    size_t      btl_put_local_registration_threshold;
+
     /* BTL function table */
     mca_btl_base_module_add_procs_fn_t      btl_add_procs;
     mca_btl_base_module_del_procs_fn_t      btl_del_procs;
