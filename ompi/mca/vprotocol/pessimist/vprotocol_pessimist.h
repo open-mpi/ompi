@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +40,7 @@ typedef struct mca_vprotocol_pessimist_module_t {
     size_t event_buffer_max_length;
 
     /* space for allocating events */
-    ompi_free_list_t events_pool;
+    opal_free_list_t events_pool;
   
     /* Sender Based repository */
     vprotocol_pessimist_sender_based_t sender_based;

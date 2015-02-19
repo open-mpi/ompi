@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -79,9 +79,8 @@ static inline bool unlock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
  */
 #define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq)                    \
 do {                                                               \
-   ompi_free_list_item_t* item;                                    \
-   OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);          \
-   recvreq = (mca_pml_ob1_recv_request_t*)item;                    \
+    recvreq = (mca_pml_ob1_recv_request_t *)                          \
+        opal_free_list_get (&mca_pml_base_recv_requests);             \
 } while(0)
 
 
@@ -138,8 +137,8 @@ do {                                                                \
             mca_bml_base_deregister_mem ((recvreq)->rdma_bml, (recvreq)->local_handle); \
             (recvreq)->local_handle = NULL;                             \
         }                                                               \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,          \
-                                  (ompi_free_list_item_t*)(recvreq));   \
+        opal_free_list_return (&mca_pml_base_recv_requests,             \
+                               (opal_free_list_item_t*)(recvreq));      \
     }
 
 /**

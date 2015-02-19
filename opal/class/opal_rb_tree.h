@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +32,7 @@
 #include <stdlib.h>
 #include "opal/constants.h"
 #include "opal/class/opal_object.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 BEGIN_C_DECLS
 /*
@@ -46,7 +49,7 @@ typedef enum {RED, BLACK} opal_rb_tree_nodecolor_t;
   */
 struct opal_rb_tree_node_t
 {
-    ompi_free_list_item_t super;        /**< the parent class */
+    opal_free_list_item_t super;        /**< the parent class */
     opal_rb_tree_nodecolor_t color;     /**< the node color */
     struct opal_rb_tree_node_t * parent;/**< the parent node, can be NULL */
     struct opal_rb_tree_node_t * left;  /**< the left child - can be nill */
@@ -72,7 +75,7 @@ struct opal_rb_tree_t {
     opal_rb_tree_node_t * root_ptr; /**< a pointer to the root of the tree */
     opal_rb_tree_node_t * nill;     /**< the nill sentinal node */
     opal_rb_tree_comp_fn_t comp;    /**< the compare function */
-    ompi_free_list_t free_list;   /**< the free list to get the memory from */
+    opal_free_list_t free_list;   /**< the free list to get the memory from */
     size_t tree_size;                  /**< the size of the tree */
 };
 typedef struct opal_rb_tree_t opal_rb_tree_t;

@@ -46,7 +46,7 @@ ompi_message_init(void)
 
     OBJ_CONSTRUCT(&ompi_message_free_list, opal_free_list_t);
     rc = opal_free_list_init(&ompi_message_free_list,
-                             sizeof(ompi_message_t),
+                             sizeof(ompi_message_t), 8,
                              OBJ_CLASS(ompi_message_t),
                              0, 0, 8, -1, 8, NULL, 0, NULL, NULL, NULL);
 

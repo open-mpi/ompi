@@ -319,40 +319,40 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         return rc;
     }
 
-    rc = ompi_free_list_init_ex_new (&ugni_module->smsg_frags,
-                                     sizeof (mca_btl_ugni_smsg_frag_t),
-                                     opal_cache_line_size, OBJ_CLASS(mca_btl_ugni_smsg_frag_t),
-                                     mca_btl_ugni_component.ugni_smsg_limit,
-                                     opal_cache_line_size,
-                                     mca_btl_ugni_component.ugni_free_list_num,
-                                     mca_btl_ugni_component.ugni_free_list_max,
-                                     mca_btl_ugni_component.ugni_free_list_inc,
-                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
-                                     (void *) ugni_module);
+    rc = opal_free_list_init (&ugni_module->smsg_frags,
+                              sizeof (mca_btl_ugni_smsg_frag_t),
+                              opal_cache_line_size, OBJ_CLASS(mca_btl_ugni_smsg_frag_t),
+                              mca_btl_ugni_component.ugni_smsg_limit,
+                              opal_cache_line_size,
+                              mca_btl_ugni_component.ugni_free_list_num,
+                              mca_btl_ugni_component.ugni_free_list_max,
+                              mca_btl_ugni_component.ugni_free_list_inc,
+                              NULL, 0, NULL, (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                              (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg fragment free list"));
         return rc;
     }
 
-    rc = ompi_free_list_init_ex_new (&ugni_module->rdma_frags,
-                                     sizeof (mca_btl_ugni_rdma_frag_t), 64,
-                                     OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
-                                     0, opal_cache_line_size,
-                                     mca_btl_ugni_component.ugni_free_list_num,
-                                     mca_btl_ugni_component.ugni_free_list_max,
-                                     mca_btl_ugni_component.ugni_free_list_inc,
-                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
-                                     (void *) ugni_module);
+    rc = opal_free_list_init (&ugni_module->rdma_frags,
+                              sizeof (mca_btl_ugni_rdma_frag_t), 64,
+                              OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
+                              0, opal_cache_line_size,
+                              mca_btl_ugni_component.ugni_free_list_num,
+                              mca_btl_ugni_component.ugni_free_list_max,
+                              mca_btl_ugni_component.ugni_free_list_inc,
+                              NULL, 0, NULL, (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                              (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
-    rc = ompi_free_list_init_ex_new (&ugni_module->rdma_int_frags,
-                                     sizeof (mca_btl_ugni_rdma_frag_t), 8,
-                                     OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
-                                     0, opal_cache_line_size, 0, -1, 64,
-                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
-                                     (void *) ugni_module);
+    rc = opal_free_list_init (&ugni_module->rdma_int_frags,
+                              sizeof (mca_btl_ugni_rdma_frag_t), 8,
+                              OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
+                              0, opal_cache_line_size, 0, -1, 64,
+                              NULL, 0, NULL, (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                              (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
@@ -397,31 +397,31 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         return OPAL_ERROR;
     }
 
-    rc = ompi_free_list_init_ex_new (&ugni_module->eager_frags_send,
-                                     sizeof (mca_btl_ugni_eager_frag_t), 8,
-                                     OBJ_CLASS(mca_btl_ugni_eager_frag_t),
-                                     ugni_module->super.btl_eager_limit, 64,
-                                     mca_btl_ugni_component.ugni_eager_num,
-                                     mca_btl_ugni_component.ugni_eager_max,
-                                     mca_btl_ugni_component.ugni_eager_inc,
-                                     ugni_module->super.btl_mpool,
-                                     (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
-                                     (void *) ugni_module);
+    rc = opal_free_list_init (&ugni_module->eager_frags_send,
+                              sizeof (mca_btl_ugni_eager_frag_t), 8,
+                              OBJ_CLASS(mca_btl_ugni_eager_frag_t),
+                              ugni_module->super.btl_eager_limit, 64,
+                              mca_btl_ugni_component.ugni_eager_num,
+                              mca_btl_ugni_component.ugni_eager_max,
+                              mca_btl_ugni_component.ugni_eager_inc,
+                              ugni_module->super.btl_mpool, 0, NULL,
+                              (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                              (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating eager send fragment free list"));
         return rc;
     }
 
-    rc = ompi_free_list_init_ex_new (&ugni_module->eager_frags_recv,
-                                     sizeof (mca_btl_ugni_eager_frag_t), 8,
-                                     OBJ_CLASS(mca_btl_ugni_eager_frag_t),
-                                     ugni_module->super.btl_eager_limit, 64,
-                                     mca_btl_ugni_component.ugni_eager_num,
-                                     mca_btl_ugni_component.ugni_eager_max,
-                                     mca_btl_ugni_component.ugni_eager_inc,
-                                     ugni_module->super.btl_mpool,
-                                     (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
-                                     (void *) ugni_module);
+    rc = opal_free_list_init (&ugni_module->eager_frags_recv,
+                              sizeof (mca_btl_ugni_eager_frag_t), 8,
+                              OBJ_CLASS(mca_btl_ugni_eager_frag_t),
+                              ugni_module->super.btl_eager_limit, 64,
+                              mca_btl_ugni_component.ugni_eager_num,
+                              mca_btl_ugni_component.ugni_eager_max,
+                              mca_btl_ugni_component.ugni_eager_inc,
+                              ugni_module->super.btl_mpool, 0, NULL,
+                              (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                              (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating eager receive fragment free list"));
         return rc;
@@ -440,21 +440,21 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         mbox_increment = mca_btl_ugni_component.mbox_increment;
     }
 
-    rc = ompi_free_list_init_new (&ugni_module->smsg_mboxes,
-                                  sizeof (mca_btl_ugni_smsg_mbox_t), 8,
-                                  OBJ_CLASS(mca_btl_ugni_smsg_mbox_t),
-                                  mca_btl_ugni_component.smsg_mbox_size, 128,
-                                  32, -1, mbox_increment,
-                                  ugni_module->smsg_mpool);
+    rc = opal_free_list_init (&ugni_module->smsg_mboxes,
+                              sizeof (mca_btl_ugni_smsg_mbox_t), 8,
+                              OBJ_CLASS(mca_btl_ugni_smsg_mbox_t),
+                              mca_btl_ugni_component.smsg_mbox_size, 128,
+                              32, -1, mbox_increment, ugni_module->smsg_mpool,
+                              0, NULL, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));
         return rc;
     }
 
-    rc = ompi_free_list_init_new (&ugni_module->post_descriptors,
-                                  sizeof (mca_btl_ugni_post_descriptor_t),
-                                  8, OBJ_CLASS(mca_btl_ugni_post_descriptor_t),
-                                  0, 0, 0, -1, 256, NULL);
+    rc = opal_free_list_init (&ugni_module->post_descriptors,
+                              sizeof (mca_btl_ugni_post_descriptor_t),
+                              8, OBJ_CLASS(mca_btl_ugni_post_descriptor_t),
+                              0, 0, 0, -1, 256, NULL, 0, NULL, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating post descriptor free list"));
         return rc;

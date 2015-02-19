@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -417,10 +417,10 @@ do {                                                                            
         struct ompi_communicator_t *comm = GET_COMM(op);                        \
         bool is_coll_sync = IS_COLL_SYNCMEM(op);                                \
         ML_VERBOSE(10, ("Releasing %p", op));                                   \
-        OMPI_REQUEST_FINI(&(op)->full_message.super);                   \
-        OMPI_FREE_LIST_RETURN_MT(&(((mca_coll_ml_module_t *)(op)->coll_module)->   \
-                    coll_ml_collective_descriptors),                            \
-                (ompi_free_list_item_t *)op);                                   \
+        OMPI_REQUEST_FINI(&(op)->full_message.super);                           \
+        opal_free_list_return (&(((mca_coll_ml_module_t *)(op)->coll_module)->  \
+                                 coll_ml_collective_descriptors),               \
+                               (opal_free_list_item_t *)op);                    \
         /* Special check for memory synchronization completion */               \
         /* We have to return it first to free list, since the communicator  */  \
         /* release potentially may trigger ML module distraction and having */  \

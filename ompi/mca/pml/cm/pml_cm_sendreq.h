@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,14 +62,13 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 #define MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst,          \
                                            ompi_proc)                   \
 do {                                                                    \
-    ompi_free_list_item_t* item;                                        \
     ompi_proc = ompi_comm_peer_lookup( comm, dst );                     \
                                                                         \
     if(OPAL_UNLIKELY(NULL == ompi_proc)) {                              \
         sendreq = NULL;                                                 \
     } else {                                                            \
-        OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);         \
-        sendreq = (mca_pml_cm_thin_send_request_t*)item;                \
+        sendreq = (mca_pml_cm_thin_send_request_t*)                     \
+          opal_free_list_wait (&mca_pml_base_send_requests);            \
         sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN; \
         sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;          \
         sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
@@ -77,13 +79,12 @@ do {                                                                    \
 #define MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst,           \
                                           ompi_proc)                    \
 {                                                                       \
-    ompi_free_list_item_t* item;                                        \
     ompi_proc = ompi_comm_peer_lookup( comm, dst );                     \
     if(OPAL_UNLIKELY(NULL == ompi_proc)) {                              \
         sendreq = NULL;                                                 \
     } else {                                                            \
-        OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);         \
-        sendreq = (mca_pml_cm_hvy_send_request_t*)item;                 \
+        sendreq = (mca_pml_cm_hvy_send_request_t*)                      \
+          opal_free_list_wait (&mca_pml_base_send_requests);            \
         sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY; \
         sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;          \
         sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
@@ -307,8 +308,8 @@ do {                                                                            
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,             \
-                               (ompi_free_list_item_t*)sendreq);        \
+        opal_free_list_return ( &mca_pml_base_send_requests,            \
+                               (opal_free_list_item_t*)sendreq);        \
     }
 
 /*
@@ -346,8 +347,8 @@ do {                                                                         \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,             \
-                               (ompi_free_list_item_t*)sendreq);        \
+        opal_free_list_return ( &mca_pml_base_send_requests,            \
+                               (opal_free_list_item_t*)sendreq);        \
     }
 
 extern void

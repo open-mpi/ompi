@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -34,16 +34,16 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
 
 /* REQUEST_ALLOC is only called from "top-level" functions (pt2pt_rput,
    pt2pt_rget, etc.), so it's ok to spin here... */
-#define OMPI_OSC_PT2PT_REQUEST_ALLOC(win, req)                           \
+#define OMPI_OSC_PT2PT_REQUEST_ALLOC(win, req)                          \
     do {                                                                \
-        ompi_free_list_item_t *item;                                    \
+        opal_free_list_item_t *item;                                    \
         do {                                                            \
-            OMPI_FREE_LIST_GET_MT(&mca_osc_pt2pt_component.requests, item); \
+            item = opal_free_list_get (&mca_osc_pt2pt_component.requests); \
             if (NULL == item) {                                         \
                 opal_progress();                                        \
             }                                                           \
         } while (NULL == item);                                         \
-        req = (ompi_osc_pt2pt_request_t*) item;                          \
+        req = (ompi_osc_pt2pt_request_t*) item;                         \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.win = win;                            \
         req->super.req_complete = false;                                \
@@ -52,11 +52,11 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
         req->internal = false;                                          \
     } while (0)
 
-#define OMPI_OSC_PT2PT_REQUEST_RETURN(req)                               \
+#define OMPI_OSC_PT2PT_REQUEST_RETURN(req)                              \
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super);                               \
-        OMPI_FREE_LIST_RETURN_MT(&mca_osc_pt2pt_component.requests,      \
-                                 (ompi_free_list_item_t *) (req));      \
+        opal_free_list_return (&mca_osc_pt2pt_component.requests,       \
+                                 (opal_free_list_item_t *) (req));      \
     } while (0)
 
 static inline void ompi_osc_pt2pt_request_complete (ompi_osc_pt2pt_request_t *request, int mpi_error)
