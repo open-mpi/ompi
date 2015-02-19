@@ -16,11 +16,7 @@
 #include "opal/util/output.h"
 
 #if OPAL_WANT_LIBLTDL
-  #if OPAL_LIBLTDL_INTERNAL
-    #include "opal/libltdl/ltdl.h"
-  #else
-    #include "ltdl.h"
-  #endif
+#include <ltdl.h>
 #endif
 
 #if OPAL_WANT_LIBLTDL
