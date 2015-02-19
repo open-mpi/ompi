@@ -162,7 +162,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
-    fabric_attr.prov_name        = strdup(ompi_mtl_ofi.provider_name);
+    if (NULL != ompi_mtl_ofi.provider_name) {
+        fabric_attr.prov_name    = strdup(ompi_mtl_ofi.provider_name);
+    } else {
+        fabric_attr.prov_name    = NULL;
+    }
     hints.domain_attr            = &domain_attr;
     hints.fabric_attr            = &fabric_attr;
 
