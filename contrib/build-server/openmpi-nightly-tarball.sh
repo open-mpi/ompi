@@ -35,6 +35,10 @@ fi
 # Build root - scratch space
 build_root=/home/mpiteam/openmpi/nightly-tarball-build-root
 
+# Coverity stuff
+coverity_token=`cat $HOME/coverity/openmpi-token.txt`
+coverity_configure_args="--enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --enable-oshmem-java --with-mxm=/opt/mellanox/mxm --with-psm --with-usnic"
+
 export PATH=$HOME/local/bin:$PATH
 export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 
@@ -121,9 +125,10 @@ done
 for tarball in `cat $pending_coverity`; do
     $HOME/scripts/openmpi-nightly-coverity.pl \
         --filename=$tarball \
-        --coverity-token=`cat $HOME/coverity-token.txt` \
+        --coverity-token=$coverity_token \
         --verbose \
         --logfile-dir=$HOME/coverity \
         --make-args=-j8 \
-        --configure-args="--enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --enable-oshmem-java --with-mxm=/opt/mellanox/mxm --with-psm --with-usnic"
+        --configure-args="$coverity_configure_args"
 done
+rm -f $pending_coverity
