@@ -218,9 +218,9 @@ static int mca_btl_smcuda_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.pending_send_fl, opal_free_list_t);
     return OPAL_SUCCESS;
 }

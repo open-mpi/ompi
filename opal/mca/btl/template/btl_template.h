@@ -30,7 +30,6 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h" 
@@ -84,9 +83,9 @@ struct mca_btl_template_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
 
     /* free list of fragment descriptors */
-    ompi_free_list_t template_frag_eager;
-    ompi_free_list_t template_frag_max;
-    ompi_free_list_t template_frag_user;
+    opal_free_list_t template_frag_eager;
+    opal_free_list_t template_frag_max;
+    opal_free_list_t template_frag_user;
 
     /* lock for accessing module state */
     opal_mutex_t template_lock;

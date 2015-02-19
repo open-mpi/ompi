@@ -156,10 +156,10 @@ struct mca_btl_sm_component_t {
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
                                         *   SMP specfic data structures. */
-    ompi_free_list_t sm_frags_eager;   /**< free list of sm first */
-    ompi_free_list_t sm_frags_max;     /**< free list of sm second */
-    ompi_free_list_t sm_frags_user;
-    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
+    opal_free_list_t sm_frags_eager;   /**< free list of sm first */
+    opal_free_list_t sm_frags_max;     /**< free list of sm second */
+    opal_free_list_t sm_frags_user;
+    opal_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
     struct mca_btl_base_endpoint_t **sm_peers;
@@ -186,7 +186,7 @@ struct mca_btl_sm_component_t {
 #endif
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
     /** registration handles to hold knem cookies */
-    ompi_free_list_t registration_handles;
+    opal_free_list_t registration_handles;
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
 
     /** MCA: should we be using knem or not?  neg=try but continue if
@@ -564,7 +564,7 @@ struct mca_btl_base_registration_handle_t {
 };
 
 struct mca_btl_sm_registration_handle_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_btl_base_registration_handle_t btl_handle;
 };
 typedef struct mca_btl_sm_registration_handle_t mca_btl_sm_registration_handle_t;

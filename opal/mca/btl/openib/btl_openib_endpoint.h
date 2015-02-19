@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
@@ -369,8 +369,8 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
         return OPAL_SUCCESS;
 
     for(i = 0; i < num_post; i++) {
-        ompi_free_list_item_t* item;
-        OMPI_FREE_LIST_WAIT_MT(&openib_btl->device->qps[qp].recv_free, item);
+        opal_free_list_item_t* item;
+        item = opal_free_list_wait (&openib_btl->device->qps[qp].recv_free);
         to_base_frag(item)->base.order = qp;
         to_com_frag(item)->endpoint = ep;
         if(NULL == wr)

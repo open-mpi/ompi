@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -72,24 +72,15 @@ struct mca_btl_vader_frag_t {
     /** fragment header (in the shared memory region) */
     mca_btl_vader_hdr_t *hdr;
     /** free list this fragment was allocated within */
-    ompi_free_list_t *my_list;
+    opal_free_list_t *my_list;
 };
 
 typedef struct mca_btl_vader_frag_t mca_btl_vader_frag_t;
 
-static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_free_list_t *list,
+static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, opal_free_list_t *list,
                                             struct mca_btl_base_endpoint_t *endpoint) {
-    ompi_free_list_item_t *item;
-
-    OMPI_FREE_LIST_GET_MT(list, item);
-    *frag = (mca_btl_vader_frag_t *) item;
-    if (OPAL_LIKELY(NULL != item)) {
-        if (OPAL_UNLIKELY(NULL == (*frag)->hdr)) {
-            OMPI_FREE_LIST_RETURN_MT(list, item);
-            *frag = NULL;
-            return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
-        }
-
+    *frag = (mca_btl_vader_frag_t *) opal_free_list_get (list);
+    if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->endpoint = endpoint;
     }
 
@@ -106,7 +97,7 @@ static inline void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
     frag->base.des_segment_count = 1;
     frag->fbox = NULL;
 
-    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *)frag);
+    opal_free_list_return (frag->my_list, (opal_free_list_item_t *)frag);
 }
 
 OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
@@ -134,6 +125,6 @@ static inline void mca_btl_vader_frag_complete (mca_btl_vader_frag_t *frag) {
     }
 }
 
-void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx);
+int mca_btl_vader_frag_init (opal_free_list_item_t *item, void *ctx);
 
 #endif /* MCA_BTL_VADER_SEND_FRAG_H */

@@ -92,7 +92,7 @@ ompi_mtl_ofi_component_open(void)
 
     OBJ_CONSTRUCT(&ompi_mtl_ofi.free_messages, opal_free_list_t);
     opal_free_list_init(&ompi_mtl_ofi.free_messages,
-                        sizeof(ompi_mtl_ofi_message_t),
+                        sizeof(ompi_mtl_ofi_message_t), 8,
                         OBJ_CLASS(ompi_mtl_ofi_message_t), 0, 0,
                         1, -1, 1, NULL, 0, NULL, NULL, NULL);
 

@@ -81,7 +81,7 @@ struct mca_coll_hcoll_component_t {
 
     /* FCA global stuff */
     mca_coll_hcoll_ops_t hcoll_ops;
-    ompi_free_list_t requests;
+    opal_free_list_t requests;
 };
 typedef struct mca_coll_hcoll_component_t mca_coll_hcoll_component_t;
 

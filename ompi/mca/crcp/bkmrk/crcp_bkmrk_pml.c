@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -5,8 +6,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,7 +42,7 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/runtime/ompi_cr.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -106,12 +107,12 @@ opal_list_t drained_msg_ack_list;
 /*
  * Free lists
  */
-ompi_free_list_t coord_state_free_list;
-ompi_free_list_t content_ref_free_list;
-ompi_free_list_t peer_ref_free_list;
-ompi_free_list_t traffic_msg_ref_free_list;
-ompi_free_list_t drain_msg_ref_free_list;
-ompi_free_list_t drain_ack_msg_ref_free_list;
+opal_free_list_t coord_state_free_list;
+opal_free_list_t content_ref_free_list;
+opal_free_list_t peer_ref_free_list;
+opal_free_list_t traffic_msg_ref_free_list;
+opal_free_list_t drain_msg_ref_free_list;
+opal_free_list_t drain_ack_msg_ref_free_list;
 
 /*
  * Quiescence requests to wait on
@@ -618,74 +619,69 @@ static void traffic_message_dump_drain_msg_indv(ompi_crcp_bkmrk_pml_drain_messag
  */
 #define HOKE_PEER_REF_ALLOC(peer_ref)                 \
 do {                                                  \
-  ompi_free_list_item_t* item;                        \
-  OMPI_FREE_LIST_WAIT_MT(&peer_ref_free_list, item);     \
-  peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;   \
-} while(0); 
+    peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t *)     \
+      opal_free_list_wait (&peer_ref_free_list);      \
+} while(0)
 
-#define HOKE_PEER_REF_RETURN(peer_ref)        \
-do {                                          \
-   OMPI_FREE_LIST_RETURN_MT(&peer_ref_free_list, \
-   (ompi_free_list_item_t*)peer_ref);         \
-} while(0);
+#define HOKE_PEER_REF_RETURN(peer_ref)         \
+do {                                           \
+   opal_free_list_return (&peer_ref_free_list, \
+   (opal_free_list_item_t*)peer_ref);          \
+} while(0)
 
 
 #define HOKE_CONTENT_REF_ALLOC(content_ref)                       \
 do {                                                              \
-  ompi_free_list_item_t* item;                                    \
-  OMPI_FREE_LIST_WAIT_MT(&content_ref_free_list, item);              \
-  content_ref = (ompi_crcp_bkmrk_pml_message_content_ref_t*)item; \
-  content_ref->msg_id = content_ref_seq_num;                      \
-  content_ref_seq_num++;\
-} while(0); 
+    content_ref = (ompi_crcp_bkmrk_pml_message_content_ref_t*)    \
+      opal_free_list_wait (&content_ref_free_list);               \
+    content_ref->msg_id = content_ref_seq_num;                    \
+    content_ref_seq_num++;                                        \
+} while(0)
 
-#define HOKE_CONTENT_REF_RETURN(content_ref)     \
-do {                                             \
-   OMPI_FREE_LIST_RETURN_MT(&content_ref_free_list, \
-   (ompi_free_list_item_t*)content_ref);         \
-} while(0);
+#define HOKE_CONTENT_REF_RETURN(content_ref)      \
+do {                                              \
+   opal_free_list_return (&content_ref_free_list, \
+   (opal_free_list_item_t*)content_ref);          \
+} while(0)
 
 
 #define HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref)                   \
 do {                                                          \
-  ompi_free_list_item_t* item;                                \
-  OMPI_FREE_LIST_WAIT_MT(&traffic_msg_ref_free_list, item);      \
-  msg_ref = (ompi_crcp_bkmrk_pml_traffic_message_ref_t*)item; \
-} while(0); 
+    msg_ref = (ompi_crcp_bkmrk_pml_traffic_message_ref_t*)    \
+      opal_free_list_wait (&traffic_msg_ref_free_list);       \
+} while(0)
 
-#define HOKE_TRAFFIC_MSG_REF_RETURN(msg_ref)         \
-do {                                                 \
-   OMPI_FREE_LIST_RETURN_MT(&traffic_msg_ref_free_list, \
-   (ompi_free_list_item_t*)msg_ref);                 \
-} while(0);
+#define HOKE_TRAFFIC_MSG_REF_RETURN(msg_ref)          \
+do {                                                  \
+   opal_free_list_return (&traffic_msg_ref_free_list, \
+   (opal_free_list_item_t*)msg_ref);                  \
+} while(0)
 
 
-#define HOKE_DRAIN_MSG_REF_ALLOC(msg_ref)                   \
-do {                                                        \
-  ompi_free_list_item_t* item;                              \
-  OMPI_FREE_LIST_WAIT_MT(&drain_msg_ref_free_list, item);      \
-  msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ref_t*)item; \
-} while(0); 
+#define HOKE_DRAIN_MSG_REF_ALLOC(msg_ref)                      \
+do {                                                           \
+    msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ref_t *)      \
+        opal_free_list_wait (&drain_msg_ref_free_list);        \
+} while(0)
 
-#define HOKE_DRAIN_MSG_REF_RETURN(msg_ref)         \
-do {                                               \
-   OMPI_FREE_LIST_RETURN_MT(&drain_msg_ref_free_list, \
-   (ompi_free_list_item_t*)msg_ref);               \
-} while(0);
+#define HOKE_DRAIN_MSG_REF_RETURN(msg_ref)                   \
+do {                                                         \
+    opal_free_list_return (&drain_msg_ref_free_list,         \
+                           (opal_free_list_item_t*)msg_ref); \
+} while(0)
 
 
 #define HOKE_DRAIN_ACK_MSG_REF_ALLOC(msg_ref)                   \
 do {                                                            \
-  ompi_free_list_item_t* item;                                  \
-  OMPI_FREE_LIST_WAIT_MT(&drain_ack_msg_ref_free_list, item);      \
-  msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item; \
-} while(0); 
+    msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t *)   \
+        opal_free_list_wait (&drain_ack_msg_ref_free_list);     \
+} while(0)
 
-#define HOKE_DRAIN_ACK_MSG_REF_RETURN(msg_ref)         \
-do {                                                   \
-   OMPI_FREE_LIST_RETURN_MT(&drain_ack_msg_ref_free_list, \
-   (ompi_free_list_item_t*)msg_ref);                   \
-} while(0);
+#define HOKE_DRAIN_ACK_MSG_REF_RETURN(msg_ref)                  \
+do {                                                            \
+    opal_free_list_return (&drain_ack_msg_ref_free_list,        \
+                           (opal_free_list_item_t*)msg_ref);    \
+} while(0)
 
 
 /*
@@ -967,18 +963,17 @@ OBJ_CLASS_INSTANCE(ompi_crcp_bkmrk_pml_state_t,
 /************************************
  * Some Macro shortcuts
  ************************************/
-#define CRCP_COORD_STATE_ALLOC(state_ref)                 \
-do {                                                      \
-  ompi_free_list_item_t* item;                            \
-  OMPI_FREE_LIST_WAIT_MT(&coord_state_free_list, item);      \
-  state_ref = (ompi_crcp_bkmrk_pml_state_t*)item;         \
-} while(0); 
+#define CRCP_COORD_STATE_ALLOC(state_ref)                    \
+do {                                                         \
+    state_ref = (ompi_crcp_bkmrk_pml_state_t *)              \
+        opal_free_list_wait (&coord_state_free_list);        \
+} while(0)
 
-#define CRCP_COORD_STATE_RETURN(state_ref)       \
-do {                                             \
-   OMPI_FREE_LIST_RETURN_MT(&coord_state_free_list, \
-   (ompi_free_list_item_t*)state_ref);           \
-} while(0);
+#define CRCP_COORD_STATE_RETURN(state_ref)                      \
+do {                                                            \
+    opal_free_list_return (&coord_state_free_list,              \
+                           (opal_free_list_item_t *)state_ref); \
+} while(0)
 
 #define CREATE_COORD_STATE(coord_state, pml_state, v_peer_ref, v_msg_ref)         \
  {                                                                                \
@@ -1100,71 +1095,71 @@ int ompi_crcp_bkmrk_pml_init(void) {
      * - Drain ACK Messsage Refs
      * - Message Contents?
      */
-    OBJ_CONSTRUCT(&coord_state_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &coord_state_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_state_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_state_t),
-                             0,opal_cache_line_size,
-                             4,  /* Initial number */
-                             -1, /* Max = Unlimited */
-                             4,  /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&coord_state_free_list, opal_free_list_t);
+    opal_free_list_init (&coord_state_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_state_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_state_t),
+                         0,opal_cache_line_size,
+                         4,  /* Initial number */
+                         -1, /* Max = Unlimited */
+                         4,  /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
-    OBJ_CONSTRUCT(&content_ref_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &content_ref_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_message_content_ref_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_message_content_ref_t),
-                             0,opal_cache_line_size,
-                             80, /* Initial number */
-                             -1, /* Max = Unlimited */
-                             32, /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&content_ref_free_list, opal_free_list_t);
+    opal_free_list_init (&content_ref_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_message_content_ref_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_message_content_ref_t),
+                         0,opal_cache_line_size,
+                         80, /* Initial number */
+                         -1, /* Max = Unlimited */
+                         32, /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
-    OBJ_CONSTRUCT(&peer_ref_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &peer_ref_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_peer_ref_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_peer_ref_t),
-                             0,opal_cache_line_size,
-                             16, /* Initial number */
-                             -1, /* Max = Unlimited */
-                             16, /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&peer_ref_free_list, opal_free_list_t);
+    opal_free_list_init (&peer_ref_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_peer_ref_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_peer_ref_t),
+                         0,opal_cache_line_size,
+                         16, /* Initial number */
+                         -1, /* Max = Unlimited */
+                         16, /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
-    OBJ_CONSTRUCT(&traffic_msg_ref_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &traffic_msg_ref_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
-                             0,opal_cache_line_size,
-                             32, /* Initial number */
-                             -1, /* Max = Unlimited */
-                             64, /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&traffic_msg_ref_free_list, opal_free_list_t);
+    opal_free_list_init (&traffic_msg_ref_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
+                         0,opal_cache_line_size,
+                         32, /* Initial number */
+                         -1, /* Max = Unlimited */
+                         64, /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
-    OBJ_CONSTRUCT(&drain_msg_ref_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &drain_msg_ref_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_drain_message_ref_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ref_t),
-                             0,opal_cache_line_size,
-                             32, /* Initial number */
-                             -1, /* Max = Unlimited */
-                             64, /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&drain_msg_ref_free_list, opal_free_list_t);
+    opal_free_list_init (&drain_msg_ref_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_drain_message_ref_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ref_t),
+                         0,opal_cache_line_size,
+                         32, /* Initial number */
+                         -1, /* Max = Unlimited */
+                         64, /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
-    OBJ_CONSTRUCT(&drain_ack_msg_ref_free_list, ompi_free_list_t);
-    ompi_free_list_init_new( &drain_ack_msg_ref_free_list,
-                             sizeof(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
-                             0,opal_cache_line_size,
-                             16, /* Initial number */
-                             -1, /* Max = Unlimited */
-                             16, /* Increment by */
-                             NULL);
+    OBJ_CONSTRUCT(&drain_ack_msg_ref_free_list, opal_free_list_t);
+    opal_free_list_init (&drain_ack_msg_ref_free_list,
+                         sizeof(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
+                         0,opal_cache_line_size,
+                         16, /* Initial number */
+                         -1, /* Max = Unlimited */
+                         16, /* Increment by */
+                         NULL, 0, NULL, NULL, NULL);
 
     clear_timers();
 

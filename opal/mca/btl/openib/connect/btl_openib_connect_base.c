@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
@@ -413,7 +413,7 @@ opal_btl_openib_connect_base_get_cpc_byindex(uint8_t index)
 
 int opal_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 {
-    ompi_free_list_item_t *fli;
+    opal_free_list_item_t *fli;
     int length = sizeof(mca_btl_openib_header_t) +
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t) +

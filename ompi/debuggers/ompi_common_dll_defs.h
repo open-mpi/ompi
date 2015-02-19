@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,7 +68,7 @@ typedef struct
     struct {
         mqs_type *type;
         int size;
-    } ompi_free_list_item_t;
+    } opal_free_list_item_t;
     struct {
         mqs_type *type;
         int size;
@@ -79,7 +82,7 @@ typedef struct
             int fl_num_per_alloc;      /* size_t */
             int fl_num_allocated;      /* size_t */
         } offset;
-    } ompi_free_list_t;
+    } opal_free_list_t;
     struct {
         mqs_type *type;
         int size;

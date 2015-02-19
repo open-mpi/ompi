@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -919,7 +919,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     mca_btl_openib_component.async_comp_pipe[0] =
         mca_btl_openib_component.async_comp_pipe[1] = -1;
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&device->send_free_control, ompi_free_list_t);
+    OBJ_CONSTRUCT(&device->send_free_control, opal_free_list_t);
     device->max_inline_data = 0;
     device->ready_for_use = false;
 }
@@ -2566,9 +2566,9 @@ btl_openib_component_init(int *num_btl_modules,
         }
     }
 
-    OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, opal_free_list_t);
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     if (NULL == init_data) {
@@ -2583,7 +2583,7 @@ btl_openib_component_init(int *num_btl_modules,
        occur on some 32-bit platforms. Depending on the size of the fragment this
        will waste 2-6 bytes of space per frag. In most cases this shouldn't waste
        any space. */
-    if (OPAL_SUCCESS != ompi_free_list_init_ex_new(
+    if (OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.send_user_free,
                 sizeof(mca_btl_openib_put_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_put_frag_t),
@@ -2591,7 +2591,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -2604,7 +2604,7 @@ btl_openib_component_init(int *num_btl_modules,
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.recv_user_free;
 
-    if(OPAL_SUCCESS != ompi_free_list_init_ex_new(
+    if(OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.recv_user_free,
                 sizeof(mca_btl_openib_get_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_get_frag_t),
@@ -2612,7 +2612,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -2625,13 +2625,13 @@ btl_openib_component_init(int *num_btl_modules,
 
     init_data->list = &mca_btl_openib_component.send_free_coalesced;
 
-    if(OPAL_SUCCESS != ompi_free_list_init_ex(
+    if(OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.send_free_coalesced,
                 length, 8, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
-                mca_btl_openib_component.ib_free_list_num,
+                0, 0, mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -3819,8 +3819,8 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
     }
 
     for(i = 0; i < num_post; i++) {
-        ompi_free_list_item_t* item;
-        OMPI_FREE_LIST_WAIT_MT(&openib_btl->device->qps[qp].recv_free, item);
+        opal_free_list_item_t* item;
+        item = opal_free_list_wait (&openib_btl->device->qps[qp].recv_free);
         to_base_frag(item)->base.order = qp;
         to_com_frag(item)->endpoint = NULL;
         if(NULL == wr)

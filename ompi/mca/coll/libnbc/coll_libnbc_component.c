@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -87,14 +87,11 @@ libnbc_open(void)
 {
     int ret;
 
-    OBJ_CONSTRUCT(&mca_coll_libnbc_component.requests, ompi_free_list_t);
-    ret = ompi_free_list_init(&mca_coll_libnbc_component.requests,
-                              sizeof(ompi_coll_libnbc_request_t),
-                              OBJ_CLASS(ompi_coll_libnbc_request_t),
-                              0,
-                              -1,
-                              8,
-                              NULL);
+    OBJ_CONSTRUCT(&mca_coll_libnbc_component.requests, opal_free_list_t);
+    ret = opal_free_list_init (&mca_coll_libnbc_component.requests,
+                               sizeof(ompi_coll_libnbc_request_t), 8,
+                               OBJ_CLASS(ompi_coll_libnbc_request_t),
+                               0, 0, 0, -1, 8, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) return ret;
 
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.active_requests, opal_list_t);
