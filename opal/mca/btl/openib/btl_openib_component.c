@@ -816,6 +816,9 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                 openib_btl->super.btl_put_limit = openib_btl->ib_port_attr.max_msg_sz;
             }
 
+            openib_btl->super.btl_put_local_registration_threshold = openib_btl->device->max_inline_data;
+            openib_btl->super.btl_get_local_registration_threshold = 0;
+
 #if HAVE_DECL_IBV_ATOMIC_HCA
             if (openib_btl->device->ib_dev_attr.atomic_cap == IBV_ATOMIC_NONE) {
                 openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
