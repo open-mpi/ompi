@@ -35,7 +35,7 @@ static int component_register(void);
  * and pointers to our public functions in it
  */
 
-opal_reachable_base_component_t mca_reachable_component = {
+opal_reachable_base_component_t mca_reachable_netlink_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
