@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -117,13 +117,17 @@ static inline int set_mxm_tls()
 
 static inline int check_mxm_hw_tls(char *v, char *tls)
 {
-    if ((0 == strcmp(tls, "rc") || 0 == strcmp(tls, "dc"))) 
-        return OSHMEM_SUCCESS;
+	if (v && tls) {
+        if ((0 == strcmp(tls, "rc") || 0 == strcmp(tls, "dc"))) {
+            return OSHMEM_SUCCESS;
+        }
 
-    if (strstr(tls, "ud") &&
+        if (strstr(tls, "ud") &&
             (NULL == strstr(tls, "rc") && NULL == strstr(tls, "dc") &&
-             NULL == strstr(tls, "shm"))) 
-        return OSHMEM_SUCCESS;
+             NULL == strstr(tls, "shm"))) {
+            return OSHMEM_SUCCESS;
+        }
+	}
 
     orte_show_help("help-oshmem-spml-ikrit.txt", "mxm tls", true,
                     v, tls);
