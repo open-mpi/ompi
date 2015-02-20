@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,6 +182,13 @@ OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
         opal_event_active(&(rq)->ev, OPAL_EV_WRITE, 1);         \
     }while(0);
 ORTE_DECLSPEC void orte_oob_base_set_addr(int fd, short args, void *cbdata);
+
+/* FIXME
+ * in order to avoid memory leak when spawning many short lived jobs,
+ * it is necessary to do cleanup what was previously allocated by
+ * orte_oob_base_set_addr
+ */
+ORTE_DECLSPEC void orte_oob_base_unset_addr(orte_process_name_t *peer);
 
 #if OPAL_ENABLE_FT_CR == 1
 ORTE_DECLSPEC void orte_oob_base_ft_event(int fd, short args, void *cbdata);

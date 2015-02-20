@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +108,13 @@ void pmix_usock_send_recv(int fd, short args, void *cbdata)
     snd->hdr.tag = tag;
     snd->hdr.nbytes = ms->bfr->bytes_used;
     snd->data = ms->bfr->base_ptr;
+    /* protect data */
+    ms->bfr->base_ptr = NULL;
+    /* FIXME
+     * manually release ms->bfr
+     * should a destructor that does not exist yet do that ? */
+    OBJ_RELEASE(ms->bfr);
+    OBJ_RELEASE(ms);
     /* always start with the header */
     snd->sdptr = (char*)&snd->hdr;
     snd->sdbytes = sizeof(pmix_usock_hdr_t);

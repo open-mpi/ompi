@@ -420,11 +420,35 @@ void pmix_server_recv_handler(int sd, short flags, void *cbdata)
                 return;
             } else {
                 /* close the connection */
+                uint64_t ui64;
+                pmix_server_peer_t* server_peer;
                 opal_output_verbose(2, pmix_server_output,
                                     "%s:usock:recv:handler error reading bytes - closing connection",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 peer->state = PMIX_SERVER_CLOSED;
+                /* FIXME
+                 * remove entries in all the handles
+                 * this is likely not the right place to do this,
+                 * but this has to be done somewhere ...
+                 */
+                server_peer = pmix_server_peer_lookup(peer->sd);
+                if (NULL != server_peer) {
+                    if (OPAL_SUCCESS != (rc=opal_dstore.remove(pmix_server_local_handle, &server_peer->name, NULL))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    if (OPAL_SUCCESS != (rc=opal_dstore.remove(pmix_server_remote_handle, &server_peer->name, NULL))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    if (OPAL_SUCCESS != (rc=opal_dstore.remove(pmix_server_global_handle, &server_peer->name, NULL))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                }
+                ui64 = (uint64_t)peer->sd;
                 CLOSE_THE_SOCKET(peer->sd);
+                if (OPAL_SUCCESS != (rc=opal_hash_table_set_value_uint64(pmix_server_peers, ui64, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                }
+                OBJ_RELEASE(server_peer);
                 return;
             }
         }

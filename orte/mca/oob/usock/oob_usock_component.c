@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,6 +91,7 @@ static int component_send(orte_rml_send_t *msg);
 static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
+static void component_unset_addr(orte_process_name_t *peer);
 static bool component_is_reachable(orte_process_name_t *peer);
 
 /*
@@ -119,6 +122,7 @@ mca_oob_usock_component_t mca_oob_usock_component = {
         component_send,
         component_get_addr,
         component_set_addr,
+        component_unset_addr,
         component_is_reachable
     },
 };
@@ -290,6 +294,19 @@ static char* component_get_addr(void)
     return tmp;
 }
 
+static void component_unset_addr(orte_process_name_t *peer) {
+    uint64_t ui64;
+    mca_oob_usock_peer_t *pr;
+
+    memcpy(&ui64, peer, sizeof(uint64_t));
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
+                                                         ui64, (void**)&pr) || NULL == pr) {
+        return;
+    }
+    OBJ_RELEASE(pr);
+    opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, NULL);
+}
+
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris)
 {
@@ -381,7 +398,6 @@ void mca_oob_usock_component_lost_connection(int fd, short args, void *cbdata)
 {
     mca_oob_usock_peer_op_t *pop = (mca_oob_usock_peer_op_t*)cbdata;
     uint64_t ui64;
-    int rc;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s usock:lost connection called for peer %s",
@@ -395,10 +411,7 @@ void mca_oob_usock_component_lost_connection(int fd, short args, void *cbdata)
      * worry about shifting to another component. Eventually, we will want to push
      * this decision to the OOB so it can try other components and eventually error out
      */
-    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
-                                                               ui64, NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    orte_oob_base_unset_addr(&pop->peer->name);
 
     /* activate the proc state - since an app only connects to its parent daemon,
      * and the daemon is *always* its lifeline, activate the lifeline lost state */

@@ -16,6 +16,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,6 +92,7 @@ static int component_send(orte_rml_send_t *msg);
 static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
+static void component_unset_addr(orte_process_name_t *peer);
 static bool component_is_reachable(orte_process_name_t *peer);
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state);
@@ -123,6 +126,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         component_send,
         component_get_addr,
         component_set_addr,
+        component_unset_addr,
         component_is_reachable
 #if OPAL_ENABLE_FT_CR == 1
         ,
@@ -686,6 +690,10 @@ static char* component_get_addr(void)
 
     /* return our uri */
     return cptr;
+}
+
+static void component_unset_addr(orte_process_name_t *peer) {
+    mca_oob_tcp_module.api.unset_peer(peer);
 }
 
 static int component_set_addr(orte_process_name_t *peer,

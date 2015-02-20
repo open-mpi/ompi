@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +64,7 @@ typedef void (*mca_oob_tcp_module_accept_connection_fn_t)(const int accepted_fd,
 typedef void (*mca_oob_tcp_module_set_peer_fn_t)(const orte_process_name_t* name,
                                                  const uint16_t af_family,
                                                  const char *net, const char *ports);
+typedef void (*mca_oob_tcp_module_unset_peer_fn_t)(const orte_process_name_t *name);
 typedef void (*mca_oob_tcp_module_ping_fn_t)(const orte_process_name_t *proc);
 typedef void (*mca_oob_tcp_module_send_nb_fn_t)(orte_rml_send_t *msg);
 typedef void (*mca_oob_tcp_module_resend_nb_fn_t)(struct mca_oob_tcp_msg_error_t *mop);
@@ -72,6 +75,7 @@ typedef struct {
     mca_oob_tcp_module_fini_fn_t               finalize;
     mca_oob_tcp_module_accept_connection_fn_t  accept_connection;
     mca_oob_tcp_module_set_peer_fn_t           set_peer;
+    mca_oob_tcp_module_unset_peer_fn_t         unset_peer;
     mca_oob_tcp_module_ping_fn_t               ping;
     mca_oob_tcp_module_send_nb_fn_t            send_nb;
     mca_oob_tcp_module_resend_nb_fn_t          resend;

@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +39,8 @@ ORTE_DECLSPEC void pmix_server_register(void);
 ORTE_DECLSPEC extern char *pmix_server_uri;
 
 ORTE_DECLSPEC extern opal_dstore_attr_t *pmix_server_create_shared_segment(orte_jobid_t jid);
+
+ORTE_DECLSPEC int pmix_server_detach_segment(orte_jobid_t jid);
 
 END_C_DECLS
 
