@@ -413,7 +413,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         SCOLL_VERBOSE(12,
                       "[#%d] Restore special synchronization array",
                       group->my_pe);
-        for (i = 0; pSync && (i < _SHMEM_BARRIER_SYNC_SIZE); i++) {
+        for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
             pSync[i] = _SHMEM_SYNC_VALUE;
         }
 

@@ -427,11 +427,13 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 #if MXM_API < MXM_VERSION(2,0)
     if (OSHMEM_SUCCESS
             != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_SELF)) {
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
     if (OSHMEM_SUCCESS
             != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_RDMA)) {
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
 #else
     if (mca_spml_ikrit.hw_rdma_channel) {
@@ -439,7 +441,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         if (MXM_OK != err) {
             orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                     mxm_error_string(err));
-            return OSHMEM_ERROR;
+            rc = OSHMEM_ERROR;
+            goto bail;
         }
         oshmem_shmem_allgather(&my_ep_info, ep_hw_rdma_info,
                 sizeof(spml_ikrit_mxm_ep_conn_info_t));
@@ -448,7 +451,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     if (MXM_OK != err) {
         orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
 #endif
     oshmem_shmem_allgather(&my_ep_info, ep_info,

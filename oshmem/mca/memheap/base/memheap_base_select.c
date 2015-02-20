@@ -121,7 +121,7 @@ int mca_memheap_base_select()
                 opal_list_remove_item(&oshmem_memheap_base_framework.framework_components, &cli->super);
                 mca_base_component_close((mca_base_component_t *) component,
                                          oshmem_memheap_base_framework.framework_output);
-
+            } else {
                 /* Calculate memheap size in case it was not set during component initialization */
                 module->memheap_size = context->user_size;
             }

@@ -562,7 +562,6 @@ static int create_btl_idx(int dst_pe)
             /*Chose SHMEM capable btl from eager array. Not filter now: take the first
               (but could appear on demand).*/
             shmem_index = 0;
-            bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
             size = 1;
         }
         else {
@@ -673,7 +672,7 @@ int mca_spml_yoda_del_procs(oshmem_proc_t** procs, size_t nprocs)
 static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id)
 {
     mca_bml_base_endpoint_t* endpoint;
-    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_btl_t* bml_btl = NULL;
     oshmem_proc_t *proc;
     mca_bml_base_btl_array_t *btl_array = 0;
     int shmem_index = -1;
@@ -704,17 +703,12 @@ static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id)
         */
         size = mca_bml_base_btl_array_get_size(btl_array =
                 &endpoint->btl_eager);
-        if (0 < size) {
-            /*Chose SHMEM capable btl from eager array. Not filter now: take the first
-              (but could appear on demand).*/
-            shmem_index = 0;
-            bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
-            size = 1;
-        }
+    }
+    if (0 < size) {
+        shmem_index = 0;
+        bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
     }
 
-    shmem_index = 0;
-    bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
     *btl_id = proc->transport_ids[0];
 
 #if SPML_YODA_DEBUG == 1
