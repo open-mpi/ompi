@@ -706,12 +706,12 @@ PRINTF("TX 1seg=%lu, s/i = %u/%u\n", sent, ntohs(hdr->msg.m.rc_data.seqno), ntoh
 				(sizeof(struct rudp_pkt) -
 				 sizeof(struct ether_header) -
 				 sizeof(struct iphdr)) + sent);
-if (0) {
+#if 0
 if ((random() % 177) == 0 && resid == 0) {
 	hdr->hdr.uh_eth.ether_type = 0;
 //printf("BORK seq %u, ID %u\n", rdc->dc_next_tx_seq, ntohl(wqe->rd_msg_id_be));
 }
-}
+#endif
 
 		if (resid == 0) {
 			opcode |= RUDP_OP_LAST;

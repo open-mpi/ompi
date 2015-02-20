@@ -1409,7 +1409,6 @@ static int sock_pe_peek_hdr(struct sock_pe *pe,
 		return -1;
 	
 	msg_hdr->msg_len = ntohll(msg_hdr->msg_len);
-	msg_hdr->rx_id = msg_hdr->rx_id;
 	msg_hdr->flags = ntohll(msg_hdr->flags);
 	msg_hdr->pe_entry_id = ntohs(msg_hdr->pe_entry_id);
 	msg_hdr->ep_id = ntohs(msg_hdr->ep_id);
@@ -1462,8 +1461,11 @@ static int sock_pe_read_hdr(struct sock_pe *pe, struct sock_rx_ctx *rx_ctx,
 		}
 	}
 	
-	sock_pe_recv_field(pe_entry, (void*)msg_hdr, 
-			   sizeof(struct sock_msg_hdr), 0);
+	if (sock_pe_recv_field(pe_entry, (void*)msg_hdr, 
+			       sizeof(struct sock_msg_hdr), 0)) {
+		SOCK_LOG_ERROR("Failed to recv header\n");
+		return -1;
+	}
 	
 	msg_hdr->msg_len = ntohll(msg_hdr->msg_len);
 	msg_hdr->rx_id = msg_hdr->rx_id;
@@ -2020,7 +2022,7 @@ static int sock_pe_new_tx_entry(struct sock_pe *pe, struct sock_tx_ctx *tx_ctx)
 		msg_hdr->ep_id = sock_av_lookup_ep_id(tx_ctx->av, pe_entry->addr);
 	} else {
 		msg_hdr->rx_id = 0;
-		msg_hdr->ep_id = ep->rem_ep_id;
+		msg_hdr->ep_id = ((ep != NULL) ? ep->rem_ep_id : 0);
 	}
 
 	msg_hdr->dest_iov_len = pe_entry->pe.tx.tx_op.dest_iov_len;
@@ -2074,8 +2076,6 @@ int sock_pe_progress_rx_ep(struct sock_pe *pe, struct sock_ep *ep,
 
 	for (i=0; i<map->used; i++) {
 		conn = &map->table[i];
-		if (!conn)
-			continue;
 		
 		if (rbused(&conn->outbuf))
 			sock_comm_flush(conn);

@@ -65,7 +65,7 @@ int usnic_arp_lookup(char *ifname, uint32_t ipaddr, int sockfd, uint8_t *macaddr
 	int			status;
 
 	memset(&req, 0, sizeof req);
-	strcpy(req.arp_dev, ifname);
+	strncpy(req.arp_dev, ifname, sizeof(req.arp_dev) - 1);
 	memset(&sinp, 0, sizeof(sinp));
 	sinp.sin_family = AF_INET;
 	sinp.sin_addr.s_addr = ipaddr;

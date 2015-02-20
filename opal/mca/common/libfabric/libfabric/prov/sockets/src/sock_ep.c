@@ -1252,7 +1252,9 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 	/* default config */
 	sock_ep->min_multi_recv = SOCK_EP_MIN_MULTI_RECV;
 	
-	memcpy(&sock_ep->info, info, sizeof(struct fi_info));
+	if (info) {
+		memcpy(&sock_ep->info, info, sizeof(struct fi_info));
+	}
   	sock_ep->domain = sock_dom;
 	atomic_inc(&sock_dom->ref);
 	return 0;

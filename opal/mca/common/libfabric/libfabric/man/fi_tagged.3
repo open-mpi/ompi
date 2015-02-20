@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc1"
+.TH fi_tagged 3 "2015\-02\-18" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -314,24 +314,6 @@ operations.
 the user.
 .PP
 \f[I]-FI_EOTHER\f[] : Indicates that an unspecified error occurred.
-.SH NOTES
-.SS Ordering
-.PP
-The order in which tags are matched is only defined for a pair of
-sending and receiving endpoints.
-The ordering is defined by the underlying protocol.
-If a specific protocol is not selected for an endpoint, the libfabric
-implementation will choose a protocol that satisfies the following
-requirement from the MPI-3.0 specification (page 41, lines 1-5):
-.RS
-.PP
-If a sender sends two messages in succession to the same destination,
-and both match the same receive, then this operation cannot receive the
-second message if the first one is still pending.
-If a receiver posts two receives in succession, and both match the same
-message, then the second receive operation cannot be satisfied by this
-message, if the first one is still pending.
-.RE
 .SH SEE ALSO
 .PP
 \f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),

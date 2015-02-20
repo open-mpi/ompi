@@ -208,25 +208,29 @@ int sock_comm_buffer_init(struct sock_conn *conn)
 	socklen_t optlen = sizeof(socklen_t);
 
 	optval = 1;
-	setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
-		   &optval, sizeof optval);
+	if (setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
+		       &optval, sizeof optval))
+		SOCK_LOG_ERROR("setsockopt failed\n");
 
 	flags = fcntl(conn->sock_fd, F_GETFL, 0);
-	fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK);
+	if (fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed\n");
 
 	rbinit(&conn->inbuf, SOCK_COMM_BUF_SZ);
 	rbinit(&conn->outbuf, SOCK_COMM_BUF_SZ);
 
-	setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen);
-	setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen);
+	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen))
+		SOCK_LOG_ERROR("setsockopt failed\n");
 
-	getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen);
-	SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);
-		
+	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen))
+		SOCK_LOG_ERROR("setsockopt failed\n");
+
+	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen))
+		SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);
+	
 	optlen = sizeof(socklen_t);
-	getsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, &optlen);
-	SOCK_LOG_INFO("SO_SNDBUF: %d\n", size);
-
+	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, &optlen))
+		SOCK_LOG_INFO("SO_SNDBUF: %d\n", size);
 	return 0;
 }
 

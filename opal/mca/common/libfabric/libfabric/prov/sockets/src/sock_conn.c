@@ -164,14 +164,16 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 	}
 	
 	optval = 1;
-	setsockopt(conn_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+	if (setsockopt(conn_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
+		SOCK_LOG_ERROR("setsockopt failed\n");
 	
 	memcpy(sa_ip, inet_ntoa(addr->sin_addr), INET_ADDRSTRLEN);
 	SOCK_LOG_INFO("Connecting to: %s:%d\n",
 		      sa_ip, ntohs(((struct sockaddr_in*)addr)->sin_port));
 
 	flags = fcntl(conn_fd, F_GETFL, 0);
-	fcntl(conn_fd, F_SETFL, flags | O_NONBLOCK);
+	if (fcntl(conn_fd, F_SETFL, flags | O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed\n");
 
 	fastlock_acquire(&map->lock);
 	memcpy(&map->curr_addr, addr, sizeof(struct sockaddr_in));
@@ -191,40 +193,43 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 				if (optval) {
 					SOCK_LOG_ERROR("failed to connect %d - %s\n", optval,
 						       strerror(optval));
-					close(conn_fd);
-					return 0;
+					ret = 0;
+					goto err;
 				}
 			} else {
 				SOCK_LOG_ERROR("Timeout or error to connect %d - %s\n", optval,
 					       strerror(optval));
-				close(conn_fd);
-				return 0;
+				ret = 0;
+				goto err;
 			}
 		} else {
 			SOCK_LOG_ERROR("Error connecting %d - %s\n", errno,
 				       strerror(errno));
-			close(conn_fd);
-			return 0;
+			ret = 0;
+			goto err;
 		}
 	}
 	
 	flags = fcntl(conn_fd, F_GETFL, 0);
 	flags &= (~O_NONBLOCK);
-	fcntl(conn_fd, F_SETFL, flags);
+	if (fcntl(conn_fd, F_SETFL, flags))
+		SOCK_LOG_ERROR("fcntl failed\n");
 	
 	ret = send(conn_fd, 
 		   &((struct sockaddr_in*)&dom->src_addr)->sin_port,
 		   sizeof(unsigned short), 0);
 	if (ret != sizeof(unsigned short)) {
 		SOCK_LOG_ERROR("Cannot exchange port\n");
-		return 0;
+		ret = 0;
+		goto err;
 	}
 
 	ret = recv(conn_fd,
 		   &reply, sizeof(unsigned short), 0);
 	if (ret != sizeof(unsigned short)) {
 		SOCK_LOG_ERROR("Cannot exchange port: %d\n", ret);
-		return 0;
+		ret = 0;
+		goto err;
 	}
 
 	reply = ntohs(reply);
@@ -248,6 +253,10 @@ uint16_t sock_conn_map_connect(struct sock_domain *dom,
 	}
 
 	return ret;
+
+err:
+	close(conn_fd);
+	return ret;
 }
 
 uint16_t sock_conn_map_match_or_connect(struct sock_domain *dom,
@@ -270,13 +279,13 @@ static void *_sock_conn_listen(void *arg)
 	struct sock_conn_map *map = &domain->r_cmap;
 	struct addrinfo *s_res = NULL, *p;
 	struct addrinfo hints;
-	int optval, flags, tmp;
+	int optval, flags;
 	int listen_fd = 0, conn_fd, ret;
 	struct sockaddr_in remote;
 	socklen_t addr_size;
 	struct pollfd poll_fds[2];
 	struct sockaddr_in addr;
-	char sa_ip[INET_ADDRSTRLEN];
+	char sa_ip[INET_ADDRSTRLEN], tmp;
 	unsigned short port, response;
 	uint16_t index;
 
@@ -297,11 +306,13 @@ static void *_sock_conn_listen(void *arg)
 		listen_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (listen_fd >= 0) {
 			flags = fcntl(listen_fd, F_GETFL, 0);
-			fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK);
+			if (fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK))
+				SOCK_LOG_ERROR("fcntl failed\n");
 
 			optval = 1;
-			setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, 
-				   sizeof optval);
+			if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, 
+				       sizeof optval))
+				SOCK_LOG_ERROR("setsockopt failed\n");
 			
 			if (!bind(listen_fd, s_res->ai_addr, s_res->ai_addrlen))
 				break;
@@ -340,7 +351,11 @@ static void *_sock_conn_listen(void *arg)
  	while(domain->listening) {
 		if (poll(poll_fds, 2, -1) > 0) {
 			if (poll_fds[1].revents & POLLIN) {
-				read(domain->signal_fds[1], &tmp, 1);
+				ret = read(domain->signal_fds[1], &tmp, 1);
+				if (ret != 1) {
+					SOCK_LOG_ERROR("Invalid signal\n");
+					goto err;
+				}
 				continue;
 			}
 		} else
@@ -355,7 +370,11 @@ static void *_sock_conn_listen(void *arg)
 		}
 		
 		addr_size = sizeof(struct sockaddr_in);
-		getpeername(conn_fd, (struct sockaddr *) &remote, &addr_size);
+		if (getpeername(conn_fd, (struct sockaddr *) &remote, &addr_size)) {
+			SOCK_LOG_ERROR("Failed to do getpeername\n");
+			goto err;
+		}
+		
 		memcpy(sa_ip, inet_ntoa(remote.sin_addr), INET_ADDRSTRLEN);
 		SOCK_LOG_INFO("ACCEPT: %s, %d\n", sa_ip, ntohs(remote.sin_port));
 
@@ -400,7 +419,8 @@ static void *_sock_conn_listen(void *arg)
 	return NULL;
 
 err:
-	close(listen_fd);
+	if (listen_fd > 0)
+		close(listen_fd);
 	perror("listening thread failed");
 	return NULL;
 }

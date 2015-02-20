@@ -715,6 +715,9 @@ usdf_ep_msg_open(struct fid_domain *domain, struct fi_info *info,
 			tx->tx_attr = *info->tx_attr;
 		} else {
 			ret = usdf_msg_fill_tx_attr(&tx->tx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&tx->t.msg.tx_free_wqe);
 		TAILQ_INIT(&tx->t.msg.tx_ep_ready);

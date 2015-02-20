@@ -760,6 +760,9 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 			tx->tx_attr = *info->tx_attr;
 		} else {
 			ret = usdf_rdm_fill_tx_attr(&tx->tx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&tx->t.rdm.tx_free_wqe);
 		TAILQ_INIT(&tx->t.rdm.tx_rdc_ready);
@@ -798,6 +801,9 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 			rx->rx_attr = *info->rx_attr;
 		} else {
 			ret = usdf_rdm_fill_rx_attr(&rx->rx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&rx->r.rdm.rx_free_rqe);
 		TAILQ_INIT(&rx->r.rdm.rx_posted_rqe);
@@ -822,6 +828,9 @@ fail:
 	if (tx != NULL) {
 		free(tx);
 		atomic_dec(&udp->dom_refcnt);
+	}
+	if (ep != NULL) {
+		free(ep);
 	}
 	return ret;
 }

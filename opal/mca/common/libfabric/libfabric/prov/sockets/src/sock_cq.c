@@ -556,6 +556,9 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		break;
 
 	case FI_WAIT_SET:
+		if (!attr)
+			return -FI_EINVAL;
+
 		sock_cq->waitset = attr->wait_set;
 		sock_cq->signal = 1;
 		wait = container_of(attr->wait_set, struct sock_wait, wait_fid);

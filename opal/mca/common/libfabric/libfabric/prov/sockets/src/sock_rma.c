@@ -189,16 +189,21 @@ static ssize_t sock_ep_rma_readv(struct fid_ep *ep, const struct iovec *iov,
 				  void **desc, size_t count, fi_addr_t src_addr, 
 				  uint64_t addr, uint64_t key, void *context)
 {
+	size_t len, i;
 	struct fi_msg_rma msg;
 	struct fi_rma_iov rma_iov;
 
 	msg.msg_iov = iov;
 	msg.desc = desc;
 	msg.iov_count = count;
+	msg.rma_iov_count = 1;
 
 	rma_iov.addr = addr;
 	rma_iov.key = key;
-	rma_iov.len = 1;
+
+	for (i = 0, len = 0; i < count; i++) 
+		len += iov[i].iov_len;
+	rma_iov.len = len;
 
 	msg.rma_iov = &rma_iov;
 	msg.addr = src_addr;
@@ -371,7 +376,7 @@ static ssize_t sock_ep_rma_writev(struct fid_ep *ep,
 
 	for (i = 0, len = 0; i < count; i++) 
 		len += iov[i].iov_len;
-
+	
 	rma_iov.addr = addr;
 	rma_iov.key = key;
 	rma_iov.len = len;

@@ -121,7 +121,8 @@ usd_ib_get_devlist(
             rc = -errno;
             goto out;
         }
-        n = read(fd, ibdev_buf, sizeof(ibdev_buf));
+        memset(ibdev_buf, 0, sizeof(ibdev_buf));
+        n = read(fd, ibdev_buf, sizeof(ibdev_buf) - 1);
         if (n == -1) {
             usd_perror("reading ibdev");
             rc = -errno;
@@ -141,12 +142,12 @@ usd_ib_get_devlist(
                 rc = -errno;
                 goto out;
             }
-            strncpy(idp->id_name, dent->d_name, sizeof(idp->id_name));
+            strncpy(idp->id_name, dent->d_name, sizeof(idp->id_name) - 1);
             strncpy(idp->id_usnic_name, ibdev_buf,
-                    sizeof(idp->id_usnic_name));
-            snprintf(idp->id_dev_path, sizeof(idp->id_dev_path),
+                    sizeof(idp->id_usnic_name) - 1);
+            snprintf(idp->id_dev_path, sizeof(idp->id_dev_path) - 1,
                      "/dev/infiniband/%s", idp->id_name);
-            snprintf(idp->id_class_path, sizeof(idp->id_class_path),
+            snprintf(idp->id_class_path, sizeof(idp->id_class_path) - 1,
                      "%s/device/infiniband/%s", dev_path, ibdev_buf);
 
             if (last_idp == NULL) {
@@ -254,11 +255,7 @@ usd_get_iface(
         return -errno;
     }
 
-    /* allow for trailing newline */
-    if (dev->ud_attrs.uda_ifname[n - 1] == '\n')
-        dev->ud_attrs.uda_ifname[n - 1] = '\0';
-    else
-        dev->ud_attrs.uda_ifname[n] = '\0';
+    dev->ud_attrs.uda_ifname[n - 1] = '\0';
 
     return 0;
 }
@@ -355,11 +352,7 @@ usd_get_firmware(
         usd_perror("reading fw_ver");
         return -errno;
     }
-    /* allow for trailing newline */
-    if (fw[n - 1] == '\n')
-        fw[n - 1] = '\0';
-    else
-        fw[n] = '\0';
+    fw[n - 1] = '\0';
 
     return 0;
 }

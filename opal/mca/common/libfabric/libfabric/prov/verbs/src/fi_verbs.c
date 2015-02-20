@@ -65,6 +65,8 @@
 #define VERBS_PROV_VERS FI_VERSION(1,0)
 
 #define VERBS_WARN(...) FI_WARN(VERBS_PROV_NAME, __VA_ARGS__)
+#define VERBS_INFO(...) FI_LOG(2, VERBS_PROV_NAME, __VA_ARGS__)
+#define VERBS_DEBUG(...) FI_DEBUG(VERBS_PROV_NAME, __VA_ARGS__)
 
 #define VERBS_MSG_SIZE (1ULL << 31)
 #define VERBS_IB_PREFIX "IB-0x"
@@ -222,7 +224,7 @@ static int fi_ibv_check_domain_attr(struct fi_domain_attr *attr)
 	case FI_THREAD_COMPLETION:
 		break;
 	default:
-		VERBS_WARN("Invalid threading model\n");
+		VERBS_INFO("Invalid threading model\n");
 		return -FI_ENODATA;
 	}
 
@@ -232,7 +234,7 @@ static int fi_ibv_check_domain_attr(struct fi_domain_attr *attr)
 	case FI_PROGRESS_MANUAL:
 		break;
 	default:
-		VERBS_WARN("Given control progress mode not supported\n");
+		VERBS_INFO("Given control progress mode not supported\n");
 		return -FI_ENODATA;
 	}
 
@@ -242,7 +244,7 @@ static int fi_ibv_check_domain_attr(struct fi_domain_attr *attr)
 	case FI_PROGRESS_MANUAL:
 		break;
 	default:
-		VERBS_WARN("Given data progress mode not supported!\n");
+		VERBS_INFO("Given data progress mode not supported!\n");
 		return -FI_ENODATA;
 	}
 
@@ -274,37 +276,37 @@ static int fi_ibv_check_ep_attr(struct fi_ep_attr *attr)
 		return -FI_ENODATA;
 
 	if (attr->total_buffered_recv) {
-		VERBS_WARN("Buffered Recv not supported\n");
+		VERBS_INFO("Buffered Recv not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->max_order_raw_size > verbs_ep_attr.max_order_raw_size) {
-		VERBS_WARN("max_order_raw_size exceeds supported size\n");
+		VERBS_INFO("max_order_raw_size exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->max_order_war_size) {
-		VERBS_WARN("max_order_war_size exceeds supported size\n");
+		VERBS_INFO("max_order_war_size exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->max_order_waw_size > verbs_ep_attr.max_order_waw_size) {
-		VERBS_WARN("max_order_waw_size exceeds supported size\n");
+		VERBS_INFO("max_order_waw_size exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->msg_order & ~(verbs_ep_attr.msg_order)) {
-		VERBS_WARN("Given msg ordering not supported\n");
+		VERBS_INFO("Given msg ordering not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->tx_ctx_cnt > verbs_ep_attr.tx_ctx_cnt) {
-		VERBS_WARN("tx_ctx_cnt exceeds supported size\n");
+		VERBS_INFO("tx_ctx_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->rx_ctx_cnt > verbs_ep_attr.rx_ctx_cnt) {
-		VERBS_WARN("rx_ctx_cnt exceeds supported size\n");
+		VERBS_INFO("rx_ctx_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
@@ -314,22 +316,22 @@ static int fi_ibv_check_ep_attr(struct fi_ep_attr *attr)
 static int fi_ibv_check_rx_attr(struct fi_rx_attr *attr)
 {
 	if (attr->caps & ~(verbs_rx_attr.caps)) {
-		VERBS_WARN("Given rx_attr->caps not supported\n");
+		VERBS_INFO("Given rx_attr->caps not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if ((attr->mode & verbs_rx_attr.mode) != verbs_rx_attr.mode) {
-		VERBS_WARN("Given rx_attr->mode not supported\n");
+		VERBS_INFO("Given rx_attr->mode not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->msg_order & ~(verbs_rx_attr.msg_order)) {
-		VERBS_WARN("Given rx_attr->msg_order not supported\n");
+		VERBS_INFO("Given rx_attr->msg_order not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->total_buffered_recv > verbs_rx_attr.total_buffered_recv) {
-		VERBS_WARN("Given rx_attr->total_buffered_recv exceeds supported size\n");
+		VERBS_INFO("Given rx_attr->total_buffered_recv exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
@@ -339,22 +341,22 @@ static int fi_ibv_check_rx_attr(struct fi_rx_attr *attr)
 static int fi_ibv_check_tx_attr(struct fi_tx_attr *attr)
 {
 	if (attr->caps & ~(verbs_tx_attr.caps)) {
-		VERBS_WARN("Given tx_attr->caps not supported\n");
+		VERBS_INFO("Given tx_attr->caps not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if ((attr->mode & verbs_tx_attr.mode) != verbs_tx_attr.mode) {
-		VERBS_WARN("Given tx_attr->mode not supported\n");
+		VERBS_INFO("Given tx_attr->mode not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->msg_order & ~(verbs_tx_attr.msg_order)) {
-		VERBS_WARN("Given tx_attr->msg_order not supported\n");
+		VERBS_INFO("Given tx_attr->msg_order not supported\n");
 		return -FI_ENODATA;
 	}
 
 	if (attr->inject_size > verbs_tx_attr.inject_size) {
-		VERBS_WARN("Given tx_attr->inject_size exceeds supported size\n");
+		VERBS_INFO("Given tx_attr->inject_size exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
@@ -416,22 +418,22 @@ static int fi_ibv_check_dev_limits(struct fi_domain_attr *domain_attr,
 				   struct ibv_device_attr *device_attr)
 {
 	if (domain_attr->cq_cnt > device_attr->max_cq) {
-		VERBS_WARN("cq_cnt exceeds supported size\n");
+		VERBS_INFO("cq_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 	
 	if (domain_attr->ep_cnt > device_attr->max_qp) {
-		VERBS_WARN("ep_cnt exceeds supported size\n");
+		VERBS_INFO("ep_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (domain_attr->tx_ctx_cnt > device_attr->max_qp) {
-		VERBS_WARN("domain_attr: tx_ctx_cnt exceeds supported size\n");
+		VERBS_INFO("domain_attr: tx_ctx_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
 	if (domain_attr->rx_ctx_cnt > device_attr->max_qp) {
-		VERBS_WARN("domain_attr: rx_ctx_cnt exceeds supported size\n");
+		VERBS_INFO("domain_attr: rx_ctx_cnt exceeds supported size\n");
 		return -FI_ENODATA;
 	}
 
@@ -543,7 +545,7 @@ static int fi_ibv_fill_info_attr(struct ibv_context *ctx, struct fi_info *hints,
 		fi->fabric_attr->name = strdup(VERBS_IWARP_FABRIC);
 		break;
 	default:
-		VERBS_WARN("Unknown transport type");
+		VERBS_INFO("Unknown transport type");
 		return -FI_ENODATA;
 	}
 
@@ -2103,7 +2105,11 @@ fi_ibv_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 			ret = -errno;
 			goto err1;
 		}
-		fcntl(_eq->channel->fd, F_GETFL, &flags);
+		flags = fcntl(_eq->channel->fd, F_GETFL);
+		if (flags < 0) {
+			ret = -errno;
+			goto err2;
+		}
 		ret = fcntl(_eq->channel->fd, F_SETFL, flags | O_NONBLOCK);
 		if (ret) {
 			ret = -errno;
@@ -2113,7 +2119,8 @@ fi_ibv_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	case FI_WAIT_NONE:
 		break;
 	default:
-		return -ENOSYS;
+		ret = -FI_ENOSYS;
+		goto err1;
 	}
 
 	_eq->flags = attr->flags;
@@ -2418,17 +2425,22 @@ fi_ibv_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 			goto err1;
 		}
 
-		fcntl(_cq->channel->fd, F_GETFL, &flags);
+		flags = fcntl(_cq->channel->fd, F_GETFL);
+		if (flags < 0) {
+			ret = -errno;
+			goto err2;
+		}
 		ret = fcntl(_cq->channel->fd, F_SETFL, flags | O_NONBLOCK);
 		if (ret) {
 			ret = -errno;
-			goto err1;
+			goto err2;
 		}
 		break;
 	case FI_WAIT_NONE:
 		break;
 	default:
-		return -FI_ENOSYS;
+		ret = -FI_ENOSYS;
+		goto err1;
 	}
 
 	_cq->cq = ibv_create_cq(_cq->domain->verbs, attr->size, _cq,

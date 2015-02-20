@@ -118,7 +118,8 @@ static int sock_dom_close(struct fid *fid)
 {
 	struct sock_domain *dom;
 	void *res;
-	int c;
+	int ret;
+	char c = 0;
 
 	dom = container_of(fid, struct sock_domain, dom_fid.fid);
 	if (atomic_get(&dom->ref)) {
@@ -126,7 +127,12 @@ static int sock_dom_close(struct fid *fid)
 	}
 
 	dom->listening = 0;
-	write(dom->signal_fds[0], &c, 1);
+	ret = write(dom->signal_fds[0], &c, 1);
+	if (ret != 1) {
+		SOCK_LOG_ERROR("Failed to signal\n");
+		return -FI_EINVAL;
+	}
+
 	if (pthread_join(dom->listen_thread, &res)) {
 		SOCK_LOG_ERROR("could not join listener thread, errno = %d\n", errno);
 		return -FI_EBUSY;
@@ -462,7 +468,9 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		goto err;
 
 	flags = fcntl(sock_domain->signal_fds[1], F_GETFL, 0);
-	fcntl(sock_domain->signal_fds[1], F_SETFL, flags | O_NONBLOCK);
+	if (fcntl(sock_domain->signal_fds[1], F_SETFL, flags | O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed\n");
+
 	sock_conn_listen(sock_domain);
 
 	while(!(volatile int)sock_domain->listening)

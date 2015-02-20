@@ -488,6 +488,9 @@ static int sock_ep_atomic_valid(struct fid_ep *ep, enum fi_datatype datatype,
 	}
 
 	datatype_sz = fi_datatype_size(datatype);
+	if (datatype_sz == 0)
+		return -FI_ENOENT;
+
 	*count = (SOCK_EP_MAX_ATOMIC_SZ/datatype_sz);
 	return 0;
 }
