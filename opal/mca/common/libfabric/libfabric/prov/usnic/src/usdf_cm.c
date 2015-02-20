@@ -81,7 +81,7 @@ usdf_cm_msg_connreq_cleanup(struct usdf_connreq *crp)
 	}
 
 	if (crp->cr_pollitem.pi_rtn != NULL) {
-		epoll_ctl(fp->fab_epollfd, EPOLL_CTL_DEL, crp->cr_sockfd, NULL);
+		(void) epoll_ctl(fp->fab_epollfd, EPOLL_CTL_DEL, crp->cr_sockfd, NULL);
 		crp->cr_pollitem.pi_rtn = NULL;
 	}
 	if (crp->cr_sockfd != -1) {

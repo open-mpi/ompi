@@ -425,12 +425,12 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 				(sizeof(struct rudp_pkt) -
 				 sizeof(struct ether_header) -
 				 sizeof(struct iphdr)) + sent);
-if (0) {
+#if 0
 if ((random() % 177) == 0 && resid == 0) {
 	hdr->hdr.uh_eth.ether_type = 0;
 //printf("BORK seq %u\n", ep->e.msg.ep_next_tx_seq);
 }
-}
+#endif
 
 		if (resid == 0) {
 			hdr->msg.opcode = htons(RUDP_OP_LAST);

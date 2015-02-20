@@ -70,6 +70,9 @@
 /* assembler has .symver support */
 #undef HAVE_SYMVER_SUPPORT
 
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
