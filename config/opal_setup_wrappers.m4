@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -248,6 +248,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
           [AC_MSG_WARN([RPATH support requested but not available])
            AC_MSG_ERROR([Cannot continue])])
 
+    # Note that we have to setup <package>_PKG_CONFIG_LDFLAGS for the
+    # pkg-config files to parallel the
+    # <package>_WRAPPER_EXTRA_LDFLAGS.  This is because pkg-config
+    # will not understand the @{libdir} notation in
+    # *_WRAPPER_EXTRA_LDFLAGS; we have to translate it to ${libdir}.
+
     # We now have all relevant flags.  Substitute them in everywhere.
     m4_ifdef([project_opal], [
        AC_MSG_CHECKING([for OPAL CPPFLAGS])
@@ -283,6 +289,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        RPATHIFY_LDFLAGS([OPAL_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([OPAL_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LDFLAGS])
+
+       # Convert @{libdir} to ${libdir} for pkg-config
+       AC_MSG_CHECKING([for OPAL pkg-config LDFLAGS])
+       OPAL_PKG_CONFIG_LDFLAGS=`echo "$OPAL_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
+       AC_SUBST([OPAL_PKG_CONFIG_LDFLAGS])
+       AC_MSG_RESULT([$OPAL_PKG_CONFIG_LDFLAGS])
 
        # wrapper_extra_libs doesn't really get populated until after the mca system runs
        # since most of the libs come from libtool.  So this is the first time we can
@@ -321,6 +333,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        RPATHIFY_LDFLAGS([ORTE_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([ORTE_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
+
+       # Convert @{libdir} to ${libdir} for pkg-config
+       AC_MSG_CHECKING([for ORTE pkg-config LDFLAGS])
+       ORTE_PKG_CONFIG_LDFLAGS=`echo "$ORTE_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
+       AC_SUBST([ORTE_PKG_CONFIG_LDFLAGS])
+       AC_MSG_RESULT([$ORTE_PKG_CONFIG_LDFLAGS])
 
        AC_MSG_CHECKING([for ORTE LIBS])
        ORTE_WRAPPER_EXTRA_LIBS="$orte_mca_wrapper_extra_libs"
@@ -389,6 +407,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        RPATHIFY_LDFLAGS([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
+
+       # Convert @{libdir} to ${libdir} for pkg-config
+       AC_MSG_CHECKING([for OMPI pkg-config LDFLAGS])
+       OMPI_PKG_CONFIG_LDFLAGS=`echo "$OMPI_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
+       AC_SUBST([OMPI_PKG_CONFIG_LDFLAGS])
+       AC_MSG_RESULT([$OMPI_PKG_CONFIG_LDFLAGS])
 
        AC_MSG_CHECKING([for OMPI LIBS])
        OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
