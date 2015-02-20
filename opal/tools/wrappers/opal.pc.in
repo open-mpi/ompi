@@ -21,4 +21,4 @@ Libs.private: @OPAL_WRAPPER_EXTRA_LIBS@
 # will not be installing this .pc file unless --enable-devel-headers is
 # selected, meaning that there will definitely be a value in EXTRA_INCLUDES.
 #
-Cflags: -I${includedir} -I${includedir}/@OPAL_WRAPPER_EXTRA_INCLUDES@ @OPAL_WRAPPER_EXTRA_CPPFLAGS@ @OPAL_WRAPPER_EXTRA_CFLAGS@
+Cflags: -I${includedir} @OPAL_WRAPPER_EXTRA_CPPFLAGS@ @OPAL_WRAPPER_EXTRA_CFLAGS@
