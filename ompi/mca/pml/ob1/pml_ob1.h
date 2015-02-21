@@ -329,8 +329,6 @@ struct mca_pml_ob1_com_btl_t {
 };
 typedef struct mca_pml_ob1_com_btl_t mca_pml_ob1_com_btl_t;
 
-int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2);
-
 /* Calculate what percentage of a message to send through each BTL according to
  * relative weight */
 static inline void
@@ -346,25 +344,21 @@ mca_pml_ob1_calc_weighted_length( mca_pml_ob1_com_btl_t *btls, int num_btls, siz
         return;
     }
 
-    /* sort BTLs according of their weights so BTLs with smaller weight will
-     * not hijack all of the traffic */
-    qsort( btls, num_btls, sizeof(mca_pml_ob1_com_btl_t),
-           mca_pml_ob1_com_btl_comp );
+    /* The list of BTLs must be already sorted by decreasing order of the bandwidth.
+     * This ensure that BTLs with smaller weight will not hijack all of the traffic */
 
-    for(length_left = size, i = 0; i < num_btls; i++) {
+    for(length_left = size, i = 0; (i < num_btls) && (0 != length_left); i++) {
         mca_bml_base_btl_t* bml_btl = btls[i].bml_btl;
-        size_t length = 0;
-        if( OPAL_UNLIKELY(0 != length_left) ) {
-            length = (length_left > bml_btl->btl->btl_eager_limit)?
-                ((size_t)(size * (bml_btl->btl_weight / weight_total))) :
-                length_left;
+        size_t length = (length_left > bml_btl->btl->btl_eager_limit)?
+            ((size_t)(size * (bml_btl->btl_weight / weight_total))) :
+            length_left;
 
-            if(length > length_left)
-                length = length_left;
-            length_left -= length;
-        }
+        if(length > length_left)
+            length = length_left;
+        length_left -= length;
         btls[i].length = length;
     }
+    for(; i < num_btls; btls[i].length = 0, i++);  /* zero everything else */
 
     /* account for rounding errors */
     btls[0].length += length_left;
