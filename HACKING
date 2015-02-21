@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
@@ -83,18 +83,19 @@ developer's checkout, you have three main options:
 Use of GNU Autoconf, Automake, and Libtool (and m4)
 ===================================================
 
-This procedure is *ONLY* necessary if you are building from a
-developer's tree.  If you have an Open MPI distribution tarball, this
-procedure is unnecessary -- you can (and should) skip reading this
-section.
+You need to read/care about this section *ONLY* if you are building
+from a developer's tree (i.e., a Git clone of the Open MPI source
+tree).  If you have an Open MPI distribution tarball, the contents of
+this section are optional -- you can (and probably should) skip
+reading this section.
 
 If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
 and Libtool (and possibly GNU m4, because recent versions of Autoconf
 have specific GNU m4 version requirements).  The specific versions
-required depend on if you are using the trunk or a release branch (and
-which release branch you are using).  The specific versions can be
-found at:
+required depend on if you are using the Git master branch or a release
+branch (and which release branch you are using).  The specific
+versions can be found here:
 
   http://www.open-mpi.org/source/building.php
 
