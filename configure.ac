@@ -1230,8 +1230,6 @@ fi
 # a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
 
-LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
-LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
 
 # What's the suffix of shared libraries?  Inspired by generated
@@ -1267,8 +1265,6 @@ hpux9* | hpux10* | hpux11*)
 esac
 AC_SUBST(OPAL_DYN_LIB_PREFIX)
 AC_SUBST(OPAL_DYN_LIB_SUFFIX)
-
-OPAL_SETUP_LIBLTDL
 
 # Need the libtool binary before the rpathify stuff
 LT_OUTPUT
