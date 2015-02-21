@@ -308,12 +308,12 @@ static int mca_btl_tcp_component_open(void)
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
         mca_base_var_check_exclusive("ompi",
-        mca_btl_tcp_component.super.btl_version.mca_type_name,
-        mca_btl_tcp_component.super.btl_version.mca_component_name,
-        "if_include",
-        mca_btl_tcp_component.super.btl_version.mca_type_name,
-        mca_btl_tcp_component.super.btl_version.mca_component_name,
-        "if_exclude")) {
+                                     mca_btl_tcp_component.super.btl_version.mca_type_name,
+                                     mca_btl_tcp_component.super.btl_version.mca_component_name,
+                                     "if_include",
+                                     mca_btl_tcp_component.super.btl_version.mca_type_name,
+                                     mca_btl_tcp_component.super.btl_version.mca_component_name,
+                                     "if_exclude")) {
         /* Return ERR_NOT_AVAILABLE so that a warning message about
            "open" failing is not printed */
         return OPAL_ERR_NOT_AVAILABLE;
@@ -388,11 +388,13 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth,
+                                        OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5,  &btl->super.btl_latency);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency,
+                                        OPAL_INFO_LVL_5,  &btl->super.btl_latency);
         if( i > 0 ) {
             btl->super.btl_bandwidth >>= 1;
             btl->super.btl_latency   <<= 1;
@@ -991,7 +993,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     }
 
     btls = (mca_btl_base_module_t **)malloc(mca_btl_tcp_component.tcp_num_btls * 
-                  sizeof(mca_btl_base_module_t*));
+                                            sizeof(mca_btl_base_module_t*));
     if(NULL == btls) {
         return NULL;
     }
