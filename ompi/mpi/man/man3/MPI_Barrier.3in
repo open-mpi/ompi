@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.\" Copyright 2014 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
 .TH MPI_Barrier 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Barrier, MPI_Ibcarrier\fP \- Synchronization between MPI processes in a group
+\fBMPI_Barrier, MPI_Ibarrier\fP \- Synchronization between MPI processes in a group
 
 .SH SYNTAX
 .ft R
@@ -14,7 +14,7 @@
 #include <mpi.h>
 int MPI_Barrier(MPI_Comm \fIcomm\fP)
 
-int MPI_Ibarrier(MPI_Comm \fIcomm\fP)
+int MPI_Ibarrier(MPI_Comm \fIcomm\fP, MPI_Request \fIrequest\fP)
 
 .fi
 .SH Fortran Syntax
@@ -23,8 +23,8 @@ INCLUDE 'mpif.h'
 MPI_BARRIER(\fICOMM\fP,\fI IERROR\fP)
 	INTEGER	\fICOMM\fP,\fI IERROR\fP
 
-MPI_IBARRIER(\fICOMM\fP,\fI IERROR\fP)
-	INTEGER	\fICOMM\fP,\fI IERROR\fP
+MPI_IBARRIER(\fICOMM\fP, \fIREQUEST\fP, \fIIERROR\fP)
+	INTEGER	\fICOMM\fP, \fIREQUEST\fP, \fIIERROR\fP
 
 .fi
 .SH C++ Syntax
