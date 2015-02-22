@@ -577,7 +577,6 @@ int mca_pml_yalla_mprobe(int src, int tag, struct ompi_communicator_t* comm,
 
         opal_progress();
     }
-    return OMPI_SUCCESS;
 }
 
 int mca_pml_yalla_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
