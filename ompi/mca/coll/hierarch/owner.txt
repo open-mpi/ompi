@@ -1,0 +1,7 @@
+#
+# owner/status file
+# owner: institution that is responsible for this package
+# status: e.g. active, maintenance, unmaintained
+#
+owner: UH
+status: unmaintained
