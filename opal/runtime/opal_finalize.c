@@ -109,11 +109,6 @@ opal_finalize_util(void)
     /* finalize the class/object system */
     opal_class_finalize();
 
-    if (NULL != opal_process_info.nodename) {
-        free(opal_process_info.nodename);
-        opal_process_info.nodename = NULL;
-    }
-
     return OPAL_SUCCESS;
 }
 
