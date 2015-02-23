@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -15,9 +15,9 @@ dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -45,8 +45,8 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 
 # OPAL_SETUP_WRAPPER_INIT()
 # -------------------------
-# Setup wrapper compiler configuration information.  Should be called early to 
-# prevent lots of calculations and then an abort for a silly user typo.  This 
+# Setup wrapper compiler configuration information.  Should be called early to
+# prevent lots of calculations and then an abort for a silly user typo.  This
 # macro works in pair with OPAL_SETUP_WRAPPER_FINAL, which should be called
 # almost at the end of configure (after the last call to OPAL_WRAPPER_FLAGS_ADD
 # and after the MCA system has been setup).
@@ -74,50 +74,50 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 #     <flag>_prefix, configure is not.  There's no known use case for
 #     doing so, and we'd like to force the issue.
 AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
-    AC_ARG_WITH([wrapper-cflags], 
+    AC_ARG_WITH([wrapper-cflags],
                 [AC_HELP_STRING([--with-wrapper-cflags],
                                 [Extra flags to add to CFLAGS when using mpicc])])
     AS_IF([test "$with_wrapper_cflags" = "yes" || test "$with_wrapper_cflags" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cflags must have an argument.])])
 
-    AC_ARG_WITH([wrapper-cflags-prefix], 
+    AC_ARG_WITH([wrapper-cflags-prefix],
                 [AC_HELP_STRING([--with-wrapper-cflags-prefix],
                                 [Extra flags (before user flags) to add to CFLAGS when using mpicc])])
     AS_IF([test "$with_wrapper_cflags_prefix" = "yes" || test "$with_wrapper_cflags_prefix" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cflags-prefix must have an argument.])])
 
-    AC_ARG_WITH([wrapper-cxxflags], 
+    AC_ARG_WITH([wrapper-cxxflags],
         [AC_HELP_STRING([--with-wrapper-cxxflags],
                         [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
     AS_IF([test "$with_wrapper_cxxflags" = "yes" || test "$with_wrapper_cxxflags" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.])])
 
-    AC_ARG_WITH([wrapper-cxxflags-prefix], 
+    AC_ARG_WITH([wrapper-cxxflags-prefix],
         [AC_HELP_STRING([--with-wrapper-cxxflags-prefix],
                         [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
     AS_IF([test "$with_wrapper_cxxflags_prefix" = "yes" || test "$with_wrapper_cxxflags_prefix" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.])])
 
     m4_ifdef([project_ompi], [
-            AC_ARG_WITH([wrapper-fcflags], 
+            AC_ARG_WITH([wrapper-fcflags],
                 [AC_HELP_STRING([--with-wrapper-fcflags],
                         [Extra flags to add to FCFLAGS when using mpifort])])
             AS_IF([test "$with_wrapper_fcflags" = "yes" || test "$with_wrapper_fcflags" = "no"],
                 [AC_MSG_ERROR([--with-wrapper-fcflags must have an argument.])])
 
-            AC_ARG_WITH([wrapper-fcflags-prefix], 
+            AC_ARG_WITH([wrapper-fcflags-prefix],
                 [AC_HELP_STRING([--with-wrapper-fcflags-prefix],
                         [Extra flags (before user flags) to add to FCFLAGS when using mpifort])])
             AS_IF([test "$with_wrapper_fcflags_prefix" = "yes" || test "$with_wrapper_fcflags_prefix" = "no"],
                 [AC_MSG_ERROR([--with-wrapper-fcflags-prefix must have an argument.])])])
 
-    AC_ARG_WITH([wrapper-ldflags], 
+    AC_ARG_WITH([wrapper-ldflags],
                 [AC_HELP_STRING([--with-wrapper-ldflags],
                                 [Extra flags to add to LDFLAGS when using wrapper compilers])])
     AS_IF([test "$with_wrapper_ldflags" = "yes" || test "$with_wrapper_ldflags" = "no"],
           [AC_MSG_ERROR([--with-wrapper-ldflags must have an argument.])])
 
-    AC_ARG_WITH([wrapper-libs], 
+    AC_ARG_WITH([wrapper-libs],
                 [AC_HELP_STRING([--with-wrapper-libs],
                                 [Extra flags to add to LIBS when using wrapper compilers])])
     AS_IF([test "$with_wrapper_libs" = "yes" || test "$with_wrapper_libs" = "no"],
@@ -186,7 +186,7 @@ EOF
 # Check to see if the linker supports the DT_RUNPATH flags via
 # --enable-new-dtags (a GNU ld-specific option).  These flags are more
 # social than DT_RPATH -- they can be overridden by LD_LIBRARY_PATH
-# (where a regular DT_RPATH cannot).  
+# (where a regular DT_RPATH cannot).
 #
 # If DT_RUNPATH is supported, then we'll use *both* the RPATH and
 # RUNPATH flags in the LDFLAGS.
