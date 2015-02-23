@@ -236,6 +236,17 @@ AC_DEFUN([RPATHIFY_LDFLAGS],[
 ])
 
 
+dnl
+dnl Avoid some repetitive code below
+dnl
+AC_DEFUN([_OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG],[
+    AC_MSG_CHECKING([for $1 pkg-config LDFLAGS])
+    $1_PKG_CONFIG_LDFLAGS=`echo "$$1_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
+    AC_SUBST([$1_PKG_CONFIG_LDFLAGS])
+    AC_MSG_RESULT([$$1_PKG_CONFIG_LDFLAGS])
+])
+
+
 # OPAL_SETUP_WRAPPER_FINAL()
 # ---------------------------
 AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
@@ -291,10 +302,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LDFLAGS])
 
        # Convert @{libdir} to ${libdir} for pkg-config
-       AC_MSG_CHECKING([for OPAL pkg-config LDFLAGS])
-       OPAL_PKG_CONFIG_LDFLAGS=`echo "$OPAL_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
-       AC_SUBST([OPAL_PKG_CONFIG_LDFLAGS])
-       AC_MSG_RESULT([$OPAL_PKG_CONFIG_LDFLAGS])
+       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([OPAL])
 
        # wrapper_extra_libs doesn't really get populated until after the mca system runs
        # since most of the libs come from libtool.  So this is the first time we can
@@ -335,10 +343,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
 
        # Convert @{libdir} to ${libdir} for pkg-config
-       AC_MSG_CHECKING([for ORTE pkg-config LDFLAGS])
-       ORTE_PKG_CONFIG_LDFLAGS=`echo "$ORTE_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
-       AC_SUBST([ORTE_PKG_CONFIG_LDFLAGS])
-       AC_MSG_RESULT([$ORTE_PKG_CONFIG_LDFLAGS])
+       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([ORTE])
 
        AC_MSG_CHECKING([for ORTE LIBS])
        ORTE_WRAPPER_EXTRA_LIBS="$orte_mca_wrapper_extra_libs"
@@ -409,10 +414,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
 
        # Convert @{libdir} to ${libdir} for pkg-config
-       AC_MSG_CHECKING([for OMPI pkg-config LDFLAGS])
-       OMPI_PKG_CONFIG_LDFLAGS=`echo "$OMPI_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
-       AC_SUBST([OMPI_PKG_CONFIG_LDFLAGS])
-       AC_MSG_RESULT([$OMPI_PKG_CONFIG_LDFLAGS])
+       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([OMPI])
 
        AC_MSG_CHECKING([for OMPI LIBS])
        OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
