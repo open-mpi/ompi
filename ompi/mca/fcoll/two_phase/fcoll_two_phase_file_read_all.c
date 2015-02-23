@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,7 +125,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     MPI_Aint recv_buf_addr = 0;
     uint32_t iov_count = 0, ti = 0;
     struct iovec *decoded_iov = NULL, *temp_iov = NULL, *iov = NULL;
-    size_t max_data = 0, total_bytes = 0;
+    size_t max_data = 0;
     long long_max_data = 0, long_total_bytes = 0;
     int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs = 0;
     int count_other_req_procs;
@@ -229,7 +230,6 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
-    total_bytes = (size_t) long_total_bytes;
     
     if (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 	
@@ -299,7 +299,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     
 #if DEBUG
     printf("%d: total_bytes:%ld, local_count: %d\n",
-	   fh->f_rank,total_bytes, local_count);
+	   fh->f_rank, long_total_bytes, local_count);
     for (i=0 ; i<local_count ; i++) {
 	printf("%d: fcoll:two_phase:read_all:OFFSET:%ld,LENGTH:%ld\n",
 	       fh->f_rank,
