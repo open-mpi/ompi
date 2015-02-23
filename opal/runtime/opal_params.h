@@ -29,6 +29,8 @@ extern char *opal_signal_string;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 
+int opal_verbs_want_fork_support;
+
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
 #endif

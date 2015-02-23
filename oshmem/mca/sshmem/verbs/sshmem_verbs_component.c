@@ -19,6 +19,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/sys_limits.h"
+#include "opal/mca/common/verbs/common_verbs.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
@@ -99,6 +100,11 @@ verbs_runtime_query(mca_base_module_t **module,
 
     *priority = 0;
     *module = NULL;
+
+    /* If fork support is requested, try to enable it */
+    if (OSHMEM_SUCCESS != (rc = opal_common_verbs_fork_test())) {
+        return OSHMEM_ERROR;
+    }
 
     memset(device, 0, sizeof(*device));
 
