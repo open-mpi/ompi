@@ -188,8 +188,8 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
         return OMPI_ERROR;
     }
 
-    opal_free_list_wait (&mca_mtl_mxm_component.mxm_messages,
-                         (opal_free_list_item_t *) msgp);
+    msgp = (ompi_mtl_mxm_message_t *)
+        opal_free_list_wait (&mca_mtl_mxm_component.mxm_messages);
 
     ompi_message_return(*message);
     (*message) = MPI_MESSAGE_NULL;
