@@ -87,7 +87,7 @@ typedef struct opal_btl_usnic_channel_t {
     struct opal_btl_usnic_recv_segment_t *repost_recv_head;
 
     /** receive segments & buffers */
-    ompi_free_list_t recv_segs;
+    opal_free_list_t recv_segs;
 
     bool chan_error;    /* set when error detected on channel */
 
@@ -163,15 +163,15 @@ typedef struct opal_btl_usnic_module_t {
     opal_pointer_array_t all_procs;
 
     /** send fragments & buffers */
-    ompi_free_list_t small_send_frags;
-    ompi_free_list_t large_send_frags;
-    ompi_free_list_t put_dest_frags;
-    ompi_free_list_t chunk_segs;
+    opal_free_list_t small_send_frags;
+    opal_free_list_t large_send_frags;
+    opal_free_list_t put_dest_frags;
+    opal_free_list_t chunk_segs;
 
     /** receive buffer pools */
     int first_pool;
     int last_pool;
-    ompi_free_list_t *module_recv_buffers;
+    opal_free_list_t *module_recv_buffers;
 
     /** list of endpoints with data to send */
     /* this list uses base endpoint ptr */
@@ -182,7 +182,7 @@ typedef struct opal_btl_usnic_module_t {
     opal_list_t pending_resend_segs;
 
     /** ack segments */
-    ompi_free_list_t ack_segs;
+    opal_free_list_t ack_segs;
 
     /** list of endpoints to which we need to send ACKs */
     /* this list uses endpoint->endpoint_ack_li */

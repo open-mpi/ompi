@@ -175,21 +175,6 @@ char* opal_get_proc_hostname(opal_proc_t *proc);
 #  error OMPI version too old (< 1.7)
 #endif
 
-/************************************************************************/
-
-/* The FREE_LIST_*_MT stuff was introduced on the SVN trunk in r28722
-   (2013-07-04), but so far, has not been merged into the v1.7 branch
-   yet (2013-09-06). */
-#ifndef OPAL_FREE_LIST_GET_MT
-#  define OPAL_FREE_LIST_GET_MT(list_, item_) \
-    do { \
-        int rc_ __opal_attribute_unused__; \
-        OPAL_FREE_LIST_GET(list_, item_, rc_); \
-    } while (0)
-#  define OPAL_FREE_LIST_RETURN_MT(list_, item_) \
-        OPAL_FREE_LIST_RETURN(list_, item_)
-#endif
-
 /************************************************************************
  * Common to all versions
  ************************************************************************/
