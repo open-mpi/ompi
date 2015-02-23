@@ -1339,8 +1339,8 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                     opal_argv_free(rngs);
                     return OPAL_ERROR;
                 }
+                opal_argv_free(range);
             }
-            opal_argv_free(range);
             opal_argv_free(rngs);
         }
     }
@@ -2082,7 +2082,10 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                             return count;
                         }
                     }
-                    if (!device_name || (strlen(device_name) == 0)) {
+                    if (!device_name) {
+                        return OPAL_ERR_NOT_FOUND;
+                    } else if (strlen(device_name) == 0) {
+                        free(device_name);
                         return OPAL_ERR_NOT_FOUND;
                     }
                     sort_by_dist(topo, device_name, sorted_list);
