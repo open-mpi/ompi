@@ -255,7 +255,7 @@ put_dest_frag_destructor(opal_btl_usnic_put_dest_frag_t *pfrag)
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_segment_t,
-                   ompi_free_list_item_t,
+                   opal_free_list_item_t,
                    NULL,
                    NULL);
 
@@ -308,6 +308,6 @@ OBJ_CLASS_INSTANCE(opal_btl_usnic_put_dest_frag_t,
                    put_dest_frag_destructor);
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_rx_buf_t,
-                   ompi_free_list_item_t,
+                   opal_free_list_item_t,
                    NULL,
                    NULL);

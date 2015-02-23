@@ -33,14 +33,14 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
-#if BTL_IN_OPAL
 #include "opal/class/opal_free_list.h"
+
+#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
 #else
-#include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
