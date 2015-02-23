@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -117,8 +117,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param num_elements_to_alloc    (IN)  Initial number of elements to allocate.
  * @param max_elements_to_alloc    (IN)  Maximum number of elements to allocate.
  * @param num_elements_per_alloc   (IN)  Number of elements to grow by per allocation.
- * @param mpool                    (IN)  Optional memory pool for allocation.s
- * @param mpool_reg_flags          (IN)  Flags to pass to mpool registration function
+ * @param mpool                    (IN)  Optional memory pool for allocations.
+ * @param mpool_reg_flags          (IN)  Flags to pass to mpool registration function.
  * @param unused0                  (IN)  Future. Must be NULL.
  * @param item_init                (IN)  Optional item initialization function
  * @param ctx                      (IN)  Initialization function context.
