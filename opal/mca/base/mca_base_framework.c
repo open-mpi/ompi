@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -195,7 +196,10 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     } else {
         opal_list_item_t *item;
         while (NULL != (item = opal_list_remove_first (&framework->framework_components))) {
-            mca_base_component_unload ((mca_base_component_t *) item, framework->framework_output);
+            mca_base_component_list_item_t *cli;
+            cli = (mca_base_component_list_item_t*) item;
+            mca_base_component_unload(cli->cli_component,
+                                      framework->framework_output);
             OBJ_RELEASE(item);
         }
         ret = OPAL_SUCCESS;
