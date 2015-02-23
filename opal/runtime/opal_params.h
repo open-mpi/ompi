@@ -30,6 +30,8 @@ extern char *opal_signal_string;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 
+int opal_verbs_want_fork_support;
+
 #if OPAL_ENABLE_TIMING
 extern char *opal_timing_sync_file;
 extern char *opal_timing_output;
@@ -38,6 +40,7 @@ extern bool opal_timing_overhead;
 
 OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
+
 /**
  *  * Whether we want to enable CUDA GPU buffer send and receive support.
  *   */
