@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -204,7 +205,7 @@ ompi_mtl_portals4_component_open(void)
                         sizeof(ompi_mtl_portals4_message_t) + 
                         ompi_mtl_portals4.eager_limit,
                         OBJ_CLASS(ompi_mtl_portals4_message_t),
-                        1, -1, 1);
+                        0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;

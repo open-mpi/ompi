@@ -33,7 +33,6 @@
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
 #include "opal/mca/event/event.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h" 
 
@@ -48,9 +47,9 @@ struct mca_btl_self_component_t {
     int free_list_max;                     /**< maximum size of free lists */
     int free_list_inc;                     /**< number of elements to alloc when growing free lists */
     opal_mutex_t self_lock;
-    ompi_free_list_t self_frags_eager;     /**< free list of self first */
-    ompi_free_list_t self_frags_send;      /**< free list of self second */
-    ompi_free_list_t self_frags_rdma;      /**< free list of self second */
+    opal_free_list_t self_frags_eager;     /**< free list of self first */
+    opal_free_list_t self_frags_send;      /**< free list of self second */
+    opal_free_list_t self_frags_rdma;      /**< free list of self second */
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;

@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,8 +102,8 @@ static int mca_spml_ikrit_put_request_free(struct oshmem_request_t** request)
     assert(false == put_req->req_put.req_base.req_free_called);
     OPAL_THREAD_LOCK(&oshmem_request_lock);
     put_req->req_put.req_base.req_free_called = true;
-    OMPI_FREE_LIST_RETURN_MT( &mca_spml_base_put_requests,
-                          (ompi_free_list_item_t*)put_req);
+    opal_free_list_return (&mca_spml_base_put_requests,
+                           (opal_free_list_item_t*)put_req);
     OPAL_THREAD_UNLOCK(&oshmem_request_lock);
 
     *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
@@ -147,8 +150,8 @@ static int mca_spml_ikrit_get_request_free(struct oshmem_request_t** request)
     assert(false == get_req->req_get.req_base.req_free_called);
     OPAL_THREAD_LOCK(&oshmem_request_lock);
     get_req->req_get.req_base.req_free_called = true;
-    OMPI_FREE_LIST_RETURN_MT( &mca_spml_base_get_requests,
-                          (ompi_free_list_item_t*)get_req);
+    opal_free_list_return (&mca_spml_base_get_requests,
+                           (opal_free_list_item_t*)get_req);
     OPAL_THREAD_UNLOCK(&oshmem_request_lock);
 
     *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
@@ -234,9 +237,9 @@ void mca_spml_ikrit_dump_stats()
 static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
 {
     mca_spml_ikrit_put_request_t *req;
-    ompi_free_list_item_t* item;
+    opal_free_list_item_t* item;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_spml_base_put_requests, item);
+    item = opal_free_list_wait (&mca_spml_base_put_requests);
 
     req = (mca_spml_ikrit_put_request_t *) item;
     req->req_put.req_base.req_free_called = false;
@@ -248,9 +251,9 @@ static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
 static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
 {
     mca_spml_ikrit_get_request_t *req;
-    ompi_free_list_item_t* item;
+    opal_free_list_item_t* item;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_spml_base_get_requests, item);
+    item = opal_free_list_wait (&mca_spml_base_get_requests);
 
     req = (mca_spml_ikrit_get_request_t *) item;
     req->req_get.req_base.req_free_called = false;
@@ -266,27 +269,27 @@ int mca_spml_ikrit_enable(bool enable)
         return OSHMEM_SUCCESS;
     }
 
-    ompi_free_list_init_new(&mca_spml_base_put_requests,
-                            sizeof(mca_spml_ikrit_put_request_t),
-                            opal_cache_line_size,
-                            OBJ_CLASS(mca_spml_ikrit_put_request_t),
-                            0,
-                            opal_cache_line_size,
-                            mca_spml_ikrit.free_list_num,
-                            mca_spml_ikrit.free_list_max,
-                            mca_spml_ikrit.free_list_inc,
-                            NULL );
+    opal_free_list_init (&mca_spml_base_put_requests,
+                         sizeof(mca_spml_ikrit_put_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_spml_ikrit_put_request_t),
+                         0,
+                         opal_cache_line_size,
+                         mca_spml_ikrit.free_list_num,
+                         mca_spml_ikrit.free_list_max,
+                         mca_spml_ikrit.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
-    ompi_free_list_init_new(&mca_spml_base_get_requests,
-                            sizeof(mca_spml_ikrit_get_request_t),
-                            opal_cache_line_size,
-                            OBJ_CLASS(mca_spml_ikrit_get_request_t),
-                            0,
-                            opal_cache_line_size,
-                            mca_spml_ikrit.free_list_num,
-                            mca_spml_ikrit.free_list_max,
-                            mca_spml_ikrit.free_list_inc,
-                            NULL );
+    opal_free_list_init (&mca_spml_base_get_requests,
+                         sizeof(mca_spml_ikrit_get_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_spml_ikrit_get_request_t),
+                         0,
+                         opal_cache_line_size,
+                         mca_spml_ikrit.free_list_num,
+                         mca_spml_ikrit.free_list_max,
+                         mca_spml_ikrit.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
     mca_spml_ikrit.enabled = true;
 

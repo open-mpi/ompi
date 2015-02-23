@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,7 +53,7 @@ mca_allocator_base_component_t mca_allocator_basic_component = {
 
 OBJ_CLASS_INSTANCE(
     mca_allocator_basic_segment_t,
-    ompi_free_list_item_t,
+    opal_free_list_item_t,
     NULL,
     NULL);
 
@@ -93,9 +96,9 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     module->seg_free = segment_free;
     OBJ_CONSTRUCT(&module->seg_list, opal_list_t);
     OBJ_CONSTRUCT(&module->seg_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&module->seg_descriptors, ompi_free_list_t);
+    OBJ_CONSTRUCT(&module->seg_descriptors, opal_free_list_t);
  
-    ompi_free_list_init_new(&module->seg_descriptors,
+    opal_free_list_init (&module->seg_descriptors,
         sizeof(mca_allocator_basic_segment_t),
         opal_cache_line_size,
         OBJ_CLASS(mca_allocator_basic_segment_t),
@@ -103,7 +106,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
         0,  /* initial size */
         -1, /* maximum size */
         16, /* increment to grow by */
-        NULL);
+        NULL, 0, NULL, NULL, NULL);
 
     return &module->super;
 }
@@ -122,7 +125,7 @@ static void mca_allocator_basic_combine_prev(
         if(prev->seg_addr + prev->seg_size == seg->seg_addr) {
             prev->seg_size += seg->seg_size;
             opal_list_remove_item(&module->seg_list, &seg->seg_item.super);
-            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, &seg->seg_item);
+            opal_free_list_return (&module->seg_descriptors, &seg->seg_item);
             return;
         }
     }
@@ -139,7 +142,7 @@ static void mca_allocator_basic_combine_next(
             next->seg_addr = seg->seg_addr;
             next->seg_size += seg->seg_size;
             opal_list_remove_item(&module->seg_list, &seg->seg_item.super);
-            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, &seg->seg_item);
+            opal_free_list_return (&module->seg_descriptors, &seg->seg_item);
             return;
         }
     }
@@ -165,7 +168,6 @@ void *mca_allocator_basic_alloc(
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
     mca_allocator_basic_segment_t* seg;
-    ompi_free_list_item_t* item;
     unsigned char* addr;
     size_t allocated_size;
     OPAL_THREAD_LOCK(&module->seg_lock);
@@ -175,11 +177,7 @@ void *mca_allocator_basic_alloc(
     /* normalize size so we don't end up with seg_addr on an odd boundary */
     size += sizeof(size_t) - (size & (sizeof(size_t) - 1));
     /* search the list for a segment of the required size */
-    for(item =  (ompi_free_list_item_t*) opal_list_get_first(&module->seg_list);
-        item != (ompi_free_list_item_t*) opal_list_get_end(&module->seg_list);
-        item =  (ompi_free_list_item_t*) opal_list_get_next(&item->super)) {
-        seg = (mca_allocator_basic_segment_t*)item;
-
+    OPAL_LIST_FOREACH(seg, &module->seg_list, mca_allocator_basic_segment_t) {
         /* split the segment */
         if(seg->seg_size > size) {
             addr = seg->seg_addr;
@@ -190,8 +188,8 @@ void *mca_allocator_basic_alloc(
             return addr+sizeof(size_t);
         } else if (seg->seg_size == size) {
             addr = seg->seg_addr;
-            opal_list_remove_item(&module->seg_list, &item->super);
-            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, item);
+            opal_list_remove_item(&module->seg_list, (opal_list_item_t *) seg);
+            opal_free_list_return (&module->seg_descriptors, (opal_free_list_item_t *) seg);
             OPAL_THREAD_UNLOCK(&module->seg_lock);
             *(size_t*)addr = size;
             return addr+sizeof(size_t);
@@ -207,15 +205,14 @@ void *mca_allocator_basic_alloc(
 
     /* create a segment for any extra allocation */
     if(allocated_size > size) {
-        OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
-        if(NULL == item) {
+        seg = (mca_allocator_basic_segment_t *) opal_free_list_get (&module->seg_descriptors);
+        if (NULL == seg) {
             OPAL_THREAD_UNLOCK(&module->seg_lock);
             return NULL;
         }
-        seg = (mca_allocator_basic_segment_t*)item;
         seg->seg_addr = addr + size;
         seg->seg_size = allocated_size - size;
-        opal_list_append(&module->seg_list, &item->super);
+        opal_list_append (&module->seg_list, (opal_list_item_t *) seg);
     }
 
     *(size_t*)addr = size;
@@ -274,17 +271,12 @@ void mca_allocator_basic_free(
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
     mca_allocator_basic_segment_t* seg;
-    ompi_free_list_item_t *item;
     unsigned char* addr = (unsigned char*)ptr - sizeof(size_t);
     size_t size = *(size_t*)addr;
     OPAL_THREAD_LOCK(&module->seg_lock);
 
     /* maintain the free list in sorted order by address */
-    for(item =  (ompi_free_list_item_t*) opal_list_get_first(&module->seg_list);
-        item != (ompi_free_list_item_t*) opal_list_get_end(&module->seg_list);
-        item =  (ompi_free_list_item_t*) opal_list_get_next((&item->super))) {
-        seg = (mca_allocator_basic_segment_t*)item;
-
+    OPAL_LIST_FOREACH(seg, &module->seg_list, mca_allocator_basic_segment_t) {
         if (seg->seg_addr < addr) {
 
             /* can we grow the current entry */
@@ -309,15 +301,15 @@ void mca_allocator_basic_free(
             /* insert before larger entry */
             } else {
                 mca_allocator_basic_segment_t* new_seg;
-                OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
-                if(NULL == item) {
+                new_seg = (mca_allocator_basic_segment_t *)
+                    opal_free_list_get (&module->seg_descriptors);
+                if(NULL == new_seg) {
                     OPAL_THREAD_UNLOCK(&module->seg_lock);
                     return;
                 }
-                new_seg = (mca_allocator_basic_segment_t*)item;
                 new_seg->seg_addr = addr;
                 new_seg->seg_size = size;
-                opal_list_insert_pos(&module->seg_list, &seg->seg_item.super, &item->super);
+                opal_list_insert_pos(&module->seg_list, &seg->seg_item.super, (opal_list_item_t *) new_seg);
                 OPAL_THREAD_UNLOCK(&module->seg_lock);
                 return;
             }
@@ -325,15 +317,14 @@ void mca_allocator_basic_free(
     }
 
     /* append to the end of the list */
-    OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
-    if(NULL == item) {
+    seg = (mca_allocator_basic_segment_t *) opal_free_list_get (&module->seg_descriptors);
+    if(NULL == seg) {
         OPAL_THREAD_UNLOCK(&module->seg_lock);
         return;
     }
-    seg = (mca_allocator_basic_segment_t*)item;
     seg->seg_addr = addr;
     seg->seg_size = size;
-    opal_list_append(&module->seg_list, &item->super);
+    opal_list_append(&module->seg_list, (opal_list_item_t *) seg);
     OPAL_THREAD_UNLOCK(&module->seg_lock);
 }
 

@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +33,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -96,7 +99,7 @@ extern int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl);
 int ompi_mtl_mxm_module_init(void);
 
 struct ompi_mtl_mxm_message_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
 
     mxm_mq_h mq;
     mxm_conn_h conn;

@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,11 +24,10 @@ typedef struct ompi_osc_portals4_request_t ompi_osc_portals4_request_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_portals4_request_t);
 
-#define OMPI_OSC_PORTALS4_REQUEST_ALLOC(win, req)                   \
+#define OMPI_OSC_PORTALS4_REQUEST_ALLOC(win, req)                       \
     do {                                                                \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT_MT(&mca_osc_portals4_component.requests,    \
-                               item);                               \
+        opal_free_list_item_t *item;                                    \
+        item = opal_free_list_wait(&mca_osc_portals4_component.requests); \
         req = (ompi_osc_portals4_request_t*) item;                      \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.win = win;                            \
@@ -38,8 +40,8 @@ OBJ_CLASS_DECLARATION(ompi_osc_portals4_request_t);
 #define OMPI_OSC_PORTALS4_REQUEST_RETURN(req)                           \
     do {                                                                \
         OMPI_REQUEST_FINI(&request->super);                             \
-        OMPI_FREE_LIST_RETURN_MT(&mca_osc_portals4_component.requests,     \
-                              (ompi_free_list_item_t*) req);            \
+        opal_free_list_return (&mca_osc_portals4_component.requests,    \
+                              (opal_free_list_item_t*) req);            \
     } while (0)
 
 

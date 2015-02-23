@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
@@ -68,7 +68,7 @@
 #endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
-static OBJ_CLASS_INSTANCE(mca_btl_sm_registration_handle_t, ompi_free_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(mca_btl_sm_registration_handle_t, opal_free_list_item_t, NULL, NULL);
 #endif
 
 static int mca_btl_sm_component_open(void);
@@ -296,15 +296,15 @@ static int mca_btl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
 
     mca_btl_sm_component.sm_seg = NULL;
 
 #if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
-    OBJ_CONSTRUCT(&mca_btl_sm_component.registration_handles, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.registration_handles, opal_free_list_t);
 #endif
 
 #if OPAL_BTL_SM_HAVE_KNEM
@@ -955,12 +955,13 @@ mca_btl_sm_component_init(int *num_btls,
 
 #if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
     if (mca_btl_sm_component.use_cma || mca_btl_sm_component.use_knem) {
-        rc = ompi_free_list_init_new (&mca_btl_sm_component.registration_handles,
-                                      sizeof (mca_btl_sm_registration_handle_t),
-                                      8, OBJ_CLASS(mca_btl_sm_registration_handle_t),
-                                      0, 0, mca_btl_sm_component.sm_free_list_num,
-                                      mca_btl_sm_component.sm_free_list_max,
-                                      mca_btl_sm_component.sm_free_list_inc, NULL);
+        rc = opal_free_list_init (&mca_btl_sm_component.registration_handles,
+                                  sizeof (mca_btl_sm_registration_handle_t),
+                                  8, OBJ_CLASS(mca_btl_sm_registration_handle_t),
+                                  0, 0, mca_btl_sm_component.sm_free_list_num,
+                                  mca_btl_sm_component.sm_free_list_max,
+                                  mca_btl_sm_component.sm_free_list_inc, NULL, 0,
+                                  NULL, NULL, NULL);
         if (OPAL_SUCCESS != rc) {
             free (btls);
             return NULL;
@@ -1054,7 +1055,7 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
 
-        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+        opal_free_list_return (&mca_btl_sm_component.pending_send_fl, (opal_free_list_item_t *) si);
 
         if ( OPAL_SUCCESS != rc )
             return;

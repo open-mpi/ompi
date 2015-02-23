@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -119,8 +122,8 @@ static void init_module_fns(void){
 void hcoll_rte_fns_setup(void)
 {
     init_module_fns();
-    OBJ_CONSTRUCT(&mca_coll_hcoll_component.requests, ompi_free_list_t);
-    ompi_free_list_init_ex_new(
+    OBJ_CONSTRUCT(&mca_coll_hcoll_component.requests, opal_free_list_t);
+    opal_free_list_init(
                 &(mca_coll_hcoll_component.requests),
                 sizeof(ompi_request_t),
                 /* no special alignment needed */
@@ -132,7 +135,9 @@ void hcoll_rte_fns_setup(void)
                 10,
                 -1,
                 10,
-                /* No Mpool */
+                /* No Mpool or init function */
+                NULL,
+                0,
                 NULL,
                 NULL,
                 NULL
@@ -175,7 +180,7 @@ static int recv_nb(struct dte_data_representation_t data,
         int rc;
         size_t size;
         ompi_request_t *ompi_req;
-        ompi_free_list_item_t *item;
+        opal_free_list_item_t *item;
 
         if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
             fprintf(stderr, "***Error in hcolrte_rml_recv_nb: buffer pointer is NULL"
@@ -246,7 +251,6 @@ static int send_nb( dte_data_representation_t data,
         int rc;
         size_t size;
         ompi_request_t *ompi_req;
-        ompi_free_list_item_t *item;
         if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
             fprintf(stderr, "***Error in hcolrte_rml_send_nb: buffer pointer is NULL"
                     " for non DTE_ZERO INLINE data representation\n");
@@ -390,8 +394,8 @@ request_free(struct ompi_request_t **ompi_req)
 static void* get_coll_handle(void)
 {
     ompi_request_t *ompi_req;
-    ompi_free_list_item_t *item;
-    OMPI_FREE_LIST_WAIT_MT(&(mca_coll_hcoll_component.requests),item);
+    opal_free_list_item_t *item;
+    item = opal_free_list_wait (&(mca_coll_hcoll_component.requests));
     if (OPAL_UNLIKELY(NULL == item)) {
         HCOL_ERROR("Wait for free list failed.\n");
         return NULL;
@@ -412,8 +416,8 @@ static int coll_handle_test(void* handle)
 
 static void coll_handle_free(void *handle){
     ompi_request_t *ompi_req = (ompi_request_t *)handle;
-    OMPI_FREE_LIST_RETURN_MT(&mca_coll_hcoll_component.requests,
-                          (ompi_free_list_item_t *)ompi_req);
+    opal_free_list_return (&mca_coll_hcoll_component.requests,
+                           (opal_free_list_item_t *)ompi_req);
 }
 
 static void coll_handle_complete(void *handle)
