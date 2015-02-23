@@ -55,7 +55,8 @@ mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_ud_la_SOURCES = $(sources)
 mca_oob_ud_la_LDFLAGS = -module -avoid-version $(orte_oob_ud_LDFLAGS)
-mca_oob_ud_la_LIBADD = $(orte_oob_ud_LIBS)
+mca_oob_ud_la_LIBADD = $(orte_oob_ud_LIBS) \
+					   $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_oob_ud_la_SOURCES = $(sources)

@@ -24,6 +24,8 @@
 
 #include "oob_ud_component.h"
 
+#include "opal/mca/common/verbs/common_verbs.h"
+
 static int   mca_oob_ud_component_open (void);
 static int   mca_oob_ud_component_close (void);
 static int   mca_oob_ud_component_register (void);
@@ -216,6 +218,16 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                          "%s oob:ud:device_setup attempting to setup ib device %p",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) ib_device);
+
+
+    /* If fork support is requested, try to enable it */
+    rc = opal_common_verbs_fork_test();
+    if (OPAL_SUCCESS != rc) {
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s oob:ud:device_setup failed in ibv_fork_init. errno = %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        return ORTE_ERROR;
+    }
 
     device->ib_context = ibv_open_device (ib_device);
     if (NULL == device->ib_context) {
