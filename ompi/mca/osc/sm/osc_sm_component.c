@@ -4,6 +4,7 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -331,7 +332,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
             goto error;
         }
 
-        if (blocking_fence) {
+        if (flag && blocking_fence) {
             ret = pthread_mutexattr_init(&mattr);
             ret = pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
             if (ret != 0) {
