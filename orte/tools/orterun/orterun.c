@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -2224,6 +2224,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
                 opal_argv_append_nosize(new_argv, orterun_argv[j]);
             }
         } else if (0 == strcmp(line_argv[i], "@np@")) {
+            used_num_procs = true;
             asprintf(&tmp, "%d", num_procs);
             opal_argv_append_nosize(new_argv, tmp);
             free(tmp);
