@@ -92,15 +92,15 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
     return OMPI_SUCCESS;
 
  bail_out:
-    if( NULL != topo->in ) free(topo->in);
-    if( MPI_UNWEIGHTED != sourceweights ) {
-        if( NULL != topo->inw ) free(topo->inw);
-    }
-    if( NULL != topo->out ) free(topo->out);
-    if( MPI_UNWEIGHTED != destweights ) {
-        if( NULL != topo->outw ) free(topo->outw);
-    }
-    if( NULL != topo ) {
+    if (NULL != topo) {
+        if( NULL != topo->in ) free(topo->in);
+        if( MPI_UNWEIGHTED != sourceweights ) {
+            if( NULL != topo->inw ) free(topo->inw);
+        }
+        if( NULL != topo->out ) free(topo->out);
+        if( MPI_UNWEIGHTED != destweights ) {
+            if( NULL != topo->outw ) free(topo->outw);
+        }
         free(topo);
     }
     ompi_comm_free(newcomm);
