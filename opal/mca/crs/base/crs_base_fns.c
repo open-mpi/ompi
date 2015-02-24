@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -142,7 +143,9 @@ int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***valu
     } while(0 == feof(metadata) );
     
  cleanup:
-    rewind(metadata);
+    if (NULL != metadata) {
+        rewind(metadata);
+    }
     return exit_status;
 }
 
