@@ -217,7 +217,6 @@ ompi_coll_base_gather_intra_linear_sync(void *sbuf, int scount,
     ompi_request_t **reqs = NULL;
     MPI_Aint extent, lb;
     size_t typelng;
-    ompi_request_t **reqs = NULL;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
