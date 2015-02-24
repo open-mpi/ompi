@@ -96,6 +96,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
     alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
+    if (NULL == alg_rules) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
+        goto on_file_error;
+    }
 
     if (NULL == alg_rules) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
@@ -126,10 +130,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
         if (alg_rules[CI].alg_rule_id != CI) {
             OPAL_OUTPUT((ompi_coll_tuned_stream, "Internal error in handling collective ID %d\n", CI));
-            fclose(fptr);
-            ompi_coll_tuned_free_all_rules (alg_rules, n_collectives);
-            *rules = (ompi_coll_alg_rule_t*) NULL;
-            return (-4);
+            goto on_file_error;
         }
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %d\n", CI));
         alg_p = &alg_rules[CI];
