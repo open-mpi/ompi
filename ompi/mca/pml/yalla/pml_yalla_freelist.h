@@ -28,7 +28,7 @@
     }
 
 #define PML_YALLA_FREELIST_INIT(_fl, _type, _initial, _max, _batch) \
-    opal_free_list_init(_fl, sizeof(_type), OBJ_CLASS(_type), \
-                        0, 0, _initial, _max, _batch, NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init(_fl, sizeof(_type), 8, OBJ_CLASS(_type),         \
+                        0, 0, _initial, _max, _batch, NULL, 0, NULL, NULL, NULL)
 
 #endif /* PML_YALLA_FREELIST_H_ */
