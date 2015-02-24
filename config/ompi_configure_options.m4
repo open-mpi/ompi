@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -106,48 +106,56 @@ AC_ARG_ENABLE(mpi-fortran,
     AC_HELP_STRING([--enable-mpi-fortran],
                    [specify which Fortran MPI bindings to build: yes, none (or no), best-effort, mpifh (build only mpif.h support), usempi (build mpif.h and the mpi module), or usempif08 (or all, build mpifh, the mpi module, and the mpi_f08 module) (default: "yes" if Fortran compiler found)]))
 
+# These are the 4 monotonically-rising values indicating levels of
+# Fortran bindings support.
 OMPI_FORTRAN_NO_BINDINGS=0
 OMPI_FORTRAN_MPIFH_BINDINGS=1
 OMPI_FORTRAN_USEMPI_BINDINGS=2
 OMPI_FORTRAN_USEMPIF08_BINDINGS=3
 
-OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
+# Set this variable to minimum the level of Fortran bindings support
+# that is *required* (i.e., if we can't achieve this level, then
+# configure should abort).
+OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
+# Set this variable to the highest level of Fortran bindings support
+# that should be attempted.  This value will never be <=
+# $OMPI_MIN_REQUIRED_FORTRAN_BINDINGS.
 OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
 
 case "x$enable_mpi_fortran" in
     x|xbest-effort)
         AC_MSG_RESULT([ (try)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
         ;;
 
     xyes)
         AC_MSG_RESULT([yes (default)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
         ;;
 
     xall|xusempif08)
         AC_MSG_RESULT([all (usempif08)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
         ;;
         
     xno|xnone)
         AC_MSG_RESULT([no (none)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
         ;;
 
     xmpifh)
         AC_MSG_RESULT([yes (mpif.h)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
         ;;
 
     xusempi)
         AC_MSG_RESULT([yes (mpif.h, mpi module)])
-        OMPI_WANT_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
+        OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
         ;;
 

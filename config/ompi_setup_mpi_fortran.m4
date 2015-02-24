@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
@@ -85,14 +85,14 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     ompi_fortran_plain=0
 
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_MPIFH_BINDINGS],
-        [$OMPI_FORTRAN_MPIFH_BINDINGS], 
-        [Support for mpif.h bindings])
+        [$OMPI_FORTRAN_MPIFH_BINDINGS],
+        [Whether we are building support for the mpif.h bindings or not])
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_USEMPI_BINDINGS],
-        [$OMPI_FORTRAN_USEMPI_BINDINGS], 
-        [Support for use mpi bindings])
+        [$OMPI_FORTRAN_USEMPI_BINDINGS],
+        [Whether we are building support for the "use mpi" bindings or not])
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_USEMPIF08_BINDINGS],
-        [$OMPI_FORTRAN_USEMPIF08_BINDINGS], 
-        [Support for use mpif08 bindings])
+        [$OMPI_FORTRAN_USEMPIF08_BINDINGS],
+        [Whether we are building support for the "use mpif08" bindings or not])
 
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
           [OMPI_SETUP_FC([ompi_fortran_happy=1])])
@@ -117,7 +117,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # specifically requested.  If so, and we weren't able to setup the
     # Fortran compiler properly, it's an error.
     AS_IF([test $ompi_fortran_happy -eq 0 && \
-           test $OMPI_WANT_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
+           test $OMPI_MIN_REQUIRED_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
           [AC_MSG_WARN([MPI Fortran bindings requested, but no suitable Fortran compiler found])
           AC_MSG_ERROR([Cannot continue])])
 
@@ -543,11 +543,9 @@ end type test_mpi_handle],
     # implementation, but for now, I'm just hard-wiring
     # OMPI_FORTRAN_NEED_WRAPPER_ROUTINES to 1 when we're
     # building the F08 wrappers.
-    if test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS; then
-        OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
-    else
-        OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0
-    fi
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1],
+          [OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0])
 
     AC_MSG_CHECKING([if building Fortran 'use mpi_f08' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
@@ -557,9 +555,9 @@ end type test_mpi_handle],
            AC_MSG_RESULT([no])])
 
     # If Fortran bindings is requested, make sure at least one can be built
-    AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -gt $OMPI_BUILD_FORTRAN_BINDINGS],
+    AS_IF([test $OMPI_MIN_REQUIRED_FORTRAN_BINDINGS -gt $OMPI_BUILD_FORTRAN_BINDINGS],
           [AC_MSG_ERROR([Cannot build requested Fortran bindings, aborting])])
-    
+
     # -------------------
     # mpif.h final setup
     # -------------------
