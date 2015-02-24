@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
@@ -1260,7 +1260,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     /* Add the 'prefix' param */
     tmp_value = NULL;
     loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
-    mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+    if (loc_id < 0) {
+        rc = OPAL_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     if( NULL != tmp_value && NULL != tmp_value[0] ) {
         /* Could also use the short version '-am'
          * but being verbose has some value
@@ -1272,7 +1281,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         /* Add the 'path' param */
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
-        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (loc_id < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         if( NULL != tmp_value && NULL != tmp_value[0] ) {
             opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
             opal_argv_append(argc, argv, "mca_base_param_file_path");
@@ -1285,7 +1302,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path_force");
-        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (loc_id < 0) {
+            rc = OPAL_ERR_NOT_FOUND;
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         if( NULL == tmp_value || NULL == tmp_value[0] ) {
             /* Get the current working directory */
             tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
