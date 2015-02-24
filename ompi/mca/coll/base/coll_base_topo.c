@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -445,7 +445,7 @@ ompi_coll_base_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
                 OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                              "coll:base:topo:build_bmtree max fanout incorrect %d needed %d",
                              MAXTREEFANOUT, childs));
-                free (bmtree);
+                free(bmtree);
                 return NULL;
             }
         }
