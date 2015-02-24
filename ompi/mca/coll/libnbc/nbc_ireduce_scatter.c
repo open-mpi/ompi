@@ -70,7 +70,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-  MPI_Type_extent(datatype, &ext);
+  res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
