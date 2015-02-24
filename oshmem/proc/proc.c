@@ -286,8 +286,7 @@ oshmem_proc_t** oshmem_proc_all(size_t* size)
 
     OPAL_THREAD_LOCK(&oshmem_proc_lock);
     for (proc = (oshmem_proc_t*) opal_list_get_first(&oshmem_proc_list);
-            ((proc != (oshmem_proc_t*) opal_list_get_end(&oshmem_proc_list))
-                    && (proc != NULL ));
+            proc && (proc != (oshmem_proc_t*) opal_list_get_end(&oshmem_proc_list));
             proc = (oshmem_proc_t*)opal_list_get_next(proc)) {
             /* We know this isn't consistent with the behavior in oshmem_proc_world,
              * but we are leaving the RETAIN for now because the code using this function
