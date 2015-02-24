@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -196,7 +197,7 @@ static int allreduce_fanout (mca_bcol_basesmuma_module_t *bcol_module, volatile 
 static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_args_t *input_args, mca_bcol_base_function_t *c_input_args)
 {
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
-    int buff_idx = buff_idx = input_args->src_desc->buffer_index;
+    int buff_idx = input_args->src_desc->buffer_index;
     int *iteration = &bcol_module->ml_mem.nb_coll_desc[buff_idx].iteration;
     void *data_addr = (void *) input_args->src_desc->data_addr;
     int my_node_index, my_rank, group_size, leading_dim, idx;
@@ -268,7 +269,7 @@ int bcol_basesmuma_allreduce_intra_fanin_fanout(bcol_function_args_t *input_args
 {
     /* local variables */
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
-    int buff_idx = buff_idx = input_args->src_desc->buffer_index;
+    int buff_idx = input_args->src_desc->buffer_index;
     int *iteration = &bcol_module->ml_mem.nb_coll_desc[buff_idx].iteration;
     void *data_addr = (void *) input_args->src_desc->data_addr;
     volatile mca_bcol_basesmuma_header_t *my_ctl_pointer;
