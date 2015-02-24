@@ -43,8 +43,20 @@ static void initFreeList(void)
 
     OBJ_CONSTRUCT(&shmem_java_buffers, opal_free_list_t);
 
-    int r = opal_free_list_init(&shmem_java_buffers, sizeof(shmem_java_buffer_t),
-                                OBJ_CLASS(shmem_java_buffer_t), 2, -1, 2);
+    int r = opal_free_list_init(&shmem_java_buffers,
+                                sizeof(shmem_java_buffer_t),
+                                opal_cache_line_size,
+                                OBJ_CLASS(shmem_java_buffer_t),
+                                0, /* payload size */
+                                0, /* payload align */
+                                2, /* initial elements to alloc */
+                                -1, /* max elements */
+                                2, /* num elements per alloc */
+                                NULL, /* mpool */
+                                0, /* mpool reg flags */
+                                NULL, /* unused0 */
+                                NULL, /* item_init */
+                                NULL /* inem_init context */);
     if(r != OPAL_SUCCESS)
     {
         fprintf(stderr, "Unable to initialize shmem_java_buffers.\n");
@@ -147,12 +159,10 @@ void* shmem_java_getBuffer(shmem_java_buffer_t **item, JNIEnv *env, int size)
     }
     else
     {
-        int rc;
         opal_free_list_item_t *freeListItem;
-        OPAL_FREE_LIST_GET(&shmem_java_buffers, freeListItem, rc);
+        OPAL_FREE_LIST_GET(&shmem_java_buffers, freeListItem);
 
-        if(rc != OPAL_SUCCESS)
-        {
+        if (NULL == item) {
             (*env)->ThrowNew(env, shmem_java.ExceptionClass,
                              "Error in OPAL_FREE_LIST_GET");
         }
