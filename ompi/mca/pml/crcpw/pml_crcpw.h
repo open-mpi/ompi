@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,7 +27,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -59,7 +61,7 @@ BEGIN_C_DECLS
     extern mca_pml_crcpw_module_t mca_pml_crcpw_module;
 
     /* Free list of PML states */
-    OMPI_MODULE_DECLSPEC extern ompi_free_list_t pml_state_list;
+    OMPI_MODULE_DECLSPEC extern opal_free_list_t pml_state_list;
     OMPI_MODULE_DECLSPEC extern bool pml_crcpw_is_finalized;
 
     /*

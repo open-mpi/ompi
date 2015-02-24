@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -8,6 +9,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,25 +63,25 @@ mca_pml_cm_enable(bool enable)
 {
     /* BWB - FIX ME - need to have this actually do something,
        maybe? */
-    ompi_free_list_init_new(&mca_pml_base_send_requests,
-                        sizeof(mca_pml_cm_hvy_send_request_t) + ompi_mtl->mtl_request_size,
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
-                        0,opal_cache_line_size,
-                        ompi_pml_cm.free_list_num,
-                        ompi_pml_cm.free_list_max,
-                        ompi_pml_cm.free_list_inc,
-                        NULL);
+    opal_free_list_init (&mca_pml_base_send_requests,
+                         sizeof(mca_pml_cm_hvy_send_request_t) + ompi_mtl->mtl_request_size,
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
+                         0,opal_cache_line_size,
+                         ompi_pml_cm.free_list_num,
+                         ompi_pml_cm.free_list_max,
+                         ompi_pml_cm.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
-    ompi_free_list_init_new(&mca_pml_base_recv_requests,
-                        sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
-                        0,opal_cache_line_size,
-                        ompi_pml_cm.free_list_num,
-                        ompi_pml_cm.free_list_max,
-                        ompi_pml_cm.free_list_inc,
-                        NULL);
+    opal_free_list_init (&mca_pml_base_recv_requests,
+                         sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
+                         0,opal_cache_line_size,
+                         ompi_pml_cm.free_list_num,
+                         ompi_pml_cm.free_list_max,
+                         ompi_pml_cm.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
 
     return OMPI_SUCCESS;
 }

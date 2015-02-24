@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -43,7 +43,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
@@ -908,11 +908,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         sizeof(mca_btl_openib_header_t);
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
-        ompi_free_list_item_t *item;
+        opal_free_list_item_t *item;
         mca_btl_openib_recv_frag_t * frag;
         mca_btl_openib_frag_init_data_t init_data;
 
-        item = (ompi_free_list_item_t*)&headers_buf[i];
+        item = (opal_free_list_item_t*)&headers_buf[i];
         item->registration = (mca_mpool_base_registration_t *)endpoint->eager_rdma_local.reg;
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);

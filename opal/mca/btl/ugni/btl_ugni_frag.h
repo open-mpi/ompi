@@ -74,7 +74,7 @@ typedef struct mca_btl_ugni_base_frag_t {
     opal_common_ugni_post_desc_t post_desc;
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_ugni_reg_t          *registration;
-    ompi_free_list_t            *my_list;
+    opal_free_list_t            *my_list;
     mca_btl_base_registration_handle_t memory_handle;
 } mca_btl_ugni_base_frag_t;
 
@@ -86,7 +86,7 @@ typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_eager_frag_t;
     ((mca_btl_ugni_base_frag_t *)((uintptr_t) (desc) - offsetof (mca_btl_ugni_base_frag_t, post_desc)))
 
 typedef struct mca_btl_ugni_post_descriptor_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     opal_common_ugni_post_desc_t desc;
     mca_btl_base_endpoint_t *endpoint;
     mca_btl_base_registration_handle_t *local_handle;
@@ -104,11 +104,8 @@ static inline void mca_btl_ugni_alloc_post_descriptor (mca_btl_base_endpoint_t *
                                                        mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata,
                                                        mca_btl_ugni_post_descriptor_t **desc)
 {
-    ompi_free_list_item_t *item = NULL;
-
-    OMPI_FREE_LIST_GET_MT(&endpoint->btl->post_descriptors, item);
-    *desc = (mca_btl_ugni_post_descriptor_t *) item;
-    if (NULL != item) {
+    *desc = (mca_btl_ugni_post_descriptor_t *) opal_free_list_get (&endpoint->btl->post_descriptors);
+    if (NULL != *desc) {
         (*desc)->cbfunc        = cbfunc;
         (*desc)->ctx           = cbcontext;
         (*desc)->cbdata        = cbdata;
@@ -120,7 +117,7 @@ static inline void mca_btl_ugni_alloc_post_descriptor (mca_btl_base_endpoint_t *
 static inline void mca_btl_ugni_return_post_descriptor (mca_btl_ugni_module_t *module,
                                                         mca_btl_ugni_post_descriptor_t *desc)
 {
-    OMPI_FREE_LIST_RETURN_MT(&module->post_descriptors, &desc->super);
+    opal_free_list_return (&module->post_descriptors, &desc->super);
 }
 
 static inline void mca_btl_ugni_post_desc_complete (mca_btl_ugni_module_t *module, mca_btl_ugni_post_descriptor_t *desc, int rc)
@@ -144,14 +141,11 @@ OBJ_CLASS_DECLARATION(mca_btl_ugni_eager_frag_t);
 void mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
 
 static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
-                                           ompi_free_list_t *list,
+                                           opal_free_list_t *list,
                                            mca_btl_ugni_base_frag_t **frag)
 {
-    ompi_free_list_item_t *item = NULL;
-
-    OMPI_FREE_LIST_GET_MT(list, item);
-    *frag = (mca_btl_ugni_base_frag_t *) item;
-    if (OPAL_LIKELY(NULL != item)) {
+    *frag = (mca_btl_ugni_base_frag_t *) opal_free_list_get (*frag);
+    if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
         return OPAL_SUCCESS;
@@ -170,7 +164,7 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
     frag->flags = 0;
 
-    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *) frag);
+    opal_free_list_return (frag->my_list, (opal_free_list_item_t *) frag);
 
     return OPAL_SUCCESS;
 }

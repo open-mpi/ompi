@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -275,11 +275,11 @@ int mca_oob_ud_qp_data_aquire (struct mca_oob_ud_port_t *port, mca_oob_ud_qp_t *
     opal_free_list_item_t *item;
 
     do {
-        OPAL_FREE_LIST_GET(&port->data_qps, item, rc);
-        if (OPAL_SUCCESS != rc) {
+        item = opal_free_list_get_st (&port->data_qps);
+        if (NULL == item) {
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                 "%s oob:ud:qp_data_aquire error allocating new data qp. error = %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+                                 "%s oob:ud:qp_data_aquire error allocating new data qp",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             break;
         }
 
@@ -305,7 +305,7 @@ int mca_oob_ud_qp_data_release (mca_oob_ud_qp_t *qp) {
         return rc;
     }
 
-    OPAL_FREE_LIST_RETURN(&qp->port->data_qps, qp);
+    opal_free_list_return_st (&qp->port->data_qps, &qp->super);
 
     return ORTE_SUCCESS;
 }

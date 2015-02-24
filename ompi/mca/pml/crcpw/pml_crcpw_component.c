@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +67,7 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
     false
 };
 
-ompi_free_list_t pml_state_list;
+opal_free_list_t pml_state_list;
 bool pml_crcpw_is_finalized = false;
 
 static int mca_pml_crcpw_component_register(void)
@@ -148,8 +151,8 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
         opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                              "pml:crcpw: component_init: Initalize Wrapper");
         
-        OBJ_CONSTRUCT(&pml_state_list, ompi_free_list_t);
-        ompi_free_list_init_new( &pml_state_list,
+        OBJ_CONSTRUCT(&pml_state_list, opal_free_list_t);
+        opal_free_list_init (&pml_state_list,
                              sizeof(ompi_crcp_base_pml_state_t),
                              opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_base_pml_state_t),
@@ -157,7 +160,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
                              5,  /* Initial number */
                              -1, /* Max = Unlimited */
                              64, /* Increment by */
-                             NULL);
+                             NULL, 0, NULL, NULL, NULL);
     }
     else {
         opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,

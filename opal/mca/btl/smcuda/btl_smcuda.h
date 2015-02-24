@@ -152,10 +152,10 @@ struct mca_btl_smcuda_component_t {
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
                                         *   SMP specfic data structures. */
-    ompi_free_list_t sm_frags_eager;   /**< free list of sm first */
-    ompi_free_list_t sm_frags_max;     /**< free list of sm second */
-    ompi_free_list_t sm_frags_user;
-    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
+    opal_free_list_t sm_frags_eager;   /**< free list of sm first */
+    opal_free_list_t sm_frags_max;     /**< free list of sm second */
+    opal_free_list_t sm_frags_user;
+    opal_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
     struct mca_btl_base_endpoint_t **sm_peers;
