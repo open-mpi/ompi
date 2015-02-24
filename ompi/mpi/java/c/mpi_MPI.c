@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -151,9 +152,20 @@ static void initFreeList(void)
 {
     OBJ_CONSTRUCT(&ompi_java_buffers, opal_free_list_t);
 
-    int r = opal_free_list_init(&ompi_java_buffers, sizeof(ompi_java_buffer_t),
-                                OBJ_CLASS(ompi_java_buffer_t), 0, 0, 2, -1, 2,
-                                NULL, 0, NULL, NULL, NULL);
+    int r = opal_free_list_init(&ompi_java_buffers,
+                                sizeof(ompi_java_buffer_t),
+                                opal_cache_line_size,
+                                OBJ_CLASS(ompi_java_buffer_t),
+                                0, /* payload size */
+                                0, /* payload align */
+                                2, /* initial elements to alloc */
+                                -1, /* max elements */
+                                2, /* num elements per alloc */
+                                NULL, /* mpool */
+                                0, /* mpool reg flags */
+                                NULL, /* unused0 */
+                                NULL, /* item_init */
+                                NULL /* inem_init context */);
     if(r != OPAL_SUCCESS)
     {
         fprintf(stderr, "Unable to initialize ompi_java_buffers.\n");
