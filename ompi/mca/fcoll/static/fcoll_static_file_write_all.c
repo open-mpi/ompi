@@ -917,11 +917,6 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   
   if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
       
-    if (NULL != disp_index){
-	free(disp_index);
-	disp_index = NULL;
-    }
-    
     if (NULL != local_iov_array){
 	free(local_iov_array);
 	local_iov_array = NULL;
@@ -936,23 +931,68 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	  displs_per_process[l] = NULL;
       }
     }
-    if (NULL != blocklen_per_process){
-	free(blocklen_per_process);
-	blocklen_per_process = NULL;
-    }
-    if (NULL != displs_per_process){
-      free(displs_per_process);
-      displs_per_process = NULL;
-    }
-    if(NULL != bytes_remaining){
-	free(bytes_remaining);
-	bytes_remaining = NULL;
-    }
-    if(NULL != current_index){
-      free(current_index);
-      current_index = NULL;
-    }
   }
+
+  if (NULL != send_buf){
+    free(send_buf);
+    send_buf = NULL;
+  }
+
+  if (NULL != global_buf){
+    free(global_buf);
+    global_buf = NULL;
+  }
+
+  if (NULL != recvtype){
+    free(recvtype);
+    recvtype = NULL;
+  }
+
+  if (NULL != sorted_file_offsets){
+    free(sorted_file_offsets);
+    sorted_file_offsets = NULL;
+  }
+
+  if (NULL != file_offsets_for_agg){
+    free(file_offsets_for_agg);
+    file_offsets_for_agg = NULL;
+  }
+
+  if (NULL != memory_displacements){
+    free(memory_displacements);
+    memory_displacements = NULL;
+  }
+
+  if (NULL != displs_per_process){
+    free(displs_per_process);
+    displs_per_process = NULL;
+  }
+
+  if (NULL != blocklen_per_process){
+    free(blocklen_per_process);
+    blocklen_per_process = NULL;
+  }
+
+  if(NULL != current_index){
+    free(current_index);
+    current_index = NULL;
+  }
+
+  if(NULL != bytes_remaining){
+    free(bytes_remaining);
+    bytes_remaining = NULL;
+  }
+
+  if (NULL != disp_index){
+    free(disp_index);
+    disp_index = NULL;
+  }
+
+  if (NULL != sorted) {
+    free(sorted);
+    sorted = NULL;
+  }
+
   return ret;
 } 
 

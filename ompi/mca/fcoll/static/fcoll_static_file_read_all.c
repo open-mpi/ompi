@@ -307,7 +307,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 						  sizeof(local_io_array));
     if (NULL == global_iov_array){
       opal_output (1, "OUT OF MEMORY\n");
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
   }
   
@@ -440,7 +441,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       receive_buf = (char *) malloc (bytes_to_read_in_cycle * sizeof(char));
       if ( NULL == receive_buf){
 	opal_output (1, "OUT OF MEMORY\n");
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
       }
     }    
     
@@ -662,7 +664,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	(entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
       if (NULL == fh->f_io_array) {
 	opal_output(1, "OUT OF MEMORY\n");
-	return OMPI_ERR_OUT_OF_RESOURCE;
+	ret =  OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
       }
       
 
@@ -732,7 +735,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
       if (NULL == temp_disp_index) {
 	opal_output (1, "OUT OF MEMORY\n");
-	return OMPI_ERR_OUT_OF_RESOURCE;
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
       }
 
       for (i=0; i<entries_per_aggregator; i++){
@@ -936,10 +940,6 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   }
 
   if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {  
-    if (NULL != disp_index){
-      free(disp_index);
-      disp_index = NULL;
-    }
     
     for(l=0;l<fh->f_procs_per_group;l++){
       if (NULL != blocklen_per_process[l]){
@@ -951,24 +951,67 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	displs_per_process[l] = NULL;
       }
     }
-    if (NULL != blocklen_per_process){
-      free(blocklen_per_process);
-      blocklen_per_process = NULL;
-    }
-    if (NULL != displs_per_process){
-      free(displs_per_process);
-      displs_per_process = NULL;
-    }
-    if(NULL != bytes_remaining){
-      free(bytes_remaining);
-      bytes_remaining = NULL;
-    }
-    if(NULL != current_index){
-      free(current_index);
-      current_index = NULL;
-    }
   }
-  
+
+  if (NULL != bytes_per_process){
+    free(bytes_per_process);
+    bytes_per_process =NULL;
+  }
+
+  if (NULL != disp_index){
+    free(disp_index);
+    disp_index =NULL;
+  }
+
+  if (NULL != displs_per_process){
+    free(displs_per_process);
+    displs_per_process = NULL;
+  }
+
+  if(NULL != bytes_remaining){
+    free(bytes_remaining);
+    bytes_remaining = NULL;
+  }
+
+  if(NULL != current_index){
+    free(current_index);
+    current_index = NULL;
+  }
+
+  if (NULL != blocklen_per_process){
+    free(blocklen_per_process);
+    blocklen_per_process =NULL;
+  }
+
+  if (NULL != bytes_remaining){
+    free(bytes_remaining);
+    bytes_remaining =NULL;
+  }
+
+  if (NULL != memory_displacements){
+    free(memory_displacements);
+    memory_displacements= NULL;
+  }
+
+  if (NULL != file_offsets_for_agg){
+    free(file_offsets_for_agg);
+    file_offsets_for_agg = NULL;
+  }
+
+  if (NULL != sorted_file_offsets){
+    free(sorted_file_offsets);
+    sorted_file_offsets = NULL;
+  }
+
+  if (NULL != sendtype){
+    free(sendtype);
+    sendtype=NULL;
+  }
+
+  if (NULL != receive_buf){
+    free(receive_buf);
+    receive_buf=NULL;
+  }
   return ret;
   
 }
