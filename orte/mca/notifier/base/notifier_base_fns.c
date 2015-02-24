@@ -104,13 +104,6 @@ void orte_notifier_base_report(int sd, short args, void *cbdata)
 
     /* need to process the notification string to get the names of the modules */
     return;
-#if 0
-    OPAL_LIST_FOREACH(imod, &orte_notifier_base.modules, orte_notifier_active_module_t) {
-        if (NULL != imod->module->report &&
-            0 == strcmp(imod->component->base_version.mca_component_name, modules[i]))
-            imod->module->report(req);
-    }
-#endif
 }
 
 const char* orte_notifier_base_sev2str(orte_notifier_severity_t severity)
