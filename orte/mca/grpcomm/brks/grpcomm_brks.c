@@ -84,9 +84,6 @@ static int allgather(orte_grpcomm_coll_t *coll,
                          "%s grpcomm:coll:bruck algo employed for %d processes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
 
-    /* start by seeding the collection with our own data */
-    opal_dss.copy_payload(&coll->bucket, sendbuf);
-
     /* record that we contributed */
     coll->nreported += 1;
 
