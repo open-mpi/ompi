@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
  *                         reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -319,7 +319,8 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
     if (NULL == path) {
         getcwd(cwd, OPAL_PATH_MAX);
     } else {
-        strncpy(cwd, path, OPAL_PATH_MAX);
+        strncpy(cwd, path, OPAL_PATH_MAX - 1);
+        cwd[OPAL_PATH_MAX - 1] = '\0';
     }
     if (NULL == agent_list) {
         lines = opal_argv_split(mca_plm_rsh_component.agent, ':');
