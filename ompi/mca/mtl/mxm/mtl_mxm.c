@@ -255,6 +255,9 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
                                &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
+            free(*address_p);
+            *address_p = NULL;
+            *address_len_p = 0;
             goto bail;
         }
 
@@ -307,12 +310,14 @@ int ompi_mtl_mxm_module_init(void)
         MXM_VERBOSE(1, "MXM support will be disabled because of total number "
                     "of processes (%lu) is less than the minimum set by the "
                     "mtl_mxm_np MCA parameter (%u)", totps, ompi_mtl_mxm.mxm_np);
+        free(procs);
         return OMPI_ERR_NOT_SUPPORTED;
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
     if (ORTE_NODE_RANK_INVALID == (lr = ompi_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
+        free(procs);
         return OMPI_ERROR;
     }
     nlps = ompi_process_info.num_local_peers + 1;
@@ -322,6 +327,7 @@ int ompi_mtl_mxm_module_init(void)
             mxlr = max(mxlr, procs[proc]->super.proc_name.vpid);
         }
     }
+    free(procs);
 
     /* Setup the endpoint options and local addresses to bind to. */
 #if MXM_API < MXM_VERSION(2,0)
@@ -406,7 +412,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     mxm_conn_req_t *conn_reqs;
     size_t ep_index = 0;
 #endif
-    void *ep_address;
+    void *ep_address = NULL;
     size_t ep_address_len;
     mxm_error_t err;
     size_t i;
@@ -438,11 +444,13 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 #if MXM_API < MXM_VERSION(2,0)
         if (ep_address_len != sizeof(ep_info[i])) {
             MXM_ERROR("Invalid endpoint address length");
+            free(ep_address);
             rc = OMPI_ERROR;
             goto bail;
         }
 
         memcpy(&ep_info[i], ep_address, ep_address_len);
+        free(ep_address);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
@@ -452,6 +460,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
         endpoint->mtl_mxm_module = &ompi_mtl_mxm;
         err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
+        free(ep_address);
         if (err != MXM_OK) {
             MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             rc = OMPI_ERROR;
@@ -459,7 +468,6 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         }
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
 #endif
-        free(ep_address);
     }
 
 #if MXM_API < MXM_VERSION(2,0)
@@ -508,7 +516,7 @@ bail:
 int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
                              struct ompi_proc_t* procs)
 {
-    void *ep_address;
+    void *ep_address = NULL;
     size_t ep_address_len;
     mxm_error_t err;
     int rc;
@@ -530,10 +538,12 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
 
     if (ep_address_len != sizeof(ep_info)) {
         MXM_ERROR("Invalid endpoint address length");
+        free(ep_address);
         return OMPI_ERROR;
     }
 
     memcpy(&ep_info, ep_address, ep_address_len);
+    free(ep_address);
     conn_req.ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SELF]);
     conn_req.ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SHM]);
     conn_req.ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_RDMA]);
@@ -560,6 +570,7 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
     endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
     endpoint->mtl_mxm_module = &ompi_mtl_mxm;
     err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
+    free(ep_address);
     if (err != MXM_OK) {
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
         return OMPI_ERROR;
