@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -2354,7 +2354,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
     if (0 != hwloc_get_cpubind(opal_hwloc_topology, my_cpuset, 0)) {
-        hwloc_bitmap_free(my_cpuset);
         goto out;
     }
     my_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, my_cpuset);

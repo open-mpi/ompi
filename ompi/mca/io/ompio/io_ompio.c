@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -338,7 +338,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 
             sorted = (int *) malloc
                 (tot_entries * sizeof(int));
-            if (NULL == all_process){
+            if (NULL == sorted){
                 opal_output(1,"Error while allocating per process!\n");
                 return  OMPI_ERR_OUT_OF_RESOURCE;
             }
