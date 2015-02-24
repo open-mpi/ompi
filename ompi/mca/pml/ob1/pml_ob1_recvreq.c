@@ -423,7 +423,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     recvreq->req_ack_sent = true;
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(recvreq->req_recv.req_base), size,
+                                  &(recvreq->req_recv.req_base), frag->rdma_length,
                                   PERUSE_RECV);
 
     /* send rdma request to peer */
