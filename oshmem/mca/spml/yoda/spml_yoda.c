@@ -193,11 +193,11 @@ static inline void spml_yoda_prepare_for_put(void* buffer, size_t size, void* p_
 {
     if (use_send) {
         memcpy((void*) buffer, &size, sizeof(size));
-        memcpy((void*) ( ((char*) buffer) + sizeof(size)), &p_dst, sizeof(p_dst));
-        memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst)), p_src, size);
+        memcpy((void*) (((char*) buffer) + sizeof(size)), &p_dst, sizeof(void *));
+        memcpy((void*) (((char*) buffer) + sizeof(size) + sizeof(void *)), p_src, size);
     }
     else {
-        memcpy((void*) (  (unsigned char*) buffer), p_src, size);
+        memcpy((void*) ((unsigned char*) buffer), p_src, size);
     }
 }
 
@@ -205,9 +205,9 @@ static inline void spml_yoda_prepare_for_get_response(void* buffer, size_t size,
 {
     if (use_send) {
         memcpy((void*) buffer, &size, sizeof(size));
-        memcpy((void*) ( ((char*) buffer) + sizeof(size)), &p_dst, sizeof(p_dst));
-        memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst)), p_src, size);
-        memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst) + size), &p_getreq, sizeof(p_getreq));
+        memcpy((void*) (((char*) buffer) + sizeof(size)), &p_dst, sizeof(void *));
+        memcpy((void*) (((char*) buffer) + sizeof(size) + sizeof(void *)), p_src, size);
+        memcpy((void*) (((char*) buffer) + sizeof(size) + sizeof(void *) + size), &p_getreq, sizeof(void *));
     }
     else {
         memcpy((void*) (  (unsigned char*) buffer), p_src, size);
@@ -216,11 +216,11 @@ static inline void spml_yoda_prepare_for_get_response(void* buffer, size_t size,
 
 static inline void spml_yoda_prepare_for_get(void* buffer, size_t size, void* p_src, int dst, void* p_dst, void* p_getreq)
 {
-    memcpy((void*) buffer, &p_src, sizeof(p_src));
-    memcpy((void*) ( ((unsigned char*) buffer) + sizeof(p_src) ), &size, sizeof(size));
-    memcpy((void*) ( ((unsigned char*) buffer) + sizeof(p_src) + sizeof(size) ), &dst, sizeof(dst));
-    memcpy((void*) ( ((unsigned char*) buffer) + sizeof(p_src) + sizeof(size) + sizeof(dst)), &p_dst, sizeof(p_dst));
-    memcpy((void*) ( ((unsigned char*) buffer) + sizeof(p_src) + sizeof(size) + sizeof(dst) + sizeof(p_dst)), &p_getreq, sizeof(p_getreq));
+    memcpy((void*) buffer, &p_src, sizeof(void *));
+    memcpy((void*) (((unsigned char*) buffer) + sizeof(void *)), &size, sizeof(size));
+    memcpy((void*) (((unsigned char*) buffer) + sizeof(void *) + sizeof(size) ), &dst, sizeof(dst));
+    memcpy((void*) (((unsigned char*) buffer) + sizeof(void *) + sizeof(size) + sizeof(dst)), &p_dst, sizeof(void *));
+    memcpy((void*) (((unsigned char*) buffer) + sizeof(void *) + sizeof(size) + sizeof(dst) + sizeof(void *)), &p_getreq, sizeof(void *));
 }
 
 static void mca_yoda_put_callback(mca_btl_base_module_t* btl,
