@@ -214,6 +214,7 @@ ompi_coll_base_gather_intra_linear_sync(void *sbuf, int scount,
                                          int first_segment_size)
 {
     int i, ret, line, rank, size, first_segment_count;
+    ompi_request_t **reqs = NULL;
     MPI_Aint extent, lb;
     size_t typelng;
     ompi_request_t **reqs = NULL;
