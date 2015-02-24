@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -577,10 +577,6 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
                 return ORTE_ERR_SILENT;
             }
             ptr++;
-            if (NULL == ptr) {
-                /* still missing the value */
-                return ORTE_ERR_SILENT;
-            }
             orte_rmaps_base.cpus_per_rank = strtol(ptr, NULL, 10);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s rmaps:base setting pe/rank to %d",
