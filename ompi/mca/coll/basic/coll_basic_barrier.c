@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -120,6 +121,9 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
 
     dim = comm->c_cube_dim;
     hibit = opal_hibit(rank, dim);
+    if (hibit < 0) {
+        return MPI_ERR_OTHER;
+    }
     --dim;
 
     /* Receive from children. */
