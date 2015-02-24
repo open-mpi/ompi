@@ -283,16 +283,9 @@ m4_ifdef([project_orte],
 ############################################################################
 
 #
-# Part one of libtool magic.  Enable static so that we have the --with
-# tests done up here and can check for OS.  Save the values of
-# $enable_static and $enable_shared before setting the defaults,
-# because if the user specified --[en|dis]able-[static|shared] on the
-# command line, they'll already be set.  In this way, we can tell if
-# the user requested something or if the default was set here.
+# Part one of libtool magic.  Default to: enable shared, disable static.
 #
 
-ompi_enable_shared="$enable_shared"
-ompi_enable_static="$enable_static"
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
