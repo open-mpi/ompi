@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  *
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -151,7 +152,9 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     }
 
  cleanup:
-    fclose(base_snapshot->metadata);
+    if (NULL != base_snapshot->metadata) {
+        fclose(base_snapshot->metadata);
+    }
     base_snapshot->metadata = NULL;
     
     return exit_status;
