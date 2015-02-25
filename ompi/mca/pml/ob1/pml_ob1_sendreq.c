@@ -15,6 +15,7 @@
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1168,7 +1169,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
     }
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), save_size, PERUSE_SEND );
+                                  &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
