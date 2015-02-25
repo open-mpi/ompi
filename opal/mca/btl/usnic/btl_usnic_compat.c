@@ -119,6 +119,36 @@ const char *usnic_compat_proc_name_print(opal_process_name_t *pname)
     return OMPI_NAME_PRINT(pname);
 }
 
+/*
+ * In v1.8, we call ompi_free_list_init, and ignore some of these params
+ */
+int usnic_compat_free_list_init(opal_free_list_t *free_list,
+                                size_t frag_size,
+                                size_t frag_alignment,
+                                opal_class_t* frag_class,
+                                size_t payload_buffer_size,
+                                size_t payload_buffer_alignment,
+                                int num_elements_to_alloc,
+                                int max_elements_to_alloc,
+                                int num_elements_per_alloc,
+                                struct mca_mpool_base_module_t *mpool,
+                                int mpool_reg_flags,
+                                void *unused0,
+                                opal_free_list_item_init_fn_t item_init,
+                                void *ctx)
+{
+    return ompi_free_list_init_new(free_list,
+                                   frag_size,
+                                   frag_alignment,
+                                   frag_class,
+                                   payload_buffer_size,
+                                   payload_buffer_alignment,
+                                   num_elements_to_alloc,
+                                   max_elements_to_alloc,
+                                   num_elements_per_alloc,
+                                   mpool);
+}
+
 #endif /* OMPI version */
 
 /************************************************************************/

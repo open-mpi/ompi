@@ -361,7 +361,7 @@ opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
     opal_free_list_item_t *item;
     opal_btl_usnic_small_send_frag_t *frag;
 
-    item = opal_free_list_get(&(module->small_send_frags));
+    USNIC_COMPAT_FREE_LIST_GET(&(module->small_send_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -383,7 +383,7 @@ opal_btl_usnic_large_send_frag_alloc(opal_btl_usnic_module_t *module)
     opal_free_list_item_t *item;
     opal_btl_usnic_large_send_frag_t *frag;
 
-    item = opal_free_list_get(&(module->large_send_frags));
+    USNIC_COMPAT_FREE_LIST_GET(&(module->large_send_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -406,7 +406,7 @@ opal_btl_usnic_put_dest_frag_alloc(
     opal_free_list_item_t *item;
     opal_btl_usnic_put_dest_frag_t *frag;
 
-    item = opal_free_list_get(&(module->put_dest_frags));
+    USNIC_COMPAT_FREE_LIST_GET(&(module->put_dest_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -480,7 +480,7 @@ opal_btl_usnic_frag_return(
         }
     }
 
-    opal_free_list_return(frag->uf_freelist, &(frag->uf_base.super));
+    USNIC_COMPAT_FREE_LIST_RETURN(frag->uf_freelist, &(frag->uf_base.super));
 }
 
 /*
@@ -525,7 +525,7 @@ opal_btl_usnic_chunk_segment_alloc(
     opal_free_list_item_t *item;
     opal_btl_usnic_send_segment_t *seg;
 
-    item = opal_free_list_get(&(module->chunk_segs));
+    USNIC_COMPAT_FREE_LIST_GET(&(module->chunk_segs), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -547,7 +547,7 @@ opal_btl_usnic_chunk_segment_return(
     assert(seg);
     assert(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
 
-    opal_free_list_return(&(module->chunk_segs), &(seg->ss_base.us_list));
+    USNIC_COMPAT_FREE_LIST_RETURN(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
 
 /*
@@ -559,7 +559,7 @@ opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
     opal_free_list_item_t *item;
     opal_btl_usnic_send_segment_t *ack;
 
-    item = opal_free_list_get(&(module->ack_segs));
+    USNIC_COMPAT_FREE_LIST_GET(&(module->ack_segs), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -584,7 +584,7 @@ opal_btl_usnic_ack_segment_return(
     assert(ack);
     assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
-    opal_free_list_return(&(module->ack_segs), &(ack->ss_base.us_list));
+    USNIC_COMPAT_FREE_LIST_RETURN(&(module->ack_segs), &(ack->ss_base.us_list));
 }
 
 /* Compute and set the proper value for sfrag->sf_size.  This must not be used
