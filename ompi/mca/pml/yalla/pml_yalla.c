@@ -433,7 +433,10 @@ int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
 
     if (mode == MCA_PML_BASE_SEND_BUFFERED) {
         rc = mca_pml_yalla_bsend(&sreq->mxm);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        sreq->super.ompi.req_status.MPI_ERROR = rc;
         ompi_request_complete(&sreq->super.ompi, true);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
         *request = &sreq->super.ompi;
         return rc;
     }
@@ -660,7 +663,10 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
             if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_BSEND) {
                 PML_YALLA_VERBOSE(8, "start bsend request %p", sreq);
                 rc = mca_pml_yalla_bsend(&sreq->mxm);
+                OPAL_THREAD_LOCK(&ompi_request_lock);
+                sreq->super.ompi.req_status.MPI_ERROR = rc;
                 ompi_request_complete(&sreq->super.ompi, true);
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 if (OMPI_SUCCESS != rc) {
                     return rc;
                 }
