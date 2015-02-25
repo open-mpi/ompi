@@ -278,8 +278,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, NULL);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -319,8 +318,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, 0);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
