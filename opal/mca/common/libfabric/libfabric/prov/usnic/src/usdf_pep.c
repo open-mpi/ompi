@@ -149,10 +149,14 @@ usdf_pep_conn_info(struct usdf_connreq *crp)
 	/* fill in dest addr */
 	ip->dest_addrlen = ip->src_addrlen;
 	sin = calloc(1, ip->dest_addrlen);
+	if (sin == NULL) {
+		goto fail;
+	}
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = reqp->creq_ipaddr;
 	sin->sin_port = reqp->creq_port;
 
+	ip->dest_addr = sin;
 	ip->connreq = crp;
 	return ip;
 fail:
@@ -322,7 +326,7 @@ usdf_pep_listen(struct fid_pep *fpep)
 
 	ret = listen(pep->pep_sock, pep->pep_backlog);
 	if (ret != 0) {
-		ret = -errno;
+		return -errno;
 	}
 
 	pep->pep_pollitem.pi_rtn = usdf_pep_listen_cb;
@@ -334,7 +338,7 @@ usdf_pep_listen(struct fid_pep *fpep)
 		return -errno;
 	}
 
-	return ret;
+	return 0;
 }
 
 ssize_t

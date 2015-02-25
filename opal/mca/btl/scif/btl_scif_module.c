@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -94,8 +94,8 @@ int mca_btl_scif_module_init (void)
     BTL_VERBOSE(("btl/scif: listening @ port %u on node %u\n",
                  mca_btl_scif_module.port_id.port, mca_btl_scif_module.port_id.node));
 
-    OBJ_CONSTRUCT(&mca_btl_scif_module.dma_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_scif_module.eager_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_scif_module.dma_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_scif_module.eager_frags, opal_free_list_t);
 
     return OPAL_SUCCESS;
 }

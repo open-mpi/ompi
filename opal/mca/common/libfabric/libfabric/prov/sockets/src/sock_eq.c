@@ -329,8 +329,10 @@ int sock_eq_openwait(struct sock_eq *eq, const char *service)
 				p->ai_protocol);
 		if (eq->wait_fd >= 0) {
 			optval = 1;
-			setsockopt(eq->wait_fd, SOL_SOCKET, SO_REUSEADDR, &optval, 
-					sizeof optval);
+			if (setsockopt(eq->wait_fd, SOL_SOCKET, SO_REUSEADDR, &optval, 
+				       sizeof optval))
+				SOCK_LOG_ERROR("setsockopt failed\n");
+			
 			if (!bind(eq->wait_fd, s_res->ai_addr, s_res->ai_addrlen))
 				break;
 			close(eq->wait_fd);
@@ -344,7 +346,9 @@ int sock_eq_openwait(struct sock_eq *eq, const char *service)
 		return -FI_EINVAL;
 	}
 
-	fcntl(eq->wait_fd, F_SETFL, O_NONBLOCK);
+	if (fcntl(eq->wait_fd, F_SETFL, O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed");
+
 	memcpy(&eq->service, service, NI_MAXSERV);
 	SOCK_LOG_INFO("open udp successfully\n");
 
@@ -410,6 +414,9 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 		break;
 
 	case FI_WAIT_SET:
+		if (!attr)
+			return -FI_EINVAL;
+
 		sock_eq->waitset = attr->wait_set;
 		sock_eq->signal = 1;
 		break;

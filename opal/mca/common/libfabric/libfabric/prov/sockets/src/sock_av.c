@@ -513,6 +513,7 @@ static int sock_verify_av_attr(struct fi_av_attr *attr)
 int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		 struct fid_av **av, void *context)
 {
+	int ret = 0;
 	struct sock_domain *dom;
 	struct sock_av *_av;
 	size_t table_sz, i;
@@ -531,8 +532,8 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 
 	_av->key = calloc(_av->attr.count, sizeof(uint16_t));
 	if (!_av->key) {
-		free(_av);
-		return -FI_ENOMEM;
+		ret = -FI_ENOMEM;
+		goto err;
 	}
 
 	table_sz = sizeof(struct sock_av_table_hdr) +
@@ -540,9 +541,10 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	
 	if (attr->name) {
 		_av->name = calloc(1, FI_NAME_MAX);
-		if(!_av->name)
-			return -FI_ENOMEM;
-
+		if(!_av->name) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		strcpy(_av->name, attr->name);
 		if (!(attr->flags & FI_READ))
 			flags |= O_CREAT;
@@ -557,22 +559,24 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		_av->shared_fd = shm_open(_av->name, flags, S_IRUSR | S_IWUSR);
 		if (_av->shared_fd < 0) {
 			SOCK_LOG_ERROR("shm_open failed\n");
-			free(_av);
-			return -FI_EINVAL;
+			ret = -FI_EINVAL;
+			goto err;
 		}
 		
 		if (ftruncate(_av->shared_fd, table_sz) == -1) {
 			SOCK_LOG_ERROR("ftruncate failed\n");
 			shm_unlink(_av->name);
-			free(_av);
-			return -FI_EINVAL;
+			ret = -FI_EINVAL;
+			goto err;
 		}
 		
 		_av->table_hdr = mmap(NULL, table_sz, PROT_READ | PROT_WRITE, 
 				      MAP_SHARED, _av->shared_fd, 0);
 		if (attr->flags & FI_READ) {
-			if (_av->table_hdr->size != _av->attr.count)
-				return -FI_EINVAL;
+			if (_av->table_hdr->size != _av->attr.count) {
+				ret = -FI_EINVAL;
+				goto err;
+			}
 		} else {
 			_av->table_hdr->size = _av->attr.count;
 			_av->table_hdr->stored = 0;
@@ -581,13 +585,15 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		if (_av->table_hdr == MAP_FAILED) {
 			SOCK_LOG_ERROR("mmap failed\n");
 			shm_unlink(_av->name);
-			free(_av);
-			return -FI_EINVAL;
+			ret = -FI_EINVAL;
+			goto err;
 		}
 	} else {
 		_av->table_hdr = calloc(1, table_sz);
-		if (!_av->table_hdr)
-			return -FI_ENOMEM;
+		if (!_av->table_hdr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		_av->table_hdr->size = _av->attr.count;
 		_av->table_hdr->req_sz = attr->count;
 	}
@@ -606,6 +612,7 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		_av->av_fid.ops = &sock_at_ops;
 		break;
 	default:
+		ret = -FI_EINVAL;
 		goto err;
 	}
 
@@ -618,6 +625,7 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		break;
 	default:
 		SOCK_LOG_ERROR("Invalid address format: only IPv4 supported\n");
+		ret = -FI_EINVAL;
 		goto err;
 	}
 	_av->rx_ctx_bits = attr->rx_ctx_bits;
@@ -627,5 +635,5 @@ int sock_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	return 0;
 err:
 	free(_av);
-	return -EINVAL;
+	return ret;
 }

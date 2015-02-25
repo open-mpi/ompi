@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -255,6 +258,9 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
                                &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
+            free(*address_p);
+            *address_p = NULL;
+            *address_len_p = 0;
             goto bail;
         }
 
@@ -267,9 +273,6 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
 bail:
     free(modex_component_name);
     free(modex_name);
-    if (*address_p) {
-        free(*address_p);
-    }
     return rc;
 }
 
@@ -444,11 +447,13 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 #if MXM_API < MXM_VERSION(2,0)
         if (ep_address_len != sizeof(ep_info[i])) {
             MXM_ERROR("Invalid endpoint address length");
+            free(ep_address);
             rc = OMPI_ERROR;
             goto bail;
         }
 
         memcpy(&ep_info[i], ep_address, ep_address_len);
+        free(ep_address);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
         conn_reqs[ep_index].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
@@ -458,6 +463,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
         endpoint->mtl_mxm_module = &ompi_mtl_mxm;
         err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
+        free(ep_address);
         if (err != MXM_OK) {
             MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             rc = OMPI_ERROR;
@@ -465,7 +471,6 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         }
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
 #endif
-        free(ep_address);
     }
 
 #if MXM_API < MXM_VERSION(2,0)
@@ -508,9 +513,6 @@ bail:
     free(conn_reqs);
     free(ep_info);
 #endif
-    if (ep_address) {
-        free(ep_address);
-    }
     return rc;
 }
 
@@ -539,10 +541,12 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
 
     if (ep_address_len != sizeof(ep_info)) {
         MXM_ERROR("Invalid endpoint address length");
+        free(ep_address);
         return OMPI_ERROR;
     }
 
     memcpy(&ep_info, ep_address, ep_address_len);
+    free(ep_address);
     conn_req.ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SELF]);
     conn_req.ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_SHM]);
     conn_req.ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info.ptl_addr[MXM_PTL_RDMA]);
@@ -557,7 +561,6 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
                        "unknown" : procs->proc_hostname,
                       mxm_error_string(conn_reqs.error));
         }
-        free(ep_address);
         return OMPI_ERROR;
     }
 
@@ -570,9 +573,9 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
     endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
     endpoint->mtl_mxm_module = &ompi_mtl_mxm;
     err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
+    free(ep_address);
     if (err != MXM_OK) {
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
-        free(ep_address);
         return OMPI_ERROR;
     }
     procs->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
@@ -668,6 +671,6 @@ static void ompi_mtl_mxm_mem_release_cb(void *buf, size_t length,
 
 OBJ_CLASS_INSTANCE(
         ompi_mtl_mxm_message_t,
-        ompi_free_list_item_t,
+        opal_free_list_item_t,
         NULL,
         NULL);

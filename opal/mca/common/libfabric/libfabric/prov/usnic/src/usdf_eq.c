@@ -298,6 +298,7 @@ usdf_eq_read_fd(struct fid_eq *feq, uint32_t *event, void *buf, size_t len,
 		ret = read(eq->eq_fd, &val, sizeof(val));
 		if (ret != sizeof(val)) {
 			ret = -FI_EIO;
+			goto done;
 		}
 	}
 
@@ -588,10 +589,10 @@ usdf_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 
 fail:
 	if (eq != NULL) {
-		free(eq);
 		if (eq->eq_ev_ring != NULL) {
 			free(eq->eq_ev_ring);
 		}
+		free(eq);
 	}
 	return ret;
 }

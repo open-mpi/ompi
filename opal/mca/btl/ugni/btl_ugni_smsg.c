@@ -31,7 +31,7 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, ompi_free_list_item_t,
+OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, opal_free_list_item_t,
                    mca_btl_ugni_smsg_mbox_construct, NULL);
 
 

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -29,7 +29,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/op/op.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 #include "coll_ml_lmngr.h"
 #include "coll_ml_functions.h"
@@ -652,10 +652,10 @@ struct mca_coll_ml_module_t {
     int32_t collective_sequence_num;
 
     /** ompi free list of full message descriptors **/
-    ompi_free_list_t message_descriptors;
+    opal_free_list_t message_descriptors;
 
     /** ompi free list of message fragment descriptors **/
-    ompi_free_list_t fragment_descriptors;
+    opal_free_list_t fragment_descriptors;
 
     /** pointer to the payload memory block **/
     struct mca_bcol_base_memory_block_desc_t *payload_block;
@@ -672,7 +672,7 @@ struct mca_coll_ml_module_t {
 
     /** collective operation descriptor free list - used to manage a single
      *  collective operation. */
-    ompi_free_list_t coll_ml_collective_descriptors;
+    opal_free_list_t coll_ml_collective_descriptors;
 
     /** multiple function collective operation support */
     /** broadcast */

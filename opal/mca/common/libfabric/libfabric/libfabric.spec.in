@@ -61,5 +61,5 @@ rm -rf %{buildroot}
 %{_mandir}/man7/*
 
 %changelog
-* Mon Jan 19 2015 Maintainer Name <email@intel.com> 1.0.0
-- TODO: Release manager fill this out for initial release
+* Mon Feb 16 2015 Open Fabrics Interfaces Working Group <ofiwg@lists.openfabrics.org> 1.0.0
+- Release 1.0.0rc2

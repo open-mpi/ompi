@@ -83,20 +83,20 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending_lock,opal_mutex_t);
 
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_send, ompi_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, ompi_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->smsg_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->rdma_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->eager_frags_send, opal_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, opal_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->smsg_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->rdma_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags_bb, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list_lock,opal_mutex_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->endpoints, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
-    OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, opal_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->pending_descriptors, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
-    OBJ_CONSTRUCT(&ugni_module->post_descriptors, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->post_descriptors, opal_free_list_t);
 
     ugni_module->device = dev;
     dev->btl_ctx = (void *) ugni_module;

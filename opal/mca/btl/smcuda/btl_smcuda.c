@@ -50,7 +50,6 @@
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 
 #if OPAL_CUDA_SUPPORT
@@ -401,47 +400,47 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     length = sizeof(mca_btl_smcuda_frag1_t);
     length_payload =
         sizeof(mca_btl_smcuda_hdr_t) + mca_btl_smcuda_component.eager_limit;
-    i = ompi_free_list_init_new(&mca_btl_smcuda_component.sm_frags_eager, length,
-                                opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_frag1_t),
-                                length_payload, opal_cache_line_size,
-                                mca_btl_smcuda_component.sm_free_list_num,
-                                mca_btl_smcuda_component.sm_free_list_max,
-                                mca_btl_smcuda_component.sm_free_list_inc,
-                                mca_btl_smcuda_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_smcuda_component.sm_frags_eager, length,
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_frag1_t),
+                             length_payload, opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
     length = sizeof(mca_btl_smcuda_frag2_t);
     length_payload =
         sizeof(mca_btl_smcuda_hdr_t) + mca_btl_smcuda_component.max_frag_size;
-    i = ompi_free_list_init_new(&mca_btl_smcuda_component.sm_frags_max, length,
-                                opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_frag2_t),
-                                length_payload, opal_cache_line_size,
-                                mca_btl_smcuda_component.sm_free_list_num,
-                                mca_btl_smcuda_component.sm_free_list_max,
-                                mca_btl_smcuda_component.sm_free_list_inc,
-                                mca_btl_smcuda_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_smcuda_component.sm_frags_max, length,
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_frag2_t),
+                             length_payload, opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
-    i = ompi_free_list_init_new(&mca_btl_smcuda_component.sm_frags_user, 
-		    sizeof(mca_btl_smcuda_user_t),
-		    opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_user_t),
-		    sizeof(mca_btl_smcuda_hdr_t), opal_cache_line_size,
-		    mca_btl_smcuda_component.sm_free_list_num,
-		    mca_btl_smcuda_component.sm_free_list_max,
-		    mca_btl_smcuda_component.sm_free_list_inc,
-		    mca_btl_smcuda_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_smcuda_component.sm_frags_user,
+                             sizeof(mca_btl_smcuda_user_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_user_t),
+                             sizeof(mca_btl_smcuda_hdr_t), opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
 	    return i;   
 
     mca_btl_smcuda_component.num_outstanding_frags = 0;
 
     mca_btl_smcuda_component.num_pending_sends = 0;
-    i = opal_free_list_init(&mca_btl_smcuda_component.pending_send_fl,
-                            sizeof(btl_smcuda_pending_send_item_t),
-                            OBJ_CLASS(opal_free_list_item_t),
-                            16, -1, 32);
+    i = opal_free_list_init (&mca_btl_smcuda_component.pending_send_fl,
+                             sizeof(btl_smcuda_pending_send_item_t), 8,
+                             OBJ_CLASS(opal_free_list_item_t),
+                             0, 0, 16, -1, 32, NULL, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
@@ -680,8 +679,8 @@ int mca_btl_smcuda_add_procs(
     mca_btl_smcuda_component.num_smp_procs += n_local_procs;
 
     /* make sure we have enough eager fragmnents for each process */
-    return_code = ompi_free_list_resize_mt(&mca_btl_smcuda_component.sm_frags_eager,
-                                           mca_btl_smcuda_component.num_smp_procs * 2);
+    return_code = opal_free_list_resize_mt (&mca_btl_smcuda_component.sm_frags_eager,
+                                            mca_btl_smcuda_component.num_smp_procs * 2);
     if (OPAL_SUCCESS != return_code)
         goto CLEANUP;
 

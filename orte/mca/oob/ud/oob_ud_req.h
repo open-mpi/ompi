@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -15,10 +15,13 @@
 #if !defined(MCA_OOB_UD_REQ_H)
 #define MCA_OOB_UD_REQ_H
 
+#include "oob_ud_peer.h"
+
 #include "orte_config.h"
 #include "orte/types.h"
 #include "opal/threads/condition.h"
 #include "opal/mca/event/event.h"
+#include "opal/class/opal_free_list.h"
 #include "orte/mca/rml/rml.h"
 
 #include <infiniband/verbs.h>
@@ -252,8 +255,7 @@ static inline int mca_oob_ud_recv_alloc (mca_oob_ud_req_t *recv_req)
 int mca_oob_ud_msg_get (struct mca_oob_ud_port_t *port, mca_oob_ud_req_t *req,
                         mca_oob_ud_qp_t *qp, mca_oob_ud_peer_t *peer, bool persist,
                         mca_oob_ud_msg_t **msgp);
-int mca_oob_ud_msg_init (mca_oob_ud_msg_t *msg, struct mca_oob_ud_port_t *port,
-                         char *buf, struct ibv_mr *mr);
+int mca_oob_ud_msg_init (opal_free_list_item_t *item, void *context);
 void mca_oob_ud_msg_return (mca_oob_ud_msg_t *msg);
 
 

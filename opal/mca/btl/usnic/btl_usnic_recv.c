@@ -215,10 +215,9 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                 pool = usnic_fls(chunk_hdr->ch_frag_size-1);
                 if (pool >= module->first_pool &&
                         pool <= module->last_pool) {
-                    ompi_free_list_item_t* item;
+                    opal_free_list_item_t* item;
                     opal_btl_usnic_rx_buf_t *rx_buf;
-                    OMPI_FREE_LIST_GET_MT(&module->module_recv_buffers[pool],
-                                          item);
+                    USNIC_COMPAT_FREE_LIST_GET(&module->module_recv_buffers[pool], item);
                     rx_buf = (opal_btl_usnic_rx_buf_t *)item;
                     if (OPAL_LIKELY(NULL != rx_buf)) {
                         fip->rfi_fl_elt = item;
@@ -304,9 +303,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
                 /* free temp buffer for non-put */
                 if (fip->rfi_data_in_pool) {
-                    OMPI_FREE_LIST_RETURN_MT(
-                            &module->module_recv_buffers[fip->rfi_data_pool],
-                            fip->rfi_fl_elt);
+                    USNIC_COMPAT_FREE_LIST_RETURN(&module->module_recv_buffers[fip->rfi_data_pool],
+                                                  fip->rfi_fl_elt);
                 } else {
                     free(fip->rfi_data);
                 }

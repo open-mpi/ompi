@@ -29,6 +29,9 @@
 /* Proc stuff */
 #  include "opal/util/proc.h"
 
+/* Free lists are unified into OPAL free lists */
+#  include "opal/class/opal_free_list.h"
+
 #  define USNIC_OUT opal_btl_base_framework.framework_output
 /* JMS Really want to be able to get the job size somehow...  But for
    now, so that we can compile, just set it to a constant :-( */
@@ -57,6 +60,13 @@
 
 #  define BTL_VERSION 30
 
+#  define USNIC_COMPAT_FREE_LIST_GET(list, item) \
+    (item) = opal_free_list_get((list))
+#  define USNIC_COMPAT_FREE_LIST_RETURN(list, item) \
+    opal_free_list_return((list), (item))
+
+#  define usnic_compat_free_list_init opal_free_list_init
+
 /*
  * Performance critical; needs to be inline
  */
@@ -78,6 +88,9 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 
 /* Proc stuff */
 #  include "ompi/proc/proc.h"
+
+/* Use OMPI free lists in v1.8 */
+#  include "ompi/class/ompi_free_list.h"
 
 #  define USNIC_OUT ompi_btl_base_framework.framework_output
 #  define USNIC_MCW_SIZE ompi_process_info.num_procs
@@ -138,8 +151,17 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 
 #  define BTL_VERSION 20
 
+#  define opal_free_list_t              ompi_free_list_t
+#  define opal_free_list_item_t         ompi_free_list_item_t
+#  define opal_free_list_item_init_fn_t ompi_free_list_item_init_fn_t
+
+#  define USNIC_COMPAT_FREE_LIST_GET(list, item) \
+    OMPI_FREE_LIST_GET_MT(list, (item))
+#  define USNIC_COMPAT_FREE_LIST_RETURN(list, item) \
+    OMPI_FREE_LIST_RETURN_MT((list), (item))
+
 #  define USNIC_COMPAT_BASE_VERSION                                 \
-    MCA_BTL_BASE_VERSION_2_0_0,                                     \
+    MCA_BASE_VERSION_2_0_0,                                         \
         .mca_type_name = "btl",                                     \
         .mca_type_major_version = OMPI_MAJOR_VERSION,               \
         .mca_type_minor_version = OMPI_MINOR_VERSION,               \
@@ -169,25 +191,28 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
  */
 char* opal_get_proc_hostname(opal_proc_t *proc);
 
+/*
+ * Wrapper to call ompi_free_list_init
+ */
+int usnic_compat_free_list_init(opal_free_list_t *free_list,
+                                size_t frag_size,
+                                size_t frag_alignment,
+                                opal_class_t* frag_class,
+                                size_t payload_buffer_size,
+                                size_t payload_buffer_alignment,
+                                int num_elements_to_alloc,
+                                int max_elements_to_alloc,
+                                int num_elements_per_alloc,
+                                struct mca_mpool_base_module_t *mpool,
+                                int mpool_reg_flags,
+                                void *unused0,
+                                opal_free_list_item_init_fn_t item_init,
+                                void *ctx);
+
 /************************************************************************/
 
 #else
 #  error OMPI version too old (< 1.7)
-#endif
-
-/************************************************************************/
-
-/* The FREE_LIST_*_MT stuff was introduced on the SVN trunk in r28722
-   (2013-07-04), but so far, has not been merged into the v1.7 branch
-   yet (2013-09-06). */
-#ifndef OPAL_FREE_LIST_GET_MT
-#  define OPAL_FREE_LIST_GET_MT(list_, item_) \
-    do { \
-        int rc_ __opal_attribute_unused__; \
-        OPAL_FREE_LIST_GET(list_, item_, rc_); \
-    } while (0)
-#  define OPAL_FREE_LIST_RETURN_MT(list_, item_) \
-        OPAL_FREE_LIST_RETURN(list_, item_)
 #endif
 
 /************************************************************************

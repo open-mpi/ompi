@@ -26,7 +26,7 @@ typedef enum {
 } mca_btl_ugni_smsg_tag_t;
 
 typedef struct mca_btl_ugni_smsg_mbox_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_btl_ugni_endpoint_attr_t attr;
 } mca_btl_ugni_smsg_mbox_t;
 

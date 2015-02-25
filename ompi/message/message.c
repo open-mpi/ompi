@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,9 +46,9 @@ ompi_message_init(void)
 
     OBJ_CONSTRUCT(&ompi_message_free_list, opal_free_list_t);
     rc = opal_free_list_init(&ompi_message_free_list,
-                             sizeof(ompi_message_t),
+                             sizeof(ompi_message_t), 8,
                              OBJ_CLASS(ompi_message_t),
-                             8, -1, 8);
+                             0, 0, 8, -1, 8, NULL, 0, NULL, NULL, NULL);
 
     OBJ_CONSTRUCT(&ompi_message_f_to_c_table, opal_pointer_array_t);
 

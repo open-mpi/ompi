@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +57,7 @@ extern mca_mtl_mxm_module_t ompi_mtl_mxm;
 
 typedef struct mca_mtl_mxm_component_t {
     mca_mtl_base_component_2_0_0_t super; /**< base MTL component */
-    ompi_free_list_t mxm_messages; /* will be used for MPI_Mprobe and MPI_Mrecv calls */
+    opal_free_list_t mxm_messages; /* will be used for MPI_Mprobe and MPI_Mrecv calls */
 } mca_mtl_mxm_component_t;
 
 

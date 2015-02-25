@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -52,7 +52,6 @@
 #include "opal/mca/shmem/shmem.h"
 
 #include "opal/datatype/opal_convertor.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/sm/mpool_sm.h"
@@ -373,37 +372,37 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     length = sizeof(mca_btl_sm_frag1_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.eager_limit;
-    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_eager, length,
-                                opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag1_t),
-                                length_payload, opal_cache_line_size,
-                                mca_btl_sm_component.sm_free_list_num,
-                                mca_btl_sm_component.sm_free_list_max,
-                                mca_btl_sm_component.sm_free_list_inc,
-                                mca_btl_sm_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_sm_component.sm_frags_eager, length,
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag1_t),
+                             length_payload, opal_cache_line_size,
+                             mca_btl_sm_component.sm_free_list_num,
+                             mca_btl_sm_component.sm_free_list_max,
+                             mca_btl_sm_component.sm_free_list_inc,
+                             mca_btl_sm_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
     length = sizeof(mca_btl_sm_frag2_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.max_frag_size;
-    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_max, length,
-                                opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag2_t),
-                                length_payload, opal_cache_line_size,
-                                mca_btl_sm_component.sm_free_list_num,
-                                mca_btl_sm_component.sm_free_list_max,
-                                mca_btl_sm_component.sm_free_list_inc,
-                                mca_btl_sm_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_sm_component.sm_frags_max, length,
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag2_t),
+                             length_payload, opal_cache_line_size,
+                             mca_btl_sm_component.sm_free_list_num,
+                             mca_btl_sm_component.sm_free_list_max,
+                             mca_btl_sm_component.sm_free_list_inc,
+                             mca_btl_sm_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
-    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_user, 
-            sizeof(mca_btl_sm_user_t),
-            opal_cache_line_size, OBJ_CLASS(mca_btl_sm_user_t),
-            sizeof(mca_btl_sm_hdr_t), opal_cache_line_size,
-            mca_btl_sm_component.sm_free_list_num,
-            mca_btl_sm_component.sm_free_list_max,
-            mca_btl_sm_component.sm_free_list_inc,
-            mca_btl_sm_component.sm_mpool);
+    i = opal_free_list_init (&mca_btl_sm_component.sm_frags_user,
+                             sizeof(mca_btl_sm_user_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_sm_user_t),
+                             sizeof(mca_btl_sm_hdr_t), opal_cache_line_size,
+                             mca_btl_sm_component.sm_free_list_num,
+                             mca_btl_sm_component.sm_free_list_max,
+                             mca_btl_sm_component.sm_free_list_inc,
+                             mca_btl_sm_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
         return i;   
 
@@ -411,9 +410,10 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
 
     mca_btl_sm_component.num_pending_sends = 0;
     i = opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
-                            sizeof(btl_sm_pending_send_item_t),
+                            sizeof(btl_sm_pending_send_item_t), 8,
                             OBJ_CLASS(opal_free_list_item_t),
-                            16, -1, 32);
+                            0, 0, 16, -1, 32, NULL, 0, NULL, NULL,
+                            NULL);
     if ( OPAL_SUCCESS != i )
         return i;
 
@@ -641,8 +641,8 @@ int mca_btl_sm_add_procs(
     mca_btl_sm_component.num_smp_procs += n_local_procs;
 
     /* make sure we have enough eager fragmnents for each process */
-    return_code = ompi_free_list_resize_mt(&mca_btl_sm_component.sm_frags_eager,
-                                           mca_btl_sm_component.num_smp_procs * 2);
+    return_code = opal_free_list_resize_mt (&mca_btl_sm_component.sm_frags_eager,
+                                            mca_btl_sm_component.num_smp_procs * 2);
     if (OPAL_SUCCESS != return_code)
         goto CLEANUP;
 
@@ -1006,9 +1006,9 @@ mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base
                                                              void *base, size_t size, uint32_t flags)
 {
     mca_btl_sm_registration_handle_t *handle;
-    ompi_free_list_item_t *item = NULL;
+    opal_free_list_item_t *item = NULL;
 
-    OMPI_FREE_LIST_GET_MT(&mca_btl_sm_component.registration_handles, item);
+    item = opal_free_list_get (&mca_btl_sm_component.registration_handles);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -1035,7 +1035,7 @@ mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base
         }
 
        if (OPAL_UNLIKELY(ioctl(((mca_btl_sm_t*)btl)->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
-           OMPI_FREE_LIST_RETURN_MT(&mca_btl_sm_component.registration_handles, item);
+           opal_free_list_return (&mca_btl_sm_component.registration_handles, item);
            return NULL;
         }
 
@@ -1064,7 +1064,7 @@ int mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_r
     }
 #endif
 
-    OMPI_FREE_LIST_RETURN_MT(&mca_btl_sm_component.registration_handles, &sm_handle->super);
+    opal_free_list_return (&mca_btl_sm_component.registration_handles, &sm_handle->super);
 
     return OPAL_SUCCESS;
 }

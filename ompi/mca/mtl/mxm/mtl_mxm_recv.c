@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,8 +188,7 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
         return OMPI_ERROR;
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&mca_mtl_mxm_component.mxm_messages,
-                         (ompi_free_list_item_t *) msgp);
+    opal_free_list_return (&mca_mtl_mxm_component.mxm_messages, (opal_free_list_item_t *) msgp);
 
     ompi_message_return(*message);
     (*message) = MPI_MESSAGE_NULL;

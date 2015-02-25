@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,8 +38,8 @@ static int mca_spml_yoda_put_request_free(struct oshmem_request_t** request)
 
     OPAL_THREAD_LOCK(&oshmem_request_lock);
     putreq->req_put.req_base.req_free_called = true;
-    OMPI_FREE_LIST_RETURN_MT( &mca_spml_base_put_requests,
-                          (ompi_free_list_item_t*)putreq);
+    opal_free_list_return (&mca_spml_base_put_requests,
+                           (opal_free_list_item_t*)putreq);
     OPAL_THREAD_UNLOCK(&oshmem_request_lock);
 
     *request = SHMEM_REQUEST_NULL;

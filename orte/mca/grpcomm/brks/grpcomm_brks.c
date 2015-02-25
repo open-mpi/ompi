@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -83,9 +83,6 @@ static int allgather(orte_grpcomm_coll_t *coll,
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:coll:bruck algo employed for %d processes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
-
-    /* start by seeding the collection with our own data */
-    opal_dss.copy_payload(&coll->bucket, sendbuf);
 
     /* record that we contributed */
     coll->nreported += 1;
@@ -314,21 +311,25 @@ static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
                          "%s grpcomm:coll:brks declared collective complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    reply = OBJ_NEW(opal_buffer_t);
-
     /* pack the number of procs involved in the collective
      * so the recipients can unpack any collected data */
     if (1 == coll->sig->sz) {
         /* get the job object for this entry */
         if (NULL == (jdata = orte_get_job_data_object(coll->sig->signature[0].jobid))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            return rc;
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return ORTE_ERROR;
         }
         nprocs = jdata->num_procs;
     } else {
         nprocs = coll->sig->sz;
     }
+
+    reply = OBJ_NEW(opal_buffer_t);
+    if (NULL == reply) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_UINT64))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);

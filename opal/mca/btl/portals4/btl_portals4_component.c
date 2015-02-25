@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -353,12 +355,12 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
         portals4_btl->portals_ni_h = portals4_nis_h[interface];
         portals4_btl->portals_max_outstanding_ops = mca_btl_portals4_component.portals_max_outstanding_ops;
 
-        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_eager), ompi_free_list_t);
-        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_max), ompi_free_list_t);
-        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_user), ompi_free_list_t);
+        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_eager), opal_free_list_t);
+        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_max), opal_free_list_t);
+        OBJ_CONSTRUCT(&(portals4_btl->portals_frag_user), opal_free_list_t);
 
         /* eager frags */
-        ompi_free_list_init_new(&(portals4_btl->portals_frag_eager),
+        opal_free_list_init (&(portals4_btl->portals_frag_eager),
                         sizeof(mca_btl_portals4_frag_eager_t) +
                         portals4_btl->super.btl_eager_limit,
                         opal_cache_line_size,
@@ -367,10 +369,10 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                         mca_btl_portals4_component.portals_free_list_init_num,
                         mca_btl_portals4_component.portals_free_list_eager_max_num,
                         mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL);
+                        NULL, 0, NULL, NULL, NULL);
 
         /* send frags */
-        ompi_free_list_init_new(&(portals4_btl->portals_frag_max),
+        opal_free_list_init (&(portals4_btl->portals_frag_max),
                         sizeof(mca_btl_portals4_frag_max_t) +
                         portals4_btl->super.btl_max_send_size,
                         opal_cache_line_size,
@@ -379,10 +381,10 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                         mca_btl_portals4_component.portals_free_list_init_num,
                         mca_btl_portals4_component.portals_free_list_max_num,
                         mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL);
+                        NULL, 0, NULL, NULL, NULL);
 
         /* user frags */
-        ompi_free_list_init_new(&(portals4_btl->portals_frag_user),
+        opal_free_list_init (&(portals4_btl->portals_frag_user),
                         sizeof(mca_btl_portals4_frag_user_t),
                         opal_cache_line_size,
                         OBJ_CLASS(mca_btl_portals4_frag_user_t),
@@ -390,7 +392,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                         mca_btl_portals4_component.portals_free_list_init_num,
                         mca_btl_portals4_component.portals_free_list_max_num,
                         mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL);
+                        NULL, 0, NULL, NULL, NULL);
 
         /* receive block list */
         OBJ_CONSTRUCT(&(portals4_btl->portals_recv_blocks), opal_list_t);

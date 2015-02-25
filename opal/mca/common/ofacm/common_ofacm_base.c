@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Mellanox Technologies.  All rights reserved.
@@ -6,6 +7,8 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -584,7 +587,7 @@ opal_common_ofacm_base_get_cpc_byindex(uint8_t index)
 #if 0
 int opal_common_ofacm_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 {
-    ompi_free_list_item_t *fli;
+    opal_free_list_item_t *fli;
     int length = sizeof(mca_btl_openib_header_t) +
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t) +

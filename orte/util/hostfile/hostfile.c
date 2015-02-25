@@ -256,9 +256,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         /* store this for later processing */
         node = OBJ_NEW(orte_node_t);
         node->name = strdup(orte_util_hostfile_value.sval);
-        if (NULL != username) {
-            orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
-        }
         opal_list_append(updates, &node->super);
     } else if (ORTE_HOSTFILE_RANK == token) {
         /* we can ignore the rank, but we need to extract the node name. we

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -15,7 +15,6 @@
 #ifndef OSC_SM_SM_H
 #define OSC_SM_SM_H
 
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/shmem/base/base.h"
 
 /* data shared across all peers */

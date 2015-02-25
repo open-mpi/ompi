@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -767,7 +767,7 @@ typedef struct mca_bcol_base_function_t mca_bcol_base_function_t;
 
 
 struct mca_bcol_base_descriptor_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
 /* Vasily: will be described in the future */
 };
 typedef struct mca_bcol_base_descriptor_t mca_bcol_base_descriptor_t;
