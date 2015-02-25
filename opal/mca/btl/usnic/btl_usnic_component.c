@@ -133,7 +133,7 @@ static void free_filter(usnic_if_filter_t *filter);
 
 
 opal_btl_usnic_component_t mca_btl_usnic_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
         .btl_version = {

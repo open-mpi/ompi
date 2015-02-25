@@ -1560,22 +1560,23 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     segsize = (max_msg_size + channel->info->ep_attr->msg_prefix_size +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&channel->recv_segs, opal_free_list_t);
-    rc = opal_free_list_init(&channel->recv_segs,
-                             sizeof(opal_btl_usnic_recv_segment_t) /* frag size */,
-                             opal_cache_line_size /* frag alignment */,
-                             OBJ_CLASS(opal_btl_usnic_recv_segment_t),
-                             segsize /* payload buffer size */,
-                             opal_cache_line_size /* payload alignment */,
-                             rd_num /* num erorments to alloc */,
-                             rd_num /* max elements to alloc */,
-                             rd_num /* num elements per alloc */,
-                             module->super.btl_mpool /* memory pool for reg */,
-                             0 /* mpool reg flags */,
-                             NULL /* unused0 */,
-                             NULL /* item_init */,
-                             NULL /* item_init_context */);
+    rc =
+        usnic_compat_free_list_init(&channel->recv_segs,
+                                    sizeof(opal_btl_usnic_recv_segment_t) /* frag size */,
+                                    opal_cache_line_size /* frag alignment */,
+                                    OBJ_CLASS(opal_btl_usnic_recv_segment_t),
+                                    segsize /* payload buffer size */,
+                                    opal_cache_line_size /* payload alignmt */,
+                                    rd_num /* num erorments to alloc */,
+                                    rd_num /* max elements to alloc */,
+                                    rd_num /* num elements per alloc */,
+                                    module->super.btl_mpool /* mpool for reg */,
+                                    0 /* mpool reg flags */,
+                                    NULL /* unused0 */,
+                                    NULL /* item_init */,
+                                    NULL /* item_init_context */);
     channel->recv_segs.ctx = module; /* must come after
-                                        opal_free_list_init_new,
+                                        free_list_init,
                                         otherwise ctx gets
                                         clobbered */
     if (OPAL_SUCCESS != rc) {
@@ -1584,7 +1585,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
 
     /* Post receive descriptors */
     for (i = 0; i < rd_num; i++) {
-        item = opal_free_list_get(&channel->recv_segs);
+        USNIC_COMPAT_FREE_LIST_GET(&channel->recv_segs, item);
         assert(NULL != item);
         rseg = (opal_btl_usnic_recv_segment_t*)item;
 
@@ -2020,7 +2021,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
 
     /* Send frags freelists */
     OBJ_CONSTRUCT(&module->small_send_frags, opal_free_list_t);
-    rc = opal_free_list_init(&module->small_send_frags,
+    rc = usnic_compat_free_list_init(&module->small_send_frags,
                              sizeof(opal_btl_usnic_small_send_frag_t) +
                              mca_btl_usnic_component.transport_header_len,
                              opal_cache_line_size,
@@ -2038,7 +2039,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     assert(OPAL_SUCCESS == rc);
 
     OBJ_CONSTRUCT(&module->large_send_frags, opal_free_list_t);
-    rc = opal_free_list_init(&module->large_send_frags,
+    rc = usnic_compat_free_list_init(&module->large_send_frags,
                              sizeof(opal_btl_usnic_large_send_frag_t) +
                              mca_btl_usnic_component.transport_header_len,
                              opal_cache_line_size,
@@ -2056,7 +2057,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     assert(OPAL_SUCCESS == rc);
 
     OBJ_CONSTRUCT(&module->put_dest_frags, opal_free_list_t);
-    rc = opal_free_list_init(&module->put_dest_frags,
+    rc = usnic_compat_free_list_init(&module->put_dest_frags,
                              sizeof(opal_btl_usnic_put_dest_frag_t) +
                              mca_btl_usnic_component.transport_header_len,
                              opal_cache_line_size,
@@ -2075,7 +2076,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
 
     /* list of segments to use for sending */
     OBJ_CONSTRUCT(&module->chunk_segs, opal_free_list_t);
-    rc = opal_free_list_init(&module->chunk_segs,
+    rc = usnic_compat_free_list_init(&module->chunk_segs,
                              sizeof(opal_btl_usnic_chunk_segment_t) +
                              mca_btl_usnic_component.transport_header_len,
                              opal_cache_line_size,
@@ -2098,7 +2099,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
            module->fabric_info->ep_attr->msg_prefix_size +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, opal_free_list_t);
-    rc = opal_free_list_init(&module->ack_segs,
+    rc = usnic_compat_free_list_init(&module->ack_segs,
                              sizeof(opal_btl_usnic_ack_segment_t) +
                              mca_btl_usnic_component.transport_header_len,
                              opal_cache_line_size,
@@ -2129,7 +2130,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     for (int i = module->first_pool; i <= module->last_pool; ++i) {
         size_t elt_size = sizeof(opal_btl_usnic_rx_buf_t) - 1 + (1 << i);
         OBJ_CONSTRUCT(&module->module_recv_buffers[i], opal_free_list_t);
-        rc = opal_free_list_init(&module->module_recv_buffers[i],
+        rc = usnic_compat_free_list_init(&module->module_recv_buffers[i],
                                  elt_size,
                                  opal_cache_line_size,
                                  OBJ_CLASS(opal_btl_usnic_rx_buf_t),
