@@ -142,11 +142,16 @@ _usdf_msg_post_recv(struct usdf_rx *rx, void *buf, size_t len)
 	rq->urq_post_index = (rq->urq_post_index + 1)
 		& rq->urq_post_index_mask;
 
-	desc = vnic_rq_next_desc(vrq);
+	desc = rq->urq_next_desc;
 	rq_enet_desc_enc(desc, (dma_addr_t) buf,
 			RQ_ENET_TYPE_ONLY_SOP, len);
 	wmb();
-	vnic_rq_post(vrq, buf, 0, (dma_addr_t) buf, len, 0);
+	iowrite32(rq->urq_post_index, &vrq->ctrl->posted_index);
+
+	rq->urq_next_desc = (struct rq_enet_desc *)
+				((uintptr_t)rq->urq_desc_ring
+					+ ((rq->urq_post_index)<<4));
+	rq->urq_recv_credits -= 1;
 
 	return 0;
 }
@@ -334,6 +339,7 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 		hdr->msg.m.rc_data.seqno = htons(ep->e.msg.ep_next_tx_seq);
 		++ep->e.msg.ep_next_tx_seq;
 
+		sge_len = resid;
 		ptr = (uint8_t *)(hdr + 1);
 		while (resid > 0) {
 			memcpy(ptr, cur_ptr, cur_resid);
@@ -345,7 +351,6 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 		}
 
 		/* add packet lengths */
-		sge_len = resid;
 		hdr->hdr.uh_ip.tot_len = htons(
 				sge_len + sizeof(struct rudp_pkt) -
 				sizeof(struct ether_header));
@@ -355,7 +360,7 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 				 sizeof(struct iphdr)) + sge_len);
 
 		index = _usd_post_send_one(wq, hdr,
-				resid + sizeof(*hdr), 1);
+				sge_len + sizeof(*hdr), 1);
 	} else {
 		struct vnic_wq *vwq;
 		u_int8_t offload_mode = 0, eop;
@@ -420,12 +425,12 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 				(sizeof(struct rudp_pkt) -
 				 sizeof(struct ether_header) -
 				 sizeof(struct iphdr)) + sent);
-if (0) {
+#if 0
 if ((random() % 177) == 0 && resid == 0) {
 	hdr->hdr.uh_eth.ether_type = 0;
 //printf("BORK seq %u\n", ep->e.msg.ep_next_tx_seq);
 }
-}
+#endif
 
 		if (resid == 0) {
 			hdr->msg.opcode = htons(RUDP_OP_LAST);

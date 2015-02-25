@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +40,6 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h"
@@ -52,7 +54,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_tcp_component_t {
-    mca_btl_base_component_2_0_0_t super;   /**< base BTL component */ 
+    mca_btl_base_component_3_0_0_t super;   /**< base BTL component */
     uint32_t tcp_addr_count;                /**< total number of addresses */
     uint32_t tcp_num_btls;                  /**< number of interfaces available to the TCP component */
     unsigned int tcp_num_links;             /**< number of logical links per physical device */
@@ -86,9 +88,9 @@ struct mca_btl_tcp_component_t {
     int    tcp_disable_family;              /**< disabled AF_family */
 
     /* free list of fragment descriptors */
-    ompi_free_list_t tcp_frag_eager;
-    ompi_free_list_t tcp_frag_max;
-    ompi_free_list_t tcp_frag_user;
+    opal_free_list_t tcp_frag_eager;
+    opal_free_list_t tcp_frag_max;
+    opal_free_list_t tcp_frag_user;
 
     /* Do we want to use TCP_NODELAY? */
     int    tcp_not_use_nodelay;
@@ -217,32 +219,22 @@ extern int mca_btl_tcp_send(
 
 /**
  * Initiate an asynchronous put.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
 
-extern int mca_btl_tcp_put(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
+int mca_btl_tcp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 
 /**
  * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
  */
 
-extern int mca_btl_tcp_get(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
+int mca_btl_tcp_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                     uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                     mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Allocate a descriptor with a segment of the requested size.
@@ -290,23 +282,12 @@ extern int mca_btl_tcp_free(
 mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
     uint32_t flags
 );
-
-extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst( 
-    struct mca_btl_base_module_t* btl, 
-    struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags); 
 
 
 /**

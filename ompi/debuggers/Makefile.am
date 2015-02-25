@@ -44,6 +44,7 @@ headers = \
         msgq_interface.h ompi_msgq_dll_defs.h
 
 # Simple checks to ensure that the DSOs are functional
+# This test is only built if we have libltdl support.
 
 dlopen_test_SOURCES = dlopen_test.c
 dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl

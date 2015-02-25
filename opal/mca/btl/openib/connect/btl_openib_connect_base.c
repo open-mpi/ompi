@@ -2,9 +2,11 @@
 /*
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -18,10 +20,10 @@
 #include "btl_openib_proc.h"
 #include "connect/base.h"
 #include "connect/btl_openib_connect_empty.h"
-#if OPAL_HAVE_RDMACM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_RDMACM
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OPAL_HAVE_UDCM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_UDCM
 #include "connect/btl_openib_connect_udcm.h"
 #endif
 
@@ -44,7 +46,7 @@ static opal_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OPAL_HAVE_RDMACM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_RDMACM
     &opal_btl_openib_connect_rdmacm,
 #else
     &opal_btl_openib_connect_empty,
@@ -52,7 +54,7 @@ static opal_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if UD CM is not enabled, use the "empty" CPC */
-#if OPAL_HAVE_UDCM && OPAL_HAVE_THREADS
+#if OPAL_HAVE_UDCM
     &opal_btl_openib_connect_udcm,
 #else
     &opal_btl_openib_connect_empty,
@@ -411,7 +413,7 @@ opal_btl_openib_connect_base_get_cpc_byindex(uint8_t index)
 
 int opal_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 {
-    ompi_free_list_item_t *fli;
+    opal_free_list_item_t *fli;
     int length = sizeof(mca_btl_openib_header_t) +
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t) +

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -142,7 +142,7 @@ get_hostname_buffer(void)
 #endif
 
 int
-opal_net_init()
+opal_net_init(void)
 {
     char **args, *arg;
     uint32_t a, b, c, d, bits, addr;
@@ -154,6 +154,7 @@ opal_net_init()
         private_ipv4 = (private_ipv4_t*)malloc( (count + 1) * sizeof(private_ipv4_t));
         if( NULL == private_ipv4 ) {
             opal_output(0, "Unable to allocate memory for the private addresses array" );
+            opal_argv_free(args);
             goto do_local_init;
         }
         for( i = 0; i < count; i++ ) {

@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,7 +98,7 @@ enum {
  * Shared Memory (VADER) BTL module.
  */
 struct mca_btl_vader_component_t {
-    mca_btl_base_component_2_0_0_t super;   /**< base BTL component */
+    mca_btl_base_component_3_0_0_t super;   /**< base BTL component */
     int vader_free_list_num;                /**< initial size of free lists */
     int vader_free_list_max;                /**< maximum size of free lists */
     int vader_free_list_inc;                /**< number of elements to alloc when growing free lists */
@@ -112,10 +112,9 @@ struct mca_btl_vader_component_t {
     size_t segment_size;                    /**< size of my_segment */
     size_t segment_offset;                  /**< start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
-    ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
-    ompi_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
-    ompi_free_list_t vader_frags_user;      /**< free list of small inline frags */
-    ompi_free_list_t vader_frags_rdma;      /**< free list of vader put/get frags (single-copy) */
+    opal_free_list_t vader_frags_eager;     /**< free list of vader send frags */
+    opal_free_list_t vader_frags_max_send;  /**< free list of vader max send frags (large fragments) */
+    opal_free_list_t vader_frags_user;      /**< free list of small inline frags */
 
     unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
     unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */
@@ -208,21 +207,24 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_VADER_HAVE_XPMEM
-int mca_btl_vader_put_xpmem (struct mca_btl_base_module_t *btl,
-                             struct mca_btl_base_endpoint_t *endpoint,
-                             struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_put_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 #if OPAL_BTL_VADER_HAVE_CMA
-int mca_btl_vader_put_cma (struct mca_btl_base_module_t *btl,
-                           struct mca_btl_base_endpoint_t *endpoint,
-                           struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_put_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 #if OPAL_BTL_VADER_HAVE_KNEM
-int mca_btl_vader_put_knem (struct mca_btl_base_module_t *btl,
-                            struct mca_btl_base_endpoint_t *endpoint,
-                            struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                            uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                            mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                            int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 /**
@@ -233,21 +235,24 @@ int mca_btl_vader_put_knem (struct mca_btl_base_module_t *btl,
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_VADER_HAVE_XPMEM
-int mca_btl_vader_get_xpmem (struct mca_btl_base_module_t *btl,
-                             struct mca_btl_base_endpoint_t *endpoint,
-                             struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                             uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 #if OPAL_BTL_VADER_HAVE_CMA
-int mca_btl_vader_get_cma (struct mca_btl_base_module_t *btl,
-                           struct mca_btl_base_endpoint_t *endpoint,
-                           struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 #if OPAL_BTL_VADER_HAVE_KNEM
-int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
-                            struct mca_btl_base_endpoint_t *endpoint,
-                            struct mca_btl_base_descriptor_t *des);
+int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                            uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                            mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                            int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
 /**
@@ -259,6 +264,7 @@ int mca_btl_vader_get_knem (struct mca_btl_base_module_t *btl,
 mca_btl_base_descriptor_t* mca_btl_vader_alloc (struct mca_btl_base_module_t* btl,
                                                 struct mca_btl_base_endpoint_t* endpoint,
                                                 uint8_t order, size_t size, uint32_t flags);
+
 
 END_C_DECLS
 

@@ -1,5 +1,6 @@
 /* Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +12,7 @@
 #include "opal/constants.h"
 
 #include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/dstore/base/base.h"

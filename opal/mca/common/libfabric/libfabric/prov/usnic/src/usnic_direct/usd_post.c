@@ -59,12 +59,10 @@ usd_get_recv_credits(
     struct usd_qp *uqp)
 {
     struct usd_qp_impl *qp;
-    struct vnic_rq *vrq;
 
     qp = to_qpi(uqp);
-    vrq = &qp->uq_rq.urq_vnic_rq;
 
-    return vrq->ring.desc_avail;
+    return qp->uq_rq.urq_recv_credits;
 }
 
 int
@@ -77,45 +75,48 @@ usd_post_recv(
     struct vnic_rq *vrq;
     struct rq_enet_desc *desc;
     struct iovec *iovp;
+    uint32_t index;
+    uint32_t count;
     unsigned i;
 
     qp = to_qpi(uqp);
     rq = &qp->uq_rq;
     vrq = &rq->urq_vnic_rq;
+    desc = rq->urq_next_desc;
+    index = rq->urq_post_index;
+
+    iovp = recv_list->urd_iov;
+    count = 0;
 
     while (recv_list != NULL) {
-
-        iovp = recv_list->urd_iov;
-
-        /* XXX - this should be rewritten along the lines of post_send */
-
-        rq->urq_context[rq->urq_post_index] = recv_list->urd_context;
-        rq->urq_post_index = (rq->urq_post_index + 1)
-            & rq->urq_post_index_mask;
-
-        desc = vnic_rq_next_desc(vrq);
+        rq->urq_context[index] = recv_list->urd_context;
         rq_enet_desc_enc(desc, (dma_addr_t) iovp[0].iov_base,
                          RQ_ENET_TYPE_ONLY_SOP, iovp[0].iov_len);
-        wmb();
-        vnic_rq_post(vrq, iovp[0].iov_base, 0,
-                     (dma_addr_t) iovp[0].iov_base, iovp[0].iov_len, 0);
+        count++;
+
+        index = (index+1) & rq->urq_post_index_mask;
+        desc = (struct rq_enet_desc *) ((uintptr_t)rq->urq_desc_ring
+                                            + (index<<4));
 
         for (i = 1; i < recv_list->urd_iov_cnt; ++i) {
-
-            rq->urq_context[rq->urq_post_index] = recv_list->urd_context;
-            rq->urq_post_index = (rq->urq_post_index + 1)
-                & rq->urq_post_index_mask;
-
-            desc = vnic_rq_next_desc(vrq);
+            rq->urq_context[index] = recv_list->urd_context;
             rq_enet_desc_enc(desc, (dma_addr_t) iovp[i].iov_base,
                              RQ_ENET_TYPE_NOT_SOP, iovp[i].iov_len);
-            wmb();
-            vnic_rq_post(vrq, iovp[i].iov_base, 0,
-                         (dma_addr_t) iovp[i].iov_base, iovp[i].iov_len,
-                         0);
+            count++;
+
+            index = (index+1) & rq->urq_post_index_mask;
+            desc = (struct rq_enet_desc *) ((uintptr_t)rq->urq_desc_ring
+                                            + (index<<4));
         }
         recv_list = recv_list->urd_next;
     }
+
+    wmb();
+    iowrite32(index, &vrq->ctrl->posted_index);
+
+    rq->urq_next_desc = desc;
+    rq->urq_post_index = index;
+    rq->urq_recv_credits -= count;
 
     return 0;
 }

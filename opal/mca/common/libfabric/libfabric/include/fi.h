@@ -38,13 +38,17 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <string.h>
-#include <byteswap.h>
-#include <endian.h>
 #include <pthread.h>
-#include <string.h>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_prov.h>
 #include <rdma/fi_atomic.h>
+
+#ifdef __APPLE__
+#include <osx/osd.h>
+#else
+#include <linux/osd.h>
+#endif
 
 #ifdef HAVE_ATOMICS
 #  include <stdatomic.h>
@@ -66,11 +70,19 @@ extern "C" {
 #endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifndef htonll
 static inline uint64_t htonll(uint64_t x) { return bswap_64(x); }
+#endif
+#ifndef ntohll
 static inline uint64_t ntohll(uint64_t x) { return bswap_64(x); }
+#endif
 #else
+#ifndef htonll
 static inline uint64_t htonll(uint64_t x) { return x; }
+#endif
+#ifndef ntohll
 static inline uint64_t ntohll(uint64_t x) { return x; }
+#endif
 #endif
 
 #define sizeof_field(type, field) sizeof(((type *)0)->field)
@@ -78,13 +90,15 @@ static inline uint64_t ntohll(uint64_t x) { return x; }
 #define MIN(a, b) ((a) < (b) ? a : b)
 #define MAX(a, b) ((a) > (b) ? a : b)
 
-static inline int flsll(long long int i)
+/* flsll is defined on BSD systems, but is different. */
+static inline int fi_flsll(long long int i)
 {
 	return i ? 65 - ffsll(htonll(i)) : 0;
 }
+
 static inline uint64_t roundup_power_of_two(uint64_t n)
 {
-	return 1ULL << flsll(n - 1);
+	return 1ULL << fi_flsll(n - 1);
 }
 
 #define FI_TAG_GENERIC	0xAAAAAAAAAAAAAAAAULL
@@ -190,22 +204,37 @@ size_t fi_datatype_size(enum fi_datatype datatype);
 uint64_t fi_tag_bits(uint64_t mem_tag_format);
 uint64_t fi_tag_format(uint64_t tag_bits);
 
+int fi_send_allowed(uint64_t caps);
+int fi_recv_allowed(uint64_t caps);
+int fi_rma_initiate_allowed(uint64_t caps);
+int fi_rma_target_allowed(uint64_t caps);
+
 #define RDMA_CONF_DIR  SYSCONFDIR "/" RDMADIR
 #define FI_CONF_DIR RDMA_CONF_DIR "/fabric"
 
 #define DEFAULT_ABI "FABRIC_1.0"
 
+#if  HAVE_ALIAS_ATTRIBUTE == 1
+#define DEFAULT_SYMVER_PRE(a) a##_
+#else
+#define DEFAULT_SYMVER_PRE(a) a
+#endif
+
 /* symbol -> external symbol mappings */
 #ifdef HAVE_SYMVER_SUPPORT
 
-#  define symver(name, api, ver) \
+#  define SYMVER(name, api, ver) \
         asm(".symver " #name "," #api "@" #ver)
-#  define default_symver(name, api) \
+#  define DEFAULT_SYMVER(name, api) \
         asm(".symver " #name "," #api "@@" DEFAULT_ABI)
 #else
-#  define symver(name, api, ver)
-#  define default_symver(name, api) \
-        extern __typeof(name) api __attribute__((alias(#name)))
+#  define SYMVER(Name, api, ver)
+#if  HAVE_ALIAS_ATTRIBUTE == 1
+#  define DEFAULT_SYMVER(name, api) \
+        extern typeof (name) api __attribute__((alias(#name)));
+#else
+#  define DEFAULT_SYMVER(name, api)
+#endif  /* HAVE_ALIAS_ATTRIBUTE == 1*/
 
 #endif /* HAVE_SYMVER_SUPPORT */
 

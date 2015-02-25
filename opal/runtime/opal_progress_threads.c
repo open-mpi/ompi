@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -9,6 +9,10 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
@@ -153,6 +157,15 @@ void opal_stop_progress_thread(char *name, bool cleanup)
     /* find the specified engine */
     OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
+            /* if it is already inactive, then just cleanup if that
+             * is the request */
+            if (!trk->ev_active) {
+                if (cleanup) {
+                    opal_list_remove_item(&tracking, &trk->super);
+                    OBJ_RELEASE(trk);
+                }
+                return;
+            }
             /* mark it as inactive */
             trk->ev_active = false;
             /* break the event loop - this will cause the loop to exit

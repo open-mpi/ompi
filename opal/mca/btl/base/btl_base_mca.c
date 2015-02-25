@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -45,13 +46,15 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_exclusivity);
 
-    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d, RDMA_MATCHED=%d, HETEROGENEOUS_RDMA=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d; flags only used by the \"bfo\" PML (ignored by others): FAILOVER_SUPPORT=%d)",
+    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d, HETEROGENEOUS_RDMA=%d, "
+             "ATOMIC_OPS=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, "
+             "RDMA_COMPLETION=%d; flags only used by the \"bfo\" PML (ignored by others): FAILOVER_SUPPORT=%d)",
              MCA_BTL_FLAGS_SEND,
              MCA_BTL_FLAGS_PUT,
              MCA_BTL_FLAGS_GET,
              MCA_BTL_FLAGS_SEND_INPLACE,
-             MCA_BTL_FLAGS_RDMA_MATCHED,
              MCA_BTL_FLAGS_HETEROGENEOUS_RDMA,
+             MCA_BTL_FLAGS_ATOMIC_OPS,
              MCA_BTL_FLAGS_NEED_ACK,
              MCA_BTL_FLAGS_NEED_CSUM,
              MCA_BTL_FLAGS_RDMA_COMPLETION,
@@ -61,6 +64,14 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_flags);
+    free(msg);
+
+    asprintf (&msg, "BTL atomic bit flags (general flags: ADD=%d, AND=%d, OR=%d, XOR=%d",
+              MCA_BTL_ATOMIC_SUPPORTS_ADD, MCA_BTL_ATOMIC_SUPPORTS_AND, MCA_BTL_ATOMIC_SUPPORTS_OR,
+              MCA_BTL_ATOMIC_SUPPORTS_XOR);
+    (void) mca_base_component_var_register(version, "atomic_flags", msg, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT, &module->btl_atomic_flags);
     free(msg);
 
     (void) mca_base_component_var_register(version, "rndv_eager_limit", "Size (in bytes, including header) of \"phase 1\" fragment sent for all large messages (must be >= 0 and <= eager_limit)",
@@ -74,6 +85,39 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_eager_limit);
+
+    if ((module->btl_flags & MCA_BTL_FLAGS_GET) && module->btl_get) {
+	if (0 == module->btl_get_limit) {
+	    module->btl_get_limit = SIZE_MAX;
+	}
+
+	(void) mca_base_component_var_register(version, "get_limit", "Maximum size (in bytes) for btl get",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4,
+					       MCA_BASE_VAR_SCOPE_READONLY, &module->btl_get_limit);
+
+	/* Allow the user to set the alignment. The BTL should double-check the alignment in its open
+	 * function. */
+	(void) mca_base_component_var_register(version, "get_alignment", "Alignment required for btl get",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_6,
+					       MCA_BASE_VAR_SCOPE_CONSTANT, &module->btl_get_alignment);
+    }
+
+    if ((module->btl_flags & MCA_BTL_FLAGS_PUT) && module->btl_put) {
+	if (0 == module->btl_put_limit) {
+	    module->btl_put_limit = SIZE_MAX;
+	}
+	(void) mca_base_component_var_register(version, "put_limit", "Maximum size (in bytes) for btl put",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4,
+					       MCA_BASE_VAR_SCOPE_READONLY, &module->btl_put_limit);
+
+	/* Allow the user to set the alignment. The BTL should double-check the alignment in its open
+	 * function. */
+	(void) mca_base_component_var_register(version, "put_alignment", "Alignment required for btl put",
+					       MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_6,
+					       MCA_BASE_VAR_SCOPE_CONSTANT, &module->btl_put_alignment);
+    }
+
+
 #if OPAL_CUDA_GDR_SUPPORT
     /* If no CUDA RDMA support, zero them out */
     if (!(MCA_BTL_FLAGS_CUDA_GET & module->btl_flags)) {
@@ -117,11 +161,16 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_min_rdma_pipeline_size);
 
-      (void) mca_base_component_var_register(version, "bandwidth", "Approximate maximum bandwidth of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)",
+      (void) mca_base_component_var_register(version, "latency", "Approximate latency of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = latency in microseconds)",
                                              MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
                                              OPAL_INFO_LVL_5,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_latency);
+      (void) mca_base_component_var_register(version, "bandwidth", "Approximate maximum bandwidth of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)",
+                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                             OPAL_INFO_LVL_5,
+                                             MCA_BASE_VAR_SCOPE_READONLY,
+                                             &module->btl_bandwidth);
     }
 
     return mca_btl_base_param_verify(module);
@@ -142,6 +191,18 @@ int mca_btl_base_param_verify(mca_btl_base_module_t *module)
 
     if (NULL == module->btl_get) {
         module->btl_flags &= ~MCA_BTL_FLAGS_GET;
+    }
+
+    if (0 == module->btl_atomic_flags) {
+        module->btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_OPS;
+    }
+
+    if (0 == module->btl_get_limit) {
+	module->btl_get_limit = SIZE_MAX;
+    }
+
+    if (0 == module->btl_put_limit) {
+	module->btl_put_limit = SIZE_MAX;
     }
 
     return OPAL_SUCCESS;

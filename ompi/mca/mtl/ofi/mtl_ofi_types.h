@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +57,10 @@ typedef struct mca_mtl_ofi_module_t {
 
     /** List of free messages for matched probe */
     opal_free_list_t free_messages;
+
+    /** Optional user-specified OFI provider name */
+    char *provider_name;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
@@ -66,7 +71,7 @@ typedef struct mca_mtl_ofi_component_t {
 } mca_mtl_ofi_component_t;
 
 
-OMPI_DECLSPEC mca_mtl_ofi_component_t mca_mtl_ofi_component;
+OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
 /* match/ignore bit manipulation
  *

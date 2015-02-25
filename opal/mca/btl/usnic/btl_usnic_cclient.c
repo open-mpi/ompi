@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +99,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     struct sockaddr_un address;
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path));
+    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
 
     if (0 != connect(agent_fd, (struct sockaddr*) &address, sizeof(address))) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);

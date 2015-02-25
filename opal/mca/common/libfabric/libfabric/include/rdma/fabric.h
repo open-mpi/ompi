@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel Corporation. All rights reserved.
+ * Copyright (c) 2013-2015 Intel Corporation. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -77,7 +77,6 @@ struct fid_cntr;
 struct fid_ep;
 struct fid_pep;
 struct fid_stx;
-struct fid_sep;
 struct fid_mr;
 
 typedef struct fid *fid_t;
@@ -96,8 +95,8 @@ typedef struct fid *fid_t;
 #define FI_MSG			(1ULL << 1)
 #define FI_RMA			(1ULL << 2)
 #define FI_TAGGED		(1ULL << 3)
-#define FI_ATOMICS		(1ULL << 4)
-#define FI_MULTICAST		(1ULL << 5)	/* multicast uses MSG ops */
+#define FI_ATOMIC		(1ULL << 4)
+#define FI_ATOMICS		FI_ATOMIC
 #define FI_DYNAMIC_MR		(1ULL << 7)
 #define FI_NAMED_RX_CTX		(1ULL << 8)
 #define FI_BUFFERED_RECV	(1ULL << 9)
@@ -122,6 +121,7 @@ typedef struct fid *fid_t;
 #define FI_WRITE		(1ULL << 17)
 #define FI_RECV			(1ULL << 18)
 #define FI_SEND			(1ULL << 19)
+#define FI_TRANSMIT		FI_SEND
 #define FI_REMOTE_READ		(1ULL << 20)
 #define FI_REMOTE_WRITE		(1ULL << 21)
 
@@ -134,6 +134,7 @@ typedef struct fid *fid_t;
 #define FI_MORE			(1ULL << 29)
 #define FI_PEEK			(1ULL << 30)
 #define FI_TRIGGER		(1ULL << 31)
+#define FI_FENCE		(1ULL << 32)
 
 
 struct fi_ioc {
@@ -168,9 +169,19 @@ enum fi_progress {
 enum fi_threading {
 	FI_THREAD_UNSPEC,
 	FI_THREAD_SAFE,
-	FI_THREAD_PROGRESS
+	FI_THREAD_FID,
+	FI_THREAD_DOMAIN,
+	FI_THREAD_COMPLETION,
+	FI_THREAD_ENDPOINT,
 };
 
+enum fi_resource_mgmt {
+	FI_RM_UNSPEC,
+	FI_RM_DISABLED,
+	FI_RM_ENABLED
+};
+
+#define FI_ORDER_NONE		0
 #define FI_ORDER_RAR		(1 << 0)
 #define FI_ORDER_RAW		(1 << 1)
 #define FI_ORDER_RAS		(1 << 2)
@@ -180,6 +191,8 @@ enum fi_threading {
 #define FI_ORDER_SAR		(1 << 6)
 #define FI_ORDER_SAW		(1 << 7)
 #define FI_ORDER_SAS		(1 << 8)
+#define FI_ORDER_RECV		(1 << 9)
+#define FI_ORDER_STRICT		0xFFFFFFFF
 
 enum fi_ep_type {
 	FI_EP_UNSPEC,
@@ -209,15 +222,18 @@ enum {
 #define FI_LOCAL_MR		(1ULL << 1)
 #define FI_PROV_MR_ATTR		(1ULL << 2)
 #define FI_MSG_PREFIX		(1ULL << 3)
+#define FI_ASYNC_IOV		(1ULL << 4)
 
 struct fi_tx_attr {
 	uint64_t		caps;
 	uint64_t		mode;
 	uint64_t		op_flags;
 	uint64_t		msg_order;
+	uint64_t		comp_order;
 	size_t			inject_size;
 	size_t			size;
 	size_t			iov_limit;
+	size_t			rma_iov_limit;
 };
 
 struct fi_rx_attr {
@@ -225,6 +241,7 @@ struct fi_rx_attr {
 	uint64_t		mode;
 	uint64_t		op_flags;
 	uint64_t		msg_order;
+	uint64_t		comp_order;
 	size_t			total_buffered_recv;
 	size_t			size;
 	size_t			iov_limit;
@@ -242,6 +259,7 @@ struct fi_ep_attr {
 	size_t			max_order_waw_size;
 	uint64_t		mem_tag_format;
 	uint64_t		msg_order;
+	uint64_t		comp_order;
 	size_t			tx_ctx_cnt;
 	size_t			rx_ctx_cnt;
 };
@@ -252,6 +270,7 @@ struct fi_domain_attr {
 	enum fi_threading	threading;
 	enum fi_progress	control_progress;
 	enum fi_progress	data_progress;
+	enum fi_resource_mgmt	resource_mgmt;
 	size_t			mr_key_size;
 	size_t			cq_data_size;
 	size_t			cq_cnt;
@@ -309,6 +328,7 @@ enum {
 };
 
 struct fi_eq_attr;
+struct fi_wait_attr;
 
 struct fi_ops {
 	size_t	size;
@@ -341,6 +361,8 @@ struct fi_ops_fabric {
 			struct fid_pep **pep, void *context);
 	int	(*eq_open)(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 			struct fid_eq **eq, void *context);
+	int	(*wait_open)(struct fid_fabric *fabric, struct fi_wait_attr *attr,
+			struct fid_wait **waitset);
 };
 
 struct fid_fabric {
@@ -356,11 +378,6 @@ int fi_fabric(struct fi_fabric_attr *attr, struct fid_fabric **fabric, void *con
 static inline int fi_close(struct fid *fid)
 {
 	return fid->ops->close(fid);
-}
-
-static inline int fi_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
-{
-	return fid->ops->bind(fid, bfid, flags);
 }
 
 struct fi_alias {
@@ -381,6 +398,7 @@ enum {
 	 */
 	FI_ALIAS,		/* struct fi_alias * */
 	FI_GETWAIT,		/* void * wait object */
+	FI_ENABLE,		/* NULL */
 };
 
 static inline int fi_control(struct fid *fid, int command, void *arg)
@@ -420,6 +438,9 @@ enum fi_type {
 	FI_TYPE_MSG_ORDER,
 	FI_TYPE_MODE,
 	FI_TYPE_AV_TYPE,
+	FI_TYPE_ATOMIC_TYPE,
+	FI_TYPE_ATOMIC_OP,
+	FI_TYPE_VERSION,
 };
 
 char *fi_tostr(const void *data, enum fi_type datatype);

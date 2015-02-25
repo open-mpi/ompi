@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -106,7 +106,8 @@ opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
  * This routine lives in this file to help prevent automatic inlining by the
  * compiler.
  *
- * The "tag" only applies to sends. */
+ * The "tag" only applies to sends.
+ */
 int
 opal_btl_usnic_finish_put_or_send(
     opal_btl_usnic_module_t *module,

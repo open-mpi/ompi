@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2014\-12\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-02\-11" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -11,7 +11,7 @@ fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
 int\ fi_getinfo(int\ version,\ const\ char\ *node,\ const\ char\ *service,
 \ \ \ \ \ \ \ \ uint64_t\ flags,\ struct\ fi_info\ *hints,\ struct\ fi_info\ **info);
 
-int\ fi_freeinfo(struct\ fi_info\ *info);
+void\ fi_freeinfo(struct\ fi_info\ *info);
 
 struct\ fi_info\ *fi_dupinfo(const\ struct\ fi_info\ *info);
 \f[]
@@ -37,6 +37,8 @@ Returns information about available fabric services for reaching the
 specified node or service, subject to any provided hints.
 Callers must provide at least one of the node, service, or hints
 parameters.
+If node and service are NULL, then the hints src_addr and/or dest_addr
+fields of the fi_info structure must be specified.
 If no matching fabric information is available, info will be set to
 NULL.
 .PP
@@ -134,8 +136,9 @@ This field will be ignored in hints if FI_SOURCE is specified.
 .PP
 \f[I]dest_addrlen - destination address length\f[] : Indicates the
 length of the destination address (must be specified if
-\f[I]dst_addr\f[] is specified).
-This field will be ignored in hints unless FI_SOURCE is specified.
+\f[I]dest_addr\f[] is specified).
+This field will be ignored in hints unless the node and service
+parameters are NULL or FI_SOURCE is specified.
 .PP
 \f[I]src_addr - source address\f[] : If specified, indicates the source
 address.
@@ -143,7 +146,8 @@ This field will be ignored in hints if FI_SOURCE is specified.
 .PP
 \f[I]dest_addr - destination address\f[] : If specified, indicates the
 destination address.
-This field will be ignored in hints unless FI_SOURCE is specified.
+This field will be ignored in hints unless the node and service
+parameters are NULL or FI_SOURCE is specified.
 .PP
 \f[I]connreq - connection request\f[] : References a specific connection
 request, otherwise the field must be NULL.
@@ -250,25 +254,15 @@ send and receive tagged messages.
 Applications can use the FI_SEND and FI_RECV flags to optimize an
 endpoint as send-only or receive-only.
 .PP
-\f[I]FI_ATOMICS\f[] : Specifies that the endpoint supports some set of
+\f[I]FI_ATOMIC\f[] : Specifies that the endpoint supports some set of
 atomic operations.
 Endpoints supporting this capability support operations defined by
 struct fi_ops_atomic.
-In the absence of any relevant flags, FI_ATOMICS implies the ability to
+In the absence of any relevant flags, FI_ATOMIC implies the ability to
 initiate and be the target of remote atomic reads and writes.
 Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
 FI_REMOTE_WRITE flags to restrict the types of atomic operations
 supported by an endpoint.
-.PP
-\f[I]FI_MULTICAST\f[] : Indicates that the endpoint should support
-multicast data transfers.
-Endpoints supporting this capability support multicast operations
-defined by struct fi_ops_msg, when a multicast address is specified as
-the destination address.
-In the absence of any relevant flags, FI_MULTICAST implies the ability
-to send and receive messages.
-Applications can use the FI_SEND and FI_RECV flags to optimize an
-endpoint as send-only or receive-only.
 .PP
 \f[I]FI_DYNAMIC_MR\f[] : The provider supports applications registering
 any range of addresses in their virtual address space, whether or not
@@ -316,11 +310,11 @@ data, which may adversely affect performance.
 .PP
 \f[I]FI_READ\f[] : Indicates that the user requires an endpoint capable
 of initiating reads against remote memory regions.
-Remote reads include some RMA and atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_WRITE\f[] : Indicates that the user requires an endpoint capable
 of initiating writes against remote memory regions.
-Remote writes include some RMA and most atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_SEND\f[] : Indicates that the user requires an endpoint capable
 of sending message data transfers.
@@ -334,12 +328,11 @@ message functionality.
 .PP
 \f[I]FI_REMOTE_READ\f[] : Indicates that the user requires an endpoint
 capable of receiving read memory operations from remote endpoints.
-Remote read operations include some RMA and atomic operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_REMOTE_WRITE\f[] : Indicates that the user requires an endpoint
 capable of receiving write memory operations from remote endpoints.
-Remote write operations include some RMA operations and most atomic
-operations.
+This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
 \f[I]FI_REMOTE_CQ_DATA\f[] : Applications may include a small message
 with a data transfer that is placed directly into a remote event queue
@@ -372,6 +365,15 @@ assumption that fi_cancel will not be used by the application.
 triggered operations.
 Endpoints support this capability must meet the usage model as described
 by fi_trigger.3.
+.PP
+\f[I]FI_FENCE\f[] : Indicates that the endpoint support the FI_FENCE
+flag on data transfer operations.
+Support requires tracking that all previous transmit requests to a
+specified remote endpoint complete prior to initiating the fenced
+operation.
+Fenced operations are often used to enforce ordering between operations
+that are not otherwise guaranteed by the underlying provider or
+protocol.
 .SH MODE
 .PP
 The operational mode bits are used to convey requirements that an
@@ -445,10 +447,10 @@ Such received messages will indicate a transfer size of 0 bytes.
 .PP
 \f[I]FI_PROV_MR_ATTR\f[] : The provider assigns one or more attributes
 associated with a memory registration request.
-The provider will set this mode if it returns the the memory
-registration keys that applications must use, or if it requires that the
-MR offset associated with a memory region be the same as the virtual
-address of the memory.
+The provider will set this mode if it returns the memory registration
+keys that applications must use, or if it requires that the MR offset
+associated with a memory region be the same as the virtual address of
+the memory.
 .PP
 Applications that support provider MR attributes will need to exchange
 MR parameters with remote peers for RMA and atomic operations.
@@ -459,6 +461,18 @@ associated with a registration request, and the resulting memory region
 will start at a base address of 0.
 Applications can request that providers select MR attributes by forcing
 this bit set after fi_getinfo returns.
+.PP
+\f[I]FI_ASYNC_IOV\f[] : Applications can reference multiple data buffers
+as part of a single transmit operation through the use of IO vectors
+(SGEs).
+Typically, the contents of an IO vector are copied by the provider into
+an internal buffer area, or directly to the underlying hardware.
+However, when a large number of IOV entries are supported, IOV buffering
+may have a negative impact on performance and memory consumption.
+The FI_ASYNC_IOV mode indicates that the application must provide the
+buffering needed for the IO vectors.
+When set, an application must not modify an IO vector until the
+associated operation has completed.
 .SH ENDPOINT TYPES
 .PP
 \f[I]FI_EP_UNSPEC\f[] : The type of endpoint is not specified.
@@ -489,7 +503,7 @@ these operations.
 .PP
 A provider may support one or more of the following addressing formats.
 In some cases, a selected addressing format may need to be translated or
-mapped into into an address which is native to the fabric.
+mapped into an address which is native to the fabric.
 See \f[C]fi_av\f[](3).
 .PP
 \f[I]FI_FORMAT_UNSPEC\f[] : FI_FORMAT_UNSPEC indicates that a provider
@@ -529,6 +543,7 @@ Use of this flag will suppress any lengthy name resolution protocol.
 .PP
 \f[I]FI_SOURCE\f[] : Indicates that the node and service parameters
 specify the local source address to associate with an endpoint.
+If specified, either the node and/or service parameter must be non-NULL.
 This flag is often used with passive endpoints.
 .SH RETURN VALUE
 .PP

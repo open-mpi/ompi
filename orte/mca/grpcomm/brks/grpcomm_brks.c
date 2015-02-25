@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -307,18 +307,38 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
 static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
     opal_buffer_t *reply;
     int rc;
+    orte_job_t *jdata;
+    uint64_t nprocs;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:coll:brks declared collective complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    reply = OBJ_NEW(opal_buffer_t);
+    /* pack the number of procs involved in the collective
+     * so the recipients can unpack any collected data */
+    if (1 == coll->sig->sz) {
+        /* get the job object for this entry */
+        if (NULL == (jdata = orte_get_job_data_object(coll->sig->signature[0].jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return ORTE_ERROR;
+        }
+        nprocs = jdata->num_procs;
+    } else {
+        nprocs = coll->sig->sz;
+    }
 
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &coll->nreported, 1, OPAL_UINT64))) {
+    reply = OBJ_NEW(opal_buffer_t);
+    if (NULL == reply) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_UINT64))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
         return rc;
     }
+
     /* transfer the collected bucket */
     opal_dss.copy_payload(reply, &coll->bucket);
 

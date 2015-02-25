@@ -122,8 +122,11 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_INIT_BAR_ID            (ORTE_JOB_START_KEY + 31)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FINI_BAR_ID            (ORTE_JOB_START_KEY + 32)    // orte_grpcomm_coll_id_t - collective id
 #define ORTE_JOB_FWDIO_TO_TOOL          (ORTE_JOB_START_KEY + 33)    // Forward IO for this job to the tool requesting its spawn
-#define ORTE_JOB_PHYSICAL_CPUIDS        (ORTE_JOB_START_KEY + 34)    // Hostfile contains physical jobids in cpuset
-#define ORTE_JOB_LAUNCHED_DAEMONS       (ORTE_JOB_START_KEY + 35)    // Job caused new daemons to be spawned
+#define ORTE_JOB_PHYSICAL_CPUIDS        (ORTE_JOB_START_KEY + 34)    // bool - Hostfile contains physical jobids in cpuset
+#define ORTE_JOB_LAUNCHED_DAEMONS       (ORTE_JOB_START_KEY + 35)    // bool - Job caused new daemons to be spawned
+#define ORTE_JOB_REPORT_BINDINGS        (ORTE_JOB_START_KEY + 36)    // bool - Report process bindings
+#define ORTE_JOB_SLOT_LIST              (ORTE_JOB_START_KEY + 37)    // string - constraints on cores to use
+#define ORTE_JOB_NOTIFICATIONS          (ORTE_JOB_START_KEY + 38)    // string - comma-separated list of desired notifications+methods
 
 #define ORTE_JOB_MAX_KEY   300
 

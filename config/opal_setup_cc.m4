@@ -6,18 +6,20 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -115,12 +117,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
     fi
 
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
-        if test "$opal_c_vendor" = "gnu"; then
-            CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
-        else
-            CFLAGS="$CFLAGS -g"
-        fi
+    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
+        CFLAGS="$CFLAGS -g"
 
         OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
@@ -129,29 +127,37 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 -a "$opal_c_vendor" = "gnu" ; then
-        add="-Wall -Wundef -Wno-long-long -Wsign-compare"
-        add="$add -Wmissing-prototypes -Wstrict-prototypes"
-        add="$add -Wcomment -pedantic"
+
+    if test $WANT_PICKY_COMPILER -eq 1; then
+        CFLAGS_orig=$CFLAGS
+        add=
+
+        # These flags are likely GCC-specific (or, more specifically,
+        # we don't have general tests for each one, and we know they
+        # work with all versions of GCC that we have used throughout
+        # the years, so we'll keep them limited just to GCC).
+        if test "$opal_c_vendor" = "gnu" ; then
+            add="$add -Wall -Wundef -Wno-long-long -Wsign-compare"
+            add="$add -Wmissing-prototypes -Wstrict-prototypes"
+            add="$add -Wcomment -pedantic"
+        fi
 
         # see if -Wno-long-double works...
-        CFLAGS_orig="$CFLAGS"
-        # CFLAGS="$CFLAGS -Wno-long-double"
         # Starting with GCC-4.4, the compiler complains about not
         # knowing -Wno-long-double, only if -Wstrict-prototypes is set, too.
         #
         # Actually, this is not real fix, as GCC will pass on any -Wno- flag,
         # have fun with the warning: -Wno-britney
-        CFLAGS="$CFLAGS $add -Wno-long-double -Wstrict-prototypes"
+        CFLAGS="$CFLAGS_orig $add -Wno-long-double -Wstrict-prototypes"
 
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
             [opal_cv_cc_wno_long_double],
-            [AC_TRY_COMPILE([], [], 
+            [AC_TRY_COMPILE([], [],
                 [
                  dnl So -Wno-long-double did not produce any errors...
-                 dnl We will try to extract a warning regarding 
+                 dnl We will try to extract a warning regarding
                  dnl unrecognized or ignored options
-                 AC_TRY_COMPILE([], [long double test;], 
+                 AC_TRY_COMPILE([], [long double test;],
                      [
                       opal_cv_cc_wno_long_double="yes"
                       if test -s conftest.err ; then
@@ -169,14 +175,17 @@ AC_DEFUN([OPAL_SETUP_CC],[
                 [opal_cv_cc_wno_long_double="no"])
             ])
 
-        CFLAGS="$CFLAGS_orig"
         if test "$opal_cv_cc_wno_long_double" = "yes" ; then
             add="$add -Wno-long-double"
         fi
 
-        add="$add -Werror-implicit-function-declaration "
+        # Per above, we know that this flag works with GCC / haven't
+        # really tested it elsewhere.
+        if test "$opal_c_vendor" = "gnu" ; then
+            add="$add -Werror-implicit-function-declaration "
+        fi
 
-        CFLAGS="$CFLAGS $add"
+        CFLAGS="$CFLAGS_orig $add"
         OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
         unset add
@@ -233,7 +242,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         add=
         AC_CACHE_CHECK([if $CC supports $RESTRICT_CFLAGS],
                    [opal_cv_cc_restrict_cflags],
-                   [AC_TRY_COMPILE([], [], 
+                   [AC_TRY_COMPILE([], [],
                                    [opal_cv_cc_restrict_cflags="yes"],
                                    [opal_cv_cc_restrict_cflags="no"])])
         if test "$opal_cv_cc_restrict_cflags" = "yes" ; then
@@ -325,7 +334,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
 
 AC_DEFUN([_OPAL_START_SETUP_CC],[
-    opal_show_subtitle "C compiler and preprocessor" 
+    opal_show_subtitle "C compiler and preprocessor"
 
 	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.

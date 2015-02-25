@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,8 +88,12 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
         PTL_ME_EVENT_LINK_DISABLE  | 
         PTL_ME_MAY_ALIGN;
 
-    remote_proc.phys.nid = PTL_NID_ANY;
-    remote_proc.phys.pid = PTL_PID_ANY;
+    if (mca_btl_portals4_component.use_logical) {
+        remote_proc.rank = PTL_RANK_ANY;
+    } else {
+        remote_proc.phys.nid = PTL_NID_ANY;
+        remote_proc.phys.pid = PTL_PID_ANY;
+    }
 
     me.match_id = remote_proc;
     me.match_bits = match_bits;

@@ -64,6 +64,7 @@ static int psmx_domain_close(fid_t fid)
 	if (err != PSM_OK)
 		psm_ep_close(domain->psm_ep, PSM_EP_CLOSE_FORCE, 0);
 
+	domain->fabric->active_domain = NULL;
 	free(domain);
 
 	return 0;
@@ -82,22 +83,30 @@ static struct fi_ops_domain psmx_domain_ops = {
 	.cq_open = psmx_cq_open,
 	.endpoint = psmx_ep_open,
 	.cntr_open = psmx_cntr_open,
-	.wait_open = psmx_wait_open,
 	.poll_open = psmx_poll_open,
+	.stx_ctx = psmx_stx_ctx,
+	.srx_ctx = fi_no_srx_context,
 };
 
 int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		     struct fid_domain **domain, void *context)
 {
+	struct psmx_fid_fabric *fabric_priv;
 	struct psmx_fid_domain *domain_priv;
 	struct psm_ep_open_opts opts;
 	psm_uuid_t uuid;
-	int err = -ENOMEM;
+	int err = -FI_ENOMEM;
 
-	psmx_debug("%s\n", __func__);
+	PSMX_DEBUG("%s\n", __func__);
+
+	fabric_priv = container_of(fabric, struct psmx_fid_fabric, fabric);
+	if (fabric_priv->active_domain) {
+		PSMX_DEBUG("%s: a domain has been opened for the fabric\n");
+		return -FI_EBUSY;
+	}
 
 	if (!info->domain_attr->name || strncmp(info->domain_attr->name, "psm", 3))
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	psmx_query_mpi();
 
@@ -111,6 +120,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	domain_priv->domain.ops = &psmx_domain_ops;
 	domain_priv->domain.mr = &psmx_mr_ops;
 	domain_priv->mode = info->mode;
+	domain_priv->fabric = fabric_priv;
 
 	psm_ep_open_opts_get_defaults(&opts);
 
@@ -118,7 +128,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_ep_open(uuid, &opts,
 			  &domain_priv->psm_ep, &domain_priv->psm_epid);
 	if (err != PSM_OK) {
-		fprintf(stderr, "%s: psm_ep_open returns %d, errno=%d\n",
+		PSMX_WARN("%s: psm_ep_open returns %d, errno=%d\n",
 			__func__, err, errno);
 		err = psmx_errno(err);
 		goto err_out_free_domain;
@@ -127,7 +137,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_mq_init(domain_priv->psm_ep, PSM_MQ_ORDERMASK_ALL,
 			  NULL, 0, &domain_priv->psm_mq);
 	if (err != PSM_OK) {
-		fprintf(stderr, "%s: psm_mq_init returns %d, errno=%d\n",
+		PSMX_WARN("%s: psm_mq_init returns %d, errno=%d\n",
 			__func__, err, errno);
 		err = psmx_errno(err);
 		goto err_out_close_ep;
@@ -152,6 +162,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		goto err_out_close_ep;
 	}
 
+	fabric_priv->active_domain = domain_priv;
 	*domain = &domain_priv->domain;
 	return 0;
 
@@ -170,19 +181,23 @@ err_out:
 int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 {
 	if ((ep_cap & PSMX_CAPS) != ep_cap)
-		return -EINVAL;
+		return -FI_EINVAL;
 
-	if ((ep_cap & FI_TAGGED) && domain->tagged_ep)
-		return -EBUSY;
+	if ((ep_cap & FI_TAGGED) && domain->tagged_ep &&
+	    fi_recv_allowed(ep_cap))
+		return -FI_EBUSY;
 
-	if ((ep_cap & FI_MSG) && domain->msg_ep)
-		return -EBUSY;
+	if ((ep_cap & FI_MSG) && domain->msg_ep &&
+	    fi_recv_allowed(ep_cap))
+		return -FI_EBUSY;
 
-	if ((ep_cap & FI_RMA) && domain->rma_ep)
-		return -EBUSY;
+	if ((ep_cap & FI_RMA) && domain->rma_ep &&
+	    fi_rma_target_allowed(ep_cap))
+		return -FI_EBUSY;
 
-	if ((ep_cap & FI_ATOMICS) && domain->atomics_ep)
-		return -EBUSY;
+	if ((ep_cap & FI_ATOMICS) && domain->atomics_ep &&
+	    fi_rma_target_allowed(ep_cap))
+		return -FI_EBUSY;
 
 	return 0;
 }
@@ -212,16 +227,16 @@ int psmx_domain_enable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep
 		domain->am_initialized = 1;
 	}
 
-	if (ep_cap & FI_RMA)
+	if ((ep_cap & FI_RMA) && fi_rma_target_allowed(ep_cap))
 		domain->rma_ep = ep;
 
-	if (ep_cap & FI_ATOMICS)
+	if ((ep_cap & FI_ATOMICS) && fi_rma_target_allowed(ep_cap))
 		domain->atomics_ep = ep;
 
-	if (ep_cap & FI_TAGGED)
+	if ((ep_cap & FI_TAGGED) && fi_recv_allowed(ep_cap))
 		domain->tagged_ep = ep;
 
-	if (ep_cap & FI_MSG)
+	if ((ep_cap & FI_MSG) && fi_recv_allowed(ep_cap))
 		domain->msg_ep = ep;
 
 	return 0;

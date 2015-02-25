@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -13,6 +13,7 @@
  */
 
 #include "oob_ud_component.h"
+#include "oob_ud_req.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -77,13 +78,12 @@ int mca_oob_ud_msg_get (struct mca_oob_ud_port_t *port, mca_oob_ud_req_t *req,
 {
     opal_free_list_item_t *item;
     opal_free_list_t *list = &port->free_msgs;
-    int rc;
 
-    OPAL_FREE_LIST_WAIT(list, item, rc);
-    if (OPAL_SUCCESS != rc) {
+    item = opal_free_list_wait_st (list);
+    if (NULL == item) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                             "%s oob:ud:msg_get error getting message buffer. rc = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+                            "%s oob:ud:msg_get error getting message buffer",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return ORTE_ERROR;
     }
 
@@ -111,12 +111,15 @@ int mca_oob_ud_msg_get (struct mca_oob_ud_port_t *port, mca_oob_ud_req_t *req,
     return ORTE_SUCCESS;
 }
 
-int mca_oob_ud_msg_init (mca_oob_ud_msg_t *msg, struct mca_oob_ud_port_t *port,
-                         char *buf, struct ibv_mr *mr)
-{
+int mca_oob_ud_msg_init (opal_free_list_item_t *item, void *context) {
+    mca_oob_ud_port_t *port = (mca_oob_ud_port_t *) context;
+    int buffer_id = port->send_buffer_index++ + mca_oob_ud_component.ud_recv_buffer_count;
+    char *buf = port->msg_buf.ptr + buffer_id * port->mtu;
+    mca_oob_ud_msg_t *msg = (mca_oob_ud_msg_t *) item;
+
     msg->port = port;
     msg->hdr  = (mca_oob_ud_msg_hdr_t *) buf;
-    msg->mr   = mr;
+    msg->mr   = port->msg_buf.mr;
 
     return ORTE_SUCCESS;
 }
@@ -134,7 +137,7 @@ void mca_oob_ud_msg_return (mca_oob_ud_msg_t *msg)
     msg->qp     = NULL;
     msg->req    = NULL;
 
-    OPAL_FREE_LIST_RETURN(list, msg);
+    opal_free_list_return_st (list, msg);
 }
 
 static void mca_oob_ud_msg_construct (mca_oob_ud_msg_t *msg)

@@ -1,6 +1,6 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,7 +21,6 @@ language=C
 compiler_env=CC
 compiler_flags_env=CFLAGS
 compiler=@CC@
-extra_includes=@OMPI_WRAPPER_EXTRA_INCLUDES@
 preprocessor_flags=@OMPI_WRAPPER_EXTRA_CPPFLAGS@
 compiler_flags=@OMPI_WRAPPER_EXTRA_CFLAGS@
 linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@    

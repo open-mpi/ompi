@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,6 +80,7 @@ void orte_util_parse_range_options(char *inp, char ***output)
                 opal_argv_free(*output);
                 *output = NULL;
                 opal_argv_append_nosize(output, "-1");
+                opal_argv_free(r2);
                 goto cleanup;
             }
             start = strtol(r2[0], NULL, 10);
@@ -87,6 +90,7 @@ void orte_util_parse_range_options(char *inp, char ***output)
             snprintf(nstr, 32, "%d", n);
             opal_argv_append_nosize(output, nstr);
         }
+        opal_argv_free(r2);
     }
     
 cleanup:
@@ -95,7 +99,6 @@ cleanup:
     }
     free(input);
     opal_argv_free(r1);
-    opal_argv_free(r2);
 
 }
 
@@ -133,10 +136,10 @@ void orte_util_get_ranges(char *inp, char ***startpts, char ***endpts)
             opal_output(0, "%s Unknown parse error on string: %s(%s)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inp, r1[i]);
         }
+        opal_argv_free(r2);
     }
     
     free(input);
     opal_argv_free(r1);
-    opal_argv_free(r2);
 
 }

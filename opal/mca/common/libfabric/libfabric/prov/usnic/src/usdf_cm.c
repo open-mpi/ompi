@@ -81,7 +81,7 @@ usdf_cm_msg_connreq_cleanup(struct usdf_connreq *crp)
 	}
 
 	if (crp->cr_pollitem.pi_rtn != NULL) {
-		epoll_ctl(fp->fab_epollfd, EPOLL_CTL_DEL, crp->cr_sockfd, NULL);
+		(void) epoll_ctl(fp->fab_epollfd, EPOLL_CTL_DEL, crp->cr_sockfd, NULL);
 		crp->cr_pollitem.pi_rtn = NULL;
 	}
 	if (crp->cr_sockfd != -1) {
@@ -112,7 +112,7 @@ usdf_cm_msg_accept_complete(struct usdf_connreq *crp)
 	/* post EQ entry */
 	entry.fid = ep_utofid(ep);
 	entry.info = NULL;
-	ret = usdf_eq_write_internal(ep->ep_eq, FI_COMPLETE, &entry,
+	ret = usdf_eq_write_internal(ep->ep_eq, FI_CONNECTED, &entry,
 			sizeof(entry), 0);
 	if (ret != sizeof(entry)) {
 		usdf_cm_msg_connreq_failed(crp, ret);
@@ -299,7 +299,7 @@ usdf_cm_msg_connect_cb_rd(void *v)
 		entry->fid = ep_utofid(ep);
 		entry->info = NULL;
 		memcpy(entry->data, reqp->creq_data, reqp->creq_datalen);
-		ret = usdf_eq_write_internal(ep->ep_eq, FI_COMPLETE, entry,
+		ret = usdf_eq_write_internal(ep->ep_eq, FI_CONNECTED, entry,
 				entry_len, 0);
 		free(entry);
 		if (ret != entry_len) {

@@ -32,21 +32,91 @@
 
 #include "psmx.h"
 
+/* It is necessary to have a separate thread making progress in order
+ * for the wait functions to succeed. This thread is only created when
+ * wait functions are called and. In order to minimize performance
+ * impact, it only goes active during te time when wait calls are
+ * blocked.
+ */
+static pthread_t	psmx_wait_thread;
+static pthread_mutex_t	psmx_wait_mutex;
+static pthread_cond_t	psmx_wait_cond;
+static volatile int	psmx_wait_thread_ready = 0;
+static volatile int	psmx_wait_thread_enabled = 0;
+static volatile int	psmx_wait_thread_busy = 0;
+
+static void *psmx_wait_progress(void *args)
+{
+	struct psmx_fid_domain *domain = args;
+
+	psmx_wait_thread_ready = 1;
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+	while (1) {
+		pthread_mutex_lock(&psmx_wait_mutex);
+		pthread_cond_wait(&psmx_wait_cond, &psmx_wait_mutex);
+		pthread_mutex_unlock(&psmx_wait_mutex);
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
+		psmx_wait_thread_busy = 1;
+		while (psmx_wait_thread_enabled)
+			psmx_progress(domain);
+
+		psmx_wait_thread_busy = 0;
+
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	}
+
+	return NULL;
+}
+
+static void psmx_wait_start_progress(struct psmx_fid_domain *domain)
+{
+	pthread_attr_t attr;
+	int err;
+
+	if (!domain)
+		return;
+
+	if (!psmx_wait_thread) {
+		pthread_mutex_init(&psmx_wait_mutex, NULL);
+		pthread_cond_init(&psmx_wait_cond, NULL);
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+		err = pthread_create(&psmx_wait_thread, &attr, psmx_wait_progress, (void *)domain);
+		if (err)
+			PSMX_WARN("%s: cannot create wait progress thread\n", __func__);
+		pthread_attr_destroy(&attr);
+		while (!psmx_wait_thread_ready)
+			;
+	}
+
+	psmx_wait_thread_enabled = 1;
+	pthread_cond_signal(&psmx_wait_cond);
+}
+
+static void psmx_wait_stop_progress(void)
+{
+	psmx_wait_thread_enabled = 0;
+
+	while (psmx_wait_thread_busy)
+		;
+}
+
 int psmx_wait_get_obj(struct psmx_fid_wait *wait, void *arg)
 {
 	void *obj_ptr;
 	int obj_size = 0;
-	int obj_type = FI_WAIT_NONE;
 	struct fi_mutex_cond mutex_cond;
 
 	if (!arg)
-		return -EINVAL;
+		return -FI_EINVAL;
 
 	if (wait) {
 		switch (wait->type) {
 			case FI_WAIT_FD:
 				obj_size = sizeof(wait->fd[0]);
-				obj_type = wait->type;
 				obj_ptr = &wait->fd[0];
 				break;
 
@@ -54,7 +124,6 @@ int psmx_wait_get_obj(struct psmx_fid_wait *wait, void *arg)
 				mutex_cond.mutex = &wait->mutex;
 				mutex_cond.cond = &wait->cond;
 				obj_size = sizeof(mutex_cond);
-				obj_type = wait->type;
 				obj_ptr = &mutex_cond;
 				break;
 
@@ -76,6 +145,9 @@ int psmx_wait_wait(struct fid_wait *wait, int timeout)
 	int err = 0;
 	
 	wait_priv = container_of(wait, struct psmx_fid_wait, wait.fid);
+
+	psmx_wait_start_progress(wait_priv->fabric->active_domain);
+
 	switch (wait_priv->type) {
 	case FI_WAIT_UNSPEC:
 		/* TODO: optimized custom wait */
@@ -97,6 +169,8 @@ int psmx_wait_wait(struct fid_wait *wait, int timeout)
 	default:
 		break;
 	}
+
+	psmx_wait_stop_progress();
 
 	return err;
 }
@@ -184,15 +258,12 @@ static int psmx_wait_init(struct psmx_fid_wait *wait, int type)
 	return 0;
 }
 
-int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
+int psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
 		   struct fid_wait **waitset)
 {
-	struct psmx_fid_domain *domain_priv;
 	struct psmx_fid_wait *wait_priv;
 	int type = FI_WAIT_FD;
 	int err;
-
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 
 	if (attr) {
 		switch (attr->wait_obj) {
@@ -205,7 +276,7 @@ int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
 			break;
 	 
 		default:
-			psmx_debug("%s: attr->wait_obj=%d, supported=%d,%d,%d\n",
+			PSMX_DEBUG("%s: attr->wait_obj=%d, supported=%d,%d,%d\n",
 					__func__, attr->wait_obj, FI_WAIT_UNSPEC,
 					FI_WAIT_FD, FI_WAIT_MUTEX_COND);
 			return -FI_EINVAL;
@@ -222,11 +293,11 @@ int psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
 		return err;
 	}
 
+	wait_priv->fabric = container_of(fabric, struct psmx_fid_fabric, fabric);
 	wait_priv->wait.fid.fclass = FI_CLASS_WAIT;
 	wait_priv->wait.fid.context = 0;
 	wait_priv->wait.fid.ops = &psmx_fi_ops;
 	wait_priv->wait.ops = &psmx_wait_ops;
-	wait_priv->domain = domain_priv;
 
 	*waitset = &wait_priv->wait;
 	return 0;

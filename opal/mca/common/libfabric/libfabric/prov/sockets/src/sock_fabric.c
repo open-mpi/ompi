@@ -42,8 +42,11 @@
 #include "sock.h"
 #include "sock_util.h"
 
-const char const sock_fab_name[] = "IP";
-const char const sock_dom_name[] = "sockets";
+const char sock_fab_name[] = "IP";
+const char sock_dom_name[] = "sockets";
+const char sock_prov_name[] = "sockets";
+
+useconds_t sock_progress_thread_wait = 0;
 
 const struct fi_fabric_attr sock_fabric_attr = {
 	.fabric = NULL,
@@ -79,13 +82,26 @@ int sock_verify_info(struct fi_info *hints)
 	switch (hints->ep_type) {
 	case FI_EP_UNSPEC:
 	case FI_EP_MSG:
+		ret = sock_msg_verify_ep_attr(hints->ep_attr,
+					      hints->tx_attr,
+					      hints->rx_attr);
+		break;
 	case FI_EP_DGRAM:
+		ret = sock_dgram_verify_ep_attr(hints->ep_attr,
+						hints->tx_attr,
+						hints->rx_attr);
+		break;
 	case FI_EP_RDM:
+		ret = sock_rdm_verify_ep_attr(hints->ep_attr,
+					      hints->tx_attr,
+					      hints->rx_attr);
 		break;
 	default:
-		return -FI_ENODATA;
+		ret = -FI_ENODATA;
 	}
-	
+	if (ret)
+		return ret;
+
 	switch (hints->addr_format) {
 	case FI_FORMAT_UNSPEC:
 	case FI_SOCKADDR:
@@ -94,11 +110,6 @@ int sock_verify_info(struct fi_info *hints)
 	default:
 		return -FI_ENODATA;
 	}
-
-	if (!sock_rdm_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr) ||
-	    !sock_dgram_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr) ||
-	    !sock_msg_verify_ep_attr(hints->ep_attr, hints->tx_attr, hints->rx_attr))
-		return 0;
 
 	ret = sock_verify_domain_attr(hints->domain_attr);
 	if (ret) 
@@ -116,6 +127,7 @@ static struct fi_ops_fabric sock_fab_ops = {
 	.domain = sock_domain,
 	.passive_ep = sock_msg_passive_ep,
 	.eq_open = sock_eq_open,
+	.wait_open = sock_wait_open,
 };
 
 static int sock_fabric_close(fid_t fid)
@@ -228,7 +240,7 @@ static void fi_sockets_fini(void)
 }
 
 struct fi_provider sock_prov = {
-	.name = "IP",
+	.name = sock_prov_name,
 	.version = FI_VERSION(SOCK_MAJOR_VERSION, SOCK_MINOR_VERSION), 
 	.fi_version = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),
 	.getinfo = sock_getinfo,
@@ -236,15 +248,15 @@ struct fi_provider sock_prov = {
 	.cleanup = fi_sockets_fini
 };
 
-
 SOCKETS_INI
 {
-	char *tmp = getenv("OFI_SOCK_LOG_LEVEL");
-	if (tmp) {
-		sock_log_level = atoi(tmp);
-	} else {
-		sock_log_level = SOCK_ERROR;
-	}
+	char *tmp;
+
+	fi_log_init();
+
+	tmp = getenv("OFI_SOCK_PROGRESS_YIELD_TIME");
+	if (tmp)
+		sock_progress_thread_wait = atoi(tmp);
 
 	return (&sock_prov);
 }

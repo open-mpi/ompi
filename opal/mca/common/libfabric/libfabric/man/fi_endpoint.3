@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2014\-12\-18" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -16,6 +16,11 @@ address vector, or memory region
 .TP
 .B fi_scalable_ep_bind
 Associate a scalable endpoint with an address vector
+.RS
+.RE
+.TP
+.B fi_pep_bind
+Associate a passive endpoint with an event queue
 .RS
 .RE
 .TP
@@ -48,6 +53,12 @@ Get or set endpoint options.
 Open a transmit or receive context.
 .RS
 .RE
+.TP
+.B fi_rx_size_left / fi_tx_size_left
+Query the lower bound on how many RX/TX operations may be posted without
+an operation returning -FI_EAGAIN.
+.RS
+.RE
 .SH SYNOPSIS
 .IP
 .nf
@@ -60,16 +71,16 @@ int\ fi_endpoint(struct\ fid_domain\ *domain,\ struct\ fi_info\ *info,
 \ \ \ \ struct\ fid_ep\ **ep,\ void\ *context);
 
 int\ fi_scalable_ep(struct\ fid_domain\ *domain,\ struct\ fi_info\ *info,
-\ \ \ \ struct\ fid_sep\ **ep,\ void\ *context);
+\ \ \ \ struct\ fid_ep\ **sep,\ void\ *context);
 
 int\ fi_passive_ep(struct\ fi_fabric\ *fabric,\ struct\ fi_info\ *info,
 \ \ \ \ struct\ fid_pep\ **pep,\ void\ *context);
 
-int\ fi_tx_context(struct\ fid_ep\ *ep,\ int\ index,
+int\ fi_tx_context(struct\ fid_ep\ *sep,\ int\ index,
 \ \ \ \ struct\ fi_tx_attr\ *attr,\ struct\ fid_ep\ **tx_ep,
 \ \ \ \ void\ *context);
 
-int\ fi_rx_context(struct\ fid_ep\ *ep,\ int\ index,
+int\ fi_rx_context(struct\ fid_ep\ *sep,\ int\ index,
 \ \ \ \ struct\ fi_rx_attr\ *attr,\ struct\ fid_ep\ **rx_ep,
 \ \ \ \ void\ *context);
 
@@ -85,7 +96,9 @@ int\ fi_close(struct\ fid\ *ep);
 
 int\ fi_ep_bind(struct\ fid_ep\ *ep,\ struct\ fid\ *fid,\ uint64_t\ flags);
 
-int\ fi_scalable_ep_bind(struct\ fid_sep\ *sep,\ struct\ fid\ *fid,\ uint64_t\ flags);
+int\ fi_scalable_ep_bind(struct\ fid_ep\ *sep,\ struct\ fid\ *fid,\ uint64_t\ flags);
+
+int\ fi_pep_bind(struct\ fid_pep\ *pep,\ struct\ fid\ *fid,\ uint64_t\ flags);
 
 int\ fi_enable(struct\ fid_ep\ *ep);
 
@@ -100,6 +113,10 @@ int\ fi_getopt(struct\ fid_\ *ep,\ int\ level,\ int\ optname,
 
 int\ fi_setopt(struct\ fid\ *ep,\ int\ level,\ int\ optname,
 \ \ \ \ const\ void\ *optval,\ size_t\ optlen);
+
+ssize_t\ fi_rx_size_left(struct\ fid_ep\ *ep);
+
+ssize_t\ fi_tx_size_left(struct\ fid_ep\ *ep);
 \f[]
 .fi
 .SH ARGUMENTS
@@ -114,6 +131,8 @@ opened, obtained from fi_getinfo.
 \f[I]ep\f[] : A fabric endpoint.
 .PP
 \f[I]sep\f[] : A scalable fabric endpoint.
+.PP
+\f[I]pep\f[] : A passive fabric endpoint.
 .PP
 \f[I]fid\f[] : Fabric identifier of an associated resource.
 .PP
@@ -142,9 +161,19 @@ incoming connection requests.
 Active endpoints belong to access domains and can perform data
 transfers.
 .PP
-Data transfer interfaces are bound to active endpoints.
 Active endpoints may be connection-oriented or connectionless, and may
 provide data reliability.
+The data transfer interfaces -- messages (fi_msg), tagged messages
+(fi_tagged), RMA (fi_rma), and atomics (fi_atomic) -- are associated
+with active endpoints.
+In basic configurations, an active endpoint has transmit and receive
+queues.
+In general, operations that generate traffic on the fabric are posted to
+the transmit queue.
+This includes all RMA and atomic operations, along with sent messages
+and sent tagged messages.
+Operations that post buffers for receiving incoming data are submitted
+to the receive queue.
 .PP
 Active endpoints are created in the disabled state.
 They must transition into an enabled state before accepting data
@@ -188,6 +217,11 @@ fi_info connreq must reference the corresponding request.
 .SS fi_close
 .PP
 Closes an endpoint and release all resources associated with it.
+.PP
+When closing a scalable endpoint, there must be no opened transmit
+contexts, or receive contexts associated with the scalable endpoint.
+If resources are still associated with the scalable endpoint when
+attempting to close, the call will return -FI_EBUSY.
 .SS fi_ep_bind
 .PP
 fi_ep_bind is used to associate an endpoint with hardware resources.
@@ -207,18 +241,23 @@ This is specified using fi_ep_bind flags.
 The following flags may be used separately or OR\[aq]ed together when
 binding an endpoint to a completion domain CQ.
 .PP
-\f[I]FI_SEND\f[] : Directs the completion of outbound data transfer
+\f[I]FI_TRANSMIT\f[] : Directs the completion of outbound data transfer
 requests to the specified completion queue.
 This includes send message, RMA, and atomic operations.
+The FI_SEND flag may be used interchangeably.
 .PP
 \f[I]FI_RECV\f[] : Directs the notification of inbound data transfers to
 the specified completion queue.
 This includes received messages.
 .PP
-\f[I]FI_COMPLETION\f[] : If FI_COMPLETION is specified, the indicated
-data transfer operations won\[aq]t generate entries for successful
-completions in the completion queue unless FI_COMPLETION is set for that
-specific operation.
+\f[I]FI_COMPLETION\f[] : By default, data transfer operations generate
+completion entries into a completion queue after they have successfully
+completed.
+Applications can use this bind flag to selectively enable when
+completions are generated.
+If FI_COMPLETION is specified, data transfer operations will not
+generate entries for successful completions unless FI_COMPLETION is set
+as an operational flag for the given operation.
 FI_COMPLETION must be OR\[aq]ed with FI_SEND and/or FI_RECV flags.
 .PP
 When set the user must determine when a request that does NOT have
@@ -226,6 +265,32 @@ FI_COMPLETION set has completed indirectly, usually based on the
 completion of a subsequent operation.
 Use of this flag may improve performance by allowing the provider to
 avoid writing a completion entry for every operation.
+.PP
+Example: An application can selectively generate send completions by
+using the following general approach:
+.IP
+.nf
+\f[C]
+\ \ fi_tx_attr::op_flags\ =\ 0;\ //\ default\ -\ no\ completion
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
+\ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
+\ \ fi_sendmsg(ep,\ ...,\ FI_COMPLETION);\ //\ completion!
+\f[]
+.fi
+.PP
+Example: An application can selectively disable send completions by
+modifying the operational flags:
+.IP
+.nf
+\f[C]
+\ \ fi_tx_attr::op_flags\ =\ FI_COMPLETION;\ //\ default\ -\ completion
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ //\ completion
+\ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ //\ completion
+\ \ fi_sendmsg(ep,\ ...,\ 0);\ //\ no\ completion!
+\f[]
+.fi
 .PP
 An endpoint may also, or instead, be bound to a fabric counter.
 When binding an endpoint to a counter, the following flags may be
@@ -255,6 +320,10 @@ successful RMA write or atomic operation is initiated from a remote
 endpoint that targets the given endpoint.
 .PP
 Connectionless endpoints must be bound to a single address vector.
+If an endpoint is using a shared transmit and/or receive context, the
+shared contexts must be bound to the endpoint.
+CQs, counters, AV, and shared contexts must be bound to endpoints before
+they are enabled.
 .SS fi_scalable_ep_bind
 .PP
 fi_scalable_ep_bind is used to associate a scalable endpoint with an
@@ -284,6 +353,9 @@ The endpoint must have been configured to support cancelable operations
 Canceling an operation causes the fabric provider to search for the
 operation and, if it is still pending, complete it as having been
 canceled.
+If multiple outstanding operations match the context parameter, only one
+will be canceled.
+In this case, the operation which is canceled is provider specific.
 The cancel operation will complete within a bounded period of time.
 .SS fi_alias
 .PP
@@ -343,6 +415,26 @@ needed on receives posted after the value has been changed.
 It is recommended that applications that want to override the default
 MIN_MULTI_RECV value set this option before enabling the corresponding
 endpoint.
+.SS fi_rx_size_left
+.PP
+The fi_rx_size_left call returns a lower bound on the number of receive
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted receive
+operations (e.g., number of iov entries, which receive function is
+called, etc.)
+, it may be possible to post more receive operations than originally
+indicated by fi_rx_size_left.
+.SS fi_tx_size_left
+.PP
+The fi_tx_size_left call returns a lower bound on the number of transmit
+operations that may be posted to the given endpoint without that
+operation returning -FI_EAGAIN.
+Depending on the specific details of the subsequently posted transmit
+operations (e.g., number of iov entries, which transmit function is
+called, etc.)
+, it may be possible to post more transmit operations than originally
+indicated by fi_tx_size_left.
 .SH ENDPOINT ATTRIBUTES
 .PP
 The fi_ep_attr structure defines the set of attributes associated with
@@ -362,6 +454,7 @@ struct\ fi_ep_attr\ {
 \ \ \ \ size_t\ \ \ \ max_order_waw_size;
 \ \ \ \ uint64_t\ \ mem_tag_format;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ tx_ctx_cnt;
 \ \ \ \ size_t\ \ \ \ rx_ctx_cnt;
 };
@@ -395,14 +488,21 @@ datagram queue pairs.
 protocol known as PSM, performance scaled messaging.
 PSMX is an extended version of the PSM protocol to support the libfabric
 interfaces.
+.PP
+\f[I]FI_PROTO_UDP\f[] : The protocol sends and receives UDP datagrams.
+For example, an endpoint using \f[I]FI_PROTO_UDP\f[] will be able to
+communicate with a remote peer that is using Berkeley
+\f[I]SOCK_DGRAM\f[] sockets using \f[I]IPPROTO_UDP\f[].
+.PP
+\f[I]FI_PROTO_SOCK_TCP\f[] : The protocol is layered over TCP packets.
 .SS protocol_version - Protocol Version
 .PP
-Identifies which version of the protocol is employeed by the provider.
+Identifies which version of the protocol is employed by the provider.
 The protocol version allows providers to extend an existing protocol, by
 adding support for additional features or functionality for example, in
 a backward compatible manner.
 Providers that support different versions of the same protocol should
-interoperate, but only when using the capabilities defined for the
+inter-operate, but only when using the capabilities defined for the
 lesser version.
 .SS max_msg_size - Max Message Size
 .PP
@@ -586,6 +686,46 @@ If set, message send operations, including tagged sends, are processed
 in the order submitted relative to other message send.
 If not set, message sends may be processed out of order from their
 submission.
+.SS comp_order - Completion Ordering
+.PP
+Completion ordering refers to the order in which completed requests are
+written into the completion queue.
+Completion ordering is similar to message order.
+Relaxed completion order may enable faster reporting of completed
+transfers, allow acknowledgments to be sent over different fabric paths,
+and support more sophisticated retry mechanisms.
+This can result in lower-latency completions, particularly when using
+unconnected endpoints.
+Strict completion ordering may require that providers queue completed
+operations or limit available optimizations
+.PP
+For transmit requests, completion ordering depends on the endpoint
+communication type.
+For unreliable communication, completion ordering applies to all data
+transfer requests submitted to an endpoint.
+For reliable communication, completion ordering only applies to requests
+that target a single destination endpoint.
+Completion ordering of requests that target different endpoints over a
+reliable transport is not defined.
+.PP
+Applications should specify the completion ordering that they support or
+require.
+Providers should return the completion order that they actually provide,
+with the constraint that the returned ordering is stricter than that
+specified by the application.
+Supported completion order values are:
+.PP
+\f[I]FI_ORDER_NONE\f[] : No ordering is defined for completed
+operations.
+Requests submitted to the transmit and receive queues may complete in
+any order.
+.PP
+\f[I]FI_ORDER_STRICT\f[] : Requests complete in the order in which they
+are submitted, in the case of transmit requests, or processed, in the
+case of receive operations, by the provider.
+Transmit operations complete in the order in which the requests were
+submitted.
+Receive operations complete in order, subject to buffer matching.
 .SS tx_ctx_cnt - Transmit Context Count
 .PP
 Number of transmit contexts to associate with the endpoint.
@@ -673,9 +813,11 @@ struct\ fi_tx_attr\ {
 \ \ \ \ uint64_t\ \ mode;
 \ \ \ \ uint64_t\ \ op_flags;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ inject_size;
 \ \ \ \ size_t\ \ \ \ size;
 \ \ \ \ size_t\ \ \ \ iov_limit;
+\ \ \ \ size_t\ \ \ \ rma_iov_limit;
 };
 \f[]
 .fi
@@ -698,6 +840,12 @@ The message ordering must be the same or more relaxed than those
 specified of the associated endpoint.
 See the fi_endpoint Message Ordering section.
 .PP
+\f[I]comp_order\f[] : The completion ordering requirements of the
+context.
+The completion ordering must be the same or more relaxed than those
+specified of the associated endpoint.
+See the fi_endpoint Completion Ordering section.
+.PP
 \f[I]inject_size\f[] : The requested inject operation size (see the
 FI_INJECT flag) that the context will support.
 This value must be equal to or less than the inject_size of the
@@ -711,6 +859,17 @@ operation.
 .PP
 \f[I]iov_limit\f[] : This is the maximum number of IO vectors
 (scatter-gather elements) that a single posted operation may reference.
+.PP
+\f[I]rma_iov_limit\f[] : This is the maximum number of RMA IO vectors
+(scatter-gather elements) that an RMA or atomic operation may reference.
+The rma_iov_limit corresponds to the rma_iov_count values in RMA and
+atomic operations.
+See struct fi_msg_rma and struct fi_msg_atomic in fi_rma.3 and
+fi_atomic.3, for additional details.
+This limit applies to both the number of RMA IO vectors that may be
+specified when initiating an operation from the local endpoint, as well
+as the maximum number of IO vectors that may be carried in a single
+request from a remote endpoint.
 .SS fi_rx_context
 .PP
 Receive contexts are independent receive queues for receiving incoming
@@ -754,6 +913,7 @@ struct\ fi_rx_attr\ {
 \ \ \ \ uint64_t\ \ mode;
 \ \ \ \ uint64_t\ \ op_flags;
 \ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
 \ \ \ \ size_t\ \ \ \ total_buffered_recv;
 \ \ \ \ size_t\ \ \ \ size;
 \ \ \ \ size_t\ \ \ \ iov_limit;
@@ -778,6 +938,12 @@ Applicable flags are listed in the Operation Flags section.
 The message ordering must be the same or more relaxed than those
 specified of the associated endpoint.
 See the fi_endpoint Message Ordering section.
+.PP
+\f[I]comp_order\f[] : The completion ordering requirements of the
+context.
+The completion ordering must be the same or more relaxed than those
+specified of the associated endpoint.
+See the fi_endpoint Completion Ordering section.
 .PP
 \f[I]total_buffered_recv\f[] : Defines the total available space
 allocated by the provider to buffer received messages on the context.
@@ -804,12 +970,14 @@ processing, with the potential cost of serializing access across
 multiple endpoints.
 Support for sharable contexts is domain specific.
 .PP
-Conceptually, sharable contexts are transmit queues that may be accessed
-by many endpoints.
+Conceptually, sharable transmit contexts are transmit queues that may be
+accessed by many endpoints.
 The use of a shared transmit context is mostly opaque to an application.
 Applications must allocate and bind shared transmit contexts to
-endpoints, but otherwise transmit operations are posted directly to the
-endpoint.
+endpoints, but operations are posted directly to the endpoint.
+Shared transmit contexts are not associated with completion queues or
+counters.
+Completed operations are posted to the CQs bound to the endpoint.
 An endpoint may only be associated with a single shared transmit
 context.
 .PP
@@ -817,7 +985,13 @@ Unlike shared transmit contexts, applications interact directly with
 shared receive contexts.
 Users post receive buffers directly to a shared receive context, with
 the buffers usable by any endpoint bound to the shared receive context.
-An endpoint may only be associated with a single receive context.
+Shared receive contexts are not associated with completion queues or
+counters.
+Completed receive operations are posted to the CQs bound to the
+endpoint.
+An endpoint may only be associated with a single receive context, and
+all connectless endpoints associated with a shared receive context must
+also share the same address vector.
 .PP
 Endpoints associated with a shared transmit context may use dedicated
 receive contexts, and vice-versa.
@@ -869,14 +1043,9 @@ Use of this flag may cause a single posted receive operation to generate
 multiple completions as messages are placed into the buffer.
 The placement of received data into the buffer may be subjected to
 provider specific alignment restrictions.
-The buffer will be freed from the endpoint when a message is received
-that cannot fit into the remaining free buffer space.
-.PP
-\f[I]FI_BUFFERED_RECV\f[] : If set, the communication interface
-implementation should attempt to queue inbound data that arrives before
-a receive buffer has been posted.
-In the absence of this flag, any messages that arrive before a receive
-is posted are lost.
+The buffer will be returned to the application\[aq]s control, and an
+\f[I]FI_MULTI_RECV\f[] completion will be generated, when a message is
+received that cannot fit into the remaining free buffer space.
 .PP
 \f[I]FI_COMPLETION\f[] : Indicates that a completion entry should be
 generated for data transfer operations.
@@ -898,33 +1067,6 @@ initiator.
 For example, if the receive data is truncated at the target because the
 provided receive buffer is too small, the initiator will be notified of
 the truncation.
-.PP
-\f[I]FI_READ\f[] : Indicates that the user wants to initiate reads
-against remote memory regions.
-Remote reads include some RMA and atomic operations.
-.PP
-\f[I]FI_WRITE\f[] : Indicates that the user wants to initiate writes
-against remote memory regions.
-Remote writes include some RMA and most atomic operations.
-.PP
-\f[I]FI_SEND\f[] : Indicates that the endpoint will be used to send
-message data transfers.
-Message transfers include base message operations as well as tagged
-message functionality.
-.PP
-\f[I]FI_RECV\f[] : Indicates that the endpoint will be used to receive
-message data transfers.
-Message transfers include base message operations as well as tagged
-message functionality.
-.PP
-\f[I]FI_REMOTE_READ\f[] : Indicates that the endpoint should allow
-remote endpoints to read memory regions exposed by this endpoint.
-Remote read operations include some RMA and atomic operations.
-.PP
-\f[I]FI_REMOTE_WRITE\f[] : Indicates that the endpoint should allow
-remote endpoints to write to memory regions exposed by this endpoint.
-Remote write operations include some RMA operations and most atomic
-operations.
 .SH NOTES
 .PP
 Users should call fi_close to release all resources allocated to the

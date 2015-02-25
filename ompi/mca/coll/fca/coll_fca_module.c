@@ -107,8 +107,10 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
     ompi_communicator_t *comm = fca_module->comm;
     fca_comm_new_spec_t spec = {0,};
     int info_size, all_info_size;
-    void *all_info, *my_info;
-    int *rcounts, *displs;
+    void *all_info = NULL;
+    void *my_info = NULL;
+    int *rcounts = NULL;
+    int *displs = NULL;
     int i, rc, ret, comm_size = ompi_comm_size(fca_module->comm);
 
     /* call fca_get_rank_info() on node managers only*/
@@ -361,7 +363,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
                 c_item = (mca_coll_fca_c_cache_item_t *)opal_list_get_next((opal_list_item_t *) c_item)){
             act_deep++;
             /* first check the size */
-            if( comm_size == c_item->size){
+            if( c_item && (comm_size == c_item->size)) {
                 /* then we have a potential cache hit */
                 ompi_comm_compare(comm, c_item->comm, &result); 
                 if( MPI_CONGRUENT == result) {
@@ -604,7 +606,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_base_module_t *module;
     int size = ompi_comm_size(comm);
-    int local_peers;
+    int local_peers = 0;
     mca_coll_fca_module_t *fca_module;
 
     *priority = 0;

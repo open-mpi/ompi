@@ -548,6 +548,8 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
                 } else {
                     /* unknown option */
                     opal_output(0, "Unknown qualifier to binding policy: %s", spec);
+                    opal_argv_free(quals);
+                    opal_argv_free(tmpvals);
                     return OPAL_ERR_BAD_PARAM;
                 }
             }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
@@ -243,20 +243,22 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     caddy->jdata->state = caddy->job_state;
 
     /* start by getting a jobid */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(caddy->jdata))) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
+    if (ORTE_JOBID_INVALID == caddy->jdata->jobid) {
+        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(caddy->jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+
+        /* store it on the global job data pool - this is the key
+         * step required before we launch the daemons. It allows
+         * the orte_rmaps_base_setup_virtual_machine routine to
+         * search all apps for any hosts to be used by the vm
+         */
+        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
     }
-
-    /* store it on the global job data pool - this is the key
-     * step required before we launch the daemons. It allows
-     * the orte_rmaps_base_setup_virtual_machine routine to
-     * search all apps for any hosts to be used by the vm
-     */
-    opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
-
+    
     /* if job recovery is not enabled, set it to default */
     if (!ORTE_FLAG_TEST(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE) &&
         orte_enable_recovery) {
@@ -1258,7 +1260,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     /* Add the 'prefix' param */
     tmp_value = NULL;
     loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
-    mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+    if (loc_id < 0) {
+        rc = OPAL_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     if( NULL != tmp_value && NULL != tmp_value[0] ) {
         /* Could also use the short version '-am'
          * but being verbose has some value
@@ -1270,7 +1281,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         /* Add the 'path' param */
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
-        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (loc_id < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         if( NULL != tmp_value && NULL != tmp_value[0] ) {
             opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
             opal_argv_append(argc, argv, "mca_base_param_file_path");
@@ -1283,7 +1302,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path_force");
-        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (loc_id < 0) {
+            rc = OPAL_ERR_NOT_FOUND;
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         if( NULL == tmp_value || NULL == tmp_value[0] ) {
             /* Get the current working directory */
             tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);

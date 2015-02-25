@@ -6,6 +6,8 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
@@ -185,7 +187,6 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_lock.super.cls_init_file_name, sizeof(const char *));
     opal_memchecker_base_isdefined (&comm->c_lock.super.cls_init_lineno, sizeof(int));
 #endif
-#if OPAL_HAVE_POSIX_THREADS
 /*
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_reserved, sizeof(int));
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_count, sizeof(int));
@@ -194,7 +195,6 @@ static inline int memchecker_comm(MPI_Comm comm)
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_lock.__status, sizeof(long int));
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_lock.__spinlock, sizeof(int));
 */
-#endif
     /*
      * The storage of a union has the size of the initialized member.
      * Here we check the whole union.

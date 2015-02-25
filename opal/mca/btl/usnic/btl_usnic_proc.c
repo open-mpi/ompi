@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -238,7 +238,9 @@ static int create_proc(opal_proc_t *opal_proc,
         uint64_t proto;
         char protostr[32];
         proto = mca_btl_usnic_component.transport_protocol;
-        strcpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL));
+        memset(protostr, 0, sizeof(protostr));
+        strncpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
+                sizeof(protostr) - 1);
         proto = proc->proc_modex->protocol;
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",
@@ -304,12 +306,12 @@ static uint64_t compute_weight(
 
     /* Just compare the CIDR-masked IP address to see if they're on
        the same network.  If so, we're good. */
-    mynet = sinp->sin_addr.s_addr & uip->ui_netmask_be;
+    mynet = sinp->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
     peernet = proc_modex_addr->ipv4_addr & proc_modex_addr->netmask;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:%s: checking my IP address/subnet (%s/%d) vs. peer (%s/%d): %s",
                         __func__, my_ip_string,
-                        usnic_netmask_to_cidrlen(uip->ui_netmask_be),
+                        usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be),
                         peer_ip_string,
                         usnic_netmask_to_cidrlen(proc_modex_addr->netmask),
                         (mynet == peernet ? "match" : "DO NOT match"));
@@ -546,8 +548,6 @@ static int match_modex(opal_btl_usnic_module_t *module,
     size_t i;
     uint32_t num_modules;
     opal_btl_usnic_graph_t *g = NULL;
-    int nme;
-    int *me;
     bool proc_is_left;
 
     if (NULL == index_out) {
@@ -597,7 +597,8 @@ static int match_modex(opal_btl_usnic_module_t *module,
             goto out_free_table;
         }
 
-        nme = 0;
+        int nme = 0;
+        int *me = NULL;
         err = opal_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
@@ -605,6 +606,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         }
 
         edge_pairs_to_match_table(proc, proc_is_left, nme, me);
+        free(me);
 
         err = opal_btl_usnic_gr_free(g);
         if (OPAL_SUCCESS != err) {

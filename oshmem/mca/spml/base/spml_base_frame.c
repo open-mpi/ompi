@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +67,7 @@ static int mca_spml_base_close(void)
     int i, j;
 
     /**
-     * Destruct the send and receive queues. The ompi_free_list_t destructor
+     * Destruct the send and receive queues. The opal_free_list_t destructor
      * will return the memory to the mpool, so this has to be done before the
      * mpool get released by the SPML close function.
      */
@@ -100,8 +103,8 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
      * their content, they should get constructed as soon as possible once the MPI
      * process is started.
      */
-    OBJ_CONSTRUCT(&mca_spml_base_put_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_spml_base_get_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_spml_base_put_requests, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_spml_base_get_requests, opal_free_list_t);
 
     OBJ_CONSTRUCT(&mca_spml_base_spml, opal_pointer_array_t);
 

@@ -5,7 +5,8 @@
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+#                         reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,5 +33,7 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/orte-migrate/Makefile
         orte/tools/orte-info/Makefile
         orte/tools/orte-server/Makefile
+        orte/tools/orte-submit/Makefile
+        orte/tools/orte-dvm/Makefile
     ])
 ])

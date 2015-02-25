@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,6 +99,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     orte_iof_proc_t *proct;
     int rc;
     orte_ns_cmp_bitmask_t mask;
+    bool exclusive;
     
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
@@ -215,6 +216,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     /* this must be output from one of my local procs - see
      * if anyone else has requested a copy of this info
      */
+    exclusive = false;
     for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
          item != opal_list_get_end(&mca_iof_hnp_component.sinks);
          item = opal_list_get_next(item)) {
@@ -237,6 +239,9 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&sink->daemon)));
             orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &rev->name, rev->tag, data, numbytes);
+            if (sink->exclusive) {
+                exclusive = true;
+            }
         }
     }
 
@@ -282,38 +287,40 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
         return;
     }
-    
-    /* see if the user wanted the output directed to files */
-    if (NULL != orte_output_filename) {
-        /* find the sink for this rank */
-        for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
-             item != opal_list_get_end(&mca_iof_hnp_component.sinks);
-             item = opal_list_get_next(item)) {
-            orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
-            /* if the target is set, then this sink is for another purpose - ignore it */
-            if (ORTE_JOBID_INVALID != sink->daemon.jobid) {
-                continue;
-            }
-            /* if this sink isn't for output, ignore it */
-            if (ORTE_IOF_STDIN & sink->tag) {
-                continue;
-            }
-            /* is this the desired proc? */
-            mask = ORTE_NS_CMP_ALL;
 
-            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, &rev->name)) {
-                /* output to the corresponding file */
-                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
-                /* done */
-                break;
+    if (!exclusive) {
+        /* see if the user wanted the output directed to files */
+        if (NULL != orte_output_filename) {
+            /* find the sink for this rank */
+            for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
+                 item != opal_list_get_end(&mca_iof_hnp_component.sinks);
+                 item = opal_list_get_next(item)) {
+                orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
+                /* if the target is set, then this sink is for another purpose - ignore it */
+                if (ORTE_JOBID_INVALID != sink->daemon.jobid) {
+                    continue;
+                }
+                /* if this sink isn't for output, ignore it */
+                if (ORTE_IOF_STDIN & sink->tag) {
+                    continue;
+                }
+                /* is this the desired proc? */
+                mask = ORTE_NS_CMP_ALL;
+
+                if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, &rev->name)) {
+                    /* output to the corresponding file */
+                    orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
+                    /* done */
+                    break;
+                }
             }
-        }
-    } else {
-        /* output this to our local output */
-        if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
-            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
         } else {
-            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
+            /* output this to our local output */
+            if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
+                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
+            } else {
+                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
+            }
         }
     }
     

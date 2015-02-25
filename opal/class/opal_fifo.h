@@ -156,6 +156,8 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
                 opal_atomic_rmb ();
             }
 
+            opal_atomic_rmb ();
+
             /* update the head with the real next value. note that no other thread
              * will be attempting to update the head until after it has been updated
              * with the next pointer. push will not see an empty list and other pop
@@ -166,6 +168,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
             assert (&fifo->opal_fifo_ghost == head.data.item);
 
             fifo->opal_fifo_head.data.item = next;
+            opal_atomic_wmb ();
         }
     }
 

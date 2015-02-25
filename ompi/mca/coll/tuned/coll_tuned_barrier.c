@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,15 +77,6 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     err = ompi_request_wait_all( 2, reqs, statuses );
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
-
-    return (MPI_SUCCESS);
-
- error_handler:
-    /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
-     * code that we can propagate up the stack. Instead, look for the real
-     * error code from the MPI_ERROR in the status.
-     */
     if( MPI_ERR_IN_STATUS == err ) {
         /* At least we know the error was detected during the wait_all */
         int err_index = 1;
@@ -94,13 +87,18 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
         OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
                                               " stage of ompi_coll_tuned_sendrecv_zero\n",
                       __FILE__, line, err, (0 == err_index ? "receive" : "send")));
-    } else {
-        /* Error discovered during the posting of the irecv or isend,
-         * and no status is available.
-         */
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
-                      __FILE__, line, err));
+        return MPI_ERR_IN_STATUS;
     }
+    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+
+    return (MPI_SUCCESS);
+
+ error_handler:
+    /* Error discovered during the posting of the irecv or isend,
+     * and no status is available.
+     */
+    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
+                  __FILE__, line, err));
     return err;
 }
 

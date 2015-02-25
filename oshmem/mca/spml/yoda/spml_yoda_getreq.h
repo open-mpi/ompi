@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,10 +42,10 @@ OBJ_CLASS_DECLARATION(mca_spml_yoda_get_request_t);
 
 static inline mca_spml_yoda_get_request_t *mca_spml_yoda_getreq_alloc(int dst)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_spml_yoda_get_request_t *getreq;
 
-    OMPI_FREE_LIST_WAIT_MT(&mca_spml_base_get_requests, item);
+    item = opal_free_list_wait (&mca_spml_base_get_requests);
     getreq = (mca_spml_yoda_get_request_t*) item;
     assert(getreq);
     getreq->req_get.req_base.req_free_called = false;
@@ -51,10 +54,11 @@ static inline mca_spml_yoda_get_request_t *mca_spml_yoda_getreq_alloc(int dst)
     return getreq;
 }
 
-void mca_spml_yoda_get_completion(mca_btl_base_module_t* btl,
-                                  struct mca_btl_base_endpoint_t* ep,
-                                  struct mca_btl_base_descriptor_t* des,
-                                  int status);
+void mca_spml_yoda_get_completion (struct mca_btl_base_module_t* module,
+                                   struct mca_btl_base_endpoint_t* endpoint,
+                                   void *local_address,
+                                   struct mca_btl_base_registration_handle_t *local_handle,
+                                   void *context, void *cbdata, int status);
 
 void mca_spml_yoda_get_response_completion(mca_btl_base_module_t* btl,
                                   struct mca_btl_base_endpoint_t* ep,

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,9 +85,28 @@ usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
 }
 
 
+/*
+ * usnic registration handle (passed over the network to peers as a
+ * cookie).
+ *
+ * Currently, this struct is meaningless (but it must be defined /
+ * exist) because we are emulating RDMA and do not have
+ * btl_register_mem and btl_deregister_mem functions (and we set
+ * module.btl_registration_handle_size to 0, not sizeof(struct
+ * mca_btl_base_registration_handle_t)).
+ */
+struct mca_btl_base_registration_handle_t {
+    /* Maybe we'll need fields like this */
+    uint32_t lkey;
+    uint32_t rkey;
+};
+
+/*
+ * usnic local registration
+ */
 typedef struct opal_btl_usnic_reg_t {
     mca_mpool_base_registration_t base;
-    struct fid_mr *mr;
+    struct fid_mr *ur_mr;
 } opal_btl_usnic_reg_t;
 
 
@@ -145,10 +164,10 @@ typedef struct {
 
 /**
  * Descriptor for a common segment.  This is exactly one packet and may
- * be send or receive
+ * be sent or received.
  */
 typedef struct opal_btl_usnic_segment_t {
-    ompi_free_list_item_t us_list;
+    opal_free_list_item_t us_list;
 
     opal_btl_usnic_seg_type_t us_type;
 
@@ -221,12 +240,12 @@ typedef struct opal_btl_usnic_frag_t {
     /* fragment descriptor type */
     opal_btl_usnic_frag_type_t uf_type;
 
-    /* utility segments */
+    /* utility segments (just seg_addr/seg_len) */
     mca_btl_base_segment_t uf_local_seg[2];
     mca_btl_base_segment_t uf_remote_seg[1];
 
     /* freelist this came from */
-    ompi_free_list_t *uf_freelist;
+    opal_free_list_t *uf_freelist;
 } opal_btl_usnic_frag_t;
 
 /**
@@ -307,14 +326,14 @@ typedef struct opal_btl_usnic_small_send_frag_t {
 typedef opal_btl_usnic_frag_t opal_btl_usnic_put_dest_frag_t;
 
 /**
- * A simple buffer that can be enqueued on an ompi_free_list_t that is intended
+ * A simple buffer that can be enqueued on an opal_free_list_t that is intended
  * to be used for fragment reassembly.  Nominally the free list code supports
  * this via the rb_super.ptr field, but that field is only allocated and
  * non-NULL if an mpool is used, and we don't need this reassembly memory to be
  * registered.
  */
 typedef struct opal_btl_usnic_rx_buf_t {
-    ompi_free_list_item_t rb_super;
+    opal_free_list_item_t rb_super;
     char buf[1]; /* flexible array member for frag reassembly */
 } opal_btl_usnic_rx_buf_t;
 
@@ -339,10 +358,10 @@ OBJ_CLASS_DECLARATION(opal_btl_usnic_ack_segment_t);
 static inline opal_btl_usnic_small_send_frag_t *
 opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     opal_btl_usnic_small_send_frag_t *frag;
 
-    OMPI_FREE_LIST_GET_MT(&(module->small_send_frags), item);
+    item = opal_free_list_get(&(module->small_send_frags));
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -361,10 +380,10 @@ opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
 static inline opal_btl_usnic_large_send_frag_t *
 opal_btl_usnic_large_send_frag_alloc(opal_btl_usnic_module_t *module)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     opal_btl_usnic_large_send_frag_t *frag;
 
-    OMPI_FREE_LIST_GET_MT(&(module->large_send_frags), item);
+    item = opal_free_list_get(&(module->large_send_frags));
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -384,10 +403,10 @@ static inline opal_btl_usnic_put_dest_frag_t *
 opal_btl_usnic_put_dest_frag_alloc(
     struct opal_btl_usnic_module_t *module)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     opal_btl_usnic_put_dest_frag_t *frag;
 
-    OMPI_FREE_LIST_GET_MT(&(module->put_dest_frags), item);
+    item = opal_free_list_get(&(module->put_dest_frags));
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -461,7 +480,7 @@ opal_btl_usnic_frag_return(
         }
     }
 
-    OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
+    opal_free_list_return(frag->uf_freelist, &(frag->uf_base.super));
 }
 
 /*
@@ -503,10 +522,10 @@ static inline opal_btl_usnic_chunk_segment_t *
 opal_btl_usnic_chunk_segment_alloc(
     opal_btl_usnic_module_t *module)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     opal_btl_usnic_send_segment_t *seg;
 
-    OMPI_FREE_LIST_GET_MT(&(module->chunk_segs), item);
+    item = opal_free_list_get(&(module->chunk_segs));
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -528,7 +547,7 @@ opal_btl_usnic_chunk_segment_return(
     assert(seg);
     assert(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
 
-    OMPI_FREE_LIST_RETURN_MT(&(module->chunk_segs), &(seg->ss_base.us_list));
+    opal_free_list_return(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
 
 /*
@@ -537,10 +556,10 @@ opal_btl_usnic_chunk_segment_return(
 static inline opal_btl_usnic_ack_segment_t *
 opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     opal_btl_usnic_send_segment_t *ack;
 
-    OMPI_FREE_LIST_GET_MT(&(module->ack_segs), item);
+    item = opal_free_list_get(&(module->ack_segs));
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -565,7 +584,32 @@ opal_btl_usnic_ack_segment_return(
     assert(ack);
     assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
-    OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
+    opal_free_list_return(&(module->ack_segs), &(ack->ss_base.us_list));
+}
+
+/* Compute and set the proper value for sfrag->sf_size.  This must not be used
+ * during usnic_alloc, since the PML might change the segment size after
+ * usnic_alloc returns. */
+static inline void
+opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
+{
+    opal_btl_usnic_frag_t *frag;
+
+    frag = &sfrag->sf_base;
+
+    /* JMS This can be a put or a send, and the buffers are different... */
+#if 0
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT > 0);
+    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT <= 2);
+
+    /* belt and suspenders: second len should be zero if only one SGE */
+    assert(2 == frag->uf_base.USNIC_SEND_LOCAL_COUNT ||
+        0 == frag->uf_local_seg[1].seg_len);
+#endif
+
+    sfrag->sf_size = 0;
+    sfrag->sf_size += frag->uf_local_seg[0].seg_len;
+    sfrag->sf_size += frag->uf_local_seg[1].seg_len;
 }
 
 END_C_DECLS

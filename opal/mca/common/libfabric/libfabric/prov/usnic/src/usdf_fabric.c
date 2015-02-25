@@ -38,6 +38,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <arpa/inet.h>
 #include <asm/types.h>
 #include <assert.h>
 #include <errno.h>
@@ -45,6 +46,7 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +68,7 @@
 #include "libnl_utils.h"
 
 #include "usdf.h"
-#include "fi_usnic.h"
+#include "fi_ext_usnic.h"
 #include "usdf_progress.h"
 #include "usdf_timer.h"
 #include "usdf_dgram.h"
@@ -114,10 +116,6 @@ usdf_validate_hints(struct fi_info *hints, struct usd_device_attrs *dap)
 	if (fattrp != NULL) {
 		if (fattrp->prov_version != 0 &&
 		    fattrp->prov_version != USDF_PROV_VERSION) {
-			return -FI_ENODATA;
-		}
-		if (fattrp->prov_name != NULL &&
-                    strcmp(fattrp->prov_name, USDF_PROV_NAME) != 0) {
 			return -FI_ENODATA;
 		}
 		if (fattrp->name != NULL &&
@@ -203,16 +201,6 @@ usdf_fill_info_dgram(
 	size_t entries;
 	int ret;
 
-	/* check that we are capable of what's requested */
-	if ((hints->caps & ~USDF_DGRAM_CAPS) != 0) {
-		return -FI_ENODATA;
-	}
-
-	/* app must support these modes */
-	if ((hints->mode & USDF_DGRAM_REQ_MODE) != USDF_DGRAM_REQ_MODE) {
-		return -FI_ENODATA;
-	}
-
 	fi = fi_allocinfo_internal();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
@@ -224,6 +212,18 @@ usdf_fill_info_dgram(
 	if (hints != NULL) {
 		fi->mode = hints->mode & USDF_DGRAM_SUPP_MODE;
 		addr_format = hints->addr_format;
+
+		/* check that we are capable of what's requested */
+		if ((hints->caps & ~USDF_DGRAM_CAPS) != 0) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
+
+		/* app must support these modes */
+		if ((hints->mode & USDF_DGRAM_REQ_MODE) != USDF_DGRAM_REQ_MODE) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
 	} else {
 		fi->mode = USDF_DGRAM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
@@ -365,16 +365,6 @@ usdf_fill_info_msg(
 	uint32_t addr_format;
 	int ret;
 
-	/* check that we are capable of what's requested */
-	if ((hints->caps & ~USDF_MSG_CAPS) != 0) {
-		return -FI_ENODATA;
-	}
-
-	/* app must support these modes */
-	if ((hints->mode & USDF_MSG_REQ_MODE) != USDF_MSG_REQ_MODE) {
-		return -FI_ENODATA;
-	}
-
 	fi = fi_allocinfo_internal();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
@@ -386,6 +376,18 @@ usdf_fill_info_msg(
 	if (hints != NULL) {
 		fi->mode = hints->mode & USDF_MSG_SUPP_MODE;
 		addr_format = hints->addr_format;
+
+		/* check that we are capable of what's requested */
+		if ((hints->caps & ~USDF_MSG_CAPS) != 0) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
+
+		/* app must support these modes */
+		if ((hints->mode & USDF_MSG_REQ_MODE) != USDF_MSG_REQ_MODE) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
 	} else {
 		fi->mode = USDF_MSG_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
@@ -468,16 +470,6 @@ usdf_fill_info_rdm(
 	uint32_t addr_format;
 	int ret;
 
-	/* check that we are capable of what's requested */
-	if ((hints->caps & ~USDF_RDM_CAPS) != 0) {
-		return -FI_ENODATA;
-	}
-
-	/* app must support these modes */
-	if ((hints->mode & USDF_RDM_REQ_MODE) != USDF_RDM_REQ_MODE) {
-		return -FI_ENODATA;
-	}
-
 	fi = fi_allocinfo_internal();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
@@ -489,6 +481,17 @@ usdf_fill_info_rdm(
 	if (hints != NULL) {
 		fi->mode = hints->mode & USDF_RDM_SUPP_MODE;
 		addr_format = hints->addr_format;
+		/* check that we are capable of what's requested */
+		if ((hints->caps & ~USDF_RDM_CAPS) != 0) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
+
+		/* app must support these modes */
+		if ((hints->mode & USDF_RDM_REQ_MODE) != USDF_RDM_REQ_MODE) {
+			ret = -FI_ENODATA;
+			goto fail;
+		}
 	} else {
 		fi->mode = USDF_RDM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
@@ -559,6 +562,8 @@ usdf_get_devinfo(void)
 	struct usdf_dev_entry *dep;
 	int ret;
 	int d;
+
+	assert(__usdf_devinfo == NULL);
 
 	dp = calloc(1, sizeof(*dp));
 	if (dp == NULL) {
@@ -678,6 +683,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 
 		/* skip this device if it has some problem */
 		if (!dep->ue_dev_ok) {
+			USDF_DEBUG("skipping %s/%s\n", dap->uda_devname,
+				dap->uda_ifname);
 			continue;
 		}
 
@@ -689,6 +696,9 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 				goto fail;
 			}
 			if (metric == -1) {
+				USDF_DEBUG("dest %s unreachable from %s/%s, skipping\n",
+					inet_ntoa(dest->sin_addr),
+					dap->uda_devname, dap->uda_ifname);
 				continue;
 			}
 		}
@@ -697,6 +707,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 		if (hints != NULL) {
 			ret = usdf_validate_hints(hints, dap);
 			if (ret != 0) {
+				USDF_DEBUG("hints do not match for %s/%s, skipping\n",
+					dap->uda_devname, dap->uda_ifname);
 				continue;
 			}
 
@@ -744,6 +756,9 @@ fail:
 	if (ai != NULL) {
 		freeaddrinfo(ai);
 	}
+	if (ret != 0) {
+		USDF_INFO("returning %d (%s)\n", ret, fi_strerror(-ret));
+	}
 	return ret;
 }
 
@@ -776,7 +791,8 @@ usdf_fabric_close(fid_t fid)
 }
 
 static int
-usdf_usnic_getinfo(struct fid_fabric *fabric, struct fi_usnic_info *uip)
+usdf_usnic_getinfo(uint32_t version, struct fid_fabric *fabric,
+			struct fi_usnic_info *uip)
 {
 	struct usdf_fabric *fp;
 	struct usd_device_attrs *dap;
@@ -784,11 +800,16 @@ usdf_usnic_getinfo(struct fid_fabric *fabric, struct fi_usnic_info *uip)
 	fp = fab_ftou(fabric);
 	dap = fp->fab_dev_attrs;
 
-	uip->ui_link_speed = dap->uda_bandwidth;
-	strcpy(uip->ui_ifname, dap->uda_ifname);
-	uip->ui_num_vf = dap->uda_num_vf;
-	uip->ui_qp_per_vf = dap->uda_qp_per_vf;
-	uip->ui_cq_per_vf = dap->uda_cq_per_vf;
+	if (version > FI_EXT_USNIC_INFO_VERSION) {
+		return -FI_EINVAL;
+	}
+
+	uip->ui.v1.ui_link_speed = dap->uda_bandwidth;
+	uip->ui.v1.ui_netmask_be = dap->uda_netmask_be;
+	strcpy(uip->ui.v1.ui_ifname, dap->uda_ifname);
+	uip->ui.v1.ui_num_vf = dap->uda_num_vf;
+	uip->ui.v1.ui_qp_per_vf = dap->uda_qp_per_vf;
+	uip->ui.v1.ui_cq_per_vf = dap->uda_cq_per_vf;
 
 	return 0;
 }
@@ -848,11 +869,14 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 		}
 	}
 	if (d >= dp->uu_num_devs) {
+		USDF_INFO("device \"%s\" does not exit, returning -FI_ENODEV\n",
+				fattrp->name);
 		return -FI_ENODEV;
 	}
 
 	fp = calloc(1, sizeof(*fp));
 	if (fp == NULL) {
+		USDF_INFO("unable to allocate memory for fabric\n");
 		return -FI_ENOMEM;
 	}
 	fp->fab_epollfd = -1;
@@ -879,12 +903,14 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	fp->fab_epollfd = epoll_create(1024);
 	if (fp->fab_epollfd == -1) {
 		ret = -errno;
+		USDF_INFO("unable to allocate epoll fd\n");
 		goto fail;
 	}
 
 	fp->fab_eventfd = eventfd(0, EFD_NONBLOCK | EFD_SEMAPHORE);
 	if (fp->fab_eventfd == -1) {
 		ret = -errno;
+		USDF_INFO("unable to allocate event fd\n");
 		goto fail;
 	}
 	fp->fab_poll_item.pi_rtn = usdf_fabric_progression_cb;
@@ -894,6 +920,7 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	ret = epoll_ctl(fp->fab_epollfd, EPOLL_CTL_ADD, fp->fab_eventfd, &ev);
 	if (ret == -1) {
 		ret = -errno;
+		USDF_INFO("unable to EPOLL_CTL_ADD\n");
 		goto fail;
 	}
 
@@ -901,12 +928,14 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 			usdf_fabric_progression_thread, fp);
 	if (ret != 0) {
 		ret = -ret;
+		USDF_INFO("unable to create progress thread\n");
 		goto fail;
 	}
 
 	/* initialize timer subsystem */
 	ret = usdf_timer_init(fp);
 	if (ret != 0) {
+		USDF_INFO("unable to initialize timer\n");
 		goto fail;
 	}
 
@@ -916,6 +945,7 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	sin.sin_addr.s_addr = fp->fab_dev_attrs->uda_ipaddr_be;
 	fp->fab_arp_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fp->fab_arp_sockfd == -1) {
+		USDF_INFO("unable to create socket\n");
 		goto fail;
 	}
 	ret = bind(fp->fab_arp_sockfd, (struct sockaddr *) &sin, sizeof(sin));
@@ -928,6 +958,8 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	fattrp->fabric = fab_utof(fp);
 	fattrp->prov_version = USDF_PROV_VERSION;
 	*fabric = fab_utof(fp);
+	USDF_INFO("successfully opened %s/%s\n", fattrp->name,
+			fp->fab_dev_attrs->uda_ifname);
 	return 0;
 
 fail:
@@ -944,6 +976,7 @@ fail:
 		usdf_timer_deinit(fp);
 		free(fp);
 	}
+	USDF_DEBUG("returning %d (%s)\n", ret, fi_strerror(-ret));
 	return ret;
 }
 

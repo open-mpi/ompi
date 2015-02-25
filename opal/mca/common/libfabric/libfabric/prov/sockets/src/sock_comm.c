@@ -63,7 +63,7 @@ static ssize_t sock_comm_send_socket(struct sock_conn *conn, const void *buf, si
 
 	while(rem > 0) {
 		len = MIN(rem, SOCK_COMM_BUF_SZ);
-		ret = send(conn->sock_fd, buf + offset, len, 0);
+		ret = send(conn->sock_fd, (char *)buf + offset, len, 0);
 		if (ret <= 0) 
 			break;
 		
@@ -190,30 +190,49 @@ ssize_t sock_comm_recv(struct sock_conn *conn, void *buf, size_t len)
 	return ret + read_len;
 }
 
+ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
+{
+	sock_comm_recv_buffer(conn);
+	if (rbused(&conn->inbuf) >= len) {
+		rbpeek(&conn->inbuf, buf, len);
+		return len;
+	} 
+	return 0;
+}
+
 int sock_comm_buffer_init(struct sock_conn *conn)
 {
+	int optval;
 	uint64_t flags;
 	socklen_t size = SOCK_COMM_BUF_SZ;
 	socklen_t optlen = sizeof(socklen_t);
 
+	optval = 1;
+	if (setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
+		       &optval, sizeof optval))
+		SOCK_LOG_ERROR("setsockopt failed\n");
+
 	flags = fcntl(conn->sock_fd, F_GETFL, 0);
-	fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK);
+	if (fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed\n");
 
 	rbinit(&conn->inbuf, SOCK_COMM_BUF_SZ);
 	rbinit(&conn->outbuf, SOCK_COMM_BUF_SZ);
-		
-	setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen);
-	setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen);
 
-	getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen);
-	SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);
-		
+	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen))
+		SOCK_LOG_ERROR("setsockopt failed\n");
+
+	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen))
+		SOCK_LOG_ERROR("setsockopt failed\n");
+
+	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen))
+		SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);
+	
 	optlen = sizeof(socklen_t);
-	getsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, &optlen);
-	SOCK_LOG_INFO("SO_SNDBUF: %d\n", size);
+	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, &optlen))
+		SOCK_LOG_INFO("SO_SNDBUF: %d\n", size);
 	return 0;
 }
-
 
 void sock_comm_buffer_finalize(struct sock_conn *conn)
 {

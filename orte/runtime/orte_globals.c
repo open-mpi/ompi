@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -190,9 +190,6 @@ bool orte_map_stddiag_to_stderr = false;
 
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;
-
-/* progress thread */
-opal_thread_t orte_progress_thread;
 
 /* user debugger */
 char *orte_base_user_debugger = NULL;
@@ -635,6 +632,7 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 
 static void orte_job_construct(orte_job_t* job)
 {
+    job->personality = NULL;
     job->jobid = ORTE_JOBID_INVALID;
     job->offset = 0;
     job->apps = OBJ_NEW(opal_pointer_array_t);
@@ -684,12 +682,15 @@ static void orte_job_destruct(orte_job_t* job)
         /* probably just a race condition - just return */
         return;
     }
-    
+
     if (orte_debug_flag) {
         opal_output(0, "%s Releasing job data for %s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job->jobid));
     }
     
+    if (NULL != job->personality) {
+        free(job->personality);
+    }
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
             continue;

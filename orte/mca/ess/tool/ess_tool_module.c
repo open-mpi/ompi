@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
+#include "opal/hash_string.h"
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -57,28 +59,50 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    
+    orte_jobid_t jobid;
+    orte_vpid_t vpid;
+
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
     }
 
-    /* If we are a tool with no name, then responsibility for
-     * defining the name falls to the PLM component for our
-     * respective environment.
-     * Just call the base function for this.
-     *
-     * NOTE: Tools with names - i.e., tools consisting of a
-     * distributed set of processes - will select and use
-     * the appropriate enviro-specific module and -not- this one!
-     */
-    if (ORTE_SUCCESS != (ret = orte_plm_base_set_hnp_name())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_set_hnp_name";
-        goto error;
+    
+    if (NULL != orte_ess_base_jobid &&
+        NULL != orte_ess_base_vpid) {
+        opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                            "ess:tool:obtaining name from environment");
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
+            return(ret);
+        }
+        ORTE_PROC_MY_NAME->jobid = jobid;
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
+            return(ret);
+        }
+        ORTE_PROC_MY_NAME->vpid = vpid;
+    } else {
+        /* If we are a tool with no name, then define it here */
+        uint16_t jobfam;
+        uint32_t hash32;
+        uint32_t bias;
+    
+        opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                            "ess:tool:computing name");
+        /* hash the nodename */
+        OPAL_HASH_STR(orte_process_info.nodename, hash32);
+        bias = (uint32_t)orte_process_info.pid;
+        /* fold in the bias */
+        hash32 = hash32 ^ bias;
+    
+        /* now compress to 16-bits */
+        jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
+    
+        /* set the name */
+        ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
+        ORTE_PROC_MY_NAME->vpid = 0;
     }
-
+    
     /* do the rest of the standard tool init */
     if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
         ORTE_ERROR_LOG(ret);
@@ -88,7 +112,7 @@ static int rte_init(void)
 
     return ORTE_SUCCESS;        
 
-error:
+ error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
@@ -123,6 +147,6 @@ static void rte_abort(int status, bool report)
     orte_proc_info_finalize();
     
     /* Now just exit */
-    exit(0);
+    exit(status);
 }
 

@@ -76,6 +76,15 @@ usdf_ep_dgram_enable(struct fid_ep *fep)
 
 	ep = ep_ftou(fep);
 
+	if (ep->e.dg.ep_wcq == NULL) {
+		ret = -FI_EOPBADSTATE;
+		goto fail;
+	}
+	if (ep->e.dg.ep_rcq == NULL) {
+		ret = -FI_EOPBADSTATE;
+		goto fail;
+	}
+
 	filt.uf_type = USD_FTY_UDP_SOCK;
 	filt.uf_filter.uf_udp_sock.u_sock = ep->e.dg.ep_sock;
 
@@ -90,7 +99,7 @@ usdf_ep_dgram_enable(struct fid_ep *fep)
 				&filt,
 				&ep->e.dg.ep_qp);
 	} else {
-		ret = -EAGAIN;
+		ret = -FI_EAGAIN;
 	}
 
 	if (ret != 0) {
@@ -133,9 +142,11 @@ usdf_ep_dgram_enable(struct fid_ep *fep)
 fail:
 	if (ep->e.dg.ep_hdr_ptr != NULL) {
 		free(ep->e.dg.ep_hdr_ptr);
+		ep->e.dg.ep_hdr_ptr = NULL;
 	}
 	if (ep->e.dg.ep_qp != NULL) {
 		usd_destroy_qp(ep->e.dg.ep_qp);
+		ep->e.dg.ep_qp = NULL;
 	}
 	return ret;
 }
@@ -261,18 +272,34 @@ usdf_ep_dgram_close(fid_t fid)
 	usdf_ep_dgram_deref_cq(ep->e.dg.ep_wcq);
 	usdf_ep_dgram_deref_cq(ep->e.dg.ep_rcq);
 
+	if (ep->e.dg.ep_sock != -1) {
+		close(ep->e.dg.ep_sock);
+	}
+
 	free(ep);
 	return 0;
 }
 
 static struct fi_ops_ep usdf_base_dgram_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_dgram_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = usdf_dgram_rx_size_left,
+	.tx_size_left = usdf_dgram_tx_size_left,
+};
+
+static struct fi_ops_ep usdf_base_dgram_prefix_ops = {
+	.size = sizeof(struct fi_ops_ep),
+	.cancel = fi_no_cancel,
+	.getopt = fi_no_getopt,
+	.setopt = fi_no_setopt,
+	.tx_ctx = fi_no_tx_ctx,
+	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = usdf_dgram_prefix_rx_size_left,
+	.tx_size_left = usdf_dgram_prefix_tx_size_left,
 };
 
 static struct fi_ops_msg usdf_dgram_ops = {
@@ -307,11 +334,31 @@ static struct fi_ops_cm usdf_cm_dgram_ops = {
 	.shutdown = fi_no_shutdown,
 };
 
+static int usdf_ep_dgram_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_dgram_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_dgram_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_dgram_close,
 	.bind = usdf_ep_dgram_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_dgram_control,
 	.ops_open = fi_no_ops_open
 };
 
@@ -352,7 +399,6 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 	ep->ep_fid.fid.fclass = FI_CLASS_EP;
 	ep->ep_fid.fid.context = context;
 	ep->ep_fid.fid.ops = &usdf_ep_dgram_ops;
-	ep->ep_fid.ops = &usdf_base_dgram_ops;
 	ep->ep_fid.cm = &usdf_cm_dgram_ops;
 	ep->ep_domain = udp;
 	ep->ep_caps = info->caps;
@@ -376,9 +422,11 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 			goto fail;
 		}
 
+		ep->ep_fid.ops = &usdf_base_dgram_prefix_ops;
 		info->ep_attr->msg_prefix_size = USDF_HDR_BUF_ENTRY;
 		ep->ep_fid.msg = &usdf_dgram_prefix_ops;
 	} else {
+		ep->ep_fid.ops = &usdf_base_dgram_ops;
 		ep->ep_fid.msg = &usdf_dgram_ops;
 	}
 	atomic_init(&ep->ep_refcnt, 0);

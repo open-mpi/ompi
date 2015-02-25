@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -36,19 +36,22 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"
 
 #include "orte/mca/oob/base/base.h"
+#include "orte/mca/plm/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/state/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/base/base.h"
 #endif
+#include "orte/mca/schizo/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
@@ -58,6 +61,8 @@
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/ess/base/base.h"
+
+static bool progress_thread_running = false;
 
 int orte_ess_base_tool_setup(void)
 {
@@ -72,13 +77,16 @@ int orte_ess_base_tool_setup(void)
     opal_proc_local_set(&orte_process_info.super);
 
     if (NULL != orte_process_info.my_hnp_uri) {
-        /* if we were given an HNP, then we were launched
-         * by mpirun in some fashion - in this case, we want
+        /* if we were given an HNP, then we want
          * to look like an application as well as being a tool.
          * Need to do this before opening the routed framework
          * so it will do the right things.
          */
         orte_process_info.proc_type |= ORTE_PROC_NON_MPI;
+        /* get a separate orte event base */
+        orte_event_base = opal_start_progress_thread("orte", true);
+        progress_thread_running = true;
+        orte_event_base_active = true;
     }
     
     /* open and setup the state machine */
@@ -90,6 +98,18 @@ int orte_ess_base_tool_setup(void)
     if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_state_base_select";
+        goto error;
+    }
+
+    /* open and setup the error manager */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
         goto error;
     }
 
@@ -177,6 +197,15 @@ int orte_ess_base_tool_setup(void)
             error = "orte_iof_base_select";
             goto error;
         }
+        /* if we were given an HNP, then also setup the PLM in case this
+         * tool wants to request that we spawn something for it */
+        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_base_open";
+            goto error;
+        }
+        /* we don't select the plm framework as we only want the
+         * base proxy functions */
     }
     
 #if OPAL_ENABLE_FT_CR == 1
@@ -208,7 +237,19 @@ int orte_ess_base_tool_setup(void)
     /* Tools do not need all the OPAL CR stuff */
     opal_cr_set_enabled(false);
 #endif
-    
+
+    /* setup schizo in case we are parsing cmd lines */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_base_select";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
     
  error:
@@ -237,6 +278,13 @@ int orte_ess_base_tool_finalize(void)
     }
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_schizo_base_framework);
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
 
+    /* release the event base */
+    if (progress_thread_running) {
+        opal_stop_progress_thread("orte", true);
+        progress_thread_running = false;
+    }
     return ORTE_SUCCESS;    
 }

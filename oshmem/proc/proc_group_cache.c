@@ -23,7 +23,7 @@ oshmem_group_t* find_group_in_cache(int PE_start, int logPE_stride, int PE_size)
     }
 
     for (item = opal_list_get_first(&oshmem_group_cache_list);
-            item != opal_list_get_end(&oshmem_group_cache_list);
+            item && (item != opal_list_get_end(&oshmem_group_cache_list));
             item = opal_list_get_next(item)) {
         if (!memcmp(((oshmem_group_cache_t *) item)->cache_id,
                     cache_look_up_id,

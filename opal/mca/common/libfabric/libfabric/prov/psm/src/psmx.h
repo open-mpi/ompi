@@ -34,67 +34,17 @@ extern "C" {
 #include <psm.h>
 #include <psm_mq.h>
 #include "psm_am.h"
+
 #include "fi.h"
 #include "fi_enosys.h"
 #include "fi_list.h"
+#include "fi_log.h"
 
-#define PSM_PFX "libfabric:psm"
+#define PSMX_PROVNAME "psm"
+#define PSMX_DEFAULT_UUID	"0FFF0FFF-0000-0000-0000-0FFF0FFF0FFF"
 
-#define PSMX_FREE_LIST_INIT(head, tail, type, count) \
-	do { \
-		int i; \
-		type *item; \
-		head = tail = NULL; \
-		for (i=0; i<count; i++) { \
-			item = calloc(sizeof(type), 1); \
-			if (!item) {\
-				fprintf(stderr, "%s: out of memory.\n", __func__); \
-				exit(-1); \
-			} \
-			item->next = head; \
-			head = item; \
-			if (!tail) \
-				tail = head; \
-		} \
-	} while (0)
-
-#define PSMX_FREE_LIST_GET(head, tail, type, item) \
-	do { \
-		if (head) { \
-			item = head; \
-			head = head->next; \
-			if (!head) \
-				tail = head; \
-			item->next = NULL; \
-		} \
-		else { \
-			item = calloc(sizeof(type), 1); \
-			if (!item) {\
-				fprintf(stderr, "%s: out of memory.\n", __func__); \
-				exit(-1); \
-			} \
-		} \
-	} while (0)
-
-#define PSMX_FREE_LIST_PUT(head, tail, type, item) \
-	do { \
-		memset(item, 0, sizeof(type)); \
-		if (tail) \
-			tail->next = item; \
-		else \
-			head = tail = item; \
-	} while (0)
-
-#define PSMX_FREE_LIST_FINALIZE(head, tail, type) \
-	do { \
-		type *next; \
-		while (head) { \
-			next = head->next; \
-			free(head); \
-			head = next; \
-		} \
-		tail = NULL; \
-	} while (0)
+#define PSMX_DEBUG(...) FI_LOG(2, PSMX_PROVNAME, __VA_ARGS__)
+#define PSMX_WARN(...)	FI_WARN(PSMX_PROVNAME, __VA_ARGS__)
 
 #define PSMX_TIME_OUT	120
 
@@ -111,6 +61,8 @@ extern "C" {
 			 FI_CANCEL | FI_TRIGGER | \
 			 FI_DYNAMIC_MR | \
 			 PSMX_CAP_EXT)
+
+#define PSMX_CAPS2	((PSMX_CAPS | FI_DIRECTED_RECV) & ~FI_TAGGED)
 
 #define PSMX_MODE	(FI_CONTEXT)
 
@@ -136,8 +88,13 @@ enum psmx_context_type {
 	PSMX_REMOTE_READ_CONTEXT,
 };
 
+union psmx_pi {
+	void	*p;
+	int	i;
+};
+
 #define PSMX_CTXT_REQ(fi_context)	((fi_context)->internal[0])
-#define PSMX_CTXT_TYPE(fi_context)	(*(int *)&(fi_context)->internal[1])
+#define PSMX_CTXT_TYPE(fi_context)	(((union psmx_pi *)&(fi_context)->internal[1])->i)
 #define PSMX_CTXT_USER(fi_context)	((fi_context)->internal[2])
 #define PSMX_CTXT_EP(fi_context)	((fi_context)->internal[3])
 
@@ -228,16 +185,24 @@ struct psmx_am_request {
 	};
 	struct fi_context fi_context;
 	struct psmx_fid_ep *ep;
-	struct psmx_am_request *next;
 	int state;
 	int no_event;
 	int error;
+	struct slist_entry list_entry;
+};
+
+struct psmx_unexp {
+	psm_epaddr_t		sender_addr;
+	uint64_t		sender_context;
+	uint32_t		len_received;
+	uint32_t		done;
+	struct slist_entry	list_entry;
+	char			buf[0];
 };
 
 struct psmx_req_queue {
-	pthread_mutex_t		lock;
-	struct psmx_am_request	*head;
-	struct psmx_am_request	*tail;
+	pthread_mutex_t	lock;
+	struct slist	list;
 };
 
 struct psmx_multi_recv {
@@ -253,10 +218,12 @@ struct psmx_multi_recv {
 
 struct psmx_fid_fabric {
 	struct fid_fabric	fabric;
+	struct psmx_fid_domain	*active_domain;
 };
 
 struct psmx_fid_domain {
 	struct fid_domain	domain;
+	struct psmx_fid_fabric	*fabric;
 	psm_ep_t		psm_ep;
 	psm_epid_t		psm_epid;
 	psm_mq_t		psm_mq;
@@ -305,18 +272,12 @@ struct psmx_cq_event {
 	} cqe;
 	int error;
 	uint64_t source;
-	struct psmx_cq_event *next;
-};
-
-struct psmx_cq_event_queue {
-	struct psmx_cq_event	*head;
-	struct psmx_cq_event	*tail;
-	size_t	count;
+	struct slist_entry list_entry;
 };
 
 struct psmx_fid_wait {
 	struct fid_wait			wait;
-	struct psmx_fid_domain		*domain;
+	struct psmx_fid_fabric		*fabric;
 	int				type;
 	union {
 		int			fd[2];
@@ -343,11 +304,13 @@ struct psmx_fid_cq {
 	struct psmx_fid_domain		*domain;
 	int 				format;
 	int				entry_size;
-	struct psmx_cq_event_queue	event_queue;
-	struct psmx_cq_event_queue	free_list;
+	size_t				event_count;
+	struct slist			event_queue;
+	struct slist			free_list;
 	struct psmx_cq_event		*pending_error;
 	struct psmx_fid_wait		*wait;
 	int				wait_cond;
+	int				wait_is_local;
 };
 
 enum psmx_triggered_op {
@@ -488,6 +451,7 @@ struct psmx_fid_cntr {
 	uint64_t		counter_last_read;
 	uint64_t		error_counter_last_read;
 	struct psmx_fid_wait	*wait;
+	int			wait_is_local;
 	struct psmx_trigger	*trigger;
 	pthread_mutex_t		trigger_lock;
 };
@@ -524,6 +488,11 @@ struct psmx_fid_ep {
 	struct fi_context	sendimm_context;
 	struct fi_context	writeimm_context;
 	size_t			min_multi_recv;
+};
+
+struct psmx_fid_stx {
+	struct fid_stx		stx;
+	struct psmx_fid_domain	*domain;
 };
 
 struct psmx_fid_mr {
@@ -572,16 +541,18 @@ extern struct psmx_env		psmx_env;
 
 int	psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 			 struct fid_domain **domain, void *context);
+int	psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
+		       struct fid_wait **waitset);
 int	psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 		     struct fid_ep **ep, void *context);
+int	psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
+		     struct fid_stx **stx, void *context);
 int	psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		     struct fid_cq **cq, void *context);
 int	psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		     struct fid_av **av, void *context);
 int	psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		       struct fid_cntr **cntr, void *context);
-int	psmx_wait_open(struct fid_domain *domain, struct fi_wait_attr *attr,
-		       struct fid_wait **waitset);
 int	psmx_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
 		       struct fid_poll **pollset);
 
@@ -596,7 +567,6 @@ int	psmx_errno(int err);
 int	psmx_epid_to_epaddr(struct psmx_fid_domain *domain,
 			    psm_epid_t epid, psm_epaddr_t *epaddr);
 void	psmx_query_mpi(void);
-void	psmx_debug(char *fmt, ...);
 
 void	psmx_cq_enqueue_event(struct psmx_fid_cq *cq, struct psmx_cq_event *event);
 struct	psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
@@ -612,17 +582,6 @@ void	psmx_wait_signal(struct fid_wait *wait);
 
 int	psmx_am_init(struct psmx_fid_domain *domain);
 int	psmx_am_fini(struct psmx_fid_domain *domain);
-int	psmx_am_enqueue_recv(struct psmx_fid_domain *domain,
-				struct psmx_am_request *req);
-struct psmx_am_request *
-	psmx_am_search_and_dequeue_recv(struct psmx_fid_domain *domain,
-					const void *src_addr);
-#if PSMX_AM_USE_SEND_QUEUE
-int	psmx_am_enqueue_send(struct psmx_fid_domain *domain,
-				  struct psmx_am_request *req);
-#endif
-int	psmx_am_enqueue_rma(struct psmx_fid_domain *domain,
-				  struct psmx_am_request *req);
 int	psmx_am_progress(struct psmx_fid_domain *domain);
 int	psmx_am_process_send(struct psmx_fid_domain *domain,
 				struct psmx_am_request *req);
@@ -646,6 +605,12 @@ static inline void psmx_cntr_inc(struct psmx_fid_cntr *cntr)
 	psmx_cntr_check_trigger(cntr);
 	if (cntr->wait)
 		psmx_wait_signal((struct fid_wait *)cntr->wait);
+}
+
+static inline void psmx_progress(struct psmx_fid_domain *domain)
+{
+	psmx_cq_poll_mq(NULL, domain, NULL, 0, NULL);
+	psmx_am_progress(domain);
 }
 
 ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,

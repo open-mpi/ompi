@@ -538,6 +538,8 @@ int orte_daemon(int argc, char *argv[])
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
+        /* default to ompi for now */
+        jdata->personality = strdup("ompi");
         orte_plm_base_create_jobid(jdata);
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);

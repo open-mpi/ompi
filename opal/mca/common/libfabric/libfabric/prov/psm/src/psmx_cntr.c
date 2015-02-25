@@ -160,11 +160,12 @@ void psmx_cntr_check_trigger(struct psmx_fid_cntr *cntr)
 						trigger->atomic_compwrite.flags);
 			break;
 		default:
-			psmx_debug("%s: %d unsupported op\n", __func__, trigger->op);
+			PSMX_DEBUG("%s: %d unsupported op\n", __func__, trigger->op);
 			break;
 		}
 
 		free(trigger);
+		trigger = cntr->trigger;
 	}
 
 	pthread_mutex_unlock(&cntr->trigger_lock);
@@ -193,11 +194,18 @@ void psmx_cntr_add_trigger(struct psmx_fid_cntr *cntr, struct psmx_trigger *trig
 	psmx_cntr_check_trigger(cntr);
 }
 
+#define PSMX_CNTR_POLL_THRESHOLD 100
 static uint64_t psmx_cntr_read(struct fid_cntr *cntr)
 {
 	struct psmx_fid_cntr *cntr_priv;
+	static int poll_cnt = 0;
 
 	cntr_priv = container_of(cntr, struct psmx_fid_cntr, cntr);
+
+	if (poll_cnt++ == PSMX_CNTR_POLL_THRESHOLD) {
+		psmx_progress(cntr_priv->domain);
+		poll_cnt = 0;
+	}
 
 	cntr_priv->counter_last_read = cntr_priv->counter;
 
@@ -264,8 +272,7 @@ static int psmx_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout
 				break;
 		}
 		else {
-			psmx_cq_poll_mq(NULL, cntr_priv->domain, NULL, 0, NULL);
-			psmx_am_progress(cntr_priv->domain);
+			psmx_progress(cntr_priv->domain);
 		}
 
 		if (cntr_priv->counter >= threshold)
@@ -293,6 +300,9 @@ static int psmx_cntr_close(fid_t fid)
 
 	cntr = container_of(fid, struct psmx_fid_cntr, cntr.fid);
 
+	if (cntr->wait && cntr->wait_is_local)
+		fi_close((fid_t)cntr->wait);
+
 	pthread_mutex_destroy(&cntr->trigger_lock);
 	free(cntr);
 
@@ -313,7 +323,7 @@ static int psmx_cntr_control(fid_t fid, int command, void *arg)
 
 	case FI_GETOPSFLAG:
 		if (!arg)
-			return -EINVAL;
+			return -FI_EINVAL;
 		*(uint64_t *)arg = cntr->flags;
 		break;
 
@@ -322,7 +332,7 @@ static int psmx_cntr_control(fid_t fid, int command, void *arg)
 		break;
 
 	default:
-		return -ENOSYS;
+		return -FI_ENOSYS;
 	}
 
 	return ret;
@@ -351,12 +361,14 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	struct psmx_fid_cntr *cntr_priv;
 	struct psmx_fid_wait *wait = NULL;
 	struct fi_wait_attr wait_attr;
+	int wait_is_local = 0;
 	int events;
 	uint64_t flags;
 	int err;
 
 	events = FI_CNTR_EVENTS_COMP;
 	flags = 0;
+	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 
 	switch (attr->events) {
 	case FI_CNTR_EVENTS_COMP:
@@ -364,9 +376,9 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		break;
 
 	default:
-		psmx_debug("%s: attr->events=%d, supported=%d\n", __func__,
+		PSMX_DEBUG("%s: attr->events=%d, supported=%d\n", __func__,
 				attr->events, FI_CNTR_EVENTS_COMP);
-		return -EINVAL;
+		return -FI_EINVAL;
 	}
 
 	switch (attr->wait_obj) {
@@ -376,7 +388,7 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	case FI_WAIT_SET:
 		if (!attr->wait_set) {
-			psmx_debug("%s: FI_WAIT_SET is specified but attr->wait_set is NULL\n",
+			PSMX_DEBUG("%s: FI_WAIT_SET is specified but attr->wait_set is NULL\n",
 				   __func__);
 			return -FI_EINVAL;
 		}
@@ -387,25 +399,27 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
-		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
+		err = psmx_wait_open(&domain_priv->fabric->fabric,
+				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
+		wait_is_local = 1;
 		break;
 
 	default:
-		psmx_debug("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__,
+		PSMX_DEBUG("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__,
 			   attr->wait_obj, FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
 
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	cntr_priv = (struct psmx_fid_cntr *) calloc(1, sizeof *cntr_priv);
 	if (!cntr_priv)
-		return -ENOMEM;
+		return -FI_ENOMEM;
 
 	cntr_priv->domain = domain_priv;
 	cntr_priv->events = events;
 	cntr_priv->wait = wait;
+	cntr_priv->wait_is_local = wait_is_local;
 	cntr_priv->flags = flags;
 	cntr_priv->cntr.fid.fclass = FI_CLASS_CNTR;
 	cntr_priv->cntr.fid.context = context;

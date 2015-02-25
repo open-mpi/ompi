@@ -1,4 +1,5 @@
-/**
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "opal/threads/mutex.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/mca/allocator/allocator.h"
 
 
@@ -36,7 +39,7 @@
  */
 
 struct mca_allocator_basic_segment_t {
-    ompi_free_list_item_t seg_item;
+    opal_free_list_item_t seg_item;
     unsigned char* seg_addr;
     size_t seg_size;
 };
@@ -53,7 +56,7 @@ struct mca_allocator_basic_module_t {
     mca_allocator_base_component_segment_free_fn_t seg_free;
     opal_list_t seg_list;
     opal_mutex_t seg_lock;
-    ompi_free_list_t seg_descriptors;
+    opal_free_list_t seg_descriptors;
 };
 typedef struct mca_allocator_basic_module_t mca_allocator_basic_module_t;
 

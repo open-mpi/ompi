@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,8 +102,8 @@ int mca_sharedfp_sm_iwrite (mca_io_ompio_file_t *fh,
  *--------------------------------------------------------------*/
 
 struct sm_offset{
-    sem_t mutex; /* the mutex: a Posix memory-based semaphore */
-    long long offset; /* and the shared file pointer offset */
+    sem_t *mutex;      /* the mutex: a Posix memory-based unnamed semaphore */
+    long long offset;  /* and the shared file pointer offset */
 };
 
 /*This structure will hang off of the mca_sharedfp_base_data_t's
@@ -114,6 +114,8 @@ struct mca_sharedfp_sm_data
     struct sm_offset * sm_offset_ptr;
     /*save filename so that we can remove the file on close*/
     char * sm_filename;
+    sem_t *mutex;      /* the mutex: a Posix memory-based named semaphore */
+    char *sem_name;    /* Name of the semaphore */
 };
 
 typedef struct mca_sharedfp_sm_data sm_data;

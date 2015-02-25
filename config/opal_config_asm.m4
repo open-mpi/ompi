@@ -11,6 +11,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -386,13 +388,13 @@ foo$opal_cv_asm_label_suffix
         [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
-    if test "$opal_asm_addr" = "16" -o "$opal_asm_addr" = "10" ; then
+    if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
        opal_cv_asm_align_log="yes"
     else
         opal_cv_asm_align_log="no"
     fi])
 
-    if test "$opal_cv_asm_align_log" = "yes" -o "$opal_cv_asm_align_log" = "1" ; then
+    if test "$opal_cv_asm_align_log" = "yes" || test "$opal_cv_asm_align_log" = "1" ; then
         opal_asm_align_log_result=1
     else
         opal_asm_align_log_result=0
@@ -650,6 +652,54 @@ AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
 		cmpxchg16b_result=1],
             [AC_MSG_RESULT([no])
 		cmpxchg16b_result=0])
+    fi
+    if test "$cmpxchg16b_result" = 1; then
+        AC_MSG_CHECKING([if compiler correctly handles volatile 128bits])
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>
+#include <assert.h>
+
+union opal_counted_pointer_t {
+    struct {
+        uint64_t counter;
+        uint64_t item;
+    } data;
+#if defined(HAVE___INT128) && HAVE___INT128
+    __int128 value;
+#elif defined(HAVE_INT128_T) && HAVE_INT128_T
+    int128_t value;
+#endif
+};
+typedef union opal_counted_pointer_t opal_counted_pointer_t;],
+                                       [volatile opal_counted_pointer_t a;
+    opal_counted_pointer_t b;
+
+    a.data.counter = 0;
+    a.data.item = 0x1234567890ABCDEF;
+
+    b.data.counter = a.data.counter;
+    b.data.item = a.data.item;
+
+    /* bozo checks */
+    assert(16 == sizeof(opal_counted_pointer_t));
+    assert(a.data.counter == b.data.counter);
+    assert(a.data.item == b.data.item);
+    /*
+     * the following test fails on buggy compilers
+     * so far, with icc -o conftest conftest.c
+     *  - intel icc 14.0.0.080 (aka 2013sp1)
+     *  - intel icc 14.0.1.106 (aka 2013sp1u1)
+     * older and more recents compilers work fine
+     * buggy compilers work also fine but only with -O0
+     */
+#if (defined(HAVE___INT128) && HAVE___INT128) || (defined(HAVE_INT128_T) && HAVE_INT128_T)
+    return (a.value != b.value);
+#else
+    return 0;
+#endif])],
+                    [AC_MSG_RESULT([yes])],
+                    [AC_MSG_RESULT([no])
+                     cmpxchg16b_result=0],
+                    [AC_MSG_RESULT([untested, assuming ok])])
     fi
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
         [Whether the processor supports the cmpxchg16b instruction])
@@ -1039,7 +1089,7 @@ AC_MSG_ERROR([Can not continue.])
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
          asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
          asm_format="${asm_format}-${opal_asm_align_log_result}"
-         if test "$opal_cv_asm_arch" = "POWERPC32" -o "$opal_cv_asm_arch" = "POWERPC64" ; then
+         if test "$opal_cv_asm_arch" = "POWERPC32" || test "$opal_cv_asm_arch" = "POWERPC64" ; then
              asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
              asm_format="${asm_format}-1"
@@ -1068,7 +1118,7 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" -o "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
            AC_TRY_RUN([[
@@ -1114,7 +1164,7 @@ AC_DEFUN([OPAL_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_SYNC" -a "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
+if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_SYNC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already

@@ -66,8 +66,8 @@ const struct fi_ep_attr sock_rdm_ep_attr = {
 	.max_order_waw_size = SOCK_EP_MAX_ORDER_WAW_SZ,
 	.mem_tag_format = SOCK_EP_MEM_TAG_FMT,
 	.msg_order = SOCK_EP_MSG_ORDER,
-	.tx_ctx_cnt = 0,
-	.rx_ctx_cnt = 0,
+	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
+	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 };
 
 const struct fi_tx_attr sock_rdm_tx_attr = {
@@ -75,7 +75,7 @@ const struct fi_tx_attr sock_rdm_tx_attr = {
 	.op_flags = SOCK_DEF_OPS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
-	.size = SOCK_EP_MAX_TX_CTX_SZ,
+	.size = SOCK_EP_TX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
@@ -84,7 +84,7 @@ const struct fi_rx_attr sock_rdm_rx_attr = {
 	.op_flags = SOCK_DEF_OPS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.total_buffered_recv = SOCK_EP_MAX_BUFF_RECV,
-	.size = SOCK_EP_MAX_MSG_SZ,
+	.size = SOCK_EP_RX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
 };
 
@@ -202,18 +202,12 @@ static struct fi_info *sock_rdm_fi_info(struct fi_info *hints,
 	if (!_info)
 		return NULL;
 	
-	if (!hints->caps) 
-		_info->caps = SOCK_EP_RDM_CAP;
-	
-	if (!hints->tx_attr)
-		*(_info->tx_attr) = sock_rdm_tx_attr;
+	_info->caps = SOCK_EP_RDM_CAP;
+	*(_info->tx_attr) = sock_rdm_tx_attr;
+	*(_info->rx_attr) = sock_rdm_rx_attr;
+	*(_info->ep_attr) = sock_rdm_ep_attr;
 
-	if (!hints->rx_attr)
-		*(_info->rx_attr) = sock_rdm_rx_attr;
-
-	if (!hints->ep_attr)
-		*(_info->ep_attr) = sock_rdm_ep_attr;
-
+	_info->caps |= (_info->rx_attr->caps | _info->tx_attr->caps);
 	return _info;
 }
 
@@ -221,11 +215,11 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 		     uint64_t flags, struct fi_info *hints, struct fi_info **info)
 {
 	int ret;
-	int udp_sock;
+	int udp_sock = 0;
 	socklen_t len;
 	struct fi_info *_info;
 	struct addrinfo sock_hints;
-	struct addrinfo *result = NULL;
+	struct addrinfo *result = NULL, *result_ptr = NULL;
 	struct sockaddr_in *src_addr = NULL, *dest_addr = NULL;
 	char sa_ip[INET_ADDRSTRLEN];
 	char hostname[HOST_NAME_MAX];
@@ -254,9 +248,6 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 			return ret;
 	}
 
-	src_addr = calloc(1, sizeof(struct sockaddr_in));
-	dest_addr = calloc(1, sizeof(struct sockaddr_in));
-
 	memset(&sock_hints, 0, sizeof(struct addrinfo));
 	sock_hints.ai_family = AF_INET;
 	sock_hints.ai_socktype = SOCK_STREAM;
@@ -271,13 +262,14 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 		}
 
 		ret = getaddrinfo(node ? node : hostname, service, 
-				  &sock_hints, &result);
+				  &sock_hints, &result_ptr);
 		if (ret != 0) {
 			ret = FI_ENODATA;
 			SOCK_LOG_INFO("getaddrinfo failed!\n");
 			goto err;
 		}
 
+		result = result_ptr;
 		while (result) {
 			if (result->ai_family == AF_INET && 
 			    result->ai_addrlen == sizeof(struct sockaddr_in))
@@ -291,17 +283,24 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 		
+		src_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!src_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		memcpy(src_addr, result->ai_addr, result->ai_addrlen);
-		freeaddrinfo(result); 
-	} else if (node || service) {
+		freeaddrinfo(result_ptr); 
+		result_ptr = NULL;
+	} else {
 
-		ret = getaddrinfo(node, service, &sock_hints, &result);
+		ret = getaddrinfo(node, service, &sock_hints, &result_ptr);
 		if (ret != 0) {
 			ret = FI_ENODATA;
 			SOCK_LOG_INFO("getaddrinfo failed!\n");
 			goto err;
 		}
 		
+		result = result_ptr;
 		while (result) {
 			if (result->ai_family == AF_INET && 
 			    result->ai_addrlen == sizeof(struct sockaddr_in))
@@ -315,9 +314,19 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 		
+		dest_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!dest_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		memcpy(dest_addr, result->ai_addr, result->ai_addrlen);
 		
 		udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+		if (udp_sock < 0) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
+
 		ret = connect(udp_sock, result->ai_addr, 
 			      result->ai_addrlen);
 		if ( ret != 0) {
@@ -326,17 +335,46 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 			goto err;
 		}
 
-		len = sizeof(struct sockaddr_in);				
+		len = sizeof(struct sockaddr_in);
+		src_addr = calloc(1, sizeof(struct sockaddr_in));
+		if (!src_addr) {
+			ret = -FI_ENOMEM;
+			goto err;
+		}
 		ret = getsockname(udp_sock, (struct sockaddr*)src_addr, &len);
 		if (ret != 0) {
 			SOCK_LOG_ERROR("getsockname failed\n");
-			close(udp_sock);
 			ret = FI_ENODATA;
 			goto err;
 		}
-		
 		close(udp_sock);
-		freeaddrinfo(result); 
+		udp_sock = 0;
+		freeaddrinfo(result_ptr); 
+		result_ptr = NULL;
+	}
+
+	if (hints && hints->src_addr) {
+		if (!src_addr) {
+			src_addr = calloc(1, sizeof(struct sockaddr_in));				
+			if (!src_addr) {
+				ret = -FI_ENOMEM;
+				goto err;
+			}
+		}
+		assert(hints->src_addrlen == sizeof(struct sockaddr_in));
+		memcpy(src_addr, hints->src_addr, hints->src_addrlen);
+	}
+
+	if (hints && hints->dest_addr) {
+		if (!dest_addr) {
+			dest_addr = calloc(1, sizeof(struct sockaddr_in));
+			if (!dest_addr) {
+				ret = -FI_ENOMEM;
+				goto err;
+			}
+		}
+		assert(hints->dest_addrlen == sizeof(struct sockaddr_in));
+		memcpy(dest_addr, hints->dest_addr, hints->dest_addrlen);
 	}
 
 	if (dest_addr) {
@@ -358,13 +396,22 @@ int sock_rdm_getinfo(uint32_t version, const char *node, const char *service,
 	}
 
 	*info = _info;
-	free(src_addr);
-	free(dest_addr);
+	if (src_addr)
+		free(src_addr);
+	if (dest_addr)
+		free(dest_addr);
 	return 0;
 
 err:
-	free(src_addr);
-	free(dest_addr);
+	if (udp_sock > 0)
+		close(udp_sock);
+	if (src_addr)
+		free(src_addr);
+	if (dest_addr)
+		free(dest_addr);
+	if (result_ptr)
+		freeaddrinfo(result_ptr);
+
 	SOCK_LOG_ERROR("fi_getinfo failed\n");
 	return ret;	
 }
@@ -427,7 +474,7 @@ int sock_rdm_ep(struct fid_domain *domain, struct fi_info *info,
 }
 
 int sock_rdm_sep(struct fid_domain *domain, struct fi_info *info,
-		struct fid_sep **sep, void *context)
+		 struct fid_ep **sep, void *context)
 {
 	int ret;
 	struct sock_ep *endpoint;
@@ -436,7 +483,7 @@ int sock_rdm_sep(struct fid_domain *domain, struct fi_info *info,
 	if (ret)
 		return ret;
 
-	*sep = &endpoint->sep;
+	*sep = &endpoint->ep;
 	return 0;
 }
 

@@ -5,7 +5,7 @@
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
  * COPYING in the main directory of this source tree, or the
- * OpenIB.org BSD license below:
+ * BSD license below:
  *
  *     Redistribution and use in source and binary forms, with or
  *     without modification, are permitted provided that the following
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 #include "sock.h"
+#include "sock_util.h"
 
 const struct fi_cntr_attr sock_cntr_attr = {
 	.events = FI_CNTR_EVENTS_COMP,
@@ -55,6 +56,10 @@ int sock_cntr_progress(struct sock_cntr *cntr)
 	struct sock_tx_ctx *tx_ctx;
 	struct sock_rx_ctx *rx_ctx;
 	struct dlist_entry *entry;
+
+	if (cntr->domain->progress_mode == FI_PROGRESS_AUTO && 
+	    !sock_progress_thread_wait)
+		return 0;
 
 	for (entry = cntr->tx_list.next; entry != &cntr->tx_list;
 	     entry = entry->next) {
@@ -74,8 +79,7 @@ static uint64_t sock_cntr_read(struct fid_cntr *cntr)
 {
 	struct sock_cntr *_cntr;
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
-	if (_cntr->domain->progress_mode == FI_PROGRESS_MANUAL)
-		sock_cntr_progress(_cntr);
+	sock_cntr_progress(_cntr);
 	return atomic_get(&_cntr->value);
 }
 
@@ -275,6 +279,7 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	struct sock_fid_list *list_entry;
 	struct sock_wait *wait;
 	
+	dom = container_of(domain, struct sock_domain, dom_fid);
 	if (attr && sock_cntr_verify_attr(attr))
 		return -FI_ENOSYS;
 
@@ -302,13 +307,17 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	case FI_WAIT_FD:
 		wait_attr.flags = 0;
 		wait_attr.wait_obj = FI_WAIT_FD;
-		ret = sock_wait_open(domain, &wait_attr, &_cntr->waitset);
+		ret = sock_wait_open(&dom->fab->fab_fid, &wait_attr,
+				     &_cntr->waitset);
 		if (ret)
 			goto err1;
 		_cntr->signal = 1;
 		break;
 		
 	case FI_WAIT_SET:
+		if (!attr)
+			return -FI_EINVAL;
+
 		_cntr->waitset = attr->wait_set;
 		_cntr->signal = 1;
 		wait = container_of(attr->wait_set, struct sock_wait, wait_fid);
@@ -338,7 +347,6 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	_cntr->cntr_fid.fid.ops = &sock_cntr_fi_ops;
 	_cntr->cntr_fid.ops = &sock_cntr_ops;
 
-	dom = container_of(domain, struct sock_domain, dom_fid);
 	atomic_inc(&dom->ref);
 	_cntr->domain = dom;
 	*cntr = &_cntr->cntr_fid;

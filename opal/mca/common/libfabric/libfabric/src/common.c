@@ -2,6 +2,7 @@
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013 Intel Corp., Inc.  All rights reserved.
+ * Copyright (c) 2015 Los Alamos Nat. Security, LLC. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -36,6 +37,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,3 +131,88 @@ uint64_t fi_tag_format(uint64_t tag_bits)
 	return FI_TAG_GENERIC >> (ffsll(htonll(tag_bits)) - 1);
 }
 
+static const size_t fi_datatype_size_table[] = {
+	[FI_INT8]   = sizeof(int8_t),
+	[FI_UINT8]  = sizeof(uint8_t),
+	[FI_INT16]  = sizeof(int16_t),
+	[FI_UINT16] = sizeof(uint16_t),
+	[FI_INT32]  = sizeof(int32_t),
+	[FI_UINT32] = sizeof(uint32_t),
+	[FI_INT64]  = sizeof(int64_t),
+	[FI_UINT64] = sizeof(uint64_t),
+	[FI_FLOAT]  = sizeof(float),
+	[FI_DOUBLE] = sizeof(double),
+	[FI_FLOAT_COMPLEX]  = sizeof(float complex),
+	[FI_DOUBLE_COMPLEX] = sizeof(double complex),
+	[FI_LONG_DOUBLE]    = sizeof(long double),
+	[FI_LONG_DOUBLE_COMPLEX] = sizeof(long double complex),
+};
+
+size_t fi_datatype_size(enum fi_datatype datatype)
+{
+	if (datatype >= FI_DATATYPE_LAST) {
+		errno = FI_EINVAL;
+		return 0;
+	}
+	return fi_datatype_size_table[datatype];
+}
+
+int fi_send_allowed(uint64_t caps)
+{
+	if (caps & FI_MSG ||
+		caps & FI_TAGGED) {
+		if (caps & FI_SEND)
+			return 1;
+		if (caps & FI_RECV)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_recv_allowed(uint64_t caps)
+{
+	if (caps & FI_MSG ||
+		caps & FI_TAGGED) {
+		if (caps & FI_RECV)
+			return 1;
+		if (caps & FI_SEND)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_rma_initiate_allowed(uint64_t caps)
+{
+	if (caps & FI_RMA ||
+		caps & FI_ATOMICS) {
+		if (caps & FI_WRITE ||
+			caps & FI_READ)
+			return 1;
+		if (caps & FI_REMOTE_WRITE ||
+			caps & FI_REMOTE_READ)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}
+
+int fi_rma_target_allowed(uint64_t caps)
+{
+	if (caps & FI_RMA ||
+		caps & FI_ATOMICS) {
+		if (caps & FI_REMOTE_WRITE ||
+			caps & FI_REMOTE_READ)
+			return 1;
+		if (caps & FI_WRITE ||
+			caps & FI_READ)
+			return 0;
+		return 1;
+	}
+
+	return 0;
+}

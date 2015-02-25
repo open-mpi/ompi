@@ -9,7 +9,7 @@ enable_debug=no
 enable_debug_symbols=no
 #enable_pretty_print_stacktrace=no
 with_valgrind=no
-enable_contrib_no_build=vt
+enable_contrib_no_build=
 
 # Extensions and language bindings
 enable_io_romio=yes

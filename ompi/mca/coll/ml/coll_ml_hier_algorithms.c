@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -17,10 +17,10 @@
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 
 /* collective managment descriptor initialization - called right after
- * the constructor by ompi_free_list code
+ * the constructor by opal_free_list code
  */
 static void mca_coll_ml_collective_operation_progress_init
-                             (ompi_free_list_item_t* item, void* ctx)
+                             (opal_free_list_item_t* item, void* ctx)
 {
     int i;
     int max_dag_size = ((struct coll_desc_init *)ctx)->max_dag_size;
@@ -161,7 +161,7 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
     ml_module->coll_desc_init_data.bcol_base_module=(mca_coll_base_module_t *)
         ml_module;
 
-    ret = ompi_free_list_init_ex_new(
+    ret = opal_free_list_init (
             &(ml_module->coll_ml_collective_descriptors),
             sizeof(mca_coll_ml_collective_operation_progress_t),
             /* no special alignment needed */
@@ -174,7 +174,7 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
             cm->free_list_max_size, 
             cm->free_list_grow_size,
             /* No Mpool */
-            NULL,
+            NULL, 0, NULL,
             mca_coll_ml_collective_operation_progress_init,
             (void *)&(ml_module->coll_desc_init_data)
             );

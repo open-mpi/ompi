@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -50,7 +50,7 @@
 #endif /* OPAL_CUDA_SUPPORT */
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,
-                    ompi_free_list_item_t,
+                    opal_free_list_item_t,
                     NULL,
                     NULL );
 
@@ -108,13 +108,13 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                           mca_btl_base_descriptor_t* des,
                                           void* cbdata )
 {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_match_hdr_t* hdr = (mca_pml_ob1_match_hdr_t*)segments->seg_addr.pval;
     ompi_communicator_t *comm_ptr;
     mca_pml_ob1_recv_request_t *match = NULL;
     mca_pml_ob1_comm_t *comm;
     mca_pml_ob1_comm_proc_t *proc;
-    size_t num_segments = des->des_local_count;
+    size_t num_segments = des->des_segment_count;
     size_t bytes_received = 0;
 
     assert(num_segments <= MCA_BTL_DES_MAX_SEGMENTS);
@@ -256,7 +256,7 @@ void mca_pml_ob1_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata )
 {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
@@ -264,7 +264,7 @@ void mca_pml_ob1_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     }
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RNDV);
     mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
-                                des->des_local_count, MCA_PML_OB1_HDR_TYPE_RNDV);
+                                des->des_segment_count, MCA_PML_OB1_HDR_TYPE_RNDV);
     return;
 }
 
@@ -273,7 +273,7 @@ void mca_pml_ob1_recv_frag_callback_rget(mca_btl_base_module_t* btl,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata )
 {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
@@ -281,7 +281,7 @@ void mca_pml_ob1_recv_frag_callback_rget(mca_btl_base_module_t* btl,
     }
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RGET);
     mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
-                                des->des_local_count, MCA_PML_OB1_HDR_TYPE_RGET);
+                                des->des_segment_count, MCA_PML_OB1_HDR_TYPE_RGET);
     return;
 }
 
@@ -292,9 +292,10 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
                                         mca_btl_base_descriptor_t* des,
                                         void* cbdata )
 {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     mca_pml_ob1_send_request_t* sendreq;
+    size_t size;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
          return;
@@ -307,19 +308,25 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA) {
-        if (NULL != sendreq->src_des) {
-            /* release registered memory */
-            mca_bml_base_free (sendreq->req_rdma[0].bml_btl, sendreq->src_des);
-            sendreq->src_des = NULL;
+        if (NULL != sendreq->rdma_frag) {
+            if (NULL != sendreq->rdma_frag->local_handle) {
+                mca_bml_base_deregister_mem (sendreq->req_rdma[0].bml_btl, sendreq->rdma_frag->local_handle);
+                sendreq->rdma_frag->local_handle = NULL;
+            }
+            MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
+            sendreq->rdma_frag = NULL;
         }
 
         sendreq->req_throttle_sends = true;
     }
-    
-    mca_pml_ob1_send_request_copy_in_out(sendreq,
-                                         hdr->hdr_ack.hdr_send_offset,
-                                         sendreq->req_send.req_bytes_packed -
-                                         hdr->hdr_ack.hdr_send_offset);
+
+    if (hdr->hdr_ack.hdr_send_size) {
+        size = hdr->hdr_ack.hdr_send_size;
+    } else {
+        size = sendreq->req_send.req_bytes_packed - hdr->hdr_ack.hdr_send_offset;
+    }
+
+    mca_pml_ob1_send_request_copy_in_out(sendreq, hdr->hdr_ack.hdr_send_offset, size);
 
     if (sendreq->req_state != 0) {
         /* Typical receipt of an ACK message causes req_state to be
@@ -355,13 +362,14 @@ void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t* btl,
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     mca_pml_ob1_recv_request_t* recvreq;
 
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
     }
+
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
     recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
@@ -372,7 +380,7 @@ void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t* btl,
         assert(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
 
         /* This will trigger the opal_convertor_pack to start asynchronous copy. */
-        mca_pml_ob1_recv_request_frag_copy_start(recvreq,btl,segments,des->des_local_count,des);
+        mca_pml_ob1_recv_request_frag_copy_start(recvreq,btl,segments,des->des_segment_count,des);
         
         /* Let BTL know that it CANNOT free the frag */
         des->des_flags |= MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
@@ -380,7 +388,8 @@ void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t* btl,
         return;
     }
 #endif /* OPAL_CUDA_SUPPORT */
-    mca_pml_ob1_recv_request_progress_frag(recvreq,btl,segments,des->des_local_count);
+
+    mca_pml_ob1_recv_request_progress_frag(recvreq,btl,segments,des->des_segment_count);
 
     return;
 }
@@ -390,7 +399,7 @@ void mca_pml_ob1_recv_frag_callback_put(mca_btl_base_module_t* btl,
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
                                         void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     mca_pml_ob1_send_request_t* sendreq;
     
@@ -410,20 +419,17 @@ void mca_pml_ob1_recv_frag_callback_fin(mca_btl_base_module_t* btl,
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
                                         void* cbdata ) {
-    mca_btl_base_segment_t* segments = des->des_local;
-    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    mca_btl_base_descriptor_t* rdma;
+    mca_btl_base_segment_t* segments = des->des_segments;
+    mca_pml_ob1_fin_hdr_t* hdr = (mca_pml_ob1_fin_hdr_t *) segments->seg_addr.pval;
+    mca_pml_ob1_rdma_frag_t *frag;
     
-    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_fin_hdr_t)) ) {
         return;
     }
-    
+
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FIN);
-    rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
-    rdma->des_cbfunc(btl, NULL, rdma,
-                     hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
-    
-    return;
+    frag = (mca_pml_ob1_rdma_frag_t *) hdr->hdr_frag.pval;
+    frag->cbfunc (frag, hdr->hdr_size);
 }
 
 
@@ -699,7 +705,7 @@ out_of_order_match:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
-        switch(type) { 
+        switch(type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
             mca_pml_ob1_recv_request_progress_match(match, btl, segments, num_segments);
             break;

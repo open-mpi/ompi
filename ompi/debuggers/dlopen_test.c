@@ -15,18 +15,15 @@
 
 #include "opal/libltdl/ltdl.h"
 
-static int do_test(void);
-
+#if !OPAL_WANT_LIBLTDL
 int main(int argc, char *argv[])
 {
-#if OPAL_WANT_LIBLTDL
-    return do_test();
-#else
     /* If OPAL wasn't built with libltdl support, then skip this test */
     fprintf(stderr, "OPAL was not built with libltdl support; skipping\n");
     return 77;
-#endif
 }
+
+#else /* OPAL_WANT_LIBLTDL */
 
 static int do_test(void)
 {
@@ -128,3 +125,9 @@ static int do_test(void)
 
     return 2;
 }
+
+int main(int argc, char *argv[])
+{
+    return do_test();
+}
+#endif /* OPAL_WANT_LIBLTDL */

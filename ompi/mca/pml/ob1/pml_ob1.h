@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -28,7 +28,7 @@
 #define MCA_PML_OB1_H
 
 #include "ompi_config.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -65,11 +65,11 @@ struct mca_pml_ob1_t {
     opal_mutex_t lock;
 
     /* free lists */
-    ompi_free_list_t rdma_frags;
-    ompi_free_list_t recv_frags;
-    ompi_free_list_t pending_pckts;
-    ompi_free_list_t buffers;
-    ompi_free_list_t send_ranges;
+    opal_free_list_t rdma_frags;
+    opal_free_list_t recv_frags;
+    opal_free_list_t pending_pckts;
+    opal_free_list_t buffers;
+    opal_free_list_t send_ranges;
 
     /* list of pending operations */
     opal_list_t pckt_pending;
@@ -211,40 +211,40 @@ extern int mca_pml_ob1_ft_event( int state );
 END_C_DECLS
 
 struct mca_pml_ob1_pckt_pending_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     ompi_proc_t* proc;
     mca_pml_ob1_hdr_t hdr;
     struct mca_bml_base_btl_t *bml_btl;
     uint8_t order;
+    int status;
 };
 typedef struct mca_pml_ob1_pckt_pending_t mca_pml_ob1_pckt_pending_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_pckt_pending_t);
 
 #define MCA_PML_OB1_PCKT_PENDING_ALLOC(pckt)                    \
 do {                                                            \
-    ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_ob1.pending_pckts, item);      \
-    pckt = (mca_pml_ob1_pckt_pending_t*)item;                   \
+    pckt = (mca_pml_ob1_pckt_pending_t *)                       \
+        opal_free_list_get (&mca_pml_ob1.pending_pckts);        \
 } while (0)
 
 #define MCA_PML_OB1_PCKT_PENDING_RETURN(pckt)                   \
 do {                                                            \
     /* return packet */                                         \
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_ob1.pending_pckts,           \
-        (ompi_free_list_item_t*)pckt);                          \
+    opal_free_list_return (&mca_pml_ob1.pending_pckts,          \
+        (opal_free_list_item_t*)pckt);                          \
 } while(0)
 
-#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, B, O, S)               \
+#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, Sz, B, O, S)           \
     do {                                                            \
         mca_pml_ob1_pckt_pending_t *_pckt;                          \
                                                                     \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt);                      \
-        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
-        _pckt->hdr.hdr_fin.hdr_des = (D);                           \
-        _pckt->hdr.hdr_fin.hdr_fail = (S);                          \
+        mca_pml_ob1_fin_hdr_prepare (&_pckt->hdr.hdr_fin, 0,        \
+                                     (D).lval, (Sz));               \
         _pckt->proc = (P);                                          \
         _pckt->bml_btl = (B);                                       \
         _pckt->order = (O);                                         \
+        _pckt->status = (S);                                        \
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                        \
         opal_list_append(&mca_pml_ob1.pckt_pending,                 \
                 (opal_list_item_t*)_pckt);                          \
@@ -253,7 +253,7 @@ do {                                                            \
 
 
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        opal_ptr_t hdr_des, uint8_t order, uint32_t status);
+        opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to
@@ -283,20 +283,6 @@ void mca_pml_ob1_process_pending_rdma(void);
 /*
  * Compute the total number of bytes on supplied descriptor
  */
-static inline size_t
-mca_pml_ob1_compute_segment_length(size_t seg_size, void *segments,
-                                   size_t count, size_t hdrlen)
-{
-    size_t i, length = 0;
-    mca_btl_base_segment_t *segment = (mca_btl_base_segment_t*)segments;
-
-    for (i = 0; i < count ; ++i) {
-        length += segment->seg_len;
-        segment = (mca_btl_base_segment_t *)((char *)segment + seg_size);
-    }
-    return (length - hdrlen);
-}
-
 static inline size_t
 mca_pml_ob1_compute_segment_length_base(mca_btl_base_segment_t *segments,
                                         size_t count, size_t hdrlen)
@@ -338,7 +324,7 @@ mca_pml_ob1_compute_segment_length_remote (size_t seg_size, void *segments,
 /* represent BTL chosen for sending request */
 struct mca_pml_ob1_com_btl_t {
     mca_bml_base_btl_t *bml_btl;
-    struct mca_mpool_base_registration_t* btl_reg;
+    struct mca_btl_base_registration_handle_t *btl_reg;
     size_t length;
 };
 typedef struct mca_pml_ob1_com_btl_t mca_pml_ob1_com_btl_t;

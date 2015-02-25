@@ -20,7 +20,6 @@
 
 #include "opal_config.h"
 
-#if OPAL_HAVE_THREADS
 #include <infiniband/verbs.h>
 #include <fcntl.h>
 #include <sys/poll.h>
@@ -720,5 +719,3 @@ int start_async_event_thread(void)
 
     return OPAL_SUCCESS;
 }
-
-#endif

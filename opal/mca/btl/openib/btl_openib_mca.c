@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,12 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -460,7 +461,6 @@ int btl_openib_register_mca_params(void)
                    "(must be >= 0, where 0 = use all available)",
                    1, &mca_btl_openib_component.max_lmc, 0));
 
-#if OPAL_HAVE_THREADS
     CHECK(reg_int("enable_apm_over_lmc", NULL, "Maximum number of alternative paths for each device port "
                   "(must be >= -1, where 0 = disable apm, -1 = all available alternative paths )",
                   0, &mca_btl_openib_component.apm_lmc, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
@@ -501,9 +501,6 @@ int btl_openib_register_mca_params(void)
                    "Enable/Disable on demand SRQ resize. "
                    "(0 = without resizing, nonzero = with resizing)", 1,
                    &mca_btl_openib_component.enable_srq_resize));
-#else
-    mca_btl_openib_component.enable_srq_resize = false;
-#endif
 
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
     CHECK(reg_bool("rroce_enable", NULL,
@@ -518,7 +515,7 @@ int btl_openib_register_mca_params(void)
                    64, &mca_btl_openib_component.buffer_alignment, 0));
 
     CHECK(reg_bool("use_message_coalescing", NULL,
-                   "If nonzero, use message coalescing", true,
+                   "If nonzero, use message coalescing", false,
                    &mca_btl_openib_component.use_message_coalescing));
 
     CHECK(reg_uint("cq_poll_ratio", NULL,
@@ -571,10 +568,16 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
-        MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
+	MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
 #if BTL_OPENIB_FAILOVER_ENABLED
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
 #endif
+
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS;
+    mca_btl_openib_module.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_CSWAP;
+#endif
+
     /* Default to bandwidth auto-detection */
     mca_btl_openib_module.super.btl_bandwidth = 0;
     mca_btl_openib_module.super.btl_latency = 4;

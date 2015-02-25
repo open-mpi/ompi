@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,9 +101,10 @@ typedef struct opal_btl_usnic_rx_frag_info_t {
     uint32_t    rfi_frag_id;    /* ID for this fragment */
     uint32_t    rfi_frag_size;  /* bytes in this fragment */
     uint32_t    rfi_bytes_left; /* bytes remaining to RX in fragment */
+    bool        rfi_data_in_pool; /* data in data_pool if true, else malloced */
+    int         rfi_data_pool;  /* if <0, data malloced, else rx buf pool */
     char       *rfi_data;       /* pointer to assembly area */
-    int         rfi_data_pool;  /* if 0, data malloced, else rx buf pool */
-    ompi_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
+    opal_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
                                           when rfi_data_pool is nonzero */
 } opal_btl_usnic_rx_frag_info_t;
 

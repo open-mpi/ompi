@@ -14,6 +14,8 @@
 # Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,7 +39,7 @@ AC_DEFUN([MCA_opal_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/openib/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([cpcs have_threads LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([cpcs LDFLAGS_save LIBS_save])
     cpcs="oob"
 
     OPAL_CHECK_OPENFABRICS([btl_openib],
@@ -57,19 +59,11 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
            $1],
           [$2])
 
-    AC_MSG_CHECKING([for thread support (needed for rdmacm/udcm)])
-    have_threads=`echo $THREAD_TYPE | awk '{ print [$]1 }'`
-    if test "x$have_threads" = "x"; then
-        have_threads=none
-    fi
-    AC_MSG_RESULT([$have_threads])
-
     AS_IF([test "$btl_openib_happy" = "yes"],
           [if test "x$btl_openib_have_xrc" = "x1"; then
               cpcs="$cpcs xoob"
           fi
-          if test "x$btl_openib_have_rdmacm" = "x1" -a \
-                  "$have_threads" != "none"; then
+          if test "x$btl_openib_have_rdmacm" = "x1"; then
               cpcs="$cpcs rdmacm"
               if test "$enable_openib_rdmacm_ibaddr" = "yes"; then
                   AC_MSG_CHECKING([IB addressing])
@@ -103,8 +97,7 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
                 AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 0, rdmacm without IB_AF addressing support)
               fi
           fi
-          if test "x$btl_openib_have_udcm" = "x1" -a \
-                  "$have_threads" != "none"; then
+          if test "x$btl_openib_have_udcm" = "x1"; then
               cpcs="$cpcs udcm"
           fi
           AC_MSG_CHECKING([which openib btl cpcs will be built])
@@ -125,7 +118,6 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
     AC_DEFINE_UNQUOTED([BTL_OPENIB_FAILOVER_ENABLED], [$btl_openib_failover_enabled],
                        [enable openib BTL failover])
     AM_CONDITIONAL([MCA_btl_openib_enable_failover], [test "x$btl_openib_failover_enabled" = "x1"])
-
 
     # Check for __malloc_hook availability
     AC_ARG_ENABLE(btl-openib-malloc-alignment,

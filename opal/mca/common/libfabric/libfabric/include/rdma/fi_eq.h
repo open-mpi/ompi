@@ -115,9 +115,12 @@ struct fi_eq_attr {
 
 /* Standard EQ events */
 enum {
-	FI_COMPLETE,
+	FI_NOTIFY,
 	FI_CONNREQ,
-	FI_SHUTDOWN
+	FI_CONNECTED,
+	FI_SHUTDOWN,
+	FI_MR_COMPLETE,
+	FI_AV_COMPLETE,
 };
 
 struct fi_eq_entry {

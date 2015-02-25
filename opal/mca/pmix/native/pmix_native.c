@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -28,6 +28,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -187,19 +188,21 @@ static int native_init(void)
      * needed for singletons as they will start without a server
      * to support them, but may have one assigned at a later time */
     if (NULL == mca_pmix_native_component.uri) {
-        if (!opal_pmix_base_allow_delayed_server) {
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native NULL uri",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+        if (NULL != (srv = getenv("PMIX_SERVER_URI"))) {
+            mca_pmix_native_component.uri = strdup(srv);
+            mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
+        } else if (opal_pmix_base_allow_delayed_server) {
             /* not ready yet, so decrement our init_cntr so we can come thru
              * here again */
             --init_cntr;
             /* let the caller know that the server isn't available yet */
             return OPAL_ERR_SERVER_NOT_AVAIL;
-        }
-        if (NULL == (srv = getenv("PMIX_SERVER_URI"))) {
-            /* error out - should have been here, but isn't */
+        } else {
             return OPAL_ERROR;
         }
-        mca_pmix_native_component.uri = strdup(srv);
-        mca_pmix_native_component.id = OPAL_PROC_MY_NAME;
     }
 
     /* if we have it, setup the path to the daemon rendezvous point */
@@ -213,10 +216,12 @@ static int native_init(void)
         mca_pmix_native_component.address.sun_family = AF_UNIX;
         uri = opal_argv_split(mca_pmix_native_component.uri, ':');
         if (2 != opal_argv_count(uri)) {
+            opal_argv_free(uri);
             return OPAL_ERROR;
         }
         /* if the rendezvous file doesn't exist, that's an error */
         if (0 != access(uri[1], R_OK)) {
+            opal_argv_free(uri);
             return OPAL_ERR_NOT_FOUND;
         }
         opal_convert_string_to_process_name(&mca_pmix_native_component.server, uri[0]);

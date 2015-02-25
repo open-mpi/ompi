@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -254,28 +254,28 @@ component_init(bool enable_progress_threads,
     mca_osc_pt2pt_component.progress_enable = false;
     mca_osc_pt2pt_component.module_count = 0;
 
-    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.frags, ompi_free_list_t);
-    ret = ompi_free_list_init_new (&mca_osc_pt2pt_component.frags,
-                                   sizeof(ompi_osc_pt2pt_frag_t), 8,
-                                   OBJ_CLASS(ompi_osc_pt2pt_frag_t),
-                                   mca_osc_pt2pt_component.buffer_size +
-                                   sizeof (ompi_osc_pt2pt_frag_header_t),
-                                   8, 1, -1, 1, 0);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.frags, opal_free_list_t);
+    ret = opal_free_list_init (&mca_osc_pt2pt_component.frags,
+                               sizeof(ompi_osc_pt2pt_frag_t), 8,
+                               OBJ_CLASS(ompi_osc_pt2pt_frag_t),
+                               mca_osc_pt2pt_component.buffer_size +
+                               sizeof (ompi_osc_pt2pt_frag_header_t),
+                               8, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {
 	opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-			    "%s:%d: ompi_free_list_init failed: %d",
+			    "%s:%d: opal_free_list_init failed: %d",
 			    __FILE__, __LINE__, ret);
 	return ret;
     }
 
-    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.requests, ompi_free_list_t);
-    ret = ompi_free_list_init(&mca_osc_pt2pt_component.requests,
-                              sizeof(ompi_osc_pt2pt_request_t),
-                              OBJ_CLASS(ompi_osc_pt2pt_request_t),
-                              0, -1, 32, NULL);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.requests, opal_free_list_t);
+    ret = opal_free_list_init (&mca_osc_pt2pt_component.requests,
+                               sizeof(ompi_osc_pt2pt_request_t), 8,
+                               OBJ_CLASS(ompi_osc_pt2pt_request_t),
+                               0, 0, 0, -1, 32, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ompi_free_list_init failed: %d\n",
+                            "%s:%d: opal_free_list_init failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
     }

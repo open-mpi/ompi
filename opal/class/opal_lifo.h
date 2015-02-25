@@ -208,6 +208,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         return NULL;
     }
 
+    opal_atomic_wmb ();
+
     item->opal_list_next = NULL;
     return item;
 }

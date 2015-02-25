@@ -32,40 +32,25 @@
 
 #include "psmx.h"
 
-#define PSMX_CQ_EMPTY(cq) (!cq->event_queue.head)
-
 void psmx_cq_enqueue_event(struct psmx_fid_cq *cq, struct psmx_cq_event *event)
 {
-	struct psmx_cq_event_queue *ceq = &cq->event_queue;
-
-	if (ceq->tail) {
-		ceq->tail->next = event;
-		ceq->tail = event;
-	}
-	else {
-		ceq->head = ceq->tail = event;
-	}
-	ceq->count++;
+	slist_insert_tail(&event->list_entry, &cq->event_queue);
+	cq->event_count++;
 	if (cq->wait)
 		psmx_wait_signal((struct fid_wait *)cq->wait);
 }
 
 static struct psmx_cq_event *psmx_cq_dequeue_event(struct psmx_fid_cq *cq)
 {
-	struct psmx_cq_event_queue *ceq = &cq->event_queue;
-	struct psmx_cq_event *event;
+	struct slist_entry *entry;
 
-	if (!ceq->head)
+	if (slist_empty(&cq->event_queue))
 		return NULL;
 
-	event = ceq->head;
-	ceq->head = event->next;
-	ceq->count--;
-	if (!ceq->head)
-		ceq->tail = NULL;
+	entry = slist_remove_head(&cq->event_queue);
+	cq->event_count--;
 
-	event->next = NULL;
-	return event;
+	return container_of(entry, struct psmx_cq_event, list_entry);
 }
 
 struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
@@ -76,7 +61,17 @@ struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 {
 	struct psmx_cq_event *event;
 
-	PSMX_FREE_LIST_GET(cq->free_list.head, cq->free_list.tail, struct psmx_cq_event, event);
+	if (!slist_empty(&cq->free_list)) {
+		event = container_of(slist_remove_head(&cq->free_list),
+				     struct psmx_cq_event, list_entry);
+	}
+	else {
+		event = calloc(1, sizeof(*event));
+		if (!event) {
+			PSMX_WARN("%s: out of memory.\n", __func__);
+			exit(-1);
+		}
+	}
 
 	if ((event->error = !!err)) {
 		event->cqe.err.op_context = op_context;
@@ -117,7 +112,7 @@ struct psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 		break;
 
 	default:
-		fprintf(stderr, "%s: unsupported CC format %d\n", __func__, cq->format);
+		PSMX_WARN("%s: unsupported CQ format %d\n", __func__, cq->format);
 		return NULL;
 	}
 
@@ -139,7 +134,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	void *op_context, *buf;
 	int is_recv = 0;
 
-	switch(PSMX_CTXT_TYPE(fi_context)) {
+	switch((int)PSMX_CTXT_TYPE(fi_context)) {
 	case PSMX_SEND_CONTEXT:
 		op_context = fi_context;
 		buf = PSMX_CTXT_USER(fi_context);
@@ -168,8 +163,18 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 		event = event_in;
 	}
 	else {
-		PSMX_FREE_LIST_GET(cq->free_list.head, cq->free_list.tail,
-				   struct psmx_cq_event, event);
+		if (!slist_empty(&cq->free_list)) {
+			event = container_of(slist_remove_head(&cq->free_list),
+					     struct psmx_cq_event, list_entry);
+		}
+		else {
+			event = calloc(1, sizeof(*event));
+			if (!event) {
+				PSMX_WARN("%s: out of memory.\n", __func__);
+				exit(-1);
+			}
+		}
+
 		event->error = !!psm_status->error_code;
 	}
 
@@ -191,12 +196,14 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 
 	case FI_CQ_FORMAT_MSG:
 		event->cqe.msg.op_context = op_context;
+		event->cqe.msg.flags = 0;
 		event->cqe.msg.len = psm_status->nbytes;
 		break;
 
 	case FI_CQ_FORMAT_DATA:
 		event->cqe.data.op_context = op_context;
 		event->cqe.data.buf = buf;
+		event->cqe.data.flags = 0;
 		event->cqe.data.len = psm_status->nbytes;
 		if (data)
 			event->cqe.data.data = data;
@@ -205,6 +212,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	case FI_CQ_FORMAT_TAGGED:
 		event->cqe.tagged.op_context = op_context;
 		event->cqe.tagged.buf = buf;
+		event->cqe.tagged.flags = 0;
 		event->cqe.tagged.len = psm_status->nbytes;
 		event->cqe.tagged.tag = psm_status->msg_tag;
 		if (data)
@@ -212,7 +220,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 		break;
 
 	default:
-		fprintf(stderr, "%s: unsupported EQ format %d\n", __func__, cq->format);
+		PSMX_WARN("%s: unsupported EQ format %d\n", __func__, cq->format);
 		return NULL;
 	}
 
@@ -220,7 +228,7 @@ out:
 	if (is_recv) {
 		if (event == event_in) {
 			if (src_addr) {
-				int err = -ENODATA;
+				int err = -FI_ENODATA;
 				if (cq->domain->reserved_tag_bits & PSMX_MSG_BIT & psm_status->msg_tag) {
 					err = psmx_epid_to_epaddr(cq->domain,
 								  psm_status->msg_tag & ~PSMX_MSG_BIT,
@@ -258,7 +266,7 @@ static int psmx_cq_get_event_src_addr(struct psmx_fid_cq *cq,
 		return 0;
 	}
 
-	return -ENODATA;
+	return -FI_ENODATA;
 }
 
 int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
@@ -287,7 +295,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 			tmp_cntr = NULL;
 			multi_recv = 0;
 
-			switch (PSMX_CTXT_TYPE(fi_context)) {
+			switch ((int)PSMX_CTXT_TYPE(fi_context)) {
 			case PSMX_NOCOMP_SEND_CONTEXT:
 				tmp_cntr = tmp_ep->send_cntr;
 				break;
@@ -353,7 +361,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 							(mr->cq == cq) ? event_in : NULL,
 							count, src_addr);
 					if (!event)
-						return -ENOMEM;
+						return -FI_ENOMEM;
 
 					if (event != event_in)
 						psmx_cq_enqueue_event(mr->cq, event);
@@ -385,7 +393,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 							(tmp_cq == cq) ? event_in : NULL, count,
 							src_addr);
 				if (!event)
-					return -ENOMEM;
+					return -FI_ENOMEM;
 
 				if (event != event_in)
 					psmx_cq_enqueue_event(tmp_cq, event);
@@ -424,7 +432,7 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 								0,	/* olen */
 								0);	/* err */
 						if (!event)
-							return -ENOMEM;
+							return -FI_ENOMEM;
 
 						psmx_cq_enqueue_event(tmp_cq, event);
 					}
@@ -455,7 +463,7 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 
 	cq_priv = container_of(cq, struct psmx_fid_cq, cq);
 
-	if (PSMX_CQ_EMPTY(cq_priv) || !buf) {
+	if (slist_empty(&cq_priv->event_queue) || !buf) {
 		ret = psmx_cq_poll_mq(cq_priv, cq_priv->domain,
 				      (struct psmx_cq_event *)buf, count, src_addr);
 		if (ret > 0)
@@ -479,10 +487,8 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 				if (psmx_cq_get_event_src_addr(cq_priv, event, src_addr))
 					*src_addr = FI_ADDR_NOTAVAIL;
 
-				PSMX_FREE_LIST_PUT(cq_priv->free_list.head,
-						   cq_priv->free_list.tail,
-						   struct psmx_cq_event,
-						   event);
+				memset(event, 0, sizeof(*event));
+				slist_insert_tail(&event->list_entry, &cq_priv->free_list);
 
 				read_count++;
 				buf += cq_priv->entry_size;
@@ -537,8 +543,8 @@ static ssize_t psmx_cq_write(struct fid_cq *cq, const void *buf, size_t len)
 	while (len >= cq_priv->entry_size) {
 		event = calloc(1, sizeof(*event));
 		if (!event) {
-			fprintf(stderr, "%s: out of memory\n", __func__);
-			return -ENOMEM;
+			PSMX_WARN("%s: out of memory\n", __func__);
+			return -FI_ENOMEM;
 		}
 
 		memcpy((void *)&event->cqe, buf + written_len, cq_priv->entry_size);
@@ -562,8 +568,8 @@ static ssize_t psmx_cq_writeerr(struct fid_cq *cq, struct fi_cq_err_entry *buf,
 	while (len >= sizeof(*buf)) {
 		event = calloc(1, sizeof(*event));
 		if (!event) {
-			fprintf(stderr, "%s: out of memory\n", __func__);
-			return -ENOMEM;
+			PSMX_WARN("%s: out of memory\n", __func__);
+			return -FI_ENOMEM;
 		}
 
 		memcpy((void *)&event->cqe, buf + written_len, sizeof(*buf));
@@ -592,7 +598,7 @@ static ssize_t psmx_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 		threshold = 1;
 
 	/* NOTE: "cond" is only a hint, not a mandatory condition. */
-	event_count = cq_priv->event_queue.count;
+	event_count = cq_priv->event_count;
 	if (event_count < threshold) {
 		if (cq_priv->wait) {
 			psmx_wait_wait((struct fid_wait *)cq_priv->wait, timeout);
@@ -604,7 +610,7 @@ static ssize_t psmx_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 					break;
 
 				/* CQ may be updated asynchronously by the AM handlers */
-				if (cq_priv->event_queue.count > event_count)
+				if (cq_priv->event_count > event_count)
 					break;
 
 				if (timeout < 0)
@@ -638,18 +644,19 @@ static const char *psmx_cq_strerror(struct fid_cq *cq, int prov_errno, const voi
 static int psmx_cq_close(fid_t fid)
 {
 	struct psmx_fid_cq *cq;
+	struct slist_entry *entry;
+	struct psmx_cq_event *item;
 
 	cq = container_of(fid, struct psmx_fid_cq, cq.fid);
 
-	PSMX_FREE_LIST_FINALIZE(cq->free_list.head, cq->free_list.tail, struct psmx_cq_event);
-
-	if (cq->wait) {
-		if (cq->wait->type == FI_WAIT_FD) {
-			close(cq->wait->fd[0]);
-			close(cq->wait->fd[1]);
-		}
-		free(cq->wait);
+	while (!slist_empty(&cq->free_list)) {
+		entry = slist_remove_head(&cq->free_list);
+		item = container_of(entry, struct psmx_cq_event, list_entry);
+		free(item);
 	}
+
+	if (cq->wait && cq->wait_is_local)
+		fi_close((fid_t)cq->wait);
 
 	free(cq);
 
@@ -669,7 +676,7 @@ static int psmx_cq_control(struct fid *fid, int command, void *arg)
 		break;
 
 	default:
-		return -ENOSYS;
+		return -FI_ENOSYS;
 	}
 
 	return ret;
@@ -700,10 +707,14 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	struct psmx_fid_domain *domain_priv;
 	struct psmx_fid_cq *cq_priv;
 	struct psmx_fid_wait *wait = NULL;
+	struct psmx_cq_event *event;
 	struct fi_wait_attr wait_attr;
+	int wait_is_local = 0;
 	int entry_size;
 	int err;
+	int i;
 
+	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	switch (attr->format) {
 	case FI_CQ_FORMAT_UNSPEC:
 		attr->format = FI_CQ_FORMAT_TAGGED;
@@ -727,7 +738,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		break;
 
 	default:
-		psmx_debug("%s: attr->format=%d, supported=%d...%d\n", __func__, attr->format,
+		PSMX_DEBUG("%s: attr->format=%d, supported=%d...%d\n", __func__, attr->format,
 				FI_CQ_FORMAT_UNSPEC, FI_CQ_FORMAT_TAGGED);
 		return -FI_EINVAL;
 	}
@@ -739,7 +750,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 
 	case FI_WAIT_SET:
 		if (!attr->wait_set) {
-			psmx_debug("%s: FI_WAIT_SET is specified but attr->wait_set is NULL\n",
+			PSMX_DEBUG("%s: FI_WAIT_SET is specified but attr->wait_set is NULL\n",
 				   __func__);
 			return -FI_EINVAL;
 		}
@@ -750,13 +761,15 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	case FI_WAIT_MUTEX_COND:
 		wait_attr.wait_obj = attr->wait_obj;
 		wait_attr.flags = 0;
-		err = psmx_wait_open(domain, &wait_attr, (struct fid_wait **)&wait);
+		err = psmx_wait_open(&domain_priv->fabric->fabric,
+				     &wait_attr, (struct fid_wait **)&wait);
 		if (err)
 			return err;
+		wait_is_local = 1;
 		break;
 
 	default:
-		psmx_debug("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__, attr->wait_obj,
+		PSMX_DEBUG("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__, attr->wait_obj,
 				FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
@@ -768,13 +781,12 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 			break;
 
 		default:
-			psmx_debug("%s: attr->wait_cond=%d, supported=%d...%d\n", __func__,
+			PSMX_DEBUG("%s: attr->wait_cond=%d, supported=%d...%d\n", __func__,
 					attr->wait_cond, FI_CQ_COND_NONE, FI_CQ_COND_THRESHOLD);
 			return -FI_EINVAL;
 		}
 	}
 
-	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 	cq_priv = (struct psmx_fid_cq *) calloc(1, sizeof *cq_priv);
 	if (!cq_priv) {
 		if (wait)
@@ -788,14 +800,25 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	cq_priv->wait = wait;
 	if (wait)
 		cq_priv->wait_cond = attr->wait_cond;
+	cq_priv->wait_is_local = wait_is_local;
 
 	cq_priv->cq.fid.fclass = FI_CLASS_CQ;
 	cq_priv->cq.fid.context = context;
 	cq_priv->cq.fid.ops = &psmx_fi_ops;
 	cq_priv->cq.ops = &psmx_cq_ops;
 
-	PSMX_FREE_LIST_INIT(cq_priv->free_list.head, cq_priv->free_list.tail,
-			    struct psmx_cq_event, 64);
+	slist_init(&cq_priv->event_queue);
+	slist_init(&cq_priv->free_list);
+
+#define PSMX_FREE_LIST_SIZE	64
+	for (i=0; i<PSMX_FREE_LIST_SIZE; i++) {
+		event = calloc(1, sizeof(*event));
+		if (!event) {
+			PSMX_WARN("%s: out of memory.\n", __func__);
+			exit(-1);
+		}
+		slist_insert_tail(&event->list_entry, &cq_priv->free_list);
+	}
 
 	*cq = &cq_priv->cq;
 	return 0;

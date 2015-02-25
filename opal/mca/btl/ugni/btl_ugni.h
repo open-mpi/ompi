@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -32,7 +32,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/mca/common/ugni/common_ugni.h"
 
 #include <errno.h>
@@ -80,11 +80,16 @@ typedef struct mca_btl_ugni_module_t {
     opal_mutex_t eager_get_pending_lock;
     opal_list_t eager_get_pending;
 
+    opal_mutex_t pending_descriptors_lock;
+    opal_list_t pending_descriptors;
+
+    opal_free_list_t post_descriptors;
+
     mca_mpool_base_module_t *smsg_mpool;
-    ompi_free_list_t         smsg_mboxes;
+    opal_free_list_t         smsg_mboxes;
 
     gni_ep_handle_t wildcard_ep;
-    gni_ep_handle_t local_ep;
+    struct mca_btl_base_endpoint_t *local_ep;
 
     struct mca_btl_ugni_endpoint_attr_t wc_remote_attr, wc_local_attr;
 
@@ -95,15 +100,15 @@ typedef struct mca_btl_ugni_module_t {
     gni_cq_handle_t rdma_local_irq_cq;
 
     /* eager fragment list (registered) */
-    ompi_free_list_t eager_frags_send;
-    ompi_free_list_t eager_frags_recv;
+    opal_free_list_t eager_frags_send;
+    opal_free_list_t eager_frags_recv;
 
     /* SMSG fragment list (unregistered) */
-    ompi_free_list_t smsg_frags;
+    opal_free_list_t smsg_frags;
 
     /* RDMA fragment list */
-    ompi_free_list_t rdma_frags;
-    ompi_free_list_t rdma_int_frags;
+    opal_free_list_t rdma_frags;
+    opal_free_list_t rdma_int_frags;
 
 
     /* lock for this list */
@@ -126,7 +131,7 @@ typedef struct mca_btl_ugni_module_t {
 
 typedef struct mca_btl_ugni_component_t {
     /* base BTL component */
-    mca_btl_base_component_2_0_0_t super;
+    mca_btl_base_component_3_0_0_t super;
 
     /* maximum supported btls. hardcoded to 1 for now */
     uint32_t ugni_max_btls;
@@ -143,8 +148,6 @@ typedef struct mca_btl_ugni_component_t {
 
     /* After this message size switch to BTE protocols */
     size_t ugni_fma_limit;
-    /* Switch to put when trying to GET at or above this size */
-    size_t ugni_get_limit;
     /* Switch to get when sending above this size */
     size_t ugni_smsg_limit;
 
@@ -267,33 +270,31 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                     uint32_t flags, mca_btl_base_tag_t tag,
                     mca_btl_base_descriptor_t **descriptor);
 
-/**
- * Initiate a get operation.
- *
- * location: btl_ugni_get.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-int
-mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-/**
- * Initiate a put operation.
- *
- * location: btl_ugni_put.c
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-int
-mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
-                  struct mca_btl_base_endpoint_t *endpoint,
-                  struct mca_btl_base_descriptor_t *des);
+int mca_btl_ugni_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_ugni_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                      mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_ugni_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                       uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                       void *cbcontext, void *cbdata);
+
+int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                         void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value,
+                         int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
@@ -302,9 +303,14 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
                    struct mca_btl_base_endpoint_t *endpoint,
                    uint8_t order, size_t size, uint32_t flags);
 
+struct mca_btl_base_registration_handle_t {
+    /** uGNI memory handle */
+    gni_mem_handle_t gni_handle;
+};
+
 typedef struct mca_btl_ugni_reg_t {
     mca_mpool_base_registration_t base;
-    gni_mem_handle_t         memory_hdl;
+    mca_btl_base_registration_handle_t handle;
 } mca_btl_ugni_reg_t;
 
 /* Global structures */ 
@@ -321,5 +327,7 @@ static inline uint64_t mca_btl_ugni_proc_name_to_id (opal_process_name_t name) {
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t* btl);
 int mca_btl_ugni_kill_progress_thread(void);
 
+/** Number of times the progress thread has woken up */
+extern unsigned int mca_btl_ugni_progress_thread_wakeups;
 
 #endif

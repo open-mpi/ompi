@@ -6,11 +6,11 @@
 # Copyright (c) 2004-2014 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -20,12 +20,12 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -110,7 +110,7 @@ m4_ifdef([project_ompi],
                             [ompi/include/ompi/version.h])])
 
 m4_ifdef([project_orte],
-         [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
+         [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment],
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
 
@@ -266,7 +266,7 @@ AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshme
 m4_ifndef([project_oshmem], [project_oshmem_amc=false])
 AM_CONDITIONAL([PROJECT_OSHMEM], [test "$project_oshmem_amc" = "true"])
 
-if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
+if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
     AC_MSG_ERROR([Cannot continue])
 fi
@@ -283,16 +283,9 @@ m4_ifdef([project_orte],
 ############################################################################
 
 #
-# Part one of libtool magic.  Enable static so that we have the --with
-# tests done up here and can check for OS.  Save the values of
-# $enable_static and $enable_shared before setting the defaults,
-# because if the user specified --[en|dis]able-[static|shared] on the
-# command line, they'll already be set.  In this way, we can tell if
-# the user requested something or if the default was set here.
+# Part one of libtool magic.  Default to: enable shared, disable static.
 #
 
-ompi_enable_shared="$enable_shared"
-ompi_enable_static="$enable_static"
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
@@ -618,9 +611,10 @@ OPAL_CONFIG_ASM
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
-    [test "$enable_oshmem" = "yes" -a "$ompi_fortran_happy" = "1" -a \
-          "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a \
-          "$enable_oshmem_fortran" != "no"])
+    [test "$enable_oshmem" = "yes" && \
+     test "$ompi_fortran_happy" = "1" && \
+     test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && \
+     test "$enable_oshmem_fortran" != "no"])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -701,7 +695,7 @@ AC_INCLUDES_DEFAULT[
 [OPAL_USE_STDBOOL_H=1 MSG=yes],[OPAL_USE_STDBOOL_H=0 MSG=no])
 else
     OPAL_USE_STDBOOL_H=0
-    MSG="no (don't have <stdbool.h>)"
+    MSG="no (do not have <stdbool.h>)"
 fi
 AC_DEFINE_UNQUOTED(OPAL_USE_STDBOOL_H, $OPAL_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
@@ -820,7 +814,7 @@ if test $ac_cv_type_ptrdiff_t = yes ; then
 elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
     opal_ptrdiff_t="long"
     opal_ptrdiff_size=$ac_cv_sizeof_long
-elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
+elif test $ac_cv_type_long_long = yes && test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
     opal_ptrdiff_t="long long"
     opal_ptrdiff_size=$ac_cv_sizeof_long_long
 else
@@ -869,7 +863,7 @@ OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
-if test $ac_cv_func_statfs = no -a $ac_cv_func_statvfs = no; then
+if test $ac_cv_func_statfs = no && test $ac_cv_func_statvfs = no; then
     AC_MSG_WARN([neither statfs() and statvfs() were found])
     AC_MSG_ERROR([Cannot continue])
 fi
@@ -895,7 +889,7 @@ AC_CACHE_CHECK([for htonl define],
 #endif
 ])], [ompi_cv_htonl_define=yes], [ompi_cv_htonl_define=no])])
 AC_CHECK_FUNC([htonl], [ompi_have_htonl=yes], [ompi_have_htonl=no])
-AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
+AS_IF([test "$ompi_cv_htonl_define" = "yes" || test "$ompi_have_htonl" = "yes"],
     [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
         [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
@@ -1015,8 +1009,9 @@ AM_PROG_LEX
 # is *only* required for developers, we decided that it really was not
 # worth it to be portable between different versions of lex ;-).
 
-if test -z "$LEX" -o -n "`echo $LEX | $GREP missing`" -o \
-    "`basename $LEX`" != "flex"; then
+if test -z "$LEX" || \
+   test -n "`echo $LEX | $GREP missing`" || \
+   test "`basename $LEX`" != "flex"; then
     if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
         AC_MSG_WARN([*** Could not find GNU Flex on your system.])
         AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
@@ -1367,7 +1362,7 @@ fi
 # the following in opal_mca.m4 (when we're already m4 looping over the
 # project list):
 #
-# m4_foreach(mca_project, [mca_project_list], 
+# m4_foreach(mca_project, [mca_project_list],
 #           [m4_ifdef(mca_project[_CONFIG_LOCAL], mca_project[_CONFIG_LOCAL])])
 #
 # Meaning that aclocal doesn't see that, for example,

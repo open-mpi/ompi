@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -142,9 +144,8 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         bytes_read = read(fd_rand, (char *) unique_key, 16);
         if(bytes_read != 16) {
             orte_pre_condition_transports_use_rand(unique_key); 
-        } else { 
-            close(fd_rand);
         }
+        close(fd_rand);
     }
 
     if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
@@ -154,6 +155,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
 
     if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(string_key);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     

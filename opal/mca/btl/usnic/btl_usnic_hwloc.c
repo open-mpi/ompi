@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -153,7 +153,7 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
     obj = NULL;
     while (NULL != (obj = hwloc_get_next_osdev(opal_hwloc_topology, obj))) {
         assert(HWLOC_OBJ_OS_DEVICE == obj->type);
-        if (0 == strcmp(obj->name, uip->ui_ifname)) {
+        if (0 == strcmp(obj->name, uip->ui.v1.ui_ifname)) {
             break;
         }
     }

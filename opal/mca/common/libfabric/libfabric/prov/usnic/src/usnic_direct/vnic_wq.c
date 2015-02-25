@@ -71,12 +71,12 @@ int vnic_wq_alloc_ring(struct vnic_dev *vdev, struct vnic_wq *wq,
 				unsigned int desc_count, unsigned int desc_size)
 {
 #ifdef ENIC_PMD
-        char res_name[NAME_MAX];
-        static int instance = 0;
+	char res_name[NAME_MAX];
+	static int instance;
 
 	snprintf(res_name, sizeof(res_name), "%d-wq-%d", instance++, wq->index);
 	return vnic_dev_alloc_desc_ring(vdev, &wq->ring, desc_count, desc_size,
-                wq->socket_id, res_name);
+		wq->socket_id, res_name);
 #else
 	return vnic_dev_alloc_desc_ring(vdev, &wq->ring, desc_count, desc_size);
 #endif
@@ -102,11 +102,14 @@ static int vnic_wq_alloc_bufs(struct vnic_wq *wq)
 				wq->ring.desc_size * buf->index;
 			if (buf->index + 1 == count) {
 				buf->next = wq->bufs[0];
+				buf->next->prev = buf;
 				break;
 			} else if (j + 1 == VNIC_WQ_BUF_BLK_ENTRIES(count)) {
 				buf->next = wq->bufs[i + 1];
+				buf->next->prev = buf;
 			} else {
 				buf->next = buf + 1;
+				buf->next->prev = buf;
 				buf++;
 			}
 		}
@@ -181,27 +184,28 @@ int vnic_wq_alloc(struct vnic_dev *vdev, struct vnic_wq *wq, unsigned int index,
 	return 0;
 }
 
+#ifndef ENIC_PMD
 int vnic_wq_devcmd2_alloc(struct vnic_dev *vdev, struct vnic_wq *wq,
 	unsigned int desc_count, unsigned int desc_size)
 {
 	int err;
-	
+
 	wq->index = 0;
 	wq->vdev = vdev;
-	
+
 	err = vnic_wq_get_ctrl(vdev, wq, 0, RES_TYPE_DEVCMD2);
 	if (err) {
 		pr_err("Failed to get devcmd2 resource\n");
 		return err;
 	}
 	vnic_wq_disable(wq);
-	
+
 	err = vnic_wq_alloc_ring(vdev, wq, desc_count, desc_size);
 	if (err)
 		return err;
 	return 0;
 }
-
+#endif
 #ifdef FOR_UPSTREAM_KERNEL
 static void vnic_wq_init_start(struct vnic_wq *wq, unsigned int cq_index,
 #else

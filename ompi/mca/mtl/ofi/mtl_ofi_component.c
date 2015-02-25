@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +24,7 @@
 #include "mtl_ofi_message.h"
 
 static int ompi_mtl_ofi_component_open(void);
+static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_ofi_component_close(void);
 static int ompi_mtl_ofi_component_register(void);
 
@@ -28,6 +32,7 @@ static mca_mtl_base_module_t*
 ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads);
 
+static int param_priority;
 
 mca_mtl_ofi_component_t mca_mtl_ofi_component = {
     {
@@ -44,7 +49,7 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_mtl_ofi_component_open,  /* component open */
             ompi_mtl_ofi_component_close, /* component close */
-            NULL,
+            ompi_mtl_ofi_component_query,
             ompi_mtl_ofi_component_register
         },
         {
@@ -59,8 +64,24 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
 static int
 ompi_mtl_ofi_component_register(void)
 {
+    ompi_mtl_ofi.provider_name = NULL;
+    (void) mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                           "provider",
+                                           "Name of OFI provider to use",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_ofi.provider_name);
+    param_priority = 10;   /* for now give a lower priority than the psm mtl */
+    mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
+                                     "priority", "Priority of the OFI MTL component",
+                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                      OPAL_INFO_LVL_9,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &param_priority);
     return OMPI_SUCCESS;
 }
+
 
 
 static int
@@ -71,9 +92,9 @@ ompi_mtl_ofi_component_open(void)
 
     OBJ_CONSTRUCT(&ompi_mtl_ofi.free_messages, opal_free_list_t);
     opal_free_list_init(&ompi_mtl_ofi.free_messages,
-                        sizeof(ompi_mtl_ofi_message_t),
-                        OBJ_CLASS(ompi_mtl_ofi_message_t),
-                        1, -1, 1);
+                        sizeof(ompi_mtl_ofi_message_t), 8,
+                        OBJ_CLASS(ompi_mtl_ofi_message_t), 0, 0,
+                        1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
     ompi_mtl_ofi.domain =  NULL;
     ompi_mtl_ofi.av     =  NULL;
@@ -84,6 +105,13 @@ ompi_mtl_ofi_component_open(void)
     return OMPI_SUCCESS;
 }
 
+static int 
+ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
+{
+    *priority = param_priority;
+    *module = (mca_base_module_t *)&ompi_mtl_ofi.base;
+    return OMPI_SUCCESS;
+}
 
 static int
 ompi_mtl_ofi_component_close(void)
@@ -102,11 +130,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info hints = {0};
     struct fi_info *providers = NULL, *prov = NULL;
     struct fi_domain_attr domain_attr = {0};
-    struct fi_tx_attr tx_attr = {0};
+    struct fi_fabric_attr fabric_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
-    fi_addr_t ep_name = 0;
-    char *null_addr = NULL;
+    char ep_name[FI_NAME_MAX] = {0};
     size_t namelen;
 
     /**
@@ -116,9 +143,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.  The bits specified
-     *           with buffered receive, cancel, and remote complete
-     *           implements MPI semantics. Tagged is used to support tag
-     *           matching.
+     *           with buffered receive and cancel implement MPI semantics.
+     *           Tagged is used to support tag matching.
      *           We expect to register all memory up front for use with this
      *           endpoint, so the MTL requires dynamic memory regions
      */
@@ -126,7 +152,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints.ep_type   = FI_EP_RDM;          /* Reliable datagram         */
     hints.caps      = FI_TAGGED;          /* Tag matching interface    */
     hints.caps     |= FI_BUFFERED_RECV;   /* Buffered receives         */
-    hints.caps     |= FI_REMOTE_COMPLETE; /* Remote completion         */
     hints.caps     |= FI_CANCEL;          /* Support cancel            */
     hints.caps     |= FI_DYNAMIC_MR;      /* Global dynamic mem region */
 
@@ -134,14 +159,16 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Refine filter for additional capabilities
      * threading:  Disable locking
      * control_progress:  enable async progress
-     * op_flags:  Specifies default operation to set on all communication.
-     *            In this case, we want remote completion to be set by default.
      */
-    domain_attr.threading        = FI_THREAD_PROGRESS;
+    domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
-    tx_attr.op_flags             = FI_REMOTE_COMPLETE;
+    if (NULL != ompi_mtl_ofi.provider_name) {
+        fabric_attr.prov_name    = strdup(ompi_mtl_ofi.provider_name);
+    } else {
+        fabric_attr.prov_name    = NULL;
+    }
     hints.domain_attr            = &domain_attr;
-    hints.tx_attr                = &tx_attr;
+    hints.fabric_attr            = &fabric_attr;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
@@ -276,9 +303,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /**
      * Bind the CQ and AV to the endpoint object.
      */
-    ret = fi_bind((fid_t)ompi_mtl_ofi.ep,
-                  (fid_t)ompi_mtl_ofi.cq,
-                  FI_SEND | FI_RECV);
+    ret = fi_ep_bind(ompi_mtl_ofi.ep,
+                     (fid_t)ompi_mtl_ofi.cq,
+                     FI_SEND | FI_RECV);
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_bind CQ-EP failed: %s\n",
@@ -286,9 +313,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    ret = fi_bind((fid_t)ompi_mtl_ofi.ep,
-                  (fid_t)ompi_mtl_ofi.av,
-                  0);
+    ret = fi_ep_bind(ompi_mtl_ofi.ep,
+                     (fid_t)ompi_mtl_ofi.av,
+                     0);
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_bind AV-EP failed: %s\n",
@@ -318,7 +345,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Get our address and publish it with modex.
      */
     namelen = sizeof(ep_name);
-    ret = fi_getname((fid_t)ompi_mtl_ofi.ep, &ep_name, &namelen);
+    ret = fi_getname((fid_t)ompi_mtl_ofi.ep, &ep_name[0], &namelen);
     if (ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_getname failed: %s\n",
@@ -328,7 +355,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
                     &mca_mtl_ofi_component.super.mtl_version,
-                    &ep_name, namelen);
+                    &ep_name[0], namelen);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: opal_modex_send failed: %d\n",
@@ -339,29 +366,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     ompi_mtl_ofi.epnamelen = namelen;
 
     /**
-     * Insert the ANY_SRC address.
+     * Set the ANY_SRC address.
      */
-    null_addr = malloc(namelen);
-    if (!null_addr) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: malloc failed\n", __FILE__, __LINE__);
-        goto error;
-    }
-    memset(null_addr, 0, namelen);
-    ret = fi_av_insert(ompi_mtl_ofi.av,
-                       null_addr,
-                       1,
-                       &ompi_mtl_ofi.any_addr,
-                       0ULL,
-                       NULL);
-    if (1 != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_av_insert failed: %s\n",
-                            __FILE__, __LINE__, fi_strerror(-ret));
-        goto error;
-    }
-    free(null_addr);
-    null_addr = NULL;
+    ompi_mtl_ofi.any_addr = FI_ADDR_UNSPEC;
 
     /**
      * Activate progress callback.
@@ -377,9 +384,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     return &ompi_mtl_ofi.base;
 
 error:
-    if (null_addr) {
-        free(null_addr);
-    }
     if (providers) {
         (void) fi_freeinfo(providers);
     }

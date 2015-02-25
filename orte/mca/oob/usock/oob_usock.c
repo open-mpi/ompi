@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -367,7 +367,6 @@ static void recv_handler(int sd, short flags, void *cbdata)
     if (MCA_OOB_USOCK_IDENT == hdr.type) {
         if (NULL == (peer = mca_oob_usock_peer_lookup(&hdr.origin))) {
             /* should never happen */
-            mca_oob_usock_peer_close(peer);
             goto cleanup;
         }
         /* set socket up to be non-blocking */

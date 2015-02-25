@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -138,8 +138,6 @@ ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
-
-ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
@@ -308,6 +306,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
+    /* personality for this job */
+    char *personality;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* offset to the total number of procs so shared memory

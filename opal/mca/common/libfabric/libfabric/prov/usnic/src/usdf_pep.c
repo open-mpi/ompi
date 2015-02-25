@@ -58,7 +58,7 @@
 #include "fi.h"
 #include "fi_enosys.h"
 
-#include "fi_usnic.h"
+#include "fi_ext_usnic.h"
 #include "usnic_direct.h"
 #include "usd.h"
 #include "usdf.h"
@@ -149,10 +149,14 @@ usdf_pep_conn_info(struct usdf_connreq *crp)
 	/* fill in dest addr */
 	ip->dest_addrlen = ip->src_addrlen;
 	sin = calloc(1, ip->dest_addrlen);
+	if (sin == NULL) {
+		goto fail;
+	}
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = reqp->creq_ipaddr;
 	sin->sin_port = reqp->creq_port;
 
+	ip->dest_addr = sin;
 	ip->connreq = crp;
 	return ip;
 fail:
@@ -322,7 +326,7 @@ usdf_pep_listen(struct fid_pep *fpep)
 
 	ret = listen(pep->pep_sock, pep->pep_backlog);
 	if (ret != 0) {
-		ret = -errno;
+		return -errno;
 	}
 
 	pep->pep_pollitem.pi_rtn = usdf_pep_listen_cb;
@@ -334,7 +338,7 @@ usdf_pep_listen(struct fid_pep *fpep)
 		return -errno;
 	}
 
-	return ret;
+	return 0;
 }
 
 ssize_t
@@ -420,7 +424,6 @@ struct fi_ops usdf_pep_ops = {
 
 static struct fi_ops_ep usdf_pep_base_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = fi_no_enable,
 	.cancel = usdf_pep_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
@@ -437,8 +440,6 @@ static struct fi_ops_cm usdf_pep_cm_ops = {
 	.accept = fi_no_accept,
 	.reject = usdf_pep_reject,
 	.shutdown = fi_no_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
 };
 
 int
@@ -448,6 +449,7 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct usdf_pep *pep;
 	struct usdf_fabric *fp;
 	int ret;
+	int optval;
 
 	if (info->ep_type != FI_EP_MSG) {
 		return -FI_ENODEV;
@@ -486,6 +488,16 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
                 ret = -errno;
                 goto fail;
         }
+
+	/* set SO_REUSEADDR to prevent annoying "Address already in use" errors
+	 * on successive runs of programs listening on a well known port */
+	optval = 1;
+	ret = setsockopt(pep->pep_sock, SOL_SOCKET, SO_REUSEADDR, &optval,
+				sizeof(optval));
+	if (ret == -1) {
+		ret = -errno;
+		goto fail;
+	}
 
 	ret = bind(pep->pep_sock, (struct sockaddr *)info->src_addr,
 			info->src_addrlen);

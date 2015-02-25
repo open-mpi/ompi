@@ -163,8 +163,6 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
         opal_condition_wait(&module->cond, &module->lock);
     }
 
-    module->active_incoming_frag_signal_count = 0;
-
     if (assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
          * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +35,7 @@ char *opal_uri_get_scheme(const char *uri)
     if (NULL == (ptr = strchr(turi, ':'))) {
         opal_show_help("help-opal-util.txt", "malformed-uri",
                        true, uri);
+        free(turi);
         return NULL;
     }
     *ptr = '\0';
@@ -117,6 +120,7 @@ char *opal_filename_from_uri(const char *uri,
     if (NULL == (ptr = strchr(turi, ':'))) {
         opal_show_help("help-opal-util.txt", "malformed-uri",
                        true, uri);
+        free(turi);
         return NULL;
     }
     *ptr = '\0';

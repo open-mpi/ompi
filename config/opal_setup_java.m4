@@ -15,6 +15,8 @@ dnl                         reserved.
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -54,24 +56,24 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
         opal_java_happy=no
     else
         # Check for bozo case: ensure a directory was specified
-        AS_IF([test "$with_jdk_dir" = "yes" -o "$with_jdk_dir" = "no"],
+        AS_IF([test "$with_jdk_dir" = "yes" || test "$with_jdk_dir" = "no"],
               [AC_MSG_WARN([Must specify a directory name for --with-jdk-dir])
                AC_MSG_ERROR([Cannot continue])])
-        AS_IF([test "$with_jdk_bindir" = "yes" -o "$with_jdk_bindir" = "no"],
+        AS_IF([test "$with_jdk_bindir" = "yes" || test "$with_jdk_bindir" = "no"],
               [AC_MSG_WARN([Must specify a directory name for --with-jdk-bindir])
                AC_MSG_ERROR([Cannot continue])])
-        AS_IF([test "$with_jdk_headers" = "yes" -o "$with_jdk_headers" = "no"],
+        AS_IF([test "$with_jdk_headers" = "yes" || test "$with_jdk_headers" = "no"],
               [AC_MSG_WARN([Must specify a directory name for --with-jdk-headers])
                AC_MSG_ERROR([Cannot continue])])
 
         # Check for bozo case: either specify --with-jdk-dir or
         # (--with-jdk-bindir, --with-jdk-headers) -- not both.
         opal_java_bad=0
-        AS_IF([test -n "$with_jdk_dir" -a -n "$with_jdk_bindir" -o \
-                    -n "$with_jdk_dir" -a -n "$with_jdk_headers"],
+        AS_IF([test -n "$with_jdk_dir" && \
+               (test -n "$with_jdk_bindir" || test -n "$with_jdk_headers")],
               [opal_java_bad=1])
-        AS_IF([test -z "$with_jdk_bindir" -a -n "$with_jdk_headers" -o \
-                    -n "$with_jdk_bindir" -a -z "$with_jdk_headers"],
+        AS_IF([(test -z "$with_jdk_bindir" && test -n "$with_jdk_headers") || \
+               (test -n "$with_jdk_bindir" && test -z "$with_jdk_headers")],
               [opal_java_bad=1])
         AS_IF([test "$opal_java_bad" = "1"],
               [AC_MSG_WARN([Either specify --with-jdk-dir or both of (--with-jdk_bindir, --with-jdk-headers) -- not both.])
@@ -136,7 +138,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                    # Solaris
                    opal_java_dir=/usr/java
                    AC_MSG_CHECKING([Solaris locations])
-                   AS_IF([test -d $opal_java_dir -a -r "$opal_java_dir/include/jni.h"], 
+                   AS_IF([test -d $opal_java_dir && test -r "$opal_java_dir/include/jni.h"],
                          [AC_MSG_RESULT([found ($opal_java_dir)])
                           with_jdk_headers=$opal_java_dir/include
                           with_jdk_bindir=$opal_java_dir/bin
@@ -153,7 +155,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
             # Look for various Java-related programs
             opal_java_happy=no
             opal_java_PATH_save=$PATH
-            AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
+            AS_IF([test -n "$with_jdk_bindir" && test "$with_jdk_bindir" != "yes" && test "$with_jdk_bindir" != "no"],
                   [PATH="$with_jdk_bindir:$PATH"])
             AC_PATH_PROG(JAVAC, javac)
             AC_PATH_PROG(JAVAH, javah)
@@ -161,7 +163,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
             PATH=$opal_java_PATH_save
 
             # Check to see if we have all 3 programs.
-            AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
+            AS_IF([test -z "$JAVAC" || test -z "$JAVAH" || test -z "$JAR"],
                   [opal_java_happy=no
                    HAVE_JAVA_SUPPORT=0],
                   [opal_java_happy=yes
@@ -172,7 +174,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                   [opal_java_CPPFLAGS_save=$CPPFLAGS
                    # silence a stupid Mac warning
                    CPPFLAGS="$CPPFLAGS -DTARGET_RT_MAC_CFM=0"
-                   AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
+                   AS_IF([test -n "$with_jdk_headers" && test "$with_jdk_headers" != "yes" && test "$with_jdk_headers" != "no"],
                          [OPAL_JDK_CPPFLAGS="-I$with_jdk_headers"
                           # Some flavors of JDK also require -I<blah>/linux.
                           # See if that's there, and if so, add a -I for that,

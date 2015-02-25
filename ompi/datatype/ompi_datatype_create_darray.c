@@ -247,8 +247,7 @@ int32_t ompi_datatype_create_darray(int size,
     }
 
 
-    /* set displacement and UB correctly. Use struct instead of
-       resized for same reason as subarray */
+    /* set displacement and UB correctly. Please read the comment in subarray */
     {
         ptrdiff_t displs[3], tmp_size;
         ompi_datatype_t *types[3];
@@ -267,9 +266,13 @@ int32_t ompi_datatype_create_darray(int size,
         for (i = 0 ; i < ndims ; i++) {
             displs[2] *= gsize_array[i];
         }
-        types[0] = MPI_LB; types[1] = lastType; types[2] = MPI_UB;
+        if(oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
+            types[0] = MPI_LB; types[1] = lastType; types[2] = MPI_UB;
 
-        rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
+            rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
+        } else {
+            ompi_datatype_create_resized(lastType, displs[1], displs[2], newtype);
+        }
         ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */

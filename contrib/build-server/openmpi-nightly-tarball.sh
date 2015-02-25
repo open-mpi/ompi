@@ -35,6 +35,10 @@ fi
 # Build root - scratch space
 build_root=/home/mpiteam/openmpi/nightly-tarball-build-root
 
+# Coverity stuff
+coverity_token=`cat $HOME/coverity/openmpi-token.txt`
+coverity_configure_args="--enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --enable-oshmem-java --with-mxm=/opt/mellanox/mxm --with-psm --with-usnic"
+
 export PATH=$HOME/local/bin:$PATH
 export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 
@@ -52,9 +56,16 @@ module use ~/modules
 mkdir -p $build_root
 cd $build_root
 
+pending_coverity=$build_root/tarballs-to-run-through-coverity.txt
+rm -f $pending_coverity
+touch $pending_coverity
+
 # Loop making the tarballs
 module unload autotools
 for branch in $branches; do
+    # Get the last tarball version that was made
+    prev_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
+
     if test "$branch" = "master"; then
         code_uri=$master_code_uri
         raw_uri=$master_raw_uri
@@ -93,9 +104,31 @@ for branch in $branches; do
     module unload autotools
     echo "=== Done running script"
 
+    # Did the script generate a new tarball?  If so, save it so that we can
+    # spawn the coverity checker on it afterwards.  Only for this for the
+    # master (for now).
+    latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
+    if test "$prev_snapshot" != "$latest_snapshot" && \
+        test "$branch" = "master"; then
+        echo "$outputroot/$branch/openmpi-$latest_snapshot.tar.bz2" >> $pending_coverity
+    fi
+
     # Failed builds are not removed.  But if a human forgets to come
     # in here and clean up the old failed builds, we can accumulate
     # many over time.  So remove any old failed bbuilds that are over
     # 4 weeks old.
     ${script_dir}/remove-old.pl 28 $build_root/$branch
 done
+
+# If we had any new snapshots to send to coverity, process them now
+
+for tarball in `cat $pending_coverity`; do
+    $HOME/scripts/openmpi-nightly-coverity.pl \
+        --filename=$tarball \
+        --coverity-token=$coverity_token \
+        --verbose \
+        --logfile-dir=$HOME/coverity \
+        --make-args=-j8 \
+        --configure-args="$coverity_configure_args"
+done
+rm -f $pending_coverity

@@ -12,12 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -66,6 +66,10 @@
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
+
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+static OBJ_CLASS_INSTANCE(mca_btl_sm_registration_handle_t, opal_free_list_item_t, NULL, NULL);
+#endif
 
 static int mca_btl_sm_component_open(void);
 static int mca_btl_sm_component_close(void);
@@ -251,9 +255,12 @@ static int sm_register(void)
     mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
     mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
-    mca_btl_sm.super.btl_seg_size = sizeof (mca_btl_sm_segment_t);
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
+
+#if OPAL_BTL_SM_HAVE_KNEM
+    mca_btl_sm.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+#endif
 
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
@@ -289,12 +296,17 @@ static int mca_btl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
 
     mca_btl_sm_component.sm_seg = NULL;
+
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+    OBJ_CONSTRUCT(&mca_btl_sm_component.registration_handles, opal_free_list_t);
+#endif
+
 #if OPAL_BTL_SM_HAVE_KNEM
     mca_btl_sm.knem_fd = -1;
     mca_btl_sm.knem_status_array = NULL;
@@ -331,6 +343,10 @@ static int mca_btl_sm_component_close(void)
         mca_btl_sm.knem_fd = -1;
     }
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
+
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+    OBJ_DESTRUCT(&mca_btl_sm_component.registration_handles);
+#endif
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     /**
@@ -725,9 +741,9 @@ mca_btl_sm_component_init(int *num_btls,
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
     uint32_t my_local_rank = UINT32_MAX;
-#if OPAL_BTL_SM_HAVE_KNEM
+#if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
     int rc;
-#endif /* OPAL_BTL_SM_HAVE_KNEM */
+#endif /* OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA */
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
@@ -904,6 +920,9 @@ mca_btl_sm_component_init(int *num_btls,
         } else {
             mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
         }
+
+        mca_btl_sm.super.btl_register_mem = mca_btl_sm_register_mem;
+        mca_btl_sm.super.btl_deregister_mem = mca_btl_sm_deregister_mem;
     }
 #else
     /* If the user explicitly asked for knem and we can't provide it,
@@ -918,6 +937,8 @@ mca_btl_sm_component_init(int *num_btls,
         /* Will only ever have either cma or knem enabled at runtime
            so no problems with accidentally overwriting this set earlier */
         mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
+        mca_btl_sm.super.btl_register_mem = mca_btl_sm_register_mem;
+        mca_btl_sm.super.btl_deregister_mem = mca_btl_sm_deregister_mem;
     }
 #else
     /* If the user explicitly asked for CMA and we can't provide itm
@@ -927,9 +948,26 @@ mca_btl_sm_component_init(int *num_btls,
         opal_show_help("help-mpi-btl-sm.txt",
                        "CMA requested but not available",
                        true, opal_process_info.nodename);
+        free(btls);
         return NULL;
     }
 #endif /* OPAL_BTL_SM_HAVE_CMA */
+
+#if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
+    if (mca_btl_sm_component.use_cma || mca_btl_sm_component.use_knem) {
+        rc = opal_free_list_init (&mca_btl_sm_component.registration_handles,
+                                  sizeof (mca_btl_sm_registration_handle_t),
+                                  8, OBJ_CLASS(mca_btl_sm_registration_handle_t),
+                                  0, 0, mca_btl_sm_component.sm_free_list_num,
+                                  mca_btl_sm_component.sm_free_list_max,
+                                  mca_btl_sm_component.sm_free_list_inc, NULL, 0,
+                                  NULL, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            free (btls);
+            return NULL;
+        }
+    }
+#endif
 
     return btls;
 
@@ -958,11 +996,13 @@ mca_btl_sm_component_init(int *num_btls,
         opal_show_help("help-mpi-btl-sm.txt",
                        "knem requested but not available",
                        true, opal_process_info.nodename);
+        free(btls);
         return NULL;
     } else if (0 == mca_btl_sm_component.use_cma) {
         /* disable get when not using knem or cma */
         mca_btl_sm.super.btl_get = NULL;
         mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
+        mca_btl_sm_component.use_knem = 0;
     }
 
     /* Otherwise, use_knem was 0 (and we didn't get here) or use_knem
@@ -1015,7 +1055,7 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
 
-        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+        opal_free_list_return (&mca_btl_sm_component.pending_send_fl, (opal_free_list_item_t *) si);
 
         if ( OPAL_SUCCESS != rc )
             return;
@@ -1090,8 +1130,8 @@ int mca_btl_sm_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_sm_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_local_count = 1;
-                Frag.base.des_local = &seg;
+                Frag.base.des_segment_count = 1;
+                Frag.base.des_segments = &seg;
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
                 /* return the fragment */
@@ -1176,22 +1216,14 @@ int mca_btl_sm_component_progress(void)
            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
         if (KNEM_STATUS_SUCCESS == 
             mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
-            int btl_ownership;
 
             /* Handle the completed fragment */
             frag = 
                 mca_btl_sm.knem_frag_array[mca_btl_sm.knem_status_first_used];
-            btl_ownership = (frag->base.des_flags & 
-                             MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-            if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & 
-                      frag->base.des_flags)) {
-                frag->base.des_cbfunc(&mca_btl_sm.super, 
-                                      frag->endpoint, &frag->base, 
-                                      OPAL_SUCCESS);
-            }
-            if (btl_ownership) {
-                MCA_BTL_SM_FRAG_RETURN(frag);
-            }
+            frag->cb.func (&mca_btl_sm.super, frag->endpoint,
+                           frag->cb.local_address, frag->cb.local_handle,
+                           frag->cb.context, frag->cb.data, OPAL_SUCCESS);
+            MCA_BTL_SM_FRAG_RETURN(frag);
 
             /* Bump counters, loop around the circular buffer if
                necessary */

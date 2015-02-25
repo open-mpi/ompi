@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,8 +62,13 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     orte_iof_sink_t *sink;
     opal_list_item_t *item, *next;
     int rc;
-
+    bool exclusive;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s received IOF from proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+
     /* unpack the stream first as this may be flow control info */
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &stream, &count, ORTE_IOF_TAG))) {
@@ -97,6 +102,12 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         goto CLEAN_RETURN;
     }
     
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s received IOF cmd from sender %s for source %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&requestor),
+                         ORTE_NAME_PRINT(&origin)));
+
     /* check to see if a tool has requested something */
     if (ORTE_IOF_PULL & stream) {
         /* get name of the process wishing to be the sink */
@@ -105,13 +116,18 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             goto CLEAN_RETURN;
         }
-    
+        
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received pull cmd from remote tool %s for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&requestor),
                              ORTE_NAME_PRINT(&origin)));
 
+        if (ORTE_IOF_EXCLUSIVE & stream) {
+            exclusive = true;
+        } else {
+            exclusive = false;
+        }
         /* a tool is requesting that we send it a copy of the specified stream(s)
          * from the specified process(es), so create a sink for it
          */
@@ -120,18 +136,21 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
+            sink->exclusive = exclusive;
         }
         if (ORTE_IOF_STDERR & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
+            sink->exclusive = exclusive;
         }
         if (ORTE_IOF_STDDIAG & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
+            sink->exclusive = exclusive;
         }
         goto CLEAN_RETURN;
     }
@@ -184,14 +203,8 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&origin)));
     
-    /* output this to our local output */
-    if (ORTE_IOF_STDOUT & stream || orte_xml_output) {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stdout->wev);
-    } else {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
-    }
-    
     /* cycle through the endpoints to see if someone else wants a copy */
+    exclusive = false;
     for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
          item != opal_list_get_end(&mca_iof_hnp_component.sinks);
          item = opal_list_get_next(item)) {
@@ -207,9 +220,21 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
              sink->name.vpid == origin.vpid)) {
             /* send the data to the tool */
             orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);
+            if (sink->exclusive) {
+                exclusive = true;
+            }
         }
     }
     
-CLEAN_RETURN:
+    /* output this to our local output unless one of the sinks was exclusive */
+    if (!exclusive) {
+        if (ORTE_IOF_STDOUT & stream || orte_xml_output) {
+            orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stdout->wev);
+        } else {
+            orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
+        }
+    }
+        
+ CLEAN_RETURN:
     return;
 }

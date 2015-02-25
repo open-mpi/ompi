@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,64 +51,50 @@ int
 ompi_mtl_base_select(bool enable_progress_threads,
                      bool enable_mpi_threads)
 {
-    opal_list_item_t *item = NULL;
-    mca_base_component_list_item_t *cli = NULL;
-    mca_mtl_base_component_t *component = NULL;
-    mca_mtl_base_module_t *module = NULL;
+    int ret = OMPI_ERR_NOT_FOUND;
+    mca_mtl_base_component_t *best_component = NULL;
+    mca_mtl_base_module_t *best_module = NULL;
 
-    /* Traverse the list of available components; call their init
-       functions. */
-    for (item = opal_list_get_first(&ompi_mtl_base_framework.framework_components);
-         opal_list_get_end(&ompi_mtl_base_framework.framework_components) != item;
-         item = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (mca_mtl_base_component_t *) cli->cli_component;
-
-        if (NULL == component->mtl_init) {
-            opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
-                                 "select: no init function; ignoring component %s",
-                                 component->mtl_version.mca_component_name );
-            continue;
-        }
-        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
-                             "select: initializing %s component %s",
-                             component->mtl_version.mca_type_name,
-                             component->mtl_version.mca_component_name );
-        module = component->mtl_init(enable_progress_threads,
-                                     enable_mpi_threads);
-        if (NULL == module) {
-            opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
-                                 "select: init returned failure for component %s",
-                                 component->mtl_version.mca_component_name );
-            continue;
-        }
-        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
-                             "select: init returned success");
-
-        ompi_mtl_base_selected_component = component;
-        ompi_mtl = module;
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != mca_base_select("mtl", ompi_mtl_base_framework.framework_output,
+                                        &ompi_mtl_base_framework.framework_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
+        /* notify caller that no available component found */
+        return ret;
     }
 
-    /* This base function closes, unloads, and removes from the
-       available list all unselected components.  The available list will
-       contain only the selected component. */
-    if (ompi_mtl_base_selected_component) {
-        (void) mca_base_framework_components_close(&ompi_mtl_base_framework,
-                                                   (mca_base_component_t *) ompi_mtl_base_selected_component);
+    opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
+                         "select: initializing %s component %s",
+                         best_component->mtl_version.mca_type_name,
+                         best_component->mtl_version.mca_component_name );
+
+    if (NULL == best_component->mtl_init(enable_progress_threads,
+                                          enable_mpi_threads)) {
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
+                             "select: init returned failure for component %s",
+                             best_component->mtl_version.mca_component_name );
+    } else {
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
+                             "select: init returned success");
+        ompi_mtl_base_selected_component = best_component;
+        ompi_mtl = best_module;
+        ret = OMPI_SUCCESS;
     }
 
     /* All done */
-    if (NULL == module) {
+    if (NULL == ompi_mtl) {
         opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
                              "select: no component selected");
-        return OMPI_ERR_NOT_FOUND;
     } else {
         opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
                              "select: component %s selected",
                              ompi_mtl_base_selected_component->
                              mtl_version.mca_component_name );
-        return OMPI_SUCCESS;
     }
+    return ret;
 }
 
 

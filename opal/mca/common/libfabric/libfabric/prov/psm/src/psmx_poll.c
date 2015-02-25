@@ -82,7 +82,7 @@ static int psmx_poll_poll(struct fid_poll *pollset, void **context, int count)
 	
 	poll_priv = container_of(pollset, struct psmx_fid_poll, poll.fid);
 
-	psmx_cq_poll_mq(NULL, poll_priv->domain, NULL, 0, NULL);
+	psmx_progress(poll_priv->domain);
 
 	head = &poll_priv->poll_list_head;
 	for (p = head->next; p != head && ret_count < count; p = p->next) {
@@ -90,7 +90,7 @@ static int psmx_poll_poll(struct fid_poll *pollset, void **context, int count)
 		switch (list_item->fid->fclass) {
 		case FI_CLASS_CQ:
 			cq = container_of(list_item->fid, struct psmx_fid_cq, cq);
-			if (cq->event_queue.count) {
+			if (cq->event_count) {
 				*context++ = cq->cq.fid.context;
 				ret_count++;
 			}

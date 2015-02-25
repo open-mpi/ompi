@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -238,7 +240,8 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 	    (OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_io_ompio_io_array_t));
 	if (NULL == fh->f_io_array) {
 	    opal_output(1, "OUT OF MEMORY\n");
-                return OMPI_ERR_OUT_OF_RESOURCE;
+            free(temp);
+            return OMPI_ERR_OUT_OF_RESOURCE;
 	}
 	while (bytes_to_write) {
 	    int start = 0;
@@ -249,6 +252,7 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 		     sizeof(mca_io_ompio_io_array_t));
 		if (NULL == fh->f_io_array) {
 		    opal_output(1, "OUT OF MEMORY\n");
+                    free(temp);
 		    return OMPI_ERR_OUT_OF_RESOURCE;
 		}
 	    }

@@ -110,6 +110,8 @@ usd_get_dev_if_info(
         if (ret == -1)
             goto out;
         dev->ud_arp_sockfd = s;
+    } else {
+        close(s);
     }
 
     return 0;

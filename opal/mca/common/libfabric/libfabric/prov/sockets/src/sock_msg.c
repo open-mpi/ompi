@@ -93,7 +93,8 @@ static ssize_t sock_ep_recvmsg(struct fid_ep *ep, const struct fi_msg *msg,
 
 	rx_entry->flags = flags;
 	rx_entry->context = (uint64_t)msg->context;
-	rx_entry->addr = msg->addr;
+	rx_entry->addr = (rx_ctx->attr.caps & FI_DIRECTED_RECV) ? 
+		msg->addr : FI_ADDR_UNSPEC;
 	rx_entry->data = msg->data;
 	rx_entry->ignore = 0xFFFFFFFF;
 
@@ -126,7 +127,7 @@ static ssize_t sock_ep_recv(struct fid_ep *ep, void *buf, size_t len, void *desc
 	msg.iov_count = 1;
 	msg.addr = src_addr;
 	msg.context = context;
-
+	msg.data = 0;
 	return sock_ep_recvmsg(ep, &msg, 0);
 }
 
@@ -141,6 +142,7 @@ static ssize_t sock_ep_recvv(struct fid_ep *ep, const struct iovec *iov,
 	msg.iov_count = count;
 	msg.addr = src_addr;
 	msg.context = context;
+	msg.data = 0;
 	return sock_ep_recvmsg(ep, &msg, 0);
 }
 
@@ -162,7 +164,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -172,9 +174,13 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	}
 
 	assert(tx_ctx->enabled && msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT);
-
-	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
-	assert(conn);
+	if (sock_ep->connected) {
+		conn = sock_ep_lookup_conn(sock_ep);
+	} else {
+		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	}
+	if (!conn)
+		return -FI_EAGAIN;
 
 	SOCK_LOG_INFO("New sendmsg on TX: %p using conn: %p\n", 
 		      tx_ctx, conn);
@@ -184,7 +190,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	tx_op.op = SOCK_OP_SEND;
 
 	total_len = 0;
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			total_len += msg->msg_iov[i].iov_len;
 		}
@@ -218,7 +224,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 		sock_tx_ctx_write(tx_ctx, &msg->data, sizeof(uint64_t));
 	}
 
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			sock_tx_ctx_write(tx_ctx, msg->msg_iov[i].iov_base, 
 					  msg->msg_iov[i].iov_len);
@@ -235,6 +241,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	return 0;
 
 err:
+	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -352,7 +359,8 @@ static ssize_t sock_ep_trecvmsg(struct fid_ep *ep,
 
 	rx_entry->flags = flags;
 	rx_entry->context = (uint64_t)msg->context;
-	rx_entry->addr = msg->addr;
+	rx_entry->addr = (rx_ctx->attr.caps & FI_DIRECTED_RECV) ? 
+		msg->addr : FI_ADDR_UNSPEC;
 	rx_entry->data = msg->data;
 	rx_entry->tag = msg->tag;
 	rx_entry->ignore = msg->ignore;
@@ -385,7 +393,7 @@ static ssize_t sock_ep_trecv(struct fid_ep *ep, void *buf, size_t len, void *des
 	msg.context = context;
 	msg.tag = tag;
 	msg.ignore = ignore;
-
+	msg.data = 0;
 	return sock_ep_trecvmsg(ep, &msg, 0);
 }
 
@@ -402,6 +410,7 @@ static ssize_t sock_ep_trecvv(struct fid_ep *ep, const struct iovec *iov,
 	msg.context = context;
 	msg.tag = tag;
 	msg.ignore = ignore;
+	msg.data = 0;
 	return sock_ep_trecvmsg(ep, &msg, 0);
 }
 
@@ -423,7 +432,7 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 		break;
 
 	case FI_CLASS_TX_CTX:
-		tx_ctx = container_of(ep, struct sock_tx_ctx, ctx);
+		tx_ctx = container_of(ep, struct sock_tx_ctx, fid.ctx);
 		sock_ep = tx_ctx->ep;
 		break;
 
@@ -433,17 +442,27 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	}
 
 	assert(tx_ctx->enabled && msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT);
-	conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
-	assert(conn);
+	if (sock_ep->connected) {
+		conn = sock_ep_lookup_conn(sock_ep);
+	} else {
+		conn = sock_av_lookup_addr(tx_ctx->av, msg->addr);
+	}
+	if (!conn)
+		return -FI_EAGAIN;
+
+	memset(&tx_op, 0, sizeof(struct sock_op));
+	tx_op.op = SOCK_OP_TSEND;
 
 	total_len = 0;
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			total_len += msg->msg_iov[i].iov_len;
 		}
+		tx_op.src_iov_len = total_len;
 		assert(total_len <= SOCK_EP_MAX_INJECT_SZ);
 	} else {
 		total_len = msg->iov_count * sizeof(union sock_iov);
+		tx_op.src_iov_len = msg->iov_count;
 	}
 
 	total_len += sizeof(struct sock_op_tsend);
@@ -457,10 +476,6 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	}
 
 	flags |= tx_ctx->attr.op_flags;
-	memset(&tx_op, 0, sizeof(struct sock_op));
-	tx_op.op = SOCK_OP_TSEND;
-	tx_op.src_iov_len = msg->iov_count;
-
 	sock_tx_ctx_write(tx_ctx, &tx_op, sizeof(struct sock_op));
 	sock_tx_ctx_write(tx_ctx, &flags, sizeof(uint64_t));
 	sock_tx_ctx_write(tx_ctx, &msg->context, sizeof(uint64_t));
@@ -474,7 +489,7 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	}
 	sock_tx_ctx_write(tx_ctx, &msg->tag, sizeof(uint64_t));
 
-	if (flags & FI_INJECT) {
+	if (SOCK_INJECT_OK(flags)) {
 		for (i=0; i< msg->iov_count; i++) {
 			sock_tx_ctx_write(tx_ctx, msg->msg_iov[i].iov_base,
 					  msg->msg_iov[i].iov_len);
@@ -491,6 +506,7 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	return 0;
 
 err:
+	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -588,6 +604,7 @@ static ssize_t sock_ep_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore
 		return -FI_EINVAL;
 	}
 
+	ret = -FI_ENOMSG;
 	fastlock_acquire(&rx_ctx->lock);
 	for (entry = rx_ctx->rx_buffered_list.next;
 	     entry != &rx_ctx->rx_buffered_list; entry = entry->next) {
@@ -599,25 +616,25 @@ static ssize_t sock_ep_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore
 		if (((rx_entry->tag & ~rx_entry->ignore) == 
 		     (*tag & ~rx_entry->ignore)) &&
 		    (rx_entry->addr == FI_ADDR_UNSPEC ||
-		     rx_entry->addr == *src_addr)) {
-
+		     (src_addr == NULL) || 
+		     (src_addr && 
+		      ((*src_addr == FI_ADDR_UNSPEC) ||
+		       (rx_entry->addr == *src_addr))))) {
+			
 			if (flags & FI_CLAIM)
 				rx_entry->is_claimed = 1;
 			*tag = rx_entry->tag;
-			*src_addr = rx_entry->addr;
+			if (src_addr)
+				*src_addr = rx_entry->addr;
 			*len = rx_entry->used;
 			ret = 1;
 			break;
 		}
 	}
 
-	if (entry == &rx_ctx->rx_entry_list)
-		ret = -FI_ENOENT;
-
 	fastlock_release(&rx_ctx->lock);
 	return ret;
 }
-
 
 struct fi_ops_tagged sock_ep_tagged = {
 	.size = sizeof(struct fi_ops_tagged),

@@ -632,12 +632,13 @@ usdf_ep_rdm_close(fid_t fid)
 
 static struct fi_ops_ep usdf_base_rdm_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_rdm_enable,
 	.cancel = usdf_ep_rdm_cancel,
 	.getopt = usdf_ep_rdm_getopt,
 	.setopt = usdf_ep_rdm_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_cm_rdm_ops = {
@@ -649,8 +650,6 @@ static struct fi_ops_cm usdf_cm_rdm_ops = {
 	.accept = fi_no_accept,
 	.reject = fi_no_reject,
 	.shutdown = fi_no_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
 };
 
 static struct fi_ops_msg usdf_rdm_ops = {
@@ -666,11 +665,31 @@ static struct fi_ops_msg usdf_rdm_ops = {
 	.injectdata = fi_no_msg_injectdata,
 };
 
+static int usdf_ep_rdm_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_rdm_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_rdm_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_rdm_close,
 	.bind = usdf_ep_rdm_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_rdm_control,
 	.ops_open = fi_no_ops_open
 };
 
@@ -741,6 +760,9 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 			tx->tx_attr = *info->tx_attr;
 		} else {
 			ret = usdf_rdm_fill_tx_attr(&tx->tx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&tx->t.rdm.tx_free_wqe);
 		TAILQ_INIT(&tx->t.rdm.tx_rdc_ready);
@@ -779,6 +801,9 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 			rx->rx_attr = *info->rx_attr;
 		} else {
 			ret = usdf_rdm_fill_rx_attr(&rx->rx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&rx->r.rdm.rx_free_rqe);
 		TAILQ_INIT(&rx->r.rdm.rx_posted_rqe);
@@ -803,6 +828,9 @@ fail:
 	if (tx != NULL) {
 		free(tx);
 		atomic_dec(&udp->dom_refcnt);
+	}
+	if (ep != NULL) {
+		free(ep);
 	}
 	return ret;
 }

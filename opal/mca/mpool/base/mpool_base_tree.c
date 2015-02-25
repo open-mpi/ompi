@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -31,7 +32,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
 
-#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_rb_tree.h"
 #include "mpool_base_tree.h"
 
@@ -43,13 +43,13 @@ static char *leak_msg = NULL;
 static int condition(void *value);
 static void action(void *key, void *value);
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, ompi_free_list_item_t, NULL, NULL); 
+OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t, NULL, NULL);
 
 /* 
  * use globals for the tree and the tree_item free list.. 
  */
 opal_rb_tree_t mca_mpool_base_tree; 
-ompi_free_list_t mca_mpool_base_tree_item_free_list;
+opal_free_list_t mca_mpool_base_tree_item_free_list;
 static opal_mutex_t tree_lock;
 
 /*
@@ -77,14 +77,14 @@ int mca_mpool_base_tree_node_compare(void * key1, void * key2)
 int mca_mpool_base_tree_init(void) { 
     int rc;
     OBJ_CONSTRUCT(&mca_mpool_base_tree, opal_rb_tree_t); 
-    OBJ_CONSTRUCT(&mca_mpool_base_tree_item_free_list, ompi_free_list_t); 
+    OBJ_CONSTRUCT(&mca_mpool_base_tree_item_free_list, opal_free_list_t);
     OBJ_CONSTRUCT(&tree_lock, opal_mutex_t);
-    rc = ompi_free_list_init_new(&mca_mpool_base_tree_item_free_list, 
+    rc = opal_free_list_init (&mca_mpool_base_tree_item_free_list,
             sizeof(mca_mpool_base_tree_item_t), 
             opal_cache_line_size,
             OBJ_CLASS(mca_mpool_base_tree_item_t), 
             0,opal_cache_line_size,
-            0, -1 , 4, NULL);
+            0, -1 , 4, NULL, 0, NULL, NULL, NULL);
     if(OPAL_SUCCESS == rc) { 
         rc = opal_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);
     }
@@ -153,21 +153,16 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
  * get a tree item from the free list 
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) { 
-    ompi_free_list_item_t* item = NULL;
-    OMPI_FREE_LIST_GET_MT(&mca_mpool_base_tree_item_free_list, item);
-    if(NULL != item) { 
-        return (mca_mpool_base_tree_item_t*) item; 
-    } else { 
-        return NULL;
-    }
+    return (mca_mpool_base_tree_item_t *)
+        opal_free_list_get (&mca_mpool_base_tree_item_free_list);
 }
 
 /*
  * put an item back into the free list
  */
 void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item) { 
-    OMPI_FREE_LIST_RETURN_MT(&mca_mpool_base_tree_item_free_list,
-                          &(item->super));
+    opal_free_list_return (&mca_mpool_base_tree_item_free_list,
+                           &item->super);
 }
 
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2014 Intel Corporation. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -40,6 +41,8 @@ extern "C" {
 #endif
 
 /* FI directly mapped errno values */
+
+#define	FI_SUCCESS		0
 
 //#define	FI_EPERM		EPERM		/* Operation not permitted */
 #define	FI_ENOENT		ENOENT		/* No such file or directory */
@@ -166,7 +169,7 @@ extern "C" {
 //#define	FI_ENOMEDIUM		ENOMEDIUM	/* No medium found */
 //#define	FI_EMEDIUMTYPE		EMEDIUMTYPE	/* Wrong medium type */
 #define	FI_ECANCELED		ECANCELED	/* Operation Canceled */
-#define	FI_ENOKEY		ENOKEY		/* Required key not available */
+
 //#define	FI_EKEYEXPIRED		EKEYEXPIRED	/* Key has expired */
 //#define	FI_EKEYREVOKED		EKEYREVOKED	/* Key has been revoked */
 #define	FI_EKEYREJECTED		EKEYREJECTED	/* Key was rejected by service */
@@ -183,6 +186,9 @@ extern "C" {
 #define FI_ENOEQ		261		/* Missing or unavailable event queue */
 #define FI_EDOMAIN		262		/* Invalid resource domain */
 #define FI_ENOCQ		263		/* Missing or unavailable completion queue */
+#define FI_ECRC			264		/* CRC error */
+#define FI_ETRUNC		265		/* Truncation error */
+#define FI_ENOKEY		266		/* Required key not available */
 
 const char *fi_strerror(int errnum);
 

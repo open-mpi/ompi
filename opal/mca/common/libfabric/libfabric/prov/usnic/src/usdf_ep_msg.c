@@ -575,12 +575,13 @@ usdf_ep_msg_close(fid_t fid)
 
 static struct fi_ops_ep usdf_base_msg_ops = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = usdf_ep_msg_enable,
 	.cancel = usdf_ep_msg_cancel,
 	.getopt = usdf_ep_msg_getopt,
 	.setopt = usdf_ep_msg_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_cm_msg_ops = {
@@ -592,8 +593,6 @@ static struct fi_ops_cm usdf_cm_msg_ops = {
 	.accept = usdf_cm_msg_accept,
 	.reject = fi_no_reject,
 	.shutdown = usdf_cm_msg_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
 };
 
 static struct fi_ops_msg usdf_msg_ops = {
@@ -609,11 +608,31 @@ static struct fi_ops_msg usdf_msg_ops = {
 	.injectdata = fi_no_msg_injectdata,
 };
 
+static int usdf_ep_msg_control(struct fid *fid, int command, void *arg)
+{
+	struct fid_ep *ep;
+
+	switch (fid->fclass) {
+	case FI_CLASS_EP:
+		ep = container_of(fid, struct fid_ep, fid);
+		switch (command) {
+		case FI_ENABLE:
+			return usdf_ep_msg_enable(ep);
+			break;
+		default:
+			return -FI_ENOSYS;
+		}
+		break;
+	default:
+		return -FI_ENOSYS;
+	}
+}
+
 static struct fi_ops usdf_ep_msg_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_ep_msg_close,
 	.bind = usdf_ep_msg_bind,
-	.control = fi_no_control,
+	.control = usdf_ep_msg_control,
 	.ops_open = fi_no_ops_open
 };
 
@@ -696,6 +715,9 @@ usdf_ep_msg_open(struct fid_domain *domain, struct fi_info *info,
 			tx->tx_attr = *info->tx_attr;
 		} else {
 			ret = usdf_msg_fill_tx_attr(&tx->tx_attr);
+			if (ret != 0) {
+				goto fail;
+			}
 		}
 		TAILQ_INIT(&tx->t.msg.tx_free_wqe);
 		TAILQ_INIT(&tx->t.msg.tx_ep_ready);

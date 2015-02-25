@@ -38,7 +38,7 @@ static int psmx_cm_getname(fid_t fid, void *addr, size_t *addrlen)
 
 	ep = container_of(fid, struct psmx_fid_ep, ep.fid);
 	if (!ep->domain)
-		return -EBADF;
+		return -FI_EBADF;
 
 	if (*addrlen < sizeof(psm_epid_t)) {
 		*addrlen = sizeof(psm_epid_t);
@@ -60,7 +60,5 @@ struct fi_ops_cm psmx_cm_ops = {
 	.accept = fi_no_accept,
 	.reject = fi_no_reject,
 	.shutdown = fi_no_shutdown,
-	.join = fi_no_join,
-	.leave = fi_no_leave,
 };
 

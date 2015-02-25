@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +30,6 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "opal/class/ompi_free_list.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/mpool.h" 
@@ -41,7 +43,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_template_component_t {
-    mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */ 
+    mca_btl_base_component_3_0_0_t          super;  /**< base BTL component */
     
     uint32_t                                template_num_btls;
     /**< number of hcas available to the TEMPLATE component */
@@ -81,9 +83,9 @@ struct mca_btl_template_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
 
     /* free list of fragment descriptors */
-    ompi_free_list_t template_frag_eager;
-    ompi_free_list_t template_frag_max;
-    ompi_free_list_t template_frag_user;
+    opal_free_list_t template_frag_eager;
+    opal_free_list_t template_frag_max;
+    opal_free_list_t template_frag_user;
 
     /* lock for accessing module state */
     opal_mutex_t template_lock;
@@ -187,32 +189,114 @@ extern int mca_btl_template_send(
 
 /**
  * Initiate an asynchronous put.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the put operation has been queued with the
+ *                       network. the local_handle can not be deregistered
+ *                       until all outstanding operations on that handle
+ *                       have been completed.
  *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (IN)  Local address to put from (registered)
+ * @param remote_address (IN) Remote address to put to (registered remotely)
+ * @param local_handle (IN)   Registration handle for region containing
+ *                            (local_address, local_address + size)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + size)
+ * @param size (IN)           Number of bytes to put
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The descriptor was successfully queued for a put
+ * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a put
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the put
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
+ *                         alignment restrictions.
  */
-                                                                                                    
-extern int mca_btl_template_put(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
-
+int mca_btl_template_put (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous get.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the get operation has been queued with the
+ *                       network. the local_handle can not be deregistered
+ *                       until all outstanding operations on that handle
+ *                       have been completed.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (IN)  Local address to put from (registered)
+ * @param remote_address (IN) Remote address to put to (registered remotely)
+ * @param local_handle (IN)   Registration handle for region containing
+ *                            (local_address, local_address + size)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + size)
+ * @param size (IN)           Number of bytes to put
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The descriptor was successfully queued for a put
+ * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a put
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the put
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
+ *                         alignment restrictions.
+ */
+int mca_btl_template_get (struct mca_btl_base_module_t *btl,
+    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+/**
+ * @brief Register a memory region for put/get/atomic operations.
  *
  * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
+ * @param endpoint(IN)     BTL addressing information (or NULL for all endpoints)
+ * @param base (IN)        Pointer to start of region
+ * @param size (IN)        Size of region
+ * @param flags (IN)       Flags indicating what operation will be performed. Valid
+ *                         values are MCA_BTL_DES_FLAGS_PUT, MCA_BTL_DES_FLAGS_GET,
+ *                         and MCA_BTL_DES_FLAGS_ATOMIC
+ *
+ * @returns a memory registration handle valid for both local and remote operations
+ * @returns NULL if the region could not be registered
+ *
+ * This function registers the specified region with the hardware for use with
+ * the btl_put, btl_get, btl_atomic_cas, btl_atomic_op, and btl_atomic_fop
+ * functions. Care should be taken to not hold an excessive number of registrations
+ * as they may use limited system/NIC resources.
  */
-                                                                                                    
-extern int mca_btl_template_get(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
+struct mca_btl_base_registration_handle_t *mca_btl_template_register_mem (
+    struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
+    size_t size, uint32_t flags);
+
+/**
+ * @brief Deregister a memory region
+ *
+ * @param btl (IN)         BTL module region was registered with
+ * @param handle (IN)      BTL registration handle to deregister
+ *
+ * This function deregisters the memory region associated with the specified handle. Care
+ * should be taken to not perform any RDMA or atomic operation on this memory region
+ * after it is deregistered. It is erroneous to specify a memory handle associated with
+ * a remote node.
+ */
+int mca_btl_template_deregister_mem (struct mca_btl_base_module_t* btl,
+                                     struct mca_btl_base_registration_handle_t *handle);
 
 /**
  * Register a callback function that is called on receipt
@@ -275,23 +359,12 @@ extern int mca_btl_template_free(
 mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
     uint32_t flags
 );
-
-extern mca_btl_base_descriptor_t* mca_btl_template_prepare_dst( 
-    struct mca_btl_base_module_t* btl, 
-    struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags); 
 
  /**
   * Fault Tolerance Event Notification Function

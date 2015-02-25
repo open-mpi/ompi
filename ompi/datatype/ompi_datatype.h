@@ -200,7 +200,10 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_a
                                                     int const* start_array, int order,
                                                     const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
-ompi_datatype_create_resized( const ompi_datatype_t* oldType, OPAL_PTRDIFF_TYPE lb, OPAL_PTRDIFF_TYPE extent, ompi_datatype_t** newType )
+ompi_datatype_create_resized( const ompi_datatype_t* oldType,
+                              OPAL_PTRDIFF_TYPE lb,
+                              OPAL_PTRDIFF_TYPE extent,
+                              ompi_datatype_t** newType )
 {
     ompi_datatype_t * type;
     ompi_datatype_duplicate( oldType, &type );

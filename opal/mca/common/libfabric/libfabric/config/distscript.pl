@@ -32,6 +32,15 @@ sub subst {
     $copy =~ s/\@VERSION\@/Libfabric v$version/g;
     $copy =~ s/\@DATE\@/$today/g;
 
+    # Note that there appears to be a bug in some versions of Pandoc
+    # that will escape the appearance of @ in generated man pages
+    # (e.g., in the "@VERSION@" that appears in the man page version
+    # field).  So rather than be clever in the regexp's above, do the
+    # simple/clear thing and repeat the same regexp's as above, but
+    # with double-escaped @'s.
+    $copy =~ s/\\\@VERSION\\\@/Libfabric v$version/g;
+    $copy =~ s/\\\@DATE\\\@/$today/g;
+
     if ($copy ne $orig) {
         print "*** VERSION/DATE-ifying $file...\n";
         open(OUT, ">$file") || die "Can't write to $file: $!";

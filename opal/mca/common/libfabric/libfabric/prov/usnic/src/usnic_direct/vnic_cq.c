@@ -75,14 +75,14 @@ void vnic_cq_free(struct vnic_cq *cq)
 
 int vnic_cq_alloc(struct vnic_dev *vdev, struct vnic_cq *cq, unsigned int index,
 #ifdef ENIC_PMD
-	unsigned int socket_id,  
+	unsigned int socket_id,
 #endif
 	unsigned int desc_count, unsigned int desc_size)
 {
 	int err;
 #ifdef ENIC_PMD
 	char res_name[NAME_MAX];
-        static int instance = 0;
+	static int instance;
 #endif
 
 	cq->index = index;
@@ -96,7 +96,7 @@ int vnic_cq_alloc(struct vnic_dev *vdev, struct vnic_cq *cq, unsigned int index,
 
 #ifdef ENIC_PMD
 	snprintf(res_name, sizeof(res_name), "%d-cq-%d", instance++, index);
-	err = vnic_dev_alloc_desc_ring(vdev, &cq->ring, desc_count, desc_size, 
+	err = vnic_dev_alloc_desc_ring(vdev, &cq->ring, desc_count, desc_size,
 		socket_id, res_name);
 #else
 	err = vnic_dev_alloc_desc_ring(vdev, &cq->ring, desc_count, desc_size);

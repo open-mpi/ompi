@@ -40,14 +40,12 @@
 #include "sock.h"
 #include "sock_util.h"
 
-extern const char const sock_dom_name[];
-
 const struct fi_domain_attr sock_domain_attr = {
 	.name = NULL,
 	.threading = FI_THREAD_SAFE,
 	.control_progress = FI_PROGRESS_AUTO,
 	.data_progress = FI_PROGRESS_AUTO,
-	.mr_key_size = 0,
+	.mr_key_size = sizeof(uint16_t),
 	.cq_data_size = sizeof(uint64_t),
 	.ep_cnt = SOCK_EP_MAX_EP_CNT,
 	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
@@ -69,7 +67,10 @@ int sock_verify_domain_attr(struct fi_domain_attr *attr)
 	switch(attr->threading){
 	case FI_THREAD_UNSPEC:
 	case FI_THREAD_SAFE:
-	case FI_THREAD_PROGRESS:
+	case FI_THREAD_FID:
+	case FI_THREAD_DOMAIN:
+	case FI_THREAD_COMPLETION:
+	case FI_THREAD_ENDPOINT:
 		break;
 	default:
 		SOCK_LOG_INFO("Invalid threading model!\n");
@@ -117,6 +118,8 @@ static int sock_dom_close(struct fid *fid)
 {
 	struct sock_domain *dom;
 	void *res;
+	int ret;
+	char c = 0;
 
 	dom = container_of(fid, struct sock_domain, dom_fid.fid);
 	if (atomic_get(&dom->ref)) {
@@ -124,15 +127,20 @@ static int sock_dom_close(struct fid *fid)
 	}
 
 	dom->listening = 0;
+	ret = write(dom->signal_fds[0], &c, 1);
+	if (ret != 1) {
+		SOCK_LOG_ERROR("Failed to signal\n");
+		return -FI_EINVAL;
+	}
+
 	if (pthread_join(dom->listen_thread, &res)) {
 		SOCK_LOG_ERROR("could not join listener thread, errno = %d\n", errno);
 		return -FI_EBUSY;
 	}
 
-	if (dom->u_cmap.size)
-		sock_conn_map_destroy(&dom->u_cmap);
 	if (dom->r_cmap.size)
 		sock_conn_map_destroy(&dom->r_cmap);
+	fastlock_destroy(&dom->r_cmap.lock);
 
 	sock_pe_finalize(dom->pe);
 	fastlock_destroy(&dom->lock);
@@ -177,13 +185,15 @@ static int sock_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	case FI_CLASS_CQ:
 		cq = container_of(bfid, struct sock_cq, cq_fid.fid);
 		assert(mr->domain == cq->domain);
-		mr->cq = cq;
+		if (flags & FI_REMOTE_WRITE)
+			mr->cq = cq;
 		break;
 
 	case FI_CLASS_CNTR:
 		cntr = container_of(bfid, struct sock_cntr, cntr_fid.fid);
 		assert(mr->domain == cntr->domain);
-		mr->cntr = cntr;
+		if (flags & FI_REMOTE_WRITE)
+			mr->cntr = cntr;
 		break;
 
 	default:
@@ -263,7 +273,8 @@ static int sock_regattr(struct fid_domain *domain, const struct fi_mr_attr *attr
 	_mr->access = attr->access;
 	_mr->flags = flags;
 	_mr->offset = (flags & FI_MR_OFFSET) ?
-		      attr->offset : (uintptr_t) attr->mr_iov[0].iov_base;
+		(uintptr_t) attr->mr_iov[0].iov_base + attr->offset : 
+		(uintptr_t) attr->mr_iov[0].iov_base;
 
 	fastlock_acquire(&dom->lock);
 	key = (dom->info.mode & FI_PROV_MR_ATTR) ?
@@ -283,7 +294,7 @@ static int sock_regattr(struct fid_domain *domain, const struct fi_mr_attr *attr
 	if (dom->mr_eq) {
 		eq_entry.fid = &domain->fid;
 		eq_entry.context = attr->context;
-		return sock_eq_report_event(dom->mr_eq, FI_COMPLETE, 
+		return sock_eq_report_event(dom->mr_eq, FI_MR_COMPLETE,
 					    &eq_entry, sizeof(eq_entry), 0);
 	}
 
@@ -357,7 +368,7 @@ int sock_endpoint(struct fid_domain *domain, struct fi_info *info,
 }
 
 int sock_scalable_ep(struct fid_domain *domain, struct fi_info *info,
-		     struct fid_sep **sep, void *context)
+		     struct fid_ep **sep, void *context)
 {
 	switch (info->ep_type) {
 	case FI_EP_RDM:
@@ -386,7 +397,6 @@ static struct fi_ops_domain sock_dom_ops = {
 	.endpoint = sock_endpoint,
 	.scalable_ep = sock_scalable_ep,
 	.cntr_open = sock_cntr_open,
-	.wait_open = sock_wait_open,
 	.poll_open = sock_poll_open,
 	.stx_ctx = sock_stx_ctx,
 	.srx_ctx = sock_srx_ctx,
@@ -402,7 +412,7 @@ static struct fi_ops_mr sock_dom_mr_ops = {
 int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		struct fid_domain **dom, void *context)
 {
-	int ret;
+	int ret, flags;
 	struct sock_domain *sock_domain;
 
 	if(info && info->domain_attr){
@@ -420,13 +430,14 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 
 	if(info && info->src_addr) {
 		if (getnameinfo(info->src_addr, info->src_addrlen, NULL, 0,
-					sock_domain->service, 
-					sizeof(sock_domain->service),
-					NI_NUMERICSERV)) {
+				sock_domain->service, sizeof(sock_domain->service),
+				NI_NUMERICSERV)) {
 			SOCK_LOG_ERROR("could not resolve src_addr\n");
 			goto err;
 		}
 		sock_domain->info = *info;
+		memcpy(&sock_domain->src_addr, info->src_addr, 
+		       sizeof(struct sockaddr_in));
 	} else {
 		SOCK_LOG_ERROR("invalid fi_info\n");
 		goto err;
@@ -450,10 +461,20 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		goto err;
 	}
 
+	sock_domain->ep_count = AF_INET;
 	sock_domain->r_cmap.domain = sock_domain;
-	sock_domain->u_cmap.domain = sock_domain;
+	fastlock_init(&sock_domain->r_cmap.lock);
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_domain->signal_fds) < 0)
+		goto err;
+
+	flags = fcntl(sock_domain->signal_fds[1], F_GETFL, 0);
+	if (fcntl(sock_domain->signal_fds[1], F_SETFL, flags | O_NONBLOCK))
+		SOCK_LOG_ERROR("fcntl failed\n");
 
 	sock_conn_listen(sock_domain);
+
+	while(!(volatile int)sock_domain->listening)
+		pthread_yield();
 
 	*dom = &sock_domain->dom_fid;
 	return 0;

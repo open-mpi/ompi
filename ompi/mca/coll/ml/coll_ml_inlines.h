@@ -5,6 +5,8 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -468,13 +470,12 @@ mca_coll_ml_alloc_op_prog_single_frag_dag(
         size_t offset_into_user_buffer
         )
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_coll_ml_collective_operation_progress_t  *coll_op = NULL;
     ompi_request_t *req;
 
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
-                        item);
+    item = opal_free_list_wait (&(ml_module->coll_ml_collective_descriptors));
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;
     ML_VERBOSE(10, (">>> Allocating coll op %p", coll_op));
@@ -529,12 +530,11 @@ static inline __opal_attribute_always_inline__ mca_coll_ml_collective_operation_
                                         size_t offset_into_user_buffer
                                         )
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_coll_ml_collective_operation_progress_t  *coll_op = NULL;
 
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
-                        item);
+    item = opal_free_list_wait (&(ml_module->coll_ml_collective_descriptors));
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;
 

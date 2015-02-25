@@ -10,9 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -101,9 +101,7 @@
 #if BTL_OPENIB_FAILOVER_ENABLED
 #include "btl_openib_failover.h"
 #endif
-#if OPAL_HAVE_THREADS
 #include "btl_openib_async.h"
-#endif
 #include "connect/base.h"
 #include "btl_openib_ip.h"
 
@@ -206,14 +204,12 @@ static int btl_openib_component_register(void)
  */
 static int btl_openib_component_open(void)
 {
-#if OPAL_HAVE_THREADS
     opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
     opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
 
     /* Construct hash table that stores pointers to SRQs */
     OBJ_CONSTRUCT(lock, opal_mutex_t);
     OBJ_CONSTRUCT(srq_addr_table, opal_hash_table_t);
-#endif
 
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
@@ -241,7 +237,6 @@ static int btl_openib_component_close(void)
 {
     int rc = OPAL_SUCCESS;
 
-#if OPAL_HAVE_THREADS
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
@@ -265,7 +260,6 @@ static int btl_openib_component_close(void)
 
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.lock);
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.srq_addr_table);
-#endif
 
     opal_btl_openib_connect_base_finalize();
     opal_btl_openib_fd_finalize();
@@ -474,7 +468,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
     mca_btl_active_message_callback_t* reg;
-    size_t len = des->des_local->seg_len - sizeof(*ctl_hdr);
+    size_t len = des->des_segments->seg_len - sizeof(*ctl_hdr);
 
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
@@ -525,8 +519,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
 
                 skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size - pad);
 
-                tmp_des.des_local = &tmp_seg;
-                tmp_des.des_local_count = 1;
+                tmp_des.des_segments = &tmp_seg;
+                tmp_des.des_segment_count = 1;
                 tmp_seg.seg_addr.pval = clsc_hdr + 1;
                 tmp_seg.seg_len = clsc_hdr->size;
 
@@ -586,6 +580,10 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
 
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+#endif
+
     if (device->mem_reg_max &&
         device->mem_reg_max < (device->mem_reg_active + size)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -607,6 +605,9 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
                               reg->base, reg->bound, (int) (reg->bound - reg->base + 1), reg->flags, errno));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+
+    openib_reg->btl_handle.lkey = openib_reg->mr->lkey;
+    openib_reg->btl_handle.rkey = openib_reg->mr->rkey;
 
     OPAL_OUTPUT_VERBOSE((30, mca_btl_openib_component.memory_registration_verbose,
                          "openib_reg_mr: base=%p, bound=%p, size=%d, flags=0x%x", reg->base, reg->bound,
@@ -748,7 +749,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         lmc = mca_btl_openib_component.max_lmc;
     }
 
-#if OPAL_HAVE_THREADS
     /* APM support -- only meaningful if async event support is
        enabled.  If async events are not enabled, then there's nothing
        to listen for the APM event to load the new path, so it's not
@@ -771,7 +771,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
         }
     }
-#endif
 
     for(lid = ib_port_attr->lid;
             lid < ib_port_attr->lid + lmc; lid += lmc_step){
@@ -807,7 +806,30 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
 
-            openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
+            if (openib_btl->super.btl_get_limit > openib_btl->ib_port_attr.max_msg_sz) {
+                openib_btl->super.btl_get_limit = openib_btl->ib_port_attr.max_msg_sz;
+            }
+
+            openib_btl->super.btl_get_alignment = 0;
+
+            if (openib_btl->super.btl_put_limit > openib_btl->ib_port_attr.max_msg_sz) {
+                openib_btl->super.btl_put_limit = openib_btl->ib_port_attr.max_msg_sz;
+            }
+
+#if HAVE_DECL_IBV_ATOMIC_HCA
+            if (openib_btl->device->ib_dev_attr.atomic_cap == IBV_ATOMIC_NONE) {
+                openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+                openib_btl->super.btl_atomic_flags = 0;
+                openib_btl->super.btl_atomic_fop = NULL;
+                openib_btl->super.btl_atomic_cswap = NULL;
+            } else if (IBV_ATOMIC_GLOB == openib_btl->device->ib_dev_attr.atomic_cap) {
+                openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
+            }
+#endif
+
+            openib_btl->super.btl_put_alignment = 0;
+
+            openib_btl->super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 
             /* Check bandwidth configured for this device */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
@@ -892,14 +914,12 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->xrc_fd = -1;
 #endif
     device->qps = NULL;
-#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_pipe[0] =
         mca_btl_openib_component.async_pipe[1] = -1;
     mca_btl_openib_component.async_comp_pipe[0] =
         mca_btl_openib_component.async_comp_pipe[1] = -1;
-#endif
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&device->send_free_control, ompi_free_list_t);
+    OBJ_CONSTRUCT(&device->send_free_control, opal_free_list_t);
     device->max_inline_data = 0;
     device->ready_for_use = false;
 }
@@ -908,7 +928,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
 {
     int i;
 
-#if OPAL_HAVE_THREADS
 #if OPAL_ENABLE_PROGRESS_THREADS
     if(device->progress) {
         device->progress = false;
@@ -939,7 +958,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
             goto device_error;
         }
     }
-#endif
 
     if(device->eager_rdma_buffers) {
         int i;
@@ -2082,9 +2100,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
 
         /* If the MCA param was specified, skip all the checks */
-        if ( MCA_BASE_VAR_SOURCE_COMMAND_LINE ||
-                MCA_BASE_VAR_SOURCE_ENV ==
-            mca_btl_openib_component.receive_queues_source) {
+        if (MCA_BASE_VAR_SOURCE_DEFAULT != mca_btl_openib_component.receive_queues_source) {
             goto good;
         }
 
@@ -2102,7 +2118,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 mca_btl_openib_component.receive_queues =
                     strdup(values.receive_queues);
                 mca_btl_openib_component.receive_queues_source =
-                    MCA_BASE_VAR_SOURCE_FILE;
+                    BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
             }
         }
 
@@ -2138,7 +2154,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                from the default, we're ok.  But if the
                component.receive_queues value came from the 1st
                device's INI file, we must error. */
-            else if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
+            else if ((mca_base_var_source_t) BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
                 mca_btl_openib_component.receive_queues_source) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "locally conflicting receive_queues", true,
@@ -2338,7 +2354,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
     if (0 != hwloc_get_cpubind(opal_hwloc_topology, my_cpuset, 0)) {
-        hwloc_bitmap_free(my_cpuset);
         goto out;
     }
     my_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, my_cpuset);
@@ -2519,15 +2534,6 @@ btl_openib_component_init(int *num_btl_modules,
        OS's that support OpenFabrics that provide both FREE and MUNMAP
        support, so the following test is [currently] good enough... */
     value = opal_mem_hooks_support_level();
-#if !OPAL_HAVE_THREADS
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                       "ptmalloc2 with no threads", true,
-                       opal_process_info.nodename);
-        goto no_btls;
-    }
-#endif
 
     /* If we have a memory manager available, and
        opal_leave_pinned==-1, then unless the user explicitly set
@@ -2559,9 +2565,9 @@ btl_openib_component_init(int *num_btl_modules,
         }
     }
 
-    OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, opal_free_list_t);
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     if (NULL == init_data) {
@@ -2576,7 +2582,7 @@ btl_openib_component_init(int *num_btl_modules,
        occur on some 32-bit platforms. Depending on the size of the fragment this
        will waste 2-6 bytes of space per frag. In most cases this shouldn't waste
        any space. */
-    if (OPAL_SUCCESS != ompi_free_list_init_ex_new(
+    if (OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.send_user_free,
                 sizeof(mca_btl_openib_put_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_put_frag_t),
@@ -2584,7 +2590,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -2597,7 +2603,7 @@ btl_openib_component_init(int *num_btl_modules,
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.recv_user_free;
 
-    if(OPAL_SUCCESS != ompi_free_list_init_ex_new(
+    if(OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.recv_user_free,
                 sizeof(mca_btl_openib_get_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_get_frag_t),
@@ -2605,7 +2611,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -2618,13 +2624,13 @@ btl_openib_component_init(int *num_btl_modules,
 
     init_data->list = &mca_btl_openib_component.send_free_coalesced;
 
-    if(OPAL_SUCCESS != ompi_free_list_init_ex(
+    if(OPAL_SUCCESS != opal_free_list_init (
                 &mca_btl_openib_component.send_free_coalesced,
                 length, 8, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
-                mca_btl_openib_component.ib_free_list_num,
+                0, 0, mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
-                NULL, mca_btl_openib_frag_init, init_data)) {
+                NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
 
@@ -2700,9 +2706,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
-#endif
     distance = dev_sorted[0].distance;
     for (found = false, i = 0;
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
@@ -2797,7 +2801,6 @@ btl_openib_component_init(int *num_btl_modules,
     if (OPAL_SUCCESS != setup_qps()) {
         goto no_btls;
     }
-#if OPAL_HAVE_THREADS
     if (mca_btl_openib_component.num_srq_qps > 0 ||
                      mca_btl_openib_component.num_xrc_qps > 0) {
         opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
@@ -2809,7 +2812,6 @@ btl_openib_component_init(int *num_btl_modules,
             goto no_btls;
         }
     }
-#endif
 
     /* For XRC:
      * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
@@ -3003,17 +3005,20 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
     size_t i, len = opal_list_get_size(&ep->pending_get_frags);
     int rc;
 
-    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++)
-    {
+    for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++) {
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         frag = opal_list_remove_first(&(ep->pending_get_frags));
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
+        if (NULL == frag)
             break;
-        rc = mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
-                                &to_base_frag(frag)->base);
-        if(OPAL_ERR_OUT_OF_RESOURCE == rc)
+        rc = mca_btl_openib_get_internal ((mca_btl_base_module_t *)openib_btl, ep,
+                                          to_get_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc) {
+            OPAL_THREAD_LOCK(&ep->endpoint_lock);
+            opal_list_prepend (&ep->pending_get_frags, frag);
+            OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
             break;
+        }
     }
 
     len = opal_list_get_size(&ep->pending_put_frags);
@@ -3021,12 +3026,16 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         frag = opal_list_remove_first(&(ep->pending_put_frags));
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(NULL == frag)
+        if (NULL == frag)
             break;
-        rc = mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
-                                &to_base_frag(frag)->base);
-        if(OPAL_ERR_OUT_OF_RESOURCE == rc)
+        rc = mca_btl_openib_put_internal ((mca_btl_base_module_t*)openib_btl, ep,
+                                          to_put_frag(frag));
+        if (OPAL_ERR_OUT_OF_RESOURCE == rc) {
+            OPAL_THREAD_LOCK(&ep->endpoint_lock);
+            opal_list_prepend (&ep->pending_put_frags, frag);
+            OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
             break;
+        }
     }
 }
 
@@ -3047,7 +3056,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     /* advance the segment address past the header and subtract from the
      * length.*/
-    des->des_local->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
+    des->des_segments->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
 
     if(OPAL_LIKELY(!(is_credit_msg = is_credit_message(frag)))) {
         /* call registered callback */
@@ -3082,7 +3091,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
     } else {
         mca_btl_openib_rdma_credits_header_t *chdr =
-            (mca_btl_openib_rdma_credits_header_t *) des->des_local->seg_addr.pval;
+            (mca_btl_openib_rdma_credits_header_t *) des->des_segments->seg_addr.pval;
         if(ep->nbo) {
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(*chdr);
         }
@@ -3388,11 +3397,27 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     /* Handle work completions */
     switch(wc->opcode) {
         case IBV_WC_RDMA_READ:
-            OPAL_OUTPUT((-1, "Got WC: RDMA_READ"));
-            OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
-            /* fall through */
+        case IBV_WC_COMP_SWAP:
+        case IBV_WC_FETCH_ADD:
+            OPAL_OUTPUT((-1, "Got WC: RDMA_READ or RDMA_WRITE"));
 
+            OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
+
+            mca_btl_openib_get_frag_t *get_frag = to_get_frag(des);
+
+            get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
+                               get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
+                               OPAL_SUCCESS);
         case IBV_WC_RDMA_WRITE:
+            if (MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
+                mca_btl_openib_put_frag_t *put_frag = to_put_frag(des);
+
+                put_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
+                                   put_frag->cb.local_handle, put_frag->cb.context, put_frag->cb.data,
+                                   OPAL_SUCCESS);
+                put_frag->cb.func = NULL;
+            }
+            /* fall through */
         case IBV_WC_SEND:
             OPAL_OUTPUT((-1, "Got WC: RDMA_WRITE or SEND"));
             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
@@ -3421,7 +3446,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             /* Process a completed send/put/get */
             btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-                des->des_cbfunc(&openib_btl->super, endpoint, des,OPAL_SUCCESS);
+                des->des_cbfunc(&openib_btl->super, endpoint, des, OPAL_SUCCESS);
             }
             if( btl_ownership ) {
                 mca_btl_openib_free(&openib_btl->super, des);
@@ -3715,12 +3740,10 @@ static int btl_openib_component_progress(void)
     int i;
     int count = 0;
 
-#if OPAL_HAVE_THREADS
     if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
             mca_btl_openib_component.error_counter)) {
         goto error;
     }
-#endif
 
     for(i = 0; i < mca_btl_openib_component.devices_count; i++) {
         mca_btl_openib_device_t *device =
@@ -3751,7 +3774,6 @@ static int btl_openib_component_progress(void)
 
     return count;
 
-#if OPAL_HAVE_THREADS
 error:
     /* Set the fatal counter to zero */
     mca_btl_openib_component.error_counter = 0;
@@ -3772,7 +3794,6 @@ error:
         }
     }
     return count;
-#endif
 }
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
@@ -3797,8 +3818,8 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
     }
 
     for(i = 0; i < num_post; i++) {
-        ompi_free_list_item_t* item;
-        OMPI_FREE_LIST_WAIT_MT(&openib_btl->device->qps[qp].recv_free, item);
+        opal_free_list_item_t* item;
+        item = opal_free_list_wait (&openib_btl->device->qps[qp].recv_free);
         to_base_frag(item)->base.order = qp;
         to_com_frag(item)->endpoint = NULL;
         if(NULL == wr)

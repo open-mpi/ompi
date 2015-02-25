@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -271,7 +273,8 @@ int opal_value_unload(opal_value_t *kv,
     if (type != kv->type) {
         return OPAL_ERR_TYPE_MISMATCH;
     }
-    if (NULL == data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type) {
+    if (NULL == data ||
+        (NULL == *data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type)) {
         OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return OPAL_ERR_BAD_PARAM;
     }

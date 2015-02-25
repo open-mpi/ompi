@@ -333,6 +333,8 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
         CLOSE_THE_SOCKET(peer->sd);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    memset(msg, 0, hdr.nbytes);
+    
     if (!usock_peer_recv_blocking(peer, sd, msg, hdr.nbytes)) {
         /* unable to complete the recv */
         opal_output_verbose(2, pmix_server_output,
@@ -364,7 +366,7 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
 
     /* check security token */
     creds.credential = (char*)(msg + strlen(version) + 1);
-    creds.size = hdr.nbytes - strlen(version) - 1;
+    creds.size = strlen(creds.credential);
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
         ORTE_ERROR_LOG(rc);
     }

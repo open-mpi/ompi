@@ -4,7 +4,9 @@
  * Copyright (c) 2012      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -465,21 +467,21 @@ int opal_tree_serialize(opal_tree_item_t *start_item, opal_buffer_t *buffer)
 static int deserialize_add_tree_item(opal_buffer_t *data, 
                                      opal_tree_item_t *parent_item,
                                      opal_tree_item_deserialize_fn_t deserialize,
-                                     char *curr_delim,
+                                     char **curr_delim,
                                      int depth)
 {
     int idx = 1, rc;
     opal_tree_item_t *new_item = NULL;
     int level = 0; /* 0 - one up 1 - curr, 2 - one down */
 
-    if (!curr_delim) {
+    if (!*curr_delim) {
         if (OPAL_SUCCESS !=
-            (rc = opal_dss.unpack(data, &curr_delim, &idx, OPAL_STRING))) {
+            (rc = opal_dss.unpack(data, curr_delim, &idx, OPAL_STRING))) {
             return(rc);
         }
     }
-    while(curr_delim[0] != end_stream[0]) {
-        if (curr_delim[0] == start_lvl[0]) {
+    while(*curr_delim[0] != end_stream[0]) {
+        if (*curr_delim[0] == start_lvl[0]) {
             level++;
         } else {
             level--;
@@ -505,7 +507,7 @@ static int deserialize_add_tree_item(opal_buffer_t *data,
             break;
         }
         if (OPAL_SUCCESS !=
-            (rc = opal_dss.unpack(data, &curr_delim, &idx, OPAL_STRING))) {
+            (rc = opal_dss.unpack(data, curr_delim, &idx, OPAL_STRING))) {
             return(rc);
         }
     }
@@ -518,10 +520,11 @@ static int deserialize_add_tree_item(opal_buffer_t *data,
 int opal_tree_deserialize(opal_buffer_t *serialized_data, 
                           opal_tree_item_t *start_item)
 {
+    char * null = NULL;
     deserialize_add_tree_item(serialized_data, 
                               start_item,
                               start_item->opal_tree_container->deserialize,
-                              NULL,
+                              &null,
                               1);
     return OPAL_SUCCESS;
 }
