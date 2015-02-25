@@ -121,6 +121,7 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
     }
     /* --END ERROR HANDLING-- */
 
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
     /* posted. defered completion */
     if (ret == 0) { 
 	if (ADIOI_PVFS2_greq_class == 0) {
@@ -132,6 +133,15 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 	MPIX_Grequest_class_allocate(ADIOI_PVFS2_greq_class, aio_req, request);
 	memcpy(&(aio_req->req), request, sizeof(*request));
     }
+#else
+    /* if generalized request extensions not available, we will have to process
+     * this operation right here */
+    int error;
+    ret = PVFS_sys_wait(aio_req->op_id, "ADIOI_PVFS2_AIO_Contig", &error);
+    if (ret == 0) {
+	MPIO_Completed_request_create(&fd, len, error_code, request);
+    }
+#endif
 
     /* immediate completion */
     if (ret == 1) {
