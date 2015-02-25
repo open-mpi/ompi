@@ -138,13 +138,13 @@ OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_rdma_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_eager_frag_t);
 
-void mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
+int mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
 
 static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
                                            opal_free_list_t *list,
                                            mca_btl_ugni_base_frag_t **frag)
 {
-    *frag = (mca_btl_ugni_base_frag_t *) opal_free_list_get (*frag);
+    *frag = (mca_btl_ugni_base_frag_t *) opal_free_list_get (list);
     if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
