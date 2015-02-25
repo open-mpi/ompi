@@ -280,6 +280,7 @@ int mca_oob_ud_qp_data_aquire (struct mca_oob_ud_port_t *port, mca_oob_ud_qp_t *
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
                                  "%s oob:ud:qp_data_aquire error allocating new data qp",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
             break;
         }
 
