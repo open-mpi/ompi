@@ -36,6 +36,8 @@ const char *ibv_get_sysfs_path(void);
 
 #include "ompi/constants.h"
 
+int opal_verbs_want_fork_support;
+
 #include "common_verbs.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/util/show_help.h"
@@ -72,6 +74,16 @@ int opal_common_verbs_fork_test(void)
 
     /* Make sure that ibv_fork_init is called before the calls to other memory
      * which will be called after this function */
+    opal_verbs_want_fork_support = 1;
+    ret = mca_base_var_register("opal", "opal", NULL, "verbs_want_fork_support"
+                                "Whether fork support is desired or not "
+                                "(negative = try to enable fork support, but continue even "
+                    "if it is not available, 0 = do not enable fork support, "
+                                "positive = try to enable fork support and fail if it is not available)",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                &opal_verbs_want_fork_support);
+
 #ifdef HAVE_IBV_FORK_INIT
     if (0 != opal_verbs_want_fork_support) {
         /* Check if fork support is requested by the user */
