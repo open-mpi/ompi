@@ -161,6 +161,7 @@ typedef int (*opal_shmem_base_module_finalize_fn_t)(void);
  * structure for shmem modules
  */
 struct opal_shmem_base_module_2_0_0_t {
+    mca_base_module_t                           base;
     opal_shmem_base_module_init_fn_t            module_init;
     opal_shmem_base_module_segment_create_fn_t  segment_create;
     opal_shmem_base_ds_copy_fn_t                ds_copy;
