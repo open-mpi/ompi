@@ -39,6 +39,7 @@ OPAL_DECLSPEC void opal_ibv_free_device_list(struct ibv_device **ib_devs);
  * common_verbs_mca.c
  */
 extern bool opal_common_verbs_warn_nonexistent_if;
+extern int opal_verbs_want_fork_support;
 OPAL_DECLSPEC void opal_common_verbs_mca_register(mca_base_component_t *component);
 
 /*
