@@ -252,7 +252,7 @@ mca_btl_scif_setup_mpools (mca_btl_scif_module_t *scif_module)
                               mca_btl_scif_component.scif_free_list_num,
                               mca_btl_scif_component.scif_free_list_max,
                               mca_btl_scif_component.scif_free_list_inc,
-                              NULL, 0, NULL, NULL);
+                              NULL, 0, NULL, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating eager receive fragment free list"));
         return rc;
