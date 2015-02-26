@@ -55,6 +55,15 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     mca_base_module_t *module = NULL;
     int priority = 0, best_priority = INT32_MIN;
 
+    /* If we've already done this query, then just return the
+       results */
+    if (opal_shmem_base_selected) {
+        *best_component = &(opal_shmem_base_component->base_version);
+        *best_module = &(opal_shmem_base_module->base);
+
+        return OPAL_SUCCESS;
+    }
+
     *best_module = NULL;
     *best_component = NULL;
 
@@ -137,6 +146,11 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     (void) mca_base_framework_components_close (&opal_shmem_base_framework,
                                                 (mca_base_component_t *)(*best_component));
 
+    /* save the winner */
+    opal_shmem_base_component = (opal_shmem_base_component_t*) *best_component;
+    opal_shmem_base_module = (opal_shmem_base_module_t*) *best_module;
+    opal_shmem_base_selected = true;
+
     return OPAL_SUCCESS;
 }
 
@@ -189,11 +203,6 @@ opal_shmem_base_select(void)
          */
         return OPAL_ERROR;
     }
-
-    /* save the winner */
-    opal_shmem_base_component = best_component;
-    opal_shmem_base_module    = best_module;
-    opal_shmem_base_selected  = true;
 
     /* initialize the winner */
     if (NULL != opal_shmem_base_module) {
