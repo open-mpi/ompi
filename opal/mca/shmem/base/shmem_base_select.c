@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -36,8 +36,8 @@
  * globals
  */
 bool opal_shmem_base_selected = false;
-const opal_shmem_base_component_2_0_0_t *opal_shmem_base_component = NULL;
-const opal_shmem_base_module_2_0_0_t *opal_shmem_base_module = NULL;
+opal_shmem_base_component_t *opal_shmem_base_component = NULL;
+opal_shmem_base_module_t *opal_shmem_base_module = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 
