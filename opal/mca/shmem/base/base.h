@@ -124,14 +124,12 @@ OPAL_DECLSPEC extern bool opal_shmem_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_shmem_base_component_2_0_0_t
-*opal_shmem_base_component;
+OPAL_DECLSPEC extern opal_shmem_base_component_t *opal_shmem_base_component;
 
 /**
  * Global module struct for the selected module
  */
-OPAL_DECLSPEC extern const opal_shmem_base_module_2_0_0_t
-*opal_shmem_base_module;
+OPAL_DECLSPEC extern opal_shmem_base_module_t *opal_shmem_base_module;
 
 /**
  * Runtime hint
