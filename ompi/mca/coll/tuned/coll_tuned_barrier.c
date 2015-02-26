@@ -78,7 +78,10 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
 
     err = ompi_request_wait_all( 2, reqs, statuses );
     if( MPI_ERR_IN_STATUS == err ) {
-        /* At least we know the error was detected during the wait_all */
+        /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
+         * code that we can propagate up the stack. Instead, look for the real
+         * error code from the MPI_ERROR in the status.
+         */
         int err_index = 1;
         if( MPI_SUCCESS == statuses[0].MPI_ERROR ) {
             err_index = 0;
@@ -87,7 +90,7 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
         OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
                                               " stage of ompi_coll_tuned_sendrecv_zero\n",
                       __FILE__, line, err, (0 == err_index ? "receive" : "send")));
-        return MPI_ERR_IN_STATUS;
+        return err;
     }
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
