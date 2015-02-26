@@ -3,10 +3,10 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -129,40 +129,40 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_scatter    = mca_coll_basic_scatter_inter;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_inter;
     } else if (ompi_comm_size(comm) <= mca_coll_basic_crossover) {
-        basic_module->super.coll_allgather  = mca_coll_basic_allgather_intra;
-        basic_module->super.coll_allgatherv = mca_coll_basic_allgatherv_intra;
+        basic_module->super.coll_allgather  = ompi_coll_base_allgather_intra_basic_linear;
+        basic_module->super.coll_allgatherv = ompi_coll_base_allgatherv_intra_basic_default;
         basic_module->super.coll_allreduce  = mca_coll_basic_allreduce_intra;
-        basic_module->super.coll_alltoall   = mca_coll_basic_alltoall_intra;
-        basic_module->super.coll_alltoallv  = mca_coll_basic_alltoallv_intra;
+        basic_module->super.coll_alltoall   = ompi_coll_base_alltoall_intra_basic_linear;
+        basic_module->super.coll_alltoallv  = ompi_coll_base_alltoallv_intra_basic_linear;
         basic_module->super.coll_alltoallw  = mca_coll_basic_alltoallw_intra;
-        basic_module->super.coll_barrier    = mca_coll_basic_barrier_intra_lin;
-        basic_module->super.coll_bcast      = mca_coll_basic_bcast_lin_intra;
+        basic_module->super.coll_barrier    = ompi_coll_base_barrier_intra_basic_linear;
+        basic_module->super.coll_bcast      = ompi_coll_base_bcast_intra_basic_linear;
         basic_module->super.coll_exscan     = mca_coll_basic_exscan_intra;
-        basic_module->super.coll_gather     = mca_coll_basic_gather_intra;
+        basic_module->super.coll_gather     = ompi_coll_base_gather_intra_basic_linear;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
-        basic_module->super.coll_reduce     = mca_coll_basic_reduce_lin_intra;
+        basic_module->super.coll_reduce     = ompi_coll_base_reduce_intra_basic_linear;
         basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
         basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
-        basic_module->super.coll_scatter    = mca_coll_basic_scatter_intra;
+        basic_module->super.coll_scatter    = ompi_coll_base_scatter_intra_basic_linear;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_intra;
     } else {
-        basic_module->super.coll_allgather  = mca_coll_basic_allgather_intra;
-        basic_module->super.coll_allgatherv = mca_coll_basic_allgatherv_intra;
+        basic_module->super.coll_allgather  = ompi_coll_base_allgather_intra_basic_linear;
+        basic_module->super.coll_allgatherv = ompi_coll_base_allgatherv_intra_basic_default;
         basic_module->super.coll_allreduce  = mca_coll_basic_allreduce_intra;
-        basic_module->super.coll_alltoall   = mca_coll_basic_alltoall_intra;
-        basic_module->super.coll_alltoallv  = mca_coll_basic_alltoallv_intra;
+        basic_module->super.coll_alltoall   = ompi_coll_base_alltoall_intra_basic_linear;
+        basic_module->super.coll_alltoallv  = ompi_coll_base_alltoallv_intra_basic_linear;
         basic_module->super.coll_alltoallw  = mca_coll_basic_alltoallw_intra;
         basic_module->super.coll_barrier    = mca_coll_basic_barrier_intra_log;
         basic_module->super.coll_bcast      = mca_coll_basic_bcast_log_intra;
         basic_module->super.coll_exscan     = mca_coll_basic_exscan_intra;
-        basic_module->super.coll_gather     = mca_coll_basic_gather_intra;
+        basic_module->super.coll_gather     = ompi_coll_base_gather_intra_basic_linear;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
         basic_module->super.coll_reduce     = mca_coll_basic_reduce_log_intra;
         basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
         basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
-        basic_module->super.coll_scatter    = mca_coll_basic_scatter_intra;
+        basic_module->super.coll_scatter    = ompi_coll_base_scatter_intra_basic_linear;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_intra;
     }
 

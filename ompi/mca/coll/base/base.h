@@ -87,7 +87,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * coll component needs to be selected for it.  It should be invoked
  * near the end of the communicator creation process such that
  * almost everything else is functional on the communicator (e.g.,
- * point-to-point communication).  
+ * point-to-point communication).
  *
  * Note that new communicators may be created as a result of
  * invoking this function.  Specifically: this function is called in

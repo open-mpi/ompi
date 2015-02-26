@@ -2,18 +2,18 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,7 +25,7 @@
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
-#include "coll_tuned_topo.h"
+#include "ompi/mca/coll/base/coll_base_topo.h"
 
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "coll_tuned_util.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 
 ompi_coll_alg_rule_t* ompi_coll_tuned_mk_alg_rules (int n_alg)
@@ -43,7 +43,7 @@ ompi_coll_alg_rule_t* ompi_coll_tuned_mk_alg_rules (int n_alg)
 
     alg_rules = (ompi_coll_alg_rule_t *) calloc (n_alg, sizeof (ompi_coll_alg_rule_t));
     if (!alg_rules) return (alg_rules);
-   
+
     /* set all we can at this point */
     for (i=0;i<n_alg;i++) {
         alg_rules[i].alg_rule_id = i;
@@ -52,7 +52,7 @@ ompi_coll_alg_rule_t* ompi_coll_tuned_mk_alg_rules (int n_alg)
 }
 
 
-ompi_coll_com_rule_t* ompi_coll_tuned_mk_com_rules (int n_com_rules, int alg_rule_id) 
+ompi_coll_com_rule_t* ompi_coll_tuned_mk_com_rules (int n_com_rules, int alg_rule_id)
 {
     int i;
     ompi_coll_com_rule_t * com_rules;
@@ -95,9 +95,9 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rul
 
 
 /*
- * Debug / IO routines 
+ * Debug / IO routines
  *
- */ 
+ */
 int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
 {
     if (!msg_p) {
@@ -105,11 +105,11 @@ int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
         return (-1);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id, 
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id,
                  msg_p->com_rule_id, msg_p->mpi_comsize, msg_p->msg_rule_id));
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"msg_size %10lu -> algorithm %2d\ttopo in/out %2d\tsegsize %5ld\tmax_requests %4d\n", 
-                 msg_p->msg_size, msg_p->result_alg, msg_p->result_topo_faninout, msg_p->result_segsize, 
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"msg_size %10lu -> algorithm %2d\ttopo in/out %2d\tsegsize %5ld\tmax_requests %4d\n",
+                 msg_p->msg_size, msg_p->result_alg, msg_p->result_topo_faninout, msg_p->result_segsize,
                  msg_p->result_max_requests));
 
     return (0);
@@ -268,7 +268,7 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
     return (rc);
 }
 
-/* 
+/*
  * query functions
  * i.e. the functions that get me the algorithm, topo fanin/out and segment size fast
  * and also get the rules that are needed by each communicator as needed
@@ -277,7 +277,7 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
 
 /*
  * This function is used to get the pointer to the nearest (less than or equal)
- * com rule for this MPI collective (alg_id) for a given 
+ * com rule for this MPI collective (alg_id) for a given
  * MPI communicator size. The complete rule base must be presented.
  *
  * If no rule exits returns NULL, else the com rule ptr
@@ -302,7 +302,7 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     }
 
     /* ok have some com sizes, now to find the one closest to my mpi_comsize */
-   
+
     /* make a copy of the first com rule */
     best_com_p = com_p = alg_p->com_rules;
     i = best = 0;
@@ -324,13 +324,13 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     return (best_com_p);
 }
 
-/* 
- * This function takes a com_rule ptr (from the communicators coll tuned data structure) 
+/*
+ * This function takes a com_rule ptr (from the communicators coll tuned data structure)
  * (Which is chosen for a particular MPI collective)
  * and a (total_)msg_size and it returns (0) and a algorithm to use and a recommended topo faninout and segment size
  * all based on the user supplied rules
  *
- * Just like the above functions it uses a less than or equal msg size 
+ * Just like the above functions it uses a less than or equal msg size
  * (hense config file must have a default defined for '0' if we reach this point)
  * else if no rules match we return '0' + '0,0' or used fixed decision table with no topo chand and no segmentation
  * of users data.. shame.
@@ -339,7 +339,7 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
  *
  */
 
-int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize, int *result_topo_faninout, 
+int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize, int *result_topo_faninout,
                                               int* result_segsize, int* max_requests)
 {
     ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
@@ -352,7 +352,7 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     }
 
     /* ok have some msg sizes, now to find the one closest to my mpi_msgsize */
-   
+
     /* make a copy of the first msg rule */
     best_msg_p = msg_p = base_com_rule->msg_rules;
     i = best = 0;
@@ -387,6 +387,5 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     *max_requests = best_msg_p->result_max_requests;
 
     /* return the algorithm/method to use */
-    return (best_msg_p->result_alg);  
+    return (best_msg_p->result_alg);
 }
-

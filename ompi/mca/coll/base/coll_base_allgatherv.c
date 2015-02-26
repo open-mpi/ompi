@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -30,19 +30,12 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "coll_tuned.h"
-#include "coll_tuned_topo.h"
-#include "coll_tuned_util.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "coll_base_topo.h"
+#include "coll_base_util.h"
 
-/* allgatherv algorithm variables */
-static int coll_tuned_allgatherv_algorithm_count = 5;
-static int coll_tuned_allgatherv_forced_algorithm = 0;
-static int coll_tuned_allgatherv_segment_size = 0;
-static int coll_tuned_allgatherv_tree_fanout;
-static int coll_tuned_allgatherv_chain_fanout;
-
-/* valid values for coll_tuned_allgatherv_forced_algorithm */
-static mca_base_var_enum_value_t allgatherv_algorithms[] = {
+/* valid values for coll_base_allgatherv_forced_algorithm */
+mca_base_var_enum_value_t coll_base_allgatherv_algorithms[] = {
     {0, "ignore"},
     {1, "default"},
     {2, "bruck"},
@@ -53,7 +46,7 @@ static mca_base_var_enum_value_t allgatherv_algorithms[] = {
 };
 
 /*
- * ompi_coll_tuned_allgatherv_intra_bruck
+ * ompi_coll_base_allgatherv_intra_bruck
  *
  * Function:     allgather using O(log(N)) steps.
  * Accepts:      Same arguments as MPI_Allgather
@@ -64,7 +57,7 @@ static mca_base_var_enum_value_t allgatherv_algorithms[] = {
  *                in Multiport Message-Passing Systems"
  * Note:         Unlike in case of allgather implementation, we relay on
  *               indexed datatype to select buffers appropriately.
- *               The only additional memory requirement is for creation of 
+ *               The only additional memory requirement is for creation of
  *               temporary datatypes.
  * Example on 7 nodes (memory lay out need not be in-order)
  *   Initial set up:
@@ -86,7 +79,7 @@ static mca_base_var_enum_value_t allgatherv_algorithms[] = {
  *         [ ]    [ ]    [ ]    [ ]    [5]    [5]    [ ]
  *         [ ]    [ ]    [ ]    [ ]    [ ]    [6]    [6]
  *   Step 1: send message to (rank - 2^1), receive message from (rank + 2^1).
- *           message contains all blocks from (rank) .. (rank + 2^2) with 
+ *           message contains all blocks from (rank) .. (rank + 2^2) with
  *           wrap around.
  *    #     0      1      2      3      4      5      6
  *         [0]    [ ]    [ ]    [ ]    [0]    [0]    [0]
@@ -97,7 +90,7 @@ static mca_base_var_enum_value_t allgatherv_algorithms[] = {
  *         [ ]    [ ]    [5]    [5]    [5]    [5]    [ ]
  *         [ ]    [ ]    [ ]    [6]    [6]    [6]    [6]
  *   Step 2: send message to (rank - 2^2), receive message from (rank + 2^2).
- *           message size is "all remaining blocks" 
+ *           message size is "all remaining blocks"
  *    #     0      1      2      3      4      5      6
  *         [0]    [0]    [0]    [0]    [0]    [0]    [0]
  *         [1]    [1]    [1]    [1]    [1]    [1]    [1]
@@ -107,10 +100,10 @@ static mca_base_var_enum_value_t allgatherv_algorithms[] = {
  *         [5]    [5]    [5]    [5]    [5]    [5]    [5]
  *         [6]    [6]    [6]    [6]    [6]    [6]    [6]
  */
-int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_bruck(void *sbuf, int scount,
                                            struct ompi_datatype_t *sdtype,
                                            void *rbuf, int *rcounts,
-                                           int *rdispls, 
+                                           int *rdispls,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -124,9 +117,9 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:allgather_intra_bruck rank %d", rank));
-   
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgather_intra_bruck rank %d", rank));
+
     err = ompi_datatype_get_extent (sdtype, &slb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
@@ -134,27 +127,27 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Initialization step:
-       - if send buffer is not MPI_IN_PLACE, copy send buffer to block rank of 
+       - if send buffer is not MPI_IN_PLACE, copy send buffer to block rank of
        the receive buffer.
     */
     tmprecv = (char*) rbuf + (ptrdiff_t)rdispls[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
-        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype,
                                    tmprecv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
 
     }
-   
+
     /* Communication step:
        At every step i, rank r:
        - doubles the distance
        - sends message with blockcount blocks, (rbuf[rank] .. rbuf[rank + 2^i])
        to rank (r - distance)
-       - receives message of blockcount blocks, 
-       (rbuf[r + distance] ... rbuf[(r+distance) + 2^i]) from 
+       - receives message of blockcount blocks,
+       (rbuf[r + distance] ... rbuf[(r+distance) + 2^i]) from
        rank (r + distance)
-       - blockcount doubles until the last step when only the remaining data is 
+       - blockcount doubles until the last step when only the remaining data is
        exchanged.
     */
     blockcount = 1;
@@ -173,7 +166,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
 
         if (distance <= (size >> 1)) {
             blockcount = distance;
-        } else { 
+        } else {
             blockcount = size - distance;
         }
 
@@ -186,7 +179,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
             new_rcounts[i] = rcounts[tmp_rrank];
             new_rdispls[i] = rdispls[tmp_rrank];
         }
-        err = ompi_datatype_create_indexed(blockcount, new_scounts, new_sdispls, 
+        err = ompi_datatype_create_indexed(blockcount, new_scounts, new_sdispls,
                                            rdtype, &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_create_indexed(blockcount, new_rcounts, new_rdispls,
@@ -198,7 +191,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
         /* Sendreceive */
-        err = ompi_coll_tuned_sendrecv(rbuf, 1, new_sdtype, sendto,
+        err = ompi_coll_base_sendrecv(rbuf, 1, new_sdtype, sendto,
                                        MCA_COLL_BASE_TAG_ALLGATHERV,
                                        rbuf, 1, new_rdtype, recvfrom,
                                        MCA_COLL_BASE_TAG_ALLGATHERV,
@@ -207,7 +200,6 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
 
         ompi_datatype_destroy(&new_sdtype);
         ompi_datatype_destroy(&new_rdtype);
-
     }
 
     free(new_rcounts);
@@ -217,14 +209,14 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
  err_hndl:
     if( NULL != new_rcounts ) free(new_rcounts);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
 
 
 /*
- * ompi_coll_tuned_allgatherv_intra_ring
+ * ompi_coll_base_allgatherv_intra_ring
  *
  * Function:     allgatherv using O(N) steps.
  * Accepts:      Same arguments as MPI_Allgatherv
@@ -236,9 +228,9 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
  *               (r + 1) containing data from rank (r - i), with wrap arounds.
  * Memory requirements:
  *               No additional memory requirements.
- * 
+ *
  */
-int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_ring(void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
                                           void* rbuf, int *rcounts, int *rdisps,
                                           struct ompi_datatype_t *rdtype,
@@ -252,8 +244,8 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:allgatherv_intra_ring rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgatherv_intra_ring rank %d", rank));
 
     err = ompi_datatype_get_extent (sdtype, &slb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -262,24 +254,24 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Initialization step:
-       - if send buffer is not MPI_IN_PLACE, copy send buffer to 
+       - if send buffer is not MPI_IN_PLACE, copy send buffer to
        the appropriate block of receive buffer
     */
     tmprecv = (char*) rbuf + (ptrdiff_t)rdisps[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
-        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype,
                                    tmprecv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
-    } 
-   
+    }
+
     /* Communication step:
        At every step i: 0 .. (P-1), rank r:
        - receives message from [(r - 1 + size) % size] containing data from rank
        [(r - i - 1 + size) % size]
        - sends message to rank [(r + 1) % size] containing data from rank
        [(r - i + size) % size]
-       - sends message which starts at begining of rbuf and has size 
+       - sends message which starts at begining of rbuf and has size
     */
     sendto = (rank + 1) % size;
     recvfrom  = (rank - 1 + size) % size;
@@ -292,47 +284,46 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
         tmpsend = (char*)rbuf + rdisps[senddatafrom] * rext;
 
         /* Sendreceive */
-        err = ompi_coll_tuned_sendrecv(tmpsend, rcounts[senddatafrom], rdtype, 
+        err = ompi_coll_base_sendrecv(tmpsend, rcounts[senddatafrom], rdtype,
                                        sendto, MCA_COLL_BASE_TAG_ALLGATHERV,
-                                       tmprecv, rcounts[recvdatafrom], rdtype, 
+                                       tmprecv, rcounts[recvdatafrom], rdtype,
                                        recvfrom, MCA_COLL_BASE_TAG_ALLGATHERV,
                                        comm, MPI_STATUS_IGNORE, rank);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
     }
 
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
 
 /*
- * ompi_coll_tuned_allgatherv_intra_neighborexchange
+ * ompi_coll_base_allgatherv_intra_neighborexchange
  *
  * Function:     allgatherv using N/2 steps (O(N))
  * Accepts:      Same arguments as MPI_Allgatherv
  * Returns:      MPI_SUCCESS or error code
  *
- * Description:  Neighbor Exchange algorithm for allgather adapted for 
+ * Description:  Neighbor Exchange algorithm for allgather adapted for
  *               allgatherv.
- *               Described by Chen et.al. in 
- *               "Performance Evaluation of Allgather Algorithms on 
+ *               Described by Chen et.al. in
+ *               "Performance Evaluation of Allgather Algorithms on
  *                Terascale Linux Cluster with Fast Ethernet",
- *               Proceedings of the Eighth International Conference on 
+ *               Proceedings of the Eighth International Conference on
  *               High-Performance Computing inn Asia-Pacific Region
  *               (HPCASIA'05), 2005
- * 
+ *
  *               Rank r exchanges message with one of its neighbors and
  *               forwards the data further in the next step.
  *
  *               No additional memory requirements.
- * 
+ *
  * Limitations:  Algorithm works only on even number of processes.
  *               For odd number of processes we switch to ring algorithm.
- * 
+ *
  * Example on 6 nodes:
  *  Initial state
  *    #     0      1      2      3      4      5
@@ -367,8 +358,8 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
  *         [4]    [4]    [4]    [4]    [4]    [4]
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
-int 
-ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
+int
+ompi_coll_base_allgatherv_intra_neighborexchange(void *sbuf, int scount,
                                                   struct ompi_datatype_t *sdtype,
                                                   void* rbuf, int *rcounts, int *rdispls,
                                                   struct ompi_datatype_t *rdtype,
@@ -386,17 +377,17 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
     if (size % 2) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:allgatherv_intra_neighborexchange WARNING: odd size %d, switching to ring algorithm", 
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allgatherv_intra_neighborexchange WARNING: odd size %d, switching to ring algorithm",
                      size));
-        return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype,
-                                                     rbuf, rcounts, 
+        return ompi_coll_base_allgatherv_intra_ring(sbuf, scount, sdtype,
+                                                     rbuf, rcounts,
                                                      rdispls, rdtype,
                                                      comm, module);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:allgatherv_intra_neighborexchange rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgatherv_intra_neighborexchange rank %d", rank));
 
     err = ompi_datatype_get_extent (sdtype, &slb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -405,16 +396,16 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Initialization step:
-       - if send buffer is not MPI_IN_PLACE, copy send buffer to 
+       - if send buffer is not MPI_IN_PLACE, copy send buffer to
        the appropriate block of receive buffer
     */
     tmprecv = (char*) rbuf + (ptrdiff_t)rdispls[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
-        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype,
                                    tmprecv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
-    } 
+    }
 
     /* Determine neighbors, order in which blocks will arrive, etc. */
     even_rank = !(rank % 2);
@@ -436,8 +427,8 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
 
     /* Communication loop:
        - First step is special: exchange a single block with neighbor[0].
-       - Rest of the steps: 
-       update recv_data_from according to offset, and 
+       - Rest of the steps:
+       update recv_data_from according to offset, and
        exchange two blocks with appropriate neighbor.
        the send location becomes previous receve location.
        Note, we need to create indexed datatype to send and receive these
@@ -445,13 +436,13 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     */
     tmprecv = (char*)rbuf + (ptrdiff_t)rdispls[neighbor[0]] * rext;
     tmpsend = (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext;
-    err = ompi_coll_tuned_sendrecv(tmpsend, rcounts[rank], rdtype, 
+    err = ompi_coll_base_sendrecv(tmpsend, rcounts[rank], rdtype,
                                    neighbor[0], MCA_COLL_BASE_TAG_ALLGATHERV,
-                                   tmprecv, rcounts[neighbor[0]], rdtype, 
+                                   tmprecv, rcounts[neighbor[0]], rdtype,
                                    neighbor[0], MCA_COLL_BASE_TAG_ALLGATHERV,
                                    comm, MPI_STATUS_IGNORE, rank);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-   
+
     /* Determine initial sending counts and displacements*/
     if (even_rank) {
         send_data_from = rank;
@@ -461,7 +452,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
 
     for (i = 1; i < (size / 2); i++) {
         const int i_parity = i % 2;
-        recv_data_from[i_parity] = 
+        recv_data_from[i_parity] =
             (recv_data_from[i_parity] + offset_at_step[i_parity] + size) % size;
 
         /* Create new indexed types for sending and receiving.
@@ -473,7 +464,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
         new_scounts[1] = rcounts[(send_data_from + 1)];
         new_sdispls[0] = rdispls[send_data_from];
         new_sdispls[1] = rdispls[(send_data_from + 1)];
-        err = ompi_datatype_create_indexed(2, new_scounts, new_sdispls, rdtype, 
+        err = ompi_datatype_create_indexed(2, new_scounts, new_sdispls, rdtype,
                                            &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_sdtype);
@@ -483,17 +474,17 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
         new_rcounts[1] = rcounts[(recv_data_from[i_parity] + 1)];
         new_rdispls[0] = rdispls[recv_data_from[i_parity]];
         new_rdispls[1] = rdispls[(recv_data_from[i_parity] + 1)];
-        err = ompi_datatype_create_indexed(2, new_rcounts, new_rdispls, rdtype, 
+        err = ompi_datatype_create_indexed(2, new_rcounts, new_rdispls, rdtype,
                                            &new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      
+
         tmprecv = (char*)rbuf;
         tmpsend = (char*)rbuf;
-      
+
         /* Sendreceive */
-        err = ompi_coll_tuned_sendrecv(tmpsend, 1, new_sdtype, neighbor[i_parity],
+        err = ompi_coll_base_sendrecv(tmpsend, 1, new_sdtype, neighbor[i_parity],
                                        MCA_COLL_BASE_TAG_ALLGATHERV,
                                        tmprecv, 1, new_rdtype, neighbor[i_parity],
                                        MCA_COLL_BASE_TAG_ALLGATHERV,
@@ -501,7 +492,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
         send_data_from = recv_data_from[i_parity];
-      
+
         ompi_datatype_destroy(&new_sdtype);
         ompi_datatype_destroy(&new_rdtype);
     }
@@ -509,13 +500,13 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
 
 
-int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_two_procs(void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
                                                void* rbuf, int *rcounts,
                                                int *rdispls,
@@ -529,8 +520,8 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "ompi_coll_tuned_allgatherv_intra_two_procs rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "ompi_coll_base_allgatherv_intra_two_procs rank %d", rank));
 
     err = ompi_datatype_get_extent (sdtype, &lb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -552,7 +543,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
     }
     tmprecv = (char*)rbuf + (ptrdiff_t)rdispls[remote] * rext;
 
-    err = ompi_coll_tuned_sendrecv(tmpsend, scount, sdtype, remote,
+    err = ompi_coll_base_sendrecv(tmpsend, scount, sdtype, remote,
                                    MCA_COLL_BASE_TAG_ALLGATHERV,
                                    tmprecv, rcounts[remote], rdtype, remote,
                                    MCA_COLL_BASE_TAG_ALLGATHERV,
@@ -561,16 +552,16 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 
     /* Place your data in correct location if necessary */
     if (MPI_IN_PLACE != sbuf) {
-        err = ompi_datatype_sndrcv((char*)sbuf, scount, sdtype, 
-                                   (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext, 
-                                   rcounts[rank], rdtype); 
+        err = ompi_datatype_sndrcv((char*)sbuf, scount, sdtype,
+                                   (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext,
+                                   rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     }
 
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
@@ -579,13 +570,13 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 /*
  * Linear functions are copied from the BASIC coll module
  * they do not segment the message and are simple implementations
- * but for some small number of nodes and/or small data sizes they 
- * are just as fast as tuned/tree based segmenting operations 
+ * but for some small number of nodes and/or small data sizes they
+ * are just as fast as base/tree based segmenting operations
  * and as such may be selected by the decision functions
  * These are copied into this module due to the way we select modules
  * in V1. i.e. in V2 we will handle this differently and so will not
  * have to duplicate code.
- * JPG following the examples from other coll_tuned implementations. Dec06.
+ * JPG following the examples from other coll_base implementations. Dec06.
  */
 
 /* copied function (with appropriate renaming) starts here */
@@ -593,19 +584,19 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 /*
  *	allgatherv_intra_basic
  *
- *	Function:	- allgatherv using other MPI collectives: 
+ *	Function:	- allgatherv using other MPI collectives:
  *                        gatherv + bcast (from basic module).
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
-                                               struct ompi_datatype_t *sdtype,
-                                               void *rbuf, int *rcounts,
-                                               int *disps,
-                                               struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm,
-                                               mca_coll_base_module_t *module)
+ompi_coll_base_allgatherv_intra_basic_default(void *sbuf, int scount,
+                                              struct ompi_datatype_t *sdtype,
+                                              void *rbuf, int *rcounts,
+                                              int *disps,
+                                              struct ompi_datatype_t *rdtype,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
 {
     int i, size, rank, err;
     MPI_Aint extent, lb;
@@ -619,8 +610,8 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
      * to process with rank 0 (OMPI convention)
      */
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "ompi_coll_tuned_allgatherv_intra_basic_default rank %d", 
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "ompi_coll_base_allgatherv_intra_basic_default rank %d",
                  rank));
 
     if (MPI_IN_PLACE == sbuf) {
@@ -639,7 +630,6 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
                                     rcounts[rank], send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
                                     comm, comm->c_coll.coll_gatherv_module);
-    
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -648,7 +638,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
      * broadcast the data out to the other processes
      *
      * Need to define a datatype that captures the different vectors
-     * from each process. MPI_TYPE_INDEXED with params 
+     * from each process. MPI_TYPE_INDEXED with params
      *                    size,rcount,displs,rdtype,newtype
      * should do the trick.
      * Use underlying ddt functions to create, and commit the
@@ -660,7 +650,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
     if (MPI_SUCCESS != err) {
         return err;
     }
-    
+
     err = ompi_datatype_commit(&newtype);
     if(MPI_SUCCESS != err) {
         return err;
@@ -675,178 +665,3 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
 }
 
 /* copied function (with appropriate renaming) ends here */
-
-/* The following are used by dynamic and forced rules */
-
-/* publish details of each algorithm and if its forced/fixed/locked in */
-/* as you add methods/algorithms you must update this and the query/map 
-   routines */
-
-/* this routine is called by the component only */
-/* this makes sure that the mca parameters are set to their initial values 
-   and perms */
-/* module does not call this they call the forced_getvalues routine instead */
-
-int 
-ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
-{
-    mca_base_var_enum_t *new_enum;
-
-    ompi_coll_tuned_forced_max_algorithms[ALLGATHERV] = coll_tuned_allgatherv_algorithm_count;
-
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "allgatherv_algorithm_count",
-                                           "Number of allgatherv algorithms available",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &coll_tuned_allgatherv_algorithm_count);
-
-    /* MPI_T: This variable should eventually be bound to a communicator */
-    coll_tuned_allgatherv_forced_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_tuned_allgatherv_algorithms", allgatherv_algorithms, &new_enum);
-    mca_param_indices->algorithm_param_index =
-        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                        "allgatherv_algorithm",
-                                        "Which allallgatherv algorithm is used. Can be locked down to choice of: 0 ignore, 1 default (allgathervv + bcast), 2 bruck, 3 ring, 4 neighbor exchange, 5: two proc only.",
-                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
-                                        OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
-                                        &coll_tuned_allgatherv_forced_algorithm);
-    OBJ_RELEASE(new_enum);
-    if (mca_param_indices->algorithm_param_index < 0) {
-        return mca_param_indices->algorithm_param_index;
-    }
-
-    coll_tuned_allgatherv_segment_size = 0;
-    mca_param_indices->segsize_param_index =
-        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                        "allgatherv_algorithm_segmentsize",
-                                        "Segment size in bytes used by default for allgatherv algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
-                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                        OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
-                                        &coll_tuned_allgatherv_segment_size);
-
-    coll_tuned_allgatherv_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
-    mca_param_indices->tree_fanout_param_index =
-        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                        "allgatherv_algorithm_tree_fanout",
-                                        "Fanout for n-tree used for allgatherv algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
-                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                        OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
-                                        &coll_tuned_allgatherv_tree_fanout);
-
-    coll_tuned_allgatherv_chain_fanout = ompi_coll_tuned_init_chain_fanout; /* get system wide default */
-    mca_param_indices->chain_fanout_param_index = 
-      mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                      "allgatherv_algorithm_chain_fanout",
-                                      "Fanout for chains used for allgatherv algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
-                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                      OPAL_INFO_LVL_5,
-                                      MCA_BASE_VAR_SCOPE_READONLY,
-                                      &coll_tuned_allgatherv_chain_fanout);
-
-    return (MPI_SUCCESS);
-}
-
-int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
-                                               struct ompi_datatype_t *sdtype,
-                                               void *rbuf, int *rcounts, 
-                                               int *rdispls,
-                                               struct ompi_datatype_t *rdtype,
-                                               struct ompi_communicator_t *comm,
-                                               mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:allgatherv_intra_do_forced selected algorithm %d",
-                 data->user_forced[ALLGATHERV].algorithm));
-
-    switch (data->user_forced[ALLGATHERV].algorithm) {
-    case (0):   
-        return ompi_coll_tuned_allgatherv_intra_dec_fixed (sbuf, scount, sdtype, 
-                                                           rbuf, rcounts, rdispls, rdtype, 
-                                                           comm, module);
-    case (1):   
-        return ompi_coll_tuned_allgatherv_intra_basic_default (sbuf, scount, sdtype,
-                                                               rbuf, rcounts, rdispls, rdtype,
-                                                               comm, module);
-    case (2):   
-        return ompi_coll_tuned_allgatherv_intra_bruck (sbuf, scount, sdtype,
-                                                       rbuf, rcounts, rdispls, rdtype, 
-                                                       comm, module);
-    case (3):   
-        return ompi_coll_tuned_allgatherv_intra_ring (sbuf, scount, sdtype, 
-                                                      rbuf, rcounts, rdispls, rdtype, 
-                                                      comm, module);
-    case (4):
-        return ompi_coll_tuned_allgatherv_intra_neighborexchange (sbuf, scount, sdtype, 
-                                                                  rbuf, rcounts, rdispls, rdtype,
-                                                                  comm, module);
-    case (5):
-        return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype, 
-                                                           rbuf, rcounts, rdispls, rdtype, 
-                                                           comm, module);
-    default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:allgatherv_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-                     data->user_forced[ALLGATHERV].algorithm,
-                     ompi_coll_tuned_forced_max_algorithms[ALLGATHERV]));
-        return (MPI_ERR_ARG);
-    } /* switch */
-
-}
-
-
-int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
-                                             struct ompi_datatype_t *sdtype,
-                                             void *rbuf, int *rcounts, 
-                                             int *rdispls, 
-                                             struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm,
-                                             mca_coll_base_module_t *module,
-                                             int algorithm, int faninout, 
-                                             int segsize)
-{
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:allgatherv_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
-                 algorithm, faninout, segsize));
-   
-    switch (algorithm) {
-    case (0):   
-        return ompi_coll_tuned_allgatherv_intra_dec_fixed(sbuf, scount, sdtype, 
-                                                          rbuf, rcounts, rdispls, rdtype, 
-                                                          comm, module);
-    case (1):   
-        return ompi_coll_tuned_allgatherv_intra_basic_default(sbuf, scount, sdtype,
-                                                              rbuf, rcounts, rdispls, rdtype,
-                                                              comm, module);
-    case (2): 
-        return ompi_coll_tuned_allgatherv_intra_bruck(sbuf, scount, sdtype, 
-                                                      rbuf, rcounts, rdispls, rdtype,
-                                                      comm, module);
-    case (3): 
-        return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype, 
-                                                     rbuf, rcounts, rdispls, rdtype,
-                                                     comm, module);
-    case (4): 
-        return ompi_coll_tuned_allgatherv_intra_neighborexchange(sbuf, scount, sdtype, 
-                                                                 rbuf, rcounts, rdispls, rdtype,
-                                                                 comm, module);
-    case (5):
-        return ompi_coll_tuned_allgatherv_intra_two_procs (sbuf, scount, sdtype,
-                                                           rbuf, rcounts, rdispls, rdtype, 
-                                                           comm, module);
-    default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
-                     "coll:tuned:allgatherv_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
-                     algorithm, 
-                     ompi_coll_tuned_forced_max_algorithms[ALLGATHERV]));
-        return (MPI_ERR_ARG);
-    } /* switch */
-}

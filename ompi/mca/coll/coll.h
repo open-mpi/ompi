@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -470,6 +470,9 @@ struct mca_coll_base_module_2_1_0_t {
         be used for the given communicator */
     mca_coll_base_module_disable_1_1_0_fn_t coll_module_disable;
 
+    /** Data storage for all the algorithms defined in the base. Should
+        not be used by other modules */
+    struct mca_coll_base_comm_t* base_data;
 };
 typedef struct mca_coll_base_module_2_1_0_t mca_coll_base_module_2_1_0_t;
 
