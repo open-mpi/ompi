@@ -46,3 +46,9 @@ specified:
 These entities will be ignored.  You can disable this warning by
 setting the ompi_common_verbs_warn_nonexistent_if MCA parameter to 0.
 #
+[ibv_fork_init fail]
+Fork support was requested but the library call ibv_fork_init() failed.
+
+  Hostname:    %s
+  Error (%d):  %s
+#

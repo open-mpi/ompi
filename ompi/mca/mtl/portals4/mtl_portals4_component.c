@@ -204,6 +204,7 @@ ompi_mtl_portals4_component_open(void)
     opal_free_list_init(&ompi_mtl_portals4.fl_message,
                         sizeof(ompi_mtl_portals4_message_t) + 
                         ompi_mtl_portals4.eager_limit,
+                        opal_cache_line_size,
                         OBJ_CLASS(ompi_mtl_portals4_message_t),
                         0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 

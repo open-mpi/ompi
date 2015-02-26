@@ -116,6 +116,7 @@ portals4_open(void)
     OBJ_CONSTRUCT(&mca_coll_portals4_component.requests, opal_free_list_t);
     ret = opal_free_list_init (&mca_coll_portals4_component.requests,
                                sizeof(ompi_coll_portals4_request_t),
+                               opal_cache_line_size,
                                OBJ_CLASS(ompi_coll_portals4_request_t),
                                0, 0, 8, 0, 8, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {

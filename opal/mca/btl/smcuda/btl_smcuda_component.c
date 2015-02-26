@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -990,7 +990,7 @@ void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         MCA_BTL_SMCUDA_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
 
-        opal_free_list_return (&mca_btl_smcuda_component.pending_send_fl, (opal_list_item_t*)si);
+        opal_free_list_return (&mca_btl_smcuda_component.pending_send_fl, (opal_free_list_item_t*)si);
 
         if ( OPAL_SUCCESS != rc )
             return;
