@@ -80,7 +80,7 @@ int opal_common_verbs_fork_test(void)
             /* If the opal_want_fork_support MCA parameter is >0 but
              * the call to ibv_fork_init() failed, then return an error code.
              */
-            if (opal_verbs_want_fork_support > 0) {
+            if (ompi_common_verbs_want_fork_support > 0) {
                 opal_show_help("help-opal-common-verbs.txt",
                                "ibv_fork_init fail", true,
                                ompi_process_info.nodename, errno,
