@@ -85,6 +85,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
         ompi_datatype_create_hvector( subsize_array[i], 1, size * extent,
                                       last_type, newtype );
         ompi_datatype_destroy( &last_type );
+
         displ += size * start_array[i];
         size *= size_array[i];
         last_type = *newtype;
@@ -106,7 +107,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
         types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
         ompi_datatype_create_struct( 3, blength, displs, types, newtype );
     } else {
-        ompi_datatype_create_resized(last_type, 0, size * extent, newtype);
+        ompi_datatype_create_resized(last_type, displ * extent, size * extent, newtype);
     }
     ompi_datatype_destroy( &last_type );
 

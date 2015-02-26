@@ -272,7 +272,7 @@ int32_t ompi_datatype_create_darray(int size,
 
             rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
         } else {
-            ompi_datatype_create_resized(lastType, displs[0], displs[2], newtype);
+            ompi_datatype_create_resized(lastType, displs[1], displs[2], newtype);
         }
         ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
