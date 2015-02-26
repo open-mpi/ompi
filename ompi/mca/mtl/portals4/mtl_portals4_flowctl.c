@@ -46,6 +46,7 @@ ompi_mtl_portals4_flowctl_init(void)
     OBJ_CONSTRUCT(&ompi_mtl_portals4.flowctl.pending_fl, opal_free_list_t);
     opal_free_list_init(&ompi_mtl_portals4.flowctl.pending_fl,
                         sizeof(ompi_mtl_portals4_pending_request_t),
+                        opal_cache_line_size,
                         OBJ_CLASS(ompi_mtl_portals4_pending_request_t),
                         0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
