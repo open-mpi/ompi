@@ -40,41 +40,13 @@ const opal_shmem_base_component_2_0_0_t *opal_shmem_base_component = NULL;
 const opal_shmem_base_module_2_0_0_t *opal_shmem_base_module = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
-char *
-opal_shmem_base_best_runnable_component_name(void)
-{
-    mca_base_component_t *best_component = NULL;
-    mca_base_module_t *best_module = NULL;
 
-    opal_output_verbose(10, opal_shmem_base_framework.framework_output,
-                        "shmem: base: best_runnable_component_name: "
-                        "Searching for best runnable component.");
-    /* select the best component so we can get its name. */
-    if (OPAL_SUCCESS != opal_shmem_base_runtime_query(&best_module,
-                                                      &best_component)) {
-        /* fail! */
-        return NULL;
-    }
-    else {
-        if (NULL != best_component) {
-            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
-                                "shmem: base: best_runnable_component_name: "
-                                "Found best runnable component: (%s).",
-                                best_component->mca_component_name);
-            return strdup(best_component->mca_component_name);
-        }
-        else {
-            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
-                                "shmem: base: best_runnable_component_name: "
-                                "Could not find runnable component.");
-            /* no component returned, so return NULL */
-            return NULL;
-        }
-    }
-}
-
-/* ////////////////////////////////////////////////////////////////////////// */
-int
+/*
+ * Performs a run-time query across all available shmem components.
+ * Similar to mca_base_select, but take into consideration environment
+ * hints provided by orte.
+ */
+static int
 opal_shmem_base_runtime_query(mca_base_module_t **best_module,
                               mca_base_component_t **best_component)
 {
@@ -166,6 +138,40 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
                                                 (mca_base_component_t *)(*best_component));
 
     return OPAL_SUCCESS;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+char *
+opal_shmem_base_best_runnable_component_name(void)
+{
+    mca_base_component_t *best_component = NULL;
+    mca_base_module_t *best_module = NULL;
+
+    opal_output_verbose(10, opal_shmem_base_framework.framework_output,
+                        "shmem: base: best_runnable_component_name: "
+                        "Searching for best runnable component.");
+    /* select the best component so we can get its name. */
+    if (OPAL_SUCCESS != opal_shmem_base_runtime_query(&best_module,
+                                                      &best_component)) {
+        /* fail! */
+        return NULL;
+    }
+    else {
+        if (NULL != best_component) {
+            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
+                                "shmem: base: best_runnable_component_name: "
+                                "Found best runnable component: (%s).",
+                                best_component->mca_component_name);
+            return strdup(best_component->mca_component_name);
+        }
+        else {
+            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
+                                "shmem: base: best_runnable_component_name: "
+                                "Could not find runnable component.");
+            /* no component returned, so return NULL */
+            return NULL;
+        }
+    }
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
