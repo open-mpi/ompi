@@ -36,7 +36,7 @@
    of correct programs */
 #define MPIU_THREAD_CS_ENTER(x,y)
 #define MPIU_THREAD_CS_EXIT(x,y)
-#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do {} while (0)
+#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do { err_ = 0; } while (0)
 #ifdef HAVE_WINDOWS_H
 #define MPIU_UNREFERENCED_ARG(a) a
 #else
