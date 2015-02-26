@@ -36,6 +36,7 @@ OMPI_DECLSPEC void ompi_ibv_free_device_list(struct ibv_device **ib_devs);
  * common_verbs_mca.c
  */
 extern bool ompi_common_verbs_warn_nonexistent_if;
+extern int ompi_common_verbs_want_fork_support;
 OMPI_DECLSPEC void ompi_common_verbs_mca_register(mca_base_component_t *component);
 
 /*
