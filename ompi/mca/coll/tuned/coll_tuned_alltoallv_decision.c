@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,6 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 /* alltoallv algorithm variables */
-static int coll_tuned_alltoallv_algorithm_count = 2;
 static int coll_tuned_alltoallv_forced_algorithm = 0;
 
 /* valid values for coll_tuned_alltoallv_forced_algorithm */
