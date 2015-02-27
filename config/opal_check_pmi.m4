@@ -26,78 +26,97 @@
 # define an internal function for checking the existence
 # and validity of a PMI library
 #
-# OPAL_CHECK_PMI_LIB(installdir, pmi, function, [action-if-slurm], [action-if-valid], [action-if-not-valid])
+# OPAL_CHECK_PMI_LIB(installdir, libdir, pmi, function, [action-if-slurm], [action-if-valid], [action-if-not-valid])
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI_LIB],
 [
     # save flags
-    opal_check_$2_save_CPPFLAGS=$CPPFLAGS
-    opal_check_$2_save_LDFLAGS=$LDFLAGS
-    opal_check_$2_save_LIBS=$LIBS
-    opal_check_$2_hdr_happy=
-    opal_check_$2_mycppflags=
+    opal_check_$3_save_CPPFLAGS=$CPPFLAGS
+    opal_check_$3_save_LDFLAGS=$LDFLAGS
+    opal_check_$3_save_LIBS=$LIBS
+    opal_check_$3_hdr_happy=
+    opal_check_$3_mycppflags=
 
     # check for the header
-    AC_MSG_CHECKING([for $2.h in $1/include])
-    AS_IF([test -f $1/include/$2.h],
+    AC_MSG_CHECKING([for $3.h in $1/include])
+    AS_IF([test -f $1/include/$3.h],
           [AC_MSG_RESULT([found])
-           opal_check_$2_mycppflags="-I$1/include"],
+           opal_check_$3_mycppflags="-I$3/include"],
           [AC_MSG_RESULT([not found])
-           AC_MSG_CHECKING([for $2.h in $1/include/slurm])
-           AS_IF([test -f $1/include/slurm/$2.h],
+           AC_MSG_CHECKING([for $3.h in $1/include/slurm])
+           AS_IF([test -f $1/include/slurm/$3.h],
                  [AC_MSG_RESULT([found])
-                  opal_check_$2_mycppflags="-I$1/include/slurm"
-                  $4],
+                  opal_check_$3_mycppflags="-I$1/include/slurm"
+                  $5],
                  [AC_MSG_RESULT([not found])
-                  opal_check_$2_hdr_happy=no])])
+                  opal_check_$3_hdr_happy=no])])
 
-    AS_IF([test "$opal_check_$2_hdr_happy" != "no"],
-          [CPPFLAGS="$CPPFLAGS $opal_check_$2_mycppflags"
-            AC_CHECK_HEADER([$2.h],
-                            [opal_check_$2_hdr_happy=yes
-                             $2_CPPFLAGS="$opal_check_$2_mycppflags"],
-                            [opal_check_$2_hdr_happy=no])])
+    AS_IF([test "$opal_check_$3_hdr_happy" != "no"],
+          [CPPFLAGS="$CPPFLAGS $opal_check_$3_mycppflags"
+            AC_CHECK_HEADER([$3.h],
+                            [opal_check_$3_hdr_happy=yes
+                             $3_CPPFLAGS="$opal_check_$3_mycppflags"],
+                            [opal_check_$3_hdr_happy=no])])
 
-    # check for presence of lib64 directory - if found, see if the
-    # desired library is present and matches our build requirements
-    opal_check_$2_lib_happy=
-    LIBS="$LIBS -l$2"
-    AC_MSG_CHECKING([for lib$2 in $1/lib64])
-    files=`ls $1/lib64/lib$2.* 2> /dev/null | wc -l`
+    # check for library and function
+    opal_check_$3_lib_happy=
+    LIBS="$LIBS -l$3"
+
+    # check for the library in the given location in case
+    # an exact path was given
+    AC_MSG_CHECKING([for lib$3 in $2])
+    files=`ls $2/lib$3.* 2> /dev/null | wc -l`
     AS_IF([test "$files" -gt "0"],
           [AC_MSG_RESULT([found])
-           LDFLAGS="$LDFLAGS -L$1/lib64"
-           AC_CHECK_LIB([$2], [$3],
-                        [opal_check_$2_lib_happy=yes
-                         $2_LDFLAGS=-L$1/lib64
-                         $2_rpath=$1/lib64],
-                        [opal_check_$2_lib_happy=no])],
-           [AC_MSG_RESULT([not found])])
+           LDFLAGS="$LDFLAGS -L$2"
+           AC_CHECK_LIB([$3], [$4],
+                        [opal_check_$3_lib_happy=yes
+                         $3_LDFLAGS=-L$2
+                         $3_rpath=$2],
+                        [opal_check_$3_lib_happy=no])],
+          [opal_check_$3_lib_happy=no
+           AC_MSG_RESULT([not found])])
+	   
+    # check for presence of lib64 directory - if found, see if the
+    # desired library is present and matches our build requirements
+    files=`ls $2/lib64/lib$3.* 2> /dev/null | wc -l`
+    AS_IF([test "$opal_check_$3_lib_happy" != "yes"],
+          [AC_MSG_CHECKING([for lib$3 in $2/lib64])
+           AS_IF([test "$files" -gt "0"],
+                 [AC_MSG_RESULT([found])
+                  LDFLAGS="$LDFLAGS -L$2/lib64"
+                  AC_CHECK_LIB([$3], [$4],
+                               [opal_check_$3_lib_happy=yes
+                                $3_LDFLAGS=-L$2/lib64
+                                $3_rpath=$2/lib64],
+                               [opal_check_$3_lib_happy=no])],
+                 [opal_check_$3_lib_happy=no
+                  AC_MSG_RESULT([not found])])])
 
 
     # if we didn't find lib64, or the library wasn't present or correct,
     # then try a lib directory if present
-    files=`ls $1/lib/lib$2.* 2> /dev/null | wc -l`
-    AS_IF([test "$opal_check_$2_lib_happy" != "yes"],
-          [AC_MSG_CHECKING([for lib$2 in $1/lib])
+    files=`ls $2/lib/lib$3.* 2> /dev/null | wc -l`
+    AS_IF([test "$opal_check_$3_lib_happy" != "yes"],
+          [AC_MSG_CHECKING([for lib$3 in $2/lib])
            AS_IF([test "$files" -gt "0"],
                  [AC_MSG_RESULT([found])
-                  LDFLAGS="$LDFLAGS -L$1/lib"
-                  AC_CHECK_LIB([$2], [$3],
-                               [opal_check_$2_lib_happy=yes
-                                $2_LDFLAGS=-L$1/lib
-                                $2_rpath=$1/lib],
-                               [opal_check_$2_lib_happy=no])],
-                 [opal_check_$2_lib_happy=no
+                  LDFLAGS="$LDFLAGS -L$2/lib"
+                  AC_CHECK_LIB([$3], [$4],
+                               [opal_check_$3_lib_happy=yes
+                                $3_LDFLAGS=-L$2/lib
+                                $3_rpath=$2/lib],
+                               [opal_check_$3_lib_happy=no])],
+                 [opal_check_$3_lib_happy=no
                   AC_MSG_RESULT([not found])])])
 
     # restore flags
-    CPPFLAGS=$opal_check_$2_save_CPPFLAGS
-    LDFLAGS=$opal_check_$2_save_LDFLAGS
-    LIBS=$opal_check_$2_save_LIBS
+    CPPFLAGS=$opal_check_$3_save_CPPFLAGS
+    LDFLAGS=$opal_check_$3_save_LDFLAGS
+    LIBS=$opal_check_$3_save_LIBS
 
-    AS_IF([test "$opal_check_$2_hdr_happy" = "yes" && test "$opal_check_$2_lib_happy" = "yes"],
-          [$5], [$6])
+    AS_IF([test "$opal_check_$3_hdr_happy" = "yes" && test "$opal_check_$3_lib_happy" = "yes"],
+          [$6], [$7])
 
 ])
 
@@ -110,8 +129,14 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                                 [Build PMI support, optionally adding DIR to the search path (default: no)])],
                                 [], with_pmi=no)
 
+    AC_ARG_WITH([pmi-libdir],
+                [AC_HELP_STRING([--with-pmi-libdir(=DIR)],
+                                [Look for libpmi or libpmi2 in the given directory, DIR/lib or DIR/lib64])])
+
     check_pmi_install_dir=
+    check_pmi_lib_dir=
     default_pmi_loc=
+    default_pmi_libloc=
     slurm_pmi_found=
 
     AC_MSG_CHECKING([if user requested PMI support])
@@ -127,10 +152,18 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   default_pmi_loc=no],
                  [check_pmi_install_dir=/usr
                   default_pmi_loc=yes])
+           AS_IF([test ! -z "$with_pmi_libdir"],
+                 [check_pmi_lib_dir=$with_pmi_libdir
+		  default_pmi_libloc=no],
+                 [check_pmi_lib_dir=$check_pmi_install_dir
+		  AS_IF([test "$default_pmi_loc" = "no"],
+		        [default_pmi_libloc=no],
+			[default_pmi_libloc=yes])])
 
            # check for pmi-1 lib */
            slurm_pmi_found=no
            OPAL_CHECK_PMI_LIB([$check_pmi_install_dir],
+	                      [$check_pmi_lib_dir],
                               [pmi], [PMI_Init],
                               [slurm_pmi_found=yes],
                               [opal_enable_pmi1=yes
@@ -140,9 +173,10 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
            AS_IF([test "$opal_enable_pmi1" = "yes"],
                  [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
-                        [opal_pmi1_CPPFLAGS="$pmi_CPPFLAGS"
-                         AC_SUBST(opal_pmi1_CPPFLAGS)
-                         opal_pmi1_LDFLAGS="$pmi_LDFLAGS"
+		        [opal_pmi1_CPPFLAGS="$pmi_CPPFLAGS"
+                         AC_SUBST(opal_pmi1_CPPFLAGS)])
+                  AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
+		        [opal_pmi1_LDFLAGS="$pmi_LDFLAGS"
                          AC_SUBST(opal_pmi1_LDFLAGS)
                          opal_pmi1_rpath="$pmi_rpath"
                          AC_SUBST(opal_pmi1_rpath)])])
@@ -150,6 +184,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            # check for pmi2 lib */
            slurm_pmi_found=no
            OPAL_CHECK_PMI_LIB([$check_pmi_install_dir],
+                              [$check_pmi_lib_dir],
                               [pmi2], [PMI2_Init],
                               [slurm_pmi_found=yes],
                               [opal_enable_pmi2=yes
@@ -159,22 +194,28 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
            AS_IF([test "$opal_enable_pmi2" = "yes"],
                  [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
-                        [opal_pmi2_CPPFLAGS="$pmi2_CPPFLAGS"
-                         AC_SUBST(opal_pmi2_CPPFLAGS)
-                         opal_pmi2_LDFLAGS="$pmi2_LDFLAGS"
+		        [opal_pmi2_CPPFLAGS="$pmi_CPPFLAGS"
+                         AC_SUBST(opal_pmi2_CPPFLAGS)])
+                  AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
+		        [opal_pmi2_LDFLAGS="$pmi_LDFLAGS"
                          AC_SUBST(opal_pmi2_LDFLAGS)
-                         opal_pmi2_rpath="$pmi2_rpath"
+                         opal_pmi2_rpath="$pmi_rpath"
                          AC_SUBST(opal_pmi2_rpath)])])
 
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
+	   AC_MSG_CHECKING([can PMI support be built])
            AS_IF([test "$opal_enable_pmi1" != "yes" && test "$opal_enable_pmi2" != "yes"],
-                 [AC_MSG_RESULT([not found])
-                  AC_MSG_WARN([PMI support requested (via --with-pmi) but neither libpmi])
-                  AC_MSG_WARN([nor libpmi2 were found under locations:])
-                  AC_MSG_WARN([    $check_install_dir/lib])
-                  AC_MSG_WARN([    $check_install_dir/lib64])
+                 [AC_MSG_RESULT([no])
+                  AC_MSG_WARN([PMI support requested (via --with-pmi) but neither pmi.h])
+		  AC_MSG_WARN([nor pmi2.h were found under locations:])
+                  AC_MSG_WARN([    $check_pmi_install_dir])
+                  AC_MSG_WARN([    $check_pmi_install_dir/slurm])
                   AC_MSG_WARN([Specified path: $with_pmi])
+		  AC_MSG_WARN([OR neither libpmi nor libpmi2 were found under:])
+                  AC_MSG_WARN([    $check_pmi_lib_dir/lib])
+                  AC_MSG_WARN([    $check_pmi_lib_dir/lib64])
+                  AC_MSG_WARN([Specified path: $with_pmi_libdir])
                   AC_MSG_ERROR([Aborting])],
                  [AC_MSG_RESULT([yes])])
            ])
