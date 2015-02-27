@@ -13,9 +13,9 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -150,6 +150,13 @@ int mca_btl_base_select(bool enable_progress_threads,
                 free(modules);
             }
         }
+    }
+
+    if (NULL != include) {
+        opal_argv_free(include);
+    }
+    if (NULL != exclude) {
+        opal_argv_free(exclude);
     }
 
     /* Finished querying all components.  Check for the bozo case. */
