@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -15,7 +15,6 @@
 #include "opal/types.h"
 
 #include "opal_stdint.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -295,9 +294,6 @@ static int s1_init(void)
         OPAL_PMI_ERROR(ret, "PMI_Get_appnum");
         goto err_exit;
     }
-
-    /* setup any local envars we were asked to do */
-    mca_base_var_process_env_list(&environ);
 
     /* increment the init count */
     ++pmix_init_count;
