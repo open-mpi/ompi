@@ -14,6 +14,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,6 +130,7 @@ int ompi_coll_base_barrier_intra_tree(BARRIER_ARGS);
 int ompi_coll_base_barrier_intra_basic_linear(BARRIER_ARGS);
 
 /* Bcast */
+int ompi_coll_base_bcast_intra_generic(BCAST_ARGS, uint32_t count_by_segment, ompi_coll_tree_t* tree);
 int ompi_coll_base_bcast_intra_basic_linear(BCAST_ARGS);
 int ompi_coll_base_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
 int ompi_coll_base_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
@@ -145,6 +148,7 @@ int ompi_coll_base_gather_intra_linear_sync(GATHER_ARGS, int first_segment_size)
 /* GatherV */
 
 /* Reduce */
+int ompi_coll_base_reduce_generic(REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment, int max_outstanding_reqs);
 int ompi_coll_base_reduce_intra_basic_linear(REDUCE_ARGS);
 int ompi_coll_base_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout, int max_outstanding_reqs );
 int ompi_coll_base_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
