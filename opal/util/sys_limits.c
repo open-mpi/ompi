@@ -226,6 +226,9 @@ out:
     if (NULL != lims) {
         opal_argv_free(lims);
     }
+    if (NULL != lim) {
+        opal_argv_free(lim);
+    }
 
     return rc;
 }
