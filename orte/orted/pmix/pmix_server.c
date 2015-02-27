@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -438,6 +438,8 @@ static int pmix_server_start_listening(struct sockaddr_un *address)
     if (listen(sd, SOMAXCONN) < 0) {
         opal_output(0, "pmix_server_component_init: listen(): %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
+        
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
 
@@ -445,12 +447,14 @@ static int pmix_server_start_listening(struct sockaddr_un *address)
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "pmix_server_component_init: fcntl(F_GETFL) failed: %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(sd, F_SETFL, flags) < 0) {
         opal_output(0, "pmix_server_component_init: fcntl(F_SETFL) failed: %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
 
