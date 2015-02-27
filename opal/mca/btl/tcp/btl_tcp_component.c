@@ -532,9 +532,9 @@ static int mca_btl_tcp_component_create_instances(void)
     const int if_count = opal_ifcount();
     int if_index;
     int kif_count = 0;
-    int *kindexes = NULL; /* this array is way too large, but never too small */
-    char **include;
-    char **exclude;
+    int *kindexes; /* this array is way too large, but never too small */
+    char **include = NULL;
+    char **exclude = NULL;
     char **argv;
     int ret = OPAL_SUCCESS;
 
@@ -601,7 +601,6 @@ static int mca_btl_tcp_component_create_instances(void)
         mca_btl_tcp_create(if_index, if_name);
         argv++;
     }
-    opal_argv_free(include);
 
     /* If we made any modules, then the "include" list was non-empty,
        and therefore we're done. */
@@ -640,6 +639,12 @@ static int mca_btl_tcp_component_create_instances(void)
     opal_argv_free(exclude);
 
  cleanup:
+    if (NULL != include) {
+        opal_argv_free(include);
+    }
+    if (NULL != exclude) {
+        opal_argv_free(exclude);
+    }
     if (NULL != kindexes) {
         free(kindexes);
     }

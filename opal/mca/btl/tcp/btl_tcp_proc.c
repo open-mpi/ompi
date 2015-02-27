@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -328,7 +328,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                 local_interfaces = (mca_btl_tcp_interface_t**)realloc( local_interfaces,
                                                                        max_local_interfaces * sizeof(mca_btl_tcp_interface_t*) );
                 if( NULL == local_interfaces )
-                    return NULL;
+                    goto cleanup;
             }
             local_interfaces[index] = (mca_btl_tcp_interface_t *) malloc(sizeof(mca_btl_tcp_interface_t));
             assert(NULL != local_interfaces[index]);
@@ -369,8 +369,13 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                         local_addr.ss_family);
         }
     }
-    opal_argv_free(include);
-    opal_argv_free(exclude);
+cleanup:
+    if (NULL != include) {
+        opal_argv_free(include);
+    }
+    if (NULL != exclude) {
+        opal_argv_free(exclude);
+    }
 
     return local_interfaces;
 }
