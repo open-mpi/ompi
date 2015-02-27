@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,7 +20,6 @@
 #include "opal/types.h"
 
 #include "opal_stdint.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -264,9 +263,6 @@ static int s2_init(void)
             break;
         }
     }
-
-    /* setup any local envars we were asked to do */
-    mca_base_var_process_env_list(&environ);
 
     /* increment the init count */
     ++pmix_init_count;
