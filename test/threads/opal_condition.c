@@ -69,7 +69,7 @@ static void* thr1_run(opal_object_t* obj)
     }
     c2 = clock();
     opal_mutex_unlock(&mutex);
-    fprintf(stderr, "thr1: time per iteration: %ld usec\n", (c2 - c1) / TEST_COUNT);
+    fprintf(stderr, "thr1: time per iteration: %ld usec\n", (long)((c2 - c1) / TEST_COUNT));
     return NULL;
 }
 
@@ -86,7 +86,7 @@ static void* thr2_run(opal_object_t* obj)
     }
     c2 = clock();
     opal_mutex_unlock(&mutex);
-    fprintf(stderr, "thr2: time per iteration: %ld usec\n", (c2 - c1) / TEST_COUNT);
+    fprintf(stderr, "thr2: time per iteration: %ld usec\n", (long)((c2 - c1) / TEST_COUNT));
     return NULL;
 }
 
