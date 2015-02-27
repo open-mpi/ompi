@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -636,7 +636,6 @@ static int mca_btl_tcp_component_create_instances(void)
             }
         }
     }
-    opal_argv_free(exclude);
 
  cleanup:
     if (NULL != include) {
