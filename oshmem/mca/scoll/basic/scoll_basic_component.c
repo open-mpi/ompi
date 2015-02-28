@@ -89,7 +89,7 @@ static int basic_register(void)
                                            &mca_scoll_basic_priority_param);
 
     sprintf(help_msg,
-            "Algoritm selection for Barrier (%d - Central Counter, %d - Tournament, %d - Recursive Doubling, %d - Dissemination, %d - Basic, %d - Adaptive)",
+            "Algorithm selection for Barrier (%d - Central Counter, %d - Tournament, %d - Recursive Doubling, %d - Dissemination, %d - Basic, %d - Adaptive)",
             SCOLL_ALG_BARRIER_CENTRAL_COUNTER,
             SCOLL_ALG_BARRIER_TOURNAMENT,
             SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING,
@@ -105,7 +105,7 @@ static int basic_register(void)
                                            &mca_scoll_basic_param_barrier_algorithm);
 
     sprintf(help_msg,
-            "Algoritm selection for Broadcast (%d - Central Counter, %d - Binomial)",
+            "Algorithm selection for Broadcast (%d - Central Counter, %d - Binomial)",
             SCOLL_ALG_BROADCAST_CENTRAL_COUNTER,
             SCOLL_ALG_BROADCAST_BINOMIAL);
     (void) mca_base_component_var_register(comp,
@@ -117,7 +117,7 @@ static int basic_register(void)
                                            &mca_scoll_basic_param_broadcast_algorithm);
 
     sprintf(help_msg,
-            "Algoritm selection for Collect (%d - Central Counter, %d - Tournament, %d - Recursive Doubling, %d - Ring)",
+            "Algorithm selection for Collect (%d - Central Counter, %d - Tournament, %d - Recursive Doubling, %d - Ring)",
             SCOLL_ALG_COLLECT_CENTRAL_COUNTER,
             SCOLL_ALG_COLLECT_TOURNAMENT,
             SCOLL_ALG_COLLECT_RECURSIVE_DOUBLING,
@@ -131,7 +131,7 @@ static int basic_register(void)
                                            &mca_scoll_basic_param_collect_algorithm);
 
     sprintf(help_msg,
-            "Algoritm selection for Reduce (%d - Central Counter, %d - Tournament, %d - Recursive Doubling %d - Linear %d - Log)",
+            "Algorithm selection for Reduce (%d - Central Counter, %d - Tournament, %d - Recursive Doubling %d - Linear %d - Log)",
             SCOLL_ALG_REDUCE_CENTRAL_COUNTER,
             SCOLL_ALG_REDUCE_TOURNAMENT,
             SCOLL_ALG_REDUCE_RECURSIVE_DOUBLING,
