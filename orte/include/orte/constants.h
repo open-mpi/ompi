@@ -43,7 +43,7 @@ enum {
     ORTE_ERR_FATAL                          = OPAL_ERR_FATAL,
     ORTE_ERR_NOT_IMPLEMENTED                = OPAL_ERR_NOT_IMPLEMENTED,
     ORTE_ERR_NOT_SUPPORTED                  = OPAL_ERR_NOT_SUPPORTED,
-    ORTE_ERR_INTERUPTED                     = OPAL_ERR_INTERUPTED,
+    ORTE_ERR_INTERUPTED                     = OPAL_ERR_INTERRUPTED,
     ORTE_ERR_WOULD_BLOCK                    = OPAL_ERR_WOULD_BLOCK,
     ORTE_ERR_IN_ERRNO                       = OPAL_ERR_IN_ERRNO,
     ORTE_ERR_UNREACH                        = OPAL_ERR_UNREACH,

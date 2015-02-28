@@ -36,7 +36,7 @@ enum {
     OPAL_ERR_FATAL                          = (OPAL_ERR_BASE -  6),
     OPAL_ERR_NOT_IMPLEMENTED                = (OPAL_ERR_BASE -  7),
     OPAL_ERR_NOT_SUPPORTED                  = (OPAL_ERR_BASE -  8),
-    OPAL_ERR_INTERUPTED                     = (OPAL_ERR_BASE -  9),
+    OPAL_ERR_INTERRUPTED                     = (OPAL_ERR_BASE -  9),
     OPAL_ERR_WOULD_BLOCK                    = (OPAL_ERR_BASE - 10),
     OPAL_ERR_IN_ERRNO                       = (OPAL_ERR_BASE - 11),
     OPAL_ERR_UNREACH                        = (OPAL_ERR_BASE - 12),
