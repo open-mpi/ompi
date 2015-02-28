@@ -61,7 +61,7 @@ BEGIN_C_DECLS
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE   0x0001  /**< datatypes unavailable on the build (OS or compiler dependant) */
 #define OPAL_DATATYPE_FLAG_PREDEFINED    0x0002  /**< cannot be removed: initial and predefined datatypes */
-#define OPAL_DATATYPE_FLAG_COMMITED      0x0004  /**< ready to be used for a send/recv operation */
+#define OPAL_DATATYPE_FLAG_COMMITTED      0x0004  /**< ready to be used for a send/recv operation */
 #define OPAL_DATATYPE_FLAG_OVERLAP       0x0008  /**< datatype is unpropper for a recv operation */
 #define OPAL_DATATYPE_FLAG_CONTIGUOUS    0x0010  /**< contiguous datatype */
 #define OPAL_DATATYPE_FLAG_NO_GAPS       0x0020  /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size */
@@ -76,7 +76,7 @@ BEGIN_C_DECLS
                                           OPAL_DATATYPE_FLAG_CONTIGUOUS | \
                                           OPAL_DATATYPE_FLAG_NO_GAPS |    \
                                           OPAL_DATATYPE_FLAG_DATA |       \
-                                          OPAL_DATATYPE_FLAG_COMMITED)
+                                          OPAL_DATATYPE_FLAG_COMMITTED)
 
 
 /**
@@ -186,7 +186,7 @@ OPAL_DECLSPEC int32_t opal_datatype_destroy( opal_datatype_t** );
 static inline int32_t
 opal_datatype_is_committed( const opal_datatype_t* type )
 {
-    return ((type->flags & OPAL_DATATYPE_FLAG_COMMITED) == OPAL_DATATYPE_FLAG_COMMITED);
+    return ((type->flags & OPAL_DATATYPE_FLAG_COMMITTED) == OPAL_DATATYPE_FLAG_COMMITTED);
 }
 
 static inline int32_t

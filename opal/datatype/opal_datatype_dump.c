@@ -55,7 +55,7 @@ int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t len
     int index = 0;
     if( length < 22 ) return 0;
     index = snprintf( ptr, 22, "-----------[---][---]" );  /* set everything to - */
-    if( usflags & OPAL_DATATYPE_FLAG_COMMITED )   ptr[1]  = 'c';
+    if( usflags & OPAL_DATATYPE_FLAG_COMMITTED )   ptr[1]  = 'c';
     if( usflags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) ptr[2]  = 'C';
     if( usflags & OPAL_DATATYPE_FLAG_OVERLAP )    ptr[3]  = 'o';
     if( usflags & OPAL_DATATYPE_FLAG_USER_LB )    ptr[4]  = 'l';
@@ -120,7 +120,7 @@ void opal_datatype_dump( const opal_datatype_t* pData )
     if( pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED )
         index += snprintf( buffer + index, length - index, "predefined " );
     else {
-        if( pData->flags & OPAL_DATATYPE_FLAG_COMMITED ) index += snprintf( buffer + index, length - index, "commited " );
+        if( pData->flags & OPAL_DATATYPE_FLAG_COMMITTED ) index += snprintf( buffer + index, length - index, "committed " );
         if( pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
     }
     index += snprintf( buffer + index, length - index, ")" );
