@@ -255,8 +255,8 @@ int32_t opal_datatype_commit( opal_datatype_t * pData )
     ddt_endloop_desc_t* pLast = &(pData->desc.desc[pData->desc.used].end_loop);
     OPAL_PTRDIFF_TYPE first_elem_disp = 0;
 
-    if( pData->flags & OPAL_DATATYPE_FLAG_COMMITED ) return OPAL_SUCCESS;
-    pData->flags |= OPAL_DATATYPE_FLAG_COMMITED;
+    if( pData->flags & OPAL_DATATYPE_FLAG_COMMITTED ) return OPAL_SUCCESS;
+    pData->flags |= OPAL_DATATYPE_FLAG_COMMITTED;
 
     /* We have to compute the displacement of the first non loop item in the
      * description.
