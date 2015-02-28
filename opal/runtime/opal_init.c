@@ -114,8 +114,8 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NOT_SUPPORTED:
         retval = "Not supported";
         break;
-    case OPAL_ERR_INTERUPTED:
-        retval = "Interupted";
+    case OPAL_ERR_INTERRUPTED:
+        retval = "Interrupted";
         break;
     case OPAL_ERR_WOULD_BLOCK:
         retval = "Would block";
