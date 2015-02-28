@@ -480,7 +480,7 @@ ompi_datatype_t* test_create_twice_two_doubles( void )
 /*
   Datatype 0x832cf28 size 0 align 1 id 0 length 4 used 0
   true_lb 0 true_ub 0 (true_extent 0) lb 0 ub 0 (extent 0)
-  nbElems 0 loops 0 flags 6 (commited contiguous )-cC--------[---][---]
+  nbElems 0 loops 0 flags 6 (committed contiguous )-cC--------[---][---]
   contain 13 disp 0x420 (1056) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x478 (1144) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x4d0 (1232) extent 4
