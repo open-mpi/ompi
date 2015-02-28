@@ -166,17 +166,17 @@ int mca_bcol_ptpcoll_register_mca_params(void)
                   "(starts from 8)", 8, &cm->num_to_probe, REGINT_GE_ONE));
 
     CHECK(reg_int("bcast_small_msg_known_root_alg", NULL,
-                  "Algoritm selection for bcast small messages known root"
+                  "Algorithm selection for bcast small messages known root"
                   "(1 - K-nomial, 2 - N-array)", 1, &cm->bcast_small_messages_known_root_alg,
                   REGINT_GE_ZERO));
 
     CHECK(reg_int("bcast_large_msg_known_root_alg", NULL,
-                  "Algoritm selection for bcast large messages known root"
+                  "Algorithm selection for bcast large messages known root"
                   "(1 - Binomial scatther-gather, 2 - N-array scather, K-nomial gather)",
                   1, &cm->bcast_large_messages_known_root_alg, REGINT_GE_ZERO));
 
     CHECK(reg_int("barrier_alg", NULL,
-                  "Algoritm selection for Barrier"
+                  "Algorithm selection for Barrier"
                   "(1 - Recursive doubling, 2 - Recursive K-ing)",
                   1, &cm->barrier_alg, REGINT_GE_ZERO));
 
