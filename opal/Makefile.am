@@ -25,6 +25,7 @@ SUBDIRS = \
         etc \
         util \
 	mca/base \
+	mca/common/verbs \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
@@ -41,6 +42,7 @@ DIST_SUBDIRS = \
         etc \
 	util \
 	mca/base \
+	mca/common/verbs \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
@@ -54,6 +56,7 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
+        mca/common/verbs/libmca_common_verbs.la \
 	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = $(lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD)
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
