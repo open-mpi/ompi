@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,6 +76,11 @@ int orte_write_hnp_contact_file(char *filename)
     FILE *fp;
     char *my_uri;
 
+    my_uri = orte_rml.get_contact_info();
+    if (NULL == my_uri) {
+        return ORTE_ERROR;
+    }
+
     fp = fopen(filename, "w");
     if (NULL == fp) {
         opal_output( 0, "Impossible to open the file %s in write mode\n",
@@ -82,10 +89,6 @@ int orte_write_hnp_contact_file(char *filename)
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
 
-    my_uri = orte_rml.get_contact_info();
-    if (NULL == my_uri) {
-        return ORTE_ERROR;
-    }
     fprintf(fp, "%s\n", my_uri);
     free(my_uri);
 
@@ -121,9 +124,11 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
     if (NULL == pidstr) {
         ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
         fclose(fp);
+        free(hnp_uri);
         return ORTE_ERR_FILE_READ_FAILURE;
     }
     hnp->pid = (pid_t)atol(pidstr);
+    free(pidstr);
     fclose(fp);
 
     if (connect) {
@@ -133,12 +138,14 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
         /* extract the HNP's name and store it */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {
             ORTE_ERROR_LOG(rc);
+            free(hnp_uri);
             return rc;
         }
         
         /* set the route to be direct */
         if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
             ORTE_ERROR_LOG(rc);
+            free(hnp_uri);
             return rc;
         }
     }
@@ -218,14 +225,13 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
         } else {
             OBJ_RELEASE(hnp);
         }
+        free(contact_filename);
      }
     
 cleanup:
     if( NULL != cur_dirp )
         closedir(cur_dirp);
     free(headdir);
-    if( NULL != contact_filename)
-        free(contact_filename);
     
     return (opal_list_is_empty(hnps) ? ORTE_ERR_NOT_FOUND : ORTE_SUCCESS);
 }
