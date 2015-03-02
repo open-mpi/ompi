@@ -459,6 +459,9 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                         }
                         argv = opal_argv_split (value, '@');
                         cnt = opal_argv_count (argv);
+                        if (NULL != node_name) {
+                            free(node_name);
+                        }
                         if (1 == cnt) {
                             node_name = strdup(argv[0]);
                         } else if (2 == cnt) {
@@ -468,6 +471,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
                             opal_argv_free(argv);
+                            node_name = NULL;
                             goto unlock;
                         }
                         opal_argv_free (argv);
@@ -476,8 +480,6 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
-                            free(node_name);
-                            node_name = NULL;
                             goto unlock;
                         }
                         /* check if this is the local node */
