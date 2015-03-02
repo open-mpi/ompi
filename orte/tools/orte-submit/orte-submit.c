@@ -1094,7 +1094,7 @@ static int create_app(int argc, char* argv[],
                 }
                 free(value);
             } else if (NULL != myglobals.prefix) {
-                param = myglobals.prefix;
+                param = strdup(myglobals.prefix);
             } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
                 /* must be --prefix alone */
                 param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
@@ -1112,6 +1112,7 @@ static int create_app(int argc, char* argv[],
                     if (0 == param_len) {
                         orte_show_help("help-orterun.txt", "orterun:empty-prefix",
                                        true, myglobals.basename, myglobals.basename);
+                        free(param);
                         return ORTE_ERR_FATAL;
                     }
                 }
@@ -1489,6 +1490,8 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != *env) {
                 tmp_env = opal_argv_copy(*env);
                 if (NULL == tmp_env) {
+                    fclose(fp);
+                    opal_argv_free(argv);
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
             } else {
@@ -1504,6 +1507,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != tmp_env) {
                 opal_argv_free(tmp_env);
             }
+            opal_argv_free(argv);
             if (made_app) {
                 app->idx = app_num;
                 ++app_num;
@@ -1517,6 +1521,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
     /* All done */
 
     free(filename);
+    
     return ORTE_SUCCESS;
 }
 
