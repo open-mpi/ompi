@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,7 +103,7 @@ int orte_oob_usock_start_listening(void)
     if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
         opal_output(0, "%s unable to set socket to CLOEXEC",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
 
@@ -119,6 +121,7 @@ int orte_oob_usock_start_listening(void)
     if (listen(sd, SOMAXCONN) < 0) {
         opal_output(0, "mca_oob_usock_component_init: listen(): %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
         
@@ -126,12 +129,14 @@ int orte_oob_usock_start_listening(void)
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_usock_component_init: fcntl(F_GETFL) failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(sd, F_SETFL, flags) < 0) {
         opal_output(0, "mca_oob_usock_component_init: fcntl(F_SETFL) failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
 
