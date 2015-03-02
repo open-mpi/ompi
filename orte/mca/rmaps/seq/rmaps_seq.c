@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -268,7 +270,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     *(eptr+1) = 0;
                     sq->cpuset = strdup(sep);
                 }
-                sq->hostname = strdup(hstname);
+                sq->hostname = hstname;
                 opal_list_append(&sq_list, &sq->super);
             }
             fclose(fp);
@@ -404,6 +406,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                         /* parse the slot_list to find the socket and core */
                         if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
                             ORTE_ERROR_LOG(rc);
+                            hwloc_bitmap_free(bitmap);
                             goto error;
                         }
                         /* note that we cannot set the proc locale to any specific object
