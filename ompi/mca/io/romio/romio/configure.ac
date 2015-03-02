@@ -1477,6 +1477,14 @@ if test "$ac_cv_header_unistd_h" = "yes" ; then
     fi
 fi
 
+# pread and pwrite are useful to ROMIO: if implemented well, they help us avoid
+# an extra system call.  But --enable-strict or CFLAGS="--std=c99" does not
+# expose this feature.  If we define XOPEN_SOURCE in ROMIO, we cause headaches
+# for some versions of lustre, quota.h, and caddr_t.  see if we need to provide
+# our own pread/pwrite
+
+AC_CHECK_DECLS([pwrite])
+
 
 ####################################################################
 # We're about to mess with CC etc.  No more feature tests past here,
