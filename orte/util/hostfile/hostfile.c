@@ -13,6 +13,8 @@
  *                         reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -234,6 +236,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             /* this node was already found once - add a slot and mark slots as "given" */
             node->slots++;
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
+            free(node_name);
         }
         /* do we need to record an alias for this node? */
         if (NULL != node_alias) {
@@ -298,13 +301,12 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             node->slots = 1;
             if (NULL != username) {
                 orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
-                free(username);
-                username = NULL;
             }
             opal_list_append(updates, &node->super);
         } else {
             /* add a slot */
             node->slots++;
+            free(node_name);
         }
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s hostfile: node %s slots %d",
@@ -323,6 +325,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         hostfile_parse_error(token);
         return ORTE_ERROR;
     }
+    if (NULL != username) {
+        free(username);
+    }
     
     while (!orte_util_hostfile_done) {
         token = orte_util_hostfile_lex();
@@ -339,7 +344,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             if (NULL != username) {
                 orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
                 free(username);
-                username = NULL;
             }
             break;
 

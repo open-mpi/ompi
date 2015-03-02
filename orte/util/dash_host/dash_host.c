@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,12 +76,15 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 rc = opal_argv_append_nosize(&mapped_nodes, 
                                              mini_map[k]);
                 if (OPAL_SUCCESS != rc) {
+                    opal_argv_free(host_argv);
+                    opal_argv_free(mini_map);
                     goto cleanup;
                 }
             }
             opal_argv_free(mini_map);
         }
     }
+    opal_argv_free(host_argv);
 
     /* Did we find anything? If not, then do nothing */
     if (NULL == mapped_nodes) {
@@ -200,9 +205,6 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
  cleanup:
     if (NULL != mapped_nodes) {
         opal_argv_free(mapped_nodes);
-    }
-    if (NULL != host_argv) {
-        opal_argv_free(host_argv);
     }
     OPAL_LIST_DESTRUCT(&adds);
 
