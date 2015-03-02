@@ -617,6 +617,7 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             OBJ_RELEASE(endpoint);
         }
     }
+    opal_pmix.fence(NULL, 0);
     return OMPI_SUCCESS;
 }
 

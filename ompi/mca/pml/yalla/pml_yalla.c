@@ -240,6 +240,7 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
         PML_YALLA_VERBOSE(2, "disconnected from rank %ld", procs[i]->super.proc_name);
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
     }
+    opal_pmix.fence(NULL, 0);
     return OMPI_SUCCESS;
 }
 
