@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,7 +63,8 @@ static int init(void)
                             munge_strerror(rc));
         return OPAL_ERR_SERVER_NOT_AVAIL;
     }
-    my_cred.size = strlen(my_cred.credential);
+    /* include the '\0' termination string character */
+    my_cred.size = strlen(my_cred.credential)+1;
     initialized = true;
     
     return OPAL_SUCCESS;
@@ -93,7 +96,8 @@ static int get_my_cred(int dstorehandle,
                                     munge_strerror(rc));
                 return OPAL_ERR_SERVER_NOT_AVAIL;
             }
-            my_cred.size = strlen(my_cred.credential);
+            /* include the '\0' termination string character */
+            my_cred.size = strlen(my_cred.credential)+1;
             *cred = &my_cred;
         }
     } else {
