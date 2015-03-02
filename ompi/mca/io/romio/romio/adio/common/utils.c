@@ -8,7 +8,6 @@
 #include <adio.h>
 #include <limits.h>
 
-
 /* utility function for creating large contiguous types: algorithim from BigMPI
  * https://github.com/jeffhammond/BigMPI */
 
@@ -77,6 +76,35 @@ int ADIOI_Type_create_hindexed_x(int count,
 
     return ret;
 }
+
+/* some systems do not have pread/pwrite, or requrie XOPEN_SOURCE set higher
+ * than we would like.  see #1973 */
+#if (HAVE_DECL_PWRITE == 0)
+
+#include <sys/types.h>
+#include <unistd.h>
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+    off_t lseek_ret;
+
+    lseek_ret = lseek(fd, offset, SEEK_SET);
+    if (lseek_ret == -1)
+	return lseek_ret;
+    return (read(fd, buf, count));
+}
+
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+    off_t lseek_ret;
+
+    lseek_ret = lseek(fd, offset, SEEK_SET);
+    if (lseek_ret == -1)
+	return lseek_ret;
+    return (write(fd, buf, count));
+}
+#endif
 
 /*
  * vim: ts=8 sts=4 sw=4 noexpandtab
