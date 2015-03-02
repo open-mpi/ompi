@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -574,6 +574,7 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
             if (NULL == (ptr = strchr(ck2[i], '='))) {
                 /* missing the value */
                 orte_show_help("help-orte-rmaps-base.txt", "missing-value", true, "pe", ck2[i]);
+                opal_argv_free(ck2);
                 return ORTE_ERR_SILENT;
             }
             ptr++;
@@ -875,6 +876,7 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
 #endif
         } else {
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
+            opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
         opal_argv_free(ck);
