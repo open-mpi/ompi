@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -983,8 +985,6 @@ hwloc_obj_t * rmaps_lama_find_parent(hwloc_topology_t hwloc_topo,
     hwloc_obj_type_t hwloc_key;
     int depth;
 
-    cur_parent = (hwloc_obj_t*)malloc(sizeof(hwloc_obj_t) * 1);
-
     /*
      * Convert LAMA key to HWLOC key
      */
@@ -1000,6 +1000,11 @@ hwloc_obj_t * rmaps_lama_find_parent(hwloc_topology_t hwloc_topo,
         } else {
             return child_obj;
         }
+    }
+
+    cur_parent = (hwloc_obj_t*)malloc(sizeof(hwloc_obj_t) * 1);
+    if (NULL == cur_parent) {
+        return NULL;
     }
 
     /*
