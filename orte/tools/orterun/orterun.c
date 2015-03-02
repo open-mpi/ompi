@@ -15,6 +15,8 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -758,7 +760,7 @@ int orterun(int argc, char *argv[])
             }
             free(tmp_basename);
         } else if (NULL != orterun_globals.path_to_mpirun) {
-            param = orterun_globals.path_to_mpirun;
+            param = strdup(orterun_globals.path_to_mpirun);
         } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
             /* must be --prefix alone */
             param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
@@ -776,12 +778,12 @@ int orterun(int argc, char *argv[])
                 if (0 == param_len) {
                     orte_show_help("help-orterun.txt", "orterun:empty-prefix",
                                    true, orte_basename, orte_basename);
+                    free(param);
                     return ORTE_ERR_FATAL;
                 }
             }
 
-            orterun_globals.prefix = strdup(param);
-            free(param);
+            orterun_globals.prefix = param;
         }
         want_prefix_by_default = true;
     }
