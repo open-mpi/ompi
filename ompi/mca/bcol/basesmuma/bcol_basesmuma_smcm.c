@@ -6,7 +6,7 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -379,11 +379,13 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
         rc = ftruncate (fd, length);
         if (0 > rc) {
             opal_output (ompi_bcol_base_framework.framework_output, "failed to truncate the file to be mapped. errno: %d", errno);
+            close(fd);
             return NULL;
         }
 
         map = bcol_basesmuma_smcm_reg_mmap(in_ptr, fd, length, 0, alignment, file_name);
         if (NULL == map) {
+            close(fd);
             return NULL;
         }
     }

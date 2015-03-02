@@ -4,8 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -265,7 +265,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
         (mca_bcol_basesmuma_module_t *)bcol_module;
     int my_idx, array_id;
     mca_bcol_basesmuma_header_t *ctl_ptr;
-    void **results_array, *mem_offset;
+    void **results_array=NULL, *mem_offset;
 
     mca_bcol_basesmuma_local_mlmem_desc_t *ml_mem = &sm_bcol_module->ml_mem;
 
@@ -289,6 +289,10 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
 
     /* allocate some memory to hold the offsets */
     results_array = (void **) malloc(pload_mgmt->size_of_group * sizeof (void *));
+    if (NULL == results_array) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit_ERROR;
+    }
 
     /* setup the input file for the shared memory connection manager */
     input_file.file_name = sm_reg_data->file_name;
@@ -371,6 +375,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
 
     /* done with the index array */
     free (results_array);
+    results_array = NULL;
 
     /* initialize my control structures!! */
     my_idx = sm_bcol_module->super.sbgp_partner_module->my_index;
@@ -424,6 +429,9 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
     return OMPI_SUCCESS;
 
 exit_ERROR:
+    if (NULL != results_array) {
+        free(results_array);
+    }
     return ret;
 }
 

@@ -4,7 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -754,5 +754,6 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
 CLEANUP:
 
     OBJ_RELEASE(ptpcoll_module);
+    free(ptpcoll_modules);
     return NULL;
 }
