@@ -50,6 +50,8 @@ enum {
     YODA_BTL_SELF = 0,
     YODA_BTL_SM,
     YODA_BTL_OPENIB,
+    YODA_BTL_VADER,
+    YODA_BTL_UGNI,
     YODA_BTL_MAX
 };
 

@@ -76,6 +76,10 @@ static int btl_name_to_id(char *btl_name)
         return YODA_BTL_OPENIB;
     } else if (0 == strcmp(btl_name, "self")) {
         return YODA_BTL_SELF;
+    } else if (0 == strcmp(btl_name, "vader")) {
+        return YODA_BTL_VADER;
+    } else if (0 == strcmp(btl_name, "ugni")) {
+        return YODA_BTL_UGNI;
     }
     return YODA_BTL_UNKNOWN;
 }
@@ -91,6 +95,10 @@ static char *btl_type2str(int btl_type)
         return "openib";
     case YODA_BTL_SM:
         return "sm";
+    case YODA_BTL_VADER:
+        return "vader";
+    case YODA_BTL_UGNI:
+        return "ugni";
     }
     return "bad_btl_type";
 }
@@ -403,7 +411,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         }
 
         /* If we have shared memory just save its id*/
-        if (YODA_BTL_SM == ybtl->btl_type
+        if ((YODA_BTL_SM == ybtl->btl_type || YODA_BTL_VADER == ybtl->btl_type)
                 && MAP_SEGMENT_SHM_INVALID != (int)shmid) {
             mkeys[i].u.key = shmid;
             mkeys[i].va_base = 0;
@@ -414,6 +422,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         mkeys[i].spml_context = yoda_context;
 
         yoda_context->registration = NULL;
+
         if (ybtl->btl->btl_flags & MCA_BTL_FLAGS_RDMA) {
 
             /* initialize convertor for source descriptor*/
@@ -805,7 +814,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     /* check if we doing put into shm attached segment and if so
      * just do memcpy
      */
-    if ((YODA_BTL_SM == ybtl->btl_type)
+    if ((YODA_BTL_SM == ybtl->btl_type || YODA_BTL_VADER == ybtl->btl_type)
             && mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
         return OSHMEM_SUCCESS;
@@ -1069,7 +1078,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
     /* check if we doing get into shm attached segment and if so
      * just do memcpy
      */
-    if ((YODA_BTL_SM == ybtl->btl_type)
+    if ((YODA_BTL_SM == ybtl->btl_type || YODA_BTL_VADER == ybtl->btl_type)
             && mca_memheap_base_can_local_copy(r_mkey, src_addr)) {
         memcpy(dst_addr, (void *) rva, size);
         /* must call progress here to avoid deadlock. Scenarion:
