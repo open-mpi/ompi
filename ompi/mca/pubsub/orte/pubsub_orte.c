@@ -13,6 +13,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -290,6 +292,7 @@ static char* lookup ( const char *service_name, ompi_info_t *info )
                                    "pubsub-orte:too-many-orders",
                                    true, (long)ORTE_PROC_MY_NAME->vpid,
                                    (long)num_tokens);
+                    opal_argv_free(tokens);
                     return NULL;
                 }
                 for (i = 0; i < 2; ++i) {
@@ -303,6 +306,7 @@ static char* lookup ( const char *service_name, ompi_info_t *info )
                             opal_show_help("help-ompi-pubsub-orte.txt",
                                            "pubsub-orte:unknown-order",
                                            true, (long)ORTE_PROC_MY_NAME->vpid);
+                            opal_argv_free(tokens);
                             return NULL;
                         }
                     } else {
