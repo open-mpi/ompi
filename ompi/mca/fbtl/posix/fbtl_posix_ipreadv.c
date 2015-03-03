@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,12 +56,15 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
                                               fh->f_num_of_io_entries);
     if (NULL == data->aio_reqs) {
         opal_output(1, "OUT OF MEMORY\n");
+        free(data);
         return 0;
     }
 
     data->aio_req_status = (int *) malloc (sizeof(int) * fh->f_num_of_io_entries);
     if (NULL == data->aio_req_status) {
         opal_output(1, "OUT OF MEMORY\n");
+        free(data->aio_reqs);
+        free(data);
         return 0;
     }
 
@@ -83,7 +88,10 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
     }	
     for (i=0; i < data->aio_last_active_req; i++) {
         if (-1 == aio_read(&data->aio_reqs[i])) {
-            perror("aio_read() error");
+            opal_output(1, "aio_read() error: %s", strerror(errno));
+            free(data->aio_reqs);
+            free(data->aio_req_status);
+            free(data);
             return OMPI_ERROR;
         }
     }
