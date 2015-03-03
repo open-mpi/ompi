@@ -14,6 +14,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1096,13 +1098,12 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
     for (i = 0 ; i < count; ++i) {
         /* Absolute paths preserved */
         if ( opal_path_is_absolute(files[i]) ) {
-            if( NULL == opal_path_access(files[i], NULL, mode) ) {
+            if( NULL == (tmp_file = opal_path_access(files[i], NULL, mode)) ) {
                 opal_show_help("help-mca-var.txt", "missing-param-file",
                                true, getpid(), files[i], path);
                 exit_status = OPAL_ERROR;
                 goto cleanup;
-            }
-            else {
+            } else {
                 opal_argv_append(&argc, &argv, files[i]);
             }
         }
@@ -1138,8 +1139,6 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
         else {
             if( NULL != (tmp_file = opal_path_find(files[i], search_path, mode, NULL)) ) {
                 opal_argv_append(&argc, &argv, tmp_file);
-                free(tmp_file);
-                tmp_file = NULL;
             }
             else {
                 opal_show_help("help-mca-var.txt", "missing-param-file",
@@ -1148,7 +1147,10 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
                 goto cleanup;
             }
         }
+        free(tmp_file);
     }
+
+    tmp_file = NULL;
 
     free(*file_list);
     *file_list = opal_argv_join(argv, OPAL_ENV_SEP);
@@ -1168,7 +1170,6 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
     }
     if( NULL != tmp_file ) {
         free(tmp_file);
-        tmp_file = NULL;
     }
 
     return exit_status;
