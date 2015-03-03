@@ -1633,7 +1633,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     port_cnt = get_port_list(device, allowed_ports);
     if (0 == port_cnt) {
-        free(allowed_ports);
         ret = OPAL_SUCCESS;
         ++num_devices_intentionally_ignored;
         goto error;
@@ -2207,6 +2206,9 @@ error:
     if (device->ib_dev_context) {
         ibv_close_device(device->ib_dev_context);
     }
+    if (NULL != allowed_ports) {
+        free(allowed_ports);
+    }
     OBJ_RELEASE(device);
     return ret;
 }
@@ -2465,7 +2467,7 @@ btl_openib_component_init(int *num_btl_modules,
                           bool enable_mpi_threads)
 {
     struct ibv_device **ib_devs;
-    mca_btl_base_module_t** btls;
+    mca_btl_base_module_t** btls = NULL;
     int i, ret, num_devs, length;
     opal_list_t btl_list;
     mca_btl_openib_module_t * openib_btl;
@@ -2905,6 +2907,9 @@ btl_openib_component_init(int *num_btl_modules,
         __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
     }
 #endif
+    if (NULL != btls) {
+        free(btls);
+    }
     return NULL;
 }
 

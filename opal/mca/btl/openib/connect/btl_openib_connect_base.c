@@ -264,6 +264,7 @@ int opal_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     }
     msg = (char *) malloc(len);
     if (NULL == msg) {
+        free(cpcs);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     msg[0] = '\0';
