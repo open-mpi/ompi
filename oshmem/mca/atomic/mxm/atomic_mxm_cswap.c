@@ -17,6 +17,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/runtime/runtime.h"
 
 #include "atomic_mxm.h"
@@ -75,10 +76,7 @@ int mca_atomic_mxm_cswap(void *target,
     if (MXM_PTL_SHM == ptl_id) {
         ptl_id = MXM_PTL_RDMA;
     }
-    r_mkey = mca_memheap.memheap_get_cached_mkey(pe,
-                                             target,
-                                             ptl_id,
-                                             &remote_addr);
+    r_mkey = mca_memheap_base_get_cached_mkey(pe, target, ptl_id, &remote_addr);
     if (!r_mkey) {
         ATOMIC_ERROR("[#%d] %p is not address of symmetric variable",
                      my_pe, target);

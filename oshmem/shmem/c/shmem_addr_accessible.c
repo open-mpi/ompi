@@ -14,6 +14,7 @@
 
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -28,8 +29,7 @@ int shmem_addr_accessible(void *addr, int pe)
 
     RUNTIME_CHECK_INIT();
 
-    mkey = MCA_MEMHEAP_CALL(get_cached_mkey(pe, addr,
-                    oshmem_get_transport_id(pe), &rva));
+    mkey = mca_memheap_base_get_cached_mkey(pe, addr, oshmem_get_transport_id(pe), &rva);
 
     return mkey ? 1 : 0;
 }

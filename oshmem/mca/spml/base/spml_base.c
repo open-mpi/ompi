@@ -158,3 +158,10 @@ int mca_spml_base_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     return OSHMEM_ERROR;
 }
 
+void mca_spml_base_rmkey_unpack(sshmem_mkey_t *mkey, int pe)
+{
+}
+
+void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey)
+{
+}

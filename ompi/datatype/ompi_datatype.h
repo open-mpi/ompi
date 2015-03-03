@@ -73,6 +73,7 @@ struct ompi_datatype_t {
 
     void*              args;                     /**< Data description for the user */
     void*              packed_description;       /**< Packed description of the datatype */
+    uint64_t           pml_data;                 /**< PML-specific information */
     /* --- cacheline 6 boundary (384 bytes) --- */
     char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */
     /* --- cacheline 7 boundary (448 bytes) --- */
