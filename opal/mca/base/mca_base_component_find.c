@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -339,13 +341,12 @@ static void find_dyn_components(const char *path, const char *type_name,
                done */
             return;
         }
-
-        if (NULL == path_to_use) {
-            /* out of memory */
-            return;
-        }
     } else {
         path_to_use = strdup(path);
+    }
+    if (NULL == path_to_use) {
+        /* out of memory */
+        return;
     }
   
     /* If we haven't done so already, iterate over all the files in
@@ -417,6 +418,7 @@ static void find_dyn_components(const char *path, const char *type_name,
            found_files list */
         file = OBJ_NEW(component_file_item_t);
         if (NULL == file) {
+            free(path_to_use);
             return;
         }
         strncpy(file->type, type_name, MCA_BASE_MAX_TYPE_NAME_LEN);
