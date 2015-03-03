@@ -799,6 +799,7 @@ int btl_openib_verify_mca_params (void)
     } else {
         mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
     }
+#if 0 /* Disable this check for now while fork support code is worked out.
     /* Cannot have fork support and GDR on at the same time.  If the user asks for both,
      * then print a message and return error.  If the user does not explicitly ask for
      * fork support, then turn it off in the presence of GDR.  */
@@ -810,6 +811,7 @@ int btl_openib_verify_mca_params (void)
               return OPAL_ERR_BAD_PARAM;
         }
     }
+#endif /* Workaround */
 #endif
 
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
