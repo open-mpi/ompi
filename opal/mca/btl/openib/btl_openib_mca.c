@@ -734,6 +734,15 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_component.cq_poll_batch = MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT;
     }
 
+#if !HAVE_IBV_FORK_INIT
+    if (1 == mca_btl_openib_component.want_fork_support) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "ibv_fork requested but not supported", true,
+                       opal_process_info.nodename);
+        return OPAL_ERR_BAD_PARAM;
+    }
+#endif
+
     mca_btl_openib_component.ib_pkey_val &= MCA_BTL_IB_PKEY_MASK;
 
     if (mca_btl_openib_component.ib_min_rnr_timer > 31) {

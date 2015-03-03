@@ -40,7 +40,6 @@
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/common/verbs/common_verbs.h"
 #include "opal/dss/dss.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
@@ -275,9 +274,6 @@ int opal_register_params(void)
     if (OPAL_SUCCESS != ret) { 
         return ret; 
     }
-
-    /* register the common_verbs parameters */
-    opal_common_verbs_mca_register();
 
     return OPAL_SUCCESS;
 }
