@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -589,6 +591,9 @@ static int setup_child(orte_job_t *jdata,
                                                         orte_process_info.nodename,
                                                         NULL, &child->name))) {
         ORTE_ERROR_LOG(rc);
+        if (NULL != value) {
+            free(value);
+        }
         return rc;
     }
     free(value);
