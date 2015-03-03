@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1332,6 +1332,7 @@ static int dyn_init(void)
                          port_name));
     
     rc = connect_accept (MPI_COMM_WORLD, root, port_name, send_first, &newcomm);
+    free(port_name);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -1392,7 +1393,7 @@ static void process_request(orte_process_name_t* sender,
     ompi_group_t *group=MPI_COMM_SELF->c_local_group;
     ompi_group_t *new_group_pointer;
     ompi_proc_t **rprocs=NULL;
-    ompi_proc_t **new_proc_list;
+    ompi_proc_t **new_proc_list=NULL;
     int new_proc_len;
     opal_buffer_t *xfer;
     int cnt, rc;
@@ -1517,6 +1518,9 @@ static void process_request(orte_process_name_t* sender,
  cleanup:
     if (NULL != rprocs) {
         free(rprocs);
+    }
+    if (NULL != new_proc_list) {
+        free(new_proc_list);
     }
     if (OMPI_SUCCESS != rc && MPI_COMM_NULL == newcomp) {
         OBJ_RELEASE(newcomp);
