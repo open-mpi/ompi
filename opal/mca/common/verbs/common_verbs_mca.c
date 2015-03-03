@@ -36,7 +36,7 @@ static void register_internal(void)
     mca_base_var_register_synonym(warn_nonexistent_if_index, "ompi", "ompi_common",
                                   "verbs", "warn_nonexistent_if", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-    mca_base_var_register("opal", "opal", NULL, "common_verbs_want_fork_support",
+    mca_base_var_register("opal", "opal_common", "verbs", "want_fork_support",
                           "Whether fork support is desired or not "
                           "(negative = try to enable fork support, but continue even "
                           "if it is not available, 0 = do not enable fork support, "
@@ -48,9 +48,13 @@ static void register_internal(void)
     registered = true;
 }
 
-void opal_common_verbs_mca_register(void)
+void opal_common_verbs_mca_register(mca_base_component_t *component)
 {
     if (!registered) {
         register_internal();
     }
+
+    /* Make synonym for the common_verbs MCA params. */
+    mca_base_var_register_synonym(warn_nonexistent_if_index, "ompi", component->mca_type_name,
+                                  component->mca_component_name, "warn_nonexistent_if", 0);
 }
