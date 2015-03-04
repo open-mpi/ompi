@@ -326,7 +326,7 @@ $constants->{MPI_ERR_RMA_ATTACH} = 69;
 $constants->{MPI_ERR_RMA_FLAVOR} = 70;
 $constants->{MPI_ERR_RMA_SHARED} = 71;
 $constants->{MPI_T_ERR_INVALID} = 72;
-$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_T_ERR_INVALID};
+$constants->{MPI_ERR_LASTCODE} = 92;
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
 
