@@ -19,7 +19,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h"
+#include "btl_openib_proc.h"
 #include "btl_openib_xrc.h"
 
 /*

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -12,6 +14,7 @@
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h"
+#include "btl_openib_proc.h"
 #include "btl_openib_xrc.h"
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
