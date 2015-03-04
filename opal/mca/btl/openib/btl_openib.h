@@ -40,6 +40,7 @@
 /* Open MPI includes */
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
