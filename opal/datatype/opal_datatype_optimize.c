@@ -48,6 +48,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
 {
     dt_elem_desc_t* pElemDesc;
     ddt_elem_desc_t opt_elem;
+    dt_stack_t* pOrigStack;
     dt_stack_t* pStack;            /* pointer to the position on the stack */
     int32_t pos_desc = 0;          /* actual position in the description of the derived datatype */
     int32_t stack_pos = 0, last_type = OPAL_DATATYPE_UINT1, last_length = 0;
@@ -56,7 +57,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
     uint32_t i;
 
-    pStack = (dt_stack_t*)malloc( sizeof(dt_stack_t) * (pData->btypes[OPAL_DATATYPE_LOOP]+2) );
+    pOrigStack = pStack = (dt_stack_t*)malloc( sizeof(dt_stack_t) * (pData->btypes[OPAL_DATATYPE_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0 );
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake OPAL_DATATYPE_END_LOOP at the end */;
@@ -247,7 +248,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     }
     /* cleanup the stack */
     pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
-    free(pStack);
+    free(pOrigStack);
     return OPAL_SUCCESS;
 }
 
