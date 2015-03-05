@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2012-2015 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +37,11 @@ int mca_topo_base_lazy_init(void)
 
     if (0 == opal_list_get_size(&ompi_topo_base_framework.framework_components)) {
         ompi_topo_base_framework.framework_open(MCA_BASE_OPEN_FIND_COMPONENTS);
-        if (OMPI_SUCCESS != 
+        /**
+         * Register all available components, giving them a chance to access the MCA parameters.
+         */
+        mca_base_framework_register(&ompi_topo_base_framework, MCA_BASE_REGISTER_DEFAULT);
+        if (OMPI_SUCCESS !=
             (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
             return err;
