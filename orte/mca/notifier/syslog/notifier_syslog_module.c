@@ -45,6 +45,7 @@
 static int init(void);
 static void finalize(void);
 static void mylog(orte_notifier_request_t *req);
+static void myevent(orte_notifier_request_t *req);
 static void myreport(orte_notifier_request_t *req);
 
 /* Module def */
@@ -52,6 +53,7 @@ orte_notifier_base_module_t orte_notifier_syslog_module = {
     init,
     finalize,
     mylog,
+    myevent,
     myreport
 };
 
@@ -90,7 +92,40 @@ static void mylog(orte_notifier_request_t *req)
            (NULL == req->msg) ? "<N/A>" : req->msg);
 }
 
+static void myevent(orte_notifier_request_t *req)
+{
+    char tod[48];
+
+    opal_output_verbose(5, orte_notifier_base_framework.framework_output,
+                           "notifier:syslog:myevent function called with severity %d and messg %s",
+                           (int)req->severity, req->msg);
+    /* If there was a message, output it */
+    (void)ctime_r(&req->t, tod);
+    /* trim the newline */
+    tod[strlen(tod)] = '\0';
+
+    syslog(req->severity, "[%s]%s SET EVENT : %s", tod,
+           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+           (NULL == req->msg) ? "<N/A>" : req->msg);
+}
+
 static void myreport(orte_notifier_request_t *req)
 {
+    char tod[48];
+
+    opal_output_verbose(5, orte_notifier_base_framework.framework_output,
+                           "notifier:syslog:myreport function called with severity %d state %s and messg %s",
+                           (int)req->severity, orte_job_state_to_str(req->state),
+                           req->msg);
+    /* If there was a message, output it */
+    (void)ctime_r(&req->t, tod);
+    /* trim the newline */
+    tod[strlen(tod)] = '\0';
+
+    syslog(req->severity, "[%s]%s JOBID %s REPORTS STATE %s: %s", tod,
+           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+           ORTE_JOBID_PRINT(req->jdata->jobid),
+           orte_job_state_to_str(req->state),
+           (NULL == req->msg) ? "<N/A>" : req->msg);
 }
 
