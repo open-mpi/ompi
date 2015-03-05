@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,6 +115,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     filename_basename = basename(filename);
     sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+64) );
     if (NULL == sm_filename) {
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -125,11 +128,14 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( sm_fd == -1){
         /*error opening file*/
         printf("mca_sharedfp_sm_file_open: Error, unable to open file for mmap: %s\n",sm_filename);
+        free(sm_filename);
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERROR;	
     }
 
+        free(sm_filename);
     sm_data->sm_filename = sm_filename;
     
     /*TODO: is it necessary to write to the file first?*/
@@ -149,6 +155,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	err = OMPI_ERROR;
 	printf("mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
 	printf("%s\n", strerror(errno));
+        free(sm_filename);
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERROR;	
@@ -188,9 +196,11 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 #endif
 	}
     }else{
+        free(sm_filename);
 	free(sm_data);
 	free(sh);
 	free(shfileHandle);
+        munmap(sm_offset_ptr, sizeof(struct sm_offset));
 	err = OMPI_ERROR;
     }
 
