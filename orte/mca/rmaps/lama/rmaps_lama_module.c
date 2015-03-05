@@ -867,13 +867,8 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
         OBJ_RELEASE(max_tree);
     }
 
-    if( NULL != pu_idx_ref ) {
-        free(pu_idx_ref);
-    }
-
-    if( NULL != last_pu_idx_ref ) {
-        free(last_pu_idx_ref);
-    }
+    free(pu_idx_ref);
+    free(last_pu_idx_ref);
 
     if( NULL != last_level_str ) {
         free(last_level_str);
