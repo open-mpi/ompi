@@ -75,22 +75,30 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 		        [opal_default_libloc=no],
 			[opal_default_libloc=yes])])
            # check for pmi-1 lib */
-           files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi.* 2> /dev/null | wc -l`
+           files=`ls -U $opal_check_pmi_lib_dir/libpmi.* 2> /dev/null | wc -l`
            AS_IF([test "$files" -gt "0"],
                  [opal_have_pmi1=1
                   AS_IF([test "$opal_default_libloc" = "no"],
-                        [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib64"
-                         opal_pmi_rpath="$opal_check_pmi_lib_dir/lib64"
+                        [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir"
+                         opal_pmi_rpath="$opal_check_pmi_lib_dir"
                          opal_pmi_added_ldflag=yes])
                   opal_check_pmi_$1_LIBS="-lpmi"],
-                 [files=`ls -U $opal_check_pmi_lib_dir/lib/libpmi.* 2> /dev/null | wc -l`
+		 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi.* 2> /dev/null | wc -l`
                   AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi1=1
                          AS_IF([test "$opal_default_libloc" = "no"],
-                               [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib"
-                                opal_pmi_rpath="$opal_check_pmi_lib_dir/lib"
+                               [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib64"
+                                opal_pmi_rpath="$opal_check_pmi_lib_dir/lib64"
                                 opal_pmi_added_ldflag=yes])
-                         opal_check_pmi_$1_LIBS="-lpmi"])])
+                         opal_check_pmi_$1_LIBS="-lpmi"],
+                        [files=`ls -U $opal_check_pmi_lib_dir/lib/libpmi.* 2> /dev/null | wc -l`
+                         AS_IF([test "$files" -gt "0"],
+                               [opal_have_pmi1=1
+                                AS_IF([test "$opal_default_libloc" = "no"],
+                                      [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib"
+                                       opal_pmi_rpath="$opal_check_pmi_lib_dir/lib"
+                                       opal_pmi_added_ldflag=yes])
+                                opal_check_pmi_$1_LIBS="-lpmi"])])])
            # check for pmi.h
            AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi.h"],
                [AS_IF([test "$opal_default_loc" = "no"],
@@ -104,20 +112,30 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                        opal_pmi_added_cppflag=yes])])
 
            # check for pmi2 lib */
-           files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi2.* 2> /dev/null | wc -l`
+           files=`ls -U $opal_check_pmi_lib_dir/libpmi2.* 2> /dev/null | wc -l`
            AS_IF([test "$files" -gt "0"],
                  [opal_have_pmi2=1
-                  AS_IF([test "$opal_pmi_added_ldflag" != "yes" && test "$opal_default_libloc" = "no"],
-                        [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib64"
-                         opal_pmi_rpath="$opal_check_pmi_lib_dir/lib64"])
+                  AS_IF([test "$opal_default_libloc" = "no"],
+                        [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir"
+                         opal_pmi_rpath="$opal_check_pmi_lib_dir"
+                         opal_pmi_added_ldflag=yes])
                   opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"],
-                 [files=`ls -U $opal_check_pmi_lib_dir/lib/libpmi2.* 2> /dev/null | wc -l`
+		 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi2.* 2> /dev/null | wc -l`
                   AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi2=1
-                         AS_IF([test "$opal_pmi_added_ldflag" != "yes" && test "$opal_default_libloc" = "no"],
-                               [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib"
-                                opal_pmi_rpath="$opal_check_pmi_lib_dir/lib"])
-                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"])])
+                         AS_IF([test "$opal_default_libloc" = "no"],
+                               [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib64"
+                                opal_pmi_rpath="$opal_check_pmi_lib_dir/lib64"
+                                opal_pmi_added_ldflag=yes])
+                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"],
+                        [files=`ls -U $opal_check_pmi_lib_dir/lib/libpmi2.* 2> /dev/null | wc -l`
+                         AS_IF([test "$files" -gt "0"],
+                               [opal_have_pmi2=1
+                                AS_IF([test "$opal_default_libloc" = "no"],
+                                      [opal_check_pmi_$1_LDFLAGS="-L$opal_check_pmi_lib_dir/lib"
+                                       opal_pmi_rpath="$opal_check_pmi_lib_dir/lib"
+                                       opal_pmi_added_ldflag=yes])
+                                opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"])])])
            # check for pmi2.h
            AS_IF([test "$opal_pmi_added_cppflag" = "no"],
                  [AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi2.h"],
