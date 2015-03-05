@@ -303,6 +303,7 @@ static int create_listen(void)
                 opal_output(0,"mca_oob_tcp_component_init: socket() failed: %s (%d)", 
                             strerror(opal_socket_errno), opal_socket_errno);
             }
+            opal_argv_free(ports);
             return ORTE_ERR_IN_ERRNO;
         }
 

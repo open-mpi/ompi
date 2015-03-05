@@ -294,6 +294,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* parse the slot_list to find the socket and core */
                 if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
+                    hwloc_bitmap_free(bitmap);
                     goto error;
                 }
                 /* note that we cannot set the proc locale to any specific object

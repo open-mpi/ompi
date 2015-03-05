@@ -667,6 +667,7 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
 
     ptpcoll_module = OBJ_NEW(mca_bcol_ptpcoll_module_t);
     if (NULL == ptpcoll_module) {
+        free(ptpcoll_modules);
         return NULL;
     }
 

@@ -140,6 +140,12 @@ int mca_btl_base_select(bool enable_progress_threads,
                     }
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);
                     if (NULL == sm) {
+                        if (NULL != include) {
+                            opal_argv_free(include);
+                        }
+                        if (NULL != exclude) {
+                            opal_argv_free(exclude);
+                        }
                         return OPAL_ERR_OUT_OF_RESOURCE;
                     }
                     sm->btl_component = component;
