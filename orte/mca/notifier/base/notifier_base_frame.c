@@ -50,6 +50,7 @@
  * Global variables
  */
 opal_list_t orte_notifier_base_components_available;
+int orte_notifier_debug_output = -1;
 
 orte_notifier_base_t orte_notifier_base;
 
@@ -214,6 +215,8 @@ static int orte_notifier_base_close(void)
  */
 static int orte_notifier_base_open(mca_base_open_flag_t flags)
 {
+    int rc;
+    
     /* construct the array of modules */
     OBJ_CONSTRUCT(&orte_notifier_base.modules, opal_list_t);
 
@@ -230,8 +233,10 @@ static int orte_notifier_base_open(mca_base_open_flag_t flags)
     }
 
     /* Open up all available components */
-    return mca_base_framework_components_open(&orte_notifier_base_framework,
-                                              flags);
+    rc = mca_base_framework_components_open(&orte_notifier_base_framework,
+                                            flags);
+    orte_notifier_debug_output = orte_notifier_base_framework.framework_output;
+    return rc;
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, notifier, "ORTE Notifier Framework",
