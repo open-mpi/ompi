@@ -1,7 +1,7 @@
 Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
-Copyright (c) 2004-2007 The University of Tennessee and The University
+Copyright (c) 2004-2015 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
 Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -435,6 +435,9 @@ General Run-Time Support Notes
 
 MPI Functionality and Features
 ------------------------------
+
+- Rank reordering support is available using the TreeMatch library. It is activated
+  for the graph and dist_graph topologies.
 
 - All MPI-3 functionality is supported.
 
