@@ -69,11 +69,18 @@ static int mca_pml_yalla_component_open(void)
 {
     ompi_pml_yalla.output = opal_output_open(NULL);
     opal_output_set_verbosity(ompi_pml_yalla.output, ompi_pml_yalla.verbose);
-    return 0;
+    return mca_pml_yalla_open();
 }
 
 static int mca_pml_yalla_component_close(void)
 {
+    int rc;
+
+    rc = mca_pml_yalla_close();
+    if (rc != 0) {
+        return rc;
+    }
+
     opal_output_close(ompi_pml_yalla.output);
     return 0;
 }
