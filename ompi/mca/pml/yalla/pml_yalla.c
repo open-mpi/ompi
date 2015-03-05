@@ -44,6 +44,8 @@ mca_pml_yalla_module_t ompi_pml_yalla = {
         1ul << (sizeof(mxm_tag_t)*8 - 1) - 1,
     },
     NULL,
+    NULL,
+    NULL,
     NULL
 };
 
@@ -91,14 +93,11 @@ static void mca_pml_yalla_mem_release_cb(void *buf, size_t length,
                   from_alloc ? MXM_MEM_UNMAP_MARK_INVALID : 0);
 }
 
-int mca_pml_yalla_init(void)
+int mca_pml_yalla_open(void)
 {
-    mxm_context_opts_t *ctx_opts;
-    mxm_ep_opts_t *ep_opts;
     mxm_error_t error;
-    int rc;
 
-    PML_YALLA_VERBOSE(1, "mca_pml_yalla_init");
+    PML_YALLA_VERBOSE(1, "mca_pml_yalla_open");
 
     /* Set memory hooks */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
@@ -116,27 +115,53 @@ int mca_pml_yalla_init(void)
                 false, &environ);
 
     /* Read options */
-    error = mxm_config_read_opts(&ctx_opts, &ep_opts, "PML", NULL, 0);
+    error = mxm_config_read_opts(&ompi_pml_yalla.ctx_opts, &ompi_pml_yalla.ep_opts,
+                                 "PML", NULL, 0);
     if (MXM_OK != error) {
         return OMPI_ERROR;
     }
 
-    error = mxm_init(ctx_opts, &ompi_pml_yalla.mxm_context);
+    error = mxm_init(ompi_pml_yalla.ctx_opts, &ompi_pml_yalla.mxm_context);
     if (MXM_OK != error) {
         return OMPI_ERROR;
     }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_pml_yalla_close(void)
+{
+    PML_YALLA_VERBOSE(1, "mca_pml_yalla_close");
+
+    if (ompi_pml_yalla.ctx_opts != NULL) {
+        mxm_config_free_context_opts(ompi_pml_yalla.ctx_opts);
+    }
+    if (ompi_pml_yalla.ep_opts != NULL) {
+        mxm_config_free_ep_opts(ompi_pml_yalla.ep_opts);
+    }
+    if (ompi_pml_yalla.mxm_context != NULL) {
+        mxm_cleanup(ompi_pml_yalla.mxm_context);
+        ompi_pml_yalla.mxm_context = NULL;
+    }
+    return 0;
+}
+
+int mca_pml_yalla_init(void)
+{
+    mxm_error_t error;
+    int rc;
+
+    PML_YALLA_VERBOSE(1, "mca_pml_yalla_init");
 
     if (ompi_pml_yalla.using_mem_hooks) {
         opal_mem_hooks_register_release(mca_pml_yalla_mem_release_cb, NULL);
     }
 
-    error = mxm_ep_create(ompi_pml_yalla.mxm_context, ep_opts, &ompi_pml_yalla.mxm_ep);
+    error = mxm_ep_create(ompi_pml_yalla.mxm_context, ompi_pml_yalla.ep_opts,
+                          &ompi_pml_yalla.mxm_ep);
     if (MXM_OK != error) {
         return OMPI_ERROR;
     }
-
-    mxm_config_free_context_opts(ctx_opts);
-    mxm_config_free_ep_opts(ep_opts);
 
     rc = send_ep_address();
     if (rc < 0) {
@@ -173,10 +198,7 @@ int mca_pml_yalla_cleanup(void)
     if (ompi_pml_yalla.using_mem_hooks) {
         opal_mem_hooks_unregister_release(mca_pml_yalla_mem_release_cb);
     }
-    if (ompi_pml_yalla.mxm_context) {
-        mxm_cleanup(ompi_pml_yalla.mxm_context);
-        ompi_pml_yalla.mxm_context = NULL;
-    }
+
     return OMPI_SUCCESS;
 }
 
@@ -270,6 +292,11 @@ int mca_pml_yalla_add_comm(struct ompi_communicator_t* comm)
 int mca_pml_yalla_del_comm(struct ompi_communicator_t* comm)
 {
     mxm_mq_h mq = (void*)comm->c_pml_comm;
+
+    if (ompi_pml_yalla.mxm_context == NULL) {
+        PML_YALLA_ERROR("Destroying communicator after MXM context is destroyed");
+        return OMPI_ERROR;
+    }
 
     PML_YALLA_VERBOSE(2, "destroying mq ctxid %d of comm %s", comm->c_contextid,
                       comm->c_name);
