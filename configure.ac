@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2014 The University of Tennessee and The University
+# Copyright (c) 2004-2015 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -1460,6 +1460,7 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
+    test/monitoring/Makefile
 ])
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])
