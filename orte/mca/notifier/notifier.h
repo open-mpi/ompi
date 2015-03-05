@@ -57,6 +57,10 @@
 
 BEGIN_C_DECLS
 
+/* make the verbose channel visible here so everyone
+ * doesn't have to include notifier/base/base.h */
+extern int orte_notifier_debug_output;
+
 /* The maximum size of any on-stack buffers used in the notifier
  * so we can try to avoid calling malloc in OUT_OF_RESOURCES conditions.
  * The code has NOT been auditied for use of malloc, so this still
@@ -84,6 +88,7 @@ typedef struct {
     orte_notifier_severity_t severity;
     int errcode;
     const char *msg;
+    const char *action;
     time_t t;
 } orte_notifier_request_t;
 OBJ_CLASS_DECLARATION(orte_notifier_request_t);
@@ -98,21 +103,27 @@ typedef int (*orte_notifier_base_module_init_fn_t)(void);
 /* finalize the selected module */
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 
-/* Log an error */
+/* Log an internal error - this will include the job that caused the
+ * error to occur */
 typedef void (*orte_notifier_base_module_log_fn_t)(orte_notifier_request_t *req);
 
+/* Report a system event - e.g., a temperature out-of-bound */
+typedef void (*orte_notifier_base_module_event_fn_t)(orte_notifier_request_t *req);
 
-/* Report a state */
+/* Report a job state */
 typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *req);
 
 
-#define ORTE_NOTIFIER_LOG_ERROR(j, st, s, e, m)                         \
+#define ORTE_NOTIFIER_INTERNAL_ERROR(j, st, s, e, m)                    \
     do {                                                                \
         orte_notifier_request_t *_n;                                    \
-        opal_output_verbose(2, orte_notifier_base_framework.framework_output, \
-                            "%s notifier:log:error[%s:%d] for job %s error %s severity %s", \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, \
-                            ORTE_JOBID_PRINT((j)->jobid), ORTE_ERROR_NAME((e)), \
+        opal_output_verbose(2, orte_notifier_debug_output,              \
+                            "%s notifier:internal:error[%s:%d] "        \
+                            "job %s error %s severity %s",              \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            __FILE__, __LINE__,                         \
+                            ORTE_JOBID_PRINT((j)->jobid),               \
+                            ORTE_ERROR_NAME((e)),                       \
                             orte_notifier_base_sev2str(s));             \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
         _n->jdata = (j);                                                \
@@ -121,6 +132,7 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
         _n->errcode = (e);                                              \
         _n->msg = (m);                                                  \
         _n->t = time(NULL);                                             \
+        _n->action = (NULL);                                            \
         /* add the event */                                             \
         opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
                        OPAL_EV_WRITE, orte_notifier_base_log, (_n));    \
@@ -128,21 +140,47 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
         opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
     } while(0);
 
-#define ORTE_NOTIFIER_REPORT_STATE(j, st, m)                            \
+#define ORTE_NOTIFIER_JOB_STATE(j, st, m)                               \
     do {                                                                \
         orte_notifier_request_t *_n;                                    \
-        opal_output_verbose(2, orte_notifier_base_framework.framework_output, \
-                            "%s notifier:report:event[%s:%d] for job %s state %s", \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, \
+        opal_output_verbose(2, orte_notifier_debug_output,              \
+                            "%s notifier[%s:%d] job %s state %s",       \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            __FILE__, __LINE__,                         \
                             ORTE_JOBID_PRINT((j)->jobid),               \
                             orte_job_state_to_str(st));                 \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
         _n->jdata = (j);                                                \
+        _n->state = (st);                                               \
         _n->msg = (m);                                                  \
         _n->t = time(NULL);                                             \
+        _n->action = (NULL);                                            \
         /* add the event */                                             \
         opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
                        OPAL_EV_WRITE, orte_notifier_base_report, (_n)); \
+        opal_event_set_priority(&(_n)->ev, ORTE_ERROR_PRI);             \
+        opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
+    } while(0);
+
+#define ORTE_NOTIFIER_SYSTEM_EVENT(s, m, a)                             \
+    do {                                                                \
+        orte_notifier_request_t *_n;                                    \
+        opal_output_verbose(2, orte_notifier_debug_output,              \
+                            "%s notifier:sys:event[%s:%d] event %s",    \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            __FILE__, __LINE__,                         \
+                            orte_notifier_base_sev2str(s));             \
+        _n = OBJ_NEW(orte_notifier_request_t);                          \
+        _n->jdata = (NULL);                                             \
+        _n->state = (NULL);                                             \
+        _n->jdata = NULL;                                               \
+        _n->msg = (m);                                                  \
+        _n->t = time(NULL);                                             \
+        _n->severity = (s);                                             \
+        _n->action = (a);                                               \
+        /* add the event */                                             \
+        opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
+                       OPAL_EV_WRITE, orte_notifier_base_event, (_n));  \
         opal_event_set_priority(&(_n)->ev, ORTE_ERROR_PRI);             \
         opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
     } while(0);
@@ -154,6 +192,7 @@ typedef struct {
     orte_notifier_base_module_init_fn_t             init;
     orte_notifier_base_module_finalize_fn_t         finalize;
     orte_notifier_base_module_log_fn_t              log;
+    orte_notifier_base_module_event_fn_t            event;
     orte_notifier_base_module_report_fn_t           report;
 } orte_notifier_base_module_t;
 
