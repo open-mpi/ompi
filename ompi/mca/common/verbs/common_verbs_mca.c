@@ -20,7 +20,7 @@ static bool registered = false;
 static int warn_nonexistent_if_index = -1;
 
 bool ompi_common_verbs_warn_nonexistent_if = true;
-int ompi_common_verbs_want_fork_support = 1;
+int ompi_common_verbs_want_fork_support = -1;
 
 static void register_internal(void)
 {
