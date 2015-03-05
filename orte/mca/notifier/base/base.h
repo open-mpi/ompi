@@ -78,6 +78,7 @@ ORTE_DECLSPEC int orte_notifier_base_select(void);
 
 /* base functions */
 ORTE_DECLSPEC void orte_notifier_base_log(int sd, short args, void *cbdata);
+ORTE_DECLSPEC void orte_notifier_base_event(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_notifier_base_report(int sd, short args, void *cbdata);
 
 /* severity to string */
