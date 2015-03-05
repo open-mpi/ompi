@@ -15,6 +15,8 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -330,7 +332,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char **argv;
     char *param, *value;
     orte_plm_rsh_shell_t remote_shell, local_shell;
-    char *lib_base, *bin_base;
     int orted_argc;
     char **orted_argv;
     char *orted_cmd, *orted_prefix, *final_cmd;
@@ -365,9 +366,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
        libdir and bindir and use it to append this install's prefix
        and use that on the remote node.
     */
-    
-    lib_base = opal_basename(opal_install_dirs.libdir);
-    bin_base = opal_basename(opal_install_dirs.bindir);
     
     /*
      * Build argv array
@@ -444,7 +442,10 @@ static int setup_launch(int *argcptr, char ***argvptr,
          */
         char *opal_prefix = getenv("OPAL_PREFIX");
         char* full_orted_cmd = NULL;
-        
+        char *lib_base, *bin_base;
+
+        bin_base = opal_basename(opal_install_dirs.bindir);
+
         if (NULL != orted_cmd) {
             if (0 == strcmp(orted_cmd, "orted")) {
                 /* if the cmd is our standard one, then add the prefix */
@@ -453,8 +454,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
                 /* someone specified something different, so don't prefix it */
                 full_orted_cmd = strdup(orted_cmd);
             }
+            free(orted_cmd);
         }
         
+        lib_base = opal_basename(opal_install_dirs.libdir);
+
         if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
             ORTE_PLM_RSH_SHELL_KSH == remote_shell ||
             ORTE_PLM_RSH_SHELL_ZSH == remote_shell ||
@@ -519,8 +523,14 @@ static int setup_launch(int *argcptr, char ***argvptr,
             orte_show_help("help-plm-rsh.txt", "cannot-resolve-shell-with-prefix", true,
                            (NULL == opal_prefix) ? "NULL" : opal_prefix,
                            prefix_dir);
+            free(bin_base);
+            free(lib_base);
+            if (NULL != orted_prefix) free(orted_prefix);
+            if (NULL != full_orted_cmd) free(full_orted_cmd);
             return ORTE_ERR_SILENT;
         }
+        free(bin_base);
+        free(lib_base);
         if( NULL != full_orted_cmd ) {
             free(full_orted_cmd);
         }
@@ -529,12 +539,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
         (void)asprintf(&final_cmd, "%s %s",
                        (orted_prefix != NULL ? orted_prefix : ""),
                        (orted_cmd != NULL ? orted_cmd : ""));
+        if (NULL != orted_cmd) free(orted_cmd);
     }
     /* now add the final cmd to the argv array */
     opal_argv_append(&argc, &argv, final_cmd);
     free(final_cmd);  /* done with this */
     if (NULL != orted_prefix) free(orted_prefix);
-    if (NULL != orted_cmd) free(orted_cmd);
     
     /* if we are not tree launching or debugging, tell the daemon
      * to daemonize so we can launch the next group
@@ -1214,6 +1224,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * function determine they are all alive and trigger the next stage
      */
     OBJ_RELEASE(state);
+    opal_argv_free(argv);
     return;
     
  cleanup:
@@ -1326,7 +1337,10 @@ static int launch_agent_setup(const char *agent, char *path)
     }
     
     bname = opal_basename(rsh_agent_argv[0]);
-    if (NULL != bname && 0 == strcmp(bname, "ssh")) {
+    if (NULL == bname) {
+        return ORTE_SUCCESS;
+    }
+    if (0 == strcmp(bname, "ssh")) {
         /* if xterm option was given, add '-X', ensuring we don't do it twice */
         if (NULL != orte_xterm) {
             opal_argv_append_unique_nosize(&rsh_agent_argv, "-X", false);
@@ -1345,6 +1359,7 @@ static int launch_agent_setup(const char *agent, char *path)
             }
         }
     }
+    free(bname);
     
     /* the caller can append any additional argv's they desire */
     return ORTE_SUCCESS;
