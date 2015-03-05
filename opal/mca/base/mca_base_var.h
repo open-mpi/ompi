@@ -404,7 +404,7 @@ OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *f
                                          mca_base_var_scope_t scope, void *storage);
 
 /**
- * Convinience function for registering a variable associated with a
+ * Convenience function for registering a variable associated with a
  * component.
  *
  * While quite similar to mca_base_var_register(), there is one key
@@ -420,7 +420,7 @@ OPAL_DECLSPEC int mca_base_component_var_register (const mca_base_component_t *c
                                                    mca_base_var_scope_t scope, void *storage);
 
 /**
- * Convinience function for registering a variable associated with a framework. This
+ * Convenience function for registering a variable associated with a framework. This
  * function is equivalent to mca_base_var_register with component_name = "base" and
  * with the MCA_BASE_VAR_FLAG_DWG set. See mca_base_var_register().
  */
