@@ -38,8 +38,6 @@ my $diff_file = "";
 my $diff_arg;
 my $update_arg;
 my $modified_arg;
-my $git_arg = 0;
-my $svn_arg = 0;
 my $repo_type;
 my $cmd;
 
@@ -48,7 +46,7 @@ sub construct {
     # "special" directories
     if ( -l $_ ) { return; }
     if ( -d $_ ) { 
-        if ((/\.svn/) || (/\.deps/) || (/\.libs/) || (/\.hg/) || (/\.git/) || (/\.dSYM/) || ($_ eq "autom4te.cache") || ($_ eq "libltdl")) {
+        if ((/\.deps/) || (/\.libs/) || (/\.git/) || (/\.dSYM/) || ($_ eq "autom4te.cache") || ($_ eq "libltdl")) {
             $File::Find::prune = true;
         }            
         return;
@@ -87,9 +85,7 @@ my $ok = Getopt::Long::GetOptions("help|h" => \$help_arg,
                                   "tgt=s" => \$tgt_arg,
                                   "diff=s" => \$diff_arg,
                                   "update" => \$update_arg,
-                                  "update-modified" => \$modified_arg,
-                                  "git" => \$git_arg,
-                                  "svn" => \$svn_arg
+                                  "update-modified" => \$modified_arg
     );
 
 if (!$ok || $help_arg) {
@@ -100,25 +96,13 @@ if (!$ok || $help_arg) {
   --src | -src        Head of source directory
   --tgt | -tgt        Head of target directory
   --update | -update  Apply changes to update target
-  --update-modified   Only update modified files (do not add/delete files)
-  --git               Target is a git repo, so use git commands to add/delete files
-  --svn               Target is a svn repo, so use svn commands to add/delete files\n";
+  --update-modified   Only update modified files (do not add/delete files)\n";
     exit($ok ? 0 : 1);
 }
 
 if (!$src_arg || !$tgt_arg) {
     print "Missing src or tgt directory\n";
     exit(1);
-}
-
-if (!$git_arg && !$svn_arg) {
-    print "Missing repo type argument\n";
-    exit(1);
-}
-if ($git_arg) {
-    $repo_type = 1;
-} else {
-    $repo_type = 0;
 }
 
 $src_dir = File::Spec->rel2abs($src_arg);
@@ -228,20 +212,12 @@ foreach $src (@src_tree) {
                     exit;
                 }
                 print "Adding $tpath to repo\n";
-                if (1 == $repo_type) {
-                    $cmd = "pushd $target_dir >& /dev/null; git add $tpath >& /dev/null; popd >& /dev/null";
-                } else {
-                    $cmd = "pushd $target_dir >& /dev/null; svn add $tpath >& /dev/null; popd >& /dev/null";
-                }
+                $cmd = "pushd $target_dir >& /dev/null; git add $tpath >& /dev/null; popd >& /dev/null";
                 system($cmd);
             }
             print "Adding $src to repo\n";
             copy("$src", "$targetpath") or die "Update failed: src=$src tgt=$targetpath\n";
-            if (1 == $repo_type) {
-                $cmd = "pushd $target_dir >& /dev/null; git add $targetpath >& /dev/null; popd >& /dev/null";
-            } else {
-                $cmd = "pushd $target_dir >& /dev/null; svn add $targetpath >& /dev/null; popd >& /dev/null";
-            }
+            $cmd = "pushd $target_dir >& /dev/null; git add $targetpath >& /dev/null; popd >& /dev/null";
             system($cmd);
         } else {
             print "Add: " . $src . "\n";
@@ -269,11 +245,7 @@ if (!$modified_arg) {
         if ($found == 0) {
             if ($update_arg) {
                 print "Removing $tgt_file from repo\n";
-               if (1 == $repo_type) {
-                    $cmd = "pushd $target_dir >& /dev/null; git rm .$tgt_file >& /dev/null; popd >& /dev/null";
-                } else {
-                    $cmd = "pushd $target_dir >& /dev/null; svn del $tgt >& /dev/null; popd >& /dev/null";
-                }
+                $cmd = "pushd $target_dir >& /dev/null; git rm .$tgt_file >& /dev/null; popd >& /dev/null";
                 system($cmd);
             } else {
                 print "Delete: " . $tgt . "\n";
