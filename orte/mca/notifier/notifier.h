@@ -59,7 +59,7 @@ BEGIN_C_DECLS
 
 /* make the verbose channel visible here so everyone
  * doesn't have to include notifier/base/base.h */
-extern int orte_notifier_debug_output;
+ORTE_DECLSPEC extern int orte_notifier_debug_output;
 
 /* The maximum size of any on-stack buffers used in the notifier
  * so we can try to avoid calling malloc in OUT_OF_RESOURCES conditions.
