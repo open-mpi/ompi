@@ -4,6 +4,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,7 +70,6 @@ int opal_compress_gzip_compress(char * fname, char **cname, char **postfix)
 
 int opal_compress_gzip_compress_nb(char * fname, char **cname, char **postfix, pid_t *child_pid)
 {
-    char * cmd = NULL;
     char **argv = NULL;
     char * base_fname = NULL;
     char * dir_fname = NULL;
@@ -79,6 +80,7 @@ int opal_compress_gzip_compress_nb(char * fname, char **cname, char **postfix, p
 
     *child_pid = fork();
     if( *child_pid == 0 ) { /* Child */
+        char * cmd = NULL;
 
         dir_fname  = opal_dirname(fname);
         base_fname = opal_basename(fname);
@@ -125,11 +127,6 @@ int opal_compress_gzip_compress_nb(char * fname, char **cname, char **postfix, p
         return OPAL_ERROR;
     }
 
-    if( NULL != cmd ) {
-        free(cmd);
-        cmd = NULL;
-    }
-
     return OPAL_SUCCESS;
 }
 
@@ -154,7 +151,6 @@ int opal_compress_gzip_decompress(char * cname, char **fname)
 
 int opal_compress_gzip_decompress_nb(char * cname, char **fname, pid_t *child_pid)
 {
-    char * cmd = NULL;
     char **argv = NULL;
     char * dir_cname = NULL;
     pid_t loc_pid = 0;
@@ -180,6 +176,7 @@ int opal_compress_gzip_decompress_nb(char * cname, char **fname, pid_t *child_pi
 
     *child_pid = fork();
     if( *child_pid == 0 ) { /* Child */
+        char * cmd;
         dir_cname  = opal_dirname(cname);
 
         chdir(dir_cname);
@@ -225,11 +222,6 @@ int opal_compress_gzip_decompress_nb(char * cname, char **fname, pid_t *child_pi
     }
     else {
         return OPAL_ERROR;
-    }
-
-    if( NULL != cmd ) {
-        free(cmd);
-        cmd = NULL;
     }
 
     return OPAL_SUCCESS;

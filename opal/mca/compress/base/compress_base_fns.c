@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -47,7 +49,6 @@
 int opal_compress_base_tar_create(char ** target)
 {
     int exit_status = OPAL_SUCCESS;
-    char *cmd = NULL;
     char *tar_target = NULL;
     char **argv = NULL;
     pid_t child_pid = 0;
@@ -57,6 +58,7 @@ int opal_compress_base_tar_create(char ** target)
 
     child_pid = fork();
     if( 0 == child_pid ) { /* Child */
+        char *cmd;
         asprintf(&cmd, "tar -cf %s %s", tar_target, *target);
 
         argv = opal_argv_split(cmd, ' ');
@@ -82,13 +84,8 @@ int opal_compress_base_tar_create(char ** target)
     }
 
  cleanup:
-    if( NULL != cmd ) {
-        free(cmd);
-        cmd = NULL;
-    }
     if( NULL != tar_target ) {
         free(tar_target);
-        tar_target = NULL;
     }
 
     return exit_status;
@@ -97,13 +94,13 @@ int opal_compress_base_tar_create(char ** target)
 int opal_compress_base_tar_extract(char ** target)
 {
     int exit_status = OPAL_SUCCESS;
-    char *cmd = NULL;
     char **argv = NULL;
     pid_t child_pid = 0;
     int status = 0;
 
     child_pid = fork();
     if( 0 == child_pid ) { /* Child */
+        char *cmd;
         asprintf(&cmd, "tar -xf %s", *target);
 
         argv = opal_argv_split(cmd, ' ');
@@ -129,10 +126,6 @@ int opal_compress_base_tar_extract(char ** target)
     }
 
  cleanup:
-    if( NULL != cmd ) {
-        free(cmd);
-        cmd = NULL;
-    }
 
     return exit_status;
 }
