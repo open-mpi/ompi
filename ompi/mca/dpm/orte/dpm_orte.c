@@ -1268,6 +1268,9 @@ static int parse_port_name(const char *port_name,
     
     /* don't mangle the port name */
     tmpstring = strdup(port_name);
+    if (NULL == tmpstring) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     
     /* find the ':' demarking the RML tag we added to the end */
     if (NULL == (ptr = strrchr(tmpstring, ':'))) {
@@ -1300,9 +1303,7 @@ static int parse_port_name(const char *port_name,
     
 cleanup:
     /* release the tmp storage */
-    if (NULL != tmpstring) {
-        free(tmpstring);
-    }
+    free(tmpstring);
     return rc;
 }
 
@@ -1522,7 +1523,7 @@ static void process_request(orte_process_name_t* sender,
     if (NULL != new_proc_list) {
         free(new_proc_list);
     }
-    if (OMPI_SUCCESS != rc && MPI_COMM_NULL == newcomp) {
+    if (OMPI_SUCCESS != rc && MPI_COMM_NULL != newcomp) {
         OBJ_RELEASE(newcomp);
     }
 }
