@@ -1800,6 +1800,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
     }
     free(allowed_ports);
+    allowed_ports = NULL;
 
     /* If we made a BTL, check APM status and return.  Otherwise, fall
        through and destroy everything */
