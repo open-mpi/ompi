@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -49,14 +51,14 @@ int opal_compress_base_select(void)
 
     /* Save the winner */
     opal_compress_base_selected_component = *best_component;
-    opal_compress = *best_module;
 
     /* Initialize the winner */
     if (NULL != best_module) {
-        if (OPAL_SUCCESS != (ret = opal_compress.init()) ) {
+        if (OPAL_SUCCESS != (ret = best_module->init()) ) {
             exit_status = ret;
             goto cleanup;
         }
+        opal_compress = *best_module;
     }
 
  cleanup:
