@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +38,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/pml/pml.h" /* for send_mode enum */
 #include "ompi/request/request.h"
 
@@ -420,8 +423,7 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
  * Macro for use in modules that are of type mtl
  */
 #define MCA_MTL_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "mtl", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("mtl", 2, 0, 0)
 
 /*
  * macro for doing direct call / call through struct

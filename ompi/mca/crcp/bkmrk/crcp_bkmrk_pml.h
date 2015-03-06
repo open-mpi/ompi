@@ -27,7 +27,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/communicator/communicator.h"
 

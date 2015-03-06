@@ -23,7 +23,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"

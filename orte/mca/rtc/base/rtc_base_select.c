@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/rtc/base/base.h"

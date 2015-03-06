@@ -31,7 +31,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -364,8 +364,7 @@ OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
  * Macro for use in components that are of type CRCP
  */
 #define OMPI_CRCP_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "crcp", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("crcp", 2, 0, 0)
 
 /**
  * Macro to call the CRCP Request Complete function

@@ -20,7 +20,7 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/runtime/opal.h"
 
 mca_bml_base_module_t mca_bml = {

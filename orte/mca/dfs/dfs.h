@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +19,7 @@
 #include <fcntl.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/dfs/dfs_types.h"
@@ -176,8 +177,7 @@ typedef orte_dfs_base_component_1_0_0_t orte_dfs_base_component_t;
  * Macro for use in components that are of type errmgr
  */
 #define ORTE_DFS_BASE_VERSION_1_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "dfs", 1, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("dfs", 1, 0, 0)
 
 END_C_DECLS
 

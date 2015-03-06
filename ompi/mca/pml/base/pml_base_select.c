@@ -31,7 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/pmix/pmix.h"
@@ -301,13 +301,11 @@ int mca_pml_base_select(bool enable_progress_threads,
 /* need a "commonly" named PML structure so everything ends up in the
    same modex field */
 static mca_base_component_t pml_base_component = {
-    MCA_BASE_VERSION_2_0_0,
-    "pml",
-    MCA_BASE_VERSION_2_0_0,
-    "base",
-    MCA_BASE_VERSION_2_0_0,
-    NULL,
-    NULL
+    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0),
+    .mca_component_name = "base",
+    .mca_component_major_version = 2,
+    .mca_component_minor_version = 0,
+    .mca_component_release_version = 0,
 };
 
 

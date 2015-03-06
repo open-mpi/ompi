@@ -12,7 +12,7 @@
 #include "oshmem_config.h"
 #include <stdio.h>
 
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 

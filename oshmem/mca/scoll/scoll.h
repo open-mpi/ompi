@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved. 
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +27,7 @@
 
 #include "opal/util/output.h"
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
@@ -162,8 +165,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_scoll_base_module_t);
  * Macro for use in components that are of type coll
  */
 #define MCA_SCOLL_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "scoll", 1, 0, 0
+    OSHMEM_MCA_BASE_VERSION_2_1_0("scoll", 1, 0, 0)
 
 /* ******************************************************************** */
 /*

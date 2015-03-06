@@ -13,7 +13,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "vprotocol_pessimist.h"
 
 static int mca_vprotocol_pessimist_component_register(void);

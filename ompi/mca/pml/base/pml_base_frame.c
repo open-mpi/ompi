@@ -30,7 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
