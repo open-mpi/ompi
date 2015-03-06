@@ -1655,11 +1655,11 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
             if (NULL == rbuf[i]) {
                 int j;
                 opal_output (1, "OUT OF MEMORY\n");
-                free(rbuf);
                 free(temp_position);
                 for (j=0; j<i; j++) {
                     free(rbuf[j]);
                 }
+                free(rbuf);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -1667,11 +1667,11 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
 
     recvreq = (MPI_Request *)malloc (num_aggregators * sizeof(MPI_Request));
     if (NULL == recvreq) {
-        free(rbuf);
         free(temp_position);
         for (i=0; i<num_aggregators; i++) {
             free(rbuf[i]);
         }
+        free(rbuf);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i=0 ; i<num_aggregators ; i++) {
@@ -1692,11 +1692,11 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     if (0 == fh->f_rank%fh->f_aggregator_index) {
         req = (MPI_Request *)malloc (fh->f_size * sizeof(MPI_Request));
         if (NULL == req) {
-            free(rbuf);
             free(temp_position);
             for (i=0; i<num_aggregators; i++) {
                 free(rbuf[i]);
             }
+            free(rbuf);
             free(recvreq);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
