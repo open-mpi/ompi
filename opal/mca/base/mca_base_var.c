@@ -1350,9 +1350,6 @@ static int register_variable (const char *project_name, const char *framework_na
         mca_base_var_init();
     }
 
-    /* XXX -- readd project name once it is available in the component structure */
-    project_name = NULL;
-
     /* See if this entry is already in the array */
     var_index = var_find (project_name, framework_name, component_name, variable_name,
                           true);
@@ -1581,16 +1578,46 @@ int mca_base_var_register_synonym (int synonym_for, const char *project_name,
                               synonym_for, NULL);
 }
 
+static int var_get_env (mca_base_var_t *var, const char *name, char **source, char **value)
+{
+    char *source_env, *value_env;
+    int ret;
+
+    ret = asprintf (&source_env, "%sSOURCE_%s", mca_prefix, name);
+    if (0 > ret) {
+        return OPAL_ERROR;
+    }
+
+    ret = asprintf (&value_env, "%s%s", mca_prefix, name);
+    if (0 > ret) {
+        free (source_env);
+        return OPAL_ERROR;
+    }
+
+    *source = getenv (source_env);
+    *value = getenv (value_env);
+
+    free (source_env);
+    free (value_env);
+
+    if (NULL == *value) {
+        *source = NULL;
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    return OPAL_SUCCESS;
+}
+
 /*
  * Lookup a param in the environment
  */
 static int var_set_from_env (mca_base_var_t *var)
 {
     const char *var_full_name = var->mbv_full_name;
+    const char *var_long_name = var->mbv_long_name;
     bool deprecated = VAR_IS_DEPRECATED(var[0]);
     bool is_synonym = VAR_IS_SYNONYM(var[0]);
-    char *source, *source_env;
-    char *value, *value_env;
+    char *source_env, *value_env;
     int ret;
     
     if (is_synonym) {
@@ -1604,25 +1631,13 @@ static int var_set_from_env (mca_base_var_t *var)
         }
     }
 
-    ret = asprintf (&source, "%sSOURCE_%s", mca_prefix, var_full_name);
-    if (0 > ret) {
-        return OPAL_ERROR;
+    ret = var_get_env (var, var_long_name, &source_env, &value_env);
+    if (OPAL_SUCCESS != ret) {
+        ret = var_get_env (var, var_full_name, &source_env, &value_env);
     }
 
-    ret = asprintf (&value, "%s%s", mca_prefix, var_full_name);
-    if (0 > ret) {
-        free (source);
-        return OPAL_ERROR;
-    }
-
-    source_env = getenv (source);
-    value_env = getenv (value);
-
-    free (source);
-    free (value);
-
-    if (NULL == value_env) {
-        return OPAL_ERR_NOT_FOUND;
+    if (OPAL_SUCCESS != ret) {
+        return ret;
     }
 
     /* we found an environment variable but this variable is default-only. print
@@ -1691,7 +1706,6 @@ static int var_set_from_env (mca_base_var_t *var)
 
     return var_set_from_string (var, value_env);
 }
-
 
 /*
  * Lookup a param in the files
