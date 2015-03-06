@@ -28,7 +28,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/dss/dss_types.h"
 
 #include "orte/mca/ess/ess.h"

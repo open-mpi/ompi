@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/communicator/communicator.h"
 
 #include "opal/util/show_help.h"
@@ -126,8 +129,7 @@ typedef struct mca_sbgp_base_component_2_0_0_t mca_sbgp_base_component;
 * Macro for use in components that are of type coll
 */
 #define MCA_SBGP_BASE_VERSION_2_0_0 \
-      MCA_BASE_VERSION_2_0_0, \
-  "sbgp", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("sbgp", 2, 0, 0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

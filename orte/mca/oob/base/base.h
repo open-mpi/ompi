@@ -41,7 +41,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/timings.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/oob/oob.h"

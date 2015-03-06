@@ -10,7 +10,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "../pml_v.h"
 #include "../pml_v_protocol_base.h"
 #include "vprotocol_example.h"

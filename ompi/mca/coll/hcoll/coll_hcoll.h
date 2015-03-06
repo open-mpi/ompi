@@ -13,7 +13,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/memoryhooks/memory.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -182,11 +183,7 @@ typedef struct opal_shmem_base_module_2_0_0_t opal_shmem_base_module_t;
  * see: opal/mca/mca.h for more information
  */
 #define OPAL_SHMEM_BASE_VERSION_2_0_0                                   \
-    MCA_BASE_VERSION_2_0_0,                                             \
-        .mca_type_name = "shmem",                                       \
-        .mca_type_major_version = 2,                                    \
-        .mca_type_minor_version = 0,                                    \
-        .mca_type_release_version = 0
+    OPAL_MCA_BASE_VERSION_2_1_0("shmem", 2, 0, 0)
 
 END_C_DECLS
 

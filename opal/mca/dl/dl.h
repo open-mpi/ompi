@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -176,8 +179,7 @@ typedef struct opal_dl_base_module_1_0_0_t opal_dl_base_module_t;
  * Macro for use in components that are of type DL
  */
 #define OPAL_DL_BASE_VERSION_1_0_0              \
-    MCA_BASE_VERSION_2_0_0,                     \
-    "dl", 1, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("dl", 1, 0, 0)
 
 END_C_DECLS
 

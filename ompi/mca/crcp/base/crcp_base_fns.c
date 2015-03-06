@@ -29,7 +29,7 @@
 #include <ctype.h>
 
 #include "opal/class/opal_bitmap.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"

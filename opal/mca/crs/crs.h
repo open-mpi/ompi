@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -296,8 +299,7 @@ OPAL_DECLSPEC extern opal_crs_base_module_t opal_crs;
  * Macro for use in components that are of type CRS
  */
 #define OPAL_CRS_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "crs", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("crs", 2, 0, 0)
 
 END_C_DECLS
 

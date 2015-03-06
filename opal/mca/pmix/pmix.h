@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -449,8 +452,7 @@ typedef struct {
  * Macro for use in components that are of type pmix
  */
 #define OPAL_PMIX_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "pmix", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("pmix", 2, 0, 0)
 
 /* Global structure for accessing store functions */
 OPAL_DECLSPEC extern opal_pmix_base_module_t opal_pmix;  /* holds base function pointers */

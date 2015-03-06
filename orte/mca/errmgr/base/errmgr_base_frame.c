@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/util/opal_environ.h"

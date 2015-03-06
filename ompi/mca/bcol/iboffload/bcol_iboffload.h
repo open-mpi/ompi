@@ -22,7 +22,7 @@
 #include <infiniband/verbs.h>
 #include <infiniband/mverbs.h>
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 
 #include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"

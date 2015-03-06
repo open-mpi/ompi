@@ -27,7 +27,7 @@
 
 #include "orte_config.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/sstore/sstore.h"

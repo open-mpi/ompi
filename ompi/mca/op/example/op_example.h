@@ -22,7 +22,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/class/opal_object.h"
 
 #include "ompi/mca/op/op.h"

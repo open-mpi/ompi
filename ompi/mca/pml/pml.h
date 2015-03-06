@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
@@ -63,7 +64,7 @@
 #define MCA_PML_H
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
 BEGIN_C_DECLS
@@ -537,8 +538,7 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
  * Macro for use in components that are of type pml
  */
 #define MCA_PML_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "pml", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0)
 
     /*
      * macro for doing direct call / call through struct

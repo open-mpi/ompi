@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -124,8 +127,7 @@ OPAL_DECLSPEC extern opal_compress_base_module_t opal_compress;
  * Macro for use in components that are of type COMPRESS
  */
 #define OPAL_COMPRESS_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "compress", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("compress", 2, 0, 0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

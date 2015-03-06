@@ -37,7 +37,7 @@
 #endif
 
 #include "opal/threads/condition.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/mca/plm/plm.h"
 

@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
@@ -34,7 +35,7 @@
 #endif
 
 #include "orte/types.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "opal/dss/dss_types.h"
 
@@ -273,8 +274,7 @@ ORTE_DECLSPEC extern orte_routed_module_t orte_routed;
 
 /** Macro for use in components that are of type routed  */
 #define ORTE_ROUTED_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "routed", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("routed", 2, 0, 0)
 
 
 /* ******************************************************************** */

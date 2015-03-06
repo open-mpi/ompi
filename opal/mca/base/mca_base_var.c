@@ -1533,8 +1533,7 @@ int mca_base_component_var_register (const mca_base_component_t *component,
                                      mca_base_var_info_lvl_t info_lvl,
                                      mca_base_var_scope_t scope, void *storage)
 {
-    /* XXX -- component_update -- We will stash the project name in the component */
-    return mca_base_var_register (NULL, component->mca_type_name,
+    return mca_base_var_register (component->mca_project_name, component->mca_type_name,
                                   component->mca_component_name,
                                   variable_name, description, type, enumerator,
                                   bind, flags | MCA_BASE_VAR_FLAG_DWG,

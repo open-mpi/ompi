@@ -13,7 +13,7 @@
 #define __INCLUDE_VPROTOCOL_H_
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h" 
+#include "ompi/mca/mca.h" 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 

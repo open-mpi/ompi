@@ -1,6 +1,9 @@
-/**
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -10,7 +13,7 @@
 
 #ifndef MCA_MEMHEAP_H
 #define MCA_MEMHEAP_H
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "oshmem/constants.h"
 #include "oshmem/proc/proc.h"
 
@@ -133,8 +136,7 @@ typedef struct mca_memheap_base_module_t mca_memheap_base_module_t;
  * Macro for use in components that are of type rcache
  */
 #define MCA_MEMHEAP_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-"memheap", 2, 0, 0
+    OSHMEM_MCA_BASE_VERSION_2_1_0("memheap", 2, 0, 0)
 
 /*
  * macro for doing direct call / call through struct

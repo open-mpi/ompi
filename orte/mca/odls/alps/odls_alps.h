@@ -25,7 +25,7 @@
 #define ORTE_ODLS_ALPS_H
 
 #include "orte_config.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "orte/mca/odls/odls.h"
 
 #include "alps/alps.h"

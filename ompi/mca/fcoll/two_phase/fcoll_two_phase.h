@@ -23,7 +23,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/io/ompio/io_ompio.h"

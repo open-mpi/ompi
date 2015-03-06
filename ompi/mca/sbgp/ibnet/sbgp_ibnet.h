@@ -16,7 +16,7 @@
 
 #include "mpi.h"
 #include "infiniband/verbs.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "opal/mca/mpool/mpool.h"
 #include "ompi/request/request.h"

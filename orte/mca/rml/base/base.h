@@ -41,7 +41,7 @@
 #include "orte_config.h"
 
 #include "opal/dss/dss_types.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/util/timings.h"
 
 #include "orte/runtime/orte_globals.h"

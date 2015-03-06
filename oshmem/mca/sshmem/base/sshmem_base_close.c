@@ -11,7 +11,7 @@
 #include "oshmem_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"

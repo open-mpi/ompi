@@ -18,7 +18,7 @@
 #include <portals4.h>
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"

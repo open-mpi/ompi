@@ -3,6 +3,8 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -92,5 +94,6 @@ include proc/Makefile.am
 include request/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
+include mca/Makefile.am
 include tools/Makefile.am
 include util/Makefile.am

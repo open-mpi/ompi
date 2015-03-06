@@ -1166,11 +1166,7 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
  * alpha until this comment is removed.
  */
 #define MCA_BTL_BASE_VERSION_3_0_0              \
-    MCA_BASE_VERSION_2_0_0,                     \
-    .mca_type_name = "btl",                     \
-    .mca_type_major_version = 3,                \
-    .mca_type_minor_version = 0,                \
-    .mca_type_release_version = 0
+    OPAL_MCA_BASE_VERSION_2_1_0("btl", 3, 0, 0)
 
 #define MCA_BTL_DEFAULT_VERSION(name)                       \
     MCA_BTL_BASE_VERSION_3_0_0,                             \

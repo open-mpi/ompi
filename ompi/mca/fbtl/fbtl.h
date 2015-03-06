@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +25,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/request/request.h"
 #ifdef HAVE_SYS_UIO_H
@@ -38,8 +41,7 @@ struct mca_ompio_request_t;
  * Macro for use in components that are of type coll
  */
 #define MCA_FBTL_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-        "fbtl", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("fbtl", 2, 0, 0)
 
 /*
  * The file byte transfer layer (fbtl) framework provides the abstraction

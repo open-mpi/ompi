@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -53,7 +54,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
 #include "opal/class/opal_list.h"
 
@@ -132,8 +133,7 @@ typedef orte_ras_base_component_2_0_0_t orte_ras_base_component_t;
  * Macro for use in components that are of type ras
  */
 #define ORTE_RAS_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "ras", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("ras", 2, 0, 0)
 
 
 END_C_DECLS

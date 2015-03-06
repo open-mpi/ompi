@@ -26,7 +26,7 @@
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/mutex.h"
 #include "opal/sys/atomic.h"

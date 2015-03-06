@@ -12,7 +12,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 

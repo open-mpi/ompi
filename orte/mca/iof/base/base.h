@@ -47,7 +47,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/iof/iof.h"

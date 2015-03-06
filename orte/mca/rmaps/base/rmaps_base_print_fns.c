@@ -28,7 +28,7 @@
 
 #include "opal/util/if.h"
 #include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/threads/tsd.h"

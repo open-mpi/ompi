@@ -14,7 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2007-2008 UT-Battelle, LLC
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -84,7 +84,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 
 /*
  * This file includes some basic struct declarations (but not
@@ -410,8 +410,7 @@ typedef ompi_op_base_op_3buff_fns_1_0_0_t ompi_op_base_op_3buff_fns_t;
  * Macro for use in modules that are of type op v2.0.0
  */
 #define OMPI_OP_BASE_VERSION_1_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "op", 1, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("op", 1, 0, 0)
 
 END_C_DECLS
 

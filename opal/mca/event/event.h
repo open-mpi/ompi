@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -69,8 +72,7 @@ typedef struct opal_event_base_component_2_0_0_t opal_event_component_t;
  * Macro for use in components that are of type event
  */
 #define OPAL_EVENT_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "event", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("event", 2, 0, 0)
 
 END_C_DECLS
 

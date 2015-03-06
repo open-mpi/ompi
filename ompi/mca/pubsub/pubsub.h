@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -30,7 +30,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 
@@ -100,8 +100,7 @@ typedef struct ompi_pubsub_base_component_2_0_0_t ompi_pubsub_base_component_t;
  * Macro for use in components that are of type PUBSUB
  */
 #define OMPI_PUBSUB_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "pubsub", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("pubsub", 2, 0, 0)
 
 
 END_C_DECLS

@@ -24,7 +24,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/common/sm/common_sm.h"
 #include "ompi/mca/coll/coll.h"

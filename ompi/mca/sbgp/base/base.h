@@ -14,7 +14,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
 /*
  * Global functions for SBGP

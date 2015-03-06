@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -61,8 +64,7 @@ typedef struct opal_hwloc_base_component_2_0_0_t opal_hwloc_component_t;
  * Macro for use in components that are of type hwloc
  */
 #define OPAL_HWLOC_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "hwloc", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("hwloc", 2, 0, 0)
 
 
 /* ******************************************************************** */

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -30,7 +31,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/proc_info.h"
@@ -101,8 +102,7 @@ typedef struct orte_ess_base_component_2_0_0_t orte_ess_base_component_t;
  * Macro for use in components that are of type ess
  */
 #define ORTE_ESS_BASE_VERSION_3_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "ess", 3, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("ess", 3, 0, 0)
 
 /* Global structure for accessing ESS functions */
 ORTE_DECLSPEC extern orte_ess_base_module_t orte_ess;  /* holds selected module's function pointers */

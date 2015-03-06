@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -38,7 +38,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "ompi/info/info.h"
@@ -227,8 +227,7 @@ typedef struct ompi_dpm_base_component_2_0_0_t ompi_dpm_base_component_t;
  * Macro for use in components that are of type DPM
  */
 #define OMPI_DPM_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "dpm", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("dpm", 2, 0, 0)
 
 
 END_C_DECLS

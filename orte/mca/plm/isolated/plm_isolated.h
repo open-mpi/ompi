@@ -26,7 +26,7 @@
 
 #include "orte_config.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/mca/plm/plm.h"
 

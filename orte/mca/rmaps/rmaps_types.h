@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -82,8 +83,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
  * Macro for use in components that are of type rmaps
  */
 #define ORTE_RMAPS_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "rmaps", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("rmaps", 2, 0, 0)
 
 /* define map-related directives */
 #define ORTE_MAPPING_NO_USE_LOCAL      0x0100

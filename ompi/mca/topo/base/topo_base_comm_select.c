@@ -25,7 +25,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "ompi/mca/topo/topo.h"

@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved. 
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,7 +20,7 @@
 #include "oshmem/constants.h"
 
 #include "opal_stdint.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/btl/btl.h"
 #include "oshmem/proc/proc.h"
 
@@ -274,8 +277,7 @@ typedef mca_spml_base_module_1_0_0_t mca_spml_base_module_t;
  * Macro for use in components that are of type spml
  */
 #define MCA_SPML_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-"spml", 2, 0, 0
+    OSHMEM_MCA_BASE_VERSION_2_1_0("spml", 2, 0, 0)
 
 /*
  * macro for doing direct call / call through struct

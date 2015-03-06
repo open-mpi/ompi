@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -35,7 +36,7 @@
 #include <stddef.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -418,8 +419,7 @@ typedef ompi_osc_base_module_3_0_0_t ompi_osc_base_module_t;
 
 /** Macro for use in components that are of type osc */
 #define OMPI_OSC_BASE_VERSION_3_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "osc", 3, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("osc", 3, 0, 0)
 
 
 /* ******************************************************************** */

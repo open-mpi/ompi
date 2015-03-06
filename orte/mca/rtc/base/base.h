@@ -20,7 +20,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/mca/rtc/rtc.h"
 

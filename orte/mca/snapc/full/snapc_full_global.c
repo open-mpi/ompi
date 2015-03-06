@@ -30,7 +30,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
