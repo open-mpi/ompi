@@ -1292,7 +1292,7 @@ static int register_variable (const char *project_name, const char *framework_na
                               mca_base_var_scope_t scope, int synonym_for,
                               void *storage)
 {
-    int ret, var_index, group_index;
+    int ret, var_index, group_index, tmp;
     mca_base_var_group_t *group;
     mca_base_var_t *var;
 
@@ -1427,6 +1427,11 @@ static int register_variable (const char *project_name, const char *framework_na
         }
 
         mca_base_var_count++;
+        if (0 <= var_find_by_name (var->mbv_full_name, &tmp, 0)) {
+            /* XXX --- FIXME: variable overshadows an existing variable. this is difficult to support */
+            assert (0);
+        }
+
         opal_hash_table_set_value_ptr (&mca_base_var_index_hash, var->mbv_full_name, strlen (var->mbv_full_name),
                                        (void *)(uintptr_t) var_index);
     } else {
