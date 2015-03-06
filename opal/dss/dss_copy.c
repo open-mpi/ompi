@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -137,7 +137,7 @@ int opal_dss_copy_null(char **dest, char *src, opal_data_type_t type)
 {
     char *val;
 
-    *dest = (char*)malloc(sizeof(char*));
+    *dest = (char*)malloc(sizeof(char));
     if (NULL == *dest) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
