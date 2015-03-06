@@ -101,11 +101,6 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         goto on_file_error;
     }
 
-    if (NULL == alg_rules) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
-        goto on_file_error;
-    }
-
     X = (int)getnext(fptr);
     if (X<0) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of collectives in configuration file around line %d\n", fileline));
