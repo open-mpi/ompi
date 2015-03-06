@@ -924,11 +924,6 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     iovec_count_per_process=NULL;
   }
 
-  if (NULL != io_array_type){
-    free(io_array_type);
-    io_array_type=NULL;
-  }
-
   if (NULL != local_iov_array){
     free(local_iov_array);
     local_iov_array=NULL;
