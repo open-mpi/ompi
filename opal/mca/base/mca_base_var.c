@@ -222,6 +222,7 @@ static char *append_filename_to_list(const char *filename)
 int mca_base_var_init(void)
 {
     int ret;
+    char *name = NULL;
 
     if (!mca_base_var_initialized) {
         /* Init the value array for the param storage */
@@ -271,6 +272,19 @@ int mca_base_var_init(void)
                                      "Set SHELL env variables delimiter. Default: semicolon ';'",
                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
+
+        /* Set OMPI_MCA_mca_base_env_list variable, it might not be set before
+         * if mca variable was taken from amca conf file. Need to set it
+         * here because mca_base_var_process_env_list is called from schizo_ompi.c
+         * only when this env variable was set.
+         */
+        if (NULL != mca_base_env_list) {
+            (void) mca_base_var_env_name ("mca_base_env_list", &name);
+            if (NULL != name) {
+                opal_setenv(name, mca_base_env_list, false, &environ);
+                free(name);
+            }
+        }
     }
 
     return OPAL_SUCCESS;
