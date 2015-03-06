@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     int recv_data;
     size_t i, numprocs;
     ompi_proc_t **procs, *thisproc;
-    double t0, t1, t2, t3, t4, t5;
+    double t0, t1, t2, t3, t4, t5, t6;
     int *ptr;
 
     MPI_Init(&argc, &argv);
@@ -83,15 +83,19 @@ int main(int argc, char* argv[])
         }
     }
     t5 = get_timestamp();
-    free(procs);
   
     /* using fence as a barrier */
     opal_pmix.fence(NULL, 0);
+    t6 = get_timestamp();
+
+    free(procs);
+
     fprintf(stderr, "[%d] Test passed.\n", my_rank);
     fprintf(stderr, "[%d] \"MODEX_SEND\" %f\n", my_rank, t1-t0);
     fprintf(stderr, "[%d] \"FENCE\" %f\n", my_rank, t3-t2);
     fprintf(stderr, "[%d] \"MODEX_RECV\" %f\n", my_rank, t5-t4);
-    fprintf(stderr, "[%d] \"TOTAL\" %f\n", my_rank, t5-t0);
+    fprintf(stderr, "[%d] \"BARRIER\" %f\n", my_rank, t6-t5);
+    fprintf(stderr, "[%d] \"TOTAL\" %f\n", my_rank, t6-t0);
 
     DO_FINALIZE(0, 0, 0, 0);
 }
