@@ -42,12 +42,6 @@ The call to cuMemHostRegister(%p, %d, 0) failed.
   cuMemHostRegister return value:  %d
   Memory Pool:  %s
 #
-[cuMemHostUnregister failed]
-The call to cuMemHostUnregister(%p) failed.
-  Host:  %s
-  cuMemHostUnregister return value:  %d
-  Memory Pool:  %s
-#
 [cuIpcGetMemHandle failed]
 The call to cuIpcGetMemHandle failed. This means the GPU RDMA protocol
 cannot be used.
