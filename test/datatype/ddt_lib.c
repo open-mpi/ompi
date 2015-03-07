@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -36,8 +36,8 @@
 
 #define DUMP_DATA_AFTER_COMMIT 0x00000001
 #define CHECK_PACK_UNPACK      0x00000002
-
-uint32_t outputFlags = CHECK_PACK_UNPACK;
+#define VALIDATE_DATA          0x00000004
+uint32_t outputFlags = CHECK_PACK_UNPACK | VALIDATE_DATA;
 
 /**
  * Cache cleanup.
@@ -480,7 +480,7 @@ ompi_datatype_t* test_create_twice_two_doubles( void )
 /*
   Datatype 0x832cf28 size 0 align 1 id 0 length 4 used 0
   true_lb 0 true_ub 0 (true_extent 0) lb 0 ub 0 (extent 0)
-  nbElems 0 loops 0 flags 6 (commited contiguous )-cC--------[---][---]
+  nbElems 0 loops 0 flags 6 (committed contiguous )-cC--------[---][---]
   contain 13 disp 0x420 (1056) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x478 (1144) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x4d0 (1232) extent 4
@@ -566,6 +566,38 @@ ompi_datatype_t* test_struct( void )
         ompi_datatype_dump( pdt );
     }
     return pdt;
+}
+
+/* Create a non-contiguous resized datatype */
+struct structure {
+    double not_transfered;
+    double transfered_1;
+    double transfered_2;
+};
+
+ompi_datatype_t* create_struct_constant_gap_resized_ddt( ompi_datatype_t* type )
+{
+    struct structure data[1];
+    ompi_datatype_t *struct_type, *temp_type;
+    ompi_datatype_t *types[2] = {type, type};
+    int blocklens[2] = {1, 1};
+    MPI_Aint disps[3];
+
+    MPI_Get_address(&data[0].transfered_1, &disps[0]);
+    MPI_Get_address(&data[0].transfered_2, &disps[1]);
+    MPI_Get_address(&data[0], &disps[2]);
+    disps[1] -= disps[2]; /*  8 */
+    disps[0] -= disps[2]; /* 16 */
+
+    ompi_datatype_create_struct(2, blocklens, disps, types, &temp_type);
+    ompi_datatype_create_resized(temp_type, 0, sizeof(data[0]), &struct_type);
+    ompi_datatype_commit(&struct_type);
+    OBJ_RELEASE(temp_type); assert( temp_type == NULL );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_datatype_dump( struct_type );
+    }
+
+    return struct_type;
 }
 
 typedef struct {

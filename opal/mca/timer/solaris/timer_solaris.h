@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,7 +35,7 @@ opal_timer_base_get_usec(void)
 {
     /* gethrtime returns nanoseconds */
     return gethrtime() / 1000;
-}    
+}
 
 static inline opal_timer_t
 opal_timer_base_get_freq(void)

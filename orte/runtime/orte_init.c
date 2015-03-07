@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,7 +35,6 @@
 #endif
 
 #include "opal/mca/dstore/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -58,6 +59,7 @@
  * Static functions used to configure the interactions between the OPAL and
  * the runtime.
  */
+
 static char*
 _process_name_print_for_opal(const opal_process_name_t procname)
 {
@@ -65,26 +67,28 @@ _process_name_print_for_opal(const opal_process_name_t procname)
     return ORTE_NAME_PRINT(rte_name);
 }
 
-static uint32_t
-_process_name_jobid_for_opal(const opal_process_name_t procname)
+static char*
+_jobid_print_for_opal(const opal_jobid_t jobid)
 {
-    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
-    return rte_name->jobid;
+    return ORTE_JOBID_PRINT(jobid);
 }
 
-static uint32_t
-_process_name_vpid_for_opal(const opal_process_name_t procname)
+static char*
+_vpid_print_for_opal(const opal_vpid_t vpid)
 {
-    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
-    return rte_name->vpid;
+    return ORTE_VPID_PRINT(vpid);
 }
 
 static int
 _process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
 {
-    orte_process_name_t* o1 = (orte_process_name_t*)&p1;
-    orte_process_name_t* o2 = (orte_process_name_t*)&p2;
-    return orte_util_compare_name_fields(ORTE_NS_CMP_ALL, o1, o2);
+    return orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &p1, &p2);
+}
+
+static int _convert_string_to_process_name(opal_process_name_t *name,
+                                           const char* name_string)
+{
+    return orte_util_convert_string_to_process_name(name, name_string);
 }
 
 /*
@@ -136,10 +140,11 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     
     /* Convince OPAL to use our naming scheme */
     opal_process_name_print = _process_name_print_for_opal;
-    opal_process_name_vpid = _process_name_vpid_for_opal;
-    opal_process_name_jobid = _process_name_jobid_for_opal;
+    opal_vpid_print = _vpid_print_for_opal;
+    opal_jobid_print = _jobid_print_for_opal;
     opal_compare_proc = _process_name_compare;
-
+    opal_convert_string_to_process_name = _convert_string_to_process_name;
+    
     /* ensure we know the type of proc for when we finalize */
     orte_process_info.proc_type = flags;
 
@@ -205,20 +210,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         }
     }
 
-    if (ORTE_PROC_IS_APP) {
-        /* we must have the pmix framework setup prior to opening/selecting ESS
-         * as some of those components may depend on it */
-        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_pmix_base_open";
-            goto error;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_pmix_base_select";
-            goto error;
-        }
-    } else if (!ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register();
     }

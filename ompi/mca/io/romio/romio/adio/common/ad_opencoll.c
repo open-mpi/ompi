@@ -61,17 +61,28 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 		   access_mode ^= ADIO_EXCL;
        }
     }
+    fd->blksize = 1024*1024*4; /* this large default value should be good for
+				 most file systems.  any ROMIO driver is free
+				 to stat the file and find an optimial value */
 
     /* if we are doing deferred open, non-aggregators should return now */
     if (fd->hints->deferred_open ) {
-        if (fd->agg_comm == MPI_COMM_NULL) {
+        if (!(fd->is_agg)) {
             /* we might have turned off EXCL for the aggregators.
              * restore access_mode that non-aggregators get the right
              * value from get_amode */
             fd->access_mode = orig_amode_excl;
-            *error_code = MPI_SUCCESS;
+	    /* In file-system specific open, a driver might collect some
+	     * information via stat().  Deferred open means not every process
+	     * participates in fs-specific open, but they all participate in
+	     * this open call.  Broadcast a bit of information in case
+	     * lower-level file system driver (e.g. 'bluegene') collected it
+	     * (not all do)*/
+	    MPI_Bcast(&(fd->blksize), 1, MPI_LONG, fd->hints->ranklist[0], fd->comm);
+	    *error_code = MPI_SUCCESS;
+	    ADIOI_Assert(fd->blksize > 0);
 	    return;
-        }
+	}
     }
 
 /* For writing with data sieving, a read-modify-write is needed. If 
@@ -79,8 +90,12 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
    if write_only, open the file as read_write, but record it as write_only
    in fd, so that get_amode returns the right answer. */
 
+    /* observation from David Knaak: file systems that do not support data
+     * sieving do not need to change the mode */
+
     orig_amode_wronly = access_mode;
-    if (access_mode & ADIO_WRONLY) {
+    if ( (access_mode & ADIO_WRONLY) &&
+	    ADIO_Feature(fd, ADIO_DATA_SIEVING_WRITES) ) {
 	access_mode = access_mode ^ ADIO_WRONLY;
 	access_mode = access_mode | ADIO_RDWR;
     }
@@ -97,6 +112,12 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
     /* if we turned off EXCL earlier, then we should turn it back on */
     if (fd->access_mode != orig_amode_excl) fd->access_mode = orig_amode_excl;
 
+    /* broadcast a bit of information (blocksize for now) to all proceses in
+     * communicator, not just those who participated in open */
+    MPI_Bcast(&(fd->blksize), 1, MPI_LONG, fd->hints->ranklist[0], fd->comm);
+    /* file domain code will get terribly confused in a hard-to-debug way if
+     * gpfs blocksize not sensible */
+    ADIOI_Assert( fd->blksize > 0);
     /* for deferred open: this process has opened the file (because if we are
      * not an aggregaor and we are doing deferred open, we returned earlier)*/
     fd->is_open = 1;

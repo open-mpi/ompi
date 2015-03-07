@@ -32,10 +32,16 @@ void ADIOI_PANFS_ReadContig(ADIO_File fd, void *buf, int count,
 			  ADIO_Offset offset, ADIO_Status *status,
 			  int *error_code);
 void ADIOI_PANFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
-void ADIOI_PANFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PANFS_WriteContig(ADIO_File fd, const void *buf, int count,
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Status *status,
 			   int *error_code);
+
+/* TODO: move this to common code and have all routines retry. */
+/* TODO: also check for EWOULDBLOCK */
+#if defined(NEEDS_USLEEP_DECL)
+int usleep(useconds_t usec);
+#endif
 
 /* Delay 1 ms */
 #define AD_PANFS_RETRY_DELAY 1000

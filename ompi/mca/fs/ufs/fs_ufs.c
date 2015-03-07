@@ -42,7 +42,6 @@ static mca_fs_base_module_1_0_0_t ufs =  {
     mca_fs_ufs_file_delete,
     mca_fs_ufs_file_set_size,
     mca_fs_ufs_file_get_size,
-    mca_fs_ufs_file_set_info,
     mca_fs_ufs_file_sync
 };
 /*

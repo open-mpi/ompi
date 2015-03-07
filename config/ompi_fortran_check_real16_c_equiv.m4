@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -29,7 +31,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
     # We have to do this as a cache check for cross-compilation platforms
     AC_CACHE_CHECK([for C type matching bit representation of REAL*16], 
         real16_matches_c_var,
-        [AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a "$OMPI_HAVE_FORTRAN_REAL16" = "1"],[
+        [AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test "$OMPI_HAVE_FORTRAN_REAL16" = "1"],[
             # AC_CACHE_CHECK automatically does its own AC_MSG_CHECKING, so close it out
             AC_MSG_RESULT([pending])
 
@@ -53,7 +55,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                                 [CFLAGS="$CFLAGS_save"
                                  AC_MSG_RESULT([does not work])])
                          ])
-                   AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" -a "$ac_cv_type___float128" = "yes"],
+                   AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" && test "$ac_cv_type___float128" = "yes"],
                          [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
                           OPAL_UNIQ([CFLAGS])
                           OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
@@ -136,7 +138,7 @@ EOF
     AS_IF([test "$happy" = "no"],
         [AC_MSG_RESULT([Could not determine if REAL*16 bit-matches C type])],
         # If it worked so far, try running to see what we get
-        [AS_IF([test "$happy" = "yes" -a "$cross_compiling" = "yes"],
+        [AS_IF([test "$happy" = "yes" && test "$cross_compiling" = "yes"],
              [AC_MSG_RESULT([Error!])
               AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
              [OPAL_LOG_COMMAND([./conftest],

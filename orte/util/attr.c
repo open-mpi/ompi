@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,12 +19,25 @@
 
 #include "orte/util/attr.h"
 
+#define MAX_CONVERTERS 5
+#define MAX_CONVERTER_PROJECT_LEN 10
+
+typedef struct {
+    int init;
+    char project[MAX_CONVERTER_PROJECT_LEN];
+    orte_attribute_key_t key_base;
+    orte_attribute_key_t key_max;
+    orte_attr2str_fn_t converter;
+} orte_attr_converter_t;
+
+/* all default to NULL */
+static orte_attr_converter_t converters[MAX_CONVERTERS];
+
 static int orte_attr_unload(orte_attribute_t *kv,
                             void **data, opal_data_type_t type);
 
 static int orte_attr_load(orte_attribute_t *kv,
                           void *data, opal_data_type_t type);
-
 
 bool orte_get_attribute(opal_list_t *attributes,
                         orte_attribute_key_t key,
@@ -92,150 +107,201 @@ void orte_remove_attribute(opal_list_t *attributes, orte_attribute_key_t key)
     }
 }
 
+int orte_attr_register(const char *project,
+                       orte_attribute_key_t key_base,
+                       orte_attribute_key_t key_max,
+                       orte_attr2str_fn_t converter)
+{
+    int i;
+
+    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
+        if (0 == converters[i].init) {
+            converters[i].init = 1;
+            strncpy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
+            converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
+            converters[i].key_base = key_base;
+            converters[i].key_max = key_max;
+            converters[i].converter = converter;
+            return ORTE_SUCCESS;
+        }
+    }
+
+    return ORTE_ERR_OUT_OF_RESOURCE;
+}
+
 const char *orte_attr_key_to_str(orte_attribute_key_t key)
 {
-    switch(key) {
-    case ORTE_APP_HOSTFILE:
-        return "APP-HOSTFILE";
-    case ORTE_APP_ADD_HOSTFILE:
-        return "APP-ADD-HOSTFILE";
-    case ORTE_APP_DASH_HOST:
-        return "APP-DASH-HOST";
-    case ORTE_APP_ADD_HOST:
-        return "APP-ADD-HOST";
-    case ORTE_APP_USER_CWD:
-        return "APP-USER-CWD";
-    case ORTE_APP_SSNDIR_CWD:
-        return "APP-USE-SESSION-DIR-AS-CWD";
-    case ORTE_APP_PRELOAD_BIN:
-        return "APP-PRELOAD-BIN";
-    case ORTE_APP_PRELOAD_FILES:
-        return "APP-PRELOAD-FILES";
-    case ORTE_APP_SSTORE_LOAD:
-        return "APP-SSTORE-LOAD";
-    case ORTE_APP_RECOV_DEF:
-        return "APP-RECOVERY-DEFINED";
-    case ORTE_APP_MAX_RESTARTS:
-        return "APP-MAX-RESTARTS";
-    case ORTE_APP_MIN_NODES:
-        return "APP-MIN-NODES";
-    case ORTE_APP_MANDATORY:
-        return "APP-NODES-MANDATORY";
-    case ORTE_APP_MAX_PPN:
-        return "APP-MAX-PPN";
-    case ORTE_APP_PREFIX_DIR:
-        return "APP-PREFIX-DIR";
+    int i;
+    
+    if (ORTE_ATTR_KEY_BASE < key &&
+        key < ORTE_ATTR_KEY_MAX) {
+        /* belongs to ORTE, so we handle it */
+        switch(key) {
+        case ORTE_APP_HOSTFILE:
+            return "APP-HOSTFILE";
+        case ORTE_APP_ADD_HOSTFILE:
+            return "APP-ADD-HOSTFILE";
+        case ORTE_APP_DASH_HOST:
+            return "APP-DASH-HOST";
+        case ORTE_APP_ADD_HOST:
+            return "APP-ADD-HOST";
+        case ORTE_APP_USER_CWD:
+            return "APP-USER-CWD";
+        case ORTE_APP_SSNDIR_CWD:
+            return "APP-USE-SESSION-DIR-AS-CWD";
+        case ORTE_APP_PRELOAD_BIN:
+            return "APP-PRELOAD-BIN";
+        case ORTE_APP_PRELOAD_FILES:
+            return "APP-PRELOAD-FILES";
+        case ORTE_APP_SSTORE_LOAD:
+            return "APP-SSTORE-LOAD";
+        case ORTE_APP_RECOV_DEF:
+            return "APP-RECOVERY-DEFINED";
+        case ORTE_APP_MAX_RESTARTS:
+            return "APP-MAX-RESTARTS";
+        case ORTE_APP_MIN_NODES:
+            return "APP-MIN-NODES";
+        case ORTE_APP_MANDATORY:
+            return "APP-NODES-MANDATORY";
+        case ORTE_APP_MAX_PPN:
+            return "APP-MAX-PPN";
+        case ORTE_APP_PREFIX_DIR:
+            return "APP-PREFIX-DIR";
 
-    case ORTE_NODE_USERNAME:
-        return "NODE-USERNAME";
-    case ORTE_NODE_LAUNCH_ID:
-        return "NODE-LAUNCHID";
-    case ORTE_NODE_HOSTID:
-        return "NODE-HOSTID";
-    case ORTE_NODE_ALIAS:
-        return "NODE-ALIAS";
-    case ORTE_NODE_SERIAL_NUMBER:
-        return "NODE-SERIAL-NUM";
+        case ORTE_NODE_USERNAME:
+            return "NODE-USERNAME";
+        case ORTE_NODE_LAUNCH_ID:
+            return "NODE-LAUNCHID";
+        case ORTE_NODE_HOSTID:
+            return "NODE-HOSTID";
+        case ORTE_NODE_ALIAS:
+            return "NODE-ALIAS";
+        case ORTE_NODE_SERIAL_NUMBER:
+            return "NODE-SERIAL-NUM";
 
-    case ORTE_JOB_LAUNCH_MSG_SENT:
-        return "JOB-LAUNCH-MSG-SENT";
-    case ORTE_JOB_LAUNCH_MSG_RECVD:
-        return "JOB-LAUNCH-MSG-RECVD";
-    case ORTE_JOB_MAX_LAUNCH_MSG_RECVD:
-        return "JOB-MAX-LAUNCH-MSG-RECVD";
-    case ORTE_JOB_FILE_MAPS:
-        return "JOB-FILE-MAPS";
-    case ORTE_JOB_CKPT_STATE:
-        return "JOB-CKPT-STATE";
-    case ORTE_JOB_SNAPSHOT_REF:
-        return "JOB-SNAPSHOT-REF";
-    case ORTE_JOB_SNAPSHOT_LOC:
-        return "JOB-SNAPSHOT-LOC";
-    case ORTE_JOB_SNAPC_INIT_BAR:
-        return "JOB-SNAPC-INIT-BARRIER-ID";
-    case ORTE_JOB_SNAPC_FINI_BAR:
-        return "JOB-SNAPC-FINI-BARRIER-ID";
-    case ORTE_JOB_NUM_NONZERO_EXIT:
-        return "JOB-NUM-NONZERO-EXIT";
-    case ORTE_JOB_FAILURE_TIMER_EVENT:
-        return "JOB-FAILURE-TIMER-EVENT";
-    case ORTE_JOB_ABORTED_PROC:
-        return "JOB-ABORTED-PROC";
-    case ORTE_JOB_MAPPER:
-        return "JOB-MAPPER";
-    case ORTE_JOB_REDUCER:
-        return "JOB-REDUCER";
-    case ORTE_JOB_COMBINER:
-        return "JOB-COMBINER";
-    case ORTE_JOB_INDEX_ARGV:
-        return "JOB-INDEX-ARGV";
-    case ORTE_JOB_NO_VM:
-        return "JOB-NO-VM";
-    case ORTE_JOB_SPIN_FOR_DEBUG:
-        return "JOB-SPIN-FOR-DEBUG";
-    case ORTE_JOB_CONTINUOUS_OP:
-        return "JOB-CONTINUOUS-OP";
-    case ORTE_JOB_RECOVER_DEFINED:
-        return "JOB-RECOVERY-DEFINED";
-    case ORTE_JOB_ENABLE_RECOVERY:
-        return "JOB-ENABLE-RECOVERY";
-    case ORTE_JOB_NON_ORTE_JOB:
-        return "JOB-NON-ORTE-JOB";
-    case ORTE_JOB_STDOUT_TARGET:
-        return "JOB-STDOUT-TARGET";
-    case ORTE_JOB_POWER:
-        return "JOB-POWER";
-    case ORTE_JOB_MAX_FREQ:
-        return "JOB-MAX_FREQ";
-    case ORTE_JOB_MIN_FREQ:
-        return "JOB-MIN_FREQ";
-    case ORTE_JOB_GOVERNOR:
-        return "JOB-FREQ-GOVERNOR";
-    case ORTE_JOB_FAIL_NOTIFIED:
-        return "JOB-FAIL-NOTIFIED";
-    case ORTE_JOB_TERM_NOTIFIED:
-        return "JOB-TERM-NOTIFIED";
-    case ORTE_JOB_PEER_MODX_ID:
-        return "JOB-PEER-MODX-ID";
-    case ORTE_JOB_INIT_BAR_ID:
-        return "JOB-INIT-BAR-ID";
-    case ORTE_JOB_FINI_BAR_ID:
-        return "JOB-FINI-BAR-ID";
-    case ORTE_JOB_FWDIO_TO_TOOL:
-        return "JOB-FWD-IO-TO-TOOL";
+        case ORTE_JOB_LAUNCH_MSG_SENT:
+            return "JOB-LAUNCH-MSG-SENT";
+        case ORTE_JOB_LAUNCH_MSG_RECVD:
+            return "JOB-LAUNCH-MSG-RECVD";
+        case ORTE_JOB_MAX_LAUNCH_MSG_RECVD:
+            return "JOB-MAX-LAUNCH-MSG-RECVD";
+        case ORTE_JOB_FILE_MAPS:
+            return "JOB-FILE-MAPS";
+        case ORTE_JOB_CKPT_STATE:
+            return "JOB-CKPT-STATE";
+        case ORTE_JOB_SNAPSHOT_REF:
+            return "JOB-SNAPSHOT-REF";
+        case ORTE_JOB_SNAPSHOT_LOC:
+            return "JOB-SNAPSHOT-LOC";
+        case ORTE_JOB_SNAPC_INIT_BAR:
+            return "JOB-SNAPC-INIT-BARRIER-ID";
+        case ORTE_JOB_SNAPC_FINI_BAR:
+            return "JOB-SNAPC-FINI-BARRIER-ID";
+        case ORTE_JOB_NUM_NONZERO_EXIT:
+            return "JOB-NUM-NONZERO-EXIT";
+        case ORTE_JOB_FAILURE_TIMER_EVENT:
+            return "JOB-FAILURE-TIMER-EVENT";
+        case ORTE_JOB_ABORTED_PROC:
+            return "JOB-ABORTED-PROC";
+        case ORTE_JOB_MAPPER:
+            return "JOB-MAPPER";
+        case ORTE_JOB_REDUCER:
+            return "JOB-REDUCER";
+        case ORTE_JOB_COMBINER:
+            return "JOB-COMBINER";
+        case ORTE_JOB_INDEX_ARGV:
+            return "JOB-INDEX-ARGV";
+        case ORTE_JOB_NO_VM:
+            return "JOB-NO-VM";
+        case ORTE_JOB_SPIN_FOR_DEBUG:
+            return "JOB-SPIN-FOR-DEBUG";
+        case ORTE_JOB_CONTINUOUS_OP:
+            return "JOB-CONTINUOUS-OP";
+        case ORTE_JOB_RECOVER_DEFINED:
+            return "JOB-RECOVERY-DEFINED";
+        case ORTE_JOB_ENABLE_RECOVERY:
+            return "JOB-ENABLE-RECOVERY";
+        case ORTE_JOB_NON_ORTE_JOB:
+            return "JOB-NON-ORTE-JOB";
+        case ORTE_JOB_STDOUT_TARGET:
+            return "JOB-STDOUT-TARGET";
+        case ORTE_JOB_POWER:
+            return "JOB-POWER";
+        case ORTE_JOB_MAX_FREQ:
+            return "JOB-MAX_FREQ";
+        case ORTE_JOB_MIN_FREQ:
+            return "JOB-MIN_FREQ";
+        case ORTE_JOB_GOVERNOR:
+            return "JOB-FREQ-GOVERNOR";
+        case ORTE_JOB_FAIL_NOTIFIED:
+            return "JOB-FAIL-NOTIFIED";
+        case ORTE_JOB_TERM_NOTIFIED:
+            return "JOB-TERM-NOTIFIED";
+        case ORTE_JOB_PEER_MODX_ID:
+            return "JOB-PEER-MODX-ID";
+        case ORTE_JOB_INIT_BAR_ID:
+            return "JOB-INIT-BAR-ID";
+        case ORTE_JOB_FINI_BAR_ID:
+            return "JOB-FINI-BAR-ID";
+        case ORTE_JOB_FWDIO_TO_TOOL:
+            return "JOB-FWD-IO-TO-TOOL";
+        case ORTE_JOB_PHYSICAL_CPUIDS:
+            return "JOB-PHYSICAL-CPUIDS";
+        case ORTE_JOB_LAUNCHED_DAEMONS:
+            return "JOB-LAUNCHED-DAEMONS";
+        case ORTE_JOB_REPORT_BINDINGS:
+            return "JOB-REPORT-BINDINGS";
+        case ORTE_JOB_SLOT_LIST:
+            return "JOB-SLOT-LIST";
+        case ORTE_JOB_NOTIFICATIONS:
+            return "JOB-NOTIFICATIONS";
+            
+        case ORTE_PROC_NOBARRIER:
+            return "PROC-NOBARRIER";
+        case ORTE_PROC_CPU_BITMAP:
+            return "PROC-CPU-BITMAP";
+        case ORTE_PROC_HWLOC_LOCALE:
+            return "PROC-HWLOC-LOCALE";
+        case ORTE_PROC_HWLOC_BOUND:
+            return "PROC-HWLOC-BOUND";
+        case ORTE_PROC_PRIOR_NODE:
+            return "PROC-PRIOR-NODE";
+        case ORTE_PROC_NRESTARTS:
+            return "PROC-NUM-RESTARTS";
+        case ORTE_PROC_RESTART_TIME:
+            return "PROC-RESTART-TIME";
+        case ORTE_PROC_FAST_FAILS:
+            return "PROC-FAST-FAILS";
+        case ORTE_PROC_CKPT_STATE:
+            return "PROC-CKPT-STATE";
+        case ORTE_PROC_SNAPSHOT_REF:
+            return "PROC-SNAPHOT-REF";
+        case ORTE_PROC_SNAPSHOT_LOC:
+            return "PROC-SNAPSHOT-LOC";
+        case ORTE_PROC_NODENAME:
+            return "PROC-NODENAME";
+        case ORTE_PROC_CGROUP:
+            return "PROC-CGROUP";
+        case ORTE_PROC_NBEATS:
+            return "PROC-NBEATS";
 
-    case ORTE_PROC_NOBARRIER:
-        return "PROC-NOBARRIER";
-    case ORTE_PROC_CPU_BITMAP:
-        return "PROC-CPU-BITMAP";
-    case ORTE_PROC_HWLOC_LOCALE:
-        return "PROC-HWLOC-LOCALE";
-    case ORTE_PROC_HWLOC_BOUND:
-        return "PROC-HWLOC-BOUND";
-    case ORTE_PROC_PRIOR_NODE:
-        return "PROC-PRIOR-NODE";
-    case ORTE_PROC_NRESTARTS:
-        return "PROC-NUM-RESTARTS";
-    case ORTE_PROC_RESTART_TIME:
-        return "PROC-RESTART-TIME";
-    case ORTE_PROC_FAST_FAILS:
-        return "PROC-FAST-FAILS";
-    case ORTE_PROC_CKPT_STATE:
-        return "PROC-CKPT-STATE";
-    case ORTE_PROC_SNAPSHOT_REF:
-        return "PROC-SNAPHOT-REF";
-    case ORTE_PROC_SNAPSHOT_LOC:
-        return "PROC-SNAPSHOT-LOC";
-    case ORTE_PROC_NODENAME:
-        return "PROC-NODENAME";
-    case ORTE_PROC_CGROUP:
-        return "PROC-CGROUP";
-    case ORTE_PROC_NBEATS:
-        return "PROC-NBEATS";
-
-    default:
-        return "UNKNOWN-KEY";
+        default:
+            return "UNKNOWN-KEY";
+        }
     }
+
+    /* see if one of the converters can handle it */
+    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
+        if (0 != converters[i].init) {
+            if (converters[i].key_base < key && 
+                key < converters[i].key_max) {
+                return converters[i].converter(key);
+            }
+        }
+    }
+
+    /* get here if nobody know what to do */
+    return "UNKNOWN-KEY";
 }
 
 
@@ -337,6 +403,14 @@ static int orte_attr_load(orte_attribute_t *kv,
         kv->data.ptr = data;
         break;
 
+    case OPAL_VPID:
+        kv->data.vpid = *(orte_vpid_t *)data;
+        break;
+
+    case OPAL_JOBID:
+        kv->data.jobid = *(orte_jobid_t *)data;
+        break;
+
     default:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         return OPAL_ERR_NOT_SUPPORTED;
@@ -352,7 +426,10 @@ static int orte_attr_unload(orte_attribute_t *kv,
     if (type != kv->type) {
         return OPAL_ERR_TYPE_MISMATCH;
     }
-    if (NULL == data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type) {
+    if (NULL == data  ||
+        (NULL == *data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type &&
+         OPAL_BUFFER != type && OPAL_PTR != type)) {
+        assert(0);
         OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return OPAL_ERR_BAD_PARAM;
     }
@@ -438,6 +515,14 @@ static int orte_attr_unload(orte_attribute_t *kv,
 
     case OPAL_PTR:
         *data = kv->data.ptr;
+        break;
+
+    case OPAL_VPID:
+        memcpy(*data, &kv->data.vpid, sizeof(orte_vpid_t));
+        break;
+
+    case OPAL_JOBID:
+        memcpy(*data, &kv->data.jobid, sizeof(orte_jobid_t));
         break;
 
     default:

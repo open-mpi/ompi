@@ -1,13 +1,15 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+dnl Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OMPI_CHECK_HCOLL(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -23,7 +25,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
     OPAL_CHECK_WITHDIR([hcoll], [$with_hcoll], [lib/libhcoll.so])
 
     AS_IF([test "$with_hcoll" != "no"],
-          [AS_IF([test ! -z "$with_hcoll" -a "$with_hcoll" != "yes"],
+          [AS_IF([test ! -z "$with_hcoll" && test "$with_hcoll" != "yes"],
 			  [ompi_check_hcoll_dir=$with_hcoll
 			   ompi_check_hcoll_libdir="$ompi_check_hcoll_dir/lib"
 			   ompi_check_hcoll_incdir="$ompi_check_hcoll_dir/include"
@@ -62,13 +64,13 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
 
 
 
-    AS_IF([test "$ompi_check_hcoll_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+    AS_IF([test "$ompi_check_hcoll_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([hcoll driver does not currently support progress threads.  Disabling HCOLL.])
            ompi_check_hcoll_happy="no"])
 
     AS_IF([test "$ompi_check_hcoll_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_hcoll" -a "$with_hcoll" != "no"],
+          [AS_IF([test ! -z "$with_hcoll" && test "$with_hcoll" != "no"],
                  [AC_MSG_ERROR([HCOLL support requested but not found.  Aborting])])
            $3])
 

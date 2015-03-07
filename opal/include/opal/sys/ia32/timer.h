@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,6 +22,9 @@
 
 typedef uint64_t opal_timer_t;
 
+/* Using RDTSC(P) results in non-monotonic timers across cores */
+#undef OPAL_TIMER_MONOTONIC
+#define OPAL_TIMER_MONOTONIC 0
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
@@ -29,8 +32,15 @@ static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
+    int tmp;
 
-    __asm__ __volatile__("rdtsc" : "=A"(ret));
+    __asm__ __volatile__(
+                         "xchg{l} {%%}ebx, %1\n"
+                         "cpuid\n"
+                         "xchg{l} {%%}ebx, %1\n"
+                         "rdtsc\n"
+                         : "=A"(ret), "=r"(tmp)
+                         :: "ecx");
 
     return ret;
 }

@@ -1,0 +1,13 @@
+This README is for userspace RDMA fabric library.
+
+Version Libfabric v1.0.0rc3
+Released on 2015-02-20
+
+Building
+========
+To make this directory, run:
+./autogen.sh && ./configure && make && make install
+
+Typically the autogen and configure steps only need be done the first
+time unless configure.ac or Makefile.am changes.
+

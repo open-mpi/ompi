@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +15,8 @@
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -85,16 +88,16 @@ void mca_mpool_gpusm_module_init(mca_mpool_gpusm_module_t* mpool)
     mpool->resources.register_mem = cuda_getmemhandle;
     mpool->resources.deregister_mem = cuda_ungetmemhandle;
 
-    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mpool->reg_list, opal_free_list_t);
 
     /* Start with 0 entries in the free list since CUDA may not have
      * been initialized when this free list is created and there is
      * some CUDA specific activities that need to be done. */
-    ompi_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
+    opal_free_list_init (&mpool->reg_list, mpool->resources.sizeof_reg,
             opal_cache_line_size,
             OBJ_CLASS(mca_mpool_gpusm_registration_t), 
             0,opal_cache_line_size,
-            0, -1, 64, NULL);
+            0, -1, 64, NULL, 0, NULL, NULL, NULL);
 
 }
 
@@ -121,7 +124,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 {
     mca_mpool_gpusm_module_t *mpool_gpusm = (mca_mpool_gpusm_module_t*)mpool;
     mca_mpool_base_registration_t *gpusm_reg;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     unsigned char *base, *bound;
     int rc;
 
@@ -134,7 +137,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     base = addr;
     bound = (unsigned char *)addr + size - 1;
 
-    OMPI_FREE_LIST_GET_MT(&mpool_gpusm->reg_list, item);
+    item = opal_free_list_get (&mpool_gpusm->reg_list);
     if(NULL == item) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -148,7 +151,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     rc = mpool_gpusm->resources.register_mem(base, size, gpusm_reg, NULL);
 
     if(rc != OPAL_SUCCESS) {
-        OMPI_FREE_LIST_RETURN_MT(&mpool_gpusm->reg_list, item);
+        opal_free_list_return (&mpool_gpusm->reg_list, item);
         return rc;
     }
 
@@ -168,7 +171,7 @@ int mca_mpool_gpusm_deregister(struct mca_mpool_base_module_t *mpool,
     mca_mpool_gpusm_module_t *mpool_gpusm = (mca_mpool_gpusm_module_t *)mpool;
 
     rc = mpool_gpusm->resources.deregister_mem(mpool, reg);
-    OMPI_FREE_LIST_RETURN_MT(&mpool_gpusm->reg_list, (ompi_free_list_item_t*)reg);
+    opal_free_list_return (&mpool_gpusm->reg_list, (opal_free_list_item_t *) reg);
     return OPAL_SUCCESS;
 }
 
@@ -177,13 +180,13 @@ int mca_mpool_gpusm_deregister(struct mca_mpool_base_module_t *mpool,
  */
 void mca_mpool_gpusm_finalize(struct mca_mpool_base_module_t *mpool)
 {
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     mca_mpool_gpusm_module_t *mpool_gpusm = (mca_mpool_gpusm_module_t *)mpool;
 
     /* Need to run the destructor on each item in the free list explicitly.
      * The destruction of the free list only runs the destructor on the
      * main free list, not each item. */
-    while (NULL != (item = (ompi_free_list_item_t *)opal_atomic_lifo_pop(&(mpool_gpusm->reg_list.super)))) {
+    while (NULL != (item = (opal_free_list_item_t *)opal_lifo_pop(&(mpool_gpusm->reg_list.super)))) {
         OBJ_DESTRUCT(item);
     }
 

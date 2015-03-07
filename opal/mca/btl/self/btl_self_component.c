@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,7 +101,6 @@ static int mca_btl_self_component_register(void)
     mca_btl_self.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_self.btl_min_rdma_pipeline_size = 0;
     mca_btl_self.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE;
-    mca_btl_self.btl_seg_size = sizeof (mca_btl_base_segment_t);
     mca_btl_self.btl_bandwidth = 100;
     mca_btl_self.btl_latency = 0;
     mca_btl_base_param_register(&mca_btl_self_component.super.btl_version,
@@ -112,9 +113,9 @@ int mca_btl_self_component_open(void)
 {
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_send, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_rdma, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_send, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_rdma, opal_free_list_t);
 
     return OPAL_SUCCESS;
 }
@@ -152,7 +153,7 @@ mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
     }
 
     /* initialize free lists */
-    ompi_free_list_init_new( &mca_btl_self_component.self_frags_eager, 
+    opal_free_list_init (&mca_btl_self_component.self_frags_eager,
                          sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
                          opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_eager_t),
@@ -160,8 +161,8 @@ mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,
-                         NULL );
-    ompi_free_list_init_new( &mca_btl_self_component.self_frags_send, 
+                         NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init (&mca_btl_self_component.self_frags_send,
                          sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
                          opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_send_t),
@@ -169,8 +170,8 @@ mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,
-                         NULL );
-    ompi_free_list_init_new( &mca_btl_self_component.self_frags_rdma, 
+                         NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init (&mca_btl_self_component.self_frags_rdma,
                          sizeof(mca_btl_self_frag_rdma_t),
                          opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_rdma_t),
@@ -178,7 +179,7 @@ mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL);
 
     /* get pointer to the btls */
     btls[0] = (mca_btl_base_module_t *)(&mca_btl_self);

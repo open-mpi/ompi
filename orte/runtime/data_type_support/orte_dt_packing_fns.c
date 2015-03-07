@@ -54,95 +54,6 @@ int orte_dt_pack_std_cntr(opal_buffer_t *buffer, const void *src,
 }
 
 /*
- * NAME
- */
-int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
-                           int32_t num_vals, opal_data_type_t type)
-{
-    int rc;
-    int32_t i;
-    orte_process_name_t* proc;
-    orte_jobid_t *jobid;
-    orte_vpid_t *vpid;
-
-    /* collect all the jobids in a contiguous array */
-    jobid = (orte_jobid_t*)malloc(num_vals * sizeof(orte_jobid_t));
-    if (NULL == jobid) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    proc = (orte_process_name_t*)src;
-    for (i=0; i < num_vals; i++) {
-        jobid[i] = proc->jobid;
-        proc++;
-    }
-    /* now pack them in one shot */
-    if (ORTE_SUCCESS != (rc =
-                         orte_dt_pack_jobid(buffer, jobid, num_vals, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        free(jobid);
-        return rc;
-    }
-    free(jobid);
-
-    /* collect all the vpids in a contiguous array */
-    vpid = (orte_vpid_t*)malloc(num_vals * sizeof(orte_vpid_t));
-    if (NULL == vpid) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    proc = (orte_process_name_t*)src;
-    for (i=0; i < num_vals; i++) {
-        vpid[i] = proc->vpid;
-        proc++;
-    }
-    /* now pack them in one shot */
-    if (ORTE_SUCCESS != (rc =
-                         orte_dt_pack_vpid(buffer, vpid, num_vals, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        free(vpid);
-        return rc;
-    }
-    free(vpid);
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * JOBID
- */
-int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
-                            int32_t num_vals, opal_data_type_t type)
-{
-    int ret;
-
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (
-                         ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_JOBID_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    return ret;
-}
-
-/*
- * VPID
- */
-int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
-                           int32_t num_vals, opal_data_type_t type)
-{
-    int ret;
-
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (
-                         ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_VPID_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    return ret;
-}
-
-/*
  * JOB
  * NOTE: We do not pack all of the job object's fields as many of them have no
  * value in sending them to another location. The only purpose in packing and
@@ -169,7 +80,11 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* pack the personality */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &jobs[i]->personality, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* pack the number of apps */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(jobs[i]->num_apps)), 1, ORTE_APP_IDX))) {

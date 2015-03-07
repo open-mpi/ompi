@@ -134,6 +134,39 @@ typedef unsigned long long uint64_t;
 
 #endif
 
+/* 128-bit */
+
+#ifdef HAVE_INT128_T
+
+typedef int128_t opal_int128_t;
+typedef uint128_t opal_uint128_t;
+
+#define HAVE_OPAL_INT128_T 1
+
+#elif defined(HAVE___INT128)
+
+/* suppress warning about __int128 type */
+#pragma GCC diagnostic push
+/* Clang won't quietly accept "-pedantic", but GCC versions older than ~4.8
+ * won't quietly accept "-Wpedanic".  The whole "#pragma GCC diagnostic ..."
+ * facility only was added to GCC as of version 4.6. */
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wpedantic"
+#else
+#pragma GCC diagnostic ignored "-pedantic"
+#endif
+typedef __int128 opal_int128_t;
+typedef unsigned __int128 opal_uint128_t;
+#pragma GCC diagnostic pop
+
+#define HAVE_OPAL_INT128_T 1
+
+#else
+
+#define HAVE_OPAL_INT128_T 0
+
+#endif
+
 /* Pointers */
 
 #if SIZEOF_VOID_P == SIZEOF_INT

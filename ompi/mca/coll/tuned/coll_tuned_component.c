@@ -2,10 +2,10 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -44,7 +44,6 @@ const char *ompi_coll_tuned_component_version_string =
  */
 int   ompi_coll_tuned_stream = -1;
 int   ompi_coll_tuned_priority = 30;
-int   ompi_coll_tuned_preallocate_memory_comm_size_limit = (32 * 1024);
 bool  ompi_coll_tuned_use_dynamic_rules = false;
 char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
@@ -121,16 +120,6 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_priority);
 
-    /* parameter for pre-allocated memory requests etc */
-    ompi_coll_tuned_preallocate_memory_comm_size_limit = (32 * 1024);
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "pre_allocate_memory_comm_size_limit",
-                                           "Size of communicator were we stop pre-allocating memory for the fixed internal buffer used for message requests etc that is hung off the communicator data segment. I.e. if you have a 100'000 nodes you might not want to pre-allocate 200'000 request handle slots per communicator instance!",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_preallocate_memory_comm_size_limit);
-    
     /* some initial guesses at topology parameters */
     ompi_coll_tuned_init_tree_fanout = 4;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
@@ -272,56 +261,13 @@ static int tuned_close(void)
 static void
 mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
 {
-    module->tuned_data = NULL;
-}
-
-
-static void
-mca_coll_tuned_module_destruct(mca_coll_tuned_module_t *module)
-{
-    mca_coll_tuned_comm_t *data;
-
-    /* Free the space in the data mpool and the data hanging off the
-       communicator */
-
-    data = module->tuned_data;
-    if (NULL != data) {
-#if OPAL_ENABLE_DEBUG
-        /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
-           the generel c_coll_selected_data */
-        data->mcct_reqs = NULL;
-        data->mcct_num_reqs = 0;
-#endif
-
-        /* free any cached information that has been allocated */
-        if (data->cached_ntree) { /* destroy general tree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_ntree);
-        }
-        if (data->cached_bintree) { /* destroy bintree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_bintree);
-        }
-        if (data->cached_bmtree) { /* destroy bmtree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_bmtree);
-        }
-        if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bmtree);
-        }
-        if (data->cached_chain) { /* destroy general chain if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_chain);
-        }
-        if (data->cached_pipeline) { /* destroy pipeline if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_pipeline);
-        }
-        if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bintree);
-        }
-
-        free(data);
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    
+    for( int i = 0; i < COLLCOUNT; i++ ) {
+        tuned_module->user_forced[i].algorithm = 0;
+        tuned_module->com_rules[i] = NULL;
     }
 }
 
-
-OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t,
-                   mca_coll_base_module_t,
-                   mca_coll_tuned_module_construct,
-                   mca_coll_tuned_module_destruct);
+OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t,
+                   mca_coll_tuned_module_construct, NULL);

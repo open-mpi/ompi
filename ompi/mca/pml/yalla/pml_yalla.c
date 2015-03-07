@@ -240,6 +240,7 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
         PML_YALLA_VERBOSE(2, "disconnected from rank %ld", procs[i]->super.proc_name);
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
     }
+    opal_pmix.fence(NULL, 0);
     return OMPI_SUCCESS;
 }
 
@@ -438,7 +439,10 @@ int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
 
     if (mode == MCA_PML_BASE_SEND_BUFFERED) {
         rc = mca_pml_yalla_bsend(&sreq->mxm);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        sreq->super.ompi.req_status.MPI_ERROR = rc;
         ompi_request_complete(&sreq->super.ompi, true);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
         *request = &sreq->super.ompi;
         return rc;
     }
@@ -522,7 +526,7 @@ int mca_pml_yalla_probe(int src, int tag, struct ompi_communicator_t* comm,
             PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
-            continue;
+            break;
         default:
             return OMPI_ERROR;
         }
@@ -575,14 +579,13 @@ int mca_pml_yalla_mprobe(int src, int tag, struct ompi_communicator_t* comm,
             PML_YALLA_SET_MESSAGE(&rreq, comm, mxm_msg, message);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
-            continue;
+            break;
         default:
             return OMPI_ERROR;
         }
 
         opal_progress();
     }
-    return OMPI_SUCCESS;
 }
 
 int mca_pml_yalla_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
@@ -666,7 +669,10 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
             if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_BSEND) {
                 PML_YALLA_VERBOSE(8, "start bsend request %p", sreq);
                 rc = mca_pml_yalla_bsend(&sreq->mxm);
+                OPAL_THREAD_LOCK(&ompi_request_lock);
+                sreq->super.ompi.req_status.MPI_ERROR = rc;
                 ompi_request_complete(&sreq->super.ompi, true);
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 if (OMPI_SUCCESS != rc) {
                     return rc;
                 }

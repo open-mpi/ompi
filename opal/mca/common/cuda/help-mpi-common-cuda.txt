@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2011-2014 NVIDIA.  All rights reserved.
+# Copyright (c) 2011-2015 NVIDIA.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -48,12 +48,6 @@ The call to cuMemHostRegister(%p, %d, 0) failed.
   cuMemHostRegister return value:  %d
   Memory Pool:  %s
 #
-[cuMemHostUnregister failed]
-The call to cuMemHostUnregister(%p) failed.
-  Host:  %s
-  cuMemHostUnregister return value:  %d
-  Memory Pool:  %s
-#
 [cuIpcGetMemHandle failed]
 The call to cuIpcGetMemHandle failed. This means the GPU RDMA protocol
 cannot be used.
@@ -80,10 +74,12 @@ Rerun with --mca mpi_common_cuda_event_max %d
 [cuIpcOpenMemHandle failed]
 The call to cuIpcOpenMemHandle failed. This is an unrecoverable error
 and will cause the program to abort.
-  cuIpcOpenMemHandle return value:   %d
-  address: %p
-Check the cuda.h file for what the return value means. Perhaps a reboot
-of the node will clear the problem.
+  Hostname:                         %s
+  cuIpcOpenMemHandle return value:  %d
+  address:                          %p
+Check the cuda.h file for what the return value means. A possible cause
+for this is not enough free device memory.  Try to reduce the device
+memory footprint of your application.
 #
 [cuIpcCloseMemHandle failed]
 The call to cuIpcCloseMemHandle failed. This is a warning and the program 

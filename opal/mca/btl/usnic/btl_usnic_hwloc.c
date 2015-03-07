@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,8 +14,6 @@
 
 #include "opal_config.h"
 
-#include <infiniband/verbs.h>
-
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
@@ -25,8 +23,12 @@
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "opal/constants.h"
+
+#if BTL_IN_OPAL
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/common/verbs/common_verbs.h"
+#else
+#include "ompi/mca/btl/base/base.h"
+#endif
 
 #include "btl_usnic_hwloc.h"
 
@@ -136,27 +138,46 @@ static int find_my_numa_node(void)
  */
 static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
 {
+    struct fi_usnic_info *uip;
     hwloc_obj_t obj;
-    hwloc_bitmap_t cpuset;
 
     /* Bozo checks */
     assert(NULL != matrix);
     assert(NULL != my_numa_node);
 
-    /* Find the NUMA node for the device */
-    cpuset = hwloc_bitmap_alloc();
-    if (NULL == cpuset) {
-        return NULL;
+    uip = &module->usnic_info;
+
+    /* Look for the IP device name in the hwloc topology (the usnic
+       device is simply an alternate API to reach the same device, so
+       if we find the IP device name, we've found the usNIC device) */
+    obj = NULL;
+    while (NULL != (obj = hwloc_get_next_osdev(opal_hwloc_topology, obj))) {
+        assert(HWLOC_OBJ_OS_DEVICE == obj->type);
+        if (0 == strcmp(obj->name, uip->ui.v1.ui_ifname)) {
+            break;
+        }
     }
-    if (0 != hwloc_ibv_get_device_cpuset(opal_hwloc_topology,
-                                         module->device,
-                                         cpuset)) {
-        hwloc_bitmap_free(cpuset);
+
+    /* Did not find it */
+    if (NULL == obj) {
         return NULL;
     }
 
-    obj = find_numa_node(cpuset);
-    hwloc_bitmap_free(cpuset);
+    /* Search upwards to find the device's NUMA node */
+    /* Go upwards until we hit the NUMA node or run out of parents */
+    while (obj->type > HWLOC_OBJ_NODE &&
+           NULL != obj->parent) {
+        obj = obj->parent;
+    }
+
+    /* Make sure we ended up on the NUMA node */
+    if (obj->type != HWLOC_OBJ_NODE) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by NUMA distance not possible",
+                            module->fabric_info->fabric_attr->name);
+        return NULL;
+    }
+
     return obj;
 }
 
@@ -209,7 +230,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: %s is distance %d from me",
-                            ibv_get_device_name(module->device),
+                            module->fabric_info->fabric_attr->name,
                             module->numa_distance);
     }
 

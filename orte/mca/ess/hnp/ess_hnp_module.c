@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,6 +73,7 @@
 #include "orte/mca/sstore/base/base.h"
 #endif
 #include "orte/mca/filem/base/base.h"
+#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
 
@@ -194,9 +195,6 @@ static int rte_init(void)
 
 #if OPAL_HAVE_HWLOC
     {
-        hwloc_obj_t obj;
-        unsigned i, j;
-
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
             if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
@@ -204,33 +202,10 @@ static int rte_init(void)
                 goto error;
             }
         }
+        /* generate the signature */
+        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
 
-        /* remove the hostname from the topology. Unfortunately, hwloc
-         * decided to add the source hostname to the "topology", thus
-         * rendering it unusable as a pure topological description. So
-         * we remove that information here.
-         */
-        obj = hwloc_get_root_obj(opal_hwloc_topology);
-        for (i=0; i < obj->infos_count; i++) {
-            if (NULL == obj->infos[i].name ||
-                NULL == obj->infos[i].value) {
-                continue;
-            }
-            if (0 == strncmp(obj->infos[i].name, "HostName", strlen("HostName"))) {
-                free(obj->infos[i].name);
-                free(obj->infos[i].value);
-                /* left justify the array */
-                for (j=i; j < obj->infos_count-1; j++) {
-                    obj->infos[j] = obj->infos[j+1];
-                }
-                obj->infos[obj->infos_count-1].name = NULL;
-                obj->infos[obj->infos_count-1].value = NULL;
-                obj->infos_count--;
-                break;
-            }
-        }
-
-        if (4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }
@@ -436,8 +411,14 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
-    /* add it to the array of known topologies */
-    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
+    {
+        orte_topology_t *t;
+        /* add it to the array of known topologies */
+        t = OBJ_NEW(orte_topology_t);
+        t->topo = opal_hwloc_topology;
+        t->sig = strdup(orte_topo_signature);
+        opal_pointer_array_add(orte_node_topologies, t);
+    }
 #endif
 
     /* create and store a proc object for us */
@@ -757,6 +738,18 @@ static int rte_init(void)
         goto error;
     }
 
+    /* setup the schizo framework */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_select";
+        goto error;
+    }
+
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -822,7 +815,7 @@ static int rte_finalize(void)
     /* shutdown the pmix server */
     pmix_server_finalize();
 
-    /* close the dfs */
+    (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
     /* output any lingering stdout/err data */

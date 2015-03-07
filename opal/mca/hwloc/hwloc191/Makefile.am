@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All right reserved.
 # $COPYRIGHT$
 # 
@@ -7,6 +7,13 @@
 # 
 # $HEADER$
 #
+
+# Due to what might be a bug in Automake, we need to remove stamp-h?
+# files manually.  See
+# http://debbugs.gnu.org/cgi/bugreport.cgi?bug=19418.
+DISTCLEANFILES = \
+    hwloc/include/hwloc/autogen/stamp-h? \
+    hwloc/include/private/autogen/stamp-h?
 
 # Need to include these files so that these directories are carried in
 # the tarball (in case someone invokes autogen.sh on a dist tarball).

@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,7 +136,7 @@ OBJ_CLASS_DECLARATION(orte_errmgr_predicted_map_t);
 
 #define ORTE_ERROR_NAME(n)  opal_strerror(n)
 #define ORTE_ERROR_LOG(n)                       \
-        orte_errmgr.log(n, __FILE__, __LINE__);
+        orte_errmgr.logfn(n, __FILE__, __LINE__);
 
 /*
  * Framework Interfaces
@@ -268,7 +269,7 @@ struct orte_errmgr_base_module_2_3_0_t {
     /** Finalization Function */
     orte_errmgr_base_module_finalize_fn_t                   finalize;
 
-    orte_errmgr_base_module_log_fn_t                        log;
+    orte_errmgr_base_module_log_fn_t                        logfn;
     orte_errmgr_base_module_abort_fn_t                      abort;
     orte_errmgr_base_module_abort_peers_fn_t                abort_peers;
 

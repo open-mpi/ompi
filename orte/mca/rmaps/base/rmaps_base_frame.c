@@ -9,11 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -574,13 +574,10 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
             if (NULL == (ptr = strchr(ck2[i], '='))) {
                 /* missing the value */
                 orte_show_help("help-orte-rmaps-base.txt", "missing-value", true, "pe", ck2[i]);
+                opal_argv_free(ck2);
                 return ORTE_ERR_SILENT;
             }
             ptr++;
-            if (NULL == ptr) {
-                /* still missing the value */
-                return ORTE_ERR_SILENT;
-            }
             orte_rmaps_base.cpus_per_rank = strtol(ptr, NULL, 10);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s rmaps:base setting pe/rank to %d",
@@ -622,8 +619,10 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
 
     /* set defaults */
     tmp = 0;
-    *device = NULL;
-
+    if (NULL != device) {
+        *device = NULL;
+    }
+    
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "%s rmaps:base set policy with %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -662,7 +661,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
              * and save the second argument as the device
              */
 #if OPAL_HAVE_HWLOC
-            if (0 == strncasecmp(spec, "dist", strlen(spec))) {
+            if (NULL != device && 0 == strncasecmp(spec, "dist", strlen(spec))) {
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
                 /* the first argument after the colon *must* be the
                  * device we are mapping near - however, other modifiers
@@ -877,6 +876,7 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
 #endif
         } else {
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
+            opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
         opal_argv_free(ck);

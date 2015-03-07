@@ -39,6 +39,7 @@ OPAL_DECLSPEC void opal_ibv_free_device_list(struct ibv_device **ib_devs);
  * common_verbs_mca.c
  */
 extern bool opal_common_verbs_warn_nonexistent_if;
+extern int opal_common_verbs_want_fork_support;
 OPAL_DECLSPEC void opal_common_verbs_mca_register(mca_base_component_t *component);
 
 /*
@@ -82,20 +83,12 @@ enum {
     OPAL_COMMON_VERBS_FLAGS_UD = 0x4,
     OPAL_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x8,
     OPAL_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x10,
-    OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC = 0x20,
-    OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP = 0x40,
     /* Note that these 2 link layer flags will only be useful if
        defined(HAVE_IBV_LINK_LAYER_ETHERNET). Otherwise, they will be
        ignored. */
     OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x80,
     OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x100,
     OPAL_COMMON_VERBS_FLAGS_MAX
-};
-
-enum {
-    /* a constant used when probing the usNIC transport type (custom L2 vs.
-     * UDP/IP) */
-    OPAL_COMMON_VERBS_USNIC_PROBE_MAGIC = 42
 };
 
 /**
@@ -172,6 +165,20 @@ opal_common_verbs_find_max_inline(struct ibv_device *device,
  */
 OPAL_DECLSPEC int opal_common_verbs_qp_test(struct ibv_context *device_context, 
                                             int flags);
+/*
+ * ibv_fork_init testing - if fork support is requested then ibv_fork_init
+ * should be called right at the beginning of the verbs initialization flow, before ibv_create_* call.
+ *
+ * Known limitations:
+ * If ibv_fork_init is called after ibv_create_* functions - it will have no effect.
+ * OMPI initializes verbs many times during initialization in the following verbs components:
+ *      oob/ud, btl/openib, mtl/mxm, pml/yalla, oshmem/ikrit, oshmem/yoda, ompi/mca/coll/{fca,hcoll}
+ *
+ * So, ibv_fork_init should be called once, in the beginning of the init flow of every verb component
+ * to proper request fork support.
+ *
+ */
+int opal_common_verbs_fork_test(void);
 
 END_C_DECLS
 

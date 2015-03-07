@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +31,8 @@
 #if HAVE_AIO_H
 #include <aio.h>
 #endif
+
+int fbtl_posix_max_aio_active_reqs=2048;
 
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/posix/fbtl_posix.h"
@@ -95,6 +97,13 @@ int mca_fbtl_posix_component_file_unquery (mca_io_ompio_file_t *file) {
 }
 
 int mca_fbtl_posix_module_init (mca_io_ompio_file_t *file) {
+    
+#if defined (FBTL_POSIX_HAVE_AIO)
+    long val = sysconf(_SC_AIO_MAX);
+    if ( -1 != val ) {
+	fbtl_posix_max_aio_active_reqs = (int)val;
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -107,14 +116,15 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 {
     bool ret=false;
 #if defined (FBTL_POSIX_HAVE_AIO)
-    int i=0;
+    int i=0, lcount=0;
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
 
-    for (i=0; i < data->aio_req_count; i++ ) {
+    for (i=data->aio_first_active_req; i < data->aio_last_active_req; i++ ) {
 	if ( EINPROGRESS == data->aio_req_status[i] ) {
 	    data->aio_req_status[i] = aio_error ( &data->aio_reqs[i]);
 	    if ( 0 == data->aio_req_status[i]){
 		data->aio_open_reqs--;
+		lcount++;
 		/* assuming right now that aio_return will return 
 		** the number of bytes written/read and not an error code,
 		** since aio_error should have returned an error in that 
@@ -135,8 +145,42 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 		break;
 	    }
 	}
+	else {
+	    lcount++;
+	}
     }
+#if 0
+    printf("lcount=%d open_reqs=%d\n", lcount, data->aio_open_reqs );
+#endif
 
+    if ( (lcount == data->aio_req_chunks) && (0 != data->aio_open_reqs )) {
+	/* post the next batch of operations */
+	data->aio_first_active_req = data->aio_last_active_req;
+	if ( (data->aio_req_count-data->aio_last_active_req) > data->aio_req_chunks ) {
+	    data->aio_last_active_req += data->aio_req_chunks;
+	}
+	else {
+	    data->aio_last_active_req = data->aio_req_count;
+	}	
+	for ( i=data->aio_first_active_req; i< data->aio_last_active_req; i++ ) {
+	    if ( FBTL_POSIX_READ == data->aio_req_type ) {
+		if (-1 == aio_read(&data->aio_reqs[i])) {
+		    perror("aio_read() error");
+		    return OMPI_ERROR;
+		}
+	    }
+	    else if ( FBTL_POSIX_WRITE == data->aio_req_type ) {
+		if (-1 == aio_write(&data->aio_reqs[i])) {
+		    perror("aio_write() error");
+		    return OMPI_ERROR;
+		}
+	    }
+	}
+#if 0
+	printf("posting new batch: first=%d last=%d\n", data->aio_first_active_req, data->aio_last_active_req );
+#endif
+    }
+	    
     if ( 0 == data->aio_open_reqs ) {
 	/* all pending operations are finished for this request */
 	req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;

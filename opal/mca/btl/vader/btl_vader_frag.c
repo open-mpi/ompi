@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -31,15 +31,15 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
     if(frag->hdr != NULL) {
         frag->hdr->frag = frag;
         frag->hdr->flags = 0;
-        frag->segments[0].base.seg_addr.pval = (char *)(frag->hdr + 1);
+        frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
     }
 
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments      = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->fbox = NULL;
 }
 
-void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
+int mca_btl_vader_frag_init (opal_free_list_item_t *item, void *ctx)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) item;
     unsigned int data_size = (unsigned int)(uintptr_t) ctx;
@@ -52,21 +52,18 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
 
     if (data_size && mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
         OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
-        item->ptr = NULL;
-        return;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* Set the list element here so we don't have to set it on the critical path. This only
      * works if each free list has its own unique fragment size and ALL free lists are initialized
-     * with ompi_free_list_init_ex_new. */
+     * with opal_free_list_init. */
     if (mca_btl_vader_component.max_inline_send == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_user;
     } else if (mca_btl_vader.super.btl_eager_limit == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_eager;
     } else if (mca_btl_vader.super.btl_max_send_size == data_size) {
         frag->my_list = &mca_btl_vader_component.vader_frags_max_send;
-    } else {
-        frag->my_list = &mca_btl_vader_component.vader_frags_rdma;
     }
 
     if (data_size) {
@@ -77,6 +74,8 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
     OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 
     mca_btl_vader_frag_constructor ((mca_btl_vader_frag_t *) item);
+
+    return OPAL_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_frag_t, mca_btl_base_descriptor_t,

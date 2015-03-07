@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -35,14 +35,14 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
 
     frag->hdr_size = reserve + sizeof (frag->hdr.send);
 
-    frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
-    frag->segments[0].base.seg_len       = reserve;
+    frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
+    frag->segments[0].seg_len       = reserve;
 
-    frag->segments[1].base.seg_addr.pval = NULL;
-    frag->segments[1].base.seg_len       = 0;
+    frag->segments[1].seg_addr.pval = NULL;
+    frag->segments[1].seg_len       = 0;
 
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments      = frag->segments;
+    frag->base.des_segment_count = 1;
     frag->base.order           = order;
     frag->base.des_flags       = flags;
 
@@ -84,22 +84,22 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
         frag->flags = MCA_BTL_UGNI_FRAG_EAGER | MCA_BTL_UGNI_FRAG_IGNORE;
 
         frag->registration = registration;
-        frag->segments[1].memory_handle = registration->memory_hdl;
+        frag->hdr.eager.memory_handle = registration->handle;;
 
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
-        frag->segments[0].base.seg_addr.pval = frag->hdr.eager_ex.pml_header;
+        frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
         frag->hdr_size = reserve + sizeof (frag->hdr.send);
-        frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
+        frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
     }
 
-    frag->segments[0].base.seg_len       = reserve;
+    frag->segments[0].seg_len       = reserve;
 
-    frag->segments[1].base.seg_addr.pval = data_ptr;
-    frag->segments[1].base.seg_len       = *size;
+    frag->segments[1].seg_addr.pval = data_ptr;
+    frag->segments[1].seg_len       = *size;
 
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 2;
+    frag->base.des_segments       = frag->segments;
+    frag->base.des_segment_count = 2;
     frag->base.order           = order;
     frag->base.des_flags       = flags;
 
@@ -130,10 +130,9 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
 
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
 
-        frag->segments[1].memory_handle = registration->memory_hdl;
-
+        frag->hdr.eager.memory_handle = registration->handle;
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
-        frag->segments[0].base.seg_addr.pval = frag->hdr.eager_ex.pml_header;
+        frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
         (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
@@ -141,7 +140,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         }
 
         frag->hdr_size = reserve + sizeof (frag->hdr.send);
-        frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
+        frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
     }
 
     frag->flags |= MCA_BTL_UGNI_FRAG_BUFFERED;
@@ -155,13 +154,13 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         return NULL;
     }
 
-    frag->segments[0].base.seg_len       = reserve;
+    frag->segments[0].seg_len       = reserve;
 
-    frag->segments[1].base.seg_addr.pval = frag->base.super.ptr;
-    frag->segments[1].base.seg_len       = *size;
+    frag->segments[1].seg_addr.pval = frag->base.super.ptr;
+    frag->segments[1].seg_len       = *size;
 
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 2;
+    frag->base.des_segments       = frag->segments;
+    frag->base.des_segment_count = 2;
     frag->base.order           = order;
     frag->base.des_flags       = flags;
 
@@ -195,68 +194,6 @@ mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
         return mca_btl_ugni_prepare_src_send_buffered (btl, endpoint, convertor, order,
                                                        reserve, size, flags);
     }
-}
-
-static inline struct mca_btl_base_descriptor_t *
-mca_btl_ugni_prepare_src_rdma (struct mca_btl_base_module_t *btl,
-                               mca_btl_base_endpoint_t *endpoint,
-                               mca_mpool_base_registration_t *registration,
-                               struct opal_convertor_t *convertor,
-                               uint8_t order, size_t *size,
-                               uint32_t flags)
-{
-    mca_btl_ugni_base_frag_t *frag;
-    void *data_ptr;
-    int rc;
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    /*
-     * For medium message use FMA protocols and for large message
-     * use BTE protocols
-     */
-    /* No need to register while using FMA Put (registration is
-     * non-null in get-- is this always true?) */
-    if (*size >= mca_btl_ugni_component.ugni_fma_limit || (flags & MCA_BTL_DES_FLAGS_GET)) {
-        if (NULL == registration) {
-            rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr, *size, 0,
-                                                (mca_mpool_base_registration_t **) &registration);
-            if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-                mca_btl_ugni_frag_return (frag);
-                return NULL;
-            }
-
-            frag->registration = (mca_btl_ugni_reg_t *) registration;
-        }
-
-        frag->segments[0].memory_handle = ((mca_btl_ugni_reg_t *)registration)->memory_hdl;
-    } else {
-        memset ((void *) &frag->segments[0].memory_handle, 0,
-                sizeof (frag->segments[0].memory_handle));
-    }
-
-    if ((flags & MCA_BTL_DES_FLAGS_GET) && (*size & 0x3)) {
-        memmove (frag->segments[0].extra_bytes, (char *) data_ptr + (*size & ~0x3),
-                 *size & 0x3);
-        frag->segments[0].extra_byte_count = *size & 0x3;
-    } else {
-        frag->segments[0].extra_byte_count = 0;
-    }
-
-    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-    frag->segments[0].base.seg_len       = *size;
-
-    frag->base.des_local       = &frag->segments->base;
-    frag->base.des_local_count = 1;
-    frag->base.order           = order;
-    frag->base.des_flags       = flags;
-
-    return &frag->base;
 }
 
 #endif

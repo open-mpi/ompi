@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,72 +28,6 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
-
-
-/*
- *	barrier_intra_lin
- *
- *	Function:	- barrier using O(N) algorithm
- *	Accepts:	- same as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int
-mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_t *module)
-{
-    int i;
-    int err;
-    int size = ompi_comm_size(comm);
-    int rank = ompi_comm_rank(comm);
-
-    /* All non-root send & receive zero-length message. */
-
-    if (rank > 0) {
-        err =
-            MCA_PML_CALL(send
-                         (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
-                          MCA_PML_BASE_SEND_STANDARD, comm));
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-
-        err =
-            MCA_PML_CALL(recv
-                         (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
-                          comm, MPI_STATUS_IGNORE));
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-    }
-
-    /* The root collects and broadcasts the messages. */
-
-    else {
-        for (i = 1; i < size; ++i) {
-            err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
-                                    MCA_COLL_BASE_TAG_BARRIER,
-                                    comm, MPI_STATUS_IGNORE));
-            if (MPI_SUCCESS != err) {
-                return err;
-            }
-        }
-
-        for (i = 1; i < size; ++i) {
-            err =
-                MCA_PML_CALL(send
-                             (NULL, 0, MPI_BYTE, i,
-                              MCA_COLL_BASE_TAG_BARRIER,
-                              MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != err) {
-                return err;
-            }
-        }
-    }
-
-    /* All done */
-
-    return MPI_SUCCESS;
-}
 
 
 /*
@@ -120,6 +55,9 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
 
     dim = comm->c_cube_dim;
     hibit = opal_hibit(rank, dim);
+    if (hibit < 0) {
+        return MPI_ERR_OTHER;
+    }
     --dim;
 
     /* Receive from children. */

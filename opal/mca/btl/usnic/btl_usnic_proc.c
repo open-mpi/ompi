@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -19,18 +19,16 @@
  *
  * $HEADER$
  */
+#include <netinet/in.h>
 
 #include "opal_config.h"
-
-#include <infiniband/verbs.h>
 
 #include "opal_stdint.h"
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
-#include "opal/mca/pmix/pmix.h"
-#include "opal/util/proc.h"
 
+#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
 #include "btl_usnic_proc.h"
 #include "btl_usnic_endpoint.h"
@@ -138,7 +136,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
     opal_list_item_t *item;
 
     MSGDEBUG1_OUT("lookup_endpoint: recvmodule=%p sendhash=0x%" PRIx64,
-                  (void *)receiver, sender_hashed_rte_name);
+                  (void *)receiver, sender_proc_name);
 
     opal_mutex_lock(&receiver->all_endpoints_lock);
     for (item = opal_list_get_first(&receiver->all_endpoints);
@@ -152,7 +150,8 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
            working to give handles instead of proc names, and then
            have a function pointer to perform comparisons.  This would
            be bad here in the critical path, though... */
-        if (proc->proc_opal->proc_name == sender_proc_name) {
+        if (usnic_compat_rte_hash_name(&(proc->proc_opal->proc_name)) ==
+            sender_proc_name) {
             MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
                           (void *)endpoint);
             opal_mutex_unlock(&receiver->all_endpoints_lock);
@@ -164,7 +163,6 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
     /* Didn't find it */
     return NULL;
 }
-
 
 /*
  * Create an opal_btl_usnic_proc_t and initialize it with modex info
@@ -193,8 +191,8 @@ static int create_proc(opal_proc_t *opal_proc,
     proc->proc_opal = opal_proc;
 
     /* query for the peer address info */
-    OPAL_MODEX_RECV(rc, &mca_btl_usnic_component.super.btl_version,
-                    opal_proc, (uint8_t**)&proc->proc_modex, &size);
+    usnic_compat_modex_recv(&rc, &mca_btl_usnic_component.super.btl_version,
+                            opal_proc, &proc->proc_modex, &size);
 
     /* If this proc simply doesn't have this key, then they're not
        running the usnic BTL -- just ignore them.  Otherwise, show an
@@ -214,13 +212,13 @@ static int create_proc(opal_proc_t *opal_proc,
         return OPAL_ERROR;
     }
 
-    if ((size % sizeof(opal_btl_usnic_addr_t)) != 0) {
+    if ((size % sizeof(opal_btl_usnic_modex_t)) != 0) {
         char msg[1024];
 
         snprintf(msg, sizeof(msg),
                  "sizeof(modex for peer %s data) == %d, expected multiple of %d",
-                 OPAL_NAME_PRINT(opal_proc->proc_name),
-                 (int) size, (int) sizeof(opal_btl_usnic_addr_t));
+                 usnic_compat_proc_name_print(&opal_proc->proc_name),
+                 (int) size, (int) sizeof(opal_btl_usnic_modex_t));
         opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
                        opal_process_info.nodename,
@@ -232,26 +230,35 @@ static int create_proc(opal_proc_t *opal_proc,
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
-    proc->proc_modex_count = size / sizeof(opal_btl_usnic_addr_t);
-    if (0 == proc->proc_modex_count) {
-        proc->proc_endpoints = NULL;
-        OBJ_RELEASE(proc);
-        return OPAL_ERR_UNREACH;
-    }
-
-    /* Sanity check: ensure that the remote proc agrees with this proc
-       on whether we're doing UDP or not.  Note that all endpoints on
-       the remote proc will have the same "use_udp" value, so we only
-       need to check one of them. */
-    if (proc->proc_modex[0].use_udp !=
-        mca_btl_usnic_component.use_udp) {
+    /* See if the peer has the same underlying wire protocol as me.
+       If not, then print an error and ignore this peer. */
+// RFXXX - things are weird when i force this to fail
+    if (mca_btl_usnic_component.transport_protocol !=
+        proc->proc_modex->protocol) {
+        uint64_t proto;
+        char protostr[32];
+        proto = mca_btl_usnic_component.transport_protocol;
+        memset(protostr, 0, sizeof(protostr));
+        strncpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
+                sizeof(protostr) - 1);
+        proto = proc->proc_modex->protocol;
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",
                        true,
                        opal_process_info.nodename,
-                       opal_get_proc_hostname(proc->proc_opal));
+                       protostr,
+                       "peer",
+                       fi_tostr(&proto, FI_TYPE_PROTOCOL));
+
         OBJ_RELEASE(proc);
-        return OPAL_ERR_BAD_PARAM;
+        return OPAL_ERR_UNREACH;
+    }
+
+    proc->proc_modex_count = size / sizeof(opal_btl_usnic_modex_t);
+    if (0 == proc->proc_modex_count) {
+        proc->proc_endpoints = NULL;
+        OBJ_RELEASE(proc);
+        return OPAL_ERR_UNREACH;
     }
 
     proc->proc_modex_claimed = (bool*)
@@ -279,48 +286,50 @@ static int create_proc(opal_proc_t *opal_proc,
  * (higher values indicate more desirable connections). */
 static uint64_t compute_weight(
     opal_btl_usnic_module_t *module,
-    opal_btl_usnic_addr_t *proc_modex_addr)
+    opal_btl_usnic_modex_t *proc_modex_addr)
 {
     char my_ip_string[INET_ADDRSTRLEN], peer_ip_string[INET_ADDRSTRLEN];
+    struct sockaddr_in sin;
+    struct sockaddr_in *sinp;
+    struct fi_usnic_info *uip;
     uint32_t mynet, peernet;
-    int err, metric;
+    int err;
+    int metric;
     uint32_t min_link_speed_gbps;
 
-    inet_ntop(AF_INET, &module->if_ipv4_addr,
+    uip = &module->usnic_info;
+    sinp = module->fabric_info->src_addr;
+    inet_ntop(AF_INET, &sinp->sin_addr,
               my_ip_string, sizeof(my_ip_string));
     inet_ntop(AF_INET, &proc_modex_addr->ipv4_addr,
               peer_ip_string, sizeof(peer_ip_string));
 
     /* Just compare the CIDR-masked IP address to see if they're on
        the same network.  If so, we're good. */
-    mynet   = opal_btl_usnic_get_ipv4_subnet(module->if_ipv4_addr,
-                                             module->if_cidrmask);
-    peernet = opal_btl_usnic_get_ipv4_subnet(proc_modex_addr->ipv4_addr,
-                                             proc_modex_addr->cidrmask);
+    mynet = sinp->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
+    peernet = proc_modex_addr->ipv4_addr & proc_modex_addr->netmask;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:%s: checking my IP address/subnet (%s/%d) vs. peer (%s/%d): %s",
-                        __func__, my_ip_string, module->if_cidrmask,
-                        peer_ip_string, proc_modex_addr->cidrmask,
+                        __func__, my_ip_string,
+                        usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be),
+                        peer_ip_string,
+                        usnic_netmask_to_cidrlen(proc_modex_addr->netmask),
                         (mynet == peernet ? "match" : "DO NOT match"));
-
-    if (!mca_btl_usnic_component.use_udp) {
-        if (mynet != peernet) {
-            return WEIGHT_UNREACHABLE;
-        } else {
-            return 1; /* any positive weight is fine */
-        }
-    }
 
     min_link_speed_gbps = MIN(module->super.btl_bandwidth,
                               proc_modex_addr->link_speed_mbps) / 1000;
 
+    /* Returned metric is:
+     *    0 - same VLAN
+     *    1..MAXINT - relative distance metric
+     *    -1 - unreachable
+     */
     metric = 0;
-    err = opal_btl_usnic_nl_ip_rt_lookup(mca_btl_usnic_component.unlsk,
-                                         module->if_name,
-                                         module->if_ipv4_addr,
-                                         proc_modex_addr->ipv4_addr,
-                                         &metric);
-    if (0 != err) {
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = proc_modex_addr->ipv4_addr;
+    err = module->usnic_av_ops->get_distance(module->av, &sin, &metric);
+    if (0 != err || (0 == err && -1 == metric)) {
         return 0; /* no connectivity */
     }
     else {
@@ -539,8 +548,6 @@ static int match_modex(opal_btl_usnic_module_t *module,
     size_t i;
     uint32_t num_modules;
     opal_btl_usnic_graph_t *g = NULL;
-    int nme;
-    int *me;
     bool proc_is_left;
 
     if (NULL == index_out) {
@@ -576,15 +583,22 @@ static int match_modex(opal_btl_usnic_module_t *module,
          * sides are always setting up the exact same graph by always putting
          * the process with the lower (jobid,vpid) on the "left".
          */
+#if 0
         proc_is_left = (proc->proc_opal->proc_name <
                         opal_proc_local_get()->proc_name);
+#else
+        proc_is_left =
+            usnic_compat_proc_name_compare(proc->proc_opal->proc_name,
+                                           opal_proc_local_get()->proc_name);
+#endif
 
         err = create_proc_module_graph(proc, proc_is_left, &g);
         if (OPAL_SUCCESS != err) {
             goto out_free_table;
         }
 
-        nme = 0;
+        int nme = 0;
+        int *me = NULL;
         err = opal_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
@@ -592,6 +606,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         }
 
         edge_pairs_to_match_table(proc, proc_is_left, nme, me);
+        free(me);
 
         err = opal_btl_usnic_gr_free(g);
         if (OPAL_SUCCESS != err) {
@@ -603,7 +618,8 @@ static int match_modex(opal_btl_usnic_module_t *module,
 
     if (!proc->proc_match_exists) {
         opal_output_verbose(5, USNIC_OUT, "btl:usnic:%s: unable to find any valid interface pairs for proc %s",
-                            __func__, OPAL_NAME_PRINT(proc->proc_opal->proc_name));
+                            __func__,
+                            usnic_compat_proc_name_print(&proc->proc_opal->proc_name));
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -622,15 +638,16 @@ static int match_modex(opal_btl_usnic_module_t *module,
      * the min of the two MTUs?  Another choice is to disqualify this pairing
      * before running the matching algorithm on it. */
     if (*index_out >= 0 &&
-        proc->proc_modex[*index_out].mtu != (uint16_t) module->if_mtu) {
+        proc->proc_modex[*index_out].max_msg_size !=
+        (uint16_t) module->fabric_info->ep_attr->max_msg_size) {
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
-                    true,
-                    opal_process_info.nodename,
-                    ibv_get_device_name(module->device),
-                    module->if_name,
-                    module->if_mtu,
-                    opal_get_proc_hostname(proc->proc_opal),
-                    proc->proc_modex[*index_out].mtu);
+                       true,
+                       opal_process_info.nodename,
+                       module->fabric_info->fabric_attr->name,
+                       module->fabric_info->ep_attr->max_msg_size,
+                       (NULL == proc->proc_opal->proc_hostname) ?
+                       "unknown" : proc->proc_opal->proc_hostname,
+                       proc->proc_modex[*index_out].max_msg_size);
         *index_out = -1;
         return OPAL_ERR_UNREACH;
     }
@@ -647,6 +664,54 @@ out_free_table:
 }
 
 /*
+ * Initiate the process to create a USD dest.
+ * It will be polled for completion later.
+ */
+static int start_av_insert(opal_btl_usnic_module_t *module,
+                                  opal_btl_usnic_endpoint_t *endpoint,
+                                  int channel)
+{
+    int ret;
+    opal_btl_usnic_modex_t *modex = &endpoint->endpoint_remote_modex;
+    opal_btl_usnic_addr_context_t *context;
+    struct sockaddr_in sin;
+
+    context = calloc(1, sizeof(*context));
+    context->endpoint = endpoint;
+    context->channel_id = channel;
+
+    char str[IPV4STRADDRLEN];
+    opal_btl_usnic_snprintf_ipv4_addr(str, sizeof(str), modex->ipv4_addr,
+                                      modex->netmask);
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic:start_av_insert: to channel %d at %s:%d",
+                        channel, str, modex->ports[channel]);
+
+    /* build remote address */
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(modex->ports[channel]);
+    sin.sin_addr.s_addr = modex->ipv4_addr;
+
+    ret = fi_av_insert(module->av, &sin, 1,
+            &endpoint->endpoint_remote_addrs[channel], 0, context);
+    /* Did an error occur? */
+    if (1 != ret) {
+        opal_show_help("help-mpi-btl-usnic.txt", "libfabric API failed",
+                       true,
+                       opal_process_info.nodename,
+                       module->fabric_info->fabric_attr->name,
+                       "fi_av_insert()", __FILE__, __LINE__,
+                       ret,
+                       "Failed to initiate AV insert");
+        free(context);
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
  * Create an endpoint and claim the matched modex slot
  */
 int
@@ -654,17 +719,17 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
                 opal_btl_usnic_proc_t *proc,
                 opal_btl_usnic_endpoint_t **endpoint_o)
 {
-    int err;
+    int rc;
     int modex_index;
     opal_btl_usnic_endpoint_t *endpoint;
 
     /* look for matching modex info */
-    err = match_modex(module, proc, &modex_index);
-    if (OPAL_SUCCESS != err) {
+    rc = match_modex(module, proc, &modex_index);
+    if (OPAL_SUCCESS != rc) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:create_endpoint: did not match usnic modex info for peer %s",
-                            OPAL_NAME_PRINT(proc->proc_opal->proc_name));
-        return err;
+                            usnic_compat_proc_name_print(&proc->proc_opal->proc_name));
+        return rc;
     }
 
     endpoint = OBJ_NEW(opal_btl_usnic_endpoint_t);
@@ -675,21 +740,26 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
     /* Initalize the endpoint */
     endpoint->endpoint_module = module;
     assert(modex_index >= 0 && modex_index < (int)proc->proc_modex_count);
-    endpoint->endpoint_remote_addr = proc->proc_modex[modex_index];
+    endpoint->endpoint_remote_modex = proc->proc_modex[modex_index];
+
+    /* Start creating destinations; one for each channel.  These
+       progress in the background.a */
+    for (int i = 0; i < USNIC_NUM_CHANNELS; ++i)  {
+        rc = start_av_insert(module, endpoint, i);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(endpoint);
+            return rc;
+        }
+    }
 
     /* Initialize endpoint sequence number info */
-    endpoint->endpoint_next_seq_to_send = module->local_addr.isn;
+    endpoint->endpoint_next_seq_to_send = module->local_modex.isn;
     endpoint->endpoint_ack_seq_rcvd = endpoint->endpoint_next_seq_to_send - 1;
     endpoint->endpoint_next_contig_seq_to_recv =
-        endpoint->endpoint_remote_addr.isn;
+        endpoint->endpoint_remote_modex.isn;
     endpoint->endpoint_highest_seq_rcvd =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
     endpoint->endpoint_rfstart = WINDOW_SIZE_MOD(endpoint->endpoint_next_contig_seq_to_recv);
-
-    /* Defer creating the ibv_ah.  Since calling ibv_create_ah() may
-       trigger ARP resolution, it's better to batch all the endpoints'
-       calls to ibv_create_ah() together to get some parallelism. */
-    endpoint->endpoint_remote_ah = NULL;
 
     /* Now claim that modex slot */
     proc->proc_modex_claimed[modex_index] = true;

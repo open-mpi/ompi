@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -138,8 +138,6 @@ ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
-
-ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
@@ -308,6 +306,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
+    /* personality for this job */
+    char *personality;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* offset to the total number of procs so shared memory
@@ -405,6 +405,16 @@ struct orte_proc_t {
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
+#if OPAL_HAVE_HWLOC
+/* define an object for storing node topologies */
+typedef struct {
+    opal_object_t super;
+    hwloc_topology_t topo;
+    char *sig;
+} orte_topology_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
+#endif
+
 /**
  * Get a job data object
  * We cannot just reference a job data object with its jobid as
@@ -445,6 +455,7 @@ ORTE_DECLSPEC extern char *orte_local_cpu_model;
 ORTE_DECLSPEC extern char *orte_basename;
 ORTE_DECLSPEC extern bool orte_coprocessors_detected;
 ORTE_DECLSPEC extern opal_hash_table_t *orte_coprocessors;
+ORTE_DECLSPEC extern char *orte_topo_signature;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
@@ -463,7 +474,6 @@ ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
 
 /* homegeneity flags */
-ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
 ORTE_DECLSPEC extern bool orte_hetero_apps;
 ORTE_DECLSPEC extern bool orte_hetero_nodes;
 

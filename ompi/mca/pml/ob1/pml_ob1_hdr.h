@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -53,6 +53,7 @@
 #define MCA_PML_OB1_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 #define MCA_PML_OB1_HDR_FLAGS_CONTIG  8  /* is user buffer contiguous */
 #define MCA_PML_OB1_HDR_FLAGS_NORDMA  16 /* rest will be send by copy-in-out */
+#define MCA_PML_OB1_HDR_FLAGS_SIGNAL  32 /* message can be optionally signalling */
 
 /**
  * Common hdr attributes - must be first element in each hdr type 
@@ -62,6 +63,13 @@ struct mca_pml_ob1_common_hdr_t {
     uint8_t hdr_flags; /**< flags indicating how fragment should be processed */
 };
 typedef struct mca_pml_ob1_common_hdr_t mca_pml_ob1_common_hdr_t;
+
+static inline void mca_pml_ob1_common_hdr_prepare (mca_pml_ob1_common_hdr_t *hdr, uint8_t hdr_type,
+                                                   uint8_t hdr_flags)
+{
+    hdr->hdr_type = hdr_type;
+    hdr->hdr_flags = hdr_flags;
+}
 
 #define MCA_PML_OB1_COMMON_HDR_NTOH(h) 
 #define MCA_PML_OB1_COMMON_HDR_HTON(h) 
@@ -88,15 +96,19 @@ struct mca_pml_ob1_match_hdr_t {
 
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
+static inline void mca_pml_ob1_match_hdr_prepare (mca_pml_ob1_match_hdr_t *hdr, uint8_t hdr_type, uint8_t hdr_flags,
+                                                  uint16_t hdr_ctx, int32_t hdr_src, int32_t hdr_tag, uint16_t hdr_seq)
+{
+    mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, hdr_type, hdr_flags);
+    hdr->hdr_ctx = hdr_ctx;
+    hdr->hdr_src = hdr_src;
+    hdr->hdr_tag = hdr_tag;
+    hdr->hdr_seq = hdr_seq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_MATCH_HDR_FILL(h) \
-do {                                  \
-    (h).hdr_padding[0] = 0;           \
-    (h).hdr_padding[1] = 0;           \
-} while(0)
-#else
-#define MCA_PML_OB1_MATCH_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+#endif
+}
 
 #define MCA_PML_OB1_MATCH_HDR_NTOH(h) \
 do { \
@@ -110,7 +122,6 @@ do { \
 #define MCA_PML_OB1_MATCH_HDR_HTON(h) \
 do { \
     MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    MCA_PML_OB1_MATCH_HDR_FILL(h);    \
     (h).hdr_ctx = htons((h).hdr_ctx); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_tag = htonl((h).hdr_tag); \
@@ -129,12 +140,14 @@ struct mca_pml_ob1_rendezvous_hdr_t {
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_RNDV_HDR_FILL(h) \
-    MCA_PML_OB1_MATCH_HDR_FILL((h).hdr_match)
-#else
-#define MCA_PML_OB1_RNDV_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+static inline void mca_pml_ob1_rendezvous_hdr_prepare (mca_pml_ob1_rendezvous_hdr_t *hdr, uint8_t hdr_type, uint8_t hdr_flags,
+                                                       uint16_t hdr_ctx, int32_t hdr_src, int32_t hdr_tag, uint16_t hdr_seq,
+                                                       uint64_t hdr_msg_length, void *hdr_src_req)
+{
+    mca_pml_ob1_match_hdr_prepare (&hdr->hdr_match, hdr_type, hdr_flags, hdr_ctx, hdr_src, hdr_tag, hdr_seq);
+    hdr->hdr_msg_length = hdr_msg_length;
+    hdr->hdr_src_req.pval = hdr_src_req;
+}
 
 /* Note that hdr_src_req is not put in network byte order because it
    is never processed by the receiver, other than being copied into
@@ -148,7 +161,6 @@ typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 #define MCA_PML_OB1_RNDV_HDR_HTON(h) \
     do { \
         MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match); \
-        MCA_PML_OB1_RNDV_HDR_FILL(h); \
         (h).hdr_msg_length = hton64((h).hdr_msg_length); \
     } while (0) 
 
@@ -157,38 +169,47 @@ typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
  */
 struct mca_pml_ob1_rget_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
-    uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[4];
 #endif
-    opal_ptr_t hdr_des;                       /**< source descriptor */
+    opal_ptr_t hdr_frag;                      /**< source fragment (for fin) */
+    uint64_t   hdr_src_ptr;                   /**< source pointer */
+    /* btl registration handle data follows */
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
 
+static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, uint8_t hdr_flags,
+                                                 uint16_t hdr_ctx, int32_t hdr_src, int32_t hdr_tag, uint16_t hdr_seq,
+                                                 uint64_t hdr_msg_length, void *hdr_src_req, void *hdr_frag,
+                                                 void *hdr_src_ptr, void *local_handle, size_t local_handle_size)
+{
+    mca_pml_ob1_rendezvous_hdr_prepare (&hdr->hdr_rndv, MCA_PML_OB1_HDR_TYPE_RGET, hdr_flags,
+                                        hdr_ctx, hdr_src, hdr_tag, hdr_seq, hdr_msg_length, hdr_src_req);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_RGET_HDR_FILL(h)         \
-do {                                         \
-    MCA_PML_OB1_RNDV_HDR_FILL((h).hdr_rndv); \
-    (h).hdr_padding[0] = 0;                  \
-    (h).hdr_padding[1] = 0;                  \
-    (h).hdr_padding[2] = 0;                  \
-    (h).hdr_padding[3] = 0;                  \
-} while(0)
-#else
-#define MCA_PML_OB1_RGET_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+    hdr->hdr_padding[2] = 0;
+    hdr->hdr_padding[3] = 0;
+#endif
+    hdr->hdr_frag.pval = hdr_frag;
+    hdr->hdr_src_ptr = (uint64_t)(intptr_t) hdr_src_ptr;
 
-#define MCA_PML_OB1_RGET_HDR_NTOH(h) \
-    do { \
-       MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv); \
-        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+    /* copy registration handle */
+    memcpy (hdr + 1, local_handle, local_handle_size);
+}
+
+#define MCA_PML_OB1_RGET_HDR_NTOH(h)                    \
+    do {                                                \
+        MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv);        \
+        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt);       \
+        (h).hdr_src_ptr = ntoh64((h).hdr_src_ptr);      \
     } while (0)
 
-#define MCA_PML_OB1_RGET_HDR_HTON(h) \
-    do { \
-        MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv); \
-        MCA_PML_OB1_RGET_HDR_FILL(h); \
-        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+#define MCA_PML_OB1_RGET_HDR_HTON(h)                    \
+    do {                                                \
+        MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv);        \
+        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt);       \
+        (h).hdr_src_ptr = hton64((h).hdr_src_ptr);      \
     } while (0) 
 
 /**
@@ -205,19 +226,23 @@ struct mca_pml_ob1_frag_hdr_t {
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
+static inline void mca_pml_ob1_frag_hdr_prepare (mca_pml_ob1_frag_hdr_t *hdr, uint8_t hdr_flags,
+                                                 uint64_t hdr_frag_offset, void *hdr_src_req,
+                                                 uint64_t hdr_dst_req)
+{
+    mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_FRAG, hdr_flags);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_FRAG_HDR_FILL(h) \
-do {                                 \
-  (h).hdr_padding[0] = 0;            \
-  (h).hdr_padding[1] = 0;            \
-  (h).hdr_padding[2] = 0;            \
-  (h).hdr_padding[3] = 0;            \
-  (h).hdr_padding[4] = 0;            \
-  (h).hdr_padding[5] = 0;            \
-} while(0)
-#else
-#define MCA_PML_OB1_FRAG_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+    hdr->hdr_padding[2] = 0;
+    hdr->hdr_padding[3] = 0;
+    hdr->hdr_padding[4] = 0;
+    hdr->hdr_padding[5] = 0;
+#endif
+    hdr->hdr_frag_offset = hdr_frag_offset;
+    hdr->hdr_src_req.pval = hdr_src_req;
+    hdr->hdr_dst_req.lval = hdr_dst_req;
+}
 
 #define MCA_PML_OB1_FRAG_HDR_NTOH(h) \
     do { \
@@ -228,7 +253,6 @@ do {                                 \
 #define MCA_PML_OB1_FRAG_HDR_HTON(h) \
     do { \
         MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_OB1_FRAG_HDR_FILL(h); \
         (h).hdr_frag_offset = hton64((h).hdr_frag_offset); \
     } while (0)
 
@@ -244,38 +268,45 @@ struct mca_pml_ob1_ack_hdr_t {
     opal_ptr_t hdr_src_req;                   /**< source request */
     opal_ptr_t hdr_dst_req;                   /**< matched receive request */
     uint64_t hdr_send_offset;                 /**< starting point of copy in/out */
+    uint64_t hdr_send_size;                   /**< number of bytes requested (0: all remaining) */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
+static inline void mca_pml_ob1_ack_hdr_prepare (mca_pml_ob1_ack_hdr_t *hdr, uint8_t hdr_flags,
+                                                uint64_t hdr_src_req, void *hdr_dst_req,
+                                                uint64_t hdr_send_offset, uint64_t hdr_send_size)
+{
+    mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_ACK, hdr_flags);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_ACK_HDR_FILL(h) \
-do {                                \
-    (h).hdr_padding[0] = 0;         \
-    (h).hdr_padding[1] = 0;         \
-    (h).hdr_padding[2] = 0;         \
-    (h).hdr_padding[3] = 0;         \
-    (h).hdr_padding[4] = 0;         \
-    (h).hdr_padding[5] = 0;         \
-} while (0)
-#else
-#define MCA_PML_OB1_ACK_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+    hdr->hdr_padding[2] = 0;
+    hdr->hdr_padding[3] = 0;
+    hdr->hdr_padding[4] = 0;
+    hdr->hdr_padding[5] = 0;
+#endif
+    hdr->hdr_src_req.lval = hdr_src_req;
+    hdr->hdr_dst_req.pval = hdr_dst_req;
+    hdr->hdr_send_offset = hdr_send_offset;
+    hdr->hdr_send_size = hdr_send_size;
+}
 
 /* Note that the request headers are not put in NBO because the
    src_req is already in receiver's byte order and the dst_req is not
    used by the receiver for anything other than backpointers in return
    headers */
-#define MCA_PML_OB1_ACK_HDR_NTOH(h) \
-    do { \
-        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+#define MCA_PML_OB1_ACK_HDR_NTOH(h)                        \
+    do {                                                   \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common);       \
         (h).hdr_send_offset = ntoh64((h).hdr_send_offset); \
+        (h).hdr_send_size = ntoh64((h).hdr_send_size);     \
     } while (0)
 
-#define MCA_PML_OB1_ACK_HDR_HTON(h) \
-    do { \
-        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_OB1_ACK_HDR_FILL(h); \
+#define MCA_PML_OB1_ACK_HDR_HTON(h)                        \
+    do {                                                   \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common);       \
         (h).hdr_send_offset = hton64((h).hdr_send_offset); \
+        (h).hdr_send_size = hton64((h).hdr_send_size);     \
     } while (0) 
 
 /**
@@ -287,38 +318,55 @@ struct mca_pml_ob1_rdma_hdr_t {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
 #endif
-    uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
+    /* TODO: add real support for multiple destination segments */
     opal_ptr_t hdr_req;                       /**< destination request */
-    opal_ptr_t hdr_des;                       /**< source descriptor */
+    opal_ptr_t hdr_frag;                      /**< receiver fragment */
     opal_ptr_t hdr_recv_req;                  /**< receive request (NTH: needed for put fallback on send) */
-    uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
-    mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
+    uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */
+    uint64_t hdr_dst_ptr;                     /**< destination address */
+    uint64_t hdr_dst_size;                    /**< destination size */
+    /* registration data follows */
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 
+static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, uint8_t hdr_flags,
+                                                 uint64_t hdr_req, void *hdr_frag, void *hdr_recv_req,
+                                                 uint64_t hdr_rdma_offset, void *hdr_dst_ptr,
+                                                 uint64_t hdr_dst_size, void *local_handle,
+                                                 size_t local_handle_size)
+{
+    mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_PUT, hdr_flags);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_RDMA_HDR_FILL(h) \
-do {                                 \
-    (h).hdr_padding[0] = 0;          \
-    (h).hdr_padding[1] = 0;          \
-} while(0)
-#else
-#define MCA_PML_OB1_RDMA_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+#endif
+    hdr->hdr_req.lval = hdr_req;
+    hdr->hdr_frag.pval = hdr_frag;
+    hdr->hdr_recv_req.pval = hdr_recv_req;
+    hdr->hdr_rdma_offset = hdr_rdma_offset;
+    hdr->hdr_dst_ptr = (uint64_t)(intptr_t) hdr_dst_ptr;
+    hdr->hdr_dst_size = hdr_dst_size;
 
-#define MCA_PML_OB1_RDMA_HDR_NTOH(h) \
-    do { \
-        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
-        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+    /* copy segments */
+    memcpy (hdr + 1, local_handle, local_handle_size);
+}
+
+#define MCA_PML_OB1_RDMA_HDR_NTOH(h)                       \
+    do {                                                   \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common);       \
+        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt);          \
         (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
+        (h).hdr_dst_ptr = ntoh64((h).hdr_dst_ptr);         \
+        (h).hdr_dst_size = ntoh64((h).hdr_dst_size);       \
     } while (0)
 
-#define MCA_PML_OB1_RDMA_HDR_HTON(h) \
-    do { \
-        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_OB1_RDMA_HDR_FILL(h); \
-        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+#define MCA_PML_OB1_RDMA_HDR_HTON(h)                       \
+    do {                                                   \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common);       \
+        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt);          \
         (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
+        (h).hdr_dst_ptr = hton64((h).hdr_dst_ptr);         \
+        (h).hdr_dst_size = hton64((h).hdr_dst_size);       \
     } while (0) 
 
 /**
@@ -330,31 +378,34 @@ struct mca_pml_ob1_fin_hdr_t {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[2];
 #endif
-    uint32_t hdr_fail;                        /**< RDMA operation failed */
-    opal_ptr_t hdr_des;                       /**< completed descriptor */
+    int64_t hdr_size;                         /**< number of bytes completed (positive), error code (negative) */
+    opal_ptr_t hdr_frag;                      /**< completed RDMA fragment */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
+static inline void mca_pml_ob1_fin_hdr_prepare (mca_pml_ob1_fin_hdr_t *hdr, uint8_t hdr_flags,
+                                                uint64_t hdr_frag, int64_t hdr_size)
+{
+    mca_pml_ob1_common_hdr_prepare (&hdr->hdr_common, MCA_PML_OB1_HDR_TYPE_FIN, hdr_flags);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_FIN_HDR_FILL(h) \
-do {                                \
-    (h).hdr_padding[0] = 0;         \
-    (h).hdr_padding[1] = 0;         \
-} while (0)
-#else
-#define MCA_PML_OB1_FIN_HDR_FILL(h)
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
+    hdr->hdr_padding[0] = 0;
+    hdr->hdr_padding[1] = 0;
+#endif
+    hdr->hdr_frag.lval = hdr_frag;
+    hdr->hdr_size      = hdr_size;
+}
 
-#define MCA_PML_OB1_FIN_HDR_NTOH(h) \
-    do { \
+#define MCA_PML_OB1_FIN_HDR_NTOH(h)                  \
+    do {                                             \
         MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+        (h).hdr_size = ntoh64((h).hdr_size);         \
     } while (0)
 
-#define MCA_PML_OB1_FIN_HDR_HTON(h) \
-    do { \
+#define MCA_PML_OB1_FIN_HDR_HTON(h)                  \
+    do {                                             \
         MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_OB1_FIN_HDR_FILL(h); \
-    } while (0) 
+        (h).hdr_size = hton64((h).hdr_size);         \
+    } while (0)
 
 /**
  * Union of defined hdr types.

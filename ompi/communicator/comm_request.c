@@ -32,8 +32,9 @@ static int ompi_comm_request_progress (void);
 void ompi_comm_request_init (void)
 {
     OBJ_CONSTRUCT(&ompi_comm_requests, opal_free_list_t);
-    (void) opal_free_list_init (&ompi_comm_requests, sizeof (ompi_comm_request_t),
-                                OBJ_CLASS(ompi_comm_request_t), 0, -1, 8);
+    (void) opal_free_list_init (&ompi_comm_requests, sizeof (ompi_comm_request_t), 8,
+                                OBJ_CLASS(ompi_comm_request_t), 0, 0, 0, -1, 8,
+                                NULL, 0, NULL, NULL, NULL);
 
     OBJ_CONSTRUCT(&ompi_comm_requests_active, opal_list_t);
     ompi_comm_request_progress_active = false;
@@ -237,10 +238,11 @@ OBJ_CLASS_INSTANCE(ompi_comm_request_item_t, opal_list_item_t, NULL, NULL);
 ompi_comm_request_t *ompi_comm_request_get (void)
 {
     opal_free_list_item_t *item;
-    int rc;
 
-    OPAL_FREE_LIST_GET(&ompi_comm_requests, item, rc);
-    (void) rc;
+    item = opal_free_list_get (&ompi_comm_requests);
+    if (OPAL_UNLIKELY(NULL == item)) {
+        return NULL;
+    }
 
     OMPI_REQUEST_INIT((ompi_request_t *) item, false);
 
@@ -254,6 +256,6 @@ void ompi_comm_request_return (ompi_comm_request_t *request)
         request->context = NULL;
     }
 
-    OPAL_FREE_LIST_RETURN(&ompi_comm_requests, (opal_free_list_item_t *) request);
+    opal_free_list_return (&ompi_comm_requests, (opal_free_list_item_t *) request);
 }
 

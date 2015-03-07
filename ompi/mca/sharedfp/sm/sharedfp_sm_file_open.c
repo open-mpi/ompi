@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,6 +115,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     filename_basename = basename(filename);
     sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+64) );
     if (NULL == sm_filename) {
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -125,11 +128,14 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( sm_fd == -1){
         /*error opening file*/
         printf("mca_sharedfp_sm_file_open: Error, unable to open file for mmap: %s\n",sm_filename);
+        free(sm_filename);
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERROR;	
     }
 
+        free(sm_filename);
     sm_data->sm_filename = sm_filename;
     
     /*TODO: is it necessary to write to the file first?*/
@@ -149,6 +155,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	err = OMPI_ERROR;
 	printf("mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
 	printf("%s\n", strerror(errno));
+        free(sm_filename);
+        free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERROR;	
@@ -156,7 +164,15 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     /* Initialize semaphore so that is shared between processes.           */
     /* the semaphore is shared by keeping it in the shared memory segment  */
+
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
     if(sem_init(&sm_offset_ptr->mutex, 1, 1) != -1){
+#else
+    sm_data->sem_name = (char*) malloc( sizeof(char) * (strlen(filename_basename)+32) );
+    sprintf(sm_data->sem_name,"OMPIO_sharedfp_sem_%s",filename_basename);
+
+    if( (sm_data->mutex = sem_open(sm_data->sem_name, O_CREAT, 0644, 1)) != SEM_FAILED ) {
+#endif
 	/*If opening was successful*/
 	/*Store the new file handle*/
 	sm_data->sm_offset_ptr = sm_offset_ptr;
@@ -168,14 +184,23 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	/*write initial zero*/
 	if(rank==0){
 	    MPI_Offset position=0;
-	    sem_wait(&sm_offset_ptr->mutex);
+
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+	    sem_wait(sm_offset_ptr->mutex);
 	    sm_offset_ptr->offset=position;
-	    sem_post(&sm_offset_ptr->mutex);
+	    sem_post(sm_offset_ptr->mutex);
+#else
+	    sem_wait(sm_data->mutex);
+	    sm_offset_ptr->offset=position;
+	    sem_post(sm_data->mutex);
+#endif
 	}
     }else{
+        free(sm_filename);
 	free(sm_data);
 	free(sh);
 	free(shfileHandle);
+        munmap(sm_offset_ptr, sizeof(struct sm_offset));
 	err = OMPI_ERROR;
     }
 
@@ -211,7 +236,12 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
         /*Close sm handle*/
         if (file_data->sm_offset_ptr) {
             /* destroy semaphore */
-            sem_destroy(&file_data->sm_offset_ptr->mutex);
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+	    sem_destroy(file_data->sm_offset_ptr->mutex);
+#else
+ 	    sem_unlink (file_data->sem_name);
+ 	    free (file_data->sem_name);
+#endif
             /*Release the shared memory segment.*/
             munmap(file_data->sm_offset_ptr,sizeof(struct sm_offset));
             /*Q: Do we need to delete the file? */

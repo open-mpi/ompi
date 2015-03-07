@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -15,34 +15,37 @@
 #include <unistd.h>
 
 #include "opal/util/show_help.h"
-#include "opal/util/proc.h"
 
+#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
+#include "btl_usnic_module.h"
 #include "btl_usnic_util.h"
 #include "btl_usnic_proc.h"
 
 /*
- * qsort helper: compare modules by IBV device name
+ * qsort helper: compare modules by fabric name
  */
 static int map_compare_modules(const void *aa, const void *bb)
 {
     opal_btl_usnic_module_t *a = *((opal_btl_usnic_module_t**) aa);
     opal_btl_usnic_module_t *b = *((opal_btl_usnic_module_t**) bb);
 
-    return strcmp(ibv_get_device_name(a->device),
-                  ibv_get_device_name(b->device));
+    return strcmp(a->fabric_info->fabric_attr->name,
+                  b->fabric_info->fabric_attr->name);
 }
 
 /*
  * Helper function to output "device:" lines
  */
-static void map_output_modules(FILE *fp)
+static int map_output_modules(FILE *fp)
 {
-    size_t i;
+    int i;
     size_t size;
     opal_btl_usnic_module_t **modules;
+    struct fi_usnic_info *uip;
     char ipv4[IPV4STRADDRLEN];
-    char mac[MACSTRLEN];
+    struct sockaddr_in *sin;
+    int prefix_len;
 
     fprintf(fp, "# Devices possibly used by this process:\n");
 
@@ -52,34 +55,39 @@ static void map_output_modules(FILE *fp)
         sizeof(opal_btl_usnic_module_t*);
     modules = calloc(1, size);
     if (NULL == modules) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     memcpy(modules, mca_btl_usnic_component.usnic_active_modules, size);
     qsort(modules, mca_btl_usnic_component.num_modules,
           sizeof(opal_btl_usnic_module_t*), map_compare_modules);
 
+
     /* Loop over and print the sorted module device information */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
-        opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN,
-                                          modules[i]->if_ipv4_addr,
-                                          modules[i]->if_cidrmask);
-        opal_btl_usnic_sprintf_mac(mac, modules[i]->if_mac);
+        uip = &modules[i]->usnic_info;
+        sin = modules[i]->fabric_info->src_addr;
+        prefix_len = usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be);
 
-        fprintf(fp, "device=%s,interface=%s,ip=%s,mac=%s,mtu=%d\n",
-                ibv_get_device_name(modules[i]->device),
-                modules[i]->if_name, ipv4, mac, modules[i]->if_mtu);
+        opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN,
+                                        sin->sin_addr.s_addr,
+                                        prefix_len);
+
+        fprintf(fp, "device=%s,ip=%s,mss=%" PRIsize_t "\n",
+                modules[i]->fabric_info->fabric_attr->name,
+                ipv4, modules[i]->fabric_info->ep_attr->max_msg_size);
     }
 
     /* Free the temp array */
     free(modules);
+
+    return OPAL_SUCCESS;
 }
 
 /************************************************************************/
 
 /*
- * qsort helper: compare endpoints by IBV device name
+ * qsort helper: compare endpoints by fabric name
  */
 static int map_compare_endpoints(const void *aa, const void *bb)
 {
@@ -94,21 +102,20 @@ static int map_compare_endpoints(const void *aa, const void *bb)
         return -1;
     }
 
-    return strcmp(ibv_get_device_name(a->endpoint_module->device),
-                  ibv_get_device_name(b->endpoint_module->device));
+    return strcmp(a->endpoint_module->fabric_info->fabric_attr->name,
+                  b->endpoint_module->fabric_info->fabric_attr->name);
 }
 
 /*
  * Helper function to output devices for a single peer
  */
-static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
+static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
 {
     size_t i;
     size_t num_output;
     size_t size;
     opal_btl_usnic_endpoint_t **eps;
     char ipv4[IPV4STRADDRLEN];
-    char mac[MACSTRLEN];
 
     /* First, we must sort the endpoints on this proc by MCW rank so
        that they're always output in a repeatable order.  There may
@@ -118,8 +125,7 @@ static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
     size = proc->proc_endpoint_count * sizeof(opal_btl_usnic_endpoint_t *);
     eps = calloc(1, size);
     if (NULL == eps) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     memcpy(eps, proc->proc_endpoints, size);
@@ -138,19 +144,20 @@ static void map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
         }
 
         opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN,
-                                          eps[i]->endpoint_remote_addr.ipv4_addr,
-                                          eps[i]->endpoint_remote_addr.cidrmask);
-        opal_btl_usnic_sprintf_mac(mac, eps[i]->endpoint_remote_addr.mac);
+                                          eps[i]->endpoint_remote_modex.ipv4_addr,
+                                          eps[i]->endpoint_remote_modex.netmask);
 
-        fprintf(fp, "device=%s@peer_ip=%s@peer_mac=%s",
-                ibv_get_device_name(eps[i]->endpoint_module->device),
-                ipv4, mac);
+        fprintf(fp, "device=%s@peer_ip=%s",
+                eps[i]->endpoint_module->fabric_info->fabric_attr->name,
+                ipv4);
         ++num_output;
     }
     fprintf(fp, "\n");
 
     /* Free the temp array */
     free(eps);
+
+    return OPAL_SUCCESS;
 }
 
 /************************************************************************/
@@ -177,7 +184,7 @@ static int map_compare_procs(const void *aa, const void *bb)
 /*
  * Helper function to output "peer:" lines
  */
-static void map_output_procs(FILE *fp)
+static int map_output_procs(FILE *fp)
 {
     size_t i;
     size_t num_procs;
@@ -191,8 +198,7 @@ static void map_output_procs(FILE *fp)
     num_procs = opal_list_get_size(&mca_btl_usnic_component.usnic_procs);
     procs = calloc(num_procs, sizeof(opal_btl_usnic_proc_t*));
     if (NULL == procs) {
-        fclose(fp);
-        return;
+        return OPAL_ERR_IN_ERRNO;
     }
 
     i = 0;
@@ -205,14 +211,19 @@ static void map_output_procs(FILE *fp)
           map_compare_procs);
 
     /* Loop over and print the sorted module device information */
+    int ret = OPAL_SUCCESS;
     for (i = 0; i < num_procs; ++i) {
-        fprintf(fp, "peer=%d,", opal_process_name_vpid(procs[i]->proc_opal->proc_name));
+        fprintf(fp, "peer=%d,", procs[i]->proc_opal->proc_name.vpid);
         fprintf(fp, "hostname=%s,", opal_get_proc_hostname(procs[i]->proc_opal));
-        map_output_endpoints(fp, procs[i]);
+        if (OPAL_SUCCESS != map_output_endpoints(fp, procs[i])) {
+            break;
+        }
     }
 
     /* Free the temp array */
     free(procs);
+
+    return ret;
 }
 
 /************************************************************************/
@@ -235,8 +246,8 @@ void opal_btl_usnic_connectivity_map(void)
              mca_btl_usnic_component.connectivity_map_prefix,
              opal_get_proc_hostname(opal_proc_local_get()),
              getpid(),
-             opal_process_name_jobid(opal_proc_local_get()->proc_name),
-             opal_process_name_vpid(opal_proc_local_get()->proc_name));
+             opal_proc_local_get()->proc_name.jobid,
+             opal_proc_local_get()->proc_name.vpid);
     if (NULL == filename) {
         /* JMS abort? */
         return;
@@ -256,8 +267,9 @@ void opal_btl_usnic_connectivity_map(void)
         return;
     }
 
-    map_output_modules(fp);
-    map_output_procs(fp);
+    if (OPAL_SUCCESS == map_output_modules(fp)) {
+        map_output_procs(fp);
+    }
 
     fclose(fp);
 }

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +43,7 @@ enum {
     ORTE_ERR_FATAL                          = OPAL_ERR_FATAL,
     ORTE_ERR_NOT_IMPLEMENTED                = OPAL_ERR_NOT_IMPLEMENTED,
     ORTE_ERR_NOT_SUPPORTED                  = OPAL_ERR_NOT_SUPPORTED,
-    ORTE_ERR_INTERUPTED                     = OPAL_ERR_INTERUPTED,
+    ORTE_ERR_INTERUPTED                     = OPAL_ERR_INTERRUPTED,
     ORTE_ERR_WOULD_BLOCK                    = OPAL_ERR_WOULD_BLOCK,
     ORTE_ERR_IN_ERRNO                       = OPAL_ERR_IN_ERRNO,
     ORTE_ERR_UNREACH                        = OPAL_ERR_UNREACH,
@@ -80,7 +82,10 @@ enum {
     ORTE_ERR_TAKE_NEXT_OPTION               = OPAL_ERR_TAKE_NEXT_OPTION,
     ORTE_ERR_PROC_ENTRY_NOT_FOUND           = OPAL_ERR_PROC_ENTRY_NOT_FOUND,
     ORTE_ERR_DATA_VALUE_NOT_FOUND           = OPAL_ERR_DATA_VALUE_NOT_FOUND,
-
+    ORTE_ERR_CONNECTION_FAILED              = OPAL_ERR_CONNECTION_FAILED,
+    ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
+    ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
+    
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
     Otherwise, the error reporting system will potentially crash,
@@ -92,8 +97,6 @@ enum {
     ORTE_ERR_REQUEST                        = (ORTE_ERR_BASE -  4),
     ORTE_ERR_NO_CONNECTION_ALLOWED          = (ORTE_ERR_BASE -  5),
     ORTE_ERR_CONNECTION_REFUSED             = (ORTE_ERR_BASE -  6),
-    ORTE_ERR_CONNECTION_FAILED              = (ORTE_ERR_BASE -  7),
-    ORTE_ERR_COMM_FAILURE                   = (ORTE_ERR_BASE -  8),
     ORTE_ERR_COMPARE_FAILURE                = (ORTE_ERR_BASE -  9),
     ORTE_ERR_COPY_FAILURE                   = (ORTE_ERR_BASE - 10),
     ORTE_ERR_PROC_STATE_MISSING             = (ORTE_ERR_BASE - 11),

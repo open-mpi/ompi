@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -14,25 +14,17 @@
 
 #include "btl_ugni_rdma.h"
 
-/**
- * Initiate a put operation.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      struct mca_btl_base_descriptor_t *des) {
-    mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
-
-    BTL_VERBOSE(("Using RDMA/FMA Put for frag %p", (void *) des));
+int mca_btl_ugni_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                      uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                      mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                      int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+{
+    BTL_VERBOSE(("Using RDMA/FMA Put from local address %p to remote address %" PRIx64,
+                 local_address, remote_address));
 
     /* cause endpoint to bind if it isn't already (bind is sufficient for rdma) */
-    (void) mca_btl_ugni_check_endpoint_state(endpoint);
+    (void) mca_btl_ugni_check_endpoint_state_rdma (endpoint);
 
-    des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    return mca_btl_ugni_post (frag, false, (mca_btl_ugni_segment_t *) des->des_local,
-                              (mca_btl_ugni_segment_t *) des->des_remote);
+    return mca_btl_ugni_post (endpoint, false, size, local_address, remote_address, local_handle,
+                              remote_handle, order, cbfunc, cbcontext, cbdata);
 }

@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -62,29 +62,81 @@ value MPI_UNDEFINED, in which case newcomm returns MPI_COMM_NULL.
 
 .SH SPLIT TYPES
 .ft R
-
 .TP 1i
 MPI_COMM_TYPE_SHARED
 This type splits the communicator into subcommunicators, each of which can create a shared memory region.
 
-.SH NOTES
 .ft R
-This is an extremely powerful mechanism for
-dividing a single communicating group of processes into k subgroups, with k
-chosen implicitly by the user (by the number of colors asserted over all
-the processes). Each resulting communicator will be nonoverlapping. Such a division could be useful for defining a hierarchy of computations, such as for multigrid or linear algebra.
+.TP 1i
+OMPI_COMM_TYPE_NODE
+Synonym for MPI_COMM_TYPE_SHARED.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_HWTHREAD
+This type splits the communicator into subcommunicators, each of which belongs to the same hardware thread.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CORE
+This type splits the communicator into subcommunicators, each of which belongs to the same core/processing unit.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L1CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L1 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L2CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L2 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_L3CACHE
+This type splits the communicator into subcommunicators, each of which belongs to the same L3 cache.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_SOCKET
+This type splits the communicator into subcommunicators, each of which belongs to the same socket.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_NUMA
+This type splits the communicator into subcommunicators, each of which belongs to the same NUMA-node.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_BOARD
+This type splits the communicator into subcommunicators, each of which belongs to the same board.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_HOST
+This type splits the communicator into subcommunicators, each of which belongs to the same host.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CU
+This type splits the communicator into subcommunicators, each of which belongs to the same computational unit.
+.ft R
+.TP 1i
+OMPI_COMM_TYPE_CLUSTER
+This type splits the communicator into subcommunicators, each of which belongs to the same cluster.
+
+.SH NOTES
 .sp
-Multiple calls to MPI_Comm_split_type can be used to overcome the requirement that any call have no overlap of the resulting communicators (each process is of only one color per call). In this way, multiple overlapping communication structures can be created. Creative use of the color and key in such splitting operations is encouraged.
-.sp
-Note that keys need not be unique. It is MPI_Comm_split_type's responsibility to sort processes in ascending order according to this key, and to break ties in a consistent way. If all the keys are specified in the same way, then all the processes in a given color will have the relative rank order as they did in their parent group. (In general, they will have different ranks.)
-.sp
-Essentially, making the key value zero for all processes of a given split_type means that one needn't really pay attention to the rank-order of the processes in the new communicator.
+The communicator keys denoted with an
+.I OMPI_
+prefix instead of an
+.I MPI_
+prefix are specific to Open MPI, and are not part of the MPI
+standard.  Their use should be protected by the
+.I OPEN_MPI
+C preprocessor macro.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
 
 .SH SEE ALSO
 .ft R

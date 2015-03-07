@@ -1,11 +1,16 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ *
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -131,6 +136,8 @@ struct mca_oob_ud_port_t {
     int                  mtu;
     uint16_t             lid;
     uint8_t              port_num;
+    /** current send buffer index. used by init function for free_msgs member */
+    int                  send_buffer_index;
 
     mca_oob_ud_reg_mem_t grh_buf;
     mca_oob_ud_reg_mem_t msg_buf;
@@ -144,74 +151,57 @@ int mca_oob_ud_port_post_one_recv (mca_oob_ud_port_t *port, int msg_num);
 
 void mca_oob_ud_port_get_uri (mca_oob_ud_port_t *port, char *uri);
 
-struct mca_oob_ud_component_t {
-    mca_oob_base_component_2_0_0_t super;    /**< base OOB component */
+/* Module definition */
+typedef int (*mca_oob_ud_module_init_fn_t)(void);
+typedef void (*mca_oob_ud_module_fini_fn_t)(mca_oob_ud_peer_t **peer);
+typedef int  (*mca_oob_ud_set_addr_fn_t)(const orte_process_name_t *name, const char *uri);
+typedef void  (*mca_oob_ud_ping_fn_t)(const orte_process_name_t *proc);
+typedef void  (*mca_oob_ud_send_nb_fn_t)(orte_rml_send_t *msg);
+typedef int  (*mca_oob_ud_recv_nb_fn_t)(orte_process_name_t* peer,
+                                        orte_rml_send_t *msg);
+typedef int (*mca_oob_ud_recv_cancel_fn_t)(orte_process_name_t *name, int tag);
 
-    opal_list_t       ud_devices;
+typedef struct {
+    mca_oob_ud_module_init_fn_t                init;
+    mca_oob_ud_module_fini_fn_t                finalize;
+    mca_oob_ud_set_addr_fn_t                   set_addr;
+    mca_oob_ud_ping_fn_t                       ping;
+    mca_oob_ud_send_nb_fn_t                    send_nb;
+} mca_oob_ud_module_api_t;
 
-    opal_list_t       ud_pending_recvs;
-    opal_list_t       ud_active_recvs;
-    opal_list_t       ud_active_sends;
-    opal_list_t       ud_unexpected_recvs;
-    opal_list_t       ud_event_queued_reqs;
-    opal_list_t       ud_event_processing_msgs;
-    opal_list_t       ud_completed;
+typedef struct {
+    mca_oob_ud_module_api_t    api;
+    opal_event_base_t          *ev_base;      /* event base for the module progress thread */
+    bool                       ev_active;
+    opal_thread_t              progress_thread;
+    opal_proc_table_t          peers;         // connection addresses for peers
+} mca_oob_ud_module_t;
 
-    opal_event_t      ud_complete_event;
+ORTE_MODULE_DECLSPEC extern mca_oob_ud_module_t mca_oob_ud_module;
 
-    opal_mutex_t      ud_lock;
-
-    int               ud_min_qp;
-    int               ud_max_qp;
-
-    int               ud_recv_buffer_count;
-    int               ud_send_buffer_count;
-
-    opal_mutex_t      ud_match_lock;
-
-    opal_hash_table_t ud_peers;
-};
-
-typedef struct mca_oob_ud_component_t mca_oob_ud_component_t;
-
-ORTE_MODULE_DECLSPEC extern mca_oob_ud_component_t mca_oob_ud_component;
-ORTE_MODULE_DECLSPEC extern mca_oob_t mca_oob_ud_module;
-
-
-char *mca_oob_ud_get_addr (void);
-int mca_oob_ud_set_addr (const orte_process_name_t *name, const char *uri);
-
-int mca_oob_ud_ping(const orte_process_name_t* name, const char* uri,
-                    const struct timeval *timeout);
-
-int mca_oob_ud_send_nb(orte_process_name_t* target, orte_process_name_t* origin, 
-                       struct iovec* iov, int count, int tag, int flags, 
-                       orte_rml_callback_fn_t cbfunc, void* cbdata);
+int mca_oob_ud_process_ping(int fd, short args, void *cbdata);
+int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata);
 int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req);
 int mca_oob_ud_send_complete (mca_oob_ud_req_t *send_req, int rc);
 
 /* recv */
-int mca_oob_ud_recv_nb(orte_process_name_t* peer, struct iovec* iov, int count,
-                       int tag, int flags, orte_rml_callback_fn_t cbfunc,
-                       void* cbdata);
+int mca_oob_ud_recv_nb(orte_process_name_t* peer,
+                       orte_rml_send_t *msg);
 int mca_oob_ud_recv_cancel(orte_process_name_t* name, int tag);
 
 int mca_oob_ud_recv_complete (mca_oob_ud_req_t *recv_req);
 int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req);
 int mca_oob_ud_recv_match_send (mca_oob_ud_port_t *port, mca_oob_ud_peer_t *peer,
                                 mca_oob_ud_msg_hdr_t *msg_hdr, mca_oob_ud_req_t **reqp);
-int mca_oob_ud_recv_match (mca_oob_ud_req_t *recv_req);
-int mca_oob_ud_get_recv_req (const orte_process_name_t name, const int tag, mca_oob_ud_req_t **reqp);
-
-int mca_oob_ud_ft_event(int state);
+int mca_oob_ud_get_recv_req (const orte_process_name_t name, const int tag, mca_oob_ud_req_t **reqp, bool iovec_used);
 
 int mca_oob_ud_register_iov (struct iovec *iov, int count, struct ibv_mr **ib_mr,
                              struct ibv_pd *ib_pd, unsigned int mtu, int *sge_countp,
                              int *wr_countp, int *data_lenp);
-
+int mca_oob_ud_register_buf (char *buf, int size, struct ibv_mr **ib_mr_buf,
+                             struct ibv_pd *ib_pd, unsigned int mtu, int *sge_countp, int *wr_countp);
 void mca_oob_ud_event_queue_completed (mca_oob_ud_req_t *req);
 
-int mca_oob_ud_module_init(void);
 END_C_DECLS
 
 #endif

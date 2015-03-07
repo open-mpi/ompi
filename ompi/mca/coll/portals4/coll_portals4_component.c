@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -110,17 +113,15 @@ portals4_open(void)
     mca_coll_portals4_component.md_h = PTL_INVALID_HANDLE;
 #endif
     
-    OBJ_CONSTRUCT(&mca_coll_portals4_component.requests, ompi_free_list_t);
-    ret = ompi_free_list_init(&mca_coll_portals4_component.requests,
-                              sizeof(ompi_coll_portals4_request_t),
-                              OBJ_CLASS(ompi_coll_portals4_request_t),
-                              8,
-                              0,
-                              8,
-                              NULL);
+    OBJ_CONSTRUCT(&mca_coll_portals4_component.requests, opal_free_list_t);
+    ret = opal_free_list_init (&mca_coll_portals4_component.requests,
+                               sizeof(ompi_coll_portals4_request_t),
+                               opal_cache_line_size,
+                               OBJ_CLASS(ompi_coll_portals4_request_t),
+                               0, 0, 8, 0, 8, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_coll_base_framework.framework_output,
-                            "%s:%d: ompi_free_list_init failed: %d\n",
+                            "%s:%d: opal_free_list_init failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
     }

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
  *     vim: ts=8 sts=4 sw=4 noexpandtab 
  * 
  *   Copyright (C) 1997 University of Chicago. 
@@ -32,12 +32,12 @@ void ADIOI_PVFS2_IReadContig(ADIO_File fd, void *buf, int count,
 	    offset, request, READ, error_code);
 }
 
-void ADIOI_PVFS2_IWriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_IWriteContig(ADIO_File fd, const void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int *error_code)
 {
-    ADIOI_PVFS2_AIO_contig(fd, buf, count, datatype, file_ptr_type,
+    ADIOI_PVFS2_AIO_contig(fd, (void *)buf, count, datatype, file_ptr_type,
 	    offset, request, WRITE, error_code);
 }
 
@@ -47,7 +47,8 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 			    int flag, int *error_code)
 {
 
-    int ret, datatype_size, len;
+    int ret;
+    MPI_Count datatype_size, len;
     ADIOI_PVFS2_fs *pvfs_fs;
     ADIOI_AIO_Request *aio_req;
     static char myname[] = "ADIOI_PVFS2_AIO_contig";
@@ -56,7 +57,7 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 
     aio_req = (ADIOI_AIO_Request*)ADIOI_Calloc(sizeof(ADIOI_AIO_Request), 1);
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
     len = datatype_size * count;
 
     ret = PVFS_Request_contiguous(len, PVFS_BYTE, &(aio_req->mem_req));
@@ -120,6 +121,7 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
     }
     /* --END ERROR HANDLING-- */
 
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
     /* posted. defered completion */
     if (ret == 0) { 
 	if (ADIOI_PVFS2_greq_class == 0) {
@@ -129,8 +131,17 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 		    &ADIOI_PVFS2_greq_class);
 	}
 	MPIX_Grequest_class_allocate(ADIOI_PVFS2_greq_class, aio_req, request);
-	memcpy(&(aio_req->req), request, sizeof(request));
+	memcpy(&(aio_req->req), request, sizeof(*request));
     }
+#else
+    /* if generalized request extensions not available, we will have to process
+     * this operation right here */
+    int error;
+    ret = PVFS_sys_wait(aio_req->op_id, "ADIOI_PVFS2_AIO_Contig", &error);
+    if (ret == 0) {
+	MPIO_Completed_request_create(&fd, len, error_code, request);
+    }
+#endif
 
     /* immediate completion */
     if (ret == 1) {

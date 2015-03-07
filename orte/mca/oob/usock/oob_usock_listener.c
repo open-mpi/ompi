@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +54,7 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/opal_socket_errno.h"
+#include "opal/util/fd.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
@@ -96,6 +99,13 @@ int orte_oob_usock_start_listening(void)
         }
         return ORTE_ERR_IN_ERRNO;
     }
+    /* Set this fd to be close-on-exec so that children don't see it */
+    if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        CLOSE_THE_SOCKET(sd);
+        return ORTE_ERROR;
+    }
 
     addrlen = sizeof(struct sockaddr_un);
     if (bind(sd, (struct sockaddr*)&mca_oob_usock_component.address, addrlen) < 0) {
@@ -111,6 +121,7 @@ int orte_oob_usock_start_listening(void)
     if (listen(sd, SOMAXCONN) < 0) {
         opal_output(0, "mca_oob_usock_component_init: listen(): %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
         
@@ -118,12 +129,14 @@ int orte_oob_usock_start_listening(void)
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_usock_component_init: fcntl(F_GETFL) failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(sd, F_SETFL, flags) < 0) {
         opal_output(0, "mca_oob_usock_component_init: fcntl(F_SETFL) failed: %s (%d)", 
                     strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
 

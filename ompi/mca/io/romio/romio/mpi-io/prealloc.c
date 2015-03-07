@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_preallocate as PMPI_File_preallocate
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_preallocate(MPI_File fh, MPI_Offset size) __attribute__((weak,alias("PMPI_File_preallocate")));
 #endif
 
 /* Include mapping from MPI->PMPI */

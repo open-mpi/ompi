@@ -10,10 +10,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -521,7 +523,7 @@ int mca_base_var_get_value (int vari, const void *value,
 
 static int var_set_string (mca_base_var_t *var, char *value)
 {
-    char *tmp, *p=NULL;
+    char *tmp;
     int ret;
 
     if (NULL != var->mbv_storage->stringval) {
@@ -558,8 +560,7 @@ static int var_set_string (mca_base_var_t *var, char *value)
         tmp[0] = '\0';
         tmp += 3;
 
-        ret = asprintf (&tmp, "%s:%s%s%s",
-                        (NULL == p) ? "" : p,
+        ret = asprintf (&tmp, "%s:%s%s%s", value,
                         home ? home : "", home ? "/" : "", tmp);
 
         free (value);
@@ -1097,13 +1098,12 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
     for (i = 0 ; i < count; ++i) {
         /* Absolute paths preserved */
         if ( opal_path_is_absolute(files[i]) ) {
-            if( NULL == opal_path_access(files[i], NULL, mode) ) {
+            if( NULL == (tmp_file = opal_path_access(files[i], NULL, mode)) ) {
                 opal_show_help("help-mca-var.txt", "missing-param-file",
                                true, getpid(), files[i], path);
                 exit_status = OPAL_ERROR;
                 goto cleanup;
-            }
-            else {
+            } else {
                 opal_argv_append(&argc, &argv, files[i]);
             }
         }
@@ -1139,8 +1139,6 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
         else {
             if( NULL != (tmp_file = opal_path_find(files[i], search_path, mode, NULL)) ) {
                 opal_argv_append(&argc, &argv, tmp_file);
-                free(tmp_file);
-                tmp_file = NULL;
             }
             else {
                 opal_show_help("help-mca-var.txt", "missing-param-file",
@@ -1149,7 +1147,10 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
                 goto cleanup;
             }
         }
+        free(tmp_file);
     }
+
+    tmp_file = NULL;
 
     free(*file_list);
     *file_list = opal_argv_join(argv, OPAL_ENV_SEP);
@@ -1169,7 +1170,6 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
     }
     if( NULL != tmp_file ) {
         free(tmp_file);
-        tmp_file = NULL;
     }
 
     return exit_status;
@@ -1243,6 +1243,12 @@ static int register_variable (const char *project_name, const char *framework_na
 
     if (0 != align) {
         assert(((uintptr_t) storage) % align == 0);
+    }
+
+    /* Also check to ensure that synonym_for>=0 when
+       MCA_BCASE_VAR_FLAG_SYNONYM is specified */
+    if (flags & MCA_BASE_VAR_FLAG_SYNONYM && synonym_for < 0) {
+        assert((flags & MCA_BASE_VAR_FLAG_SYNONYM) && synonym_for >= 0);
     }
 #endif
 

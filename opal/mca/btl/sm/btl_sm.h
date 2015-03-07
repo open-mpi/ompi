@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -126,7 +127,7 @@ typedef struct mca_btl_sm_mem_node_t {
  * Shared Memory (SM) BTL module.
  */
 struct mca_btl_sm_component_t {
-    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t super;  /**< base BTL component */
     int sm_free_list_num;              /**< initial size of free lists */
     int sm_free_list_max;              /**< maximum size of free lists */
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
@@ -155,10 +156,10 @@ struct mca_btl_sm_component_t {
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
                                         *   SMP specfic data structures. */
-    ompi_free_list_t sm_frags_eager;   /**< free list of sm first */
-    ompi_free_list_t sm_frags_max;     /**< free list of sm second */
-    ompi_free_list_t sm_frags_user;
-    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
+    opal_free_list_t sm_frags_eager;   /**< free list of sm first */
+    opal_free_list_t sm_frags_max;     /**< free list of sm second */
+    opal_free_list_t sm_frags_user;
+    opal_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
     struct mca_btl_base_endpoint_t **sm_peers;
@@ -182,6 +183,10 @@ struct mca_btl_sm_component_t {
 #if OPAL_BTL_SM_HAVE_KNEM
     /* Knem capabilities info */
     struct knem_cmd_info knem_info;
+#endif
+#if OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA
+    /** registration handles to hold knem cookies */
+    opal_free_list_t registration_handles;
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
 
     /** MCA: should we be using knem or not?  neg=try but continue if
@@ -461,7 +466,6 @@ extern int mca_btl_sm_free(
 struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
@@ -504,30 +508,20 @@ extern int mca_btl_sm_send(
 /*
  * Synchronous knem/cma get
  */
-extern int mca_btl_sm_get_sync(
-        struct mca_btl_base_module_t* btl,
-        struct mca_btl_base_endpoint_t* endpoint,
-        struct mca_btl_base_descriptor_t* des );
-
-extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
-        struct mca_btl_base_module_t* btl,
-        struct mca_btl_base_endpoint_t* endpoint,
-        struct mca_mpool_base_registration_t* registration,
-        struct opal_convertor_t* convertor,
-        uint8_t order,
-        size_t reserve,
-        size_t* size,
-        uint32_t flags);
+int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif /* OPAL_BTL_SM_HAVE_KNEM || OPAL_BTL_SM_HAVE_CMA */
 
 #if OPAL_BTL_SM_HAVE_KNEM
 /*
  * Asynchronous knem get
  */
-extern int mca_btl_sm_get_async(
-                struct mca_btl_base_module_t* btl,
-                struct mca_btl_base_endpoint_t* endpoint,
-                struct mca_btl_base_descriptor_t* des );
+int mca_btl_sm_get_async (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                          uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                          mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 #endif /* OPAL_BTL_SM_HAVE_KNEM */
 
@@ -556,6 +550,31 @@ void mca_btl_sm_component_event_thread(opal_object_t*);
 }
 #else
 #define MCA_BTL_SM_SIGNAL_PEER(peer)
+#endif
+
+#if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
+struct mca_btl_base_registration_handle_t {
+    union {
+        struct {
+            uint64_t cookie;
+            intptr_t base_addr;
+        } knem;
+        pid_t pid;
+    } data;
+};
+
+struct mca_btl_sm_registration_handle_t {
+    opal_free_list_item_t super;
+    mca_btl_base_registration_handle_t btl_handle;
+};
+typedef struct mca_btl_sm_registration_handle_t mca_btl_sm_registration_handle_t;
+
+mca_btl_base_registration_handle_t *mca_btl_sm_register_mem (struct mca_btl_base_module_t* btl,
+                                                             struct mca_btl_base_endpoint_t* endpoint,
+                                                             void *base, size_t size, uint32_t flags);
+
+int mca_btl_sm_deregister_mem (struct mca_btl_base_module_t* btl, mca_btl_base_registration_handle_t *handle);
+
 #endif
 
 END_C_DECLS

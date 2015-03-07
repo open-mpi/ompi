@@ -1051,9 +1051,36 @@ For example:
 Means that
 .
 
-  Rank 0 runs on node aa, bound to socket 1, cores 0-2.
-  Rank 1 runs on node bb, bound to socket 0, cores 0 and 1.
-  Rank 2 runs on node cc, bound to cores 1 and 2.
+  Rank 0 runs on node aa, bound to logical socket 1, cores 0-2.
+  Rank 1 runs on node bb, bound to logical socket 0, cores 0 and 1.
+  Rank 2 runs on node cc, bound to logical cores 1 and 2.
+.
+.PP
+Rankfiles can alternatively be used to specify \fIphysical\fP processor
+locations. In this case, the syntax is somewhat different. Sockets are
+no longer recognized, and the slot number given must be the number of
+the physical PU as most OS's do not assign a unique physical identifier
+to each core in the node. Thus, a proper physical rankfile looks something
+like the following:
+.
+
+    $ cat myphysicalrankfile
+    rank 0=aa slot=1
+    rank 1=bb slot=8
+    rank 2=cc slot=6
+.
+.PP
+This means that
+.
+
+  Rank 0 will run on node aa, bound to the core that contains physical PU 1
+  Rank 1 will run on node bb, bound to the core that contains physical PU 8
+  Rank 2 will run on node cc, bound to the core that contains physical PU 6
+.
+.PP
+Rankfiles are treated as \fIlogical\fP by default, and the MCA parameter
+rmaps_rank_file_physical must be set to 1 to indicate that the rankfile
+is to be considered as \fIphysical\fP.
 .
 .PP
 The hostnames listed above are "absolute," meaning that actual

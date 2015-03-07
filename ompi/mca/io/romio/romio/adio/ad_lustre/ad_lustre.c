@@ -40,4 +40,7 @@ struct ADIOI_Fns_struct ADIO_LUSTRE_operations = {
     ADIOI_GEN_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
     ADIOI_GEN_Feature, /* Features */
+    "LUSTRE:",
+    ADIOI_GEN_IreadStridedColl, /* IreadStridedColl */
+    ADIOI_GEN_IwriteStridedColl /* IwriteStridedColl */
 };

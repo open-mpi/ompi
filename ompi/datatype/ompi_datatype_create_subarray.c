@@ -40,6 +40,12 @@ int32_t ompi_datatype_create_subarray(int ndims,
     int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
+    /**
+     * If the oldtype contains the original MPI_LB and MPI_UB markers then we
+     * are forced to follow the MPI standard suggestion and reset these 2
+     * markers (MPI 3.0 page 96 line 37).  Otherwise we can simply resize the
+     * datatype.
+     */
     ompi_datatype_type_extent( oldtype, &extent );
 
     /* If the ndims is zero then return the NULL datatype */
@@ -78,6 +84,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
         ompi_datatype_create_hvector( subsize_array[i], 1, size * extent,
                                       last_type, newtype );
         ompi_datatype_destroy( &last_type );
+
         displ += size * start_array[i];
         size *= size_array[i];
         last_type = *newtype;
@@ -85,12 +92,12 @@ int32_t ompi_datatype_create_subarray(int ndims,
 
  replace_subarray_type:
     /**
-     * We cannot use resized here. Resized will only set the soft lb and ub markers
-     * without moving the real data inside. What we need is to force the displacement
-     * of the data upward to the right position AND set the LB and UB. A type
-     * struct is the function we need.
+     * Resized will only set the soft lb and ub markers without moving the real
+     * data inside. Thus, in case the original data contains the hard markers
+     * (MPI_LB or MPI_UB) we must force the displacement of the data upward to
+     * the right position AND set the hard markers LB and UB.
      */
-    {
+    if( oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
         MPI_Aint displs[3];
         MPI_Datatype types[3];
         int blength[3] = { 1, 1, 1 };
@@ -98,6 +105,8 @@ int32_t ompi_datatype_create_subarray(int ndims,
         displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
         types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
         ompi_datatype_create_struct( 3, blength, displs, types, newtype );
+    } else {
+        ompi_datatype_create_resized(last_type, displ * extent, size * extent, newtype);
     }
     ompi_datatype_destroy( &last_type );
 

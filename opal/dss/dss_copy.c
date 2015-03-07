@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +23,7 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss_internal.h"
+#include "opal/util/error.h"
 
 int opal_dss_copy(void **dest, void *src, opal_data_type_t type)
 {
@@ -106,6 +109,10 @@ int opal_dss_std_copy(void **dest, void *src, opal_data_type_t type)
         datasize = sizeof(time_t);
         break;
 
+    case OPAL_NAME:
+        datasize = sizeof(opal_process_name_t);
+        break;
+
     default:
         return OPAL_ERR_UNKNOWN_DATA_TYPE;
     }
@@ -130,7 +137,7 @@ int opal_dss_copy_null(char **dest, char *src, opal_data_type_t type)
 {
     char *val;
 
-    *dest = (char*)malloc(sizeof(char*));
+    *dest = (char*)malloc(sizeof(char));
     if (NULL == *dest) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -326,6 +333,9 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
             p->data.bo.size = 0;
         }
         break;
+    case OPAL_NAME:
+        memcpy(&p->data.name, &src->data.name, sizeof(opal_process_name_t));
+        break;
     default:
         opal_output(0, "COPY-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
         return OPAL_ERROR;
@@ -337,6 +347,63 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
 int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
                                   opal_data_type_t type)
 {
+    *dest = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(*dest, src);
     return OPAL_SUCCESS;
 }
 
+/* PROCESS NAME */
+int opal_dss_copy_name(opal_process_name_t **dest, opal_process_name_t *src, opal_data_type_t type)
+{
+    opal_process_name_t *val;
+
+    val = (opal_process_name_t*)malloc(sizeof(opal_process_name_t));
+    if (NULL == val) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    val->jobid = src->jobid;
+    val->vpid = src->vpid;
+
+    *dest = val;
+    return OPAL_SUCCESS;
+}
+
+/*
+ * JOBID
+ */
+int opal_dss_copy_jobid(opal_jobid_t **dest, opal_jobid_t *src, opal_data_type_t type)
+{
+    opal_jobid_t *val;
+
+    val = (opal_jobid_t*)malloc(sizeof(opal_jobid_t));
+    if (NULL == val) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    *val = *src;
+    *dest = val;
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * VPID
+ */
+int opal_dss_copy_vpid(opal_vpid_t **dest, opal_vpid_t *src, opal_data_type_t type)
+{
+    opal_vpid_t *val;
+
+    val = (opal_vpid_t*)malloc(sizeof(opal_vpid_t));
+    if (NULL == val) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    *val = *src;
+    *dest = val;
+
+    return OPAL_SUCCESS;
+}

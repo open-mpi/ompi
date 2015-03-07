@@ -14,6 +14,8 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -104,7 +106,8 @@ CLEANFILES += sizeof_f.f90
 noinst_LTLIBRARIES=
 if BUILD_FORTRAN_SIZEOF
 noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
-libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
+# Do not dist this file; it is generated
+nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
 libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 endif
 
@@ -116,7 +119,9 @@ sizeof_f.f90:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --impl=$@ --ierror=mandatory --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
-	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF)
+	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
+	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 if BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER
 libmpi_mpifh_la_SOURCES += \

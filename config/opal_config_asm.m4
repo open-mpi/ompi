@@ -11,6 +11,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -18,6 +20,68 @@ dnl
 dnl $HEADER$
 dnl
 
+
+AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
+
+  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result CFLAGS_save])
+
+  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
+                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
+
+  sync_bool_compare_and_swap_128_result=0
+
+  if test ! "$enable_cross_cmpset128" = "yes" ; then
+      AC_MSG_CHECKING([for processor support of __sync builtin atomic compare-and-swap on 128-bit values])
+
+      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
+	  [AC_MSG_RESULT([yes])
+	      sync_bool_compare_and_swap_128_result=1],
+	  [AC_MSG_RESULT([no])],
+	  [AC_MSG_RESULT([no (cross compiling)])])
+
+      if test $sync_bool_compare_and_swap_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+	  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
+              [AC_MSG_RESULT([yes])
+		  sync_bool_compare_and_swap_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])],
+	      [AC_MSG_RESULT([no (cross compiling)])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  else
+      AC_MSG_CHECKING([for compiler support of __sync builtin atomic compare-and-swap on 128-bit values])
+
+      # Check if the compiler supports the __sync builtin
+      AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+	  [AC_MSG_RESULT([yes])
+	      sync_bool_compare_and_swap_128_result=1],
+	  [AC_MSG_RESULT([no])])
+
+      if test $sync_bool_compare_and_swap_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+	  AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
+              [AC_MSG_RESULT([yes])
+		  sync_bool_compare_and_swap_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  fi
+
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128], [$sync_bool_compare_and_swap_128_result],
+	[Whether the __sync builtin atomic compare and swap supports 128-bit values])
+
+  OPAL_VAR_SCOPE_POP
+])
 
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
   AC_MSG_CHECKING([for __sync builtin atomics])
@@ -324,13 +388,13 @@ foo$opal_cv_asm_label_suffix
         [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
-    if test "$opal_asm_addr" = "16" -o "$opal_asm_addr" = "10" ; then
+    if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
        opal_cv_asm_align_log="yes"
     else
         opal_cv_asm_align_log="no"
     fi])
 
-    if test "$opal_cv_asm_align_log" = "yes" -o "$opal_cv_asm_align_log" = "1" ; then
+    if test "$opal_cv_asm_align_log" = "yes" || test "$opal_cv_asm_align_log" = "1" ; then
         opal_asm_align_log_result=1
     else
         opal_asm_align_log_result=0
@@ -558,6 +622,89 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
     unset sparc_result
 ])dnl
 
+dnl #################################################################
+dnl
+dnl OPAL_CHECK_CMPXCHG16B
+dnl
+dnl #################################################################
+AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
+    OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
+
+    AC_ARG_ENABLE([cross-cmpxchg16b],[AC_HELP_STRING([--enable-cross-cmpxchg16b],
+                  [enable the use of the cmpxchg16b instruction when cross compiling])])
+
+    if test ! "$enable_cross_cmpxchg16b" = "yes" ; then
+	AC_MSG_CHECKING([if processor supports x86_64 16-byte compare-and-exchange])
+	AC_RUN_IFELSE([AC_LANG_PROGRAM([[unsigned char tmp[16];]],[[
+    __asm__ __volatile__ ("lock cmpxchg16b (%%rsi)" : : "S" (tmp) : "memory", "cc");]])],
+            [AC_MSG_RESULT([yes])
+		cmpxchg16b_result=1],
+            [AC_MSG_RESULT([no])
+		cmpxchg16b_result=0],
+            [AC_MSG_RESULT([no (cross-compiling)])
+		cmpxchg16b_result=0])
+    else
+	AC_MSG_CHECKING([if assembler supports x86_64 16-byte compare-and-exchange])
+
+	OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
+		cmpxchg16b 0],
+            [AC_MSG_RESULT([yes])
+		cmpxchg16b_result=1],
+            [AC_MSG_RESULT([no])
+		cmpxchg16b_result=0])
+    fi
+    if test "$cmpxchg16b_result" = 1; then
+        AC_MSG_CHECKING([if compiler correctly handles volatile 128bits])
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>
+#include <assert.h>
+
+union opal_counted_pointer_t {
+    struct {
+        uint64_t counter;
+        uint64_t item;
+    } data;
+#if defined(HAVE___INT128) && HAVE___INT128
+    __int128 value;
+#elif defined(HAVE_INT128_T) && HAVE_INT128_T
+    int128_t value;
+#endif
+};
+typedef union opal_counted_pointer_t opal_counted_pointer_t;],
+                                       [volatile opal_counted_pointer_t a;
+    opal_counted_pointer_t b;
+
+    a.data.counter = 0;
+    a.data.item = 0x1234567890ABCDEF;
+
+    b.data.counter = a.data.counter;
+    b.data.item = a.data.item;
+
+    /* bozo checks */
+    assert(16 == sizeof(opal_counted_pointer_t));
+    assert(a.data.counter == b.data.counter);
+    assert(a.data.item == b.data.item);
+    /*
+     * the following test fails on buggy compilers
+     * so far, with icc -o conftest conftest.c
+     *  - intel icc 14.0.0.080 (aka 2013sp1)
+     *  - intel icc 14.0.1.106 (aka 2013sp1u1)
+     * older and more recents compilers work fine
+     * buggy compilers work also fine but only with -O0
+     */
+#if (defined(HAVE___INT128) && HAVE___INT128) || (defined(HAVE_INT128_T) && HAVE_INT128_T)
+    return (a.value != b.value);
+#else
+    return 0;
+#endif])],
+                    [AC_MSG_RESULT([yes])],
+                    [AC_MSG_RESULT([no])
+                     cmpxchg16b_result=0],
+                    [AC_MSG_RESULT([untested, assuming ok])])
+    fi
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
+        [Whether the processor supports the cmpxchg16b instruction])
+    OPAL_VAR_SCOPE_POP
+])dnl
 
 dnl #################################################################
 dnl
@@ -770,6 +917,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
          [Whether C compiler supports GCC style inline assembly])
+       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
     elif test "$enable_osx_builtin_atomics" = "yes" ; then
 	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
 	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
@@ -801,6 +949,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+            OPAL_CHECK_CMPXCHG16B
             ;;
 
         ia64-*)
@@ -940,7 +1089,7 @@ AC_MSG_ERROR([Can not continue.])
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
          asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
          asm_format="${asm_format}-${opal_asm_align_log_result}"
-         if test "$opal_cv_asm_arch" = "POWERPC32" -o "$opal_cv_asm_arch" = "POWERPC64" ; then
+         if test "$opal_cv_asm_arch" = "POWERPC32" || test "$opal_cv_asm_arch" = "POWERPC64" ; then
              asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
              asm_format="${asm_format}-1"
@@ -966,6 +1115,28 @@ AC_MSG_ERROR([Can not continue.])
     AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
         [Architecture type of assembly to use for atomic operations and CMA])
     AC_SUBST([OPAL_ASSEMBLY_ARCH])
+
+    # Check for RDTSCP support
+    result=0
+    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
+          [AC_MSG_CHECKING([for RDTSCP assembly support])
+           AC_LANG_PUSH([C])
+           AC_TRY_RUN([[
+int main(int argc, char* argv[])
+{
+  unsigned int rax, rdx;
+  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
+  return 0;
+}
+           ]],
+           [result=1
+            AC_MSG_RESULT([yes])],
+           [AC_MSG_RESULT([no])],
+           [#cross compile not supported
+            AC_MSG_RESULT(["no (cross compiling)"])])
+           AC_LANG_POP([C])])
+    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_SUPPORTS_RDTSCP], [$result],
+                       [Whether we have support for RDTSCP instruction])
 
     result="OPAL_$opal_cv_asm_builtin"
     OPAL_ASSEMBLY_BUILTIN="$opal_cv_asm_builtin"
@@ -993,7 +1164,7 @@ AC_DEFUN([OPAL_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_SYNC" -a "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
+if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_SYNC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already

@@ -93,6 +93,8 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define PMIX_NODE_RANK       "pmix.nrank"       // (uint16_t) rank on this node spanning all jobs
 #define PMIX_LOCALLDR        "pmix.lldr"        // (uint64_t) opal_identifier of lowest rank on this node within this job
 #define PMIX_APPLDR          "pmix.aldr"        // (uint32_t) lowest rank in this app within this job
+#define PMIX_NODE_ID         "pmix.nodeid"      // (uint32_t) vpid of daemon hosting specified proc
+
 /* proc location-related info */
 #define PMIX_PROC_MAP        "pmix.map"         // (byte_object) packed map of proc locations within this job
 #define PMIX_LOCAL_PEERS     "pmix.lpeers"      // (char*) comma-delimited string of ranks on this node within this job
@@ -106,6 +108,37 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 /* topology info */
 #define PMIX_NET_TOPO        "pmix.ntopo"       // (byte_object) network topology
 #define PMIX_LOCAL_TOPO      "pmix.ltopo"       // (hwloc topo) local node topology
+
+/**
+ * Provide a simplified macro for sending data via modex
+ * to other processes. The macro requires four arguments:
+ *
+ * r - the integer return status from the modex op
+ * f - whether this modex requires sync or is async ready
+ * sc - the PMIX scope of the data
+ * s - the key to tag the data being posted
+ * d - pointer to the data object being posted
+ * t - the type of the data
+ */
+#define OPAL_MODEX_SEND_VALUE(r, f, sc, s, d, t)                         \
+    do {                                                                \
+        opal_value_t kv;                                                \
+        if (PMIX_SYNC_REQD == (f)) {                                    \
+            opal_pmix_use_collective = true;                            \
+        }                                                               \
+        OBJ_CONSTRUCT(&kv, opal_value_t);                               \
+        kv.key = (s);                                                   \
+        if (OPAL_SUCCESS != ((r) = opal_value_load(&kv, (d), (t)))) {   \
+            OPAL_ERROR_LOG((r));                                        \
+        } else {                                                        \
+            if (OPAL_SUCCESS != ((r) = opal_pmix.put(sc, &kv))) {       \
+                OPAL_ERROR_LOG((r));                                    \
+            }                                                           \
+        }                                                               \
+        /* do not destruct the keyval as we don't own */                \
+        /* the data - the caller will take care of the */               \
+        /* key and value storage, and the kv itself has none */         \
+    } while(0);
 
 /**
  * Provide a simplified macro for sending data via modex
@@ -168,7 +201,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
  * p - pointer to the opal_proc_t of the proc that posted
  *     the data (opal_proc_t*)
  * d - pointer to a location wherein the data object
- *     it to be returned
+ *     is to be returned
  * t - the expected data type
  */
 #define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                            \
@@ -300,7 +333,7 @@ typedef int (*opal_pmix_base_module_put_fn_t)(opal_pmix_scope_t scope,
  * reflect the proposed PMIx extensions, and to include the process identifier so
  * we can form the PMI key within the active component instead of sprinkling that
  * code all over the code base. */
-typedef int (*opal_pmix_base_module_get_fn_t)(const opal_identifier_t *id,
+typedef int (*opal_pmix_base_module_get_fn_t)(const opal_process_name_t *id,
                                               const char *key,
                                               opal_value_t **kv);
 
@@ -309,7 +342,7 @@ typedef int (*opal_pmix_base_module_get_fn_t)(const opal_identifier_t *id,
  * opal_value_t object in the callback. We include the process identifier so
  * we can form the PMI key within the active component instead of sprinkling that
  * code all over the code base. */
-typedef void (*opal_pmix_base_module_get_nb_fn_t)(const opal_identifier_t *id,
+typedef void (*opal_pmix_base_module_get_nb_fn_t)(const opal_process_name_t *id,
                                                  const char *key,
                                                  opal_pmix_cbfunc_t cbfunc,
                                                  void *cbdata);

@@ -65,8 +65,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
          * to our hash table
          */
         OBJ_CONSTRUCT(&myvals, opal_list_t);
-	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal,
-                                              (opal_identifier_t*)&msg->dst,
+	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &msg->dst,
                                               OPAL_DSTORE_URI, &myvals)) {
             kv = (opal_value_t*)opal_list_get_first(&myvals);
             if (NULL != kv) {
@@ -387,6 +386,11 @@ static void process_uri(char *uri)
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
                 opal_bitmap_set_bit(&pr->addressable, component->idx);
+            } else {
+                opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                    "%s: peer %s is NOT reachable via component %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
             }
         }
     }

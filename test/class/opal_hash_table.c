@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Hewlett-Packard Development Company, LP.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 
     test_init("opal_hash_table_t");
 
-    rc = opal_init(&argc, &argv);
+    rc = opal_init_util(&argc, &argv);
     test_verify_int(OPAL_SUCCESS, rc);
     if (OPAL_SUCCESS != rc) {
         test_finalize();
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     fclose( error_out );
 #endif
 
-    opal_finalize();
+    opal_finalize_util ();
     
     return test_finalize();
 }

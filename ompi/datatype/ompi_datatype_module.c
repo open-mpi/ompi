@@ -748,7 +748,7 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );
     } else {
-        if( pData->super.flags & OPAL_DATATYPE_FLAG_COMMITED ) index += snprintf( buffer + index, length - index, "commited " );
+        if( pData->super.flags & OPAL_DATATYPE_FLAG_COMMITTED ) index += snprintf( buffer + index, length - index, "committed " );
         if( pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
     }
     index += snprintf( buffer + index, length - index, ")" );

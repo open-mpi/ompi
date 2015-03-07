@@ -6,6 +6,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -312,13 +314,14 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     rly = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(rly, buffer);
 
-    /* get the signature */
+    /* get the signature that we do not need */
     cnt=1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(ret);
         ORTE_FORCED_TERMINATE(ret);
         return;
     }
+    OBJ_RELEASE(sig);
 
     /* get the target tag */
     cnt=1;
@@ -361,8 +364,11 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                  */
                 if (ORTE_PROC_IS_HNP) {
                     /* no need - already have the info */
-                    if (NULL != bo->bytes) {
-                        free(bo->bytes);
+                    if (NULL != bo) {
+                        if (NULL != bo->bytes) {
+                            free(bo->bytes);
+                        }
+                        free(bo);
                     }
                 } else {
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -385,6 +391,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     goto relay;
                 }
                 if (0 == flag) {
+                    /* copy the remainder of the payload */
+                    opal_dss.copy_payload(relay, buffer);
                     /* no - just return */
                     goto relay;
                 }
@@ -408,6 +416,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     /* done with the wireup buffer - dump it */
                     OBJ_DESTRUCT(&wireup);
                 }
+                free(bo);
                 /* copy the remainder of the payload */
                 opal_dss.copy_payload(relay, buffer);
             }
@@ -429,6 +438,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:direct:send_relay - recipient list is empty!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_RELEASE(rly);
         goto CLEANUP;
     }
     

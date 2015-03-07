@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,11 +16,11 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 
-#include "opal/util/proc.h"
-
+#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 #include "btl_usnic_stats.h"
+#include "btl_usnic_util.h"
 
 /*
  * Local variables
@@ -84,7 +84,7 @@ void opal_btl_usnic_print_stats(
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
              prefix,
-             opal_process_name_vpid(opal_proc_local_get()->proc_name),
+             opal_proc_local_get()->proc_name.vpid,
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
@@ -264,11 +264,10 @@ static int usnic_pvar_notify(struct mca_base_pvar_t *pvar,
 static int usnic_pvar_read(const struct mca_base_pvar_t *pvar,
                            void *value, void *bound_obj)
 {
-    size_t i;
     size_t offset = (size_t) pvar->ctx;
     uint64_t *array = (uint64_t*) value;
 
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         char *base = (char*) &(mca_btl_usnic_component.usnic_active_modules[i]->stats);
         array[i] = *((uint64_t*) (base + offset));
     }
@@ -310,10 +309,9 @@ static void register_pvar_highwater(char *name, char *desc, size_t offset)
 static int usnic_pvar_enum_read(const struct mca_base_pvar_t *pvar,
                                 void *value, void *bound_obj)
 {
-    size_t i;
     int *array = (int *) value;
 
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         array[i] = i;
     }
 
@@ -376,13 +374,13 @@ static bool setup_mpit_pvar_type(void)
  */
 static void setup_mpit_pvars_enum(void)
 {
-    size_t i;
+    int i;
     int rc __opal_attribute_unused__;
     mca_base_var_enum_value_t *devices;
     static mca_base_var_enum_t *devices_enum;
-    struct ibv_device *device;
     opal_btl_usnic_module_t *m;
     unsigned char *c;
+    struct sockaddr_in *sin;
 
     devices = calloc(mca_btl_usnic_component.num_modules + 1,
                      sizeof(*devices));
@@ -392,15 +390,14 @@ static void setup_mpit_pvars_enum(void)
         char *str;
 
         m = mca_btl_usnic_component.usnic_active_modules[i];
-        c = (unsigned char*) &m->if_ipv4_addr;
+        sin = m->fabric_info->src_addr;
+        c = (unsigned char*) &sin->sin_addr.s_addr;
 
-        device = m->device;
         devices[i].value = i;
-        rc = asprintf(&str, "%s,%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
-                 ibv_get_device_name(device),
-                 m->if_name,
-                 c[0], c[1], c[2], c[3],
-                 m->if_cidrmask);
+        rc = asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
+                      m->fabric_info->fabric_attr->name,
+                      c[0], c[1], c[2], c[3],
+                      usnic_netmask_to_cidrlen(sin->sin_addr.s_addr));
         assert(rc > 0);
         devices[i].string = str;
     }
@@ -427,9 +424,10 @@ static void setup_mpit_pvars_enum(void)
 
     /* Free the strings (mca_base_var_enum_create() strdup()'ed them
        into private storage, so we don't need them any more) */
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         free((char*) devices[i].string);
     }
+    free(devices);
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar

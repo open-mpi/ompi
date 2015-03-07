@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,13 +25,10 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_message_t);
 static inline ompi_mtl_portals4_message_t*
 ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
 {
-    int rc;
     opal_free_list_item_t *tmp;
     ompi_mtl_portals4_message_t* message;
 
-    OPAL_FREE_LIST_GET(&ompi_mtl_portals4.fl_message,
-                       tmp,
-                       rc);
+    tmp = opal_free_list_get (&ompi_mtl_portals4.fl_message);
     if (NULL == tmp) return NULL;
 
     message = (ompi_mtl_portals4_message_t*) tmp;
@@ -51,8 +51,8 @@ ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
 static inline void
 ompi_mtl_portals4_message_free(ompi_mtl_portals4_message_t *message)
 {
-    OPAL_FREE_LIST_RETURN(&ompi_mtl_portals4.fl_message,
-                          &message->super);
+    opal_free_list_return (&ompi_mtl_portals4.fl_message,
+                           &message->super);
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,13 +57,11 @@ typedef struct {
 
     /* Data from the LISTEN command message */
     uint32_t ipv4_addr;
-    uint32_t cidrmask;
+    uint32_t netmask;
     char ipv4_addr_str[IPV4STRADDRLEN];
-    uint32_t mtu;
+    uint32_t max_msg_size;
     char *nodename;
-    char *if_name;
     char *usnic_name;
-    char mac_str[MACSTRLEN];
 
     /* File descriptor, UDP port, buffer to receive messages, and event */
     int fd;
@@ -121,11 +119,10 @@ typedef struct {
     uint32_t src_udp_port;
     agent_udp_port_listener_t *listener;
     uint32_t dest_ipv4_addr; /* in network byte order */
-    uint32_t dest_cidrmask;
+    uint32_t dest_netmask;
     uint32_t dest_udp_port;
     struct sockaddr_in dest_sockaddr;
     char *dest_nodename;
-    uint8_t dest_mac[6];
 
     /* The sizes and corresponding buffers of the PING messages that
        we'll send, and whether each of those PING messages have been
@@ -154,13 +151,11 @@ OBJ_CLASS_DECLARATION(agent_ping_t);
 static void udp_port_listener_zero(agent_udp_port_listener_t *obj)
 {
     obj->ipv4_addr =
-        obj->cidrmask =
-        obj->mtu = 0;
+        obj->netmask =
+        obj->max_msg_size = 0;
     obj->nodename =
-        obj->if_name =
         obj->usnic_name = NULL;
     memset(obj->ipv4_addr_str, 0, sizeof(obj->ipv4_addr_str));
-    memset(obj->mac_str, 0, sizeof(obj->mac_str));
 
     obj->fd = -1;
     obj->udp_port = -1;
@@ -191,9 +186,6 @@ static void udp_port_listener_destructor(agent_udp_port_listener_t *obj)
     }
     if (NULL != obj->nodename) {
         free(obj->nodename);
-    }
-    if (NULL != obj->if_name) {
-        free(obj->if_name);
     }
     if (NULL != obj->usnic_name) {
         free(obj->usnic_name);
@@ -365,7 +357,7 @@ static bool agent_thread_is_ping_expected(opal_btl_usnic_module_t *module,
             opal_btl_usnic_endpoint_t *ep;
             ep = container_of(item, opal_btl_usnic_endpoint_t,
                               endpoint_endpoint_li);
-            if (src_ipv4_addr == ep->endpoint_remote_addr.ipv4_addr) {
+            if (src_ipv4_addr == ep->endpoint_remote_modex.ipv4_addr) {
                 found = true;
                 break;
             }
@@ -503,7 +495,7 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
     socklen_t addrlen = sizeof(src_addr);
 
     while (1) {
-        numbytes = recvfrom(listener->fd, listener->buffer, listener->mtu, 0,
+        numbytes = recvfrom(listener->fd, listener->buffer, listener->max_msg_size, 0,
                             &src_addr, &addrlen);
         if (numbytes > 0) {
             break;
@@ -622,21 +614,19 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     }
 
     udp_listener->module = cmd.module;
-    udp_listener->mtu = cmd.mtu;
+    udp_listener->max_msg_size = cmd.max_msg_size;
     udp_listener->ipv4_addr = cmd.ipv4_addr;
-    udp_listener->cidrmask = cmd.cidrmask;
-    udp_listener->if_name = strdup(cmd.if_name);
+    udp_listener->netmask = cmd.netmask;
     udp_listener->usnic_name = strdup(cmd.usnic_name);
 
-    /* Fill in the ipv4_addr_str and mac_str.  Since we don't have the
-       IPv4 address in sockaddr_in form, it's not worth using
+    /* Fill in the ipv4_addr_str.  Since we don't have the IPv4
+       address in sockaddr_in form, it's not worth using
        inet_ntop() */
     opal_btl_usnic_snprintf_ipv4_addr(udp_listener->ipv4_addr_str,
                                       sizeof(udp_listener->ipv4_addr_str),
-                                      cmd.ipv4_addr, cmd.cidrmask);
-    opal_btl_usnic_sprintf_mac(udp_listener->mac_str, cmd.mac);
+                                      cmd.ipv4_addr, cmd.netmask);
 
-    udp_listener->buffer = malloc(udp_listener->mtu);
+    udp_listener->buffer = malloc(udp_listener->max_msg_size);
     if (NULL == udp_listener->buffer) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         ABORT("Out of memory");
@@ -676,10 +666,10 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     udp_listener->udp_port = ntohs(inaddr.sin_port);
 
     opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity agent listening on %s:%d, (%s/%s)",
+                        "usNIC connectivity agent listening on %s:%d, (%s)",
                         udp_listener->ipv4_addr_str,
                         udp_listener->udp_port,
-                        udp_listener->usnic_name, udp_listener->if_name);
+                        udp_listener->usnic_name);
 
     /* Set the "don't fragment" bit on outgoing frames because we
        want MTU-sized messages to get through successfully to the
@@ -696,7 +686,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
 
     /* Set the send and receive buffer sizes to our MTU size */
     int temp;
-    temp = (int) udp_listener->mtu;
+    temp = (int) udp_listener->max_msg_size;
     if ((ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_RCVBUF,
                           &temp, sizeof(temp))) < 0 ||
         (ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_SNDBUF,
@@ -736,7 +726,7 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
     char dest_ipv4_addr_str[IPV4STRADDRLEN];
     opal_btl_usnic_snprintf_ipv4_addr(dest_ipv4_addr_str,
                                       sizeof(dest_ipv4_addr_str),
-                                      ap->dest_ipv4_addr, ap->dest_cidrmask);
+                                      ap->dest_ipv4_addr, ap->dest_netmask);
 
     /* If we got all the ACKs for this ping, then move this ping from
        the "pending" list to the "results" list.  We can also free the
@@ -778,20 +768,16 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
             topic = "connectivity error: small bad, large bad";
         }
 
-        char mac_str[MACSTRLEN], ipv4_addr_str[IPV4STRADDRLEN];
+        char ipv4_addr_str[IPV4STRADDRLEN];
         opal_btl_usnic_snprintf_ipv4_addr(ipv4_addr_str, sizeof(ipv4_addr_str),
                                           ap->dest_ipv4_addr,
-                                          ap->dest_cidrmask);
-        opal_btl_usnic_sprintf_mac(mac_str, ap->dest_mac);
+                                          ap->dest_netmask);
         opal_show_help("help-mpi-btl-usnic.txt", topic, true,
                        opal_process_info.nodename,
                        ap->listener->ipv4_addr_str,
                        ap->listener->usnic_name,
-                       ap->listener->if_name,
-                       ap->listener->mac_str,
                        ap->dest_nodename,
                        ipv4_addr_str,
-                       mac_str,
                        ap->sizes[0],
                        ap->sizes[1]);
         opal_btl_usnic_exit(NULL);
@@ -800,12 +786,12 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
 
     time_t t = time(NULL);
     opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity pinging %s:%d (%s) from %s (%s/%s) at %s",
+                        "usNIC connectivity pinging %s:%d (%s) from %s (%s) at %s",
                         dest_ipv4_addr_str,
                         ntohs(ap->dest_sockaddr.sin_port),
                         ap->dest_nodename,
                         ap->listener->ipv4_addr_str,
-                        ap->listener->if_name, ap->listener->usnic_name,
+                        ap->listener->usnic_name,
                         ctime(&t));
 
     /* Send the ping messages to the peer */
@@ -888,12 +874,11 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
     ap->src_udp_port = cmd.src_udp_port;
     ap->listener = udp_listener;
     ap->dest_ipv4_addr = cmd.dest_ipv4_addr;
-    ap->dest_cidrmask = cmd.dest_cidrmask;
+    ap->dest_netmask = cmd.dest_netmask;
     ap->dest_udp_port = cmd.dest_udp_port;
     ap->dest_sockaddr.sin_family = AF_INET;
     ap->dest_sockaddr.sin_addr.s_addr = cmd.dest_ipv4_addr;
     ap->dest_sockaddr.sin_port = htons(cmd.dest_udp_port);
-    memcpy(ap->dest_mac, cmd.dest_mac, 6);
     ap->dest_nodename = strdup(cmd.dest_nodename);
 
     /* The first message we send will be "short" (a simple control
@@ -906,8 +891,9 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
        all IP options are enabled, which is 60 bytes), and then also
        subtract off the UDP header (which is 8 bytes).  So we need to
        subtract off 68 bytes from the MTU, and that's the largest ping
-       payload we can send. */
-    ap->sizes[1] = cmd.mtu - 68;
+       payload we can send.
+       max_msg_size allows for minimal UDP header, be more conservative */
+    ap->sizes[1] = cmd.max_msg_size - (68 - 42);
 
     /* Allocate a buffer for each size.  Make sure the smallest size
        is at least sizeof(agent_udp_message_t). */
@@ -1017,7 +1003,7 @@ static void agent_thread_accept(int fd, short flags, void *context)
 
     len = sizeof(addr);
     int client_fd = accept(fd, &addr, &len);
-    if (-1 == client_fd) {
+    if (client_fd < 0) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("accept() failed");
         /* Will not return */
@@ -1148,7 +1134,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
 
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path));
+    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
 
     if (bind(ipc_accept_fd, (struct sockaddr *) &address,
              sizeof(struct sockaddr_un)) != 0) {

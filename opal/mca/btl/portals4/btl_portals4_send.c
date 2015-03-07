@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,8 +67,8 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
         portals4_btl->portals_outstanding_ops));
 
     OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
-                         "PtlPut frag=%p pid=%x tag=%x len=%ld match_bits=%lx\n",
-                         (void*)frag,  endpoint->ptl_proc.phys.pid, tag, 
+                         "PtlPut frag=%p rank=%x pid=%x tag=%x len=%ld match_bits=%lx\n",
+                         (void*)frag,  endpoint->ptl_proc.rank, endpoint->ptl_proc.phys.pid, tag, 
                          put_length, (uint64_t)match_bits));
 
     ret = PtlPut(md_h,
@@ -84,8 +85,8 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
         opal_output(opal_btl_base_framework.framework_output, "mca_btl_portals4_send: PtlPut failed with error %d", ret);
         return OPAL_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlPut frag=%p pid=%x tag=%x addr=%p len=%ld match_bits=%lx\n",
-        (void*)frag,  endpoint->ptl_proc.phys.pid, tag, (void *)offset, put_length, (uint64_t)match_bits));
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlPut frag=%p rank=%x pid=%x tag=%x addr=%p len=%ld match_bits=%lx\n",
+        (void*)frag,  endpoint->ptl_proc.rank, endpoint->ptl_proc.phys.pid, tag, (void *)offset, put_length, (uint64_t)match_bits));
 
     return OPAL_SUCCESS;
 }

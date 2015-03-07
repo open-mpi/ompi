@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
@@ -161,6 +161,7 @@ typedef int (*opal_shmem_base_module_finalize_fn_t)(void);
  * structure for shmem modules
  */
 struct opal_shmem_base_module_2_0_0_t {
+    mca_base_module_t                           base;
     opal_shmem_base_module_init_fn_t            module_init;
     opal_shmem_base_module_segment_create_fn_t  segment_create;
     opal_shmem_base_ds_copy_fn_t                ds_copy;
@@ -180,9 +181,12 @@ typedef struct opal_shmem_base_module_2_0_0_t opal_shmem_base_module_t;
  * macro for use in components that are of type shmem
  * see: opal/mca/mca.h for more information
  */
-#define OPAL_SHMEM_BASE_VERSION_2_0_0                                          \
-    MCA_BASE_VERSION_2_0_0,                                                    \
-    "shmem", 2, 0, 0
+#define OPAL_SHMEM_BASE_VERSION_2_0_0                                   \
+    MCA_BASE_VERSION_2_0_0,                                             \
+        .mca_type_name = "shmem",                                       \
+        .mca_type_major_version = 2,                                    \
+        .mca_type_minor_version = 0,                                    \
+        .mca_type_release_version = 0
 
 END_C_DECLS
 

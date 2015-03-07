@@ -17,6 +17,8 @@
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -86,9 +88,7 @@ static int mca_bml_r2_add_btls( void )
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(selected_btl =  (mca_btl_base_selected_module_t*)opal_list_get_first(btls);
-        selected_btl != (mca_btl_base_selected_module_t*)opal_list_get_end(btls);
-        selected_btl =  (mca_btl_base_selected_module_t*)opal_list_get_next(selected_btl)) {
+    OPAL_LIST_FOREACH(selected_btl, btls, mca_btl_base_selected_module_t) {
         mca_btl_base_module_t *btl = selected_btl->btl_module;
         mca_bml_r2.btl_modules[mca_bml_r2.num_btl_modules++] = btl;
         for (i = 0; NULL != btl_names_argv && NULL != btl_names_argv[i]; ++i) {
@@ -125,6 +125,23 @@ static int btl_bandwidth_compare(const void *v1, const void *v2)
                        *b2 = (mca_bml_base_btl_t*)v2;
 
     return b2->btl->btl_bandwidth - b1->btl->btl_bandwidth;
+}
+
+static void mca_bml_r2_calculate_bandwidth_latency (mca_bml_base_btl_array_t *btl_array, double *total_bandwidth, uint32_t *latency)
+{
+    const size_t array_length = mca_bml_base_btl_array_get_size (btl_array);
+
+    *latency = UINT_MAX;
+    *total_bandwidth = 0.;
+
+    for (size_t i = 0 ; i < array_length ; ++i) {
+        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index (btl_array, i);
+        mca_btl_base_module_t *btl = bml_btl->btl;
+        *total_bandwidth += btl->btl_bandwidth;
+        if (btl->btl_latency < *latency) {
+            *latency = btl->btl_latency;
+        }
+    }
 }
 
 /*
@@ -189,6 +206,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     for(p_index = 0; p_index < mca_bml_r2.num_btl_modules; p_index++) {
         mca_btl_base_module_t* btl = mca_bml_r2.btl_modules[p_index];
         int btl_inuse = 0;
+        int btl_flags;
 
         /* if the r2 can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
@@ -212,7 +230,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 ompi_proc_t *proc = new_procs[p];
                 mca_bml_base_endpoint_t * bml_endpoint = 
                     (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
-                mca_bml_base_btl_t* bml_btl; 
+                mca_bml_base_btl_t* bml_btl = NULL;
                 size_t size;
                 
                 if(NULL == bml_endpoint) { 
@@ -236,12 +254,35 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                     bml_endpoint->btl_flags_or = 0;
                 }
 
+                btl_flags = btl->btl_flags;
+                if( (btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == btl->btl_put) ) {
+                    opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
+                                " the %s BTL without any PUT function attached. Discard the flag !",
+                                btl->btl_component->btl_version.mca_component_name);
+                    btl_flags ^= MCA_BTL_FLAGS_PUT;
+                }
+                if( (btl_flags & MCA_BTL_FLAGS_GET) && (NULL == btl->btl_get) ) {
+                    opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
+                                " the %s BTL without any GET function attached. Discard the flag !",
+                                btl->btl_component->btl_version.mca_component_name);
+                    btl_flags ^= MCA_BTL_FLAGS_GET;
+                }
+
+                if( (btl_flags & (MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_SEND)) == 0 ) {
+                    /**
+                     * If no protocol specified, we have 2 choices: we ignore the BTL
+                     * as we don't know which protocl to use, or we suppose that all
+                     * BTLs support the send protocol.
+                     */
+                    btl_flags |= MCA_BTL_FLAGS_SEND;
+                }
+
                 /* dont allow an additional BTL with a lower exclusivity ranking */
                 size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
                 if(size > 0) {
                     bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, size-1);
-                    /* skip this btl if the exclusivity is less than the previous */
-                    if(bml_btl->btl->btl_exclusivity > btl->btl_exclusivity) {
+                    /* skip this btl if the exclusivity is less than the previous only if the btl does not provide full rdma (for one-sided) */
+                    if(bml_btl->btl->btl_exclusivity > btl->btl_exclusivity  && ((btl_flags & MCA_BTL_FLAGS_RDMA) != MCA_BTL_FLAGS_RDMA)) {
                         btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[p]);
                         opal_output_verbose(20, opal_btl_base_framework.framework_output, 
                                             "mca: bml: Not using %s btl to %s on node %s "
@@ -261,39 +302,44 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                                     proc->super.proc_hostname);
 
                 /* cache the endpoint on the proc */
-                bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
-                bml_btl->btl = btl;
-                bml_btl->btl_endpoint = btl_endpoints[p];
-                bml_btl->btl_weight = 0;
-                bml_btl->btl_flags = btl->btl_flags; 
-                if( (bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == btl->btl_put) ) {
-                    opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
-                                " the %s BTL without any PUT function attached. Discard the flag !",
-                                bml_btl->btl->btl_component->btl_version.mca_component_name);
-                    bml_btl->btl_flags ^= MCA_BTL_FLAGS_PUT;
-                }
-                if( (bml_btl->btl_flags & MCA_BTL_FLAGS_GET) && (NULL == btl->btl_get) ) {
-                    opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
-                                " the %s BTL without any GET function attached. Discard the flag !",
-                                bml_btl->btl->btl_component->btl_version.mca_component_name);
-                    bml_btl->btl_flags ^= MCA_BTL_FLAGS_GET;
-                }
-                if( (bml_btl->btl_flags & (MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_SEND)) == 0 ) {
+                if (NULL == bml_btl || (bml_btl->btl->btl_exclusivity <= btl->btl_exclusivity)) {
+                    bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
+                    bml_btl->btl = btl;
+                    bml_btl->btl_endpoint = btl_endpoints[p];
+                    bml_btl->btl_weight = 0;
+                    bml_btl->btl_flags = btl_flags;
+
                     /**
-                     * If no protocol specified, we have 2 choices: we ignore the BTL
-                     * as we don't know which protocl to use, or we suppose that all
-                     * BTLs support the send protocol. 
+                     * calculate the bitwise OR of the btl flags
                      */
-                    bml_btl->btl_flags |= MCA_BTL_FLAGS_SEND;
+                    bml_endpoint->btl_flags_or |= bml_btl->btl_flags;
                 }
-                /**
-                 * calculate the bitwise OR of the btl flags 
-                 */
-                bml_endpoint->btl_flags_or |= bml_btl->btl_flags;
+
+                /* always add rdma endpoints */
+                if ((btl_flags & MCA_BTL_FLAGS_RDMA) &&
+                    !((proc->super.proc_arch != ompi_proc_local_proc->super.proc_arch) &&
+                      (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
+                    mca_bml_base_btl_t *bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
+
+                    bml_btl_rdma->btl = btl;
+                    bml_btl_rdma->btl_endpoint = btl_endpoints[p];
+                    bml_btl_rdma->btl_weight = 0;
+                    bml_btl_rdma->btl_flags = btl_flags;
+
+                    if (bml_endpoint->btl_pipeline_send_length < btl->btl_rdma_pipeline_send_length) {
+                        bml_endpoint->btl_pipeline_send_length = btl->btl_rdma_pipeline_send_length;
+                    }
+
+                    if (bml_endpoint->btl_send_limit < btl->btl_min_rdma_pipeline_size) {
+                        bml_endpoint->btl_send_limit = btl->btl_min_rdma_pipeline_size;
+                    }
+                }
+
                 /* This BTL is in use, allow the progress registration */
                 btl_inuse++;
             }
         }
+
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
             size_t p;
             bool found = false;
@@ -319,9 +365,8 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         mca_bml_base_endpoint_t* bml_endpoint = 
             (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         double total_bandwidth = 0;
-        uint32_t latency = 0xffffffff;
-        size_t n_index;
-        size_t n_size;
+        uint32_t latency;
+        size_t n_send, n_rdma;
 
         /* skip over procs w/ no btl's registered */
         if(NULL == bml_endpoint) {
@@ -335,28 +380,22 @@ static int mca_bml_r2_add_procs( size_t nprocs,
          *     weighting. Once the left over is smaller than this number we will
          *     start using the weight to compute the correct amount.
          */
-        n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
-        
+        n_send = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
+        n_rdma = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+
         /* sort BTLs in descending order according to bandwidth value */
-        qsort(bml_endpoint->btl_send.bml_btls, n_size,
+        qsort(bml_endpoint->btl_send.bml_btls, n_send,
                 sizeof(mca_bml_base_btl_t), btl_bandwidth_compare);
 
         bml_endpoint->btl_rdma_index = 0;
-        for(n_index = 0; n_index < n_size; n_index++) {
-            mca_bml_base_btl_t* bml_btl = 
-                mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
-            mca_btl_base_module_t* btl = bml_btl->btl;
-            total_bandwidth += bml_btl->btl->btl_bandwidth;
-            if(btl->btl_latency < latency) {
-                latency = btl->btl_latency;
-            }
-        }
-        
+
+        mca_bml_r2_calculate_bandwidth_latency (&bml_endpoint->btl_send, &total_bandwidth, &latency);
+
         /* (1) set the weight of each btl as a percentage of overall bandwidth
          * (2) copy all btl instances at the highest priority ranking into the
          *     list of btls used for first fragments
          */
-        for(n_index = 0; n_index < n_size; n_index++) {
+        for (size_t n_index = 0 ; n_index < n_send ; ++n_index) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t *btl = bml_btl->btl;
@@ -365,7 +404,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             if(btl->btl_bandwidth > 0) {
                 bml_btl->btl_weight = (float)(btl->btl_bandwidth / total_bandwidth);
             } else {
-                bml_btl->btl_weight = (float)(1.0 / n_size);
+                bml_btl->btl_weight = (float)(1.0 / n_send);
             }
 
             /* check to see if this r2 is already in the array of r2s 
@@ -380,21 +419,24 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             /* set endpoint max send size as min of available btls */
             if(bml_endpoint->btl_max_send_size > btl->btl_max_send_size)
                bml_endpoint->btl_max_send_size = btl->btl_max_send_size;
+        }
 
-            /* check flags - is rdma prefered */
-            if ((btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET)) &&
-                !((proc->super.proc_arch != ompi_proc_local_proc->super.proc_arch) &&
-                  (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
-                mca_bml_base_btl_t* bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
-                mca_btl_base_module_t* btl_rdma = bml_btl->btl;
+        /* sort BTLs in descending order according to bandwidth value */
+        qsort(bml_endpoint->btl_rdma.bml_btls, n_rdma,
+                sizeof(mca_bml_base_btl_t), btl_bandwidth_compare);
 
-                *bml_btl_rdma = *bml_btl;
-                if(bml_endpoint->btl_pipeline_send_length < btl_rdma->btl_rdma_pipeline_send_length) {
-                    bml_endpoint->btl_pipeline_send_length = btl_rdma->btl_rdma_pipeline_send_length;
-                }
-                if(bml_endpoint->btl_send_limit < btl_rdma->btl_min_rdma_pipeline_size) {
-                    bml_endpoint->btl_send_limit = btl_rdma->btl_min_rdma_pipeline_size;
-                }
+        mca_bml_r2_calculate_bandwidth_latency (&bml_endpoint->btl_rdma, &total_bandwidth, &latency);
+
+        /* set rdma btl weights */
+        for (size_t n_index = 0 ; n_index < n_rdma ; ++n_index) {
+            mca_bml_base_btl_t *bml_btl =
+                mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n_index);
+
+            /* compute weighting factor for this r2 */
+            if (bml_btl->btl->btl_bandwidth > 0.0) {
+                bml_btl->btl_weight = (float)(bml_btl->btl->btl_bandwidth / total_bandwidth);
+            } else {
+                bml_btl->btl_weight = (float)(1.0 / n_rdma);
             }
         }
     }

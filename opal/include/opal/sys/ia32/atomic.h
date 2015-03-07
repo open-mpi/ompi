@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -168,7 +170,7 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
                         :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :
                         :"memory", "cc"
                         );
    return (ret+i);
@@ -188,7 +190,7 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
                         :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :
                         :"memory", "cc"
                         );
    return (ret-i);

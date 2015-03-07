@@ -11,8 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +53,54 @@
 
 print_queue *coll_write_time=NULL;
 print_queue *coll_read_time=NULL;
+
+
+static int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
+                                      size_t bytes_per_proc);
+
+
+static int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
+                                         OMPI_MPI_OFFSET_TYPE **start_offsets_lens,
+                                         OMPI_MPI_OFFSET_TYPE **end_offsets, 
+                                         OMPI_MPI_OFFSET_TYPE **aggr_bytes_per_group,
+                                         OMPI_MPI_OFFSET_TYPE *bytes_per_group,
+					 int **decision_list,
+                                         size_t bytes_per_proc,
+                                         int *is_aggregator,  
+                                         int *ompio_grouping_flag);
+
+static int mca_io_ompio_retain_initial_groups(mca_io_ompio_file_t *fh);
+
+
+static int mca_io_ompio_split_initial_groups(mca_io_ompio_file_t *fh,
+		                             OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
+					     OMPI_MPI_OFFSET_TYPE *end_offsets,
+					     OMPI_MPI_OFFSET_TYPE bytes_per_group);
+
+
+static int mca_io_ompio_split_a_group(mca_io_ompio_file_t *fh,
+                                      OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
+                                      OMPI_MPI_OFFSET_TYPE *end_offsets,
+                                      int size_new_group,
+                                      OMPI_MPI_OFFSET_TYPE *max_cci,
+                                      OMPI_MPI_OFFSET_TYPE *min_cci,
+                                      int *num_groups,
+                                      int *size_smallest_group);
+
+
+static int mca_io_ompio_finalize_split(mca_io_ompio_file_t *fh,
+                                       int size_new_group,
+                                       int size_last_group);
+
+static int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
+		                             OMPI_MPI_OFFSET_TYPE *aggr_bytes_per_group,
+					     int *decision_list,
+					     int is_aggregator);
+
+static int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
+                                     int *merge_aggrs,
+                                     int num_merge_aggrs);
+
 
 
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
@@ -132,7 +182,7 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
     }
 }
 
-int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
+int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                                               size_t max_data,
                                               struct iovec **f_iov,
                                               int *iov_count)
@@ -290,7 +340,7 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 
             sorted = (int *) malloc
                 (tot_entries * sizeof(int));
-            if (NULL == all_process){
+            if (NULL == sorted){
                 opal_output(1,"Error while allocating per process!\n");
                 return  OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -348,11 +398,14 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 	    column_list = (int *) malloc ( m * sizeof(int));
 	    if (NULL == column_list){
 		opal_output(1,"Error while allocating column list\n");
+                fclose(fp);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    values = (int *) malloc ( m * sizeof(int));
 	    if (NULL == values){
 		opal_output(1,"Error while allocating values list\n");
+                free(column_list);
+                fclose(fp);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    
@@ -360,6 +413,9 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 					sizeof(int));
 	    if (NULL == row_index){
 		opal_output(1,"Error while allocating row_index list\n");
+                free(values);
+                free(column_list);
+                fclose(fp);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    fprintf(fp,"%d %d\n", m, fh->f_size+1);
@@ -411,14 +467,8 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 		free(all_process);
 		all_process = NULL;
 	    }
-	    if (NULL != column_list){
-		free(column_list);
-		column_list = NULL;
-	    }
-	    if (NULL != values){
-		free(values);
-		values = NULL;
-	    }
+	    free(column_list);
+	    free(values);
 	    if (NULL != row_index){
 		free(row_index);
 		row_index = NULL;
@@ -470,7 +520,7 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh, 
+int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh, 
                                    ompi_datatype_t *datatype,
                                    int count,
                                    void *buf,
@@ -534,6 +584,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
         *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
         if (NULL == *iov) {
             opal_output(1, "OUT OF MEMORY\n");
+            free(temp_iov);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         for (i=0 ; i<temp_count ; i++) {
@@ -557,6 +608,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
 	*iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
 	if (NULL == *iov) {
 	    opal_output(1, "OUT OF MEMORY\n");
+            free(temp_iov);
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
     }
@@ -582,10 +634,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
                 (unsigned long) remaining_length );
     }
 
-    if (NULL != temp_iov) {
-        free (temp_iov);
-        temp_iov = NULL;
-    }
+    free (temp_iov);
 
     return OMPI_SUCCESS;
 }
@@ -903,13 +952,13 @@ int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
+int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
                                         int num_aggregators,
                                         size_t bytes_per_proc)
 {
-    int j,procs_per_group=0;
+    int j,procs_per_group = 0;
      
-	/*If only one process used, no need to do aggregator selection!*/
+    /*If only one process used, no need to do aggregator selection!*/
     if (fh->f_size == 1){
 	num_aggregators = 1;
     }
@@ -921,7 +970,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
         return OMPI_SUCCESS;
     }
 
-   //Forced number of aggregators // need to review
+   //Forced number of aggregators 
    else
    { 
     /* calculate the offset at which each group of processes will start */
@@ -1047,8 +1096,8 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
 {
 
 
-    int *num_entries = NULL;
-    int *broken_index = NULL;
+    int *num_entries;
+    int *broken_index;
     int temp = 0;
     int *fview_cnt = NULL;
     int global_fview_count = 0;
@@ -1068,6 +1117,7 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     broken_index = (int *) malloc (sizeof (int) * num_aggregators);
     if (NULL == broken_index) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(num_entries);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1085,16 +1135,27 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
         fview_cnt = (int *) malloc (sizeof (int) * fh->f_size);
         if (NULL == fview_cnt) {
             opal_output (1, "OUT OF MEMORY\n");
+            free(num_entries);
+            free(broken_index);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         req = (MPI_Request *)malloc (fh->f_size * sizeof(MPI_Request));
         if (NULL == req) {
+            free(num_entries);
+            free(broken_index);
+            free(fview_cnt);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
     sendreq = (MPI_Request *)malloc (num_aggregators * sizeof(MPI_Request));
     if (NULL == sendreq) {
+        free(num_entries);
+        free(broken_index);
+        if (0 == fh->f_rank%fh->f_aggregator_index) {
+            free(fview_cnt);
+            free(req);
+        }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1158,6 +1219,8 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
         displs = (int*) malloc (fh->f_size * sizeof (int));
         if (NULL == displs) {
             opal_output (1, "OUT OF MEMORY\n");
+            free(num_entries);
+            free(broken_index);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         displs[0] = 0;
@@ -1172,6 +1235,9 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
                                                   sizeof(struct iovec));
             if (NULL == global_fview) {
                 opal_output (1, "OUT OF MEMORY\n");
+                free(num_entries);
+                free(broken_index);
+                free(displs);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -1180,6 +1246,8 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     broken = (struct iovec**)malloc (num_aggregators * sizeof(struct iovec *));
     if (NULL == broken) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(num_entries);
+        free(broken_index);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1189,7 +1257,14 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
             broken[i] = (struct iovec*) malloc (num_entries[i] *
                                                 sizeof (struct iovec));
             if (NULL == broken[i]) {
+                int j;
                 opal_output (1, "OUT OF MEMORY\n");
+                free(num_entries);
+                free(broken_index);
+                for (j=0; j<i; j++) {
+                    free(broken[j]);
+                }
+                free(broken);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -1302,7 +1377,6 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     for (i=0 ; i<num_aggregators ; i++) {
         if (NULL != broken[i]) {
             free (broken[i]);
-            broken[i] = NULL;
         }
     }
     if (NULL != req) {
@@ -1313,19 +1387,11 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     }
     if (NULL != broken) {
         free (broken);
-        broken = NULL;
     }
-    if (NULL != num_entries) {
-        free (num_entries);
-        num_entries = NULL;
-    }
-    if (NULL != broken_index) {
-        free (broken_index);
-        broken_index = NULL;
-    }
+    free (num_entries);
+    free (broken_index);
     if (NULL != displs) {
         free (displs);
-        displs = NULL;
     }
 
     *fview_count = fview_cnt;
@@ -1371,6 +1437,7 @@ int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
     temp_position = (size_t *) malloc (num_aggregators * sizeof(size_t));
     if (NULL == temp_position) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(sbuf);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memset (temp_position, 0x0, num_aggregators * sizeof (size_t));
@@ -1437,12 +1504,17 @@ int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
 
     sendreq = (MPI_Request *)malloc (num_aggregators * sizeof(MPI_Request));
     if (NULL == sendreq) {
+        free(sbuf);
+        free(temp_position);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 == fh->f_rank%fh->f_aggregator_index) {
         req = (MPI_Request *)malloc (fh->f_size * sizeof(MPI_Request));
         if (NULL == req) {
+            free(sbuf);
+            free(temp_position);
+            free(sendreq);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         for (i=0; i<fh->f_size ; i++) {
@@ -1571,6 +1643,7 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     temp_position = (size_t *) malloc (num_aggregators * sizeof(size_t));
     if (NULL == temp_position) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(rbuf);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memset (temp_position, 0x0, num_aggregators * sizeof (size_t));
@@ -1580,7 +1653,13 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
         if (0 != bytes_received[i]) {
             rbuf[i] = (void *) malloc (bytes_received[i]);
             if (NULL == rbuf[i]) {
+                int j;
                 opal_output (1, "OUT OF MEMORY\n");
+                free(temp_position);
+                for (j=0; j<i; j++) {
+                    free(rbuf[j]);
+                }
+                free(rbuf);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -1588,6 +1667,11 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
 
     recvreq = (MPI_Request *)malloc (num_aggregators * sizeof(MPI_Request));
     if (NULL == recvreq) {
+        free(temp_position);
+        for (i=0; i<num_aggregators; i++) {
+            free(rbuf[i]);
+        }
+        free(rbuf);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i=0 ; i<num_aggregators ; i++) {
@@ -1608,6 +1692,12 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     if (0 == fh->f_rank%fh->f_aggregator_index) {
         req = (MPI_Request *)malloc (fh->f_size * sizeof(MPI_Request));
         if (NULL == req) {
+            free(temp_position);
+            for (i=0; i<num_aggregators; i++) {
+                free(rbuf[i]);
+            }
+            free(rbuf);
+            free(recvreq);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         for (i=0; i<fh->f_size ; i++) {
@@ -1995,223 +2085,525 @@ int ompi_io_ompio_print_time_info(int queue_type,
 }
     
 int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
-		                      size_t bytes_per_proc)
+		               size_t bytes_per_proc)
 {
+  
+    int is_aggregator = 0;
+    int final_aggr = 0;
+    int final_num_aggrs = 0;
+    int ompio_grouping_flag = 0;
     
-    int j;
-    int k = 0;
-    int size_new_group = 0;
-    int ret=OMPI_SUCCESS;
-    int num_groups = 0;
-    int size_smallest_group = 0;
-    OMPI_MPI_OFFSET_TYPE max_cci = 0;
-    OMPI_MPI_OFFSET_TYPE min_cci = 0;
-    OMPI_MPI_OFFSET_TYPE bytes_per_group = 0;
-    int size_old_group = 0;
-    int size_last_group = 0;
+    int *decision_list = NULL;
     
-    OMPI_MPI_OFFSET_TYPE start_offset_len[3] = {0};
     OMPI_MPI_OFFSET_TYPE *start_offsets_lens = NULL;
     OMPI_MPI_OFFSET_TYPE *end_offsets = NULL;
+    OMPI_MPI_OFFSET_TYPE bytes_per_group = 0;
+    OMPI_MPI_OFFSET_TYPE *aggr_bytes_per_group = NULL;
     
-    //Store start offset and length in an array //also add bytes per process 
-    if(NULL == fh->f_decoded_iov){
-       start_offset_len[0] = 0;
-       start_offset_len[1] = 0;
-    }
-    else{
-	start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-        start_offset_len[1] = fh->f_decoded_iov[0].iov_len;			          
-    }
-    start_offset_len[2] = bytes_per_proc;
-     
-    start_offsets_lens = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
-    if (NULL == start_offsets_lens) {
-        opal_output (1, "OUT OF MEMORY\n");
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    end_offsets = (OMPI_MPI_OFFSET_TYPE* )malloc (fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
-    if (NULL == end_offsets) {
-        opal_output (1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-     
-   
-    //Gather start offsets across processes in a group on aggregator
-    ompi_io_ompio_allgather_array (start_offset_len,
-                                   3,
-        		           OMPI_OFFSET_DATATYPE,       
-				   start_offsets_lens,
-				   3,
-				   OMPI_OFFSET_DATATYPE,
-				   0,
-				   fh->f_init_procs_in_group,
-				   fh->f_init_procs_per_group,
-				   fh->f_comm);
-				 
-    
+    mca_io_ompio_prepare_to_group(fh,
+	                          &start_offsets_lens,
+	                          &end_offsets, 
+	                          &aggr_bytes_per_group,
+				  &bytes_per_group,
+	                          &decision_list,
+                                  bytes_per_proc,
+	                          &is_aggregator,
+	                          &ompio_grouping_flag);
 
-    for( k = 0 ; k < fh->f_init_procs_per_group; k++){
-        end_offsets[k] = start_offsets_lens[3*k] + start_offsets_lens[3*k+1];
-    }
-    
-    //new split logic
-    for(j = 0; j < fh->f_init_procs_per_group; j++){
-        bytes_per_group += start_offsets_lens[3*j+2];
-    }
+    switch(ompio_grouping_flag){ 
         
-    if ( (size_t)(bytes_per_group) >
-         (size_t)mca_io_ompio_bytes_per_agg) {        
-      
-         size_new_group = ceil ((float)mca_io_ompio_bytes_per_agg * fh->f_init_procs_per_group/ bytes_per_group);
-	 size_old_group = fh->f_init_procs_per_group;
-         ret = mca_io_ompio_split_group(fh,
-                                        start_offsets_lens,
-                                        end_offsets,
-                                        size_new_group,
-                                        &max_cci,
-                                        &min_cci,
-                                        &num_groups,
-                                        &size_smallest_group);
+        case OMPIO_SPLIT:	    
+            mca_io_ompio_split_initial_groups(fh,
+                                              start_offsets_lens,
+	       			              end_offsets,
+					      bytes_per_group);
+        break;
+
+        case OMPIO_MERGE:
+            mca_io_ompio_merge_initial_groups(fh,
+		                              aggr_bytes_per_group,
+					      decision_list,
+				              is_aggregator);
+        break;
+    
+        case  OMPIO_RETAIN:    
+	
+            mca_io_ompio_retain_initial_groups(fh);
+           
+        break; 
 
 
-         switch(OMPIO_GROUPING_OPTION){
-	   
-	     case DATA_VOLUME:
-	         //Just use size as returned by split group	 
-                 size_last_group = size_smallest_group;
-	         	 
-             break;
-	   
-	     case UNIFORM_DISTRIBUTION:
-		 if(size_smallest_group <= OMPIO_UNIFORM_DIST_THRESHOLD * size_new_group){
-		     //uneven split need to call split again
-		     if( size_old_group % num_groups == 0 ){
-	                 //most even distribution possible
-		         size_new_group = size_old_group / num_groups;
-			 size_last_group = size_new_group;
-		     }
-		     else{ 
-		         //merge the last small group with the previous group
-			 size_last_group = size_new_group + size_smallest_group;
-		     }
-		 }
-                 else{
-	  	     //Considered uniform
-		     size_last_group = size_smallest_group;
-		 } 
-                 
-	     break;
-
-	     case CONTIGUITY:
-	        while(1){
-		    if((max_cci < OMPIO_CONTG_THRESHOLD) &&
-		       (size_new_group <= size_old_group)){ 
-		        size_new_group = floor( (float) (size_new_group + size_old_group ) / 2 );
-		        ret = mca_io_ompio_split_group(fh,
-		                                       start_offsets_lens,
-		                                       end_offsets,
-		                                       size_new_group,
-		                                       &max_cci,
-		                                       &min_cci,
-		                                       &num_groups,
-		                                       &size_smallest_group);
-		   
-		    }
-		    else{
-		        break;
-		    }	
-
-	        }
-	        size_last_group = size_smallest_group;
-	     break;
-	    
-	     case OPTIMIZE_GROUPING:
-                  //This case is a combination of Data volume, contiguity and uniform distribution
-                  while(1){
-		      if((max_cci < OMPIO_CONTG_THRESHOLD) &&
-		         (size_new_group <= size_old_group)){  //can be a better condition
-		
-		          size_new_group = floor( (float) (size_new_group + size_old_group ) / 2 );
-		          ret = mca_io_ompio_split_group(fh,
-		                                         start_offsets_lens,
-		                                         end_offsets,
-		                                         size_new_group,
-		                                         &max_cci,
-		                                         &min_cci,
-		                                         &num_groups,
-		                                         &size_smallest_group);
-		      }
-		      else{
-		          break;
-		      }
-		  }
-                  if(size_smallest_group <= OMPIO_UNIFORM_DIST_THRESHOLD * size_new_group){
-		     //uneven split need to call split again
-		     if( size_old_group % num_groups == 0 ){
-		        //most even distribution possible
-		        size_new_group = size_old_group / num_groups;
-		        size_last_group = size_new_group;
-		     }
-		     else{
-		         //merge the last small group with the previous group
-		         size_last_group = size_new_group + size_smallest_group;
-		     }
-		  }
-		  else{
-		      //Considered uniform
-		      size_last_group = size_smallest_group;
-		  }
-   	     break;	     
-         }
-
-        ret = mca_io_ompio_distribute_group(fh,
-	                                    size_old_group,
-	                                    size_new_group,
-	                                    size_last_group);
-    }
-
-    else
-    {
-	    //merge case 
-	    fh->f_procs_per_group = fh->f_init_procs_per_group;
-	    fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
-	    if (NULL == fh->f_procs_in_group) {
-	        opal_output (1, "OUT OF MEMORY\n");
-	        return OMPI_ERR_OUT_OF_RESOURCE;
-	    }
-	    for( j = 0 ; j < fh->f_procs_per_group; j++){
-	       fh->f_procs_in_group[j] = fh->f_init_procs_in_group[j];
-            }
-	     
-    }
-  
-
+    } 
+    
+    //Set aggregator index
     fh->f_aggregator_index = 0;
 
+    //Calculate final number of aggregators
+    if(fh->f_rank == fh->f_procs_in_group[fh->f_aggregator_index]){
+	   final_aggr = 1;
+    }
+    fh->f_comm->c_coll.coll_allreduce (&final_aggr,
+		                       &final_num_aggrs,
+			               1,
+			               MPI_INT,
+			               MPI_SUM,
+			               fh->f_comm,
+			               fh->f_comm->c_coll.coll_allreduce_module);
+    
+    //Print final number of aggregators if required
+
+    /*if(fh->f_rank == 0){
+        printf("Rank %d : has final_num_aggrs = %d\n",fh->f_rank,final_num_aggrs);
+    }*/
+    
     //Print final grouping 
     /*if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank)  {
         for (j=0 ; j<fh->f_procs_per_group; j++) {
             printf ("%d: Proc %d: %d\n", fh->f_rank, j, fh->f_procs_in_group[j]);
         }
-    }*/
+
+	printf("\n\n");
+    }
+   
+   */
     if (NULL != start_offsets_lens) {
-    	free (start_offsets_lens);
-      	start_offsets_lens =  NULL;
-    }	
+        free (start_offsets_lens);
+        start_offsets_lens =  NULL;
+    }
     if (NULL != end_offsets) {
         free (end_offsets);
         end_offsets =  NULL;
     }
+    if(NULL != aggr_bytes_per_group){
+      free(aggr_bytes_per_group);
+      aggr_bytes_per_group = NULL;
+    }
+    if( NULL != decision_list){
+      free(decision_list);
+      decision_list = NULL;
+    }
 
-   return ret;
+
+   return OMPI_SUCCESS;
+}
+
+int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
+		                      OMPI_MPI_OFFSET_TYPE *aggr_bytes_per_group,
+				      int *decision_list,
+	                              int is_aggregator){
+    
+    OMPI_MPI_OFFSET_TYPE sum_bytes = 0;
+    
+    MPI_Request *sendreq = NULL;
+    MPI_Request *req = NULL;
+
+    int start = 0;
+    int end = 0;
+    int i = 0;
+    int j = 0;
+    int r  = 0;
+
+    int merge_pair_flag = 4; 
+    int first_merge_flag = 4;
+
+    int *merge_aggrs = NULL;
+
+    int is_new_aggregator= 0;
+  
+
+    if(is_aggregator){
+        i = 0;
+	sum_bytes = 0;
+        //go through the decision list
+	//Find the aggregators that could merge
+	
+	while(i < fh->f_init_num_aggrs){
+	    while(1){
+	        if( i >= fh->f_init_num_aggrs){
+	            break;
+	        }
+	        else if((decision_list[i] == OMPIO_MERGE) &&
+	                (sum_bytes <= mca_io_ompio_bytes_per_agg)){
+	            sum_bytes = sum_bytes + aggr_bytes_per_group[i];
+	            decision_list[i] = merge_pair_flag;
+	            i++;
+	        }
+	        else if((decision_list[i] == OMPIO_MERGE) &&
+	                (sum_bytes >= mca_io_ompio_bytes_per_agg)){
+	           if(decision_list[i+1] == OMPIO_MERGE){
+	               merge_pair_flag++;
+	               decision_list[i] = merge_pair_flag;
+	               sum_bytes = aggr_bytes_per_group[i];
+	               i++;
+	           }
+	           else{
+	               decision_list[i] = merge_pair_flag;
+	               i++;
+	           }
+	        }
+	        else{
+	            i++;
+	            if(decision_list[i] == OMPIO_MERGE)
+	               merge_pair_flag++;
+	            sum_bytes = 0;
+	            break;
+	        }
+	    }
+        }
+
+        //Now go through the new edited decision list and
+	//make lists of aggregators to merge and number
+	//of groups to me merged.
+	i = 0;
+	j = 0;
+
+	while(i < fh->f_init_num_aggrs){
+	   if(decision_list[i] >= first_merge_flag){
+	       start = i;
+	       while((decision_list[i] >= first_merge_flag) &&
+		      (i < fh->f_init_num_aggrs-1)){
+	           if(decision_list[i+1] == decision_list[i]){
+	               i++;
+	           }
+	           else{
+	               break;
+	           }
+	           end = i;
+	       }
+	       merge_aggrs = (int *)malloc((end - start + 1) * sizeof(int));
+	       if (NULL == merge_aggrs) {
+		  opal_output (1, "OUT OF MEMORY\n");
+		  return OMPI_ERR_OUT_OF_RESOURCE;
+	       }
+	       j = 0;
+	       for( j = 0 ; j < end - start + 1; j++){
+	           merge_aggrs[j] = fh->f_init_aggr_list[start+j];
+	       }
+               if(fh->f_rank == merge_aggrs[0])
+	          is_new_aggregator = 1;
+	       
+	       for( j = 0 ; j < end-start+1 ;j++){
+	          if(fh->f_rank == merge_aggrs[j]){	        
+	              mca_io_ompio_merge_groups(fh,
+		                                merge_aggrs,
+			                        end-start+1);
+		  }
+	       }
+               if(NULL != merge_aggrs){
+	           free(merge_aggrs);
+                   merge_aggrs = NULL;
+               }
+
+	   }
+           i++;
+        }
+       
+    }//end old aggregators
+
+    //New aggregators communicate new grouping info to the groups
+    if(is_new_aggregator){
+       sendreq = (MPI_Request *)malloc ( 2 *fh->f_procs_per_group * sizeof(MPI_Request));
+       if (NULL == sendreq) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+       //Communicate grouping info
+       for( j = 0 ; j < fh->f_procs_per_group; j++){
+           //new aggregator sends new procs_per_group to all its members
+	   MCA_PML_CALL(isend(&fh->f_procs_per_group,
+                              1,
+                              MPI_INT,
+                              fh->f_procs_in_group[j],
+                              OMPIO_PROCS_PER_GROUP_TAG,
+                              MCA_PML_BASE_SEND_STANDARD,
+                              fh->f_comm,
+                              &sendreq[r++]));
+                                                                                                                                                                    //new aggregator sends distribution of process to all its new members
+          MCA_PML_CALL(isend(fh->f_procs_in_group,
+                             fh->f_procs_per_group,
+                             MPI_INT,
+                             fh->f_procs_in_group[j],
+                             OMPIO_PROCS_IN_GROUP_TAG,
+                             MCA_PML_BASE_SEND_STANDARD,
+                             fh->f_comm,
+			     &sendreq[r++]));
+ 
+	     }
+
+       }
+       //All non aggregators
+       req = (MPI_Request *)malloc (2* sizeof(MPI_Request));
+       if (NULL == req) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+       //All processes receive initial process distribution from aggregators
+       MCA_PML_CALL(recv(&fh->f_procs_per_group,
+                          1,
+                          MPI_INT,
+                          MPI_ANY_SOURCE,
+                          OMPIO_PROCS_PER_GROUP_TAG,
+                          fh->f_comm,
+			  MPI_STATUS_IGNORE));
+  
+       fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+       if (NULL == fh->f_procs_in_group) {
+          opal_output (1, "OUT OF MEMORY\n");
+          free(req);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+ 
+       MCA_PML_CALL(recv(fh->f_procs_in_group,
+                          fh->f_procs_per_group,
+                          MPI_INT,
+                          MPI_ANY_SOURCE,
+                          OMPIO_PROCS_IN_GROUP_TAG,
+                          fh->f_comm,
+			  MPI_STATUS_IGNORE));
+		
+       if(NULL != req){
+	 free (req);
+	 req =  NULL;
+       }
+       if(is_new_aggregator) {
+         ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
+         if (NULL != sendreq) {
+	    free (sendreq);
+	    sendreq =  NULL;
+	 }
+    }
+
+
+    return OMPI_SUCCESS;	
+}
+
+int mca_io_ompio_split_initial_groups(mca_io_ompio_file_t *fh,
+		                      OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
+				      OMPI_MPI_OFFSET_TYPE *end_offsets,
+				      OMPI_MPI_OFFSET_TYPE bytes_per_group){
+
+    
+    int size_new_group = 0;
+    int size_old_group = 0;
+    int size_last_group = 0;
+    int size_smallest_group = 0;
+    int num_groups = 0;
+    
+    OMPI_MPI_OFFSET_TYPE max_cci = 0;
+    OMPI_MPI_OFFSET_TYPE min_cci = 0;
+
+    size_new_group = ceil ((float)mca_io_ompio_bytes_per_agg * fh->f_init_procs_per_group/ bytes_per_group);
+    size_old_group = fh->f_init_procs_per_group;
+    
+    mca_io_ompio_split_a_group(fh,
+                               start_offsets_lens,
+                               end_offsets,
+                               size_new_group,
+                               &max_cci,
+                               &min_cci,
+                               &num_groups,
+                               &size_smallest_group);
+
+    switch(mca_io_ompio_grouping_option){
+        case DATA_VOLUME:
+            //Just use size as returned by split group
+            size_last_group = size_smallest_group;
+	break;
+	
+	case UNIFORM_DISTRIBUTION:
+	    if(size_smallest_group <= OMPIO_UNIFORM_DIST_THRESHOLD * size_new_group){
+	        //uneven split need to call split again
+	        if( size_old_group % num_groups == 0 ){
+	           //most even distribution possible
+	           size_new_group = size_old_group / num_groups;
+	           size_last_group = size_new_group;
+	        }
+	        else{
+	            //merge the last small group with the previous group
+	            size_last_group = size_new_group + size_smallest_group;
+	        }
+	    }
+	    else{
+	         //Considered uniform
+	         size_last_group = size_smallest_group;
+	    }
+	break;
+	
+	case CONTIGUITY:
+	
+   	    while(1){
+		 if((max_cci < OMPIO_CONTG_THRESHOLD) &&
+		    (size_new_group < size_old_group)){
+		    
+		    size_new_group = floor( (float) (size_new_group + size_old_group ) / 2 );
+  	            mca_io_ompio_split_a_group(fh,
+		                               start_offsets_lens,
+		                               end_offsets,
+		                               size_new_group,
+		                               &max_cci,
+		                               &min_cci,
+		                               &num_groups,
+		                               &size_smallest_group);
+                 }
+                 else{
+                     break;
+                 }
+            }
+	    size_last_group = size_smallest_group;
+	break;
+       
+	case OPTIMIZE_GROUPING:
+            //This case is a combination of Data volume, contiguity and uniform distribution
+	    while(1){
+	         if((max_cci < OMPIO_CONTG_THRESHOLD) &&
+	            (size_new_group < size_old_group)){  //can be a better condition
+                 //monitor the previous iteration
+		 //break if it has not changed.    
+	      	     size_new_group = ceil( (float) (size_new_group + size_old_group ) / 2 );
+		     mca_io_ompio_split_a_group(fh,
+		                                start_offsets_lens,
+		                                end_offsets,
+		                                size_new_group,
+		                                &max_cci,
+		                                &min_cci,
+		                                &num_groups,
+		                                &size_smallest_group);
+		 }
+		 else{
+		     break;
+		 }
+	    }
+	
+	   if(size_smallest_group <= OMPIO_UNIFORM_DIST_THRESHOLD * size_new_group){
+	       //uneven split need to call split again
+	       if( size_old_group % num_groups == 0 ){
+	           //most even distribution possible
+	           size_new_group = size_old_group / num_groups;
+		   size_last_group = size_new_group;
+	       }
+	       else{
+	            //merge the last small group with the previous group
+	            size_last_group = size_new_group + size_smallest_group;
+	       }
+	   }
+	   else{
+	       //Considered uniform
+	       size_last_group = size_smallest_group;
+	   }
+	   
+	break;
+    }
+
+    mca_io_ompio_finalize_split(fh,
+                                size_new_group,
+	                        size_last_group);
+
+
+    return OMPI_SUCCESS;
+}
+
+ 
+int mca_io_ompio_retain_initial_groups(mca_io_ompio_file_t *fh){
+   
+    int i = 0;
+
+    fh->f_procs_per_group = fh->f_init_procs_per_group;
+    fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+    if (NULL == fh->f_procs_in_group) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for( i = 0 ; i < fh->f_procs_per_group; i++){
+        fh->f_procs_in_group[i] = fh->f_init_procs_in_group[i];
+    }
+
+
+    return OMPI_SUCCESS;
+}
+
+int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
+		              int *merge_aggrs,
+			      int num_merge_aggrs)
+{
+    int i = 0;
+    int *sizes_old_group;
+
+    int *displs;
+
+    
+    
+    sizes_old_group = (int*)malloc(num_merge_aggrs * sizeof(int));
+    if (NULL == sizes_old_group) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+
+    displs = (int*)malloc(num_merge_aggrs * sizeof(int));
+    if (NULL == displs) {
+        opal_output (1, "OUT OF MEMORY\n");
+        free(sizes_old_group);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+
+    //merge_aggrs[0] is considered the new aggregator 
+    //New aggregator collects group sizes of the groups to be merged
+    ompi_io_ompio_allgather_array (&fh->f_init_procs_per_group,
+     		                   1,
+				   MPI_INT,
+				   sizes_old_group,
+				   1,
+				   MPI_INT,
+				   0,
+				   merge_aggrs,
+				   num_merge_aggrs,
+				   fh->f_comm);
+        
+    fh->f_procs_per_group = 0;
+
+    
+    for( i = 0; i < num_merge_aggrs; i++){
+        fh->f_procs_per_group = fh->f_procs_per_group + sizes_old_group[i];
+    }
+
+    displs[0] = 0;
+    for(i = 1; i < num_merge_aggrs; i++){
+	  displs[i] = displs[i-1] + sizes_old_group[i-1];
+    }
+
+    fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+    if (NULL == fh->f_procs_in_group) {
+        opal_output (1, "OUT OF MEMORY\n");
+        free(sizes_old_group);
+        free(displs);
+        return OMPI_ERR_OUT_OF_RESOURCE; 
+    }
+    
+    //New aggregator also collects the grouping distribution
+    //This is the actual merge
+    //use allgatherv array
+    ompi_io_ompio_allgatherv_array (fh->f_init_procs_in_group,
+                                   fh->f_init_procs_per_group,
+                                   MPI_INT,
+                                   fh->f_procs_in_group,
+                                   sizes_old_group,
+				   displs,
+                                   MPI_INT,
+                                   0,
+                                   merge_aggrs,
+                                   num_merge_aggrs,
+                                   fh->f_comm);
+    
+    
+    free(displs);
+    free (sizes_old_group);
+
+    return OMPI_SUCCESS;
+	  
 }
 
 
 
-
-
-int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
+int mca_io_ompio_split_a_group(mca_io_ompio_file_t *fh,
      		             OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
 		             OMPI_MPI_OFFSET_TYPE *end_offsets,
 		             int size_new_group,
@@ -2220,7 +2612,7 @@ int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
 		             int *num_groups,
 		             int *size_smallest_group)
 {
-       
+    
     OMPI_MPI_OFFSET_TYPE *cci = NULL;
     *num_groups = fh->f_init_procs_per_group / size_new_group;
     *size_smallest_group = size_new_group;
@@ -2254,8 +2646,8 @@ int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
 	         cci[i] += start_offsets_lens[3*size_new_group*i + 3*(k + 1) + 1];
 	     }	
        	 }	
-     }	
-      
+     }
+     
      //get min and max cci
      *min_cci = cci[0];
      *max_cci = cci[0];
@@ -2267,7 +2659,6 @@ int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
 	     *min_cci = cci[i];	
 	 }
      }
-     
      //if cci is not needed anymore
      if (NULL != cci) {
         free (cci);
@@ -2276,8 +2667,7 @@ int mca_io_ompio_split_group(mca_io_ompio_file_t *fh,
      return OMPI_SUCCESS;
 }
 
-int mca_io_ompio_distribute_group(mca_io_ompio_file_t *fh,
-                                  int size_old_group,
+int mca_io_ompio_finalize_split(mca_io_ompio_file_t *fh,
                                   int size_new_group,
                                   int size_last_group)
 {
@@ -2330,3 +2720,188 @@ int mca_io_ompio_distribute_group(mca_io_ompio_file_t *fh,
 
     return OMPI_SUCCESS;
 }
+
+int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
+		                  OMPI_MPI_OFFSET_TYPE **start_offsets_lens,
+				  OMPI_MPI_OFFSET_TYPE **end_offsets, // need it?
+				  OMPI_MPI_OFFSET_TYPE **aggr_bytes_per_group,
+				  OMPI_MPI_OFFSET_TYPE *bytes_per_group,
+                                  int **decision_list,
+		                  size_t bytes_per_proc,
+				  int *is_aggregator,
+				  int *ompio_grouping_flag)
+{
+   
+    OMPI_MPI_OFFSET_TYPE start_offset_len[3] = {0};
+    OMPI_MPI_OFFSET_TYPE *aggr_bytes_per_group_tmp = NULL;
+    OMPI_MPI_OFFSET_TYPE *start_offsets_lens_tmp = NULL;
+    OMPI_MPI_OFFSET_TYPE *end_offsets_tmp = NULL;
+    int *decision_list_tmp = NULL;
+
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int merge_count = 0;
+    int split_count = 0; //not req?
+    int retain_as_is_count = 0; //not req?
+ 
+
+    //Store start offset and length in an array //also add bytes per process
+    if(NULL == fh->f_decoded_iov){
+         start_offset_len[0] = 0;
+         start_offset_len[1] = 0;
+    }
+    else{
+         start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
+         start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
+    }
+    start_offset_len[2] = bytes_per_proc;
+    start_offsets_lens_tmp = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
+    if (NULL == start_offsets_lens_tmp) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    end_offsets_tmp = (OMPI_MPI_OFFSET_TYPE* )malloc (fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
+    if (NULL == end_offsets_tmp) {
+        opal_output (1, "OUT OF MEMORY\n");
+        free(start_offsets_lens_tmp);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    //Gather start offsets across processes in a group on aggregator
+    ompi_io_ompio_allgather_array (start_offset_len,
+                                   3,
+                                   OMPI_OFFSET_DATATYPE,
+                                   start_offsets_lens_tmp,
+                                   3,
+                                   OMPI_OFFSET_DATATYPE,
+                                   0,
+                                   fh->f_init_procs_in_group,
+                                   fh->f_init_procs_per_group,
+                                   fh->f_comm);
+    for( k = 0 ; k < fh->f_init_procs_per_group; k++){
+        end_offsets_tmp[k] = start_offsets_lens_tmp[3*k] + start_offsets_lens_tmp[3*k+1];
+    }
+    //Every process has the total bytes written in its group
+    for(j = 0; j < fh->f_init_procs_per_group; j++){
+        *bytes_per_group = *bytes_per_group + start_offsets_lens_tmp[3*j+2];
+    }
+
+    *start_offsets_lens = &start_offsets_lens_tmp[0];
+    *end_offsets = &end_offsets_tmp[0];
+
+
+    for( j = 0 ; j < fh->f_init_num_aggrs ; j++){
+        if(fh->f_rank == fh->f_init_aggr_list[j])
+           *is_aggregator = 1;
+    }
+    //Decide groups going in for a merge or a split
+    //Merge only if the groups are consecutive
+    if(*is_aggregator == 1){
+       aggr_bytes_per_group_tmp = (OMPI_MPI_OFFSET_TYPE*)malloc (fh->f_init_num_aggrs * sizeof(OMPI_MPI_OFFSET_TYPE));
+       if (NULL == aggr_bytes_per_group_tmp) {
+          opal_output (1, "OUT OF MEMORY\n");
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+    decision_list_tmp = (int* )malloc (fh->f_init_num_aggrs * sizeof(int));
+    if (NULL == decision_list_tmp) {
+        opal_output (1, "OUT OF MEMORY\n");
+        free(start_offsets_lens_tmp);
+        free(end_offsets_tmp);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    //Communicate bytes per group between all aggregators
+    ompi_io_ompio_allgather_array (bytes_per_group,
+                                   1,
+                                   OMPI_OFFSET_DATATYPE,
+                                   aggr_bytes_per_group_tmp,
+                                   1,
+                                   OMPI_OFFSET_DATATYPE,
+                                   0,
+                                   fh->f_init_aggr_list,
+                                   fh->f_init_num_aggrs,
+                                   fh->f_comm);
+   
+    for( i = 0; i < fh->f_init_num_aggrs; i++){
+       if((size_t)(aggr_bytes_per_group_tmp[i])>
+          (size_t)mca_io_ompio_bytes_per_agg){
+          decision_list_tmp[i] = OMPIO_SPLIT;
+          split_count++;
+       }
+       else if((size_t)(aggr_bytes_per_group_tmp[i])<
+               (size_t)mca_io_ompio_bytes_per_agg){
+            decision_list_tmp[i] = OMPIO_MERGE;
+            merge_count++;
+       }
+       else{
+	   decision_list_tmp[i] = OMPIO_RETAIN;
+	   retain_as_is_count++;
+	   }
+    }
+   
+    *aggr_bytes_per_group = &aggr_bytes_per_group_tmp[0];
+    //Go through the decision list to see if non consecutive
+    //processes intend to merge, if yes retain original grouping
+    for( i = 0; i < fh->f_init_num_aggrs ; i++){
+        if(decision_list_tmp[i] == OMPIO_MERGE){
+	    if( (i == 0) &&
+	        (decision_list_tmp[i+1] != OMPIO_MERGE)){ //first group
+		    decision_list_tmp[i] = OMPIO_RETAIN;
+            }
+	    else if( (i == fh->f_init_num_aggrs-1) &&
+	             (decision_list_tmp[i-1] != OMPIO_MERGE)){
+		 
+	        decision_list_tmp[i] = OMPIO_RETAIN;
+	    }
+	    else if(!((decision_list_tmp[i-1] == OMPIO_MERGE) ||
+                      (decision_list_tmp[i+1] == OMPIO_MERGE))){
+		     
+		 decision_list_tmp[i] = OMPIO_RETAIN;
+	    }
+        }
+    }
+   
+    //Set the flag as per the decision list
+    for( i = 0 ; i < fh->f_init_num_aggrs; i++){
+        if((decision_list_tmp[i] == OMPIO_MERGE)&&
+	   (fh->f_rank == fh->f_init_aggr_list[i]))
+           *ompio_grouping_flag = OMPIO_MERGE;	
+       
+       	if((decision_list_tmp[i] == OMPIO_SPLIT)&&
+	   (fh->f_rank == fh->f_init_aggr_list[i]))
+           *ompio_grouping_flag = OMPIO_SPLIT;
+ 
+	if((decision_list_tmp[i] == OMPIO_RETAIN)&&
+	   (fh->f_rank == fh->f_init_aggr_list[i]))
+           *ompio_grouping_flag = OMPIO_RETAIN;	 
+    }
+    
+    //print decision list of aggregators
+    /*printf("RANK%d  : Printing decsion list   : \n",fh->f_rank);
+    for( i = 0; i < fh->f_init_num_aggrs; i++){
+        if(decision_list_tmp[i] == OMPIO_MERGE)
+            printf("MERGE,");
+        else if(decision_list_tmp[i] == OMPIO_SPLIT)
+            printf("SPLIT, ");
+	else if(decision_list_tmp[i] == OMPIO_RETAIN)
+	    printf("RETAIN, " );
+    }
+    printf("\n\n");
+   */
+   *decision_list = &decision_list_tmp[0]; 
+  }
+    //Communicate flag to all group members
+    ompi_io_ompio_bcast_array (ompio_grouping_flag,
+                               1,
+                               MPI_INT,
+                               0,
+                               fh->f_init_procs_in_group,
+                               fh->f_init_procs_per_group,
+                               fh->f_comm);
+
+
+
+    return OMPI_SUCCESS;
+}
+
+

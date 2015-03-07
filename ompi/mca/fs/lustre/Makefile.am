@@ -40,8 +40,7 @@ fs_lustre_sources = \
 	fs_lustre_file_delete.c \
 	fs_lustre_file_sync.c \
 	fs_lustre_file_set_size.c \
-        fs_lustre_file_get_size.c \
-        fs_lustre_file_set_info.c
+        fs_lustre_file_get_size.c
 
 AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 

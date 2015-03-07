@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
@@ -752,6 +752,7 @@ static int component_set_addr(orte_process_name_t *peer,
          * end - we need to remove those extra characters
          */
         hptr = host;
+#if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             if ('[' == host[0]) {
                 hptr = &host[1];
@@ -760,6 +761,7 @@ static int component_set_addr(orte_process_name_t *peer,
                 host[strlen(host)-1] = '\0';
             }
         }
+#endif
         addrs = opal_argv_split(hptr, ',');
 
 
@@ -1124,7 +1126,8 @@ static char **split_and_resolve(char **orig_str, char *name)
                             argv_prefix);
             
         /* Go through all interfaces and see if we can find a match */
-        for (if_index = 0; if_index < opal_ifcount(); if_index++) {
+        for (if_index = opal_ifbegin(); if_index >= 0;
+             if_index = opal_ifnext(if_index)) {
             opal_ifindextoaddr(if_index, 
                                (struct sockaddr*) &if_inaddr,
                                sizeof(if_inaddr));
@@ -1136,7 +1139,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         }
         
         /* If we didn't find a match, keep trying */
-        if (if_index == opal_ifcount()) {
+        if (if_index < 0) {
             orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
                            true, name, orte_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");

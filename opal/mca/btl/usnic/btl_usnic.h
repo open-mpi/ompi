@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,6 @@
 
 #include "opal_config.h"
 #include <sys/types.h>
-#include <infiniband/verbs.h>
 
 #include "opal_stdint.h"
 #include "opal/util/alfg.h"
@@ -34,13 +33,18 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
-#include "opal/class/opal_free_list.h"
+#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
+#else
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
+#endif
 
-#include "btl_usnic_libnl_utils.h"
 #include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
@@ -66,10 +70,8 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
 #endif
 
-/* particularly old versions of verbs do not have this function, which will
- * cause unnecessary build failures on other platforms */
-#if !HAVE_DECL_IBV_EVENT_TYPE_STR
-#define ibv_event_type_str(ev_type) "(ibv_event_type_str unavailable)"
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* MSGDEBUG2 prints 1 line at each BTL entry point */
@@ -120,7 +122,7 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 
 
 /**
- * Verbs UD BTL component.
+ * usnic BTL component
  */
 typedef struct opal_btl_usnic_component_t {
     /** base BTL component */
@@ -130,9 +132,9 @@ typedef struct opal_btl_usnic_component_t {
      * subsequent fastpath fields */
 
     /** Maximum number of BTL modules */
-    uint32_t max_modules;
+    int max_modules;
     /** Number of available/initialized BTL modules */
-    uint32_t num_modules;
+    int num_modules;
 
     /* Cached hashed version of my RTE proc name (to stuff in
        protocol headers) */
@@ -145,9 +147,6 @@ typedef struct opal_btl_usnic_component_t {
 
     /** convertor packing threshold */
     int pack_lazy_threshold;
-
-    /** does the stack below us speak UDP or custom-L2? */
-    bool use_udp;
 
     /* vvvvvvvvvv non-fastpath fields go below vvvvvvvvvv */
 
@@ -164,9 +163,6 @@ typedef struct opal_btl_usnic_component_t {
     bool stats_enabled;
     bool stats_relative;
     int stats_frequency;
-
-    /** GID index to use */
-    int gid_index;
 
     /** Whether we want to use NUMA distances to choose which usNIC
         devices to use for short messages */
@@ -188,7 +184,17 @@ typedef struct opal_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
-    struct usnic_rtnl_sk *unlsk;
+    /** transport header length for all usNIC devices on this server
+        (it is guaranteed that all usNIC devices on a single server
+        will have the same underlying transport, and therefore the
+        same transport header length) */
+    int transport_header_len;
+    uint32_t transport_protocol;
+
+    /* what UDP port do we want to use?  If 0, the system will pick.
+       If nonzero, it is used as the base -- the final number will be
+       (base+my_local_rank). */
+    int udp_port_base;
 
     /** disable the "cannot find route" warnings (for network setups
         where this is known/acceptable) */
@@ -199,9 +205,6 @@ typedef struct opal_btl_usnic_component_t {
     bool connectivity_enabled;
     int connectivity_ack_timeout;
     int connectivity_num_retries;
-
-    /* ibv_create_ah() (i.e., ARP) timeout */
-    int arp_timeout;
 
     /** how many short packets have to be received before outputting
         the "received short packets" warning? */

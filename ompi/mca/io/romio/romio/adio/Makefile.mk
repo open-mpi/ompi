@@ -20,12 +20,13 @@ noinst_HEADERS +=                      \
     adio/include/mpipr.h               \
     adio/include/mpiu_greq.h           \
     adio/include/nopackage.h           \
+    adio/include/romioconf-undefs.h    \
     adio/include/mpiu_external32.h     \
-    adio/include/romioconf-undefs.h
+    adio/include/hint_fns.h
 
-include $(top_srcdir)/adio/ad_bg/Makefile.mk
-include $(top_srcdir)/adio/ad_bgl/Makefile.mk
-include $(top_srcdir)/adio/ad_bglockless/Makefile.mk
+include $(top_srcdir)/adio/ad_gpfs/Makefile.mk
+include $(top_srcdir)/adio/ad_gpfs/bg/Makefile.mk
+include $(top_srcdir)/adio/ad_gpfs/pe/Makefile.mk
 include $(top_srcdir)/adio/ad_gridftp/Makefile.mk
 include $(top_srcdir)/adio/ad_hfs/Makefile.mk
 include $(top_srcdir)/adio/ad_lustre/Makefile.mk

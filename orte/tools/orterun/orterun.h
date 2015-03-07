@@ -64,6 +64,8 @@ struct orterun_globals_t {
     bool preload_binaries;
     bool index_argv;
     bool run_as_root;
+    char *personality;
+    bool dvm;
 };
 
 /**

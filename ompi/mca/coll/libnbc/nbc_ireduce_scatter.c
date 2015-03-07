@@ -6,8 +6,11 @@
  *                         rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation. All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -46,12 +49,28 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-  handle = (*coll_req);
-  res = MPI_Comm_rank(comm, &rank);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  MPI_Type_extent(datatype, &ext);
+
+  if(p==1) {
+    if(!inplace) {
+      /* single node not in_place: copy data to recvbuf */
+      res = NBC_Copy(sendbuf, recvcounts[0], datatype, recvbuf, recvcounts[0], datatype, comm);
+      if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+    }
+    /* manually complete the request */
+    (*request)->req_status.MPI_ERROR = OMPI_SUCCESS;
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    ompi_request_complete(*request, true);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    return NBC_OK;
+  }
+
+  handle = (*coll_req);
+
+  res = MPI_Comm_rank(comm, &rank);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+  res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
@@ -70,15 +89,6 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   redbuf = ((char*)handle->tmpbuf)+(ext*count);
 
-  /* copy data to redbuf if we only have a single node */
-  if(p==1) {
-    if(!inplace) {
-      res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
-      if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
-    }
-    goto submit_and_return;
-  }
-  
   firstred = 1;
   for(r=1; r<=maxr; r++) {
     if((rank % (1<<r)) == 0) {
@@ -141,7 +151,6 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
   }
 
-submit_and_return:
   /*NBC_PRINT_SCHED(*schedule);*/
   
   res = NBC_Sched_commit(schedule);
@@ -171,7 +180,7 @@ int ompi_coll_libnbc_ireduce_scatter_inter(void* sendbuf, void* recvbuf, int *re
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_remote_size(comm, &rsize);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
-  MPI_Type_extent(datatype, &ext);
+  res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
 
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));

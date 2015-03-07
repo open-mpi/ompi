@@ -651,29 +651,12 @@ The job will now be aborted. Please check your code and/or
 adjust/remove the job execution time limit (as specified
 by MPIEXEC_TIMEOUT in your environment).
 #
-[orterun:deprecated-env-set]
-WARNING: The mechanism by which environment variables are explicitly
-passed to Open MPI has changed!
-
-Specifically, beginning in the 1.9.x/2.0.x series, using "-x" to set
-environment variables is deprecated.  Please use the
-"mca_base_env_list" MCA parameter, instead.
-
-For example, this invocation using the old "-x" mechanism:
-
-    mpirun -x env_foo1=bar1 -x env_foo2=bar2 -x env_foo3 ...
-
-is equivalent to this invocation using the new "mca_base_env_list"
-mechanism:
-
-    mpirun -mca mca_base_env_list 'env_foo1=bar1;env_foo2=bar2;env_foo3' ...
-#
 [orterun:conflict-env-set]
 ERROR: You have attempted to pass environment variables to Open MPI
-with both the "-x" method (deprecated starting in the 1.9.x/2.0.x
-series) and by setting the MCA parameter "mca_base_env_list".
+with both the "-x" method and by setting the MCA parameter "mca_base_env_list".
 
 Open MPI does not support mixing these two methods.  Please choose one
 method and try launching your job again.
 
 Your job will now abort.
+#

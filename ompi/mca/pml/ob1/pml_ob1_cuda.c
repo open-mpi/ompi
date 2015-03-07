@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -123,19 +126,20 @@ size_t mca_pml_ob1_rdma_cuda_btls(
             mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n);
 
         if (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
-            mca_mpool_base_registration_t* reg = NULL;
-            mca_mpool_base_module_t *btl_mpool = bml_btl->btl->btl_mpool;
+            mca_btl_base_registration_handle_t *handle = NULL;
 
-            if( NULL != btl_mpool ) {
+            if( NULL != bml_btl->btl->btl_register_mem ) {
                 /* register the memory */
-                btl_mpool->mpool_register(btl_mpool, base, size, MCA_MPOOL_FLAGS_CUDA_GPU_MEM, &reg);
+                handle = bml_btl->btl->btl_register_mem (bml_btl->btl, bml_btl->btl_endpoint,
+                                                         base, size, MCA_BTL_REG_FLAG_CUDA_GPU_MEM |
+                                                         MCA_BTL_REG_FLAG_REMOTE_READ);
             }
 
-            if(NULL == reg)
+            if(NULL == handle)
                 continue;
 
             rdma_btls[num_btls_used].bml_btl = bml_btl;
-            rdma_btls[num_btls_used].btl_reg = reg;
+            rdma_btls[num_btls_used].btl_reg = handle;
             weight_total += bml_btl->btl_weight;
             num_btls_used++;
         }
@@ -160,6 +164,13 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
     mca_bml_base_endpoint_t* bml_endpoint = 
         (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+
+    /* A btl could be in the rdma list but not in the send list so check there also */
+    if (NULL == bml_btl) {
+        bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+    }
+    /* We should always be able to find back the bml_btl based on the btl */
+    assert(NULL != bml_btl);
 
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
         (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET)) {

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,50 +30,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
-
-
-/*
- *	allgather_intra
- *
- *	Function:	- allgather using other MPI collections
- *	Accepts:	- same as MPI_Allgather()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int
-mca_coll_basic_allgather_intra(void *sbuf, int scount,
-                               struct ompi_datatype_t *sdtype, void *rbuf,
-                               int rcount, struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
-{
-    int err;
-    ptrdiff_t lb, extent;
-
-    /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
-       allocate temp buffer) -- note that rank 0 can use IN_PLACE
-       natively, and we can just alias the right position in rbuf
-       as sbuf and avoid using a temporary buffer if gather is
-       implemented correctly */
-    if (MPI_IN_PLACE == sbuf && 0 != ompi_comm_rank(comm)) {
-       ompi_datatype_get_extent(rdtype, &lb, &extent);
-       sbuf = ((char*) rbuf) + (ompi_comm_rank(comm) * extent * rcount);
-       sdtype = rdtype;
-       scount = rcount;
-    } 
-
-    /* Gather and broadcast. */
-
-    err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
-                                   rdtype, 0, comm, comm->c_coll.coll_gather_module);
-    if (MPI_SUCCESS == err) {
-        err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
-                                      rdtype, 0, comm, comm->c_coll.coll_bcast_module);
-    }
-
-    /* All done */
-
-    return err;
-}
 
 
 /*

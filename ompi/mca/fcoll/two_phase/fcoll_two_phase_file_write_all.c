@@ -149,6 +149,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     uint32_t iov_count=0,ti;
     struct iovec *decoded_iov=NULL, *temp_iov=NULL;
     size_t max_data = 0, total_bytes = 0; 
+    long long_max_data = 0, long_total_bytes = 0; 
     int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
     int count_other_req_procs,  ret=OMPI_SUCCESS;
     int two_phase_num_io_procs=1;
@@ -174,13 +175,13 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     
     if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 	
-	ret =   ompi_io_ompio_decode_datatype (fh,
-					       datatype,
-					       count,
-					       buf,
-					       &max_data,
-					       &temp_iov,
-					       &iov_count);
+	ret =   fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+				       datatype,
+				       count,
+				       buf,
+				       &max_data,
+				       &temp_iov,
+				       &iov_count);
 	if (OMPI_SUCCESS != ret ){
 	    goto exit;
 	}
@@ -212,11 +213,11 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	status->_ucount = max_data;
     }
     
-    mca_io_ompio_get_num_aggregators ( &two_phase_num_io_procs );
+    fh->f_get_num_aggregators ( &two_phase_num_io_procs );
     if(-1 == two_phase_num_io_procs){
-	ret = ompi_io_ompio_set_aggregator_props (fh, 
-						  two_phase_num_io_procs,
-						  max_data);
+	ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh, 
+					  two_phase_num_io_procs,
+					  max_data);
 	if ( OMPI_SUCCESS != ret){
 	    return  ret;
 	}
@@ -244,20 +245,21 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     }
     
     
-    ret = ompi_io_ompio_generate_current_file_view (fh, 
-						    max_data, 
-						    &iov, 
-						    &local_count);
+    ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t*)fh, 
+					    max_data, 
+					    &iov, 
+					    &local_count);
     
     
     if ( OMPI_SUCCESS != ret ){
 	goto exit;
     }
     
-    ret = fh->f_comm->c_coll.coll_allreduce (&max_data,
-					     &total_bytes,
+    long_max_data = (long) max_data;
+    ret = fh->f_comm->c_coll.coll_allreduce (&long_max_data,
+					     &long_total_bytes,
 					     1,
-					     MPI_DOUBLE,
+					     MPI_LONG,
 					     MPI_SUM,
 					     fh->f_comm,
 					     fh->f_comm->c_coll.coll_allreduce_module);
@@ -265,6 +267,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
+    total_bytes = (size_t) long_total_bytes;
     
     if ( 0 == total_bytes ) {
 	return OMPI_SUCCESS;
@@ -314,8 +317,14 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	flat_buf->count = local_size;
 	i=0;j=0;
 	while(j < local_size){
-	    flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
-	    flat_buf->blocklens[j] = decoded_iov[i].iov_len;
+	    if ( 0 < max_data  ) {
+		flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
+		flat_buf->blocklens[j] = decoded_iov[i].iov_len;
+	    }
+	    else {
+		flat_buf->indices[j] = 0;
+		flat_buf->blocklens[j] = 0;
+	    }
 	    if(i < (int)iov_count)
 		i+=1;
 	    j+=1;
@@ -529,9 +538,9 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	nentry.aggregator = 0;
     }
     nentry.nprocs_for_coll = two_phase_num_io_procs;
-    if (!ompi_io_ompio_full_print_queue(WRITE_PRINT_QUEUE)){
-	ompi_io_ompio_register_print_entry(WRITE_PRINT_QUEUE,
-					   nentry);
+    if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
+	fh->f_ompio_register_print_entry(WRITE_PRINT_QUEUE,
+					 nentry);
     }
 #endif
     
@@ -622,7 +631,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	}
     }
     
-    mca_io_ompio_get_bytes_per_agg ( &two_phase_cycle_buffer_size );
+    fh->f_get_bytes_per_agg ( &two_phase_cycle_buffer_size );
     ntimes = (int) ((end_loc - st_loc + two_phase_cycle_buffer_size)/two_phase_cycle_buffer_size); 
     
     if ((st_loc == -1) && (end_loc == -1)) {

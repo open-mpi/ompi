@@ -129,16 +129,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             orte_dt_quick_print(output, "ORTE_STD_CNTR", prefix, src, ORTE_STD_CNTR_T);
             break;
 
-        case ORTE_VPID:
-            orte_dt_quick_print(output, "ORTE_VPID", prefix, src, ORTE_VPID_T);
-            break;
-
-        case ORTE_JOBID:
-            asprintf(output, "%sData Type: ORTE_JOBID\tData size: %lu\tValue: %s",
-                     (NULL == prefix) ? "" : prefix, (unsigned long)sizeof(orte_jobid_t),
-                     ORTE_JOBID_PRINT(*(orte_jobid_t*)src));
-            break;
-
         case ORTE_PROC_STATE:
             orte_dt_quick_print(output, "ORTE_PROC_STATE", prefix, src, ORTE_PROC_STATE_T);
             break;
@@ -176,25 +166,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
 }
 
 /*
- * NAME
- */
-int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, opal_data_type_t type)
-{
-    /* set default result */
-    *output = NULL;
-
-    if (NULL == name) {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
-                 (NULL == prefix ? " " : prefix));
-    } else {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: %s",
-                 (NULL == prefix ? " " : prefix), ORTE_NAME_PRINT(name));
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
  * JOB
  */
 int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_type_t type)
@@ -215,8 +186,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
-             ORTE_JOBID_PRINT(src->jobid),
+    asprintf(&tmp, "\n%sData for job: %s\tPersonality: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+             ORTE_JOBID_PRINT(src->jobid), src->personality,
              (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_RECOVERABLE)) ? "ENABLED" : "DISABLED",
              (orte_get_attribute(&src->attributes, ORTE_JOB_RECOVER_DEFINED, NULL, OPAL_BOOL)) ? "DEFINED" : "DEFAULT",
              pfx2,
@@ -805,88 +776,88 @@ int orte_dt_print_attr(char **output, char *prefix,
 
     switch (src->type) {
     case OPAL_STRING:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_STRING\tKey: %s\tValue: %s",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), src->data.string);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_STRING\tKey: %s\tValue: %s",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), src->data.string);
         break;
     case OPAL_SIZE:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_SIZE\tKey: %s\tValue: %lu",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned long)src->data.size);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_SIZE\tKey: %s\tValue: %lu",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned long)src->data.size);
         break;
     case OPAL_PID:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_PID\tKey: %s\tValue: %lu",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned long)src->data.pid);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_PID\tKey: %s\tValue: %lu",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned long)src->data.pid);
         break;
     case OPAL_INT:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_INT\tKey: %s\tValue: %d",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), src->data.integer);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_INT\tKey: %s\tValue: %d",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), src->data.integer);
         break;
     case OPAL_INT8:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_INT8\tKey: %s\tValue: %d",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (int)src->data.int8);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_INT8\tKey: %s\tValue: %d",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (int)src->data.int8);
         break;
     case OPAL_INT16:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_INT16\tKey: %s\tValue: %d",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (int)src->data.int16);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_INT16\tKey: %s\tValue: %d",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (int)src->data.int16);
         break;
     case OPAL_INT32:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_INT32\tKey: %s\tValue: %d",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), src->data.int32);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_INT32\tKey: %s\tValue: %d",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), src->data.int32);
         break;
     case OPAL_INT64:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_INT64\tKey: %s\tValue: %d",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (int)src->data.int64);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_INT64\tKey: %s\tValue: %d",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (int)src->data.int64);
         break;
     case OPAL_UINT:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_UINT\tKey: %s\tValue: %u",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_UINT\tKey: %s\tValue: %u",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint);
         break;
     case OPAL_UINT8:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_UINT8\tKey: %s\tValue: %u",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint8);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_UINT8\tKey: %s\tValue: %u",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint8);
         break;
     case OPAL_UINT16:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_UINT16\tKey: %s\tValue: %u",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint16);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_UINT16\tKey: %s\tValue: %u",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned int)src->data.uint16);
         break;
     case OPAL_UINT32:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_UINT32\tKey: %s\tValue: %u",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), src->data.uint32);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_UINT32\tKey: %s\tValue: %u",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), src->data.uint32);
         break;
     case OPAL_UINT64:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_UINT64\tKey: %s\tValue: %lu",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (unsigned long)src->data.uint64);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_UINT64\tKey: %s\tValue: %lu",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (unsigned long)src->data.uint64);
         break;
     case OPAL_BYTE_OBJECT:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_BYTE_OBJECT\tKey: %s\tValue: UNPRINTABLE",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key));
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_BYTE_OBJECT\tKey: %s\tValue: UNPRINTABLE",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key));
         break;
     case OPAL_BUFFER:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_BUFFER\tKey: %s\tValue: UNPRINTABLE",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key));
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_BUFFER\tKey: %s\tValue: UNPRINTABLE",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key));
         break;
     case OPAL_FLOAT:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_FLOAT\tKey: %s\tValue: %f",
-                 prefx, src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), src->data.fval);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_FLOAT\tKey: %s\tValue: %f",
+                 prefx, src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), src->data.fval);
         break;
     case OPAL_TIMEVAL:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
-                 src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key), (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
+                 src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key), (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
         break;
     case OPAL_PTR:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: OPAL_PTR\tKey: %s", prefx,
-                 src->local ? "TRUE" : "FALSE", orte_attr_key_to_str(src->key));
+        asprintf(output, "%sORTE_ATTR: %s Data type: OPAL_PTR\tKey: %s", prefx,
+                 src->local ? "LOCAL" : "GLOBAL", orte_attr_key_to_str(src->key));
         break;
     case ORTE_VPID:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: ORTE_VPID\tKey: %s\tValue: %s", prefx, src->local ? "TRUE" : "FALSE",
+        asprintf(output, "%sORTE_ATTR: %s Data type: ORTE_VPID\tKey: %s\tValue: %s", prefx, src->local ? "LOCAL" : "GLOBAL",
                  orte_attr_key_to_str(src->key), ORTE_VPID_PRINT(src->data.vpid));
         break;
     case ORTE_JOBID:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: ORTE_JOBID\tKey: %s\tValue: %s", prefx, src->local ? "TRUE" : "FALSE",
+        asprintf(output, "%sORTE_ATTR: %s Data type: ORTE_JOBID\tKey: %s\tValue: %s", prefx, src->local ? "LOCAL" : "GLOBAL",
                  orte_attr_key_to_str(src->key), ORTE_JOBID_PRINT(src->data.jobid));
         break;
     default:
-        asprintf(output, "%sORTE_ATTR: Local: %s Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
-                 prefx, orte_attr_key_to_str(src->key), src->local ? "TRUE" : "FALSE");
+        asprintf(output, "%sORTE_ATTR: %s Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
+                 prefx, orte_attr_key_to_str(src->key), src->local ? "LOCAL" : "GLOBAL");
         break;
     }
     free(prefx);

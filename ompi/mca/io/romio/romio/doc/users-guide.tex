@@ -355,7 +355,7 @@ that they are listed in \texttt{cb\_config\_list}.
 The following hint controls the deferred open feature of romio and are also
 applicable to all file system types: 
 \begin{itemize}
-\item \texttt{romio\_no\_indep\_rw} -- If the application plans on performing only
+\item \texttt{romio\_no\_indep\_rw} -- If the application plans on performing only 
    collecitve operations and this hint is set to ``true'', then ROMIO can
    have just the aggregators open a file.   The \texttt{cb\_config\_list} and
    \texttt{cb\_nodes} hints can be given to further control which nodes are
@@ -807,17 +807,17 @@ to include the file {\tt mpio.h} for C or {\tt mpiof.h} for Fortran in
 your MPI-IO program.  
 
 Note that on HP machines running HPUX and on NEC SX-4, you need to
-compile Fortran programs with {\tt mpif90}, becuase {\tt mpif77} does
-not support 8-byte integers. 
+compile Fortran programs with {\tt mpifort}, because {\tt mpif77} does
+not support 8-byte integers.
 
 With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as \\
 \hspace*{.4in} {\tt mpicc foo.c}\\
 or \\
 \hspace*{.4in} {\tt mpif77 foo.f }\\
 or\\
-\hspace*{.4in} {\tt mpif90 foo.f}\\
+\hspace*{.4in} {\tt mpifort foo.f}\\
 
-As mentioned above, mpif90 is preferred over mpif77 on HPUX and NEC
+As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
 because the f77 compilers on those machines do not support 8-byte integers.
 
 With SGI MPI, you can compile MPI-IO programs as \\
@@ -869,7 +869,7 @@ file systems because they don't support {\tt fcntl} file locks,
 and ROMIO uses that feature to implement shared file pointers.
 
 \item On HP machines running HPUX and on NEC SX-4, you need to compile
-Fortran programs with {\tt mpif90} instead of {\tt mpif77}, because
+Fortran programs with {\tt mpifort} instead of {\tt mpif77}, because
 the {\tt f77} compilers on these machines don't support 8-byte integers.
 
 \item The file-open mode {\tt MPI\_MODE\_EXCL} does not work on Intel

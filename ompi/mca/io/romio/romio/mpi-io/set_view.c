@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_set_view as PMPI_File_set_view
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
+                      const char *datarep, MPI_Info info) __attribute__((weak,alias("PMPI_File_set_view")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -37,9 +40,10 @@ Input Parameters:
 .N fortran
 @*/
 int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
-		      MPI_Datatype filetype, const char *datarep, MPI_Info info)
+		      MPI_Datatype filetype, ROMIO_CONST char *datarep, MPI_Info info)
 {
-    int filetype_size, etype_size, error_code;
+    int error_code;
+    MPI_Count filetype_size, etype_size;
     static char myname[] = "MPI_FILE_SET_VIEW";
     ADIO_Offset shared_fp, byte_off;
     ADIO_File adio_fh;
@@ -106,13 +110,11 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
     }
-    if(info != MPI_INFO_NULL){
-        MPIO_CHECK_INFO(info, error_code);
-    }
+    MPIO_CHECK_INFO_ALL(info, error_code, adio_fh->comm);
     /* --END ERROR HANDLING-- */
 
-    MPI_Type_size(filetype, &filetype_size);
-    MPI_Type_size(etype, &etype_size);
+    MPI_Type_size_x(filetype, &filetype_size);
+    MPI_Type_size_x(etype, &etype_size);
 
     /* --BEGIN ERROR HANDLING-- */
     if (etype_size != 0 && filetype_size % etype_size != 0)
@@ -124,12 +126,12 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 	goto fn_exit;
     }
 
-    if (strcmp(datarep, "native") &&
+    if ((datarep == NULL) || (strcmp(datarep, "native") &&
 	    strcmp(datarep, "NATIVE") &&
 	    strcmp(datarep, "external32") &&
 	    strcmp(datarep, "EXTERNAL32") &&
 	    strcmp(datarep, "internal") &&
-	    strcmp(datarep, "INTERNAL"))
+	    strcmp(datarep, "INTERNAL")) )
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__,

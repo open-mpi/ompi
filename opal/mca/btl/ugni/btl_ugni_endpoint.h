@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -17,6 +17,7 @@
 
 enum mca_btl_ugni_endpoint_state_t {
     MCA_BTL_UGNI_EP_STATE_INIT = 0,
+    MCA_BTL_UGNI_EP_STATE_RDMA,
     MCA_BTL_UGNI_EP_STATE_CONNECTING,
     MCA_BTL_UGNI_EP_STATE_CONNECTED
 };
@@ -114,6 +115,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
 
     switch (ep->state) {
     case MCA_BTL_UGNI_EP_STATE_INIT:
+    case MCA_BTL_UGNI_EP_STATE_RDMA:
         rc = mca_btl_ugni_ep_connect_progress (ep);
         if (OPAL_SUCCESS != rc) {
             break;
@@ -127,6 +129,43 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
 
     opal_mutex_unlock (&ep->lock);
 
+    return rc;
+}
+
+static inline int mca_btl_ugni_ep_connect_rdma (mca_btl_base_endpoint_t *ep) {
+    int rc;
+
+    if (ep->state >= MCA_BTL_UGNI_EP_STATE_RDMA) {
+        return OPAL_SUCCESS;
+    }
+
+    /* get the modex info for this endpoint and setup a ugni endpoint */
+    rc = opal_common_ugni_endpoint_for_proc (ep->btl->device, ep->peer_proc, &ep->common);
+    if (OPAL_SUCCESS != rc) {
+        assert (0);
+        return rc;
+    }
+
+    /* bind endpoint to remote address */
+    rc = opal_common_ugni_ep_create (ep->common, ep->btl->rdma_local_cq, &ep->rdma_ep_handle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        return rc;
+    }
+
+    ep->state = MCA_BTL_UGNI_EP_STATE_RDMA;
+
+    return OPAL_SUCCESS;
+}
+
+static inline int mca_btl_ugni_check_endpoint_state_rdma (mca_btl_base_endpoint_t *ep) {
+    int rc;
+    if (OPAL_LIKELY(MCA_BTL_UGNI_EP_STATE_INIT < ep->state)) {
+        return OPAL_SUCCESS;
+    }
+
+    opal_mutex_lock (&ep->lock);
+    rc = mca_btl_ugni_ep_connect_rdma (ep);
+    opal_mutex_unlock (&ep->lock);
     return rc;
 }
 

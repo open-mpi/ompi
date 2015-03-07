@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +47,12 @@ int mca_sharedfp_sm_request_position(struct mca_sharedfp_base_data_t * sh,
     sm_offset_ptr = sm_data->sm_offset_ptr;
 
     /* Aquire an exclusive lock */
-    sem_wait(&sm_offset_ptr->mutex);
+
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+    sem_wait(sm_offset_ptr->mutex);
+#else
+    sem_wait(sm_data->mutex);
+#endif
 
     if ( mca_sharedfp_sm_verbose ) {
 	printf("Succeeded! Acquired sm lock.for rank=%d\n",rank);
@@ -68,7 +73,12 @@ int mca_sharedfp_sm_request_position(struct mca_sharedfp_base_data_t * sh,
     if ( mca_sharedfp_sm_verbose ) {
 	printf("Releasing sm lock...rank=%d",rank);
     }
-    sem_post(&sm_offset_ptr->mutex);
+
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+    sem_post(sm_offset_ptr->mutex);
+#else
+    sem_post(sm_data->mutex);
+#endif
     if ( mca_sharedfp_sm_verbose ) {
 	printf("Released lock! released lock.for rank=%d\n",rank);
     }

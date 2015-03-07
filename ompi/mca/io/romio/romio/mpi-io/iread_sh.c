@@ -16,6 +16,9 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_iread_shared as PMPI_File_iread_shared
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_iread_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
+                          MPIO_Request *request) __attribute__((weak,alias("PMPI_File_iread_shared")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -43,10 +46,11 @@ Output Parameters:
 int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
                           MPI_Datatype datatype, MPI_Request *request)
 {
-    int error_code, bufsize, buftype_is_contig, filetype_is_contig;
+    int error_code, buftype_is_contig, filetype_is_contig;
+    ADIO_Offset bufsize;
     ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_IREAD_SHARED";
-    int datatype_size, incr;
+    MPI_Count datatype_size, incr;
     MPI_Status status;
     ADIO_Offset off, shared_fp;
     MPI_Offset nbytes=0;
@@ -61,7 +65,7 @@ int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
     MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
     /* --END ERROR HANDLING-- */
 
-    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size_x(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);

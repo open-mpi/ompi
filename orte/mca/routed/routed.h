@@ -6,6 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,7 +50,6 @@ BEGIN_C_DECLS
 
 
 struct opal_buffer_t;
-struct orte_process_name_t;
 struct orte_rml_module_t;
 
 

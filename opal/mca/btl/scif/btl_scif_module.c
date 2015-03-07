@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -24,17 +24,14 @@ mca_btl_scif_free (struct mca_btl_base_module_t *btl,
 static int
 mca_btl_scif_module_finalize (struct mca_btl_base_module_t* btl);
 
-static mca_btl_base_descriptor_t *
-mca_btl_scif_prepare_dst (mca_btl_base_module_t *btl,
-                          mca_btl_base_endpoint_t *endpoint,
-                          mca_mpool_base_registration_t *registration,
-                          opal_convertor_t *convertor, uint8_t order,
-                          size_t reserve, size_t *size, uint32_t flags);
+static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca_btl_base_module_t *btl,
+                                                                      mca_btl_base_endpoint_t *endpoint,
+                                                                      void *base, size_t size, uint32_t flags);
+static int mca_btl_scif_deregister_mem (struct mca_btl_base_module_t *btl, mca_btl_base_registration_handle_t *handle);
 
 static struct mca_btl_base_descriptor_t *
 mca_btl_scif_prepare_src (struct mca_btl_base_module_t *btl,
                           struct mca_btl_base_endpoint_t *endpoint,
-                          mca_mpool_base_registration_t *registration,
                           struct opal_convertor_t *convertor,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags);
@@ -48,11 +45,12 @@ mca_btl_scif_module_t mca_btl_scif_module = {
         .btl_alloc          = mca_btl_scif_alloc,
         .btl_free           = mca_btl_scif_free,
         .btl_prepare_src    = mca_btl_scif_prepare_src,
-        .btl_prepare_dst    = mca_btl_scif_prepare_dst,
         .btl_send           = mca_btl_scif_send,
         .btl_sendi          = mca_btl_scif_sendi,
         .btl_put            = mca_btl_scif_put,
         .btl_get            = mca_btl_scif_get,
+        .btl_register_mem   = mca_btl_scif_register_mem,
+        .btl_deregister_mem = mca_btl_scif_deregister_mem,
     }
 };
 
@@ -96,8 +94,8 @@ int mca_btl_scif_module_init (void)
     BTL_VERBOSE(("btl/scif: listening @ port %u on node %u\n",
                  mca_btl_scif_module.port_id.port, mca_btl_scif_module.port_id.node));
 
-    OBJ_CONSTRUCT(&mca_btl_scif_module.dma_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_scif_module.eager_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_scif_module.dma_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_scif_module.eager_frags, opal_free_list_t);
 
     return OPAL_SUCCESS;
 }
@@ -163,10 +161,10 @@ mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_local = &frag->segments[0].base;
-    frag->base.des_local_count = 1;
+    frag->base.des_segments = frag->segments;
+    frag->base.des_segment_count = 1;
 
-    frag->segments[0].base.seg_len       = size;
+    frag->segments[0].seg_len       = size;
 
     return &frag->base;
 }
@@ -178,15 +176,18 @@ mca_btl_scif_free (struct mca_btl_base_module_t *btl,
     return mca_btl_scif_frag_return ((mca_btl_scif_base_frag_t *) des);
 }
 
-static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
-                                                                   mca_btl_base_endpoint_t *endpoint,
-                                                                   void *data_ptr, size_t size,
-                                                                   mca_mpool_base_registration_t *registration,
-                                                                   uint8_t order, uint32_t flags)
+static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca_btl_base_module_t *btl,
+                                                                      mca_btl_base_endpoint_t *endpoint,
+                                                                      void *base, size_t size, uint32_t flags)
 {
-    mca_btl_scif_base_frag_t *frag;
     mca_btl_scif_reg_t *scif_reg;
     int rc;
+
+    if (MCA_BTL_ENDPOINT_ANY == endpoint) {
+        /* it probably isn't possible to support registering memory to use with any endpoint so
+         * return NULL */
+        return NULL;
+    }
 
     if (OPAL_LIKELY(MCA_BTL_SCIF_EP_STATE_CONNECTED != endpoint->state)) {
         /* the endpoint needs to be connected before the fragment can be
@@ -198,67 +199,36 @@ static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma (struct mca_bt
         }
     }
 
-    (void) MCA_BTL_SCIF_FRAG_ALLOC_DMA(endpoint, frag);
-    if (OPAL_UNLIKELY(NULL == frag)) {
+    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0,
+                                        (mca_mpool_base_registration_t **) &scif_reg);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
     }
-
-    if (NULL == registration) {
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr, size, 0,
-                                            (mca_mpool_base_registration_t **) &registration);
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            mca_btl_scif_frag_return (frag);
-            return NULL;
-        }
-
-        frag->registration = (mca_btl_scif_reg_t *) registration;
-    }
- 
-    scif_reg = (mca_btl_scif_reg_t *) registration;
 
     /* register the memory location with this peer if it isn't already */
-    if ((off_t) -1 == scif_reg->registrations[endpoint->id]) {
-        size_t seg_size = (size_t)((uintptr_t) registration->bound - (uintptr_t) registration->base) + 1;
-        scif_reg->registrations[endpoint->id] = scif_register (endpoint->scif_epd, registration->base,
-                                                               seg_size, 0, SCIF_PROT_READ |
-                                                               SCIF_PROT_WRITE, 0);
+    if ((off_t) -1 == scif_reg->handles[endpoint->id].btl_handle.scif_offset) {
+        size_t seg_size = (size_t)((uintptr_t) scif_reg->base.bound - (uintptr_t) scif_reg->base.base) + 1;
+
+        /* NTH: until we determine a way to pass permissions to the mpool just make all segments
+         * read/write */
+        scif_reg->handles[endpoint->id].btl_handle.scif_offset =
+            scif_register (endpoint->scif_epd, scif_reg->base.base, seg_size, 0, SCIF_PROT_READ |
+                           SCIF_PROT_WRITE, 0);
         BTL_VERBOSE(("registered fragment for scif DMA transaction. offset = %lu",
-                     (unsigned long) scif_reg->registrations[endpoint->id]));
+                     (unsigned long) scif_reg->handles[endpoint->id].btl_handle.scif_offset));
     }
 
-    if (OPAL_UNLIKELY((off_t) -1 == scif_reg->registrations[endpoint->id])) {
-        mca_btl_scif_frag_return (frag);
-        return NULL;
-    }
-
-    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-    frag->segments[0].base.seg_len       = size;
-    frag->segments[0].scif_offset        = scif_reg->registrations[endpoint->id] +
-        (off_t) ((ptrdiff_t) data_ptr - (ptrdiff_t) registration->base);
-    /* save the original pointer so the offset can be adjusted if needed (this is
-     * required for osc/rdma) */
-    frag->segments[0].orig_ptr           = (uint64_t)(uintptr_t) data_ptr;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
-
-    frag->base.des_local = &frag->segments->base;
-    frag->base.des_local_count = 1;
-
-    return &frag->base;
+    return &scif_reg->handles[endpoint->id].btl_handle;
 }
 
-static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma_conv (struct mca_btl_base_module_t *btl,
-                                                                        mca_btl_base_endpoint_t *endpoint,
-                                                                        mca_mpool_base_registration_t *registration,
-                                                                        struct opal_convertor_t *convertor,
-                                                                        uint8_t order, size_t *size,
-                                                                        uint32_t flags)
+static int mca_btl_scif_deregister_mem (struct mca_btl_base_module_t *btl, mca_btl_base_registration_handle_t *handle)
 {
-    void *data_ptr;
+    mca_btl_scif_registration_handle_t *scif_handle = (mca_btl_scif_registration_handle_t *) handle;
+    mca_btl_scif_reg_t *scif_reg = scif_handle->reg;
 
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
+    btl->btl_mpool->mpool_deregister (btl->btl_mpool, &scif_reg->base);
 
-    return mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration, order, flags);
+    return OPAL_SUCCESS;
 }
 
 static inline struct mca_btl_base_descriptor_t *
@@ -286,10 +256,10 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
             return NULL;
         }
 
-        frag->segments[0].base.seg_len       = reserve;
-        frag->segments[1].base.seg_addr.pval = data_ptr;
-        frag->segments[1].base.seg_len       = *size;
-        frag->base.des_local_count = 2;
+        frag->segments[0].seg_len       = reserve;
+        frag->segments[1].seg_addr.pval = data_ptr;
+        frag->segments[1].seg_len       = *size;
+        frag->base.des_segment_count = 2;
     } else {
         /* buffered send */
         (void) MCA_BTL_SCIF_FRAG_ALLOC_EAGER(endpoint, frag);
@@ -299,7 +269,7 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
 
         if (*size) {
             iov.iov_len  = *size;
-            iov.iov_base = (IOVBASE_TYPE *) ((uintptr_t) frag->segments[0].base.seg_addr.pval + reserve);
+            iov.iov_base = (IOVBASE_TYPE *) ((uintptr_t) frag->segments[0].seg_addr.pval + reserve);
 
             rc = opal_convertor_pack (convertor, &iov, &iov_count, &max_size);
             if (OPAL_UNLIKELY(rc < 0)) {
@@ -309,37 +279,22 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
             *size = max_size;
         }
 
-        frag->segments[0].base.seg_len = reserve + *size;
-        frag->base.des_local_count = 1;
+        frag->segments[0].seg_len = reserve + *size;
+        frag->base.des_segment_count = 1;
     }
 
-    frag->base.des_local   = &frag->segments->base;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_segments = frag->segments;
+    frag->base.order        = order;
+    frag->base.des_flags    = flags;
 
     return &frag->base;
 }
 
 static mca_btl_base_descriptor_t *mca_btl_scif_prepare_src (struct mca_btl_base_module_t *btl,
                                                             mca_btl_base_endpoint_t *endpoint,
-                                                            mca_mpool_base_registration_t *registration,
                                                             struct opal_convertor_t *convertor,
                                                             uint8_t order, size_t reserve, size_t *size,
                                                             uint32_t flags)
 {
-    if (OPAL_LIKELY(reserve)) {
-        return mca_btl_scif_prepare_src_send (btl, endpoint, convertor,
-                                              order, reserve, size, flags);
-    } else {
-        return mca_btl_scif_prepare_dma_conv (btl, endpoint, registration, convertor, order, size, flags);
-    }
-}
-
-static mca_btl_base_descriptor_t *mca_btl_scif_prepare_dst (mca_btl_base_module_t *btl,
-                                                            mca_btl_base_endpoint_t *endpoint,
-                                                            mca_mpool_base_registration_t *registration,
-                                                            opal_convertor_t *convertor, uint8_t order,
-                                                            size_t reserve, size_t *size, uint32_t flags)
-{
-    return mca_btl_scif_prepare_dma_conv (btl, endpoint, registration, convertor, order, size, flags);
+    return mca_btl_scif_prepare_src_send (btl, endpoint, convertor, order, reserve, size, flags);
 }

@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -46,7 +48,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     if test "$enable_contrib_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-contrib-no-build flag requires an explicit list
-*** of packages to not build.  For example, --enable-contrib-no-build=vt])
+*** of packages to not build.  For example, --enable-contrib-no-build=libompitrace])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"
@@ -107,7 +109,7 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
     AS_IF([test "x$enable_$1" = xno], [DISABLE_contrib_$1=yes])
 
     OMPI_CONTRIB_HAPPY=0
-    if test "$DISABLE_contrib_$1" = "" -a "$DISABLE_contrib_all" = ""; then
+    if test "$DISABLE_contrib_$1" = "" && test "$DISABLE_contrib_all" = ""; then
         OMPI_contrib_$1_CONFIG([OMPI_CONTRIB_HAPPY=1], [])
         AC_MSG_CHECKING([if contributed component $1 can compile])
         if test "$OMPI_CONTRIB_HAPPY" = "1"; then

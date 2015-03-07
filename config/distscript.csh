@@ -10,7 +10,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -80,82 +82,6 @@ echo "*** Updated VERSION file with repo rev number"
 #########################################################
 cd "$distdir"
 echo "*** Now in distdir: $distdir"
-
-#
-# Get the latest config.guess and config.sub from ftp.gnu.org
-#
-
-echo "*** Downloading latest config.sub/config.guess from ftp.gnu.org..."
-cd config
-set configdir="`pwd`"
-mkdir tmp.$$
-cd tmp.$$
-# Official HTTP git mirrors for config.guess / config.sub
-wget -t 1 -T 10 -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=master'
-wget -t 1 -T 10 -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=master'
-chmod +x config.guess config.sub
-
-# Recently, ftp.gnu.org has had zero-legnth config.guess / config.sub
-# files, which causes the automated nightly SVN snapshot tarball to
-# fail to be made correctly.  This is a primitive attempt to fix that.
-# If we got zero-length files from wget, use a config.guess /
-# config.sub from a known location that is more recent than what ships
-# in the current generation of auto* tools.  Also check to ensure that
-# the resulting scripts are runnable (Jan 2009: there are un-runnable
-# scripts available right now because of some git vulnerability).
-
-# Before you complain about this too loudly, remember that we're using
-# unreleased software...
-
-set happy=0
-if (! -f config.guess || ! -s config.guess) then
-    echo " - WARNING: Got bad config.guess from ftp.gnu.org (non-existent or empty)"
-else
-    ./config.guess >& /dev/null
-    if ($status != 0) then
-        echo " - WARNING: Got bad config.guess from ftp.gnu.org (not executable)"
-    else
-        if (! -f config.sub || ! -s config.sub) then
-            echo " - WARNING: Got bad config.sub from ftp.gnu.org (non-existent or empty)"
-        else
-            ./config.sub `./config.guess` >& /dev/null
-            if ($status != 0) then
-                echo " - WARNING: Got bad config.sub from ftp.gnu.org (not executable)"
-            else
-                echo " - Got good config.guess and config.sub from ftp.gnu.org"
-                cp -f config.sub config.guess ..
-                set happy=1
-            endif
-        endif
-    endif
-endif
-
-if ("$happy" == "0") then
-    echo " - WARNING: using included versions for both config.sub and config.guess"
-endif
-cd ..
-rm -rf tmp.$$
-cd ..
-
-
-#
-# Find all the config.guess/config.sub files, and replace them with
-# the ones that we've downloaded
-#
-
-echo "*** Now in: `pwd`"
-echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
-foreach file (config.guess config.sub)
-    foreach dir (opal orte ompi)
-        if (-d $dir) then
-            find $dir -name $file \
-                -exec chmod +w {} \; \
-                -exec cp -f $configdir/$file {} \; \
-                -print
-        endif
-    end
-end
-
 
 #
 # Put the release version number in the README and INSTALL files

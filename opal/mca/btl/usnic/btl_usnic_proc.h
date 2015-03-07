@@ -45,7 +45,7 @@ typedef struct opal_btl_usnic_proc_t {
     opal_proc_t *proc_opal;
 
     /** Addresses received via modex for this remote proc */
-    opal_btl_usnic_addr_t* proc_modex;
+    opal_btl_usnic_modex_t* proc_modex;
     /** Number of entries in the proc_modex array */
     size_t proc_modex_count;
     /** Whether the modex entry is "claimed" by a module or not */

@@ -1,27 +1,27 @@
-# -*- shell-script ; indent-tabs-mode:nil -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
-#                         reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
-#
+dnl -*- shell-script ; indent-tabs-mode:nil -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+dnl                         reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2015 Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 AC_DEFUN([OPAL_CHECK_CRAY_PMI_EXPLICIT],[
 
@@ -39,10 +39,10 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI_EXPLICIT],[
           [opal_cray_pmi_include_good=0
           AC_MSG_WARN([No pmi.h in path specified by $with_cray_pmi])])
 
-    AS_IF([test "$opal_cray_pmi_lib_good" -eq 1 -a "$opal_cray_pmi_include_good" -eq 1],
+    AS_IF([test "$opal_cray_pmi_lib_good" -eq 1 && test "$opal_cray_pmi_include_good" -eq 1],
            [CRAY_PMI_LDFLAGS="-L$with_cray_pmi/lib64 -L/usr/lib/alps"
             CRAY_PMI_LIBS="-L$with_cray_pmi/lib64 -lpmi"
-            CRAY_PMI_CFLAGS="-I $with_cray_pmi/include" 
+            CRAY_PMI_CFLAGS="-I $with_cray_pmi/include"
             $1],
             [$2])
 
@@ -78,7 +78,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
    AS_IF([test "$with_cray_pmi" = "no"],
          [AC_MSG_RESULT([no])
           $3],
-         [AS_IF([test "$with_cray_pmi" = "auto" -o "$with_cray_pmi" = "yes"],
+         [AS_IF([test "$with_cray_pmi" = "auto" || test "$with_cray_pmi" = "yes"],
                  [PKG_CHECK_MODULES_STATIC([CRAY_PMI], [cray-pmi],
                                     [opal_check_cray_pmi_happy="yes"],
                                     [opal_check_cray_pmi_happy="no"]
@@ -92,14 +92,10 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
                                                [opal_check_cray_pmi_happy="no"])
                   AC_MSG_WARN([opal_chack_cray_pmi_happy = $opal_check_cray_pmi_happy])])
          ])
-                          
-    AS_IF([test "$opal_check_cray_pmi_happy" = "yes" -a "$enable_static" = "yes"],
+
+    AS_IF([test "$opal_check_cray_pmi_happy" = "yes" && test "$enable_static" = "yes"],
           [CRAY_PMI_LIBS = $CRAY_PMI_STATIC_LIBS],[])
 
-    AC_MSG_RESULT([CRAY_PMI_STATIC_LIBS - $CRAY_PMI_STATIC_LIBS])
-    AC_MSG_RESULT([CRAY_PMI_LIBS - $CRAY_PMI_LIBS])
-    AC_MSG_RESULT([CRAY_PMI_CFLAGS - $CRAY_PMI_CFLAGS])
-          
     AS_IF([test "$opal_check_cray_pmi_happy" = "yes"],
           [$1_LDFLAGS="$CRAY_PMI_LIBS"
            $1_CPPFLAGS="$CRAY_PMI_CFLAGS"

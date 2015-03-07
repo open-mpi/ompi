@@ -3,12 +3,14 @@ dnl
 dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -43,7 +45,7 @@ AC_DEFUN([OMPI_EXT],[
     AC_MSG_RESULT([ompi_mpiext_list])
 
     AC_MSG_CHECKING([which MPI extension should be enabled])
-    if test "$enable_mpi_ext" = "yes" -o "$enable_mpi_ext" = "all"; then
+    if test "$enable_mpi_ext" = "yes" || test "$enable_mpi_ext" = "all"; then
         msg="All Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
         eval $str
@@ -171,8 +173,8 @@ EOF
     # Make an AM conditional to see whether we're building the mpi_ext
     # module.  Note that we only build it if we support the ignore-tkr
     # mpi module.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 -a \
-                $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
+    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=0])
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_EXT,
@@ -208,18 +210,18 @@ EOF
 
     # Only build this mpi_f08_ext module if we're building the "use
     # mpi_f08" module *and* it's the non-descriptor one.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-                $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 0],
+    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 0],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=0])
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_EXT, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_EXT,
                    [test $OMPI_BUILD_FORTRAN_USEMPIF08_EXT -eq 1])
 
     # Make an AM conditional to see whether we're building either the
     # mpi_ext or mpi_f08_Ext modules.
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_OR_USEMPIF08_EXT,
-                   [test $OMPI_BUILD_FORTRAN_USEMPI_EXT -eq 1 -o \
-                         $OMPI_BUILD_FORTRAN_USEMPIF08_EXT -eq 1])
+                   [test $OMPI_BUILD_FORTRAN_USEMPI_EXT -eq 1 || \
+                    test $OMPI_BUILD_FORTRAN_USEMPIF08_EXT -eq 1])
 
     #
     # Process each component
@@ -260,7 +262,7 @@ EOF
     ###############
     # Create the final mpif-ext.h file.
     cat >> $mpif_ext_h <<EOF
-! 
+!
 EOF
 
     ###############
@@ -268,7 +270,7 @@ EOF
     ###############
     # Create the final mpiusempi-ext.h file.
     cat >> $mpiusempi_ext_h <<EOF
-! 
+!
 end module mpi_ext
 EOF
 
@@ -277,7 +279,7 @@ EOF
     ###############
     # Create the final mpiusempi-ext.h file.
     cat >> $mpiusempif08_ext_h <<EOF
-! 
+!
 end module mpi_f08_ext
 EOF
 
@@ -317,7 +319,7 @@ EOF
             rm -f $outfile
         fi
     fi
-    rm -f $outfile.struct $outfile.extern 
+    rm -f $outfile.struct $outfile.extern
 
     # We have all the results we need.  Now put them in various
     # variables/defines so that others can see the results.
@@ -330,7 +332,7 @@ EOF
     OMPI_EXT_MAKE_LISTS(OMPI_MPIEXT_USEMPIF08, $OMPI_MPIEXT_USEMPIF08, use-mpi-f08, usempif08)
 
     comps=`echo $OMPI_MPIEXT_C | sed -e 's/^[ \t]*//;s/[ \t]*$//;s/ /, /g'`
-    AC_DEFINE_UNQUOTED([OMPI_MPIEXT_COMPONENTS], ["$comps"], 
+    AC_DEFINE_UNQUOTED([OMPI_MPIEXT_COMPONENTS], ["$comps"],
                        [MPI Extensions included in libmpi])
 ])
 
@@ -359,8 +361,7 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 
     EXT_COMPONENT_BUILD_CHECK($1, [should_build=1], [should_build=0])
 
-    # try to configure the component.  pay no attention to
-    # --enable-dist, since we'll always have makefiles.
+    # try to configure the component
     m4_ifdef([OMPI_MPIEXT_$1_CONFIG], [],
              [m4_fatal([Could not find OMPI_MPIEXT_]$1[_CONFIG macro for ]$1[ component])])
 
@@ -676,11 +677,11 @@ AC_DEFUN([EXT_PROCESS_DEAD_COMPONENT],[
 #
 # EXT_COMPONENT_BUILD_CHECK
 #
-# checks the standard rules of component building to see if the 
+# checks the standard rules of component building to see if the
 # given component should be built.
 #
 # USAGE:
-#    EXT_COMPONENT_BUILD_CHECK(component, 
+#    EXT_COMPONENT_BUILD_CHECK(component,
 #                              action-if-build, action-if-not-build)
 #
 ######################################################################
@@ -737,7 +738,7 @@ AC_DEFUN([EXT_COMPONENT_BUILD_CHECK],[
 
 
 # OMPI_EXT_MAKE_DIR_LIST(subst'ed variable, shell list)
-# 
+#
 # Prefix every extension name with "mpiext/" and AC subst it.
 # -------------------------------------------------------------------------
 AC_DEFUN([OMPI_EXT_MAKE_DIR_LIST],[
@@ -748,11 +749,11 @@ AC_DEFUN([OMPI_EXT_MAKE_DIR_LIST],[
     AC_SUBST($1)
 ])
 
-# OMPI_EXT_MAKE_LISTS((1) subst'ed variable prefix, 
-#                     (2) shell list, 
-#                     (3) bindings dir name, 
+# OMPI_EXT_MAKE_LISTS((1) subst'ed variable prefix,
+#                     (2) shell list,
+#                     (3) bindings dir name,
 #                     (4) bindings suffix)
-# 
+#
 # Prefix every extension name with "mpiext/".
 # -------------------------------------------------------------------------
 AC_DEFUN([OMPI_EXT_MAKE_LISTS],[

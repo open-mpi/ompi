@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -74,38 +74,28 @@ static int sysv_runtime_query(mca_base_module_t **module,
  * and pointers to our public functions in it
  */
 opal_shmem_sysv_component_t mca_shmem_sysv_component = {
-    /* ////////////////////////////////////////////////////////////////////// */
-    /* super */
-    /* ////////////////////////////////////////////////////////////////////// */
-    {
+    .super = {
         /* common MCA component data */
         {
             OPAL_SHMEM_BASE_VERSION_2_0_0,
 
             /* component name and version */
-            "sysv",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "sysv",
+            .mca_component_major_version = OPAL_MAJOR_VERSION,
+            .mca_component_minor_version = OPAL_MINOR_VERSION,
+            .mca_component_release_version = OPAL_RELEASE_VERSION,
 
-            /* component open */
-            sysv_open,
-            /* component close */
-            NULL,
-            /* component query */
-            sysv_query,
-            sysv_register
+            .mca_open_component = sysv_open,
+            .mca_query_component = sysv_query,
+            .mca_register_component_params = sysv_register
         },
         /* MCA v2.0.0 component meta data */
-        {
+        .base_data = {
             /* the component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        sysv_runtime_query,
+        .runtime_query = sysv_runtime_query,
     },
-    /* ////////////////////////////////////////////////////////////////////// */
-    /* sysv component-specific information */
-    /* see: shmem_sysv.h for more information */
 };
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -211,7 +201,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
     }
 
 out:
-    if ((char *)-1 != addr) {
+    if (NULL != addr && (char *)-1 != addr) {
         shmdt(addr);
     }
     return OPAL_SUCCESS;

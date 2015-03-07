@@ -1,26 +1,28 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
-#                         reserved. 
-# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2014-2015 Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Default to building nothing
@@ -68,7 +70,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # that they're the same back-end compiler (e.g., pgf77 and pgf90).
     # Open MPI only uses $FC and $FCFLAGS -- $F77 and $FFLAGS are now
     # ignored.
-    AS_IF([test "$F77" != "" -o "$FFLAGS" != ""],
+    AS_IF([test "$F77" != "" || test "$FFLAGS" != ""],
           [AC_MSG_WARN([Open MPI now ignores the F77 and FFLAGS environment variables; only the FC and FCFLAGS environment variables are used.])
            sleep 5])
 
@@ -106,7 +108,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Check to see if any of the MPI Fortran bindings were
     # specifically requested.  If so, and we weren't able to setup the
     # Fortran compiler properly, it's an error.
-    AS_IF([test $ompi_fortran_happy -eq 0 -a $OMPI_FORTRAN_USER_REQUESTED -eq 1],
+    AS_IF([test $ompi_fortran_happy -eq 0 && test $OMPI_FORTRAN_USER_REQUESTED -eq 1],
           [AC_MSG_WARN([MPI Fortran bindings requested, but no suitable Fortran compiler found])
           AC_MSG_ERROR([Cannot continue])])
 
@@ -300,9 +302,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Fortran use mpi or use mpi_f08 MPI bindings
     #--------------------------------------------
 
-    AS_IF([test $ompi_fortran_happy -eq 1 -a \
-              \( $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 -o \
-                 $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 \)],
+    AS_IF([test $ompi_fortran_happy -eq 1 && \
+           ( test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 || \
+             test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 )],
           [ # Look for the fortran module compiler flag
            OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([], 
                [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
@@ -357,15 +359,15 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
 
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have ISO C bindings, we won't build mpi_f08 at all
            AS_IF([test "$OMPI_FORTRAN_HAVE_ISO_C_BINDING" -eq 0],
                  [OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have SUBROUTINE BIND(C), we won't build mpi_f08 at all
            OMPI_FORTRAN_CHECK_BIND_C_SUB(
                [OMPI_FORTRAN_HAVE_BIND_C_SUB=1],
@@ -373,8 +375,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have TYPE, BIND(C), we won't build mpi_f08 at all
            OMPI_FORTRAN_CHECK_BIND_C_TYPE(
                [OMPI_FORTRAN_HAVE_BIND_C_TYPE=1],
@@ -394,8 +396,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # to ensure that BIND(C, name="foo") works, where "foo" is
     # actually a name >32 characters.
     OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have TYPE, BIND(C, name="foo"), we won't build mpi_f08 at all
            OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME(
                [ # If we got here, we have all the required forms of
@@ -409,8 +411,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Fortran compiler doesn't support PROCEDURE in the way we
     # want/need, disable the mpi_f08 module.
     OMPI_FORTRAN_HAVE_PROCEDURE=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler support "procedure"
            OMPI_FORTRAN_CHECK_PROCEDURE(
                [OMPI_FORTRAN_HAVE_PROCEDURE=1],
@@ -418,49 +420,59 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler have optional arguments?
            OMPI_FORTRAN_CHECK_OPTIONAL_ARGS(
                [OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=1],
                [OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
+    OMPI_FORTRAN_HAVE_C_FUNLOC=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # Does the compiler supports c_funloc per
+            # TS 29113 subclause 8.1 ?
+           OMPI_FORTRAN_CHECK_C_FUNLOC(
+               [OMPI_FORTRAN_HAVE_C_FUNLOC=1],
+               [OMPI_FORTRAN_HAVE_C_FUNLOC=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
     OMPI_FORTRAN_HAVE_PRIVATE=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler support "private"
            OMPI_FORTRAN_CHECK_PRIVATE(
                [OMPI_FORTRAN_HAVE_PRIVATE=1],
                [OMPI_FORTRAN_HAVE_PRIVATE=0])])
 
     OMPI_FORTRAN_HAVE_PROTECTED=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler support "protected"
            OMPI_FORTRAN_CHECK_PROTECTED(
                [OMPI_FORTRAN_HAVE_PROTECTED=1],
                [OMPI_FORTRAN_HAVE_PROTECTED=0])])
 
     OMPI_FORTRAN_HAVE_ABSTRACT=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler support "abstract"
            OMPI_FORTRAN_CHECK_ABSTRACT(
                [OMPI_FORTRAN_HAVE_ABSTRACT=1],
                [OMPI_FORTRAN_HAVE_ABSTRACT=0])])
 
     OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Does the compiler support "asynchronous"
            OMPI_FORTRAN_CHECK_ASYNCHRONOUS(
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=1],
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0])])
 
     OMPI_FORTRAN_F08_HANDLE_SIZE=4
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # How big are derived types with a single INTEGER?
            OMPI_FORTRAN_GET_SIZEOF([type, BIND(C) :: test_mpi_handle
   integer :: MPI_VAL
@@ -473,8 +485,8 @@ end type test_mpi_handle],
     OMPI_FORTRAN_F08_PREDECL='!'
     OMPI_FORTRAN_F08_TYPE=real
     OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Look for Fortran 2008 assumed rank syntax
            OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK(
                [ # If we have assumed rank, we can build the use
@@ -593,9 +605,11 @@ end type test_mpi_handle],
     # these layers need to be built or NOT
 
     AM_CONDITIONAL(BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [test \( $WANT_MPI_PROFILING -eq 0 -o $OMPI_PROFILING_COMPILE_SEPARATELY -eq 1 \) -a $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS -eq 1])
+                   [( test $WANT_MPI_PROFILING -eq 0 || test $OMPI_PROFILING_COMPILE_SEPARATELY -eq 1 ) && \
+                    test $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS -eq 1])
     AM_CONDITIONAL(BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [test $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS -eq 1 -a $WANT_MPI_PROFILING -eq 1])
+                   [test $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS -eq 1 && \
+                    test $WANT_MPI_PROFILING -eq 1])
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS,
                        $OMPI_BUILD_FORTRAN_MPIFH_BINDINGS,
                        [Whether we will build the MPI Fortran mpif.h bindings or not])
@@ -634,16 +648,16 @@ end type test_mpi_handle],
     # ompi/mpi/fortran/use-mpi*/Makefile.ams be safe, too.
     # True if we're building either "use mpi" bindings
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS, 
-                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 -o \
-                         $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
+                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 || \
+                    test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
     # True if we're building the old TKR-style bindings
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS, 
-                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 -a \
-                         $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 0])
+                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+                    test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 0])
     # True if we're building the new ignore-TKR-style bindings
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS, 
-                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 -a \
-                         $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
+                   [test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+                    test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
 
     # -------------------
     # use mpi_f08 final setup
@@ -741,6 +755,13 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROCEDURE], 
                        [$OMPI_FORTRAN_HAVE_PROCEDURE],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports the "procedure" keyword or not])
+
+    # For configure-fortran-output.h, various files in
+    # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
+    AC_SUBST([OMPI_FORTRAN_HAVE_C_FUNLOC])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_C_FUNLOC], 
+                       [$OMPI_FORTRAN_HAVE_C_FUNLOC],
+                       [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports c_funloc or not])
 
     # For configure-fortran-output.h
     AC_SUBST(OMPI_FORTRAN_HAVE_BIND_C)

@@ -38,5 +38,6 @@ mca_fcoll_individual_file_read_all (mca_io_ompio_file_t *fh,
                                     struct ompi_datatype_t *datatype, 
                                     ompi_status_public_t *status)
 {
-    return mca_io_ompio_file_read ( fh->f_fh, buf, count, datatype, status);
+    return fh->f_fh->f_io_selected_module.v2_0_0.
+	io_module_file_read( fh->f_fh, buf, count, datatype, status);
 }

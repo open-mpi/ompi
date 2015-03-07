@@ -627,7 +627,8 @@ int orte_show_help_norender(const char *filename, const char *topic,
      * or we weren't given an HNP, or we are running in standalone
      * mode, then all we can do is process this locally
      */
-    if (ORTE_PROC_IS_HNP || orte_standalone_operation ||
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_TOOL ||
+        orte_standalone_operation ||
         NULL == orte_rml.send_buffer_nb ||
         NULL == orte_routed.get_route ||
         NULL == orte_process_info.my_hnp_uri) {
@@ -666,6 +667,8 @@ int orte_show_help_norender(const char *filename, const char *topic,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
+                /* okay, that didn't work, just process locally error, just ignore return  */
+                show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
             } else {
                 rc = ORTE_SUCCESS;
             }
@@ -732,6 +735,8 @@ int orte_show_help_suppress(const char *filename, const char *topic)
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
+                /* okay, that didn't work, just process locally error, just ignore return  */
+                show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
             }
             am_inside = false;
         }

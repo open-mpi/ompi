@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,6 +102,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_abstract;
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
+    char *fortran_have_c_funloc;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
     char *fortran_build_sizeof;
     char *java;
@@ -116,6 +119,7 @@ void ompi_info_do_config(bool want_all)
     char *cxxexceptions;
     char *threads;
     char *want_libltdl;
+    char *have_ltdl_advise;
 #if OMPI_RTE_ORTE
     char *mpirun_prefix_by_default;
 #endif
@@ -126,7 +130,6 @@ void ompi_info_do_config(bool want_all)
     char *ft_support;
     char *crdebug_support;
     char *topology_support;
-    char *vt_support;
 
     /* Do a little preprocessor trickery here to figure opal_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
@@ -186,6 +189,7 @@ void ompi_info_do_config(bool want_all)
     fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
     fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
     fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
+    fortran_have_c_funloc = OMPI_FORTRAN_HAVE_C_FUNLOC ? "yes" : "no";
     fortran_08_using_wrappers_for_choice_buffer_functions = 
         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES ? "yes" : "no";
     fortran_build_sizeof = OMPI_FORTRAN_BUILD_SIZEOF ?
@@ -193,6 +197,7 @@ void ompi_info_do_config(bool want_all)
 
     /* Build a string describing what level of compliance the mpi_f08
        module has */
+    char f08_msg[1024];
     if (OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) {
 
         /* Do we have everything? (not including PROTECTED, which
@@ -203,36 +208,43 @@ void ompi_info_do_config(bool want_all)
             OMPI_FORTRAN_HAVE_ABSTRACT &&
             OMPI_FORTRAN_HAVE_ASYNCHRONOUS &&
             OMPI_FORTRAN_HAVE_PROCEDURE &&
+            OMPI_FORTRAN_HAVE_C_FUNLOC &&
             OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
-            fortran_usempif08_compliance = strdup("The mpi_f08 module is available, and is fully compliant.  w00t!");
+            fortran_usempif08_compliance = "The mpi_f08 module is available, and is fully compliant.  w00t!";
         } else {
-            char f08[1024];
             int first = 1;
-            snprintf(f08, sizeof(f08),
+            snprintf(f08_msg, sizeof(f08_msg),
                      "The mpi_f08 module is available, but due to limitations in the %s compiler, does not support the following: ", 
                      OMPI_FC);
             if (!OMPI_BUILD_FORTRAN_F08_SUBARRAYS) {
-                append(f08, sizeof(f08), &first, "array subsections");
+                append(f08_msg, sizeof(f08_msg), &first, "array subsections");
             }
             if (!OMPI_FORTRAN_HAVE_PRIVATE) {
-                append(f08, sizeof(f08), &first, "private MPI_Status members");
+                append(f08_msg, sizeof(f08_msg), &first,
+                       "private MPI_Status members");
             }
             if (!OMPI_FORTRAN_HAVE_ABSTRACT) {
-                append(f08, sizeof(f08), &first, "ABSTRACT INTERFACE function pointers");
+                append(f08_msg, sizeof(f08_msg), &first,
+                       "ABSTRACT INTERFACE function pointers");
             }
             if (!OMPI_FORTRAN_HAVE_ASYNCHRONOUS) {
-                append(f08, sizeof(f08), &first, "Fortran '08-specified ASYNCHRONOUS behavior");
+                append(f08_msg, sizeof(f08_msg), &first,
+                       "Fortran '08-specified ASYNCHRONOUS behavior");
             }
             if (!OMPI_FORTRAN_HAVE_PROCEDURE) {
-                append(f08, sizeof(f08), &first, "PROCEDUREs");
+                append(f08_msg, sizeof(f08_msg), &first, "PROCEDUREs");
+            }
+            if (!OMPI_FORTRAN_HAVE_C_FUNLOC) {
+                append(f08_msg, sizeof(f08_msg), &first, "C_FUNLOCs");
             }
             if (OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
-                append(f08, sizeof(f08), &first, "direct passthru (where possible) to underlying Open MPI's C functionality");
+                append(f08_msg, sizeof(f08_msg), &first,
+                       "direct passthru (where possible) to underlying Open MPI's C functionality");
             }
-            fortran_usempif08_compliance = strdup(f08);
+            fortran_usempif08_compliance = f08_msg;
         }
     } else {
-        fortran_usempif08_compliance = strdup("The mpi_f08 module was not built");
+        fortran_usempif08_compliance = "The mpi_f08 module was not built";
     }
 
     java = OMPI_WANT_JAVA_BINDINGS ? "yes" : "no";
@@ -248,6 +260,7 @@ void ompi_info_do_config(bool want_all)
     fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
+    have_ltdl_advise = OPAL_HAVE_LTDL_ADVISE ? "yes" : "no";
 #if OMPI_RTE_ORTE
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
 #endif
@@ -256,7 +269,6 @@ void ompi_info_do_config(bool want_all)
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     topology_support = OPAL_HAVE_HWLOC ? "yes" : "no";
-    vt_support = OMPI_ENABLE_CONTRIB_vt ? "yes" : "no";
     
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) {
@@ -280,23 +292,19 @@ void ompi_info_do_config(bool want_all)
         fortran_have_ignore_tkr = strdup("no");
     }
 
-    if (OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
 #if OMPI_RTE_ORTE
-        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
-                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                       OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
+                   "posix",
+                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
-        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
-                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                       OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
+                   "posix",
+                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
-    } else {
-        threads = strdup("no");
-    }
     
     (void)asprintf(&ft_support, "%s (checkpoint thread: %s)", 
                    OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
@@ -325,9 +333,6 @@ void ompi_info_do_config(bool want_all)
                   fortran_usempif08);
     opal_info_out("Fort mpi_f08 compliance", "bindings:use_mpi_f08:compliance", 
                   fortran_usempif08_compliance);
-    if (NULL != fortran_usempif08_compliance) {
-        free(fortran_usempif08_compliance);
-    }
     opal_info_out("Fort mpi_f08 subarrays", "bindings:use_mpi_f08:subarrays-supported", 
                   fortran_build_f08_subarrays);
     opal_info_out("Java bindings", "bindings:java", java);
@@ -425,6 +430,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort PROCEDURE", 
                   "compiler:fortran:procedure",
                   fortran_have_procedure);
+    opal_info_out("Fort C_FUNLOC",
+                  "compiler:fortran:c_funloc",
+                  fortran_have_c_funloc);
     opal_info_out("Fort f08 using wrappers", 
                   "compiler:fortran:08_wrappers",
                   fortran_08_using_wrappers_for_choice_buffer_functions);
@@ -613,6 +621,7 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Memory profiling support", "option:mem-profile", memprofile);
     opal_info_out("Memory debugging support", "option:mem-debug", memdebug);
     opal_info_out("libltdl support", "option:dlopen", want_libltdl);
+    opal_info_out("lt_dladvise support", "option:lt_dladvise", have_ltdl_advise);
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
 #if OMPI_RTE_ORTE
     opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default", 
@@ -631,8 +640,6 @@ void ompi_info_do_config(bool want_all)
 
     opal_info_out("C/R Enabled Debugging", "options:crdebug_support", crdebug_support);
     free(crdebug_support);
-
-    opal_info_out("VampirTrace support", "options:vt", vt_support);
 
     opal_info_out_int("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name", 
                   MPI_MAX_PROCESSOR_NAME);

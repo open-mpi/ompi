@@ -1171,9 +1171,6 @@ MISCELLANEOUS SUPPORT LIBRARIES
   running Valgrind on MPI applications.  There is a minor performance
   penalty for enabling this option.
 
---disable-vt
-  Disable building the VampirTrace that is bundled with Open MPI.
-
 MPI FUNCTIONALITY
 
 --with-mpi-param-check(=value)
@@ -1190,14 +1187,9 @@ MPI FUNCTIONALITY
 
   If --with-mpi-param is not specified, "runtime" is the default.
 
---with-threads=value
-  Since thread support is only partially tested, it is disabled by
-  default.  To enable threading, use "--with-threads=posix".  This is
-  most useful when combined with --enable-mpi-thread-multiple.
-
 --enable-mpi-thread-multiple
-  Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
-  --with-threads; this is currently disabled by default. Enabling
+  Allows the MPI thread level MPI_THREAD_MULTIPLE.
+  This is currently disabled by default. Enabling
   this feature will automatically --enable-opal-multi-threads.
 
 --enable-opal-multi-threads

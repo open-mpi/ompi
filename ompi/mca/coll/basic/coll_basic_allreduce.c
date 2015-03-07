@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -80,6 +80,7 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
 {
     int err, i, rank, root = 0, rsize;
     ptrdiff_t lb, extent;
+    ptrdiff_t true_lb, true_extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
@@ -102,12 +103,16 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
+        err = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
 
-        tmpbuf = (char *) malloc(count * extent);
+        tmpbuf = (char *) malloc(true_extent + (count - 1) * extent);
         if (NULL == tmpbuf) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = tmpbuf - lb;
+        pml_buffer = tmpbuf - true_lb;
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,7 +76,6 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     num_children = data->mcb_tree[rank].mcstn_num_children;
     buffer_set = ((data->mcb_barrier_count++) % 2) * 2;
     me_in = &data->mcb_barrier_control_me[buffer_set];
-    me_out = me_in + uint_control_size;
     me_out = (uint32_t*)
         (((char*) me_in) + mca_coll_sm_component.sm_control_size);
 

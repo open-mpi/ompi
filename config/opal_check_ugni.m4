@@ -1,26 +1,28 @@
-# -*- Mode: Shell ; indent-tabs-mode:nil -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2006 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2006      QLogic Corp. All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2014 Los Alamos National Security, LLC.
-#                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
-#
+dnl -*- Mode: Shell ; indent-tabs-mode:nil -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2006 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2006      QLogic Corp. All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2011-2014 Los Alamos National Security, LLC.
+dnl                         All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # OPAL_CHECK_UGNI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -28,14 +30,6 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 #
-# NOTES
-# on Cray XE6 systems, the GNI development header (gni_pub.h) is in a
-# completely different place than the ugni library (libugni).
-#
-# EXAMPLE CONFIGURE USAGE:
-# --with-ugni=/base/path/to/libugni --with-ugni-includedir=/path/to/gni_pub.h
-#
-# --with-ugni=/opt/cray/ugni/default --with-ugni-includedir=/opt/cray/gni-headers/default/include
 
 AC_DEFUN([OPAL_CHECK_UGNI], [
     AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni],
@@ -49,8 +43,7 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
                       [$1_LDFLAGS="$CRAY_UGNI_LIBS"
                        $1_CPPFLAGS="$CRAY_UGNI_CFLAGS"
                        opal_check_ugni_happy="yes"],
-                      [AC_MSG_RESULT([no])
-                       opal_check_ugni_happy="no"])])
+                      [ opal_check_ugni_happy="no"])])
 
     opal_check_ugni_$1_save_CPPFLAGS="$CPPFLAGS"
     opal_check_ugni_$1_save_LDFLAGS="$LDFLAGS"
@@ -76,13 +69,13 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
     LDFLAGS="$opal_check_ugni_$1_save_LDFLAGS"
     LIBS="$opal_check_ugni_$1_save_LIBS"
 
-    AS_IF([test "$opal_check_ugni_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+    AS_IF([test "$opal_check_ugni_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([GNI driver does not currently support progress threads.  Disabling.])
            opal_check_ugni_happy="no"])
 
     AS_IF([test "$opal_check_ugni_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_ugni" -a "$with_ugni" != "no"],
+          [AS_IF([test ! -z "$with_ugni" && test "$with_ugni" != "no"],
                  [AC_MSG_ERROR([GNI support requested but not found.  Cannot continue.])])
            $3])
 

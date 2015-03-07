@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2014 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -398,6 +398,7 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     /* check for error */
     if (NULL == token) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        free(temp);
         return ORTE_ERR_BAD_PARAM;
     }
     *token = '\0';
@@ -553,16 +554,6 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     return OPAL_EQUAL;
 }
 
-
-uint64_t  orte_util_hash_name(const orte_process_name_t * name) {
-    uint64_t hash;
-    
-    hash = name->jobid;
-    hash <<= sizeof(name->jobid) * 8;
-    hash += name->vpid;
-    
-    return hash;
-}
 /* hash a vpid based on Robert Jenkin's algorithm - note
  * that the precise values of the constants in the algo are
  * irrelevant.
@@ -598,6 +589,7 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
     
     /* check for error */
     if (NULL == token) {
+        free(temp);
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     } 

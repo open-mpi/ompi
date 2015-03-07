@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
 .\" $COPYRIGHT$
@@ -53,6 +53,14 @@ MPI_Comm_delete_attr deletes an attribute from cache by key. This function invok
 Whenever a communicator is replicated using the function MPI_Comm_dup, all callback copy functions for attributes that are currently set are invoked (in arbitrary order). Whenever a communicator is deleted using the function MPI_Comm_free, all callback delete functions for attributes that are currently set are invoked. 
 .sp
 This function is the same as MPI_Attr_delete but is needed to match the communicator-specific functions introduced in the MPI-2 standard. The use of MPI_Attr_delete is deprecated. 
+
+
+.SH NOTES
+Note that it is not defined by the MPI standard what happens if the
+delete_fn callback invokes other MPI functions.  In Open MPI, it is
+not valid for delete_fn callbacks (or any of their children) to add or
+delete attributes on the same object on which the delete_fn callback
+is being invoked.
 
 
 .SH ERRORS

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -62,11 +62,19 @@ int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
             return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
+
+        /* Need this check here to protect the access to "cart",
+           below.  I.e., if OMPI_COMM_IS_CART is true, then cart is
+           guaranteed to be != NULL. */
+        if (!OMPI_COMM_IS_CART(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
+                                           FUNC_NAME);
+        }
+
         cart = comm->c_topo->mtc.cart;
         /* Per MPI-2.1, coords is only relevant if the dimension of
            the cartesian comm is >0 */
         if (((NULL == coords) &&
-             (NULL != cart) &&
              (cart->ndims >= 1)) ||
             (NULL == rank)){
             return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
@@ -82,11 +90,13 @@ int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
         }
-    }
-
-    if (!OMPI_COMM_IS_CART(comm)) {
-        return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
-                                      FUNC_NAME);
+    } else {
+        /* Need to always test for cartesian communicators, even in
+           the !MPI_PARAM_CHECK case. */
+        if (!OMPI_COMM_IS_CART(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
+                                           FUNC_NAME);
+        }
     }
     OPAL_CR_ENTER_LIBRARY();
 

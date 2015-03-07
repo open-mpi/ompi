@@ -4,7 +4,7 @@
 # Note that we use an interpreter value ("PERL") from configure
 # because even "#!/usr/bin/env perl" to all systems (e.g., NetBSD).
 #
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -31,7 +31,6 @@ if (exists($ENV{'OPAL_DESTDIR'})
 
 my $CC = "@WRAPPER_CC@";
 my $CXX = "@CXX@";
-my $extra_includes = "@ORTE_WRAPPER_EXTRA_INCLUDES@";
 my $extra_cppflags = "@ORTE_WRAPPER_EXTRA_CPPFLAGS@";
 my $extra_cflags = "@ORTE_WRAPPER_EXTRA_CFLAGS@";
 my $extra_cflags_prefix = "@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@";
@@ -69,28 +68,16 @@ sub check_env {
     return $str;
 }
 
-sub add_extra_includes {
-    my $str = "";
-    my @includes = split(' ', $extra_includes);
-    for my $include (@includes) {
-        $str .= $include_flag . catdir($includedir, $include) . " ";
-    }
-
-    return $str;
-}
-
 
 if (basename($0) eq "ortecc") {
     $lang = "C";
     $comp = check_env("CC", $CC);
-    $preproc_flags .= " " . add_extra_includes();
     $comp_flags = $extra_cflags;
     $comp_flags_prefix = $extra_cflags_prefix;
     # no special libs for C
 } elsif (basename($0) eq "ortec++") {
     $lang = "C++";
     $comp = check_env("CXX", $CXX);
-    $preproc_flags .= " " . add_extra_includes();
     $comp_flags = $extra_cxxflags;
     $comp_flags_prefix = $extra_cxxflags_prefix;
 #    $libs = $cxx_lib . " " . $libs;

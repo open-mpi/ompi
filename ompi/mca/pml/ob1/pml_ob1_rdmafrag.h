@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,38 +34,51 @@ typedef enum {
     MCA_PML_OB1_RDMA_GET
 } mca_pml_ob1_rdma_state_t;
 
+struct mca_pml_ob1_rdma_frag_t;
+
+typedef void (*mca_pml_ob1_rdma_frag_callback_t)(struct mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length);
+
+/**
+ * Used to keep track of local and remote RDMA operations.
+ */
 struct mca_pml_ob1_rdma_frag_t {
-    ompi_free_list_item_t super;
-    mca_bml_base_btl_t* rdma_bml;
+    opal_free_list_item_t super;
+    mca_bml_base_btl_t *rdma_bml;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;
-    uint8_t rdma_segs[MCA_BTL_SEG_MAX_SIZE * MCA_BTL_DES_MAX_SEGMENTS];
     void *rdma_req;
-    struct mca_bml_base_endpoint_t* rdma_ep;
-    opal_convertor_t convertor;
-    mca_mpool_base_registration_t* reg;
     uint32_t retries;
+    mca_pml_ob1_rdma_frag_callback_t cbfunc;
+
+    uint64_t rdma_offset;
+    void *local_address;
+    mca_btl_base_registration_handle_t *local_handle;
+
+    uint64_t remote_address;
+    uint8_t remote_handle[MCA_BTL_REG_HANDLE_MAX_SIZE];
 };
 typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 
-#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                       \
-do {                                                            \
-    ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_ob1.rdma_frags, item);         \
-    frag = (mca_pml_ob1_rdma_frag_t*)item;                      \
-} while(0)
+#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                          \
+    do {                                                           \
+        frag = (mca_pml_ob1_rdma_frag_t *)                         \
+            opal_free_list_wait (&mca_pml_ob1.rdma_frags);         \
+    } while(0)
 
-#define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                      \
-do {                                                            \
-    /* return fragment */                                       \
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_ob1.rdma_frags,              \
-        (ompi_free_list_item_t*)frag);                          \
-} while(0)
-
+#define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                              \
+    do {                                                                \
+        /* return fragment */                                           \
+        if (frag->local_handle) {                                       \
+            mca_bml_base_deregister_mem (frag->rdma_bml, frag->local_handle); \
+            frag->local_handle = NULL;                                  \
+        }                                                               \
+        opal_free_list_return (&mca_pml_ob1.rdma_frags,                 \
+                               (opal_free_list_item_t*)frag);           \
+    } while (0)
 
 END_C_DECLS
 

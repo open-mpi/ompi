@@ -68,6 +68,8 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
     char *value;
 	int error_code = MPI_SUCCESS;
 	static char myname[] = "ADIOI_cb_bcast_rank_map";
+    char *p;
+    int i;
 
     MPI_Bcast(&(fd->hints->cb_nodes), 1, MPI_INT, 0, fd->comm);
     if (fd->hints->cb_nodes > 0) {
@@ -92,6 +94,18 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
     ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", fd->hints->cb_nodes);
     ADIOI_Info_set(fd->info, "cb_nodes", value);
+    p = value;
+    /* the (by MPI rank) list of aggregators can be larger than
+     * MPI_MAX_INFO_VAL, so we will simply truncate when we reach capacity. I
+     * wasn't clever enough to figure out how to rewind and put '...' at the
+     * end in the truncate case */
+    for (i=0; i< fd->hints->cb_nodes; i++) {
+        int incr, remain = (MPI_MAX_INFO_VAL) - (p-value);
+        incr = ADIOI_Snprintf(p, remain, "%d ", fd->hints->ranklist[i]);
+    if (incr >= remain) break;
+        p += incr;
+    }
+    ADIOI_Info_set(fd->info, "romio_aggregator_list", value);
     ADIOI_Free(value);
 
     return 0;
@@ -666,7 +680,7 @@ static int get_max_procs(int cb_nodes)
 	if (token != AGG_WILDCARD && token != AGG_STRING) return -1;
 	if (token == AGG_WILDCARD) max_procs = cb_nodes;
 	else if (token == AGG_STRING) {
-	    max_procs = strtol(yylval, &errptr, 10);
+	    max_procs = (int)strtol(yylval, &errptr, 10);
 	    if (*errptr != '\0') {
 		/* some garbage value; default to 1 */
 		max_procs = 1;
@@ -688,7 +702,7 @@ static int get_max_procs(int cb_nodes)
  *
  * Returns a token of types defined at top of this file.
  */
-#ifdef ROMIO_BGL
+#if defined(ROMIO_GPFS)
 /* On BlueGene, the ',' character shows up in get_processor_name, so we have to
  * use a different delimiter */
 #define COLON ':'

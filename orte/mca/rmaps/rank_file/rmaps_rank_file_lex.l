@@ -99,7 +99,7 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
     */
 %}
 
-[A-za-z0-9_\-,\;:*@]*  { orte_rmaps_rank_file_value.sval = yytext;
+[A-Za-z0-9_\-,\;:*@]*  { orte_rmaps_rank_file_value.sval = yytext;
                          return ORTE_RANKFILE_STRING; }
 
 ([A-Za-z0-9][A-Za-z0-9_\-]*"@")?([0-9]{1,3}"."){3}[0-9]{1,3} {

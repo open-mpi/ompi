@@ -184,16 +184,33 @@ static int rte_init(void)
      */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
-    /* tell the pmix framework to allow delayed connection to a server
-     * in case we need one */
-    opal_pmix_base_allow_delayed_server = true;
-
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
+    /* check and ensure pmix was initialized */
+    if (NULL == opal_pmix.initialized || !opal_pmix.initialized()) {
+        putenv("OMPI_MCA_pmix=native");
+        /* tell the pmix framework to allow delayed connection to a server
+         * in case we need one */
+        opal_pmix_base_allow_delayed_server = true;
+        if (OPAL_SUCCESS != (rc = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+            /* if PMIx is not available even with a delayed
+             * connection to the server, then we are hosed */
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_pmix_base_select()) &&
+            OPAL_ERR_SERVER_NOT_AVAIL != rc) {
+            /* if PMIx is not available even with a delayed
+             * connection to the server, then we are hosed */
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+
     /* to the best of our knowledge, we are alone */
     orte_process_info.my_node_rank = 0;
     orte_process_info.my_local_rank = 0;
@@ -261,6 +278,12 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     int ret;
+        
+    /* mark us as finalized */
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+        (void) mca_base_framework_close(&opal_pmix_base_framework);
+    }
         
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {

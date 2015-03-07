@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,7 +80,7 @@ typedef uint8_t pmix_cmd_t;
 /* header for pmix client-server msgs - must
  * match that in opal/mca/pmix/native! */
 typedef struct {
-    opal_identifier_t id;
+    opal_process_name_t id;
     uint8_t type;
     uint32_t tag;
     size_t nbytes;
@@ -136,7 +138,7 @@ typedef struct {
     opal_list_item_t super;
     pmix_server_peer_t *peer;
     orte_proc_t *proxy;
-    opal_identifier_t target;
+    opal_process_name_t target;
     uint32_t tag;
 } pmix_server_dmx_req_t;
 OBJ_CLASS_DECLARATION(pmix_server_dmx_req_t);
@@ -201,8 +203,12 @@ extern void pmix_server_peer_event_init(pmix_server_peer_t* peer);
 extern char* pmix_server_state_print(pmix_server_state_t state);
 extern pmix_server_peer_t* pmix_server_peer_lookup(int sd);
 extern void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg);
-extern int pack_segment_info(opal_identifier_t id, opal_buffer_t *reply);
+extern int pack_segment_info(opal_process_name_t id, opal_buffer_t *reply);
 
+extern int pmix_server_fetch_proc_map(opal_buffer_t *reply,
+                                      orte_job_t *jdata,
+                                      orte_proc_t *proc);
+extern void pmix_server_process_message(pmix_server_peer_t *peer);
 
 /* exposed shared variables */
 extern bool pmix_server_distribute_data;

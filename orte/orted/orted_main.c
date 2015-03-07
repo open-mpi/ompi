@@ -126,6 +126,7 @@ static struct {
     bool abort;
     bool mapreduce;
     bool tree_spawn;
+    char *hnp_topo_sig;
 } orted_globals;
 
 /*
@@ -217,6 +218,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
+    
+    { NULL, '\0', NULL, "hnp-topo-sig", 1,
+      &orted_globals.hnp_topo_sig, OPAL_CMD_LINE_TYPE_STRING,
+      "Topology signature of HNP" },
 #endif
 
     { NULL, '\0', "mapreduce", "mapreduce", 0,
@@ -391,7 +396,7 @@ int orte_daemon(int argc, char *argv[])
             res = hwloc_bitmap_alloc();
             for (i=0; NULL != cores[i]; i++) {
                 core = strtoul(cores[i], NULL, 10);
-                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core))) {
+                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core, OPAL_HWLOC_LOGICAL))) {
                     /* turn off the show help forwarding as we won't
                      * be able to cycle the event library to send
                      */
@@ -533,6 +538,8 @@ int orte_daemon(int argc, char *argv[])
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
+        /* default to ompi for now */
+        jdata->personality = strdup("ompi");
         orte_plm_base_create_jobid(jdata);
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
@@ -558,6 +565,7 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
+        proc->parent = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
@@ -567,6 +575,10 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        /* add the node to the job map */
+        OBJ_RETAIN(node);
+        opal_pointer_array_add(jdata->map->nodes, node);
+        jdata->map->num_nodes++;
         /* and it obviously is on the node */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(node->procs, proc);
@@ -738,10 +750,23 @@ int orte_daemon(int argc, char *argv[])
 #if OPAL_HAVE_HWLOC
         {
             char *coprocessors;
-            /* add the local topology */
-            if (NULL != opal_hwloc_topology &&
-                (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
+            uint8_t tflag;
+                        
+            /* add the local topology, if different from the HNP's or user directed us to */
+            if (orte_hetero_nodes || 0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig)) {
+                tflag = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(ret);
+                }
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+            } else {
+                tflag = 0;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
                     ORTE_ERROR_LOG(ret);
                 }
             }
@@ -754,6 +779,9 @@ int orte_daemon(int argc, char *argv[])
             coprocessors = opal_hwloc_base_check_on_coprocessor();
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
+            }
+            if (NULL!= coprocessors) {
+                free(coprocessors);
             }
         }
 #endif

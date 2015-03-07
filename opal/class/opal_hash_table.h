@@ -14,6 +14,8 @@
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,6 +41,7 @@
 #include <stdint.h>
 #endif
 #include "opal/class/opal_list.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -297,6 +300,171 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
 OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, uint64_t *key,
                                        void **value, void *in_node,
                                        void **out_node);
+
+
+/**
+ *  Get the first ptr bit key from the hash table, which can be used later to
+ *  get the next key
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The first key (OUT)
+ *  @param  key_size The first key size (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  node     The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, void* *key,
+                                        size_t *key_size, void **value, void **node);
+
+
+/**
+ *  Get the next ptr bit key from the hash table, knowing the current key 
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The key (OUT)
+ *  @param  key_size The key size (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  in_node  The node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_hash_table_get_next_key_ptr(opal_hash_table_t *table, void* *key,
+                                       size_t *key_size, void **value,
+                                       void *in_node, void **out_node);
+
+
+
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_proc_table_t);
+                           
+struct opal_proc_table_t
+{
+    opal_hash_table_t    super;          /**< subclass of opal_object_t */
+    size_t               pt_size;        /**< number of extant entries */
+    size_t               vpids_size;
+    // FIXME
+    // Begin KLUDGE!!  So ompi/debuggers/ompi_common_dll.c doesn't complain
+    size_t              pt_table_size;  /**< size of table */
+    // End KLUDGE
+};
+typedef struct opal_proc_table_t opal_proc_table_t;
+
+                           
+    
+/**
+ *  Initializes the table size, must be called before using
+ *  the table.
+ *
+ *  @param   pt      The input hash table (IN).
+ *  @param   jobids  The size of the jobids table, which will be rounded up 
+ *                   (if required) to the next highest power of two (IN).
+ *  @param   vpids   The size of the vpids table, which will be rounded up 
+ *                   (if required) to the next highest power of two (IN).
+ *  @return  OPAL error code.
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_init(opal_proc_table_t* pt, size_t jobids, size_t vpids);
+
+/**
+ *  Remove all elements from the table.
+ *
+ *  @param   pt   The input hash table (IN).
+ *  @return  OPAL return code.
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_remove_all(opal_proc_table_t *pt);
+
+/**
+ *  Retrieve value via opal_process_name_t key.
+ *
+ *  @param   pt      The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @param   ptr     The value associated with the key
+ *  @return  integer return code:
+ *           - OPAL_SUCCESS       if key was found
+ *           - OPAL_ERR_NOT_FOUND if key was not found
+ *           - OPAL_ERROR         other error
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key, 
+                                                   void** ptr);
+
+/**
+ *  Set value based on opal_process_name_t key.
+ *
+ *  @param   pt      The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @param   value   The value to be associated with the key (IN).
+ *  @return  OPAL return code.
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_set_value(opal_proc_table_t* pt, opal_process_name_t key, void* value);
+
+/**
+ *  Remove value based on opal_process_name_t key.
+ *
+ *  @param   pt      The input hash table (IN).
+ *  @param   key     The input key (IN).
+ *  @return  OPAL return code.
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_remove_value(opal_proc_table_t* pt, opal_process_name_t key);
+
+
+/**
+ *  Get the first opal_process_name_t key from the hash table, which can be used later to
+ *  get the next key
+ *  @param  pt      The hash table pointer (IN)
+ *  @param  key     The first key (OUT)
+ *  @param  value   The value corresponding to this key (OUT)
+ *  @param  node1   The pointer to the first internal node which stores
+ *                  the key-value pair (this is required for subsequent calls
+ *                  to get_next_key) (OUT)
+ *  @param  node2   The pointer to the second internal node which stores
+ *                  the key-value pair (this is required for subsequent calls
+ *                  to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_get_first_key(opal_proc_table_t *pt, opal_process_name_t *key,
+                                                void **value, void **node1, void **node2);
+
+
+/**
+ *  Get the next opal_process_name_t key from the hash table, knowing the current key 
+ *  @param  pt       The hash table pointer (IN)
+ *  @param  key      The key (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  in_node1 The first node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node1 The first pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @param  in_node2 The second node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node2 The second pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return OPAL error code
+ *
+ */
+
+OPAL_DECLSPEC int opal_proc_table_get_next_key(opal_proc_table_t *pt, opal_process_name_t *key,
+                                               void **value, void *in_node1, void **out_node1,
+                                               void *in_node2, void **out_node2);
+
 
 END_C_DECLS
 

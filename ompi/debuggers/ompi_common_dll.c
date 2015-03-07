@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2013 The University of Tennessee and The University
@@ -8,6 +9,8 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,13 +61,17 @@ static int host_is_big_endian = 0;
  * call to the real function mqs_field_offset.
  */
 #ifndef ompi_field_offset
-#define ompi_field_offset(out_name, qh_type, struct_name, field_name)  \
-{ \
-    out_name = mqs_field_offset((qh_type), #field_name); \
-    if (out_name < 0) { \
-        fprintf(stderr, "WARNING: Field " #field_name " of type " #struct_name " not found!\n"); \
-    } \
-}
+#define ompi_field_offset(out_name, qh_type, struct_name, field_name)   \
+    {                                                                   \
+        out_name = mqs_field_offset((qh_type), #field_name);            \
+        if (out_name < 0) {                                             \
+            fprintf(stderr, "WARNING: Open MPI is unable to find "      \
+                    "field " #field_name " in the " #struct_name        \
+                    " type.  This can happen can if Open MPI is built " \
+                    "without debugging information, or is stripped "    \
+                    "after building.\n");                               \
+        }                                                               \
+    }
 #endif
 
 /*
@@ -72,7 +79,7 @@ static int host_is_big_endian = 0;
  * internal objects. We have to make sure we're able to find all of
  * them in the image and compute their ofset in order to be able to
  * parse them later.  We need to find the opal_list_item_t, the
- * opal_list_t, the ompi_free_list_item_t, and the ompi_free_list_t.
+ * opal_list_t, the opal_free_list_item_t, and the opal_free_list_t.
  *
  * Once we have these offsets, we should make sure that we have access
  * to all requests lists and types. We're looking here only at the
@@ -107,41 +114,41 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
                           qh_type, opal_list_t, opal_list_sentinel);
     }
     {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_item_t", mqs_lang_c );
+        mqs_type* qh_type = mqs_find_type( image, "opal_free_list_item_t", mqs_lang_c );
         if( !qh_type ) {
-            missing_in_action = "ompi_free_list_item_t";
+            missing_in_action = "opal_free_list_item_t";
             goto type_missing;
         }
         /* This is just an overloaded opal_list_item_t */
-        i_info->ompi_free_list_item_t.type = qh_type;
-        i_info->ompi_free_list_item_t.size = mqs_sizeof(qh_type);
+        i_info->opal_free_list_item_t.type = qh_type;
+        i_info->opal_free_list_item_t.size = mqs_sizeof(qh_type);
     }
     {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_t", mqs_lang_c );
+        mqs_type* qh_type = mqs_find_type( image, "opal_free_list_t", mqs_lang_c );
 
         if( !qh_type ) {
-            missing_in_action = "ompi_free_list_t";
+            missing_in_action = "opal_free_list_t";
             goto type_missing;
         }
 
-        i_info->ompi_free_list_t.type = qh_type;
-        i_info->ompi_free_list_t.size = mqs_sizeof(qh_type);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_mpool,
-                          qh_type, ompi_free_list_t, fl_mpool);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_allocations,
-                          qh_type, ompi_free_list_t, fl_allocations); 
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_class,
-                          qh_type, ompi_free_list_t, fl_frag_class);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_size,
-                          qh_type, ompi_free_list_t, fl_frag_size);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_alignment,
-                          qh_type, ompi_free_list_t, fl_frag_alignment);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_max_to_alloc,
-                          qh_type, ompi_free_list_t, fl_max_to_alloc);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_num_per_alloc,
-                          qh_type, ompi_free_list_t, fl_num_per_alloc);
-        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_num_allocated,
-                          qh_type, ompi_free_list_t, fl_num_allocated);
+        i_info->opal_free_list_t.type = qh_type;
+        i_info->opal_free_list_t.size = mqs_sizeof(qh_type);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_mpool,
+                          qh_type, opal_free_list_t, fl_mpool);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_allocations,
+                          qh_type, opal_free_list_t, fl_allocations);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_frag_class,
+                          qh_type, opal_free_list_t, fl_frag_class);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_frag_size,
+                          qh_type, opal_free_list_t, fl_frag_size);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_frag_alignment,
+                          qh_type, opal_free_list_t, fl_frag_alignment);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_max_to_alloc,
+                          qh_type, opal_free_list_t, fl_max_to_alloc);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_num_per_alloc,
+                          qh_type, opal_free_list_t, fl_num_per_alloc);
+        ompi_field_offset(i_info->opal_free_list_t.offset.fl_num_allocated,
+                          qh_type, opal_free_list_t, fl_num_allocated);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "opal_hash_table_t", mqs_lang_c );
@@ -503,7 +510,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
      * did our best but here we're at our limit. Give up!
      */
     *message = missing_in_action;
-    printf( "The following type is missing %s\n", missing_in_action );
+    fprintf(stderr, "WARNING: Open MPI is unable to find debugging information about the \"%s\" type.  This can happen if Open MPI was built without debugging information, or was stripped after building.\n",
+           missing_in_action);
     return err_missing_type;
 }
 

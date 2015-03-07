@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,15 +81,18 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
     if( NULL != tcp_proc->proc_opal ) {
         /* remove from list of all proc instances */
         OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-        opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                            tcp_proc->proc_opal->proc_name);
+        opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, 
+                                     tcp_proc->proc_opal->proc_name);
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-        /* Do not OBJ_RELEASE the proc_opal ! */
-        /* OBJ_RELEASE(tcp_proc->proc_opal); */
+        OBJ_RELEASE(tcp_proc->proc_opal);
+        tcp_proc->proc_opal = NULL;
     }
     /* release resources */
     if(NULL != tcp_proc->proc_endpoints) {
         free(tcp_proc->proc_endpoints);
+    }
+    if(NULL != tcp_proc->proc_addrs) {
+        free(tcp_proc->proc_addrs);
     }
     OBJ_DESTRUCT(&tcp_proc->proc_lock);
 }
@@ -102,14 +107,13 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
 {
-    uint64_t hash = proc->proc_name;
     mca_btl_tcp_proc_t* btl_proc;
     size_t size;
     int rc;
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    rc = opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                          hash, (void**)&btl_proc);
+    rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, 
+                                   proc->proc_name, (void**)&btl_proc);
     if(OPAL_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
         return btl_proc;
@@ -122,8 +126,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
     OBJ_RETAIN(btl_proc->proc_opal);
 
     /* add to hash table of all proc instance */
-    opal_hash_table_set_value_uint64(&mca_btl_tcp_component.tcp_procs,
-                                     hash, btl_proc);
+    opal_proc_table_set_value(&mca_btl_tcp_component.tcp_procs,
+                              proc->proc_name, btl_proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
@@ -324,7 +328,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                 local_interfaces = (mca_btl_tcp_interface_t**)realloc( local_interfaces,
                                                                        max_local_interfaces * sizeof(mca_btl_tcp_interface_t*) );
                 if( NULL == local_interfaces )
-                    return NULL;
+                    goto cleanup;
             }
             local_interfaces[index] = (mca_btl_tcp_interface_t *) malloc(sizeof(mca_btl_tcp_interface_t));
             assert(NULL != local_interfaces[index]);
@@ -365,8 +369,13 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                         local_addr.ss_family);
         }
     }
-    opal_argv_free(include);
-    opal_argv_free(exclude);
+cleanup:
+    if (NULL != include) {
+        opal_argv_free(include);
+    }
+    if (NULL != exclude) {
+        opal_argv_free(exclude);
+    }
 
     return local_interfaces;
 }
@@ -724,8 +733,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 {
     mca_btl_tcp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                     *name, (void**)&proc);
+    opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, 
+                              *name, (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
     return proc;
 }
@@ -734,7 +743,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
  * loop through all available BTLs for one matching the source address
  * of the request.
  */
-bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
+void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
@@ -766,13 +775,13 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             ;
         }
 
-        if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
-            OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-            return true;
-        }
+        (void)mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+        return;
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-    return false;
+    /* No further use of this socket. Close it */
+    CLOSE_THE_SOCKET(sd);
 }
 
 /*

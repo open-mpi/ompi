@@ -16,6 +16,8 @@
 #elif defined(HAVE_PRAGMA_CRI_DUP)
 #pragma _CRI duplicate MPI_File_close as PMPI_File_close
 /* end of weak pragmas */
+#elif defined(HAVE_WEAK_ATTRIBUTE)
+int MPI_File_close(MPI_File *fh) __attribute__((weak,alias("PMPI_File_close")));
 #endif
 
 /* Include mapping from MPI->PMPI */
@@ -56,9 +58,9 @@ int MPI_File_close(MPI_File *fh)
 	/* POSIX semantics say a deleted file remains available until all
 	 * processes close the file.  But since when was NFS posix-compliant?
 	 */
-	if (!ADIO_Feature(adio_fh, ADIO_UNLINK_AFTER_CLOSE)) {
-		MPI_Barrier((adio_fh)->comm);
-	}
+	/* this used to be gated by the lack of the UNLINK_AFTER_CLOSE feature,
+	 * but a race condition in GPFS necessated this.  See ticket #2214 */
+	MPI_Barrier((adio_fh)->comm);
 	if ((adio_fh)->shared_fp_fd != ADIO_FILE_NULL) {
 	    MPI_File *fh_shared = &(adio_fh->shared_fp_fd);
 	    ADIO_Close((adio_fh)->shared_fp_fd, &error_code);

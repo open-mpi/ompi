@@ -31,7 +31,7 @@ void ADIOI_PANFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
         if(((ADIO_Offset)stat_buf.st_size) != size)
         {
             /* This should never happen otherwise there is a coherency problem. */
-            FPRINTF(stderr, "%s: Rank %d: Resize failed: requested=%llu actual=%llu.\n",myname,myrank,size,stat_buf.st_size);
+            FPRINTF(stderr, "%s: Rank %d: Resize failed: requested=%llu actual=%llu.\n",myname,myrank,size,(unsigned long long)stat_buf.st_size);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }

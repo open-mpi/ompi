@@ -97,7 +97,7 @@ esac
 
 
 # If further packages should be disabled, insert
-#   --enable-contrib-no-build=vt --disable-mpi-cxx --disable-io-romio \
+#   --disable-mpi-cxx --disable-io-romio \
 
 $SRCDIR/configure \
    --prefix=$PREFIX \
@@ -107,7 +107,6 @@ $SRCDIR/configure \
    --enable-mca-no-build=maffinity-first_use,maffinity-libnuma,ess-cnos,ess-slurm,ess-slurmd,filem-rsh,grpcomm-cnos,plm-rsh,plm-rshd,plm-slurm,pml-dr,btl-tcp,notifier-twitter,notifier-smtp,pml-csum,pml-v,vprotocol-pessimist,dpm-orte \
    --with-wrapper-ldflags="-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L/opt/xt-mpt/default/lib/snos64/ ${WRAPPER_LDFLAGS}" \
    --with-wrapper-libs="-lpct -lalpslli -lalpsutil -lportals -lpthread -lm" \
-   --enable-contrib-no-build=vt \
    ${COMPILER_FLAGS} \
    CPPFLAGS="-DNDEBUG -I${PE_DIR}/include ${CPPFLAGS}" \
    CFLAGS="${CFLAGS}" \

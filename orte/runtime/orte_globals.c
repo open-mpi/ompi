@@ -13,7 +13,9 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,6 +70,7 @@ char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
 opal_hash_table_t *orte_coprocessors = NULL;
+char *orte_topo_signature = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -82,7 +85,6 @@ int orte_use_hostname_alias;
 
 int orted_debug_failure;
 int orted_debug_failure_delay;
-bool orte_homogeneous_nodes = false;
 bool orte_hetero_apps = false;
 bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
@@ -189,9 +191,6 @@ bool orte_map_stddiag_to_stderr = false;
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;
 
-/* progress thread */
-opal_thread_t orte_progress_thread;
-
 /* user debugger */
 char *orte_base_user_debugger = NULL;
 
@@ -239,41 +238,6 @@ int orte_dt_init(void)
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_STD_CNTR", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    tmp = ORTE_NAME;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_name,
-                                                     orte_dt_unpack_name,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_name,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_name,
-                                                     (opal_dss_print_fn_t)orte_dt_print_name,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_NAME", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_VPID;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_vpid,
-                                                     orte_dt_unpack_vpid,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_vpid,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_vpid,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_VPID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_JOBID;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_jobid,
-                                                     orte_dt_unpack_jobid,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_jobid,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_jobid,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_JOBID", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -502,7 +466,6 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
     char *hostname;
-    int rc;
     opal_list_t myvals;
     opal_value_t *kv;
 
@@ -522,10 +485,9 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 
     /* if we are an app, get the data from the modex db */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                (opal_identifier_t*)proc,
-                                                OPAL_DSTORE_HOSTNAME,
-                                                &myvals))) {
+    if (ORTE_SUCCESS != opal_dstore.fetch(opal_dstore_internal, proc,
+                                          OPAL_DSTORE_HOSTNAME,
+                                          &myvals)) {
         OPAL_LIST_DESTRUCT(&myvals);
         return NULL;
     }
@@ -557,8 +519,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 
     /* if we are an app, get the value from the modex db */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                (opal_identifier_t*)proc,
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, proc,
                                                 OPAL_DSTORE_NODERANK,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
@@ -671,6 +632,7 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 
 static void orte_job_construct(orte_job_t* job)
 {
+    job->personality = NULL;
     job->jobid = ORTE_JOBID_INVALID;
     job->offset = 0;
     job->apps = OBJ_NEW(opal_pointer_array_t);
@@ -720,12 +682,15 @@ static void orte_job_destruct(orte_job_t* job)
         /* probably just a race condition - just return */
         return;
     }
-    
+
     if (orte_debug_flag) {
         opal_output(0, "%s Releasing job data for %s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job->jobid));
     }
     
+    if (NULL != job->personality) {
+        free(job->personality);
+    }
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
             continue;
@@ -953,8 +918,30 @@ static void orte_attr_des(orte_attribute_t *p)
         }
     } else if (OPAL_BUFFER == p->type) {
         OBJ_DESTRUCT(&p->data.buf);
+    } else if (OPAL_STRING == p->type) {
+        free(p->data.string);
     }
 }
 OBJ_CLASS_INSTANCE(orte_attribute_t,
                    opal_list_item_t,
                    orte_attr_cons, orte_attr_des);
+
+#if OPAL_HAVE_HWLOC
+static void tcon(orte_topology_t *t)
+{
+    t->topo = NULL;
+    t->sig = NULL;
+}
+static void tdes(orte_topology_t *t)
+{
+    if (NULL != t->topo) {
+        hwloc_topology_destroy(t->topo);
+    }
+    if (NULL != t->sig) {
+        free(t->sig);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_topology_t,
+                   opal_object_t,
+                   tcon, tdes);
+#endif

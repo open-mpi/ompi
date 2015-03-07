@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,7 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
 {
     va_list args;
     char *buff, *str;
-    int ret;
+    int ret = 0;
 
     if (level < opal_output_get_verbosity(output_id)) {
         UNREFERENCED_PARAMETER(ret);

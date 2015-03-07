@@ -16,6 +16,8 @@
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,8 +114,8 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NOT_SUPPORTED:
         retval = "Not supported";
         break;
-    case OPAL_ERR_INTERUPTED:
-        retval = "Interupted";
+    case OPAL_ERR_INTERRUPTED:
+        retval = "Interrupted";
         break;
     case OPAL_ERR_WOULD_BLOCK:
         retval = "Would block";
@@ -607,7 +609,6 @@ int opal_init_test(void)
     return ret;
 }
 
-#if OPAL_HAVE_POSIX_THREADS
 static bool fork_warning_issued = false;
 static bool atfork_called = false;
 
@@ -619,14 +620,11 @@ static void warn_fork_cb(void)
         fork_warning_issued = true;
     }
 }
-#endif  /* OPAL_HAVE_POSIX_THREADS */
 
 void opal_warn_fork(void)
 {
-#if OPAL_HAVE_POSIX_THREADS
     if (opal_warn_on_fork && !atfork_called) {
         pthread_atfork(warn_fork_cb, NULL, NULL);
         atfork_called = true;
     }
-#endif
 }

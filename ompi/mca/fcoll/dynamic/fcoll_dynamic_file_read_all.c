@@ -112,13 +112,13 @@
       ** In case the data is not contigous in memory, decode it into an iovec **
       **************************************************************************/
      if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
-       ret = ompi_io_ompio_decode_datatype (fh,
-					    datatype,
-					    count,
-					    buf,
-					    &max_data,
-					    &decoded_iov,
-					    &iov_count);
+	 ret = fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+				    datatype,
+				    count,
+				    buf,
+				    &max_data,
+				    &decoded_iov,
+				    &iov_count);
        if (OMPI_SUCCESS != ret){
 	 goto exit;
        }
@@ -131,10 +131,10 @@
 	 status->_ucount = max_data;
      }
 
-     mca_io_ompio_get_num_aggregators ( &dynamic_num_io_procs);
-     ret = ompi_io_ompio_set_aggregator_props (fh, 
-					       dynamic_num_io_procs,
-					       max_data);
+     fh->f_get_num_aggregators ( &dynamic_num_io_procs);
+     ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh, 
+				       dynamic_num_io_procs,
+				       max_data);
      if (OMPI_SUCCESS != ret){
 	 goto exit;
      }
@@ -147,16 +147,16 @@
 	 goto exit;
      }
 
-     ret = ompi_io_ompio_allgather_array (&max_data,
-					  1,
-					  MPI_LONG,
-					  total_bytes_per_process,
-					  1,
-					  MPI_LONG,
-					  fh->f_aggregator_index,
-					  fh->f_procs_in_group,
-					  fh->f_procs_per_group,
-					  fh->f_comm);
+     ret = fh->f_allgather_array (&max_data,
+				  1,
+				  MPI_LONG,
+				  total_bytes_per_process,
+				  1,
+				  MPI_LONG,
+				  fh->f_aggregator_index,
+				  fh->f_procs_in_group,
+				  fh->f_procs_per_group,
+				  fh->f_comm);
      if (OMPI_SUCCESS != ret){
        goto exit;
      }
@@ -173,13 +173,13 @@
      /*********************************************************************
       *** Generate the File offsets/lengths corresponding to this write ***
       ********************************************************************/
-     ret = ompi_io_ompio_generate_current_file_view (fh, 
-						     max_data,
-						     &local_iov_array,
-						     &local_count);
-
+     ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t *) fh, 
+					     max_data,
+					     &local_iov_array,
+					     &local_count);
+     
      if (ret != OMPI_SUCCESS){
-       goto exit;
+	 goto exit;
      }
 
      
@@ -197,21 +197,21 @@
 	 goto exit;
      }
 
-     ret = ompi_io_ompio_allgather_array (&local_count,
-					  1,
-					  MPI_INT,
-					  fview_count,
-					  1,
-					  MPI_INT,
-					  fh->f_aggregator_index,
-					  fh->f_procs_in_group,
-					  fh->f_procs_per_group,
-					  fh->f_comm);
-
+     ret = fh->f_allgather_array (&local_count,
+				  1,
+				  MPI_INT,
+				  fview_count,
+				  1,
+				  MPI_INT,
+				  fh->f_aggregator_index,
+				  fh->f_procs_in_group,
+				  fh->f_procs_per_group,
+				  fh->f_comm);
+     
      if (OMPI_SUCCESS != ret){
-       goto exit;
+	 goto exit;
      }
-
+     
      displs = (int*)malloc (fh->f_procs_per_group*sizeof(int));
      if (NULL == displs) {
 	 opal_output (1, "OUT OF MEMORY\n");
@@ -249,17 +249,17 @@
        }
      }
 
-     ret =  ompi_io_ompio_allgatherv_array (local_iov_array,
-					    local_count,
-					    fh->f_iov_type,
-					    global_iov_array,
-					    fview_count,
-					    displs,
-					    fh->f_iov_type,
-					    fh->f_aggregator_index,
-					    fh->f_procs_in_group,
-					    fh->f_procs_per_group,
-					    fh->f_comm);
+     ret =  fh->f_allgatherv_array (local_iov_array,
+				    local_count,
+				    fh->f_iov_type,
+				    global_iov_array,
+				    fview_count,
+				    displs,
+				    fh->f_iov_type,
+				    fh->f_aggregator_index,
+				    fh->f_procs_in_group,
+				    fh->f_procs_per_group,
+				    fh->f_comm);
      
      if (OMPI_SUCCESS != ret){
        goto exit;
@@ -273,7 +273,7 @@
 	     ret = OMPI_ERR_OUT_OF_RESOURCE;
 	     goto exit;
 	 }
-	 ompi_io_ompio_sort_iovec (global_iov_array, total_fview_count, sorted);
+	 fh->f_sort_iovec (global_iov_array, total_fview_count, sorted);
      }
 
      if (NULL != local_iov_array) {
@@ -325,7 +325,7 @@
      /*
       * Calculate how many bytes are read in each cycle
       */
-     mca_io_ompio_get_bytes_per_agg ( (int *) &bytes_per_cycle);
+     fh->f_get_bytes_per_agg ( (int *) &bytes_per_cycle);
      cycles = ceil((double)total_bytes/bytes_per_cycle);
 
      n = 0; 
@@ -845,9 +845,9 @@
      else
        nentry.aggregator = 0;
      nentry.nprocs_for_coll = dynamic_num_io_procs;
-     if (!ompi_io_ompio_full_print_queue(READ_PRINT_QUEUE)){
-       ompi_io_ompio_register_print_entry(READ_PRINT_QUEUE,
-					  nentry);
+     if (!fh->f_full_print_queue(READ_PRINT_QUEUE)){
+       fh->f_register_print_entry(READ_PRINT_QUEUE,
+				  nentry);
      } 
  #endif
 

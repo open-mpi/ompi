@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -148,8 +152,20 @@ static void initFreeList(void)
 {
     OBJ_CONSTRUCT(&ompi_java_buffers, opal_free_list_t);
 
-    int r = opal_free_list_init(&ompi_java_buffers, sizeof(ompi_java_buffer_t),
-                                OBJ_CLASS(ompi_java_buffer_t), 2, -1, 2);
+    int r = opal_free_list_init(&ompi_java_buffers,
+                                sizeof(ompi_java_buffer_t),
+                                opal_cache_line_size,
+                                OBJ_CLASS(ompi_java_buffer_t),
+                                0, /* payload size */
+                                0, /* payload align */
+                                2, /* initial elements to alloc */
+                                -1, /* max elements */
+                                2, /* num elements per alloc */
+                                NULL, /* mpool */
+                                0, /* mpool reg flags */
+                                NULL, /* unused0 */
+                                NULL, /* item_init */
+                                NULL /* inem_init context */);
     if(r != OPAL_SUCCESS)
     {
         fprintf(stderr, "Unable to initialize ompi_java_buffers.\n");
@@ -262,8 +278,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, NULL);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -303,8 +318,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, 0);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -511,12 +525,11 @@ static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
     }
     else
     {
-        int rc;
         opal_free_list_item_t *freeListItem;
-        OPAL_FREE_LIST_GET(&ompi_java_buffers, freeListItem, rc);
+        freeListItem = opal_free_list_get (&ompi_java_buffers);
 
-        ompi_java_exceptionCheck(env,
-                rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+        ompi_java_exceptionCheck(env, NULL == freeListItem ? OMPI_ERROR :
+                                 OMPI_SUCCESS);
 
         *item = (ompi_java_buffer_t*)freeListItem;
         return (*item)->buffer;
@@ -532,7 +545,7 @@ static void releaseBuffer(void *ptr, ompi_java_buffer_t *item)
     else
     {
         assert(item->buffer == ptr);
-        OPAL_FREE_LIST_RETURN(&ompi_java_buffers, (opal_free_list_item_t*)item);
+        opal_free_list_return (&ompi_java_buffers, (opal_free_list_item_t*)item);
     }
 }
 

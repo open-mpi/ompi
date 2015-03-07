@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,7 +16,7 @@
 #include "pml_yalla.h"
 
 struct pml_yalla_convertor {
-    ompi_free_list_item_t     super;
+    opal_free_list_item_t     super;
     ompi_datatype_t           *datatype;
     opal_convertor_t          convertor;
 };

@@ -49,9 +49,9 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Comm_get_attr instead.
-.sp
-This deprecated routine is not available in C++. 
+Note that use of this routine is \fIdeprecated\fP as of MPI-2, and
+was \fIdeleted\fP in MPI-3. Please use MPI_Comm_create_attr.  This
+function does not have a C++ or mpi_f08 binding.
 .sp
 Retrieves attribute value by key. The call is erroneous if there is no key
 with value keyval. On the other hand, the call is correct if the key value exists, but no attribute is attached on comm for that key; in such case, the call returns flag = false. In particular MPI_KEYVAL_INVALID is an erroneous key value.  

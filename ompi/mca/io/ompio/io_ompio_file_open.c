@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -100,11 +100,19 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     remote_arch = opal_local_arch;
     ompio_fh->f_convertor = opal_convertor_create (remote_arch, 0);
 
-    ret = ompi_comm_dup (comm, &ompio_fh->f_comm);
-    if ( ret != OMPI_SUCCESS )  {
-	goto fn_fail;
+    if ( true == use_sharedfp ) {
+	ret = ompi_comm_dup (comm, &ompio_fh->f_comm);
+	if ( OMPI_SUCCESS != ret )  {
+	    goto fn_fail;
+	}
     }
-
+    else {
+	/* No need to duplicate the communicator if the file_open is called
+	   from the sharedfp component, since the comm used as an input
+	   is already a dup of the user level comm. */
+	ompio_fh->f_flags |= OMPIO_SHAREDFP_IS_SET;
+	ompio_fh->f_comm = comm;
+    }
 
     ompio_fh->f_fstype = NONE;
     ompio_fh->f_amode  = amode;
@@ -121,14 +129,25 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompi_io_ompio_initialize_print_queue(coll_write_time);
     ompi_io_ompio_initialize_print_queue(coll_read_time);
 
-    /*
-    if (MPI_INFO_NULL != info)  {
-        ret = ompi_info_dup (info, &ompio_fh->f_info);
-	if (OMPI_SUCCESS != ret) {
-             goto fn_fail;
-	}
-    }
-    */
+    /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
+    ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
+    ompio_fh->f_generate_current_file_view=ompi_io_ompio_generate_current_file_view;
+
+    ompio_fh->f_sort=ompi_io_ompio_sort;
+    ompio_fh->f_sort_iovec=ompi_io_ompio_sort_iovec;
+
+    ompio_fh->f_allgather_array=ompi_io_ompio_allgather_array;
+    ompio_fh->f_allgatherv_array=ompi_io_ompio_allgatherv_array;
+    ompio_fh->f_gather_array=ompi_io_ompio_gather_array;
+    ompio_fh->f_gatherv_array=ompi_io_ompio_gatherv_array;
+
+    ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
+    ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
+    ompio_fh->f_set_aggregator_props=ompi_io_ompio_set_aggregator_props;
+
+    ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
+    ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;   
+
     /* This fix is needed for data seiving to work with 
        two-phase collective I/O */
      if ((amode & MPI_MODE_WRONLY)){
@@ -159,16 +178,44 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_sharedfp           = NULL; /*module*/
     ompio_fh->f_sharedfp_data      = NULL; /*data*/
 
-    if (OMPI_SUCCESS != (ret = mca_sharedfp_base_file_select (ompio_fh, NULL))) {
-        opal_output ( ompi_io_base_framework.framework_output, 
-		     "mca_sharedfp_base_file_select() failed\n");
-	ompio_fh->f_sharedfp           = NULL; /*module*/
-	/* Its ok to not have a shared file pointer module as long as the shared file
-	** pointer operations are not used. However, the first call to any file_read/write_shared
-	** function will return an error code.
+    if ( true == use_sharedfp ) {
+	if (OMPI_SUCCESS != (ret = mca_sharedfp_base_file_select (ompio_fh, NULL))) {
+	    opal_output ( ompi_io_base_framework.framework_output, 
+			  "mca_sharedfp_base_file_select() failed\n");
+	    ompio_fh->f_sharedfp           = NULL; /*module*/
+	    /* Its ok to not have a shared file pointer module as long as the shared file
+	    ** pointer operations are not used. However, the first call to any file_read/write_shared
+	    ** function will return an error code.
+	    */
+	}
+	
+	/* open the file once more for the shared file pointer if required.
+	** Per default, the shared file pointer specific actions are however 
+	** only performed on first access of the shared file pointer, except
+	** for the addproc sharedfp component. 
+	** 
+	** Lazy open does not work for the addproc sharedfp
+	** component since it starts by spawning a process using MPI_Comm_spawn.
+	** For this, the first operation has to be collective which we can 
+	** not guarantuee outside of the MPI_File_open operation.
 	*/
+	if ( NULL != ompio_fh->f_sharedfp &&  
+	     true == use_sharedfp && 
+	     (!mca_io_ompio_sharedfp_lazy_open || 
+	      !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
+		       "addproc")               )) {
+	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
+							   filename,
+							   amode,
+							   info,
+							   ompio_fh);
+	    
+	    if ( OMPI_SUCCESS != ret ) {
+		goto fn_fail;
+	    }
+	}
     }
-    
+	
      /*Determine topology information if set*/
     if (ompio_fh->f_comm->c_flags & OMPI_COMM_CART){
         ret = mca_io_ompio_cart_based_grouping(ompio_fh);
@@ -191,31 +238,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
         goto fn_fail;
     }
 
-    /* open the file once more for the shared file pointer if required.
-    ** Per default, the shared file pointer specific actions are however 
-    ** only performed on first access of the shared file pointer, except
-    ** for the addproc sharedfp component. 
-    ** 
-    ** Lazy open does not work for the addproc sharedfp
-    ** component since it starts by spawning a process using MPI_Comm_spawn.
-    ** For this, the first operation has to be collective which we can 
-    ** not guarantuee outside of the MPI_File_open operation.
-    */
-    if ( NULL != ompio_fh->f_sharedfp &&  
-	 true == use_sharedfp && 
-	 (!mca_io_ompio_sharedfp_lazy_open || 
-	  !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
-		  "addproc")               )) {
-        ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
-                                                       filename,
-                                                       amode,
-                                                       info,
-                                                       ompio_fh);
-
-        if ( OMPI_SUCCESS != ret ) {
-            goto fn_fail;
-        }
-    }
 
     /* If file has been opened in the append mode, move the internal
        file pointer of OMPIO to the very end of the file. */
@@ -291,7 +313,7 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     }
 
     /*close the sharedfp file*/
-    if(ompio_fh->f_sharedfp != NULL){
+    if( NULL != ompio_fh->f_sharedfp ){
         ret = ompio_fh->f_sharedfp->sharedfp_file_close(ompio_fh);
     }
     ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
@@ -302,7 +324,9 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     mca_fs_base_file_unselect (ompio_fh);
     mca_fbtl_base_file_unselect (ompio_fh);
     mca_fcoll_base_file_unselect (ompio_fh);
-    /* mca_sharedfp_base_file_unselect (ompio_fh) ; EG?*/ 
+    if ( NULL != ompio_fh->f_sharedfp)  {
+	mca_sharedfp_base_file_unselect (ompio_fh);
+    }
 
     if (NULL != ompio_fh->f_io_array) {
         free (ompio_fh->f_io_array);
@@ -338,18 +362,9 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompi_datatype_destroy (&ompio_fh->f_iov_type);
     }
 
-    if (MPI_COMM_NULL != ompio_fh->f_comm)  {
+    if (MPI_COMM_NULL != ompio_fh->f_comm && (ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
-
-
-    /*
-    if (MPI_INFO_NULL != ompio_fh->f_info)
-    {
-        ompi_info_free (&ompio_fh->f_info);
-    }
-    */
-    
     
     return ret;
 }
@@ -528,31 +543,38 @@ mca_io_ompio_file_get_amode (ompi_file_t *fh,
 }
 
 
-int
-mca_io_ompio_file_set_info (ompi_file_t *fh,
-                            ompi_info_t *info)
+int mca_io_ompio_file_set_info (ompi_file_t *fh,
+				ompi_info_t *info)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
-    ret = data->ompio_fh.f_fs->fs_file_set_info (&data->ompio_fh, info);
+    
+    if ( MPI_INFO_NULL == fh->f_info ) {
+	/* OBJ_RELEASE(MPI_INFO_NULL); */
+    }
+    else {
+	ompi_info_free ( &fh->f_info);
+	fh->f_info = OBJ_NEW(ompi_info_t);
+	ret = ompi_info_dup (info, &fh->f_info);
+    }
 
     return ret;
 }
 
 
-int
-mca_io_ompio_file_get_info (ompi_file_t *fh,
-                            ompi_info_t ** info_used)
+int mca_io_ompio_file_get_info (ompi_file_t *fh,
+				ompi_info_t ** info_used)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
-    ret = ompi_info_dup (data->ompio_fh.f_info, info_used);
+    ompi_info_t *info=NULL;
+    
+    if ( MPI_INFO_NULL == fh->f_info  ) {
+	*info_used = MPI_INFO_NULL;
+    }
+    else {
+	info = OBJ_NEW(ompi_info_t);
+	ret = ompi_info_dup (fh->f_info, &info);
+	*info_used = info;
+    }
 
     return ret;
 }
@@ -745,20 +767,51 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 }
 
 int
-mca_io_ompio_file_seek_shared (ompi_file_t *fh,
+mca_io_ompio_file_seek_shared (ompi_file_t *fp,
                                OMPI_MPI_OFFSET_TYPE offset,
                                int whence)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
+    ret = shared_fp_base_module->sharedfp_seek(fh,offset,whence);
+
     return ret;
 }
 
 
 int
-mca_io_ompio_file_get_position_shared (ompi_file_t *fh,
+mca_io_ompio_file_get_position_shared (ompi_file_t *fp,
                                        OMPI_MPI_OFFSET_TYPE * offset)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    if ( NULL == shared_fp_base_module ){
+        opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
+        return OMPI_ERROR;
+    }
+    ret = shared_fp_base_module->sharedfp_get_position(fh,offset);
+    *offset = *offset / fh->f_etype_size;
+
     return ret;
 }
 

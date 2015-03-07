@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -57,6 +57,12 @@ library call with a duplicate communication space that has the same properties a
 .sp
 This call applies to both intra- and intercommunicators. 
 
+Note that it is not defined by the MPI standard what happens if the
+attribute copy callback invokes other MPI functions.  In Open MPI, it
+is not valid for attribute copy callbacks (or any of their children)
+to add or delete attributes on the same object on which the attribute
+copy callback is being invoked.
+
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
@@ -64,3 +70,8 @@ Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
 
 
+.SH SEE ALSO
+.ft R
+.nf
+MPI_Comm_dup_with_info
+MPI_Comm_idup

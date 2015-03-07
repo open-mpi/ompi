@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -57,7 +57,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
     int rc = OSHMEM_SUCCESS;
 
     /* Arguments validation */
-    if (!group) {
+    if (!group || !pSync) {
         SCOLL_ERROR("Active set (group) of PE is not defined");
         rc = OSHMEM_ERR_BAD_PARAM;
     }
@@ -127,7 +127,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
         SCOLL_VERBOSE(12,
                       "[#%d] Restore special synchronization array",
                       group->my_pe);
-        for (i = 0; pSync && (i < _SHMEM_COLLECT_SYNC_SIZE); i++) {
+        for (i = 0; i < _SHMEM_COLLECT_SYNC_SIZE; i++) {
             pSync[i] = _SHMEM_SYNC_VALUE;
         }
     }

@@ -1,15 +1,17 @@
 /*
- *  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                          University Research and Technology
- *                          Corporation.  All rights reserved.
- *  Copyright (c) 2004-2005 The University of Tennessee and The University
- *                          of Tennessee Research Foundation.  All rights
- *                          reserved.
- *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                          University of Stuttgart.  All rights reserved.
- *  Copyright (c) 2004-2005 The Regents of the University of California.
- *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -280,6 +282,7 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
        end_offsets = (OMPI_MPI_OFFSET_TYPE* )malloc (fh->f_size * sizeof(OMPI_MPI_OFFSET_TYPE));
        if (NULL == end_offsets) {
           opal_output (1, "OUT OF MEMORY\n");
+          free(start_offsets_lens);
           return OMPI_ERR_OUT_OF_RESOURCE;
        }
 
@@ -331,7 +334,7 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
        *num_groups = p+1;           
        if (NULL != start_offsets_lens) {
           free (start_offsets_lens);
-          end_offsets =  NULL;
+          start_offsets_lens =  NULL;
        }
        if (NULL != end_offsets) {
           free (end_offsets);
@@ -360,20 +363,26 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
     int y = 0;
     int r = 0;
    
-    MPI_Request *sendreq, *req;
+    MPI_Request *sendreq = NULL , *req = NULL;
   
 
+    req = (MPI_Request *)malloc (2* sizeof(MPI_Request));
+    if (NULL == req) {
+       return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     fh->f_init_num_aggrs = num_groups;
     fh->f_init_aggr_list = (int*)malloc (fh->f_init_num_aggrs * sizeof(int));
     if (NULL == fh->f_init_aggr_list) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(req);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if(OMPIO_ROOT == fh->f_rank){
        sendreq = (MPI_Request *)malloc ( 2 *fh->f_size * sizeof(MPI_Request));
        if (NULL == sendreq) {
+           free(req);
            return OMPI_ERR_OUT_OF_RESOURCE;
        }
 
@@ -401,11 +410,6 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
        }
     }
     
-    req = (MPI_Request *)malloc (2* sizeof(MPI_Request));
-    if (NULL == req) {
-       return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
     //All processes receive initial procs per group from OMPIO_ROOT
     MCA_PML_CALL(irecv(&fh->f_init_procs_per_group,
                        1,
@@ -419,6 +423,10 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
     fh->f_init_procs_in_group = (int*)malloc (fh->f_init_procs_per_group * sizeof(int));
     if (NULL == fh->f_init_procs_in_group) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(req);
+        if (NULL != sendreq) {
+            free(sendreq);
+        }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     //All processes receive initial process distribution from OMPIO_ROOT
@@ -431,8 +439,10 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
                        &req[1]));
    
     ompi_request_wait (&req[1], MPI_STATUS_IGNORE);
+    free (req);
     if(OMPIO_ROOT == fh->f_rank){
-       ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
+        ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
+        free (sendreq);
     }
    
 
@@ -451,17 +461,6 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
 				   fh->f_comm,
 				   fh->f_comm->c_coll.coll_bcast_module);
    
-    if (OMPIO_ROOT == fh->f_rank){
-       if (NULL != sendreq) {
-          free (sendreq);
-          sendreq =  NULL;
-       }
-    }
-
-    if (NULL != req) {
-        free (req);
-        req =  NULL;
-    }
     if (NULL != contg_groups){
         free(contg_groups);
         contg_groups = NULL;

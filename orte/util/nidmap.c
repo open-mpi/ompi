@@ -99,7 +99,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
     kv.data.uint32 = proc.vpid;
     kv.type = OPAL_UINT32;
     if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                (opal_identifier_t*)&proc,
+                                                &proc,
                                                 &kv))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
@@ -112,7 +112,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
     kv.data.string = strdup("HNP");
     kv.type = OPAL_STRING;
     if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                (opal_identifier_t*)&proc,
+                                                &proc,
                                                 &kv))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
@@ -134,7 +134,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
         kv.data.string = strdup(nodes[i]);
         kv.type = OPAL_STRING;
         if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                    (opal_identifier_t*)&proc,
+                                                    &proc,
                                                     &kv))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&kv);
@@ -150,7 +150,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
         kv.data.uint32 = opal_local_arch;
         kv.type = OPAL_UINT32;
         if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                    (opal_identifier_t*)&proc,
+                                                    &proc,
                                                     &kv))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&kv);

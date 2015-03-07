@@ -1,22 +1,24 @@
-# -*- shell-script -*-
-#
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-#                         University Research and Technology
-#                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
-#                         of Tennessee Research Foundation.  All rights
-#                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
-#                         All rights reserved.
-# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
+dnl -*- shell-script -*-
+dnl
+dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl                         University Research and Technology
+dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+dnl                         University of Stuttgart.  All rights reserved.
+dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl                         All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
 
 # ORTE_CHECK_TM_LIBS_FLAGS(prefix, [LIBS or LDFLAGS])
 # ---------------------------------------------------
@@ -51,14 +53,14 @@ AC_DEFUN([ORTE_CHECK_TM],[
     AS_IF([test "$with_tm" = "no"],
           [orte_check_tm_happy="no"],
           [orte_check_tm_happy="yes"
-           AS_IF([test ! -z "$with_tm" -a "$with_tm" != "yes"],
+           AS_IF([test ! -z "$with_tm" && test "$with_tm" != "yes"],
                  [orte_check_tm_dir="$with_tm"],
                  [orte_check_tm_dir=""])])
 
     AS_IF([test "$orte_check_tm_happy" = "yes"],
           [AC_MSG_CHECKING([for pbs-config])
            orte_check_tm_pbs_config="not found"
-           AS_IF([test "$orte_check_tm_dir" != "" -a -d "$orte_check_tm_dir" -a -x "$orte_check_tm_dir/bin/pbs-config"],
+           AS_IF([test "$orte_check_tm_dir" != "" && test -d "$orte_check_tm_dir" && test -x "$orte_check_tm_dir/bin/pbs-config"],
                  [orte_check_tm_pbs_config="$orte_check_tm_dir/bin/pbs-config"],
                  [AS_IF([pbs-config --prefix >/dev/null 2>&1],
                         [orte_check_tm_pbs_config="pbs-config"])])
@@ -67,7 +69,7 @@ AC_DEFUN([ORTE_CHECK_TM],[
     # If we have pbs-config, get the flags we need from there and then
     # do simplistic tests looking for the tm headers and symbols
 
-    AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_pbs_config" != "not found"],
+    AS_IF([test "$orte_check_tm_happy" = "yes" && test "$orte_check_tm_pbs_config" != "not found"],
           [$1_CPPFLAGS=`$orte_check_tm_pbs_config --cflags`
            OPAL_LOG_MSG([$1_CPPFLAGS from pbs-config: $$1_CPPFLAGS], 1)
 
@@ -139,10 +141,14 @@ AC_DEFUN([ORTE_CHECK_TM],[
     LDFLAGS="$orte_check_package_$1_save_LDFLAGS"
     LIBS="$orte_check_package_$1_save_LIBS"
 
+    # add the TM libraries to static builds as they are required
+    $1_WRAPPER_EXTRA_LDFLAGS=[$]$1_LDFLAGS
+    $1_WRAPPER_EXTRA_LIBS=[$]$1_LIBS
+
     # Did we find the right stuff?
-    AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_found" = "yes"],
+    AS_IF([test "$orte_check_tm_happy" = "yes" && test "$orte_check_tm_found" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_tm" -a "$with_tm" != "no"],
+          [AS_IF([test ! -z "$with_tm" && test "$with_tm" != "no"],
                  [AC_MSG_ERROR([TM support requested but not found.  Aborting])])
            $3])
 

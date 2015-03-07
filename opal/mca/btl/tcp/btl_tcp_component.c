@@ -13,10 +13,12 @@
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -163,25 +165,8 @@ struct mca_btl_tcp_event_t {
 };
 typedef struct mca_btl_tcp_event_t mca_btl_tcp_event_t;
 
-static void mca_btl_tcp_event_construct(mca_btl_tcp_event_t* event)
-{
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_list_append(&mca_btl_tcp_component.tcp_events, &event->item);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-}
-
-static void mca_btl_tcp_event_destruct(mca_btl_tcp_event_t* event)
-{
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_list_remove_item(&mca_btl_tcp_component.tcp_events, &event->item);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-}
-
-OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_event_t,
-    opal_list_item_t,
-    mca_btl_tcp_event_construct,
-    mca_btl_tcp_event_destruct);
+OBJ_CLASS_INSTANCE( mca_btl_tcp_event_t, opal_list_item_t,
+                    NULL, NULL);
 
 
 /*
@@ -285,7 +270,7 @@ static int mca_btl_tcp_component_register(void)
                                        MCA_BTL_FLAGS_NEED_CSUM |
                                        MCA_BTL_FLAGS_NEED_ACK |
                                        MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
-    mca_btl_tcp_module.super.btl_seg_size = sizeof (mca_btl_base_segment_t);
+
     mca_btl_tcp_module.super.btl_bandwidth = 100;
     mca_btl_tcp_module.super.btl_latency = 100;
 
@@ -314,12 +299,11 @@ static int mca_btl_tcp_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
-    opal_hash_table_init(&mca_btl_tcp_component.tcp_procs, 256);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, opal_free_list_t);
+    opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
@@ -345,9 +329,6 @@ static int mca_btl_tcp_component_open(void)
 
 static int mca_btl_tcp_component_close(void)
 {
-    opal_list_item_t* item;
-    opal_list_item_t* next;
-
     if (NULL != mca_btl_tcp_component.tcp_btls)
         free(mca_btl_tcp_component.tcp_btls);
   
@@ -364,21 +345,8 @@ static int mca_btl_tcp_component_close(void)
     }
 #endif
 
-    /* cleanup any pending events */
-    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
-        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events); 
-        item = next) {
-        mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
-        next = opal_list_get_next(item);
-        opal_event_del(&event->event);
-        OBJ_RELEASE(event);
-    }
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
-
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_procs);
-    OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_events);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_eager);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
@@ -564,9 +532,9 @@ static int mca_btl_tcp_component_create_instances(void)
     const int if_count = opal_ifcount();
     int if_index;
     int kif_count = 0;
-    int *kindexes = NULL; /* this array is way too large, but never too small */
-    char **include;
-    char **exclude;
+    int *kindexes; /* this array is way too large, but never too small */
+    char **include = NULL;
+    char **exclude = NULL;
     char **argv;
     int ret = OPAL_SUCCESS;
 
@@ -633,7 +601,6 @@ static int mca_btl_tcp_component_create_instances(void)
         mca_btl_tcp_create(if_index, if_name);
         argv++;
     }
-    opal_argv_free(include);
 
     /* If we made any modules, then the "include" list was non-empty,
        and therefore we're done. */
@@ -669,9 +636,14 @@ static int mca_btl_tcp_component_create_instances(void)
             }
         }
     }
-    opal_argv_free(exclude);
 
  cleanup:
+    if (NULL != include) {
+        opal_argv_free(include);
+    }
+    if (NULL != exclude) {
+        opal_argv_free(exclude);
+    }
     if (NULL != kindexes) {
         free(kindexes);
     }
@@ -755,14 +727,16 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     {
         int index, range, port;
         
-        range = mca_btl_tcp_component.tcp_port_range;
-        port = mca_btl_tcp_component.tcp_port_min;
 #if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             range = mca_btl_tcp_component.tcp6_port_range;
             port = mca_btl_tcp_component.tcp6_port_min;
-        }
+        } else
 #endif  /* OPAL_ENABLE_IPV6 */
+        {
+            range = mca_btl_tcp_component.tcp_port_range;
+            port = mca_btl_tcp_component.tcp_port_min;
+        }
 
         for( index = 0;  index < range; index++ ) {
 #if OPAL_ENABLE_IPV6
@@ -781,18 +755,18 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
             }
             goto socket_binded;
         }
-        if( AF_INET == af_family ) {
-            BTL_ERROR(("bind() failed: no port available in the range [%d..%d]",
-                       mca_btl_tcp_component.tcp_port_min,
-                       mca_btl_tcp_component.tcp_port_min + range));
-        }
 #if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             BTL_ERROR(("bind6() failed: no port available in the range [%d..%d]",
                        mca_btl_tcp_component.tcp6_port_min,
                        mca_btl_tcp_component.tcp6_port_min + range));
-        }
+        } else
 #endif  /* OPAL_ENABLE_IPV6 */
+        {
+            BTL_ERROR(("bind() failed: no port available in the range [%d..%d]",
+                       mca_btl_tcp_component.tcp_port_min,
+                       mca_btl_tcp_component.tcp_port_min + range));
+        }
         CLOSE_THE_SOCKET(sd);
         return OPAL_ERROR;
     }
@@ -805,16 +779,16 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         return OPAL_ERROR;
     }
 
-    if (AF_INET == af_family) {
-        mca_btl_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
-        mca_btl_tcp_component.tcp_listen_sd = sd;
-    }
 #if OPAL_ENABLE_IPV6
     if (AF_INET6 == af_family) {
         mca_btl_tcp_component.tcp6_listen_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
         mca_btl_tcp_component.tcp6_listen_sd = sd;
-    }
+    } else
 #endif
+    {
+        mca_btl_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
+        mca_btl_tcp_component.tcp_listen_sd = sd;
+    }
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(sd, SOMAXCONN) < 0) {
@@ -841,14 +815,6 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     }
 
     /* register listen port */
-    if (AF_INET == af_family) {
-        opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp_recv_event,
-                        mca_btl_tcp_component.tcp_listen_sd,
-                        OPAL_EV_READ|OPAL_EV_PERSIST,
-                        mca_btl_tcp_component_accept_handler,
-                        0 );
-        opal_event_add(&mca_btl_tcp_component.tcp_recv_event, 0);
-    }
 #if OPAL_ENABLE_IPV6
     if (AF_INET6 == af_family) {
         opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp6_recv_event,
@@ -857,8 +823,16 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
                         mca_btl_tcp_component_accept_handler,
                         0 );
         opal_event_add(&mca_btl_tcp_component.tcp6_recv_event, 0);
-    }
+    } else
 #endif
+    {
+        opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp_recv_event,
+                        mca_btl_tcp_component.tcp_listen_sd,
+                        OPAL_EV_READ|OPAL_EV_PERSIST,
+                        mca_btl_tcp_component_accept_handler,
+                        0 );
+        opal_event_add(&mca_btl_tcp_component.tcp_recv_event, 0);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -910,20 +884,6 @@ static int mca_btl_tcp_component_exchange(void)
                      continue;
                  }
 
-                 if ((AF_INET == my_ss.ss_family) &&
-                     (4 != mca_btl_tcp_component.tcp_disable_family)) {
-                     memcpy(&addrs[current_addr].addr_inet, 
-                             &((struct sockaddr_in*)&my_ss)->sin_addr,
-                             sizeof(addrs[0].addr_inet));
-                     addrs[current_addr].addr_port = 
-                         mca_btl_tcp_component.tcp_listen_port;
-                     addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET;
-                     xfer_size += sizeof (mca_btl_tcp_addr_t);
-                     addrs[current_addr].addr_inuse   = 0;
-                     addrs[current_addr].addr_ifkindex =
-                         opal_ifindextokindex (index);
-                     current_addr++;
-                 }
 #if OPAL_ENABLE_IPV6
                  if ((AF_INET6 == my_ss.ss_family) &&
                      (6 != mca_btl_tcp_component.tcp_disable_family)) {
@@ -938,8 +898,22 @@ static int mca_btl_tcp_component_exchange(void)
                      addrs[current_addr].addr_ifkindex =
                          opal_ifindextokindex (index);
                      current_addr++;
-                 }
+                 } else
 #endif
+                 if ((AF_INET == my_ss.ss_family) &&
+                     (4 != mca_btl_tcp_component.tcp_disable_family)) {
+                     memcpy(&addrs[current_addr].addr_inet, 
+                             &((struct sockaddr_in*)&my_ss)->sin_addr,
+                             sizeof(addrs[0].addr_inet));
+                     addrs[current_addr].addr_port = 
+                         mca_btl_tcp_component.tcp_listen_port;
+                     addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET;
+                     xfer_size += sizeof (mca_btl_tcp_addr_t);
+                     addrs[current_addr].addr_inuse   = 0;
+                     addrs[current_addr].addr_ifkindex =
+                         opal_ifindextokindex (index);
+                     current_addr++;
+                 }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
          OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
@@ -966,7 +940,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
 
     /* initialize free lists */
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_eager,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_eager,
                          sizeof (mca_btl_tcp_frag_eager_t) + 
                          mca_btl_tcp_module.super.btl_eager_limit,
                          opal_cache_line_size,
@@ -975,9 +949,9 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_max,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_max,
                          sizeof (mca_btl_tcp_frag_max_t) + 
                          mca_btl_tcp_module.super.btl_max_send_size,
                          opal_cache_line_size,
@@ -986,9 +960,9 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_user,
+    opal_free_list_init( &mca_btl_tcp_component.tcp_frag_user,
                          sizeof (mca_btl_tcp_frag_user_t),
                          opal_cache_line_size,
                          OBJ_CLASS (mca_btl_tcp_frag_user_t),
@@ -996,7 +970,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
     /* create a BTL TCP module for selected interfaces */
     if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_create_instances() )) {
@@ -1073,7 +1047,6 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         mca_btl_tcp_set_socket_options(sd);
 
         /* wait for receipt of peers process identifier to complete this connection */
-         
         event = OBJ_NEW(mca_btl_tcp_event_t);
         opal_event_set(opal_event_base, &event->event, sd, OPAL_EV_READ, mca_btl_tcp_component_recv_handler, event);
         opal_event_add(&event->event, 0);
@@ -1134,9 +1107,6 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     }
 
     /* are there any existing peer instances will to accept this connection */
-    if(mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd) == false) {
-        CLOSE_THE_SOCKET(sd);
-        return;
-    }
+    (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
 }
 

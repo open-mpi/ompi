@@ -34,7 +34,7 @@ if test "X$pac_lib_mpi_is_building" != "Xyes" ; then
      fi
   fi
   # Look for MPILIB first if it is defined
-  AC_SEARCH_LIBS(MPI_Init,$MPILIB mpi mpich mpich)
+  AC_SEARCH_LIBS(MPI_Init,$MPILIB mpi mpich)
   if test "$ac_cv_search_MPI_Init" = "no" ; then
     ifelse($2,,
     AC_MSG_ERROR([Could not find MPI library]),[$2])
@@ -157,14 +157,16 @@ if test "$ac_mpi_type" = "unknown" -a "$pac_lib_mpi_is_building" = "yes" ; then
 fi
 ])
 dnl
-dnl Because of autoconf insists on moving code to the beginning of
+dnl Because autoconf insists on moving code to the beginning of
 dnl certain definitions, it is *not possible* to define a single command
 dnl that selects compilation scripts and also check for other options.
-dnl Thus, this needs to be divided into
+dnl Thus, this needs to be divided into 
 dnl   MPI_FIND_COMPILER_SCRIPTS
 dnl which can fail (i.e., not find a script), and
 dnl   MPI_FIND_COMPILERS
 dnl which runs the various PROC_xx for the compilers.
+dnl WARNING: this function ignores --program-suffix and --program-prefix.
+dnl However, this function is not currently used at all.
 AC_DEFUN([PAC_MPI_FIND_COMPILER_SCRIPTS],[
 # Set defaults
 MPIRUN_NP="-np "

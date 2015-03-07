@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,13 +91,13 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
     /* send a handshake that includes our process identifier
      * to ensure we are talking to another OMPI process
     */
-    memcpy(&hdr.id, ORTE_PROC_MY_NAME, sizeof(opal_identifier_t));
+    hdr.id = *ORTE_PROC_MY_NAME;
     hdr.type = PMIX_USOCK_IDENT;
     hdr.tag = UINT32_MAX;
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+                                                         ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -118,8 +120,10 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+        free(msg);
         return ORTE_ERR_UNREACH;
     }
+    free(msg);
     return ORTE_SUCCESS;
 }
 
@@ -264,7 +268,7 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&peer->name));
 
-    memcpy(&sender, &hdr.id, sizeof(opal_identifier_t));
+    sender = hdr.id;
     /* if we don't already have it, get the peer */
     if (NULL == peer) {
         peer = pmix_server_peer_lookup(sd);
@@ -329,6 +333,8 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
         CLOSE_THE_SOCKET(peer->sd);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    memset(msg, 0, hdr.nbytes);
+    
     if (!usock_peer_recv_blocking(peer, sd, msg, hdr.nbytes)) {
         /* unable to complete the recv */
         opal_output_verbose(2, pmix_server_output,
@@ -360,7 +366,7 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
 
     /* check security token */
     creds.credential = (char*)(msg + strlen(version) + 1);
-    creds.size = hdr.nbytes - strlen(version) - 1;
+    creds.size = strlen(creds.credential);
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
         ORTE_ERROR_LOG(rc);
     }

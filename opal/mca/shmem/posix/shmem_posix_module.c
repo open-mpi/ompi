@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -90,15 +90,14 @@ module_finalize(void);
 
 /* posix shmem module */
 opal_shmem_posix_module_t opal_shmem_posix_module = {
-    /* super */
-    {
-        module_init,
-        segment_create,
-        ds_copy,
-        segment_attach,
-        segment_detach,
-        segment_unlink,
-        module_finalize
+    .super = {
+        .module_init = module_init,
+        .segment_create = segment_create,
+        .ds_copy = ds_copy,
+        .segment_attach = segment_attach,
+        .segment_detach = segment_detach,
+        .unlink = segment_unlink,
+        .module_finalize = module_finalize
     }
 };
 

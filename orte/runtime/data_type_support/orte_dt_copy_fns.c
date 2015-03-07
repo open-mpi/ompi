@@ -52,62 +52,6 @@ int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_dat
     return ORTE_SUCCESS;
 }
 
-/* PROCESS NAME */
-int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal_data_type_t type)
-{
-    orte_process_name_t *val;
-
-    val = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-    if (NULL == val) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    val->jobid = src->jobid;
-    val->vpid = src->vpid;
-
-    *dest = val;
-    return ORTE_SUCCESS;
-}
-
-/*
- * JOBID
- */
-int orte_dt_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, opal_data_type_t type)
-{
-    orte_jobid_t *val;
-
-    val = (orte_jobid_t*)malloc(sizeof(orte_jobid_t));
-    if (NULL == val) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    *val = *src;
-    *dest = val;
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * VPID
- */
-int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t type)
-{
-    orte_vpid_t *val;
-
-    val = (orte_vpid_t*)malloc(sizeof(orte_vpid_t));
-    if (NULL == val) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    *val = *src;
-    *dest = val;
-
-    return ORTE_SUCCESS;
-}
-
 /**
  * JOB
  */

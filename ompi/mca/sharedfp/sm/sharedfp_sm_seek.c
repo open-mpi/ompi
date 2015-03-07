@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,7 +120,12 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 
         /* Aquire an exclusive lock */
         sm_offset_ptr = sm_data->sm_offset_ptr;
-        sem_wait(&sm_offset_ptr->mutex);
+
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+	sem_wait(sm_offset_ptr->mutex);
+#else
+	sem_wait(sm_data->mutex);
+#endif
 
 	if ( mca_sharedfp_sm_verbose ) {
 	    printf("sharedfp_sm_seek: Success! Acquired sm lock.for rank=%d\n",rank);
@@ -129,7 +134,11 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 	if ( mca_sharedfp_sm_verbose ) {
 	    printf("sharedfp_sm_seek: Releasing sm lock...rank=%d",rank); fflush(stdout);
 	}
-        sem_post(&sm_offset_ptr->mutex);
+#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
+    sem_post(sm_offset_ptr->mutex);
+#else
+    sem_post(sm_data->mutex);
+#endif
     }
 
     /* since we are only letting process 0, update the current pointer

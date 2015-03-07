@@ -2,9 +2,9 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -612,7 +612,7 @@ static int load_recursive_knomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module
     return rc;
 }
 
-static void bcol_ptpcoll_collreq_init(ompi_free_list_item_t *item, void* ctx)
+static int bcol_ptpcoll_collreq_init(opal_free_list_item_t *item, void* ctx)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module= (mca_bcol_ptpcoll_module_t *) ctx;
     mca_bcol_ptpcoll_collreq_t *collreq = (mca_bcol_ptpcoll_collreq_t *) item;
@@ -627,6 +627,12 @@ static void bcol_ptpcoll_collreq_init(ompi_free_list_item_t *item, void* ctx)
             calloc(2 * ptpcoll_module->k_nomial_radix, sizeof(ompi_request_t *));
         break;
     }
+
+    if (NULL == collreq->requests) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 /* query to see if the module is available for use on the given
@@ -661,6 +667,7 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
 
     ptpcoll_module = OBJ_NEW(mca_bcol_ptpcoll_module_t);
     if (NULL == ptpcoll_module) {
+        free(ptpcoll_modules);
         return NULL;
     }
 
@@ -705,18 +712,18 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
     }
 
     /* creating collfrag free list */
-    OBJ_CONSTRUCT(&ptpcoll_module->collreqs_free, ompi_free_list_t);
-    rc = ompi_free_list_init_ex_new(&ptpcoll_module->collreqs_free,
-                                    sizeof(mca_bcol_ptpcoll_collreq_t),
-                                    BCOL_PTP_CACHE_LINE_SIZE,
-                                    OBJ_CLASS(mca_bcol_ptpcoll_collreq_t),
-                                    0, BCOL_PTP_CACHE_LINE_SIZE,
-                                    256 /* free_list_num */,
-                                    -1  /* free_list_max, -1 = infinite */,
-                                    32  /* free_list_inc */,
-                                    NULL,
-                                    bcol_ptpcoll_collreq_init,
-                                    ptpcoll_module);
+    OBJ_CONSTRUCT(&ptpcoll_module->collreqs_free, opal_free_list_t);
+    rc = opal_free_list_init (&ptpcoll_module->collreqs_free,
+                              sizeof(mca_bcol_ptpcoll_collreq_t),
+                              BCOL_PTP_CACHE_LINE_SIZE,
+                              OBJ_CLASS(mca_bcol_ptpcoll_collreq_t),
+                              0, BCOL_PTP_CACHE_LINE_SIZE,
+                              256 /* free_list_num */,
+                              -1  /* free_list_max, -1 = infinite */,
+                              32  /* free_list_inc */,
+                              NULL, 0, NULL,
+                              bcol_ptpcoll_collreq_init,
+                              ptpcoll_module);
     if (OMPI_SUCCESS != rc) {
         goto CLEANUP;
     }
@@ -748,5 +755,6 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
 CLEANUP:
 
     OBJ_RELEASE(ptpcoll_module);
+    free(ptpcoll_modules);
     return NULL;
 }

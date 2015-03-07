@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -15,7 +15,6 @@
 #include "opal/types.h"
 
 #include "opal_stdint.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -35,7 +34,7 @@ static int s1_abort(int flag, const char msg[]);
 static int s1_fence(opal_process_name_t *procs, size_t nprocs);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
-static int s1_get(const opal_identifier_t *id,
+static int s1_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv);
 static int s1_publish(const char service_name[],
@@ -86,12 +85,15 @@ static int pmix_init_count = 0;
 static int pmix_kvslen_max = 0;
 static int pmix_keylen_max = 0;
 static int pmix_vallen_max = 0;
+static int pmix_vallen_threshold = INT_MAX;
 
 // Job environment description
 static char *pmix_kvs_name = NULL;
 static bool s1_committed = false;
 static char* pmix_packed_data = NULL;
 static int pmix_packed_data_offset = 0;
+static char* pmix_packed_encoded_data = NULL;
+static int pmix_packed_encoded_data_offset = 0;
 static int pmix_pack_key = 0;
 static uint32_t s1_jobid;
 static int s1_rank;
@@ -102,10 +104,7 @@ static int s1_jsize;
 static int s1_appnum;
 static int s1_nlranks;
 static int *s1_lranks=NULL;
-static struct {
-    uint32_t jid;
-    uint32_t vid;
-} s1_pname;
+static opal_process_name_t s1_pname;
 
 static bool got_modex_data = false;
 static char* pmix_error(int pmix_err);
@@ -164,6 +163,8 @@ static int s1_init(void)
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_value_length_max");
         goto err_exit;
     }
+    pmix_vallen_threshold = pmix_vallen_max * 3;
+    pmix_vallen_threshold >>= 2;
 
     rc = PMI_KVS_Get_name_length_max(&pmix_kvslen_max);
     if (PMI_SUCCESS != rc ) {
@@ -217,12 +218,12 @@ static int s1_init(void)
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    s1_pname.jid = s1_jobid;
-    s1_pname.vid = s1_rank;
-    opal_proc_set_name((opal_process_name_t*)&s1_pname);
+    s1_pname.jobid = s1_jobid;
+    s1_pname.vpid = s1_rank;
+    opal_proc_set_name(&s1_pname);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s1: assigned tmp name",
-                        OPAL_NAME_PRINT(*(opal_process_name_t*)&s1_pname));
+                        OPAL_NAME_PRINT(s1_pname));
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
@@ -294,9 +295,9 @@ static int s1_init(void)
         goto err_exit;
     }
 
-    /* setup any local envars we were asked to do */
-    mca_base_var_process_env_list(&environ);
-
+    /* increment the init count */
+    ++pmix_init_count;
+    
     return OPAL_SUCCESS;
 
  err_exit:
@@ -360,9 +361,6 @@ static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv)
 {
     int rc;
-    char* buffer_to_put;
-    int rem_offset = 0;
-    int data_to_put = 0;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s1 put for key %s",
@@ -378,30 +376,16 @@ static int s1_put(opal_pmix_scope_t scope,
         return OPAL_SUCCESS;
     }
 
-    if (pmix_packed_data_offset < pmix_vallen_max) {
+    if (((pmix_packed_data_offset/3)*4) + pmix_packed_encoded_data_offset < pmix_vallen_max) {
         /* this meta-key is still being filled,
          * nothing to put yet
          */
         return OPAL_SUCCESS;
     }
 
-    /* encode only full filled meta keys */
-    rem_offset = pmix_packed_data_offset % pmix_vallen_max;
-    data_to_put = pmix_packed_data_offset - rem_offset;
-    buffer_to_put = (char*)malloc(data_to_put);
-    memcpy(buffer_to_put, pmix_packed_data, data_to_put);
-
-    opal_pmix_base_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
-
-    free(buffer_to_put);
-    pmix_packed_data_offset = rem_offset;
-    if (0 == pmix_packed_data_offset) {
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    } else {
-        memmove (pmix_packed_data, pmix_packed_data + data_to_put, pmix_packed_data_offset);
-        pmix_packed_data = realloc (pmix_packed_data, pmix_packed_data_offset);
-    }
+    rc = opal_pmix_base_partial_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
+                                               &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
+                                               pmix_vallen_max, &pmix_pack_key, kvs_put);
 
     s1_committed = false;
     return rc;
@@ -419,12 +403,10 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check if there is partially filled meta key and put them */
-    if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        opal_pmix_base_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
-        pmix_packed_data_offset = 0;
-        free(pmix_packed_data);
-        pmix_packed_data = NULL;
-    }
+    opal_pmix_base_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
+                                  &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
+                                  pmix_vallen_max, &pmix_pack_key, kvs_put);
+
     /* if we haven't already done it, ensure we have committed our values */
     if (!s1_committed) {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
@@ -458,8 +440,8 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
         /* we only need to set locality for each local rank as "not found"
          * equates to "non-local" */
         for (i=0; i < s1_nlranks; i++) {
-            s1_pname.vid = s1_lranks[i];
-            rc = opal_pmix_base_cache_keys_locally((opal_identifier_t*)&s1_pname, OPAL_DSTORE_CPUSET,
+            s1_pname.vpid = s1_lranks[i];
+            rc = opal_pmix_base_cache_keys_locally(&s1_pname, OPAL_DSTORE_CPUSET,
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
@@ -487,14 +469,14 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s1 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname),
+                                 OPAL_NAME_PRINT(s1_pname),
                                  opal_hwloc_base_print_locality(locality)));
     
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s1_pname, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, &s1_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -502,7 +484,7 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     return OPAL_SUCCESS;
 }
 
-static int s1_get(const opal_identifier_t *id,
+static int s1_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv)
 {

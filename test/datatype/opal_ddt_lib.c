@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2009      The University of Tennessee and The University
+ * Copyright (c) 2009-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -26,7 +26,7 @@
 #include "opal/datatype/opal_datatype.h"
 
 
-uint32_t outputFlags = 0;
+uint32_t outputFlags = VALIDATE_DATA | CHECK_PACK_UNPACK | RESET_CONVERTORS | QUIT_ON_FIRST_ERROR;
 
 static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType );
@@ -71,7 +71,7 @@ opal_datatype_t* test_create_twice_two_doubles( void )
 /*
   Datatype 0x832cf28 size 0 align 1 id 0 length 4 used 0
   true_lb 0 true_ub 0 (true_extent 0) lb 0 ub 0 (extent 0)
-  nbElems 0 loops 0 flags 6 (commited contiguous )-cC--------[---][---]
+  nbElems 0 loops 0 flags 6 (committed contiguous )-cC--------[---][---]
   contain 13 disp 0x420 (1056) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x478 (1144) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x4d0 (1232) extent 4
@@ -251,6 +251,27 @@ opal_datatype_t* create_contiguous_type( const opal_datatype_t* type, int length
    opal_datatype_commit( newtype );
 
    return newtype;
+}
+
+/* Create a non-contiguous resized datatype */
+struct structure {
+    double not_transfered;
+    double transfered_1;
+    double transfered_2;
+};
+
+opal_datatype_t* create_struct_constant_gap_resized_ddt( const opal_datatype_t* type )
+{
+    opal_datatype_t *struct_type;
+
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &struct_type);
+    opal_datatype_add( struct_type, &opal_datatype_float8, 1,  8, -1 );
+    opal_datatype_add( struct_type, &opal_datatype_float8, 1, 16, -1 );
+
+    opal_datatype_resize(struct_type, 0, sizeof(struct structure));
+    opal_datatype_commit(struct_type);
+
+    return struct_type;
 }
 
 

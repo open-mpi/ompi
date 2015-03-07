@@ -1,19 +1,20 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +27,7 @@
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
-#include "coll_tuned_topo.h"
+#include "ompi/mca/coll/base/coll_base_topo.h"
 
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
@@ -41,7 +42,7 @@ static long getnext (FILE *fptr); /* local function */
 
 static int fileline=0; /* used for verbose error messages */
 
-/* 
+/*
  * Reads a rule file called fname
  * Builds the algorithm rule table for a max of n_collectives
  *
@@ -95,6 +96,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
     alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
+    if (NULL == alg_rules) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot cannot allocate rules for file [%s]\n", fname));
+        goto on_file_error;
+    }
 
     X = (int)getnext(fptr);
     if (X<0) {
@@ -120,8 +125,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
         if (alg_rules[CI].alg_rule_id != CI) {
             OPAL_OUTPUT((ompi_coll_tuned_stream, "Internal error in handling collective ID %d\n", CI));
-            ompi_coll_tuned_free_all_rules (*rules, n_collectives);
-            return (-4);
+            goto on_file_error;
         }
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Reading dynamic rule for collective ID %d\n", CI));
         alg_p = &alg_rules[CI];
@@ -142,7 +146,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         for (ncs=0;ncs<NCS;ncs++) {	/* for each comm size */
 
             com_p = &(alg_p->com_rules[ncs]);
-        
+
             CS = (int)getnext (fptr);
             if (CS<0) {
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read communicator size for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline));
@@ -156,7 +160,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of message sizes for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline));
                 goto on_file_error;
             }
-            OPAL_OUTPUT((ompi_coll_tuned_stream, "Read message count %d for dynamic rule for collective ID %d and comm size %d\n", 
+            OPAL_OUTPUT((ompi_coll_tuned_stream, "Read message count %d for dynamic rule for collective ID %d and comm size %d\n",
                          NMS, CI, CS));
             com_p->n_msg_sizes = NMS;
             com_p->msg_rules = ompi_coll_tuned_mk_msg_rules (NMS, CI, ncs, CS);
@@ -213,7 +217,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Done reading dynamic rule for collective ID %d\n", CI));
 
     } /* per collective */
-   
+
     fclose (fptr);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"\nConfigure file Stats\n"));
@@ -277,8 +281,8 @@ static long getnext (FILE *fptr)
         if (1 == rc) return val;
         /* in all other cases, skip to the end */
         rc = fread(&trash, 1, 1, fptr);
+        if (rc == EOF) return MYEOF;
         if ('\n' == trash) fileline++;
         if ('#' == trash) skiptonewline (fptr);
     } while (1);
 }
-

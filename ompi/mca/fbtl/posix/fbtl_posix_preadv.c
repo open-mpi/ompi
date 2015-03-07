@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,7 +81,8 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	}
 	
 	if (-1 == lseek (fh->fd, iov_offset, SEEK_SET)) {
-	    perror ("fseek");
+            opal_output(1, "lseek:%s", strerror(errno));
+            free(iov);
 	    return OMPI_ERROR;
 	}
 	ret_code = readv (fh->fd, iov, iov_count);
@@ -87,7 +90,8 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    bytes_read+=ret_code;
 	}
 	else if ( ret_code == -1 ) {
-	    perror ("readv");
+            opal_output(1, "readv:%s", strerror(errno));
+            free(iov);
 	    return OMPI_ERROR;
 	}
 	else if ( 0 == ret_code ){
@@ -97,11 +101,7 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	iov_count = 0;
     }
 
-    if (NULL != iov) {
-        free (iov);
-        iov = NULL;
-    }
-    
+    free (iov);
 
     return bytes_read;
 }

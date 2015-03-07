@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
@@ -19,13 +19,6 @@
 #include "btl_ugni.h"
 #include "btl_ugni_endpoint.h"
 
-typedef struct mca_btl_ugni_segment_t {
-    mca_btl_base_segment_t base;
-    gni_mem_handle_t       memory_handle;
-    uint8_t                extra_bytes[3];
-    uint8_t                extra_byte_count;
-} mca_btl_ugni_segment_t;
-
 typedef struct mca_btl_ugni_send_frag_hdr_t {
     uint32_t lag;
 } mca_btl_ugni_send_frag_hdr_t;
@@ -41,7 +34,9 @@ typedef struct mca_btl_ugni_rdma_frag_hdr_t {
 
 typedef struct mca_btl_ugni_eager_frag_hdr_t {
     mca_btl_ugni_send_frag_hdr_t send;
-    mca_btl_ugni_segment_t src_seg;
+    uint32_t size;
+    uint64_t address;
+    mca_btl_base_registration_handle_t memory_handle;
     void *ctx;
 } mca_btl_ugni_eager_frag_hdr_t;
 
@@ -59,16 +54,15 @@ typedef union mca_btl_ugni_frag_hdr_t {
 } mca_btl_ugni_frag_hdr_t;
 
 enum {
-    MCA_BTL_UGNI_FRAG_BUFFERED      = 1, /* frag data is buffered */
-    MCA_BTL_UGNI_FRAG_COMPLETE      = 2, /* smsg complete for frag */
-    MCA_BTL_UGNI_FRAG_EAGER         = 4, /* eager get frag */
-    MCA_BTL_UGNI_FRAG_IGNORE        = 8, /* ignore local smsg completion */
-    MCA_BTL_UGNI_FRAG_SMSG_COMPLETE = 16 /* SMSG has completed for this message */
+    MCA_BTL_UGNI_FRAG_BUFFERED      = 1,  /* frag data is buffered */
+    MCA_BTL_UGNI_FRAG_COMPLETE      = 2,  /* smsg complete for frag */
+    MCA_BTL_UGNI_FRAG_EAGER         = 4,  /* eager get frag */
+    MCA_BTL_UGNI_FRAG_IGNORE        = 8,  /* ignore local smsg completion */
+    MCA_BTL_UGNI_FRAG_SMSG_COMPLETE = 16, /* SMSG has completed for this message */
+    MCA_BTL_UGNI_FRAG_RESPONSE      = 32,
 };
 
 struct mca_btl_ugni_base_frag_t;
-
-typedef void (*frag_cb_t) (struct mca_btl_ugni_base_frag_t *, int);
 
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;
@@ -76,11 +70,12 @@ typedef struct mca_btl_ugni_base_frag_t {
     uint16_t                     hdr_size;
     uint16_t                     flags;
     mca_btl_ugni_frag_hdr_t      hdr;
-    mca_btl_ugni_segment_t       segments[2];
+    mca_btl_base_segment_t       segments[2];
     opal_common_ugni_post_desc_t post_desc;
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_ugni_reg_t          *registration;
-    ompi_free_list_t            *my_list;
+    opal_free_list_t            *my_list;
+    mca_btl_base_registration_handle_t memory_handle;
 } mca_btl_ugni_base_frag_t;
 
 typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_smsg_frag_t;
@@ -90,21 +85,67 @@ typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_eager_frag_t;
 #define MCA_BTL_UGNI_DESC_TO_FRAG(desc) \
     ((mca_btl_ugni_base_frag_t *)((uintptr_t) (desc) - offsetof (mca_btl_ugni_base_frag_t, post_desc)))
 
+typedef struct mca_btl_ugni_post_descriptor_t {
+    opal_free_list_item_t super;
+    opal_common_ugni_post_desc_t desc;
+    mca_btl_base_endpoint_t *endpoint;
+    mca_btl_base_registration_handle_t *local_handle;
+    mca_btl_base_rdma_completion_fn_t cbfunc;
+    void *cbdata;
+    void *ctx;
+} mca_btl_ugni_post_descriptor_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_ugni_post_descriptor_t);
+
+#define MCA_BTL_UGNI_DESC_TO_PDESC(desc)                                \
+    ((mca_btl_ugni_post_descriptor_t *)((uintptr_t) (desc) - offsetof (mca_btl_ugni_post_descriptor_t, desc)))
+
+static inline void mca_btl_ugni_alloc_post_descriptor (mca_btl_base_endpoint_t *endpoint, mca_btl_base_registration_handle_t *local_handle,
+                                                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata,
+                                                       mca_btl_ugni_post_descriptor_t **desc)
+{
+    *desc = (mca_btl_ugni_post_descriptor_t *) opal_free_list_get (&endpoint->btl->post_descriptors);
+    if (NULL != *desc) {
+        (*desc)->cbfunc        = cbfunc;
+        (*desc)->ctx           = cbcontext;
+        (*desc)->cbdata        = cbdata;
+        (*desc)->local_handle  = local_handle;
+        (*desc)->endpoint      = endpoint;
+    }
+}
+
+static inline void mca_btl_ugni_return_post_descriptor (mca_btl_ugni_module_t *module,
+                                                        mca_btl_ugni_post_descriptor_t *desc)
+{
+    opal_free_list_return (&module->post_descriptors, &desc->super);
+}
+
+static inline void mca_btl_ugni_post_desc_complete (mca_btl_ugni_module_t *module, mca_btl_ugni_post_descriptor_t *desc, int rc)
+{
+    BTL_VERBOSE(("RDMA/FMA/ATOMIC operation complete for post descriptor %p. rc = %d", (void *) desc, rc));
+
+    if (NULL != desc->cbfunc) {
+        /* call the user's callback function */
+        desc->cbfunc (&module->super, desc->endpoint, (void *)(intptr_t) desc->desc.base.local_addr,
+                      desc->local_handle, desc->ctx, desc->cbdata, rc);
+    }
+
+    /* the descriptor is no longer needed */
+    mca_btl_ugni_return_post_descriptor (module, desc);
+}
+
 OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_rdma_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_eager_frag_t);
 
-void mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
+int mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
 
 static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
-                                           ompi_free_list_t *list,
+                                           opal_free_list_t *list,
                                            mca_btl_ugni_base_frag_t **frag)
 {
-    ompi_free_list_item_t *item = NULL;
-
-    OMPI_FREE_LIST_GET_MT(list, item);
-    *frag = (mca_btl_ugni_base_frag_t *) item;
-    if (OPAL_LIKELY(NULL != item)) {
+    *frag = (mca_btl_ugni_base_frag_t *) opal_free_list_get (list);
+    if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
         return OPAL_SUCCESS;
@@ -123,7 +164,7 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
     frag->flags = 0;
 
-    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *) frag);
+    opal_free_list_return (frag->my_list, (opal_free_list_item_t *) frag);
 
     return OPAL_SUCCESS;
 }

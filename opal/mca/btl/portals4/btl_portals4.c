@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,10 +72,21 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
     ptl_process_t *id;
     size_t i, size;
     bool need_activate = false;
+    ptl_process_t *maptable;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output,
                         "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d", (int) nprocs,
                         (int) portals4_btl->portals_num_procs, portals4_btl->interface_num);
+
+    if (mca_btl_portals4_component.use_logical) {
+        maptable = malloc(sizeof(ptl_process_t) * nprocs);
+        if (NULL == maptable) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: malloc failed\n",
+                                __FILE__, __LINE__);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
 
     if (0 == portals4_btl->portals_num_procs) {
         need_activate = true;
@@ -91,9 +103,13 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
                         curr_proc, (void**) &id, &size);
 
-        if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_NOT_FOUND == ret) {
+            OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                "btl/portals4: Portals 4 BTL not available on peer: %s", opal_strerror(ret)));
+            continue;
+        } else if (OPAL_SUCCESS != ret) {
             opal_output_verbose(0, opal_btl_base_framework.framework_output,
-                "btl/portals4: opal_modex_recv failed: %d", ret);
+                "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
             return ret;
         }
         if (size < sizeof(ptl_process_t)) {  /* no available connection */
@@ -110,15 +126,24 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         btl_peer_data[i] = malloc(sizeof(mca_btl_base_endpoint_t));
         if (NULL == btl_peer_data[i]) return OPAL_ERROR;
 
-        /* If the modex received one id per interface (this is the
-           normal case), store the id of the corresponding
+        /* The modex may receive more than one id (this is the
+           normal case if there is more than one interface). Store the id of the corresponding
            interface */
-        if (size / sizeof(ptl_process_t) >= portals4_btl->interface_num)
+
+        if (mca_btl_portals4_component.use_logical) {
+            btl_peer_data[i]->ptl_proc.rank = i;
+            maptable[i].phys.pid = id[portals4_btl->interface_num].phys.pid;
+            maptable[i].phys.nid = id[portals4_btl->interface_num].phys.nid;
+            opal_output_verbose(50, opal_btl_base_framework.framework_output,
+                "logical: global rank=%d pid=%d nid=%d\n",
+                (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
+        } else {
             btl_peer_data[i]->ptl_proc = id[portals4_btl->interface_num];
-        else btl_peer_data[i]->ptl_proc = *id;
+        }
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                             "add_procs: nid=%x pid=%x for NI %d\n",
+                             "add_procs: rank=%x nid=%x pid=%x for NI %d\n",
+                             btl_peer_data[i]->ptl_proc.rank,
                              btl_peer_data[i]->ptl_proc.phys.nid,
                              btl_peer_data[i]->ptl_proc.phys.pid,
                              portals4_btl->interface_num));
@@ -127,6 +152,20 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         /* and here we can reach */
         opal_bitmap_set_bit(reachable, i);
     }
+
+    if (mca_btl_portals4_component.use_logical) {
+        ret = PtlSetMap(portals4_btl->portals_ni_h, nprocs, maptable);
+        if (OPAL_SUCCESS != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: logical mapping failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
+        opal_output_verbose(90, opal_btl_base_framework.framework_output,
+                            "logical mapping OK\n");
+        free(maptable);
+    }
+
     if (need_activate && portals4_btl->portals_num_procs > 0) {
         ret = mca_btl_portals4_recv_enable(portals4_btl);
     }
@@ -250,7 +289,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-        "mca_btl_portals4_prepare_src reserve=%ld size=%ld max_data=%ld\n", reserve, *size, max_data));
+        "mca_btl_portals4_prepare_src NI=%d reserve=%ld size=%ld max_data=%ld\n", portals4_btl->interface_num, reserve, *size, max_data));
 
     if (0 != reserve || 0 != opal_convertor_need_buffers(convertor)) {
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "mca_btl_portals4_prepare_src NEED BUFFERS or RESERVE\n"));
@@ -268,6 +307,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         *size  = max_data;
         if ( ret < 0 ) {
+            mca_btl_portals4_free(btl_base, (mca_btl_base_descriptor_t *) frag);
             return NULL;
         }
 
@@ -297,7 +337,12 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        ret = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        if ( OPAL_UNLIKELY(ret < 0) ) {
+            OPAL_BTL_PORTALS4_FRAG_RETURN_USER(portals4_btl, frag);
+            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+            return NULL;
+        }
 
         frag->segments[0].base.seg_len = max_data;
         frag->segments[0].base.seg_addr.pval = iov.iov_base;
@@ -321,8 +366,13 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
               PTL_ME_EVENT_LINK_DISABLE |
               PTL_ME_EVENT_COMM_DISABLE |
               PTL_ME_EVENT_UNLINK_DISABLE;
-          me.match_id.phys.nid = peer->ptl_proc.phys.nid;
-          me.match_id.phys.pid = peer->ptl_proc.phys.pid;
+
+          if (mca_btl_portals4_component.use_logical) {
+              me.match_id.rank = peer->ptl_proc.rank;
+          } else {
+              me.match_id.phys.nid = peer->ptl_proc.phys.nid;
+              me.match_id.phys.pid = peer->ptl_proc.phys.pid;
+          }
           me.match_bits = frag->segments[0].key;
           me.ignore_bits = BTL_PORTALS4_PROTOCOL_MASK |
               BTL_PORTALS4_CONTEXT_MASK |
@@ -344,9 +394,9 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
               return NULL;
           }
           OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-              "PtlMEAppend (prepare_src) frag=%p, me_h=%d start=%p length=%ld nid=%x pid=%x match_bits=%lx\n",
+              "PtlMEAppend (prepare_src) frag=%p, me_h=%d start=%p length=%ld rank=%x nid=%x pid=%x match_bits=%lx\n",
               (void *)frag, frag->me_h, me.start, me.length,
-              me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
+              me.match_id.rank, me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
     }
     frag->base.des_local = &frag->segments[0].base;
     frag->base.des_remote = NULL;
@@ -397,8 +447,8 @@ mca_btl_portals4_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->md_h = PTL_INVALID_HANDLE;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-        "mca_btl_portals4_prepare_dst &base=%p reserve=%ld size=%ld pid=%x key=%ld\n", 
-        (void *)&frag->base, reserve, *size, peer->ptl_proc.phys.pid, frag->segments[0].key));
+        "mca_btl_portals4_prepare_dst &base=%p reserve=%ld size=%ld rank=%x pid=%x key=%ld\n", 
+        (void *)&frag->base, reserve, *size, peer->ptl_proc.rank, peer->ptl_proc.phys.pid, frag->segments[0].key));
     return &frag->base;
 }
 

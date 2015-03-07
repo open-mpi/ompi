@@ -86,7 +86,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         }
 
         OPAL_MODEX_RECV(ret, &mca_mtl_portals4_component.mtl_version,
-                        &procs[i]->super, (char**)&modex_id, &size);
+                        &procs[i]->super, (uint8_t**)&modex_id, &size);
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: ompi_modex_recv failed: %d\n",

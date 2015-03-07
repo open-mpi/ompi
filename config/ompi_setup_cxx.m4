@@ -14,6 +14,8 @@ dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -145,7 +147,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
 # Back end of _OMPI_SETUP_CXX_COMPILER_BACKEND()
 AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     # Do we want code coverage
-    if test "$WANT_COVERAGE" = "1" -a "$WANT_MPI_CXX_SUPPORT" = "1"; then 
+    if test "$WANT_COVERAGE" = "1" && test "$WANT_MPI_CXX_SUPPORT" = "1"; then
         if test "$ompi_cxx_vendor" = "gnu" ; then
             AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
             WANT_DEBUG=1
@@ -158,7 +160,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     fi
 
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
+    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
         CXXFLAGS="$CXXFLAGS -g"
         OPAL_FLAGS_UNIQ(CXXFLAGS)
         AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
@@ -167,7 +169,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     # These flags are generally g++-specific; even the g++-impersonating
     # compilers won't accept them.
     OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 -a "$ompi_cxx_vendor" = "gnu"; then
+    if test "$WANT_PICKY_COMPILER" = 1 && test "$ompi_cxx_vendor" = "gnu"; then
         add="-Wall -Wundef -Wno-long-long"
 
         # see if -Wno-long-double works...

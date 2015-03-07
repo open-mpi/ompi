@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,14 +11,17 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -40,7 +43,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
@@ -51,7 +54,7 @@
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
 
-static inline int acruire_wqe(mca_btl_openib_endpoint_t *ep,
+static inline int acquire_wqe(mca_btl_openib_endpoint_t *ep,
         mca_btl_openib_send_frag_t *frag)
 {
     int qp = to_base_frag(frag)->base.order;
@@ -67,89 +70,32 @@ static inline int acruire_wqe(mca_btl_openib_endpoint_t *ep,
     return OPAL_SUCCESS;
 }
 
-static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
-        mca_btl_openib_send_frag_t *frag)
-{
-    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-    int qp = to_base_frag(frag)->base.order;
-    int prio = !(to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY);
-
-    if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-        if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) < 0) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
-            opal_list_append(&endpoint->qps[qp].no_credits_pending_frags[prio],
-                    (opal_list_item_t *)frag);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-    } else {
-        if(OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, -1) < 0)
-        {
-            OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
-            OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-            opal_list_append(&openib_btl->qps[qp].u.srq_qp.pending_frags[prio],
-                             (opal_list_item_t *)frag);
-            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-    }
-
-    return OPAL_SUCCESS;
-}
-
 /* this function is called with endpoint->endpoint_lock held */
 int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
         mca_btl_openib_send_frag_t *frag)
 {
+    int prio = to_base_frag(frag)->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY;
     mca_btl_openib_header_t *hdr = frag->hdr;
     mca_btl_base_descriptor_t *des = &to_base_frag(frag)->base;
-    int qp, ib_rc;
-    int32_t cm_return;
+    int qp, ib_rc, rc;
     bool do_rdma = false;
-    size_t eager_limit;
+    size_t size;
 
     if(OPAL_LIKELY(des->order == MCA_BTL_NO_ORDER))
         des->order = frag->qp_idx;
 
     qp = des->order;
 
-    if(acruire_wqe(endpoint, frag) != OPAL_SUCCESS)
+    if(acquire_wqe(endpoint, frag) != OPAL_SUCCESS)
         return OPAL_ERR_RESOURCE_BUSY;
 
-    eager_limit = mca_btl_openib_component.eager_limit +
-        sizeof(mca_btl_openib_header_coalesced_t) +
-        sizeof(mca_btl_openib_control_header_t);
-    if(des->des_local->seg_len + frag->coalesced_length <= eager_limit &&
-            (des->des_flags & MCA_BTL_DES_FLAGS_PRIORITY)) {
-        /* High priority frag. Try to send over eager RDMA */
-        if(acquire_eager_rdma_send_credit(endpoint) == OPAL_SUCCESS)
-            do_rdma = true;
-    }
+    size = des->des_segments->seg_len + frag->coalesced_length;
 
-    if(!do_rdma && acquire_send_credit(endpoint, frag) != OPAL_SUCCESS) {
+    rc = mca_btl_openib_endpoint_credit_acquire (endpoint, qp, prio, size,
+                                                 &do_rdma, frag, true);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         qp_put_wqe(endpoint, qp);
         return OPAL_ERR_RESOURCE_BUSY;
-    }
-
-    BTL_OPENIB_GET_CREDITS(endpoint->eager_rdma_local.credits, hdr->credits);
-    if(hdr->credits)
-        hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
-
-    if(!do_rdma) {
-        if(BTL_OPENIB_QP_TYPE_PP(qp) && 0 == hdr->credits) {
-            BTL_OPENIB_GET_CREDITS(endpoint->qps[qp].u.pp_qp.rd_credits, hdr->credits);
-        }
-    } else {
-        hdr->credits |= (qp << 11);
-    }
-
-    BTL_OPENIB_GET_CREDITS(endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
-    if(cm_return > 255) {
-        hdr->cm_seen = 255;
-        cm_return -= 255;
-        OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_return, cm_return);
-    } else {
-        hdr->cm_seen = cm_return;
     }
 
     qp_reset_signal_count(endpoint, qp);
@@ -161,27 +107,12 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     if(endpoint->nbo)
         BTL_OPENIB_HEADER_NTOH(*hdr);
 
-    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
-                BTL_OPENIB_CREDITS(hdr->credits));
-    }
+    mca_btl_openib_endpoint_credit_release (endpoint, qp, do_rdma, frag);
 
     qp_put_wqe(endpoint, qp);
 
-    if(do_rdma) {
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
-    } else {
-        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.rd_credits,
-                    hdr->credits);
-            OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
-        } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
-            mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
-            OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
-        }
-    }
-    BTL_ERROR(("error posting send request error %d: %s\n",
-               ib_rc, strerror(ib_rc)));
+    BTL_ERROR(("error posting send request error %d: %s. size = %lu\n",
+               ib_rc, strerror(ib_rc), size));
     return OPAL_ERROR;
 }
 
@@ -349,7 +280,11 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     }
 
     endpoint->ib_addr = NULL;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    endpoint->xrc_recv_qp = NULL;
+#else
     endpoint->xrc_recv_qp_num = 0;
+#endif
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_local_cpc = NULL;
@@ -460,12 +395,24 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* unregister xrc recv qp */
 #if HAVE_XRC
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    if (NULL != endpoint->xrc_recv_qp) {
+        if(ibv_destroy_qp(endpoint->xrc_recv_qp)) {
+            BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp->qp_num));
+        } else {
+            BTL_VERBOSE(("Unregistered XRC Recv QP:%d\n", endpoint->xrc_recv_qp->qp_num));
+        }
+    }
+#else
     if (0 != endpoint->xrc_recv_qp_num) {
         if(ibv_unreg_xrc_rcv_qp(endpoint->endpoint_btl->device->xrc_domain,
                     endpoint->xrc_recv_qp_num)) {
             BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp_num));
+        } else {
+            BTL_VERBOSE(("Unregistered XRC Recv QP:%d\n", endpoint->xrc_recv_qp_num));
         }
     }
+#endif
 #endif
 
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
@@ -645,7 +592,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
     /* Run over all qps and load alternative path */
-#if OPAL_HAVE_THREADS
     if (APM_ENABLED) {
         int i;
         if (MCA_BTL_XRC_ENABLED) {
@@ -658,7 +604,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
             }
         }
     }
-#endif
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->device->non_eager_rdma_endpoints++;
@@ -690,8 +635,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         /* We need to post this one */
 
         if (OPAL_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag)) {
-		     BTL_ERROR(("Error posting send"));
-		}
+            BTL_ERROR(("Error posting send"));
+        }
     }
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
@@ -963,11 +908,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         sizeof(mca_btl_openib_header_t);
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
-        ompi_free_list_item_t *item;
+        opal_free_list_item_t *item;
         mca_btl_openib_recv_frag_t * frag;
         mca_btl_openib_frag_init_data_t init_data;
 
-        item = (ompi_free_list_item_t*)&headers_buf[i];
+        item = (opal_free_list_item_t*)&headers_buf[i];
         item->registration = (mca_mpool_base_registration_t *)endpoint->eager_rdma_local.reg;
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);

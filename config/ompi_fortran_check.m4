@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -67,7 +69,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
         # doesn't match the expected size, then the compiler doesn't
         # really support it.
         OMPI_FORTRAN_GET_SIZEOF([], [$1], [ofc_type_size])
-        if test "$ofc_expected_size" != "-1" -a "$ofc_type_size" != "$ofc_expected_size"; then
+        if test "$ofc_expected_size" != "-1" && test "$ofc_type_size" != "$ofc_expected_size"; then
             AC_MSG_WARN([*** Fortran $1 does not have expected size!])
             AC_MSG_WARN([*** Expected $ofc_expected_size, got $ofc_type_size])
             AC_MSG_WARN([*** Disabling MPI support for Fortran $1])
@@ -175,7 +177,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
     AC_DEFINE_UNQUOTED([OMPI_KIND_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_type_kind], 
                        [Fortrn KIND number for $1])
-    if test "$3" != "" -a "$ofc_define_type" = "yes"; then
+    if test "$3" != "" && test "$ofc_define_type" = "yes"; then
         AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
                            [$ofc_c_type], 
                            [C type corresponding to Fortran $1])

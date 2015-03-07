@@ -5,9 +5,10 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -321,16 +322,21 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
 
 static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg);
 static int udcm_finish_connection (mca_btl_openib_endpoint_t *lcl_ep);
+static int udcm_rc_qps_to_rts(mca_btl_openib_endpoint_t *lcl_ep);
 
 /* XRC support */
 #if HAVE_XRC
 static int udcm_xrc_start_connect (opal_btl_openib_connect_base_module_t *cpc,
                                   mca_btl_base_endpoint_t *lcl_ep);
 static int udcm_xrc_restart_connect (mca_btl_base_endpoint_t *lcl_ep);
-static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr);
+static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn);
 static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep);
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t qp_num);
+#else
 static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep);
-static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr);
+#endif
+static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn);
 static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
                                   uint8_t msg_type);
 static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
@@ -507,6 +513,96 @@ static int udcm_component_finalize(void)
 
 /* mark: udcm module */
 
+#if HAVE_XRC
+static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
+{
+    udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+    int rc;
+
+    opal_mutex_lock (&udep->udep_lock);
+    do {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        rc = udcm_xrc_recv_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num);
+#else
+        lcl_ep->xrc_recv_qp_num = lcl_ep->qps[0].qp->lcl_qp->qp_num;
+        rc = udcm_xrc_recv_qp_connect (lcl_ep);
+#endif
+        if (OPAL_SUCCESS != rc) {
+            BTL_VERBOSE(("error connecting loopback XRC receive queue pair"));
+            break;
+        }
+
+        rc = mca_btl_openib_endpoint_post_recvs (lcl_ep);
+        if (OPAL_SUCCESS != rc) {
+            BTL_VERBOSE(("error posting receives for loopback queue pair"));
+            break;
+        }
+
+        rc = udcm_xrc_recv_qp_create (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
+                                      lcl_ep->qps[0].qp->lcl_psn);
+        if (OPAL_SUCCESS != rc) {
+            BTL_VERBOSE(("error creating loopback XRC receive queue pair"));
+            break;
+        }
+
+        rc = udcm_xrc_send_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
+                                       lcl_ep->qps[0].qp->lcl_psn);
+        if (OPAL_SUCCESS != rc) {
+            BTL_VERBOSE(("error creating loopback XRC send queue pair"));
+            break;
+        }
+
+        lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
+
+        rc = udcm_finish_connection (lcl_ep);
+    } while (0);
+    opal_mutex_unlock (&udep->udep_lock);
+
+    return rc;
+}
+#endif
+
+static int udcm_endpoint_init_self (struct mca_btl_base_endpoint_t *lcl_ep)
+{
+    udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+    int rc;
+
+    opal_mutex_lock (&udep->udep_lock);
+    do {
+        if (OPAL_SUCCESS != (rc = udcm_endpoint_init_data (lcl_ep))) {
+            BTL_VERBOSE(("error initializing loopback endpoint cpc data"));
+            break;
+        }
+
+        if (OPAL_SUCCESS != (rc = udcm_rc_qp_create_all (lcl_ep))) {
+            BTL_VERBOSE(("error initializing loopback endpoint qps"));
+            break;
+        }
+
+        /* save queue pair info */
+        lcl_ep->rem_info.rem_index = lcl_ep->index;
+
+        for (int i = 0 ; i <  mca_btl_openib_component.num_qps ; ++i) {
+            lcl_ep->rem_info.rem_qps[i].rem_psn = lcl_ep->qps[i].qp->lcl_psn;
+            lcl_ep->rem_info.rem_qps[i].rem_qp_num = lcl_ep->qps[i].qp->lcl_qp->qp_num;
+        }
+
+        if (OPAL_SUCCESS != (rc = udcm_rc_qps_to_rts (lcl_ep))) {
+            BTL_VERBOSE(("error moving loopback endpoint qps to RTS"));
+            break;
+        }
+
+        lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
+
+        rc = udcm_finish_connection (lcl_ep);
+
+        return OPAL_SUCCESS;
+    } while (0);
+    opal_mutex_unlock (&udep->udep_lock);
+
+    return rc;
+}
+
 static int udcm_endpoint_init (struct mca_btl_base_endpoint_t *lcl_ep)
 {
     udcm_endpoint_t *udep = lcl_ep->endpoint_local_cpc_data = 
@@ -517,6 +613,16 @@ static int udcm_endpoint_init (struct mca_btl_base_endpoint_t *lcl_ep)
     }
 
     OBJ_CONSTRUCT(&udep->udep_lock, opal_mutex_t);
+
+    if (lcl_ep->endpoint_proc->proc_opal == opal_proc_local_get ()) {
+        /* go ahead and try to create a loopback queue pair */
+#if HAVE_XRC
+        if (mca_btl_openib_component.num_xrc_qps > 0) {
+            return udcm_endpoint_init_self_xrc (lcl_ep);
+        } else
+#endif
+            return udcm_endpoint_init_self (lcl_ep);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -870,7 +976,6 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
         return;
     }
 
-#if OPAL_HAVE_THREADS
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
         /* Tell the openib async thread to ignore ERR state on the QP
@@ -889,7 +994,6 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
             BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
         }
     }
-#endif
 
     do {
         /* Move listen QP into the ERR state to cancel all outstanding
@@ -1069,6 +1173,9 @@ static inline int udcm_rc_qp_to_init (struct ibv_qp *qp,
     attr.pkey_index      = btl->pkey_index;
     attr.port_num        = btl->port_num;
     attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    attr.qp_access_flags |= IBV_ACCESS_REMOTE_ATOMIC;
+#endif
     attr_mask = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT |
         IBV_QP_ACCESS_FLAGS;
 
@@ -1963,7 +2070,10 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
 
             if (UDCM_MESSAGE_XCONNECT2 == message->hdr.type) {
                 /* save the qp number for unregister */
+#if ! OPAL_HAVE_CONNECTX_XRC_DOMAINS
                 lcl_ep->xrc_recv_qp_num = message->hdr.data.xreq.rem_qp_num;
+#endif
+
             }
         }
 #endif
@@ -2307,7 +2417,7 @@ static int udcm_xrc_restart_connect (mca_btl_base_endpoint_t *lcl_ep)
 /* mark: xrc send qp */
 
 /* Send qp connect */
-static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr)
+static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn)
 {
     mca_btl_openib_module_t *openib_btl = lcl_ep->endpoint_btl;
     struct ibv_qp_attr attr;
@@ -2316,7 +2426,7 @@ static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
     int ret;
 
     BTL_VERBOSE(("Connecting send qp: %p, remote qp: %d", (void *)lcl_ep->qps[0].qp->lcl_qp,
-                 msg_hdr->data.xres.rem_qp_num));
+                 rem_qp_num));
     assert(NULL != lcl_ep->qps);
     qp = lcl_ep->qps[0].qp->lcl_qp;
     psn = lcl_ep->qps[0].qp->lcl_psn;
@@ -2326,8 +2436,8 @@ static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
     attr.qp_state           = IBV_QPS_RTR;
     attr.path_mtu = (openib_btl->device->mtu < lcl_ep->rem_info.rem_mtu) ?
         openib_btl->device->mtu : lcl_ep->rem_info.rem_mtu;
-    attr.dest_qp_num        = msg_hdr->data.xres.rem_qp_num;
-    attr.rq_psn             = msg_hdr->data.xres.rem_psn;
+    attr.dest_qp_num        = rem_qp_num;
+    attr.rq_psn             = rem_psn;
     attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
     attr.min_rnr_timer  = mca_btl_openib_component.ib_min_rnr_timer;
     attr.ah_attr.is_global     = 0;
@@ -2403,7 +2513,11 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     uint32_t send_wr;
     struct ibv_qp **qp;
     uint32_t *psn;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_qp_init_attr_ex qp_init_attr;
+#else
     struct ibv_qp_init_attr qp_init_attr;
+#endif
     struct ibv_qp_attr attr;
     int ret;
     size_t req_inline;
@@ -2420,7 +2534,11 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     send_wr = lcl_ep->ib_addr->qp->sd_wqe +
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr_ex));
+#else
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr));
+#endif
     memset(&attr, 0, sizeof(struct ibv_qp_attr));
 
     qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->device->ib_cq[prio];
@@ -2433,9 +2551,16 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     qp_init_attr.cap.max_send_sge = 1;
     /* this one is ignored by driver */
     qp_init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    qp_init_attr.qp_type = IBV_QPT_XRC_SEND;
+    qp_init_attr.comp_mask = IBV_QP_INIT_ATTR_PD;
+    qp_init_attr.pd = openib_btl->device->ib_pd;
+    *qp = ibv_create_qp_ex(openib_btl->device->ib_dev_context, &qp_init_attr);
+#else
     qp_init_attr.qp_type = IBV_QPT_XRC;
     qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
     *qp = ibv_create_qp(openib_btl->device->ib_pd, &qp_init_attr);
+#endif
     if (NULL == *qp) {
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true,
@@ -2460,6 +2585,9 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     attr.pkey_index = openib_btl->pkey_index;
     attr.port_num = openib_btl->port_num;
     attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    attr.qp_access_flags |= IBV_ACCESS_REMOTE_ATOMIC;
+#endif
     ret = ibv_modify_qp(*qp, &attr,
                       IBV_QP_STATE |
                       IBV_QP_PKEY_INDEX |
@@ -2482,11 +2610,34 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
 /* mark: xrc receive qp */
 
 /* Recv qp connect */
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t qp_num)
+#else
 static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
+#endif
 {
     mca_btl_openib_module_t *openib_btl = lcl_ep->endpoint_btl;
-    int ret;
 
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_qp_open_attr attr;
+    memset(&attr, 0, sizeof(struct ibv_qp_open_attr));
+    attr.comp_mask = IBV_QP_OPEN_ATTR_NUM | IBV_QP_OPEN_ATTR_XRCD | IBV_QP_OPEN_ATTR_TYPE;
+    attr.qp_num = qp_num;
+    attr.qp_type = IBV_QPT_XRC_RECV;
+    attr.xrcd = openib_btl->device->xrcd;
+    BTL_VERBOSE(("Connecting Recv QP\n"));
+    lcl_ep->xrc_recv_qp = ibv_open_qp(openib_btl->device->ib_dev_context, &attr);
+    if (NULL == lcl_ep->xrc_recv_qp) { /* failed to regester the qp, so it is already die and we should create new one */
+       /* Return NOT READY !!!*/
+        BTL_ERROR(("Failed to register qp_num: %d , get error: %s (%d)\n. Replying with RNR",
+                   lcl_ep->xrc_recv_qp->qp_num, strerror(errno), errno));
+        return OPAL_ERROR;
+    } else {
+        BTL_VERBOSE(("Connected to XRC Recv qp [%d]", lcl_ep->xrc_recv_qp->qp_num));
+        return OPAL_SUCCESS;
+    }
+#else
+    int ret;
     BTL_VERBOSE(("Connecting receive qp: %d", lcl_ep->xrc_recv_qp_num));
     ret = ibv_reg_xrc_rcv_qp(openib_btl->device->xrc_domain, lcl_ep->xrc_recv_qp_num);
     if (ret) { /* failed to regester the qp, so it is already die and we should create new one */
@@ -2496,20 +2647,38 @@ static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
                    lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
         return OPAL_ERROR;
     }
+#endif
 
     return OPAL_SUCCESS;
 }
 
 /* Recv qp create */
-static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr)
+static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn)
 {
     mca_btl_openib_module_t* openib_btl = lcl_ep->endpoint_btl;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_qp_init_attr_ex qp_init_attr;
+#else
     struct ibv_qp_init_attr qp_init_attr;
+#endif
     struct ibv_qp_attr attr;
     int ret;
 
     BTL_VERBOSE(("creating xrc receive qp"));
 
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr_ex));
+    qp_init_attr.qp_type = IBV_QPT_XRC_RECV;
+    qp_init_attr.comp_mask = IBV_QP_INIT_ATTR_XRCD;
+    qp_init_attr.xrcd = openib_btl->device->xrcd;
+    lcl_ep->xrc_recv_qp = ibv_create_qp_ex(openib_btl->device->ib_dev_context,
+                                           &qp_init_attr);
+    if (NULL == lcl_ep->xrc_recv_qp) {
+        BTL_ERROR(("Error creating XRC recv QP, errno says: %s [%d]",
+                    strerror(errno), errno));
+        return OPAL_ERROR;
+    }
+#else
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr));
     /* Only xrc_domain is required, all other are ignored */
     qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
@@ -2519,12 +2688,31 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
                    lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
         return OPAL_ERROR;
     }
+#endif
 
     memset(&attr, 0, sizeof(struct ibv_qp_attr));
     attr.qp_state = IBV_QPS_INIT;
     attr.pkey_index = openib_btl->pkey_index;
     attr.port_num = openib_btl->port_num;
     attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
+
+#if HAVE_DECL_IBV_ATOMIC_HCA
+    attr.qp_access_flags |= IBV_ACCESS_REMOTE_ATOMIC;
+#endif
+
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    ret = ibv_modify_qp(lcl_ep->xrc_recv_qp,
+            &attr,
+            IBV_QP_STATE|
+            IBV_QP_PKEY_INDEX|
+            IBV_QP_PORT|
+            IBV_QP_ACCESS_FLAGS);
+    if (ret) {
+        BTL_ERROR(("Error modifying XRC recv QP to IBV_QPS_INIT, errno says: %s [%d]",
+                    strerror(ret), ret));
+        return OPAL_ERROR;
+    }
+#else
     ret = ibv_modify_xrc_rcv_qp(openib_btl->device->xrc_domain,
                                 lcl_ep->xrc_recv_qp_num, &attr,
                                 IBV_QP_STATE | IBV_QP_PKEY_INDEX |
@@ -2535,13 +2723,14 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
         while(1);
         return OPAL_ERROR;
     }
+#endif
 
     memset(&attr, 0, sizeof(struct ibv_qp_attr));
     attr.qp_state           = IBV_QPS_RTR;
     attr.path_mtu = (openib_btl->device->mtu < lcl_ep->rem_info.rem_mtu) ?
         openib_btl->device->mtu : lcl_ep->rem_info.rem_mtu;
-    attr.dest_qp_num        = msg_hdr->data.xreq.rem_qp_num;
-    attr.rq_psn             = msg_hdr->data.xreq.rem_psn;
+    attr.dest_qp_num        = rem_qp_num;
+    attr.rq_psn             = rem_psn;
     attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
     attr.min_rnr_timer  = mca_btl_openib_component.ib_min_rnr_timer;
     attr.ah_attr.is_global     = 0;
@@ -2555,7 +2744,11 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
     /* if user enabled dynamic SL, get it from PathRecord */
     if (0 != mca_btl_openib_component.ib_path_record_service_level) {
         int rc = btl_openib_connect_get_pathrecord_sl(
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+                                                      openib_btl->device->xrcd->context,
+#else
                                                       openib_btl->device->xrc_domain->context,
+#endif
                                                       attr.ah_attr.port_num,
                                                       openib_btl->lid,
                                                       attr.ah_attr.dlid);
@@ -2566,6 +2759,22 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
     }
 #endif
 
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    ret = ibv_modify_qp(lcl_ep->xrc_recv_qp,
+            &attr,
+            IBV_QP_STATE|
+            IBV_QP_AV|
+            IBV_QP_PATH_MTU|
+            IBV_QP_DEST_QPN|
+            IBV_QP_RQ_PSN|
+            IBV_QP_MAX_DEST_RD_ATOMIC|
+            IBV_QP_MIN_RNR_TIMER);
+    if (ret) {
+        BTL_ERROR(("Error modifying XRC recv QP to IBV_QPS_RTR, errno says: %s [%d]",
+                    strerror(ret), ret));
+        return OPAL_ERROR;
+    }
+#else
     ret = ibv_modify_xrc_rcv_qp(openib_btl->device->xrc_domain,
                                 lcl_ep->xrc_recv_qp_num,
                                 &attr,
@@ -2581,11 +2790,14 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
                    lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
         return OPAL_ERROR;
     }
-#if OPAL_HAVE_THREADS
-    if (APM_ENABLED) {
-        mca_btl_openib_load_apm_xrc_rcv(lcl_ep->xrc_recv_qp_num, lcl_ep);
-    }
 #endif
+    if (APM_ENABLED) {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        mca_btl_openib_load_apm(lcl_ep->xrc_recv_qp, lcl_ep);
+#else
+        mca_btl_openib_load_apm_xrc_rcv(lcl_ep->xrc_recv_qp_num, lcl_ep);
+#endif
+    }
 
     return OPAL_SUCCESS;
 }
@@ -2648,14 +2860,29 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
     msg->data->hdr.data.xres.rem_ep_index = htonl(lcl_ep->index);
 
     if (UDCM_MESSAGE_XRESPONSE == msg_type) {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        BTL_VERBOSE(("Sending qp: %d, psn: %d", lcl_ep->xrc_recv_qp->qp_num, lcl_ep->xrc_recv_psn));
+        msg->data->hdr.data.xres.rem_qp_num = htonl(lcl_ep->xrc_recv_qp->qp_num);
+        msg->data->hdr.data.xres.rem_psn    = htonl(lcl_ep->xrc_recv_psn);
+#else
         BTL_VERBOSE(("Sending qp: %d, psn: %d", lcl_ep->xrc_recv_qp_num, lcl_ep->xrc_recv_psn));
         msg->data->hdr.data.xres.rem_qp_num = htonl(lcl_ep->xrc_recv_qp_num);
         msg->data->hdr.data.xres.rem_psn    = htonl(lcl_ep->xrc_recv_psn);
+#endif
     }
 
     for (int i = 0; i < mca_btl_openib_component.num_xrc_qps; ++i) {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        uint32_t srq_num;
+        if (ibv_get_srq_num(lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq, &srq_num)) {
+            BTL_ERROR(("BTL openib XOOB internal error: can't get srq num"));
+        }
+        BTL_VERBOSE(("Sending srq[%d] num  = %d", i, srq_num));
+        msg->data->qps[i].qp_num = htonl(srq_num);
+#else
         BTL_VERBOSE(("Sending srq[%d] num  = %d", i, lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num));
         msg->data->qps[i].qp_num = htonl(lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num);
+#endif
     }
 
     rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0);
@@ -2695,7 +2922,11 @@ static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
 
         if (UDCM_MESSAGE_XCONNECT2 == msg_hdr->type) {
             response_type = UDCM_MESSAGE_XRESPONSE2;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+            rc = udcm_xrc_recv_qp_connect (lcl_ep, msg_hdr->data.xreq.rem_qp_num);
+#else
             rc = udcm_xrc_recv_qp_connect (lcl_ep);
+#endif
             if (OPAL_SUCCESS != rc) {
                 /* return not ready. remote side will retry */
                 rej_reason = UDCM_REJ_NOT_READY;
@@ -2715,7 +2946,7 @@ static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
 
             response_type = UDCM_MESSAGE_XRESPONSE;
 
-            rc = udcm_xrc_recv_qp_create (lcl_ep, msg_hdr);
+            rc = udcm_xrc_recv_qp_create (lcl_ep, msg_hdr->data.xreq.rem_qp_num, msg_hdr->data.xreq.rem_psn);
             if (OPAL_SUCCESS != rc) {
                 break;
             }
@@ -2761,7 +2992,7 @@ static int udcm_xrc_handle_xresponse (mca_btl_openib_endpoint_t *lcl_ep, udcm_ms
 
     udep->recv_resp = true;
 
-    rc = udcm_xrc_send_qp_connect (lcl_ep, msg_hdr);
+    rc = udcm_xrc_send_qp_connect (lcl_ep, msg_hdr->data.xres.rem_qp_num, msg_hdr->data.xres.rem_psn);
     if (OPAL_SUCCESS != rc) {
         mca_btl_openib_endpoint_invoke_error (lcl_ep);
     }

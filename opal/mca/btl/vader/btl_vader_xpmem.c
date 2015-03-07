@@ -19,6 +19,19 @@
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
 
+int mca_btl_vader_xpmem_init (void)
+{
+    mca_btl_vader_component.my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
+    if (-1 == mca_btl_vader_component.my_seg_id) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
+    mca_btl_vader.super.btl_put = mca_btl_vader_put_xpmem;
+
+    return OPAL_SUCCESS;
+}
+
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *ep, void *rem_ptr,

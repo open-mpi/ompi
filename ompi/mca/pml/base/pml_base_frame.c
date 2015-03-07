@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -137,7 +138,7 @@ static int mca_pml_base_close(void)
        anymore) */
 
     /**
-     * Destruct the send and receive queues. The ompi_free_list_t destructor
+     * Destruct the send and receive queues. The opal_free_list_t destructor
      * will return the memory to the mpool, so this has to be done before the
      * mpool get released by the PML close function.
      */
@@ -172,8 +173,8 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
      * their content, they should get constructed as soon as possible once the MPI
      * process is started.
      */
-    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, opal_free_list_t);
 
     OBJ_CONSTRUCT(&mca_pml_base_pml, opal_pointer_array_t);
 
@@ -211,6 +212,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
         if( (NULL == default_pml || NULL == default_pml[0] ||
              0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+            opal_pointer_array_add(&mca_pml_base_pml, strdup("yalla"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));

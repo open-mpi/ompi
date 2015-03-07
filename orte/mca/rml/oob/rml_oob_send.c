@@ -224,6 +224,14 @@ int orte_rml_oob_send_nb(orte_process_name_t* peer,
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
+
+    if( NULL == peer ||
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /* cannot send to an invalid peer */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
     /* get ourselves into an event to protect against
      * race conditions and threads
      */
@@ -258,6 +266,13 @@ int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
 
     if (ORTE_RML_TAG_INVALID == tag) {
         /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    if (NULL == peer ||
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /* cannot send to an invalid peer */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }

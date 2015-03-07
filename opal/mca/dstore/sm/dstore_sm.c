@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,19 +30,18 @@
 
 static uint32_t cur_offset = 0;
 static int32_t cur_seg_index = -1;
-static int hdr_offset;
 
 static int init(struct opal_dstore_base_module_t *imod);
 static void finalize(struct opal_dstore_base_module_t *imod);
 static int store(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *proc,
+                 const opal_process_name_t *proc,
                  opal_value_t *val);
 static int fetch(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *proc,
+                 const opal_process_name_t *proc,
                  const char *key,
                  opal_list_t *kvs);
 static int remove_data(struct opal_dstore_base_module_t *imod,
-                       const opal_identifier_t *proc, const char *key);
+                       const opal_process_name_t *proc, const char *key);
 
 static void smtrkcon(opal_sm_tracker_t *p)
 {
@@ -124,11 +125,10 @@ static void finalize(struct opal_dstore_base_module_t *imod)
 
 
 static int store(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *uid,
+                 const opal_process_name_t *uid,
                  opal_value_t *val)
 {
     mca_dstore_sm_module_t *mod;
-    int rc;
     void *addr;
     int32_t data_size;
     opal_shmem_ds_t *seg_ds;
@@ -146,10 +146,10 @@ static int store(struct opal_dstore_base_module_t *imod,
     mod = (mca_dstore_sm_module_t*)imod;
     data_size = val->data.bo.size;
 
-    idx = opal_process_name_vpid(*uid);
+    idx = uid->vpid;
     /* look for segment info for target jobid */
     OPAL_LIST_FOREACH(trk, &mod->tracklist, opal_sm_tracker_t) {
-        if (trk->jobid == opal_process_name_jobid(*uid)) {
+        if (trk->jobid == uid->jobid) {
             found_trk = true;
             break;
         }
@@ -158,7 +158,7 @@ static int store(struct opal_dstore_base_module_t *imod,
         opal_output_verbose(0, opal_dstore_base_framework.framework_output,
                 "%s dstore:sm:store: tracker object wasn't found for job id %u, proc %s",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                opal_process_name_jobid(*uid),
+                uid->jobid,
                 OPAL_NAME_PRINT(*uid));
         return OPAL_ERROR;
     }
@@ -212,18 +212,17 @@ static int store(struct opal_dstore_base_module_t *imod,
             ch = strrchr(path, OPAL_PATH_SEP[0]) + 1;
             if (NULL != ch) {
                 *ch = '\0';
-                rc = asprintf(&sm_file, "%sdstore_segment.%d", path, cur_seg_index);
+                (void)asprintf(&sm_file, "%sdstore_segment.%d", path, cur_seg_index);
             }
             free(path);
         }
         if (NULL == sm_file) {
-            rc = asprintf(&sm_file, "%s", "noname");
+            (void)asprintf(&sm_file, "%s", "noname");
         }
-        if (0 <= rc && NULL != sm_file) {
+        if (NULL != sm_file) {
             seg_ds = (opal_shmem_ds_t*)malloc(sizeof(opal_shmem_ds_t));
             memset(seg_ds, 0, sizeof(opal_shmem_ds_t));
-            rc = opal_shmem_segment_create (seg_ds, sm_file, SHARED_SEGMENT_SIZE);
-            if (OPAL_SUCCESS != rc) {
+            if (OPAL_SUCCESS != opal_shmem_segment_create (seg_ds, sm_file, SHARED_SEGMENT_SIZE)) {
                 opal_output_verbose(0, opal_dstore_base_framework.framework_output,
                                  "%s dstore:sm:store: couldn't create new shared segment to store key %s on proc %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -303,12 +302,11 @@ static int store(struct opal_dstore_base_module_t *imod,
 }
 
 static int fetch(struct opal_dstore_base_module_t *imod,
-                 const opal_identifier_t *uid,
+                 const opal_process_name_t *uid,
                  const char *key, opal_list_t *kvs)
 {
     int rc;
     int32_t size;
-    size_t my_offset;
     mca_dstore_sm_module_t *mod;
     void *addr, *ptr;
     opal_buffer_t *bptr, buf;
@@ -328,7 +326,7 @@ static int fetch(struct opal_dstore_base_module_t *imod,
     mod = (mca_dstore_sm_module_t*)imod;
     /* look for segment info for target jobid */
     OPAL_LIST_FOREACH(trk, &mod->tracklist, opal_sm_tracker_t) {
-        if (trk->jobid == opal_process_name_jobid(*uid)) {
+        if (trk->jobid == uid->jobid) {
             found_trk = true;
             break;
         }
@@ -337,12 +335,12 @@ static int fetch(struct opal_dstore_base_module_t *imod,
         opal_output_verbose(0, opal_dstore_base_framework.framework_output,
                 "%s dstore:sm:fetch: tracker object wasn't found for job id %u, proc %s",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                opal_process_name_jobid(*uid),
+                uid->jobid,
                 OPAL_NAME_PRINT(*uid));
         return OPAL_ERROR;
     }
     /* look for data for this process in meta_info segment */
-    idx = opal_process_name_vpid(*uid);
+    idx = uid->vpid;
     addr = ((uint8_t*)trk->addr + META_OFFSET + idx * sizeof(meta_info));
     memcpy(&my_info, addr, sizeof(meta_info));
     if (0 == my_info.data_size) {
@@ -422,7 +420,7 @@ static int fetch(struct opal_dstore_base_module_t *imod,
 }
 
 static int remove_data(struct opal_dstore_base_module_t *imod,
-        const opal_identifier_t *uid, const char *key)
+        const opal_process_name_t *uid, const char *key)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }

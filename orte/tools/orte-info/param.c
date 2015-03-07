@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -338,6 +340,7 @@ void orte_info_do_config(bool want_all)
     char *debug;
     char *threads;
     char *want_libltdl;
+    char *have_ltdl_advise;
     char *orterun_prefix_by_default;
     char *wtime_support;
     char *symbol_visibility;
@@ -349,18 +352,15 @@ void orte_info_do_config(bool want_all)
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
+    have_ltdl_advise = OPAL_HAVE_LTDL_ADVISE ? "yes" : "no";
     orterun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     
     /* setup strings that require allocation */    
-    if (OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
-                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                 OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
-    } else {
-        threads = strdup("no");
-    }
+    asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
+             "posix",
+             OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
     
     asprintf(&ft_support, "%s (checkpoint thread: %s)", 
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
@@ -424,6 +424,7 @@ void orte_info_do_config(bool want_all)
     orte_info_out("Memory profiling support", "option:mem-profile", memprofile);
     orte_info_out("Memory debugging support", "option:mem-debug", memdebug);
     orte_info_out("libltdl support", "option:dlopen", want_libltdl);
+    orte_info_out("lt_dladvise support", "option:lt_dladvise", have_ltdl_advise);
     orte_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
     orte_info_out("orterun default --prefix", "orterun:prefix_by_default", 
                   orterun_prefix_by_default);

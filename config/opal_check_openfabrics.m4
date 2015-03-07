@@ -10,19 +10,21 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+# Copyright (c) 2014      Bull SAS.  All rights reserved.
+# Copyright (c) 2014-2015 Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
 
 # OPAL_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -77,21 +79,6 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_openib_$1_save_LIBS="$LIBS"
-
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AS_IF([test "$THREAD_TYPE" != "posix" -a "$memory_ptmalloc2_happy" = "yes"],
-                 [AS_IF([test "$enable_ptmalloc2_internal" = "yes"],
-                        [AC_MSG_WARN([POSIX threads are disabled, but])
-                         AC_MSG_WARN([--enable-ptmalloc2-internal was specified.  This will])
-                         AC_MSG_WARN([cause memory corruption with OpenFabrics.])
-                         AC_MSG_WARN([Not building component.])
-                         ompi_check_openib_happy="no"],
-                        [AC_MSG_WARN([POSIX threads are disabled, but the ptmalloc2 memory])
-                         AC_MSG_WARN([manager is being built.  Compiling MPI applications with])
-                         AC_MSG_WARN([-lopenmpi-malloc will result in memory corruption; Open])
-                         AC_MSG_WARN([MPI will disable the openib BTL at run-time if such a])
-                         AC_MSG_WARN([combination is detected.])
-                         AC_MSG_WARN([You have been warned.])])])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
             [AC_CHECK_HEADERS(
@@ -148,11 +135,12 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
     $1_have_xrc=0
+    $1_have_xrc_domains=0
     $1_have_opensm_devel=0
 
     # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO, IBV_TRANSPORT_USNIC, IBV_TRANSPORT_USNIC_UDP, IBV_NODE_USNIC], [], [],
+          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO, IBV_ATOMIC_HCA], [], [],
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
 
@@ -161,9 +149,20 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                             [#include <infiniband/verbs.h>])
 
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
+           # ibv_cmd_open_xrcd (aka XRC Domains) was added in  OFED 3.12
            if test "$enable_connectx_xrc" = "yes"; then
-               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
+               $1_have_xrc=1
+               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd],
+                              [], [$1_have_xrc=0])
+               AC_CHECK_DECLS([IBV_SRQT_XRC],
+                              [], [$1_have_xrc=0])
+                              [#include <infiniband/verbs.h>])
            fi
+           if test "$enable_connectx_xrc" = "yes" \
+               && test $$1_have_xrc -eq 1; then
+               AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrc_domains=1])
+           fi
+
 
            if test "no" != "$enable_openib_dynamic_sl"; then
                # We need ib_types.h file, which is installed with opensm-devel
@@ -223,6 +222,15 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CONNECTX_XRC], [$$1_have_xrc],
         [Enable features required for ConnectX XRC support])
     if test "1" = "$$1_have_xrc"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
+    AC_MSG_CHECKING([if ConnectIB XRC support is enabled])
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CONNECTX_XRC_DOMAINS], [$$1_have_xrc_domains],
+        [Enable features required for XRC domains support])
+    if test "1" = "$$1_have_xrc_domains"; then
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])
@@ -419,6 +427,6 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
           [AC_MSG_RESULT([yes])],
           [AC_MSG_RESULT([no])])
 
-    AS_IF([test "1" = "$$1_have_mverbs" -a "1" = $$1_have_mqe],
+    AS_IF([test "1" = "$$1_have_mverbs" && test "1" = $$1_have_mqe],
             [$2], [$3])
 ])dnl

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -227,12 +227,12 @@ static int mca_btl_vader_component_register (void)
         mca_btl_vader.super.btl_eager_limit               = 32 * 1024;
         mca_btl_vader.super.btl_rndv_eager_limit          = mca_btl_vader.super.btl_eager_limit;
         mca_btl_vader.super.btl_max_send_size             = mca_btl_vader.super.btl_eager_limit;
-        mca_btl_vader.super.btl_min_rdma_pipeline_size    = mca_btl_vader.super.btl_eager_limit;
+        mca_btl_vader.super.btl_min_rdma_pipeline_size    = INT_MAX;
     } else {
         mca_btl_vader.super.btl_eager_limit               = 4 * 1024;
         mca_btl_vader.super.btl_rndv_eager_limit          = 32 * 1024;
         mca_btl_vader.super.btl_max_send_size             = 32 * 1024;
-        mca_btl_vader.super.btl_min_rdma_pipeline_size    = 32 * 1024;
+        mca_btl_vader.super.btl_min_rdma_pipeline_size    = INT_MAX;
     }
 
     mca_btl_vader.super.btl_rdma_pipeline_send_length = mca_btl_vader.super.btl_eager_limit;
@@ -251,7 +251,6 @@ static int mca_btl_vader_component_register (void)
         mca_btl_vader.super.btl_bandwidth = 10000; /* Mbs */
     }
 
-    mca_btl_vader.super.btl_seg_size  = sizeof (mca_btl_vader_segment_t);
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */
 
     /* Call the BTL based to register its MCA params */
@@ -269,10 +268,9 @@ static int mca_btl_vader_component_register (void)
 static int mca_btl_vader_component_open(void)
 {
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_rdma, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_max_send, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.pending_fragments, opal_list_t);
@@ -293,7 +291,6 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_max_send);
-    OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_rdma);
     OBJ_DESTRUCT(&mca_btl_vader_component.lock);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
@@ -319,7 +316,7 @@ static int mca_btl_base_vader_modex_send (void)
         modex.xpmem.seg_id = mca_btl_vader_component.my_seg_id;
         modex.xpmem.segment_base = mca_btl_vader_component.my_segment;
 
-        modex_size = sizeof (modex);
+        modex_size = sizeof (modex.xpmem);
     } else {
 #endif
         modex_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
@@ -349,14 +346,12 @@ static void mca_btl_vader_select_next_single_copy_mechanism (void)
 static void mca_btl_vader_check_single_copy (void)
 {
     int initial_mechanism = mca_btl_vader_component.single_copy_mechanism;
-    int rc;
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         /* try to create an xpmem segment for the entire address space */
-        mca_btl_vader_component.my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
-
-        if (-1 == mca_btl_vader_component.my_seg_id) {
+        int rc = mca_btl_vader_xpmem_init ();
+        if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_XPMEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "xpmem-make-failed",
                                true, opal_process_info.nodename, errno,
@@ -364,24 +359,20 @@ static void mca_btl_vader_check_single_copy (void)
             }
 
             mca_btl_vader_select_next_single_copy_mechanism ();
-        } else {
-            mca_btl_vader.super.btl_get = mca_btl_vader_get_xpmem;
-            mca_btl_vader.super.btl_put = mca_btl_vader_get_xpmem;
         }
-
     }
 #endif
 
 #if OPAL_BTL_VADER_HAVE_CMA
     if (MCA_BTL_VADER_CMA == mca_btl_vader_component.single_copy_mechanism) {
         /* Check if we have the proper permissions for CMA */
-        char buffer = {0};
+        char buffer = '0';
         bool cma_happy = false;
         int fd;
 
         /* check system setting for current ptrace scope */
         fd = open ("/proc/sys/kernel/yama/ptrace_scope", O_RDONLY);
-        if (0 > fd) {
+        if (0 < fd) {
             read (fd, &buffer, 1);
             close (fd);
         }
@@ -405,8 +396,8 @@ static void mca_btl_vader_check_single_copy (void)
             mca_btl_vader_select_next_single_copy_mechanism ();
 
             if (MCA_BTL_VADER_CMA == initial_mechanism) {
-	        opal_show_help("help-btl-vader.txt", "cma-permission-denied",
-			       true, opal_process_info.nodename);
+                opal_show_help("help-btl-vader.txt", "cma-permission-denied",
+                               true, opal_process_info.nodename);
             }
         } else {
             /* ptrace_scope will allow CMA */
@@ -419,11 +410,11 @@ static void mca_btl_vader_check_single_copy (void)
 #if OPAL_BTL_VADER_HAVE_KNEM
     if (MCA_BTL_VADER_KNEM == mca_btl_vader_component.single_copy_mechanism) {
         /* mca_btl_vader_knem_init will set the appropriate get/put functions */
-        rc = mca_btl_vader_knem_init ();
+        int rc = mca_btl_vader_knem_init ();
         if (OPAL_SUCCESS != rc) {
             if (MCA_BTL_VADER_KNEM == initial_mechanism) {
                 opal_show_help("help-btl-vader.txt", "knem requested but not available",
-			       true, opal_process_info.nodename);
+                               true, opal_process_info.nodename);
             }
 
             /* disable single copy */
@@ -564,7 +555,7 @@ failed:
 void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *endpoint)
 {
     mca_btl_base_segment_t segments[2];
-    mca_btl_base_descriptor_t frag = {.des_local = segments, .des_local_count = 1};
+    mca_btl_base_descriptor_t frag = {.des_segments = segments, .des_segment_count = 1};
     const mca_btl_active_message_callback_t *reg;
 
     if (hdr->flags & MCA_BTL_VADER_FLAG_COMPLETE) {
@@ -584,7 +575,7 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_ba
                                            &segments[1].seg_addr.pval);
 
         segments[1].seg_len       = hdr->sc_iov.iov_len;
-        frag.des_local_count = 2;
+        frag.des_segment_count = 2;
 
         /* recv upcall */
         reg->cbfunc(&mca_btl_vader.super, hdr->tag, &frag, reg->cbdata);

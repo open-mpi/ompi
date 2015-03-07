@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -24,7 +25,7 @@
 #include "btl_openib_frag.h"
 #include "btl_openib_eager_rdma.h"
 
-void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
+int mca_btl_openib_frag_init(opal_free_list_item_t* item, void* ctx)
 {
     mca_btl_openib_frag_init_data_t* init_data = (mca_btl_openib_frag_init_data_t *) ctx;
     mca_btl_openib_frag_t *frag = to_base_frag(item);
@@ -42,6 +43,8 @@ void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
         to_send_frag(frag)->qp_idx = init_data->order;
 
     frag->list = init_data->list;
+
+    return OPAL_SUCCESS;
 }
 
 static void base_constructor(mca_btl_openib_frag_t *frag)
@@ -68,8 +71,8 @@ static void out_constructor(mca_btl_openib_out_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 
     frag->sr_desc.wr_id = (uint64_t)(uintptr_t)frag;
     frag->sr_desc.sg_list = &to_com_frag(frag)->sg_entry;
@@ -83,8 +86,8 @@ static void in_constructor(mca_btl_openib_in_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 }
 
 static void send_constructor(mca_btl_openib_send_frag_t *frag)
@@ -134,6 +137,7 @@ static void put_constructor(mca_btl_openib_put_frag_t *frag)
 {
     to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_SEND_USER;
     to_out_frag(frag)->sr_desc.opcode = IBV_WR_RDMA_WRITE;
+    frag->cb.func = NULL;
 }
 
 static void get_constructor(mca_btl_openib_get_frag_t *frag)
@@ -154,8 +158,8 @@ static void coalesced_constructor(mca_btl_openib_coalesced_frag_t *frag)
 
     base_frag->type = MCA_BTL_OPENIB_FRAG_COALESCED;
 
-    base_frag->base.des_local = &base_frag->segment.base;
-    base_frag->base.des_local_count = 1;
+    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segment_count = 1;
 }
 
 OBJ_CLASS_INSTANCE(

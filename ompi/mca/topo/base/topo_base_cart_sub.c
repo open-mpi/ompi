@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -121,6 +121,12 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
         cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
         if( NULL == cart ) {
             ompi_comm_free(&temp_comm);
+            if (NULL != dorig) {
+                free(dorig);
+            }
+            if (NULL != porig) {
+                free(porig);
+            }
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         cart->ndims = ndim;

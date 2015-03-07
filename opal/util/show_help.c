@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -244,18 +246,17 @@ static int find_topic(const char *base, const char *topic)
  */
 static int read_topic(char ***array)
 {
-    char *tmp;
-    int token;
+    int token, rc;
 
     while (1) {
         token = opal_show_help_yylex();
         switch (token) {
         case OPAL_SHOW_HELP_PARSE_MESSAGE:
-            tmp = strdup(opal_show_help_yytext);
-            if (NULL == tmp) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
+            /* opal_argv_append_nosize does strdup(opal_show_help_yytext) */
+            rc = opal_argv_append_nosize(array, opal_show_help_yytext);
+            if (rc != OPAL_SUCCESS) {
+                return rc;
             }
-            opal_argv_append_nosize(array, tmp);
             break;
 
         default:

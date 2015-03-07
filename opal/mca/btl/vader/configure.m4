@@ -23,7 +23,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
                 [Build with XPMEM kernel module support, searching for headers in DIR])])
-    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h include/sn/xpmem.h])
+    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
     AC_ARG_WITH([xpmem-libdir],
                 [AC_HELP_STRING([--with-xpmem-libdir=DIR],
@@ -41,7 +41,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	    opal_check_xpmem_libdir="$with_xpmem_libdir"
 	fi
 
-	OPAL_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
+	OPAL_CHECK_PACKAGE([$1],[xpmem.h],[xpmem],[xpmem_make],[],
 	    [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
 	if test "$opal_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
@@ -63,7 +63,12 @@ AC_DEFUN([MCA_opal_btl_vader_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy btl_vader_cma_happy btl_vader_knem_happy])
 
     # Check for single-copy APIs
-    OPAL_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [btl_vader_xpmem_happy=0])
+
+    OPAL_CHECK_CRAY_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [btl_vader_xpmem_happy=0])
+
+    AS_IF([test "$btl_vader_xpmem_happy" -eq 0],
+          [OPAL_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [btl_vader_xpmem_happy=0])],[])
+
     OPAL_CHECK_KNEM([btl_vader], [btl_vader_knem_happy=1],[btl_vader_knem_happy=0])
     OPAL_CHECK_CMA([btl_vader], [AC_CHECK_HEADER([sys/prctl.h]) btl_vader_cma_happy=1], [btl_vader_cma_happy=0])
 

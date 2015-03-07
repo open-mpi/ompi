@@ -20,7 +20,6 @@ enable_per_user_config_files=no
 enable_script_wrapper_compilers=no
 enable_orterun_prefix_by_default=yes
 enable_io_romio=no
-enable_vt=no
 enable_mca_no_build=carto,crs,memchecker,snapc,crcp,paffinity,filem,sstore,compress,rml-ftrm
 with_memory_manager=no
 with_tm=no

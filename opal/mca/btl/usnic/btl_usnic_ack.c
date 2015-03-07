@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,8 +131,8 @@ opal_btl_usnic_handle_ack(
 #if MSGDEBUG1
         opal_output(0, "   ACKED seg %p frag %p ack_bytes=%"PRIu32" left=%zd dst_seg[0].seg_addr=%p des_flags=0x%x\n",
                 (void*)sseg, (void*)frag, bytes_acked,
-                frag->sf_ack_bytes_left-bytes_acked,
-                frag->sf_base.uf_dst_seg[0].seg_addr.pval,
+                frag->sf_ack_bytes_left - bytes_acked,
+                frag->sf_base.uf_local_seg[0].seg_addr.pval,
                 frag->sf_base.uf_base.des_flags);
 #endif
 
@@ -147,11 +147,21 @@ opal_btl_usnic_handle_ack(
          * fragment really needs to be freed, we'll take care of it in a few
          * lines below.
          */
-        if (frag->sf_ack_bytes_left == bytes_acked &&
-            ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
-             (frag->sf_base.uf_base.des_flags &
-              MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
-            OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+        if (frag->sf_ack_bytes_left == bytes_acked) {
+#if BTL_VERSION == 30
+            if (frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) {
+                OPAL_BTL_USNIC_DO_PUT_FRAG_CB(module, frag, "put completion");
+            } else if (frag->sf_base.uf_base.des_flags &
+                       MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
+#else
+            if ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
+                (frag->sf_base.uf_base.des_flags &
+                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
+#endif
         }
 
         /* free this segment */
@@ -200,25 +210,23 @@ opal_btl_usnic_ack_send(
     ack->ss_base.us_btl_header->ack_seq =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
 
-    ack->ss_base.us_sg_entry[0].length =
-        sizeof(opal_btl_usnic_btl_header_t);
+    ack->ss_len = sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
     {
-        uint8_t mac[6];
-        char src_mac[32];
-        char dest_mac[32];
+        char remote_ip[IPV4STRADDRLEN];
+        struct opal_btl_usnic_modex_t *modex =
+            &endpoint->endpoint_remote_modex;
+        opal_btl_usnic_snprintf_ipv4_addr(remote_ip, sizeof(remote_ip),
+                                          modex->ipv4_addr,
+                                          modex->netmask);
 
-        memset(src_mac, 0, sizeof(src_mac));
-        memset(dest_mac, 0, sizeof(dest_mac));
-        opal_btl_usnic_sprintf_mac(src_mac, module->if_mac);
-        opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
-        opal_btl_usnic_sprintf_mac(dest_mac, mac);
 
-        opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u",
-                    ack->ss_base.us_sg_entry[0].length,
-                    ack->ss_base.us_btl_header->ack_seq, dest_mac,
-                    endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+        opal_output(0, "--> Sending ACK, length %d, seq %" UDSEQ " to %s, port %u",
+                    ack->ss_len,
+                    ack->ss_base.us_btl_header->ack_seq,
+                    remote_ip,
+                    modex->ports[ack->ss_channel]);
     }
 #endif
 
@@ -228,7 +236,7 @@ opal_btl_usnic_ack_send(
     opal_btl_usnic_check_connectivity(module, endpoint);
 
     /* send the ACK */
-    opal_btl_usnic_post_segment(module, endpoint, ack);
+    opal_btl_usnic_post_ack(module, endpoint, ack);
 
     /* Stats */
     ++module->stats.num_ack_sends;
@@ -244,7 +252,6 @@ opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
                                    opal_btl_usnic_ack_segment_t *ack)
 {
     opal_btl_usnic_ack_segment_return(module, ack);
-    ++module->mod_channels[ack->ss_channel].sd_wqe;
 }
 
 /*****************************************************************************/

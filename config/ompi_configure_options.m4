@@ -17,6 +17,8 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -159,9 +161,9 @@ case "x$enable_mpi_fortran" in
         ;;
 esac
 
-AS_IF([test $OMPI_WANT_FORTRAN_MPIFH_BINDINGS -eq 1 -o \
-            $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 -o \
-            $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+AS_IF([test $OMPI_WANT_FORTRAN_MPIFH_BINDINGS -eq 1 || \
+       test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 || \
+       test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1],
       [OMPI_WANT_FORTRAN_BINDINGS=1],
       [OMPI_WANT_FORTRAN_BINDINGS=0])
 
@@ -226,18 +228,18 @@ AC_ARG_WITH(mpi-param-check,
     AC_HELP_STRING([--with-mpi-param-check(=VALUE)],
                    [behavior of MPI function parameter checking.  Valid values are: always, never, runtime.  If --with-mpi-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-mpi-param-check is equivalent to "never" (default: runtime).]))
 mpi_param_check=ompi_mpi_param_check
-if test "$with_mpi_param_check" = "no" -o \
-    "$with_mpi_param_check" = "never"; then
+if test "$with_mpi_param_check" = "no" || \
+   test "$with_mpi_param_check" = "never"; then
     mpi_param_check=0
     ompi_param_check=0
     AC_MSG_RESULT([never])
-elif test "$with_mpi_param_check" = "yes" -o \
-    "$with_mpi_param_check" = "always"; then
+elif test "$with_mpi_param_check" = "yes" || \
+     test "$with_mpi_param_check" = "always"; then
     mpi_param_check=1
     ompi_param_check=1
     AC_MSG_RESULT([always])
-elif test "$with_mpi_param_check" = "runtime" -o \
-    -z "$with_mpi_params_check"; then
+elif test "$with_mpi_param_check" = "runtime" || \
+     test -z "$with_mpi_params_check"; then
     ompi_param_check=1
     AC_MSG_RESULT([runtime])
 else

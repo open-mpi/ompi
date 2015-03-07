@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +30,7 @@
 
 #include "ompi/mca/bml/base/base.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef OSHMEM_WAIT_COMPLETION_DEBUG
@@ -50,6 +53,8 @@ enum {
     YODA_BTL_SELF = 0,
     YODA_BTL_SM,
     YODA_BTL_OPENIB,
+    YODA_BTL_VADER,
+    YODA_BTL_UGNI,
     YODA_BTL_MAX
 };
 
@@ -74,7 +79,7 @@ struct mca_spml_yoda_t {
     opal_mutex_t lock;
 
     /* free lists */
-    ompi_free_list_t rdma_frags;
+    opal_free_list_t rdma_frags;
     /* number of outstanding put requests */
     int32_t n_active_puts;
     int32_t n_active_gets;
@@ -86,7 +91,7 @@ typedef struct mca_spml_yoda_t mca_spml_yoda_module_t;
 
 struct mca_spml_yoda_context_t {
     mca_btl_base_descriptor_t* btl_src_descriptor;
-    mca_mpool_base_registration_t* registration;
+    mca_btl_base_registration_handle_t *registration;
 };
 typedef struct mca_spml_yoda_context_t mca_spml_yoda_context_t;
 

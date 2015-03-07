@@ -24,6 +24,7 @@
 #include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
@@ -61,24 +62,40 @@ orte_ess_base_component_t mca_ess_pmi_component = {
 
 static int pmi_component_open(void)
 {
-
-    if (OPAL_SUCCESS != mca_base_framework_open(&opal_pmix_base_framework, 0)) {
-        return ORTE_ERROR;
-    }
-
-    if (OPAL_SUCCESS != opal_pmix_base_select()) {
-        return ORTE_ERROR;
-    }
-
     return ORTE_SUCCESS;
 }
 
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we are available anywhere PMI is available, but not for HNP itself */
-    if (!ORTE_PROC_IS_HNP && NULL != opal_pmix.init &&
-        OPAL_SUCCESS == opal_pmix.init()) {
-        /* if PMI is available, use it */
+    int ret;
+    
+    /* all APPS must use pmix */
+    if (ORTE_PROC_IS_APP) {
+        /* open and setup pmix */
+        if (NULL == opal_pmix.initialized) {
+            if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+                ORTE_ERROR_LOG(ret);
+                *priority = -1;
+                *module = NULL;
+                return ret;
+            }
+            if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+                /* don't error log this as it might not be an error at all */
+                *priority = -1;
+                *module = NULL;
+                (void) mca_base_framework_close(&opal_pmix_base_framework);
+                return ret;
+            }
+        }
+        if (!opal_pmix.initialized()) {
+            /* we may have everything setup, but we are not
+             * in a PMIx environment and so we need to disqualify
+             * ourselves - we are likely a singleton and will
+             * pick things up from there */
+            *priority = -1;
+            *module = NULL;
+            return ORTE_ERROR;
+        }
         *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
         return ORTE_SUCCESS;
@@ -93,9 +110,6 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
 
 static int pmi_component_close(void)
 {
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();  // balances query
-    }
-    return mca_base_framework_close(&opal_pmix_base_framework);
+    return ORTE_SUCCESS;
 }
 

@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -794,6 +796,30 @@ opal_hash_table_get_next_key_uint32(opal_hash_table_t * ht,
 }
 
 int                             /* OPAL_ return code */
+opal_hash_table_get_first_key_ptr(opal_hash_table_t * ht, 
+                                  void * *key, size_t *key_size, void * *value, 
+                                  void * *node)
+{
+  return opal_hash_table_get_next_key_ptr(ht, key, key_size, value, NULL, node);
+}
+
+int                             /* OPAL_ return code */
+opal_hash_table_get_next_key_ptr(opal_hash_table_t * ht, 
+                                 void * *key, size_t *key_size, void * *value, 
+                                 void * in_node, void * *out_node)
+{
+  opal_hash_element_t * elt;
+  if (OPAL_SUCCESS == opal_hash_table_get_next_elt(ht, (opal_hash_element_t *) in_node, &elt)) {
+    *key       = (void *)elt->key.ptr.key;
+    *key_size  = elt->key.ptr.key_size;
+    *value     = elt->value;
+    *out_node  = elt;
+    return OPAL_SUCCESS;
+  }
+  return OPAL_ERROR;
+}
+
+int                             /* OPAL_ return code */
 opal_hash_table_get_first_key_uint64(opal_hash_table_t * ht, 
                                      uint64_t *key, void * *value, 
                                      void * *node)
@@ -817,3 +843,151 @@ opal_hash_table_get_next_key_uint64(opal_hash_table_t * ht,
 }
 
 /* there was/is no traversal for the ptr case; it would go here */
+/* interact with the class-like mechanism */
+
+static void opal_proc_table_construct(opal_proc_table_t* pt);
+static void opal_proc_table_destruct(opal_proc_table_t* pt);
+
+OBJ_CLASS_INSTANCE(
+    opal_proc_table_t, 
+    opal_hash_table_t,
+    opal_proc_table_construct,
+    opal_proc_table_destruct
+);
+
+static void
+opal_proc_table_construct(opal_proc_table_t* pt)
+{
+  pt->pt_size = 0;
+}
+
+static void
+opal_proc_table_destruct(opal_proc_table_t* pt)
+{
+}
+
+/* 
+ * Init, etc
+ */
+
+int opal_proc_table_init(opal_proc_table_t* pt, size_t jobids, size_t vpids) {
+    int rc;
+    if (OPAL_SUCCESS != (rc=opal_hash_table_init(&pt->super, jobids))) {
+        return rc;
+    }
+    pt->vpids_size = vpids;
+    return OPAL_SUCCESS;
+}
+
+int opal_proc_table_remove_all(opal_proc_table_t *pt) {
+    int rc;
+    opal_hash_table_t * vpids;
+    uint32_t jobid;
+    void * node;
+
+    rc = opal_hash_table_get_first_key_uint32(&pt->super, &jobid, (void **)&vpids, &node);
+    
+    if (OPAL_SUCCESS == rc) {
+        do {
+            if (NULL != vpids) {
+                opal_hash_table_remove_all(vpids);
+                OBJ_RELEASE(vpids);
+            }
+            rc = opal_hash_table_get_next_key_uint32 (&pt->super, &jobid,
+                                               (void **) &vpids, node, &node);
+        } while (OPAL_SUCCESS == rc);
+    }
+
+    return rc;
+}
+
+int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key, 
+                              void** ptr) {
+    int rc;
+    opal_hash_table_t * vpids;
+    rc = opal_hash_table_get_value_uint32(&pt->super, key.jobid, (void **)&vpids);
+    if (rc != OPAL_SUCCESS) {
+        return rc;
+    }
+    rc = opal_hash_table_get_value_uint32(vpids, key.vpid, ptr);
+    return rc;
+}
+
+int opal_proc_table_set_value(opal_proc_table_t* pt, opal_process_name_t key, void* value) {
+    int rc;
+    opal_hash_table_t * vpids;
+    rc = opal_hash_table_get_value_uint32(&pt->super, key.jobid, (void **)&vpids);
+    if (rc != OPAL_SUCCESS) {
+        vpids = OBJ_NEW(opal_hash_table_t);
+        if (NULL == vpids) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        if (OPAL_SUCCESS != (rc=opal_hash_table_init(vpids, pt->vpids_size))) {
+            OBJ_RELEASE(vpids);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc=opal_hash_table_set_value_uint32(&pt->super, key.jobid, vpids))) {
+            OBJ_RELEASE(vpids);
+            return rc;
+        }
+    }
+    rc = opal_hash_table_set_value_uint32(vpids, key.vpid, value);
+    return rc;
+}
+
+int opal_proc_table_remove_value(opal_proc_table_t* pt, opal_process_name_t key) {
+    int rc;
+    opal_hash_table_t * vpids;
+    if (OPAL_SUCCESS != (rc=opal_hash_table_get_value_uint32(&pt->super, key.jobid, (void **)&vpids))) {
+        return rc;
+    }
+    if (OPAL_SUCCESS == (rc=opal_hash_table_remove_value_uint32(vpids, key.vpid))) {
+        if (0 == vpids->ht_size) {
+            opal_hash_table_remove_value_uint32(&pt->super, key.jobid);
+            OBJ_RELEASE(vpids);
+        }
+    }
+    return rc;
+}
+
+int opal_proc_table_get_first_key(opal_proc_table_t *pt, opal_process_name_t *key,
+                                  void **value, void **node1, void **node2) {
+    int rc;
+    uint32_t jobid, vpid;
+    opal_hash_table_t * vpids;
+    if (OPAL_SUCCESS != (rc=opal_hash_table_get_first_key_uint32(&pt->super, &jobid, (void **)&vpids, node1))) {
+        return rc;
+    }
+    rc = opal_hash_table_get_first_key_uint32(vpids, &vpid, value, node2);
+    if (OPAL_SUCCESS == rc) {
+        key->jobid = jobid;
+        key->vpid = vpid;
+    }
+    return rc;
+}
+
+int opal_proc_table_get_next_key(opal_proc_table_t *pt, opal_process_name_t *key,
+                                 void **value, void *in_node1, void **out_node1,
+                                 void *in_node2, void **out_node2) {
+    int rc;
+    uint32_t jobid = ((opal_hash_element_t *)in_node1)->key.u32;
+    uint32_t vpid;
+    opal_hash_table_t * vpids = ((opal_hash_element_t *)in_node1)->value;
+
+    rc = opal_hash_table_get_next_key_uint32(vpids, &vpid, value, in_node2, out_node2);
+    if (OPAL_SUCCESS == rc) {
+        key->jobid = jobid;
+        key->vpid = vpid;
+        *out_node1 = in_node1;
+        return rc;
+    }
+    if (OPAL_SUCCESS != (rc=opal_hash_table_get_next_key_uint32(&pt->super, &jobid, (void **)&vpids, in_node1, out_node1))) {
+        return rc;
+    }
+    rc = opal_hash_table_get_first_key_uint32(vpids, &vpid, value, out_node2);
+    if (OPAL_SUCCESS == rc) {
+        key->jobid = jobid;
+        key->vpid = vpid;
+    }
+    return rc;
+}

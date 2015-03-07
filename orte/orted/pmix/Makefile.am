@@ -15,4 +15,6 @@ headers += \
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
           orted/pmix/pmix_server.c \
           orted/pmix/pmix_server_connection.c \
-          orted/pmix/pmix_server_sendrecv.c
+          orted/pmix/pmix_server_sendrecv.c \
+          orted/pmix/pmix_server_db.c \
+          orted/pmix/pmix_server_process_msgs.c

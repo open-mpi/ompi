@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,6 +61,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/base/base.h"
 #endif
+#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -149,7 +150,9 @@ int orte_ess_base_orted_setup(char **hosts)
                 goto error;
             }
         }
-        
+        /* generate the signature */
+        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+
         /* remove the hostname from the topology. Unfortunately, hwloc
          * decided to add the source hostname to the "topology", thus
          * rendering it unusable as a pure topological description. So
@@ -175,7 +178,7 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
         
-        if (4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }
@@ -621,6 +624,18 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
+    /* setup the SCHIZO framework */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_select";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
     
  error:
@@ -651,6 +666,7 @@ int orte_ess_base_orted_finalize(void)
     pmix_server_finalize();
 
     /* close frameworks */
+    (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_iof_base_framework);

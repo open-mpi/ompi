@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,11 +46,12 @@ BEGIN_C_DECLS
 #define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_CUDA             0x00400000
 #define CONVERTOR_CUDA_ASYNC       0x00800000
-#define CONVERTOR_TYPE_MASK        0x00FF0000
+#define CONVERTOR_TYPE_MASK        0x10FF0000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
 #define CONVERTOR_COMPLETED        0x08000000
+#define CONVERTOR_CUDA_UNIFIED     0x10000000
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
@@ -177,7 +179,7 @@ static inline int32_t opal_convertor_need_buffers( const opal_convertor_t* pConv
     if (OPAL_UNLIKELY(0 == (pConvertor->flags & CONVERTOR_HOMOGENEOUS))) return 1;
 #endif
 #if OPAL_CUDA_SUPPORT
-    if( pConvertor->flags & CONVERTOR_CUDA ) return 1;
+    if( pConvertor->flags & (CONVERTOR_CUDA | CONVERTOR_CUDA_UNIFIED)) return 1;
 #endif
     if( pConvertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS ) return 0;
     if( (pConvertor->count == 1) && (pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) return 0;
@@ -216,6 +218,14 @@ static inline void opal_convertor_get_current_pointer( const opal_convertor_t* p
     unsigned char* base = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
     *position = (void*)base;
 }
+
+static inline void opal_convertor_get_offset_pointer( const opal_convertor_t* pConv,
+                                                      size_t offset, void** position )
+{
+    unsigned char* base = pConv->pBaseBuf + offset + pConv->pDesc->true_lb;
+    *position = (void*)base;
+}
+
 
 /*
  *

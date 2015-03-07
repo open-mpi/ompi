@@ -8,7 +8,6 @@
 #ifndef AD_XFS_INCLUDE
 #define AD_XFS_INCLUDE
 
-#define _XOPEN_SOURCE 500
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>

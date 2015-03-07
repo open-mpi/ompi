@@ -1,10 +1,12 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/*
+ * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -1158,7 +1160,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
         return OMPI_ERROR;
     }
 
-    spec->job_id = opal_process_name_jobid(opal_proc_local_get()->proc_name);
+    spec->job_id = opal_proc_local_get()->proc_name.jobid;
     spec->rank_id = ompi_comm_rank(MPI_COMM_WORLD);
     spec->progress.func = mca_coll_fca_progress_cb;
     spec->progress.arg = NULL;

@@ -6,16 +6,16 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -55,7 +55,7 @@ AC_DEFUN([OPAL_MCA],[
     #
     AC_ARG_ENABLE([mca-no-build],
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
-                        [Comma-separated list of <type>-<component> pairs 
+                        [Comma-separated list of <type>-<component> pairs
                          that will not be built.  Example: "--enable-mca-no-build=maffinity,btl-portals" will disable building all maffinity components and the "portals" btl components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
@@ -122,7 +122,7 @@ AC_DEFUN([OPAL_MCA],[
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-direct flag requires an explicit list of
 *** type-component pairs.  For example, --enable-mca-direct=pml-ob1,coll-basic])
-    elif test ! -z "$enable_mca_direct" -a "$enable_mca_direct" != "" ; then
+    elif test ! -z "$enable_mca_direct" && test "$enable_mca_direct" != "" ; then
         #
         # we need to add this into the static list, unless the static list
         # is everything
@@ -142,7 +142,7 @@ AC_DEFUN([OPAL_MCA],[
         for item in $enable_mca_direct; do
             type="`echo $item | cut -f1 -d-`"
             comp="`echo $item | cut -f2- -d-`"
-            if test -z $type -o -z $comp ; then
+            if test -z $type || test -z $comp ; then
                 AC_MSG_ERROR([*** The enable-mca-direct flag requires a
 *** list of type-component pairs.  Invalid input detected.])
             else
@@ -164,7 +164,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_static" != "no"; then
         DSO_all=0
         msg=none
-    elif test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes"; then
+    elif test -z "$enable_mca_dso" || test "$enable_mca_dso" = "yes"; then
         DSO_all=1
         msg=all
     elif test "$enable_mca_dso" = "no"; then
@@ -193,7 +193,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_mca_static" = "yes"; then
         STATIC_all=1
         msg=all
-    elif test -z "$enable_mca_static" -o "$enable_mca_static" = "no"; then
+    elif test -z "$enable_mca_static" || test "$enable_mca_static" = "no"; then
         STATIC_all=0
         msg=none
     else
@@ -221,11 +221,11 @@ AC_DEFUN([OPAL_MCA],[
     # now configure all the projects, frameworks, and components.  Most
     # of the hard stuff is in here
     MCA_PROJECT_SUBDIRS=
-    m4_foreach(mca_project, [mca_project_list], 
+    m4_foreach(mca_project, [mca_project_list],
                [# BWB: Until projects have seperate configure scripts
                 # and can skip running all of ORTE, just avoid recursing
                 # into orte sub directory if orte disabled
-                if test "mca_project" = "ompi" -a "$enable_mpi" != "no" || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
+                if (test "mca_project" = "ompi" && test "$enable_mpi" != "no") || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
@@ -270,7 +270,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     #  MCA_project_FRAMEWORK_LIBS - list of libraries (or variables pointing
     #                               to more libraries) that must be included
     #                               in the project's main library
-    m4_ifdef([mca_$1_framework_list], [], 
+    m4_ifdef([mca_$1_framework_list], [],
              [m4_fatal([Could not find mca_$1_framework_list - please rerun autogen.pl])])
 
     MCA_$1_FRAMEWORKS=
@@ -281,7 +281,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     MCA_$1_FRAMEWORK_LIBS=
 
     m4_foreach(mca_framework, [mca_$1_framework_list],
-               [m4_ifval(mca_framework, 
+               [m4_ifval(mca_framework,
                          [dnl common has to go up front
                           m4_if(mca_framework, [common],
                                 [MCA_$1_FRAMEWORKS="mca_framework $MCA_$1_FRAMEWORKS"
@@ -318,9 +318,9 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
 AC_DEFUN([MCA_ORDER_COMPONENT_LIST], [
     m4_foreach(mca_component, [mca_$1_$2_m4_config_component_list],
                [m4_ifval(mca_component,
-                    [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY], [], 
+                    [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY], [],
                          [m4_fatal([MCA_$1_$2_]mca_component[_PRIORITY not found, but required.])])])])
-    m4_define([component_list], 
+    m4_define([component_list],
               [esyscmd([config/opal_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
                         [m4_ifval(mca_component, [mca_component ]OPAL_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
 ])
@@ -352,9 +352,9 @@ AC_DEFUN([MCA_CHECK_IGNORED_PRIORITY], [
 AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     opal_show_subsubtitle "Configuring MCA framework $2"
 
-    m4_ifdef([mca_$1_$2_no_config_component_list], [], 
+    m4_ifdef([mca_$1_$2_no_config_component_list], [],
              [m4_fatal([Could not find mca_$1_$2_no_config_component_list - please rerun autogen.pl])])
-    m4_ifdef([mca_$1_$2_m4_config_component_list], [], 
+    m4_ifdef([mca_$1_$2_m4_config_component_list], [],
              [m4_fatal([Could not find mca_$1_$2_m4_config_component_list - please rerun autogen.pl])])
 
     # setup for framework
@@ -400,7 +400,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # run the configure logic for the no-config components
     m4_foreach(mca_component, [mca_$1_$2_no_config_component_list],
                [m4_ifval(mca_component,
-                  [MCA_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, mca_component, 
+                  [MCA_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, mca_component,
                                                      [all_components],
                                                      [static_components],
                                                      [dso_components],
@@ -421,7 +421,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                [m4_ifval(mca_component,
                   [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
                          [AS_IF([test $best_mca_component_priority -gt MCA_$1_$2_]mca_component[_PRIORITY], [components_looking_for_succeed=0])])
-                   MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component, 
+                   MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component,
                                                      [all_components],
                                                      [static_components],
                                                      [dso_components],
@@ -497,7 +497,7 @@ EOF
             rm -f $outfile
         fi
     fi
-    rm -f $outfile.struct $outfile.extern 
+    rm -f $outfile.struct $outfile.extern
 
     unset all_components static_components dso_components outfile outfile_real
 ])
@@ -516,7 +516,7 @@ EOF
 #
 # USAGE:
 #   MCA_CONFIGURE_PROJECT(project_name, framework_name, component_name
-#                         all_components_variable, 
+#                         all_components_variable,
 #                         static_components_variable,
 #                         dso_components_variable,
 #                         static_ltlibs_variable,
@@ -526,9 +526,11 @@ EOF
 AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
     opal_show_subsubsubtitle "MCA component $2:$3 (no configuration)"
 
-    MCA_COMPONENT_BUILD_CHECK($1, $2, $3, 
+    opal_show_verbose "OPAL_MCA_NO_CONFIG_COMPONENT: before, should_build=$8"
+    MCA_COMPONENT_BUILD_CHECK($1, $2, $3,
                               [should_build=$8], [should_build=0])
     MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
+    opal_show_verbose "OPAL_MCA_NO_CONFIG_COMPONENT: after, should_build=$should_build"
 
     if test "$should_build" = "1" ; then
         MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)
@@ -559,12 +561,12 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 #
 # USAGE:
 #   MCA_CONFIGURE_PROJECT(project_name, framework_name, component_name
-#                         all_components_variable, 
+#                         all_components_variable,
 #                         static_components_variable,
 #                         dso_components_variable,
 #                         static_ltlibs_variable,
 #                         allowed_to_succeed,
-#                         [eval if should build], 
+#                         [eval if should build],
 #                         [eval if should not build])
 #
 ######################################################################
@@ -573,6 +575,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
         [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro, priority MCA_$1_$2_$3_PRIORITY)"],
         [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"])
 
+    opal_show_verbose "OPAL_MCA_M4_CONFIG_COMPONENT: before, should_build=$8"
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
@@ -580,12 +583,12 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
              [MCA_$1_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
              [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
 
-    # try to configure the component.  pay no attention to
-    # --enable-dist, since we'll always have makefiles.
+    # try to configure the component
     m4_ifdef([MCA_$1_$2_$3_CONFIG],
-             [MCA_$1_$2_$3_CONFIG([should_build=$should_build], 
+             [MCA_$1_$2_$3_CONFIG([should_build=$should_build],
                                   [should_build=0])],
              [m4_fatal([MCA_$1_$2_$3_CONFIG macro not found])])
+    opal_show_verbose "OPAL_MCA_M4_CONFIG_COMPONENT: after, should_build=$should_build"
 
     AS_IF([test "$should_build" = "1"],
           [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
@@ -597,7 +600,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
              [ MCA_$1_$2_$3_POST_CONFIG($should_build)])
 
     # set the AM_CONDITIONAL on how we should build
-    AS_IF([test "$compile_mode" = "dso"], 
+    AS_IF([test "$compile_mode" = "dso"],
           [BUILD_$1_$2_$3_DSO=1],
           [BUILD_$1_$2_$3_DSO=0])
     AM_CONDITIONAL(MCA_BUILD_$1_$2_$3_DSO, test "$BUILD_$1_$2_$3_DSO" = "1")
@@ -616,9 +619,9 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
 # scripts and should be configured according to the usual rules...
 #
 # USAGE:
-#   MCA_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name, 
+#   MCA_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name,
 #                         framework_name,
-#                         all_components_variable, 
+#                         all_components_variable,
 #                         static_components_variable,
 #                         dso_components_variable,
 #                         static_ltlibs_variable)
@@ -627,17 +630,20 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
 AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
     for component_path in $srcdir/$1/mca/$2/* ; do
         component="`basename $component_path`"
-        if test -d $component_path -a -x $component_path/configure ; then
+        if test -d $component_path && test -x $component_path/configure ; then
             opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
 
-            MCA_COMPONENT_BUILD_CHECK($1, $2, $component, 
+            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: before, should_build=$8"
+            MCA_COMPONENT_BUILD_CHECK($1, $2, $component,
                                       [should_build=1], [should_build=0])
             MCA_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
+            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after, should_build=$should_build"
 
             if test "$should_build" = "1" ; then
                 OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
                                    [$opal_subdir_args],
                                    [should_build=1], [should_build=0])
+                opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after subdir, should_build=$should_build"
             fi
 
             if test "$should_build" = "1" ; then
@@ -649,7 +655,7 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 
                     # First check for the ABORT tag
                     line="`$GREP ABORT= $infile | cut -d= -f2-`"
-                    if test -n "$line" -a "$line" != "no"; then
+                    if test -n "$line" && test "$line" != "no"; then
                         AC_MSG_WARN([MCA component configure script told me to abort])
                         AC_MSG_ERROR([cannot continue])
                     fi
@@ -694,14 +700,14 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     shared_mode_override=static
 
     # Setup for either shared or static
-    if test "$STATIC_FRAMEWORK" = "1" -o \
-        "$STATIC_COMPONENT" = "1" -o \
-        "$STATIC_all" = "1" ; then
+    if test "$STATIC_FRAMEWORK" = "1" || \
+       test "$STATIC_COMPONENT" = "1" || \
+       test "$STATIC_all" = "1" ; then
         $4="static"
-    elif test "$shared_mode_override" = "dso" -o \
-        "$SHARED_FRAMEWORK" = "1" -o \
-        "$SHARED_COMPONENT" = "1" -o \
-        "$DSO_all" = "1"; then
+    elif test "$shared_mode_override" = "dso" || \
+         test "$SHARED_FRAMEWORK" = "1" || \
+         test "$SHARED_COMPONENT" = "1" || \
+         test "$DSO_all" = "1"; then
         $4="dso"
     else
         $4="static"
@@ -729,7 +735,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
     AC_REQUIRE([AC_PROG_GREP])
 
     # See if it dropped an output file for us to pick up some
-    # shell variables in.  
+    # shell variables in.
     infile="$srcdir/$1/mca/$2/$3/post_configure.sh"
 
     # Add this subdir to the mast list of all MCA component subdirs
@@ -756,7 +762,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
     # Output pretty results
     AC_MSG_CHECKING([if MCA component $2:$3 can compile])
     AC_MSG_RESULT([yes])
-    
+
     dnl BWB: FIX ME: We still use the post_configure.sh for frameworks that use the direct call infrastructure.
     dnl All other uses we can ignore here, because config_components will have read it in and set all the
     dnl proper environment variables.  At some point, we should handle the direct call stuff the same way we
@@ -777,7 +783,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
             fi
         fi
     else
-        # were we supposed to have found something in the 
+        # were we supposed to have found something in the
         # post_configure.sh, but the file didn't exist?
         if test "$DIRECT_$2" = "$3" ; then
 AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
@@ -795,7 +801,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # because it will link against these (without a dependency from
     # libmpi.so to these flags)
     if test "$8" = "static"; then
-        AS_LITERAL_IF([$3], 
+        AS_LITERAL_IF([$3],
             [m4_foreach(flags, [LDFLAGS, LIBS],
                     [AS_IF([test "$$2_$3_WRAPPER_EXTRA_]flags[" = ""],
                            [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_]flags)],
@@ -811,10 +817,10 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # component can never be used in a STOP_AT_FIRST framework, we
     # don't have to implement the else clause in the literal check...
     AS_LITERAL_IF([$3],
-        [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""], 
+        [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
            [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
-            AS_IF([test "$8" = "static" -a "$stop_at_first" = "1"],
-              [AS_IF([test "$with_devel_headers" = "yes"], 
+            AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
+              [AS_IF([test "$with_devel_headers" = "yes"],
                      [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
               [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])
 ])
@@ -850,11 +856,11 @@ AC_DEFUN([MCA_PROCESS_DEAD_COMPONENT],[
 ])
 
 
-# MCA_COMPONENT_BUILD_CHECK(project_name (1), framework_name(2), 
+# MCA_COMPONENT_BUILD_CHECK(project_name (1), framework_name(2),
 #                           component_name (3), action-if-build (4)
 #                           action-if-not-build (5)
 # -----------------------------------------------------------------
-# checks the standard rules of component building to see if the 
+# checks the standard rules of component building to see if the
 # given component should be built.
 #
 # Note: component_name may not be determined until runtime....

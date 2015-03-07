@@ -38,13 +38,16 @@ ugni_SOURCES = \
         btl_ugni.h \
         btl_ugni_smsg.h \
         btl_ugni_smsg.c \
-        btl_ugni_prepare.h
+        btl_ugni_progress_thread.c \
+        btl_ugni_prepare.h \
+        btl_ugni_atomic.c
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_mca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-mca_btl_ugni_la_LIBADD = $(btl_ugni_LIBS) 
+mca_btl_ugni_la_LIBADD = $(btl_ugni_LIBS)  \
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/ugni/lib@OPAL_LIB_PREFIX@mca_common_ugni.la
 mca_btl_ugni_la_LDFLAGS = -module -avoid-version $(btl_ugni_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

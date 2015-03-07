@@ -9,9 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -327,6 +329,9 @@ static int query(pid_t pid,
         memset(data, 0, sizeof(data));
         len = read(fd, data, sizeof(data)-1);
         close(fd);
+        if (len < 0) {
+            goto diskstats;
+        }
     
         /* remove newline at end */
         data[len] = '\0';
@@ -409,6 +414,7 @@ static int query(pid_t pid,
             opal_list_append(&nstats->diskstats, &ds->super);
             opal_argv_free(fields);
         }
+        fclose(fp);
 
     netstats:
         /* look for the netstats file */
@@ -447,6 +453,7 @@ static int query(pid_t pid,
             opal_list_append(&nstats->netstats, &ns->super);
             opal_argv_free(fields);
         }
+        fclose(fp);
     }
 
  complete:

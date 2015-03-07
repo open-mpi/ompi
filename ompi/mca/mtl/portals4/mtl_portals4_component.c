@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,9 +32,12 @@
 #include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
 
+static int param_priority;
+
 static int ompi_mtl_portals4_component_register(void);
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
+static int ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority);
 static mca_mtl_base_module_t* 
 ompi_mtl_portals4_component_init(bool enable_progress_threads, 
                                  bool enable_mpi_threads);
@@ -51,8 +57,8 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         ompi_mtl_portals4_component_open,  /* component open */
-        ompi_mtl_portals4_component_close, /* component close */
-        NULL,
+        ompi_mtl_portals4_component_close,  /* component close */
+        ompi_mtl_portals4_component_query,  /* component close */
         ompi_mtl_portals4_component_register
     },
     {
@@ -74,6 +80,14 @@ ompi_mtl_portals4_component_register(void)
 {
     mca_base_var_enum_t *new_enum;
     int ret;
+
+    param_priority = 10;
+    (void) mca_base_component_var_register (&mca_mtl_portals4_component.mtl_version,
+                                            "priority", "Priority of the Portals4 MTL component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &param_priority);
 
     ompi_mtl_portals4.eager_limit = 2 * 1024;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
@@ -190,8 +204,9 @@ ompi_mtl_portals4_component_open(void)
     opal_free_list_init(&ompi_mtl_portals4.fl_message,
                         sizeof(ompi_mtl_portals4_message_t) + 
                         ompi_mtl_portals4.eager_limit,
+                        opal_cache_line_size,
                         OBJ_CLASS(ompi_mtl_portals4_message_t),
-                        1, -1, 1);
+                        0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
@@ -208,6 +223,18 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
 
+    return OMPI_SUCCESS;
+}
+
+static int
+ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
+{
+    /*
+     * assume if portals4 MTL was compiled, the user wants it
+     */
+ 
+    *priority = param_priority;
+    *module = (mca_base_module_t *)&ompi_mtl_portals4.base;
     return OMPI_SUCCESS;
 }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -271,7 +271,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             if (NULL == free_buffer) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            reduce_temp_buffer = free_buffer - lb;
+            reduce_temp_buffer = free_buffer - true_lb;
             
             /* Trickery here: we use a potentially smaller count than
                the user count -- use the largest count that is <=
@@ -319,7 +319,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 }
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            sbuf = inplace_temp - lb;
+            sbuf = inplace_temp - true_lb;
             ompi_datatype_copy_content_same_ddt(dtype, count, (char *) sbuf, (char *) rbuf);
         } else {
             inplace_temp = NULL;

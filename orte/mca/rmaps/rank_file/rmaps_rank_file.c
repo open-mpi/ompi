@@ -81,7 +81,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_rank_file_component.super.base_version;
     char *slots;
     bool initial_map=true;
-
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_resource_type_t rtype;
+#endif
+    
     /* only handle initial launch of rf job */
     if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -113,6 +116,19 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 
     /* convenience def */
     map = jdata->map;
+
+#if OPAL_HAVE_HWLOC
+    /* default to LOGICAL processors */
+    if (mca_rmaps_rank_file_component.physical) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:rank_file: using PHYSICAL processors");
+        rtype = OPAL_HWLOC_PHYSICAL;
+    } else {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:rank_file: using LOGICAL processors");
+        rtype = OPAL_HWLOC_LOGICAL;
+    }
+#endif
     
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -276,8 +292,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
                 bitmap = hwloc_bitmap_alloc();
                 /* parse the slot_list to find the socket and core */
-                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, bitmap))) {
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
+                    hwloc_bitmap_free(bitmap);
                     goto error;
                 }
                 /* note that we cannot set the proc locale to any specific object
@@ -443,6 +460,9 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                         }
                         argv = opal_argv_split (value, '@');
                         cnt = opal_argv_count (argv);
+                        if (NULL != node_name) {
+                            free(node_name);
+                        }
                         if (1 == cnt) {
                             node_name = strdup(argv[0]);
                         } else if (2 == cnt) {
@@ -452,6 +472,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
                             opal_argv_free(argv);
+                            node_name = NULL;
                             goto unlock;
                         }
                         opal_argv_free (argv);
@@ -460,8 +481,6 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
-                            free(node_name);
-                            node_name = NULL;
                             goto unlock;
                         }
                         /* check if this is the local node */

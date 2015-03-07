@@ -15,9 +15,9 @@
  */
 void ADIOI_GEN_Prealloc(ADIO_File fd, ADIO_Offset diskspace, int *error_code) 
 {
-	ADIO_Offset curr_fsize, alloc_size, size, len, done;
+	ADIO_Offset curr_fsize, alloc_size, size, len, done, ntimes;
 	ADIO_Status status;
-	int i, ntimes;
+	int i;
 	char *buf;
 	ADIO_Fcntl_t *fcntl_struct;
 	static char myname[] = "ADIOI_GEN_PREALLOC";
@@ -48,7 +48,7 @@ void ADIOI_GEN_Prealloc(ADIO_File fd, ADIO_Offset diskspace, int *error_code)
 	for (i=0; i<ntimes; i++) {
 	    len = ADIOI_MIN(size-done, ADIOI_PREALLOC_BUFSZ);
 	    ADIO_ReadContig(fd, buf, 
-                      len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M), 
+                      (int)len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M),
                               so it fits in an int parameter */
                       MPI_BYTE, ADIO_EXPLICIT_OFFSET, done,
 			    &status, error_code);
@@ -62,7 +62,7 @@ void ADIOI_GEN_Prealloc(ADIO_File fd, ADIO_Offset diskspace, int *error_code)
                 return;  
 	    }
 	    ADIO_WriteContig(fd, buf, 
-                       len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M), 
+                       (int)len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M),
                                so it fits in an int parameter */
                        MPI_BYTE, ADIO_EXPLICIT_OFFSET, 
                              done, &status, error_code);
@@ -77,7 +77,7 @@ void ADIOI_GEN_Prealloc(ADIO_File fd, ADIO_Offset diskspace, int *error_code)
 	    for (i=0; i<ntimes; i++) {
 		len = ADIOI_MIN(alloc_size-done, ADIOI_PREALLOC_BUFSZ);
 		ADIO_WriteContig(fd, buf, 
-                     len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M), 
+                     (int)len, /* len is ADIO_Offset but is <= ADIOI_PREALLOC_BUFSZ (16M),
                              so it fits in an int parameter */
                      MPI_BYTE, ADIO_EXPLICIT_OFFSET, 
 				 done, &status, error_code);

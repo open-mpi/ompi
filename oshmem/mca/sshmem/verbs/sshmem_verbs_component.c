@@ -19,6 +19,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/sys_limits.h"
+#include "opal/mca/common/verbs/common_verbs.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
@@ -100,6 +101,11 @@ verbs_runtime_query(mca_base_module_t **module,
     *priority = 0;
     *module = NULL;
 
+    /* If fork support is requested, try to enable it */
+    if (OSHMEM_SUCCESS != (rc = opal_common_verbs_fork_test())) {
+        return OSHMEM_ERROR;
+    }
+
     memset(device, 0, sizeof(*device));
 
 #ifdef HAVE_IBV_GET_DEVICE_LIST
@@ -176,7 +182,7 @@ verbs_runtime_query(mca_base_module_t **module,
         }
 
 #if (MPAGE_ENABLE > 0)
-        if (!rc && mca_sshmem_verbs_component.has_shared_mr > 0) {
+        if (!rc && (0 != mca_sshmem_verbs_component.has_shared_mr)) {
             struct ibv_exp_reg_shared_mr_in in_smr;
 
             access_flag = IBV_ACCESS_LOCAL_WRITE |

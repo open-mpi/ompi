@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -311,3 +313,82 @@ int opal_dss_compare_buffer_contents(opal_buffer_t *value1, opal_buffer_t *value
 {
     return OPAL_EQUAL;  /* eventually compare bytes in buffers */
 }
+
+/* OPAL_NAME */
+int opal_dss_compare_name(opal_process_name_t *value1,
+                          opal_process_name_t *value2,
+                          opal_data_type_t type)
+{
+    if (NULL == value1 && NULL == value2) {
+        return OPAL_EQUAL;
+    } else if (NULL == value1) {
+        return OPAL_VALUE2_GREATER;
+    } else if (NULL == value2) {
+        return OPAL_VALUE1_GREATER;
+    }
+
+    /* If any of the fields are wildcard,
+    * then we want to just ignore that one field. In the case
+    * of OPAL_NAME_WILDCARD (where ALL of the fields are wildcard), this
+    * will automatically result in OPAL_EQUAL for any name in the other
+    * value - a totally useless result, but consistent in behavior.
+    */
+
+    /** check the jobids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->jobid != OPAL_JOBID_WILDCARD &&
+        value2->jobid != OPAL_JOBID_WILDCARD) {
+        if (value1->jobid < value2->jobid) {
+            return OPAL_VALUE2_GREATER;
+        } else if (value1->jobid > value2->jobid) {
+            return OPAL_VALUE1_GREATER;
+        }
+    }
+
+    /** check the vpids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->vpid != OPAL_VPID_WILDCARD &&
+        value2->vpid != OPAL_VPID_WILDCARD) {
+        if (value1->vpid < value2->vpid) {
+            return OPAL_VALUE2_GREATER;
+        } else if (value1->vpid > value2->vpid) {
+            return OPAL_VALUE1_GREATER;
+        }
+    }
+
+    /** only way to get here is if all fields are equal or WILDCARD */
+    return OPAL_EQUAL;
+}
+
+int opal_dss_compare_vpid(opal_vpid_t *value1,
+                          opal_vpid_t *value2,
+                          opal_data_type_t type)
+{
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == OPAL_VPID_WILDCARD ||
+        *value2 == OPAL_VPID_WILDCARD) return OPAL_EQUAL;
+
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+int opal_dss_compare_jobid(opal_jobid_t *value1,
+                           opal_jobid_t *value2,
+                           opal_data_type_t type)
+{
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == OPAL_JOBID_WILDCARD ||
+        *value2 == OPAL_JOBID_WILDCARD) return OPAL_EQUAL;
+
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+

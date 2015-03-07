@@ -12,9 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -175,12 +175,12 @@ static int smcuda_register(void)
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_smcuda.super.btl_max_send_size = 32*1024;
+    mca_btl_smcuda.super.btl_max_send_size = 128*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_send_length = 64*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_smcuda.super.btl_min_rdma_pipeline_size = 64*1024;
     mca_btl_smcuda.super.btl_flags = MCA_BTL_FLAGS_SEND;
-    mca_btl_smcuda.super.btl_seg_size = sizeof (mca_btl_smcuda_segment_t);
+    mca_btl_smcuda.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
     mca_btl_smcuda.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_smcuda.super.btl_latency   = 1;     /* Microsecs */
 
@@ -218,9 +218,9 @@ static int mca_btl_smcuda_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_eager, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_max, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.pending_send_fl, opal_free_list_t);
     return OPAL_SUCCESS;
 }
@@ -655,7 +655,7 @@ static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t* btl,
     frag->hdr->tag = MCA_BTL_TAG_SMCUDA;
     frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
     frag->endpoint = endpoint;
-    memcpy(frag->segment.base.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
+    memcpy(frag->segment.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
 
     /* write the fragment pointer to the FIFO */
     /*
@@ -691,7 +691,7 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
     mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
-    mca_btl_base_segment_t* segments = des->des_local;
+    mca_btl_base_segment_t* segments = des->des_segments;
 
     /* Use the rank of the peer that sent the data to get to the endpoint
      * structure.  This is needed for PML callback. */
@@ -990,7 +990,7 @@ void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         MCA_BTL_SMCUDA_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
 
-        OPAL_FREE_LIST_RETURN(&mca_btl_smcuda_component.pending_send_fl, (opal_list_item_t*)si);
+        opal_free_list_return (&mca_btl_smcuda_component.pending_send_fl, (opal_free_list_item_t*)si);
 
         if ( OPAL_SUCCESS != rc )
             return;
@@ -1065,8 +1065,8 @@ int mca_btl_smcuda_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_smcuda_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_local_count = 1;
-                Frag.base.des_local = &seg;
+                Frag.base.des_segment_count = 1;
+                Frag.base.des_segments = &seg;
 #if OPAL_CUDA_SUPPORT
                 Frag.hdr = hdr;  /* needed for peer rank in control messages */
 #endif /* OPAL_CUDA_SUPPORT */
@@ -1134,20 +1134,16 @@ int mca_btl_smcuda_component_progress(void)
      * completed.  If so, issue the PML callbacks on the fragments.
      */
     while (1 == progress_one_cuda_ipc_event((mca_btl_base_descriptor_t **)&frag)) {
-        int btl_ownership;
-        btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-        if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-            frag->base.des_cbfunc(&mca_btl_smcuda.super, 
-                                  frag->endpoint, &frag->base, 
-                                  OPAL_SUCCESS);
-        }
+        mca_btl_base_rdma_completion_fn_t cbfunc = (mca_btl_base_rdma_completion_fn_t) frag->base.des_cbfunc;
 
-        if (btl_ownership) {
-            if(frag->registration != NULL) {
-                frag->endpoint->mpool->mpool_deregister(frag->endpoint->mpool,
-                                                       (mca_mpool_base_registration_t*)frag->registration);
-                frag->registration = NULL;
-            }
+        cbfunc (&mca_btl_smcuda.super, frag->endpoint, frag->segment.seg_addr.pval,
+                frag->local_handle, frag->base.des_context, frag->base.des_cbdata,
+                OPAL_SUCCESS);
+
+        if(frag->registration != NULL) {
+            frag->endpoint->mpool->mpool_deregister(frag->endpoint->mpool,
+                                                    (mca_mpool_base_registration_t*)frag->registration);
+            frag->registration = NULL;
             MCA_BTL_SMCUDA_FRAG_RETURN(frag);
         }
         nevents++;

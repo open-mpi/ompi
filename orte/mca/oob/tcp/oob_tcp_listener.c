@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -301,6 +303,7 @@ static int create_listen(void)
                 opal_output(0,"mca_oob_tcp_component_init: socket() failed: %s (%d)", 
                             strerror(opal_socket_errno), opal_socket_errno);
             }
+            opal_argv_free(ports);
             return ORTE_ERR_IN_ERRNO;
         }
 
@@ -351,6 +354,7 @@ static int create_listen(void)
             opal_output(0, "mca_oob_tcp_create_listen: getsockname(): %s (%d)", 
                         strerror(opal_socket_errno), opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
         
@@ -358,6 +362,8 @@ static int create_listen(void)
         if (listen(sd, SOMAXCONN) < 0) {
             opal_output(0, "mca_oob_tcp_component_init: listen(): %s (%d)", 
                         strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
         
@@ -365,12 +371,16 @@ static int create_listen(void)
         if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
             opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed: %s (%d)", 
                         strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
         flags |= O_NONBLOCK;
         if (fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed: %s (%d)", 
                         strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
 
@@ -393,18 +403,17 @@ static int create_listen(void)
             break;
         }
     }
+    /* done with this, so release it */
+    opal_argv_free(ports);
+    
     if (0 == opal_list_get_size(&mca_oob_tcp_component.listeners)) {
         /* cleanup */
         if (0 <= sd) {
             CLOSE_THE_SOCKET(sd);
         }
-        opal_argv_free(ports);
         return ORTE_ERR_SOCKET_NOT_AVAILABLE;
     }
 
-    /* done with this, so release it */
-    opal_argv_free(ports);
-    
     return ORTE_SUCCESS;
 }
 
@@ -546,6 +555,17 @@ static int create_listen6(void)
             }
             return ORTE_ERR_IN_ERRNO;
         }
+        /* Set the socket to close-on-exec so that no children inherit
+           this FD */
+        if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_create_listen6: unable to set the "
+                        "listening socket to CLOEXEC (%s:%d)\n",
+                        strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
+            return ORTE_ERROR;
+        }
+
 
         /* setup socket options */
         orte_oob_tcp_set_socket_options(sd);

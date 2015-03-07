@@ -575,7 +575,41 @@ int opal_dss_open(void)
                                                      "OPAL_TIME", &tmp))) {
         return rc;
     }
-   /* All done */
+    
+    tmp = OPAL_NAME;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_name,
+                                          opal_dss_unpack_name,
+                                          (opal_dss_copy_fn_t)opal_dss_copy_name,
+                                          (opal_dss_compare_fn_t)opal_dss_compare_name,
+                                          (opal_dss_print_fn_t)opal_dss_print_name,
+                                          OPAL_DSS_UNSTRUCTURED,
+                                          "OPAL_NAME", &tmp))) {
+        return rc;
+    }
+
+    tmp = OPAL_JOBID;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_jobid,
+                                          opal_dss_unpack_jobid,
+                                          (opal_dss_copy_fn_t)opal_dss_copy_jobid,
+                                          (opal_dss_compare_fn_t)opal_dss_compare_jobid,
+                                          (opal_dss_print_fn_t)opal_dss_print_jobid,
+                                          OPAL_DSS_UNSTRUCTURED,
+                                          "OPAL_JOBID", &tmp))) {
+        return rc;
+    }
+
+    tmp = OPAL_VPID;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_vpid,
+                                          opal_dss_unpack_vpid,
+                                          (opal_dss_copy_fn_t)opal_dss_copy_vpid,
+                                          (opal_dss_compare_fn_t)opal_dss_compare_vpid,
+                                          (opal_dss_print_fn_t)opal_dss_print_vpid,
+                                          OPAL_DSS_UNSTRUCTURED,
+                                          "OPAL_VPID", &tmp))) {
+        return rc;
+    }
+
+    /* All done */
 
     opal_dss_initialized = true;
     return OPAL_SUCCESS;

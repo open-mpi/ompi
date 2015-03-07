@@ -1,11 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -24,12 +26,12 @@ static inline int mca_oob_ud_qp_process_send_completions (mca_oob_ud_qp_t *qp,
                                                           int num_completions);
 
 #define MCA_OOB_UD_CLEAR_CQ(cq)                                        \
-    do {                                                        \
-        if (NULL == (cq)->channel) {                                \
-            struct ibv_wc wc;                                        \
+    do {                                                               \
+        if (NULL == (cq)->channel) {                                   \
+            struct ibv_wc wc;                                          \
             while (ibv_poll_cq ((cq), 1, &wc));                        \
-        }                                                        \
-    } while (0);                                                \
+        }                                                              \
+    } while (0);                                                       \
 
 int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
                         struct ibv_comp_channel *recv_channel,
@@ -37,8 +39,9 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
 {
     struct ibv_qp_init_attr init_attr;
 
-    OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:qp_init creating UD QP on port %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), port->port_num));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:qp_init creating UD QP on port %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), port->port_num);
 
     /* create a UD queue pair */
     memset(&init_attr, 0, sizeof(init_attr));
@@ -47,9 +50,21 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
 
     qp->ib_recv_cq = ibv_create_cq (port->device->ib_context, 16384,
                                     port, recv_channel, 0);
+    if (NULL == qp->ib_recv_cq) {
+        opal_output(orte_oob_base_framework.framework_output,
+                    "%s oob:ud:qp_init could not create recv completion queue. errno = %d",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        return ORTE_ERROR;
+    }
     if (false == onecq) {
         qp->ib_send_cq = ibv_create_cq (port->device->ib_context, 16384,
                                         port, send_channel, 0);
+        if (NULL == qp->ib_send_cq) {
+            opal_output(orte_oob_base_framework.framework_output,
+                        "%s oob:ud:qp_init could not create send completion queue. errno = %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+            return ORTE_ERROR;
+        }
     } else {
         qp->ib_send_cq = qp->ib_recv_cq;
     }
@@ -64,11 +79,11 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
     init_attr.cap.max_recv_wr     = 4096;
     init_attr.cap.max_send_wr     = 4096;
 
-    qp->ib_qp = ibv_create_qp (port->device->ib_pd, &init_attr); 
+    qp->ib_qp = ibv_create_qp (port->device->ib_pd, &init_attr);
     if (NULL == qp->ib_qp) {
-        OPAL_OUTPUT_VERBOSE((1, mca_oob_base_output,
+        opal_output_verbose(1, orte_oob_base_framework.framework_output,
                              "%s oob:ud:qp_init could not create queue pair. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
         return ORTE_ERROR;
     }
     /* end: create the UD queue pair */
@@ -136,7 +151,7 @@ int mca_oob_ud_qp_to_rts (mca_oob_ud_qp_t *qp)
     if (0 != ibv_modify_qp(qp->ib_qp, &attr, IBV_QP_STATE)) {
         opal_output(0, "%s oob:ud:qp_to_reset error modifying qp to RTR. errno = %d",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
-        return ORTE_ERROR; 
+        return ORTE_ERROR;
     }
 
     /* Setup attributes */
@@ -148,7 +163,7 @@ int mca_oob_ud_qp_to_rts (mca_oob_ud_qp_t *qp)
     if (0 != ibv_modify_qp(qp->ib_qp, &attr, attr_mask)) {
         opal_output(0, "%s oob:ud:qp_to_reset error modifying qp to RTS. errno = %d",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
-        return ORTE_ERROR; 
+        return ORTE_ERROR;
     }
 
     return ORTE_SUCCESS;
@@ -202,9 +217,10 @@ static inline int mca_oob_ud_qp_process_send_completions (mca_oob_ud_qp_t *qp,
     struct ibv_wc wc[1];
     int count, rc, ret, i;
 
-    OPAL_OUTPUT_VERBOSE((20, mca_oob_base_output, "%s oob:ud:qp_process_send_completions polling "
-                         "for %d completions", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         num_completions));
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                         "%s oob:ud:qp_process_send_completions polling for %d completions",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         num_completions);
 
     rc = ORTE_SUCCESS;
 
@@ -238,7 +254,6 @@ int mca_oob_ud_qp_post_send (mca_oob_ud_qp_t *qp, struct ibv_send_wr *wr,
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
         return ORTE_ERROR;
     }
-
     return mca_oob_ud_qp_process_send_completions (qp, num_completions);
 }
 
@@ -248,11 +263,10 @@ int mca_oob_ud_qp_post_recv (mca_oob_ud_qp_t *qp, struct ibv_recv_wr *wr) {
 
     rc = ibv_post_recv (qp->ib_qp, wr, &bad_wr);
     if (0 != rc) {
-        opal_output (0, "%s oob:ud:qp_post_recv ibv_post_send failed. errno = %d",
+        opal_output (0, "%s oob:ud:qp_post_recv failed. errno = %d",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
         return ORTE_ERROR;
     }
-
     return ORTE_SUCCESS;
 }
 
@@ -261,11 +275,12 @@ int mca_oob_ud_qp_data_aquire (struct mca_oob_ud_port_t *port, mca_oob_ud_qp_t *
     opal_free_list_item_t *item;
 
     do {
-        OPAL_FREE_LIST_GET(&port->data_qps, item, rc);
-        if (OPAL_SUCCESS != rc) {
-            OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:qp_data_aquire error "
-                                 "allocating new data qp. error = %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc));
+        item = opal_free_list_get_st (&port->data_qps);
+        if (NULL == item) {
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                 "%s oob:ud:qp_data_aquire error allocating new data qp",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
             break;
         }
 
@@ -291,7 +306,7 @@ int mca_oob_ud_qp_data_release (mca_oob_ud_qp_t *qp) {
         return rc;
     }
 
-    OPAL_FREE_LIST_RETURN(&qp->port->data_qps, qp);
+    opal_free_list_return_st (&qp->port->data_qps, &qp->super);
 
     return ORTE_SUCCESS;
 }

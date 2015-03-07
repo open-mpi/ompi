@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,6 @@
 #include "opal_stdint.h"
 #include "opal/threads/mutex.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
 
@@ -100,7 +99,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     struct sockaddr_un address;
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path));
+    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
 
     if (0 != connect(agent_fd, (struct sockaddr*) &address, sizeof(address))) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -150,6 +149,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
 {
     /* If connectivity checking is not enabled, do nothing */
     if (!mca_btl_usnic_component.connectivity_enabled) {
+        module->local_modex.connectivity_udp_port = 0;
         return OPAL_SUCCESS;
     }
 
@@ -164,9 +164,9 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     /* Send the LISTEN command parameters */
     opal_btl_usnic_connectivity_cmd_listen_t cmd = {
         .module = NULL,
-        .ipv4_addr = module->local_addr.ipv4_addr,
-        .cidrmask = module->local_addr.cidrmask,
-        .mtu = module->local_addr.mtu
+        .ipv4_addr = module->local_modex.ipv4_addr,
+        .netmask = module->local_modex.netmask,
+        .max_msg_size = module->local_modex.max_msg_size
     };
     /* Only the MPI process who is also the agent will send the
        pointer value (it doesn't make sense otherwise) */
@@ -177,10 +177,8 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     /* Ensure to NULL-terminate the passed strings */
     strncpy(cmd.nodename, opal_process_info.nodename,
             CONNECTIVITY_NODENAME_LEN - 1);
-    strncpy(cmd.if_name, module->if_name, CONNECTIVITY_IFNAME_LEN - 1);
-    strncpy(cmd.usnic_name, ibv_get_device_name(module->device),
+    strncpy(cmd.usnic_name, module->fabric_info->fabric_attr->name,
             CONNECTIVITY_IFNAME_LEN - 1);
-    memcpy(cmd.mac, module->local_addr.mac, 6);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -199,7 +197,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
 
     /* Get the UDP port number that was received */
     assert(CONNECTIVITY_AGENT_CMD_LISTEN == reply.cmd);
-    module->local_addr.connectivity_udp_port = reply.udp_port;
+    module->local_modex.connectivity_udp_port = reply.udp_port;
 
     return OPAL_SUCCESS;
 }
@@ -207,9 +205,9 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
 
 int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
                                      uint32_t dest_ipv4_addr,
-                                     uint32_t dest_cidrmask, int dest_port,
-                                     uint8_t dest_mac[6], char *dest_nodename,
-                                     size_t mtu)
+                                     uint32_t dest_netmask, int dest_port,
+                                     char *dest_nodename,
+                                     size_t max_msg_size)
 {
     /* If connectivity checking is not enabled, do nothing */
     if (!mca_btl_usnic_component.connectivity_enabled) {
@@ -229,13 +227,12 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
         .src_ipv4_addr = src_ipv4_addr,
         .src_udp_port = src_port,
         .dest_ipv4_addr = dest_ipv4_addr,
-        .dest_cidrmask = dest_cidrmask,
+        .dest_netmask = dest_netmask,
         .dest_udp_port = dest_port,
-        .mtu = mtu
+        .max_msg_size = max_msg_size
     };
     /* Ensure to NULL-terminate the passed string */
     strncpy(cmd.dest_nodename, dest_nodename, CONNECTIVITY_NODENAME_LEN - 1);
-    memcpy(cmd.dest_mac, dest_mac, 6);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -272,7 +269,7 @@ int opal_btl_usnic_connectivity_unlisten(opal_btl_usnic_module_t *module)
 
     /* Send the UNLISTEN command parameters */
     opal_btl_usnic_connectivity_cmd_unlisten_t cmd = {
-        .ipv4_addr = module->local_addr.ipv4_addr,
+        .ipv4_addr = module->local_modex.ipv4_addr,
     };
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {

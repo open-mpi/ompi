@@ -1,3 +1,14 @@
+dnl
+dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl $COPYRIGHT$
+dnl
+dnl Additional copyrights may follow
+dnl
+dnl $HEADER$
+dnl
+
 #
 # --with-ft=TYPE
 #  TYPE:
@@ -52,7 +63,7 @@ AC_DEFUN([OPAL_SETUP_FT],[
     if test "$opal_setup_ft_options" = "yes"; then 
         AC_MSG_CHECKING([if want fault tolerance])
     fi
-    if test "x$with_ft" != "x" -o "$opal_want_ft" = "1"; then
+    if test "x$with_ft" != "x" || test "$opal_want_ft" = "1"; then
         opal_want_ft=1
         opal_want_ft_cr=0
         opal_want_ft_type=none
@@ -63,7 +74,7 @@ AC_DEFUN([OPAL_SETUP_FT],[
             IFS=$as_save_IFS
 
             # Default value
-            if test "$opt" = "" -o "$opt" = "yes"; then
+            if test "$opt" = "" || test "$opt" = "yes"; then
                 opal_want_ft_cr=1
             elif test "$opt" = "LAM"; then
                 opal_want_ft_cr=1
@@ -136,7 +147,7 @@ AC_DEFUN([OPAL_SETUP_FT],[
         opal_want_ft_thread=0
         AC_MSG_RESULT([Disabled])
     # if default, and no progress or MPI threads
-    elif test "$enable_ft_thread" = "undef" -a "$enable_opal_multi_threads" = "no" ; then
+    elif test "$enable_ft_thread" = "undef" && test "$enable_opal_multi_threads" = "no" ; then
         opal_want_ft_thread=0
         AC_MSG_RESULT([Disabled (OPAL Thread Support Disabled)])
     # if default, and MPI threads enabled for C/R only

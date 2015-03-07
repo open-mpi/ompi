@@ -11,8 +11,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +40,13 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
+
+typedef uint32_t opal_jobid_t;
+typedef uint32_t opal_vpid_t;
+typedef struct {
+    opal_jobid_t jobid;
+    opal_vpid_t vpid;
+} opal_process_name_t;
 
 BEGIN_C_DECLS
 
@@ -86,8 +96,6 @@ typedef struct {
 #define    OPAL_VALUE               (opal_data_type_t)   26 /**< opal value structure */
 #define    OPAL_BUFFER              (opal_data_type_t)   27 /**< pack the remaining contents of a buffer as an object */
 #define    OPAL_PTR                 (opal_data_type_t)   28 /**< pointer to void* */
-    /* OPAL Dynamic */
-#define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
     /* OPAL Array types */
 #define    OPAL_FLOAT_ARRAY         (opal_data_type_t)   31
 #define    OPAL_DOUBLE_ARRAY        (opal_data_type_t)   32
@@ -108,7 +116,11 @@ typedef struct {
 #define    OPAL_BYTE_OBJECT_ARRAY   (opal_data_type_t)   47
 #define    OPAL_PID_ARRAY           (opal_data_type_t)   48
 #define    OPAL_TIMEVAL_ARRAY       (opal_data_type_t)   49
-
+#define    OPAL_NAME                (opal_data_type_t)   50
+#define    OPAL_JOBID               (opal_data_type_t)   51
+#define    OPAL_VPID                (opal_data_type_t)   52
+    /* OPAL Dynamic */
+#define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)  100
 
 /* define the results values for comparisons so we can change them in only one place */
 #define OPAL_VALUE1_GREATER  +1
@@ -232,6 +244,7 @@ typedef struct {
         float fval;
         double dval;
         struct timeval tv;
+        opal_process_name_t name;
         opal_bool_array_t flag_array;
         opal_uint8_array_t byte_array;
         opal_string_array_t string_array;

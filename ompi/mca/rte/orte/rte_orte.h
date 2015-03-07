@@ -56,7 +56,6 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_JOBID  ORTE_NS_CMP_JOBID
 #define OMPI_RTE_CMP_VPID   ORTE_NS_CMP_VPID
 #define OMPI_RTE_CMP_ALL    ORTE_NS_CMP_ALL
-#define ompi_rte_hash_name(a) orte_util_hash_name(a)
 /* This is the DSS tag to serialize a proc name */
 #define OMPI_NAME ORTE_NAME
 #define OMPI_PROCESS_NAME_HTON ORTE_PROCESS_NAME_HTON

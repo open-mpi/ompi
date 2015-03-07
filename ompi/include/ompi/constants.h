@@ -40,7 +40,7 @@ enum {
     OMPI_ERR_FATAL                  = OPAL_ERR_FATAL,
     OMPI_ERR_NOT_IMPLEMENTED        = OPAL_ERR_NOT_IMPLEMENTED,
     OMPI_ERR_NOT_SUPPORTED          = OPAL_ERR_NOT_SUPPORTED,
-    OMPI_ERR_INTERUPTED             = OPAL_ERR_INTERUPTED,
+    OMPI_ERR_INTERUPTED             = OPAL_ERR_INTERRUPTED,
     OMPI_ERR_WOULD_BLOCK            = OPAL_ERR_WOULD_BLOCK,
     OMPI_ERR_IN_ERRNO               = OPAL_ERR_IN_ERRNO,
     OMPI_ERR_UNREACH                = OPAL_ERR_UNREACH,
@@ -66,7 +66,11 @@ enum {
 
     OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1,
     OMPI_ERR_RMA_SYNC               = OMPI_ERR_BASE - 2,
-    OMPI_ERR_RMA_SHARED             = OMPI_ERR_BASE - 3
+    OMPI_ERR_RMA_SHARED             = OMPI_ERR_BASE - 3,
+    OMPI_ERR_RMA_ATTACH             = OMPI_ERR_BASE - 4,
+    OMPI_ERR_RMA_RANGE              = OMPI_ERR_BASE - 5,
+    OMPI_ERR_RMA_CONFLICT           = OMPI_ERR_BASE - 6,
+    OMPI_ERR_WIN                    = OMPI_ERR_BASE - 7,
 };
 
 #define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 100)

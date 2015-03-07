@@ -12,11 +12,14 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,9 +38,9 @@
 #include <infiniband/verbs.h>
 
 /* Open MPI includes */
-#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
@@ -126,10 +129,7 @@ struct mca_btl_openib_qp_info_t {
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_XRC_QP)
 
 typedef enum {
-    BTL_OPENIB_RQ_SOURCE_DEFAULT,
-    BTL_OPENIB_RQ_SOURCE_MCA,
-    BTL_OPENIB_RQ_SOURCE_DEVICE_INI,
-    BTL_OPENIB_RQ_SOURCE_MAX
+    BTL_OPENIB_RQ_SOURCE_DEVICE_INI = MCA_BASE_VAR_SOURCE_MAX,
 } btl_openib_receive_queues_source_t;
 
 typedef enum {
@@ -138,7 +138,6 @@ typedef enum {
     BTL_OPENIB_DT_ALL
 } btl_openib_device_type_t;
 
-#if OPAL_HAVE_THREADS
 /* The structer for manage all BTL SRQs */
 typedef struct mca_btl_openib_srq_manager_t {
     opal_mutex_t lock;
@@ -147,10 +146,9 @@ typedef struct mca_btl_openib_srq_manager_t {
        pointers that associated with these SRQs */
     opal_hash_table_t srq_addr_table;
 } mca_btl_openib_srq_manager_t;
-#endif
 
 struct mca_btl_openib_component_t {
-    mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t          super;  /**< base BTL component */
 
     int                                ib_max_btls;
     /**< maximum number of devices available to openib component */
@@ -228,7 +226,6 @@ struct mca_btl_openib_component_t {
     int     apm_lmc;
     int     apm_ports;
     unsigned int buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
-#if OPAL_HAVE_THREADS
     int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
@@ -237,7 +234,6 @@ struct mca_btl_openib_component_t {
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
 #if BTL_OPENIB_FAILOVER_ENABLED
     bool port_error_failover;        /**< Report port errors to speed up failover */
-#endif
 #endif
     /* declare as an int instead of btl_openib_device_type_t since there is no
        guarantee about the size of an enum. this value will be registered as an
@@ -283,23 +279,22 @@ struct mca_btl_openib_component_t {
     unsigned int cq_poll_progress;
     unsigned int cq_poll_batch;
     unsigned int eager_rdma_poll_ratio;
-    /** Whether we want fork support or not */
-    int want_fork_support;
     int rdma_qp;
     int credits_qp; /* qp used for software flow control */
     bool cpc_explicitly_defined;
     /**< free list of frags only; used for pining user memory */
-    ompi_free_list_t send_user_free;
+    opal_free_list_t send_user_free;
     /**< free list of frags only; used for pining user memory */
-    ompi_free_list_t recv_user_free;
+    opal_free_list_t recv_user_free;
     /**< frags for coalesced massages */
-    ompi_free_list_t send_free_coalesced;
+    opal_free_list_t send_free_coalesced;
     /** Default receive queues */
     char* default_recv_qps;
     /** GID index to use */
     int gid_index;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
+    bool allow_max_memory_registration;
     int memory_registration_verbose_level;
     int memory_registration_verbose;
     int ignore_locality;
@@ -361,8 +356,8 @@ typedef struct mca_btl_openib_modex_message_t {
     } while (0)
 
 typedef struct mca_btl_openib_device_qp_t {
-    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
-    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
+    opal_free_list_t send_free;     /**< free lists of send buffer descriptors */
+    opal_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
 } mca_btl_openib_device_qp_t;
 
 struct mca_btl_base_endpoint_t;
@@ -392,19 +387,21 @@ typedef struct mca_btl_openib_device_t {
     uint16_t hp_cq_polls;
     uint16_t eager_rdma_polls;
     bool pollme;
-#if OPAL_HAVE_THREADS
     volatile bool got_fatal_event;
     volatile bool got_port_event;
-#endif
 #if HAVE_XRC
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_xrcd *xrcd;
+#else
     struct ibv_xrc_domain *xrc_domain;
+#endif
     int xrc_fd;
 #endif
     int32_t non_eager_rdma_endpoints;
     int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
-    ompi_free_list_t send_free_control;
+    opal_free_list_t send_free_control;
     /* QP types and attributes that will be used on this device */
     mca_btl_openib_device_qp_t *qps;
     /* Maximum value supported by this device for max_inline_data */
@@ -497,9 +494,15 @@ typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
+struct mca_btl_base_registration_handle_t {
+    uint32_t rkey;
+    uint32_t lkey;
+};
+
 struct mca_btl_openib_reg_t {
     mca_mpool_base_registration_t base;
     struct ibv_mr *mr;
+    mca_btl_base_registration_handle_t btl_handle;
 };
 typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
@@ -612,32 +615,182 @@ extern int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_base_descriptor_t** descriptor
 );
 
-/**
- * PML->BTL Initiate a put of the specified size.
- *
- * @param btl (IN)               BTL instance
- * @param btl_peer (IN)          BTL peer addressing
- * @param descriptor (IN)        Descriptor of data to be transmitted.
- */
-extern int mca_btl_openib_put(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor
-    );
+/* forward decaration for internal put/get */
+struct mca_btl_openib_put_frag_t;
+struct mca_btl_openib_get_frag_t;
 
 /**
- * PML->BTL Initiate a get of the specified size.
+ * @brief Schedule a put fragment with the HCA (internal)
  *
  * @param btl (IN)               BTL instance
- * @param btl_base_peer (IN)     BTL peer addressing
- * @param descriptor (IN)        Descriptor of data to be transmitted.
+ * @param ep (IN)                BTL endpoint
+ * @param frag (IN)              Fragment prepared by mca_btl_openib_put
+ *
+ * If the fragment can not be scheduled due to resource limitations then
+ * the fragment will be put on the pending put fragment list and retried
+ * when another get/put fragment has completed.
  */
-extern int mca_btl_openib_get(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor
-    );
+int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
+                                 struct mca_btl_openib_put_frag_t *frag);
 
+/**
+ * @brief Schedule an RDMA write with the HCA
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param local_address (IN)     Source address
+ * @param remote_address (IN)    Destination address
+ * @param local_handle (IN)      Registration handle for region containing the region {local_address, size}
+ * @param remote_handle (IN)     Registration handle for region containing the region {remote_address, size}
+ * @param size (IN)              Number of bytes to write
+ * @param flags (IN)             Transfer flags
+ * @param order (IN)             Ordering
+ * @param cbfunc (IN)            Function to call on completion
+ * @param cbcontext (IN)         Context for completion callback
+ * @param cbdata (IN)            Data for completion callback
+ *
+ * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
+ * @return OPAL_SUCCCESS if the operation was successfully scheduled
+ *
+ * This function will attempt to schedule a put operation with the HCA.
+ */
+int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+/**
+ * @brief Schedule a get fragment with the HCA (internal)
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param qp (IN)                ID of queue pair to schedule the get on
+ * @param frag (IN)              Fragment prepared by mca_btl_openib_get
+ *
+ * If the fragment can not be scheduled due to resource limitations then
+ * the fragment will be put on the pending get fragment list and retried
+ * when another get/put fragment has completed.
+ */
+int mca_btl_openib_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
+                                 struct mca_btl_openib_get_frag_t *frag);
+
+/**
+ * @brief Schedule an RDMA read with the HCA
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                BTL endpoint
+ * @param local_address (IN)     Destination address
+ * @param remote_address (IN)    Source address
+ * @param local_handle (IN)      Registration handle for region containing the region {local_address, size}
+ * @param remote_handle (IN)     Registration handle for region containing the region {remote_address, size}
+ * @param size (IN)              Number of bytes to read
+ * @param flags (IN)             Transfer flags
+ * @param order (IN)             Ordering
+ * @param cbfunc (IN)            Function to call on completion
+ * @param cbcontext (IN)         Context for completion callback
+ * @param cbdata (IN)            Data for completion callback
+ *
+ * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
+ * @return OPAL_SUCCCESS if the operation was successfully scheduled
+ *
+ * This function will attempt to schedule a get operation with the HCA.
+ */
+int mca_btl_openib_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous fetching atomic operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param op (IN)             Operation to perform
+ * @param operand (IN)        Operand for the operation
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ */
+int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                               void *local_address, uint64_t remote_address,
+                               struct mca_btl_base_registration_handle_t *local_handle,
+                               struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                               uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                               void *cbcontext, void *cbdata);
+
+/**
+ * Initiate an asynchronous compare and swap operation.
+ * Completion Semantics: if this function returns a 1 then the operation
+ *                       is complete. a return of OPAL_SUCCESS indicates
+ *                       the atomic operation has been queued with the
+ *                       network.
+ *
+ * @param btl (IN)            BTL module
+ * @param endpoint (IN)       BTL addressing information
+ * @param local_address (OUT) Local address to store the result in
+ * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
+ * @param local_handle (IN)   Local registration handle for region containing
+ *                            (local_address, local_address + 8)
+ * @param remote_handle (IN)  Remote registration handle for region containing
+ *                            (remote_address, remote_address + 8)
+ * @param compare (IN)        Operand for the operation
+ * @param value (IN)          Value to store on success
+ * @param flags (IN)          Flags for this put operation
+ * @param order (IN)          Ordering
+ * @param cbfunc (IN)         Function to call on completion (if queued)
+ * @param cbcontext (IN)      Context for the callback
+ * @param cbdata (IN)         Data for callback
+ *
+ * @retval OPAL_SUCCESS    The operation was successfully queued
+ * @retval 1               The operation is complete
+ * @retval OPAL_ERROR      The operation was NOT successfully queued
+ * @retval OPAL_ERR_OUT_OF_RESOURCE  Insufficient resources to queue the atomic
+ *                         operation. Try again later
+ * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
+ *                         alignment restrictions or the operation {op} is not supported
+ *                         by the hardware.
+ *
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with {value} if *remote_address == compare.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ */
+int mca_btl_openib_atomic_cswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                                 void *local_address, uint64_t remote_address,
+                                 struct mca_btl_base_registration_handle_t *local_handle,
+                                 struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+                                 uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                                 void *cbcontext, void *cbdata);
 
 /**
  * Allocate a descriptor.
@@ -674,29 +827,12 @@ extern int mca_btl_openib_free(
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                                       struct mca_btl_base_module_t* btl,
                                                       struct mca_btl_base_endpoint_t* peer,
-                                                      mca_mpool_base_registration_t* registration,
                                                       struct opal_convertor_t* convertor,
                                                       uint8_t order,
                                                       size_t reserve,
                                                       size_t* size,
                                                       uint32_t flags
                                                       );
-
-/**
- * Allocate a descriptor initialized for RDMA write.
- *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
- */
-extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
-                                                             struct mca_btl_base_module_t* btl,
-                                                             struct mca_btl_base_endpoint_t* peer,
-                                                             mca_mpool_base_registration_t* registration,
-                                                             struct opal_convertor_t* convertor,
-                                                             uint8_t order,
-                                                             size_t reserve,
-                                                             size_t* size,
-                                                             uint32_t flags);
 
 extern void mca_btl_openib_frag_progress_pending_put_get(
         struct mca_btl_base_endpoint_t*, const int);

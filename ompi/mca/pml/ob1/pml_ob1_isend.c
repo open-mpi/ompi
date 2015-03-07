@@ -3,16 +3,18 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,19 +68,18 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
                                            ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
                                            ompi_communicator_t * comm)
 {
-    mca_btl_base_descriptor_t *des = NULL;
     mca_pml_ob1_match_hdr_t match;
     mca_bml_base_btl_t *bml_btl;
-    OPAL_PTRDIFF_TYPE lb, extent;
     opal_convertor_t convertor;
-    size_t size = 0;
+    size_t size;
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+    if( NULL == bml_btl->btl->btl_sendi)
+        return OMPI_ERR_NOT_AVAILABLE;
 
-    ompi_datatype_get_extent (datatype, &lb, &extent);
-
-    if (OPAL_UNLIKELY((extent * count) > 256 || !bml_btl->btl->btl_sendi)) {
+    ompi_datatype_type_size (datatype, &size);
+    if ((size * count) > 256) {  /* some random number */
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
@@ -90,32 +91,27 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         /* remote architecture and prepared with the datatype.   */
         opal_convertor_copy_and_prepare_for_send (dst_proc->super.proc_convertor,
                                                   (const struct opal_datatype_t *) datatype,
-						  count, buf, 0, &convertor);
+                                                  count, buf, 0, &convertor);
         opal_convertor_get_packed_size (&convertor, &size);
+    } else {
+        size = 0;
     }
 
-    match.hdr_common.hdr_flags = 0;
-    match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
-    match.hdr_ctx = comm->c_contextid;
-    match.hdr_src = comm->c_my_rank;
-    match.hdr_tag = tag;
-    match.hdr_seq = seqn;
+    mca_pml_ob1_match_hdr_prepare (&match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
+                                   comm->c_contextid, comm->c_my_rank,
+                                   tag, seqn);
 
     ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH, dst_proc);
 
     /* try to send immediately */
     rc = mca_bml_base_sendi (bml_btl, &convertor, &match, OMPI_PML_OB1_MATCH_HDR_LEN,
                              size, MCA_BTL_NO_ORDER, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
-                             MCA_PML_OB1_HDR_TYPE_MATCH, &des);
+                             MCA_PML_OB1_HDR_TYPE_MATCH, NULL);
     if (count > 0) {
         opal_convertor_cleanup (&convertor);
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        if (des) {
-            mca_bml_base_free (bml_btl, des);
-        }
-
 	return rc;
     }
 
@@ -220,7 +216,7 @@ int mca_pml_ob1_send(void *buf,
 
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
-    sendreq->src_des = NULL;
+    sendreq->rdma_frag = NULL;
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   buf,

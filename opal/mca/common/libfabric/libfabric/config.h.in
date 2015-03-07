@@ -1,0 +1,129 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* defined to 1 if libfabric was configured with --enable-debug, 0 otherwise
+   */
+#undef ENABLE_DEBUG
+
+/* Define to 1 if the linker supports alias attribute. */
+#undef HAVE_ALIAS_ATTRIBUTE
+
+/* Set to 1 to use c11 atomic functions */
+#undef HAVE_ATOMICS
+
+/* Define HAVE_CLOCK_GETTIME to 1 if available. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define HAVE_HOST_GET_CLOCK_SERVICE to 1 if available. */
+#undef HAVE_HOST_GET_CLOCK_SERVICE
+
+/* Define to 1 if you have the <infiniband/verbs.h> header file. */
+#undef HAVE_INFINIBAND_VERBS_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* set to 1 if should use libnl v3, set to 0 for libnl v11 */
+#undef HAVE_LIBNL3
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* psm provider is built */
+#undef HAVE_PSM
+
+/* psm provider is built as DSO */
+#undef HAVE_PSM_DL
+
+/* Define to 1 if you have the <psm.h> header file. */
+#undef HAVE_PSM_H
+
+/* Define to 1 if you have the <rdma/rsocket.h> header file. */
+#undef HAVE_RDMA_RSOCKET_H
+
+/* sockets provider is built */
+#undef HAVE_SOCKETS
+
+/* sockets provider is built as DSO */
+#undef HAVE_SOCKETS_DL
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* assembler has .symver support */
+#undef HAVE_SYMVER_SUPPORT
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* usnic provider is built */
+#undef HAVE_USNIC
+
+/* usnic provider is built as DSO */
+#undef HAVE_USNIC_DL
+
+/* verbs provider is built */
+#undef HAVE_VERBS
+
+/* verbs provider is built as DSO */
+#undef HAVE_VERBS_DL
+
+/* Define to 1 to enable valgrind annotations */
+#undef INCLUDE_VALGRIND
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Version number of package */
+#undef VERSION

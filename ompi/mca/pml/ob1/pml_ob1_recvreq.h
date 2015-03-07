@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -52,6 +53,8 @@ struct mca_pml_ob1_recv_request_t {
     bool req_ack_sent; /**< whether ack was sent to the sender */
     bool req_match_received; /**< Prevent request to be completed prematurely */
     opal_mutex_t lock;
+    mca_bml_base_btl_t *rdma_bml;
+    mca_btl_base_registration_handle_t *local_handle;
     mca_pml_ob1_com_btl_t req_rdma[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
@@ -76,9 +79,8 @@ static inline bool unlock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
  */
 #define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq)                    \
 do {                                                               \
-   ompi_free_list_item_t* item;                                    \
-   OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);          \
-   recvreq = (mca_pml_ob1_recv_request_t*)item;                    \
+    recvreq = (mca_pml_ob1_recv_request_t *)                          \
+        opal_free_list_get (&mca_pml_base_recv_requests);             \
 } while(0)
 
 
@@ -131,8 +133,12 @@ do {                                                                \
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
         MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,             \
-                               (ompi_free_list_item_t*)(recvreq));      \
+        if ((recvreq)->local_handle) {                                  \
+            mca_bml_base_deregister_mem ((recvreq)->rdma_bml, (recvreq)->local_handle); \
+            (recvreq)->local_handle = NULL;                             \
+        }                                                               \
+        opal_free_list_return (&mca_pml_base_recv_requests,             \
+                               (opal_free_list_item_t*)(recvreq));      \
     }
 
 /**
@@ -154,9 +160,11 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     }
 
     for(i = 0; i < recvreq->req_rdma_cnt; i++) {
-        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[i].btl_reg;
-        if( NULL != btl_reg  && btl_reg->mpool != NULL) {
-            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );
+        struct mca_btl_base_registration_handle_t *handle = recvreq->req_rdma[i].btl_reg;
+        mca_bml_base_btl_t *bml_btl = recvreq->req_rdma[i].bml_btl;
+
+        if (NULL != handle) {
+            mca_bml_base_deregister_mem (bml_btl, handle);
         }
     }
     recvreq->req_rdma_cnt = 0;
@@ -177,6 +185,10 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
                 recvreq->req_recv.req_bytes_packed;
             recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
                 MPI_ERR_TRUNCATE;
+        }
+        if (OPAL_UNLIKELY(recvreq->local_handle)) {
+            mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
+            recvreq->local_handle = NULL;
         }
         MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
     }
@@ -387,7 +399,7 @@ static inline void mca_pml_ob1_recv_request_schedule(
     (void)mca_pml_ob1_recv_request_schedule_exclusive(req, start_bml_btl);
 }
 
-#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
+#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O, Sz)                  \
     do {                                                                \
         mca_pml_ob1_pckt_pending_t *_pckt;                              \
                                                                         \
@@ -396,6 +408,7 @@ static inline void mca_pml_ob1_recv_request_schedule(
         _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
         _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \
         _pckt->hdr.hdr_ack.hdr_send_offset = (O);                       \
+        _pckt->hdr.hdr_ack.hdr_send_size = (Sz);                        \
         _pckt->proc = (P);                                              \
         _pckt->bml_btl = NULL;                                          \
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                            \
@@ -406,11 +419,11 @@ static inline void mca_pml_ob1_recv_request_schedule(
 
 int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
         mca_bml_base_btl_t* bml_btl, uint64_t hdr_src_req, void *hdr_dst_req,
-        uint64_t hdr_rdma_offset, bool nordma);
+        uint64_t hdr_rdma_offset, uint64_t size, bool nordma);
 
 static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
         uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_send_offset,
-        bool nordma)
+        uint64_t size, bool nordma)
 {
     size_t i;
     mca_bml_base_btl_t* bml_btl;
@@ -420,12 +433,12 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         if(mca_pml_ob1_recv_request_ack_send_btl(proc, bml_btl, hdr_src_req,
-                    hdr_dst_req, hdr_send_offset, nordma) == OMPI_SUCCESS)
+                    hdr_dst_req, hdr_send_offset, size, nordma) == OMPI_SUCCESS)
             return OMPI_SUCCESS;
     }
 
     MCA_PML_OB1_ADD_ACK_TO_PENDING(proc, hdr_src_req, hdr_dst_req,
-                                   hdr_send_offset);
+                                   hdr_send_offset, size);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }

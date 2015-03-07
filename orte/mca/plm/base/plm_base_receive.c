@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +38,7 @@
 #include "opal/mca/mca.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
+#include "opal/util/argv.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -164,28 +165,26 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         jdata->originator.vpid = sender->vpid;
 
         /* get the parent's job object */
-        if (NULL == (parent = orte_get_job_data_object(sender->jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            goto ANSWER_LAUNCH;
+        if (NULL != (parent = orte_get_job_data_object(sender->jobid))) {
+            /* if the prefix was set in the parent's job, we need to transfer
+             * that prefix to the child's app_context so any further launch of
+             * orteds can find the correct binary. There always has to be at
+             * least one app_context in both parent and child, so we don't
+             * need to check that here. However, be sure not to overwrite
+             * the prefix if the user already provided it!
+             */
+            app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
+            child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+            prefix_dir = NULL;
+            if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING) &&
+                !orte_get_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, NULL, OPAL_STRING)) {
+                orte_set_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, prefix_dir, OPAL_STRING);
+            }
+            if (NULL != prefix_dir) {
+                free(prefix_dir);
+            }
         }
-       /* if the prefix was set in the parent's job, we need to transfer
-         * that prefix to the child's app_context so any further launch of
-         * orteds can find the correct binary. There always has to be at
-         * least one app_context in both parent and child, so we don't
-         * need to check that here. However, be sure not to overwrite
-         * the prefix if the user already provided it!
-         */
-        app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
-        child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
-        prefix_dir = NULL;
-        if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING) &&
-            !orte_get_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, NULL, OPAL_STRING)) {
-            orte_set_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, prefix_dir, OPAL_STRING);
-        }
-        if (NULL != prefix_dir) {
-            free(prefix_dir);
-        }
-
+        
         /* if the user asked to forward any envars, cycle through the app contexts
          * in the comm_spawn request and add them
          */
@@ -210,18 +209,20 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             goto ANSWER_LAUNCH;
         }
 
-        if( NULL == parent->bookmark ) {
-            /* find the sender's node in the job map */
-            if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, sender->vpid))) {
-                /* set the bookmark so the child starts from that place - this means
-                 * that the first child process could be co-located with the proc
-                 * that called comm_spawn, assuming slots remain on that node. Otherwise,
-                 * the procs will start on the next available node
-                 */
-                jdata->bookmark = proc->node;
+        if (NULL != parent) {
+            if (NULL == parent->bookmark) {
+                /* find the sender's node in the job map */
+                if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, sender->vpid))) {
+                    /* set the bookmark so the child starts from that place - this means
+                     * that the first child process could be co-located with the proc
+                     * that called comm_spawn, assuming slots remain on that node. Otherwise,
+                     * the procs will start on the next available node
+                     */
+                    jdata->bookmark = proc->node;
+                }
+            } else {
+                jdata->bookmark = parent->bookmark;
             }
-        } else {
-            jdata->bookmark = parent->bookmark;
         }
 
         /* launch it */

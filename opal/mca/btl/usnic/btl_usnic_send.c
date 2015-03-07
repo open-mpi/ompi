@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -23,14 +23,17 @@
 
 #include "opal_config.h"
 
-#include <infiniband/verbs.h>
-
 #include "opal_stdint.h"
 
 #include "opal/constants.h"
+
+#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/common/verbs/common_verbs.h"
+#else
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
@@ -60,7 +63,6 @@ opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
 
     /* do bookkeeping */
     ++frag->sf_endpoint->endpoint_send_credits;
-    ++module->mod_channels[sseg->ss_channel].sd_wqe;
 
     /* see if this endpoint needs to be made ready-to-send */
     opal_btl_usnic_check_rts(frag->sf_endpoint);
@@ -92,7 +94,6 @@ opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
 
     /* do bookkeeping */
     ++frag->sf_endpoint->endpoint_send_credits;
-    ++module->mod_channels[sseg->ss_channel].sd_wqe;
 
     /* see if this endpoint needs to be made ready-to-send */
     opal_btl_usnic_check_rts(frag->sf_endpoint);
@@ -105,7 +106,8 @@ opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
  * This routine lives in this file to help prevent automatic inlining by the
  * compiler.
  *
- * The "tag" only applies to sends. */
+ * The "tag" only applies to sends.
+ */
 int
 opal_btl_usnic_finish_put_or_send(
     opal_btl_usnic_module_t *module,
@@ -131,7 +133,7 @@ opal_btl_usnic_finish_put_or_send(
          * We already packed via the convertor if necessary, so we only need to
          * handle the simple memcpy case here.
          */
-        if (frag->sf_base.uf_base.des_local_count > 1) {
+        if (frag->sf_base.uf_base.USNIC_SEND_LOCAL_COUNT > 1) {
             /* no convertor */
             assert(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
 
@@ -141,21 +143,16 @@ opal_btl_usnic_finish_put_or_send(
                     frag->sf_base.uf_local_seg[1].seg_len);
 
             /* update 1st segment length */
-            frag->sf_base.uf_base.des_local_count = 1;
+            frag->sf_base.uf_base.USNIC_SEND_LOCAL_COUNT = 1;
             frag->sf_base.uf_local_seg[0].seg_len +=
                 frag->sf_base.uf_local_seg[1].seg_len;
         }
 
-        sseg->ss_base.us_sg_entry[0].length =
-            sizeof(opal_btl_usnic_btl_header_t) + frag->sf_size;
+        sseg->ss_len = sizeof(opal_btl_usnic_btl_header_t) + frag->sf_size;
 
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
-
-        if (frag->sf_base.uf_local_seg[0].seg_len < module->tiny_mtu) {
-            sseg->ss_send_desc.send_flags |= IBV_SEND_INLINE;
-        }
     } else {
         opal_btl_usnic_large_send_frag_t *lfrag;
 

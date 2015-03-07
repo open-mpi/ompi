@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,9 +59,8 @@ static int
 atomic_math_test_th(int count, int thr_count)
 {
     int value;
-#if OPAL_HAVE_POSIX_THREADS
     pthread_t *th;
-    int tid, ret = 0;
+    int tid;
 
     th = (pthread_t *) malloc(thr_count * sizeof(pthread_t));
     if (!th) { 
@@ -91,16 +92,6 @@ atomic_math_test_th(int count, int thr_count)
         }
     }
     free(th);
-
-    return ret;
-#else
-    value = count;
-    if (thr_count == 1) {
-        atomic_math_test((void*) &value);
-    } else {
-        return 77;
-    }
-#endif
 
     return 0;
 }

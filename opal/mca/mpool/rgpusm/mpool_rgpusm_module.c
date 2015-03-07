@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +15,8 @@
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -121,8 +124,8 @@ static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpo
         return false;
     }
 
-    OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
-                          (ompi_free_list_item_t*)old_reg);
+    opal_free_list_return (&mpool_rgpusm->reg_list,
+                           (opal_free_list_item_t*)old_reg);
     mpool_rgpusm->stat_evicted++;
 
     return true;
@@ -154,12 +157,12 @@ void mca_mpool_rgpusm_module_init(mca_mpool_rgpusm_module_t* mpool)
     mpool->resources.register_mem = cuda_openmemhandle;
     mpool->resources.deregister_mem = cuda_closememhandle;
 
-    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t);
-    ompi_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
+    OBJ_CONSTRUCT(&mpool->reg_list, opal_free_list_t);
+    opal_free_list_init (&mpool->reg_list, mpool->resources.sizeof_reg,
             opal_cache_line_size,
             OBJ_CLASS(mca_mpool_base_registration_t), 
             0,opal_cache_line_size,
-            0, -1, 32, NULL);
+            0, -1, 32, NULL, 0, NULL, NULL, NULL);
     OBJ_CONSTRUCT(&mpool->lru_list, opal_list_t);
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
@@ -179,7 +182,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t*)mpool;
     mca_mpool_common_cuda_reg_t *rgpusm_reg;
     mca_mpool_common_cuda_reg_t *rget_reg;
-    ompi_free_list_item_t *item;
+    opal_free_list_item_t *item;
     int rc;
     int mypeer;  /* just for debugging */
 
@@ -201,7 +204,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
     if(!mca_mpool_rgpusm_component.leave_pinned && 0 == mca_mpool_rgpusm_component.rcache_size_limit) {
-        OMPI_FREE_LIST_GET_MT(&mpool_rgpusm->reg_list, item);
+        item = opal_free_list_get (&mpool_rgpusm->reg_list);
         if(NULL == item) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
@@ -212,7 +215,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         rgpusm_reg->base.flags = flags;
 
         /* Copy the memory handle received into the registration */
-        memcpy(rgpusm_reg->memHandle, rget_reg->memHandle, sizeof(rget_reg->memHandle));
+        memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
 
         /* The rget_reg registration is holding the memory handle needed
          * to register the remote memory.  This was received from the remote
@@ -225,7 +228,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         assert(OPAL_ERR_WOULD_BLOCK != rc);
 
         if(rc != OPAL_SUCCESS) {
-            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
+            opal_free_list_return (&mpool_rgpusm->reg_list, item);
             return rc;
         }
         rgpusm_reg->base.ref_count++;
@@ -312,7 +315,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
                         "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
                          mypeer, addr, (int)size);
 
-    OMPI_FREE_LIST_GET_MT(&mpool_rgpusm->reg_list, item);
+    item = opal_free_list_get (&mpool_rgpusm->reg_list);
     if(NULL == item) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -325,7 +328,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     rgpusm_reg->base.flags = flags;
 
     /* Need the memory handle saved in the registration */
-    memcpy(rgpusm_reg->memHandle, rget_reg->memHandle, sizeof(rget_reg->memHandle));
+    memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
 
     /* Actually register the memory, which opens the memory handle.
      * Need to do this prior to putting in the cache as the base and
@@ -392,7 +395,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if(rc != OPAL_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
+        opal_free_list_return (&mpool_rgpusm->reg_list, item);
         return rc;
     }
 
@@ -409,7 +412,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if(rc != OPAL_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
+        opal_free_list_return (&mpool_rgpusm->reg_list, item);
         /* We cannot recover from this.  We can be here if the size of
          * the cache is smaller than the amount of memory we are
          * trying to register in a single transfer.  In that case, rc
@@ -512,8 +515,8 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
         OPAL_THREAD_LOCK(&mpool->rcache->lock);
 
         if(OPAL_SUCCESS == rc) {
-            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
-                                  (ompi_free_list_item_t*)reg);
+            opal_free_list_return (&mpool_rgpusm->reg_list,
+                                   (opal_free_list_item_t*)reg);
         }
     }
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
@@ -555,8 +558,8 @@ int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *mpool,
          }
 
         if(OPAL_SUCCESS == rc) {
-            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
-                                  (ompi_free_list_item_t*)reg);
+            opal_free_list_return (&mpool_rgpusm->reg_list,
+                                   (opal_free_list_item_t*)reg);
         }
     }
 
@@ -615,8 +618,8 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
                 continue;
             }
 
-            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
-                                  (ompi_free_list_item_t*)reg);
+            opal_free_list_return (&mpool_rgpusm->reg_list,
+                                   (opal_free_list_item_t *) reg);
         }
     } while(reg_cnt == RGPUSM_MPOOL_NREGS);
 

@@ -55,12 +55,10 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_connectivity_checked = false;
     endpoint->endpoint_on_all_endpoints = false;
 
-    for (i=0; i<USNIC_NUM_CHANNELS; ++i) {
-        endpoint->endpoint_remote_addr.qp_num[i] = 0;
+    for (i = 0; i < USNIC_NUM_CHANNELS; ++i) {
+        endpoint->endpoint_remote_modex.ports[i] = 0;
+        endpoint->endpoint_remote_addrs[i] = FI_ADDR_NOTAVAIL;
     }
-    endpoint->endpoint_remote_addr.gid.global.subnet_prefix = 0;
-    endpoint->endpoint_remote_addr.gid.global.interface_id = 0;
-    endpoint->endpoint_remote_ah = NULL;
 
     endpoint->endpoint_send_credits = 8;
 
@@ -76,9 +74,9 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
     /* clear sent/received sequence number array */
     memset(endpoint->endpoint_sent_segs, 0,
-            sizeof(endpoint->endpoint_sent_segs));
+           sizeof(endpoint->endpoint_sent_segs));
     memset(endpoint->endpoint_rcvd_segs, 0,
-            sizeof(endpoint->endpoint_rcvd_segs));
+           sizeof(endpoint->endpoint_rcvd_segs));
 
     /*
      * Make a new OPAL hotel for this module
@@ -110,7 +108,6 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
 static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
-    int rc;
     opal_btl_usnic_proc_t *proc;
 
     if (endpoint->endpoint_ack_needed) {
@@ -143,14 +140,6 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     }
 
     free(endpoint->endpoint_rx_frag_info);
-
-    if (NULL != endpoint->endpoint_remote_ah) {
-        rc = ibv_destroy_ah(endpoint->endpoint_remote_ah);
-        if (rc) {
-            BTL_ERROR(("failed to ibv_destroy_ah, err=%d (%s)",
-                       rc, strerror(rc)));
-        }
-    }
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_endpoint_t,

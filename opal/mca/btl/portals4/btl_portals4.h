@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +47,9 @@ struct mca_btl_portals4_component_t {
     unsigned int max_btls; /* Maximum number of accepted Portals4 cards */
 
     struct mca_btl_portals4_module_t** btls; /* array of available BTL modules */
+
+    /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
+    int use_logical;
 
     /* initial size of free lists */
     int portals_free_list_init_num;
@@ -85,9 +92,9 @@ struct mca_btl_portals4_module_t {
     uint32_t interface_num;
 
     /* fragment free lists */
-    ompi_free_list_t portals_frag_eager;
-    ompi_free_list_t portals_frag_max;
-    ompi_free_list_t portals_frag_user;
+    opal_free_list_t portals_frag_eager;
+    opal_free_list_t portals_frag_max;
+    opal_free_list_t portals_frag_user;
 
     opal_list_t portals_recv_blocks;
 
@@ -167,6 +174,8 @@ typedef struct mca_btl_portals4_module_t mca_btl_portals4_module_t;
         hdr_data = (hdr_data << 48);                                 \
         hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
     }
+
+#define REQ_BTL_TABLE_ID	2
 
 /*
  * See note in ompi/mtl/portals4/mtl_portals4.h for how we deal with

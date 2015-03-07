@@ -11,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -248,31 +249,6 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_error(int fd, short flags, void *cbdata);
-
-/* null functions */
-int orte_rml_base_null_send_nb(struct orte_process_name_t* peer,
-                               struct iovec* msg,
-                               int count,
-                               orte_rml_tag_t tag,
-                               orte_rml_callback_fn_t cbfunc,
-                               void* cbdata);
-int orte_rml_base_null_send_buffer_nb(struct orte_process_name_t* peer,
-                                      struct opal_buffer_t* buffer,
-                                      orte_rml_tag_t tag,
-                                      orte_rml_buffer_callback_fn_t cbfunc,
-                                      void* cbdata);
-void orte_rml_base_null_recv_nb(struct orte_process_name_t* peer,
-                                orte_rml_tag_t tag,
-                                bool persistent,
-                                orte_rml_callback_fn_t cbfunc,
-                                void* cbdata);
-void orte_rml_base_null_recv_buffer_nb(struct orte_process_name_t* peer,
-                                       orte_rml_tag_t tag,
-                                       bool persistent,
-                                       orte_rml_buffer_callback_fn_t cbfunc,
-                                       void* cbdata);
-void orte_rml_base_null_recv_cancel(orte_process_name_t* peer,
-                                    orte_rml_tag_t tag);
 
 END_C_DECLS
 

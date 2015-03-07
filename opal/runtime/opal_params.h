@@ -38,6 +38,7 @@ extern bool opal_timing_overhead;
 
 OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
+
 /**
  *  * Whether we want to enable CUDA GPU buffer send and receive support.
  *   */

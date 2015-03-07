@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,7 +120,8 @@ int orte_ess_base_proc_binding(void)
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 if (OPAL_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
-                                                                           opal_hwloc_topology, cpus))) {
+                                                                           opal_hwloc_topology,
+                                                                           OPAL_HWLOC_LOGICAL, cpus))) {
                     error = "Setting processor affinity failed";
                     hwloc_bitmap_free(cpus);
                     goto error;
@@ -303,7 +306,7 @@ int orte_ess_base_proc_binding(void)
             goto error;
         }
         /* and store a copy locally */
-        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv);
+        (void)opal_dstore.store(opal_dstore_internal, ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
     }
     return ORTE_SUCCESS;

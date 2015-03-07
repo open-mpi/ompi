@@ -2,6 +2,9 @@
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <dlfcn.h>
 
 #include "opal/mca/btl/base/base.h"
 #include "btl_openib_xrc.h"
@@ -35,12 +39,38 @@ OBJ_CLASS_INSTANCE(ib_address_t,
                    ib_address_constructor,
                    ib_address_destructor);
 
+/* run-time check for which libibverbs XRC API we really have underneath */
+bool mca_btl_openib_xrc_check_api()
+{
+    void *lib = dlopen(NULL, RTLD_NOW); /* current program */
+    if (!lib) {
+        BTL_ERROR(("XRC error: could not find XRC API version"));
+        return false;
+    }
+
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    if (NULL != dlsym(lib, "ibv_open_xrcd")) {
+        BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED 3.12+)"));
+        return false;
+    }
+#else
+    if (NULL != dlsym(lib, "ibv_create_xrc_rcv_qp")) {
+        BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED pre 3.12)."));
+        return false;
+    }
+#endif
+    return true;
+}
+
 /* This func. opens XRC domain */
 int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
 {
     int len;
     char *xrc_file_name;
     const char *dev_name;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    struct ibv_xrcd_init_attr xrcd_attr;
+#endif
 
     dev_name = ibv_get_device_name(device->ib_dev);
     len = asprintf(&xrc_file_name,
@@ -59,9 +89,17 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
         free(xrc_file_name);
         return OPAL_ERROR;
     }
-
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    memset(&xrcd_attr, 0, sizeof xrcd_attr);
+    xrcd_attr.comp_mask = IBV_XRCD_INIT_ATTR_FD | IBV_XRCD_INIT_ATTR_OFLAGS;
+    xrcd_attr.fd = device->xrc_fd;
+    xrcd_attr.oflags = O_CREAT;
+    device->xrcd = ibv_open_xrcd(device->ib_dev_context, &xrcd_attr);
+    if (NULL == device->xrcd) {
+#else
     device->xrc_domain = ibv_open_xrc_domain(device->ib_dev_context, device->xrc_fd, O_CREAT);
     if (NULL == device->xrc_domain) {
+#endif
         BTL_ERROR(("Failed to open XRC domain\n"));
         close(device->xrc_fd);
         free(xrc_file_name);
@@ -74,11 +112,19 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
 /* This func. closes XRC domain */
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device)
 {
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    if (NULL == device->xrcd) {
+#else
     if (NULL == device->xrc_domain) {
+#endif
         /* No XRC domain, just exit */
         return OPAL_SUCCESS;
     }
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+    if (ibv_close_xrcd(device->xrcd)) {
+#else
     if (ibv_close_xrc_domain(device->xrc_domain)) {
+#endif
         BTL_ERROR(("Failed to close XRC domain, errno %d says %s\n",
                     device->xrc_fd, strerror(errno)));
         return OPAL_ERROR;
@@ -112,7 +158,7 @@ static void ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_ep);
 }
 
-static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, opal_process_name_t ep_jobid)
+static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, opal_jobid_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
@@ -137,7 +183,7 @@ static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, o
  * Before call to this function you need to protect with
  */
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
-        opal_process_name_t ep_jobid, mca_btl_openib_endpoint_t *ep)
+        opal_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep)
 {
     void *tmp;
     int ret = OPAL_SUCCESS;

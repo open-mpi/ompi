@@ -377,7 +377,7 @@ static int compare_nodes (opal_list_item_t **a, opal_list_item_t **b)
     }
 
     ldptr = &launchb;
-    if (!orte_get_attribute(&nodea->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
+    if (!orte_get_attribute(&nodeb->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
         return 0;
     }
 
@@ -403,7 +403,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
     int32_t         sNodes=0;
     char            *cpBuf;
     char            *hostname;
-    orte_node_t     *node = NULL, *n2;
+    orte_node_t     *node = NULL;
     appInfoHdr_t    *apHdr;                 /* ALPS header structure          */
     appInfo_t       *apInfo;                /* ALPS table info structure      */
 #if ALPS_APPINFO_VERSION==0
@@ -411,7 +411,6 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 #else
     placeNodeList_t *apNodes;
 #endif
-    opal_list_item_t *item;
 
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
     oNow=0;

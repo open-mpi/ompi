@@ -57,6 +57,7 @@
 #include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
+#include "opal/util/fd.h"
 #include "opal/util/error.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
@@ -97,6 +98,14 @@ static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
                          ORTE_NAME_PRINT(&(peer->name))));
     
     peer->sd = socket(AF_INET, SOCK_STREAM, 0);
+    /* Set this fd to be close-on-exec so that any subsequent children don't see it */
+    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(peer->sd);
+        peer->sd = -1;
+        return ORTE_ERROR;
+    }
 
     if (peer->sd < 0) {
         opal_output(0, "%s-%s tcp_peer_create_socket: socket() failed: %s (%d)\n",
@@ -359,7 +368,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+                                                         ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

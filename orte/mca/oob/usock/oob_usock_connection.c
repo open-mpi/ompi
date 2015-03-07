@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +58,7 @@
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
+#include "opal/util/fd.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
@@ -64,7 +67,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "oob_usock.h"
@@ -102,6 +104,14 @@ static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         return ORTE_ERR_UNREACH;
+    }
+    /* Set this fd to be close-on-exec so that subsequent children don't see it */
+    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(peer->sd);
+        peer->sd = -1;
+        return ORTE_ERROR;
     }
 
     /* setup event callbacks */
@@ -282,7 +292,7 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+                                                         ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -305,8 +315,10 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+        free(msg);
         return ORTE_ERR_UNREACH;
     }
+    free(msg);
     return ORTE_SUCCESS;
 }
 
@@ -702,9 +714,6 @@ static void usock_peer_connected(mca_oob_usock_peer_t* peer)
         peer->timer_ev_active = false;
     }
     peer->state = MCA_OOB_USOCK_CONNECTED;
-
-    /* update the route */
-    orte_routed.update_route(&peer->name, &peer->name);
 
     /* initiate send of first message on queue */
     if (NULL == peer->send_msg) {

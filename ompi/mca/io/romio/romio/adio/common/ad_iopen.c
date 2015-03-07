@@ -9,13 +9,13 @@
 
 void ADIO_ImmediateOpen(ADIO_File fd, int *error_code)
 { 
-	int nprocs, myrank; 
+	MPI_Comm tmp_comm;
+	tmp_comm = fd->comm;
+	/* some file systems might try to be clever inside their open routine.
+	 * e.g. Blue Gene does a stat-and-broadcast */
+	fd->comm = MPI_COMM_SELF;
 	(*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 	fd->is_open = 1;
+	fd->comm = tmp_comm;
 
-	/* DEBUG: remove following lines */
-	MPI_Comm_size(fd->comm, &nprocs);
-	MPI_Comm_rank(fd->comm, &myrank);
-	FPRINTF(stdout, "[%d/%d] DEBUG: ADIOI_ImmediateOpen called on %s\n", 
-			myrank, nprocs, fd->filename);
 } 

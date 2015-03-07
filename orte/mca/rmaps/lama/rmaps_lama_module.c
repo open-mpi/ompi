@@ -3,6 +3,8 @@
  *
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -605,7 +607,14 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
      * Find the position of the 'machine'
      */
     pu_idx_ref = (int*)malloc(sizeof(int) * lama_mapping_num_layouts);
+    if (NULL == pu_idx_ref) {
+        return ORTE_ERROR;
+    }
     last_pu_idx_ref = (int*)malloc(sizeof(int) * lama_mapping_num_layouts);
+    if (NULL == last_pu_idx_ref) {
+        free(pu_idx_ref);
+        return ORTE_ERROR;
+    }
 
     for( i = 0; i < lama_mapping_num_layouts; ++i ) {
         pu_idx_ref[i] = 0;
@@ -852,22 +861,17 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
             OBJ_RELEASE(item);
         }
         OBJ_RELEASE(node_list);
-        node_list = NULL;
     }
 
     if( NULL != max_tree ) {
         OBJ_RELEASE(max_tree);
-        max_tree = NULL;
     }
 
-    if( NULL != pu_idx_ref ) {
-        free(pu_idx_ref);
-        pu_idx_ref = NULL;
-    }
+    free(pu_idx_ref);
+    free(last_pu_idx_ref);
 
     if( NULL != last_level_str ) {
         free(last_level_str);
-        last_level_str = NULL;
     }
 
     return exit_status;
@@ -1060,7 +1064,8 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
                                                   &proc);
                 if( ORTE_SUCCESS != ret ) {
                     ORTE_ERROR_LOG(ret);
-                    return ret;
+                    exit_status = ret;
+                    goto bailout;
                 }
 
                 /*
@@ -1111,7 +1116,8 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
             if( lama_binding_level == lama_mapping_layout[cur_level] && lama_binding_num_levels > 1) {
                 opal_output(0, "mca:rmaps:lama: ERROR: Cannot bind to multiple machines - SHOULD NEVER HAPPEN: %s",
                             rmaps_lama_cmd_bind);
-                return ORTE_ERROR;
+                exit_status = ORTE_ERROR;
+                goto bailout;
 #if 0
                 for( j = 0; j < lama_binding_num_levels; ++j ) {
                     cur_mach = get_next_machine(jdata, node_list, (opal_list_item_t*)cur_mach);
@@ -1166,6 +1172,7 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
         *iter_passes += 1;
     }
 
+ bailout:
     if( NULL != level_str ) {
         free(level_str);
         level_str = NULL;
@@ -1353,7 +1360,7 @@ static int check_node_availability(orte_node_t *cur_node,
     int exit_status = ORTE_SUCCESS;
     int i;
     char * level_str = NULL;
-    hwloc_obj_t *topo_child = NULL, *topo_parent=NULL;
+    hwloc_obj_t *topo_child = NULL, *topo_parent, *topo_allocated;
 
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -1370,7 +1377,10 @@ static int check_node_availability(orte_node_t *cur_node,
      * by the PU index.
      * JJH TODO: If homogeneous system then this could be simplified.
      */
-    topo_parent  = (hwloc_obj_t*)malloc(sizeof(hwloc_obj_t) * 1);
+    topo_allocated = topo_parent  = (hwloc_obj_t*)malloc(sizeof(hwloc_obj_t) * 1);
+    if (NULL == topo_parent) {
+        return ORTE_ERROR;
+    }
     *topo_parent = hwloc_get_obj_by_depth(cur_node->topology, 0, 0);
     for( i = 0; i < lama_mapping_num_layouts; ++i ) {
         /*
@@ -1446,6 +1456,8 @@ static int check_node_availability(orte_node_t *cur_node,
             *slot_list = NULL;
         }
     }
+
+    free(topo_allocated);
 
     return exit_status;
 }
@@ -1776,6 +1788,7 @@ static char * get_native_slot_list(orte_node_t *cur_node, hwloc_obj_t *pu_obj, i
  cleanup:
     hwloc_bitmap_free(scratch_cpuset);
     hwloc_bitmap_free(binding_cpuset);
+    free(binding_parent);
 
     return slot_list;
 }

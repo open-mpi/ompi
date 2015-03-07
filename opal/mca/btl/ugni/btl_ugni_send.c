@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
                        mca_btl_base_tag_t tag)
 {
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) descriptor;
-    size_t size = frag->segments[0].base.seg_len + frag->segments[1].base.seg_len;
+    size_t size = frag->segments[0].seg_len + frag->segments[1].seg_len;
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     int flags_save = frag->base.des_flags;
     int rc;
@@ -39,7 +41,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     }
 
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
-                 opal_process_name_vpid(OPAL_PROC_MY_NAME), endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
+                 OPAL_PROC_MY_NAME.vpid, endpoint->common->ep_rem_id, size));
 
     /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
     frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
@@ -88,14 +90,13 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     return rc;
 }
 
-int
-mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
-                    struct mca_btl_base_endpoint_t *endpoint,
-                    struct opal_convertor_t *convertor,
-                    void *header, size_t header_size,
-                    size_t payload_size, uint8_t order,
-                    uint32_t flags, mca_btl_base_tag_t tag,
-                    mca_btl_base_descriptor_t **descriptor)
+int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
+                        struct mca_btl_base_endpoint_t *endpoint,
+                        struct opal_convertor_t *convertor,
+                        void *header, size_t header_size,
+                        size_t payload_size, uint8_t order,
+                        uint32_t flags, mca_btl_base_tag_t tag,
+                        mca_btl_base_descriptor_t **descriptor)
 {
     size_t total_size = header_size + payload_size;
     mca_btl_ugni_base_frag_t *frag = NULL;
@@ -116,13 +117,14 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
             frag = (mca_btl_ugni_base_frag_t *) mca_btl_ugni_prepare_src_send_buffered (btl, endpoint, convertor, order,
                                                                                         header_size, &packed_size, flags);
         }
+
         assert (packed_size == payload_size);
         if (OPAL_UNLIKELY(NULL == frag)) {
             break;
         }
 
         frag->hdr.send.lag = (tag << 24) | total_size;
-        memcpy (frag->segments[0].base.seg_addr.pval, header, header_size);
+        memcpy (frag->segments[0].seg_addr.pval, header, header_size);
 
         rc = mca_btl_ugni_send_frag (endpoint, frag);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
@@ -133,7 +135,9 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         return OPAL_SUCCESS;
     } while (0);
 
-    *descriptor = NULL;
+    if (NULL != descriptor) {
+        *descriptor = NULL;
+    }
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
 
@@ -149,7 +153,13 @@ int mca_btl_ugni_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
         if (NULL == frag) {
             break;
         }
-        rc = mca_btl_ugni_send_frag (endpoint, frag);
+        if (OPAL_LIKELY(!(frag->flags & MCA_BTL_UGNI_FRAG_RESPONSE))) {
+            rc = mca_btl_ugni_send_frag (endpoint, frag);
+        } else {
+            rc = opal_mca_btl_ugni_smsg_send (frag, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
+                                              NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
+        }
+
         if (OPAL_UNLIKELY(OPAL_SUCCESS > rc)) {
             if (OPAL_LIKELY(OPAL_ERR_OUT_OF_RESOURCE == rc)) {
                 OPAL_THREAD_LOCK(&endpoint->lock);

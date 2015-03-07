@@ -40,8 +40,7 @@ fs_pvfs2_sources = \
 	fs_pvfs2_file_delete.c \
 	fs_pvfs2_file_sync.c \
 	fs_pvfs2_file_set_size.c \
-        fs_pvfs2_file_get_size.c \
-        fs_pvfs2_file_set_info.c
+        fs_pvfs2_file_get_size.c 
 
 AM_CPPFLAGS = $(fs_pvfs2_CPPFLAGS)
 

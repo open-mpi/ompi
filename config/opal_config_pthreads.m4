@@ -5,18 +5,18 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2014      Research Organization for Information Science
+dnl Copyright (c) 2014-2015 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 dnl OPAL_CONFIG_POSIX_THREADS()
@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
     pthread_attr_t attr;
 
     me = pthread_self(); 
+    pthread_atfork(NULL, NULL, NULL);
     pthread_attr_init(&attr); 
     pthread_cleanup_push(cleanup_routine, 0);
     pthread_create(&newthread, &attr, thread_main, 0); 
@@ -114,6 +115,7 @@ void pthreadtest_f(void)
     pthread_attr_t attr;
 
     me = pthread_self(); 
+    pthread_atfork(NULL, NULL, NULL);
     pthread_attr_init(&attr); 
     pthread_cleanup_push(cleanup_routine, 0);
     pthread_create(&newthread, &attr, thread_main, 0); 
@@ -216,7 +218,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_FC], [
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
+if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
   AC_MSG_CHECKING([if Fortran compiler and POSIX threads work as is])
 
   AC_LANG_PUSH(C)
@@ -320,7 +322,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
+if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
   for pf in $pflags; do
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
     FCFLAGS="$orig_FCFLAGS $pf"
@@ -435,7 +437,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS_CXX],[
 # C++ compiler
 #
 if test "$opal_pthread_cxx_success" = "0"; then
-  if test ! "$opal_pthread_c_success" = "0" -a ! "$PTHREAD_LIBS" = "" ; then
+  if test ! "$opal_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
     AC_MSG_CHECKING([if C++ compiler and POSIX threads work with $PTHREAD_LIBS])
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
@@ -505,8 +507,8 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS_FC],[
 #
 # Fortran compiler
 #
-if test "$opal_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
-  if test ! "$opal_pthread_c_success" = "0" -a ! "$PTHREAD_LIBS" = "" ; then
+if test "$opal_pthread_fortran_success" = "0" && test "$OMPI_WANT_FORTRAN_BINDINGS" = "1" && test $ompi_fortran_happy -eq 1; then
+  if test ! "$opal_pthread_c_success" = "0" && test ! "$PTHREAD_LIBS" = "" ; then
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $PTHREAD_LIBS])
     LIBS="$orig_LIBS $PTHREAD_LIBS"
     AC_LANG_PUSH(C)
@@ -648,13 +650,13 @@ CXXCPPFLAGS="$orig_CXXCPPFLAGS"
 LDFLAGS="$orig_LDFLAGS"
 LIBS="$orig_LIBS"
 
-if test "$OMPI_WANT_FORTRAN_BINDINGS" != "1" -o $ompi_fortran_happy -ne 1; then
+if test "$OMPI_WANT_FORTRAN_BINDINGS" != "1" || test $ompi_fortran_happy -ne 1; then
   opal_pthread_fortran_success=1
 fi
 
-if test "$opal_pthread_c_success" = "1" -a \
-        "$opal_pthread_cxx_success" = "1" -a \
-       "$opal_pthread_fortran_success" = "1"; then
+if test "$opal_pthread_c_success" = "1" && \
+   test "$opal_pthread_cxx_success" = "1" && \
+   test "$opal_pthread_fortran_success" = "1"; then
   internal_useless=1
   $1
 else

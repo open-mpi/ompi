@@ -23,7 +23,7 @@
 #define STARTING_SIZE 5000
 
 int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, 
-		char *msg, int verbose); 
+		const char *msg, int verbose); 
 
 #define ADIOI_Free free
 #define ADIOI_Malloc malloc
@@ -37,7 +37,7 @@ struct ADIO_cb_name_arrayD {
 };  
 typedef struct ADIO_cb_name_arrayD *ADIO_cb_name_array;
 
-void handle_error(int errcode, char *str);
+void handle_error(int errcode, const char *str);
 int cb_gather_name_array(MPI_Comm comm, ADIO_cb_name_array *arrayp);
 void default_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
 void reverse_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
@@ -45,7 +45,7 @@ void reverse_alternating_str(int mynod, int len, ADIO_cb_name_array array, char 
 void simple_shuffle_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
 
 
-void handle_error(int errcode, char *str) 
+void handle_error(int errcode, const char *str) 
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
 
 #define SEEDER(x,y,z) ((x)*1000000 + (y) + (x)*(z))
 
-int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, char *msg, int verbose) 
+int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, const char *msg, int verbose) 
 {
     MPI_Datatype typevec, newtype, t[3];
     int *buf, i, b[3], errcode, errors=0;

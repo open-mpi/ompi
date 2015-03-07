@@ -2,18 +2,18 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,13 +26,13 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_topo.h"
 #include "coll_tuned.h"
-#include "coll_tuned_topo.h"
 #include "coll_tuned_dynamic_rules.h"
 #include "coll_tuned_dynamic_file.h"
 
 static int tuned_module_enable(mca_coll_base_module_t *module,
-			       struct ompi_communicator_t *comm);
+                   struct ompi_communicator_t *comm);
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
@@ -79,8 +79,8 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     *priority = ompi_coll_tuned_priority;
 
-    /* 
-     * Choose whether to use [intra|inter] decision functions 
+    /*
+     * Choose whether to use [intra|inter] decision functions
      * and if using fixed OR dynamic rule sets.
      * Right now you cannot mix them, maybe later on it can be changed
      * but this would probably add an extra if and funct call to the path
@@ -114,9 +114,9 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 
 /* We put all routines that handle the MCA user forced algorithm and parameter choices here */
 /* recheck the setting of forced, called on module create (i.e. for each new comm) */
-                                                                                                          
+
 static int
-ompi_coll_tuned_forced_getvalues( enum COLLTYPE type, 
+ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
                                   coll_tuned_force_algorithm_params_t *forced_values )
 {
     coll_tuned_force_algorithm_mca_param_indices_t* mca_params;
@@ -145,20 +145,20 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
     return (MPI_SUCCESS);
 }
 
-#define COLL_TUNED_EXECUTE_IF_DYNAMIC(DATA, TYPE, EXECUTE)              \
+#define COLL_TUNED_EXECUTE_IF_DYNAMIC(TMOD, TYPE, EXECUTE)              \
     {                                                                   \
         int need_dynamic_decision = 0;                                  \
-        ompi_coll_tuned_forced_getvalues( (TYPE), &((DATA)->user_forced[(TYPE)]) ); \
-        (DATA)->com_rules[(TYPE)] = NULL;                               \
-        if( 0 != (DATA)->user_forced[(TYPE)].algorithm ) {              \
+        ompi_coll_tuned_forced_getvalues( (TYPE), &((TMOD)->user_forced[(TYPE)]) ); \
+        (TMOD)->com_rules[(TYPE)] = NULL;                               \
+        if( 0 != (TMOD)->user_forced[(TYPE)].algorithm ) {              \
             need_dynamic_decision = 1;                                  \
             EXECUTE;                                                    \
         }                                                               \
         if( NULL != mca_coll_tuned_component.all_base_rules ) {         \
-            (DATA)->com_rules[(TYPE)]                                   \
+            (TMOD)->com_rules[(TYPE)]                                   \
                 = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
                                                     (TYPE), size );     \
-            if( NULL != (DATA)->com_rules[(TYPE)] ) {                   \
+            if( NULL != (TMOD)->com_rules[(TYPE)] ) {                   \
                 need_dynamic_decision = 1;                              \
             }                                                           \
         }                                                               \
@@ -178,7 +178,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
 {
     int size;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
-    mca_coll_tuned_comm_t *data = NULL;
+    mca_coll_base_comm_t *data = NULL;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
 
@@ -191,32 +191,19 @@ tuned_module_enable( mca_coll_base_module_t *module,
 
     /**
      * we still malloc data as it is used by the TUNED modules
-     * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers 
+     * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers
      * we place any special info after the default data
      *
      * BUT on very large systems we might not be able to allocate all this memory so
      * we do check a MCA parameter to see if if we should allocate this memory
      *
-     * The default is set very high  
-     *
+     * The default is set very high
      */
 
     /* if we within the memory/size limit, allow preallocated data */
-    if( size <= ompi_coll_tuned_preallocate_memory_comm_size_limit ) {
-        data = (mca_coll_tuned_comm_t*)malloc(sizeof(struct mca_coll_tuned_comm_t) +
-                                              (sizeof(ompi_request_t *) * size * 2));
-        if (NULL == data) {
-            return OMPI_ERROR;
-        }
-        data->mcct_reqs = (ompi_request_t **) (data + 1);
-        data->mcct_num_reqs = size * 2;
-    } else {
-        data = (mca_coll_tuned_comm_t*)malloc(sizeof(struct mca_coll_tuned_comm_t)); 
-        if (NULL == data) {
-            return OMPI_ERROR;
-        }
-        data->mcct_reqs = (ompi_request_t **) NULL;
-        data->mcct_num_reqs = 0;
+    data = OBJ_NEW(mca_coll_base_comm_t);
+    if (NULL == data) {
+        return OMPI_ERROR;
     }
 
     if (ompi_coll_tuned_use_dynamic_rules) {
@@ -230,37 +217,37 @@ tuned_module_enable( mca_coll_base_module_t *module,
          * next dynamic state, recheck all forced rules as well
          * warning, we should check to make sure this is really an INTRA comm here...
          */
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLGATHER,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLGATHER,
                                       tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLGATHERV,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLGATHERV,
                                       tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLREDUCE,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLREDUCE,
                                       tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALL,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLTOALL,
                                       tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALLV,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLTOALLV,
                                       tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALLW,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, ALLTOALLW,
                                       tuned_module->super.coll_alltoallw  = NULL);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, BARRIER,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, BARRIER,
                                       tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, BCAST,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, BCAST,
                                       tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, EXSCAN,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, EXSCAN,
                                       tuned_module->super.coll_exscan     = NULL);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, GATHER,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, GATHER,
                                       tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, GATHERV,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, GATHERV,
                                       tuned_module->super.coll_gatherv    = NULL);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, REDUCE,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCE,
                                       tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, REDUCESCATTER,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCESCATTER,
                                       tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCAN,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCAN,
                                       tuned_module->super.coll_scan       = NULL);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCATTER,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTER,
                                       tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic);
-        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCATTERV,
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTERV,
                                       tuned_module->super.coll_scatterv   = NULL);
 
         if( false == ompi_coll_tuned_use_dynamic_rules ) {
@@ -269,7 +256,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
                          " decision by lack of dynamic rules"));
         }
     }
-    
+
     /* general n fan out tree */
     data->cached_ntree = NULL;
     /* binary tree */
@@ -286,7 +273,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
     data->cached_in_order_bintree = NULL;
 
     /* All done */
-    tuned_module->tuned_data = data;
+    tuned_module->super.base_data = data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
     return OMPI_SUCCESS;

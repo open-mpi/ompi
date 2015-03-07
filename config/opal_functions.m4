@@ -6,19 +6,21 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 dnl Portions of this file derived from GASNet v1.12 (see "GASNet"
@@ -29,7 +31,7 @@ dnl IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
 dnl DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
 dnl OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
 dnl CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-dnl 
+dnl
 dnl THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 dnl INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 dnl AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
@@ -77,6 +79,15 @@ opal_show_subsubsubtitle() {
 --- ${1}
 EOF
   OPAL_LOG_MSG([--- ${1}], 1)
+}
+
+opal_show_verbose() {
+  if test "$V" = "1"; then
+      cat <<EOF
++++ VERBOSE: ${1}
+EOF
+      OPAL_LOG_MSG([--- ${1}], 1)
+  fi
 }
 
 #
@@ -136,33 +147,21 @@ unset opal_prefix_save
 case "$prefix" in
   /*/bin)
     prefix="`dirname $prefix`"
-    echo installing to directory \"$prefix\" 
+    echo installing to directory \"$prefix\"
     ;;
-  /*) 
-    echo installing to directory \"$prefix\" 
+  /*)
+    echo installing to directory \"$prefix\"
     ;;
   NONE)
-    echo installing to directory \"$ac_default_prefix\" 
+    echo installing to directory \"$ac_default_prefix\"
     ;;
   @<:@a-zA-Z@:>@:*)
-    echo installing to directory \"$prefix\" 
+    echo installing to directory \"$prefix\"
     ;;
-  *) 
-    AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path) 
+  *)
+    AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path)
     ;;
 esac
-
-# Allow the --enable-dist flag to be passed in
-
-AC_ARG_ENABLE(dist, 
-    AC_HELP_STRING([--enable-dist],
-		   [guarantee that that the "dist" make target will be functional, although may not guarantee that any other make target will be functional.]),
-    OPAL_WANT_DIST=yes, OPAL_WANT_DIST=no)
-
-if test "$OPAL_WANT_DIST" = "yes"; then
-    AC_MSG_WARN([Configuring in 'make dist' mode])
-    AC_MSG_WARN([Most make targets may be non-functional!])
-fi
 
 # BEGIN: Derived from GASNet
 
@@ -216,7 +215,7 @@ dnl #######################################################################
 
 AC_DEFUN([OPAL_LOG_FILE],[
 # 1 is the filename
-if test -n "$1" -a -f "$1"; then
+if test -n "$1" && test -f "$1"; then
     cat $1 >&5
 fi])dnl
 
@@ -259,7 +258,7 @@ for val in ${$1}; do
     # Loop over every token we've seen so far
 
     opal_done="`expr $opal_i \> $opal_count`"
-    while test "$opal_found" = "0" -a "$opal_done" = "0"; do
+    while test "$opal_found" = "0" && test "$opal_done" = "0"; do
 
 	# Have we seen this token already?  Prefix the comparison with
 	# "x" so that "-Lfoo" values won't be cause an error.
@@ -364,7 +363,7 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
         # Loop over every token we've seen so far
 
         opal_done="`expr $opal_i \> $opal_count`"
-        while test "$opal_found" = "0" -a "$opal_done" = "0"; do
+        while test "$opal_found" = "0" && test "$opal_done" = "0"; do
 
             # Have we seen this token already?  Prefix the comparison
             # with "x" so that "-Lfoo" values won't be cause an error.
@@ -383,12 +382,18 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
 
         # Check for special cases where we do want to allow repeated
         # arguments (per
-        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
+        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php
+        # and
+        # https://github.com/open-mpi/ompi/issues/324).
 
         case $val in
         -Xclang)
                 opal_found=0
                 opal_i=`expr $opal_count + 1`
+                ;;
+        --param)
+                ompi_found=0
+                ompi_i=`expr $ompi_count + 1`
                 ;;
         esac
 
@@ -449,7 +454,7 @@ AC_DEFUN([OPAL_FLAGS_APPEND_UNIQ], [
     for arg in $2; do
         opal_tmp=`echo $arg | cut -c1-2`
         opal_append=1
-        AS_IF([test "$opal_tmp" = "-I" -o "$opal_tmp" = "-L" -o "$opal_tmp" = "-l"],
+        AS_IF([test "$opal_tmp" = "-I" || test "$opal_tmp" = "-L" || test "$opal_tmp" = "-l"],
               [for val in ${$1}; do
                    AS_IF([test "x$val" = "x$arg"], [opal_append=0])
                done])
@@ -569,11 +574,11 @@ AC_DEFUN([OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
         AC_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
                        [maximum length of ]m4_translit($1, [_], [ ])[s.  VALUE argument has to be specified (default: [$2]).]))
-    if test ! -z "$with_max_[$1]" -a "$with_max_[$1]" != "no" ; then
+    if test ! -z "$with_max_[$1]" && test "$with_max_[$1]" != "no" ; then
         # Ensure it's a number (hopefully an integer!), and >0
         expr $with_max_[$1] + 1 > /dev/null 2> /dev/null
         AS_IF([test "$?" != "0"], [happy=0],
-              [AS_IF([test $with_max_[$1] -ge $3 -a $with_max_[$1] -le $4],
+              [AS_IF([test $with_max_[$1] -ge $3 && test $with_max_[$1] -le $4],
                      [happy=1], [happy=0])])
 
         # If badness in the above tests, bail
