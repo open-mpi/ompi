@@ -40,8 +40,8 @@ mca_pml_yalla_module_t ompi_pml_yalla = {
         mca_pml_yalla_mrecv,
         mca_pml_yalla_dump,
         NULL, /* FT */
-        1ul << (sizeof(mxm_ctxid_t)*8) - 1,
-        1ul << (sizeof(mxm_tag_t)*8 - 1) - 1,
+        1ul << ((sizeof(mxm_ctxid_t)*8) - 1),
+        1ul << ((sizeof(mxm_tag_t)*8 - 1) - 1),
     },
     NULL,
     NULL,
@@ -175,8 +175,8 @@ int mca_pml_yalla_init(void)
 
     opal_progress_register(mca_pml_yalla_progress);
 
-    PML_YALLA_VERBOSE(2, "created mxm context %p ep %p", ompi_pml_yalla.mxm_context,
-                      ompi_pml_yalla.mxm_ep);
+    PML_YALLA_VERBOSE(2, "created mxm context %p ep %p", (void *)ompi_pml_yalla.mxm_context,
+                      (void *)ompi_pml_yalla.mxm_ep);
     return OMPI_SUCCESS;
 }
 
@@ -315,7 +315,7 @@ int mca_pml_yalla_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
     rreq->super.ompi.req_persistent = true;
     rreq->super.flags = 0;
     *request = &rreq->super.ompi;
-    PML_YALLA_VERBOSE(9, "init recv request %p src %d tag %d comm %s", *request,
+    PML_YALLA_VERBOSE(9, "init recv request %p src %d tag %d comm %s", (void*)(*request),
                       src, tag, comm->c_name);
     return OMPI_SUCCESS;
 }
@@ -332,8 +332,8 @@ int mca_pml_yalla_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
     rreq->super.ompi.req_persistent = false;
     rreq->super.flags = 0;
 
-    PML_YALLA_VERBOSE(8, "receive request *%p=%p from %d tag %d dtype %s count %Zu",
-                      request, rreq, src, tag, datatype->name, count);
+    PML_YALLA_VERBOSE(8, "receive request *%p=%p from %d tag %d dtype %s count %zu",
+                      (void *)request, (void *)rreq, src, tag, datatype->name, count);
 
     error = mxm_req_recv(&rreq->mxm);
     if (MXM_OK != error) {
@@ -354,7 +354,7 @@ int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int s
     PML_YALLA_INIT_MXM_RECV_REQ(&rreq, buf, count, datatype, src, tag, comm, recv);
     PML_YALLA_INIT_BLOCKING_MXM_RECV_REQ(&rreq);
 
-    PML_YALLA_VERBOSE(8, "receive from %d tag %d dtype %s count %Zu", src, tag,
+    PML_YALLA_VERBOSE(8, "receive from %d tag %d dtype %s count %zu", src, tag,
                       datatype->name, count);
 
     error = mxm_req_recv(&rreq);
@@ -363,7 +363,7 @@ int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int s
     }
 
     PML_YALLA_WAIT_MXM_REQ(&rreq.base);
-    PML_YALLA_VERBOSE(8, "receive completed with status %s source %d rtag %d(%d/0x%x) len %Zu",
+    PML_YALLA_VERBOSE(8, "receive completed with status %s source %d rtag %d(%d/0x%x) len %zu",
                       mxm_error_string(rreq.base.error),
                       rreq.completion.sender_imm, rreq.completion.sender_tag,
                       rreq.tag, rreq.tag_mask,
@@ -390,14 +390,14 @@ int mca_pml_yalla_isend_init(void *buf, size_t count, ompi_datatype_t *datatype,
     }
 
     *request = &sreq->super.ompi;
-    PML_YALLA_VERBOSE(9, "init send request %p dst %d tag %d comm %s", *request,
+    PML_YALLA_VERBOSE(9, "init send request %p dst %d tag %d comm %s", (void *)*request,
                       dst, tag, comm->c_name);
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_yalla_bsend(mxm_send_req_t *mxm_sreq)
 {
-    mca_pml_yalla_bsend_request_t *bsreq = PML_YALLA_FREELIST_GET(&ompi_pml_yalla.bsend_reqs);
+    mca_pml_yalla_bsend_request_t *bsreq = (mca_pml_yalla_bsend_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.bsend_reqs);
     mxm_error_t error;
     size_t length;
 
@@ -455,8 +455,8 @@ int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
     sreq->super.ompi.req_persistent = false;
     sreq->super.flags = 0;
 
-    PML_YALLA_VERBOSE(8, "send request *%p=%p to %d mode %d tag %d dtype %s count %Zu",
-                      request, sreq, dst, mode, tag, datatype->name, count);
+    PML_YALLA_VERBOSE(8, "send request *%p=%p to %d mode %d tag %d dtype %s count %zu",
+                      (void *)request, (void *)sreq, dst, mode, tag, datatype->name, count);
 
     if (mode == MCA_PML_BASE_SEND_BUFFERED) {
         rc = mca_pml_yalla_bsend(&sreq->mxm);
@@ -487,7 +487,7 @@ int mca_pml_yalla_send(void *buf, size_t count, ompi_datatype_t *datatype, int d
     PML_YALLA_INIT_MXM_SEND_REQ(&sreq, buf, count, datatype, dst, tag, mode, comm, send);
     PML_YALLA_INIT_BLOCKING_MXM_SEND_REQ(&sreq);
 
-    PML_YALLA_VERBOSE(8, "send to %d tag %d dtype %s count %Zu", dst, tag,
+    PML_YALLA_VERBOSE(8, "send to %d tag %d dtype %s count %zu", dst, tag,
                       datatype->name, count);
 
     if (mode == MCA_PML_BASE_SEND_BUFFERED) {
@@ -621,8 +621,8 @@ int mca_pml_yalla_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
     rreq->super.ompi.req_persistent = false;
     rreq->super.flags = 0;
 
-    PML_YALLA_VERBOSE(8, "receive request *%p=%p message *%p=%p dtype %s count %Zu",
-                      request, rreq, message, *message, datatype->name, count);
+    PML_YALLA_VERBOSE(8, "receive request *%p=%p message *%p=%p dtype %s count %zu",
+                      (void *)request, (void *)rreq, (void *)message, (void *)(*message), datatype->name, count);
 
     error = mxm_message_recv(&rreq->mxm, (*message)->req_ptr);
     if (MXM_OK != error) {
@@ -645,8 +645,8 @@ int mca_pml_yalla_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
     PML_YALLA_INIT_MXM_RECV_REQ(&rreq, buf, count, datatype, -1, 0, (*message)->comm, recv);
     PML_YALLA_INIT_BLOCKING_MXM_RECV_REQ(&rreq);
 
-    PML_YALLA_VERBOSE(8, "receive message *%p=%p dtype %s count %Zu", message,
-                      *message, datatype->name, count);
+    PML_YALLA_VERBOSE(8, "receive message *%p=%p dtype %s count %zu", (void *)message,
+                      (void *)*message, datatype->name, count);
 
     error = mxm_message_recv(&rreq, (*message)->req_ptr);
     if (MXM_OK != error) {
@@ -656,7 +656,7 @@ int mca_pml_yalla_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
     PML_YALLA_MESSAGE_RELEASE(message);
 
     PML_YALLA_WAIT_MXM_REQ(&rreq.base);
-    PML_YALLA_VERBOSE(8, "receive completed with status %s source %d rtag %d(%d/0x%x) len %Zu",
+    PML_YALLA_VERBOSE(8, "receive completed with status %s source %d rtag %d(%d/0x%x) len %zu",
                       mxm_error_string(rreq.base.error),
                       rreq.completion.sender_imm, rreq.completion.sender_tag,
                       rreq.tag, rreq.tag_mask,
@@ -688,7 +688,7 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
         if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_SEND) {
             sreq = (mca_pml_yalla_send_request_t *)req;
             if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_BSEND) {
-                PML_YALLA_VERBOSE(8, "start bsend request %p", sreq);
+                PML_YALLA_VERBOSE(8, "start bsend request %p", (void *)sreq);
                 rc = mca_pml_yalla_bsend(&sreq->mxm);
                 OPAL_THREAD_LOCK(&ompi_request_lock);
                 sreq->super.ompi.req_status.MPI_ERROR = rc;
@@ -698,14 +698,14 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
                     return rc;
                 }
             } else {
-                PML_YALLA_VERBOSE(8, "start send request %p", sreq);
+                PML_YALLA_VERBOSE(8, "start send request %p", (void *)sreq);
                 error = mxm_req_send(&sreq->mxm);
                 if (MXM_OK != error) {
                     return OMPI_ERROR;
                 }
             }
         } else {
-            PML_YALLA_VERBOSE(8, "start recv request %p", req);
+            PML_YALLA_VERBOSE(8, "start recv request %p", (void *)req);
             error = mxm_req_recv(&((mca_pml_yalla_recv_request_t *)req)->mxm);
             if (MXM_OK != error) {
                 return OMPI_ERROR;
