@@ -114,7 +114,8 @@ typedef enum {
     MCA_BASE_FRAMEWORK_FLAG_REGISTERED = 2,
     /** Framework does not have any DSO components */
     MCA_BASE_FRAMEWORK_FLAG_NO_DSO     = 4,
-
+    /** Internal. Don't set outside mca_base_framework.h */
+    MCA_BASE_FRAMEWORK_FLAG_OPEN       = 8,
     /**
      * The upper 16 bits are reserved for project specific flags.
      */

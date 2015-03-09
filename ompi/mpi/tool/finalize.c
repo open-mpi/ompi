@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -13,6 +13,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
+#include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 
@@ -35,6 +36,7 @@ int MPI_T_finalize (void)
     }
 
     if (0 == --mpit_init_count) {
+        (void) ompi_info_close_components ();
         (void) opal_finalize_util ();
     }
 

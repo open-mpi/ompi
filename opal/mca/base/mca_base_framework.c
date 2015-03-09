@@ -24,6 +24,11 @@ static bool framework_is_registered (struct mca_base_framework_t *framework)
     return !!(framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_REGISTERED);
 }
 
+static bool framework_is_open (struct mca_base_framework_t *framework)
+{
+    return !!(framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_OPEN);
+}
+
 static void framework_open_output (struct mca_base_framework_t *framework)
 {
     if (0 < framework->framework_verbose) {
@@ -53,6 +58,8 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
     int ret;
 
     assert (NULL != framework);
+
+    framework->framework_refcnt++;
 
     if (framework_is_registered (framework)) {
         return OPAL_SUCCESS;
@@ -127,15 +134,15 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
 
     assert (NULL != framework);
 
-    /* check if this framework is already open */
-    if (framework->framework_refcnt++) {
-        return OPAL_SUCCESS;
-    }
-
     /* register this framework before opening it */
     ret = mca_base_framework_register (framework, MCA_BASE_REGISTER_DEFAULT);
     if (OPAL_SUCCESS != ret) {
         return ret;
+    }
+
+    /* check if this framework is already open */
+    if (framework_is_open (framework)) {
+        return OPAL_SUCCESS;
     }
 
     if (MCA_BASE_FRAMEWORK_FLAG_NOREGISTER & framework->framework_flags) {
@@ -158,23 +165,27 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
     }
 
     if (OPAL_SUCCESS != ret) {
-        framework->framework_refcnt = 0;
+        framework->framework_refcnt--;
+    } else {
+        framework->framework_flags |= MCA_BASE_FRAMEWORK_FLAG_OPEN;
     }
 
     return ret;
 }
 
 int mca_base_framework_close (struct mca_base_framework_t *framework) {
-    bool is_open = !!framework->framework_refcnt;
+    bool is_open = framework_is_open (framework);
+    bool is_registered = framework_is_registered (framework);
     int ret, group_id;
 
     assert (NULL != framework);
 
-    if (!framework_is_registered (framework) && 0 == framework->framework_refcnt) {
+    if (!(is_open || is_registered)) {
         return OPAL_SUCCESS;
     }
 
-    if (framework->framework_refcnt && --framework->framework_refcnt) {
+    assert (framework->framework_refcnt);
+    if (--framework->framework_refcnt) {
         return OPAL_SUCCESS;
     }
 
@@ -183,7 +194,6 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
                                         framework->framework_name, NULL);
     if (0 <= group_id) {
         (void) mca_base_var_group_deregister (group_id);
-        framework->framework_flags &= ~MCA_BASE_FRAMEWORK_FLAG_REGISTERED;
     }
 
     /* close the framework and all of its components */
@@ -209,7 +219,7 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
         ret = OPAL_SUCCESS;
     }
 
-    framework->framework_flags &= ~MCA_BASE_FRAMEWORK_FLAG_REGISTERED;
+    framework->framework_flags &= ~(MCA_BASE_FRAMEWORK_FLAG_REGISTERED | MCA_BASE_FRAMEWORK_FLAG_OPEN);
 
     framework_close_output (framework);
 

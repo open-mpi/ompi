@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -131,7 +131,7 @@ static int group_find_by_name (const char *full_name, int *index, bool invalidok
         return rc;
     }
 
-    rc = mca_base_var_group_get_internal ((int)(uintptr_t) tmp, &group, false);
+    rc = mca_base_var_group_get_internal ((int)(uintptr_t) tmp, &group, invalidok);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
@@ -291,7 +291,7 @@ int mca_base_var_group_component_register (const mca_base_component_t *component
 int mca_base_var_group_deregister (int group_index)
 {
     mca_base_var_group_t *group;
-    int size, i, ret;
+    int size, ret;
     int *params, *subgroups;
 
     ret = mca_base_var_group_get_internal (group_index, &group, false);
@@ -305,7 +305,7 @@ int mca_base_var_group_deregister (int group_index)
     size = opal_value_array_get_size(&group->group_vars);
     params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, int);
 
-    for (i = 0 ; i < size ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         const mca_base_var_t *var;
 
         ret = mca_base_var_get (params[i], &var);
@@ -315,14 +315,12 @@ int mca_base_var_group_deregister (int group_index)
 
         (void) mca_base_var_deregister (params[i]);
     }
-    OBJ_DESTRUCT(&group->group_vars);
-    OBJ_CONSTRUCT(&group->group_vars, opal_value_array_t);
 
     /* invalidate all associated mca performance variables */
     size = opal_value_array_get_size(&group->group_pvars);
     params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_pvars, int);
 
-    for (i = 0 ; i < size ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         const mca_base_pvar_t *var;
 
         ret = mca_base_pvar_get (params[i], &var);
@@ -332,16 +330,14 @@ int mca_base_var_group_deregister (int group_index)
 
         (void) mca_base_pvar_mark_invalid (params[i]);
     }
-    OBJ_DESTRUCT(&group->group_pvars);
-    OBJ_CONSTRUCT(&group->group_pvars, opal_value_array_t);
 
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
-    for (i = 0 ; i < size ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         (void) mca_base_var_group_deregister (subgroups[i]);
     }
-    OBJ_DESTRUCT(&group->group_subgroups);
-    OBJ_CONSTRUCT(&group->group_subgroups, opal_value_array_t);
+    /* ordering of variables and subgroups must be the same if the
+     * group is re-registered */
 
     mca_base_var_groups_timestamp++;
 
