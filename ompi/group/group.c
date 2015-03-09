@@ -16,6 +16,8 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -464,27 +466,12 @@ int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
     group1_pointer=(ompi_group_t *)group1;
     group2_pointer=(ompi_group_t *)group2;
 
-    /* determine the number of included processes for the incl-method */
     k = 0;
-    for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-        proc1_pointer = ompi_group_peer_lookup (group1_pointer , proc1);
-        
-        /* check to see if this proc is in group2 */
-    
-        for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-            proc2_pointer = ompi_group_peer_lookup (group2_pointer , proc2);
-
-            if( proc1_pointer == proc2_pointer ) {
-                k++;
-                break;
-            }
-        }  /* end proc2 loop */
-    }  /* end proc1 loop */
-    
-    if (0 != k) {
-        ranks_included = (int *)malloc( k*(sizeof(int)));
+    /* allocate the max required memory */
+    ranks_included = (int *)malloc(group1_pointer->grp_proc_count*(sizeof(int)));
+    if (NULL == ranks_included) {
+        return MPI_ERR_NO_MEM;
     }
-
     /* determine the list of included processes for the incl-method */
     k = 0;
     for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
