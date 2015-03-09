@@ -738,15 +738,29 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         ret = fi_fabric(info->fabric_attr, &fabric, NULL);
         if (0 != ret) {
-            BTL_ERROR(("fi_fabric"));
-            /* JMS error */
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "libfabric API failed",
+                           true,
+                           opal_process_info.nodename,
+                           info->fabric_attr->name,
+                           "fi_fabric()", __FILE__, __LINE__,
+                           ret,
+                           strerror(-ret));
+            continue;
         }
         opal_memchecker_base_mem_defined(&fabric, sizeof(fabric));
 
         ret = fi_domain(fabric, info, &domain, NULL);
         if (0 != ret) {
-            BTL_ERROR(("fi_domain"));
-            /* JMS error */
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "libfabric API failed",
+                           true,
+                           opal_process_info.nodename,
+                           info->fabric_attr->name,
+                           "fi_domain()", __FILE__, __LINE__,
+                           ret,
+                           strerror(-ret));
+            continue;
         }
         opal_memchecker_base_mem_defined(&domain, sizeof(domain));
 
@@ -815,14 +829,21 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             }
         }
 
-        /* Check some usNIC configuration minimum settings */
-        if (check_usnic_config(module, num_local_procs) != OPAL_SUCCESS) {
+        /* The first time through, check some usNIC configuration
+           minimum settings with information we got back from the fi_*
+           probes (these are VIC-wide settings -- they don't change
+           for each module we create, so we only need to check
+           once). */
+        if (0 == j &&
+            check_usnic_config(module, num_local_procs) != OPAL_SUCCESS) {
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: device %s is not provisioned with enough resources -- skipping",
                                 info->fabric_attr->name);
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
-            continue;
+
+            mca_btl_usnic_component.num_modules = 0;
+            goto error;
         }
 
         /*************************************************/
