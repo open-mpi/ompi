@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -424,6 +424,9 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
             return ret;
         }
+        if (NULL == convert) {
+            return OPAL_ERR_UNPACK_FAILURE;
+        }
         tmp = strtof(convert, NULL);
         memcpy(&desttmp[i], &tmp, sizeof(tmp));
         free(convert);
@@ -450,6 +453,9 @@ int opal_dss_unpack_double(opal_buffer_t *buffer, void *dest,
         n=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
             return ret;
+        }
+        if (NULL == convert) {
+            return OPAL_ERR_UNPACK_FAILURE;
         }
         tmp = strtod(convert, NULL);
         memcpy(&desttmp[i], &tmp, sizeof(tmp));
