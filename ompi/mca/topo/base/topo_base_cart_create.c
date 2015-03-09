@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -91,7 +91,6 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
 
     cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
     if( NULL == cart ) {
-        ompi_comm_free(&new_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     cart->ndims = ndims;
@@ -172,11 +171,13 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
-        new_comm->c_topo = NULL;
-        new_comm->c_flags &= ~OMPI_COMM_CART;
         free(topo_procs);
         OBJ_RELEASE(cart);
-        ompi_comm_free (&new_comm);
+        if (MPI_COMM_NULL != new_comm) {
+            new_comm->c_topo = NULL;
+            new_comm->c_flags &= ~OMPI_COMM_CART;
+            ompi_comm_free (&new_comm);
+        }
         return ret;
     }
 
