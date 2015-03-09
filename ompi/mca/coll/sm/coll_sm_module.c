@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -252,7 +252,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 #if OPAL_HAVE_HWLOC
     opal_hwloc_base_memory_segment_t *maffinity;
 #endif
-    int parent, min_child, max_child, num_children;
+    int parent, min_child, num_children;
     unsigned char *base = NULL;
     const int num_barrier_buffers = 2;
 
@@ -333,10 +333,10 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         if ((root * num_children) + 1 >= size) {
             /* Leaves */
             min_child = -1;
-            max_child = -1;
             num_children = 0;
         } else {
             /* Interior nodes */
+            int max_child;
             min_child = root * num_children + 1;
             max_child = root * num_children + num_children;
             if (max_child >= size) {
