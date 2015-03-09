@@ -414,14 +414,6 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 
     (*num_modules)=1;
     cs->super.n_net_contexts = *num_modules;
-    sm_modules = (mca_bcol_base_module_t **) malloc((cs->super.n_net_contexts)*
-                                                    sizeof(mca_bcol_base_module_t *));
-
-    if( !sm_modules ) {
-        opal_output (ompi_bcol_base_framework.framework_output, "In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
-        return NULL;
-    }
-
     sm_module->reduction_tree = NULL;
     sm_module->fanout_read_tree = NULL;
 
@@ -668,6 +660,12 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 
     /* in this case we only expect a single network context.
        in the future we should loop around this */
+    sm_modules = (mca_bcol_base_module_t **) malloc(sizeof(mca_bcol_base_module_t *));
+    if( !sm_modules ) {
+        opal_output (ompi_bcol_base_framework.framework_output, "In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
+        return NULL;
+    }
+
     sm_modules[0] = &(sm_module->super);
 
     return sm_modules;
@@ -679,7 +677,6 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
         free(sm_module->reduction_tree);
         sm_module->reduction_tree=NULL;
     }
-    free(sm_modules);
 
     return NULL;
 }
