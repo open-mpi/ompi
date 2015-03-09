@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,9 +13,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "opal/libltdl/ltdl.h"
+#include "opal/runtime/opal.h"
+#include "opal/mca/dl/base/base.h"
 
-#if !OPAL_WANT_LIBLTDL
+#if !OPAL_HAVE_DL_SUPPORT
 int main(int argc, char *argv[])
 {
     /* If OPAL wasn't built with libltdl support, then skip this test */
@@ -23,7 +24,36 @@ int main(int argc, char *argv[])
     return 77;
 }
 
-#else /* OPAL_WANT_LIBLTDL */
+#else /* OPAL_HAVE_DL_SUPPORT */
+
+static int try_open(const char *filename)
+{
+    char *err_msg;
+    opal_dl_handle_t *handle;
+    int ret;
+
+    ret = opal_dl_open(filename, true, true, &handle, &err_msg);
+    if (OPAL_SUCCESS == ret) {
+        opal_dl_close(handle);
+        printf("File opened with private namespace, all passed\n");
+        return 0;
+    }
+
+    printf("Failed to open with private namespace: %s\n", err_msg);
+    printf("Retrying with global namespace\n");
+
+    ret = opal_dl_open(filename, true, false, &handle, &err_msg);
+    if (OPAL_SUCCESS == ret) {
+        opal_dl_close(handle);
+        printf("File opened with global namespace\n");
+        return 0;
+    }
+
+    fprintf(stderr, "File failed to open with global namespace: %s\n",
+            err_msg);
+
+    return 2;
+}
 
 static int do_test(void)
 {
@@ -32,11 +62,6 @@ static int do_test(void)
     char full_filename[] = "./libompi_dbg_msgq.la";
     char line[1024];
     int happy;
-    lt_dlhandle dlhandle;
-
-#if OPAL_HAVE_LTDL_ADVISE
-    lt_dladvise dladvise;
-#endif
 
     /* Double check that the .la file is there that we expect; if it's
        not, skip this test. */
@@ -74,60 +99,41 @@ static int do_test(void)
         exit(77);
     }
 
-    /* Startup LT */
-    if (lt_dlinit() != 0) {
-        fprintf(stderr, "Failed to lt_dlinit\n");
-        return 1;
-    }
+    char cwd[4096];
+    getcwd(cwd, sizeof(cwd) - 1);
+    cwd[sizeof(cwd) - 1] = '\0';
+    printf("Running in CWD: %s\n", cwd);
 
-    printf("Trying to lt_dlopen file with dladvise_local: %s\n", filename);
+    printf("Trying to open file with private namespace: %s\n", filename);
 
-#if OPAL_HAVE_LTDL_ADVISE
-    if (lt_dladvise_init(&dladvise) ||
-        lt_dladvise_ext(&dladvise) ||
-        lt_dladvise_local(&dladvise)) {
-        fprintf(stderr, "lt_dladvise failed to initialize properly\n");
-        return 1;
-    }
-    dlhandle = lt_dlopenadvise(filename, dladvise);
-    lt_dladvise_destroy(&dladvise);
-#else
-    dlhandle = lt_dlopenext(filename);
-#endif
-    if (NULL != dlhandle) {
-        lt_dlclose(dlhandle);
-	printf("File opened with dladvise_local, all passed\n");
+    /* If that works, great */
+    if (0 == try_open(filename)) {
         return 0;
     }
 
-    printf("Failed to open with dladvise_local: %s\n", lt_dlerror());
-    printf("Retrying with dladvise_global\n");
-
-#if OPAL_HAVE_LTDL_ADVISE
-    if (lt_dladvise_init(&dladvise) ||
-        lt_dladvise_ext(&dladvise) ||
-        lt_dladvise_global(&dladvise)) {
-        fprintf(stderr, "lt_dladvise failed to initialize properly\n");
+    /* If we're using libltdl, it will find the .la file and may
+       discover that it needs to open the actual file in the .libs
+       directory.  If we're not using libltdl, then we won't know
+       about the magic .la file / .libs directory.  Hueristic: if we
+       get here, manually prefix the filename with .libs/ and try
+       again. */
+    char *rel_filename;
+    asprintf(&rel_filename, ".libs/%s", filename);
+    if (NULL == rel_filename) {
         return 1;
     }
-    dlhandle = lt_dlopenadvise(filename, dladvise);
-    lt_dladvise_destroy(&dladvise);
-#else
-    dlhandle = lt_dlopenext(filename);
-#endif
-    if (NULL != dlhandle) {
-        lt_dlclose(dlhandle);
-	printf("File opened with dladvise_global\n");
-	return 0;
-    }
-    fprintf(stderr, "File failed to open with dladvise_global: %s\n", 
-            lt_dlerror());
+    int rc = try_open(rel_filename);
+    free(rel_filename);
 
-    return 2;
+    return rc;
 }
 
 int main(int argc, char *argv[])
 {
-    return do_test();
+    opal_init(&argc, &argv);
+    int ret = do_test();
+    opal_finalize();
+
+    return ret;
 }
-#endif /* OPAL_WANT_LIBLTDL */
+#endif /* OPAL_HAVE_DL_SUPPORT */

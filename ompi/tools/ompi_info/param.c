@@ -118,8 +118,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_usempif08_profiling;
     char *cxxexceptions;
     char *threads;
-    char *want_libltdl;
-    char *have_ltdl_advise;
+    char *have_dl;
 #if OMPI_RTE_ORTE
     char *mpirun_prefix_by_default;
 #endif
@@ -259,8 +258,7 @@ void ompi_info_do_config(bool want_all)
     fortran_mpifh_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
     fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
-    want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
-    have_ltdl_advise = OPAL_HAVE_LTDL_ADVISE ? "yes" : "no";
+    have_dl = OPAL_HAVE_DL_SUPPORT ? "yes" : "no";
 #if OMPI_RTE_ORTE
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
 #endif
@@ -620,8 +618,7 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("MPI parameter check", "option:mpi-param-check", paramcheck);
     opal_info_out("Memory profiling support", "option:mem-profile", memprofile);
     opal_info_out("Memory debugging support", "option:mem-debug", memdebug);
-    opal_info_out("libltdl support", "option:dlopen", want_libltdl);
-    opal_info_out("lt_dladvise support", "option:lt_dladvise", have_ltdl_advise);
+    opal_info_out("dl support", "option:dlopen", have_dl);
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
 #if OMPI_RTE_ORTE
     opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default", 
