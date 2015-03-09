@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  */
 
@@ -347,12 +347,14 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
         if ( NULL != topo->outw ) {
             free(topo->outw);
         }
+        if (MPI_COMM_NULL != new_comm) {
+            new_comm->c_topo->mtc.dist_graph = NULL;
+            new_comm->c_topo             = NULL;
+            new_comm->c_flags           &= ~OMPI_COMM_DIST_GRAPH;
+            ompi_comm_free (&new_comm);
+        }
         free(topo);
         free(topo_procs);
-        new_comm->c_topo             = NULL;
-        new_comm->c_flags           &= ~OMPI_COMM_DIST_GRAPH;
-        new_comm->c_topo->mtc.dist_graph = NULL;
-        ompi_comm_free (&new_comm);
         return ret;
     }
     *newcomm = new_comm;
