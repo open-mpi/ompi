@@ -68,7 +68,7 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 	int namelen;
 	char linkbuf[PATH_MAX+1];
 
-	namelen = readlink(filename, linkbuf, PATH_MAX+1);
+	namelen = readlink(filename, linkbuf, PATH_MAX);
 	if (namelen == -1) {
 	    /* something strange has happened between the time that
 	     * we determined that this was a link and the time that
