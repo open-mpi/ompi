@@ -13,7 +13,8 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos Nat Security, LLC. All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -602,11 +603,12 @@ enum {
 #define MPI_ERR_RMA_ATTACH            69
 #define MPI_ERR_RMA_FLAVOR            70
 #define MPI_ERR_RMA_SHARED            71
+#define MPI_T_ERR_INVALID             72
 
 /* Per MPI-3 p349 47, MPI_ERR_LASTCODE must be >= the last predefined
-   MPI_ERR_<foo> code.  So just set it equal to the last code --
-   MPI_ERR_RMA_SHARED, in this case. */
-#define MPI_ERR_LASTCODE              MPI_ERR_RMA_SHARED
+   MPI_ERR_<foo> code. Set the last code to allow some room for adding
+   error codes without breaking ABI. */
+#define MPI_ERR_LASTCODE              92
 
 #define MPI_ERR_SYSRESOURCE          -2
 
