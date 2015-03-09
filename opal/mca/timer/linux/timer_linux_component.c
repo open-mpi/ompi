@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +79,9 @@ find_info(FILE* fp, char *str, char *buf, size_t buflen)
             /* we found the line.  Now eat everything up to,
                including, and one past the : */
             for (tmp = buf ; (*tmp != '\0') && (*tmp != ':') ; ++tmp) ;
+            if (*tmp == '\0') {
+                continue;
+            }
             for ( ++tmp ; *tmp == ' ' ; ++tmp);
             if ('\0' != *tmp) {
                 return tmp;
