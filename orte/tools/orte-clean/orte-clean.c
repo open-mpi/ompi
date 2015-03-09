@@ -353,7 +353,7 @@ void kill_procs(void) {
      */
     if (NULL == (inputline = orte_getline(psfile))) {
         free(this_user);
-        fclose(psfile);
+        pclose(psfile);
         return;
     } 
     free(inputline);  /* dump the header line */
@@ -444,6 +444,6 @@ void kill_procs(void) {
 	free(procname);
     }
     free(this_user);
-    fclose(psfile);
+    pclose(psfile);
     return;
 }
