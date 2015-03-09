@@ -67,8 +67,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
     # cache variable for the library check.  one should not copy this
     # code into other places unless you want much pain and suffering
     AS_LITERAL_IF([$2],
-                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_lib_$2_$3])],
-                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_lib_$2''_$3])])dnl
+                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_search_$2_$3])],
+                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_search_$2''_$3])])dnl
 
     # see comment above
     unset opal_Lib
@@ -77,7 +77,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
           [ # libdir was specified - search only there
            $1_LDFLAGS="$$1_LDFLAGS -L$6"
            LDFLAGS="$LDFLAGS -L$6"
-           AC_CHECK_LIB([$2], [$3],
+           AC_SEARCH_LIBS([$3], [$2],
                         [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
            AS_IF([test "$opal_check_package_lib_happy" = "no"],
@@ -91,7 +91,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                   test "$opal_check_package_libdir" = "/usr/local"],
                [ # try as is...
                 AC_VERBOSE([looking for library without search path])
-                AC_CHECK_LIB([$2], [$3],
+                AC_SEARCH_LIBS([$3], [$2],
                         [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
                 AS_IF([test "$opal_check_package_lib_happy" = "no"],
@@ -105,7 +105,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib"
                      AC_VERBOSE([looking for library in lib])
-                     AC_CHECK_LIB([$2], [$3],
+                     AC_SEARCH_LIBS([$3], [$2],
                                [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$opal_check_package_lib_happy" = "no"],
@@ -119,7 +119,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib64"
                      LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib64"
                      AC_VERBOSE([looking for library in lib64])
-                     AC_CHECK_LIB([$2], [$3],
+                     AC_SEARCH_LIBS([$3], [$2],
                                [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$opal_check_package_lib_happy" = "no"],
@@ -129,8 +129,13 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                           unset opal_Lib])])])])
 
     AS_IF([test "$opal_check_package_lib_happy" = "yes"],
-          [$1_LIBS="-l$2 $4"
-           $7], [$8])
+          [ # The result of AC SEARCH_LIBS is cached in $ac_cv_search_[function]
+           AS_IF([test "$ac_cv_search_$3" != "no" &&
+                  test "$ac_cv_search_$3" != "none required"],
+                 [$1_LIBS="$ac_cv_search_$3 $4"],
+                 [$1_LIBS="$4"])
+           $7],
+          [$8])
 
     AS_VAR_POPDEF([opal_Lib])dnl
 ])
