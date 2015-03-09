@@ -1713,7 +1713,7 @@ static int create_app(int argc, char* argv[],
                 }
                 free(value);
             } else if (NULL != orterun_globals.prefix) {
-                param = orterun_globals.prefix;
+                param = strdup(orterun_globals.prefix);
             } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
                 /* must be --prefix alone */
                 param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
@@ -1731,6 +1731,7 @@ static int create_app(int argc, char* argv[],
                     if (0 == param_len) {
                         orte_show_help("help-orterun.txt", "orterun:empty-prefix",
                                        true, orte_basename, orte_basename);
+                        free(param);
                         return ORTE_ERR_FATAL;
                     }
                 }
@@ -2015,7 +2016,6 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
     FILE *fp;
     char line[BUFSIZ];
     int rc, argc, app_num;
-    char **argv;
     orte_app_context_t *app;
     bool blank, made_app;
     char bogus[] = "bogus ";
@@ -2044,6 +2044,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
     line[sizeof(line) - 1] = '\0';
     app_num = 0;
     do {
+        char **argv;
 
         /* We need a bogus argv[0] (because when argv comes in from
            the command line, argv[0] is "orterun", so the parsing
@@ -2115,6 +2116,8 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != *env) {
                 tmp_env = opal_argv_copy(*env);
                 if (NULL == tmp_env) {
+                    opal_argv_free(argv);
+                    fclose(fp);
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
             } else {
@@ -2130,6 +2133,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != tmp_env) {
                 opal_argv_free(tmp_env);
             }
+            opal_argv_free(argv);
             if (made_app) {
                 app->idx = app_num;
                 ++app_num;
