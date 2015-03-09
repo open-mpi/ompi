@@ -299,7 +299,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 						  sizeof(local_io_array));
     if (NULL == global_iov_array){
       opal_output (1, "OUT OF MEMORY\n");
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
   }
   
@@ -328,7 +329,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     sorted = (int *)malloc (global_iov_count * sizeof(int));
     if (NULL == sorted) {
       opal_output (1, "OUT OF MEMORY\n");
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
     local_heap_sort (global_iov_array, global_iov_count, sorted);
   }
