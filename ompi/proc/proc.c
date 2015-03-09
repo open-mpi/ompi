@@ -762,12 +762,14 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #endif
             }
 
-            if (0 == strcmp(ompi_proc_local_proc->super.proc_hostname, new_hostname)) {
-                plist[i]->super.proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
-            }
+            if (NULL != new_hostname) {
+                if (0 == strcmp(ompi_proc_local_proc->super.proc_hostname, new_hostname)) {
+                    plist[i]->super.proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
+                }
 
-            /* Save the hostname */
-            plist[i]->super.proc_hostname = new_hostname;
+                /* Save the hostname */
+                plist[i]->super.proc_hostname = new_hostname;
+            }
 
         } else {
             if (full_info) {
