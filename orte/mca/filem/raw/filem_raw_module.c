@@ -3,6 +3,8 @@
  *                         All rights reserved
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -510,7 +512,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
 
         /* attempt to open the specified file */
-        if (0 >= (fd = open(fs->local_target, O_RDONLY))) {
+        if (0 > (fd = open(fs->local_target, O_RDONLY))) {
             opal_output(0, "%s CANNOT ACCESS FILE %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target);
             OBJ_RELEASE(item);
@@ -524,7 +526,10 @@ static int raw_preposition_files(orte_job_t *jdata,
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
-            fcntl(fd, F_SETFL, flags);
+            if (fcntl(fd, F_SETFL, flags) < 0) {
+                opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                            __FILE__, __LINE__, errno);
+            }
         }            
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: setting up to position file %s",
@@ -743,7 +748,12 @@ static int raw_link_local_files(orte_job_t *jdata,
             /* doesn't exist with correct permissions, and/or we can't
              * create it - either way, we are done
              */
+            free(files);
+            if (NULL != prefix) {
+                free(prefix);
+            }
             free(path);
+            free(my_dir);
             return rc;
         }
 
@@ -771,6 +781,10 @@ static int raw_link_local_files(orte_job_t *jdata,
                                 ORTE_ERROR_LOG(rc);
                                 free(my_dir);
                                 free(path);
+                                if (NULL != prefix) {
+                                    free(prefix);
+                                }
+                                free(files);
                                 return rc;
                             }
                         }
@@ -786,9 +800,7 @@ static int raw_link_local_files(orte_job_t *jdata,
         }
         free(path);
     }
-    if (NULL != files) {
-        opal_argv_free(files);
-    }
+    opal_argv_free(files);
     if (NULL != prefix) {
         free(prefix);
     }
@@ -997,7 +1009,7 @@ static void recv_files(int status, orte_process_name_t* sender,
     orte_filem_raw_incoming_t *ptr, *incoming;
     opal_list_item_t *item;
     int32_t type;
-    char *tmp, *cptr;
+    char *cptr;
 
     /* unpack the data */
     n=1;
@@ -1067,6 +1079,7 @@ static void recv_files(int status, orte_process_name_t* sender,
     /* if this is the first chunk, we need to open the file descriptor */
     if (0 == nchunk) {
         /* separate out the top-level directory of the target */
+        char *tmp;
         tmp = strdup(file);
         if (NULL != (cptr = strchr(tmp, '/'))) {
             *cptr = '\0';
@@ -1100,6 +1113,7 @@ static void recv_files(int status, orte_process_name_t* sender,
                             incoming->fullpath);
                 send_complete(file, ORTE_ERR_FILE_WRITE_FAILURE);
                 free(file);
+                free(tmp);
                 return;
             }
         } else {
@@ -1109,9 +1123,11 @@ static void recv_files(int status, orte_process_name_t* sender,
                             incoming->fullpath);
                 send_complete(file, ORTE_ERR_FILE_WRITE_FAILURE);
                 free(file);
+                free(tmp);
                 return;
             }
         }
+        free(tmp);
         opal_event_set(orte_event_base, &incoming->ev, incoming->fd, OPAL_EV_WRITE, write_handler, incoming);
         opal_event_set_priority(&incoming->ev, ORTE_MSG_PRI);
     }
