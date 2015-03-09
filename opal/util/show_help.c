@@ -75,7 +75,8 @@ int opal_show_help_finalize(void)
     /* destruct the search list */
     if (NULL != search_dirs) {
         opal_argv_free(search_dirs);
-    };
+        search_dirs = NULL;
+    }
     
     return OPAL_SUCCESS;
 }
