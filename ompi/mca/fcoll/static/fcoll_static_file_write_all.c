@@ -720,7 +720,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	send_buf = malloc (bytes_to_write_in_cycle);
 	if (NULL == send_buf) {
 	    opal_output (1, "OUT OF MEMORY\n");
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
 	}
 	remaining = bytes_to_write_in_cycle;
 	
@@ -806,7 +807,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	    (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
 	if (NULL == fh->f_io_array) {
 	    opal_output(1, "OUT OF MEMORY\n");
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
 	}
 	fh->f_num_of_io_entries = 0;
 	/*First entry for every aggregator*/
