@@ -257,7 +257,7 @@ usd_open_with_fd(
     }
 
     /*
-     * Found mathcing device, open an instance
+     * Found matching device, open an instance
      */
     dev = calloc(sizeof(*dev), 1);
     if (dev == NULL) {

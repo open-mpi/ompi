@@ -593,6 +593,9 @@ usdf_get_devinfo(void)
 		}
 
 		dep->ue_dev_ok = 1;	/* this device is OK */
+
+		usd_close(dep->ue_dev);
+		dep->ue_dev = NULL;
 	}
 	return 0;
 
@@ -864,7 +867,7 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	dp = __usdf_devinfo;
 	for (d = 0; d < dp->uu_num_devs; ++d) {
 		dep = &dp->uu_info[d];
-		if (dep->ue_dev != NULL &&
+		if (dep->ue_dev_ok &&
 			strcmp(fattrp->name, dep->ue_dattr.uda_devname) == 0) {
 			break;
 		}
