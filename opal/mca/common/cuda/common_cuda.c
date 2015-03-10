@@ -367,6 +367,7 @@ int mca_common_cuda_stage_one_init(void)
      * appended). */
     j = 0;
     while (searchpaths[j] != NULL) {
+        i = 0;
         while (cudalibs[i] != NULL) {
             char *filename;
             char *str;
