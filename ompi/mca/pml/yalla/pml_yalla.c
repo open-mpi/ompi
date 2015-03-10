@@ -57,7 +57,8 @@ static int send_ep_address(void)
     int rc;
 
     addrlen = 0;
-    mxm_ep_get_address(ompi_pml_yalla.mxm_ep, NULL, &addrlen);
+    error = mxm_ep_get_address(ompi_pml_yalla.mxm_ep, NULL, &addrlen);
+    PML_YALLA_ASSERT(error == MXM_ERR_BUFFER_TOO_SMALL);
 
     address = alloca(addrlen);
     error = mxm_ep_get_address(ompi_pml_yalla.mxm_ep, address, &addrlen);

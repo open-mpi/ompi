@@ -302,12 +302,14 @@ int ompi_mtl_mxm_module_init(void)
         MXM_VERBOSE(1, "MXM support will be disabled because of total number "
                     "of processes (%lu) is less than the minimum set by the "
                     "mtl_mxm_np MCA parameter (%u)", totps, ompi_mtl_mxm.mxm_np);
+        free(procs);
         return OMPI_ERR_NOT_SUPPORTED;
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
     if (ORTE_NODE_RANK_INVALID == (lr = ompi_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
+        free(procs);
         return OMPI_ERROR;
     }
     nlps = ompi_process_info.num_local_peers + 1;
@@ -317,6 +319,7 @@ int ompi_mtl_mxm_module_init(void)
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
         }
     }
+    free(procs);
 
     /* Setup the endpoint options and local addresses to bind to. */
 #if MXM_API < MXM_VERSION(2,0)
