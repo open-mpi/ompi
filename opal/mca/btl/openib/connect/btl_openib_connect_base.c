@@ -448,7 +448,6 @@ int opal_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 
     /* Copy the lkey where it needs to go */
     endpoint->endpoint_cts_frag.super.sg_entry.lkey =
-        endpoint->endpoint_cts_frag.super.super.segment.key =
         endpoint->endpoint_cts_mr->lkey;
     endpoint->endpoint_cts_frag.super.sg_entry.length = length;
 

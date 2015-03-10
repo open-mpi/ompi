@@ -546,13 +546,13 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
         mca_btl_openib_send_frag_t *frag, const bool rdma, int do_signal)
 {
     mca_btl_openib_module_t *openib_btl = ep->endpoint_btl;
-    mca_btl_openib_segment_t *seg = &to_base_frag(frag)->segment;
+    mca_btl_base_segment_t *seg = &to_base_frag(frag)->segment;
     struct ibv_sge *sg = &to_com_frag(frag)->sg_entry;
     struct ibv_send_wr *sr_desc = &to_out_frag(frag)->sr_desc;
     struct ibv_send_wr *bad_wr;
     int qp = to_base_frag(frag)->base.order;
 
-    sg->length = seg->base.seg_len + sizeof(mca_btl_openib_header_t) +
+    sg->length = seg->seg_len + sizeof(mca_btl_openib_header_t) +
         (rdma ? sizeof(mca_btl_openib_footer_t) : 0) + frag->coalesced_length;
 
     sr_desc->send_flags = ib_send_flags(sg->length, &(ep->qps[qp]), do_signal);

@@ -463,7 +463,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     mca_btl_openib_endpoint_t* ep = to_com_frag(des)->endpoint;
     mca_btl_openib_control_header_t *ctl_hdr =
-        (mca_btl_openib_control_header_t *) to_base_frag(des)->segment.base.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(des)->segment.seg_addr.pval;
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
@@ -1179,7 +1179,7 @@ static void merge_values(opal_btl_openib_ini_values_t *target,
 static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
-        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
     return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
@@ -1187,7 +1187,7 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 static bool inline is_cts_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
-        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
     return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CTS == chdr->type);
 }
@@ -3705,7 +3705,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
             OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
             frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) -
                 size - BTL_OPENIB_FTR_PADDING(size) + sizeof(mca_btl_openib_footer_t));
-            to_base_frag(frag)->segment.base.seg_addr.pval =
+            to_base_frag(frag)->segment.seg_addr.pval =
                 ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
 
             ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
