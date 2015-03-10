@@ -605,6 +605,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     struct fi_info *info_list;
     struct fi_info *info;
     struct fi_info hints = {0};
+    struct fi_ep_attr ep_attr = {0};
     struct fi_fabric_attr fabric_attr = {0};
     struct fid_fabric *fabric;
     struct fid_domain *domain;
@@ -619,13 +620,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
-    /* We only want providers named "usnic */
+    /* We only want providers named "usnic that are of type EP_DGRAM */
     fabric_attr.prov_name = "usnic";
+    ep_attr.type = FI_EP_DGRAM;
 
-    hints.ep_type = FI_EP_DGRAM;
     hints.caps = FI_MSG;
     hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
     hints.addr_format = FI_SOCKADDR;
+    hints.ep_attr = &ep_attr;
     hints.fabric_attr = &fabric_attr;
 
     ret = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, &hints, &info_list);
