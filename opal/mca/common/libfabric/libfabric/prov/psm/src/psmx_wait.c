@@ -188,7 +188,8 @@ void psmx_wait_signal(struct fid_wait *wait)
 		break;
 
 	case FI_WAIT_FD:
-		write(wait_priv->fd[1], &c, 1);
+		if (write(wait_priv->fd[1], &c, 1) != 1)
+			PSMX_WARN("%s: error signaling wait object\n", __func__);
 		break;
 
 	case FI_WAIT_MUTEX_COND:
@@ -276,8 +277,8 @@ int psmx_wait_open(struct fid_fabric *fabric, struct fi_wait_attr *attr,
 			break;
 	 
 		default:
-			PSMX_DEBUG("%s: attr->wait_obj=%d, supported=%d,%d,%d\n",
-					__func__, attr->wait_obj, FI_WAIT_UNSPEC,
+			PSMX_DEBUG("attr->wait_obj=%d, supported=%d,%d,%d\n",
+					attr->wait_obj, FI_WAIT_UNSPEC,
 					FI_WAIT_FD, FI_WAIT_MUTEX_COND);
 			return -FI_EINVAL;
 		}

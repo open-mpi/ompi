@@ -201,7 +201,7 @@ usdf_fill_info_dgram(
 	size_t entries;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -228,7 +228,7 @@ usdf_fill_info_dgram(
 		fi->mode = USDF_DGRAM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_DGRAM;
+	fi->ep_attr->type = FI_EP_DGRAM;
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
 	if (ret != 0) {
@@ -365,7 +365,7 @@ usdf_fill_info_msg(
 	uint32_t addr_format;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -392,7 +392,7 @@ usdf_fill_info_msg(
 		fi->mode = USDF_MSG_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_MSG;
+	fi->ep_attr->type = FI_EP_MSG;
 
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
@@ -470,7 +470,7 @@ usdf_fill_info_rdm(
 	uint32_t addr_format;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -496,7 +496,7 @@ usdf_fill_info_rdm(
 		fi->mode = USDF_RDM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_RDM;
+	fi->ep_attr->type = FI_EP_RDM;
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
 	if (ret != 0) {
@@ -712,7 +712,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 				continue;
 			}
 
-			ep_type = hints->ep_type;
+			ep_type = hints->ep_attr ? hints->ep_attr->type :
+				  FI_EP_UNSPEC;
 		} else {
 			ep_type = FI_EP_UNSPEC;
 		}

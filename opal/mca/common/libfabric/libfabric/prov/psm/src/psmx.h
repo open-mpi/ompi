@@ -9,6 +9,7 @@ extern "C" {
 #include <config.h>
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -48,13 +49,13 @@ extern "C" {
 
 #define PSMX_TIME_OUT	120
 
-#define PSMX_OP_FLAGS	(FI_INJECT | FI_MULTI_RECV | FI_EVENT | \
+#define PSMX_OP_FLAGS	(FI_INJECT | FI_MULTI_RECV | FI_COMPLETION | \
 			 FI_TRIGGER | FI_REMOTE_SIGNAL | FI_REMOTE_COMPLETE)
 
 #define PSMX_CAP_EXT	(0)
 
-#define PSMX_CAPS	(FI_TAGGED | FI_MSG | FI_ATOMICS | FI_INJECT | \
-			 FI_RMA | FI_BUFFERED_RECV | FI_MULTI_RECV | \
+#define PSMX_CAPS	(FI_TAGGED | FI_MSG | FI_ATOMICS | \
+			 FI_RMA | FI_MULTI_RECV | \
                          FI_READ | FI_WRITE | FI_SEND | FI_RECV | \
                          FI_REMOTE_READ | FI_REMOTE_WRITE | \
                          FI_REMOTE_COMPLETE | FI_REMOTE_SIGNAL | \
@@ -80,6 +81,8 @@ enum psmx_context_type {
 	PSMX_SEND_CONTEXT,
 	PSMX_RECV_CONTEXT,
 	PSMX_MULTI_RECV_CONTEXT,
+	PSMX_TSEND_CONTEXT,
+	PSMX_TRECV_CONTEXT,
 	PSMX_WRITE_CONTEXT,
 	PSMX_READ_CONTEXT,
 	PSMX_INJECT_CONTEXT,
@@ -183,6 +186,7 @@ struct psmx_am_request {
 			void 	*result;
 		} atomic;
 	};
+	uint64_t cq_flags;
 	struct fi_context fi_context;
 	struct psmx_fid_ep *ep;
 	int state;
@@ -218,17 +222,18 @@ struct psmx_multi_recv {
 
 struct psmx_fid_fabric {
 	struct fid_fabric	fabric;
+	int			refcnt;
 	struct psmx_fid_domain	*active_domain;
+	psm_uuid_t		uuid;
 };
 
 struct psmx_fid_domain {
 	struct fid_domain	domain;
 	struct psmx_fid_fabric	*fabric;
+	int			refcnt;
 	psm_ep_t		psm_ep;
 	psm_epid_t		psm_epid;
 	psm_mq_t		psm_mq;
-	pthread_t		ns_thread;
-	int			ns_port;
 	struct psmx_fid_ep	*tagged_ep;
 	struct psmx_fid_ep	*msg_ep;
 	struct psmx_fid_ep	*rma_ep;
@@ -538,6 +543,7 @@ extern struct fi_ops_rma	psmx_rma_ops;
 extern struct fi_ops_atomic	psmx_atomic_ops;
 extern struct psm_am_parameters psmx_am_param;
 extern struct psmx_env		psmx_env;
+extern struct psmx_fid_fabric	*psmx_active_fabric;
 
 int	psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 			 struct fid_domain **domain, void *context);

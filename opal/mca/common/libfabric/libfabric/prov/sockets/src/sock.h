@@ -94,23 +94,23 @@
 #define SOCK_EP_MAX_CM_DATA_SZ (256)
 
 #define SOCK_EP_RDM_CAP (FI_MSG | FI_RMA | FI_TAGGED | FI_ATOMICS |	\
-			 FI_DYNAMIC_MR | FI_NAMED_RX_CTX | FI_BUFFERED_RECV | \
-			 FI_DIRECTED_RECV | FI_INJECT | FI_MULTI_RECV | \
+			 FI_DYNAMIC_MR | FI_NAMED_RX_CTX | \
+			 FI_DIRECTED_RECV | FI_MULTI_RECV | \
 			 FI_SOURCE | FI_READ | FI_WRITE | FI_RECV | FI_SEND | \
-			 FI_REMOTE_READ | FI_REMOTE_WRITE | FI_REMOTE_CQ_DATA | \
+			 FI_REMOTE_READ | FI_REMOTE_WRITE | \
 			 FI_COMPLETION | FI_REMOTE_SIGNAL | FI_REMOTE_COMPLETE | \
 			 FI_MORE | FI_CANCEL | FI_FENCE)
 
 #define SOCK_EP_MSG_CAP SOCK_EP_RDM_CAP
 
 #define SOCK_EP_DGRAM_CAP (FI_MSG | FI_TAGGED | FI_DYNAMIC_MR | \
-			   FI_NAMED_RX_CTX | FI_BUFFERED_RECV | FI_DIRECTED_RECV | \
-			   FI_INJECT | FI_MULTI_RECV | FI_SOURCE | FI_RECV | FI_SEND | \
-			   FI_REMOTE_CQ_DATA | FI_COMPLETION | FI_REMOTE_SIGNAL | \
+			   FI_NAMED_RX_CTX | FI_DIRECTED_RECV | \
+			   FI_MULTI_RECV | FI_SOURCE | FI_RECV | FI_SEND | \
+			   FI_COMPLETION | FI_REMOTE_SIGNAL | \
 			   FI_REMOTE_COMPLETE | FI_MORE | FI_CANCEL | \
 			   FI_FENCE)
 
-#define SOCK_DEF_OPS (FI_SEND | FI_RECV | FI_BUFFERED_RECV)
+#define SOCK_DEF_OPS (FI_SEND | FI_RECV )
 
 #define SOCK_EP_MSG_ORDER (FI_ORDER_RAR | FI_ORDER_RAW | FI_ORDER_RAS|	\
 			   FI_ORDER_WAR | FI_ORDER_WAW | FI_ORDER_WAS |	\
@@ -184,9 +184,11 @@ struct sock_cntr {
 
 	struct dlist_entry rx_list;
 	struct dlist_entry tx_list;
+	fastlock_t list_lock;
 
 	struct fid_wait *waitset;
 	int signal;
+	int is_waiting;
 };
 
 struct sock_mr {
@@ -377,6 +379,16 @@ struct sock_comp {
 	struct sock_eq *eq;
 };
 
+struct sock_cm_entry {
+	int sock;
+	int do_listen;
+	int signal_fds[2];
+	fastlock_t lock;
+	int shutdown_received;
+	pthread_t listener_thread;
+	struct dlist_entry msg_list;
+};
+
 struct sock_ep {
 	struct fid_ep ep;
 	size_t fclass;
@@ -416,24 +428,19 @@ struct sock_ep {
 	enum fi_ep_type ep_type;
 	struct sockaddr_in *src_addr;
 	struct sockaddr_in *dest_addr;
-	fi_addr_t conn_addr;
-	uint16_t key;
-	int socket;
 
-	pthread_t listener_thread;
-	int do_listen;
+	struct sockaddr_in cm_addr;
+	fid_t peer_fid;
+	uint16_t key;
+	int is_disabled;
+	struct sock_cm_entry cm;
 };
 
 struct sock_pep {
 	struct fid_pep	pep;
 	struct sock_fabric *sock_fab;
 
-	int do_listen;
-	pthread_t listener_thread;
-	int signal_fds[2];
-	int socket;
-	int listener_sock_fd;
-
+	struct sock_cm_entry cm;
 	struct sockaddr_in src_addr;
 	struct fi_info info;
 	struct sock_eq *eq;
@@ -702,6 +709,7 @@ struct sock_cq {
 	struct ringbuffd cq_rbfd;
 	struct ringbuf cqerr_rb;
 	fastlock_t lock;
+	fastlock_t list_lock;
 
 	struct fid_wait *waitset;
 	int signal;
@@ -711,6 +719,13 @@ struct sock_cq {
 	struct dlist_entry tx_list;
 
 	sock_cq_report_fn report_completion;
+};
+
+struct sock_cm_msg_list_entry {
+	size_t msg_len;
+	struct sockaddr_in addr;
+	struct dlist_entry entry;
+	char msg[0];
 };
 
 struct sock_conn_hdr {
@@ -797,6 +812,7 @@ int sock_msg_sep(struct fid_domain *domain, struct fi_info *info,
 int sock_msg_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 			struct fid_pep **pep, void *context);
 int sock_ep_enable(struct fid_ep *ep);
+int sock_ep_disable(struct fid_ep *ep);
 
 
 int sock_stx_ctx(struct fid_domain *domain,

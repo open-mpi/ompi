@@ -381,6 +381,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 	struct psmx_fid_mr *mr;
 	struct psmx_fid_ep *target_ep;
 	void *tmp_buf;
+	uint64_t cq_flags;
 
 	switch (args[0].u32w0 & PSMX_AM_OP_MASK) {
 	case PSMX_AM_REQ_ATOMIC_WRITE:
@@ -404,7 +405,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						mr->cq,
 						0, /* context */
 						addr,
-						0, /* flags */
+						FI_REMOTE_WRITE | FI_ATOMIC,
 						len,
 						0, /* data */
 						0, /* tag */
@@ -438,9 +439,12 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
+		cq_flags = FI_REMOTE_WRITE | FI_ATOMIC;
 
-		if (op == FI_ATOMIC_READ)
+		if (op == FI_ATOMIC_READ) {
 			len = fi_datatype_size(datatype) * count;
+			cq_flags = FI_REMOTE_READ | FI_ATOMIC;
+		}
 
 		assert(len == fi_datatype_size(datatype) * count);
 
@@ -463,7 +467,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 							mr->cq,
 							0, /* context */
 							addr,
-							0, /* flags */
+							cq_flags,
 							len,
 							0, /* data */
 							0, /* tag */
@@ -535,7 +539,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						mr->cq,
 						0, /* context */
 						addr,
-						0, /* flags */
+						FI_REMOTE_WRITE | FI_ATOMIC,
 						len,
 						0, /* data */
 						0, /* tag */
@@ -578,7 +582,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 					req->ep->send_cq,
 					req->atomic.context,
 					req->atomic.buf,
-					0, /* flags */
+					req->cq_flags,
 					req->atomic.len,
 					0, /* data */
 					0, /* tag */
@@ -610,7 +614,7 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 					req->ep->send_cq,
 					req->atomic.context,
 					req->atomic.buf,
-					0, /* flags */
+					req->cq_flags,
 					req->atomic.len,
 					0, /* data */
 					0, /* tag */
@@ -653,6 +657,7 @@ static int psmx_atomic_self(int am_cmd,
 	int err = 0;
 	int op_error;
 	int access;
+	uint64_t cq_flags = 0;
 
 	if (am_cmd == PSMX_AM_REQ_ATOMIC_WRITE)
 		access = FI_REMOTE_WRITE;
@@ -672,18 +677,24 @@ static int psmx_atomic_self(int am_cmd,
 	case PSMX_AM_REQ_ATOMIC_WRITE:
 		err = psmx_atomic_do_write((void *)addr, (void *)buf,
 					   (int)datatype, (int)op, (int)count);
+		cq_flags = FI_WRITE | FI_ATOMIC;
 		break;
 
 	case PSMX_AM_REQ_ATOMIC_READWRITE:
 		err = psmx_atomic_do_readwrite((void *)addr, (void *)buf,
 					       (void *)result, (int)datatype,
 					       (int)op, (int)count);
+		if (op == FI_ATOMIC_READ)
+			cq_flags = FI_READ | FI_ATOMIC;
+		else
+			cq_flags = FI_WRITE | FI_ATOMIC;
 		break;
 
 	case PSMX_AM_REQ_ATOMIC_COMPWRITE:
 		err = psmx_atomic_do_compwrite((void *)addr, (void *)buf,
 					       (void *)compare, (void *)result,
 					       (int)datatype, (int)op, (int)count);
+		cq_flags = FI_WRITE | FI_ATOMIC;
 		break;
 	}
 
@@ -693,7 +704,7 @@ static int psmx_atomic_self(int am_cmd,
 					mr->cq,
 					0, /* context */
 					(void *)addr,
-					0, /* flags */
+					FI_REMOTE_WRITE | FI_ATOMIC,
 					len,
 					0, /* data */
 					0, /* tag */
@@ -729,13 +740,13 @@ static int psmx_atomic_self(int am_cmd,
 
 gen_local_event:
 	no_event = ((flags & FI_INJECT) ||
-		    (ep->send_cq_event_flag && !(flags & FI_EVENT)));
+		    (ep->send_cq_event_flag && !(flags & FI_COMPLETION)));
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
 				ep->send_cq,
 				context,
 				(void *)buf,
-				0, /* flags */
+				cq_flags,
 				len,
 				0, /* data */
 				0, /* tag */
@@ -856,7 +867,7 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 		if (!req)
 			return -FI_ENOMEM;
 
-		if (ep_priv->send_cq_event_flag && !(flags & FI_EVENT))
+		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
 			req->no_event = 1;
 	}
 
@@ -867,6 +878,7 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 	req->atomic.key = key;
 	req->atomic.context = context;
 	req->ep = ep_priv;
+	req->cq_flags = FI_WRITE | FI_ATOMIC;
 
 	args[0].u32w0 = PSMX_AM_REQ_ATOMIC_WRITE;
 	args[0].u32w1 = count;
@@ -1042,7 +1054,7 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 		if (!req)
 			return -FI_ENOMEM;
 
-		if (ep_priv->send_cq_event_flag && !(flags & FI_EVENT))
+		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
 			req->no_event = 1;
 	}
 
@@ -1054,6 +1066,10 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 	req->atomic.context = context;
 	req->atomic.result = result;
 	req->ep = ep_priv;
+	if (op == FI_ATOMIC_READ)
+		req->cq_flags = FI_READ | FI_ATOMIC;
+	else
+		req->cq_flags = FI_WRITE | FI_ATOMIC;
 
 	args[0].u32w0 = PSMX_AM_REQ_ATOMIC_READWRITE;
 	args[0].u32w1 = count;
@@ -1248,7 +1264,7 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 		if (!req)
 			return -FI_ENOMEM;
 
-		if (ep_priv->send_cq_event_flag && !(flags & FI_EVENT))
+		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
 			req->no_event = 1;
 
 		if (compare != buf + len) {
@@ -1269,6 +1285,7 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 	req->atomic.context = context;
 	req->atomic.result = result;
 	req->ep = ep_priv;
+	req->cq_flags = FI_WRITE | FI_ATOMIC;
 
 	args[0].u32w0 = PSMX_AM_REQ_ATOMIC_COMPWRITE;
 	args[0].u32w1 = count;

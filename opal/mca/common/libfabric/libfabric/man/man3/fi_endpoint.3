@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-02\-12" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_endpoint 3 "2015\-02\-27" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -222,6 +222,14 @@ When closing a scalable endpoint, there must be no opened transmit
 contexts, or receive contexts associated with the scalable endpoint.
 If resources are still associated with the scalable endpoint when
 attempting to close, the call will return -FI_EBUSY.
+.PP
+Outstanding operations posted to the endpoint when fi_close is called
+will be discarded.
+Discarded operations will silently be dropped, with no completions
+reported.
+Additionally, a provider may discard previously completed operations
+from the associated completion queue(s).
+The behavior to discard completed operations is provider specific.
 .SS fi_ep_bind
 .PP
 fi_ep_bind is used to associate an endpoint with hardware resources.
@@ -415,6 +423,13 @@ needed on receives posted after the value has been changed.
 It is recommended that applications that want to override the default
 MIN_MULTI_RECV value set this option before enabling the corresponding
 endpoint.
+.IP \[bu] 2
+\f[I]FI_OPT_CM_DATA_SIZE - size_t\f[] : Defines the size of available
+space in CM messages for user-defined data.
+This value limits the amount of data that applications can exchange
+between peer endpoints using the fi_connect, fi_accept, and fi_reject
+operations.
+This option is read only.
 .SS fi_rx_size_left
 .PP
 The fi_rx_size_left call returns a lower bound on the number of receive
@@ -443,23 +458,44 @@ an endpoint.
 .nf
 \f[C]
 struct\ fi_ep_attr\ {
-\ \ \ \ uint32_t\ \ protocol;
-\ \ \ \ uint32_t\ \ protocol_version;
-\ \ \ \ size_t\ \ \ \ max_msg_size;
-\ \ \ \ size_t\ \ \ \ inject_size;
-\ \ \ \ size_t\ \ \ \ total_buffered_recv;
-\ \ \ \ size_t\ \ \ \ msg_prefix_size;
-\ \ \ \ size_t\ \ \ \ max_order_raw_size;
-\ \ \ \ size_t\ \ \ \ max_order_war_size;
-\ \ \ \ size_t\ \ \ \ max_order_waw_size;
-\ \ \ \ uint64_t\ \ mem_tag_format;
-\ \ \ \ uint64_t\ \ msg_order;
-\ \ \ \ uint64_t\ \ comp_order;
-\ \ \ \ size_t\ \ \ \ tx_ctx_cnt;
-\ \ \ \ size_t\ \ \ \ rx_ctx_cnt;
+\ \ \ \ enum\ fi_ep_type\ ep_type;
+\ \ \ \ uint32_t\ \ \ \ \ \ \ \ protocol;
+\ \ \ \ uint32_t\ \ \ \ \ \ \ \ protocol_version;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_msg_size;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ msg_prefix_size;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_order_raw_size;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_order_war_size;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_order_waw_size;
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ mem_tag_format;
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ msg_order;
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ comp_order;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ tx_ctx_cnt;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ rx_ctx_cnt;
 };
 \f[]
 .fi
+.SS type - Endpoint Type
+.PP
+If specified, indicates the type of fabric interface communication
+desired.
+Supported types are:
+.PP
+\f[I]FI_EP_UNSPEC\f[] : The type of endpoint is not specified.
+This is usually provided as input, with other attributes of the endpoint
+or the provider selecting the type.
+.PP
+\f[I]FI_EP_MSG\f[] : Provides a reliable, connection-oriented data
+transfer service with flow control that maintains message boundaries.
+.PP
+\f[I]FI_EP_DGRAM\f[] : Supports a connectionless, unreliable datagram
+communication.
+Message boundaries are maintained, but the maximum message size may be
+limited to the fabric MTU.
+Flow control is not guaranteed.
+.PP
+\f[I]FI_EP_RDM\f[] : Reliable datagram message.
+Provides a reliable, unconnected data transfer service with flow control
+that maintains message boundaries.
 .SS Protocol
 .PP
 Specifies the low-level end to end protocol employed by the provider.
@@ -508,15 +544,6 @@ lesser version.
 .PP
 Defines the maximum size for an application data transfer as a single
 operation.
-.SS inject_size - Inject Size
-.PP
-Defines the default inject operation size (see the FI_INJECT flag) that
-an endpoint will support.
-This value applies per send operation.
-.SS total_buffered_recv - Total Buffered Receive
-.PP
-Defines the total available space allocated by the provider to buffer
-received messages (see the FI_BUFFERED_RECV flag).
 .SS msg_prefix_size - Message Prefix Size
 .PP
 Specifies the size of any required message prefix buffer space.
@@ -848,8 +875,6 @@ See the fi_endpoint Completion Ordering section.
 .PP
 \f[I]inject_size\f[] : The requested inject operation size (see the
 FI_INJECT flag) that the context will support.
-This value must be equal to or less than the inject_size of the
-associated endpoint.
 See the fi_endpoint Inject Size section.
 .PP
 \f[I]size\f[] : The size of the context, in bytes.
@@ -946,10 +971,10 @@ specified of the associated endpoint.
 See the fi_endpoint Completion Ordering section.
 .PP
 \f[I]total_buffered_recv\f[] : Defines the total available space
-allocated by the provider to buffer received messages on the context.
-This value must be less than or equal to that specified for the
-associated endpoint.
-See the fi_endpoint Total Buffered Receive section.
+allocated by the provider to buffer messages that are received for which
+there is no matching receive operation.
+If set to 0, any messages that arrive before a receive buffer has been
+posted are lost.
 .PP
 \f[I]size\f[] : The size of the context, in bytes.
 The size is usually used as an output value by applications wishing to
@@ -1024,15 +1049,13 @@ data transfer operations, where a flags parameter is not available.
 Data transfer operations that take flags as input override the op_flags
 value of an endpoint.
 .PP
-\f[I]FI_INJECT\f[] : Indicates that all outbound data buffer should be
+\f[I]FI_INJECT\f[] : Indicates that all outbound data buffers should be
 returned to the user\[aq]s control immediately after a data transfer
 call returns, even if the operation is handled asynchronously.
 This may require that the provider copy the data into a local buffer and
 transfer out of that buffer.
 A provider may limit the total amount of send data that may be buffered
 and/or the size of a single send.
-Applications may discover and modify these limits using the
-endpoint\[aq]s getopt and setopt interfaces.
 .PP
 \f[I]FI_MULTI_RECV\f[] : Applies to posted receive operations.
 This flag allows the user to post a single buffer that will receive

@@ -170,12 +170,15 @@ void sock_wait_signal(struct fid_wait *wait_fid)
 {
 	struct sock_wait *wait;
 	static char c = 'a';
+	int ret;
 
 	wait = container_of(wait_fid, struct sock_wait, wait_fid);
 
 	switch (wait->type) {
 	case FI_WAIT_FD:
-		write(wait->wobj.fd[WAIT_WRITE_FD], &c, 1);
+		ret = write(wait->wobj.fd[WAIT_WRITE_FD], &c, 1);
+		if (ret != 1)
+			SOCK_LOG_ERROR("failed to signal\n");
 		break;
 		
 	case FI_WAIT_MUTEX_COND:

@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_eq 3 "2015\-02\-23" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -215,8 +215,8 @@ information regarding the format associated with each event.
 \f[I]Asynchronous Control Operations\f[] : Asynchronous control
 operations are basic requests that simply need to generate an event to
 indicate that they have completed.
-These include the following types of events: memory registration,
-address vector resolution, and connection established.
+These include the following types of events: memory registration and
+address vector resolution.
 .PP
 Control requests report their completion by inserting a
 \f[C]struct\ \ \ fi_eq_entry\f[] into the EQ.
@@ -236,16 +236,18 @@ For the completion of basic asynchronous control operations, the
 returned event will indicate the operation that has completed, and the
 fid will reference the fabric descriptor associated with the event.
 For memory registration, this will be an FI_MR_COMPLETE event and the
-fid_mr, address resolution will reference an FI_AV_COMPLETE event and
-fid_av, and CM events will refer to a FI_CONNECTED event and fid_ep.
+fid_mr; address resolution will reference an FI_AV_COMPLETE event and
+fid_av.
 The context field will be set to the context specified as part of the
 operation, if available, otherwise the context will be associated with
 the fabric descriptor.
 .PP
-\f[I]Connection Request Notification\f[] : Connection requests are
-unsolicited notifications that a remote endpoint wishes to establish a
-new connection to a listening passive endpoint.
-Connection requests are reported using
+\f[I]Connection Notification\f[] : Connection notifications are
+connection management notifications used to setup or teardown
+connections between endpoints.
+There are three connection notification events: FI_CONNREQ,
+FI_CONNECTED, and FI_SHUTDOWN.
+Connection notifications are reported using
 \f[C]struct\ \ \ fi_eq_cm_entry\f[]:
 .IP
 .nf
@@ -258,10 +260,12 @@ struct\ fi_eq_cm_entry\ {
 \f[]
 .fi
 .PP
-Connection request events are of type FI_CONNREQ.
+A connection request (FI_CONNREQ) event indicates that a remote endpoint
+wishes to establish a new connection to a listening, or passive,
+endpoint.
 The fid is the passive endpoint.
-Information regarding the requested endpoint\[aq]s capabilities and
-attributes are available from the info field.
+Information regarding the requested, active endpoint\[aq]s capabilities
+and attributes are available from the info field.
 The application is responsible for freeing this structure by calling
 fi_freeinfo when it is no longer needed.
 The fi_info connreq field will reference the connection request
@@ -287,13 +291,20 @@ protocol padding.
 As a result, the returned length may be larger than that specified by
 the connecting peer.
 .PP
-\f[I]Connection Shutdown Notification\f[] : Notification that a remote
-peer has disconnected from an active endpoint is done through the
-FI_SHUTDOWN event.
-Shutdown notification uses struct fi_eq_entry as declared above.
+If a connection request has been accepted, an FI_CONNECTED event will be
+generated on both sides of the connection.
+The active side -- one that called fi_connect() -- may receive user data
+as part of the FI_CONNECTED event.
+The user data is passed to the connection manager on the passive side
+through the fi_accept call.
+User data is not provided with an FI_CONNECTED event on the listening
+side of the connection.
+.PP
+Notification that a remote peer has disconnected from an active endpoint
+is done through the FI_SHUTDOWN event.
+Shutdown notification uses struct fi_eq_cm_entry as declared above.
 The fid field for a shutdown notification refers to the active
 endpoint\[aq]s fid_ep.
-The context field is set to NULL.
 .SS fi_eq_sread
 .PP
 The fi_eq_sread call is the blocking (or synchronous) equivalent to
@@ -333,6 +344,7 @@ struct\ fi_eq_err_entry\ {
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ err;\ \ \ \ \ \ \ \ /*\ positive\ error\ code\ */
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ prov_errno;\ /*\ provider\ error\ code\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ *err_data;\ \ \ /*\ additional\ error\ data\ */
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ err_data_size;\ /*\ size\ of\ err_data\ */
 };
 \f[]
 .fi
@@ -344,10 +356,15 @@ The context field will be set to the context specified as part of the
 operation.
 .PP
 The general reason for the error is provided through the err field.
-Provider specific error information may also be available through the
-prov_errno and err_data fields.
+Provider or operational specific error information may also be available
+through the prov_errno and err_data fields.
 Users may call fi_eq_strerror to convert provider specific error
 information into a printable string for debugging purposes.
+.PP
+If err_data_size is > 0, then the buffer referenced by err_data is
+directly user-accessible.
+Applications which read the err_data buffer must ensure that they do not
+read past the end of the referenced buffer.
 .SH RETURN VALUES
 .PP
 fi_eq_open : Returns 0 on success.
