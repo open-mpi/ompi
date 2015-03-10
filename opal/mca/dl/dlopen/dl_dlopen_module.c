@@ -166,7 +166,8 @@ static int dlopen_foreachfile(const char *search_path,
 
         dp = opendir(dirs[i]);
         if (NULL == dp) {
-            return OPAL_ERR_IN_ERRNO;
+            ret = OPAL_ERR_IN_ERRNO;
+            goto error;
         }
 
         struct dirent *de;
