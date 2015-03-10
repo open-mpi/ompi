@@ -335,25 +335,6 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
     ret = ompi_comm_enable(comm_old, new_comm,
                            rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
-        if ( NULL != topo->in ) {
-            free(topo->in);
-        }
-        if ( NULL != topo->out ) {
-            free(topo->out);
-        }
-        if ( NULL != topo->inw ) {
-            free(topo->inw);
-        }
-        if ( NULL != topo->outw ) {
-            free(topo->outw);
-        }
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo->mtc.dist_graph = NULL;
-            new_comm->c_topo             = NULL;
-            new_comm->c_flags           &= ~OMPI_COMM_DIST_GRAPH;
-            ompi_comm_free (&new_comm);
-        }
-        free(topo);
         free(topo_procs);
         return ret;
     }
