@@ -12,6 +12,8 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -234,14 +236,19 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
          */
         char *path;
         path = opal_dirname(orte_output_filename);
+        if (NULL == path) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         if (0 != strcmp(path, orte_output_filename)) {
             /* there is a path in this name - ensure that the directory
              * exists, and create it if not
              */
             if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(path, S_IRWXU))) {
+                free(path);
                 return rc;
             }
         }
+        free(path);
     }
 
     /* daemons do not need to do this as they do not write out stdout/err */
