@@ -596,7 +596,7 @@ static int component_startup(void)
 
 static void component_shutdown(void)
 {
-    int i;
+    int i=0;
     opal_list_item_t *item;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
@@ -703,20 +703,26 @@ static int component_set_addr(orte_process_name_t *peer,
     found = false;
 
     for (i=0; NULL != uris[i]; i++) {
+        tcpuri = strdup(uris[i]);
+        if (NULL == tcpuri) {
+            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                            "%s oob:tcp: out of memory",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            continue;
+        }
         if (0 == strncmp(uris[i], "tcp:", 4)) {
             af_family = AF_INET;
-            tcpuri = strdup(uris[i]);
             host = tcpuri + strlen("tcp://");
         } else if (0 == strncmp(uris[i], "tcp6:", 5)) {
 #if OPAL_ENABLE_IPV6
             af_family = AF_INET6;
-            tcpuri = strdup(uris[i]);
             host = tcpuri + strlen("tcp6://");
 #else
             /* we don't support this connection type */
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp: address %s not supported",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uris[i]);
+            free(tcpuri);
             continue;
 #endif
         } else {
@@ -724,6 +730,7 @@ static int component_set_addr(orte_process_name_t *peer,
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp: ignoring address %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uris[i]);
+            free(tcpuri);
             continue;
         }
 
@@ -739,14 +746,6 @@ static int component_set_addr(orte_process_name_t *peer,
         ports++;
 
         /* split the addrs */
-        if (NULL == host || 0 == strlen(host)) {
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "FORMAT ERROR IN ADDR: %s",
-                                (NULL == host) ? "NULL" : "ZERO LENGTH");
-            free(tcpuri);
-            return ORTE_ERR_BAD_PARAM;
-        }
-
         /* if this is a tcp6 connection, the first one will have a '['
          * at the beginning of it, and the last will have a ']' at the
          * end - we need to remove those extra characters

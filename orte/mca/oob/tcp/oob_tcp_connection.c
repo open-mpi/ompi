@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -98,15 +98,6 @@ static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
                          ORTE_NAME_PRINT(&(peer->name))));
     
     peer->sd = socket(AF_INET, SOCK_STREAM, 0);
-    /* Set this fd to be close-on-exec so that any subsequent children don't see it */
-    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
-        opal_output(0, "%s unable to set socket to CLOEXEC",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        close(peer->sd);
-        peer->sd = -1;
-        return ORTE_ERROR;
-    }
-
     if (peer->sd < 0) {
         opal_output(0, "%s-%s tcp_peer_create_socket: socket() failed: %s (%d)\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -114,6 +105,15 @@ static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         return ORTE_ERR_UNREACH;
+    }
+
+    /* Set this fd to be close-on-exec so that any subsequent children don't see it */
+    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set socket to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(peer->sd);
+        peer->sd = -1;
+        return ORTE_ERROR;
     }
 
     /* setup socket options */
@@ -575,11 +575,10 @@ static bool retry(mca_oob_tcp_peer_t* peer, int sd, bool fatal)
             opal_event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
-        if (0 < peer->sd) {
+        if (0 <= peer->sd) {
             CLOSE_THE_SOCKET(peer->sd);
             peer->sd = -1;
         }
-        CLOSE_THE_SOCKET(peer->sd);
         if (OPAL_VALUE1_GREATER == cmpval) {
             /* force the other end to retry the connection */
             peer->state = MCA_OOB_TCP_UNCONNECTED;
@@ -1034,11 +1033,21 @@ void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     opal_socklen_t addrlen = sizeof(struct sockaddr_storage);
     opal_socklen_t optlen;
                                                                                                             
-    getsockname(peer->sd, (struct sockaddr*)&inaddr, &addrlen);
-    snprintf(src, sizeof(src), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
-    getpeername(peer->sd, (struct sockaddr*)&inaddr, &addrlen);
-    snprintf(dst, sizeof(dst), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
-                                                                                                            
+    if (getsockname(peer->sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
+        opal_output(0, "tcp_peer_dump: getsockname: %s (%d)\n", 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    } else {
+        snprintf(src, sizeof(src), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
+    }
+    if (getpeername(peer->sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
+        opal_output(0, "tcp_peer_dump: getpeername: %s (%d)\n", 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    } else {
+        snprintf(dst, sizeof(dst), "%s", opal_net_get_hostname((struct sockaddr*) &inaddr));
+    }
+
     if ((flags = fcntl(peer->sd, F_GETFL, 0)) < 0) {
         opal_output(0, "tcp_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",
                     strerror(opal_socket_errno),
