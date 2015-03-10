@@ -210,16 +210,18 @@ static int dlopen_foreachfile(const char *search_path,
 
             /* Have we already found this file?  Or already found a
                file with the same basename (but different suffix)? */
-            if (NULL != good_files) {
-                for (int j = 0; NULL != good_files[j]; ++j) {
-                    if (strcmp(good_files[j], abs_name) == 0) {
-                        free(abs_name);
-                        continue;
-                    }
+            bool found = false;
+            for (int j = 0; NULL != good_files &&
+                     NULL != good_files[j]; ++j) {
+                if (strcmp(good_files[j], abs_name) == 0) {
+                    found = true;
+                    break;
                 }
             }
 
-            opal_argv_append_nosize(&good_files, abs_name);
+            if (!found) {
+                opal_argv_append_nosize(&good_files, abs_name);
+            }
             free(abs_name);
         }
         closedir(dp);
