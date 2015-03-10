@@ -162,7 +162,7 @@ static int dlopen_foreachfile(const char *search_path,
     char **good_files = NULL;
 
     dirs = opal_argv_split(search_path, OPAL_ENV_SEP);
-    for (int i = 0; NULL != dirs[i]; ++i) {
+    for (int i = 0; NULL != dirs && NULL != dirs[i]; ++i) {
 
         dp = opendir(dirs[i]);
         if (NULL == dp) {
