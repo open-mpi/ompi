@@ -662,14 +662,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
 
-    /* Setup the connectivity checking agent and client. */
-    if (mca_btl_usnic_component.connectivity_enabled) {
-        if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
-            OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
-            return NULL;
-        }
-    }
-
     /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
@@ -861,6 +853,16 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     if (filter != NULL) {
         free_filter(filter);
         filter = NULL;
+    }
+
+    /* If we actually have some modules, setup the connectivity
+       checking agent and client. */
+    if (mca_btl_usnic_component.num_modules > 0 &&
+        mca_btl_usnic_component.connectivity_enabled) {
+        if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
+            OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
+            return NULL;
+        }
     }
 
     /* Now that we know how many modules there are, let the modules
