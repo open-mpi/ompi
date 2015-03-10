@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 #include <rdma/fi_errno.h>
 #include "fi.h"
@@ -96,29 +97,6 @@ int fi_poll_fd(int fd, int timeout)
 	fds.events = POLLIN;
 	ret = poll(&fds, 1, timeout);
 	return ret == -1 ? -errno : ret;
-}
-
-struct fi_info *fi_allocinfo_internal(void)
-{
-	struct fi_info *info;
-
-	info = calloc(1, sizeof(*info));
-	if (!info)
-		return NULL;
-
-	info->tx_attr = calloc(1, sizeof(*info->tx_attr));
-	info->rx_attr = calloc(1, sizeof(*info->rx_attr));
-	info->ep_attr = calloc(1, sizeof(*info->ep_attr));
-	info->domain_attr = calloc(1, sizeof(*info->domain_attr));
-	info->fabric_attr = calloc(1, sizeof(*info->fabric_attr));
-	if (!info->tx_attr|| !info->rx_attr || !info->ep_attr ||
-	    !info->domain_attr || !info->fabric_attr)
-		goto err;
-
-	return info;
-err:
-	fi_freeinfo(info);
-	return NULL;
 }
 
 uint64_t fi_tag_bits(uint64_t mem_tag_format)
@@ -215,4 +193,12 @@ int fi_rma_target_allowed(uint64_t caps)
 	}
 
 	return 0;
+}
+
+uint64_t fi_gettime_ms(void)
+{
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	return now.tv_sec * 1000 + now.tv_usec / 1000;
 }

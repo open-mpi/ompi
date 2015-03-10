@@ -1,4 +1,4 @@
-.TH fi_msg 3 "2015\-02\-06" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_msg 3 "2015\-03\-04" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_msg - Message data transfer operations
@@ -101,7 +101,7 @@ Completed message operations are reported to the user through one or
 more event collectors associated with the endpoint.
 Users provide context which are associated with each operation, and is
 returned to the user as part of the event completion.
-See fi_eq for completion event details.
+See fi_cq for completion event details.
 .SS fi_send
 .PP
 The call fi_send transfers the data contained in the user-specified data
@@ -248,6 +248,6 @@ operations.
 .SH SEE ALSO
 .PP
 \f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
-\f[C]fi_eq\f[](3)
+\f[C]fi_cq\f[](3)
 .SH AUTHORS
 OpenFabrics.

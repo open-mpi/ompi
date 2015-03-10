@@ -174,12 +174,20 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 		if (!mask[i])
 			continue;
 
-		if (errors[i] == PSM_OK) {
+		if (errors[i] == PSM_OK || errors[i] == PSM_EPID_ALREADY_CONNECTED) {
 			psmx_set_epaddr_context(av_priv->domain,
 						((psm_epid_t *) addr)[i],
 						((psm_epaddr_t *) fi_addr)[i]);
 		}
 		else {
+			PSMX_DEBUG("%d: psm_ep_connect returned %s. remote epid=%lx.\n",
+					i, psm_error_get_string(errors[i]),
+					((psm_epid_t *)addr)[i]);
+			if (((psm_epid_t *)addr)[i] == 0)
+				PSMX_DEBUG("does the application depend on the provider"
+					   "to resolve IP address into endpoint id? if so"
+					   "check if the name server has started correctly"
+					   "at the other side.\n");
 			fi_addr[i] = FI_ADDR_NOTAVAIL;
 			error_count++;
 		}
@@ -308,8 +316,8 @@ int psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 			type = attr->type;
 			break;
 		default:
-			PSMX_DEBUG("%s: attr->type=%d, supported=%d %d\n",
-				__func__, attr->type, FI_AV_MAP, FI_AV_TABLE);
+			PSMX_DEBUG("attr->type=%d, supported=%d %d\n",
+				attr->type, FI_AV_MAP, FI_AV_TABLE);
 			return -FI_EINVAL;
 		}
 

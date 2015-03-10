@@ -34,6 +34,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -130,6 +131,7 @@ static void sock_pe_release_entry(struct sock_pe *pe,
 	pe_entry->data_len = 0;
 	pe_entry->buf = 0;
 	pe_entry->flags = 0;
+	pe_entry->context = 0L;
 
 	dlist_remove(&pe_entry->entry);
 	dlist_insert_head(&pe_entry->entry, &pe->free_list);
@@ -410,8 +412,13 @@ static void sock_pe_send_response(struct sock_pe *pe,
 	response->msg_hdr.op_type = op_type;
 	response->msg_hdr.msg_len = htonll(response->msg_hdr.msg_len);
 	response->msg_hdr.rx_id = pe_entry->msg_hdr.rx_id;
-	response->msg_hdr.ep_id = htons(sock_av_lookup_ep_id(rx_ctx->av, 
-							     pe_entry->addr));
+
+	if (pe_entry->ep && pe_entry->ep->connected)
+		response->msg_hdr.ep_id = pe_entry->ep->rem_ep_id;
+	else
+		response->msg_hdr.ep_id = 
+			sock_av_lookup_ep_id(rx_ctx->av, pe_entry->addr);
+	response->msg_hdr.ep_id = htons(response->msg_hdr.ep_id);
 
 	pe->pe_atomic = NULL;
 	pe_entry->done_len = 0;
@@ -671,7 +678,8 @@ static int sock_pe_process_rx_write(struct sock_pe *pe, struct sock_rx_ctx *rx_c
 		sock_pe_report_error(pe_entry, rem);
 		goto out;
 	} else {
-		if (pe_entry->flags & FI_REMOTE_SIGNAL) {
+		if (pe_entry->flags & FI_REMOTE_SIGNAL ||
+			pe_entry->flags & FI_REMOTE_CQ_DATA) {
 			sock_pe_report_rx_completion(pe_entry);
 		}
 	}
@@ -1088,7 +1096,8 @@ static int sock_pe_process_rx_atomic(struct sock_pe *pe, struct sock_rx_ctx *rx_
 	pe_entry->buf = pe_entry->pe.rx.rx_iov[0].iov.addr;
 	pe_entry->data_len = offset;
 	
-	if (pe_entry->flags & FI_REMOTE_SIGNAL) {
+	if (pe_entry->flags & FI_REMOTE_SIGNAL ||
+		pe_entry->flags & FI_REMOTE_CQ_DATA) {
 		sock_pe_report_rx_completion(pe_entry);
 	}
 	
@@ -1468,11 +1477,11 @@ static int sock_pe_read_hdr(struct sock_pe *pe, struct sock_rx_ctx *rx_ctx,
 	}
 	
 	msg_hdr->msg_len = ntohll(msg_hdr->msg_len);
-	msg_hdr->rx_id = msg_hdr->rx_id;
 	msg_hdr->flags = ntohll(msg_hdr->flags);
 	msg_hdr->pe_entry_id = ntohs(msg_hdr->pe_entry_id);
 	msg_hdr->ep_id = ntohs(msg_hdr->ep_id);
 	pe_entry->pe.rx.header_read = 1;
+	pe_entry->flags = msg_hdr->flags;
 	
 	SOCK_LOG_INFO("PE RX (Hdr read): MsgLen:  %" PRIu64 ", TX-ID: %d, Type: %d\n", 
 		      msg_hdr->msg_len, msg_hdr->rx_id, msg_hdr->op_type);
@@ -1551,6 +1560,7 @@ static int sock_pe_progress_tx_atomic(struct sock_pe *pe,
 		SOCK_LOG_INFO("Send complete\n");		
 	}
 	sock_comm_flush(pe_entry->conn);
+	pe_entry->msg_hdr.flags = pe_entry->flags;
 	return 0;
 }
 
@@ -1609,6 +1619,7 @@ static int sock_pe_progress_tx_write(struct sock_pe *pe,
 		SOCK_LOG_INFO("Send complete\n");		
 	}
 	sock_comm_flush(pe_entry->conn);
+	pe_entry->msg_hdr.flags = pe_entry->flags;
 	return 0;
 }
 
@@ -1644,6 +1655,7 @@ static int sock_pe_progress_tx_read(struct sock_pe *pe,
 		SOCK_LOG_INFO("Send complete\n");		
 	}
 	sock_comm_flush(pe_entry->conn);
+	pe_entry->msg_hdr.flags = pe_entry->flags;
 	return 0;
 }
 
@@ -1691,6 +1703,7 @@ static int sock_pe_progress_tx_send(struct sock_pe *pe,
 	}
 	
 	sock_comm_flush(pe_entry->conn);
+	pe_entry->msg_hdr.flags = pe_entry->flags;
 	if (pe_entry->done_len == pe_entry->total_len) {
 		pe_entry->pe.tx.send_done = 1;
 		pe_entry->conn->tx_pe_entry = NULL;
@@ -2111,7 +2124,8 @@ int sock_pe_progress_rx_ctx(struct sock_pe *pe, struct sock_rx_ctx *rx_ctx)
 	struct dlist_entry *entry;
 	struct sock_pe_entry *pe_entry;
 
-	fastlock_acquire(&pe->lock);
+	if (fastlock_acquire(&pe->lock))
+		return 0;
 
 	/* progress buffered recvs */
 	fastlock_acquire(&rx_ctx->lock);
@@ -2160,7 +2174,8 @@ int sock_pe_progress_tx_ctx(struct sock_pe *pe, struct sock_tx_ctx *tx_ctx)
 	struct dlist_entry *entry;
 	struct sock_pe_entry *pe_entry;
 
-	fastlock_acquire(&pe->lock);
+	if (fastlock_acquire(&pe->lock))
+		return 0;
 
 	/* check tx_ctx rbuf */
 	fastlock_acquire(&tx_ctx->rlock);

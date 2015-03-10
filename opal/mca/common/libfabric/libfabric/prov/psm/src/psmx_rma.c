@@ -110,7 +110,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 							mr->cq,
 							0, /* context */
 							rma_addr,
-							0, /* flags */
+							FI_REMOTE_WRITE | FI_RMA | (has_data ? FI_REMOTE_CQ_DATA : 0),
 							rma_len,
 							has_data ? args[4].u64 : 0,
 							0, /* tag */
@@ -256,7 +256,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						req->ep->send_cq,
 						req->write.context,
 						req->write.buf,
-						0, /* flags */
+						req->cq_flags,
 						req->write.len,
 						0, /* data */
 						0, /* tag */
@@ -292,7 +292,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						req->ep->send_cq,
 						req->read.context,
 						req->read.buf,
-						0, /* flags */
+						req->cq_flags,
 						req->read.len_read,
 						0, /* data */
 						0, /* tag */
@@ -331,13 +331,16 @@ static ssize_t psmx_rma_self(int am_cmd,
 	int op_error = 0;
 	int access;
 	void *dst, *src;
+	uint64_t cq_flags;
 
 	switch (am_cmd) {
 	case PSMX_AM_REQ_WRITE:
 		access = FI_REMOTE_WRITE;
+		cq_flags = FI_WRITE | FI_RMA;
 		break;
 	case PSMX_AM_REQ_READ:
 		access = FI_REMOTE_READ;
+		cq_flags = FI_READ | FI_RMA;
 		break;
 	default:
 		return -FI_EINVAL;
@@ -366,7 +369,7 @@ static ssize_t psmx_rma_self(int am_cmd,
 					mr->cq,
 					0, /* context */
 					(void *)addr,
-					0, /* flags */
+					FI_REMOTE_WRITE | FI_RMA | (flags & FI_REMOTE_CQ_DATA),
 					len,
 					flags & FI_REMOTE_CQ_DATA ? data : 0,
 					0, /* tag */
@@ -385,14 +388,14 @@ static ssize_t psmx_rma_self(int am_cmd,
 	}
 
 	no_event = (flags & FI_INJECT) ||
-		   (ep->send_cq_event_flag && !(flags & FI_EVENT));
+		   (ep->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
 				ep->send_cq,
 				context,
 				(void *)buf,
-				0, /* flags */
+				cq_flags,
 				len,
 				0, /* data */
 				0, /* tag */
@@ -514,11 +517,12 @@ ssize_t _psmx_read(struct fid_ep *ep, void *buf, size_t len,
 	req->read.key = key; 	/* needed? */
 	req->read.context = context;
 	req->ep = ep_priv;
+	req->cq_flags = FI_READ | FI_RMA;
 	PSMX_CTXT_TYPE(&req->fi_context) = PSMX_READ_CONTEXT;
 	PSMX_CTXT_USER(&req->fi_context) = context;
 	PSMX_CTXT_EP(&req->fi_context) = ep_priv;
 
-	if (ep_priv->send_cq_event_flag && !(flags & FI_EVENT)) {
+	if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)) {
 		PSMX_CTXT_TYPE(&req->fi_context) = PSMX_NOCOMP_READ_CONTEXT;
 		req->no_event = 1;
 	}
@@ -689,7 +693,7 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 		if (!req)
 			return -FI_ENOMEM;
 
-		if (ep_priv->send_cq_event_flag && !(flags & FI_EVENT)) {
+		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)) {
 			PSMX_CTXT_TYPE(&req->fi_context) = PSMX_NOCOMP_WRITE_CONTEXT;
 			req->no_event = 1;
 		}
@@ -705,6 +709,7 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 	req->write.key = key; 	/* needed? */
 	req->write.context = context;
 	req->ep = ep_priv;
+	req->cq_flags = FI_WRITE | FI_RMA;
 	PSMX_CTXT_USER(&req->fi_context) = context;
 	PSMX_CTXT_EP(&req->fi_context) = ep_priv;
 

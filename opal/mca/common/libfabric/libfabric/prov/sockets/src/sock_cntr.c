@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -61,6 +60,7 @@ int sock_cntr_progress(struct sock_cntr *cntr)
 	    !sock_progress_thread_wait)
 		return 0;
 
+	fastlock_acquire(&cntr->list_lock);
 	for (entry = cntr->tx_list.next; entry != &cntr->tx_list;
 	     entry = entry->next) {
 		tx_ctx = container_of(entry, struct sock_tx_ctx, cntr_entry);
@@ -72,6 +72,8 @@ int sock_cntr_progress(struct sock_cntr *cntr)
 		rx_ctx = container_of(entry, struct sock_rx_ctx, cntr_entry);
 		sock_pe_progress_rx_ctx(cntr->domain->pe, rx_ctx);
 	}
+	fastlock_release(&cntr->list_lock);
+
 	return 0;
 }
 
@@ -85,18 +87,20 @@ static uint64_t sock_cntr_read(struct fid_cntr *cntr)
 
 int sock_cntr_inc(struct sock_cntr *cntr)
 {
-	fastlock_acquire(&cntr->mut);
+	pthread_mutex_lock(&cntr->mut);
 	atomic_inc(&cntr->value);
 	if (atomic_get(&cntr->value) >= atomic_get(&cntr->threshold))
 		pthread_cond_signal(&cntr->cond);
-	fastlock_release(&cntr->mut);
+	pthread_mutex_unlock(&cntr->mut);
 	return 0;
 }
 
 int sock_cntr_err_inc(struct sock_cntr *cntr)
 {
+	pthread_mutex_lock(&cntr->mut);
 	atomic_inc(&cntr->err_cnt);
 	pthread_cond_signal(&cntr->cond);
+	pthread_mutex_unlock(&cntr->mut);
 	return 0;
 }
 
@@ -105,11 +109,11 @@ static int sock_cntr_add(struct fid_cntr *cntr, uint64_t value)
 	struct sock_cntr *_cntr;
 
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
-	fastlock_acquire(&_cntr->mut);
+	pthread_mutex_lock(&_cntr->mut);
 	atomic_set(&_cntr->value, atomic_get(&_cntr->value) + value);
 	if (atomic_get(&_cntr->value) >= atomic_get(&_cntr->threshold))
 		pthread_cond_signal(&_cntr->cond);
-	fastlock_release(&_cntr->mut);
+	pthread_mutex_unlock(&_cntr->mut);
 	return 0;
 }
 
@@ -118,46 +122,59 @@ static int sock_cntr_set(struct fid_cntr *cntr, uint64_t value)
 	struct sock_cntr *_cntr;
 
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
-	fastlock_acquire(&_cntr->mut);
+	pthread_mutex_lock(&_cntr->mut);
 	atomic_set(&_cntr->value, value);
 	if (atomic_get(&_cntr->value) >= atomic_get(&_cntr->threshold))
 		pthread_cond_signal(&_cntr->cond);
-	fastlock_release(&_cntr->mut);
+	pthread_mutex_unlock(&_cntr->mut);
 	return 0;
 }
 
 static int sock_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout)
 {
 	int ret = 0;
-	struct timeval now;
-	double start_ms, end_ms;
+	uint64_t start_ms = 0, end_ms = 0;
 	struct sock_cntr *_cntr;
-
+	
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);
-	fastlock_acquire(&_cntr->mut);
+	pthread_mutex_lock(&_cntr->mut);
+	if (atomic_get(&_cntr->value) >= threshold) {
+		pthread_mutex_unlock(&_cntr->mut);
+		return 0;
+	}
+
+	if (_cntr->is_waiting) {
+		pthread_mutex_unlock(&_cntr->mut);
+		return -FI_EBUSY;
+	}
+	
+	_cntr->is_waiting = 1;
 	atomic_set(&_cntr->threshold, threshold);
-	while (atomic_get(&_cntr->value) < atomic_get(&_cntr->threshold) && !ret) {
-		if (_cntr->domain->progress_mode == FI_PROGRESS_MANUAL) {
-			if (timeout > 0) {
-				gettimeofday(&now, NULL);
-				start_ms = (double)now.tv_sec * 1000.0 + 
-					(double)now.tv_usec / 1000.0;
-			}
+
+	if (_cntr->domain->progress_mode == FI_PROGRESS_MANUAL) {
+		pthread_mutex_unlock(&_cntr->mut);
+		if (timeout >= 0) {
+			start_ms = fi_gettime_ms();
+			end_ms = start_ms + timeout;
+		}
+		
+		while (atomic_get(&_cntr->value) < threshold) {
 			sock_cntr_progress(_cntr);
-			if (timeout > 0) {
-				gettimeofday(&now, NULL);
-				end_ms = (double)now.tv_sec * 1000.0 + 
-					(double)now.tv_usec / 1000.0;
-				timeout -=  (end_ms - start_ms);
-				timeout = timeout < 0 ? 0 : timeout;
+			if (timeout >= 0 && fi_gettime_ms() >= end_ms) {
+				ret = -FI_ETIMEDOUT;
+				break;
 			}
 		}
+		pthread_mutex_lock(&_cntr->mut);
+	} else {
 		ret = fi_wait_cond(&_cntr->cond, &_cntr->mut, timeout);
 	}
+
+	_cntr->is_waiting = 0;
 	atomic_set(&_cntr->threshold, ~0);
-	fastlock_release(&_cntr->mut);
+	pthread_mutex_unlock(&_cntr->mut);
 	return -ret;
-}
+}		
 
 int sock_cntr_control(struct fid *fid, int command, void *arg)
 {
@@ -214,7 +231,9 @@ static int sock_cntr_close(struct fid *fid)
 	if (cntr->signal && cntr->attr.wait_obj == FI_WAIT_FD)
 		sock_wait_close(&cntr->waitset->fid);
 	
-	fastlock_destroy(&cntr->mut);
+	pthread_mutex_destroy(&cntr->mut);
+	fastlock_destroy(&cntr->list_lock);
+
 	pthread_cond_destroy(&cntr->cond);
 	atomic_dec(&cntr->domain->ref);
 	free(cntr);
@@ -289,7 +308,7 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	ret = pthread_cond_init(&_cntr->cond, NULL);
 	if (ret)
-		goto err1;
+		goto err;
 
 	if(attr == NULL)
 		memcpy(&_cntr->attr, &sock_cntr_add, sizeof(sock_cntr_attr));
@@ -309,14 +328,18 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		wait_attr.wait_obj = FI_WAIT_FD;
 		ret = sock_wait_open(&dom->fab->fab_fid, &wait_attr,
 				     &_cntr->waitset);
-		if (ret)
-			goto err1;
+		if (ret) {
+			ret = FI_EINVAL;
+			goto err;
+		}
 		_cntr->signal = 1;
 		break;
 		
 	case FI_WAIT_SET:
-		if (!attr)
-			return -FI_EINVAL;
+		if (!attr) {
+			ret = FI_EINVAL;
+			goto err;
+		}
 
 		_cntr->waitset = attr->wait_set;
 		_cntr->signal = 1;
@@ -325,14 +348,15 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		dlist_init(&list_entry->entry);
 		list_entry->fid = &_cntr->cntr_fid.fid;
 		dlist_insert_after(&list_entry->entry, &wait->fid_list);
-
 		break;
 		
 	default:
 		break;
 	}
 
-	fastlock_init(&_cntr->mut);
+	pthread_mutex_init(&_cntr->mut, NULL);
+	fastlock_init(&_cntr->list_lock);
+
 	atomic_init(&_cntr->ref, 0);
 	atomic_init(&_cntr->err_cnt, 0);
 
@@ -352,7 +376,7 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	*cntr = &_cntr->cntr_fid;
 	return 0;
 
-err1:
+err:
 	free(_cntr);
 	return -ret;
 }

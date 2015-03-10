@@ -297,7 +297,7 @@ int DEFAULT_SYMVER_PRE(fi_getinfo)(uint32_t version, const char *node, const cha
 		if (!prov->provider->getinfo)
 			continue;
 
-		if (hints->fabric_attr && hints->fabric_attr->prov_name &&
+		if (hints && hints->fabric_attr && hints->fabric_attr->prov_name &&
 		    strcmp(prov->provider->name, hints->fabric_attr->prov_name))
 			continue;
 
@@ -332,10 +332,37 @@ int DEFAULT_SYMVER_PRE(fi_getinfo)(uint32_t version, const char *node, const cha
 }
 DEFAULT_SYMVER(fi_getinfo_, fi_getinfo);
 
+static struct fi_info *fi_allocinfo_internal(void)
+{
+	struct fi_info *info;
+
+	info = calloc(1, sizeof(*info));
+	if (!info)
+		return NULL;
+
+	info->tx_attr = calloc(1, sizeof(*info->tx_attr));
+	info->rx_attr = calloc(1, sizeof(*info->rx_attr));
+	info->ep_attr = calloc(1, sizeof(*info->ep_attr));
+	info->domain_attr = calloc(1, sizeof(*info->domain_attr));
+	info->fabric_attr = calloc(1, sizeof(*info->fabric_attr));
+	if (!info->tx_attr|| !info->rx_attr || !info->ep_attr ||
+	    !info->domain_attr || !info->fabric_attr)
+		goto err;
+
+	return info;
+err:
+	fi_freeinfo(info);
+	return NULL;
+}
+
+
 __attribute__((visibility ("default")))
 struct fi_info *DEFAULT_SYMVER_PRE(fi_dupinfo)(const struct fi_info *info)
 {
 	struct fi_info *dup;
+
+	if (!info)
+		return fi_allocinfo_internal();
 
 	dup = malloc(sizeof(*dup));
 	if (dup == NULL) {

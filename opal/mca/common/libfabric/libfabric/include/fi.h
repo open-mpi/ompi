@@ -197,8 +197,6 @@ int fi_read_file(const char *dir, const char *file, char *buf, size_t size);
 int fi_poll_fd(int fd, int timeout);
 int fi_wait_cond(pthread_cond_t *cond, pthread_mutex_t *mut, int timeout);
 
-struct fi_info *fi_allocinfo_internal(void);
-
 int fi_sockaddr_len(struct sockaddr *addr);
 size_t fi_datatype_size(enum fi_datatype datatype);
 uint64_t fi_tag_bits(uint64_t mem_tag_format);
@@ -208,6 +206,8 @@ int fi_send_allowed(uint64_t caps);
 int fi_recv_allowed(uint64_t caps);
 int fi_rma_initiate_allowed(uint64_t caps);
 int fi_rma_target_allowed(uint64_t caps);
+
+uint64_t fi_gettime_ms();
 
 #define RDMA_CONF_DIR  SYSCONFDIR "/" RDMADIR
 #define FI_CONF_DIR RDMA_CONF_DIR "/fabric"

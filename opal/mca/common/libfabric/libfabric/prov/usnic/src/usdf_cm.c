@@ -234,6 +234,7 @@ usdf_cm_msg_connreq_failed(struct usdf_connreq *crp, int error)
         err.err = -error;
         err.prov_errno = 0;
         err.err_data = NULL;
+        err.err_data_size = 0;
         usdf_eq_write_internal(eq, 0, &err, sizeof(err), USDF_EVENT_FLAG_ERROR);
 
         usdf_cm_msg_connreq_cleanup(crp);

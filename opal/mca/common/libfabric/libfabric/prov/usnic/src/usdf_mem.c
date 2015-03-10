@@ -80,17 +80,25 @@ static struct fi_ops usdf_mr_ops = {
 };
 
 int
-usdf_reg_mr(struct fid_domain *domain, const void *buf, size_t len,
+usdf_reg_mr(struct fid *fid, const void *buf, size_t len,
 	   uint64_t access, uint64_t offset, uint64_t requested_key,
 	   uint64_t flags, struct fid_mr **mr_o, void *context)
 {
 	struct usdf_mr *mr;
 	struct usdf_domain *udp;
 	int ret;
+	struct fid_domain *domain;
 
 	if (flags != 0) {
 		return -FI_EBADFLAGS;
 	}
+
+	if (fid->fclass != FI_CLASS_DOMAIN) {
+		USDF_DEBUG("memory registration only supported "
+				"for struct fid_domain\n");
+		return -FI_EINVAL;
+	}
+	domain = container_of(fid, struct fid_domain, fid);
 
 	mr = calloc(1, sizeof *mr);
 	if (mr == NULL) {

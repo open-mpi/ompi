@@ -87,7 +87,7 @@ int
 usdf_endpoint_open(struct fid_domain *domain, struct fi_info *info,
 	    struct fid_ep **ep_o, void *context)
 {
-	switch (info->ep_type) {
+	switch (info->ep_attr->type) {
 	case FI_EP_DGRAM:
 		return usdf_ep_dgram_open(domain, info, ep_o, context);
 	case FI_EP_MSG:

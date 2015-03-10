@@ -74,11 +74,6 @@ int psmx_uuid_to_port(psm_uuid_t uuid)
 	return (int)port;
 }
 
-static void psmx_name_server_cleanup(void *args)
-{
-	close((int)(uintptr_t)args);
-}
-
 /*************************************************************
  * A simple name resolution mechanism for client-server style
  * applications. The server side has to run first. The client
@@ -89,7 +84,7 @@ static void psmx_name_server_cleanup(void *args)
  *************************************************************/
 void *psmx_name_server(void *args)
 {
-	struct psmx_fid_domain *domain;
+	struct psmx_fid_fabric *fabric;
 	struct addrinfo hints = {
 		.ai_flags = AI_PASSIVE,
 		.ai_family = AF_UNSPEC,
@@ -100,18 +95,17 @@ void *psmx_name_server(void *args)
 	int listenfd = -1, connfd;
 	int port;
 	int n;
+	int ret;
 
-	domain = args;
-	port = domain->ns_port;
-
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+	fabric = args;
+	port = psmx_uuid_to_port(fabric->uuid);
 
 	if (asprintf(&service, "%d", port) < 0)
 		return NULL;
 
 	n = getaddrinfo(NULL, service, &hints, &res);
 	if (n < 0) {
-		PSMX_DEBUG("%s: port %d: %s\n", __func__, port, gai_strerror(n));
+		PSMX_DEBUG("port %d: %s\n", port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -132,28 +126,24 @@ void *psmx_name_server(void *args)
 	free(service);
 
 	if (listenfd < 0) {
-		PSMX_DEBUG("%s: couldn't listen to port %d\n", __func__, port);
+		PSMX_DEBUG("couldn't listen to port %d. try set OFI_PSM_UUID to a different value?\n", port);
 		return NULL;
 	}
 
 	listen(listenfd, 256);
 
-	pthread_cleanup_push(psmx_name_server_cleanup, (void *)(uintptr_t)listenfd);
-	{
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-		while (1) {
-			connfd = accept(listenfd, NULL, 0);
-			if (connfd >= 0) {
-				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-				write(connfd, &domain->psm_epid, sizeof(psm_epid_t));
-				close(connfd);
-				pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	while (1) {
+		connfd = accept(listenfd, NULL, 0);
+		if (connfd >= 0) {
+			if (fabric->active_domain) {
+				ret = write(connfd, &fabric->active_domain->psm_epid, sizeof(psm_epid_t));
+				if (ret != sizeof(psm_epid_t))
+					PSMX_WARN("%s: error sending address info to the client\n",
+						  __func__);
 			}
+			close(connfd);
 		}
 	}
-	pthread_cleanup_pop(1);
 
 	return NULL;
 }
@@ -181,7 +171,7 @@ void *psmx_resolve_name(const char *servername, int port)
 
 	n = getaddrinfo(servername, service, &hints, &res);
 	if (n < 0) {
-		PSMX_DEBUG("%s:(%s:%d):%s\n", __func__, servername, port, gai_strerror(n));
+		PSMX_DEBUG("(%s:%d):%s\n", servername, port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -200,7 +190,7 @@ void *psmx_resolve_name(const char *servername, int port)
 	free(service);
 
 	if (sockfd < 0) {
-		PSMX_DEBUG("%s: couldn't connect to %s:%d\n", __func__, servername, port);
+		PSMX_DEBUG("couldn't connect to %s:%d\n", servername, port);
 		return NULL;
 	}
 

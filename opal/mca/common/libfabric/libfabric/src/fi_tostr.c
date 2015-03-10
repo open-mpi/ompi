@@ -179,7 +179,6 @@ static void fi_tostr_caps(char *buf, uint64_t caps)
 	IFFLAGSTR(caps, FI_TAGGED);
 	IFFLAGSTR(caps, FI_ATOMICS);
 	IFFLAGSTR(caps, FI_DYNAMIC_MR);
-	IFFLAGSTR(caps, FI_BUFFERED_RECV);
 	fi_tostr_flags(buf, caps);
 
 	fi_remove_comma(buf);
@@ -326,12 +325,13 @@ static void fi_tostr_ep_attr(char *buf, const struct fi_ep_attr *attr, const cha
 	}
 
 	strcatf(buf, "%sfi_ep_attr:\n", prefix);
+	strcatf(buf, "%sep_type: ", TAB);
+	fi_tostr_ep_type(buf, attr->type);
+	strcatf(buf, "\n");
 	strcatf(buf, "%s%sprotocol: ", prefix, TAB);
 	fi_tostr_protocol(buf, attr->protocol);
 	strcatf(buf, "\n");
 	strcatf(buf, "%s%smax_msg_size: %zd\n", prefix, TAB, attr->max_msg_size);
-	strcatf(buf, "%s%sinject_size: %zd\n", prefix, TAB, attr->inject_size);
-	strcatf(buf, "%s%stotal_buffered_recv: %zd\n", prefix, TAB, attr->total_buffered_recv);
 	strcatf(buf, "%s%smax_order_raw_size: %zd\n", prefix, TAB, attr->max_order_raw_size);
 	strcatf(buf, "%s%smax_order_war_size: %zd\n", prefix, TAB, attr->max_order_war_size);
 	strcatf(buf, "%s%smax_order_waw_size: %zd\n", prefix, TAB, attr->max_order_waw_size);
@@ -401,9 +401,6 @@ static void fi_tostr_info(char *buf, const struct fi_info *info)
 	fi_tostr_mode(buf, info->mode);
 	strcatf(buf, " ]\n");
 
-	strcatf(buf, "%sep_type: ", TAB);
-	fi_tostr_ep_type(buf, info->ep_type);
-	strcatf(buf, "\n");
 	strcatf(buf, "%sfi_addr_format: ", TAB);
 	fi_tostr_addr_format(buf, info->addr_format);
 	strcatf(buf, "\n");
@@ -492,6 +489,38 @@ static void fi_tostr_version(char *buf)
 	strcatf(buf, VERSION);
 }
 
+static void fi_tostr_eq_event(char *buf, int type)
+{
+	switch (type) {
+	CASEENUMSTR(FI_NOTIFY);
+	CASEENUMSTR(FI_CONNREQ);
+	CASEENUMSTR(FI_CONNECTED);
+	CASEENUMSTR(FI_SHUTDOWN);
+	CASEENUMSTR(FI_MR_COMPLETE);
+	CASEENUMSTR(FI_AV_COMPLETE);
+	default:
+		strcatf(buf, "Unknown");
+		break;
+	}
+}
+
+static void fi_tostr_cq_event_flags(char *buf, uint64_t flags)
+{
+	IFFLAGSTR(flags, FI_SEND);
+	IFFLAGSTR(flags, FI_RECV);
+	IFFLAGSTR(flags, FI_RMA);
+	IFFLAGSTR(flags, FI_ATOMIC);
+	IFFLAGSTR(flags, FI_MSG);
+	IFFLAGSTR(flags, FI_TAGGED);
+	IFFLAGSTR(flags, FI_READ);
+	IFFLAGSTR(flags, FI_WRITE);
+	IFFLAGSTR(flags, FI_REMOTE_READ);
+	IFFLAGSTR(flags, FI_REMOTE_WRITE);
+	IFFLAGSTR(flags, FI_REMOTE_CQ_DATA);
+	IFFLAGSTR(flags, FI_MULTI_RECV);
+	fi_remove_comma(buf);
+}
+
 __attribute__((visibility ("default")))
 char *DEFAULT_SYMVER_PRE(fi_tostr)(const void *data, enum fi_type datatype)
 {
@@ -571,6 +600,12 @@ char *DEFAULT_SYMVER_PRE(fi_tostr)(const void *data, enum fi_type datatype)
 		break;
 	case FI_TYPE_VERSION:
 		fi_tostr_version(buf);
+		break;
+	case FI_TYPE_EQ_EVENT:
+		fi_tostr_eq_event(buf, enumval);
+		break;
+	case FI_TYPE_CQ_EVENT_FLAGS:
+		fi_tostr_cq_event_flags(buf, val64);
 		break;
 	default:
 		strcatf(buf, "Unknown type");

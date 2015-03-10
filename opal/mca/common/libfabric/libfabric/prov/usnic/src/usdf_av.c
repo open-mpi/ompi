@@ -113,6 +113,8 @@ usdf_post_insert_request_error(struct usdf_av_insert *insert,
 	err_entry.context = insert->avi_context;
 	err_entry.data = req - (struct usdf_av_req *)(insert + 1);
 	err_entry.err = -req->avr_status;
+	err_entry.err_data = NULL;
+	err_entry.err_data_size = 0;
 
 	usdf_eq_write_internal(av->av_eq, 0,
 		&err_entry, sizeof(err_entry),

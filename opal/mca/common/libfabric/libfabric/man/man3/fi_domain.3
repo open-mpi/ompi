@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2015\-02\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_domain 3 "2015\-02\-28" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -97,6 +97,7 @@ struct\ fi_domain_attr\ {
 \ \ \ \ enum\ fi_progress\ \ \ \ \ \ control_progress;
 \ \ \ \ enum\ fi_progress\ \ \ \ \ \ data_progress;
 \ \ \ \ enum\ fi_resource_mgmt\ resource_mgmt;
+\ \ \ \ enum\ fi_av_type\ \ \ \ \ \ \ av_type;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mr_key_size;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cq_data_size;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cq_cnt;
@@ -360,16 +361,46 @@ For unconnected endpoints, the endpoint must be re-enabled before it
 will accept new data transfer operations.
 For connected endpoints, the connection is torn down and must be
 re-established.
-.SS MR Key Size
+.SS AV Type (av_type)
+.PP
+Specifies the type of address vectors that are usable with this domain.
+For additional details on AV type, see \f[C]fi_av\f[](3).
+The following values may be specified.
+.PP
+\f[I]FI_AV_UNSPEC\f[] : Any address vector format is requested and
+supported.
+.PP
+\f[I]FI_AV_MAP\f[] : Only address vectors of type AV map are requested
+or supported.
+.PP
+\f[I]FI_AV_TABLE\f[] : Only address vectors of type AV index are
+requested or supported.
+.PP
+Address vectors are only used by connectionless endpoints.
+Applications that require the use of a specific type of address vector
+should set the domain attribute av_type to the necessary value when
+calling fi_getinfo.
+The value FI_AV_UNSPEC may be used to indicate that the provider can
+support either address vector format.
+In this case, a provider may return FI_AV_UNSPEC to indicate that either
+format is supportable, or may return another AV type to indicate the
+optimal AV type supported by this domain.
+.SS MR Key Size (mr_key_size)
 .PP
 Size of the memory region remote access key, in bytes.
 Applications that request their own MR key must select a value within
 the range specified by this value.
-.SS CQ Data Size
+.SS CQ Data Size (cq_data_size)
 .PP
-The number of bytes that the provider supports for remote CQ data.
-See the FI_REMOTE_CQ_DATA flag (fi_getinfo) for the use of remote CQ
-data.
+Applications may include a small message with a data transfer that is
+placed directly into a remote completion queue as part of a completion
+event.
+This is referred to as remote CQ data (sometimes referred to as
+immediate data).
+This field indicates the number of bytes that the provider supports for
+remote CQ data.
+If supported (non-zero value is returned), the minimum size of remote CQ
+data must be at least 4-bytes.
 .SS Completion Queue Count (cq_cnt)
 .PP
 The total number of completion queues supported by the domain, relative

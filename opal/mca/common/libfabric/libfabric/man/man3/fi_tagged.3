@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-02\-18" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_tagged 3 "2015\-03\-04" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -133,7 +133,7 @@ Completed message operations are reported to the user through one or
 more event collectors associated with the endpoint.
 Users provide context which are associated with each operation, and is
 returned to the user as part of the event completion.
-See fi_eq for completion event details.
+See fi_cq for completion event details.
 .SS fi_tsend
 .PP
 The call fi_tsend transfers the data contained in the user-specified
@@ -211,8 +211,8 @@ The fi_trecvmsg function takes a struct fi_msg_tagged as input.
 The function fi_tsearch determines if a message with the specified tag
 with ignore mask from an optionally supplied source address has been
 received and is buffered by the provider.
-The fi_tsearch call is only available on endpoints with FI_BUFFERED_RECV
-enabled.
+The fi_tsearch call is only available on endpoints with provider
+allocated buffering enabled (see fi_rx_attr total_buffered_recv).
 The fi_tsearch operation may complete asynchronously or immediately,
 depending on the underlying provider implementation.
 .PP
@@ -317,6 +317,6 @@ the user.
 .SH SEE ALSO
 .PP
 \f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
-\f[C]fi_eq\f[](3)
+\f[C]fi_cq\f[](3)
 .SH AUTHORS
 OpenFabrics.

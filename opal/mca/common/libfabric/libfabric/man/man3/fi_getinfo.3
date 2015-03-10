@@ -1,7 +1,9 @@
-.TH fi_getinfo 3 "2015\-02\-11" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc3"
+.TH fi_getinfo 3 "2015\-02\-28" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
+.PP
+fi_allocinfo / fi_dupinfo - Allocate / duplicate an fi_info structure
 .SH SYNOPSIS
 .IP
 .nf
@@ -12,6 +14,8 @@ int\ fi_getinfo(int\ version,\ const\ char\ *node,\ const\ char\ *service,
 \ \ \ \ \ \ \ \ uint64_t\ flags,\ struct\ fi_info\ *hints,\ struct\ fi_info\ **info);
 
 void\ fi_freeinfo(struct\ fi_info\ *info);
+
+struct\ fi_info\ *fi_allocinfo(void);
 
 struct\ fi_info\ *fi_dupinfo(const\ struct\ fi_info\ *info);
 \f[]
@@ -33,12 +37,11 @@ criteria for selecting the returned fabric information.
 containing response information.
 .SH DESCRIPTION
 .PP
-Returns information about available fabric services for reaching the
-specified node or service, subject to any provided hints.
-Callers must provide at least one of the node, service, or hints
-parameters.
-If node and service are NULL, then the hints src_addr and/or dest_addr
-fields of the fi_info structure must be specified.
+fi_getinfo returns information about available fabric services for
+reaching specified node or service, subject to any provided hints.
+Callers may specify NULL for node, service, and hints in order to
+retrieve information about what providers are available and their
+optimal usage models.
 If no matching fabric information is available, info will be set to
 NULL.
 .PP
@@ -52,10 +55,10 @@ additional criteria in their search hints.
 Relaxing or eliminating input hints will increase the number and type of
 endpoints that are available.
 Providers that return multiple endpoints to a single fi_getinfo call
-should return the endpoints that are highest performing.
+should return the endpoints that are highest performing first.
 Providers may indicate that an endpoint and domain can support
 additional capabilities than those requested by the user only if such
-support will not adversely affect performance.
+support will not adversely affect application performance or security.
 .PP
 The version parameter is used by the application to request the desired
 version of the interfaces.
@@ -73,8 +76,8 @@ This protects against the application being built from source against a
 newer version of the library that introduces new fields to data
 structures, which would not be initialized by the application.
 .PP
-Either node, service, or hints must be provided, with any combination
-being supported.
+Node, service, or hints may be provided, with any combination being
+supported.
 If node is provided, fi_getinfo will attempt to resolve the fabric
 address to the given node.
 The hints parameter, if provided, may be used to control the resulting
@@ -84,6 +87,11 @@ addressing information based on the provided hints.
 .PP
 The caller must call fi_freeinfo to release fi_info structures returned
 by this call.
+.PP
+The fi_allocinfo call will allocate and zero an fi_info structure and
+all related substructures.
+The fi_dupinfo will duplicate a single fi_info structure and all the
+substructures within it.
 .SH FI_INFO
 .IP
 .nf
@@ -92,7 +100,6 @@ struct\ fi_info\ {
 \ \ \ \ struct\ fi_info\ \ \ \ \ \ \ \ *next;
 \ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ caps;
 \ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ mode;
-\ \ \ \ enum\ fi_ep_type\ \ \ \ \ \ \ ep_type;
 \ \ \ \ uint32_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ addr_format;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src_addrlen;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest_addrlen;
@@ -119,10 +126,6 @@ below.
 \f[I]mode\f[] : Operational modes supported by the application.
 See the \f[I]Mode\f[] section below.
 .PP
-\f[I]ep_type - endpoint type\f[] : If specified, indicates the type of
-fabric interface communication desired.
-Supported types are listed in the \f[I]Endpoint types\f[] section below.
-.PP
 \f[I]addr_format - address format\f[] : If specified, indicates the
 format of addresses referenced by the fabric interfaces and data
 structures.
@@ -130,15 +133,17 @@ Supported formats are listed in the \f[I]Addressing formats\f[] section
 below.
 .PP
 \f[I]src_addrlen - source address length\f[] : Indicates the length of
-the source address (must be specified if \f[I]src_addr\f[] is
-specified).
-This field will be ignored in hints if FI_SOURCE is specified.
+the source address.
+This value must be > 0 if \f[I]src_addr\f[] is non-NULL.
+This field will be ignored in hints if FI_SOURCE is specified, or
+\f[I]src_addr\f[] is NULL.
 .PP
 \f[I]dest_addrlen - destination address length\f[] : Indicates the
-length of the destination address (must be specified if
-\f[I]dest_addr\f[] is specified).
+length of the destination address.
+This value must be > 0 if \f[I]dest_addr\f[] is non-NULL.
 This field will be ignored in hints unless the node and service
-parameters are NULL or FI_SOURCE is specified.
+parameters are NULL or FI_SOURCE is specified, or if \f[I]dst_addr\f[]
+is NULL.
 .PP
 \f[I]src_addr - source address\f[] : If specified, indicates the source
 address.
@@ -210,7 +215,7 @@ Interface capabilities are obtained by OR-ing the following flags
 together.
 If capabilities in the hint parameter are set to 0, the underlying
 provider will return the set of capabilities which are supported.
-Otherwise, providers will only return data matching the specified set of
+Otherwise, providers will return data matching the specified set of
 capabilities.
 Providers may indicate support for additional capabilities beyond those
 requested when the use of expanded capabilities will not adversely
@@ -275,27 +280,11 @@ regions be backed by allocated memory pages.
 multiple receive contexts allow an initiator to target (or name) a
 specific receive context as part of a data transfer operation.
 .PP
-\f[I]FI_BUFFERED_RECV\f[] : Requests that the communication endpoint
-should attempt to queue inbound data that arrives before a receive
-buffer has been posted.
-In the absence of this flag, any messages that arrive before a receive
-is posted are lost.
-Applications may access endpoint options (getopt/setopt) to determine
-the size of available buffered receive space.
-.PP
 \f[I]FI_DIRECTED_RECV\f[] : Requests that the communication endpoint use
 the source address of an incoming message when matching it with a
 receive buffer.
 If this capability is not set, then the src_addr parameter for msg and
 tagged receive operations is ignored.
-.PP
-\f[I]FI_INJECT\f[] : Indicates that the endpoint be able to support the
-FI_INJECT flag on data transfer operations and the \[aq]inject\[aq] data
-transfer calls.
-The minimum supported size of an inject operation that an endpoint with
-this capability must support is 8-bytes.
-Applications may access endpoint options (getopt/setopt) to determine
-injected transfer limits.
 .PP
 \f[I]FI_MULTI_RECV\f[] : Specifies that the endpoint must support the
 FI_MULTI_RECV flag when posting receive buffers.
@@ -334,18 +323,6 @@ This flag requires that FI_RMA and/or FI_ATOMIC be set.
 capable of receiving write memory operations from remote endpoints.
 This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
-\f[I]FI_REMOTE_CQ_DATA\f[] : Applications may include a small message
-with a data transfer that is placed directly into a remote event queue
-as part of a completion event.
-This is referred to as remote CQ data (sometimes referred to as
-immediate data).
-The FI_REMOTE_CQ_DATA indicates that an endpoint must support the
-FI_REMOTE_CQ_DATA flag on data transfer operations.
-The minimum supported size of remote CQ data that an endpoint with this
-capability must support is 4-bytes.
-Applications may check the domain attributes to determine remote CQ data
-limits.
-.PP
 \f[I]FI_REMOTE_SIGNAL\f[] : Indicates that the endpoint support the
 FI_REMOTE_SIGNAL flag on data transfer operations.
 Support requires marking outbound data transfers as signaled and
@@ -374,6 +351,24 @@ operation.
 Fenced operations are often used to enforce ordering between operations
 that are not otherwise guaranteed by the underlying provider or
 protocol.
+.PP
+Capabilities may be grouped into two general categories: primary and
+secondary.
+Primary capabilities must explicitly be requested by an application, and
+a provider must enable support for only those primary capabilities which
+were selected.
+Secondary capabilities may optionally be requested by an application.
+If requested, a provider must support the capability or fail the
+fi_getinfo request (FI_ENOSYS).
+A provider may optionally report non-selected secondary capabilities if
+doing so would not compromise performance or security.
+.PP
+Primary capabilities: FI_MSG, FI_RMA, FI_TAGGED, FI_ATOMIC,
+FI_NAMED_RX_CTX, FI_DIRECTD_RECV, FI_READ, FI_WRITE, FI_RECV, FI_SEND,
+FI_REMOTE_READ, and FI_REMOTE_WRITE.
+.PP
+Secondary capabilities: FI_DYNAMIC_MR, FI_MULTI_RECV, FI_SOURCE,
+FI_CANCEL, FI_FENCE, FI_REMOTE_COMPLETE
 .SH MODE
 .PP
 The operational mode bits are used to convey requirements that an
@@ -473,24 +468,6 @@ The FI_ASYNC_IOV mode indicates that the application must provide the
 buffering needed for the IO vectors.
 When set, an application must not modify an IO vector until the
 associated operation has completed.
-.SH ENDPOINT TYPES
-.PP
-\f[I]FI_EP_UNSPEC\f[] : The type of endpoint is not specified.
-This is usually provided as input, with other attributes of the endpoint
-or the provider selecting the type.
-.PP
-\f[I]FI_EP_MSG\f[] : Provides a reliable, connection-oriented data
-transfer service with flow control that maintains message boundaries.
-.PP
-\f[I]FI_EP_DGRAM\f[] : Supports a connectionless, unreliable datagram
-communication.
-Message boundaries are maintained, but the maximum message size may be
-limited to the fabric MTU.
-Flow control is not guaranteed.
-.PP
-\f[I]FI_EP_RDM\f[] : Reliable datagram message.
-Provides a reliable, unconnected data transfer service with flow control
-that maintains message boundaries.
 .SH ADDRESSING FORMATS
 .PP
 Multiple fabric interfaces take as input either a source or destination
@@ -552,11 +529,13 @@ On error, fi_getinfo() returns a negative value corresponding to fabric
 errno.
 Fabric errno values are defined in \f[C]rdma/fi_errno.h\f[].
 .PP
+fi_allocinfo() returns a pointer to a new fi_info structure on success,
+or NULL on error.
 fi_dupinfo() duplicates a single fi_info structure and all the
-substructures within it and returns a pointer to the new fi_info
-structure.
-This new fi_info structure must be freed via fi_freeinfo().
-fi_dupinfo() returns NULL on error.
+substructures within it, returning a pointer to the new fi_info
+structure on success, or NULL on error.
+Both calls require that the returned fi_info structure be freed via
+fi_freeinfo().
 .SH ERRORS
 .PP
 \f[I]FI_EBADFLAGS\f[] : The specified endpoint or domain capability or

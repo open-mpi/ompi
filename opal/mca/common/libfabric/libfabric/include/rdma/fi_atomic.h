@@ -33,7 +33,6 @@
 #ifndef _FI_ATOMIC_H_
 #define _FI_ATOMIC_H_
 
-#include <assert.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>

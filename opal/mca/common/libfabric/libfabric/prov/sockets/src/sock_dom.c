@@ -34,6 +34,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -247,13 +248,21 @@ struct sock_mr *sock_mr_verify_desc(struct sock_domain *domain, void *desc,
 	return sock_mr_verify_key(domain, key, buf, len, access);
 }
 
-static int sock_regattr(struct fid_domain *domain, const struct fi_mr_attr *attr,
+static int sock_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 		uint64_t flags, struct fid_mr **mr)
 {
 	struct fi_eq_entry eq_entry;
 	struct sock_domain *dom;
 	struct sock_mr *_mr;
 	uint64_t key;
+	struct fid_domain *domain;
+
+	if (fid->fclass != FI_CLASS_DOMAIN) {
+		SOCK_LOG_ERROR("memory registration only supported "
+				"for struct fid_domain\n");
+		return -FI_EINVAL;
+	}
+	domain = container_of(fid, struct fid_domain, fid);
 
 	dom = container_of(domain, struct sock_domain, dom_fid);
 	if (!(dom->info.mode & FI_PROV_MR_ATTR) && 
@@ -306,7 +315,7 @@ err:
 	return -errno;
 }
 
-static int sock_regv(struct fid_domain *domain, const struct iovec *iov,
+static int sock_regv(struct fid *fid, const struct iovec *iov,
 		size_t count, uint64_t access,
 		uint64_t offset, uint64_t requested_key,
 		uint64_t flags, struct fid_mr **mr, void *context)
@@ -319,10 +328,10 @@ static int sock_regv(struct fid_domain *domain, const struct iovec *iov,
 	attr.offset = offset;
 	attr.requested_key = requested_key;
 	attr.context = context;
-	return sock_regattr(domain, &attr, flags, mr);
+	return sock_regattr(fid, &attr, flags, mr);
 }
 
-static int sock_reg(struct fid_domain *domain, const void *buf, size_t len,
+static int sock_reg(struct fid *fid, const void *buf, size_t len,
 		uint64_t access, uint64_t offset, uint64_t requested_key,
 		uint64_t flags, struct fid_mr **mr, void *context)
 {
@@ -330,7 +339,7 @@ static int sock_reg(struct fid_domain *domain, const void *buf, size_t len,
 
 	iov.iov_base = (void *) buf;
 	iov.iov_len = len;
-	return sock_regv(domain, &iov, 1, access,  offset, requested_key,
+	return sock_regv(fid, &iov, 1, access,  offset, requested_key,
 			 flags, mr, context);
 }
 
@@ -355,7 +364,7 @@ int sock_dom_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 int sock_endpoint(struct fid_domain *domain, struct fi_info *info,
 			 struct fid_ep **ep, void *context)
 {
-	switch (info->ep_type) {
+	switch (info->ep_attr->type) {
 	case FI_EP_RDM:
 		return sock_rdm_ep(domain, info, ep, context);
 	case FI_EP_DGRAM:
@@ -370,7 +379,7 @@ int sock_endpoint(struct fid_domain *domain, struct fi_info *info,
 int sock_scalable_ep(struct fid_domain *domain, struct fi_info *info,
 		     struct fid_ep **sep, void *context)
 {
-	switch (info->ep_type) {
+	switch (info->ep_attr->type) {
 	case FI_EP_RDM:
 		return sock_rdm_sep(domain, info, sep, context);
 	case FI_EP_DGRAM:

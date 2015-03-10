@@ -37,14 +37,14 @@ static int psmx_domain_close(fid_t fid)
 	struct psmx_fid_domain *domain;
 	int err;
 
+	PSMX_DEBUG("\n");
+
 	domain = container_of(fid, struct psmx_fid_domain, domain.fid);
 
-	psmx_am_fini(domain);
+	if (--domain->refcnt > 0)
+		return 0;
 
-	if (domain->ns_thread) {
-		pthread_cancel(domain->ns_thread);
-		pthread_join(domain->ns_thread, NULL);
-	}
+	psmx_am_fini(domain);
 
 #if 0
 	/* AM messages could arrive after MQ is finalized, causing segfault
@@ -94,21 +94,19 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct psmx_fid_fabric *fabric_priv;
 	struct psmx_fid_domain *domain_priv;
 	struct psm_ep_open_opts opts;
-	psm_uuid_t uuid;
 	int err = -FI_ENOMEM;
 
-	PSMX_DEBUG("%s\n", __func__);
+	PSMX_DEBUG("\n");
 
 	fabric_priv = container_of(fabric, struct psmx_fid_fabric, fabric);
 	if (fabric_priv->active_domain) {
-		PSMX_DEBUG("%s: a domain has been opened for the fabric\n");
-		return -FI_EBUSY;
+		fabric_priv->active_domain->refcnt++;
+		*domain = &fabric_priv->active_domain->domain;
+		return 0;
 	}
 
 	if (!info->domain_attr->name || strncmp(info->domain_attr->name, "psm", 3))
 		return -FI_EINVAL;
-
-	psmx_query_mpi();
 
 	domain_priv = (struct psmx_fid_domain *) calloc(1, sizeof *domain_priv);
 	if (!domain_priv)
@@ -124,8 +122,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 
 	psm_ep_open_opts_get_defaults(&opts);
 
-	psmx_get_uuid(uuid);
-	err = psm_ep_open(uuid, &opts,
+	err = psm_ep_open(fabric_priv->uuid, &opts,
 			  &domain_priv->psm_ep, &domain_priv->psm_epid);
 	if (err != PSM_OK) {
 		PSMX_WARN("%s: psm_ep_open returns %d, errno=%d\n",
@@ -143,25 +140,12 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		goto err_out_close_ep;
 	}
 
-	domain_priv->ns_port = psmx_uuid_to_port(uuid);
-
-	if (psmx_env.name_server)
-		err = pthread_create(&domain_priv->ns_thread, NULL, psmx_name_server, (void *)domain_priv);
-	else
-		err = -1;
-
-	if (err)
-		domain_priv->ns_thread = 0;
-
 	if (psmx_domain_enable_ep(domain_priv, NULL) < 0) {
-		if (domain_priv->ns_thread) {
-			pthread_cancel(domain_priv->ns_thread);
-			pthread_join(domain_priv->ns_thread, NULL);
-		}
 		psm_mq_finalize(domain_priv->psm_mq);
 		goto err_out_close_ep;
 	}
 
+	domain_priv->refcnt = 1;
 	fabric_priv->active_domain = domain_priv;
 	*domain = &domain_priv->domain;
 	return 0;
