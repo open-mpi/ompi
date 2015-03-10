@@ -133,26 +133,62 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	struct fi_context *fi_context = psm_status->context;
 	void *op_context, *buf;
 	int is_recv = 0;
+	uint64_t flags;
 
 	switch((int)PSMX_CTXT_TYPE(fi_context)) {
 	case PSMX_SEND_CONTEXT:
 		op_context = fi_context;
 		buf = PSMX_CTXT_USER(fi_context);
+		flags = FI_SEND | FI_MSG;
 		break;
 	case PSMX_RECV_CONTEXT:
 		op_context = fi_context;
 		buf = PSMX_CTXT_USER(fi_context);
+		flags = FI_RECV | FI_MSG;
 		is_recv = 1;
 		break;
 	case PSMX_MULTI_RECV_CONTEXT:
 		op_context = fi_context;
 		req = PSMX_CTXT_USER(fi_context);
 		buf = req->buf + req->offset;
+		flags = FI_RECV | FI_MSG;
 		is_recv = 1;
+		break;
+	case PSMX_TSEND_CONTEXT:
+		op_context = fi_context;
+		buf = PSMX_CTXT_USER(fi_context);
+		flags = FI_SEND | FI_TAGGED;
+		break;
+	case PSMX_TRECV_CONTEXT:
+		op_context = fi_context;
+		buf = PSMX_CTXT_USER(fi_context);
+		flags = FI_RECV | FI_TAGGED;
+		is_recv = 1;
+		break;
+	case PSMX_READ_CONTEXT:
+		op_context = PSMX_CTXT_USER(fi_context);
+		buf = NULL;
+		flags = FI_READ | FI_RMA;
+		break;
+	case PSMX_WRITE_CONTEXT:
+		op_context = PSMX_CTXT_USER(fi_context);
+		buf = NULL;
+		flags = FI_WRITE | FI_RMA;
+		break;
+	case PSMX_REMOTE_READ_CONTEXT:
+		op_context = PSMX_CTXT_USER(fi_context);
+		buf = NULL;
+		flags = FI_REMOTE_READ | FI_RMA;
+		break;
+	case PSMX_REMOTE_WRITE_CONTEXT:
+		op_context = PSMX_CTXT_USER(fi_context);
+		buf = NULL;
+		flags = FI_REMOTE_WRITE | FI_RMA;
 		break;
 	default:
 		op_context = PSMX_CTXT_USER(fi_context);
 		buf = NULL;
+		flags = 0;
 		break;
 	}
 
@@ -180,6 +216,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 
 	if (psm_status->error_code) {
 		event->cqe.err.op_context = op_context;
+		event->cqe.err.flags = flags;
 		event->cqe.err.err = -psmx_errno(psm_status->error_code);
 		event->cqe.err.prov_errno = psm_status->error_code;
 		event->cqe.err.tag = psm_status->msg_tag;
@@ -196,14 +233,14 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 
 	case FI_CQ_FORMAT_MSG:
 		event->cqe.msg.op_context = op_context;
-		event->cqe.msg.flags = 0;
+		event->cqe.msg.flags = flags;
 		event->cqe.msg.len = psm_status->nbytes;
 		break;
 
 	case FI_CQ_FORMAT_DATA:
 		event->cqe.data.op_context = op_context;
 		event->cqe.data.buf = buf;
-		event->cqe.data.flags = 0;
+		event->cqe.data.flags = flags;
 		event->cqe.data.len = psm_status->nbytes;
 		if (data)
 			event->cqe.data.data = data;
@@ -212,7 +249,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	case FI_CQ_FORMAT_TAGGED:
 		event->cqe.tagged.op_context = op_context;
 		event->cqe.tagged.buf = buf;
-		event->cqe.tagged.flags = 0;
+		event->cqe.tagged.flags = flags;
 		event->cqe.tagged.len = psm_status->nbytes;
 		event->cqe.tagged.tag = psm_status->msg_tag;
 		if (data)
@@ -323,11 +360,13 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 				break;
 
 			case PSMX_SEND_CONTEXT:
+			case PSMX_TSEND_CONTEXT:
 				tmp_cq = tmp_ep->send_cq;
 				tmp_cntr = tmp_ep->send_cntr;
 				break;
 
 			case PSMX_RECV_CONTEXT:
+			case PSMX_TRECV_CONTEXT:
 				tmp_cq = tmp_ep->recv_cq;
 				tmp_cntr = tmp_ep->recv_cntr;
 				break;
@@ -738,7 +777,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		break;
 
 	default:
-		PSMX_DEBUG("%s: attr->format=%d, supported=%d...%d\n", __func__, attr->format,
+		PSMX_DEBUG("attr->format=%d, supported=%d...%d\n", attr->format,
 				FI_CQ_FORMAT_UNSPEC, FI_CQ_FORMAT_TAGGED);
 		return -FI_EINVAL;
 	}
@@ -750,8 +789,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 
 	case FI_WAIT_SET:
 		if (!attr->wait_set) {
-			PSMX_DEBUG("%s: FI_WAIT_SET is specified but attr->wait_set is NULL\n",
-				   __func__);
+			PSMX_DEBUG("FI_WAIT_SET is specified but attr->wait_set is NULL\n");
 			return -FI_EINVAL;
 		}
 		wait = (struct psmx_fid_wait *)attr->wait_set;
@@ -769,7 +807,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		break;
 
 	default:
-		PSMX_DEBUG("%s: attr->wait_obj=%d, supported=%d...%d\n", __func__, attr->wait_obj,
+		PSMX_DEBUG("attr->wait_obj=%d, supported=%d...%d\n", attr->wait_obj,
 				FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
@@ -781,7 +819,7 @@ int psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 			break;
 
 		default:
-			PSMX_DEBUG("%s: attr->wait_cond=%d, supported=%d...%d\n", __func__,
+			PSMX_DEBUG("attr->wait_cond=%d, supported=%d...%d\n",
 					attr->wait_cond, FI_CQ_COND_NONE, FI_CQ_COND_THRESHOLD);
 			return -FI_EINVAL;
 		}

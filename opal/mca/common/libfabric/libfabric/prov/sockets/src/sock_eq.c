@@ -62,6 +62,10 @@ ssize_t sock_eq_sread(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 	}
 	
 	if(dlistfd_empty(&sock_eq->list)) {
+		if(!timeout) {
+			SOCK_LOG_INFO("Nothing to read from eq!\n");
+			return 0;
+		}
 		ret = dlistfd_wait_avail(&sock_eq->list, timeout);
 		if(ret <= 0)
 			return ret;
@@ -132,6 +136,7 @@ out:
 ssize_t sock_eq_report_event(struct sock_eq *sock_eq, uint32_t event, 
 			     const void *buf, size_t len, uint64_t flags)
 {
+	int ret;
 	struct sock_eq_entry *entry = calloc(1, len + 
 					     sizeof(struct sock_eq_entry));
 	if(!entry)
@@ -142,6 +147,7 @@ ssize_t sock_eq_report_event(struct sock_eq *sock_eq, uint32_t event,
 	entry->type = event;
 	entry->len = len;
 	entry->flags = flags;
+	ret = entry->len;
 	memcpy(entry->event, buf, len);
 	dlistfd_insert_tail(&entry->entry, &sock_eq->list);
 
@@ -149,7 +155,7 @@ ssize_t sock_eq_report_event(struct sock_eq *sock_eq, uint32_t event,
 		sock_wait_signal(sock_eq->waitset);
 
 	fastlock_release(&sock_eq->lock);
-	return 0;
+	return ret;
 }
 
 ssize_t sock_eq_report_error(struct sock_eq *sock_eq, fid_t fid, void *context,
@@ -168,7 +174,7 @@ ssize_t sock_eq_report_error(struct sock_eq *sock_eq, fid_t fid, void *context,
 	err_entry->context = context;
 	err_entry->err = err;
 	err_entry->prov_errno = prov_errno;
-	err_entry->err_data = err_data;	
+	err_entry->err_data = err_data;
 	entry->len = sizeof(struct fi_eq_err_entry);
 	dlistfd_insert_tail(&entry->entry, &sock_eq->err_list);
 
@@ -414,8 +420,10 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 		break;
 
 	case FI_WAIT_SET:
-		if (!attr)
-			return -FI_EINVAL;
+		if (!attr) {
+			ret = -FI_EINVAL;
+			goto err2;
+		}
 
 		sock_eq->waitset = attr->wait_set;
 		sock_eq->signal = 1;

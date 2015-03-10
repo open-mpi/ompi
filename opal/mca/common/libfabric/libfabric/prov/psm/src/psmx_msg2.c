@@ -221,7 +221,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						req->ep->recv_cq,
 						req->recv.context,
 						req->recv.buf,
-						0, /* flags */
+						req->cq_flags,
 						req->recv.len_received,
 						0, /* data */
 						0, /* tag */
@@ -275,7 +275,7 @@ int psmx_am_msg_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 						req->ep->send_cq,
 						req->send.context,
 						req->send.buf,
-						0, /* flags */
+						req->cq_flags,
 						req->send.len,
 						0, /* data */
 						0, /* tag */
@@ -391,8 +391,9 @@ static ssize_t _psmx_recv2(struct fid_ep *ep, void *buf, size_t len,
 	req->recv.context = context;
 	req->recv.src_addr = (void *)src_addr;
 	req->ep = ep_priv;
+	req->cq_flags = FI_RECV | FI_MSG;
 
-	if (ep_priv->recv_cq_event_flag && !(flags & FI_EVENT))
+	if (ep_priv->recv_cq_event_flag && !(flags & FI_COMPLETION))
 		req->no_event = 1;
 
 	unexp = psmx_am_search_and_dequeue_unexp(ep_priv->domain,
@@ -429,7 +430,7 @@ static ssize_t _psmx_recv2(struct fid_ep *ep, void *buf, size_t len,
 					req->ep->recv_cq,
 					req->recv.context,
 					req->recv.buf,
-					0, /* flags */
+					req->cq_flags,
 					req->recv.len_received,
 					0, /* data */
 					0, /* tag */
@@ -547,8 +548,9 @@ static ssize_t _psmx_send2(struct fid_ep *ep, const void *buf, size_t len,
 	req->send.len_sent = msg_size;
 	req->send.dest_addr = (void *)dest_addr;
 	req->ep = ep_priv;
+	req->cq_flags = FI_SEND | FI_MSG;
 
-	if ((ep_priv->send_cq_event_flag && !(flags & FI_EVENT)) ||
+	if ((ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)) ||
 	     (context == &ep_priv->sendimm_context))
 		req->no_event = 1;
 

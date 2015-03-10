@@ -396,7 +396,7 @@ int usdf_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 
 
 /* fi_ops_mr */
-int usdf_reg_mr(struct fid_domain *domain, const void *buf, size_t len,
+int usdf_reg_mr(struct fid *fid, const void *buf, size_t len,
 	uint64_t access, uint64_t offset, uint64_t requested_key,
 	uint64_t flags, struct fid_mr **mr_o, void *context);
 

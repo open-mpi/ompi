@@ -84,6 +84,7 @@ usdf_tx_msg_enable(struct usdf_tx *tx)
 		return -FI_ENOCQ;
 	}
 
+	USDF_INFO("allocating 1 QP for FI_EP_MSG TX context\n");
 	/* XXX temp until we can allocate WQ and RQ independently */
 	filt.uf_type = USD_FTY_UDP;
 	filt.uf_filter.uf_udp.u_port = 0;
@@ -97,6 +98,7 @@ usdf_tx_msg_enable(struct usdf_tx *tx)
 			&filt,
 			&tx->tx_qp);
 	if (ret != 0) {
+		USDF_INFO("QP allocation failed (%s)\n", strerror(-ret));
 		goto fail;
 	}
 	tx->tx_qp->uq_context = tx;
@@ -106,6 +108,7 @@ usdf_tx_msg_enable(struct usdf_tx *tx)
 			sizeof(struct usdf_msg_qe));
 	if (tx->t.msg.tx_wqe_buf == NULL) {
 		ret = -errno;
+		USDF_INFO("malloc failed (%s)\n", strerror(-ret));
 		goto fail;
 	}
 
@@ -151,6 +154,7 @@ usdf_rx_msg_enable(struct usdf_rx *rx)
 		return -FI_ENOCQ;
 	}
 
+	USDF_INFO("allocating 1 QP for FI_EP_MSG RX context\n");
 	/* XXX temp until we can allocate WQ and RQ independently */
 	filt.uf_type = USD_FTY_UDP;
 	filt.uf_filter.uf_udp.u_port = 0;
@@ -164,6 +168,7 @@ usdf_rx_msg_enable(struct usdf_rx *rx)
 			&filt,
 			&rx->rx_qp);
 	if (ret != 0) {
+		USDF_INFO("QP allocation failed (%s)\n", strerror(-ret));
 		goto fail;
 	}
 	rx->rx_qp->uq_context = rx;
@@ -175,6 +180,7 @@ usdf_rx_msg_enable(struct usdf_rx *rx)
 			qp->uq_rq.urq_num_entries * mtu,
 			(void **)&rx->r.msg.rx_bufs);
 	if (ret != 0) {
+		USDF_INFO("usd_alloc_mr failed (%s)\n", strerror(-ret));
 		goto fail;
 	}
 
@@ -190,6 +196,7 @@ usdf_rx_msg_enable(struct usdf_rx *rx)
 			sizeof(struct usdf_msg_qe));
 	if (rx->r.msg.rx_rqe_buf == NULL) {
 		ret = -errno;
+		USDF_INFO("malloc failed (%s)\n", strerror(-ret));
 		goto fail;
 	}
 
@@ -681,7 +688,7 @@ usdf_ep_msg_open(struct fid_domain *domain, struct fi_info *info,
 	ep->ep_domain = udp;
 	ep->ep_caps = info->caps;
 	ep->ep_mode = info->mode;
-	ep->e.msg.ep_connreq = info->connreq;
+	ep->e.msg.ep_connreq = (struct usdf_connreq *)info->connreq;
 
 	ep->e.msg.ep_seq_credits = USDF_RUDP_SEQ_CREDITS;
 	TAILQ_INIT(&ep->e.msg.ep_posted_wqe);

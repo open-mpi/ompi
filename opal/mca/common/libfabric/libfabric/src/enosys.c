@@ -248,20 +248,20 @@ int fi_no_srx_context(struct fid_domain *domain, struct fi_rx_attr *attr,
 /*
  * struct fi_ops_mr
  */
-int fi_no_mr_reg(struct fid_domain *domain, const void *buf, size_t len,
+int fi_no_mr_reg(struct fid *fid, const void *buf, size_t len,
 		uint64_t access, uint64_t offset, uint64_t requested_key,
 		uint64_t flags, struct fid_mr **mr, void *context)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_mr_regv(struct fid_domain *domain, const struct iovec *iov,
+int fi_no_mr_regv(struct fid *fid, const struct iovec *iov,
 		size_t count, uint64_t access,
 		uint64_t offset, uint64_t requested_key,
 		uint64_t flags, struct fid_mr **mr, void *context)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_mr_regattr(struct fid_domain *domain, const struct fi_mr_attr *attr,
+int fi_no_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 		uint64_t flags, struct fid_mr **mr)
 {
 	return -FI_ENOSYS;

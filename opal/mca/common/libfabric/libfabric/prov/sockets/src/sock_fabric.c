@@ -75,11 +75,14 @@ int sock_verify_fabric_attr(struct fi_fabric_attr *attr)
 
 int sock_verify_info(struct fi_info *hints)
 {
+	enum fi_ep_type ep_type;
 	int ret;
+
 	if (!hints)
 		return 0;
 
-	switch (hints->ep_type) {
+	ep_type = hints->ep_attr ? hints->ep_attr->type : FI_EP_UNSPEC;
+	switch (ep_type) {
 	case FI_EP_UNSPEC:
 	case FI_EP_MSG:
 		ret = sock_msg_verify_ep_attr(hints->ep_attr,
@@ -182,8 +185,8 @@ static int sock_getinfo(uint32_t version, const char *node, const char *service,
 	if (ret) 
 		return ret;
 	
-	if (hints) {
-		switch (hints->ep_type) {
+	if (hints && hints->ep_attr) {
+		switch (hints->ep_attr->type) {
 		case FI_EP_RDM:
 			return sock_rdm_getinfo(version, node, service, flags,
 						hints, info);
