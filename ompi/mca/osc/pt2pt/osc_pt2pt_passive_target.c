@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -349,7 +349,7 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
     OPAL_THREAD_UNLOCK(&module->lock);
 
     if (lock->assert & MPI_MODE_NOCHECK) {
-        /* flush intstead */
+        /* flush instead */
         ompi_osc_pt2pt_flush_lock (module, lock, target);
     } else if (my_rank != target) {
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -369,6 +369,7 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
                 }
             }
 
+            ompi_osc_pt2pt_unlock_self (module, lock);
         } else {
             ret = ompi_osc_pt2pt_unlock_remote (module, target, lock);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -396,9 +397,7 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
 
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                              "ompi_osc_pt2pt_unlock: unlock of %d complete", target));
-    }
-
-    if ((target == my_rank || target == -1) && !(lock->assert & MPI_MODE_NOCHECK)) {
+    } else {
         ompi_osc_pt2pt_unlock_self (module, lock);
     }
 
