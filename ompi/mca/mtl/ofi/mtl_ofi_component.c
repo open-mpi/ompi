@@ -131,6 +131,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info *providers = NULL, *prov = NULL;
     struct fi_domain_attr domain_attr = {0};
     struct fi_fabric_attr fabric_attr = {0};
+    struct fi_ep_attr ep_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
     char ep_name[FI_NAME_MAX] = {0};
@@ -143,15 +144,13 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.  The bits specified
-     *           with buffered receive and cancel implement MPI semantics.
+     *           with cancel implement MPI semantics.
      *           Tagged is used to support tag matching.
      *           We expect to register all memory up front for use with this
      *           endpoint, so the MTL requires dynamic memory regions
      */
     hints.mode      = FI_CONTEXT;
-    hints.ep_type   = FI_EP_RDM;          /* Reliable datagram         */
     hints.caps      = FI_TAGGED;          /* Tag matching interface    */
-    hints.caps     |= FI_BUFFERED_RECV;   /* Buffered receives         */
     hints.caps     |= FI_CANCEL;          /* Support cancel            */
     hints.caps     |= FI_DYNAMIC_MR;      /* Global dynamic mem region */
 
@@ -159,7 +158,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * Refine filter for additional capabilities
      * threading:  Disable locking
      * control_progress:  enable async progress
+     * ep type: reliable datagram
      */
+    ep_attr.type                 = FI_EP_RDM;
     domain_attr.threading        = FI_THREAD_ENDPOINT;
     domain_attr.control_progress = FI_PROGRESS_AUTO;
     if (NULL != ompi_mtl_ofi.provider_name) {
@@ -167,6 +168,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     } else {
         fabric_attr.prov_name    = NULL;
     }
+    hints.ep_attr                = &ep_attr;
     hints.domain_attr            = &domain_attr;
     hints.fabric_attr            = &fabric_attr;
 
