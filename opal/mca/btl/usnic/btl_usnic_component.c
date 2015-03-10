@@ -598,7 +598,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     int i, j, num_final_modules;
     int num_devs;
     opal_btl_usnic_module_t *module;
-    usnic_if_filter_t *filter;
+    usnic_if_filter_t *filter = NULL;
     bool keep_module;
     bool filter_incl = false;
     int min_distance, num_local_procs;
@@ -722,8 +722,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         filter_incl = false;
         filter = parse_ifex_str(mca_btl_usnic_component.if_exclude, "exclude");
-    } else {
-        filter = NULL;
     }
 
     num_local_procs = opal_process_info.num_local_peers;
@@ -1000,6 +998,13 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     mca_btl_usnic_component.usnic_all_modules = NULL;
     free(mca_btl_usnic_component.usnic_active_modules);
     mca_btl_usnic_component.usnic_active_modules = NULL;
+
+    /* free filter if created */
+    if (filter != NULL) {
+        free_filter(filter);
+        filter = NULL;
+    }
+
     goto send_modex;
 }
 
