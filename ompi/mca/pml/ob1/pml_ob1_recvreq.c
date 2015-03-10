@@ -567,8 +567,8 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
                                      bytes_delivered );
     /* Store the receive request in unused context pointer. */
     des->des_context = (void *)recvreq;
-    /* Store the amount of bytes in unused remote count value */
-    des->des_segment_count = bytes_delivered;
+    /* Store the amount of bytes in unused cbdata pointer */
+    des->des_cbdata = (void *) (intptr_t) bytes_delivered;
     /* Then record an event that will get triggered by a PML progress call which
      * checks the stream events.  If we get an error, abort.  Should get message
      * from CUDA code about what went wrong. */
@@ -593,12 +593,12 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
                                                   int status )
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_context;
-    size_t bytes_received = des->des_segment_count;
+    size_t bytes_received = (size_t) (intptr_t) des->des_cbdata;
 
     OPAL_OUTPUT((-1, "frag_copy_finished (delivered=%d), frag=%p", (int)bytes_received, (void *)des));
     /* Call into the BTL so it can free the descriptor.  At this point, it is 
      * known that the data has been copied out of the descriptor. */
-    des->des_cbfunc(NULL, (struct mca_btl_base_endpoint_t *)des->des_cbdata, des, 0);
+    des->des_cbfunc(NULL, NULL, des, 0);
 
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
 
