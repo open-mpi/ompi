@@ -222,8 +222,8 @@ static int dlopen_foreachfile(const char *search_path,
             opal_argv_append_nosize(&good_files, abs_name);
             free(abs_name);
         }
+        closedir(dp);
     }
-    closedir(dp);
     dp = NULL;
 
     /* Invoke the callback on all the found files */
