@@ -73,7 +73,7 @@ void mca_pml_yalla_init_reqs(void);
 #define PML_YALLA_INIT_MXM_REQ_BASE(_req_base, _comm) \
     { \
         (_req_base)->state = MXM_REQ_NEW; \
-        (_req_base)->mq    = (void*)(_comm)->c_pml_comm; \
+        (_req_base)->mq    = (mxm_mq_h)(_comm)->c_pml_comm; \
     }
 
 #define PML_YALLA_PEER_CONN(_comm, _rank) \
@@ -128,7 +128,7 @@ void mca_pml_yalla_init_reqs(void);
 
 #define MCA_PML_YALLA_RREQ_INIT(_buf, _count, _datatype, _src, _tag, _comm, _state) \
     ({ \
-        mca_pml_yalla_recv_request_t *rreq = PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs); \
+        mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs); \
         \
         PML_YALLA_INIT_OMPI_REQ(&rreq->super.ompi, _comm, _state); \
         PML_YALLA_INIT_MXM_RECV_REQ(&rreq->mxm, _buf, _count, _datatype, _src, _tag, \
@@ -138,7 +138,7 @@ void mca_pml_yalla_init_reqs(void);
 
 #define MCA_PML_YALLA_SREQ_INIT(_buf, _count, _datatype, _dst, _tag, _mode, _comm, _state) \
     ({ \
-        mca_pml_yalla_send_request_t *sreq = PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs); \
+        mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs); \
         \
         PML_YALLA_INIT_OMPI_REQ(&sreq->super.ompi, _comm, _state); \
         PML_YALLA_INIT_MXM_SEND_REQ(&sreq->mxm, _buf, _count, _datatype, _dst, _tag, \
