@@ -340,7 +340,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     sorted = (int *)malloc (global_iov_count * sizeof(int));
     if (NULL == sorted) {
       opal_output (1, "OUT OF MEMORY\n");
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
     read_local_heap_sort (global_iov_array, global_iov_count, sorted);
   }
