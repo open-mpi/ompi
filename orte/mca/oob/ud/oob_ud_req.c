@@ -137,7 +137,7 @@ void mca_oob_ud_msg_return (mca_oob_ud_msg_t *msg)
     msg->qp     = NULL;
     msg->req    = NULL;
 
-    opal_free_list_return_st (list, msg);
+    opal_free_list_return_st (list, &msg->super);
 }
 
 static void mca_oob_ud_msg_construct (mca_oob_ud_msg_t *msg)
