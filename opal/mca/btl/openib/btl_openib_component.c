@@ -3071,7 +3071,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
              * up callback for PML to call when complete, add argument into
              * descriptor and return. */
             des->des_cbfunc = btl_openib_handle_incoming_completion;
-            des->des_cbdata = (void *)ep;
+            to_in_frag(des)->endpoint = ep;
             return OPAL_SUCCESS;
         }
 #endif /* OPAL_CUDA_SUPPORT */
@@ -3179,6 +3179,8 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
     mca_btl_openib_header_t *hdr = frag->hdr;
     int rqp = to_base_frag(frag)->base.order, cqp;
     uint16_t rcredits = 0, credits;
+
+    ep = to_in_frag (des)->endpoint;
 
     OPAL_OUTPUT((-1, "handle_incoming_complete frag=%p", (void *)des));
 
