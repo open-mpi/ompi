@@ -284,16 +284,10 @@ typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 /**
  * IB fragment derived type.
  */
-
-typedef struct mca_btl_openib_segment_t {
-    mca_btl_base_segment_t base;
-    uint32_t key;
-} mca_btl_openib_segment_t;
-
 /* base openib frag */
 typedef struct mca_btl_openib_frag_t {
     mca_btl_base_descriptor_t base;
-    mca_btl_openib_segment_t segment;
+    mca_btl_base_segment_t segment;
     mca_btl_openib_frag_type_t type;
     opal_free_list_t* list;
 } mca_btl_openib_frag_t;

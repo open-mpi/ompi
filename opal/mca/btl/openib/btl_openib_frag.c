@@ -62,7 +62,6 @@ static void com_constructor(mca_btl_openib_com_frag_t *frag)
 
     if(reg) {
         frag->sg_entry.lkey = reg->mr->lkey;
-        base_frag->segment.key = reg->mr->lkey;
     }
     frag->n_wqes_inflight = 0;
 }
@@ -71,7 +70,7 @@ static void out_constructor(mca_btl_openib_out_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segments = &base_frag->segment;
     base_frag->base.des_segment_count = 1;
 
     frag->sr_desc.wr_id = (uint64_t)(uintptr_t)frag;
@@ -86,7 +85,7 @@ static void in_constructor(mca_btl_openib_in_frag_t *frag)
 {
     mca_btl_openib_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segments = &base_frag->segment;
     base_frag->base.des_segment_count = 1;
 }
 
@@ -101,7 +100,7 @@ static void send_constructor(mca_btl_openib_send_frag_t *frag)
         (((unsigned char*)base_frag->base.super.ptr) +
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t));
-    base_frag->segment.base.seg_addr.pval = frag->hdr + 1;
+    base_frag->segment.seg_addr.pval = frag->hdr + 1;
     to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
     frag->coalesced_length = 0;
     OBJ_CONSTRUCT(&frag->coalesced_frags, opal_list_t);
@@ -114,7 +113,7 @@ static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
     base_frag->type = MCA_BTL_OPENIB_FRAG_RECV;
 
     frag->hdr = (mca_btl_openib_header_t*)base_frag->base.super.ptr;
-    base_frag->segment.base.seg_addr.pval =
+    base_frag->segment.seg_addr.pval =
         ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
     to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
 
@@ -129,7 +128,7 @@ static void send_control_constructor(mca_btl_openib_send_control_frag_t *frag)
     to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_CONTROL;
     /* adjusting headers because there is no coalesce header in control messages */
     frag->hdr = frag->chdr;
-    to_base_frag(frag)->segment.base.seg_addr.pval = frag->hdr + 1;
+    to_base_frag(frag)->segment.seg_addr.pval = frag->hdr + 1;
     to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
 }
 
@@ -158,7 +157,7 @@ static void coalesced_constructor(mca_btl_openib_coalesced_frag_t *frag)
 
     base_frag->type = MCA_BTL_OPENIB_FRAG_COALESCED;
 
-    base_frag->base.des_segments = &base_frag->segment.base;
+    base_frag->base.des_segments = &base_frag->segment;
     base_frag->base.des_segment_count = 1;
 }
 
