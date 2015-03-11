@@ -242,9 +242,9 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         else if (-FI_EAVAIL == ret) {
             ret = fi_eq_readerr(module->av_eq, &err_entry, 0);
             if (sizeof(err_entry) == ret) {
-                /* The usnic provider returns the number of inserts
-                   that errored in entry.data */
-                num_left -= entry.data;
+                /* An err_entry is returned for each errored
+                   insertion */
+                --num_left;
 
                 /* Got some kind of address failure.  This usually means
                    that we couldn't find a route to that peer (e.g., the
