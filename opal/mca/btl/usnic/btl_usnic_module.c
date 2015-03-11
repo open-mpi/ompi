@@ -263,13 +263,13 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                    interface. */
                 else {
                     opal_show_help("help-mpi-btl-usnic.txt",
-                                "libfabric API failed",
-                               true,
-                               opal_process_info.nodename,
-                               module->fabric_info->fabric_attr->name,
-                               "async insertion result", __FILE__, __LINE__,
-                               err_entry.err,
-                               "Failed to insert address to AV");
+                                   "libfabric API failed",
+                                   true,
+                                   opal_process_info.nodename,
+                                   module->fabric_info->fabric_attr->name,
+                                   "async insertion result", __FILE__, __LINE__,
+                                   err_entry.err,
+                                   "Failed to insert address to AV");
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
                     error_occurred = true;
                     /* we can't break here, need to finish reaping all inserts */
@@ -278,13 +278,13 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
             }
             else {
                 opal_show_help("help-mpi-btl-usnic.txt",
-                            "libfabric API failed",
-                            true,
-                            opal_process_info.nodename,
-                            module->fabric_info->fabric_attr->name,
-                            "fi_eq_readerr()", __FILE__, __LINE__,
-                            ret,
-                            "Failed to insert address to AV");
+                               "internal error during init",
+                               true,
+                               opal_process_info.nodename,
+                               module->fabric_info->fabric_attr->name,
+                               "fi_eq_readerr()", __FILE__, __LINE__,
+                               ret,
+                               "Returned != sizeof(err_entry)");
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 error_occurred = true;
                 /* we can't break here, need to finish reaping all inserts */
@@ -295,13 +295,13 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         /* Some kind of error from fi_eq_sread */
         else {
             opal_show_help("help-mpi-btl-usnic.txt",
-                        "libfabric API failed",
-                        true,
-                        opal_process_info.nodename,
-                        module->fabric_info->fabric_attr->name,
-                        "fi_eq_sread()", __FILE__, __LINE__,
-                        ret,
-                        "Failed to insert address to AV");
+                           "internal error during init",
+                           true,
+                           opal_process_info.nodename,
+                           module->fabric_info->fabric_attr->name,
+                           "fi_eq_sread()", __FILE__, __LINE__,
+                           ret,
+                           "Returned != (sizeof(entry) or -FI_EAVAIL)");
             ret = OPAL_ERR_OUT_OF_RESOURCE;
             error_occurred = true;
             /* we can't break here, need to finish reaping all inserts */
