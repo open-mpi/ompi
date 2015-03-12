@@ -50,6 +50,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "orte/util/name_fns.h"
+#include "opal/mca/pmix/pmix.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -110,7 +111,6 @@ int app_coord_init()
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_INIT;
     opal_buffer_t *buffer = NULL;
-    orte_grpcomm_collective_t *coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) Initalized for Application %s\n",
@@ -154,16 +154,7 @@ int app_coord_init()
                              "app) Startup Barrier..."));
     }
 
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.snapc_init_barrier;
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
-	    ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-    coll->active = true;
-    ORTE_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    opal_pmix.fence(NULL, 0);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -217,7 +208,6 @@ int app_coord_finalize()
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_FIN;
     opal_buffer_t *buffer = NULL;
     orte_std_cntr_t count;
-    orte_grpcomm_collective_t *coll;
     orte_rml_recv_cb_t *rb = NULL;
 
     /*
@@ -230,15 +220,7 @@ int app_coord_finalize()
                              "app) Shutdown Barrier..."));
     }
 
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.snapc_init_barrier;
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-    coll->active = true;
-    ORTE_WAIT_FOR_COMPLETION(coll->active);
+    opal_pmix.fence(NULL, 0);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -309,13 +291,6 @@ int app_coord_finalize()
                              "app) Shutdown Barrier: Waiting on barrier...!"));
     }
 
-    coll->id = orte_process_info.snapc_fini_barrier;
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
                              "app) Shutdown Barrier, Done!"));
@@ -331,8 +306,6 @@ int app_coord_finalize()
         OBJ_RELEASE(rb);
         rb = NULL;
     }
-
-    OBJ_RELEASE(coll);
 
     /*
      * Cleanup named pipes
@@ -398,7 +371,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     }
 
     /* Default: use the fast way */
-    orte_cr_continue_like_restart = false;
+    opal_cr_continue_like_restart = false;
     orte_cr_flush_restart_files   = true;
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
@@ -480,7 +453,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
          * otherwise just continue.
          */
         if( currently_all_migrating ) {
-            orte_cr_continue_like_restart = true;
+            opal_cr_continue_like_restart = true;
             orte_cr_flush_restart_files   = false;
         }
         if( !currently_migrating && currently_all_migrating ) {
