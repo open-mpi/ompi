@@ -164,7 +164,7 @@ usdf_av_insert_progress(void *v)
 		ret = usnic_arp_lookup(dap->uda_ifname,
 				req->avr_daddr_be, fp->fab_arp_sockfd, eth);
 
-		/* anything besides -EAGAIN means request is completed */
+		/* anything besides EAGAIN means request is completed */
 		if (ret != EAGAIN) {
 			TAILQ_REMOVE(&insert->avi_req_list, req, avr_link);
 			req->avr_status = -ret;
