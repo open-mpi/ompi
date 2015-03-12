@@ -37,23 +37,52 @@ mca_btl_portals4_put(struct mca_btl_base_module_t* btl_base,
 int
 mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
-                    struct mca_btl_base_descriptor_t* descriptor)
+                    void *local_address,
+                    uint64_t remote_address,
+                    struct mca_btl_base_registration_handle_t *local_handle,
+                    struct mca_btl_base_registration_handle_t *remote_handle,
+                    size_t size,
+                    int flags,
+                    int order,
+                    mca_btl_base_rdma_completion_fn_t cbfunc,
+                    void *cbcontext,
+                    void *cbdata)
 {
     mca_btl_portals4_module_t *portals4_btl = (mca_btl_portals4_module_t *) btl_base;
-    mca_btl_portals4_segment_t *src_seg = (mca_btl_portals4_segment_t *) descriptor->des_remote;
-    mca_btl_portals4_frag_t *frag = (mca_btl_portals4_frag_t*) descriptor;
+    mca_btl_portals4_frag_t   *frag         = NULL;
     ptl_md_t md;
     int ret;
 
+    /* reserve space in the event queue for rdma operations immediately */
+    while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >
+           portals4_btl->portals_max_outstanding_ops) {
+        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "Call to mca_btl_portals4_component_progress (1)\n"));
+        mca_btl_portals4_component_progress();
+    }
+
+    OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(portals4_btl, frag);
+    if (NULL == frag){
+        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+        return OPAL_ERROR;
+    }
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-	"mca_btl_portals4_get frag=%p src_seg=%p frag->md_h=%d\n", (void *)frag, (void *)src_seg, frag->md_h));
+        "mca_btl_portals4_prepare_src: Incrementing portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
+
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+	"mca_btl_portals4_get frag=%p\n", (void *)frag));
+
+    frag->rdma_cb.func         = cbfunc;
+    frag->rdma_cb.context      = cbcontext;
+    frag->rdma_cb.data         = cbdata;
+    frag->rdma_cb.local_handle = local_handle;
 
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
 
     /* Bind the memory */
-    md.start = (void *)frag->segments[0].base.seg_addr.pval;
-    md.length = frag->segments[0].base.seg_len;
+    md.start = (void *)local_address;
+    md.length = size;
     md.options = 0;
     md.eq_handle = portals4_btl->recv_eq_h;
     md.ct_handle = PTL_CT_NONE;
@@ -69,7 +98,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
         return OPAL_ERROR;
     }
 
-    frag->match_bits = src_seg->key;
+    frag->match_bits = remote_handle->key;
     frag->length = md.length;
     frag->peer_proc = btl_peer->ptl_proc;
     ret = PtlGet(frag->md_h,
