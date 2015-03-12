@@ -20,4 +20,4 @@ noinst_LTLIBRARIES = libmca_dl_dlopen.la
 
 libmca_dl_dlopen_la_SOURCES = $(sources)
 libmca_dl_dlopen_la_LDFLAGS = -module -avoid-version
-libmca_dl_dlopen_la_LIBS = $(opal_dl_dlopen_LIBS)
+libmca_dl_dlopen_la_LIBADD = $(opal_dl_dlopen_LIBS)

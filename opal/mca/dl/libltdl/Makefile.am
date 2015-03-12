@@ -23,4 +23,4 @@ libmca_dl_libltdl_la_CPPFLAGS = $(opal_dl_libltdl_CPPFLAGS)
 libmca_dl_libltdl_la_LDFLAGS = \
         $(opal_dl_libltdl_LDFLAGS) \
         -module -avoid-version
-libmca_dl_libltdl_la_LIBS = $(opal_dl_libltdl_LIBS)
+libmca_dl_libltdl_la_LIBADD = $(opal_dl_libltdl_LIBS)
