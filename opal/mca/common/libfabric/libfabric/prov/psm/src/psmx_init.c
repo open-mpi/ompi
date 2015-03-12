@@ -122,12 +122,13 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		if (hints->ep_attr) {
 			switch (hints->ep_attr->type) {
 			case FI_EP_UNSPEC:
+			case FI_EP_DGRAM:
 			case FI_EP_RDM:
 				break;
 			default:
-				PSMX_DEBUG("hints->ep_attr->type=%d, supported=%d,%d.\n",
+				PSMX_DEBUG("hints->ep_attr->type=%d, supported=%d,%d,%d.\n",
 						hints->ep_attr->type, FI_EP_UNSPEC,
-						FI_EP_RDM);
+						FI_EP_DGRAM, FI_EP_RDM);
 				goto err_out;
 			}
 

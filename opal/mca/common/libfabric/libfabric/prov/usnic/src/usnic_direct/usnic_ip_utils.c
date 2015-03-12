@@ -77,6 +77,8 @@ int usnic_arp_lookup(char *ifname, uint32_t ipaddr, int sockfd, uint8_t *macaddr
 		memcpy(macaddr, req.arp_ha.sa_data, 6);
 	else if (status != -1) /* req.arp_flags & ATF_COM == 0 */
 		err = EAGAIN;
+	else if (errno == ENXIO) /* ENXIO means no ARP entry was found */
+		err = EAGAIN;
 	else /* status == -1 */
 		err = errno;
 

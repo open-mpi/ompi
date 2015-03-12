@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2015\-02\-23" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_eq 3 "2015\-03\-11" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -227,7 +227,7 @@ The format of this structure is:
 struct\ fi_eq_entry\ {
 \ \ \ \ fid_t\ \ \ \ \ \ \ \ \ \ \ \ fid;\ \ \ \ \ \ \ \ /*\ fid\ associated\ with\ request\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ *context;\ \ \ \ /*\ operation\ context\ */
-\ \ \ \ uint32_t\ \ \ \ \ \ \ \ \ data;\ \ \ \ \ \ \ /*\ completion\ dependent\ data\ */
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ data;\ \ \ \ \ \ \ /*\ completion-specific\ data\ */
 };
 \f[]
 .fi
@@ -241,6 +241,9 @@ fid_av.
 The context field will be set to the context specified as part of the
 operation, if available, otherwise the context will be associated with
 the fabric descriptor.
+The data field will be set as described in the man page for the
+corresponding object type (e.g., see \f[C]fi_av\f[](3) for a description
+of how asynchronous address vector insertions are completed).
 .PP
 \f[I]Connection Notification\f[] : Connection notifications are
 connection management notifications used to setup or teardown
@@ -340,6 +343,7 @@ The format of this structure is defined below.
 struct\ fi_eq_err_entry\ {
 \ \ \ \ fid_t\ \ \ \ \ \ \ \ \ \ \ \ fid;\ \ \ \ \ \ \ \ /*\ fid\ associated\ with\ error\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ *context;\ \ \ \ /*\ operation\ context\ */
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ data;\ \ \ \ \ \ \ /*\ completion-specific\ data\ */
 \ \ \ \ uint32_t\ \ \ \ \ \ \ \ \ index;\ \ \ \ \ \ /*\ index\ for\ vector\ ops\ */
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ err;\ \ \ \ \ \ \ \ /*\ positive\ error\ code\ */
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ prov_errno;\ /*\ provider\ error\ code\ */
@@ -354,6 +358,10 @@ For memory registration, this will be the fid_mr, address resolution
 will reference a fid_av, and CM events will refer to a fid_ep.
 The context field will be set to the context specified as part of the
 operation.
+.PP
+The data field will be set as described in the man page for the
+corresponding object type (e.g., see \f[C]fi_av\f[](3) for a description
+of how asynchronous address vector insertions are completed).
 .PP
 The general reason for the error is provided through the err field.
 Provider or operational specific error information may also be available

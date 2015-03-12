@@ -780,15 +780,23 @@ usdf_fabric_close(fid_t fid)
 	/* Tell progression thread to exit */
 	fp->fab_exit = 1;
 
-	ret = usdf_fabric_wake_thread(fp);
-	if (ret != 0) {
-		return ret;
+	if (fp->fab_thread) {
+		ret = usdf_fabric_wake_thread(fp);
+		if (ret != 0) {
+			return ret;
+		}
+		pthread_join(fp->fab_thread, &rv);
 	}
-	pthread_join(fp->fab_thread, &rv);
 	usdf_timer_deinit(fp);
-	close(fp->fab_eventfd);
-	close(fp->fab_epollfd);
-	close(fp->fab_arp_sockfd);
+	if (fp->fab_epollfd != -1) {
+		close(fp->fab_epollfd);
+	}
+	if (fp->fab_eventfd != -1) {
+		close(fp->fab_eventfd);
+	}
+	if (fp->fab_arp_sockfd != -1) {
+		close(fp->fab_arp_sockfd);
+	}
 
 	free(fp);
 	return 0;
@@ -855,6 +863,7 @@ static int
 usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	       void *context)
 {
+	struct fid_fabric *ff;
 	struct usdf_fabric *fp;
 	struct usdf_usnic_info *dp;
 	struct usdf_dev_entry *dep;
@@ -928,18 +937,18 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 		goto fail;
 	}
 
+	/* initialize timer subsystem */
+	ret = usdf_timer_init(fp);
+	if (ret != 0) {
+		USDF_INFO("unable to initialize timer\n");
+		goto fail;
+	}
+
 	ret = pthread_create(&fp->fab_thread, NULL,
 			usdf_fabric_progression_thread, fp);
 	if (ret != 0) {
 		ret = -ret;
 		USDF_INFO("unable to create progress thread\n");
-		goto fail;
-	}
-
-	/* initialize timer subsystem */
-	ret = usdf_timer_init(fp);
-	if (ret != 0) {
-		USDF_INFO("unable to initialize timer\n");
 		goto fail;
 	}
 
@@ -967,19 +976,8 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	return 0;
 
 fail:
-	if (fp != NULL) {
-		if (fp->fab_epollfd != -1) {
-			close(fp->fab_epollfd);
-		}
-		if (fp->fab_eventfd != -1) {
-			close(fp->fab_eventfd);
-		}
-		if (fp->fab_arp_sockfd != -1) {
-			close(fp->fab_arp_sockfd);
-		}
-		usdf_timer_deinit(fp);
-		free(fp);
-	}
+	ff = fab_utof(fp);
+	usdf_fabric_close(&ff->fid);
 	USDF_DEBUG("returning %d (%s)\n", ret, fi_strerror(-ret));
 	return ret;
 }
