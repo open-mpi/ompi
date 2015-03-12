@@ -27,8 +27,8 @@ static void
 mca_btl_portals4_frag_common_send_constructor(mca_btl_portals4_frag_t* frag) 
 { 
     frag->base.des_flags = 0;
-    frag->base.des_local = &frag->segments[0].base;
-    frag->base.des_local_count = 2;
+    frag->base.des_segments = &frag->segments[0].base;
+    frag->base.des_segment_count = 2;
 
     frag->segments[0].base.seg_addr.pval = frag + 1;
     frag->segments[0].base.seg_len = frag->size;
