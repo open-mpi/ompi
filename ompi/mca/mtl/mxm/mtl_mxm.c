@@ -597,10 +597,12 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 #if MXM_API >= MXM_VERSION(3,1)
     if (ompi_mtl_mxm.bulk_disconnect) {
         size_t nprocs_world;
-        ompi_proc_world(&nprocs_world);
+        ompi_proc_t **procs;
+        procs = ompi_proc_world(&nprocs_world);
         if (nprocs == nprocs_world) {
             mxm_ep_powerdown(ompi_mtl_mxm.ep);
         }
+        free(procs);
     }
 #endif
 
