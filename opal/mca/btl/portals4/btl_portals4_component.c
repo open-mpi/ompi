@@ -863,7 +863,7 @@ mca_btl_portals4_component_progress(void)
                 }
                 else {
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_REPLY: Call to rdma_cbfunc=%p\n", (void *)frag->rdma_cb.func));
+                        "PTL_EVENT_REPLY: Call to rdma_cbfunc=%lx\n", (uint64_t)frag->rdma_cb.func));
                     frag->rdma_cb.func(&portals4_btl->super,
                                  frag->endpoint,
                                  ev.start,
