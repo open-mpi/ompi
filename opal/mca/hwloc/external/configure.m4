@@ -5,9 +5,9 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -32,9 +32,9 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_basedir])
 
     # If we won, then do all the rest of the setup
-    AS_IF([test "$1" = "1"], 
-          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION], 
-                              [external], 
+    AS_IF([test "$1" = "1"],
+          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION],
+                              [external],
                               [Version of hwloc])
 
            # Set this variable so that the framework m4 knows what
@@ -110,7 +110,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
     # If we still want external support, try it
     AS_IF([test "$opal_hwloc_external_want" = "yes"],
-          [OPAL_CHECK_WITHDIR([hwloc-libdir], [$with_hwloc_libdir], 
+          [OPAL_CHECK_WITHDIR([hwloc-libdir], [$with_hwloc_libdir],
                               [libhwloc.*])
 
            AC_MSG_CHECKING([looking for external hwloc in])
@@ -144,8 +144,8 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
     # Done!
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION], 
-                              [external], 
+          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION],
+                              [external],
                               [Version of hwloc])
 
            # See if the external hwloc supports XML
