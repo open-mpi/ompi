@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -123,6 +123,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
 # OPAL_CHECK_PMI()
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI],[
+    OPAL_VAR_SCOPE_PUSH([check_pmi_install_dir check_pmi_lib_dir default_pmi_loc default_pmi_libloc slurm_pmi_found])
 
     AC_ARG_WITH([pmi],
                 [AC_HELP_STRING([--with-pmi(=DIR)],
@@ -219,5 +220,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   AC_MSG_ERROR([Aborting])],
                  [AC_MSG_RESULT([yes])])
            ])
+
+    OPAL_VAR_SCOPE_POP
 ])
 
