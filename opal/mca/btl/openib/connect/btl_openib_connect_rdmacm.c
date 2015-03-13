@@ -1302,7 +1302,9 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     rdmacm_contents_t *contents = context->contents;
     rdmacm_endpoint_local_cpc_data_t *data;
     mca_btl_openib_endpoint_t *endpoint;
+#if !BTL_OPENIB_RDMACM_IB_ADDR
     modex_message_t *message;
+#endif
 
     if (contents->server) {
         endpoint = context->endpoint;
@@ -1341,8 +1343,8 @@ static int rdmacm_connect_endpoint(id_context_t *context,
         return OPAL_SUCCESS;
     }
 
-    message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 #if !BTL_OPENIB_RDMACM_IB_ADDR
+    message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     BTL_VERBOSE(("%s connected!!! local %x remote %x state = %d",
                  contents->server?"server":"client",
                  contents->ipaddr,
@@ -1530,16 +1532,16 @@ static int finish_connect(id_context_t *context)
     struct rdma_conn_param conn_param;
     private_data_t msg;
     int rc;
-    struct sockaddr *peeraddr;
 #if !BTL_OPENIB_RDMACM_IB_ADDR
+    struct sockaddr *peeraddr;
     uint32_t remoteipaddr;
-#endif
     uint16_t remoteport;
+#endif
     modex_message_t *message;
 
+#if !BTL_OPENIB_RDMACM_IB_ADDR
     remoteport = rdma_get_dst_port(context->id);
     peeraddr = rdma_get_peer_addr(context->id);
-#if !BTL_OPENIB_RDMACM_IB_ADDR
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
 #endif
 
@@ -1700,8 +1702,8 @@ static void *show_help_rdmacm_event_error(void *c)
 static int event_handler(struct rdma_cm_event *event)
 {
     id_context_t *context = (id_context_t*) event->id->context;
-    rdmacm_contents_t *contents;
 #if !BTL_OPENIB_RDMACM_IB_ADDR
+    rdmacm_contents_t *contents;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t peeripaddr, localipaddr;
 #endif
@@ -1713,9 +1715,9 @@ static int event_handler(struct rdma_cm_event *event)
         return rc;
     }
 
+#if !BTL_OPENIB_RDMACM_IB_ADDR
     contents = context->contents;
 
-#if !BTL_OPENIB_RDMACM_IB_ADDR
     localaddr = rdma_get_local_addr(event->id);
     peeraddr = rdma_get_peer_addr(event->id);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
