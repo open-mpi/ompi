@@ -37,7 +37,6 @@ static int
 ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                      ompi_mtl_portals4_base_request_t* ptl_base_request)
 {
-    int ret  = OMPI_SUCCESS;
     ompi_mtl_portals4_recv_short_request_t *ptl_request = 
         (ompi_mtl_portals4_recv_short_request_t*) ptl_base_request;
     ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
@@ -46,9 +45,9 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
         if (OPAL_UNLIKELY(block->release_on_free)) {
             opal_list_remove_item(&ompi_mtl_portals4.waiting_recv_short_blocks,
                                   &block->base);
-            ret = ompi_mtl_portals4_recv_short_block_free(block);
+            ompi_mtl_portals4_recv_short_block_free(block);
         } else {
-            ret =  ompi_mtl_portals4_activate_block(block);
+            ompi_mtl_portals4_activate_block(block);
         }
     } else if (PTL_EVENT_AUTO_UNLINK == ev->type) {
         opal_list_remove_item(&ompi_mtl_portals4.active_recv_short_blocks,
