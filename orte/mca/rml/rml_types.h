@@ -5,17 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -150,9 +151,16 @@ BEGIN_C_DECLS
 
 /* notifier support */
 #define ORTE_RML_TAG_NOTIFIER_HNP           52
-
-/* confirm spawn by tool */
 #define ORTE_RML_TAG_CONFIRM_SPAWN          53
+
+/*** QOS specific  RML TAGS ***/
+#define ORTE_RML_TAG_OPEN_CHANNEL_REQ           54
+#define ORTE_RML_TAG_OPEN_CHANNEL_RESP          55
+#define ORTE_RML_TAG_MSG_ACK                    56
+#define ORTE_RML_TAG_CLOSE_CHANNEL_REQ          57
+#define ORTE_RML_TAG_CLOSE_CHANNEL_ACCEPT       58
+
+
 
 #define ORTE_RML_TAG_MAX                   100
 
@@ -160,7 +168,7 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
 
-/** 
+/**
  * Message matching tag
  *
  * Message matching tag.  Unlike MPI, there is no wildcard receive,
@@ -170,6 +178,11 @@ BEGIN_C_DECLS
  */
 typedef uint32_t orte_rml_tag_t;
 
+/**
+ * Channel number
+ * Reference to a rml channel
+ */
+typedef uint32_t orte_rml_channel_num_t;
 
 /* ******************************************************************** */
 

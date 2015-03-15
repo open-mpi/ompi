@@ -11,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +48,8 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/qos/base/base.h"
+
 
 static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all);
 
@@ -159,11 +162,11 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     opal_buffer_t buf;
 
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s message received %d bytes from %s for tag %d",
+                         "%s message received from %s for tag %d on channel=%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (int)msg->iov.iov_len,
                          ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag));
+                         msg->tag,
+                         msg->channel_num));
 
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
@@ -175,6 +178,15 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
          */
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &post->peer) &&
             msg->tag == post->tag) {
+            if ((ORTE_RML_INVALID_CHANNEL_NUM != msg->channel_num) &&
+                 (NULL != orte_rml_base_get_channel(msg->channel_num) )) {
+                 OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                    "%s calling recv msg on  channel=%d",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    msg->channel_num));
+                 // call channel for recv post processing
+                 orte_rml_base_process_recv_channel (orte_rml_base_get_channel(msg->channel_num), msg);
+             }
             /* deliver the data to this location */
             if (post->buffer_data) {
                 /* deliver it in a buffer */
@@ -186,7 +198,13 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                 /* the user must have unloaded the buffer if they wanted
                  * to retain ownership of it, so release whatever remains
                  */
-                OBJ_DESTRUCT(&buf);
+           /*    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                     "%s message received  bytes from %s for tag %d on channel=%d called callback",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&msg->sender),
+                                     msg->tag,
+                                     msg->channel_num));*/
+                 OBJ_DESTRUCT(&buf);
             } else {
                 /* deliver as an iovec */
                 post->cbfunc.iov(ORTE_SUCCESS, &msg->sender, &msg->iov, 1, msg->tag, post->cbdata);
@@ -197,10 +215,19 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
             }
             /* release the message */
             OBJ_RELEASE(msg);
+            OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                 "%s message tag %d on released",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 post->tag));
             /* if the recv is non-persistent, remove it */
             if (!post->persistent) {
                 opal_list_remove_item(&orte_rml_base.posted_recvs, &post->super);
+                /*OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                     "%s non persistent recv %p remove success releasing now",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     post));*/
                 OBJ_RELEASE(post);
+
             }
             return;
         }
@@ -209,5 +236,12 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     /* we get here if no matching recv was found - we then hold
      * the message until such a recv is issued
      */
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                         "%s message received  bytes from %s for tag %d on channel=%d Not Matched adding to unmatched msgs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&msg->sender),
+                         msg->tag,
+                         msg->channel_num));
     opal_list_append(&orte_rml_base.unmatched_msgs, &msg->super);
 }
+
