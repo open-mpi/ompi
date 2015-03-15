@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -43,14 +43,6 @@
 #include <netdb.h>
 #endif
 
-#if OPAL_WANT_LIBLTDL
-  #if OPAL_LIBLTDL_INTERNAL
-    #include "opal/libltdl/ltdl.h"
-  #else
-    #include "ltdl.h"
-  #endif
-#endif
-
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -61,9 +53,10 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
+#include "opal/mca/dl/base/base.h"
 
 
-#if OPAL_WANT_LIBLTDL
+#if OPAL_HAVE_DL_SUPPORT
 /*
  * Private types; only necessary when we're dlopening components.
  */
@@ -98,20 +91,17 @@ typedef struct dependency_item_t dependency_item_t;
 
 static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, NULL, NULL);
 
-#if OPAL_HAVE_LTDL_ADVISE
-extern lt_dladvise opal_mca_dladvise;
-#endif
-#endif /* OPAL_WANT_LIBLTDL */
+#endif /* OPAL_HAVE_DL_SUPPORT */
 
 
-#if OPAL_WANT_LIBLTDL
+#if OPAL_HAVE_DL_SUPPORT
 /*
  * Private functions
  */
 static void find_dyn_components(const char *path, const char *type, 
                                 const char **names, bool include_mode,
                                 opal_list_t *found_components);
-static int save_filename(const char *filename, lt_ptr data);
+static int save_filename(const char *filename, void *data);
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components);
 static int check_opal_info(component_file_item_t *target_file, 
@@ -131,7 +121,7 @@ static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
 static char **found_filenames = NULL;
 static char *last_path_to_use = NULL;
-#endif /* OPAL_WANT_LIBLTDL */
+#endif /* OPAL_HAVE_DL_SUPPORT */
 
 static int component_find_check (const char *framework_name, char **requested_component_names, opal_list_t *components);
 
@@ -196,7 +186,7 @@ int mca_base_component_find(const char *directory, const char *type,
         }
     }
 
-#if OPAL_WANT_LIBLTDL
+#if OPAL_HAVE_DL_SUPPORT
     /* Find any available dynamic components in the specified directory */
     if (open_dso_components && !mca_base_component_disable_dlopen) {
         find_dyn_components(directory, type,
@@ -228,7 +218,7 @@ component_find_out:
 
 int mca_base_component_find_finalize(void)
 {
-#if OPAL_WANT_LIBLTDL
+#if OPAL_HAVE_DL_SUPPORT
     if (NULL != found_filenames) {
         opal_argv_free(found_filenames);
         found_filenames = NULL;
@@ -306,18 +296,15 @@ int mca_base_components_filter (const char *framework_name, opal_list_t *compone
     return ret;
 }
 
-#if OPAL_WANT_LIBLTDL
+#if OPAL_HAVE_DL_SUPPORT
 
 /*
  * Open up all directories in a given path and search for components of
  * the specified type (and possibly of a given name).
  *
- * Note that we use our own path iteration functionality (vs. ltdl's
- * lt_dladdsearchdir() functionality) because we need to look at
- * companion .ompi_info files in the same directory as the library to
- * generate dependencies, etc.  If we use the plain lt_dlopen()
- * functionality, we would not get the directory name of the file
- * finally opened in recursive dependency traversals.
+ * Note that we use our own path iteration functionality because we
+ * need to look at companion .ompi_info files in the same directory as
+ * the library to generate dependencies, etc.
  */
 static void find_dyn_components(const char *path, const char *type_name, 
                                 const char **names, bool include_mode,
@@ -377,18 +364,18 @@ static void find_dyn_components(const char *path, const char *type_name,
                 if ((0 == strcmp(dir, "USER_DEFAULT") ||
                      0 == strcmp(dir, "USR_DEFAULT"))
                     && NULL != mca_base_user_default_path) {
-                    if (0 != lt_dlforeachfile(mca_base_user_default_path,
-                                              save_filename, NULL)) {
+                    if (0 != opal_dl_foreachfile(mca_base_user_default_path,
+                                                 save_filename, NULL)) {
                         break;
                     }
                 } else if (0 == strcmp(dir, "SYS_DEFAULT") ||
                            0 == strcmp(dir, "SYSTEM_DEFAULT")) {
-                    if (0 != lt_dlforeachfile(mca_base_system_default_path,
-                                              save_filename, NULL)) {
+                    if (0 != opal_dl_foreachfile(mca_base_system_default_path,
+                                                 save_filename, NULL)) {
                         break;
                     }                    
                 } else {
-                    if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
+                    if (0 != opal_dl_foreachfile(dir, save_filename, NULL)) {
                         break;
                     }
                 }
@@ -475,7 +462,7 @@ static void find_dyn_components(const char *path, const char *type_name,
  * Blindly save all filenames into an argv-style list.  This function
  * is the callback from lt_dlforeachfile().
  */
-static int save_filename(const char *filename, lt_ptr data)
+static int save_filename(const char *filename, void *data)
 {
     opal_argv_append_nosize(&found_filenames, filename);
     return 0;
@@ -508,9 +495,9 @@ static int file_exists(const char *filename, const char *ext)
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components)
 {
-  lt_dlhandle component_handle;
+  opal_dl_handle_t *component_handle;
   mca_base_component_t *component_struct;
-  char *struct_name, *err;
+  char *struct_name;
   opal_list_t dependencies;
   opal_list_item_t *cur;
   mca_base_component_list_item_t *mitem;
@@ -562,18 +549,14 @@ static int open_component(component_file_item_t *target_file,
 
   /* Now try to load the component */
 
-#if OPAL_HAVE_LTDL_ADVISE
-  component_handle = lt_dlopenadvise(target_file->filename, opal_mca_dladvise);
-#else
-  component_handle = lt_dlopenext(target_file->filename);
-#endif
-  if (NULL == component_handle) {
-      /* Apparently lt_dlerror() sometimes returns NULL! */
-      const char *str = lt_dlerror();
-      if (NULL != str) {
-          err = strdup(str);
+  char *err_msg;
+  if (OPAL_SUCCESS !=
+      opal_dl_open(target_file->filename, true, false, &component_handle,
+                   &err_msg)) {
+      if (NULL != err_msg) {
+          err_msg = strdup(err_msg);
       } else {
-          err = strdup("lt_dlerror() returned NULL!");
+          err_msg = strdup("opal_dl_open() error message was NULL!");
       }
       /* Because libltdl erroneously says "file not found" for any
          type of error -- which is especially misleading when the file
@@ -581,17 +564,17 @@ static int open_component(component_file_item_t *target_file,
          (e.g., missing symbol) -- do some simple huersitics and if
          the file [probably] does exist, print a slightly better error
          message. */
-      if (0 == strcmp("file not found", err) &&
+      if (0 == strcmp("file not found", err_msg) &&
           (file_exists(target_file->filename, "lo") ||
            file_exists(target_file->filename, "so") ||
            file_exists(target_file->filename, "dylib") ||
            file_exists(target_file->filename, "dll"))) {
-          free(err);
-          err = strdup("perhaps a missing symbol, or compiled for a different version of Open MPI?");
+          free(err_msg);
+          err_msg = strdup("perhaps a missing symbol, or compiled for a different version of Open MPI?");
       }
       opal_output_verbose(vl, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
-                          target_file->filename, err);
-      free(err);
+                          target_file->filename, err_msg);
+      free(err_msg);
       target_file->status = FAILED_TO_LOAD;
       free_dependency_list(&dependencies);
       return OPAL_ERR_BAD_PARAM;
@@ -603,7 +586,7 @@ static int open_component(component_file_item_t *target_file,
   len = strlen(target_file->type) + strlen(target_file->name) + 32;
   struct_name = (char*)malloc(len);
   if (NULL == struct_name) {
-    lt_dlclose(component_handle);
+    opal_dl_close(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OPAL_ERR_OUT_OF_RESOURCE;
@@ -614,25 +597,24 @@ static int open_component(component_file_item_t *target_file,
   mitem = OBJ_NEW(mca_base_component_list_item_t);
   if (NULL == mitem) {
     free(struct_name);
-    lt_dlclose(component_handle);
+    opal_dl_close(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
-  component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
-  if (NULL == component_struct) {
-      /* Apparently lt_dlerror() sometimes returns NULL! */
-      const char *str = lt_dlerror();
-      if (NULL == str) {
-          str = "lt_dlerror() returned NULL!";
+  if (OPAL_SUCCESS != opal_dl_lookup(component_handle, struct_name,
+                                     (void**) &component_struct, &err_msg) ||
+      NULL == component_struct) {
+      if (NULL == err_msg) {
+          err_msg = "opal_dl_loookup() error message was NULL!";
       }
       opal_output_verbose(vl, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
-                          "%s MCA dynamic component (ignored): %s", 
-                          target_file->basename, target_file->type, str);
+                          "%s MCA dynamic component (ignored): %s",
+                          target_file->basename, target_file->type, err_msg);
       free(mitem);
       free(struct_name);
-      lt_dlclose(component_handle);
+      opal_dl_close(component_handle);
       target_file->status = FAILED_TO_LOAD;
       free_dependency_list(&dependencies);
       return OPAL_ERR_BAD_PARAM;
@@ -652,7 +634,7 @@ static int open_component(component_file_item_t *target_file,
                           MCA_BASE_VERSION_RELEASE);
     free(mitem);
     free(struct_name);
-    lt_dlclose(component_handle);
+    opal_dl_close(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OPAL_ERR_BAD_PARAM;
@@ -668,7 +650,7 @@ static int open_component(component_file_item_t *target_file,
                           component_struct->mca_component_name);
       free(mitem);
       free(struct_name);
-      lt_dlclose(component_handle);
+      opal_dl_close(component_handle);
       target_file->status = FAILED_TO_LOAD;
       free_dependency_list(&dependencies);
       return OPAL_ERR_BAD_PARAM;
@@ -945,7 +927,7 @@ static void free_dependency_list(opal_list_t *dependencies)
   OBJ_DESTRUCT(dependencies);
 }
 
-#endif /* OPAL_WANT_LIBLTDL */
+#endif /* OPAL_HAVE_DL_SUPPORT */
 
 static bool use_component(const bool include_mode,
                           const char **requested_component_names,

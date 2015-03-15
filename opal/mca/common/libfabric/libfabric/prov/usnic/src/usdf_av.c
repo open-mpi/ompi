@@ -113,6 +113,8 @@ usdf_post_insert_request_error(struct usdf_av_insert *insert,
 	err_entry.context = insert->avi_context;
 	err_entry.data = req - (struct usdf_av_req *)(insert + 1);
 	err_entry.err = -req->avr_status;
+	err_entry.err_data = NULL;
+	err_entry.err_data_size = 0;
 
 	usdf_eq_write_internal(av->av_eq, 0,
 		&err_entry, sizeof(err_entry),
@@ -162,7 +164,7 @@ usdf_av_insert_progress(void *v)
 		ret = usnic_arp_lookup(dap->uda_ifname,
 				req->avr_daddr_be, fp->fab_arp_sockfd, eth);
 
-		/* anything besides -EAGAIN means request is completed */
+		/* anything besides EAGAIN means request is completed */
 		if (ret != EAGAIN) {
 			TAILQ_REMOVE(&insert->avi_req_list, req, avr_link);
 			req->avr_status = -ret;

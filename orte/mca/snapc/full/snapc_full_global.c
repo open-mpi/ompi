@@ -524,13 +524,6 @@ int global_coord_end_ckpt(orte_snapc_base_quiesce_t *datum)
         }
 #endif
 
-        orte_grpcomm.finalize();
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
         SNAPC_FULL_SET_TIMER(SNAPC_FULL_TIMER_ESTABLISH);
         if( ORTE_SUCCESS != (ret = orte_snapc_full_global_set_job_ckpt_info(current_global_jobid,
                                                                             ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL,
@@ -2106,6 +2099,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     orte_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
     size_t num_procs;
+    orte_grpcomm_signature_t *sig;
 
     /*
      * Update all Local Coordinators (broadcast operation)
@@ -2187,7 +2181,12 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     free(state_str);
     state_str = NULL;
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, buffer, ORTE_RML_TAG_SNAPC_FULL))) {
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(sig, ORTE_RML_TAG_SNAPC_FULL, buffer))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -2204,6 +2203,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     }
 
     OBJ_RELEASE(buffer);
+    OBJ_RELEASE(sig);
 
     return exit_status;
 }

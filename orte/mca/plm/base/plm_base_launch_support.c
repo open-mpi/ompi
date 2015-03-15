@@ -14,7 +14,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -995,6 +995,10 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     }
                 }
             }
+        }
+        if (NULL != nodename) {
+            free(nodename);
+            nodename = NULL;
         }
         idx = 1;
     }

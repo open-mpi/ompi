@@ -127,10 +127,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
     int ret, fi_version;
-    struct fi_info hints = {0};
+    struct fi_info *hints;
     struct fi_info *providers = NULL, *prov = NULL;
-    struct fi_domain_attr domain_attr = {0};
-    struct fi_fabric_attr fabric_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     struct fi_av_attr av_attr = {0};
     char ep_name[FI_NAME_MAX] = {0};
@@ -143,32 +141,36 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.  The bits specified
-     *           with buffered receive and cancel implement MPI semantics.
+     *           with cancel implement MPI semantics.
      *           Tagged is used to support tag matching.
      *           We expect to register all memory up front for use with this
      *           endpoint, so the MTL requires dynamic memory regions
      */
-    hints.mode      = FI_CONTEXT;
-    hints.ep_type   = FI_EP_RDM;          /* Reliable datagram         */
-    hints.caps      = FI_TAGGED;          /* Tag matching interface    */
-    hints.caps     |= FI_BUFFERED_RECV;   /* Buffered receives         */
-    hints.caps     |= FI_CANCEL;          /* Support cancel            */
-    hints.caps     |= FI_DYNAMIC_MR;      /* Global dynamic mem region */
+    hints = fi_allocinfo();
+    if (!hints) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: Could not allocate fi_info\n",
+                            __FILE__, __LINE__);
+        goto error;
+    }
+    hints->mode             = FI_CONTEXT;
+    hints->ep_attr->type    = FI_EP_RDM;      /* Reliable datagram         */
+    hints->caps             = FI_TAGGED;      /* Tag matching interface    */
+    hints->caps            |= FI_CANCEL;      /* Support cancel            */
+    hints->caps            |= FI_DYNAMIC_MR;  /* Global dynamic mem region */
 
     /**
      * Refine filter for additional capabilities
      * threading:  Disable locking
      * control_progress:  enable async progress
      */
-    domain_attr.threading        = FI_THREAD_ENDPOINT;
-    domain_attr.control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->threading        = FI_THREAD_ENDPOINT;
+    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
     if (NULL != ompi_mtl_ofi.provider_name) {
-        fabric_attr.prov_name    = strdup(ompi_mtl_ofi.provider_name);
+        hints->fabric_attr->prov_name = strdup(ompi_mtl_ofi.provider_name);
     } else {
-        fabric_attr.prov_name    = NULL;
+        hints->fabric_attr->prov_name = NULL;
     }
-    hints.domain_attr            = &domain_attr;
-    hints.fabric_attr            = &fabric_attr;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
@@ -186,7 +188,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      NULL,          /* Optional name or fabric to resolve       */
                      NULL,          /* Optional service name or port to request */
                      0ULL,          /* Optional flag                            */
-                     &hints,        /* In: Hints to filter providers            */
+                     hints,        /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -338,6 +340,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /**
      * Free providers info since it's not needed anymore.
      */
+    fi_freeinfo(hints);
+    hints = NULL;
     fi_freeinfo(providers);
     providers = NULL;
 
@@ -386,6 +390,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 error:
     if (providers) {
         (void) fi_freeinfo(providers);
+    }
+    if (hints) {
+        (void) fi_freeinfo(hints);
     }
     if (ompi_mtl_ofi.av) {
         (void) fi_close((fid_t)ompi_mtl_ofi.av);

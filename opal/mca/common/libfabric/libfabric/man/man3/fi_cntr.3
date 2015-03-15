@@ -1,0 +1,216 @@
+.TH fi_cntr 3 "2015\-01\-29" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+fi_cntr - Completion and event counter operations
+.PP
+fi_cntr_open / fi_close : Allocate/free a counter
+.PP
+fi_cntr_read : Read the current value of a counter
+.PP
+fi_cntr_readerr : Reads the number of operations which have completed in
+error.
+.PP
+fi_cntr_add : Increment a counter by a specified value
+.PP
+fi_cntr_set : Set a counter to a specified value
+.PP
+fi_cntr_wait : Wait for a counter to be greater or equal to a threshold
+value
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <rdma/fi_domain.h>
+
+int\ fi_cntr_open(struct\ fid_domain\ *domain,\ struct\ fi_cntr_attr\ *attr,
+\ \ \ \ struct\ fid_cntr\ **cntr,\ void\ *context);
+
+int\ fi_close(struct\ fid\ *cntr);
+
+uint64_t\ fi_cntr_read(struct\ fid_cntr\ *cntr);
+
+uint64_t\ fi_cntr_readerr(struct\ fid_cntr\ *cntr);
+
+int\ fi_cntr_add(struct\ fid_cntr\ *cntr,\ uint64_t\ value);
+
+int\ fi_cntr_set(struct\ fid_cntr\ *cntr,\ uint64_t\ value);
+
+int\ fi_cntr_wait(struct\ fid_cntr\ *cntr,\ uint64_t\ threshold,
+\ \ \ \ int\ timeout);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]domain\f[] : Fabric domain
+.PP
+\f[I]cntr\f[] : Fabric counter
+.PP
+\f[I]attr\f[] : Counter attributes
+.PP
+\f[I]context\f[] : User specified context associated with the counter
+.PP
+\f[I]value\f[] : Value to increment or set counter
+.PP
+\f[I]threshold\f[] : Value to compare counter against
+.PP
+\f[I]timeout\f[] : Time in milliseconds to wait.
+A negative value indicates infinite timeout.
+.SH DESCRIPTION
+.PP
+Counters record the number of requested operations that have completed.
+Counters can provide a light-weight completion mechanism by suppressing
+the generation of a full completion event.
+They are useful for applications that only need to know the number of
+requests that have completed, and not details about each request.
+For example, counters may be useful for implementing credit based flow
+control or tracking the number of remote processes which have responded
+to a request.
+.PP
+Counters typically only count successful completions.
+However, if an operation completes in error, it may increment an
+associated error value.
+.SS fi_cntr_open
+.PP
+fi_cntr_open allocates a new fabric counter.
+The properties and behavior of the counter are defined by
+\f[C]struct\ fi_cntr_attr\f[].
+.IP
+.nf
+\f[C]
+struct\ fi_cntr_attr\ {
+\ \ \ \ enum\ fi_cntr_events\ \ events;\ \ \ \ /*\ type\ of\ events\ to\ count\ */
+\ \ \ \ enum\ fi_wait_obj\ \ \ \ \ wait_obj;\ \ /*\ requested\ wait\ object\ */
+\ \ \ \ struct\ fid_wait\ \ \ \ \ *wait_set;\ \ /*\ optional\ wait\ set\ */
+\ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ \ \ \ \ flags;\ \ \ \ \ /*\ operation\ flags\ */
+};
+\f[]
+.fi
+.PP
+\f[I]events\f[] : A counter captures different types of events.
+The specific type which is to counted are one of the following:
+.IP \[bu] 2
+\f[I]FI_CNTR_EVENTS_COMP\f[] : The counter increments for every
+successful completion that occurs on an associated bound endpoint.
+The type of completions -- sends and/or receives -- which are counted
+may be restricted using control flags when binding the counter an the
+endpoint.
+Counters increment on all successful completions, separately from
+whether the operation generates an entry in an event queue.
+.PP
+\f[I]wait_obj\f[] : Counters may be associated with a specific wait
+object.
+Wait objects allow applications to block until the wait object is
+signaled, indicating that a counter has reached a specific threshold.
+Users may use fi_control to retrieve the underlying wait object
+associated with a counter, in order to use it in other system calls.
+The following values may be used to specify the type of wait object
+associated with a counter: FI_WAIT_NONE, FI_WAIT_UNSPEC, FI_WAIT_SET,
+FI_WAIT_FD, and FI_WAIT_MUTEX_COND.
+.IP \[bu] 2
+\f[I]FI_WAIT_NONE\f[] : Used to indicate that the user will not block
+(wait) for events on the counter.
+.IP \[bu] 2
+\f[I]FI_WAIT_UNSPEC\f[] : Specifies that the user will only wait on the
+counter using fabric interface calls, such as fi_cntr_readcond.
+In this case, the underlying provider may select the most appropriate or
+highest performing wait object available, including custom wait
+mechanisms.
+Applications that select FI_WAIT_UNSPEC are not guaranteed to retrieve
+the underlying wait object.
+.IP \[bu] 2
+\f[I]FI_WAIT_SET\f[] : Indicates that the event counter should use a
+wait set object to wait for events.
+If specified, the wait_set field must reference an existing wait set
+object.
+.IP \[bu] 2
+\f[I]FI_WAIT_FD\f[] : Indicates that the counter should use a file
+descriptor as its wait mechanism.
+A file descriptor wait object must be usable in select, poll, and epoll
+routines.
+However, a provider may signal an FD wait object by marking it as
+readable, writable, or with an error.
+.IP \[bu] 2
+\f[I]FI_WAIT_MUTEX_COND\f[] : Specifies that the counter should use a
+pthread mutex and cond variable as a wait object.
+.PP
+\f[I]wait_set\f[] : If wait_obj is FI_WAIT_SET, this field references a
+wait object to which the event counter should attach.
+When an event is added to the event counter, the corresponding wait set
+will be signaled if all necessary conditions are met.
+The use of a wait_set enables an optimized method of waiting for events
+across multiple event counters.
+This field is ignored if wait_obj is not FI_WAIT_SET.
+.PP
+\f[I]flags\f[] : Flags are reserved for future use, and must be set to
+0.
+.SS fi_close
+.PP
+The fi_close call releases all resources associated with a counter.
+When closing the counter, there must be no opened endpoints, transmit
+contexts, receive contexts or memory regions associated with the
+counter.
+If resources are still associated with the counter when attempting to
+close, the call will return -FI_EBUSY.
+.SS fi_cntr_control
+.PP
+The fi_cntr_control call is used to access provider or implementation
+specific details of the counter.
+Access to the counter should be serialized across all calls when
+fi_cntr_control is invoked, as it may redirect the implementation of
+counter operations.
+The following control commands are usable with a counter:
+.PP
+\f[I]FI_GETOPSFLAG (uint64_t *)\f[] : Returns the current default
+operational flags associated with the counter.
+.PP
+\f[I]FI_SETOPSFLAG (uint64_t *)\f[] : Modifies the current default
+operational flags associated with the counter.
+.PP
+\f[I]FI_GETWAIT (void **)\f[] : This command allows the user to retrieve
+the low-level wait object associated with the counter.
+The format of the wait-object is specified during counter creation,
+through the counter attributes.
+See fi_eq.3 for addition details using control with FI_GETWAIT.
+.SS fi_cntr_read
+.PP
+The fi_cntr_read call returns the current value of the counter.
+.SS fi_cntr_readerr
+.PP
+The read error call returns the number of operations that completed in
+error and were unable to update the counter.
+.SS fi_cntr_add
+.PP
+This adds the user-specified value to the counter.
+.SS fi_cntr_set
+.PP
+This sets the counter to the specified value.
+.SS fi_cntr_wait
+.PP
+This call may be used to wait until the counter reaches the specified
+threshold, or until an error or timeout occurs.
+Upon successful return from this call, the counter will be greater than
+or equal to the input threshold value.
+.PP
+If an operation associated with the counter encounters an error, it will
+increment the error value associated with the counter.
+Any change in a counter\[aq]s error value will unblock any thread inside
+fi_cntr_wait.
+.PP
+If the call returns due to timeout, -FI_ETIMEDOUT will be returned.
+The error value associated with the counter remains unchanged.
+.SH RETURN VALUES
+.PP
+Returns 0 on success.
+On error, a negative value corresponding to fabric errno is returned.
+.PP
+fi_cntr_read / fi_cntr_readerr : Returns the current value of the
+counter.
+.PP
+Fabric errno values are defined in \f[C]rdma/fi_errno.h\f[].
+.SH NOTES
+.SH SEE ALSO
+.PP
+\f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
+\f[C]fi_eq\f[](3), \f[C]fi_poll\f[](3)
+.SH AUTHORS
+OpenFabrics.

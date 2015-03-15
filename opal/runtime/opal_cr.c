@@ -13,6 +13,8 @@
  *                         reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,6 +130,8 @@ int    opal_cr_checkpointing_state = OPAL_CR_STATUS_NONE;
 int    opal_cr_checkpoint_request  = OPAL_CR_STATUS_NONE;
 
 static bool   opal_cr_debug_sigpipe = false;
+
+bool opal_cr_continue_like_restart = false;
 
 #if OPAL_ENABLE_FT_THREAD == 1
 /*****************
@@ -917,7 +921,7 @@ int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
 }
 
 int opal_cr_refresh_environ(int prev_pid) {
-    char *file_name = NULL;
+    char *file_name;
 #if OPAL_ENABLE_CRDEBUG == 1
     char *tmp;
 #endif
@@ -933,7 +937,11 @@ int opal_cr_refresh_environ(int prev_pid) {
      *  2) The file has been deleted on the previous round.
      */
     asprintf(&file_name, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
+    if (NULL == file_name) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     if(0 != stat(file_name, &file_status) ){
+        free(file_name);
         return OPAL_SUCCESS;
     }
 
@@ -958,10 +966,7 @@ int opal_cr_refresh_environ(int prev_pid) {
                         (MPIR_debug_with_checkpoint ? "True": "False"));
 #endif
 
-    if( NULL != file_name ){
-        free(file_name);
-        file_name = NULL;
-    }
+    free(file_name);
 
     return OPAL_SUCCESS;
 }
@@ -990,17 +995,16 @@ static int extract_env_vars(int prev_pid, char * file_name)
         goto cleanup;
     }
 
+    tmp_str = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
+    if( NULL == tmp_str) {
+        exit_status = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
     /* Extract an env var */
     while(!feof(env_data) ) {
         char **t_set = NULL;
-        len = OPAL_PATH_MAX;
 
-        tmp_str = (char *) malloc(sizeof(char) * len);
-        if( NULL == tmp_str) {
-            exit_status = OPAL_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-        if( NULL == fgets(tmp_str, len, env_data) ) {
+        if( NULL == fgets(tmp_str, OPAL_PATH_MAX, env_data) ) {
             exit_status = OPAL_ERROR;
             goto cleanup;
         }
@@ -1011,8 +1015,6 @@ static int extract_env_vars(int prev_pid, char * file_name)
             opal_output(opal_cr_output,
                         "opal_cr: extract_env_vars: Error: Parameter too long (%s)\n",
                         tmp_str);
-            free(tmp_str);
-            tmp_str = NULL;
             continue;
         }
 
@@ -1022,8 +1024,7 @@ static int extract_env_vars(int prev_pid, char * file_name)
         
         opal_setenv(t_set[0], t_set[1], true, &environ);
 
-        free(tmp_str);
-        tmp_str = NULL;
+        opal_argv_free(t_set);
     }
 
  cleanup:

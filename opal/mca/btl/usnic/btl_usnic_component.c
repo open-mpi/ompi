@@ -598,13 +598,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     int i, j, num_final_modules;
     int num_devs;
     opal_btl_usnic_module_t *module;
-    usnic_if_filter_t *filter;
+    usnic_if_filter_t *filter = NULL;
     bool keep_module;
     bool filter_incl = false;
     int min_distance, num_local_procs;
     struct fi_info *info_list;
     struct fi_info *info;
     struct fi_info hints = {0};
+    struct fi_ep_attr ep_attr = {0};
     struct fi_fabric_attr fabric_attr = {0};
     struct fid_fabric *fabric;
     struct fid_domain *domain;
@@ -619,13 +620,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
-    /* We only want providers named "usnic */
+    /* We only want providers named "usnic that are of type EP_DGRAM */
     fabric_attr.prov_name = "usnic";
+    ep_attr.type = FI_EP_DGRAM;
 
-    hints.ep_type = FI_EP_DGRAM;
     hints.caps = FI_MSG;
     hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
     hints.addr_format = FI_SOCKADDR;
+    hints.ep_attr = &ep_attr;
     hints.fabric_attr = &fabric_attr;
 
     ret = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, &hints, &info_list);
@@ -661,14 +663,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
-
-    /* Setup the connectivity checking agent and client. */
-    if (mca_btl_usnic_component.connectivity_enabled) {
-        if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
-            OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
-            return NULL;
-        }
-    }
 
     /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
@@ -722,8 +716,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         filter_incl = false;
         filter = parse_ifex_str(mca_btl_usnic_component.if_exclude, "exclude");
-    } else {
-        filter = NULL;
     }
 
     num_local_procs = opal_process_info.num_local_peers;
@@ -738,15 +730,29 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         ret = fi_fabric(info->fabric_attr, &fabric, NULL);
         if (0 != ret) {
-            BTL_ERROR(("fi_fabric"));
-            /* JMS error */
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "libfabric API failed",
+                           true,
+                           opal_process_info.nodename,
+                           info->fabric_attr->name,
+                           "fi_fabric()", __FILE__, __LINE__,
+                           ret,
+                           strerror(-ret));
+            continue;
         }
         opal_memchecker_base_mem_defined(&fabric, sizeof(fabric));
 
         ret = fi_domain(fabric, info, &domain, NULL);
         if (0 != ret) {
-            BTL_ERROR(("fi_domain"));
-            /* JMS error */
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "libfabric API failed",
+                           true,
+                           opal_process_info.nodename,
+                           info->fabric_attr->name,
+                           "fi_domain()", __FILE__, __LINE__,
+                           ret,
+                           strerror(-ret));
+            continue;
         }
         opal_memchecker_base_mem_defined(&domain, sizeof(domain));
 
@@ -815,14 +821,21 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             }
         }
 
-        /* Check some usNIC configuration minimum settings */
-        if (check_usnic_config(module, num_local_procs) != OPAL_SUCCESS) {
+        /* The first time through, check some usNIC configuration
+           minimum settings with information we got back from the fi_*
+           probes (these are VIC-wide settings -- they don't change
+           for each module we create, so we only need to check
+           once). */
+        if (0 == j &&
+            check_usnic_config(module, num_local_procs) != OPAL_SUCCESS) {
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: device %s is not provisioned with enough resources -- skipping",
                                 info->fabric_attr->name);
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
-            continue;
+
+            mca_btl_usnic_component.num_modules = 0;
+            goto error;
         }
 
         /*************************************************/
@@ -842,6 +855,16 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     if (filter != NULL) {
         free_filter(filter);
         filter = NULL;
+    }
+
+    /* If we actually have some modules, setup the connectivity
+       checking agent and client. */
+    if (mca_btl_usnic_component.num_modules > 0 &&
+        mca_btl_usnic_component.connectivity_enabled) {
+        if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
+            OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
+            return NULL;
+        }
     }
 
     /* Now that we know how many modules there are, let the modules
@@ -979,6 +1002,13 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     mca_btl_usnic_component.usnic_all_modules = NULL;
     free(mca_btl_usnic_component.usnic_active_modules);
     mca_btl_usnic_component.usnic_active_modules = NULL;
+
+    /* free filter if created */
+    if (filter != NULL) {
+        free_filter(filter);
+        filter = NULL;
+    }
+
     goto send_modex;
 }
 

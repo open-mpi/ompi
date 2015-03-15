@@ -59,6 +59,7 @@ int sock_cq_progress(struct sock_cq *cq)
 	    !sock_progress_thread_wait)
 		return 0;
 
+	fastlock_acquire(&cq->list_lock);
 	for (entry = cq->tx_list.next; entry != &cq->tx_list;
 	     entry = entry->next) {
 		tx_ctx = container_of(entry, struct sock_tx_ctx, cq_entry);
@@ -70,6 +71,8 @@ int sock_cq_progress(struct sock_cq *cq)
 		rx_ctx = container_of(entry, struct sock_rx_ctx, cq_entry);
 		sock_pe_progress_rx_ctx(cq->domain->pe, rx_ctx);
 	}
+	fastlock_release(&cq->list_lock);
+
 	return 0;
 }
 
@@ -245,45 +248,39 @@ ssize_t sock_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 {
 	int ret = 0;
 	int64_t threshold;
-	struct timeval now;
 	struct sock_cq *sock_cq;
-	double start_ms, end_ms;
+	uint64_t start_ms = 0, end_ms = 0;
 	ssize_t cq_entry_len, avail;
 	
 	sock_cq = container_of(cq, struct sock_cq, cq_fid);
 	cq_entry_len = sock_cq->cq_entry_size;
 
-	if (sock_cq->domain->progress_mode == FI_PROGRESS_MANUAL) {
-		if (timeout > 0) {
-			gettimeofday(&now, NULL);
-			start_ms = (double)now.tv_sec * 1000.0 + 
-				(double)now.tv_usec / 1000.0;
-		}
-		sock_cq_progress(sock_cq);
-		if (timeout > 0) {
-			gettimeofday(&now, NULL);
-			end_ms = (double)now.tv_sec * 1000.0 + 
-				(double)now.tv_usec / 1000.0;
-			timeout -=  (end_ms - start_ms);
-			timeout = timeout < 0 ? 0 : timeout;
-		}
-	} else
-		sock_cq_progress(sock_cq);
-	
 	if (sock_cq->attr.wait_cond == FI_CQ_COND_THRESHOLD) {
 		threshold = MIN((int64_t)cond, count);
 	}else{
 		threshold = count;
 	}
 
-	fastlock_acquire(&sock_cq->lock);
-	if ((avail = rbfdused(&sock_cq->cq_rbfd)))
-		ret = sock_cq_rbuf_read(sock_cq, buf, 
-					MIN(threshold, avail / cq_entry_len),
-					src_addr, cq_entry_len);
-	fastlock_release(&sock_cq->lock);
+	if (sock_cq->domain->progress_mode == FI_PROGRESS_MANUAL) {
+		if (timeout >= 0) {
+			start_ms = fi_gettime_ms();
+			end_ms = start_ms + timeout;
+		}
 
-	if (ret == 0) {
+		do {
+			sock_cq_progress(sock_cq);
+			fastlock_acquire(&sock_cq->lock);
+			if ((avail = rbfdused(&sock_cq->cq_rbfd)))
+				ret = sock_cq_rbuf_read(sock_cq, buf, 
+							MIN(threshold, avail / cq_entry_len),
+							src_addr, cq_entry_len);
+			fastlock_release(&sock_cq->lock);
+			if (ret == 0 && timeout >= 0) {
+				if (fi_gettime_ms() >= end_ms)
+					return -FI_ETIMEDOUT;
+			}
+		}while (ret == 0);
+	} else {
 		ret = rbfdwait(&sock_cq->cq_rbfd, timeout);
 		fastlock_acquire(&sock_cq->lock);
 		if (ret != -FI_ETIMEDOUT && (avail = rbfdused(&sock_cq->cq_rbfd)))
@@ -386,6 +383,7 @@ int sock_cq_close(struct fid *fid)
 	rbfdfree(&cq->cq_rbfd);
 
 	fastlock_destroy(&cq->lock);
+	fastlock_destroy(&cq->list_lock);
 	atomic_dec(&cq->domain->ref);
 
 	free(cq);
@@ -550,14 +548,18 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		wait_attr.wait_obj = FI_WAIT_MUTEX_COND;
 		ret = sock_wait_open(&sock_dom->fab->fab_fid, &wait_attr,
 				     &sock_cq->waitset);
-		if (ret)
-			goto err3;
+		if (ret) {
+			ret = -FI_EINVAL;
+			goto err4;
+		}
 		sock_cq->signal = 1;
 		break;
 
 	case FI_WAIT_SET:
-		if (!attr)
-			return -FI_EINVAL;
+		if (!attr) {
+			ret = -FI_EINVAL;
+			goto err4;
+		}
 
 		sock_cq->waitset = attr->wait_set;
 		sock_cq->signal = 1;
@@ -567,14 +569,19 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		list_entry->fid = &sock_cq->cq_fid.fid;
 		dlist_insert_after(&list_entry->entry, &wait->fid_list);
 		break;
+
 	default:
 		break;
 	}
 	
 	*cq = &sock_cq->cq_fid;
 	atomic_inc(&sock_dom->ref);
+	fastlock_init(&sock_cq->list_lock);
+
 	return 0;
-	
+
+err4:
+	rbfree(&sock_cq->cqerr_rb);
 err3:
 	rbfree(&sock_cq->addr_rb);
 err2:

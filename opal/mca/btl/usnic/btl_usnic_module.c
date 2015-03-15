@@ -217,13 +217,23 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
     }
 
     /* Loop polling for USD destination creation completion (they were
-       individually started in btl_usnic_proc.c) */
+       individually started in btl_usnic_proc.c)
+
+       In the loop below, the num_left value is decremented by a value
+       we get back from the event queue.  There are error cases where
+       we (theothetically) can get a corrupted event entry back, and
+       not know how much to decrement num_left.  Hence, num_left can
+       be inaccurate.  In such cases, this is probably indicative of a
+       larger error.  Plus, we're not even all the way through module
+       init yet, so only sane thing to do is abort. */
     while (num_left > 0) {
         opal_btl_usnic_addr_context_t *context;
 
         ret = fi_eq_sread(module->av_eq, &event, &entry, sizeof(entry), -1, 0);
         if (sizeof(entry) == ret) {
             context = entry.context;
+            /* The usnic provider returns the number of inserts
+               completed in entry.data */
             num_left -= entry.data;
             free(context);
             ret = 0;
@@ -232,6 +242,9 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         else if (-FI_EAVAIL == ret) {
             ret = fi_eq_readerr(module->av_eq, &err_entry, 0);
             if (sizeof(err_entry) == ret) {
+                /* An err_entry is returned for each errored
+                   insertion */
+                --num_left;
 
                 /* Got some kind of address failure.  This usually means
                    that we couldn't find a route to that peer (e.g., the
@@ -260,49 +273,56 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                    interface. */
                 else {
                     opal_show_help("help-mpi-btl-usnic.txt",
-                                "libfabric API failed",
-                               true,
-                               opal_process_info.nodename,
-                               module->fabric_info->fabric_attr->name,
-                               "async insertion result", __FILE__, __LINE__,
-                               err_entry.err,
-                               "Failed to insert address to AV");
+                                   "libfabric API failed",
+                                   true,
+                                   opal_process_info.nodename,
+                                   module->fabric_info->fabric_attr->name,
+                                   "async insertion result", __FILE__, __LINE__,
+                                   err_entry.err,
+                                   "Failed to insert address to AV");
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
                     error_occurred = true;
                     /* we can't break here, need to finish reaping all inserts */
                     continue;
                 }
-            }
-            else {
+            } else {
+                /* If we get here, it means fi_eq_readerr() failed
+                   badly, which means something has gone tremendously
+                   wrong.  Probably the only safe thing to do here is
+                   exit. */
                 opal_show_help("help-mpi-btl-usnic.txt",
-                            "libfabric API failed",
-                            true,
-                            opal_process_info.nodename,
-                            module->fabric_info->fabric_attr->name,
-                            "fi_eq_readerr()", __FILE__, __LINE__,
-                            ret,
-                            "Failed to insert address to AV");
+                               "internal error during init",
+                               true,
+                               opal_process_info.nodename,
+                               module->fabric_info->fabric_attr->name,
+                               "fi_eq_readerr()", __FILE__, __LINE__,
+                               ret,
+                               "Returned != sizeof(err_entry)");
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 error_occurred = true;
-                /* we can't break here, need to finish reaping all inserts */
-                continue;
-            }
-        }
 
-        /* Some kind of error from fi_eq_sread */
-        else {
+                /* Per above, there's really nothing sane left to do
+                   but exit */
+                opal_btl_usnic_exit(module);
+            }
+        } else {
+            /* If we get here, it means fi_eq_readerr() failed badly,
+               which means something has gone tremendously wrong.
+               Probably the only safe thing to do here is exit. */
             opal_show_help("help-mpi-btl-usnic.txt",
-                        "libfabric API failed",
-                        true,
-                        opal_process_info.nodename,
-                        module->fabric_info->fabric_attr->name,
-                        "fi_eq_sread()", __FILE__, __LINE__,
-                        ret,
-                        "Failed to insert address to AV");
+                           "internal error during init",
+                           true,
+                           opal_process_info.nodename,
+                           module->fabric_info->fabric_attr->name,
+                           "fi_eq_sread()", __FILE__, __LINE__,
+                           ret,
+                           "Returned != (sizeof(entry) or -FI_EAVAIL)");
             ret = OPAL_ERR_OUT_OF_RESOURCE;
             error_occurred = true;
-            /* we can't break here, need to finish reaping all inserts */
-            continue;
+
+            /* Per above, there's really nothing sane left to do but
+               exit */
+            opal_btl_usnic_exit(module);
         }
     }
 

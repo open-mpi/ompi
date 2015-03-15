@@ -1,0 +1,36 @@
+.TH fi_control 3 "2015\-02\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+fi_control - Perform an operation on a fabric resource.
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <rdma/fabric.h>
+
+int\ fi_control(struct\ fid\ *fid,\ int\ command,\ void\ *arg);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]fid\f[] : Fabric resource
+.PP
+\f[I]command\f[] : Operation to perform
+.PP
+\f[I]arg\f[] : Optional argument to the command
+.SH DESCRIPTION
+.PP
+The fi_control operation is used to perform one or more operations on a
+fabric resource.
+Conceptually, fi_control is similar to the POSIX fcntl routine.
+The exact behavior of using fi_control depends on the fabric resource
+being operated on, the specified command, and any provided arguments for
+the command.
+For specific details, see the fabric resource specific help pages noted
+below.
+.SH SEE ALSO
+.PP
+\f[C]fi_endpoint\f[](3), \f[C]fi_cm\f[](3), \f[C]fi_cntr\f[](3),
+\f[C]fi_cq\f[](3), \f[C]fi_eq\f[](3),
+.SH AUTHORS
+OpenFabrics.

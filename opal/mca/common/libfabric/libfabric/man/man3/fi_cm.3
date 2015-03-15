@@ -1,0 +1,173 @@
+.TH fi_cm 3 "2015\-02\-26" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+fi_cm - Connection management operations
+.PP
+fi_connect / fi_listen / fi_accept / fi_reject / fi_shutdown : Manage
+endpoint connection state.
+.PP
+fi_getname / fi_getpeer : Return local or peer endpoint address
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <rdma/fi_cm.h>
+
+int\ fi_connect(struct\ fid_ep\ *ep,\ const\ void\ *addr,
+\ \ \ \ const\ void\ *param,\ size_t\ paramlen);
+
+int\ fi_listen(struct\ fid_pep\ *pep);
+
+int\ fi_accept(struct\ fid_ep\ *ep,\ const\ void\ *param,\ size_t\ paramlen);
+
+int\ fi_reject(struct\ fid_pep\ *pep,\ fi_connreq_t\ connreq,
+\ \ \ \ const\ void\ *param,\ size_t\ paramlen);
+
+int\ fi_shutdown(struct\ fid_ep\ *ep,\ uint64_t\ flags);
+
+int\ fi_getname(fid_t\ fid,\ void\ *addr,\ size_t\ *addrlen);
+
+int\ fi_getpeer(struct\ fid_ep\ *ep,\ void\ *addr,\ size_t\ *addrlen);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]ep / pep\f[] : Fabric endpoint on which to change connection state.
+.PP
+\f[I]addr\f[] : Buffer to store queried address (get), or address to
+connect.
+The address must be in the same format as that specified using fi_info:
+addr_format when the endpoint was created.
+.PP
+\f[I]addrlen\f[] : On input, specifies size of addr buffer.
+On output, stores number of bytes written to addr buffer.
+.PP
+\f[I]param\f[] : User-specified data exchanged as part of the connection
+exchange.
+.PP
+\f[I]paramlen\f[] : Size of param buffer.
+.PP
+\f[I]info\f[] : Fabric information associated with a connection request.
+.PP
+\f[I]flags\f[] : Additional flags for controlling connection operation.
+.PP
+\f[I]context\f[] : User context associated with the request.
+.SH DESCRIPTION
+.PP
+Connection management functions are used to connect an
+connection-oriented endpoint to a peer endpoint.
+.SS fi_listen
+.PP
+The fi_listen call indicates that the specified endpoint should be
+transitioned into a passive connection state, allowing it to accept
+incoming connection requests.
+Connection requests against a listening endpoint are reported
+asynchronously to the user through a bound CM event queue using the
+FI_CONNREQ event type.
+The number of outstanding connection requests that can be queued at an
+endpoint is limited by the listening endpoint\[aq]s backlog parameter.
+The backlog is initialized based on administrative configuration values,
+but may be adjusted through the fi_control call.
+.SS fi_connect
+.PP
+The fi_connect call initiates a connection request on a
+connection-oriented endpoint to the destination address.
+.SS fi_accept / fi_reject
+.PP
+The fi_accept and fi_reject calls are used on the passive (listening)
+side of a connection to accept or reject a connection request,
+respectively.
+To accept a connection, the listening application first waits for a
+connection request event (FI_CONNREQ).
+After receiving such an event, the application allocates a new endpoint
+to accept the connection.
+This endpoint must be allocated using an fi_info structure referencing
+the connreq from this FI_CONNREQ event.
+fi_accept is then invoked with the newly allocated endpoint.
+If the listening application wishes to reject a connection request, it
+calls fi_reject with the listening endpoint and a reference to the
+connection request.
+.PP
+A successfully accepted connection request will result in the active
+(connecting) endpoint seeing an FI_CONNECTED event on its associated
+event queue.
+A rejected or failed connection request will generate an error event.
+The error entry will provide additional details describing the reason
+for the failed attempt.
+.PP
+An FI_CONNECTED event will also be generated on the passive side for the
+accepting endpoint once the connection has been properly established.
+The fid of the FI_CONNECTED event will be that of the endpoint passed to
+fi_accept as opposed to the listening passive endpoint.
+Outbound data transfers cannot be initiated on a connection-oriented
+endpoint until an FI_CONNECTED event has been generated.
+However, receive buffers may be associated with an endpoint anytime.
+.SS fi_shutdown
+.PP
+The fi_shutdown call is used to gracefully disconnect an endpoint from
+its peer.
+The flags parameter is reserved and must be 0.
+.PP
+Outstanding operations posted to the endpoint when fi_shutdown is called
+will be canceled or discarded.
+Notification of canceled operations will be reported by the provider to
+the corresponding completion queue(s).
+Discarded operations will silently be dropped, with no completions
+generated.
+The choice of canceling, versus discarding operations, is provider
+dependent.
+However, all canceled completions will be written before fi_shutdown
+returns.
+.PP
+When called, fi_shutdown does not affect completions already written to
+a completion queue.
+Any queued completions associated with asynchronous operations posted to
+the endpoint may still be retrieved from the corresponding completion
+queue(s) after an endpoint has been shutdown.
+.PP
+An FI_SHUTDOWN event will be generated for an endpoint when the remote
+peer issues a disconnect using fi_shutdown or abruptly closes the
+endpoint.
+Note that in the abrupt close case, an FI_SHUTDOWN event will only be
+generated if the peer system is reachable and a service or kernel agent
+on the peer system is able to notify the local endpoint that the
+connection has been aborted.
+.SS fi_getname / fi_getpeer
+.PP
+The fi_getname and fi_getpeer calls may be used to retrieve the local or
+peer endpoint address, respectively.
+On input, the addrlen parameter should indicate the size of the addr
+buffer.
+If the actual address is larger than what can fit into the buffer, it
+will be truncated.
+On output, addrlen is set to the size of the buffer needed to store the
+address, which may be larger than the input value.
+.SH FLAGS
+.PP
+Flag values are reserved and must be 0.
+.SH RETURN VALUE
+.PP
+Returns 0 on success.
+On error, a negative value corresponding to fabric errno is returned.
+Fabric errno values are defined in \f[C]rdma/fi_errno.h\f[].
+.SH ERRORS
+.SH NOTES
+.PP
+For connection-oriented endpoints, the buffer referenced by param will
+be sent as part of the connection request or response, subject to the
+constraints of the underlying connection protocol.
+Applications may use fi_getopt with the FI_OPT_CM_DATA_SIZE endpoint
+option to determine the size of application data that may be exchanged
+as part of a connection request or response.
+The fi_connect, fi_accept, and fi_reject calls will silently truncate
+any application data which cannot fit into underlying protocol messages.
+User data exchanged as part of the connection process is available as
+part of the fi_eq_cm_entry structure, for FI_CONNREQ and FI_CONNECTED
+events, or as additional err_data to fi_eq_err_entry, in the case of a
+rejected connection.
+.SH SEE ALSO
+.PP
+\f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
+\f[C]fi_eq\f[](3)
+.SH AUTHORS
+OpenFabrics.

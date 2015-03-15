@@ -1158,6 +1158,18 @@ m4_ifdef([project_ompi], [OMPI_REQUIRE_ENDPOINT_TAG_FINI])
 AC_CACHE_SAVE
 
 ##################################
+# CUDA: part two
+##################################
+
+# This is somewhat gross to have a configure check for a common MCA
+# component outside of the normal MCA checks, but this check must come
+# after the opal DL MCA checks have done.  Someday this could perhaps
+# be done better by having some kind of "run this check at the end of
+# all other MCA checks" hook...?
+
+OPAL_CHECK_CUDA_AFTER_OPAL_DL
+
+##################################
 # MPI Extended Interfaces
 ##################################
 
@@ -1218,8 +1230,6 @@ fi
 # a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
 
-LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
-LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
 
 # What's the suffix of shared libraries?  Inspired by generated
@@ -1255,8 +1265,6 @@ hpux9* | hpux10* | hpux11*)
 esac
 AC_SUBST(OPAL_DYN_LIB_PREFIX)
 AC_SUBST(OPAL_DYN_LIB_SUFFIX)
-
-OPAL_SETUP_LIBLTDL
 
 # Need the libtool binary before the rpathify stuff
 LT_OUTPUT

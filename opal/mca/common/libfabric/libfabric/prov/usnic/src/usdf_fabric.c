@@ -201,7 +201,7 @@ usdf_fill_info_dgram(
 	size_t entries;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -228,7 +228,7 @@ usdf_fill_info_dgram(
 		fi->mode = USDF_DGRAM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_DGRAM;
+	fi->ep_attr->type = FI_EP_DGRAM;
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
 	if (ret != 0) {
@@ -365,7 +365,7 @@ usdf_fill_info_msg(
 	uint32_t addr_format;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -392,7 +392,7 @@ usdf_fill_info_msg(
 		fi->mode = USDF_MSG_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_MSG;
+	fi->ep_attr->type = FI_EP_MSG;
 
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
@@ -470,7 +470,7 @@ usdf_fill_info_rdm(
 	uint32_t addr_format;
 	int ret;
 
-	fi = fi_allocinfo_internal();
+	fi = fi_allocinfo();
 	if (fi == NULL) {
 		ret = -FI_ENOMEM;
 		goto fail;
@@ -496,7 +496,7 @@ usdf_fill_info_rdm(
 		fi->mode = USDF_RDM_SUPP_MODE;
 		addr_format = FI_FORMAT_UNSPEC;
 	}
-	fi->ep_type = FI_EP_RDM;
+	fi->ep_attr->type = FI_EP_RDM;
 
 	ret = usdf_fill_addr_info(fi, addr_format, src, dest, dap);
 	if (ret != 0) {
@@ -593,6 +593,9 @@ usdf_get_devinfo(void)
 		}
 
 		dep->ue_dev_ok = 1;	/* this device is OK */
+
+		usd_close(dep->ue_dev);
+		dep->ue_dev = NULL;
 	}
 	return 0;
 
@@ -712,7 +715,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 				continue;
 			}
 
-			ep_type = hints->ep_type;
+			ep_type = hints->ep_attr ? hints->ep_attr->type :
+				  FI_EP_UNSPEC;
 		} else {
 			ep_type = FI_EP_UNSPEC;
 		}
@@ -776,15 +780,23 @@ usdf_fabric_close(fid_t fid)
 	/* Tell progression thread to exit */
 	fp->fab_exit = 1;
 
-	ret = usdf_fabric_wake_thread(fp);
-	if (ret != 0) {
-		return ret;
+	if (fp->fab_thread) {
+		ret = usdf_fabric_wake_thread(fp);
+		if (ret != 0) {
+			return ret;
+		}
+		pthread_join(fp->fab_thread, &rv);
 	}
-	pthread_join(fp->fab_thread, &rv);
 	usdf_timer_deinit(fp);
-	close(fp->fab_eventfd);
-	close(fp->fab_epollfd);
-	close(fp->fab_arp_sockfd);
+	if (fp->fab_epollfd != -1) {
+		close(fp->fab_epollfd);
+	}
+	if (fp->fab_eventfd != -1) {
+		close(fp->fab_eventfd);
+	}
+	if (fp->fab_arp_sockfd != -1) {
+		close(fp->fab_arp_sockfd);
+	}
 
 	free(fp);
 	return 0;
@@ -851,6 +863,7 @@ static int
 usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	       void *context)
 {
+	struct fid_fabric *ff;
 	struct usdf_fabric *fp;
 	struct usdf_usnic_info *dp;
 	struct usdf_dev_entry *dep;
@@ -863,7 +876,7 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	dp = __usdf_devinfo;
 	for (d = 0; d < dp->uu_num_devs; ++d) {
 		dep = &dp->uu_info[d];
-		if (dep->ue_dev != NULL &&
+		if (dep->ue_dev_ok &&
 			strcmp(fattrp->name, dep->ue_dattr.uda_devname) == 0) {
 			break;
 		}
@@ -924,18 +937,18 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 		goto fail;
 	}
 
+	/* initialize timer subsystem */
+	ret = usdf_timer_init(fp);
+	if (ret != 0) {
+		USDF_INFO("unable to initialize timer\n");
+		goto fail;
+	}
+
 	ret = pthread_create(&fp->fab_thread, NULL,
 			usdf_fabric_progression_thread, fp);
 	if (ret != 0) {
 		ret = -ret;
 		USDF_INFO("unable to create progress thread\n");
-		goto fail;
-	}
-
-	/* initialize timer subsystem */
-	ret = usdf_timer_init(fp);
-	if (ret != 0) {
-		USDF_INFO("unable to initialize timer\n");
 		goto fail;
 	}
 
@@ -963,19 +976,8 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	return 0;
 
 fail:
-	if (fp != NULL) {
-		if (fp->fab_epollfd != -1) {
-			close(fp->fab_epollfd);
-		}
-		if (fp->fab_eventfd != -1) {
-			close(fp->fab_eventfd);
-		}
-		if (fp->fab_arp_sockfd != -1) {
-			close(fp->fab_arp_sockfd);
-		}
-		usdf_timer_deinit(fp);
-		free(fp);
-	}
+	ff = fab_utof(fp);
+	usdf_fabric_close(&ff->fid);
 	USDF_DEBUG("returning %d (%s)\n", ret, fi_strerror(-ret));
 	return ret;
 }

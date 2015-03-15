@@ -33,6 +33,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/request/request.h"
 #include "ompi/mca/rte/rte.h"
@@ -1445,8 +1446,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
     for( i = 0; i < nprocs; ++i) {
         HOKE_PEER_REF_ALLOC(new_peer_ref);
 
-        new_peer_ref->proc_name.jobid  = procs[i]->proc_name.jobid;
-        new_peer_ref->proc_name.vpid   = procs[i]->proc_name.vpid;
+        new_peer_ref->proc_name.jobid  = OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->jobid;
+        new_peer_ref->proc_name.vpid   = OMPI_CAST_RTE_NAME(&procs[i]->super.proc_name)->vpid;
 
         opal_list_append(&ompi_crcp_bkmrk_pml_peer_refs, &(new_peer_ref->super));
     }
@@ -1474,11 +1475,11 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
                         "crcp:bkmrk: pml_del_procs()"));
 
     for( i = 0; i < nprocs; ++i) {
-        item = (opal_list_item_t*)find_peer(procs[i]->proc_name);
+        item = (opal_list_item_t*)find_peer(*(ompi_process_name_t*)&procs[i]->super.proc_name);
         if(NULL == item) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: del_procs: Unable to find peer %s\n",
-                        OMPI_NAME_PRINT(&(procs[i]->proc_name)));
+                        OMPI_NAME_PRINT(&procs[i]->super.proc_name));
             exit_status = OMPI_ERROR;
             goto DONE;
         }
@@ -3006,12 +3007,9 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
     static bool first_continue_pass = false;
     opal_list_item_t* item = NULL;
     int exit_status = OMPI_SUCCESS;
-    ompi_rte_collective_t coll;
     int ret;
 
     ft_event_state = state;
-    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-    coll.id = ompi_process_info.peer_init_barrier;
 
     if( step_to_return_to == 1 ) {
         goto STEP_1;
@@ -3030,8 +3028,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
+            opal_pmix.fence(NULL, 0);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
 
@@ -3076,7 +3073,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         first_continue_pass = !first_continue_pass;
 
         /* Only finalize the Protocol after the PML has been rebuilt */
-        if( orte_cr_continue_like_restart && first_continue_pass ) {
+        if (opal_cr_continue_like_restart && first_continue_pass) {
             goto DONE;
         }
 
@@ -3099,8 +3096,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
+            opal_pmix.fence(NULL, 0);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
     }
@@ -3156,7 +3152,6 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
     }
 
  DONE:
-    OBJ_DESTRUCT(&coll);
     step_to_return_to = 0;
     ft_event_state = OPAL_CRS_RUNNING;
 
@@ -3919,7 +3914,7 @@ static int drain_message_find_any(size_t count, int tag, int peer,
                 
             if( OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                             &(cur_peer_ref->proc_name),
-                                                            &(comm->c_local_group->grp_proc_pointers[peer]->proc_name)) ) {
+                                                            OMPI_CAST_RTE_NAME(&comm->c_local_group->grp_proc_pointers[peer]->super.proc_name))) {
                 continue;
             }
         }
@@ -4162,7 +4157,7 @@ static ompi_crcp_bkmrk_pml_peer_ref_t * find_peer(ompi_process_name_t proc)
 static int find_peer_in_comm(struct ompi_communicator_t* comm, int proc_idx,
                              ompi_crcp_bkmrk_pml_peer_ref_t **peer_ref)
 {
-    *peer_ref = find_peer(comm->c_remote_group->grp_proc_pointers[proc_idx]->proc_name);
+    *peer_ref = find_peer(*(ompi_process_name_t *)&comm->c_remote_group->grp_proc_pointers[proc_idx]->super.proc_name);
 
     if( NULL == *peer_ref) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
@@ -6212,19 +6207,15 @@ static void clear_timers(void) {
 static void display_all_timers(int state) {
     bool report_ready = false;
     double barrier_start, barrier_stop;
-    ompi_rte_collective_t coll;
     int i;
 
-    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
-    coll.id = ompi_process_info.peer_init_barrier;
     if( 0 != OMPI_PROC_MY_NAME->vpid ) {
         if( 2 > timing_enabled ) {
-            goto done;
+            return;
         }
         else if( 2 == timing_enabled ) {
-            ompi_rte_barrier(&coll);
-            OMPI_WAIT_FOR_COMPLETION(coll.active);
-            goto done;
+            opal_pmix.fence(NULL, 0);
+            return;
         }
     }
 
@@ -6234,7 +6225,7 @@ static void display_all_timers(int state) {
         }
     }
     if( !report_ready ) {
-        goto done;
+        return;
     }
 
     opal_output(0, "crcp:bkmrk: timing(%20s): ******************** Begin: [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
@@ -6244,8 +6235,7 @@ static void display_all_timers(int state) {
 
     if( timing_enabled >= 2) {
         barrier_start = get_time();
-        ompi_rte_barrier(&coll);
-        OMPI_WAIT_FOR_COMPLETION(coll.active);
+        opal_pmix.fence(NULL, 0);
         barrier_stop = get_time();
         opal_output(0,
                     "crcp:bkmrk: timing(%20s): %20s = %10.2f s\n",
@@ -6256,8 +6246,6 @@ static void display_all_timers(int state) {
 
     opal_output(0, "crcp:bkmrk: timing(%20s): ******************** End:   [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
 
-done:
-    OBJ_DESTRUCT(&coll);
 }
 
 static void display_indv_timer(int idx, int proc, int msgs) {

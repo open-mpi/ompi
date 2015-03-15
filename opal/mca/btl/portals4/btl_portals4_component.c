@@ -222,7 +222,17 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_flags =
         MCA_BTL_FLAGS_RDMA |
         MCA_BTL_FLAGS_RDMA_MATCHED;
-    mca_btl_portals4_module.super.btl_seg_size = sizeof (mca_btl_portals4_segment_t);
+
+    mca_btl_portals4_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+
+    mca_btl_portals4_module.super.btl_get_limit = SIZE_MAX;
+    mca_btl_portals4_module.super.btl_put_limit = 0;        /* not implemented */
+    mca_btl_portals4_module.super.btl_get_alignment = 0;
+    mca_btl_portals4_module.super.btl_put_alignment = 0;
+
+    mca_btl_portals4_module.super.btl_get_local_registration_threshold = 0;
+    mca_btl_portals4_module.super.btl_put_local_registration_threshold = 0;
+
     mca_btl_portals4_module.super.btl_bandwidth = 1000;
     mca_btl_portals4_module.super.btl_latency = 0;
 
@@ -770,8 +780,8 @@ mca_btl_portals4_component_progress(void)
 
                 tag = (unsigned char) (ev.hdr_data);
 
-                btl_base_descriptor.des_local = seg;
-                btl_base_descriptor.des_local_count = 1;
+                btl_base_descriptor.des_segments = seg;
+                btl_base_descriptor.des_segment_count = 1;
                 seg[0].seg_addr.pval = ev.start;
                 seg[0].seg_len = ev.mlength;
 
@@ -785,6 +795,8 @@ mca_btl_portals4_component_progress(void)
 
             case PTL_EVENT_PUT_OVERFLOW:
                 /* */
+                OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+                    "PTL_EVENT_OVERFLOW received\n"));
                 goto done;
                 break;
 
@@ -810,8 +822,10 @@ mca_btl_portals4_component_progress(void)
                 goto done;
                 break;
 
-            case PTL_EVENT_GET:
+            case PTL_EVENT_GET:   /* Generated on source (target) when a get from memory ends */
                 /* */
+                OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+                    "PTL_EVENT_GET received at target rlength=%ld mlength=%ld\n", ev.rlength, ev.mlength));
                 goto done;
                 break;
 
@@ -849,11 +863,14 @@ mca_btl_portals4_component_progress(void)
                 }
                 else {
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_REPLY: Call to des_cbfunc: %lx\n", (uint64_t)frag->base.des_cbfunc));
-                    frag->base.des_cbfunc(&portals4_btl->super,
-                                      frag->endpoint,
-                                      &frag->base,
-                                      OPAL_SUCCESS);
+                        "PTL_EVENT_REPLY: Call to rdma_cbfunc=%lx\n", (uint64_t)frag->rdma_cb.func));
+                    frag->rdma_cb.func(&portals4_btl->super,
+                                 frag->endpoint,
+                                 ev.start,
+                                 frag->rdma_cb.local_handle,
+                                 frag->rdma_cb.context,
+                                 frag->rdma_cb.data,
+                                 OPAL_SUCCESS);
                     PtlMDRelease(frag->md_h);
                     frag->md_h = PTL_INVALID_HANDLE;
 

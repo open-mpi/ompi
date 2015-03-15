@@ -1,0 +1,148 @@
+.TH fi_fabric 3 "2015\-01\-24" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+fi_fabric - Fabric domain operations
+.PP
+fi_fabric / fi_close : Open / close a fabric domain
+.PP
+fi_tostr : Convert fabric attributes, flags, and capabilities to
+printable string
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <rdma/fabric.h>
+
+int\ fi_fabric(struct\ fi_fabric_attr\ *attr,
+\ \ \ \ struct\ fid_fabric\ **fabric,\ void\ *context);
+
+int\ fi_close(struct\ fid\ *fabric);
+
+char\ *\ fi_tostr(const\ void\ *data,\ enum\ fi_type\ datatype);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]attr\f[] : Attributes of fabric to open.
+.PP
+\f[I]fabric\f[] : Fabric domain
+.PP
+\f[I]context\f[] : User specified context associated with the opened
+object.
+This context is returned as part of any associated asynchronous event.
+.SH DESCRIPTION
+.PP
+A fabric domain represents a collection of hardware and software
+resources that access a single physical or virtual network.
+All network ports on a system that can communicate with each other
+through their attached networks belong to the same fabric domain.
+A fabric domain shares network addresses and can span multiple
+providers.
+.SS fi_fabric
+.PP
+Opens a fabric provider.
+The attributes of the fabric provider are specified through the open
+call, and may be obtained by calling fi_getinfo.
+.SS fi_close
+.PP
+The fi_close call is used to release all resources associated with a
+fabric domain or interface.
+All items associated with the opened fabric must be released prior to
+calling fi_close.
+.SS fi_tostr
+.PP
+Converts fabric interface attributes, capabilities, flags, and enum
+values into a printable string.
+The data parameter accepts a pointer to the attribute or value(s) to
+display, with the datatype parameter indicating the type of data
+referenced by the data parameter.
+Valid values for the datatype are listed below, along with the
+corresponding datatype or field value.
+.PP
+\f[I]FI_TYPE_INFO\f[] : struct fi_info
+.PP
+\f[I]FI_TYPE_EP_TYPE\f[] : struct fi_info::type field
+.PP
+\f[I]FI_TYPE_EP_CAP\f[] : struct fi_info::ep_cap field
+.PP
+\f[I]FI_TYPE_OP_FLAGS\f[] : struct fi_info::op_flags field, or general
+uint64_t flags
+.PP
+\f[I]FI_TYPE_ADDR_FORMAT\f[] : struct fi_info::addr_format field
+.PP
+\f[I]FI_TYPE_TX_ATTR\f[] : struct fi_tx_attr
+.PP
+\f[I]FI_TYPE_RX_ATTR\f[] : struct fi_rx_attr
+.PP
+\f[I]FI_TYPE_EP_ATTR\f[] : struct fi_ep_attr
+.PP
+\f[I]FI_TYPE_DOMAIN_ATTR\f[] : struct fi_domain_attr
+.PP
+\f[I]FI_TYPE_FABRIC_ATTR\f[] : struct fi_fabric_attr
+.PP
+\f[I]FI_TYPE_DOMAIN_CAP\f[] : struct fi_info::domain_cap field
+.PP
+\f[I]FI_TYPE_THREADING\f[] : enum fi_threading
+.PP
+\f[I]FI_TYPE_PROGRESS\f[] : enum fi_progress
+.PP
+\f[I]FI_TYPE_PROTO\f[] : struct fi_ep_attr::protocol field
+.PP
+\f[I]FI_TYPE_MSG_ORDER\f[] : struct fi_ep_attr::msg_order field
+.PP
+\f[I]FI_TYPE_VERSION\f[] : Returns the library version of libfabric in
+string form.
+The data parameter is ignored.
+.PP
+fi_tostr() will return a pointer to an internal libfabric buffer that
+should not be modified, and will be overwritten the next time fi_tostr()
+is invoked.
+fi_tostr() is not thread safe.
+.SH NOTES
+.PP
+The following resources are associated with fabric domains: access
+domains, passive endpoints, and CM event queues.
+.SH FABRIC ATTRIBUTES
+.PP
+The fi_fabric_attr structure defines the set of attributes associated
+with a fabric and a fabric provider.
+.IP
+.nf
+\f[C]
+struct\ fi_fabric_attr\ {
+\ \ \ \ struct\ fid_fabric\ *fabric;
+\ \ \ \ char\ \ \ \ \ \ \ \ \ \ \ \ \ \ *name;
+\ \ \ \ char\ \ \ \ \ \ \ \ \ \ \ \ \ \ *prov_name;
+\ \ \ \ uint32_t\ \ \ \ \ \ \ \ \ \ prov_version;
+};
+\f[]
+.fi
+.SS fabric
+.PP
+On input to fi_getinfo, a user may set this to an opened fabric instance
+to restrict output to the given fabric.
+On output from fi_getinfo, if no fabric was specified, but the user has
+an opened instance of the named fabric, this will reference the first
+opened instance.
+If no instance has been opened, this field will be NULL.
+.SS name
+.PP
+A fabric identifier.
+.SS prov_name
+.PP
+The name of the underlying fabric provider.
+.SS prov_version
+.PP
+Version information for the fabric provider.
+.SH RETURN VALUE
+.PP
+Returns 0 on success.
+On error, a negative value corresponding to fabric errno is returned.
+Fabric errno values are defined in \f[C]rdma/fi_errno.h\f[].
+.SH ERRORS
+.SH SEE ALSO
+.PP
+\f[C]fabric\f[](7), \f[C]fi_getinfo\f[](3), \f[C]fi_domain\f[](3),
+\f[C]fi_eq\f[](3), \f[C]fi_endpoint\f[](3)
+.SH AUTHORS
+OpenFabrics.

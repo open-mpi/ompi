@@ -35,7 +35,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <assert.h>
 #include <sys/socket.h>
 
 #ifdef __cplusplus
@@ -47,6 +46,9 @@ extern "C" {
 #define container_of(ptr, type, field) \
 	((type *) ((char *)ptr - offsetof(type, field)))
 #endif
+
+#define FI_DEFINE_HANDLE(name) struct name##_s { int dummy; }; \
+				typedef struct name##_s *name
 
 enum {
 	FI_MAJOR_VERSION	= 1,
@@ -99,7 +101,6 @@ typedef struct fid *fid_t;
 #define FI_ATOMICS		FI_ATOMIC
 #define FI_DYNAMIC_MR		(1ULL << 7)
 #define FI_NAMED_RX_CTX		(1ULL << 8)
-#define FI_BUFFERED_RECV	(1ULL << 9)
 #define FI_DIRECTED_RECV	(1ULL << 10)
 
 /*
@@ -158,7 +159,13 @@ enum {
 #define FI_ADDR_NOTAVAIL	UINT64_MAX
 #define FI_SHARED_CONTEXT	UINT64_MAX
 typedef uint64_t		fi_addr_t;
-typedef void *			fi_connreq_t;
+FI_DEFINE_HANDLE(fi_connreq_t);
+
+enum fi_av_type {
+	FI_AV_UNSPEC,
+	FI_AV_MAP,
+	FI_AV_TABLE
+};
 
 enum fi_progress {
 	FI_PROGRESS_UNSPEC,
@@ -248,11 +255,10 @@ struct fi_rx_attr {
 };
 
 struct fi_ep_attr {
+	enum fi_ep_type		type;
 	uint32_t		protocol;
 	uint32_t		protocol_version;
 	size_t			max_msg_size;
-	size_t			inject_size;
-	size_t			total_buffered_recv;
 	size_t			msg_prefix_size;
 	size_t			max_order_raw_size;
 	size_t			max_order_war_size;
@@ -271,6 +277,7 @@ struct fi_domain_attr {
 	enum fi_progress	control_progress;
 	enum fi_progress	data_progress;
 	enum fi_resource_mgmt	resource_mgmt;
+	enum fi_av_type		av_type;
 	size_t			mr_key_size;
 	size_t			cq_data_size;
 	size_t			cq_cnt;
@@ -292,7 +299,6 @@ struct fi_info {
 	struct fi_info		*next;
 	uint64_t		caps;
 	uint64_t		mode;
-	enum fi_ep_type		ep_type;
 	uint32_t		addr_format;
 	size_t			src_addrlen;
 	size_t			dest_addrlen;
@@ -352,6 +358,11 @@ int fi_getinfo(uint32_t version, const char *node, const char *service,
 	       uint64_t flags, struct fi_info *hints, struct fi_info **info);
 void fi_freeinfo(struct fi_info *info);
 struct fi_info *fi_dupinfo(const struct fi_info *info);
+
+static inline struct fi_info *fi_allocinfo(void)
+{
+	return fi_dupinfo(NULL);
+}
 
 struct fi_ops_fabric {
 	size_t	size;
@@ -441,6 +452,8 @@ enum fi_type {
 	FI_TYPE_ATOMIC_TYPE,
 	FI_TYPE_ATOMIC_OP,
 	FI_TYPE_VERSION,
+	FI_TYPE_EQ_EVENT,
+	FI_TYPE_CQ_EVENT_FLAGS,
 };
 
 char *fi_tostr(const void *data, enum fi_type datatype);

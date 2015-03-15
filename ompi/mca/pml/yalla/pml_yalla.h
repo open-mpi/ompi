@@ -37,6 +37,8 @@ struct mca_pml_yalla_module {
     mca_pml_base_module_t    super;
 
     /* MXM global objects */
+    mxm_context_opts_t       *ctx_opts;
+    mxm_ep_opts_t            *ep_opts;
     mxm_h                    mxm_context;
     mxm_ep_h                 mxm_ep;
 
@@ -79,6 +81,8 @@ extern mca_pml_yalla_module_t ompi_pml_yalla;
                             __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__); \
     }
 
+int mca_pml_yalla_open(void);
+int mca_pml_yalla_close(void);
 int mca_pml_yalla_init(void);
 int mca_pml_yalla_cleanup(void);
 

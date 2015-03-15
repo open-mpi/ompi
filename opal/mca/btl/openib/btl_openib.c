@@ -1130,7 +1130,7 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
         return NULL;
 
     /* not all upper layer users set this */
-    to_base_frag(item)->segment.base.seg_len = size;
+    to_base_frag(item)->segment.seg_len = size;
     to_base_frag(item)->base.order = order;
     to_base_frag(item)->base.des_flags = flags;
 
@@ -1161,7 +1161,7 @@ static mca_btl_openib_send_frag_t *check_coalescing(opal_list_t *frag_list,
         }
 
         total_length = size + frag->coalesced_length +
-            to_base_frag(frag)->segment.base.seg_len +
+            to_base_frag(frag)->segment.seg_len +
             sizeof(mca_btl_openib_header_coalesced_t);
 
         qp = to_base_frag(frag)->base.order;
@@ -1248,8 +1248,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         sfrag->hdr->tag = MCA_BTL_TAG_IB;
         ctrl_hdr->type = MCA_BTL_OPENIB_CONTROL_COALESCED;
         clsc_hdr->tag = org_tag;
-        clsc_hdr->size = to_base_frag(sfrag)->segment.base.seg_len;
-        clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.base.seg_len;
+        clsc_hdr->size = to_base_frag(sfrag)->segment.seg_len;
+        clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.seg_len;
         if(ep->nbo)
             BTL_OPENIB_HEADER_COALESCED_HTON(*clsc_hdr);
         sfrag->coalesced_length = sizeof(mca_btl_openib_control_header_t) +
@@ -1259,13 +1259,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 
     cfrag->hdr = (mca_btl_openib_header_coalesced_t*)((unsigned char*)(sfrag->hdr + 1) + 
                   sfrag->coalesced_length +
-                  to_base_frag(sfrag)->segment.base.seg_len);
+                  to_base_frag(sfrag)->segment.seg_len);
     cfrag->hdr = (mca_btl_openib_header_coalesced_t*)BTL_OPENIB_ALIGN_COALESCE_HDR(cfrag->hdr);
     cfrag->hdr->alloc_size = size;
 
     /* point coalesced frag pointer into a data buffer */
-    to_base_frag(cfrag)->segment.base.seg_addr.pval = cfrag->hdr + 1;
-    to_base_frag(cfrag)->segment.base.seg_len = size;
+    to_base_frag(cfrag)->segment.seg_addr.pval = cfrag->hdr + 1;
+    to_base_frag(cfrag)->segment.seg_len = size;
 
     /* NTH: there is no reason to append the coalesced fragment here. No more
      * fragments will be added until either send or free has been called on
@@ -1297,7 +1297,7 @@ int mca_btl_openib_free(
             to_com_frag(des)->sg_entry.addr =
                 (uint64_t)(uintptr_t)to_send_frag(des)->hdr;
             to_send_frag(des)->coalesced_length = 0;
-            to_base_frag(des)->segment.base.seg_addr.pval =
+            to_base_frag(des)->segment.seg_addr.pval =
                 to_send_frag(des)->hdr + 1;
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall through */
@@ -1369,7 +1369,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         return NULL;
     }
 
-    ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+    ptr = to_base_frag(frag)->segment.seg_addr.pval;
 
     iov.iov_len = max_data;
     iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*) ptr + reserve );
@@ -1388,7 +1388,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     *size = max_data;
 
     /* not all upper layer users set this */
-    to_base_frag(frag)->segment.base.seg_len = max_data + reserve;
+    to_base_frag(frag)->segment.seg_len = max_data + reserve;
 
     return &to_base_frag(frag)->base;
 }
@@ -1593,14 +1593,14 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         goto cant_send_frag;
     }
 
-    frag->segment.base.seg_len = size;
+    frag->segment.seg_len = size;
     frag->base.order = qp;
     frag->base.des_flags = flags;
     hdr->tag = tag;
     to_com_frag(item)->endpoint = ep;
 
     /* put match header */
-    memcpy(frag->segment.base.seg_addr.pval, header, header_size);
+    memcpy(frag->segment.seg_addr.pval, header, header_size);
 
     /* Pack data */
     if(payload_size) {
@@ -1608,7 +1608,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         struct iovec iov;
         uint32_t iov_count;
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.base.seg_addr.pval + header_size);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
         iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
 
@@ -1743,7 +1743,7 @@ int mca_btl_openib_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Continue must reconstruct the routes (including modex), since we
          * have to tear down the devices completely. */
-        orte_cr_continue_like_restart = true;
+        opal_cr_continue_like_restart = true;
 
         /*
          * To keep the node from crashing we need to call ibv_close_device

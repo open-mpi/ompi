@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -1265,7 +1265,6 @@ verbose "\n$step. Running autotools on top-level tree\n\n";
 verbose "==> Remove stale files\n";
 find_and_delete(qw/config.guess config.sub depcomp compile install-sh ltconfig
     ltmain.sh missing mkinstalldirs libtool/);
-system("rm -rf opal/libltdl");
 
 # Remove the old m4 file and write the new one
 verbose "==> Writing m4 file with autogen.pl results\n";
@@ -1289,26 +1288,6 @@ foreach my $project (@{$projects}) {
         if (-d "$project->{dir}/config");
 }
 safe_system($cmd);
-
-#---------------------------------------------------------------------------
-
-# For FreeBSD (carried over from autogen.sh); apparently some versions
-# of automake don't so this (prior to 1.9.7...?).
-system("chmod u+w opal/libltdl/configure");
-
-#---------------------------------------------------------------------------
-
-++$step;
-verbose "\n$step. Patching autotools output on top-level tree :-(\n\n";
-
-# Patch preopen error in libltdl
-if (-f "opal/libltdl/loaders/preopen.c") {
-    verbose "=== Patching preopen error masking in libltdl\n";
-    safe_system("$patch_prog -N -p0 < config/libltdl-preopen-error.diff");
-    unlink("opal/libltdl/loaders/preopen.c.rej");
-}
-
-patch_autotools_output(".");
 
 #---------------------------------------------------------------------------
 

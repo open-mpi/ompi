@@ -57,6 +57,14 @@ struct mca_btl_portals4_frag_t {
     /* length for retransmit case */
     ptl_process_t peer_proc;
 
+    /* the callback and context to complete an RDMA operation */
+    struct {
+        mca_btl_base_rdma_completion_fn_t func;
+        void *context;
+        void *data;
+        mca_btl_base_registration_handle_t *local_handle;
+    } rdma_cb;
+
     enum { BTL_PORTALS4_FRAG_TYPE_EAGER, 
            BTL_PORTALS4_FRAG_TYPE_MAX,
            BTL_PORTALS4_FRAG_TYPE_USER } type;

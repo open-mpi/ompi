@@ -5,9 +5,9 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -32,9 +32,9 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_basedir])
 
     # If we won, then do all the rest of the setup
-    AS_IF([test "$1" = "1"], 
-          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION], 
-                              [external], 
+    AS_IF([test "$1" = "1"],
+          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION],
+                              [external],
                               [Version of hwloc])
 
            # Set this variable so that the framework m4 knows what
@@ -74,9 +74,9 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # Finally, add some flags to the wrapper compiler if we're
            # building with developer headers so that our headers can
            # be found.
-           hwloc_external_WRAPPER_EXTRA_CPPFLAGS="$opal_hwloc_external_CPPFLAGS"
-           hwloc_external_WRAPPER_EXTRA_LDFLAGS="$opal_hwloc_external_LDFLAGS"
-           hwloc_external_WRAPPER_EXTRA_LIBS="$opal_hwloc_external_LIBS"
+           hwloc_external_WRAPPER_EXTRA_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
+           hwloc_external_WRAPPER_EXTRA_LDFLAGS=$opal_hwloc_external_LDFLAGS
+           hwloc_external_WRAPPER_EXTRA_LIBS=$opal_hwloc_external_LIBS
           ])
     OPAL_VAR_SCOPE_POP
 ])dnl
@@ -95,7 +95,8 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
     # Make sure the user didn't specify --with-hwloc=internal and
     # --with-hwloc-libdir=whatever.
-    AS_IF([test "$with_hwloc" = "internal" -a "$with_hwloc_libdir" != ""],
+    AS_IF([test "$with_hwloc" = "internal" && \
+           test "$with_hwloc_libdir" != ""],
           [AC_MSG_WARN([Both --with-hwloc=internal and --with-hwloc-libdir=DIR])
            AC_MSG_WARN([were specified, which does not make sense.])
            AC_MSG_ERROR([Cannot continue])])
@@ -105,21 +106,25 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
     opal_hwloc_external_want=no
     AS_IF([test "$with_hwloc_libdir" != ""], [opal_hwloc_external_want=yes])
     AS_IF([test "$with_hwloc" = "external"], [opal_hwloc_external_want=yes])
-    AS_IF([test "$with_hwloc" != "" -a "$with_hwloc" != "no" -a "$with_hwloc" != "internal"], [opal_hwloc_external_want=yes])
+    AS_IF([test "$with_hwloc" != "" && \
+           test "$with_hwloc" != "no" && \
+           test "$with_hwloc" != "internal"], [opal_hwloc_external_want=yes])
     AS_IF([test "$with_hwloc" = "no"], [opal_hwloc_external_want=no])
 
     # If we still want external support, try it
     AS_IF([test "$opal_hwloc_external_want" = "yes"],
-          [OPAL_CHECK_WITHDIR([hwloc-libdir], [$with_hwloc_libdir], 
+          [OPAL_CHECK_WITHDIR([hwloc-libdir], [$with_hwloc_libdir],
                               [libhwloc.*])
 
            AC_MSG_CHECKING([looking for external hwloc in])
-           AS_IF([test "$with_hwloc" != "external" -a "$with_hwloc" != "yes"],
+           AS_IF([test "$with_hwloc" != "external" && \
+                  test "$with_hwloc" != "yes"],
                  [opal_hwloc_dir=$with_hwloc
                   AC_MSG_RESULT([($opal_hwloc_dir)])],
                  [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_hwloc_libdir" -a "$with_hwloc_libdir" != "yes"],
-                 [opal_hwloc_libdir="$with_hwloc_libdir"])
+           AS_IF([test ! -z "$with_hwloc_libdir" && \
+                  test "$with_hwloc_libdir" != "yes"],
+                 [opal_hwloc_libdir=$with_hwloc_libdir])
 
            opal_hwloc_external_CPPFLAGS_save=$CPPFLAGS
            opal_hwloc_external_CFLAGS_save=$CFLAGS
@@ -144,8 +149,8 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
     # Done!
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION], 
-                              [external], 
+          [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION],
+                              [external],
                               [Version of hwloc])
 
            # See if the external hwloc supports XML
@@ -164,7 +169,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
            AC_MSG_CHECKING([if external hwloc version is 1.8 or greater])
            AS_IF([test "$opal_hwloc_dir" != ""],
-                 [CFLAGS_save="$CFLAGS"
+                 [CFLAGS_save=$CFLAGS
                   CFLAGS="-I$opal_hwloc_dir/include $CFLAGS_save"])
            AC_COMPILE_IFELSE(
                [AC_LANG_PROGRAM([[#include <hwloc.h>]],
@@ -177,7 +182,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([Cannot continue])])
            AS_IF([test "$opal_hwloc_dir" != ""],
-                 [CFLAGS="$CFLAGS_save"
+                 [CFLAGS=$CFLAGS_save
                   unset CFLAGS_save])
            $1],
           [$2])

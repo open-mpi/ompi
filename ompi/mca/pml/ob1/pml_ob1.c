@@ -40,6 +40,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "ompi/runtime/ompi_cr.h"
 
 #include "pml_ob1.h"
@@ -792,15 +793,11 @@ int mca_pml_ob1_ft_event( int state )
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
-    ompi_rte_collective_t *coll, *modex;
 
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_init_barrier;
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            ompi_rte_barrier(coll);
-            OMPI_WAIT_FOR_COMPLETION(coll->active);
+            opal_pmix.fence(NULL, 0);
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -811,20 +808,18 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) { 
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                ompi_rte_barrier(coll);
-                OMPI_WAIT_FOR_COMPLETION(coll->active);
+                opal_pmix.fence(NULL, 0);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
 
-        if( orte_cr_continue_like_restart && !first_continue_pass ) {
+        if (opal_cr_continue_like_restart && !first_continue_pass) {
             /*
              * Get a list of processes
              */
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto clean;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
             /*
@@ -842,7 +837,7 @@ int mca_pml_ob1_ft_event( int state )
                     OBJ_RELEASE(procs[p]);
                 }
                 free (procs);
-                goto clean;
+                return ret;
             }
         }
     }
@@ -855,8 +850,7 @@ int mca_pml_ob1_ft_event( int state )
          */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            goto clean;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         /*
@@ -882,7 +876,7 @@ int mca_pml_ob1_ft_event( int state )
                 OBJ_RELEASE(procs[p]);
             }
             free (procs);
-            goto clean;
+            return ret;
         }
     }
     else if(OPAL_CRS_TERM == state ) {
@@ -914,28 +908,13 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                ompi_rte_barrier(coll);
-                OMPI_WAIT_FOR_COMPLETION(coll->active);
+                opal_pmix.fence(NULL, 0);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
 
-        if( orte_cr_continue_like_restart && !first_continue_pass ) {
-            /*
-             * Exchange the modex information once again.
-             * BTLs will have republished their modex information.
-             */
-            modex = OBJ_NEW(ompi_rte_collective_t);
-            modex->id = ompi_process_info.peer_modex;
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(modex))) {
-                opal_output(0,
-                            "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
-                            ret);
-                OBJ_RELEASE(modex);
-                goto clean;
-            }
-            OMPI_WAIT_FOR_COMPLETION(modex->active);
-            OBJ_RELEASE(modex);
+        if (opal_cr_continue_like_restart && !first_continue_pass) {
+            opal_pmix.fence(NULL, 0);
 
             /*
              * Startup the PML stack now that the modex is running again
@@ -943,15 +922,11 @@ int mca_pml_ob1_ft_event( int state )
              */
             if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
                 opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
-                goto clean;
+                return ret;
             }
 
             /* Is this barrier necessary ? JJH */
-            if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
-                goto clean;
-            }
-            OMPI_WAIT_FOR_COMPLETION(coll->active);
+            opal_pmix.fence(NULL, 0);
 
             if( NULL != procs ) {
                 for(p = 0; p < (int)num_procs; ++p) {
@@ -964,8 +939,7 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                ompi_rte_barrier(coll);
-                OMPI_WAIT_FOR_COMPLETION(coll->active);
+                opal_pmix.fence(NULL, 0);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -978,17 +952,7 @@ int mca_pml_ob1_ft_event( int state )
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.
          */
-        modex = OBJ_NEW(ompi_rte_collective_t);
-        modex->id = ompi_process_info.peer_modex;
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(modex))) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
-                        ret);
-            OBJ_RELEASE(modex);
-            goto clean;
-        }
-        OMPI_WAIT_FOR_COMPLETION(modex->active);
-        OBJ_RELEASE(modex);
+        opal_pmix.fence(NULL, 0);
 
         /*
          * Startup the PML stack now that the modex is running again
@@ -996,15 +960,11 @@ int mca_pml_ob1_ft_event( int state )
          */
         if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
             opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
-            goto clean;
+            return ret;
         }
 
         /* Is this barrier necessary ? JJH */
-        if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
-            goto clean;
-        }
-        OMPI_WAIT_FOR_COMPLETION(coll->active);
+        opal_pmix.fence(NULL, 0);
 
         if( NULL != procs ) {
             for(p = 0; p < (int)num_procs; ++p) {
@@ -1021,11 +981,7 @@ int mca_pml_ob1_ft_event( int state )
         ;
     }
 
-    ret = OMPI_SUCCESS;
-
-clean:
-    OBJ_RELEASE(coll);
-    return ret;
+    return OMPI_SUCCESS;
 }
 #endif /* OPAL_ENABLE_FT_CR */
 
