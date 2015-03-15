@@ -43,7 +43,7 @@
 #include "opal/mca/mca.h"
 
 #include "orte/mca/rml/base/base.h"
-
+#include "orte/mca/qos/base/base.h"
 BEGIN_C_DECLS
 
 typedef bool (*mca_oob_base_component_avail_fn_t)(void);
