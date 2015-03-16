@@ -413,7 +413,7 @@ static int tcp_component_register(void)
     
     mca_oob_tcp_component.keepalive_time = 10;
     (void)mca_base_component_var_register(component, "keepalive_time",
-                                          "Idle time in seconds before starting to send keepalives (num <= 0 => disable keepalive)",
+                                          "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
