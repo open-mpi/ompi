@@ -73,6 +73,75 @@
  * Set socket buffering
  */
 
+static void set_keepalive(int sd)
+{
+    int option;
+    socklen_t optlen;
+        
+    /* see if the keepalive option is available */
+    optlen = sizeof(option);
+    if (getsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, &optlen) < 0) {
+        /* not available, so just return */
+        return;
+    }
+
+    /* Set the option active */
+    option = 1;
+    if (setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, optlen) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)", 
+                    __FILE__, __LINE__, 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+        return;
+    }
+#if defined(TCP_KEEPALIVE)
+    /* set the idle time */
+    if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPALIVE,
+                   &mca_oob_tcp_component.keepalive_time,
+                   sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
+                    __FILE__, __LINE__, 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+        return;
+    }
+#elif defined(TCP_KEEPIDLE)
+    /* set the idle time */
+    if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPIDLE,
+                   &mca_oob_tcp_component.keepalive_time,
+                   sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
+                    __FILE__, __LINE__, 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+        return;
+    }
+#endif  // TCP_KEEPIDLE
+#if defined(TCP_KEEPINTVL)
+    /* set the keepalive interval */
+    if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPINTVL,
+                   &mca_oob_tcp_component.keepalive_intvl,
+                   sizeof(mca_oob_tcp_component.keepalive_intvl)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
+                    __FILE__, __LINE__, 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+        return;
+    }
+#endif  // TCP_KEEPINTVL
+#if defined(TCP_KEEPCNT)
+    /* set the miss rate */
+    if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPCNT,
+                   &mca_oob_tcp_component.keepalive_probes,
+                   sizeof(mca_oob_tcp_component.keepalive_probes)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 
+                    __FILE__, __LINE__, 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    }
+#endif  // TCP_KEEPCNT
+}
+
 void orte_oob_tcp_set_socket_options(int sd)
 {
 #if defined(TCP_NODELAY)
@@ -106,74 +175,9 @@ void orte_oob_tcp_set_socket_options(int sd)
 #endif
 #if defined(SO_KEEPALIVE)
     if (0 < mca_oob_tcp_component.keepalive_time) {
-        int option;
-        socklen_t optlen;
-        
-        /* see if the keepalive option is available */
-        optlen = sizeof(option);
-        if (getsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, &optlen) < 0) {
-            /* not available, so just return */
-            return;
-        }
-
-        /* Set the option active */
-        option = 1;
-        if (setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, optlen) < 0) {
-            opal_output(0, "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)", 
-                        __FILE__, __LINE__, 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-            return;
-        }
-#if defined(TCP_KEEPALIVE)
-        /* set the idle time */
-        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPALIVE,
-                       &mca_oob_tcp_component.keepalive_time,
-                       sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
-            opal_output(0, "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
-                        __FILE__, __LINE__, 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-            return;
-        }
-#elif defined(TCP_KEEPIDLE)
-        /* set the idle time */
-        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPIDLE,
-                       &mca_oob_tcp_component.keepalive_time,
-                       sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
-            opal_output(0, "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
-                        __FILE__, __LINE__, 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-            return;
-        }
-#endif  // TCP_KEEPIDLE
-#if defined(TCP_KEEPINTVL)
-        /* set the keepalive interval */
-        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPINTVL,
-                       &mca_oob_tcp_component.keepalive_intvl,
-                       sizeof(mca_oob_tcp_component.keepalive_intvl)) < 0) {
-            opal_output(0, "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
-                        __FILE__, __LINE__, 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-            return;
-        }
-#endif  // TCP_KEEPINTVL
-#if defined(TCP_KEEPCNT)
-        /* set the miss rate */
-        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPCNT,
-                       &mca_oob_tcp_component.keepalive_probes,
-                       sizeof(mca_oob_tcp_component.keepalive_probes)) < 0) {
-            opal_output(0, "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 
-                        __FILE__, __LINE__, 
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-        }
+        set_keepalive(sd);
     }
-#endif  // TCP_KEEPCNT
 #endif  // SO_KEEPALIVE
- 
 }
 
 mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(const orte_process_name_t *name)

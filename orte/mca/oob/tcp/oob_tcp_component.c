@@ -419,7 +419,7 @@ static int tcp_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_time);
 
-    mca_oob_tcp_component.keepalive_intvl = 5;
+    mca_oob_tcp_component.keepalive_intvl = 60;
     (void)mca_base_component_var_register(component, "keepalive_intvl",
                                           "Time between keepalives, in seconds",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
