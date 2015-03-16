@@ -520,6 +520,7 @@ static int create_appfile(orte_sstore_base_global_snapshot_info_t *snapshot)
     opal_list_item_t* item = NULL;
     char *tmp_str = NULL;
     char *amca_param = NULL;
+    char *tune_param = NULL;
     char *reference_fmt_str = NULL;
     char *location_str = NULL;
     char *ref_location_fmt_str = NULL;
@@ -542,6 +543,10 @@ static int create_appfile(orte_sstore_base_global_snapshot_info_t *snapshot)
     orte_sstore.get_attr(snapshot->ss_handle,
                          SSTORE_METADATA_GLOBAL_AMCA_PARAM,
                          &amca_param);
+
+    orte_sstore.get_attr(snapshot->ss_handle,
+                         SSTORE_METADATA_GLOBAL_TUNE_PARAM,
+                         &tune_param);
 
     if (NULL == (appfile = fopen(orte_restart_globals.appfile, "w")) ) {
         exit_status = ORTE_ERROR;
@@ -597,6 +602,13 @@ static int create_appfile(orte_sstore_base_global_snapshot_info_t *snapshot)
         }
         fprintf(appfile, "-am %s ", amca_param);
 
+        if( NULL == tune_param ) {
+            tune_param = strdup("ft-enable-cr");
+            opal_show_help("help-orte-restart.txt", "tune_param_not_found", true,
+                           tune_param);
+        }
+        fprintf(appfile, "-tune %s ", tune_param);
+
         fprintf(appfile, " opal-restart ");
 
         /*
@@ -642,6 +654,7 @@ static int spawn_children(orte_sstore_base_global_snapshot_info_t *snapshot, pid
 {
     int ret, exit_status = ORTE_SUCCESS;
     char *amca_param = NULL;
+    char *tune_param = NULL;
     char **argv = NULL;
     int argc = 0, i;
     int status;
@@ -649,6 +662,10 @@ static int spawn_children(orte_sstore_base_global_snapshot_info_t *snapshot, pid
     orte_sstore.get_attr(snapshot->ss_handle,
                          SSTORE_METADATA_GLOBAL_AMCA_PARAM,
                          &amca_param);
+
+    orte_sstore.get_attr(snapshot->ss_handle,
+                         SSTORE_METADATA_GLOBAL_TUNE_PARAM,
+                         &tune_param);
 
     if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "mpirun")) ) {
         exit_status = ret;
@@ -664,6 +681,19 @@ static int spawn_children(orte_sstore_base_global_snapshot_info_t *snapshot, pid
                        amca_param);
     }
     if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, amca_param)) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "-tune")) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    if( NULL == tune_param ) {
+        tune_param = strdup("ft-enable-cr");
+        opal_show_help("help-orte-restart.txt", "tune_param_not_found", true,
+                       tune_param);
+    }
+    if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, tune_param)) ) {
         exit_status = ret;
         goto cleanup;
     }

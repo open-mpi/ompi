@@ -482,6 +482,12 @@ the parameter name; \fI<value>\fP is the parameter value.
 Send arguments to various MCA modules.  See the "MCA" section, below.
 .
 .
+.TP
+.B -tune\fR,\fP --tune <tune_file>
+Specify a tune file to set arguments for various MCA modules and environment variables.
+See the "Setting MCA parameters and environment variables from file" section, below.
+.
+.
 .
 .
 .P
@@ -1389,6 +1395,21 @@ depends on the specific MCA module.
 To find the available component types under the MCA architecture, or to find the
 available parameters for a specific component, use the \fIompi_info\fP command.
 See the \fIompi_info(1)\fP man page for detailed information on the command.
+.
+.
+.
+.SS Setting MCA parameters and environment variables from file.
+The \fI-tune\fP command line option and its synonym \fI-mca mca_base_envar_file_prefix\fP allows a user
+to set mca parameters and environment variables with the syntax described below.
+This option requires a single file or list of files separated by "," to follow.
+.PP
+A valid line in the file may contain zero or many "-x", "-mca", or “--mca” arguments.
+The following patterns are supported: -mca var val -mca var "val" -x var=val -x var.
+If any argument is duplicated in the file, the last value read will be used.
+.PP
+MCA parameters and environment specified on the command line have higher precedence than variables specified in the file.
+.
+.
 .
 .SS Running as root
 .

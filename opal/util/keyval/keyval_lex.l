@@ -55,6 +55,7 @@ CHAR        [A-Za-z0-9_\-\.]
 
 %x VALUE
 %x comment
+%x MCA_VALUE
 
 %%
 
@@ -77,6 +78,15 @@ CHAR        [A-Za-z0-9_\-\.]
 
 <VALUE>{WHITE}*\n   { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 <VALUE>[^\n]*[^\t \n]/[\t ]*      { return OPAL_UTIL_KEYVAL_PARSE_VALUE; }
+
+<MCA_VALUE>[^\n \t]+      { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_VALUE; }
+<MCA_VALUE>"'"[^\n]*"'"{WHITE}+      { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_VALUE; }
+<MCA_VALUE>"\""[^\n]*"\""{WHITE}+      { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_VALUE; }
+<MCA_VALUE>{WHITE}*\n   { BEGIN(INITIAL); BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
+
+"-"?"-mca"{WHITE}+{CHAR}+{WHITE}+ {BEGIN(MCA_VALUE); return OPAL_UTIL_KEYVAL_PARSE_MCAVAR; }
+"-"?"-x"{WHITE}+{CHAR}+{WHITE}*"="{WHITE}* {BEGIN(MCA_VALUE); return OPAL_UTIL_KEYVAL_PARSE_ENVEQL; }
+"-"?"-x"{WHITE}+{CHAR}+{WHITE}*/[^=] { return OPAL_UTIL_KEYVAL_PARSE_ENVVAR; }
 
 .	            { return OPAL_UTIL_KEYVAL_PARSE_ERROR; }
 

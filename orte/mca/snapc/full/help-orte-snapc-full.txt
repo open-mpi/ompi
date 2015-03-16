@@ -29,3 +29,9 @@ Warning: Unable to determine the AMCA parameter from the environment.
          This is the option supplied to mpirun as '-am '.
          Restart may not be able to correctly determine the correct AMCA/MCA
          parameters to use when restarting.
+
+[tune_param_not_found]
+Warning: Unable to determine the TUNE parameter from the environment.
+         This is the option supplied to mpirun as '-tune '.
+         Restart may not be able to correctly determine the correct TUNE/MCA/ENV
+         parameters to use when restarting.

@@ -50,6 +50,8 @@ OPAL_DECLSPEC int opal_util_keyval_parse_init(void);
 
 OPAL_DECLSPEC int opal_util_keyval_parse_finalize(void);
 
+OPAL_DECLSPEC int opal_util_keyval_save_internal_envars(opal_keyval_parse_fn_t callback);
+
 END_C_DECLS
 
 #endif

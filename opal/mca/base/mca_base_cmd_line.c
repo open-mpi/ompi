@@ -75,6 +75,18 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
         }
     }
 
+    {
+        opal_cmd_line_init_t entry =
+            {"mca_base_envar_file_prefix", '\0', "tune", NULL, 1,
+             NULL, OPAL_CMD_LINE_TYPE_STRING,
+             "Application profile options file list"
+            };
+        ret = opal_cmd_line_make_opt_mca(cmd, entry);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
     return ret;
 }
 

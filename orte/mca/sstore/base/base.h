@@ -68,6 +68,7 @@ ORTE_DECLSPEC extern int orte_sstore_context;
 #define SSTORE_METADATA_LOCAL_SNAP_REF_FMT_STR ("# Local Snapshot Format Reference: ")
 #define SSTORE_METADATA_GLOBAL_SNAP_SEQ_STR    ("# Seq: ")
 #define SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR  ("# AMCA: ")
+#define SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR  ("# TUNE: ")
 
 #define SSTORE_METADATA_INTERNAL_DONE_SEQ_STR  ("# Finished Seq: ")
 #define SSTORE_METADATA_INTERNAL_TIME_STR      ("# Timestamp: ")

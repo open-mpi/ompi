@@ -1988,6 +1988,26 @@ static int snapc_full_establish_snapshot_dir(bool empty_metadata)
         }
     }
 
+    /*
+     * Save the TUNE parameter used into the metadata file
+     */
+    if( 0 > (idx = mca_base_var_find("opal", "mca", "base", "envar_file_prefix")) ) {
+        opal_show_help("help-orte-restart.txt", "tune_param_not_found", true);
+    }
+    if( 0 < idx ) {
+        mca_base_var_get_value (idx, &value, NULL, NULL);
+
+        if (*value) {
+            orte_sstore.set_attr(global_snapshot.ss_handle,
+                                 SSTORE_METADATA_GLOBAL_TUNE_PARAM,
+                                 *value);
+
+            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                                 "Global) TUNE Parameter Preserved: %s",
+                                 *value));
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 

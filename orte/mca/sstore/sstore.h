@@ -91,8 +91,11 @@ typedef uint32_t orte_sstore_base_key_t;
  * Therefore, it needs to be marked specially. */
 #define SSTORE_METADATA_GLOBAL_MIGRATING       22
 
+/** TUNE Parameter to be preserved for ompi-restart */
+#define SSTORE_METADATA_GLOBAL_TUNE_PARAM      23
+
 /** */
-#define SSTORE_METADATA_MAX                    23
+#define SSTORE_METADATA_MAX                    24
 
 /**
  * Storage handle
@@ -159,6 +162,9 @@ struct orte_sstore_base_global_snapshot_info_1_0_0_t {
 
     /** AMCA parameter used */
     char *amca_param;
+
+    /** TUNE parameter used */
+    char *tune_param;
 
     /** Internal use only: Cache some information on the structure */
     int num_seqs;

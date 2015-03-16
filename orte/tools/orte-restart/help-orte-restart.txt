@@ -70,3 +70,8 @@ Error: The filename (%s) and sequence number (%d) could not be used.
 Warning: Unable to find the AMCA parameter in the checkpoint metadata.
          This is the option supplied to mpirun as '-am '. Restart will
          assume this value to be '%s'.
+#
+[tune_param_not_found]
+Warning: Unable to find the TUNE parameter in the checkpoint metadata.
+         This is the option supplied to mpirun as '-tune '. Restart will
+         assume this value to be '%s'.

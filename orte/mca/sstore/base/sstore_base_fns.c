@@ -121,6 +121,7 @@ void orte_sstore_base_global_snapshot_info_construct(orte_sstore_base_global_sna
     snapshot->basedir = NULL;
     snapshot->reference = NULL;
     snapshot->amca_param = NULL;
+    snapshot->tune_param = NULL;
     snapshot->metadata_filename = NULL;
 }
 
@@ -167,6 +168,11 @@ void orte_sstore_base_global_snapshot_info_destruct( orte_sstore_base_global_sna
     if( NULL != snapshot->amca_param ) {
         free(snapshot->amca_param);
         snapshot->amca_param = NULL;
+    }
+
+    if( NULL != snapshot->tune_param ) {
+        free(snapshot->tune_param);
+        snapshot->tune_param = NULL;
     }
 
     if( NULL != snapshot->metadata_filename ) {
@@ -335,6 +341,9 @@ int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore
     else if( SSTORE_METADATA_GLOBAL_AMCA_PARAM == key ) {
         *value = strdup(tool_global_snapshot->amca_param);
     }
+    else if( SSTORE_METADATA_GLOBAL_TUNE_PARAM == key ) {
+        *value = strdup(tool_global_snapshot->tune_param);
+    }
     else {
         return ORTE_ERR_NOT_SUPPORTED;
     }
@@ -412,6 +421,9 @@ int orte_sstore_base_convert_key_to_string(orte_sstore_base_key_t key, char **ke
     case SSTORE_METADATA_GLOBAL_AMCA_PARAM:
         *key_str = strdup(SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR);
         break;
+    case SSTORE_METADATA_GLOBAL_TUNE_PARAM:
+        *key_str = strdup(SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR);
+        break;
     default:
         *key_str = NULL;
         break;
@@ -451,6 +463,9 @@ int orte_sstore_base_convert_string_to_key(char *key_str, orte_sstore_base_key_t
     }
     else if( 0 == strncmp(key_str, SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR, strlen(SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR))) {
         *key = SSTORE_METADATA_GLOBAL_AMCA_PARAM;
+    }
+    else if( 0 == strncmp(key_str, SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR, strlen(SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR))) {
+        *key = SSTORE_METADATA_GLOBAL_TUNE_PARAM;
     }
     else {
         *key = SSTORE_METADATA_MAX;
@@ -653,6 +668,9 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
         }
         else if(0 == strncmp(token, SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR, strlen(SSTORE_METADATA_GLOBAL_AMCA_PARAM_STR))) {
             global_snapshot->amca_param  = strdup(value);
+        }
+        else if(0 == strncmp(token, SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR, strlen(SSTORE_METADATA_GLOBAL_TUNE_PARAM_STR))) {
+            global_snapshot->tune_param  = strdup(value);
         }
     } while(0 == feof(metadata) );
     
