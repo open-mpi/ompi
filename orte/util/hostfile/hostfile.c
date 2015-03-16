@@ -132,9 +132,8 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
     orte_node_t* node;
     bool got_max = false;
     char* value;
-    char **argv, **aliases, *aptr;
+    char **argv;
     char* node_name = NULL;
-    char* node_alias = NULL;
     char* username = NULL;
     int cnt;
     int number_of_slots = 0;
@@ -181,13 +180,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
-            /* convert this into something globally unique */
-            if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
+            /* see if this is another name for us */
+            if (orte_ifislocal(node_name)) {
                 /* Nodename has been allocated, that is for sure */
-                if (orte_show_resolved_nodenames &&
-                    0 != strcmp(node_name, orte_process_info.nodename)) {
-                    node_alias = strdup(node_name);
-                }
                 free (node_name);
                 node_name = strdup(orte_process_info.nodename);
             }
@@ -208,12 +203,8 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         /* this is not a node to be excluded, so we need to process it and
          * add it to the "include" list. See if this host is actually us.
          */
-        if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
+        if (orte_ifislocal(node_name)) {
             /* Nodename has been allocated, that is for sure */
-            if (orte_show_resolved_nodenames &&
-                0 != strcmp(node_name, orte_process_info.nodename)) {
-                node_alias = strdup(node_name);
-            }
             free (node_name);
             node_name = strdup(orte_process_info.nodename);
         }
@@ -237,23 +228,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             node->slots++;
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             free(node_name);
-        }
-        /* do we need to record an alias for this node? */
-        if (NULL != node_alias) {
-            /* add to list of aliases for this node - only add if unique */
-            aptr = NULL;
-            aliases = NULL;
-            orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)&aptr, OPAL_STRING);
-            if (NULL != aptr) {
-                aliases = opal_argv_split(aptr, ',');
-                free(aptr);
-            }
-            opal_argv_append_unique_nosize(&aliases, node_alias, false);
-            free(node_alias);
-            aptr = opal_argv_join(aliases, ',');
-            opal_argv_free(aliases);
-            orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
-            free(aptr);
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {
         /* store this for later processing */
@@ -779,15 +753,11 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                  item1 != opal_list_get_end(nodes);
                  item1 = opal_list_get_next(item1)) {
                 node_from_list = (orte_node_t*)item1;
-                /* since the name in the hostfile might not match
-                 * our local name, and yet still be intended to match,
-                 * we have to check for local interfaces
-                 */
-                if (0 == strcmp(node_from_file->name, node_from_list->name) ||
-                    (0 == strcmp(node_from_file->name, "localhost") &&
-                     0 == strcmp(node_from_list->name, orte_process_info.nodename)) ||
-                    (opal_ifislocal(node_from_list->name) &&
-                     opal_ifislocal(node_from_file->name))) {
+                /* we have converted all aliases for ourself
+                 * to our own detected nodename, so no need
+                 * to check for interfaces again - a simple
+                 * strcmp will suffice */
+                if (0 == strcmp(node_from_file->name, node_from_list->name)) {
                     /* if the slot count here is less than the
                      * total slots avail on this node, set it
                      * to the specified count - this allows people

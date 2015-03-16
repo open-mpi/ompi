@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *  
  * $COPYRIGHT$
  * 
@@ -484,8 +484,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             goto unlock;
                         }
                         /* check if this is the local node */
-                        if (0 == strcmp(node_name, hnp_node->name) ||
-                            opal_ifislocal(node_name)) {
+                        if (orte_ifislocal(node_name)) {
                             rfmap->node_name = strdup(hnp_node->name);
                         } else {
                             rfmap->node_name = strdup(node_name);

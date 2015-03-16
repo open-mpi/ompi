@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,6 +33,7 @@
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -537,9 +538,7 @@ static void process_opens(int fd, short args, void *cbdata)
     }
 
     /* if the host is our own, then treat it as a local file */
-    if (0 == strcmp(host, orte_process_info.nodename) ||
-        0 == strcmp(host, "localhost") ||
-        opal_ifislocal(host)) {
+    if (orte_ifislocal(host)) {
         opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s file %s on local host",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

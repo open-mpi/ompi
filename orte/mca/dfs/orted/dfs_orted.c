@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -329,10 +330,7 @@ static void process_opens(int fd, short args, void *cbdata)
         goto complete;
     }
     /* if the host is our own, then treat it as a local file */
-    if (NULL == host ||
-        0 == strcmp(host, orte_process_info.nodename) ||
-        0 == strcmp(host, "localhost") ||
-        opal_ifislocal(host)) {
+    if (NULL == host || orte_ifislocal(host)) {
         opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s file %s on local host",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
