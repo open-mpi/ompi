@@ -125,13 +125,9 @@ void orte_oob_tcp_set_socket_options(int sd)
                         opal_socket_errno);
             return;
         }
-        if (mca_oob_tcp_component.tcp_proto < 0) {
-            /* we don't know the TCP protocol number */
-            return;
-        }
 #if defined(TCP_KEEPALIVE)
         /* set the idle time */
-        if (setsockopt(sd, mca_oob_tcp_component.tcp_proto, TCP_KEEPALIVE,
+        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPALIVE,
                        &mca_oob_tcp_component.keepalive_time,
                        sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
             opal_output(0, "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
@@ -142,7 +138,7 @@ void orte_oob_tcp_set_socket_options(int sd)
         }
 #elif defined(TCP_KEEPIDLE)
         /* set the idle time */
-        if (setsockopt(sd, mca_oob_tcp_component.tcp_proto, TCP_KEEPIDLE,
+        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPIDLE,
                        &mca_oob_tcp_component.keepalive_time,
                        sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
             opal_output(0, "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
@@ -154,7 +150,7 @@ void orte_oob_tcp_set_socket_options(int sd)
 #endif  // TCP_KEEPIDLE
 #if defined(TCP_KEEPINTVL)
         /* set the keepalive interval */
-        if (setsockopt(sd, mca_oob_tcp_component.tcp_proto, TCP_KEEPINTVL,
+        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPINTVL,
                        &mca_oob_tcp_component.keepalive_intvl,
                        sizeof(mca_oob_tcp_component.keepalive_intvl)) < 0) {
             opal_output(0, "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
@@ -166,7 +162,7 @@ void orte_oob_tcp_set_socket_options(int sd)
 #endif  // TCP_KEEPINTVL
 #if defined(TCP_KEEPCNT)
         /* set the miss rate */
-        if (setsockopt(sd, mca_oob_tcp_component.tcp_proto, TCP_KEEPCNT,
+        if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPCNT,
                        &mca_oob_tcp_component.keepalive_probes,
                        sizeof(mca_oob_tcp_component.keepalive_probes)) < 0) {
             opal_output(0, "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 

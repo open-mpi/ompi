@@ -411,21 +411,13 @@ static int tcp_component_register(void)
 #endif
 
     
-    mca_oob_tcp_component.keepalive_time = -1;
+    mca_oob_tcp_component.keepalive_time = 10;
     (void)mca_base_component_var_register(component, "keepalive_time",
                                           "Idle time in seconds before starting to send keepalives (num <= 0 => disable keepalive)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_time);
-    if (0 < mca_oob_tcp_component.keepalive_time) {
-        struct protoent *proto;
-        if (NULL != (proto = getprotobyname("TCP"))) {
-            mca_oob_tcp_component.tcp_proto = proto->p_proto;
-        } else {
-            mca_oob_tcp_component.tcp_proto = -1;
-        }
-    }
 
     mca_oob_tcp_component.keepalive_intvl = 5;
     (void)mca_base_component_var_register(component, "keepalive_intvl",
