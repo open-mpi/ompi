@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -52,11 +52,10 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
     orte_std_cntr_t i, j, k;
     int rc;
     char **host_argv=NULL;
-    char **mapped_nodes = NULL, **mini_map;
+    char **mapped_nodes = NULL, **mini_map, *ndname;
     orte_node_t *node, *nd;
     opal_list_t adds;
     bool found;
-    char **aliases, *aptr;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s dashhost: parsing args",
@@ -111,12 +110,17 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                              "%s dashhost: working node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), mapped_nodes[i]));
 
+        /* check for local name */
+        if (orte_ifislocal(mapped_nodes[i])) {
+            ndname = orte_process_info.nodename;
+        } else {
+            ndname = mapped_nodes[i];
+        }
+        
         /* see if the node is already on the list */
         found = false;
         OPAL_LIST_FOREACH(node, &adds, orte_node_t) {
-            if (0 == strcmp(node->name, mapped_nodes[i]) ||
-                (0 == strcmp(node->name, orte_process_info.nodename) &&
-                 (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
+            if (0 == strcmp(node->name, ndname)) {
                 found = true;
                 ++node->slots;
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
@@ -134,33 +138,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             if (NULL == node) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            /* check to see if this is a local name */
-            if (0 == strcmp(mapped_nodes[i], "localhost") ||
-                opal_ifislocal(mapped_nodes[i])) {
-                /* it is local, so use the local nodename to avoid
-                 * later confusion
-                 */
-                if (orte_show_resolved_nodenames &&
-                    0 != strcmp(mapped_nodes[i], orte_process_info.nodename)) {
-                    /* add to list of aliases for this node - only add if unique */
-                    aptr = NULL;
-                    aliases = NULL;
-                    orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)&aptr, OPAL_STRING);
-                    if (NULL != aptr) {
-                        aliases = opal_argv_split(aptr, ',');
-                        free(aptr);
-                    }
-                    opal_argv_append_unique_nosize(&aliases, mapped_nodes[i], false);
-                    aptr = opal_argv_join(aliases, ',');
-                    opal_argv_free(aliases);
-                    orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
-                    free(aptr);
-                }
-                node->name = strdup(orte_process_info.nodename);
-            } else {
-                /* not local - use the given name */
-                node->name = strdup(mapped_nodes[i]);
-            }
+            node->name = strdup(ndname);
             OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                  "%s dashhost: added node %s to list",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
@@ -287,9 +265,11 @@ static int parse_dash_host(char ***mapped_nodes, char *hosts)
                     goto cleanup;
                 }
             } else { /* non-relative syntax - add to list */
-                if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(mapped_nodes, 
-                                                                  mini_map[k]))) {
-                    goto cleanup;
+                /* check for local alias */
+                if (orte_ifislocal(mini_map[k])) {
+                    opal_argv_append_nosize(mapped_nodes, orte_process_info.nodename);
+                } else {
+                    opal_argv_append_nosize(mapped_nodes, mini_map[k]);
                 }
             }
         }
@@ -316,7 +296,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     orte_std_cntr_t i, j, len_mapped_node=0;
     int rc;
     char **mapped_nodes = NULL;
-    orte_node_t *node, *hnp_node;
+    orte_node_t *node;
     int num_empty=0;
     opal_list_t keep;
     bool want_all_empty=false;
@@ -342,9 +322,6 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
      * nodes list ONCE.
      */
 
-    /* get the hnp node's info */
-    hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        
     len_mapped_node = opal_argv_count(mapped_nodes);
     /* setup a working list so we can put the final list
      * of nodes in order. This way, if the user specifies a
@@ -399,21 +376,15 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 item = next;
             }
         } else {
-            /* we are looking for a specific node on the list
-             * we have a match if one of two conditions is met:
-             * 1. the node_name and mapped_nodes directly match
-             * 2. the node_name is the local system name AND
-             *    either the mapped_node is "localhost" OR it
-             *    is a local interface as found by opal_ifislocal
-             */
+            /* we are looking for a specific node on the list. The
+             * parser will have substituted our local name for any
+             * alias, so we only have to do a strcmp here */
             item = opal_list_get_first(nodes);
             while (item != opal_list_get_end(nodes)) {
                 next = opal_list_get_next(item);  /* save this position */
                 node = (orte_node_t*)item;
                 /* search -host list to see if this one is found */
-                if (0 == strcmp(node->name, mapped_nodes[i]) ||
-                    (0 == strcmp(node->name, hnp_node->name) &&
-                    (0 == strcasecmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
+                if (0 == strcmp(node->name, mapped_nodes[i])) {
                     if (remove) {
                         /* remove item from list */
                         opal_list_remove_item(nodes, item);
