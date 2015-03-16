@@ -1122,7 +1122,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *nodes)
 {
     char *param = NULL;
-    const char **tmp_value;
+    const char **tmp_value, **tmp_value2;
     int loc_id;
     char *tmp_force = NULL;
     int i, j, cnt, rc;
@@ -1289,7 +1289,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      */
     /* Add the 'prefix' param */
     tmp_value = NULL;
-    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+
+    loc_id = mca_base_var_find("opal", "mca", "base", "envar_file_prefix");
     if (loc_id < 0) {
         rc = OPAL_ERR_NOT_FOUND;
         ORTE_ERROR_LOG(rc);
@@ -1301,13 +1302,28 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         return rc;
     }
     if( NULL != tmp_value && NULL != tmp_value[0] ) {
+        /* Could also use the short version '-tune'
+         * but being verbose has some value
+         */
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "mca_base_envar_file_prefix");
+        opal_argv_append(argc, argv, tmp_value[0]);
+    }
+
+    tmp_value2 = NULL;
+    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+    mca_base_var_get_value(loc_id, &tmp_value2, NULL, NULL);
+    if( NULL != tmp_value2 && NULL != tmp_value2[0] ) {
         /* Could also use the short version '-am'
          * but being verbose has some value
          */
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "mca_base_param_file_prefix");
-        opal_argv_append(argc, argv, tmp_value[0]);
-    
+        opal_argv_append(argc, argv, tmp_value2[0]);
+        orte_show_help("help-plm-base.txt", "deprecated-amca", true);
+    }
+
+    if (NULL != tmp_value && NULL != tmp_value[0] || NULL != tmp_value2 && NULL != tmp_value2[0]) {
         /* Add the 'path' param */
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");

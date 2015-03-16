@@ -727,6 +727,7 @@ OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_typ
  * their assigned value, to the provided argv
  */
 OPAL_DECLSPEC int mca_base_var_process_env_list(char ***argv);
+OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
 
 END_C_DECLS
 
