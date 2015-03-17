@@ -351,6 +351,10 @@ static int bind_downwards(orte_job_t *jdata,
             nxt_obj = trg_obj->next_cousin;
         } while (total_cpus < orte_rmaps_base.cpus_per_rank);
         hwloc_bitmap_list_asprintf(&cpu_bitmap, totalcpuset);
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "%s PROC %s BITMAP %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&proc->name), cpu_bitmap);
         orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
         if (NULL != cpu_bitmap) {
             free(cpu_bitmap);
@@ -680,9 +684,9 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     int bind_depth, map_depth;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps: compute bindings for job %s with policy %s",
+                        "mca:rmaps: compute bindings for job %s with policy %s[%x]",
                         ORTE_JOBID_PRINT(jdata->jobid),
-                        opal_hwloc_base_print_binding(jdata->map->binding));
+                        opal_hwloc_base_print_binding(jdata->map->binding), jdata->map->binding);
 
     map = ORTE_GET_MAPPING_POLICY(jdata->map->mapping);
     bind = OPAL_GET_BINDING_POLICY(jdata->map->binding);
