@@ -100,7 +100,6 @@ void pmix_server_process_message(pmix_server_peer_t *peer)
     pmix_server_dmx_req_t *req, *nextreq;
     bool found;
     orte_grpcomm_signature_t *sig;
-    char *local_uri;
     uint32_t sm_flag;
 
     /* xfer the message to a buffer for unpacking */
@@ -206,19 +205,6 @@ void pmix_server_process_message(pmix_server_peer_t *peer)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (PMIX_FENCENB_CMD == cmd) ? "FENCE_NB" : "FENCE", tmp);
             free(tmp);
-        }
-        /* get the URI for this process */
-        cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &local_uri, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(sig);
-            goto reply_fence;
-        }
-        /* if not NULL, then update our connection info as we might need
-         * to send this proc a message at some point */
-        if (NULL != local_uri) {
-            orte_rml.set_contact_info(local_uri);
-            free(local_uri);
         }
         /* unpack flag if sm dstore is supported by the client */
         cnt = 1;
