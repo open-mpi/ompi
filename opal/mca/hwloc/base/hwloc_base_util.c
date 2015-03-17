@@ -98,12 +98,10 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
     
     /* Now do the actual lookup. */
     obj = hwloc_get_obj_by_type(topo, obj_type, lid);
-    if (NULL == obj) {
-        opal_show_help("help-opal-hwloc-base.txt",
-                       "cpu-not-found", true, "logical",
-                       lid, (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set);
-        return NULL;
-    }
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "logical cpu %d %s found in cpuset %s",
+                             lid, (NULL == obj) ? "not" : "is",
+                             (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set));
 
     /* Found the right core (or PU). Return the object */
     return obj;
@@ -156,43 +154,26 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
             case 1:
                 /* only one cpu given - get that object */
                 cpu = strtoul(range[0], NULL, 10);
-                if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
-                    opal_argv_free(ranges);
-                    opal_argv_free(range);
-                    hwloc_bitmap_free(avail);
-                    hwloc_bitmap_free(res);
-                    hwloc_bitmap_free(pucpus);
-                    return OPAL_ERR_SILENT;
+                if (NULL != (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
+                    hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                    hwloc_bitmap_or(res, avail, pucpus);
+                    hwloc_bitmap_copy(avail, res);
                 }
-                hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
-                hwloc_bitmap_or(res, avail, pucpus);
-                hwloc_bitmap_copy(avail, res);
                 break;
             case 2:
                 /* range given */
                 start = strtoul(range[0], NULL, 10);
                 end = strtoul(range[1], NULL, 10);
                 for (cpu=start; cpu <= end; cpu++) {
-                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
-                        opal_argv_free(ranges);
-                        opal_argv_free(range);
-                        hwloc_bitmap_free(avail);
-                        hwloc_bitmap_free(res);
-                        hwloc_bitmap_free(pucpus);
-                        return OPAL_ERR_SILENT;
+                    if (NULL != (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
+                        hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                        hwloc_bitmap_or(res, avail, pucpus);
+                        hwloc_bitmap_copy(avail, res);
                     }
-                    hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
-                    hwloc_bitmap_or(res, avail, pucpus);
-                    hwloc_bitmap_copy(avail, res);
                 }
                 break;
             default:
-                hwloc_bitmap_free(avail);
-                hwloc_bitmap_free(res);
-                hwloc_bitmap_free(pucpus);
-                opal_argv_free(ranges);
-                opal_argv_free(range);
-                return OPAL_ERR_BAD_PARAM;
+                break;
             }
             opal_argv_free(range);
         }
@@ -262,9 +243,11 @@ int opal_hwloc_base_get_topology(void)
             0 != hwloc_topology_load(opal_hwloc_topology)) {
             return OPAL_ERR_NOT_SUPPORTED;
         }
+        if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
+            return rc;
+        }
     } else {
-        rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file);
-        if (OPAL_SUCCESS != rc) {
+        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
             return rc;
         }
     }

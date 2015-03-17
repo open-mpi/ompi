@@ -202,11 +202,7 @@ static int rte_init(void)
                 goto error;
             }
         }
-        /* don't filter the topology thru any specified cpuset as that
-         * might only apply to compute nodes, which could be different
-         * from the node where mpirun is executing */
-        
-        /* generate the unfiltered signature */
+        /* generate the signature */
         orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
 
         if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {

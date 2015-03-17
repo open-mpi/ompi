@@ -149,11 +149,6 @@ int orte_ess_base_orted_setup(char **hosts)
                 error = "topology discovery";
                 goto error;
             }
-            /* filter our topology to take into account any specified cpuset */
-            if (OPAL_SUCCESS != (ret = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
-                error = "topology filter";
-                goto error;
-            }
         }
         /* generate the signature */
         orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);

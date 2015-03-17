@@ -87,7 +87,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     {
         hwloc_topology_t t;
         orte_node_t *node;
-        int i, rc;
+        int i;
 
         /* if we got back topology info from the first node, then we use
          * it as the "standard" for all other nodes unless they sent
@@ -112,17 +112,6 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                     node->topology = t;
                 }
             }
-        } else {
-            /* since we are the only daemon, we need to filter our topology
-             * to take into account any specified cpuset */
-            if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
-                ORTE_ERROR_LOG(rc);
-                ORTE_FORCED_TERMINATE(rc);
-                OBJ_RELEASE(caddy);
-                return;
-            }
-            /* update the signature */
-            orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
         }
         /* if this is an unmanaged allocation, then set the default
          * slots on each node as directed or using default
