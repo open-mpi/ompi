@@ -28,12 +28,6 @@ The specified %s policy is not recognized:
 Please check for a typo or ensure that the option is a supported
 one.
 #
-[cpu-not-found]
-A specified %s processor does not exist in this topology:
-
-  CPU number:     %d
-  Cpu set given:  %s
-#
 [redefining-policy]
 Conflicting directives for binding policy are causing the policy
 to be redefined:

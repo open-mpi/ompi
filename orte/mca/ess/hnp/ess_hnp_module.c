@@ -197,7 +197,7 @@ static int rte_init(void)
     {
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
-            if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+            if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
                 error = "topology discovery";
                 goto error;
             }

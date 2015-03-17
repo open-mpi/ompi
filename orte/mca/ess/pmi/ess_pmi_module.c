@@ -96,16 +96,6 @@ static int rte_init(void)
         goto error;
     }
     
-#if OPAL_HAVE_HWLOC
-    /* get the topology */
-    if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
-            error = "topology discovery";
-            goto error;
-        }
-    }
-#endif
-
     /* we don't have to call pmix.init because the pmix select did it */
 
     /****   THE FOLLOWING ARE REQUIRED VALUES   ***/
@@ -201,6 +191,16 @@ static int rte_init(void)
         /* cannot free the envar as that messes up our environ */
         free(string_key);
     }
+
+#if OPAL_HAVE_HWLOC
+    /* if it wasn't passed down to us, get the topology */
+    if (NULL == opal_hwloc_topology) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+            error = "topology discovery";
+            goto error;
+        }
+    }
+#endif
 
     /* we don't need to force the routed system to pick the
      * "direct" component as that should happen automatically

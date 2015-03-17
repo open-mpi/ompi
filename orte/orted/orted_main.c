@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -752,8 +752,10 @@ int orte_daemon(int argc, char *argv[])
             char *coprocessors;
             uint8_t tflag;
                         
-            /* add the local topology, if different from the HNP's or user directed us to */
-            if (orte_hetero_nodes || 0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig)) {
+            /* add the local topology, if different from the HNP's or user directed us to,
+             * but always if we are the first daemon to ensure we get a compute node */
+            if (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes ||
+                0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig)) {
                 tflag = 1;
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
                     ORTE_ERROR_LOG(ret);
