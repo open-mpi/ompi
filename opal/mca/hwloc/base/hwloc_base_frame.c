@@ -449,7 +449,8 @@ char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
 static void obj_data_const(opal_hwloc_obj_data_t *ptr)
 {
     ptr->available = NULL;
-    ptr->npus = UINT_MAX;
+    ptr->npus_calculated = false;
+    ptr->npus = 0;
     ptr->idx = UINT_MAX;
     ptr->num_bound = 0;
 }
