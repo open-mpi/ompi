@@ -197,12 +197,16 @@ static int rte_init(void)
     {
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
-            if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+            if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
                 error = "topology discovery";
                 goto error;
             }
         }
-        /* generate the signature */
+        /* don't filter the topology thru any specified cpuset as that
+         * might only apply to compute nodes, which could be different
+         * from the node where mpirun is executing */
+        
+        /* generate the unfiltered signature */
         orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
 
         if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {

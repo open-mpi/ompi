@@ -488,6 +488,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             error = "Topology init";
             goto error;
         }
+        /* filter our topology to take into account any specified cpuset */
+        if (OPAL_SUCCESS != (ret = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
+            error = "topology filter";
+            goto error;
+        }
     }
 #endif
 

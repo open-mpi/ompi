@@ -249,7 +249,7 @@ static void fill_cache_line_size(void)
 
 int opal_hwloc_base_get_topology(void)
 {
-    int rc;
+    int rc=OPAL_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
@@ -261,12 +261,6 @@ int opal_hwloc_base_get_topology(void)
                                            HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
             0 != hwloc_topology_load(opal_hwloc_topology)) {
             return OPAL_ERR_NOT_SUPPORTED;
-        }
-
-        /* filter the cpus thru any default cpu set */
-        rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
         }
     } else {
         rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file);

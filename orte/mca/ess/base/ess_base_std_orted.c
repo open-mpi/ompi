@@ -145,8 +145,13 @@ int orte_ess_base_orted_setup(char **hosts)
         
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
-            if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+            if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
                 error = "topology discovery";
+                goto error;
+            }
+            /* filter our topology to take into account any specified cpuset */
+            if (OPAL_SUCCESS != (ret = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
+                error = "topology filter";
                 goto error;
             }
         }
