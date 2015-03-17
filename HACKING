@@ -49,7 +49,7 @@ developer's checkout, you have three main options:
      shell$ ./autogen.pl
      shell$ mkdir build
      shell$ cd build
-     shell$ ./configure --with-platform=optimized ...
+     shell$ ../configure --with-platform=optimized ...
      [...lots of output...]
      shell$ make all install
 
