@@ -404,6 +404,29 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
+    
+    mca_oob_tcp_component.keepalive_time = 10;
+    (void)mca_base_component_var_register(component, "keepalive_time",
+                                          "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_time);
+
+    mca_oob_tcp_component.keepalive_intvl = 60;
+    (void)mca_base_component_var_register(component, "keepalive_intvl",
+                                          "Time between keepalives, in seconds",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_intvl);
+    mca_oob_tcp_component.keepalive_probes = 3;
+    (void)mca_base_component_var_register(component, "keepalive_probes",
+                                          "Number of keepalives that can be missed before declaring error",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_probes);
     return ORTE_SUCCESS;
 }
 
