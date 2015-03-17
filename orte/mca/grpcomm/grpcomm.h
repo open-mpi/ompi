@@ -75,7 +75,7 @@ typedef struct {
     /* number reported in */
     size_t nreported;
     /* distance masks for receive */
-    uint32_t distance_mask_recv;
+    uint32_t *distance_mask_recv;
     /* received buckets */
     opal_buffer_t ** buffers;
     /* callback function */
