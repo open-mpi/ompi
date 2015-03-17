@@ -171,6 +171,9 @@ int orte_proc_info(void)
 
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    /* add this to our list of aliases */
+    opal_argv_append_nosize(&orte_process_info.aliases, hostname);
+    
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
         if (0 == inet_pton(AF_INET, hostname, &buf) &&
@@ -178,6 +181,8 @@ int orte_proc_info(void)
             /* not an IP address, so remove any domain info */
             if (NULL != (ptr = strchr(hostname, '.'))) {
                 *ptr = '\0';
+                /* add this to our list of aliases */
+                opal_argv_append_nosize(&orte_process_info.aliases, hostname);
             }
         }
     }
@@ -209,6 +214,8 @@ int orte_proc_info(void)
                 } else {
                     orte_process_info.nodename = strdup(&hostname[idx]);
                 }
+                /* add this to our list of aliases */
+                opal_argv_append_nosize(&orte_process_info.aliases, orte_process_info.nodename);
                 match = true;
                 break;
             }
@@ -221,6 +228,9 @@ int orte_proc_info(void)
     } else {
         orte_process_info.nodename = strdup(hostname);
     }
+
+    /* add "localhost" to our list of aliases */
+    opal_argv_append_nosize(&orte_process_info.aliases, "localhost");
 
     /* get the number of nodes in the job */
     orte_process_info.num_nodes = 1;
@@ -332,17 +342,6 @@ int orte_proc_info_finalize(void)
 bool orte_ifislocal(const char *hostname)
 {
     int i;
-    
-    /* see if this matches our known hostname */
-    if (NULL != orte_process_info.nodename &&
-        0 == strcmp(hostname, orte_process_info.nodename)) {
-        return true;
-    }
-
-    /* see if it matches the generic "localhost" */
-    if (0 == strcmp(hostname, "localhost")) {
-        return true;
-    }
     
     /* see if it matches any of our known aliases */
     if (NULL != orte_process_info.aliases) {
