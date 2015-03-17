@@ -216,16 +216,14 @@ static void accept_connection(const int accepted_fd,
     ORTE_ACTIVATE_TCP_ACCEPT_STATE(accepted_fd, addr, recv_handler);
 }
 
+/* the host in this case is always in "dot" notation, and
+ * thus we do not need to do a DNS lookup to convert it */
 static int parse_uri(const uint16_t af_family,
                      const char* host,
                      const char *port,
                      struct sockaddr* inaddr)
 {
     struct sockaddr_in *in;
-#if OPAL_ENABLE_IPV6
-    struct addrinfo hints, *res;
-    int ret;
-#endif
 
     if (AF_INET == af_family) {
         memset(inaddr, 0, sizeof(struct sockaddr_in));
@@ -239,21 +237,14 @@ static int parse_uri(const uint16_t af_family,
     }
 #if OPAL_ENABLE_IPV6
     else if (AF_INET6 == af_family) {
-        size_t len;
+        struct sockaddr_in6 *in6;
         memset(inaddr, 0, sizeof(struct sockaddr_in6));
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = af_family;
-        hints.ai_socktype = SOCK_STREAM;
-        ret = getaddrinfo(host, NULL, &hints, &res);
+        in6 = (struct sockaddr_in6*) inaddr;
         
-        if (ret) {
-            opal_output (0, "oob_tcp_parse_uri: Could not resolve %s. [Error: %s]\n",
-                         host, gai_strerror (ret));
+        if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
+            opal_output (0, "oob_tcp_parse_uri: Could not convert %s\n", host);
             return ORTE_ERR_BAD_PARAM;
         }
-        len = (res->ai_addrlen < sizeof(struct sockaddr_in6)) ? res->ai_addrlen : sizeof(struct sockaddr_in6);
-        memcpy(inaddr, res->ai_addr, len);
-        freeaddrinfo(res);
     }
 #endif
     else {

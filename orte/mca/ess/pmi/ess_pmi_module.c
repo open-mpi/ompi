@@ -232,28 +232,31 @@ static int rte_init(void)
 
     /***  PUSH DATA FOR OTHERS TO FIND   ***/
 
-    /* if our URI was not provided by the system, then
-     * push our URI so others can find us */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_URI, &vals)) {
-        /* construct the RTE string */
-        rmluri = orte_rml.get_contact_info();
-        /* push it out for others to use */
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_URI);
-        kvn.type = OPAL_STRING;
-        kvn.data.string = strdup(rmluri);
-        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-            error = "db store uri";
+    /* if we are direct launched, then push our RML URI - there
+     * is no need to do so when launched by mpirun as all apps
+     * communicate thru their local daemon */
+    if (orte_standalone_operation) {
+        OBJ_CONSTRUCT(&vals, opal_list_t);
+        if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
+                                              OPAL_DSTORE_URI, &vals)) {
+            /* construct the RTE string */
+            rmluri = orte_rml.get_contact_info();
+            /* push it out for others to use */
+            OBJ_CONSTRUCT(&kvn, opal_value_t);
+            kvn.key = strdup(OPAL_DSTORE_URI);
+            kvn.type = OPAL_STRING;
+            kvn.data.string = strdup(rmluri);
+            if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+                error = "db store uri";
+                OBJ_DESTRUCT(&kvn);
+                goto error;
+            }
             OBJ_DESTRUCT(&kvn);
-            goto error;
+            free(rmluri);
         }
-        OBJ_DESTRUCT(&kvn);
-        free(rmluri);
+        OPAL_LIST_DESTRUCT(&vals);
     }
-    OPAL_LIST_DESTRUCT(&vals);
-
+    
     /* push our hostname so others can find us, if they need to */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
     kvn.key = strdup(OPAL_DSTORE_HOSTNAME);

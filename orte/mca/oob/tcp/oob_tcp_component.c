@@ -451,6 +451,12 @@ static bool component_available(void)
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
 
+    /* if we are an APP and we are not direct launched,
+     * then we don't want to be considered */
+    if (ORTE_PROC_IS_APP && !orte_standalone_operation) {
+        return false;
+    }
+
     /* if interface include was given, construct a list
      * of those interfaces which match the specifications - remember,
      * the includes could be given as named interfaces, IP addrs, or
