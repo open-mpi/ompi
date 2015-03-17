@@ -173,8 +173,8 @@ int orte_proc_info(void)
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
-        if (0 != inet_pton(AF_INET, hostname, &buf) &&
-            0 != inet_pton(AF_INET6, hostname, &buf)) {
+        if (0 == inet_pton(AF_INET, hostname, &buf) &&
+            0 == inet_pton(AF_INET6, hostname, &buf)) {
             /* not an IP address, so remove any domain info */
             if (NULL != (ptr = strchr(hostname, '.'))) {
                 *ptr = '\0';
