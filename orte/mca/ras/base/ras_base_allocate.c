@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
+#include "opal/mca/if/if.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -195,6 +196,11 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     } 
     /* If something came back, save it and we are done */
     if (!opal_list_is_empty(&nodes)) {
+        /* flag that the allocation is managed */
+        orte_managed_allocation = true;
+        /* since it is managed, we do not attempt to resolve
+         * the nodenames */
+        opal_if_do_not_resolve = true;
         /* store the results in the global resource pool - this removes the
          * list items
          */
@@ -210,8 +216,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         }
-        /* flag that the allocation is managed */
-        orte_managed_allocation = true;
         goto DISPLAY;
     } else if (orte_allocation_required) {
         /* if nothing was found, and an allocation is

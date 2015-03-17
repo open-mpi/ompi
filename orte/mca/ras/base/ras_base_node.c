@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,10 +103,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
          */
-        if (NULL != hnp_node &&
-            (0 == strcmp(node->name, hnp_node->name) ||
-             0 == strcmp(node->name, "localhost") ||
-             opal_ifislocal(node->name))) {
+        if (NULL != hnp_node && orte_ifislocal(node->name)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:node_insert updating HNP [%s] info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
