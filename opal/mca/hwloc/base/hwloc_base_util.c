@@ -159,7 +159,6 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                     if (NULL == data) {
                         pu->userdata = (void*)OBJ_NEW(opal_hwloc_obj_data_t);
                         data = (opal_hwloc_obj_data_t*)pu->userdata;
-                        data->npus = 0;
                     }
                     data->npus++;
                 }
@@ -177,7 +176,6 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         if (NULL == data) {
                             pu->userdata = (void*)OBJ_NEW(opal_hwloc_obj_data_t);
                             data = (opal_hwloc_obj_data_t*)pu->userdata;
-                            data->npus = 0;
                         }
                         data->npus++;
                     }
@@ -491,6 +489,9 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
         if (NULL == data) {
             return;
         }
+        if (NULL == opal_hwloc_base_cpu_set) {
+            data->npus = 1;
+        }
         *cnt += data->npus;
         return;
     }
@@ -539,7 +540,6 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
     hwloc_cpuset_t cpuset;
 
     data = (opal_hwloc_obj_data_t*)obj->userdata;
-
     if (NULL == data || !data->npus_calculated) {
         if (!opal_hwloc_use_hwthreads_as_cpus) {
             /* if we are treating cores as cpus, then we really

@@ -115,15 +115,30 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using byslot");
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+                    if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                        map->binding = opal_hwloc_binding_policy;
+                    } else {
+                        OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_SOCKET);
+                    }
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using bycore");
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYCORE);
+                    if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                        map->binding = opal_hwloc_binding_policy;
+                    } else {
+                        OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_CORE);
+                    }
                 }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps mapping not given - using bysocket");
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
+                if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                    map->binding = opal_hwloc_binding_policy;
+                } else {
+                    OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_SOCKET);
+                }
             }
 #else
             /* in the absence of hwloc, default to map-by slot */
@@ -152,10 +167,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
         /* ranking was already handled, so just use it here */
         map->ranking = orte_rmaps_base.ranking;
-
-#if OPAL_HAVE_HWLOC
-        map->binding = opal_hwloc_binding_policy;
-#endif
 
         if (NULL != orte_rmaps_base.ppr) {
             map->ppr = strdup(orte_rmaps_base.ppr);
@@ -192,15 +203,36 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using byslot");
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                    if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->mapping)) {
+                        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                            jdata->map->binding = opal_hwloc_binding_policy;
+                        } else {
+                            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                        }
+                    }
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using bycore");
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYCORE);
+                    if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->mapping)) {
+                        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                            jdata->map->binding = opal_hwloc_binding_policy;
+                        } else {
+                            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                        }
+                    }
                 }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps mapping not set by user - using bysocket");
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
+                if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->mapping)) {
+                    if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                        jdata->map->binding = opal_hwloc_binding_policy;
+                    } else {
+                        OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                    }
+                }
             }
 #else
             /* in the absence of hwloc, default to map-by slot */
@@ -231,11 +263,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
             jdata->map->ranking = orte_rmaps_base.ranking;
         }
-#if OPAL_HAVE_HWLOC
-        if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-            jdata->map->binding = opal_hwloc_binding_policy;
-        }
-#endif
     }
 
 #if OPAL_HAVE_HWLOC
