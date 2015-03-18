@@ -268,36 +268,63 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
         return ORTE_ERR_NOT_FOUND;
     }
     regexp = strdup(slurm_node_str);
-    
-    /* get the number of process slots we were assigned on each node */
-    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
-    if (NULL == tasks_per_node) {
-        /* couldn't find any version - abort */
-        orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
-                       "SLURM_TASKS_PER_NODE");
-        return ORTE_ERR_NOT_FOUND;
-    }
-    node_tasks = strdup(tasks_per_node);
 
-    if(NULL == regexp || NULL == node_tasks) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* get the number of CPUs per task that the user provided to slurm */
-    tmp = getenv("SLURM_CPUS_PER_TASK");
-    if(NULL != tmp) {
-        cpus_per_task = atoi(tmp);
-        if(0 >= cpus_per_task) {
-            opal_output(0, "ras:slurm:allocate: Got bad value from SLURM_CPUS_PER_TASK. "
-                        "Variable was: %s\n", tmp);
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            return ORTE_ERROR;
+    if (mca_ras_slurm_component.use_all) {
+        /* this is an oddball case required for debug situations where
+         * a tool is started that will then call mpirun. In this case,
+         * Slurm will assign only 1 tasks/per node to the tool, but
+         * we want mpirun to use the entire allocation. They don't give
+         * us a specific variable for this purpose, so we have to fudge
+         * a bit - but this is a special edge case, and we'll live with it */
+        tasks_per_node = getenv("SLURM_JOB_CPUS_PER_NODE");
+        if (NULL == tasks_per_node) {
+            /* couldn't find any version - abort */
+            orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
+                           "SLURM_JOB_CPUS_PER_NODE");
+            free(regexp);
+            return ORTE_ERR_NOT_FOUND;
         }
-    } else {
+        node_tasks = strdup(tasks_per_node);
+        if (NULL == node_tasks) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(regexp);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         cpus_per_task = 1;
+    } else {
+        /* get the number of process slots we were assigned on each node */
+        tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
+        if (NULL == tasks_per_node) {
+            /* couldn't find any version - abort */
+            orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
+                           "SLURM_TASKS_PER_NODE");
+            free(regexp);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        node_tasks = strdup(tasks_per_node);
+        if (NULL == node_tasks) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(regexp);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+
+        /* get the number of CPUs per task that the user provided to slurm */
+        tmp = getenv("SLURM_CPUS_PER_TASK");
+        if(NULL != tmp) {
+            cpus_per_task = atoi(tmp);
+            if(0 >= cpus_per_task) {
+                opal_output(0, "ras:slurm:allocate: Got bad value from SLURM_CPUS_PER_TASK. "
+                            "Variable was: %s\n", tmp);
+                ORTE_ERROR_LOG(ORTE_ERROR);
+                free(node_tasks);
+                free(regexp);
+                return ORTE_ERROR;
+            }
+        } else {
+            cpus_per_task = 1;
+        }
     }
- 
+    
     ret = orte_ras_slurm_discover(regexp, node_tasks, nodes);
     free(regexp);
     free(node_tasks);

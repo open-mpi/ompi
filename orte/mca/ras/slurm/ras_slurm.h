@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +38,7 @@ typedef struct {
     bool dyn_alloc_enabled;
     char *config_file;
     bool rolling_alloc;
+    bool use_all;
 } orte_ras_slurm_component_t;
 ORTE_DECLSPEC extern orte_ras_slurm_component_t mca_ras_slurm_component;
 
