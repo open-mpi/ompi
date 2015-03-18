@@ -85,8 +85,9 @@ static void mylog(orte_notifier_request_t *req)
     /* trim the newline */
     tod[strlen(tod)] = '\0';
 
-    syslog(req->severity, "[%s]%s JOBID %s REPORTS ERROR %s: %s", tod,
+    syslog(req->severity, "[%s]%s %s: JOBID %s REPORTS ERROR %s: %s", tod,
            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+           orte_notifier_base_sev2str(req->severity),
            ORTE_JOBID_PRINT(req->jdata->jobid),
            orte_job_state_to_str(req->state),
            (NULL == req->msg) ? "<N/A>" : req->msg);
@@ -104,8 +105,9 @@ static void myevent(orte_notifier_request_t *req)
     /* trim the newline */
     tod[strlen(tod)] = '\0';
 
-    syslog(req->severity, "[%s]%s SET EVENT : %s", tod,
+    syslog(req->severity, "[%s]%s %s SYSTEM EVENT : %s", tod,
            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+           orte_notifier_base_sev2str(req->severity),
            (NULL == req->msg) ? "<N/A>" : req->msg);
 }
 
