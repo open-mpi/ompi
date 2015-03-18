@@ -298,7 +298,8 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
         OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version, 
                         &procs[i]->super, (void**)&epid, &size);
 	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
-	  return OMPI_ERROR;
+	  rc = OMPI_ERROR;
+          goto bail;
 	}
 	epids_in[i] = *epid;
         mask_in[i] = 1;
