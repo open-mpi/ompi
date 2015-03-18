@@ -143,6 +143,7 @@ typedef uint8_t opal_hwloc_resource_type_t;
 typedef struct {
     opal_object_t super;
     hwloc_cpuset_t available;
+    bool npus_calculated;
     unsigned int npus;
     unsigned int idx;
     unsigned int num_bound;

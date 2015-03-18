@@ -891,6 +891,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                          "%s ADDING TOPOLOGY PER USER REQUEST",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     t = OBJ_NEW(orte_topology_t);
+                    /* filter the topology as we'll need it that way later */
+                    opal_hwloc_base_filter_cpus(topo);
                     t->topo = topo;
                     t->sig = sig;
                     opal_pointer_array_add(orte_node_topologies, t);
@@ -920,6 +922,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                              "%s NEW TOPOLOGY - ADDING",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         t = OBJ_NEW(orte_topology_t);
+                        /* filter the topology as we'll need it that way later */
+                        opal_hwloc_base_filter_cpus(topo);
                         t->topo = topo;
                         t->sig = sig;
                         opal_pointer_array_add(orte_node_topologies, t);
