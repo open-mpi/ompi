@@ -142,11 +142,11 @@ void orte_notifier_base_report(int sd, short args, void *cbdata)
 const char* orte_notifier_base_sev2str(orte_notifier_severity_t severity)
 {
     switch (severity) {
-    case ORTE_NOTIFIER_EMERG:  return "EMERG";  break;
+    case ORTE_NOTIFIER_EMERG:  return "EMERGENCY";  break;
     case ORTE_NOTIFIER_ALERT:  return "ALERT";  break;
-    case ORTE_NOTIFIER_CRIT:   return "CRIT";   break;
+    case ORTE_NOTIFIER_CRIT:   return "CRITICAL";   break;
     case ORTE_NOTIFIER_ERROR:  return "ERROR";  break;
-    case ORTE_NOTIFIER_WARN:   return "WARN";   break;
+    case ORTE_NOTIFIER_WARN:   return "WARNING";   break;
     case ORTE_NOTIFIER_NOTICE: return "NOTICE"; break;
     case ORTE_NOTIFIER_INFO:   return "INFO";   break;
     case ORTE_NOTIFIER_DEBUG:  return "DEBUG";  break;
