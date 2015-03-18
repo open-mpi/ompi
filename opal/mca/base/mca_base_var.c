@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -1367,6 +1367,10 @@ static int register_variable (const char *project_name, const char *framework_na
         if (OPAL_SUCCESS != ret) {
             /* Shouldn't ever happen */
             return OPAL_ERROR;
+        }
+
+        if (!group->group_isvalid) {
+            group->group_isvalid = true;
         }
 
         /* Verify the name components match */
