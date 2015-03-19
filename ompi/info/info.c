@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -324,6 +324,33 @@ int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
+}
+
+int ompi_info_get_value_enum (ompi_info_t *info, const char *key, int *value,
+                              int default_value, mca_base_var_enum_t *var_enum,
+                              int *flag)
+{
+    ompi_info_entry_t *search;
+    int ret;
+
+    *value = default_value;
+
+    OPAL_THREAD_LOCK(info->i_lock);
+    search = info_find_key (info, key);
+    if (NULL == search){
+        OPAL_THREAD_UNLOCK(info->i_lock);
+        *flag = 0;
+        return MPI_SUCCESS;
+    }
+
+    /* we found a mathing key. pass the string value to the enumerator and
+     * return */
+    *flag = 1;
+
+    ret = var_enum->value_from_string (var_enum, search->ie_value, value);
+    OPAL_THREAD_UNLOCK(info->i_lock);
+
+    return ret;
 }
 
 

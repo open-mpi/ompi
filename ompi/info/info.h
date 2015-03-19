@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +32,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/mutex.h"
 
+#include "opal/mca/base/mca_base_var_enum.h"
 
 /**
  * \internal
@@ -201,6 +202,26 @@ int ompi_info_free (ompi_info_t **info);
    */
 OMPI_DECLSPEC int ompi_info_get_bool (ompi_info_t *info, char *key, bool *value,
                                       int *flag);
+
+/**
+ *   Get a (key, value) pair from an 'MPI_Info' object and assign it
+ *   into an integer output based on the enumerator value.
+ *
+ *   @param info Pointer to ompi_info_t object
+ *   @param key null-terminated character string of the index key
+ *   @param value integer output value
+ *   @param default_value value to use if the string does not conform to the
+ *          values accepted by the enumerator
+ *   @param var_enum variable enumerator for the value
+ *   @param flag true (1) if 'key' defined on 'info', false (0) if not
+ *               (logical)
+ *
+ *   @retval MPI_SUCCESS
+ */
+
+OMPI_DECLSPEC int ompi_info_get_value_enum (ompi_info_t *info, const char *key,
+                                            int *value, int default_value,
+                                            mca_base_var_enum_t *var_enum, int *flag);
 
 /**
  *   Get a (key, value) pair from an 'MPI_Info' object
