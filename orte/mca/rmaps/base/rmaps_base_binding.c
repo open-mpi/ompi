@@ -684,9 +684,9 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     int bind_depth, map_depth;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps: compute bindings for job %s with policy %s",
+                        "mca:rmaps: compute bindings for job %s with policy %s[%x]",
                         ORTE_JOBID_PRINT(jdata->jobid),
-                        opal_hwloc_base_print_binding(jdata->map->binding));
+                        opal_hwloc_base_print_binding(jdata->map->binding), jdata->map->binding);
 
     map = ORTE_GET_MAPPING_POLICY(jdata->map->mapping);
     bind = OPAL_GET_BINDING_POLICY(jdata->map->binding);
