@@ -487,7 +487,8 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
     if (HWLOC_OBJ_CORE == obj->type) {
         data = (opal_hwloc_obj_data_t*)obj->userdata;
         if (NULL == data) {
-            return;
+            data = OBJ_NEW(opal_hwloc_obj_data_t);
+            obj->userdata = (void*)data;
         }
         if (NULL == opal_hwloc_base_cpu_set) {
             data->npus = 1;
@@ -585,6 +586,7 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
             }
         }
         /* cache the info */
+        data = (opal_hwloc_obj_data_t*)obj->userdata;  // in case it was added
         if (NULL == data) {
             data = OBJ_NEW(opal_hwloc_obj_data_t);
             obj->userdata = (void*)data;
