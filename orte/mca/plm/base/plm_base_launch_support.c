@@ -13,7 +13,9 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,21 +85,32 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     
 #if OPAL_HAVE_HWLOC
     {
-        orte_topology_t *t;
+        hwloc_topology_t t;
         orte_node_t *node;
         int i;
 
-        /* set the nodes to point to the topology
-         * of mpirun's node for any nodes that didn't send
-         * back their topology, thus indicating they are different
-         */
-        t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
-        for (i=1; i < orte_node_pool->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
+        /* if we got back topology info from the first node, then we use
+         * it as the "standard" for all other nodes unless they sent
+         * back their own topology */
+        if (1 < orte_process_info.num_procs) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 1)) ||
+                NULL == (t = node->topology)) {
+                /* something is wrong */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                OBJ_RELEASE(caddy);
+                return;
             }
-            if (NULL == node->topology) {
-                node->topology = t->topo;
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                 "%s plm:base:setting topo to that from node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+            for (i=2; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (NULL == node->topology) {
+                    node->topology = t;
+                }
             }
         }
         /* if this is an unmanaged allocation, then set the default
@@ -861,18 +874,14 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
                     opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
                 }
-                if (NULL == sig) {
-                    opal_output(0, "%s NULL TOPOLOGY SIGNATURE FROM NODE %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename);
-                    orted_failed_launch = true;
-                    goto CLEANUP;
-                }
-                if (orte_hetero_nodes) {
+                if (1 == dname.vpid || orte_hetero_nodes) {
                     /* the user has told us that something is different, so just store it */
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s ADDING TOPOLOGY PER USER REQUEST",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     t = OBJ_NEW(orte_topology_t);
+                    /* filter the topology as we'll need it that way later */
+                    opal_hwloc_base_filter_cpus(topo);
                     t->topo = topo;
                     t->sig = sig;
                     opal_pointer_array_add(orte_node_topologies, t);
@@ -907,6 +916,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                              "%s NEW TOPOLOGY - ADDING",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         t = OBJ_NEW(orte_topology_t);
+                        /* filter the topology as we'll need it that way later */
+                        opal_hwloc_base_filter_cpus(topo);
                         t->topo = topo;
                         t->sig = sig;
                         opal_pointer_array_add(orte_node_topologies, t);
