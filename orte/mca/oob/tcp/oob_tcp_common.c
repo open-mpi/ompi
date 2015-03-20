@@ -88,10 +88,11 @@ static void set_keepalive(int sd)
     /* Set the option active */
     option = 1;
     if (setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, optlen) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
         return;
     }
 #if defined(TCP_KEEPALIVE)
@@ -99,10 +100,11 @@ static void set_keepalive(int sd)
     if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPALIVE,
                    &mca_oob_tcp_component.keepalive_time,
                    sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
         return;
     }
 #elif defined(TCP_KEEPIDLE)
@@ -110,10 +112,11 @@ static void set_keepalive(int sd)
     if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPIDLE,
                    &mca_oob_tcp_component.keepalive_time,
                    sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
         return;
     }
 #endif  // TCP_KEEPIDLE
@@ -122,10 +125,11 @@ static void set_keepalive(int sd)
     if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPINTVL,
                    &mca_oob_tcp_component.keepalive_intvl,
                    sizeof(mca_oob_tcp_component.keepalive_intvl)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
         return;
     }
 #endif  // TCP_KEEPINTVL
@@ -134,10 +138,11 @@ static void set_keepalive(int sd)
     if (setsockopt(sd, IPPROTO_TCP, TCP_KEEPCNT,
                    &mca_oob_tcp_component.keepalive_probes,
                    sizeof(mca_oob_tcp_component.keepalive_probes)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
     }
 #endif  // TCP_KEEPCNT
 }
@@ -149,28 +154,31 @@ void orte_oob_tcp_set_socket_options(int sd)
     optval = 1;
     if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         opal_backtrace_print(stderr, NULL, 1);
-        opal_output(0, "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
     }
 #endif
 #if defined(SO_SNDBUF)
     if (mca_oob_tcp_component.tcp_sndbuf > 0 &&
         setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_oob_tcp_component.tcp_sndbuf, sizeof(int)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(SO_SNDBUF) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(SO_SNDBUF) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
     }
 #endif
 #if defined(SO_RCVBUF)
     if (mca_oob_tcp_component.tcp_rcvbuf > 0 &&
         setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_oob_tcp_component.tcp_rcvbuf, sizeof(int)) < 0) {
-        opal_output(0, "[%s:%d] setsockopt(SO_RCVBUF) failed: %s (%d)", 
-                    __FILE__, __LINE__, 
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "[%s:%d] setsockopt(SO_RCVBUF) failed: %s (%d)", 
+                            __FILE__, __LINE__, 
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
     }
 #endif
 #if defined(SO_KEEPALIVE)
