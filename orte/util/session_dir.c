@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -140,32 +141,7 @@ orte_session_dir_get_name(char **fulldirpath,
 
     /* get the name of the user */
     uid = getuid();
-#if OPAL_ENABLE_GETPWUID
-    {
-        struct passwd *pwdent;
-
-#ifdef HAVE_GETPWUID
-        pwdent = getpwuid(uid);
-        if (NULL == pwdent) {
-            /* this indicates a problem with the passwd system,
-             * so pretty-print a message just for info
-             */
-            orte_show_help("help-orte-runtime.txt",
-                           "orte:session:dir:nopwname", true);
-        }
-#else
-        pwdent = NULL;
-#endif
-        if (NULL != pwdent) {
-            user = strdup(pwdent->pw_name);
-        } else {
-            asprintf(&user, "%d", uid);
-        }
-    }
-#else
     asprintf(&user, "%d", uid);
-#endif
-
     
     /*
      * set the 'hostname'
