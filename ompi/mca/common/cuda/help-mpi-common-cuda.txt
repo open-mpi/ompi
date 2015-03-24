@@ -77,7 +77,7 @@ of the node will clear the problem.
 The call to cuIpcCloseMemHandle failed. This is a warning and the program 
 will continue to run.
   Hostname:                         %s
-  cuIpcOpenMemHandle return value:  %d
+  cuIpcCloseMemHandle return value:  %d
   address:                          %p
 Check the cuda.h file for what the return value means. A possible cause
 for this is not enough free device memory.  Try to reduce the device
