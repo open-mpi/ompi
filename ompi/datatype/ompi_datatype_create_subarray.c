@@ -91,13 +91,19 @@ int32_t ompi_datatype_create_subarray(int ndims,
     }
 
  replace_subarray_type:
-    /**
+    /*
      * Resized will only set the soft lb and ub markers without moving the real
      * data inside. Thus, in case the original data contains the hard markers
      * (MPI_LB or MPI_UB) we must force the displacement of the data upward to
      * the right position AND set the hard markers LB and UB.
+     *
+     * NTH: ompi_datatype_create_resized() does not do enough for the general
+     * pack/unpack functions to work correctly. Until this is fixed always use
+     * ompi_datatype_create_struct(). Once this is fixed remove 1 || below. To
+     * verify that the regression is fixed run the subarray test in the Open MPI
+     * ibm testsuite.
      */
-    if( oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
+    if(1 || oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
         MPI_Aint displs[3];
         MPI_Datatype types[3];
         int blength[3] = { 1, 1, 1 };
