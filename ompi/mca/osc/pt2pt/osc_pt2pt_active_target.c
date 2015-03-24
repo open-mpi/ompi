@@ -297,7 +297,7 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_complete sending complete message"));
+                         "ompi_osc_pt2pt_complete sending complete messages"));
 
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests.  Note that the
@@ -320,18 +320,26 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
         peer = module->peers + ranks[i];
 
+        /* XXX -- TODO -- since fragment are always delivered in order we do not need to count anything but long
+         * requests. once that is done this can be removed. */
+        if (peer->active_frag && (peer->active_frag->remain_len < sizeof (complete_req))) {
+            ++complete_req.frag_count;
+        }
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                             "ompi_osc_pt2pt_complete sending complete message to %d. frag_count: %u",
+                             ranks[i], complete_req.frag_count));
+
+
         peer->access_epoch = false;
 
-        ret = ompi_osc_pt2pt_control_send(module,
-                                         ranks[i],
-                                         &complete_req,
-                                         sizeof(ompi_osc_pt2pt_header_complete_t));
+        ret = ompi_osc_pt2pt_control_send (module, ranks[i], &complete_req,
+                                           sizeof(ompi_osc_pt2pt_header_complete_t));
+        if (OMPI_SUCCESS != ret) goto cleanup;
+
+        ret = ompi_osc_pt2pt_frag_flush_target (module, ranks[i]);
         if (OMPI_SUCCESS != ret) goto cleanup;
     }
-
-    /* start all requests */
-    ret = ompi_osc_pt2pt_frag_flush_all(module);
-    if (OMPI_SUCCESS != ret) goto cleanup;
 
     OPAL_THREAD_LOCK(&module->lock);
     /* zero the fragment counts here to ensure they are zerod */

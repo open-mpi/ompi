@@ -190,6 +190,7 @@ static inline int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, i
 
 static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module, int target, ompi_osc_pt2pt_outstanding_lock_t *lock)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + target;
     ompi_osc_pt2pt_header_unlock_t unlock_req;
     int32_t frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
 
@@ -199,8 +200,51 @@ static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module,
     unlock_req.lock_type = lock->type;
     unlock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
 
+    if (peer->active_frag && peer->active_frag->remain_len < sizeof (unlock_req)) {
+        /* the peer should expect one more packet */
+        ++unlock_req.frag_count;
+        --module->epoch_outgoing_frag_count[target];
+    }
+
+    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                         "osc pt2pt: unlocking target %d, frag count: %d", target,
+                         unlock_req.frag_count));
+
     /* send control message with unlock request and count */
     return ompi_osc_pt2pt_control_send (module, target, &unlock_req, sizeof (unlock_req));
+}
+
+static inline int ompi_osc_pt2pt_flush_remote (ompi_osc_pt2pt_module_t *module, int target, ompi_osc_pt2pt_outstanding_lock_t *lock)
+{
+    ompi_osc_pt2pt_peer_t *peer = module->peers + target;
+    ompi_osc_pt2pt_header_flush_t flush_req;
+    int32_t frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
+    int ret;
+
+    flush_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ;
+    flush_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID | OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
+    flush_req.frag_count = frag_count;
+    flush_req.serial_number = lock->serial_number;
+
+    /* XXX -- TODO -- since fragment are always delivered in order we do not need to count anything but long
+     * requests. once that is done this can be removed. */
+    if (peer->active_frag && (peer->active_frag->remain_len < sizeof (flush_req))) {
+        /* the peer should expect one more packet */
+        ++flush_req.frag_count;
+        --module->epoch_outgoing_frag_count[target];
+    }
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "flushing to target %d, frag_count: %d",
+                         target, flush_req.frag_count));
+
+    /* send control message with unlock request and count */
+    ret = ompi_osc_pt2pt_control_send (module, target, &flush_req, sizeof (flush_req));
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
+
+    /* start all sendreqs to target */
+    return ompi_osc_pt2pt_frag_flush_target (module, target);
 }
 
 static int ompi_osc_pt2pt_lock_internal_execute (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_outstanding_lock_t *lock)
@@ -342,20 +386,23 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
 
     opal_list_remove_item (&module->outstanding_locks, &lock->super);
 
+    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_pt2pt_unlock_internal: lock acks received: %d, expected: %d",
+                         lock->lock_acks_received, lock_acks_expected));
+
     /* wait until ack has arrived from target */
     while (lock->lock_acks_received != lock_acks_expected) {
         opal_condition_wait(&module->cond, &module->lock);
     }
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_pt2pt_unlock_internal: all lock acks received"));
+
     if (lock->assert & MPI_MODE_NOCHECK) {
         /* flush instead */
         ompi_osc_pt2pt_flush_lock (module, lock, target);
     } else if (my_rank != target) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "osc pt2pt: unlock %d, lock_acks_received = %d", target,
-                             lock->lock_acks_received));
-
         if (-1 == target) {
             /* send unlock messages to all of my peers */
             for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
@@ -449,7 +496,6 @@ int ompi_osc_pt2pt_sync (struct ompi_win_t *win)
 static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_outstanding_lock_t *lock,
                                       int target)
 {
-    ompi_osc_pt2pt_header_flush_t flush_req;
     int peer_count, ret, flush_count;
     int my_rank = ompi_comm_rank (module->comm);
 
@@ -470,10 +516,6 @@ static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_
     lock->flushing = true;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    flush_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ;
-    flush_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID | OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
-    flush_req.serial_number = lock->serial_number;
-
     if (-1 == target) {
         /* NTH: no local flush */
         flush_count = ompi_comm_size(module->comm) - 1;
@@ -482,31 +524,16 @@ static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_
                 continue;
             }
 
-            flush_req.frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + i, -1);
-
-            /* send control message with flush request and count */
-            ret = ompi_osc_pt2pt_control_send (module, i, &flush_req, sizeof (flush_req));
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                return ret;
-            }
-
-            /* start all sendreqs to target */
-            ret = ompi_osc_pt2pt_frag_flush_target (module, i);
+            ret = ompi_osc_pt2pt_flush_remote (module, i, lock);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return ret;
             }
         }
     } else {
-        flush_req.frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
         flush_count = 1;
-        /* send control message with flush request and count */
-        ret = ompi_osc_pt2pt_control_send (module, target, &flush_req, sizeof (flush_req));
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            return ret;
-        }
 
-        /* start all sendreqs to target */
-        ret = ompi_osc_pt2pt_frag_flush_target (module, target);
+        /* send control message with flush request and count */
+        ret = ompi_osc_pt2pt_flush_remote (module, target, lock);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return ret;
         }
@@ -800,7 +827,7 @@ void ompi_osc_pt2pt_process_lock_ack (ompi_osc_pt2pt_module_t *module,
     ompi_osc_pt2pt_outstanding_lock_t *lock;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_process_unlock_ack: processing lock ack from %d for lock %" PRIu64,
+                         "ompi_osc_pt2pt_process_lock_ack: processing lock ack from %d for lock %" PRIu64,
                          lock_ack_header->source, lock_ack_header->lock_ptr));
 
     lock = (ompi_osc_pt2pt_outstanding_lock_t *) (uintptr_t) lock_ack_header->lock_ptr;

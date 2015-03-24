@@ -84,8 +84,6 @@ ompi_osc_pt2pt_free(ompi_win_t *win)
      * probably produce an error here instead of cleaning up */
     OPAL_LIST_DESTRUCT(&module->pending_acc);
     OPAL_LIST_DESTRUCT(&module->pending_posts);
-    OPAL_LIST_DESTRUCT(&module->queued_frags);
-    OBJ_DESTRUCT(&module->queued_frags_lock);
 
     osc_pt2pt_gc_clean (module);
     OPAL_LIST_DESTRUCT(&module->request_gc);
@@ -93,6 +91,10 @@ ompi_osc_pt2pt_free(ompi_win_t *win)
     OBJ_DESTRUCT(&module->gc_lock);
 
     if (NULL != module->peers) {
+        for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
+            OBJ_DESTRUCT(module->peers + i);
+        }
+
         free(module->peers);
     }
 

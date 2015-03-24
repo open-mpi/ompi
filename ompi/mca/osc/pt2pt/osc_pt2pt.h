@@ -80,17 +80,34 @@ typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
 
 
 struct ompi_osc_pt2pt_peer_t {
-    /** Pointer to the current send fragment for each outgoing target */
+    /** make this an opal object */
+    opal_object_t super;
+
+    /** pointer to the current send fragment for each outgoing target */
     struct ompi_osc_pt2pt_frag_t *active_frag;
 
-    /** Number of acks pending.  New requests can not be sent out if there are
+    /** lock for this peer */
+    opal_mutex_t lock;
+
+    /** fragments queued to this target */
+    opal_list_t queued_frags;
+
+    /** number of acks pending.  New requests can not be sent out if there are
      * acks pending (to fulfill the ordering constraints of accumulate) */
     uint32_t num_acks_pending;
+
+    /** number of fragments incomming (negative - expected, positive - unsynchronized) */
     int32_t passive_incoming_frag_count;
+
+    /** peer is in an access epoch */
     bool access_epoch;
+
+    /** eager sends are active to this peer */
     bool eager_send_active;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
+
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_peer_t);
 
 #define SEQ_INVALID 0xFFFFFFFFFFFFFFFFULL
 
@@ -131,13 +148,6 @@ struct ompi_osc_pt2pt_module_t {
     /** Nmber of communication fragments started for this epoch, by
         peer.  Not in peer data to make fence more manageable. */
     uint32_t *epoch_outgoing_frag_count;
-
-    /** Lock for queued_frags */
-    opal_mutex_t queued_frags_lock;
-
-    /** List of full communication buffers queued to be sent.  Should
-        be maintained in order (at least in per-target order). */
-    opal_list_t queued_frags;
 
     /** cyclic counter for a unique tage for long messages. */
     unsigned int tag_counter;

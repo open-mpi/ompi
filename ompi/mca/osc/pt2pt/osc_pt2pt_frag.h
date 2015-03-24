@@ -44,15 +44,14 @@ extern int ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module, ompi_osc_p
 extern int ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target);
 extern int ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module);
 
-
 /*
  * Note: module lock must be held during this operation
  */
-static inline int ompi_osc_pt2pt_frag_alloc(ompi_osc_pt2pt_module_t *module, int target,
-                                           size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
-                                           char **ptr)
+static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, int target,
+                                             size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
+                                             char **ptr)
 {
-    ompi_osc_pt2pt_frag_t *curr = module->peers[target].active_frag;
+    ompi_osc_pt2pt_frag_t *curr;
     int ret;
 
     /* osc pt2pt headers can have 64-bit values. these will need to be aligned
@@ -65,6 +64,7 @@ static inline int ompi_osc_pt2pt_frag_alloc(ompi_osc_pt2pt_module_t *module, int
     }
 
     OPAL_THREAD_LOCK(&module->lock);
+    curr = module->peers[target].active_frag;
     if (NULL == curr || curr->remain_len < request_len) {
         opal_free_list_item_t *item = NULL;
 
