@@ -86,15 +86,29 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 #if OPAL_HAVE_HWLOC
     {
         hwloc_topology_t t;
+        orte_job_t *jdata;
         orte_node_t *node;
+        orte_proc_t *dmn1;
         int i;
 
         /* if we got back topology info from the first node, then we use
          * it as the "standard" for all other nodes unless they sent
          * back their own topology */
         if (1 < orte_process_info.num_procs) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 1)) ||
+            /* find daemon.vpid = 1 */
+            jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            if (NULL == (dmn1 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 1))) {
+                /* something is wrong */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                OBJ_RELEASE(caddy);
+                return;
+            }
+            if (NULL == (node = dmn1->node) ||
                 NULL == (t = node->topology)) {
+                opal_output(0, "NODE %s TOPO %s",
+                            (NULL == node) ? "NULL" : node->name,
+                            (NULL == node) ? "N/A" : ((NULL == t) ? "NULL-T" : "NON-NULL-T"));
                 /* something is wrong */
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
@@ -104,7 +118,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:setting topo to that from node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
-            for (i=2; i < orte_node_pool->size; i++) {
+            for (i=1; i < orte_node_pool->size; i++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
                 }
@@ -756,7 +770,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&dname), nodename));
+                             ORTE_NAME_PRINT(&daemon->name), nodename));
         
         /* look this node up, if necessary */
         if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
@@ -888,8 +902,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 if (1 == dname.vpid || orte_hetero_nodes) {
                     /* the user has told us that something is different, so just store it */
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                         "%s ADDING TOPOLOGY PER USER REQUEST",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                         "%s ADDING TOPOLOGY PER USER REQUEST TO NODE %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
                     t = OBJ_NEW(orte_topology_t);
                     /* filter the topology as we'll need it that way later */
                     opal_hwloc_base_filter_cpus(topo);
