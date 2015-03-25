@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -632,8 +632,9 @@ static int usock_recv_connect_ack(void)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check security token */
-    creds.credential = (char*)(msg + strlen(version) + 1);
-    creds.size = hdr.nbytes - strlen(version) - 1;
+    creds.method = (char*)(msg + strlen(version) + 1);
+    creds.credential = (char*)(msg + strlen(version) + 1 + strlen(creds.method) + 1);
+    creds.size = hdr.nbytes - strlen(version) - 1 - strlen(creds.method) - 1;
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
         OPAL_ERROR_LOG(rc);
     }
