@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -538,6 +538,7 @@ mca_oob_usock_peer_t* mca_oob_usock_peer_lookup(const orte_process_name_t *name)
 
 static void peer_cons(mca_oob_usock_peer_t *peer)
 {
+    peer->auth_method = NULL;
     peer->sd = -1;
     peer->state = MCA_OOB_USOCK_UNCONNECTED;
     peer->retries = 0;
@@ -550,6 +551,9 @@ static void peer_cons(mca_oob_usock_peer_t *peer)
 }
 static void peer_des(mca_oob_usock_peer_t *peer)
 {
+    if (NULL != peer->auth_method) {
+        free(peer->auth_method);
+    }
     if (0 <= peer->sd) {
         CLOSE_THE_SOCKET(peer->sd);
     }

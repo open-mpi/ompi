@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -42,6 +42,7 @@
 BEGIN_C_DECLS
 
 typedef struct {
+    char *method;
     char *credential;
     size_t size;
 } opal_sec_cred_t;
@@ -80,6 +81,10 @@ typedef int (*opal_sec_base_module_get_my_cred_fn_t)(int dstorehandle,
                                                      opal_process_name_t *my_id,
                                                      opal_sec_cred_t **cred);
 
+typedef int (*opal_sec_API_module_get_my_cred_fn_t)(char *method,
+                                                    int dstorehandle,
+                                                    opal_process_name_t *my_id,
+                                                    opal_sec_cred_t **cred);
 /*
  * Authenticate a security credential - given a security credential,
  * determine if the credential is valid. The credential is passed in
@@ -102,6 +107,12 @@ struct opal_sec_base_module_1_0_0_t {
 typedef struct opal_sec_base_module_1_0_0_t opal_sec_base_module_1_0_0_t;
 typedef struct opal_sec_base_module_1_0_0_t opal_sec_base_module_t;
 
+/* the API structure */
+typedef struct {
+    opal_sec_API_module_get_my_cred_fn_t    get_my_credential;
+    opal_sec_base_module_auth_fn_t          authenticate;
+} opal_sec_API_module_t;
+
 /*
  * the standard component data structure
  */
@@ -120,7 +131,7 @@ typedef struct opal_sec_base_component_1_0_0_t opal_sec_base_component_t;
   "sec", 1, 0, 0
 
 /* Global structure for accessing SEC functions */
-OPAL_DECLSPEC extern opal_sec_base_module_t opal_sec;  /* holds base function pointers */
+OPAL_DECLSPEC extern opal_sec_API_module_t opal_sec;  /* holds base function pointers */
 
 END_C_DECLS
 

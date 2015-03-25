@@ -30,9 +30,10 @@ int opal_sec_base_select(void)
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
-    opal_sec_base_module_t *smodule, *nmodule = NULL;
-    int rc, priority, pri = -1;
-
+    opal_sec_base_module_t *smodule;
+    int rc, priority;
+    opal_sec_handle_t *hdl, *hptr, *hmark;
+    
     if (selected) {
         /* ensure we don't do this twice */
         return OPAL_SUCCESS;
@@ -87,19 +88,27 @@ int opal_sec_base_select(void)
             continue;
         }
 
-        /* see if this is the one to keep - only retain the highest priority */
-        if (pri < priority) {
-            nmodule = smodule;
-            pri = priority;
+        /* keep this one */
+        hdl = OBJ_NEW(opal_sec_handle_t);
+        hdl->pri = priority;
+        hdl->module = smodule;
+        hdl->component = component;
+        
+        /* add to the list of actives in priority order */
+        hmark = NULL;
+        OPAL_LIST_FOREACH(hptr, &opal_sec_base_actives, opal_sec_handle_t) {
+            if (priority > hptr->pri) {
+                hmark = hptr;
+                break;
+            }
+        }
+        if (NULL == hmark) {
+            /* just append to the end */
+            opal_list_append(&opal_sec_base_actives, &hdl->super);
+        } else {
+            /* insert before hmark */
+            opal_list_insert_pos(&opal_sec_base_actives, &hmark->super, &hdl->super);
         }
     }
-
-    if (NULL == nmodule) {
-        /* no module available - error out */
-        return OPAL_ERROR;
-    }
-
-    opal_sec = *nmodule;
-
     return OPAL_SUCCESS;;
 }
