@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -117,6 +117,7 @@ typedef struct {
     opal_object_t super;
     int sd;
     orte_process_name_t name;
+    char *auth_method;         // method used by peer to authenticate
     int retries;                  // number of times we have tried to connect to this address
     pmix_server_state_t state;
     opal_event_t op_event;      // used for connecting and operations other than read/write

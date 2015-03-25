@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -359,15 +359,15 @@ int usock_send_connect_ack(void)
     hdr.type = PMIX_USOCK_IDENT;
 
     /* get our security credential */
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, &OPAL_PROC_MY_NAME, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(NULL, opal_dstore_internal, &OPAL_PROC_MY_NAME, &cred))) {
         return rc;
     }
 
     /* set the number of bytes to be read beyond the header */
-    hdr.nbytes = strlen(opal_version_string) + 1 + cred->size;
+    hdr.nbytes = strlen(opal_version_string) + 1 + strlen(cred->method) + 1 + cred->size;
 
     /* create a space for our message */
-    sdsize = (sizeof(hdr) + strlen(opal_version_string) + 1 + cred->size);
+    sdsize = (sizeof(hdr) + strlen(opal_version_string) + 1 + strlen(cred->method) + 1 + cred->size);
     if (NULL == (msg = (char*)malloc(sdsize))) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -376,7 +376,8 @@ int usock_send_connect_ack(void)
     /* load the message */
     memcpy(msg, &hdr, sizeof(hdr));
     memcpy(msg+sizeof(hdr), opal_version_string, strlen(opal_version_string));
-    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1, cred->credential, cred->size);
+    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1, cred->method, strlen(cred->method));
+    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1+strlen(cred->method)+1, cred->credential, cred->size);
 
 
     if (OPAL_SUCCESS != usock_send_blocking(msg, sdsize)) {
