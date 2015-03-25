@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +27,8 @@ static int opal_if_base_register (mca_base_register_flag_t flags);
 static int opal_if_base_open (mca_base_open_flag_t flags);
 static int opal_if_base_close(void);
 static void opal_if_construct(opal_if_t *obj);
+
+static bool frameopen = false;
 
 /* instance the opal_if_t object */
 OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, opal_if_construct, NULL);
@@ -55,10 +58,15 @@ static int opal_if_base_register (mca_base_register_flag_t flags)
 
 static int opal_if_base_open (mca_base_open_flag_t flags)
 {
+    if (frameopen) {
+        return OPAL_SUCCESS;
+    }
+    frameopen = true;
+    
     /* setup the global list */
     OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
 
-    return mca_base_framework_components_open (&opal_if_base_framework, flags);
+    return mca_base_framework_components_open(&opal_if_base_framework, flags);
 }
 
 
@@ -66,12 +74,16 @@ static int opal_if_base_close(void)
 {
     opal_list_item_t *item;
 
+    if (!frameopen) {
+        return OPAL_SUCCESS;
+    }
+    
     while (NULL != (item = opal_list_remove_first(&opal_if_list))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&opal_if_list);
 
-    return mca_base_framework_components_close (&opal_if_base_framework, NULL);
+    return mca_base_framework_components_close(&opal_if_base_framework, NULL);
 }
 
 static void opal_if_construct(opal_if_t *obj)
