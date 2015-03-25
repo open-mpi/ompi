@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -55,17 +55,6 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
 /*
  * Global functions for MCA overall shmem open and close
  */
-
-/**
- * Performs a run-time query across all available shmem components.  Similar to
- * mca_base_select, but take into consideration environment hints provided by
- * orte.
- *
- * see: orte/mca/odls/base/odls_base_default_fns.c
- */
-OPAL_DECLSPEC int
-opal_shmem_base_runtime_query(mca_base_module_t **best_module,
-                              mca_base_component_t **best_component);
 
 /**
  * returns the name of the best, runnable shmem component.  the caller is
@@ -135,14 +124,12 @@ OPAL_DECLSPEC extern bool opal_shmem_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_shmem_base_component_2_0_0_t
-*opal_shmem_base_component;
+OPAL_DECLSPEC extern opal_shmem_base_component_t *opal_shmem_base_component;
 
 /**
  * Global module struct for the selected module
  */
-OPAL_DECLSPEC extern const opal_shmem_base_module_2_0_0_t
-*opal_shmem_base_module;
+OPAL_DECLSPEC extern opal_shmem_base_module_t *opal_shmem_base_module;
 
 /**
  * Runtime hint
