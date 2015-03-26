@@ -1199,6 +1199,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 
 static void peer_cons(mca_oob_tcp_peer_t *peer)
 {
+    peer->auth_method = NULL;
     peer->sd = -1;
     OBJ_CONSTRUCT(&peer->addrs, opal_list_t);
     peer->active_addr = NULL;
@@ -1212,6 +1213,9 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
 }
 static void peer_des(mca_oob_tcp_peer_t *peer)
 {
+    if (NULL != peer->auth_method) {
+        free(peer->auth_method);
+    }
     if (peer->send_ev_active) {
         opal_event_del(&peer->send_event);
     }

@@ -291,17 +291,18 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
     hdr.tag = 0;
 
     /* get our security credential*/
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
+                                                         opal_dstore_internal,
                                                          ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* set the number of bytes to be read beyond the header */
-    hdr.nbytes = strlen(orte_version_string) + 1 + cred->size;
+    hdr.nbytes = strlen(orte_version_string) + 1 + strlen(cred->method) + 1 + cred->size;
 
     /* create a space for our message */
-    sdsize = (sizeof(hdr) + strlen(orte_version_string) + 1 + cred->size);
+    sdsize = (sizeof(hdr) + strlen(orte_version_string) + 1 + strlen(cred->method) + 1 + cred->size);
     if (NULL == (msg = (char*)malloc(sdsize))) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -310,7 +311,8 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
     /* load the message */
     memcpy(msg, &hdr, sizeof(hdr));
     memcpy(msg+sizeof(hdr), orte_version_string, strlen(orte_version_string));
-    memcpy(msg+sizeof(hdr)+strlen(orte_version_string)+1, cred->credential, cred->size);
+    memcpy(msg+sizeof(hdr)+strlen(orte_version_string)+1, cred->method, strlen(cred->method));
+    memcpy(msg+sizeof(hdr)+strlen(orte_version_string)+1+strlen(cred->method)+1, cred->credential, cred->size);
 
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
@@ -666,10 +668,15 @@ int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* pr, int sd,
                         ORTE_NAME_PRINT(&peer->name));
 
     /* check security token */
-    creds.credential = (char*)(msg + strlen(version) + 1);
+    creds.method = (char*)(msg + strlen(version) + 1);
+    creds.credential = (char*)(msg + strlen(version) + 1 + strlen(creds.method) + 1);
     creds.size = hdr.nbytes - strlen(version) - 1;
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
         ORTE_ERROR_LOG(rc);
+    }
+    /* record the method they used so we can reciprocate */
+    if (NULL == peer->auth_method) {
+        peer->auth_method = strdup(creds.method);
     }
     free(msg);
 
