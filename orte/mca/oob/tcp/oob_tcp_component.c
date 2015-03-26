@@ -453,7 +453,7 @@ static bool component_available(void)
 
     /* if we are an APP and we are not direct launched,
      * then we don't want to be considered */
-    if (ORTE_PROC_IS_APP && !orte_standalone_operation) {
+    if (!ORTE_PROC_IS_TOOL && ORTE_PROC_IS_APP && !orte_standalone_operation) {
         return false;
     }
 
