@@ -85,10 +85,12 @@ AC_DEFUN([FI_PROVIDER_SETUP],[
 				[AC_MSG_WARN([$1 provider was selected to be built as DL])
 				 AC_MSG_WARN([but libfabric is being built as static-only])
 				 AC_MSG_ERROR([This is an impossible situation. Cannot continue.])])
+			 AC_MSG_NOTICE([$1 provider: build as plugin])
 			],
-			[PROVIDERS_STATIC="prov/$1/lib$1.la $PROVIDERS_STATIC"])
+			[PROVIDERS_STATIC="prov/$1/lib$1.la $PROVIDERS_STATIC"
+			 AC_MSG_NOTICE([$1 provider: include in libfabric])])
 		],
-		[AC_MSG_NOTICE([$1 provider disabled])])
+		[AC_MSG_NOTICE([$1 provider: disabled])])
 
 	AC_DEFINE_UNQUOTED([HAVE_]m4_translit([$1], [a-z], [A-Z]), $$1_happy, [$1 provider is built])
 	AC_DEFINE_UNQUOTED([HAVE_]m4_translit([$1], [a-z], [A-Z])[_DL], $$1_dl, [$1 provider is built as DSO])

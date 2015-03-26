@@ -94,7 +94,17 @@ struct usnic_ib_create_qp_cmd_v0 {
 struct usnic_ib_create_qp_cmd {
 	struct usnic_transport_spec	spec;
 	u32				cmd_version;
+	union {
+		struct {
+			/* length in bytes of resources array */
+			u32		resources_len;
+
+			/* ptr to array of struct usnic_vnic_barres_info */
+			u64		resources;
+		} v1;
+	} u;
 };
+
 
 /*
  * infomation of vnic bar resource
@@ -128,10 +138,14 @@ struct usnic_ib_create_qp_resp_v0 {
 
 struct usnic_ib_create_qp_resp {
 	USNIC_IB_CREATE_QP_RESP_V0_FIELDS
-	u32				cmd_version;
-	u32				num_barres;
-	u32				pad_to_8byte;
-	struct usnic_vnic_barres_info	resources[0];
+	/* the above fields end on 4-byte alignment boundary */
+	u32 cmd_version;
+	union {
+		struct {
+			u32 num_barres;
+			u32 pad_to_8byte;
+		} v1;
+	} u;
 };
 
 #define USNIC_CTX_RESP_VERSION 1

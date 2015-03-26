@@ -312,6 +312,8 @@ static struct fi_ops psmx_fabric_fi_ops = {
 static struct fi_ops_fabric psmx_fabric_ops = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = psmx_domain_open,
+	.passive_ep = fi_no_passive_ep,
+	.eq_open = fi_no_eq_open,
 	.wait_open = psmx_wait_open,
 };
 
@@ -399,11 +401,9 @@ PSM_INI
 	int check_version;
 	int err;
 
-	fi_log_init();
-
 	psmx_env.name_server	= psmx_get_int_env("OFI_PSM_NAME_SERVER", 1);
 	psmx_env.am_msg		= psmx_get_int_env("OFI_PSM_AM_MSG", 0);
-	psmx_env.tagged_rma	= psmx_get_int_env("OFI_PSM_TAGGED_RMA", 0);
+	psmx_env.tagged_rma	= psmx_get_int_env("OFI_PSM_TAGGED_RMA", 1);
 	psmx_env.warning	= psmx_get_int_env("OFI_PSM_WARNING", 1);
 	psmx_env.uuid		= getenv("OFI_PSM_UUID");
 	if (!psmx_env.uuid)
