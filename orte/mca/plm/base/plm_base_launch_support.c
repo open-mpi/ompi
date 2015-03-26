@@ -106,9 +106,6 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             }
             if (NULL == (node = dmn1->node) ||
                 NULL == (t = node->topology)) {
-                opal_output(0, "NODE %s TOPO %s",
-                            (NULL == node) ? "NULL" : node->name,
-                            (NULL == node) ? "N/A" : ((NULL == t) ? "NULL-T" : "NON-NULL-T"));
                 /* something is wrong */
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
