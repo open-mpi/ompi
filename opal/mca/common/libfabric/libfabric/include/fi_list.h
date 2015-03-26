@@ -239,8 +239,8 @@ static inline int dlistfd_empty(struct dlistfd_head *head)
 static inline void dlistfd_signal(struct dlistfd_head *head)
 {
 	if (head->fdwcnt == head->fdrcnt) {
-		(void) write(head->fd[LIST_WRITE_FD], head, sizeof head);
-		head->fdwcnt++;
+		if (write(head->fd[LIST_WRITE_FD], head, sizeof head) == sizeof head)
+			head->fdwcnt++;
 	}
 }
 
@@ -248,8 +248,8 @@ static inline void dlistfd_reset(struct dlistfd_head *head)
 {
 	void *buf;
 	if (dlistfd_empty(head) && (head->fdrcnt < head->fdwcnt)) {
-		(void) read(head->fd[LIST_READ_FD], &buf, sizeof buf);
-		head->fdrcnt++;
+		if (read(head->fd[LIST_READ_FD], &buf, sizeof buf) == sizeof buf)
+			head->fdrcnt++;
 	}
 }
 

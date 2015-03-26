@@ -28,7 +28,7 @@
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
-/* set to 1 if should use libnl v3, set to 0 for libnl v11 */
+/* Whether we have libl or libnl3 */
 #undef HAVE_LIBNL3
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
@@ -36,6 +36,12 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netlink/netlink.h> header file. */
+#undef HAVE_NETLINK_NETLINK_H
+
+/* Define to 1 if you have the <netlink/version.h> header file. */
+#undef HAVE_NETLINK_VERSION_H
 
 /* psm provider is built */
 #undef HAVE_PSM

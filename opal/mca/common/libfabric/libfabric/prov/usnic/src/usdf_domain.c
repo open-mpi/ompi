@@ -189,19 +189,27 @@ static struct fi_ops usdf_fid_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_domain_close,
 	.bind = usdf_domain_bind,
+	.control = fi_no_control,
 	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_mr usdf_domain_mr_ops = {
 	.size = sizeof(struct fi_ops_mr),
 	.reg = usdf_reg_mr,
+	.regv = fi_no_mr_regv,
+	.regattr = fi_no_mr_regattr,
 };
 
 static struct fi_ops_domain usdf_domain_ops = {
 	.size = sizeof(struct fi_ops_domain),
-	.cq_open = usdf_cq_open,
 	.av_open = usdf_av_open,
+	.cq_open = usdf_cq_open,
 	.endpoint = usdf_endpoint_open,
+	.scalable_ep = fi_no_scalable_ep,
+	.cntr_open = fi_no_cntr_open,
+	.poll_open = fi_no_poll_open,
+	.stx_ctx = fi_no_stx_context,
+	.srx_ctx = fi_no_srx_context,
 };
 
 int

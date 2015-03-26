@@ -102,14 +102,20 @@ static int vnic_wq_alloc_bufs(struct vnic_wq *wq)
 				wq->ring.desc_size * buf->index;
 			if (buf->index + 1 == count) {
 				buf->next = wq->bufs[0];
+#ifndef __VMKLNX__
 				buf->next->prev = buf;
+#endif
 				break;
 			} else if (j + 1 == VNIC_WQ_BUF_BLK_ENTRIES(count)) {
 				buf->next = wq->bufs[i + 1];
+#ifndef __VMKLNX__
 				buf->next->prev = buf;
+#endif
 			} else {
 				buf->next = buf + 1;
+#ifndef __VMKLNX__
 				buf->next->prev = buf;
+#endif
 				buf++;
 			}
 		}

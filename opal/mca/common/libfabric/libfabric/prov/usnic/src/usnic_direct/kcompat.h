@@ -248,6 +248,7 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 #define __vlan_hwaccel_put_tag(a, b, c) __vlan_hwaccel_put_tag(a, c);
 #endif /* KERNEL < 3.9.0 */
 
+#ifndef __VMKLNX__
 #if ((LINUX_VERSION_CODE <= KERNEL_VERSION(3, 4, 0)) &&		\
      (!RHEL_RELEASE_CODE || RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(6, 0)))
 #define net_warn_ratelimited(fmt, ...)			\
@@ -262,6 +263,7 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 #else
 #define enic_pci_dma_mapping_error(pdev, dma) pci_dma_mapping_error(pdev, dma)
 #endif /* Kernel version <= 2.6.26 */
+#endif
 
 /* Kernel version-specific definitions */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 14))

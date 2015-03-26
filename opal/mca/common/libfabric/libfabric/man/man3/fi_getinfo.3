@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-02\-28" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-03\-19" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -328,11 +328,6 @@ FI_REMOTE_SIGNAL flag on data transfer operations.
 Support requires marking outbound data transfers as signaled and
 handling incoming transfers appropriately.
 .PP
-\f[I]FI_REMOTE_COMPLETE\f[] : Indicates that the endpoint support the
-FI_REMOTE_COMPLETE flag on data transfer operations.
-Support requires marking outbound data transfers as using remote
-completions and responding to incoming transfers appropriately.
-.PP
 \f[I]FI_CANCEL\f[] : Indicates that the user desires the ability to
 cancel outstanding data transfer operations.
 If FI_CANCEL is not set, a provider may optimize code paths with the
@@ -368,7 +363,7 @@ FI_NAMED_RX_CTX, FI_DIRECTD_RECV, FI_READ, FI_WRITE, FI_RECV, FI_SEND,
 FI_REMOTE_READ, and FI_REMOTE_WRITE.
 .PP
 Secondary capabilities: FI_DYNAMIC_MR, FI_MULTI_RECV, FI_SOURCE,
-FI_CANCEL, FI_FENCE, FI_REMOTE_COMPLETE
+FI_CANCEL, FI_FENCE
 .SH MODE
 .PP
 The operational mode bits are used to convey requirements that an

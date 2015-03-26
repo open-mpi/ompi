@@ -110,7 +110,6 @@ struct vnic_dev {
 	struct vnic_intr_coal_timer_info intr_coal_timer_info;
 	struct devcmd2_controller *devcmd2;
 	int (*devcmd_rtn)(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd, int wait);
-	struct vnic_gen_stats gen_stats;
 };
 
 #define VNIC_MAX_RES_HDR_SIZE \
@@ -534,9 +533,11 @@ static int _vnic_dev_cmd2(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
 	new_posted = (posted + 1) % DEVCMD2_RING_SIZE;
 
 	if (new_posted == fetch_index) {
-		pr_err("wq is full while issuing devcmd2 command %d, "
+		pr_err("%s: wq is full while issuing devcmd2 command %d, "
 			"fetch index: %u, posted index: %u\n",
-			_CMD_N(cmd), fetch_index, posted);
+			 pci_name(vdev->pdev),
+			 _CMD_N(cmd),
+			 fetch_index, posted);
 		return -EBUSY;
 
 	}
@@ -573,8 +574,9 @@ static int _vnic_dev_cmd2(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
 			if (result->error) {
 				err = -(int) result->error;
 				if (err != ERR_ECMDUNKNOWN || cmd != CMD_CAPABILITY)
-					pr_err("Error %d devcmd %d\n",
-						err, _CMD_N(cmd));
+					pr_err("%s:Error %d devcmd %d\n",
+						 pci_name(vdev->pdev),
+						 err, _CMD_N(cmd));
 				return err;
 			}
 			if (_CMD_DIR(cmd) & _CMD_DIR_READ) {
@@ -586,7 +588,8 @@ static int _vnic_dev_cmd2(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
 		}
 	}
 	
-	pr_err("Timed out devcmd %d\n", _CMD_N(cmd));
+	pr_err("%s:Timed out devcmd %d\n", pci_name(vdev->pdev),
+			_CMD_N(cmd));
 
 	return -ETIMEDOUT;
 #endif
@@ -1806,7 +1809,7 @@ int vnic_dev_classifier(struct vnic_dev *vdev, u8 cmd, u16 *entry, struct filter
 	return ret;
 }
 #ifdef ENIC_VXLAN
-int vnic_dev_overlay_offload_enable_disable(struct vnic_dev *vdev, u8 overlay,
+int vnic_dev_overlay_offload_ctrl(struct vnic_dev *vdev, u8 overlay,
 	u8 config)
 {
 	u64 a0, a1;
@@ -1814,7 +1817,7 @@ int vnic_dev_overlay_offload_enable_disable(struct vnic_dev *vdev, u8 overlay,
 	int ret = -EINVAL;
 	a0 = overlay;
 	a1 = config;
-	ret = vnic_dev_cmd(vdev, CMD_OVERLAY_OFFLOAD_ENABLE_DISABLE,
+	ret = vnic_dev_cmd(vdev, CMD_OVERLAY_OFFLOAD_CTRL,
 		&a0, &a1, wait);
 
 	return ret;
@@ -1830,6 +1833,18 @@ int vnic_dev_overlay_offload_cfg(struct vnic_dev *vdev, u8 overlay,
 	a1 = vxlan_udp_port_number;
 	ret = vnic_dev_cmd(vdev, CMD_OVERLAY_OFFLOAD_CFG, &a0, &a1, wait);
 
+	return ret;
+}
+
+int vnic_dev_get_supported_feature_ver(struct vnic_dev *vdev, u8 feature,
+	u64 *supported_versions)
+{
+	u64 a0 = feature, a1 = 0;
+	int wait = 1000;
+	int ret = -EINVAL;
+	ret = vnic_dev_cmd(vdev, CMD_GET_SUPP_FEATURE_VER, &a0, &a1, wait);
+	if (!ret)
+		*supported_versions = a0;
 	return ret;
 }
 #endif

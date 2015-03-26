@@ -264,10 +264,12 @@ int vnic_dev_set_mac_addr(struct vnic_dev *vdev, u8 *mac_addr);
 int vnic_dev_classifier(struct vnic_dev *vdev, u8 cmd, u16 *entry,
 	struct filter *data);
 #ifdef ENIC_VXLAN
-int vnic_dev_overlay_offload_enable_disable(struct vnic_dev *vdev,
+int vnic_dev_overlay_offload_ctrl(struct vnic_dev *vdev,
 	u8 overlay, u8 config);
 int vnic_dev_overlay_offload_cfg(struct vnic_dev *vdev, u8 overlay,
 	u16 vxlan_udp_port_number);
+int vnic_dev_get_supported_feature_ver(struct vnic_dev *vdev,
+	u8 feature, u64 *supported_versions);
 #endif
 #ifndef ENIC_PMD
 int vnic_dev_init_devcmdorig(struct vnic_dev *vdev);

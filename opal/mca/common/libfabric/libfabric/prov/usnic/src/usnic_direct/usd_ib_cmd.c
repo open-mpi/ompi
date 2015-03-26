@@ -311,12 +311,14 @@ usd_ib_cmd_create_qp(
     int ret;
     int n;
     uint32_t i;
+    struct usnic_vnic_barres_info *resources;
 
+    ucp = NULL;
+    resources = NULL;
     irp = NULL;
     memset(&cmd, 0, sizeof(cmd));
 
-    resp = calloc(1, sizeof(*resp) +
-            RES_TYPE_MAX*sizeof(struct usnic_vnic_barres_info));
+    resp = calloc(1, sizeof(*resp));
     if (resp == NULL) {
         usd_err("Failed to allocate memory for create_qp_resp\n");
         return -ENOMEM;
@@ -325,9 +327,7 @@ usd_ib_cmd_create_qp(
     icp = &cmd.ibv_cmd;
     icp->command = IB_USER_VERBS_CMD_CREATE_QP;
     icp->in_words = sizeof(cmd) / 4;
-    icp->out_words = (sizeof(*resp) +
-			RES_TYPE_MAX * sizeof(struct usnic_vnic_barres_info))
-			/ 4;
+    icp->out_words = sizeof(*resp) / 4;
     icp->response = (uintptr_t) resp;
 
     icp->user_handle = (uintptr_t) qp;
@@ -357,6 +357,15 @@ usd_ib_cmd_create_qp(
         goto out;
     }
 
+    ucp->u.v1.resources_len = RES_TYPE_MAX * sizeof(*resources);
+    resources = calloc(RES_TYPE_MAX, sizeof(*resources));
+    if (resources == NULL) {
+        usd_err("unable to allocate resources array\n");
+        ret = -ENOMEM;
+        goto out;
+    }
+    ucp->u.v1.resources = (u64)(uintptr_t)resources;
+
     /* Issue command to IB driver */
     n = write(dev->ud_ib_dev_fd, &cmd, sizeof(cmd));
     if (n != sizeof(cmd)) {
@@ -385,47 +394,68 @@ usd_ib_cmd_create_qp(
     vfip->vi_bar_bus_addr = urp->bar_bus_addr;
     vfip->vi_bar_len = urp->bar_len;
 
-    if (dev->ud_caps[USD_CAP_MAP_PER_RES] > 0) {
-        for (i = 0; i < urp->num_barres; i++) {
-            enum vnic_res_type type = urp->resources[i].type;
-            if (type < RES_TYPE_MAX) {
-                vfip->barres[type].type = type;
-                vfip->barres[type].bus_addr = urp->resources[i].bus_addr;
-                vfip->barres[type].len = urp->resources[i].len;
+    if (urp->cmd_version == USNIC_IB_CREATE_QP_VERSION) {
+        /* got expected version */
+        if (dev->ud_caps[USD_CAP_MAP_PER_RES] > 0) {
+            for (i = 0; i < MIN(RES_TYPE_MAX, urp->u.v1.num_barres); i++) {
+                enum vnic_res_type type = resources[i].type;
+                if (type < RES_TYPE_MAX) {
+                    vfip->barres[type].type = type;
+                    vfip->barres[type].bus_addr = resources[i].bus_addr;
+                    vfip->barres[type].len = resources[i].len;
+                }
+            }
+            if (vfip->barres[RES_TYPE_WQ].bus_addr == 0) {
+                    usd_err("Failed to retrieve WQ res info\n");
+                    ret = -ENXIO;
+                    goto out;
+            }
+            if (vfip->barres[RES_TYPE_RQ].bus_addr == 0) {
+                    usd_err("Failed to retrieve RQ res info\n");
+                    ret = -ENXIO;
+                    goto out;
+            }
+            if (vfip->barres[RES_TYPE_CQ].bus_addr == 0) {
+                    usd_err("Failed to retrieve CQ res info\n");
+                    ret = -ENXIO;
+                    goto out;
+            }
+            if (vfip->barres[RES_TYPE_INTR_CTRL].bus_addr == 0) {
+                    usd_err("Failed to retrieve INTR res info\n");
+                    ret = -ENXIO;
+                    goto out;
+            }
+            if (vfip->barres[RES_TYPE_DEVCMD].bus_addr == 0) {
+                    usd_err("Failed to retrieve DEVCMD res info\n");
+                    ret = -ENXIO;
+                    goto out;
             }
         }
-        if (vfip->barres[RES_TYPE_WQ].bus_addr == 0) {
-                usd_err("Failed to retrieve WQ res info\n");
-                ret = -ENXIO;
-                goto out;
+    } else if (urp->cmd_version == 0) {
+        /* special case, old kernel that won't tell us about individual barres
+         * info but should otherwise work fine */
+
+        if (dev->ud_caps[USD_CAP_MAP_PER_RES] != 0) {
+            /* should not happen, only the presence of never-released kernel
+             * code should cause this case */
+            usd_err("USD_CAP_MAP_PER_RES claimed but qp_create cmd_version == 0\n");
+            ret = -ENXIO;
+            goto out;
         }
-        if (vfip->barres[RES_TYPE_RQ].bus_addr == 0) {
-                usd_err("Failed to retrieve RQ res info\n");
-                ret = -ENXIO;
-                goto out;
-        }
-        if (vfip->barres[RES_TYPE_CQ].bus_addr == 0) {
-                usd_err("Failed to retrieve CQ res info\n");
-                ret = -ENXIO;
-                goto out;
-        }
-        if (vfip->barres[RES_TYPE_INTR_CTRL].bus_addr == 0) {
-                usd_err("Failed to retrieve INTR res info\n");
-                ret = -ENXIO;
-                goto out;
-        }
-        if (vfip->barres[RES_TYPE_DEVCMD].bus_addr == 0) {
-                usd_err("Failed to retrieve DEVCMD res info\n");
-                ret = -ENXIO;
-                goto out;
-        }
+    }  else {
+        usd_err("unexpected cmd_version (%u)\n", urp->cmd_version);
+        ret = -ENXIO;
+        goto out;
     }
+
+    free(resources);
     free(resp);
     return 0;
 
   out:
     if (irp != NULL)                   /* indicates successful IB create QP */
         usd_ib_cmd_destroy_qp(dev, qp);
+    free(resources);
     free(resp);
     return ret;
 }

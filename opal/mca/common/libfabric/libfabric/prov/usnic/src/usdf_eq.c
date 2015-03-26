@@ -481,20 +481,20 @@ usdf_eq_close(fid_t fid)
 }
 
 static struct fi_ops_eq usdf_eq_ops = {
-        .size = sizeof(struct fi_ops_eq),
-        .read = usdf_eq_read,
-        .sread = fi_no_eq_sread,
-        .readerr = usdf_eq_readerr,
-        .write = fi_no_eq_write,
-        .strerror = usdf_eq_strerror
+	.size = sizeof(struct fi_ops_eq),
+	.read = usdf_eq_read,
+	.readerr = usdf_eq_readerr,
+	.write = fi_no_eq_write,
+	.sread = fi_no_eq_sread,
+	.strerror = usdf_eq_strerror,
 };
 
 static struct fi_ops usdf_eq_fi_ops = {
-        .size = sizeof(struct fi_ops),
-        .close = usdf_eq_close,
-        .bind = fi_no_bind,
-        .control = usdf_eq_control,
-        .ops_open = fi_no_ops_open,
+	.size = sizeof(struct fi_ops),
+	.close = usdf_eq_close,
+	.bind = fi_no_bind,
+	.control = usdf_eq_control,
+	.ops_open = fi_no_ops_open,
 };
 
 int

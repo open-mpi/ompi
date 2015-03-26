@@ -213,8 +213,8 @@ static inline size_t rbfdavail(struct ringbuffd *rbfd)
 static inline void rbfdsignal(struct ringbuffd *rbfd)
 {
 	if (rbfd->fdwcnt == rbfd->fdrcnt) {
-		write(rbfd->fd[RB_WRITE_FD], rbfd, sizeof rbfd);
-		rbfd->fdwcnt++;
+		if (write(rbfd->fd[RB_WRITE_FD], rbfd, sizeof rbfd) == sizeof rbfd)
+			rbfd->fdwcnt++;
 	}
 }
 
@@ -223,8 +223,8 @@ static inline void rbfdreset(struct ringbuffd *rbfd)
 	void *buf;
 
 	if (rbfdempty(rbfd) && (rbfd->fdrcnt < rbfd->fdwcnt)) {
-		read(rbfd->fd[RB_READ_FD], &buf, sizeof buf);
-		rbfd->fdrcnt++;
+		if (read(rbfd->fd[RB_READ_FD], &buf, sizeof buf) == sizeof buf)
+			rbfd->fdrcnt++;
 	}
 }
 

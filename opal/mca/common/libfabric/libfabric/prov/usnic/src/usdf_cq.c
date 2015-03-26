@@ -648,61 +648,81 @@ usdf_cq_close(fid_t fid)
 static struct fi_ops_cq usdf_cq_context_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_context,
-	.sread = usdf_cq_sread,
 	.readfrom = usdf_cq_readfrom_context,
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_context_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_context_soft,
-	.sread = usdf_cq_sread_soft,
 	.readfrom = usdf_cq_readfrom_context_soft,
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread_soft,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_msg_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_msg,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_msg_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_msg_soft,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_data_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_data,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_data_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_data_soft,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops usdf_cq_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_cq_close,
+	.bind = fi_no_bind,
 	.control = usdf_cq_control,
+	.ops_open = fi_no_ops_open,
 };
 
 /*

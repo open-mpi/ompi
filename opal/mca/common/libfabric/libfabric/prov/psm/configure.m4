@@ -1,4 +1,4 @@
-dnl Configury specific to the libfabrics PSM provider
+dnl Configury specific to the libfabric PSM provider
 
 dnl Called to configure this provider
 dnl

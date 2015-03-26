@@ -86,10 +86,12 @@ struct vnic_rx_stats {
 	u64 rsvd[16];
 };
 
+#ifndef __VMKLNX__
 /* Generic statistics */
 struct vnic_gen_stats {
 	u64 dma_map_error;
 };
+#endif
 
 struct vnic_stats {
 	struct vnic_tx_stats tx;

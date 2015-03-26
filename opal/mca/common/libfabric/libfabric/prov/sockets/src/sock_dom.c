@@ -46,6 +46,7 @@ const struct fi_domain_attr sock_domain_attr = {
 	.threading = FI_THREAD_SAFE,
 	.control_progress = FI_PROGRESS_AUTO,
 	.data_progress = FI_PROGRESS_AUTO,
+	.resource_mgmt = FI_RM_ENABLED,
 	.mr_key_size = sizeof(uint16_t),
 	.cq_data_size = sizeof(uint64_t),
 	.ep_cnt = SOCK_EP_MAX_EP_CNT,
@@ -99,6 +100,17 @@ int sock_verify_domain_attr(struct fi_domain_attr *attr)
 		SOCK_LOG_INFO("Data progress mode not supported!\n");
 		return -FI_ENODATA;
 	}
+
+	switch (attr->resource_mgmt){
+	case FI_RM_UNSPEC:
+	case FI_RM_DISABLED:
+	case FI_RM_ENABLED:
+		break;
+
+	default:
+		SOCK_LOG_INFO("Resource mgmt not supported!\n");
+		return -FI_ENODATA;
+	}
 	
 	if(attr->cq_data_size > sock_domain_attr.cq_data_size)
 		return -FI_ENODATA;
@@ -118,24 +130,8 @@ int sock_verify_domain_attr(struct fi_domain_attr *attr)
 static int sock_dom_close(struct fid *fid)
 {
 	struct sock_domain *dom;
-	void *res;
-	int ret;
-	char c = 0;
-
 	dom = container_of(fid, struct sock_domain, dom_fid.fid);
 	if (atomic_get(&dom->ref)) {
-		return -FI_EBUSY;
-	}
-
-	dom->listening = 0;
-	ret = write(dom->signal_fds[0], &c, 1);
-	if (ret != 1) {
-		SOCK_LOG_ERROR("Failed to signal\n");
-		return -FI_EINVAL;
-	}
-
-	if (pthread_join(dom->listen_thread, &res)) {
-		SOCK_LOG_ERROR("could not join listener thread, errno = %d\n", errno);
 		return -FI_EBUSY;
 	}
 
@@ -244,7 +240,7 @@ struct sock_mr *sock_mr_verify_key(struct sock_domain *domain, uint16_t key,
 struct sock_mr *sock_mr_verify_desc(struct sock_domain *domain, void *desc, 
 			void *buf, size_t len, uint64_t access)
 {
-	uint64_t key = (uint64_t)desc;
+	uint64_t key = (uintptr_t) desc;
 	return sock_mr_verify_key(domain, key, buf, len, access);
 }
 
@@ -291,7 +287,7 @@ static int sock_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	if (idm_set(&dom->mr_idm, key, _mr) < 0)
 		goto err;
 	_mr->mr_fid.key = key;
-	_mr->mr_fid.mem_desc = (void *)key;
+	_mr->mr_fid.mem_desc = (void *) (uintptr_t) key;
 	fastlock_release(&dom->lock);
 
 	_mr->iov_count = attr->iov_count;
@@ -421,9 +417,11 @@ static struct fi_ops_mr sock_dom_mr_ops = {
 int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		struct fid_domain **dom, void *context)
 {
-	int ret, flags;
 	struct sock_domain *sock_domain;
+	struct sock_fabric *fab;
+	int ret;
 
+	fab = container_of(fabric, struct sock_fabric, fab_fid);
 	if(info && info->domain_attr){
 		ret = sock_verify_domain_attr(info->domain_attr);
 		if(ret)
@@ -437,16 +435,8 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 	fastlock_init(&sock_domain->lock);
 	atomic_init(&sock_domain->ref, 0);
 
-	if(info && info->src_addr) {
-		if (getnameinfo(info->src_addr, info->src_addrlen, NULL, 0,
-				sock_domain->service, sizeof(sock_domain->service),
-				NI_NUMERICSERV)) {
-			SOCK_LOG_ERROR("could not resolve src_addr\n");
-			goto err;
-		}
+	if (info) {
 		sock_domain->info = *info;
-		memcpy(&sock_domain->src_addr, info->src_addr, 
-		       sizeof(struct sockaddr_in));
 	} else {
 		SOCK_LOG_ERROR("invalid fi_info\n");
 		goto err;
@@ -465,26 +455,18 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 		sock_domain->progress_mode = info->domain_attr->data_progress;
 
 	sock_domain->pe = sock_pe_init(sock_domain);
-	if(!sock_domain->pe){
+	if (!sock_domain->pe){
 		SOCK_LOG_ERROR("Failed to init PE\n");
 		goto err;
 	}
 
-	sock_domain->ep_count = AF_INET;
-	sock_domain->r_cmap.domain = sock_domain;
-	fastlock_init(&sock_domain->r_cmap.lock);
-	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_domain->signal_fds) < 0)
+	if (sock_conn_map_init(&sock_domain->r_cmap, 128))
 		goto err;
 
-	flags = fcntl(sock_domain->signal_fds[1], F_GETFL, 0);
-	if (fcntl(sock_domain->signal_fds[1], F_SETFL, flags | O_NONBLOCK))
-		SOCK_LOG_ERROR("fcntl failed\n");
+	sock_domain->r_cmap.domain = sock_domain;
+	fastlock_init(&sock_domain->r_cmap.lock);
 
-	sock_conn_listen(sock_domain);
-
-	while(!(volatile int)sock_domain->listening)
-		pthread_yield();
-
+	sock_domain->fab = fab;
 	*dom = &sock_domain->dom_fid;
 	return 0;
 

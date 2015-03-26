@@ -405,7 +405,7 @@ usdf_pep_close(fid_t fid)
 
 	usdf_pep_free_cr_lists(pep);
 	close(pep->pep_sock);
-	if (&pep->pep_eq != NULL) {
+	if (pep->pep_eq != NULL) {
 		atomic_dec(&pep->pep_eq->eq_refcnt);
 	}
 	atomic_dec(&pep->pep_fabric->fab_refcnt);
@@ -429,6 +429,8 @@ static struct fi_ops_ep usdf_pep_base_ops = {
 	.setopt = fi_no_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_pep_cm_ops = {

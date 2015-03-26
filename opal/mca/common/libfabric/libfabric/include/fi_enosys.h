@@ -64,7 +64,7 @@ int fi_no_ops_open(struct fid *fid, const char *name,
 static struct fi_ops_fabric X = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = fi_no_domain,
-	.endpoint = fi_no_passive_ep,
+	.passive_ep = fi_no_passive_ep,
 	.eq_open = fi_no_eq_open,
 	.wait_open = fi_no_wait_open,
 };
@@ -150,7 +150,7 @@ int fi_no_atomic_compwritevalid(struct fid_ep *ep,
 /*
 static struct fi_ops_cm X = {
 	.size = sizeof(struct fi_ops_cm),
-	.getname = X,
+	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
 	.listen = fi_no_listen,
@@ -170,23 +170,12 @@ int fi_no_reject(struct fid_pep *pep, fi_connreq_t connreq,
 int fi_no_shutdown(struct fid_ep *ep, uint64_t flags);
 
 /*
-static struct fi_ops_av X = {
-	.size = sizeof(struct fi_ops_av),
-	.insert = X,
-	.insertsvc = X,
-	.insertsym = X,
-	.remove = X,
-	.lookup = X,
-	.straddr = X,
-};
-*/
-
-/*
 static struct fi_ops_domain X = {
 	.size = sizeof(struct fi_ops_domain),
 	.av_open = fi_no_av_open,
 	.cq_open = fi_no_cq_open,
 	.endpoint = fi_no_endpoint,
+	.scalable_ep = fi_no_scalable_ep,
 	.cntr_open = fi_no_cntr_open,
 	.poll_open = fi_no_poll_open,
 	.stx_ctx = fi_no_stx_context,
@@ -199,6 +188,8 @@ int fi_no_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		struct fid_cq **cq, void *context);
 int fi_no_endpoint(struct fid_domain *domain, struct fi_info *info,
 		struct fid_ep **ep, void *context);
+int fi_no_scalable_ep(struct fid_domain *domain, struct fi_info *info,
+		struct fid_ep **sep, void *context);
 int fi_no_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		struct fid_cntr **cntr, void *context);
 int fi_no_poll_open(struct fid_domain *domain, struct fi_poll_attr *attr,
@@ -229,7 +220,6 @@ int fi_no_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 /*
 static struct fi_ops_ep X = {
 	.size = sizeof(struct fi_ops_ep),
-	.enable = fi_no_enable,
 	.cancel = fi_no_cancel,
 	.getopt = fi_no_getopt,
 	.setopt = fi_no_setopt,
@@ -239,7 +229,6 @@ static struct fi_ops_ep X = {
 	.tx_size_left = fi_no_tx_size_left,
 };
 */
-int fi_no_enable(struct fid_ep *ep);
 ssize_t fi_no_cancel(fid_t fid, void *context);
 int fi_no_getopt(fid_t fid, int level, int optname,
 		void *optval, size_t *optlen);
@@ -298,6 +287,8 @@ static struct fi_ops_wait X = {
 static struct fi_ops_poll X = {
 	.size = sizeof(struct fi_ops_poll),
 	.poll = X,
+	.poll_add = X,
+	.poll_del = X,
 };
 */
 
@@ -323,8 +314,9 @@ static struct fi_ops_cq X = {
 	.readfrom = fi_no_cq_readfrom,
 	.readerr = X,
 	.write = fi_no_cq_write,
+	.writeerr = fi_no_cq_writeerr,
 	.sread = fi_no_cq_sread,
-	.sreadfrom = fi_no_cq_readfrom,
+	.sreadfrom = fi_no_cq_sreadfrom,
 	.strerror = X,
 };
 */
@@ -426,8 +418,16 @@ ssize_t fi_no_tagged_search(struct fid_ep *ep, uint64_t *tag, uint64_t ignore,
 		uint64_t flags, fi_addr_t *src_addr, size_t *len, void *context);
 
 /*
- * fi_ops_av
- */
+static struct fi_ops_av X = {
+	.size = sizeof(struct fi_ops_av),
+	.insert = fi_no_av_insert,
+	.insertsvc = fi_no_av_insertsvc,
+	.insertsym = fi_no_av_insertsym,
+	.remove = fi_no_av_remove,
+	.lookup = X,
+	.straddr = X,
+};
+*/
 int fi_no_av_insert(struct fid_av *av, const void *addr, size_t count,
 			fi_addr_t *fi_addr, uint64_t flags, void *context);
 int fi_no_av_insertsvc(struct fid_av *av, const char *node,
