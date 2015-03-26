@@ -36,6 +36,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +63,24 @@ static struct fi_prov *prov_head, *prov_tail;
 static volatile int init = 0;
 static pthread_mutex_t ini_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static char **prov_name_filters = NULL;
+static int prov_filter_negated = 0;
+
+/* returns 1 if the provider should be kept, 0 if it should be skipped */
+static int filter_provider(struct fi_provider *provider)
+{
+	int i;
+
+	if (prov_name_filters != NULL) {
+		for (i = 0; prov_name_filters[i] != NULL; ++i)
+			if (strcmp(provider->name, prov_name_filters[i]) == 0)
+				return prov_filter_negated ? 0 : 1;
+		return prov_filter_negated ? 1 : 0;
+	} else {
+		/* keep by default */
+		return 1;
+	}
+}
 
 static void cleanup_provider(struct fi_provider *provider, void *dlhandle)
 {
@@ -78,6 +97,7 @@ static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 {
 	struct fi_prov *prov;
 	int ret;
+	int keep;
 
 	if (!provider) {
 		ret = -FI_EINVAL;
@@ -95,6 +115,15 @@ static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 			FI_MAJOR_VERSION, FI_MINOR_VERSION);
 
 		ret = -FI_ENOSYS;
+		goto cleanup;
+	}
+
+	keep = filter_provider(provider);
+	if (!keep) {
+		FI_LOG(2, NULL,
+			"\"%s\" filtered by provider include/exclude list, skipping\n",
+			provider->name);
+		ret = -FI_ENODEV;
 		goto cleanup;
 	}
 
@@ -156,6 +185,98 @@ static int lib_filter(const struct dirent *entry)
 }
 #endif
 
+/* split the given string "s" using the specified delimiter(s) in the string
+ * "delim" and return an array of strings.  The array is terminated with a NULL
+ * pointer.  You can clean this array up with a call to free_string_array().
+ *
+ * Returns NULL on failure.
+ */
+static char **split_and_alloc(const char *s, const char *delim)
+{
+	int i, n;
+	char *tmp;
+	char *dup = NULL;
+	char **arr = NULL;
+
+	if (!s || !delim)
+		return NULL;
+
+	dup = strdup(s);
+	if (!dup) {
+		FI_WARN(NULL, "failed to allocate memory\n");
+		return NULL;
+	}
+
+	/* compute the array size */
+	n = 1;
+	for (tmp = dup; *tmp != '\0'; ++tmp) {
+		for (i = 0; delim[i] != '\0'; ++i) {
+			if (*tmp == delim[i]) {
+				++n;
+				break;
+			}
+		}
+	}
+
+	/* +1 to leave space for NULL terminating pointer */
+	arr = calloc(n + 1, sizeof(*arr));
+	if (!arr) {
+		FI_WARN(NULL, "failed to allocate memory\n");
+		goto cleanup;
+	}
+
+	/* set array elts to point inside the dup'ed string */
+	for (tmp = dup, i = 0; tmp != NULL; ++i) {
+		arr[i] = strsep(&tmp, delim);
+	}
+	assert(i == n);
+
+	return arr;
+
+cleanup:
+	free(dup);
+	free(arr);
+	return NULL;
+}
+
+/* see split_and_alloc() */
+static void free_string_array(char **s)
+{
+	/* all strings are allocated from the same strdup'ed slab, so just free
+	 * the first element */
+	if (s != NULL)
+		free(s[0]);
+
+	/* and then the actual array of pointers */
+	free(s);
+}
+
+/* parse any initialization-related environment variables */
+static void fi_parse_ini_env()
+{
+	const char *raw_prov_filter;
+
+	raw_prov_filter = getenv("FI_PROVIDER");
+	if (raw_prov_filter == NULL)
+		return;
+
+	if (*raw_prov_filter == '^') {
+		prov_filter_negated = 1;
+		++raw_prov_filter;
+	}
+
+	prov_name_filters = split_and_alloc(raw_prov_filter, ",");
+	if (!prov_name_filters) {
+		FI_WARN(NULL, "unable to parse FI_PROVIDER env var\n");
+		return;
+	}
+}
+
+static void fi_fini_env()
+{
+	free_string_array(prov_name_filters);
+}
+
 /*
  * Initialize the sockets provider last.  This will result in it being
  * the least preferred provider.
@@ -168,6 +289,7 @@ static void fi_ini(void)
 		goto unlock;
 
 	fi_log_init();
+	fi_parse_ini_env();
 
 #ifdef HAVE_LIBDL
 	struct dirent **liblist = NULL;
@@ -240,6 +362,8 @@ static void __attribute__((destructor)) fi_fini(void)
 		cleanup_provider(prov->provider, prov->dlhandle);
 		free(prov);
 	}
+
+	fi_fini_env();
 }
 
 static struct fi_prov *fi_getprov(const char *prov_name)

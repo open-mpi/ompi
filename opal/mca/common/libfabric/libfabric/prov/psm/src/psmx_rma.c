@@ -677,6 +677,9 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 				     addr, key, context, flags, data);
 
 	if (flags & FI_INJECT) {
+		if (len > PSMX_INJECT_SIZE)
+			return -FI_EMSGSIZE;
+
 		req = malloc(sizeof(*req) + len);
 		if (!req)
 			return -FI_ENOMEM;
@@ -685,7 +688,6 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 		memcpy((void *)req + sizeof(*req), (void *)buf, len);
 		buf = (void *)req + sizeof(*req);
 
-		PSMX_CTXT_TYPE(&req->fi_context) = PSMX_INJECT_WRITE_CONTEXT;
 		req->no_event = 1;
 	}
 	else {
@@ -833,6 +835,7 @@ static ssize_t psmx_writedata(struct fid_ep *ep, const void *buf, size_t len, vo
 }
 
 struct fi_ops_rma psmx_rma_ops = {
+	.size = sizeof(struct fi_ops_rma),
 	.read = psmx_read,
 	.readv = psmx_readv,
 	.readmsg = psmx_readmsg,

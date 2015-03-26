@@ -61,6 +61,7 @@ struct sock_rx_ctx *sock_rx_ctx_alloc(const struct fi_rx_attr *attr, void *conte
 
 	rx_ctx->ctx.fid.fclass = FI_CLASS_RX_CTX;
 	rx_ctx->ctx.fid.context = context;
+	rx_ctx->num_left = attr->size;
 	rx_ctx->attr = *attr;
 	return rx_ctx;
 }
@@ -156,3 +157,40 @@ void sock_tx_ctx_abort(struct sock_tx_ctx *tx_ctx)
 	fastlock_release(&tx_ctx->wlock);
 }
 
+void sock_tx_ctx_write_op_send(struct sock_tx_ctx *tx_ctx,
+		struct sock_op *op, uint64_t flags, uint64_t context,
+		uint64_t dest_addr, uint64_t buf, struct sock_ep *ep,
+		struct sock_conn *conn)
+{
+	sock_tx_ctx_write(tx_ctx, op, sizeof *op);
+	sock_tx_ctx_write(tx_ctx, &flags, sizeof flags);
+	sock_tx_ctx_write(tx_ctx, &context, sizeof context);
+	sock_tx_ctx_write(tx_ctx, &dest_addr, sizeof dest_addr);
+	sock_tx_ctx_write(tx_ctx, &buf, sizeof buf);
+	sock_tx_ctx_write(tx_ctx, &ep, sizeof ep);
+	sock_tx_ctx_write(tx_ctx, &conn, sizeof conn);
+}
+
+void sock_tx_ctx_write_op_tsend(struct sock_tx_ctx *tx_ctx,
+		struct sock_op *op, uint64_t flags, uint64_t context,
+		uint64_t dest_addr, uint64_t buf, struct sock_ep *ep,
+		struct sock_conn *conn, uint64_t tag)
+{
+	sock_tx_ctx_write_op_send(tx_ctx, op, flags, context, dest_addr,
+			buf, ep, conn);
+	sock_tx_ctx_write(tx_ctx, &tag, sizeof tag);
+}
+
+void sock_tx_ctx_read_op_send(struct sock_tx_ctx *tx_ctx,
+		struct sock_op *op, uint64_t *flags, uint64_t *context,
+		uint64_t *dest_addr, uint64_t *buf, struct sock_ep **ep,
+		struct sock_conn **conn)
+{
+	rbfdread(&tx_ctx->rbfd, op, sizeof *op);
+	rbfdread(&tx_ctx->rbfd, flags, sizeof *flags);
+	rbfdread(&tx_ctx->rbfd, context, sizeof *context);
+	rbfdread(&tx_ctx->rbfd, dest_addr, sizeof *dest_addr);
+	rbfdread(&tx_ctx->rbfd, buf, sizeof *buf);
+	rbfdread(&tx_ctx->rbfd, ep, sizeof *ep);
+	rbfdread(&tx_ctx->rbfd, conn, sizeof *conn);
+}

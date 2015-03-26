@@ -343,6 +343,7 @@ static struct fi_ops psmx_fi_ops = {
 	.close = psmx_cntr_close,
 	.bind = fi_no_bind,
 	.control = psmx_cntr_control,
+	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_cntr psmx_cntr_ops = {

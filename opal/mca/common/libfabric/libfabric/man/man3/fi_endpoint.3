@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-02\-27" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2015\-03\-23" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -458,7 +458,7 @@ an endpoint.
 .nf
 \f[C]
 struct\ fi_ep_attr\ {
-\ \ \ \ enum\ fi_ep_type\ ep_type;
+\ \ \ \ enum\ fi_ep_type\ type;
 \ \ \ \ uint32_t\ \ \ \ \ \ \ \ protocol;
 \ \ \ \ uint32_t\ \ \ \ \ \ \ \ protocol_version;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_msg_size;
@@ -1080,16 +1080,27 @@ flag will be ignored by the target.
 The local endpoint must be configured with the FI_REMOTE_SIGNAL
 capability in order to specify this flag.
 .PP
-\f[I]FI_REMOTE_COMPLETE\f[] : Indicates that local completions should
-not be generated until the operation has completed on the remote side.
-When set, if the target endpoint experiences an error receiving the
-transferred data, that error will be reported back to the initiator of
-the request.
+\f[I]FI_REMOTE_COMPLETE\f[] : Generally, this flag indicates that an
+operation will not complete until it has been accepted into the fabric
+and acknowledged by a remote service.
+When used with unreliable endpoints, local completions should not be
+generated until the associated operation has been successfully delivered
+into the fabric.
+For example, the corresponding messages have been placed on the wire.
+When used with reliable endpoints, this flag indicates that the
+operation will not complete until it has been acknowledged by the
+target, or a proxy for the target that is responsible for ensuring its
+reliable delivery.
+For example, this flag often implies that a completion is not generated
+until an ack has been received from the target.
+.PP
+Note that when set, if the target endpoint experiences an error
+receiving the transferred data, that error will often be reported back
+to the initiator of the request.
 This includes errors which may not normally be reported to the
-initiator.
-For example, if the receive data is truncated at the target because the
-provided receive buffer is too small, the initiator will be notified of
-the truncation.
+initiator, such as remote buffer overruns.
+.PP
+\f[I]FI_REMOTE_COMMIT\f[] : This flag is defined for future use.
 .SH NOTES
 .PP
 Users should call fi_close to release all resources allocated to the

@@ -1493,6 +1493,7 @@ static int psmx_atomic_compwritevalid(struct fid_ep *ep,
 }
 
 struct fi_ops_atomic psmx_atomic_ops = {
+	.size = sizeof(struct fi_ops_atomic),
 	.write = psmx_atomic_write,
 	.writev = psmx_atomic_writev,
 	.writemsg = psmx_atomic_writemsg,

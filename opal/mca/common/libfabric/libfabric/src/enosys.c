@@ -224,6 +224,11 @@ int fi_no_endpoint(struct fid_domain *domain, struct fi_info *info,
 {
 	return -FI_ENOSYS;
 }
+int fi_no_scalable_ep(struct fid_domain *domain, struct fi_info *info,
+		struct fid_ep **sep, void *context)
+{
+	return -FI_ENOSYS;
+}
 int fi_no_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		struct fid_cntr **cntr, void *context)
 {
@@ -270,10 +275,6 @@ int fi_no_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 /*
  * struct fi_ops_ep
  */
-int fi_no_enable(struct fid_ep *ep)
-{
-	return -FI_ENOSYS;
-}
 ssize_t fi_no_cancel(fid_t fid, void *context)
 {
 	return -FI_ENOSYS;

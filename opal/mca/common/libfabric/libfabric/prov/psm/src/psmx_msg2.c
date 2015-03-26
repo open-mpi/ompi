@@ -551,7 +551,7 @@ static ssize_t _psmx_send2(struct fid_ep *ep, const void *buf, size_t len,
 	req->cq_flags = FI_SEND | FI_MSG;
 
 	if ((ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)) ||
-	     (context == &ep_priv->sendimm_context))
+	     (flags & FI_INJECT))
 		req->no_event = 1;
 
 	args[0].u32w0 = PSMX_AM_REQ_SEND | (msg_size == len ? PSMX_AM_EOM : 0);
@@ -639,7 +639,7 @@ static ssize_t psmx_inject2(struct fid_ep *ep, const void *buf, size_t len,
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
 	/* TODO: optimize it & guarantee buffered */
-	return _psmx_send2(ep, buf, len, NULL, dest_addr, &ep_priv->sendimm_context,
+	return _psmx_send2(ep, buf, len, NULL, dest_addr, NULL,
 			   ep_priv->flags | FI_INJECT);
 }
 

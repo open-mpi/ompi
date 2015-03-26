@@ -27,7 +27,8 @@ rdmainclude_HEADERS =
 # internal utility functions shared by in-tree providers:
 common_srcs = \
 	src/common.c \
-	src/enosys.c
+	src/enosys.c \
+	src/log.c
 
 # ensure dl-built providers link back to libfabric
 linkback = $(top_builddir)/src/libfabric.la
@@ -42,7 +43,6 @@ src_libfabric_la_SOURCES = \
 	include/prov.h \
 	src/fabric.c \
 	src/fi_tostr.c \
-	src/log.c \
 	$(common_srcs)
 
 if MACOS
@@ -216,7 +216,7 @@ _usnic_files = \
 
 _usnic_cppflags = \
         -D__LIBUSNIC__ \
-        -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(usnic_libnl_CPPFLAGS) \
+        -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(usnic_nl_CPPFLAGS) \
         -I$(top_srcdir)/prov/usnic/src/usnic_direct
 
 rdmainclude_HEADERS += \
@@ -226,13 +226,16 @@ if HAVE_USNIC_DL
 pkglib_LTLIBRARIES += libusnic-fi.la
 libusnic_fi_la_CPPFLAGS = $(AM_CPPFLAGS) $(_usnic_cppflags)
 libusnic_fi_la_SOURCES = $(_usnic_files) $(common_srcs)
-libusnic_fi_la_LDFLAGS = -module -avoid-version -shared -export-dynamic
-libusnic_fi_la_LIBADD = $(linkback) $(usnic_libnl_LIBS)
+libusnic_fi_la_LDFLAGS = \
+        $(usnic_ln_LDFLAGS) \
+        -module -avoid-version -shared -export-dynamic
+libusnic_fi_la_LIBADD = $(linkback) $(usnic_nl_LIBS)
 libusnic_fi_la_DEPENDENCIES = $(linkback)
 else !HAVE_USNIC_DL
 src_libfabric_la_SOURCES += $(_usnic_files)
 src_libfabric_la_CPPFLAGS += $(_usnic_cppflags)
-src_libfabric_la_LIBADD += $(usnic_libnl_LIBS)
+src_libfabric_la_LDFLAGS += $(usnic_nl_LDFLAGS)
+src_libfabric_la_LIBADD += $(usnic_nl_LIBS)
 endif !HAVE_USNIC_DL
 
 endif HAVE_USNIC
@@ -328,6 +331,11 @@ real_man_pages = \
         man/man3/fi_trigger.3 \
         man/man3/fi_version.3 \
         man/man7/fabric.7 \
+        man/man7/fi_provider.7 \
+        man/man7/fi_psm.7 \
+        man/man7/fi_sockets.7 \
+        man/man7/fi_usnic.7 \
+        man/man7/fi_verbs.7 \
         man/man7/fi_direct.7
 
 dummy_man_pages = \
@@ -397,7 +405,9 @@ dummy_man_pages = \
         man/man3/fi_mr_regattr.3 \
         man/man3/fi_mr_regv.3 \
         man/man3/fi_open.3 \
+        man/man3/fi_open_ops.3 \
         man/man3/fi_passive_ep.3 \
+        man/man3/fi_pep_bind.3 \
         man/man3/fi_poll_add.3 \
         man/man3/fi_poll_del.3 \
         man/man3/fi_poll_open.3 \
@@ -410,6 +420,7 @@ dummy_man_pages = \
         man/man3/fi_reject.3 \
         man/man3/fi_rx_addr.3 \
         man/man3/fi_rx_size_left.3 \
+        man/man3/fi_scalable_ep_bind.3 \
         man/man3/fi_send.3 \
         man/man3/fi_senddata.3 \
         man/man3/fi_sendmsg.3 \
