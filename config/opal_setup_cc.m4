@@ -199,7 +199,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # Note: Some versions of clang (at least >= 3.5 -- perhaps
         # older versions, too?) will *warn* about -finline-functions,
         # but still allow it.  This is very annoying, so check for
-        # that warning, too.
+        # that warning, too.  The clang warning looks like this:
+        # clang: warning: optimization flag '-finline-functions' is not supported
+        # clang: warning: argument unused during compilation: '-finline-functions'
         CFLAGS="$CFLAGS_orig -finline-functions"
         add=
         AC_CACHE_CHECK([if $CC supports -finline-functions],
@@ -208,8 +210,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
                                    [opal_cv_cc_finline_functions="yes"
                                     if test -s conftest.err ; then
                                         for i in unused 'not supported' ; do
-                                            $GREP -iq "$i" conftest.err
-                                            if test $? -eq 0; then
+                                            if $GREP -iq "$i" conftest.err; then
                                                 opal_cv_cc_finline_functions="no"
                                                 break;
                                             fi
