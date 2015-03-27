@@ -15,11 +15,11 @@ Low level communication monitoring interface in OpenMPI
 
 Introduction
 ------------
-This inteface traces and monitors all messages sent by MPI before they go to the
+This interface traces and monitors all messages sent by MPI before they go to the
 communication channels. At that levels all communication are point-to-point communications:
 collectives are already decomposed in send and receive calls.
 
-The monitoring is strored internally by each process and output on stderr at the end of the
+The monitoring is stored internally by each process and output on stderr at the end of the
 application (during MPI_Finalize()).
 
 
@@ -31,7 +31,7 @@ If x = 2 it monitors internal tags and external tags separately.
 If x = 0 the monitoring is disabled.
 Other value of x are not supported.
 
-Internal tags are tags < 0. They are used to tag send and receive comming from
+Internal tags are tags < 0. They are used to tag send and receive coming from
 collective operations or from protocol communications
 
 External tags are tags >=0. They are used by the application in point-to-point communication.
@@ -59,10 +59,10 @@ E	3	2	860 bytes	24 msgs sent
 
 Where:
   - the first column distinguishes internal (I)  and external (E) tags.
-  - the second column is ther sender rank
+  - the second column is the sender rank
   - the third column is the receiver rank
   - the fourth column is the number of bytes sent
-  - the last column is the nulber of messages.
+  - the last column is the number of messages.
 
 In this example process 0 as sent 27 messages to process 1 using point-to-point call
 for 108 bytes and 30 messages with collectives and protocol related communication
@@ -84,10 +84,10 @@ I	3	2	860 bytes	24 msgs sent
 Monitoring phases
 -----------------
 If one wants to monitor phases of the application, it is possible to flush the monitoring
-at the application level. In this case all the monitoring since the last flush is strored
+at the application level. In this case all the monitoring since the last flush is stored
 by every process in a file.
 
-An example of how to flush such monitroing is given in test/monitoring/monitoring_test.c
+An example of how to flush such monitoring is given in test/monitoring/monitoring_test.c
 
 Moreover, all the different flushed phased are aggregated at runtime and output at the end
 of the application as described above.
@@ -116,16 +116,16 @@ Two perl scripts are provided in test/monitoring
    prof/phase_2.prof
 
 - profile2mat.pl is for transforming a the monitoring output into a communication matrix.
-   Take a profile file and aggregates all the recorded communicaton into matrices.
-   It generated a matrices for teh number of messages, (msg),
+   Take a profile file and aggregates all the recorded communicator into matrices.
+   It generated a matrices for the number of messages, (msg),
    for the total bytes transmitted (size) and
-   the average nulber of bytes per messages (avg)
+   the average number of bytes per messages (avg)
 
-   The output matix is symetric
+   The output matrix is symmetric
 
-Do not forget to enable the execution rigth to these scripts.
+Do not forget to enable the execution right to these scripts.
 
-For instance, the provided examples store phses output in ./prof
+For instance, the provided examples store phases output in ./prof
 
 If you type:
 > mpirun -np 4 --mca pml_monitoring_enable 2 ./monitoring_test
@@ -158,7 +158,7 @@ you can parse the phases with:
 Building prof/phase_1.prof
 Building prof/phase_2.prof
 
-And you can buid the different communication matrices of phase 1 with:
+And you can build the different communication matrices of phase 1 with:
 > ./profile2mat.pl prof/phase_1.prof
 prof/phase_1.prof -> all
 prof/phase_1_size_all.mat
