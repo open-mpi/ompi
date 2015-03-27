@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +77,9 @@ typedef struct {
     bool               listen_thread_active;
     struct timeval     listen_thread_tv;       /**< Timeout when using listen thread */
     int                stop_thread[2];         /**< pipe used to exit the listen thread */
+    int                keepalive_probes;       /**< number of keepalives that can be missed before declaring error */
+    int                keepalive_time;         /**< idle time in seconds before starting to send keepalives */
+    int                keepalive_intvl;        /**< time between keepalives, in seconds */
 } mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;

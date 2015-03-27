@@ -74,7 +74,8 @@ int sock_wait_get_obj(struct fid_wait *fid, void *arg)
 
 static int sock_wait_init(struct sock_wait *wait, enum fi_wait_obj type)
 {
-	long flags = 0;
+	int ret;
+
 	wait->type = type;
 	
 	switch (type) {
@@ -82,11 +83,11 @@ static int sock_wait_init(struct sock_wait *wait, enum fi_wait_obj type)
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, wait->wobj.fd))
 			return -errno;
 		
-		flags = fcntl(wait->wobj.fd[WAIT_READ_FD], F_GETFL, 0);
-		if (fcntl(wait->wobj.fd[WAIT_READ_FD], F_SETFL, flags | O_NONBLOCK)) {
+		ret = fd_set_nonblock(wait->wobj.fd[WAIT_READ_FD]);
+		if (ret) {
 			close(wait->wobj.fd[WAIT_READ_FD]);
 			close(wait->wobj.fd[WAIT_WRITE_FD]);
-			return -errno;
+			return ret;
 		}
 		break;
 		

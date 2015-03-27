@@ -1,4 +1,4 @@
-dnl Configury specific to the libfabrics verbs provider
+dnl Configury specific to the libfabric verbs provider
 
 dnl Called to configure this provider
 dnl

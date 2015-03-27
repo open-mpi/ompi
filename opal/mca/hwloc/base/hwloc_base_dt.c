@@ -104,7 +104,9 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
          */
-        if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) {
+        if (0 != hwloc_topology_set_flags(t, (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                                              HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                              HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
             goto cleanup;
@@ -130,6 +132,11 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         }
         cnt = sizeof(struct hwloc_topology_membind_support);
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, support->membind, &cnt, OPAL_BYTE))) {
+            goto cleanup;
+        }
+
+        /* filter the cpus thru any default cpu set */
+        if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(t))) {
             goto cleanup;
         }
 

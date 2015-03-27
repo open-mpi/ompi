@@ -75,6 +75,7 @@ static struct fi_ops psmx_fi_ops = {
 	.close = psmx_domain_close,
 	.bind = fi_no_bind,
 	.control = fi_no_control,
+	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_domain psmx_domain_ops = {
@@ -82,6 +83,7 @@ static struct fi_ops_domain psmx_domain_ops = {
 	.av_open = psmx_av_open,
 	.cq_open = psmx_cq_open,
 	.endpoint = psmx_ep_open,
+	.scalable_ep = fi_no_scalable_ep,
 	.cntr_open = psmx_cntr_open,
 	.poll_open = psmx_poll_open,
 	.stx_ctx = psmx_stx_ctx,

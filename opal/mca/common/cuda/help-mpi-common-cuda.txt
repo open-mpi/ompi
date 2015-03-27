@@ -85,7 +85,7 @@ memory footprint of your application.
 [cuIpcCloseMemHandle failed]
 The call to cuIpcCloseMemHandle failed. This is a warning and the program 
 will continue to run.
-  cuIpcOpenMemHandle return value:   %d
+  cuIpcCloseMemHandle return value:   %d
   address: %p
 Check the cuda.h file for what the return value means. Perhaps a reboot
 of the node will clear the problem.

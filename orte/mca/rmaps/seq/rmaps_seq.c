@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -298,7 +298,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                  * hostfile may not have been FQDN, while name returned
                  * by gethostname may have been (or vice versa)
                  */
-                if (opal_ifislocal(seq->hostname)) {
+                if (orte_ifislocal(seq->hostname)) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:seq: removing head node %s", seq->hostname);
                     opal_list_remove_item(seq_list, item);

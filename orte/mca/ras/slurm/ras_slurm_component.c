@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -105,6 +106,14 @@ static int ras_slurm_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ras_slurm_component.rolling_alloc);
+
+    mca_ras_slurm_component.use_all = false;
+    (void) mca_base_component_var_register (component, "use_entire_allocation",
+                                            "Use entire allocation (not just job step nodes) for this application",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_slurm_component.use_all);
 
     return ORTE_SUCCESS;
 }

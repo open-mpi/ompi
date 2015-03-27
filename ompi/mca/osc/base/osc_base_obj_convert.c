@@ -13,7 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -114,7 +115,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
             iov_count = OMPI_OSC_BASE_DECODE_MAX;
             done = opal_convertor_raw (&convertor, iov, &iov_count, &size);
 
-            for (int i = 0 ; i < iov_count ; ++i) {
+            for (uint32_t i = 0 ; i < iov_count ; ++i) {
                 int primitive_count = iov[i].iov_len / primitive_size;
                 ompi_op_reduce (op, inbuf, iov[i].iov_base, primitive_count, primitive_datatype);
                 inbuf = (void *)((intptr_t) inbuf + iov[i].iov_len);

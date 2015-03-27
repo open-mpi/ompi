@@ -196,6 +196,7 @@ opal_dl_handle_t *libcuda_handle = NULL;
  * This is a workaround to avoid SEGVs.
  */
 static int checkmem;
+static int ctx_ok = 1;
 
 #define CUDA_COMMON_TIMING 0
 #if OPAL_ENABLE_DEBUG
@@ -789,7 +790,7 @@ static int mca_common_cuda_stage_three_init(void)
  */
 void mca_common_cuda_fini(void)
 {
-    int i, ctx_ok = 0;
+    int i;
     CUresult res;
     
     if (0 == stage_one_init_ref_count) {
@@ -810,8 +811,8 @@ void mca_common_cuda_fini(void)
          * a user has called cudaDeviceReset prior to MPI_Finalize. If so,
          * then this call will fail and we skip cleaning up CUDA resources. */
         res = cuFunc.cuMemHostUnregister(&checkmem);
-        if (CUDA_SUCCESS == res) {
-            ctx_ok = 1;
+        if (CUDA_SUCCESS != res) {
+            ctx_ok = 0;
         }
         opal_output_verbose(20, mca_common_cuda_output,
                             "CUDA: mca_common_cuda_fini, cuMemHostUnregister returned %d, ctx_ok=%d",
@@ -1133,16 +1134,22 @@ int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
     CUresult result;
     mca_mpool_common_cuda_reg_t *cuda_reg = (mca_mpool_common_cuda_reg_t*)reg;
 
-    result = cuFunc.cuIpcCloseMemHandle((CUdeviceptr)cuda_reg->base.alloc_base);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
-                       true, result, cuda_reg->base.alloc_base);
-        /* We will just continue on and hope things continue to work. */
-    } else {
-        opal_output_verbose(10, mca_common_cuda_output,
-                            "CUDA: cuIpcCloseMemHandle passed: base=%p",
-                            cuda_reg->base.alloc_base);
-        CUDA_DUMP_MEMHANDLE((100, cuda_reg->data.memHandle, "cuIpcCloseMemHandle"));
+    /* Only attempt to close if we have valid context.  This can change if a call
+     * to the fini function is made and we discover context is gone. */
+    if (ctx_ok) {
+        result = cuFunc.cuIpcCloseMemHandle((CUdeviceptr)cuda_reg->base.alloc_base);
+        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+            opal_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
+                           true, result, cuda_reg->base.alloc_base);
+            opal_output(0, "Sleep on %d", getpid());
+            sleep(20);
+            /* We will just continue on and hope things continue to work. */
+        } else {
+            opal_output_verbose(10, mca_common_cuda_output,
+                                "CUDA: cuIpcCloseMemHandle passed: base=%p",
+                                cuda_reg->base.alloc_base);
+            CUDA_DUMP_MEMHANDLE((100, cuda_reg->data.memHandle, "cuIpcCloseMemHandle"));
+        }
     }
 
     return OPAL_SUCCESS;
@@ -1172,10 +1179,14 @@ void mca_common_cuda_destruct_event(uint64_t *event)
 {
     CUresult result;
 
-    result = cuFunc.cuEventDestroy((CUevent)event);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
-                       true, result);
+    /* Only attempt to destroy if we have valid context.  This can change if a call
+     * to the fini function is made and we discover context is gone. */
+    if (ctx_ok) {
+        result = cuFunc.cuEventDestroy((CUevent)event);
+        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
+                           true, result);
+        }
     }
 }
 

@@ -349,16 +349,6 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 				tmp_cntr = tmp_ep->read_cntr;
 				break;
 
-			case PSMX_INJECT_CONTEXT:
-				tmp_cntr = tmp_ep->send_cntr;
-				free(fi_context);
-				break;
-
-			case PSMX_INJECT_WRITE_CONTEXT:
-				tmp_cntr = tmp_ep->write_cntr;
-				free(fi_context);
-				break;
-
 			case PSMX_SEND_CONTEXT:
 			case PSMX_TSEND_CONTEXT:
 				tmp_cq = tmp_ep->send_cq;
@@ -546,7 +536,7 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 		}
 	}
 
-	return read_count;
+	return read_count ? read_count : -FI_EAGAIN;
 }
 
 static ssize_t psmx_cq_read(struct fid_cq *cq, void *buf, size_t count)
@@ -726,6 +716,7 @@ static struct fi_ops psmx_fi_ops = {
 	.close = psmx_cq_close,
 	.bind = fi_no_bind,
 	.control = psmx_cq_control,
+	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_cq psmx_cq_ops = {

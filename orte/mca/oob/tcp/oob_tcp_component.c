@@ -410,6 +410,29 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
+    
+    mca_oob_tcp_component.keepalive_time = 10;
+    (void)mca_base_component_var_register(component, "keepalive_time",
+                                          "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_time);
+
+    mca_oob_tcp_component.keepalive_intvl = 60;
+    (void)mca_base_component_var_register(component, "keepalive_intvl",
+                                          "Time between keepalives, in seconds",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_intvl);
+    mca_oob_tcp_component.keepalive_probes = 3;
+    (void)mca_base_component_var_register(component, "keepalive_probes",
+                                          "Number of keepalives that can be missed before declaring error",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.keepalive_probes);
     return ORTE_SUCCESS;
 }
 
@@ -427,6 +450,12 @@ static bool component_available(void)
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
+
+    /* if we are an APP and we are not direct launched,
+     * then we don't want to be considered */
+    if (!ORTE_PROC_IS_TOOL && ORTE_PROC_IS_APP && !orte_standalone_operation) {
+        return false;
+    }
 
     /* if interface include was given, construct a list
      * of those interfaces which match the specifications - remember,
@@ -1171,6 +1200,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 
 static void peer_cons(mca_oob_tcp_peer_t *peer)
 {
+    peer->auth_method = NULL;
     peer->sd = -1;
     OBJ_CONSTRUCT(&peer->addrs, opal_list_t);
     peer->active_addr = NULL;
@@ -1184,6 +1214,9 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
 }
 static void peer_des(mca_oob_tcp_peer_t *peer)
 {
+    if (NULL != peer->auth_method) {
+        free(peer->auth_method);
+    }
     if (peer->send_ev_active) {
         opal_event_del(&peer->send_event);
     }

@@ -1500,9 +1500,9 @@ scheme with the release of v1.3.2.
 
 NOTE: Only official releases of Open MPI adhere to this versioning
       scheme. "Beta" releases, release candidates, and nightly
-      tarballs, developer snapshots, and Subversion/Mercurial snapshot
-      tarballs likely will all have arbitrary/meaningless shared
-      library version numbers.
+      tarballs, developer snapshots, and Git snapshot tarballs likely
+      will all have arbitrary/meaningless shared library version
+      numbers.
 
 For deep voodoo technical reasons, only the MPI API libraries were
 versioned until Open MPI v1.5 was released (i.e., libmpi*so --

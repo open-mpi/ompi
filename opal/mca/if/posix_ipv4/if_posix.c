@@ -4,6 +4,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/mca/if/if.h"
+#include "opal/mca/if/base/base.h"
 
 static int if_posix_open(void);
 
@@ -148,6 +150,7 @@ static int if_posix_open(void)
     } while (ifc_len < MAX_IFCONF_SIZE);
     if (!successful_locate) {
         opal_output(0, "opal_ifinit: unable to find network interfaces.");
+        close(sd);
         return OPAL_ERR_FATAL;
     }
         
@@ -220,7 +223,10 @@ static int if_posix_open(void)
             
         /* every new address gets its own internal if_index */
         intf->if_index = opal_list_get_size(&opal_if_list)+1;
-            
+
+        opal_output_verbose(1, opal_if_base_framework.framework_output,
+                            "found interface %s", intf->if_name);
+        
         /* assign the kernel index to distinguish different NICs */
 #ifndef SIOCGIFINDEX
         intf->if_kernel_index = intf->if_index;

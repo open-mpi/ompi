@@ -157,7 +157,7 @@ enum {
 
 #define FI_ADDR_UNSPEC		UINT64_MAX
 #define FI_ADDR_NOTAVAIL	UINT64_MAX
-#define FI_SHARED_CONTEXT	UINT64_MAX
+#define FI_SHARED_CONTEXT	(-(size_t)1)
 typedef uint64_t		fi_addr_t;
 FI_DEFINE_HANDLE(fi_connreq_t);
 

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -1396,6 +1396,7 @@ OBJ_CLASS_INSTANCE(pmix_server_recv_t,
 
 static void pcon(pmix_server_peer_t *p)
 {
+    p->auth_method = NULL;
     p->sd = -1;
     p->retries = 0;
     p->state = PMIX_SERVER_UNCONNECTED;
@@ -1408,6 +1409,9 @@ static void pcon(pmix_server_peer_t *p)
 }
 static void pdes(pmix_server_peer_t *p)
 {
+    if (NULL != p->auth_method) {
+        free(p->auth_method);
+    }
     OPAL_LIST_DESTRUCT(&p->send_queue);
 }
 OBJ_CLASS_INSTANCE(pmix_server_peer_t,
