@@ -240,6 +240,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         else if (-FI_EAVAIL == ret) {
             ret = fi_eq_readerr(module->av_eq, &err_entry, 0);
             if (sizeof(err_entry) == ret) {
+                context = err_entry.context;
 
                 /* Got some kind of address failure.  This usually means
                    that we couldn't find a route to that peer (e.g., the
@@ -247,14 +248,14 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                    can't reach this peer, and print a pretty warning. */
                 if (EADDRNOTAVAIL == err_entry.err ||
                      EHOSTUNREACH == err_entry.err) {
-                    context = err_entry.context;
-                    add_procs_warn_unreachable(module, context->endpoint);
 
                     /* NULL out this endpoint in the array so that the
                        caller knows it's unreachable */
                     /* RFXXX - index in context? */
                     for (i = 0; i < array_len; ++i) {
                         if (endpoints[i] == context->endpoint) {
+                            add_procs_warn_unreachable(module,
+                                                       context->endpoint);
                             OBJ_RELEASE(context->endpoint);
 
                             endpoints[i] = NULL;
