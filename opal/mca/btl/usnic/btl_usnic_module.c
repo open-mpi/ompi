@@ -232,19 +232,14 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         ret = fi_eq_sread(module->av_eq, &event, &entry, sizeof(entry), -1, 0);
         if (sizeof(entry) == ret) {
             context = entry.context;
-            /* The usnic provider returns the number of inserts
-               completed in entry.data */
-            num_left -= entry.data;
             free(context);
+            --num_left;
             ret = 0;
         }
 
         else if (-FI_EAVAIL == ret) {
             ret = fi_eq_readerr(module->av_eq, &err_entry, 0);
             if (sizeof(err_entry) == ret) {
-                /* An err_entry is returned for each errored
-                   insertion */
-                --num_left;
 
                 /* Got some kind of address failure.  This usually means
                    that we couldn't find a route to that peer (e.g., the
