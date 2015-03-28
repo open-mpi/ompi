@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -245,19 +245,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
                     /* for performance, bind to core */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
                 }
             } else {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
                     /* for performance, bind to socket */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 }
             }
         }

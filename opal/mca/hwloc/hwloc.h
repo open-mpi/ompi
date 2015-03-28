@@ -195,6 +195,8 @@ typedef uint16_t opal_binding_policy_t;
     ((pol) & 0x0fff)
 #define OPAL_SET_BINDING_POLICY(target, pol) \
     (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_GIVEN)
+#define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol) \
+    (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_IF_SUPPORTED)
 /* check if policy is set */
 #define OPAL_BINDING_POLICY_IS_SET(pol) \
     ((pol) & 0x4000)
