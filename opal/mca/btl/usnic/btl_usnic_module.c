@@ -239,10 +239,10 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
 
            Note that if an fi_av_insert() fails, it will *first*
            return an entry on the error queue (i.e., have
-           gi_eq_sread() return -FI_EVAIL), and *second* it will
+           fi_eq_sread() return -FI_EVAIL), and *second* it will
            return an entry on the normal queue.  Meaning: the failed
            fi_av_insert() context will show up twice.  So don't free
-           the context (or associated anything with it) here in this
+           the context (or anything associated with it) here in this
            error case, because the same context will show up in the
            non-error case (above). */
         else if (-FI_EAVAIL == ret) {
