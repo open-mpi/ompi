@@ -803,7 +803,11 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     creds.credential = (char*)(msg + strlen(version) + 1 + strlen(creds.method) + 1);
     creds.size = hdr.nbytes - strlen(version) - 1 - strlen(creds.method) - 1;
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
-        ORTE_ERROR_LOG(rc);
+        char *hostname;
+        hostname = orte_get_proc_hostname(&peer->name);
+        orte_show_help("help-oob-tcp.txt", "authent-fail", true,
+                       orte_process_info.nodename,
+                       (NULL == hostname) ? "unknown" : hostname);
         free(msg);
         return ORTE_ERR_CONNECTION_REFUSED;
     }
