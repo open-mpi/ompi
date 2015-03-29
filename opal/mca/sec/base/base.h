@@ -45,9 +45,9 @@ OPAL_DECLSPEC int opal_sec_base_select(void);
 OPAL_DECLSPEC int opal_sec_base_get_cred(char *method,
                                          int dstorehandle,
                                          opal_process_name_t *my_id,
-                                         opal_sec_cred_t **cred);
+                                         char **payload, size_t *size);
 
-OPAL_DECLSPEC int opal_sec_base_validate(opal_sec_cred_t *cred);
+OPAL_DECLSPEC int opal_sec_base_validate(char *payload, size_t size, char **method);
 
 END_C_DECLS
 

@@ -79,12 +79,12 @@ typedef void (*opal_sec_base_module_finalize_fn_t)(void);
  */
 typedef int (*opal_sec_base_module_get_my_cred_fn_t)(int dstorehandle,
                                                      opal_process_name_t *my_id,
-                                                     opal_sec_cred_t **cred);
+                                                     opal_sec_cred_t *cred);
 
 typedef int (*opal_sec_API_module_get_my_cred_fn_t)(char *method,
                                                     int dstorehandle,
                                                     opal_process_name_t *my_id,
-                                                    opal_sec_cred_t **cred);
+                                                    char **payload, size_t *size);
 /*
  * Authenticate a security credential - given a security credential,
  * determine if the credential is valid. The credential is passed in
@@ -94,6 +94,8 @@ typedef int (*opal_sec_API_module_get_my_cred_fn_t)(char *method,
  * error code indicating why it failed
  */
 typedef int (*opal_sec_base_module_auth_fn_t)(opal_sec_cred_t *cred);
+
+typedef int (*opal_sec_API_module_auth_fn_t)(char *payload, size_t size, char **method);
 
 /*
  * the standard module data structure
@@ -110,7 +112,7 @@ typedef struct opal_sec_base_module_1_0_0_t opal_sec_base_module_t;
 /* the API structure */
 typedef struct {
     opal_sec_API_module_get_my_cred_fn_t    get_my_credential;
-    opal_sec_base_module_auth_fn_t          authenticate;
+    opal_sec_API_module_auth_fn_t           authenticate;
 } opal_sec_API_module_t;
 
 /*

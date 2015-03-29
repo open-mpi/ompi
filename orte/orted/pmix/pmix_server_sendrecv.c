@@ -569,7 +569,8 @@ int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
     char *msg;
     char *version;
     int rc;
-    opal_sec_cred_t creds;
+    char *cred;
+    size_t credsize;
     pmix_server_hdr_t hdr;
     pmix_server_peer_t *peer;
     uint64_t *ui64;
@@ -720,9 +721,9 @@ int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
                         ORTE_NAME_PRINT(&peer->name));
 
     /* check security token */
-    creds.credential = (char*)(msg + strlen(version) + 1);
-    creds.size = hdr.nbytes - strlen(version) - 1;
-    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
+    cred = (char*)(msg + strlen(version) + 1);
+    credsize = hdr.nbytes - strlen(version) - 1;
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(cred, credsize, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     free(msg);
