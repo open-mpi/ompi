@@ -80,10 +80,10 @@ I	3	2	860 bytes	24 msgs sent
 */
 int mca_base_var_find_by_name (const char *full_name, int *vari);
 int mca_base_var_get_value (int vari, const void *value,
-			    void *source, /* should be mca_base_var_source_t *source,
-					     but we do not need it
-					     and we do not know what is mca_base_var_source_t */
-			    const char **source_file);
+                void *source, /* should be mca_base_var_source_t *source,
+                         but we do not need it
+                         and we do not know what is mca_base_var_source_t */
+                const char **source_file);
 
 
 int main(argc, argv)
@@ -147,9 +147,9 @@ int main(argc, argv)
     sprintf(filename,"./prof/phase_1_%d.prof",rank);
     if(flush_monitoring){
         int r = flush_monitoring(filename);
-	if(r == -1){
-	  fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-	}
+    if(r == -1){
+      fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+    }
     }
 
     /*
@@ -181,13 +181,13 @@ int main(argc, argv)
                 MPI_Send(&n,1,MPI_INT,to,tagno,newcomm);
                 if (rank != 0) {n--;tagno++;}
                 if (n<0){
-		  if(flush_monitoring){
-		    int r = flush_monitoring(filename);
-		    if(r == -1){
-		      fprintf(stderr, "Process %d cannot save monitoring in %s\n", old_rank, filename);
-		    }
-		  }
-		  break;
+          if(flush_monitoring){
+            int r = flush_monitoring(filename);
+            if(r == -1){
+              fprintf(stderr, "Process %d cannot save monitoring in %s\n", old_rank, filename);
+            }
+          }
+          break;
                 }
             }
         }
@@ -200,11 +200,11 @@ int main(argc, argv)
         MPI_Comm_split(newcomm,rank%2,rank,&newcomm);
         MPI_Barrier(newcomm);
         if(flush_monitoring){
-	  int r = flush_monitoring(filename);
-	  if(r == -1){
-	    fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-	  }
-	}
+      int r = flush_monitoring(filename);
+      if(r == -1){
+        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+      }
+    }
     }
 
     /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in STDERR, the aggregated recorded monitoring of all the phases*/
