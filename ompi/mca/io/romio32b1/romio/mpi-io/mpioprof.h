@@ -10,6 +10,15 @@
    building the profiling interface
  */
 
+/*
+ * Open MPI: Unfortunately, ROMIO doesn't seem to be able to build
+ * without a profiling interface, but we don't want a profiling
+ * interface, since we are just using ROMIO "behind the scenes".
+ * So enable all the profiling defines, only compile once, and don't
+ * do all the name mangling.  The effect is about the same, but without
+ * modification to all the files in the mpi-io directory.
+ */
+#if 0
 #ifdef MPIO_BUILD_PROFILING
 
 #undef MPI_File_open
@@ -211,4 +220,5 @@
 #undef MPIX_Grequest_class_create
 #define MPIX_Grequest_class_create PMPIX_Grequest_class_create
 
+#endif
 #endif
