@@ -10,13 +10,12 @@
 # $HEADER$
 #
 
+# This test requires multiple processes to run. Don't run it as part
+# of 'make check'
 if PROJECT_OMPI
-    TESTS = monitoring_test
+    noinst_PROGRAMS = monitoring_test
+
+    monitoring_test_SOURCES = monitoring_test.c
+    monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+    monitoring_test_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
 endif
-
-check_PROGRAMS = $(TESTS)
-
-monitoring_test_SOURCES = monitoring_test.c
-monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-monitoring_test_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
-
