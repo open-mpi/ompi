@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -64,3 +64,16 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
+#
+[authent-fail]
+An attempt was made to make a TCP connection between two hosts:
+
+  Initiating host:  %s
+  Receiving host:   %s
+
+Unfortunately, the connection was refused due to a failure to
+authenticate. This is usually caused by a mis-match between
+the security domains of the two hosts - e.g., one might be
+using Munge while the other is not. This can typically be
+resolved by specifying the desired security method. For
+example, adding "--mca sec basic" to your command line.

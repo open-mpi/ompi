@@ -32,7 +32,7 @@ static int init(void);
 static void finalize(void);
 static int get_my_cred(int dstorehandle,
                        opal_process_name_t *my_id,
-                       opal_sec_cred_t **cred);
+                       opal_sec_cred_t *cred);
 static int authenticate(opal_sec_cred_t *cred);
 
 opal_sec_base_module_t opal_sec_munge_module = {
@@ -79,13 +79,12 @@ static void finalize(void)
 
 static int get_my_cred(int dstorehandle,
                        opal_process_name_t *my_id,
-                       opal_sec_cred_t **cred)
+                       opal_sec_cred_t *cred)
 {
     int rc;
     
     if (initialized) {
         if (!refresh) {
-            *cred = &my_cred;
             refresh = true;
         } else {
             /* get a new credential as munge will not
@@ -98,10 +97,12 @@ static int get_my_cred(int dstorehandle,
             }
             /* include the '\0' termination string character */
             my_cred.size = strlen(my_cred.credential)+1;
-            *cred = &my_cred;
         }
+        cred->method = strdup("munge");
+        cred->credential = strdup(my_cred.credential);
+        cred->size = my_cred.size;
     } else {
-        *cred = NULL;
+        rc = OPAL_ERROR;
     }
     
     return OPAL_SUCCESS;
