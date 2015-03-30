@@ -173,7 +173,7 @@ opal_dstore_attr_t *pmix_server_create_shared_segment(orte_jobid_t jid)
         return NULL;
     }
     /* create a shared segment */
-    pmix_segment_size = jdata->num_local_procs * sizeof(meta_info) + META_OFFSET;
+    pmix_segment_size = jdata->num_procs * sizeof(meta_info) + META_OFFSET;
     rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "dstore_segment.meta.%u", orte_process_info.job_session_dir, jid);
     if (0 <= rc && NULL != sm_file) {
         rc = opal_shmem_segment_create (&seg_ds, sm_file, pmix_segment_size);
