@@ -19,3 +19,4 @@ if PROJECT_OMPI
     monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
     monitoring_test_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
 endif
+
