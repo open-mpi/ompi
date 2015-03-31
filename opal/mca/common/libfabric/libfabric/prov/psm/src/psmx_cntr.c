@@ -160,7 +160,8 @@ void psmx_cntr_check_trigger(struct psmx_fid_cntr *cntr)
 						trigger->atomic_compwrite.flags);
 			break;
 		default:
-			PSMX_DEBUG("%d unsupported op\n", trigger->op);
+			FI_INFO(&psmx_prov, FI_LOG_CQ,
+				"%d unsupported op\n", trigger->op);
 			break;
 		}
 
@@ -377,8 +378,9 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		break;
 
 	default:
-		PSMX_DEBUG("attr->events=%d, supported=%d\n",
-				attr->events, FI_CNTR_EVENTS_COMP);
+		FI_INFO(&psmx_prov, FI_LOG_CQ,
+			"attr->events=%d, supported=%d\n",
+			attr->events, FI_CNTR_EVENTS_COMP);
 		return -FI_EINVAL;
 	}
 
@@ -389,7 +391,8 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 
 	case FI_WAIT_SET:
 		if (!attr->wait_set) {
-			PSMX_DEBUG("FI_WAIT_SET is specified but attr->wait_set is NULL\n");
+			FI_INFO(&psmx_prov, FI_LOG_CQ,
+				"FI_WAIT_SET is specified but attr->wait_set is NULL\n");
 			return -FI_EINVAL;
 		}
 		wait = (struct psmx_fid_wait *)attr->wait_set;
@@ -407,8 +410,9 @@ int psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 		break;
 
 	default:
-		PSMX_DEBUG("attr->wait_obj=%d, supported=%d...%d\n",
-			   attr->wait_obj, FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
+		FI_INFO(&psmx_prov, FI_LOG_CQ,
+			"attr->wait_obj=%d, supported=%d...%d\n",
+			attr->wait_obj, FI_WAIT_NONE, FI_WAIT_MUTEX_COND);
 		return -FI_EINVAL;
 	}
 

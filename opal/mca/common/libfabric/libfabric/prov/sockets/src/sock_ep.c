@@ -41,6 +41,9 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_CTRL, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_CTRL, __VA_ARGS__)
+
 extern struct fi_ops_rma sock_ep_rma;
 extern struct fi_ops_msg sock_ep_msg_ops;
 extern struct fi_ops_tagged sock_ep_tagged;
@@ -56,7 +59,7 @@ extern const struct fi_fabric_attr sock_fabric_attr;
 
 const struct fi_tx_attr sock_stx_attr = {
 	.caps = SOCK_EP_RDM_CAP,
-	.op_flags = 0,
+	.op_flags = FI_TRANSMIT_COMPLETE,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
 	.size = SOCK_EP_TX_SZ,
@@ -322,6 +325,7 @@ static int sock_ctx_control(struct fid *fid, int command, void *arg)
 			break;
 		case FI_SETOPSFLAG:
 			tx_ctx->attr.op_flags = *(uint64_t *) arg;
+			tx_ctx->attr.op_flags |= FI_TRANSMIT_COMPLETE;
 			break;
 		case FI_ENABLE:
 			ep = container_of(fid, struct fid_ep, fid);
@@ -358,6 +362,7 @@ static int sock_ctx_control(struct fid *fid, int command, void *arg)
 			break;
 		case FI_SETOPSFLAG:
 			tx_ctx->attr.op_flags = *(uint64_t *) arg;
+			tx_ctx->attr.op_flags |= FI_TRANSMIT_COMPLETE;
 			break;
 		default:
 			return -FI_ENOSYS;
@@ -565,6 +570,36 @@ static int sock_ep_close(struct fid *fid)
 	    atomic_get(&sock_ep->num_tx_ctx))
 		return -FI_EBUSY;
 
+	if (sock_ep->ep_type == FI_EP_MSG) {
+		sock_ep->cm.do_listen = 0;
+		if (write(sock_ep->cm.signal_fds[0], &c, 1) != 1) {
+			SOCK_LOG_INFO("Failed to signal\n");
+		}
+		if (sock_ep->cm.listener_thread && 
+		    pthread_join(sock_ep->cm.listener_thread, NULL)) {
+			SOCK_LOG_ERROR("pthread join failed (%d)\n", errno);
+		}
+		close(sock_ep->cm.signal_fds[0]);
+		close(sock_ep->cm.signal_fds[1]);
+	} else {
+		if (sock_ep->av) {
+			atomic_dec(&sock_ep->av->ref);
+		}
+	}
+	
+	sock_ep->listener.do_listen = 0;
+	if (write(sock_ep->listener.signal_fds[0], &c, 1) != 1) {
+		SOCK_LOG_INFO("Failed to signal\n");
+	}
+	
+	if (pthread_join(sock_ep->listener.listener_thread, NULL)) {
+		SOCK_LOG_ERROR("pthread join failed (%d)\n", errno);
+	}
+	
+	close(sock_ep->listener.signal_fds[0]);
+	close(sock_ep->listener.signal_fds[1]);
+	fastlock_destroy(&sock_ep->cm.lock);
+
 	if (sock_ep->fclass != FI_CLASS_SEP && !sock_ep->tx_shared) {
 		sock_pe_remove_tx_ctx(sock_ep->tx_array[0]);
 		sock_tx_ctx_free(sock_ep->tx_array[0]);
@@ -583,34 +618,6 @@ static int sock_ep_close(struct fid *fid)
 	if (sock_ep->dest_addr)
 		free(sock_ep->dest_addr);
 
-	if (sock_ep->ep_type == FI_EP_MSG) {
-
-		sock_ep->cm.do_listen = 0;
-
-		if (write(sock_ep->cm.signal_fds[0], &c, 1) != 1) {
-			SOCK_LOG_INFO("Failed to signal\n");
-		}
-
-		if (sock_ep->cm.listener_thread && 
-		    pthread_join(sock_ep->cm.listener_thread, NULL)) {
-			SOCK_LOG_ERROR("pthread join failed (%d)\n", errno);
-		}
-
-		close(sock_ep->cm.signal_fds[0]);
-		close(sock_ep->cm.signal_fds[1]);
-	}
-	
-	sock_ep->listener.do_listen = 0;
-	if (write(sock_ep->listener.signal_fds[0], &c, 1) != 1) {
-		SOCK_LOG_INFO("Failed to signal\n");
-	}
-	
-	if (pthread_join(sock_ep->listener.listener_thread, NULL)) {
-		SOCK_LOG_ERROR("pthread join failed (%d)\n", errno);
-	}
-	
-	close(sock_ep->listener.signal_fds[0]);
-	close(sock_ep->listener.signal_fds[1]);
 	sock_fabric_remove_service(sock_ep->domain->fab, 
 				   atoi(sock_ep->listener.service));
 
@@ -793,6 +800,7 @@ static int sock_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 
 		ep->av = av;
 		av->cmap = &av->domain->r_cmap;
+		atomic_inc(&av->ref);
 
 		if (ep->tx_ctx && 
 		    ep->tx_ctx->fid.ctx.fid.fclass == FI_CLASS_TX_CTX) {
@@ -871,6 +879,7 @@ static int sock_ep_control(struct fid *fid, int command, void *arg)
 		break;
 	case FI_SETOPSFLAG:
 		ep->op_flags = *(uint64_t *) arg;
+		ep->op_flags |= FI_TRANSMIT_COMPLETE;
 		break;
 	case FI_ENABLE:
 		ep_fid = container_of(fid, struct fid_ep, fid);
@@ -1289,9 +1298,6 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 	sock_ep->fclass = fclass;
 	*ep = sock_ep;	
 
-	fastlock_acquire(&sock_dom->lock);
-	fastlock_release(&sock_dom->lock);
-
 	if (info) {
 		sock_ep->info.caps = info->caps;
 		sock_ep->info.addr_format = FI_SOCKADDR_IN;
@@ -1320,6 +1326,7 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 			sock_ep->tx_attr.size = sock_ep->tx_attr.size ?
 				sock_ep->tx_attr.size : 
 				(SOCK_EP_TX_SZ * SOCK_EP_TX_ENTRY_SZ);
+			sock_ep->op_flags |= FI_TRANSMIT_COMPLETE;
 		}
 		
 		if (info->rx_attr) {
@@ -1388,6 +1395,7 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 	if (sock_conn_listen(sock_ep))
 		goto err;
 
+	fastlock_init(&sock_ep->cm.lock);
 	if (sock_ep->ep_type == FI_EP_MSG) {
 		dlist_init(&sock_ep->cm.msg_list);
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, 

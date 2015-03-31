@@ -658,6 +658,10 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 	if (__usdf_devinfo == NULL) {
 		ret = usdf_get_devinfo();
 		if (ret != 0) {
+			USDF_WARN("failed to usdf_get_devinfo, ret=%d (%s)\n",
+					ret, fi_strerror(-ret));
+			if (ret == -FI_ENODEV)
+				ret = -FI_ENODATA;
 			goto fail;
 		}
 	}
@@ -990,7 +994,7 @@ static void usdf_fini(void)
 {
 }
 
-static struct fi_provider usdf_ops = {
+struct fi_provider usdf_ops = {
 	.name = USDF_PROV_NAME,
 	.version = USDF_PROV_VERSION,
 	.fi_version = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),
