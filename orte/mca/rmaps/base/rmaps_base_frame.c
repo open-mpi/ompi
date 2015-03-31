@@ -70,6 +70,7 @@ static bool rmaps_base_oversubscribe = false;
 static bool rmaps_base_display_devel_map = false;
 static bool rmaps_base_display_diffable_map = false;
 static char *rmaps_base_topo_file = NULL;
+static char *rmaps_dist_device = NULL;
 
 static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 {
@@ -166,6 +167,14 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base.cpus_per_rank);
     mca_base_var_register_synonym(var_id, "orte", "rmaps", "base", "cpus_per_rank", 0);
+
+    rmaps_dist_device = NULL;
+    var_id = mca_base_var_register("orte", "rmaps", NULL, "dist_device",
+                                   "Set device to map by distance near by",
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &rmaps_dist_device);
 #endif
 
     rmaps_base_no_schedule_local = false;
@@ -616,6 +625,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
     int rc;
     size_t len;
     char *spec;
+    char *pch;
 
     /* set defaults */
     tmp = 0;
@@ -661,30 +671,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
              * and save the second argument as the device
              */
 #if OPAL_HAVE_HWLOC
-            if (NULL != device && 0 == strncasecmp(spec, "dist", strlen(spec))) {
-                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
-                /* the first argument after the colon *must* be the
-                 * device we are mapping near - however, other modifiers
-                 * could have been provided, so check for them, okay if
-                 * none found
-                 */
-                if (NULL != (ptr = strchr(ck, ','))) {
-                    *ptr = '\0';
-                    ptr++; // move past the comma
-                    /* check the remaining string for modifiers - may be none, so
-                     * don't emit an error message if the modifier isn't recognized
-                     */
-                    if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
-                        ORTE_ERR_BAD_PARAM != rc) {
-                        free(spec);
-                        return ORTE_ERR_SILENT;
-                    }
-                }
-                *device = strdup(ck);
-                ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
-                free(spec);
-                goto setpolicy;
-            } else if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
+            if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
                 /* we have to allow additional modifiers here - e.g., specifying
                  * #pe's/proc or oversubscribe - so check for modifiers
                  */
@@ -755,6 +742,18 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
              * we need to treat those hwthreads as separate cpus
              */
             opal_hwloc_use_hwthreads_as_cpus = true;            
+        } else if ( NULL != device && 0 == strncasecmp(spec, "dist", len)) {
+            if (NULL != rmaps_dist_device) {
+                if (NULL != (pch = strchr(rmaps_dist_device, ':'))) {
+                    *pch = '\0';
+                }
+                *device = strdup(rmaps_dist_device);
+                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
+            } else {
+                orte_show_help("help-orte-rmaps-base.txt", "device-not-specified", true);
+                free(spec);
+                return ORTE_ERR_SILENT;
+            }
 #endif
         } else {
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", spec);
