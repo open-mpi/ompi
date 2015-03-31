@@ -452,6 +452,10 @@ int main(int argc, char *argv[])
     /* flag that I am a TOOL */
     orte_process_info.proc_type = ORTE_PROC_TOOL;
 
+    /* we are never allowed to operate as a distributed tool,
+     * so insist on the ess/tool component */
+    putenv("OMPI_MCA_ess=tool");
+    
     if (myglobals.debug) {
         orte_devel_level_output = true;
     }
