@@ -43,9 +43,17 @@ hwloc_hpux_find_ldom(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_set)
     return -1;
 
   obj = hwloc_get_first_largest_obj_inside_cpuset(topology, hwloc_set);
-  if (!hwloc_bitmap_isequal(obj->cpuset, hwloc_set) || obj->type != HWLOC_OBJ_NODE) {
+  if (!hwloc_bitmap_isequal(obj->cpuset, hwloc_set))
     /* Does not correspond to exactly one node */
     return -1;
+  /* obj is the highest possibly matching object, but some (single) child (with same cpuset) could match too */
+  while (obj->type != HWLOC_OBJ_NODE) {
+    /* try the first child, in case it has the same cpuset */
+    if (!obj->first_child
+	|| !obj->first_child->cpuset
+	|| !hwloc_bitmap_isequal(obj->cpuset, obj->first_child->cpuset))
+      return -1;
+    obj = obj->first_child;
   }
 
   return obj->os_index;

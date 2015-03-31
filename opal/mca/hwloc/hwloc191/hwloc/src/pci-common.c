@@ -1,5 +1,5 @@
 /*
- * Copyright © 2009-2014 Inria.  All rights reserved.
+ * Copyright © 2009-2015 Inria.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -29,14 +29,6 @@ hwloc_pci_traverse_print_cb(void * cbdata __hwloc_attribute_unused,
 		pcidev->attr->pcidev.vendor_id, pcidev->attr->pcidev.device_id,
 		pcidev->attr->pcidev.subvendor_id, pcidev->attr->pcidev.subdevice_id,
 		pcidev->attr->pcidev.revision, pcidev->attr->pcidev.class_id);
-}
-
-static void
-hwloc_pci_traverse_setbridgedepth_cb(void * cbdata __hwloc_attribute_unused,
-				     struct hwloc_obj *pcidev, int depth)
-{
-  if (pcidev->type == HWLOC_OBJ_BRIDGE)
-    pcidev->attr->bridge.depth = depth;
 }
 
 static void
@@ -263,6 +255,7 @@ hwloc_pci_find_hostbridge_parent(struct hwloc_topology *topology, struct hwloc_b
     hwloc_obj_t group_obj = hwloc_alloc_setup_object(HWLOC_OBJ_GROUP, -1);
     if (group_obj) {
       group_obj->cpuset = hwloc_bitmap_dup(cpuset);
+      group_obj->complete_cpuset = hwloc_bitmap_dup(cpuset);
       group_obj->attr->group.depth = (unsigned) -1;
       parent = hwloc__insert_object_by_cpuset(topology, group_obj, hwloc_report_os_error);
       if (parent == group_obj)
@@ -304,8 +297,7 @@ hwloc_insert_pci_device_list(struct hwloc_backend *backend,
   hwloc_debug("%s", "\nPCI hierarchy under fake parent:\n");
   hwloc_pci_traverse(NULL, &fakeparent, hwloc_pci_traverse_print_cb);
 
-  /* walk the hierarchy, set bridge depth and lookup OS devices */
-  hwloc_pci_traverse(NULL, &fakeparent, hwloc_pci_traverse_setbridgedepth_cb);
+  /* walk the hierarchy, and lookup OS devices */
   hwloc_pci_traverse(backend, &fakeparent, hwloc_pci_traverse_lookuposdevices_cb);
 
   /*

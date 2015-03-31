@@ -331,7 +331,10 @@ struct hwloc_obj_memory_s {
 struct hwloc_obj {
   /* physical information */
   hwloc_obj_type_t type;		/**< \brief Type of object */
-  unsigned os_index;			/**< \brief OS-provided physical index number */
+  unsigned os_index;			/**< \brief OS-provided physical index number.
+					 * It is not guaranteed unique across the entire machine,
+					 * except for PUs and NUMA nodes.
+					 */
   char *name;				/**< \brief Object description if any */
 
   struct hwloc_obj_memory_s memory;	/**< \brief Memory attributes */
@@ -346,7 +349,9 @@ struct hwloc_obj {
 					 * of parent/child links from the root object to here.
 					 */
   unsigned logical_index;		/**< \brief Horizontal index in the whole list of similar objects,
-					 * could be a "cousin_rank" since it's the rank within the "cousin" list below */
+					 * hence guaranteed unique across the entire machine.
+					 * Could be a "cousin_rank" since it's the rank within the "cousin" list below
+					 */
   signed os_level;			/**< \brief OS-provided physical level, -1 if unknown or meaningless */
 
   /* cousins are all objects of the same type (and depth) across the entire topology */
