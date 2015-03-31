@@ -218,7 +218,7 @@ static void vm_ready(int fd, short args, void *cbdata)
     /* if this is my job, then we are done */
     if (ORTE_PROC_MY_NAME->jobid == caddy->jdata->jobid) {
         /* notify that the vm is ready */
-        opal_output(0, "DVM ready");
+        fprintf(stdout, "DVM ready\n");
         OBJ_RELEASE(caddy);
         return;
     }
