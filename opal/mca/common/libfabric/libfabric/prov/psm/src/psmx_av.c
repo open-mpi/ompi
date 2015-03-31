@@ -40,7 +40,8 @@ static void psmx_set_epaddr_context(struct psmx_fid_domain *domain,
 	context = (void *)psm_epaddr_getctxt(epaddr);
 	if (context) {
 		if (context->domain != domain || context->epid != epid) {
-			PSMX_WARN("%s: domain or epid doesn't match\n", __func__);
+			FI_WARN(&psmx_prov, FI_LOG_AV,
+				"domain or epid doesn't match\n");
 			context = NULL;
 		}
 	}
@@ -50,7 +51,8 @@ static void psmx_set_epaddr_context(struct psmx_fid_domain *domain,
 
 	context = malloc(sizeof *context);
 	if (!context) {
-		PSMX_WARN("%s: cannot allocate context\n", __func__);
+		FI_WARN(&psmx_prov, FI_LOG_AV,
+			"cannot allocate context\n");
 		return;
 	}
 
@@ -180,14 +182,16 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 						((psm_epaddr_t *) fi_addr)[i]);
 		}
 		else {
-			PSMX_DEBUG("%d: psm_ep_connect returned %s. remote epid=%lx.\n",
-					i, psm_error_get_string(errors[i]),
-					((psm_epid_t *)addr)[i]);
+			FI_INFO(&psmx_prov, FI_LOG_AV,
+				"%d: psm_ep_connect returned %s. remote epid=%lx.\n",
+				i, psm_error_get_string(errors[i]),
+				((psm_epid_t *)addr)[i]);
 			if (((psm_epid_t *)addr)[i] == 0)
-				PSMX_DEBUG("does the application depend on the provider"
-					   "to resolve IP address into endpoint id? if so"
-					   "check if the name server has started correctly"
-					   "at the other side.\n");
+				FI_INFO(&psmx_prov, FI_LOG_AV,
+					"does the application depend on the provider"
+					"to resolve IP address into endpoint id? if so"
+					"check if the name server has started correctly"
+					"at the other side.\n");
 			fi_addr[i] = FI_ADDR_NOTAVAIL;
 			error_count++;
 		}
@@ -318,7 +322,8 @@ int psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 			type = attr->type;
 			break;
 		default:
-			PSMX_DEBUG("attr->type=%d, supported=%d %d\n",
+			FI_INFO(&psmx_prov, FI_LOG_AV,
+				"attr->type=%d, supported=%d %d\n",
 				attr->type, FI_AV_MAP, FI_AV_TABLE);
 			return -FI_EINVAL;
 		}

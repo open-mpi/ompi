@@ -43,6 +43,7 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_prov.h>
 #include <rdma/fi_atomic.h>
+#include <rdma/fi_log.h>
 
 #ifdef __APPLE__
 #include <osx/osd.h>
@@ -90,6 +91,26 @@ static inline uint64_t ntohll(uint64_t x) { return x; }
 #define MIN(a, b) ((a) < (b) ? a : b)
 #define MAX(a, b) ((a) > (b) ? a : b)
 
+/* Restrict to size of struct fi_context */
+struct fi_prov_context {
+	int disable_logging;
+};
+
+struct fi_filter {
+	char **names;
+	int negated;
+};
+
+extern struct fi_filter prov_log_filter;
+
+void fi_create_filter(struct fi_filter *filter, const char *env_name);
+void fi_free_filter(struct fi_filter *filter);
+int fi_apply_filter(struct fi_filter *filter, const char *name);
+
+void fi_log_init(void);
+void fi_log_fini(void);
+
+
 /* flsll is defined on BSD systems, but is different. */
 static inline int fi_flsll(long long int i)
 {
@@ -104,7 +125,7 @@ static inline uint64_t roundup_power_of_two(uint64_t n)
 #define FI_TAG_GENERIC	0xAAAAAAAAAAAAAAAAULL
 
 
-#if defined(PT_LOCK_SPIN)
+#if PT_LOCK_SPIN == 1
 
 #define fastlock_t pthread_spinlock_t
 #define fastlock_init(lock) pthread_spin_init(lock, PTHREAD_PROCESS_PRIVATE)
@@ -206,7 +227,7 @@ int fi_recv_allowed(uint64_t caps);
 int fi_rma_initiate_allowed(uint64_t caps);
 int fi_rma_target_allowed(uint64_t caps);
 
-uint64_t fi_gettime_ms();
+uint64_t fi_gettime_ms(void);
 
 #define RDMA_CONF_DIR  SYSCONFDIR "/" RDMADIR
 #define FI_CONF_DIR RDMA_CONF_DIR "/fabric"
