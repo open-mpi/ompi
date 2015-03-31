@@ -50,10 +50,11 @@ static void psmx_string_to_uuid(const char *s, psm_uuid_t uuid)
 		&uuid[10], &uuid[11], &uuid[12], &uuid[13], &uuid[14], &uuid[15]);
 
 	if (n != 16) {
-		PSMX_WARN("%s: wrong uuid format: %s\n", __func__, s);
-		PSMX_WARN("%s: correct uuid format is: "
-			"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n",
-			__func__);
+		FI_WARN(&psmx_prov, FI_LOG_CORE,
+				"wrong uuid format: %s\n", s);
+		FI_WARN(&psmx_prov, FI_LOG_CORE,
+			"correct uuid format is: "
+			"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n");
 	}
 }
 
@@ -105,7 +106,8 @@ void *psmx_name_server(void *args)
 
 	n = getaddrinfo(NULL, service, &hints, &res);
 	if (n < 0) {
-		PSMX_DEBUG("port %d: %s\n", port, gai_strerror(n));
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"port %d: %s\n", port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -126,7 +128,8 @@ void *psmx_name_server(void *args)
 	free(service);
 
 	if (listenfd < 0) {
-		PSMX_DEBUG("couldn't listen to port %d. try set OFI_PSM_UUID to a different value?\n", port);
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"couldn't listen to port %d. try set OFI_PSM_UUID to a different value?\n", port);
 		return NULL;
 	}
 
@@ -136,10 +139,11 @@ void *psmx_name_server(void *args)
 		connfd = accept(listenfd, NULL, 0);
 		if (connfd >= 0) {
 			if (fabric->active_domain) {
-				ret = write(connfd, &fabric->active_domain->psm_epid, sizeof(psm_epid_t));
+				ret = write(connfd, &fabric->active_domain->psm_epid,
+					    sizeof(psm_epid_t));
 				if (ret != sizeof(psm_epid_t))
-					PSMX_WARN("%s: error sending address info to the client\n",
-						  __func__);
+					FI_WARN(&psmx_prov, FI_LOG_CORE,
+						"error sending address info to the client\n");
 			}
 			close(connfd);
 		}
@@ -171,7 +175,8 @@ void *psmx_resolve_name(const char *servername, int port)
 
 	n = getaddrinfo(servername, service, &hints, &res);
 	if (n < 0) {
-		PSMX_DEBUG("(%s:%d):%s\n", servername, port, gai_strerror(n));
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"(%s:%d):%s\n", servername, port, gai_strerror(n));
 		free(service);
 		return NULL;
 	}
@@ -190,7 +195,8 @@ void *psmx_resolve_name(const char *servername, int port)
 	free(service);
 
 	if (sockfd < 0) {
-		PSMX_DEBUG("couldn't connect to %s:%d\n", servername, port);
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"couldn't connect to %s:%d\n", servername, port);
 		return NULL;
 	}
 

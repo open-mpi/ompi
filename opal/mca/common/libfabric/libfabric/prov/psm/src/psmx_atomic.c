@@ -739,7 +739,7 @@ static int psmx_atomic_self(int am_cmd,
 	}
 
 gen_local_event:
-	no_event = ((flags & FI_INJECT) ||
+	no_event = ((flags & PSMX_NO_COMPLETION) ||
 		    (ep->send_cq_event_flag && !(flags & FI_COMPLETION)));
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
@@ -860,16 +860,15 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 		memset((void *)req, 0, sizeof(*req));
 		memcpy((void *)req+sizeof(*req), (void *)buf, len);
 		buf = (void *)req + sizeof(*req);
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_WRITE;
 	req->atomic.buf = (void *)buf;
@@ -954,7 +953,8 @@ static ssize_t psmx_atomic_inject(struct fid_ep *ep,
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	return _psmx_atomic_write(ep, buf, count, NULL/*desc*/,
 				  dest_addr, addr, key,
-				  datatype, op, NULL, ep_priv->flags | FI_INJECT);
+				  datatype, op, NULL,
+				  ep_priv->flags | FI_INJECT | PSMX_NO_COMPLETION);
 }
 
 ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
@@ -1047,16 +1047,15 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 		memset((void *)req, 0, sizeof(*req));
 		memcpy((void *)req+sizeof(*req), (void *)buf, len);
 		buf = (void *)req + sizeof(*req);
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_READWRITE;
 	req->atomic.buf = (void *)buf;
@@ -1257,15 +1256,11 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 		memcpy((void *)req + sizeof(*req) + len, (void *)compare, len);
 		buf = (void *)req + sizeof(*req);
 		compare = buf + len;
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 
 		if (compare != buf + len) {
 			tmp_buf = malloc(len * 2);
@@ -1276,6 +1271,9 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 			memcpy(tmp_buf + len, compare, len);
 		}
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_COMPWRITE;
 	req->atomic.buf = (void *)buf;

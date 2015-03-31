@@ -128,6 +128,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define PT_LOCK_SPIN to 1 if available. */
+#undef PT_LOCK_SPIN
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 

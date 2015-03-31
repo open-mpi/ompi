@@ -37,35 +37,40 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 	if (ep->ep.tagged) {
 		if (ep->flags) {
 			ep->ep.tagged = &psmx_tagged_ops;
-			PSMX_DEBUG("generic tagged ops.\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"generic tagged ops.\n");
 		}
 		else if (ep->send_cq_event_flag && ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and event suppression\n");
 		}
 		else if (ep->send_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and send event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and send event suppression\n");
 		}
 		else if (ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and recv event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and recv event suppression\n");
 		}
 		else {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0\n");
 		}
 	}
 }
@@ -386,7 +391,7 @@ int psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
 {
 	struct psmx_fid_stx *stx_priv;
 
-	PSMX_DEBUG("\n");
+	FI_INFO(&psmx_prov, FI_LOG_EP_DATA, "\n");
 
 	stx_priv = (struct psmx_fid_stx *) calloc(1, sizeof *stx_priv);
 	if (!stx_priv)

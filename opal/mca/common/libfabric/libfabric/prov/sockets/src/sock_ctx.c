@@ -40,6 +40,8 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_CTRL, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_CTRL, __VA_ARGS__)
 
 struct sock_rx_ctx *sock_rx_ctx_alloc(const struct fi_rx_attr *attr, void *context)
 {
@@ -109,6 +111,7 @@ static struct sock_tx_ctx *sock_tx_context_alloc(const struct fi_tx_attr *attr,
 		goto err;
 	}
 	tx_ctx->attr = *attr;		
+	tx_ctx->attr.op_flags |= FI_TRANSMIT_COMPLETE;
 	return tx_ctx;
 
 err:
@@ -120,11 +123,6 @@ err:
 struct sock_tx_ctx *sock_tx_ctx_alloc(const struct fi_tx_attr *attr, void *context)
 {
 	return sock_tx_context_alloc(attr, context, FI_CLASS_TX_CTX);
-}
-
-struct sock_tx_ctx *sock_stx_ctx_alloc(const struct fi_tx_attr *attr, void *context)
-{
-	return sock_tx_context_alloc(attr, context, FI_CLASS_STX_CTX);
 }
 
 void sock_tx_ctx_free(struct sock_tx_ctx *tx_ctx)

@@ -46,6 +46,8 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_DATA, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_DATA, __VA_ARGS__)
 
 /* FIXME: pool of rx_entry */
 struct sock_rx_entry *sock_rx_new_entry(struct sock_rx_ctx *rx_ctx)

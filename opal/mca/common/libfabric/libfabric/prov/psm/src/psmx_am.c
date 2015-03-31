@@ -53,10 +53,14 @@ int psmx_am_progress(struct psmx_fid_domain *domain)
 	while (!slist_empty(&domain->send_queue.list)) {
 		item = slist_remove_head(&domain->send_queue.list);
 		req = container_of(item, struct psmx_am_request, list_entry);
-		if (req->state == PSMX_AM_STATE_DONE)
+		if (req->state == PSMX_AM_STATE_DONE) {
 			free(req);
-		else
+		}
+		else {
+			pthread_mutex_unlock(&domain->send_queue.lock);
 			psmx_am_process_send(domain, req);
+			pthread_mutex_lock(&domain->send_queue.lock);
+		}
 	}
 	pthread_mutex_unlock(&domain->send_queue.lock);
 #endif
@@ -66,7 +70,9 @@ int psmx_am_progress(struct psmx_fid_domain *domain)
 		while (!slist_empty(&domain->rma_queue.list)) {
 			item = slist_remove_head(&domain->rma_queue.list);
 			req = container_of(item, struct psmx_am_request, list_entry);
+			pthread_mutex_unlock(&domain->rma_queue.lock);
 			psmx_am_process_rma(domain, req);
+			pthread_mutex_lock(&domain->rma_queue.lock);
 		}
 		pthread_mutex_unlock(&domain->rma_queue.lock);
 	}

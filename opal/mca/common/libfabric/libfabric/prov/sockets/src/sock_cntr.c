@@ -176,7 +176,7 @@ static int sock_cntr_wait(struct fid_cntr *cntr, uint64_t threshold, int timeout
 	return -ret;
 }		
 
-int sock_cntr_control(struct fid *fid, int command, void *arg)
+static int sock_cntr_control(struct fid *fid, int command, void *arg)
 {
 	int ret = 0;
 	struct sock_cntr *cntr;
@@ -240,7 +240,7 @@ static int sock_cntr_close(struct fid *fid)
 	return 0;
 }
 
-uint64_t sock_cntr_readerr(struct fid_cntr *cntr)
+static uint64_t sock_cntr_readerr(struct fid_cntr *cntr)
 {
 	struct sock_cntr *_cntr;
 	_cntr = container_of(cntr, struct sock_cntr, cntr_fid);

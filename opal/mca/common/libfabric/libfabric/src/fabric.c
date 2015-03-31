@@ -45,7 +45,7 @@
 #include <rdma/fi_errno.h>
 #include "fi.h"
 #include "prov.h"
-#include "fi_log.h"
+#include <rdma/fi_log.h>
 
 #ifdef HAVE_LIBDL
 #include <dlfcn.h>
@@ -63,23 +63,35 @@ static struct fi_prov *prov_head, *prov_tail;
 static volatile int init = 0;
 static pthread_mutex_t ini_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static char **prov_name_filters = NULL;
-static int prov_filter_negated = 0;
+static struct fi_filter prov_filter;
 
-/* returns 1 if the provider should be kept, 0 if it should be skipped */
-static int filter_provider(struct fi_provider *provider)
+struct fi_provider core_prov = {
+	.name = "core",
+	.version = 1,
+	.fi_version = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),
+};
+
+
+static int fi_find_name(char **names, const char *name)
 {
 	int i;
 
-	if (prov_name_filters != NULL) {
-		for (i = 0; prov_name_filters[i] != NULL; ++i)
-			if (strcmp(provider->name, prov_name_filters[i]) == 0)
-				return prov_filter_negated ? 0 : 1;
-		return prov_filter_negated ? 1 : 0;
-	} else {
-		/* keep by default */
-		return 1;
+	for (i = 0; names[i]; i++) {
+		if (!strcmp(name, names[i]))
+			return i;
 	}
+	return -1;
+}
+
+int fi_apply_filter(struct fi_filter *filter, const char *name)
+{
+	if (filter->names) {
+		if (fi_find_name(filter->names, name) >= 0)
+			return filter->negated ? 1 : 0;
+
+		return filter->negated ? 0 : 1;
+	}
+	return 0;
 }
 
 static void cleanup_provider(struct fi_provider *provider, void *dlhandle)
@@ -95,36 +107,42 @@ static void cleanup_provider(struct fi_provider *provider, void *dlhandle)
 
 static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 {
+	struct fi_prov_context *ctx;
 	struct fi_prov *prov;
 	int ret;
-	int keep;
 
 	if (!provider) {
 		ret = -FI_EINVAL;
 		goto cleanup;
 	}
 
-	FI_LOG(2, NULL, "registering provider: %s (%d.%d)\n", provider->name,
-		FI_MAJOR(provider->version), FI_MINOR(provider->version));
+	FI_INFO(&core_prov, FI_LOG_CORE,
+	       "registering provider: %s (%d.%d)\n", provider->name,
+	       FI_MAJOR(provider->version), FI_MINOR(provider->version));
 
 	if (FI_MAJOR(provider->fi_version) != FI_MAJOR_VERSION ||
 	    FI_MINOR(provider->fi_version) > FI_MINOR_VERSION) {
-		FI_LOG(2, NULL, "provider has unsupported FI version (provider %d.%d != libfabric %d.%d); ignoring\n",
-			FI_MAJOR(provider->fi_version),
-			FI_MINOR(provider->fi_version),
-			FI_MAJOR_VERSION, FI_MINOR_VERSION);
+		FI_INFO(&core_prov, FI_LOG_CORE,
+		       "provider has unsupported FI version (provider %d.%d != libfabric %d.%d); ignoring\n",
+		       FI_MAJOR(provider->fi_version),
+		       FI_MINOR(provider->fi_version), FI_MAJOR_VERSION,
+		       FI_MINOR_VERSION);
 
 		ret = -FI_ENOSYS;
 		goto cleanup;
 	}
 
-	keep = filter_provider(provider);
-	if (!keep) {
-		FI_LOG(2, NULL,
+	if (fi_apply_filter(&prov_filter, provider->name)) {
+		FI_INFO(&core_prov, FI_LOG_CORE,
 			"\"%s\" filtered by provider include/exclude list, skipping\n",
 			provider->name);
 		ret = -FI_ENODEV;
 		goto cleanup;
+	}
+
+	if (fi_apply_filter(&prov_log_filter, provider->name)) {
+		ctx = (struct fi_prov_context *) &provider->context;
+		ctx->disable_logging = 1;
 	}
 
 	prov = fi_getprov(provider->name);
@@ -133,8 +151,9 @@ static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 		 * provider of the same name, then discard this one.
 		 */
 		if (FI_VERSION_GE(prov->provider->version, provider->version)) {
-			FI_LOG(2, NULL, "a newer %s provider was already loaded; ignoring this one\n",
-				provider->name);
+			FI_INFO(&core_prov, FI_LOG_CORE,
+			       "a newer %s provider was already loaded; ignoring this one\n",
+			       provider->name);
 			ret = -FI_EALREADY;
 			goto cleanup;
 		}
@@ -143,8 +162,9 @@ static int fi_register_provider(struct fi_provider *provider, void *dlhandle)
 		 * provider of the same name, so discard the
 		 * already-loaded one.
 		 */
-		FI_LOG(2, NULL, "an older %s provider was already loaded; keeping this one and ignoring the older one\n",
-			provider->name);
+		FI_INFO(&core_prov, FI_LOG_CORE,
+		       "an older %s provider was already loaded; keeping this one and ignoring the older one\n",
+		       provider->name);
 		cleanup_provider(prov->provider, prov->dlhandle);
 
 		prov->dlhandle = dlhandle;
@@ -203,7 +223,7 @@ static char **split_and_alloc(const char *s, const char *delim)
 
 	dup = strdup(s);
 	if (!dup) {
-		FI_WARN(NULL, "failed to allocate memory\n");
+		FI_WARN(&core_prov, FI_LOG_CORE, "failed to allocate memory\n");
 		return NULL;
 	}
 
@@ -221,7 +241,7 @@ static char **split_and_alloc(const char *s, const char *delim)
 	/* +1 to leave space for NULL terminating pointer */
 	arr = calloc(n + 1, sizeof(*arr));
 	if (!arr) {
-		FI_WARN(NULL, "failed to allocate memory\n");
+		FI_WARN(&core_prov, FI_LOG_CORE, "failed to allocate memory\n");
 		goto cleanup;
 	}
 
@@ -251,77 +271,57 @@ static void free_string_array(char **s)
 	free(s);
 }
 
-/* parse any initialization-related environment variables */
-static void fi_parse_ini_env()
+void fi_free_filter(struct fi_filter *filter)
 {
-	const char *raw_prov_filter;
-
-	raw_prov_filter = getenv("FI_PROVIDER");
-	if (raw_prov_filter == NULL)
-		return;
-
-	if (*raw_prov_filter == '^') {
-		prov_filter_negated = 1;
-		++raw_prov_filter;
-	}
-
-	prov_name_filters = split_and_alloc(raw_prov_filter, ",");
-	if (!prov_name_filters) {
-		FI_WARN(NULL, "unable to parse FI_PROVIDER env var\n");
-		return;
-	}
+	free_string_array(filter->names);
 }
 
-static void fi_fini_env()
+void fi_create_filter(struct fi_filter *filter, const char *env_name)
 {
-	free_string_array(prov_name_filters);
+	const char *raw_filter;
+
+	memset(filter, 0, sizeof *filter);
+	raw_filter = getenv(env_name);
+	if (raw_filter == NULL)
+		return;
+
+	if (*raw_filter == '^') {
+		filter->negated = 1;
+		++raw_filter;
+	}
+
+	filter->names = split_and_alloc(raw_filter, ",");
+	if (!filter->names)
+		FI_WARN(&core_prov, FI_LOG_CORE,
+			"unable to parse %s env var\n", env_name);
 }
-
-/*
- * Initialize the sockets provider last.  This will result in it being
- * the least preferred provider.
- */
-static void fi_ini(void)
-{
-	pthread_mutex_lock(&ini_lock);
-
-	if (init)
-		goto unlock;
-
-	fi_log_init();
-	fi_parse_ini_env();
 
 #ifdef HAVE_LIBDL
-	struct dirent **liblist = NULL;
+static void fi_ini_dir(const char *dir)
+{
 	int n = 0;
-	char *lib, *provdir;
+	char *lib;
 	void *dlhandle;
+	struct dirent **liblist = NULL;
 	struct fi_provider* (*inif)(void);
 
-	/* If dlopen fails, assume static linking and just return
-	   without error */
-	dlhandle = dlopen(NULL, RTLD_NOW);
-	if (dlhandle == NULL) {
-		goto libdl_done;
-	}
-	dlclose(dlhandle);
-
-	provdir = PROVDLDIR;
-	n = scandir(provdir, &liblist, lib_filter, NULL);
+	n = scandir(dir, &liblist, lib_filter, NULL);
 	if (n < 0)
 		goto libdl_done;
 
 	while (n--) {
-		if (asprintf(&lib, "%s/%s", provdir, liblist[n]->d_name) < 0) {
-			FI_WARN(NULL, "asprintf failed to allocate memory\n");
+		if (asprintf(&lib, "%s/%s", dir, liblist[n]->d_name) < 0) {
+			FI_WARN(&core_prov, FI_LOG_CORE,
+			       "asprintf failed to allocate memory\n");
 			goto libdl_done;
 		}
-		FI_DEBUG(NULL, "opening provider lib %s\n", lib);
+		FI_DBG(&core_prov, FI_LOG_CORE, "opening provider lib %s\n", lib);
 
 		dlhandle = dlopen(lib, RTLD_NOW);
 		free(liblist[n]);
 		if (dlhandle == NULL) {
-			FI_WARN(NULL, "dlopen(%s): %s\n", lib, dlerror());
+			FI_WARN(&core_prov, FI_LOG_CORE,
+			       "dlopen(%s): %s\n", lib, dlerror());
 			free(lib);
 			continue;
 		}
@@ -329,7 +329,7 @@ static void fi_ini(void)
 
 		inif = dlsym(dlhandle, "fi_prov_ini");
 		if (inif == NULL) {
-			FI_WARN(NULL, "dlsym: %s\n", dlerror());
+			FI_WARN(&core_prov, FI_LOG_CORE, "dlsym: %s\n", dlerror());
 			dlclose(dlhandle);
 		} else
 			fi_register_provider((inif)(), dlhandle);
@@ -339,12 +339,49 @@ libdl_done:
 	while (n-- > 0)
 		free(liblist[n]);
 	free(liblist);
+}
+#endif
+
+static void fi_ini(void)
+{
+	pthread_mutex_lock(&ini_lock);
+
+	if (init)
+		goto unlock;
+
+	fi_log_init();
+	fi_create_filter(&prov_filter, "FI_PROVIDER");
+
+#ifdef HAVE_LIBDL
+	int n = 0;
+	char **dirs;
+	char *provdir;
+	void *dlhandle;
+
+	/* If dlopen fails, assume static linking and just return
+	   without error */
+	dlhandle = dlopen(NULL, RTLD_NOW);
+	if (dlhandle == NULL) {
+		goto libdl_done;
+	}
+	dlclose(dlhandle);
+
+	provdir = getenv("FI_PROVIDER_PATH");
+	if (!provdir)
+		provdir = PROVDLDIR;
+	dirs = split_and_alloc(provdir, ":");
+	for (n = 0; dirs[n]; ++n) {
+		fi_ini_dir(dirs[n]);
+	}
+	free_string_array(dirs);
+libdl_done:
 #endif
 
 	fi_register_provider(PSM_INIT, NULL);
 	fi_register_provider(USNIC_INIT, NULL);
-
 	fi_register_provider(VERBS_INIT, NULL);
+        /* Initialize the sockets provider last.  This will result in
+           it being the least preferred provider. */
 	fi_register_provider(SOCKETS_INIT, NULL);
 	init = 1;
 
@@ -363,7 +400,8 @@ static void __attribute__((destructor)) fi_fini(void)
 		free(prov);
 	}
 
-	fi_fini_env();
+	fi_free_filter(&prov_filter);
+	fi_log_fini();
 }
 
 static struct fi_prov *fi_getprov(const char *prov_name)
@@ -411,7 +449,7 @@ int DEFAULT_SYMVER_PRE(fi_getinfo)(uint32_t version, const char *node, const cha
 {
 	struct fi_prov *prov;
 	struct fi_info *tail, *cur;
-	int ret = -FI_ENOSYS;
+	int ret = -FI_ENODATA;
 
 	if (!init)
 		fi_ini();
@@ -428,8 +466,9 @@ int DEFAULT_SYMVER_PRE(fi_getinfo)(uint32_t version, const char *node, const cha
 		ret = prov->provider->getinfo(version, node, service, flags,
 					      hints, &cur);
 		if (ret) {
-			FI_LOG(1, NULL, "fi_getinfo: provider %s returned -%d (%s)\n",
-				prov->provider->name, -ret, fi_strerror(-ret));
+			FI_WARN(&core_prov, FI_LOG_CORE,
+			       "fi_getinfo: provider %s returned -%d (%s)\n",
+			       prov->provider->name, -ret, fi_strerror(-ret));
 			if (ret == -FI_ENODATA) {
 				continue;
 			} else {
@@ -634,5 +673,3 @@ const char *DEFAULT_SYMVER_PRE(fi_strerror)(int errnum)
 		return errstr[FI_EOTHER - FI_ERRNO_OFFSET];
 }
 DEFAULT_SYMVER(fi_strerror_, fi_strerror);
-
-

@@ -127,15 +127,17 @@ typedef struct fid *fid_t;
 #define FI_REMOTE_WRITE		(1ULL << 21)
 
 #define FI_REMOTE_CQ_DATA	(1ULL << 24)
-#define FI_EVENT		(1ULL << 25)
+#define FI_CANCEL		(1ULL << 25)
+#define FI_MORE			(1ULL << 26)
+#define FI_PEEK			(1ULL << 27)
+#define FI_TRIGGER		(1ULL << 28)
+#define FI_FENCE		(1ULL << 29)
+
+#define FI_EVENT		(1ULL << 32)
 #define FI_COMPLETION		FI_EVENT
-#define FI_REMOTE_SIGNAL	(1ULL << 26)
-#define FI_REMOTE_COMPLETE	(1ULL << 27)
-#define FI_CANCEL		(1ULL << 28)
-#define FI_MORE			(1ULL << 29)
-#define FI_PEEK			(1ULL << 30)
-#define FI_TRIGGER		(1ULL << 31)
-#define FI_FENCE		(1ULL << 32)
+#define FI_INJECT_COMPLETE	(1ULL << 33)
+#define FI_TRANSMIT_COMPLETE	(1ULL << 34)
+#define FI_COMMIT_COMPLETE	(1ULL << 35)
 
 
 struct fi_ioc {
@@ -198,8 +200,8 @@ enum fi_resource_mgmt {
 #define FI_ORDER_SAR		(1 << 6)
 #define FI_ORDER_SAW		(1 << 7)
 #define FI_ORDER_SAS		(1 << 8)
-#define FI_ORDER_RECV		(1 << 9)
-#define FI_ORDER_STRICT		0xFFFFFFFF
+#define FI_ORDER_STRICT		0x1FF
+#define FI_ORDER_DATA		(1 << 16)
 
 enum fi_ep_type {
 	FI_EP_UNSPEC,
@@ -230,6 +232,7 @@ enum {
 #define FI_PROV_MR_ATTR		(1ULL << 2)
 #define FI_MSG_PREFIX		(1ULL << 3)
 #define FI_ASYNC_IOV		(1ULL << 4)
+#define FI_RX_CQ_DATA		(1ULL << 5)
 
 struct fi_tx_attr {
 	uint64_t		caps;
@@ -264,8 +267,6 @@ struct fi_ep_attr {
 	size_t			max_order_war_size;
 	size_t			max_order_waw_size;
 	uint64_t		mem_tag_format;
-	uint64_t		msg_order;
-	uint64_t		comp_order;
 	size_t			tx_ctx_cnt;
 	size_t			rx_ctx_cnt;
 };

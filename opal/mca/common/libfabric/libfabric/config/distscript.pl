@@ -58,11 +58,17 @@ subst("README");
 
 chdir("man");
 opendir(my $dh, ".") || die "Can't open man directory: $!";
-my @files = grep { /\.\d$/ && -f "./$_" } readdir($dh);
+my @subdirs = grep { /man\d+/ && -d "./$_" } readdir($dh);
 closedir $dh;
 
-foreach my $file (@files) {
-    subst($file);
+foreach my $dir (@subdirs) {
+    opendir(my $dh, $dir) || die "Can't open man/$dir directory: $!";
+    my @files = grep { /\.\d$/ && -f "$dir/$_" } readdir($dh);
+    closedir $dh;
+
+    foreach my $file (@files) {
+        subst("$dir/$file");
+    }
 }
 
 exit(0);

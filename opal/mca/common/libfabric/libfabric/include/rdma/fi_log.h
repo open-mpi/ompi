@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015, Intel Corp., Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -31,36 +32,68 @@
  *
  */
 
-#if !defined(FI_LOG_H)
-#define FI_LOG_H
+#ifndef _FI_LOG_H_
+#define _FI_LOG_H_
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
+#include <rdma/fabric.h>
+#include <rdma/fi_prov.h>
 
-extern int fi_log_level;
-
-void fi_log_init(void);
-void fi_warn_impl(const char *prov, const char *fmt, ...);
-void fi_log_impl(int level, const char *prov, const char *func, int line,
-		 const char *fmt, ...);
-void fi_debug_impl(const char *prov, const char *func, int line, const char *fmt, ...);
-
-/* Callers are responsible for including their own trailing "\n".  Non-provider
- * code should pass prov=NULL.
- */
-#define FI_WARN(prov, ...) fi_warn_impl(prov, __VA_ARGS__)
-
-#define FI_LOG(level, prov, ...) \
-	do { \
-		if ((level) <= fi_log_level) \
-			fi_log_impl(level, prov, __func__, __LINE__, __VA_ARGS__); \
-	} while (0)
-
-#if ENABLE_DEBUG
-#  define FI_DEBUG(prov, ...) fi_debug_impl(prov, __func__, __LINE__, __VA_ARGS__)
-#else
-#  define FI_DEBUG(prov, ...) do {} while (0)
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* !defined(FI_LOG_H) */
+enum fi_log_subsys {
+	FI_LOG_CORE,
+	FI_LOG_FABRIC,
+	FI_LOG_DOMAIN,
+	FI_LOG_EP_CTRL,
+	FI_LOG_EP_DATA,
+	FI_LOG_AV,
+	FI_LOG_CQ,
+	FI_LOG_EQ,
+	FI_LOG_MR,
+	FI_LOG_SUBSYS_MAX
+};
+
+enum fi_log_level {
+	FI_LOG_WARN,
+	FI_LOG_TRACE,
+	FI_LOG_INFO,
+	FI_LOG_DEBUG,
+	FI_LOG_MAX
+};
+
+int fi_log_enabled(const struct fi_provider *prov, enum fi_log_level level,
+		   enum fi_log_subsys subsys);
+void fi_log(const struct fi_provider *prov, enum fi_log_level level,
+	    enum fi_log_subsys subsys, const char *func, int line,
+	    const char *fmt, ...);
+
+#define FI_LOG(prov, level, subsystem, ...)				\
+	do {								\
+		if (fi_log_enabled(prov, level, subsystem))		\
+			fi_log(prov, level, subsystem,			\
+				__func__, __LINE__, __VA_ARGS__);	\
+	} while (0)
+
+#define FI_WARN(prov, subsystem, ...)					\
+	FI_LOG(prov, FI_LOG_WARN, subsystem, __VA_ARGS__)
+
+#define FI_TRACE(prov, subsystem, ...)					\
+	FI_LOG(prov, FI_LOG_TRACE, subsystem, __VA_ARGS__)
+
+#define FI_INFO(prov, subsystem, ...)					\
+	FI_LOG(prov, FI_LOG_INFO, subsystem, __VA_ARGS__)
+
+#if ENABLE_DEBUG
+#define FI_DBG(prov, subsystem, ...)					\
+	FI_LOG(prov, FI_LOG_DEBUG, subsystem, __VA_ARGS__)
+#else
+#define FI_DBG(prov_name, subsystem, ...)
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*_FI_LOG_H_ */

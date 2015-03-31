@@ -55,6 +55,9 @@
 #include "sock_util.h"
 #include "sock.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_CTRL, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_CTRL, __VA_ARGS__)
+
 const struct fi_ep_attr sock_dgram_ep_attr = {
 	.type = FI_EP_DGRAM,
 	.protocol = FI_PROTO_SOCK_TCP,
@@ -63,14 +66,13 @@ const struct fi_ep_attr sock_dgram_ep_attr = {
 	.max_order_war_size = SOCK_EP_MAX_ORDER_WAR_SZ,
 	.max_order_waw_size = SOCK_EP_MAX_ORDER_WAW_SZ,
 	.mem_tag_format = SOCK_EP_MEM_TAG_FMT,
-	.msg_order = SOCK_EP_MSG_ORDER,
 	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
 	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 };
 
 const struct fi_tx_attr sock_dgram_tx_attr = {
 	.caps = SOCK_EP_DGRAM_CAP,
-	.op_flags = 0,
+	.op_flags = FI_TRANSMIT_COMPLETE,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
 	.size = SOCK_EP_TX_SZ,
@@ -160,9 +162,6 @@ int sock_dgram_verify_ep_attr(struct fi_ep_attr *ep_attr,
 		   sock_dgram_ep_attr.max_order_waw_size)
 			return -FI_ENODATA;
 
-		if ((ep_attr->msg_order | SOCK_EP_MSG_ORDER) != SOCK_EP_MSG_ORDER)
-			return -FI_ENODATA;
-
 		if ((ep_attr->tx_ctx_cnt > SOCK_EP_MAX_TX_CNT) &&
 		    ep_attr->tx_ctx_cnt != FI_SHARED_CONTEXT)
 			return -FI_ENODATA;
@@ -194,7 +193,7 @@ int sock_dgram_fi_info(void *src_addr, void *dest_addr, struct fi_info *hints,
 	return 0;
 }
 
-int sock_dgram_endpoint(struct fid_domain *domain, struct fi_info *info,
+static int sock_dgram_endpoint(struct fid_domain *domain, struct fi_info *info,
 		struct sock_ep **ep, void *context, size_t fclass)
 {
 	int ret;

@@ -65,7 +65,7 @@
 #include "usdf_cm.h"
 #include "usdf_msg.h"
 
-int
+static int
 usdf_pep_bind(fid_t fid, fid_t bfid, uint64_t flags)
 {
 	struct usdf_pep *pep;
@@ -313,7 +313,7 @@ usdf_pep_listen_cb(void *v)
 	return 0;
 }
 
-int
+static int
 usdf_pep_listen(struct fid_pep *fpep)
 {
 	struct usdf_pep *pep;
@@ -341,17 +341,17 @@ usdf_pep_listen(struct fid_pep *fpep)
 	return 0;
 }
 
-ssize_t
+static ssize_t
 usdf_pep_cancel(fid_t fid, void *context)
 {
 	return -FI_EINVAL;
 }
 
-int
+static int
 usdf_pep_reject(struct fid_pep *pep, fi_connreq_t connreq,
 		const void *param, size_t paramlen)
 {
-	return 0;
+	return -FI_ENOSYS;
 }
 
 static void
@@ -393,7 +393,7 @@ usdf_pep_grow_backlog(struct usdf_pep *pep)
 	return 0;
 }
 
-int
+static int
 usdf_pep_close(fid_t fid)
 {
 	struct usdf_pep *pep;

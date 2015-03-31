@@ -39,19 +39,22 @@
 #include <sys/queue.h>
 #include <pthread.h>
 
-#include "fi_log.h"
+#include <rdma/fi_log.h>
 
 #include "usdf_progress.h"
 #include "usd.h"
+
 
 #define USDF_PROV_NAME "usnic"
 #define USDF_MAJOR_VERS 1
 #define USDF_MINOR_VERS 0
 #define USDF_PROV_VERSION FI_VERSION(USDF_MAJOR_VERS, USDF_MINOR_VERS)
 
-#define USDF_WARN(...) FI_WARN("usnic", __VA_ARGS__)
-#define USDF_INFO(...) FI_LOG(3, "usnic", __VA_ARGS__)
-#define USDF_DEBUG(...) FI_DEBUG("usnic", __VA_ARGS__)
+extern struct fi_provider usdf_ops;
+
+#define USDF_WARN(...) FI_WARN(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
+#define USDF_INFO(...) FI_INFO(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
+#define USDF_DEBUG(...) FI_DBG(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
 
 #define USDF_HDR_BUF_ENTRY 64
 #define USDF_EP_CAP_PIO (1ULL << 63)

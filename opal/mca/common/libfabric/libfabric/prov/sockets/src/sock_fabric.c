@@ -47,6 +47,9 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_FABRIC, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_FABRIC, __VA_ARGS__)
+
 const char sock_fab_name[] = "IP";
 const char sock_dom_name[] = "sockets";
 const char sock_prov_name[] = "sockets";
@@ -289,6 +292,7 @@ static int sock_ep_getinfo(const char *node, const char *service, uint64_t flags
 		ai.ai_flags |= AI_NUMERICHOST;
 
 	if (flags & FI_SOURCE) {
+		ai.ai_flags |= AI_PASSIVE;
 		ret = getaddrinfo(node, service, &ai, &rai);
 		if (ret) {
 			SOCK_LOG_INFO("getaddrinfo failed!\n");

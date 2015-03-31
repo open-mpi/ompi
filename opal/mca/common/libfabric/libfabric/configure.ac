@@ -91,6 +91,13 @@ dnl Checks for libraries
 AC_CHECK_LIB(pthread, pthread_mutex_init, [],
     AC_MSG_ERROR([pthread_mutex_init() not found.  libfabric requires libpthread.]))
 
+AC_CHECK_FUNC([pthread_spin_init],
+	[have_spinlock=1],
+	[have_spinlock=0])
+
+AC_DEFINE_UNQUOTED([PT_LOCK_SPIN], [$have_spinlock],
+	[Define PT_LOCK_SPIN to 1 if available.])
+
 have_clock_gettime=0
 have_host_get_clock_service=0
 

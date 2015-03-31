@@ -221,18 +221,9 @@ fail:
 }
 
 /*
- * release queue resources
- */
-void
-usdf_ep_rdm_release_queues(struct usdf_ep *ep)
-{
-	/* XXX */
-}
-
-/*
  * Allocate any missing queue resources for this endpoint
  */
-int
+static int
 usdf_ep_rdm_get_queues(struct usdf_ep *ep)
 {
 	struct usdf_tx *tx;
@@ -556,7 +547,7 @@ usdf_rdm_tx_ctx_close(fid_t fid)
 	return 0;
 }
 
-int
+static int
 usdf_rx_rdm_port_bind(struct usdf_rx *rx, struct fi_info *info)
 {
 	struct sockaddr_in *sin;
