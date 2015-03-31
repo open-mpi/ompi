@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -135,6 +135,9 @@ static int rte_init(void)
 
     /* indicate we are a singleton so orte_init knows what to do */
     orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
+    /* we were not started by a daemon */
+    orte_standalone_operation = true;
+    
     /* now define my own name */
     /* hash the nodename */
     OPAL_HASH_STR(orte_process_info.nodename, hash32);
