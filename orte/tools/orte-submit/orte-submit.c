@@ -354,7 +354,6 @@ int main(int argc, char *argv[])
     opal_cmd_line_t cmd_line;
     char *param;
     orte_job_t *jdata=NULL;
-    char *hnpenv;
     opal_buffer_t *req;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
     
@@ -484,12 +483,11 @@ int main(int argc, char *argv[])
         fclose(fp);
         input[strlen(input)-1] = '\0';  /* remove newline */
         /* construct the target hnp info */
-        asprintf(&hnpenv, "OMPI_MCA_orte_hnp_uri=%s", input);
+        opal_setenv("OMPI_MCA_orte_hnp_uri", input, true, &environ);
     } else {
         /* should just be the uri itself - construct the target hnp info */
-        asprintf(&hnpenv, "OMPI_MCA_orte_hnp_uri=%s", myglobals.hnp);
+        opal_setenv("OMPI_MCA_orte_hnp_uri", myglobals.hnp, true, &environ);
     }
-    putenv(hnpenv);  // must not free
 
     /* Setup MCA params */
     orte_register_params();
@@ -499,7 +497,7 @@ int main(int argc, char *argv[])
 
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
-    putenv("OMPI_MCA_ess=tool");
+    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
     
     if (myglobals.debug) {
         orte_devel_level_output = true;
