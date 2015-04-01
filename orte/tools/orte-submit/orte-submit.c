@@ -393,33 +393,25 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    /* DO NOT LET ROOT CALL ORTE_INIT/FINALIZE AS IT CAN BLAST SYSTEM FILES
-     * TO BE FULLY SAFE, WE DON'T ALLOW ANYTHING MORE THAN THE VERSION OUTPUT */
-    
     /* check if we are running as root - if we are, then only allow
      * us to proceed if the allow-run-as-root flag was given. Otherwise,
      * exit with a giant warning flag
      */
     if (0 == geteuid() && !myglobals.run_as_root) {
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (myglobals.help) {
-            fprintf(stderr, "%s cannot provide the help message when run as root\n"
-                    "Please run as regular user, or add the --run-as-root flag\n"
-                    "NOTE: running as root is not recommended as it can lead\n"
-                    "to unintended deletion of system files if the prefix used\n"
-                    "to build %s points to a system location\n",
-                    myglobals.basename, myglobals.basename);
+            fprintf(stderr, "%s cannot provide the help message when run as root\n", myglobals.basename);
         } else {
             /* show_help is not yet available, so print an error manually */
-            fprintf(stderr, "--------------------------------------------------------------------------\n");
-            fprintf(stderr, "%s has detected an attempt to run as root. This is *strongly*\n", myglobals.basename);
-            fprintf(stderr, "discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
-            fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
-            fprintf(stderr, "your system in an unusable state.\n\n");
-            fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
-            fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
-            fprintf(stderr, "against doing so - please do so at your own risk.\n");
-            fprintf(stderr, "--------------------------------------------------------------------------\n");
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", myglobals.basename);
         }
+        fprintf(stderr, " This is *strongly* discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
+        fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
+        fprintf(stderr, "your system in an unusable state.\n\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
+        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
 
