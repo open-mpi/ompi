@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
     orte_register_params();
 
     /* specify the DVM state machine */
-    putenv("OMPI_MCA_state=dvm");
+    opal_setenv("OMPI_MCA_state", "dvm", true, &environ);
     
     /* Intialize our Open RTE environment */
     if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
