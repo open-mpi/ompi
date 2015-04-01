@@ -333,4 +333,8 @@ were given to support the requested number of processes:
 
 We cannot continue - please adjust either the number of processes
 or provide more node locations in the file.
-
+#
+[device-not-specified]
+The request to map processes by distance could not be completed
+because device to map near by was not specified. Please, use
+rmaps_dist_device mca parameter to set it.
