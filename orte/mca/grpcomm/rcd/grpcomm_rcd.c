@@ -96,7 +96,9 @@ static int allgather(orte_grpcomm_coll_t *coll,
     coll->nreported = 1;
 
     /* mark local data received */
-    coll->distance_mask_recv = (uint32_t *)calloc(sizeof(uint32_t), log2(coll->ndmns));
+    if (coll->ndmns > 1) {
+	    coll->distance_mask_recv = (uint32_t *)calloc(sizeof(uint32_t), log2(coll->ndmns));
+    }
 
     /* start by seeding the collection with our own data */
     opal_dss.copy_payload(&coll->bucket, sendbuf);
