@@ -1012,6 +1012,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
+                bool dvm = true;
                 jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 /* activate the daemons_reported state for all jobs
                  * whose daemons were launched
@@ -1020,9 +1021,14 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
                         continue;
                     }
+                    dvm = false;
                     if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
                     }
+                }
+                if (dvm) {
+                    /* must be launching a DVM - activate the state */
+                    ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
                 }
             }
         }
