@@ -43,6 +43,11 @@ int mca_base_parse_paramfile(const char *paramfile, opal_list_t *list)
     return opal_util_keyval_parse(paramfile, save_value);
 }
 
+int mca_base_internal_env_store(void)
+{
+    return opal_util_keyval_save_internal_envars(save_value);
+}
+
 static void save_value(const char *name, const char *value)
 {
     mca_base_var_file_value_t *fv;

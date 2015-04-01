@@ -148,3 +148,10 @@ Please either specify an absolute path to the file, or check
 that the file is in your current working directory...and ensure
 that you have read permissions on the file.
 
+#
+[deprecated-amca]
+You're using the --am option. Please be advised that this option is deprecated;
+you should use --tune instead. The --tune option allows one to specify mca
+parameters as well as environment variables from within a file using the same
+command line syntax (e.g. -mca var val -mca var "val" -x var=val -x var).
+The --am option will be removed in a future release.
