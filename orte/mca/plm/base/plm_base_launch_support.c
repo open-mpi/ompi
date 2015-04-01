@@ -1007,6 +1007,10 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             return;
         } else {
             jdatorted->num_reported++;
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                 "%s plm:base:orted_report_launch recvd %d of %d reported daemons",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
                 jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 /* activate the daemons_reported state for all jobs
