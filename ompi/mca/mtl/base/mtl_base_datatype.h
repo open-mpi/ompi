@@ -26,7 +26,10 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-static inline int
+#ifndef MTL_BASE_DATATYPE_H_INCLUDED
+#define MTL_BASE_DATATYPE_H_INCLUDED
+
+__opal_attribute_always_inline__ static inline int
 ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
                        void **buffer,
                        size_t *buffer_len,
@@ -67,7 +70,7 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
 }
 
 
-static inline int
+__opal_attribute_always_inline__ static inline int
 ompi_mtl_datatype_recv_buf(struct opal_convertor_t *convertor,
                            void ** buffer,
                            size_t *buffer_len,
@@ -91,7 +94,7 @@ ompi_mtl_datatype_recv_buf(struct opal_convertor_t *convertor,
 }
 
 
-static inline int
+__opal_attribute_always_inline__ static inline int
 ompi_mtl_datatype_unpack(struct opal_convertor_t *convertor,
                          void *buffer,
                          size_t buffer_len)
@@ -110,3 +113,5 @@ ompi_mtl_datatype_unpack(struct opal_convertor_t *convertor,
 
     return OMPI_SUCCESS;
 }
+
+#endif /* MTL_BASE_DATATYPE_H_INCLUDED */
