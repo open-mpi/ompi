@@ -448,7 +448,7 @@ static int tcp_component_register(void)
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                          &mca_oob_tcp_component.max_retries);
+                                          &mca_oob_tcp_component.max_recon_attempts);
 
     return ORTE_SUCCESS;
 }
