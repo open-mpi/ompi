@@ -18,16 +18,12 @@ dist_ompidata_DATA = help-mtl-ofi.txt
 mtl_ofi_sources = \
 				   mtl_ofi.h \
 				   mtl_ofi.c \
-				   mtl_ofi_cancel.c \
 				   mtl_ofi_component.c \
 				   mtl_ofi_endpoint.h \
 				   mtl_ofi_endpoint.c \
 				   mtl_ofi_message.h \
 				   mtl_ofi_message.c \
-				   mtl_ofi_probe.c \
-				   mtl_ofi_recv.c \
 				   mtl_ofi_request.h \
-				   mtl_ofi_send.c \
 				   mtl_ofi_types.h
 
 # Make the output library in this directory, and name it either
