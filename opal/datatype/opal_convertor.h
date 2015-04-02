@@ -246,6 +246,16 @@ static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_conve
     convertor->flags      = pSrcConv->flags | flags;
     convertor->master     = pSrcConv->master;
 
+#if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+    if (opal_datatype_is_contiguous_memory_layout(datatype, count)) {
+        convertor->local_size = count * datatype->size;
+        convertor->pBaseBuf   = (unsigned char*)pUserBuf;
+        convertor->count      = count;
+        convertor->pDesc      = datatype;
+        return 0;
+    }
+#endif
+
     return opal_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
 
