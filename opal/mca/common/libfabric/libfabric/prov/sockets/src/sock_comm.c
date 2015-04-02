@@ -201,6 +201,12 @@ ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
 	return 0;
 }
 
+ssize_t sock_comm_data_avail(struct sock_conn *conn)
+{
+	sock_comm_recv_buffer(conn);
+	return rbused(&conn->inbuf);
+}
+
 int sock_comm_buffer_init(struct sock_conn *conn)
 {
 	socklen_t size = SOCK_COMM_BUF_SZ;
