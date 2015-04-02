@@ -48,6 +48,7 @@ typedef struct {
     opal_list_t addrs;
     mca_oob_tcp_addr_t *active_addr;
     mca_oob_tcp_state_t state;
+    int num_retries;
     opal_event_t send_event;    /**< registration with event thread for send events */
     bool send_ev_active;
     opal_event_t recv_event;    /**< registration with event thread for recv events */

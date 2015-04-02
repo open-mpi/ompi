@@ -80,6 +80,8 @@ typedef struct {
     int                keepalive_probes;       /**< number of keepalives that can be missed before declaring error */
     int                keepalive_time;         /**< idle time in seconds before starting to send keepalives */
     int                keepalive_intvl;        /**< time between keepalives, in seconds */
+    int                retry_delay;            /**< time to wait before retrying connection */
+    int                max_recon_attempts;     /**< maximum number of times to attempt connect before giving up (-1 for never) */
 } mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;

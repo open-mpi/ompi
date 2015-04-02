@@ -433,6 +433,23 @@ static int tcp_component_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_probes);
+
+    mca_oob_tcp_component.retry_delay = 0;
+    (void)mca_base_component_var_register(component, "retry_delay",
+                                          "Time (in sec) to wait before trying to connect to peer again",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.retry_delay);
+
+    mca_oob_tcp_component.max_recon_attempts = 10;
+    (void)mca_base_component_var_register(component, "max_recon_attempts",
+                                          "Max number of times to attempt connection before giving up (-1 -> never give up)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.max_retries);
+
     return ORTE_SUCCESS;
 }
 
@@ -1204,6 +1221,7 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
     OBJ_CONSTRUCT(&peer->addrs, opal_list_t);
     peer->active_addr = NULL;
     peer->state = MCA_OOB_TCP_UNCONNECTED;
+    peer->num_retries = 0;
     OBJ_CONSTRUCT(&peer->send_queue, opal_list_t);
     peer->send_msg = NULL;
     peer->recv_msg = NULL;

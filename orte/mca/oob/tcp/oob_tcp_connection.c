@@ -258,11 +258,32 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
             /* connection succeeded */
             addr->retries = 0;
             connected = true;
+            peer->num_retries = 0;
             break;
         }
     }
 
     if (!connected) {
+        /* it could be that the intended recipient just hasn't
+         * started yet. if requested, wait awhile and try again
+         * unless/until we hit the maximum number of retries */
+        if (0 < mca_oob_tcp_component.retry_delay) {
+            if (mca_oob_tcp_component.max_recon_attempts < 0 ||
+                peer->num_retries < mca_oob_tcp_component.max_recon_attempts) {
+                struct timeval tv;
+                /* reset the addr states */
+                OPAL_LIST_FOREACH(addr, &peer->addrs, mca_oob_tcp_addr_t) {
+                    addr->state = MCA_OOB_TCP_UNCONNECTED;
+                    addr->retries = 0;
+                }
+                /* give it awhile and try again */
+                tv.tv_sec = mca_oob_tcp_component.retry_delay;
+                tv.tv_usec = 0;
+                ++peer->num_retries;
+                ORTE_RETRY_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect, &tv);
+                goto cleanup;
+            }
+        }
         /* no address succeeded, so we cannot reach this peer */
         peer->state = MCA_OOB_TCP_FAILED;
         host = orte_get_proc_hostname(&(peer->name));
