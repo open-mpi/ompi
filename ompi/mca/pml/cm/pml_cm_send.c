@@ -150,31 +150,20 @@ mca_pml_cm_send(void *buf,
         
         ompi_request_free( (ompi_request_t**)&sendreq );
     } else { 
-        mca_pml_cm_thin_send_request_t *sendreq;
-        ompi_proc_t * ompi_proc;
-        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
-        if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-        
-        MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq,
-                                          ompi_proc,
-                                          comm,
-                                          tag,
-                                          dst, 
-                                          datatype,
-                                          sendmode,
-                                          buf,
-                                          count);
-        MCA_PML_CM_SEND_REQUEST_START_SETUP((&sendreq->req_send));
-            
+        opal_convertor_t convertor;
+        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dst);
+
+        opal_convertor_copy_and_prepare_for_send(
+		ompi_proc->super.proc_convertor,
+                &datatype->super, count, buf, 0,
+                &convertor);
+
         ret = OMPI_MTL_CALL(send(ompi_mtl,                             
                                  comm, 
                                  dst, 
                                  tag,  
-                                 &sendreq->req_send.req_base.req_convertor,
+                                 &convertor,
                                  sendmode));
-        /* Allow a quick path for the request return */
-        sendreq->req_send.req_base.req_free_called = true;
-        MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq);
     }
     
     return ret;
