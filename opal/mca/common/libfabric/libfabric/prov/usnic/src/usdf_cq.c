@@ -868,6 +868,7 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	cq->cq_fid.fid.context = context;
 	cq->cq_fid.fid.ops = &usdf_cq_fi_ops;
+	atomic_init(&cq->cq_refcnt, 0);
 
 	switch (attr->format) {
 	case FI_CQ_FORMAT_CONTEXT:

@@ -509,7 +509,6 @@ struct psmx_fid_stx {
 struct psmx_fid_mr {
 	struct fid_mr		mr;
 	struct psmx_fid_domain	*domain;
-	struct psmx_fid_cq	*cq;
 	struct psmx_fid_cntr	*cntr;
 	uint64_t		access;
 	uint64_t		flags;

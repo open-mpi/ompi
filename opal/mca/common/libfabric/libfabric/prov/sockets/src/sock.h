@@ -696,7 +696,7 @@ struct sock_pe {
 	int num_free_entries;
 	struct sock_pe_entry pe_table[SOCK_PE_MAX_ENTRIES];
 	fastlock_t lock;
-	fastlock_t list_lock;
+	pthread_mutex_t list_lock;
 
 	struct dlist_entry free_list;
 	struct dlist_entry busy_list;
@@ -958,6 +958,7 @@ void sock_comm_buffer_finalize(struct sock_conn *conn);
 ssize_t sock_comm_send(struct sock_conn *conn, const void *buf, size_t len);
 ssize_t sock_comm_recv(struct sock_conn *conn, void *buf, size_t len);
 ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len);
+ssize_t sock_comm_data_avail(struct sock_conn *conn);
 ssize_t sock_comm_flush(struct sock_conn *conn);
 
 #endif

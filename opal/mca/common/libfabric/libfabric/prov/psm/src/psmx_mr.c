@@ -154,7 +154,6 @@ static int psmx_mr_close(fid_t fid)
 static int psmx_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 {
 	struct psmx_fid_mr *mr;
-	struct psmx_fid_cq *cq;
 	struct psmx_fid_ep *ep;
 	struct psmx_fid_cntr *cntr;
 
@@ -167,15 +166,6 @@ static int psmx_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 		ep = container_of(bfid, struct psmx_fid_ep, ep.fid);
 		if (mr->domain != ep->domain)
 			return -FI_EINVAL;
-		break;
-
-	case FI_CLASS_CQ:
-		cq = container_of(bfid, struct psmx_fid_cq, cq.fid);
-		if (mr->cq && mr->cq != cq)
-			return -FI_EBUSY;
-		if (mr->domain != cq->domain)
-			return -FI_EINVAL;
-		mr->cq = cq;
 		break;
 
 	case FI_CLASS_CNTR:

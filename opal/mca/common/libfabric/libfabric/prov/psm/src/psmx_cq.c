@@ -184,7 +184,7 @@ static struct psmx_cq_event *psmx_cq_create_event_from_status(
 	case PSMX_REMOTE_WRITE_CONTEXT:
 		op_context = PSMX_CTXT_USER(fi_context);
 		buf = NULL;
-		flags = FI_REMOTE_WRITE | FI_RMA;
+		flags = FI_REMOTE_WRITE | FI_RMA | FI_REMOTE_CQ_DATA;
 		break;
 	default:
 		op_context = PSMX_CTXT_USER(fi_context);
@@ -399,10 +399,12 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 				  }
 
 				  mr = PSMX_CTXT_USER(fi_context);
-				  if (mr->cq) {
+				  if (mr->domain->rma_ep->recv_cq && (req->cq_flags & FI_REMOTE_CQ_DATA)) {
 					event = psmx_cq_create_event_from_status(
-							mr->cq, &psm_status, req->write.data,
-							(mr->cq == cq) ? event_buffer : NULL,
+							mr->domain->rma_ep->recv_cq,
+							&psm_status, req->write.data,
+							(mr->domain->rma_ep->recv_cq == cq) ?
+								event_buffer : NULL,
 							count, src_addr);
 					if (!event)
 						return -FI_ENOMEM;
@@ -411,17 +413,21 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 						read_count++;
 						read_more = --count;
 						event_buffer = count ? event_buffer + cq->entry_size : NULL;
+						if (src_addr)
+							src_addr = count ? src_addr + 1 : NULL;
 					}
 					else {
-						psmx_cq_enqueue_event(mr->cq, event);
-						if (mr->cq == cq)
+						psmx_cq_enqueue_event(mr->domain->rma_ep->recv_cq, event);
+						if (mr->domain->rma_ep->recv_cq == cq)
 							read_more = 0;
 					}
 				  }
-				  if (mr->cntr)
-					psmx_cntr_inc(mr->cntr);
+
 				  if (mr->domain->rma_ep->remote_write_cntr)
 					psmx_cntr_inc(mr->domain->rma_ep->remote_write_cntr);
+
+				  if (mr->cntr && mr->cntr != mr->domain->rma_ep->remote_write_cntr)
+					psmx_cntr_inc(mr->cntr);
 
 				  if (read_more)
 					continue;
@@ -452,6 +458,8 @@ int psmx_cq_poll_mq(struct psmx_fid_cq *cq, struct psmx_fid_domain *domain,
 					read_count++;
 					read_more = --count;
 					event_buffer = count ? event_buffer + cq->entry_size : NULL;
+					if (src_addr)
+						src_addr = count ? src_addr + 1 : NULL;
 				}
 				else {
 					psmx_cq_enqueue_event(tmp_cq, event);
@@ -557,7 +565,8 @@ static ssize_t psmx_cq_readfrom(struct fid_cq *cq, void *buf, size_t count,
 
 				read_count++;
 				buf += cq_priv->entry_size;
-				src_addr++;
+				if (src_addr)
+					src_addr++;
 				continue;
 			}
 			else {
