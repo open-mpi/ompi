@@ -165,7 +165,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         }
 
         /* Get the ranks of the local procs in comm_old */
-        local_procs = (int *)calloc(num_procs_in_node,sizeof(int));
+        local_procs = (int *)malloc(num_procs_in_node * sizeof(int));
         for(i = idx = 0 ; i < size ; i++){
             proc = ompi_group_peer_lookup(comm_old->c_local_group, i);
             if (( i == rank ) ||
@@ -173,21 +173,20 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 local_procs[idx++] = i;
         }
 
-        vpids = (int *)calloc(size,sizeof(int));
-        vpids[0] = 0;
-        for(i = 1; i < size ; i++)
-            vpids[i] = -1;
+        vpids = (int *)malloc(size * sizeof(int));
+        colors = (int *)malloc(size * sizeof(int));
         for(i = 0; i < size ; i++) {
             proc = ompi_group_peer_lookup(comm_old->c_local_group, i);
             pval = &val;
             OPAL_MODEX_RECV_VALUE(err, OPAL_DSTORE_NODEID, &(proc->super), &pval, OPAL_UINT32);
             if( OPAL_SUCCESS != err ) {
-                fprintf(stdout, "IT DOESN'T WORK\n");
+                opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
+                            OMPI_NAME_PRINT(&(proc->super)));
+                vpids[i] = colors[i] = -1;
+                continue;
             }
-            vpids[i] = (OPAL_SUCCESS == err) ? val : -1;
+            vpids[i] = colors[i] = (int)val;
         }
-        colors = (int *)calloc(size, sizeof(int));
-        memcpy(colors, vpids, size*sizeof(int));
 
 #ifdef __DEBUG__
         fprintf(stdout,"Process rank (2) is : %i \n",rank);
