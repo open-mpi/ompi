@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1008,6 +1010,17 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     free(receive_buf);
     receive_buf=NULL;
   }
+
+  if (NULL != global_buf) {
+    free(global_buf);
+    global_buf = NULL;
+  }
+
+  if (NULL != sorted) {
+    free(sorted);
+    sorted = NULL;
+  }
+
   return ret;
   
 }
