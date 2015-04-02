@@ -30,14 +30,14 @@ int ompi_mca_pml_monitoring_flush(char* filename);
 MPI_Group group_world;
 
 /* array for stroring monitoring data*/
-size_t *sent_data = NULL;
-int *messages_count = NULL;
-size_t *filtered_sent_data = NULL;
-int *filtered_messages_count = NULL;
-size_t *all_sent_data = NULL;
-int *all_messages_count = NULL;
-size_t *all_filtered_sent_data = NULL;
-int *all_filtered_messages_count = NULL;
+uint64_t* sent_data = NULL;
+uint64_t* messages_count = NULL;
+uint64_t* filtered_sent_data = NULL;
+uint64_t* filtered_messages_count = NULL;
+uint64_t* all_sent_data = NULL;
+uint64_t* all_messages_count = NULL;
+uint64_t* all_filtered_sent_data = NULL;
+uint64_t* all_filtered_messages_count = NULL;
 
 int init_done = 0;
 int nbprocs = -1;
@@ -132,16 +132,16 @@ void finalize_monitoring( void ){
 }
 void initialize_monitoring( void ){
 
-    sent_data      = (size_t*)calloc(nbprocs, sizeof(size_t));
-    messages_count = (int*)   calloc(nbprocs, sizeof(int));
-    all_sent_data      = (size_t*)calloc(nbprocs, sizeof(size_t));
-    all_messages_count = (int*)   calloc(nbprocs, sizeof(int));
+    sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+    messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
+    all_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+    all_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
 
     if(filter_monitoring()){
-        filtered_sent_data      = (size_t*)calloc(nbprocs, sizeof(size_t));
-        filtered_messages_count = (int*)   calloc(nbprocs, sizeof(int));
-        all_filtered_sent_data      = (size_t*)calloc(nbprocs, sizeof(size_t));
-        all_filtered_messages_count = (int*)   calloc(nbprocs, sizeof(int));
+        filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+        filtered_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
+        all_filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+        all_filtered_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
     }
 
     init_done = 1;
@@ -173,7 +173,7 @@ void output_monitoring( void ){
         all_sent_data[i] += sent_data[i];
         all_messages_count[i] += messages_count[i];
         if(all_sent_data[i] > 0) {
-            fprintf(stderr, "I\t%d\t%d\t%ld bytes\t%d msgs sent\n", my_rank, i, all_sent_data[i], all_messages_count[i]); fflush(stderr);
+            fprintf(stderr, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, all_sent_data[i], all_messages_count[i]); fflush(stderr);
         }
     }
 
@@ -182,7 +182,7 @@ void output_monitoring( void ){
             all_filtered_sent_data[i] += filtered_sent_data[i];
             all_filtered_messages_count[i] += filtered_messages_count[i];
             if(all_filtered_sent_data[i] > 0) {
-                fprintf(stderr, "E\t%d\t%d\t%ld bytes\t%d msgs sent\n", my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]); fflush(stderr);
+                fprintf(stderr, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]); fflush(stderr);
             }
         }
     }
@@ -208,7 +208,7 @@ int ompi_mca_pml_monitoring_flush(char* filename) {
 
   for (i = 0 ; i < nbprocs ; i++) {
     if(sent_data[i] > 0) {
-      fprintf(pf, "I\t%d\t%d\t%ld bytes\t%d msgs sent\n", my_rank, i, sent_data[i], messages_count[i]); fflush(pf);
+      fprintf(pf, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, sent_data[i], messages_count[i]); fflush(pf);
       /* aggregate  data in general array*/
       all_sent_data[i] += sent_data[i];
       all_messages_count[i] += messages_count[i];
@@ -221,7 +221,7 @@ int ompi_mca_pml_monitoring_flush(char* filename) {
   if(filter_monitoring()){
     for (i = 0 ; i < nbprocs ; i++) {
       if(filtered_sent_data[i] > 0) {
-    fprintf(pf, "E\t%d\t%d\t%ld bytes\t%d msgs sent\n", my_rank, i, filtered_sent_data[i], filtered_messages_count[i]); fflush(pf);
+    fprintf(pf, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, filtered_sent_data[i], filtered_messages_count[i]); fflush(pf);
       /* aggregate  data in general array*/
       all_filtered_sent_data[i] += filtered_sent_data[i];
       all_filtered_messages_count[i] += filtered_messages_count[i];
