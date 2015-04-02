@@ -1333,7 +1333,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         orte_show_help("help-plm-base.txt", "deprecated-amca", true);
     }
 
-    if (NULL != tmp_value && NULL != tmp_value[0] || NULL != tmp_value2 && NULL != tmp_value2[0]) {
+    if ((NULL != tmp_value && NULL != tmp_value[0])
+        || (NULL != tmp_value2 && NULL != tmp_value2[0])) {
         /* Add the 'path' param */
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
