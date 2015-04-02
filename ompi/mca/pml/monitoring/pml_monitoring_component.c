@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 
 static int mca_pml_monitoring_enabled = 0;
+static int mca_pml_monitoring_output_enabled = 0;
 static int mca_pml_monitoring_active = 0;
 mca_pml_base_component_t pml_selected_component;
 mca_pml_base_module_t pml_selected_module;
@@ -62,6 +64,16 @@ static int mca_pml_monitoring_component_open(void)
     return OMPI_SUCCESS;
 }
 
+static int mca_pml_monitoring_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj_handle, int *count)
+{
+    if (MCA_BASE_PVAR_HANDLE_BIND == event) {
+        /* Return the size of the communicator as the number of values */
+        *count = ompi_comm_size ((ompi_communicator_t *) obj_handle);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 static int mca_pml_monitoring_component_close(void)
 {
     if( mca_pml_monitoring_enabled ) {
@@ -98,7 +110,9 @@ static int mca_pml_monitoring_component_finish(void)
 {
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
         /* It is over... Output what has been monitored*/
-        output_monitoring();
+        if ( mca_pml_monitoring_output_enabled != 0) {
+            output_monitoring();
+        }
         /* Free internal data structure */
         finalize_monitoring();
         /* Call the original PML and then close */
@@ -123,6 +137,23 @@ static int mca_pml_monitoring_component_register(void)
                                           "Enable the monitoring at the PML level. This value should be different than 0 in order for the monitoring to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_enabled);
+
+    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable_output",
+                                          "Enable the PML monitoring textual output at MPI_Finalize. This value should be different than 0 in order for the output to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
+
+    (void) mca_base_pvar_register ("ompi", "pml", "monitoring", "messages_count", "Number of messages "
+                                   "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                   mca_pml_monitoring_get_messages_count, NULL, mca_pml_monitoring_comm_size_notify, NULL);
+
+    (void) mca_base_pvar_register ("ompi", "pml", "monitoring", "messages_size", "Size of messages "
+                                   "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                   mca_pml_monitoring_get_messages_size, NULL, mca_pml_monitoring_comm_size_notify, NULL);
     return OMPI_SUCCESS;
 }
 

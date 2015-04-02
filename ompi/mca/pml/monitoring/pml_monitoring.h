@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@ BEGIN_C_DECLS
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/mca/pml/pml.h>
 #include <ompi/mca/pml/pml.h>
+#include <opal/mca/base/mca_base_pvar.h>
 
 typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 
@@ -135,6 +137,14 @@ extern int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 extern int mca_pml_monitoring_start(size_t count,
                                     ompi_request_t** requests);
+
+int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar,
+                                           void *value,
+                                           void *obj_handle);
+
+int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar,
+                                          void *value,
+                                          void *obj_handle);
 
 END_C_DECLS
 
