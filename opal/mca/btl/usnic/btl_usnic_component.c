@@ -1066,8 +1066,7 @@ static int usnic_component_progress(void)
                 }
             } else if (OPAL_LIKELY(-FI_EAGAIN == ret)) {
                 continue;
-            }
-            else {
+            } else {
                 usnic_handle_cq_error(module, channel, ret);
             }
         }
@@ -1219,20 +1218,21 @@ static int usnic_component_progress_2(void)
                 channel->chan_deferred_recv = NULL;
             }
 
-            ret = fi_cq_read(channel->cq, completions,
-                             OPAL_BTL_USNIC_NUM_COMPLETIONS);
+            num_events = ret =
+                fi_cq_read(channel->cq, completions,
+                           OPAL_BTL_USNIC_NUM_COMPLETIONS);
             assert(0 != ret);
             opal_memchecker_base_mem_defined(&ret, sizeof(ret));
             if (OPAL_UNLIKELY(ret < 0 && -FI_EAGAIN != ret)) {
                 usnic_handle_cq_error(module, channel, num_events);
                 num_events = 0;
-            } else {
-                num_events = ret;
+            } else if (-FI_EAGAIN == ret) {
+                num_events = 0;
             }
 
             opal_memchecker_base_mem_defined(completions,
                                              sizeof(completions[0]) *
-                                             ret);
+                                             num_events);
             /* Handle each event */
             for (j = 0; j < num_events; j++) {
                 count += usnic_handle_completion(module, channel,
