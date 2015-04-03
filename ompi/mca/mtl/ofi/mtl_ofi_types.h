@@ -71,8 +71,6 @@ typedef struct mca_mtl_ofi_component_t {
 } mca_mtl_ofi_component_t;
 
 
-OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
-
 /* match/ignore bit manipulation
  *
  * 0 123 4567 01234567 01234567 01234567 01234567 01234567 01234567 01234567
