@@ -16,14 +16,14 @@ extra_treematch_files = treematch/tm_bucket.h \
     treematch/tm_hwloc.h treematch/tm_mapping.h \
     treematch/tm_timings.h treematch/tm_tree.h \
     treematch/tm_kpartitioning.h treematch/uthash.h\
-    treematch/fibo.h treematch/IntConstantInitializedVector.h \
-    treematch/k-partitioning.h treematch/tm_mt.h \
+    treematch/IntConstantInitializedVector.h \
+    treematch/tm_mt.h \
     treematch/tm_thread_pool.h treematch/tm_verbose.h \
-    treematch/PriorityQueue.h treematch/tm_malloc.h \
-    treematch/fibo.c treematch/IntConstantInitializedVector.c \
-    treematch/k-partitioning.c treematch/tm_mt.c \
+    treematch/tm_malloc.h \
+    treematch/IntConstantInitializedVector.c \
+    treematch/tm_mt.c \
     treematch/tm_thread_pool.c treematch/tm_verbose.c \
-    treematch/PriorityQueue.c treematch/tm_malloc.c \
+    treematch/tm_malloc.c \
     treematch/tm_mapping.c treematch/tm_timings.c \
     treematch/tm_bucket.c treematch/tm_tree.c \
     treematch/tm_hwloc.c treematch/tm_kpartitioning.c

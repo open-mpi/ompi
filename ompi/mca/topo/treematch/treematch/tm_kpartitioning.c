@@ -1,11 +1,13 @@
 #include "tm_mapping.h"
 #include "tm_mt.h"
 #include "tm_kpartitioning.h"
-#include "k-partitioning.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 #define USE_KL_KPART 0
+#if USE_KL_KPART
+#include "k-partitioning.h"
+#endif  /* USE_KL_KPART */
 #define KL_KPART_GREEDY_TRIALS 0
 
 static int verbose_level = ERROR;
