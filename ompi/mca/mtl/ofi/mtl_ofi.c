@@ -13,11 +13,12 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include "mtl_ofi.h"
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_endpoint.h"
+
+OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
 mca_mtl_ofi_module_t ompi_mtl_ofi = {
     {
@@ -46,7 +47,6 @@ mca_mtl_ofi_module_t ompi_mtl_ofi = {
     NULL,
     NULL
 };
-
 
 int
 ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
@@ -137,7 +137,6 @@ bail:
     return ret;
 }
 
-
 int
 ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
                        size_t nprocs,
@@ -162,63 +161,5 @@ ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
         }
     }
 
-    return OMPI_SUCCESS;
-}
-
-
-int
-ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
-{
-    opal_progress_unregister(ompi_mtl_ofi_progress);
-
-    /**
-     * Close all the OFI objects
-     */
-    if (fi_close((fid_t)ompi_mtl_ofi.ep)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.mr)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.cq)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.av)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.domain)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.fabric)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-int
-ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
-                      struct ompi_communicator_t *comm)
-{
-    return OMPI_SUCCESS;
-}
-
-int
-ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
-                      struct ompi_communicator_t *comm)
-{
     return OMPI_SUCCESS;
 }
