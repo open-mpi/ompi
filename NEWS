@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -61,6 +61,35 @@ Trunk (not on release branches yet)
   via --enable-mpi-cxx.
 - Remove embedded VampirTrace.  It is in maintenance mode since 2013.
   Please consider Score-P (score-p.org) as an external replacement.
+
+1.8.5
+-----
+- Updated the internal HWLOC with several bug fixes
+- Fixed several bugs in OpenSHMEM support
+- Extended vader shared memory support to 32-bit architectures
+- Fixed a bug in handling subarray datatypes
+- Don't use inline functions with Clang compiler
+- Multiple bug fixes for cleanup during finalize
+  in unusual situations
+- Added support for TCP keepalive signals to ensure
+  timely termination when sockets between daemons
+  cannot be created (e.g., due to a firewall)
+- Added MCA parameter to allow full use of a SLURM
+  allocation when started from a tool (supports LLNL
+  debugger)
+- Fixed several bugs in the configure logic for PMI
+  and HWLOC
+- Cleaned up documentation in a few places (e.g.,
+  MPI_Comm_split_type)
+- Fixed prototypes for MPI_Barrier
+- Fixed a number of one-sided bugs
+- Fixed singleton MPI_Comm_spawn
+- Fixed a number of minor issues with CUDA support,
+  including registering of shared memory
+- Improved support for Cray
+- Fixed performance regression introduced by
+  inadvertent default enabling of thread support
+
 
 1.8.4
 -----
