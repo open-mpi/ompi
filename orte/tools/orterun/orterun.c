@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -77,6 +77,7 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_info_support.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -645,17 +646,43 @@ int orterun(int argc, char *argv[])
         return rc;
     }
 
+    /* print version if requested.  Do this before check for help so
+       that --version --help works as one might expect. */
+    if (orterun_globals.version) {
+        char *str, *project_name = NULL;
+        if (0 == strcmp(orte_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        str = opal_info_make_version_str("all", 
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
+                                         OPAL_RELEASE_VERSION, 
+                                         OPAL_GREEK_VERSION,
+                                         OPAL_REPO_REV);
+        if (NULL != str) {
+            fprintf(stdout, "%s (%s) %s\n\nReport bugs to %s\n",
+                    orte_basename, project_name, str, PACKAGE_BUGREPORT);
+            free(str);
+        }
+        exit(0);
+    }
+
     /* check if we are running as root - if we are, then only allow
      * us to proceed if the allow-run-as-root flag was given. Otherwise,
      * exit with a giant warning flag
      */
     if (0 == geteuid() && !orterun_globals.run_as_root) {
-        /* show_help is not yet available, so print an error manually */
         fprintf(stderr, "--------------------------------------------------------------------------\n");
-        fprintf(stderr, "%s has detected an attempt to run as root. This is *strongly*\n", orte_basename);
-        fprintf(stderr, "discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
-        fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
-        fprintf(stderr, "your system in an unusable state.\n\n");
+        if (orterun_globals.help) {
+            fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
+        } else {
+            /* show_help is not yet available, so print an error manually */
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
+        }
+        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
+        fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
+        fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
         fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
         fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
         fprintf(stderr, "against doing so - please do so at your own risk.\n");
@@ -665,7 +692,7 @@ int orterun(int argc, char *argv[])
 
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
-     * process them.
+     * process them - we can do this step WITHOUT first calling opal_init
      */
     if (OPAL_SUCCESS != mca_base_cmd_line_process_args(&cmd_line, &environ, &environ)) {
         exit(1);
@@ -686,6 +713,31 @@ int orterun(int argc, char *argv[])
     /* Need to initialize OPAL so that install_dirs are filled in */
     if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
+    }
+    
+    /* Check for help request */
+    if (orterun_globals.help) {
+        char *str, *args = NULL;
+        char *project_name = NULL;
+        if (0 == strcmp(orte_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    orte_basename, args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+
+        /* If someone asks for help, that should be all we do */
+        opal_finalize();
+        exit(0);
     }
     
     /* may look strange, but the way we handle prefix is a little weird
@@ -1159,50 +1211,6 @@ static int init_globals(void)
 
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
-    /* print version if requested.  Do this before check for help so
-       that --version --help works as one might expect. */
-    if (orterun_globals.version) {
-        char *str, *project_name = NULL;
-        if (0 == strcmp(orte_basename, "mpirun")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        str = opal_show_help_string("help-orterun.txt", "orterun:version", 
-                                    false,
-                                    orte_basename, project_name, OPAL_VERSION,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        exit(0);
-    }
-
-    /* Check for help request */
-    if (orterun_globals.help) {
-        char *str, *args = NULL;
-        char *project_name = NULL;
-        if (0 == strcmp(orte_basename, "mpirun")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        args = opal_cmd_line_get_usage_msg(cmd_line);
-        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    orte_basename, project_name, OPAL_VERSION,
-                                    orte_basename, args,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        free(args);
-
-        /* If someone asks for help, that should be all we do */
-        exit(0);
-    }
-
     /* check for request to report pid */
     if (NULL != orterun_globals.report_pid) {
         FILE *fp;
