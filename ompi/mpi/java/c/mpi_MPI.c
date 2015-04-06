@@ -135,7 +135,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
     if(libmpi == NULL)
     {
-        fprintf(stderr, "Java bindings failed to load liboshmem.\n");
+        fprintf(stderr, "Java bindings failed to load libmpi: %s\n",dlerror());
         exit(1);
     }
 
