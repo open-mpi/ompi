@@ -113,6 +113,8 @@ int mca_base_pvar_finalize (void)
             }
         }
 
+        pvar_count = 0;
+
         OBJ_DESTRUCT(&registered_pvars);
         OBJ_DESTRUCT(&mca_base_pvar_index_hash);
     }

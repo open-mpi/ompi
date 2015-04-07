@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
@@ -88,7 +88,7 @@ const char *opal_info_ver_mca = "mca";
 const char *opal_info_ver_type = "type";
 const char *opal_info_ver_component = "component";
 
-static bool opal_info_registered = false;
+static int opal_info_registered = 0;
 
 static void component_map_construct(opal_info_component_map_t *map)
 {
@@ -225,8 +225,6 @@ int opal_info_init(int argc, char **argv,
 
 void opal_info_finalize(void)
 {
-    opal_info_close_components ();
-    mca_base_close();
     opal_finalize_util();
 }
 
@@ -293,11 +291,9 @@ int opal_info_register_framework_params(opal_pointer_array_t *component_map)
 {
     int rc;
 
-    if (opal_info_registered) {
+    if (opal_info_registered++) {
         return OPAL_SUCCESS;
     }
-
-    opal_info_registered = true;
 
     /* Register mca/base parameters */
     if( OPAL_SUCCESS != mca_base_open() ) {
@@ -319,9 +315,17 @@ void opal_info_close_components(void)
 {
     int i;
 
+    assert(opal_info_registered);
+    if (--opal_info_registered) {
+        return;
+    }
+
     for (i=0; NULL != opal_frameworks[i]; i++) {
         (void) mca_base_framework_close(opal_frameworks[i]);
     }
+
+    /* release our reference to MCA */
+    mca_base_close ();
 }
 
 

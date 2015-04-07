@@ -67,10 +67,6 @@ opal_dl_dlopen_component_t mca_dl_dlopen_component = {
         /* The dl framework members */
         .priority = 80
     },
-
-    /* Now fill in the dlopen component-specific members */
-    .filename_suffixes_mca_storage = ".so,.dylib,.dll,.sl",
-    .filename_suffixes = NULL
 };
 
 
@@ -78,6 +74,7 @@ static int dlopen_component_register(void)
 {
     int ret;
 
+    mca_dl_dlopen_component.filename_suffixes_mca_storage = ".so,.dylib,.dll,.sl";
     ret =
         mca_base_component_var_register(&mca_dl_dlopen_component.base.base_version,
                                         "filename_suffixes",
