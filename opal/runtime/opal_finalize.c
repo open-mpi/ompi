@@ -129,9 +129,6 @@ opal_finalize(void)
 #if OPAL_ENABLE_FT_CR    == 1
     (void) mca_base_framework_close(&opal_compress_base_framework);
 #endif
-    
-    /* close the shmem framework */
-    (void) mca_base_framework_close(&opal_shmem_base_framework);
 
     (void) mca_base_framework_close(&opal_event_base_framework);
 
