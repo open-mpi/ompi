@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -481,10 +484,16 @@ void opal_output_finalize(void)
             opal_output_close(verbose_stream);
         }
         free(verbose.lds_prefix);
+        verbose.lds_prefix = NULL;
+
         verbose_stream = -1;
 
         free (output_prefix);
+        output_prefix = NULL;
+
         free (output_dir);
+        output_dir = NULL;
+
         if(NULL != temp_str) {
 	    free(temp_str);
 	    temp_str = NULL;
@@ -493,6 +502,8 @@ void opal_output_finalize(void)
         OBJ_DESTRUCT(&verbose);
         OBJ_DESTRUCT(&mutex);
     }
+
+    initialized = false;
 }
 
 /************************************************************************/

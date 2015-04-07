@@ -105,16 +105,6 @@ int mca_base_component_repository_init(void)
     }
     opal_dl_base_select();
 
-    /* Bump the refcount to indicate that this framework is "special"
-       -- it can't be finalized until all other frameworks have been
-       finalized.  E.g., in opal/runtime/opal_info_support.c, there's
-       a loop calling mca_base_framework_close() on all OPAL
-       frameworks.  But that function simply decrements each
-       framework's refcount, and if it's zero, closes it.  This
-       additional increment ensures that the "dl" framework is not
-       closed as part of that loop. */
-    ++opal_dl_base_framework.framework_refcnt;
-
     OBJ_CONSTRUCT(&repository, opal_list_t);
 #endif
 
@@ -265,9 +255,6 @@ void mca_base_component_repository_finalize(void)
       }
     } while (opal_list_get_size(&repository) > 0);
 
-    /* Close the dl framework (see comment about refcnt in
-       mca_base_component_repository_init()) */
-    --opal_dl_base_framework.framework_refcnt;
     (void) mca_base_framework_close(&opal_dl_base_framework);
 #endif
 
