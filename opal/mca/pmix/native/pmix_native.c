@@ -200,6 +200,9 @@ static int native_init(void)
             /* let the caller know that the server isn't available yet */
             return OPAL_ERR_SERVER_NOT_AVAIL;
         } else {
+            /* not ready yet, so decrement our init_cntr so we can come thru
+             * here again */
+            --init_cntr;
             return OPAL_ERROR;
         }
     }
