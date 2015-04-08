@@ -65,6 +65,8 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
         return OPAL_SUCCESS;
     }
 
+    OBJ_CONSTRUCT(&framework->framework_components, opal_list_t);
+
     if (framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
         flags |= MCA_BASE_REGISTER_STATIC_ONLY;
     }
@@ -147,6 +149,10 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
 
     if (MCA_BASE_FRAMEWORK_FLAG_NOREGISTER & framework->framework_flags) {
         flags |= MCA_BASE_OPEN_FIND_COMPONENTS;
+
+        if (MCA_BASE_FRAMEWORK_FLAG_NO_DSO & framework->framework_flags) {
+            flags |= MCA_BASE_OPEN_STATIC_ONLY;
+        }
     }
 
     /* lock all of this frameworks's variables */
@@ -220,6 +226,8 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     }
 
     framework->framework_flags &= ~(MCA_BASE_FRAMEWORK_FLAG_REGISTERED | MCA_BASE_FRAMEWORK_FLAG_OPEN);
+
+    OBJ_DESTRUCT(&framework->framework_components);
 
     framework_close_output (framework);
 

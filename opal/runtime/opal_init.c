@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
@@ -354,6 +354,12 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    /* initialize the mca */
+    if (OPAL_SUCCESS != (ret = mca_base_open())) {
+        error = "mca_base_open";
+        goto return_error;
+    }
+
     return OPAL_SUCCESS;
 
  return_error:
@@ -382,12 +388,6 @@ opal_init(int* pargc, char*** pargv)
     /* initialize util code */
     if (OPAL_SUCCESS != (ret = opal_init_util(pargc, pargv))) {
         return ret;
-    }
-
-    /* initialize the mca */
-    if (OPAL_SUCCESS != (ret = mca_base_open())) {
-        error = "mca_base_open";
-        goto return_error;
     }
 
     /* open hwloc - since this is a static framework, no
