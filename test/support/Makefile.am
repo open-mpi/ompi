@@ -30,7 +30,5 @@ AM_CPPFLAGS = \
 check_LIBRARIES = libsupport.a
 
 libsupport_a_SOURCES = \
-        components.h \
-        components.c \
         support.c \
         support.h
