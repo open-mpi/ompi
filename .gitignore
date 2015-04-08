@@ -369,6 +369,7 @@ opal/mca/event/libevent2021/libevent/libevent.pc
 opal/mca/event/libevent2021/libevent/libevent_openssl.pc
 opal/mca/event/libevent2021/libevent/libevent_pthreads.pc
 opal/mca/event/libevent2021/libevent/include/event2/event-config.h
+opal/mca/event/libevent2021/libevent/m4/ltsugar.m4
 opal/mca/hwloc/hwloc191/hwloc/include/hwloc/autogen/config.h
 opal/mca/hwloc/hwloc191/hwloc/include/private/autogen/config.h
 opal/mca/installdirs/config/install_dirs.h
