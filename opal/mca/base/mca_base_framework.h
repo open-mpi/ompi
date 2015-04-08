@@ -29,11 +29,13 @@ enum mca_base_register_flag_t {
 typedef enum mca_base_register_flag_t mca_base_register_flag_t;
 
 enum mca_base_open_flag_t {
-    MCA_BASE_OPEN_DEFAULT = 0,
+    MCA_BASE_OPEN_DEFAULT         = 0,
     /** Find components in mca_base_components_find. Used by
      mca_base_framework_open() when NOREGISTER is specified
      by the framework */
-    MCA_BASE_OPEN_FIND_COMPONENTS = 1
+    MCA_BASE_OPEN_FIND_COMPONENTS = 1,
+    /** Do not open DSO components */
+    MCA_BASE_OPEN_STATIC_ONLY     = 2,
 };
 
 typedef enum mca_base_open_flag_t mca_base_open_flag_t;

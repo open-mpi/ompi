@@ -44,7 +44,7 @@ void mca_base_component_unload (const mca_base_component_t *component, int outpu
         mca_base_var_group_deregister (ret);
     }
 
-    mca_base_component_repository_release((mca_base_component_t *) component);    
+    mca_base_component_repository_release (component);
 }
 
 void mca_base_component_close (const mca_base_component_t *component, int output_id)
