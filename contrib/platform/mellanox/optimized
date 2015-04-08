@@ -5,10 +5,16 @@ with_verbs=yes
 with_devel_headers=yes
 enable_oshmem=yes
 enable_oshmem_fortran=yes
+disable_wrapper_rpath=yes
 
 mellanox_autodetect=${mellanox_autodetect:="no"}
 mellanox_debug=${mellanox_debug:="no"}
+mellanox_threads=${mellanox_threads:="no"}
 
+if [ "$mellanox_threads" == "yes" ]; then
+    enable_mpi_thread_multiple=yes
+    enable_opal_multi_threads=yes
+fi
 
 if [ "$mellanox_autodetect" == "yes" ]; then
 
