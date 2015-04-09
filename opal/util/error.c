@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC. 
- *                         All rights reserved.
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -197,6 +198,11 @@ opal_error_register(const char *project, int err_base, int err_max,
             converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
             converters[i].err_base = err_base;
             converters[i].err_max = err_max;
+            converters[i].converter = converter;
+            return OPAL_SUCCESS;
+        } else if (converters[i].err_base == err_base &&
+                   converters[i].err_max == err_max &&
+                   !strcmp (project, converters[i].project)) {
             converters[i].converter = converter;
             return OPAL_SUCCESS;
         }
