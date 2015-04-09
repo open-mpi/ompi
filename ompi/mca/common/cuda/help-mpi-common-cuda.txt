@@ -1,10 +1,11 @@
 # -*- text -*-
 #
 # Copyright (c) 2011-2014 NVIDIA.  All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 [cuCtxGetCurrent failed not initialized]
@@ -145,14 +146,6 @@ Open MPI was compiled without dynamic library support (e.g., with the
  --disable-dlopen flag), and therefore cannot utilize CUDA support.  
 
 If you need CUDA support, reconfigure Open MPI with dynamic library support enabled.
-#
-[unknown ltdl error]
-While attempting to load the supporting libcuda.so library, an error
-occurred.  This really should rarely happen.  Please notify the Open
-MPI developers. 
-   Function:     %s
-   Return Value: %d
-   Error string: %s
 #
 [dlopen failed]
 The library attempted to open the following supporting CUDA libraries, 
