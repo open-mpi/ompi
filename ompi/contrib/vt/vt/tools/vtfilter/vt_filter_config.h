@@ -31,17 +31,12 @@
 
   // using Open64 < v4.2.4 (causes "internal compiler error")
 # elif defined(__OPEN64__)
-#   if !defined(__OPENCC__) || !defined(__OPENCC_MINOR__) || !defined(__OPENCC_PATCHLEVEL__)
+#   if !defined(VT_OPENCC_VERSION)
       // unknown compiler version; disable OpenMP to be on the safe side
 #     undef HAVE_OMP
 #   else
-      // __OPENCC_PATCHLEVEL__ can be empty; redefine it to 0
-#     if !(__OPENCC_PATCHLEVEL__ + 0)
-#       undef __OPENCC_PATCHLEVEL__
-#       define __OPENCC_PATCHLEVEL__ 0
-#     endif
       // disable OpenMP, if compiler version is less than 4.2.4
-#     if __OPENCC__ < 4 || (__OPENCC__ == 4 && (__OPENCC_MINOR__ < 2 || (__OPENCC_MINOR__ == 2 && __OPENCC_PATCHLEVEL__ < 4)))
+#     if VT_OPENCC_VERSION < 4240
 #       undef HAVE_OMP
 #     endif
 #   endif
