@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -129,8 +132,7 @@ static int rte_init(void)
         /* save the daemon uri - we will process it later */
         orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
         /* for convenience, push the pubsub version of this param into the environ */
-        asprintf(&param,OPAL_MCA_PREFIX"pubsub_orte_server=%s",orte_process_info.my_hnp_uri);
-        putenv(param);
+        opal_setenv (OPAL_MCA_PREFIX"pubsub_orte_server", orte_process_info.my_hnp_uri, 1, &environ);
     }
 
     /* indicate we are a singleton so orte_init knows what to do */
@@ -195,7 +197,7 @@ static int rte_init(void)
 
     /* check and ensure pmix was initialized */
     if (NULL == opal_pmix.initialized || !opal_pmix.initialized()) {
-        putenv("OMPI_MCA_pmix=native");
+        opal_setenv("OMPI_MCA_pmix", "native", 1, &environ);
         /* tell the pmix framework to allow delayed connection to a server
          * in case we need one */
         opal_pmix_base_allow_delayed_server = true;
@@ -219,10 +221,10 @@ static int rte_init(void)
     orte_process_info.my_local_rank = 0;
 
     /* set some envars */
-    putenv("OMPI_NUM_APP_CTX=1");
-    putenv("OMPI_FIRST_RANKS=0");
-    putenv("OMPI_APP_CTX_NUM_PROCS=1");
-    putenv(OPAL_MCA_PREFIX"orte_ess_num_procs=1");
+    opal_setenv("OMPI_NUM_APP_CTX", "1", 1, &environ);
+    opal_setenv("OMPI_FIRST_RANKS", "0", 1, &environ);
+    opal_setenv("OMPI_APP_CTX_NUM_PROCS", "1", 1, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"orte_ess_num_procs", "1", 1, &environ);
 
     /* push some required info to our local datastore */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
@@ -294,11 +296,11 @@ static int rte_finalize(void)
     }
 
     /* cleanup the environment */
-    unsetenv("OMPI_NUM_APP_CTX");
-    unsetenv("OMPI_FIRST_RANKS");
-    unsetenv("OMPI_APP_CTX_NUM_PROCS");
-    unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs");
-    unsetenv(OPAL_MCA_PREFIX"pubsub_orte_server");  // just in case it is there
+    opal_unsetenv("OMPI_NUM_APP_CTX", &environ);
+    opal_unsetenv("OMPI_FIRST_RANKS", &environ);
+    opal_unsetenv("OMPI_APP_CTX_NUM_PROCS", &environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"orte_ess_num_procs", &environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"pubsub_orte_server", &environ);  // just in case it is there
 
     return ret;
 }
