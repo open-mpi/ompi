@@ -67,7 +67,8 @@ static char *mca_base_var_file_prefix = NULL;
 static char *mca_base_envar_file_prefix = NULL;
 static char *mca_base_param_file_path = NULL;
 static char *mca_base_env_list = NULL;
-static char *mca_base_env_list_sep = ";";
+#define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"
+static char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
 static char *mca_base_env_list_internal = NULL;
 static bool mca_base_var_suppress_override_warning = false;
 static opal_list_t mca_base_var_file_values;
@@ -273,6 +274,8 @@ int mca_base_var_init(void)
                                      "Set SHELL env variables",
                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
+
+        mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
         (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
                                      "Set SHELL env variables delimiter. Default: semicolon ';'",
                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
@@ -430,6 +433,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
+
     mca_base_envar_files = strdup(mca_base_var_files);
 
     (void) mca_base_var_register_synonym (ret, "opal", "mca", NULL, "param_files",
@@ -1131,11 +1135,15 @@ int mca_base_var_finalize(void)
         if (NULL != mca_base_var_file_list) {
             opal_argv_free(mca_base_var_file_list);
         }
+        mca_base_var_file_list = NULL;
 
         (void) mca_base_var_group_finalize ();
         (void) mca_base_pvar_finalize ();
 
         OBJ_DESTRUCT(&mca_base_var_index_hash);
+
+        free (mca_base_envar_files);
+        mca_base_envar_files = NULL;
     }
 
     /* All done */
@@ -1241,14 +1249,30 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search, char
 
 static int read_files(char *file_list, opal_list_t *file_values, char sep)
 {
-    int i, count;
+    char **tmp = opal_argv_split(file_list, sep);
+    int i, count, ret;
+
+    if (!tmp) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (mca_base_var_file_list) {
+        count = opal_argv_count (mca_base_var_file_list);
+        ret = opal_argv_insert (&mca_base_var_file_list, count, tmp);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
+        opal_argv_free (tmp);
+    } else {
+        mca_base_var_file_list = tmp;
+    }
+
+    count = opal_argv_count(mca_base_var_file_list);
 
     /* Iterate through all the files passed in -- read them in reverse
        order so that we preserve unix/shell path-like semantics (i.e.,
        the entries farthest to the left get precedence) */
-
-    mca_base_var_file_list = opal_argv_split(file_list, sep);
-    count = opal_argv_count(mca_base_var_file_list);
 
     for (i = count - 1; i >= 0; --i) {
         mca_base_parse_paramfile(mca_base_var_file_list[i], file_values);

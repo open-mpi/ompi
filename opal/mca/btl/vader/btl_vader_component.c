@@ -209,6 +209,7 @@ static int mca_btl_vader_component_register (void)
                                            "single_copy_mechanism", "Single copy mechanism to use (defaults to best available)",
                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP, &mca_btl_vader_component.single_copy_mechanism);
+    OBJ_RELEASE(new_enum);
 
 #if OPAL_BTL_VADER_HAVE_KNEM
     /* Currently disabling DMA mode by default; it's not clear that this is useful in all applications and architectures. */

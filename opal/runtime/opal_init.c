@@ -303,11 +303,6 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_net_init())) {
-        error = "opal_net_init";
-        goto return_error;
-    }
-
     /* Setup the parameter system */
     if (OPAL_SUCCESS != (ret = mca_base_var_init())) {
         error = "mca_base_var_init";
@@ -317,6 +312,11 @@ opal_init_util(int* pargc, char*** pargv)
     /* register params for opal */
     if (OPAL_SUCCESS != (ret = opal_register_params())) {
         error = "opal_register_params";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_net_init())) {
+        error = "opal_net_init";
         goto return_error;
     }
 

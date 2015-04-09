@@ -37,6 +37,15 @@ int MPI_T_finalize (void)
 
     if (0 == --mpit_init_count) {
         (void) ompi_info_close_components ();
+
+        if ((!ompi_mpi_initialized || ompi_mpi_finalized) &&
+            (NULL != ompi_mpi_main_thread)) {
+            /* we are not between MPI_Init and MPI_Finalize so we
+             * have to free the ompi_mpi_main_thread */
+            OBJ_RELEASE(ompi_mpi_main_thread);
+            ompi_mpi_main_thread = NULL;
+        }
+
         (void) opal_finalize_util ();
     }
 
