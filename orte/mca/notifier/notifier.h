@@ -122,7 +122,9 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
                             "job %s error %s severity %s",              \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_JOBID_PRINT((j)->jobid),               \
+                            ORTE_JOBID_PRINT((NULL == (j)) ?            \
+                                             ORTE_JOBID_INVALID :       \
+                                             (j)->jobid),               \
                             ORTE_ERROR_NAME((e)),                       \
                             orte_notifier_base_sev2str(s));             \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
@@ -147,7 +149,9 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
                             "%s notifier[%s:%d] job %s state %s",       \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_JOBID_PRINT((j)->jobid),               \
+                            ORTE_JOBID_PRINT((NULL == (j)) ?            \
+                                             ORTE_JOBID_INVALID :       \
+                                             (j)->jobid),               \
                             orte_job_state_to_str(st));                 \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
         _n->jdata = (j);                                                \
