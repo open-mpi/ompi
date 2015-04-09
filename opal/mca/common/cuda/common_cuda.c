@@ -370,8 +370,8 @@ int mca_common_cuda_stage_one_init(void)
     while (searchpaths[j] != NULL) {
         i = 0;
         while (cudalibs[i] != NULL) {
-            char *filename;
-            char *str;
+            char *filename = NULL;
+            char *str = NULL;
 
             /* If there's a non-empty search path, prepend it
                to the library filename */
