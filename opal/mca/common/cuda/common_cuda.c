@@ -1866,11 +1866,11 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
         ts_end = opal_timer_base_get_usec();
         accum = mydifftime(ts_start, ts_end);
         if (mca_common_cuda_cumemcpy_async) {
-            opal_output(0, "cuMemcpyAsync took   %7.2f usecs (src=%p (%d), dst=%p (%d))\n",
-                        accum, src, memTypeSrc, dest, memTypeDst);
+            opal_output(0, "cuMemcpyAsync took   %7.2f usecs, size=%d, (src=%p (%d), dst=%p (%d))\n",
+                        accum, (int)size, src, memTypeSrc, dest, memTypeDst);
         } else {
-            opal_output(0, "cuMemcpy took   %7.2f usecs (src=%p (%d), dst=%p (%d))\n",
-                        accum, src, memTypeSrc, dest, memTypeDst);
+            opal_output(0, "cuMemcpy took   %7.2f usecs, size=%d,  (src=%p (%d), dst=%p (%d))\n",
+                        accum, (int)size, src, memTypeSrc, dest, memTypeDst);
         }
     }
 #endif 
