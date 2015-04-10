@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -35,10 +35,12 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/state/state.h"
 #include "orte/orted/pmix/pmix_server.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
@@ -109,6 +111,13 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* if we don't have any active OOB modules, then abort */
+    if (0 == opal_list_get_size(&orte_oob_base.actives)) {
+        orte_show_help("help-plm-base.txt", "no-oob", true);
+        ORTE_FORCED_TERMINATE(ORTE_ERR_SILENT);
+        goto CLEANUP;
+    }
+ 
     /* if we are a singleton and the supporting HNP hasn't
      * been spawned, then do so now
      */
@@ -229,6 +238,13 @@ int orte_plm_base_fork_hnp(void)
     int rc;
     orte_jobid_t jobid;
 
+    /* if we don't have any active OOB modules, then abort */
+    if (0 == opal_list_get_size(&orte_oob_base.actives)) {
+        orte_show_help("help-plm-base.txt", "no-oob", true);
+        ORTE_FORCED_TERMINATE(ORTE_ERR_SILENT);
+        return ORTE_ERR_SILENT;
+    }
+ 
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
