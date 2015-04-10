@@ -327,7 +327,6 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
 
     } else {
         /* no need to pack - rdma operation out of user's buffer */
-        ptl_me_t me;
 
         /* reserve space in the event queue for rdma operations immediately */
         while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >=
@@ -366,48 +365,6 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
                              (unsigned long) frag,
                              (unsigned long) frag->base.des_cbfunc,
                              frag->segments[0].key, flags));
-
-        /* create a match entry */
-          me.start = frag->segments[0].base.seg_addr.pval;
-          me.length = frag->segments[0].base.seg_len;
-          me.ct_handle = PTL_CT_NONE;
-          me.min_free = 0;
-          me.uid = PTL_UID_ANY;
-          me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE |
-              PTL_ME_EVENT_LINK_DISABLE |
-              PTL_ME_EVENT_COMM_DISABLE |
-              PTL_ME_EVENT_UNLINK_DISABLE;
-
-          if (mca_btl_portals4_component.use_logical) {
-              me.match_id.rank = peer->ptl_proc.rank;
-          } else {
-              me.match_id.phys.nid = peer->ptl_proc.phys.nid;
-              me.match_id.phys.pid = peer->ptl_proc.phys.pid;
-          }
-          me.match_bits = frag->segments[0].key;
-          me.ignore_bits = BTL_PORTALS4_PROTOCOL_MASK |
-              BTL_PORTALS4_CONTEXT_MASK |
-              BTL_PORTALS4_SOURCE_MASK;
-          me.ignore_bits = 0;
-
-          ret = PtlMEAppend(portals4_btl->portals_ni_h,
-                            portals4_btl->recv_idx,
-                            &me,
-                            PTL_PRIORITY_LIST,
-                            frag,
-                            &(frag->me_h));
-          if (PTL_OK != ret) {
-              opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                  "%s:%d: PtlMEAppend failed: %d\n",
-                                  __FILE__, __LINE__, ret);
-              OPAL_BTL_PORTALS4_FRAG_RETURN_USER(portals4_btl, frag);
-              OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1); 
-              return NULL;
-          }
-          OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-              "PtlMEAppend (prepare_src) frag=%p, me_h=%d start=%p length=%ld rank=%x nid=%x pid=%x match_bits=%lx\n",
-              (void *)frag, frag->me_h, me.start, me.length,
-              me.match_id.rank, me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
     }
 
     frag->base.des_segments = &frag->segments[0].base;
@@ -425,6 +382,8 @@ mca_btl_portals4_register_mem(mca_btl_base_module_t *btl_base,
 {
     struct mca_btl_portals4_module_t   *portals4_btl = (struct mca_btl_portals4_module_t*) btl_base;
     mca_btl_base_registration_handle_t *handle = NULL;
+    ptl_me_t me;
+    int ret;
 
     handle = (mca_btl_base_registration_handle_t *)malloc(sizeof(mca_btl_base_registration_handle_t));
     if (!handle) {
@@ -437,6 +396,48 @@ mca_btl_portals4_register_mem(mca_btl_base_module_t *btl_base,
         "mca_btl_portals4_register_mem NI=%d base=%p size=%ld handle=%p key=%ld\n",
         portals4_btl->interface_num, base, size, (void *)handle, handle->key));
 
+    if (MCA_BTL_FLAGS_PUT == flags) {
+        /* create a match entry */
+        me.start = base;
+        me.length = size;
+        me.ct_handle = PTL_CT_NONE;
+        me.min_free = 0;
+        me.uid = PTL_UID_ANY;
+        me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE |
+            PTL_ME_EVENT_LINK_DISABLE |
+            PTL_ME_EVENT_COMM_DISABLE |
+            PTL_ME_EVENT_UNLINK_DISABLE;
+
+        if (mca_btl_portals4_component.use_logical) {
+            me.match_id.rank = endpoint->ptl_proc.rank;
+        } else {
+            me.match_id.phys.nid = endpoint->ptl_proc.phys.nid;
+            me.match_id.phys.pid = endpoint->ptl_proc.phys.pid;
+        }
+        me.match_bits = handle->key;
+        me.ignore_bits = BTL_PORTALS4_PROTOCOL_MASK |
+            BTL_PORTALS4_CONTEXT_MASK |
+            BTL_PORTALS4_SOURCE_MASK;
+        me.ignore_bits = 0;
+
+        ret = PtlMEAppend(portals4_btl->portals_ni_h,
+                          portals4_btl->recv_idx,
+                          &me,
+                          PTL_PRIORITY_LIST,
+                          handle,
+                          &(handle->me_h));
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: PtlMEAppend failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1); 
+            return NULL;
+        }
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "PtlMEAppend (mca_btl_portals4_register_mem) handle=%p, me_h=%d start=%p length=%ld rank=%x nid=%x pid=%x match_bits=%lx\n",
+            (void *)handle, handle->me_h, me.start, me.length,
+            me.match_id.rank, me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
+    }
     return handle;
 }
 
