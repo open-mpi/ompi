@@ -116,7 +116,8 @@ static int rte_init(void)
                                "singleton", orte_ess_singleton_server_uri);
                 return ORTE_ERROR;
             }
-            if (NULL == fgets(input, 1024, fp)) {
+            memset(input, 0, 1024);  // initialize the array to ensure a NULL termination
+            if (NULL == fgets(input, 1023, fp)) {
                 /* something malformed about file */
                 fclose(fp);
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
