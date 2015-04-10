@@ -776,21 +776,23 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
 
     /* check that this is from a matching version */
     version = (char*)(msg);
-    /* we are an even series, so only check that the
-     * caller matches us at the minor version level - i.e.,
-     * that the caller is also from the 1.8 series */
-    if (0 != strncmp(version, orte_version_string, 3)) {
-        opal_output(0, "%s tcp_peer_recv_connect_ack: "
-                    "received different version from %s: %s instead of %s\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->name)),
-                    version, orte_version_string);
-        peer->state = MCA_OOB_TCP_FAILED;
-        mca_oob_tcp_peer_close(peer);
-        free(msg);
-        return ORTE_ERR_CONNECTION_REFUSED;
+    if (!mca_oob_tcp_component.skip_version_check) {
+        /* we are an even series, so only check that the
+         * caller matches us at the minor version level - i.e.,
+         * that the caller is also from the 1.8 series */
+        if (0 != strncmp(version, orte_version_string, 3)) {
+            opal_output(0, "%s tcp_peer_recv_connect_ack: "
+                        "received different version from %s: %s instead of %s\n",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&(peer->name)),
+                        version, orte_version_string);
+            peer->state = MCA_OOB_TCP_FAILED;
+            mca_oob_tcp_peer_close(peer);
+            free(msg);
+            return ORTE_ERR_CONNECTION_REFUSED;
+        }
     }
-
+    
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s connect-ack version from %s matches ours",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

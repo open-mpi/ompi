@@ -427,6 +427,14 @@ static int tcp_component_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_probes);
+    
+    mca_oob_tcp_component.skip_version_check = false;
+    (void)mca_base_component_var_register(component, "skip_version_check",
+                                          "Skip checking versions between connections",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.skip_version_check);
     return ORTE_SUCCESS;
 }
 
