@@ -242,14 +242,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         } else {
             /* if nothing was specified, then we default to a policy
              * based on number of procs and cpus_per_rank */
-            if (2 <= nprocs) {
+            if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
-                    /* for performance, bind to core */
-                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                    if (opal_hwloc_use_hwthreads_as_cpus) {
+                        /* if we are using hwthread cpus, then bind to those */
+                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                    } else {
+                        /* for performance, bind to core */
+                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                    }
                 }
             } else {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
