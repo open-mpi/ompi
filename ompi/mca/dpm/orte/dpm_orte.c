@@ -1176,9 +1176,9 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
      */
     if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
         !orte_routing_is_enabled) {
-        if (ORTE_SUCCESS != orte_plm_base_fork_hnp()) {
-            ORTE_ERROR_LOG(ORTE_ERR_FATAL);
-            return ORTE_ERR_FATAL;
+        if (ORTE_SUCCESS != (rc = orte_plm_base_fork_hnp())) {
+            ORTE_ERROR_LOG(rc);
+            return OMPI_ERROR;
         }
         orte_routing_is_enabled = true;
         /* need to init_routes again to redirect messages
