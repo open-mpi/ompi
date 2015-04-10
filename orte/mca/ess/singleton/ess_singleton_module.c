@@ -239,21 +239,23 @@ static int rte_init(void)
     }
     OBJ_DESTRUCT(&kvn);
 
-    /* construct the RTE string */
+    /* construct the RTE string, if we have one */
     param = orte_rml.get_contact_info();
-    /* push it out for others to use */
-    OBJ_CONSTRUCT(&kvn, opal_value_t);
-    kvn.key = strdup(OPAL_DSTORE_URI);
-    kvn.type = OPAL_STRING;
-    kvn.data.string = strdup(param);
-    free(param);
-    if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-        ORTE_ERROR_LOG(rc);
+    if (NULL != param) {
+        /* push it out for others to use */
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_URI);
+        kvn.type = OPAL_STRING;
+        kvn.data.string = strdup(param);
+        free(param);
+        if (ORTE_SUCCESS != (rc = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kvn);
+            return rc;
+        }
         OBJ_DESTRUCT(&kvn);
-        return rc;
     }
-    OBJ_DESTRUCT(&kvn);
-
+    
     /* push our local rank */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
     kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
