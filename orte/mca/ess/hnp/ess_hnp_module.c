@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -568,6 +568,10 @@ static int rte_init(void)
         if (NULL != coprocessors) {
             node->serial_number = coprocessors;
             orte_coprocessors_detected = true;
+            /* compute the hash */
+            OPAL_HASH_STR(coprocessors, h);
+            /* mark that I am on this coprocessor */
+            opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
         }
     }
 #endif
