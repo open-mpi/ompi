@@ -566,6 +566,10 @@ static int rte_init(void)
         /* see if I am on a coprocessor */
         coprocessors = opal_hwloc_base_check_on_coprocessor();
         if (NULL != coprocessors) {
+            /* compute the hash */
+            OPAL_HASH_STR(coprocessors, h);
+            /* mark that I am on this coprocessor */
+            opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
             orte_set_attribute(&node->attributes, ORTE_NODE_SERIAL_NUMBER, ORTE_ATTR_LOCAL, coprocessors, OPAL_STRING);
             free(coprocessors);
             orte_coprocessors_detected = true;
