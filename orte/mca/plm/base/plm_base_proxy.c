@@ -115,6 +115,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     if (0 == opal_list_get_size(&orte_oob_base.actives)) {
         orte_show_help("help-plm-base.txt", "no-oob", true);
         ORTE_FORCED_TERMINATE(ORTE_ERR_SILENT);
+        rc = ORTE_ERR_SILENT;
         goto CLEANUP;
     }
  
