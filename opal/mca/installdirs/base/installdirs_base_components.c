@@ -165,6 +165,7 @@ opal_installdirs_base_close(void)
     free(opal_install_dirs.ompidatadir);
     free(opal_install_dirs.ompilibdir);
     free(opal_install_dirs.ompiincludedir);
+    memset (&opal_install_dirs, 0, sizeof (opal_install_dirs));
 
     return mca_base_framework_components_close (&opal_installdirs_base_framework, NULL);
 }

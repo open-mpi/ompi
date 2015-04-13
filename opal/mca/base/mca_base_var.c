@@ -998,6 +998,7 @@ int mca_base_var_finalize(void)
         if (NULL != mca_base_var_file_list) {
             opal_argv_free(mca_base_var_file_list);
         }
+        mca_base_var_file_list = NULL;
 
         (void) mca_base_var_group_finalize ();
         (void) mca_base_pvar_finalize ();
@@ -1109,14 +1110,30 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search) {
 
 static int read_files(char *file_list, opal_list_t *file_values)
 {
-    int i, count;
+    char **tmp = opal_argv_split(file_list, OPAL_ENV_SEP);
+    int i, count, ret;
+
+    if (!tmp) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (mca_base_var_file_list) {
+        count = opal_argv_count (mca_base_var_file_list);
+        ret = opal_argv_insert (&mca_base_var_file_list, count, tmp);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
+        opal_argv_free (tmp);
+    } else {
+        mca_base_var_file_list = tmp;
+    }
+
+    count = opal_argv_count(mca_base_var_file_list);
 
     /* Iterate through all the files passed in -- read them in reverse
        order so that we preserve unix/shell path-like semantics (i.e.,
        the entries farthest to the left get precedence) */
-
-    mca_base_var_file_list = opal_argv_split(file_list, OPAL_ENV_SEP);
-    count = opal_argv_count(mca_base_var_file_list);
 
     for (i = count - 1; i >= 0; --i) {
         mca_base_parse_paramfile(mca_base_var_file_list[i], file_values);
