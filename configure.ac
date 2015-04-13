@@ -469,43 +469,8 @@ OPAL_VAR_SCOPE_POP
 # Check for other compiler characteristics
 #
 
-OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
-if test "$GCC" = "yes"; then
-
-    # gcc 2.96 will emit oodles of warnings if you use "inline" with
-    # -pedantic (which we do in developer builds).  However,
-    # "__inline__" is ok.  So we have to force gcc to select the
-    # right one.  If you use -pedantic, the AC_C_INLINE test will fail
-    # (because it names a function foo() -- without the (void)).  So
-    # we turn off all the picky flags, turn on -ansi mode (which is
-    # implied by -pedantic), and set warnings to be errors.  Hence,
-    # this does the following (for 2.96):
-    #
-    # - causes the check for "inline" to emit a warning, which then
-    # fails
-    # - checks for __inline__, which then emits no error, and works
-    #
-    # This also works nicely for gcc 3.x because "inline" will work on
-    # the first check, and all is fine.  :-)
-
-    CFLAGS_save=$CFLAGS
-    CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY -Werror -ansi"
-fi
-AC_C_INLINE
-# Microsoft compilers support 2 versions of restrict. One for functions, and
-# one for variables. The problem is that they don't have an equivalent
-# syntax, and the autoconf restrict detection is unable to detect them
-# correctly. It detect the restrict keyword as __restrict which break the
-# rules for function syntax which is declspec(restrict).
-if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
-    AC_C_RESTRICT
-fi
 OMPI_C_WEAK_SYMBOLS
 OMPI_C_MACRO_WEAK_SYMBOLS
-if test "$GCC" = "yes"; then
-    CFLAGS=$CFLAGS_save
-fi
-OPAL_VAR_SCOPE_POP
 
 if test "x$CC" = "xicc"; then
     OMPI_CHECK_ICC_VARARGS
