@@ -3,9 +3,10 @@
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -160,6 +161,8 @@ ompi_osc_sm_unlock(int target,
         ret = end_exclusive(module, target);
     } else if (module->outstanding_locks[target] == lock_shared) {
         ret = end_shared(module, target);
+    } else {
+        ret = OMPI_SUCCESS;
     }
 
     module->outstanding_locks[target] = lock_none;
