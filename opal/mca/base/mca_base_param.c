@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -580,7 +580,15 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
                     q->mbpp_deprecated = !!(syn->mbv_flags & MCA_BASE_VAR_FLAG_DEPRECATED);
                     q->mbpp_internal = !!(syn->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL);
                     q->mbpp_read_only = !!(syn->mbv_flags & MCA_BASE_VAR_FLAG_DEFAULT_ONLY);
-                    q->mbpp_type = syn->mbv_type;
+                    if (var->mbv_type == MCA_BASE_VAR_TYPE_INT ||
+                        var->mbv_type == MCA_BASE_VAR_TYPE_UNSIGNED_INT ||
+                        var->mbv_type == MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG ||
+                        var->mbv_type == MCA_BASE_VAR_TYPE_SIZE_T ||
+                        var->mbv_type == MCA_BASE_VAR_TYPE_BOOL) {
+                        q->mbpp_type = MCA_BASE_PARAM_TYPE_INT;
+                    } else {
+                        q->mbpp_type = MCA_BASE_PARAM_TYPE_STRING;
+                    }
                     q->mbpp_help_msg = syn->mbv_description;
 
                     /* Let this one point to the original */
