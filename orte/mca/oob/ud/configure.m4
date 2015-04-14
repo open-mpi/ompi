@@ -47,7 +47,7 @@ AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
     LDFLAGS=$orte_oob_ud_check_save_LDFLAGS
     LIBS=$orte_oob_ud_check_save_LIBS
 
-    AS_IF([test "$orte_oob_ud_check_happy" = "yes"],
+    AS_IF([test "$orte_oob_ud_check_happy" = "yes" && test "$opal_want_verbs" != "no"],
           [$1],
           [AS_IF([test "$opal_want_verbs" = "yes"],
                  [AC_MSG_WARN([--with-verbs specified, but cannot build this component])
