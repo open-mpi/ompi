@@ -121,11 +121,6 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
     # Invoke the configure script in the subdirectory
     #
 
-    export CFLAGS CPPFLAGS
-    export CXXFLAGS CXXCPPFLAGS
-    export FCFLAGS
-    export LDFLAGS LIBS
-
     sub_configure="$SHELL '$subdir_srcdir/configure'"
     AC_MSG_NOTICE([running $sub_configure $subdir_args --cache-file=$subdir_cache_file --srcdir=$subdir_srcdir --disable-option-checking])
     eval "$sub_configure $subdir_args \
