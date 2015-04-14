@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
@@ -169,8 +169,8 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
            AC_MSG_CHECKING([if external hwloc version is 1.8 or greater])
            AS_IF([test "$opal_hwloc_dir" != ""],
-                 [CFLAGS_save=$CFLAGS
-                  CFLAGS="-I$opal_hwloc_dir/include $CFLAGS_save"])
+                 [opal_hwloc_external_CFLAGS_save=$CFLAGS
+                  CFLAGS="-I$opal_hwloc_dir/include $opal_hwloc_external_CFLAGS_save"])
            AC_COMPILE_IFELSE(
                [AC_LANG_PROGRAM([[#include <hwloc.h>]],
                    [[
@@ -182,8 +182,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([Cannot continue])])
            AS_IF([test "$opal_hwloc_dir" != ""],
-                 [CFLAGS=$CFLAGS_save
-                  unset CFLAGS_save])
+                 [CFLAGS=$opal_hwloc_external_CFLAGS_save])
            $1],
           [$2])
 
