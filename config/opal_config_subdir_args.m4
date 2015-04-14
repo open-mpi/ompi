@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -19,6 +20,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CONFIG_SUBDIR_ARGS],[
+OPAL_VAR_SCOPE_PUSH([subdirs_str subdirs_skip subdirs_args subdirs_arg])
 #
 # Invoke configure in subdirectories.
 #
@@ -75,4 +77,4 @@ eval "$subdirs_str"
 # Clean up
 #
 
-unset subdirs_str subdirs_skip subdirs_args subdirs_arg])dnl
+OPAL_VAR_SCOPE_POP])dnl
