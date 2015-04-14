@@ -324,47 +324,6 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         frag->segments[0].base.seg_len = max_data + reserve;
         frag->base.des_segment_count = 1;
-
-    } else {
-        /* no need to pack - rdma operation out of user's buffer */
-
-        /* reserve space in the event queue for rdma operations immediately */
-        while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >=
-               portals4_btl->portals_max_outstanding_ops) {
-            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "Call to mca_btl_portals4_component_progress (1)\n"));
-            mca_btl_portals4_component_progress();
-        }
-
-        OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(portals4_btl, frag);
-        if (NULL == frag){
-            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
-            return NULL;
-        }
-        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-            "mca_btl_portals4_prepare_src: Incrementing portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
-
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ret = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        if ( OPAL_UNLIKELY(ret < 0) ) {
-            OPAL_BTL_PORTALS4_FRAG_RETURN_USER(portals4_btl, frag);
-            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
-            return NULL;
-        }
-
-        frag->segments[0].base.seg_len = max_data;
-        frag->segments[0].base.seg_addr.pval = iov.iov_base;
-        frag->segments[0].key = OPAL_THREAD_ADD64(&(portals4_btl->portals_rdma_key), 1);
-        frag->base.des_segment_count = 1;
-
-        /* either a put or get.  figure out which later */
-        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                             "rdma src posted for frag 0x%lx, callback 0x%lx, bits %"PRIu64", flags say %d" ,
-                             (unsigned long) frag,
-                             (unsigned long) frag->base.des_cbfunc,
-                             frag->segments[0].key, flags));
     }
 
     frag->base.des_segments = &frag->segments[0].base;
