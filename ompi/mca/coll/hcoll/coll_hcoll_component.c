@@ -190,7 +190,7 @@ static int hcoll_register(void)
 
     CHECK(reg_int("enable",NULL,
                   "[1|0|] Enable/Disable HCOL",
-                  0 /*disable by default*/,
+                  1,
                   &mca_coll_hcoll_component.hcoll_enable,
                   0));
 
