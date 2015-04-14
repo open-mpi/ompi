@@ -247,14 +247,6 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     }
 
      
-    err = psm_error_register_handler(NULL /* no ep */,
-			             PSM_ERRHANDLER_NOP);
-    if (err) {
-        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
-		    psm_error_get_string(err));
-	return NULL;
-    }
-    
 #if PSM_VERNO >= 0x010c
     /* Set infinipath debug level */
     err = psm_setopt(PSM_COMPONENT_CORE, 0, PSM_CORE_OPT_DEBUG, 
@@ -302,6 +294,15 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     ompi_mtl_psm.super.mtl_request_size = 
       sizeof(mca_mtl_psm_request_t) - 
       sizeof(struct mca_mtl_request_t);
+
+    /* don't register the err handler until we know we will be active */
+    err = psm_error_register_handler(NULL /* no ep */,
+			             PSM_ERRHANDLER_NOP);
+    if (err) {
+        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
+		    psm_error_get_string(err));
+	return NULL;
+    }
     
     return &ompi_mtl_psm.super;
 }
