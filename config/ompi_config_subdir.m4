@@ -19,6 +19,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_CONFIG_SUBDIR],[
+OPAL_VAR_SCOPE_PUSH([subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file unset subdir_args subdir_dots total_dir dir_part temp])
 #
 # Invoke configure in a specific subdirectory.
 #
@@ -143,5 +144,4 @@ fi
 # Clean up
 #
 
-unset subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file
-unset subdir_args subdir_dots total_dir dir_part temp])dnl
+OPAL_VAR_SCOPE_POP])dnl
