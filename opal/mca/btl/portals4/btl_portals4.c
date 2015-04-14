@@ -71,6 +71,198 @@ mca_btl_portals4_module_t mca_btl_portals4_module = {
     },
 };
 
+static int
+btl_portals4_init_interface(void)
+{
+    mca_btl_portals4_module_t *portals4_btl;
+    unsigned int ret, interface;
+    ptl_md_t md;
+    ptl_me_t me;
+
+// The initialisation of EQ, PT and ME must be done after the SetMap !
+    for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+        portals4_btl = mca_btl_portals4_component.btls[interface];
+
+        /* create event queue */
+        ret = PtlEQAlloc(portals4_btl->portals_ni_h,
+                     mca_btl_portals4_component.recv_queue_size,
+                     &portals4_btl->recv_eq_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlEQAlloc failed for NI %d: %d",
+                            __FILE__, __LINE__, interface, ret);
+            goto error; 
+        }
+        mca_btl_portals4_component.eqs_h[interface] = portals4_btl->recv_eq_h;
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "PtlEQAlloc (recv_eq=%d) OK for NI %d\n", portals4_btl->recv_eq_h, interface));
+
+        /* Create recv_idx portal table entry */
+        ret = PtlPTAlloc(portals4_btl->portals_ni_h,
+                     PTL_PT_ONLY_USE_ONCE | 
+                     PTL_PT_ONLY_TRUNCATE,
+                     portals4_btl->recv_eq_h,
+                     REQ_BTL_TABLE_ID,
+                     &portals4_btl->recv_idx);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc failed for NI %d: %d",
+                            __FILE__, __LINE__, interface, ret);
+            goto error;      
+        }
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "PtlPTAlloc (recv_idx) OK for NI %d recv_idx=%d", interface, portals4_btl->recv_idx));
+
+        if (portals4_btl->recv_idx != REQ_BTL_TABLE_ID) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d",
+                           __FILE__, __LINE__, portals4_btl->recv_idx);
+            goto error;
+        }
+
+        /* bind zero-length md for sending acks */
+        md.start     = NULL;
+        md.length    = 0;
+        md.options   = 0;
+        md.eq_handle = PTL_EQ_NONE;
+        md.ct_handle = PTL_CT_NONE;
+
+        ret = PtlMDBind(portals4_btl->portals_ni_h,
+                    &md,
+                    &portals4_btl->zero_md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed for NI %d: %d",
+                            __FILE__, __LINE__, interface, ret);
+            goto error;
+        }
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "PtlMDBind (zero-length md=%d) OK for NI %d", portals4_btl->zero_md_h, interface));
+
+        /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
+           to have a single MD across all of memory */
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+        {
+            int i;
+            int num_mds = mca_btl_portals4_get_num_mds();
+            ptl_size_t size = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) - 1;
+            ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
+
+            portals4_btl->send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
+            if (NULL == portals4_btl->send_md_hs) {
+                opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: Error allocating MD array",
+                                __FILE__, __LINE__);
+                ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
+                goto error;
+            }
+
+            for (i = 0 ; i < num_mds ; ++i) {
+                portals4_btl->send_md_hs[i] = PTL_INVALID_HANDLE;
+            }
+
+            for (i = 0 ; i < num_mds ; ++i) {
+                md.start = (char*) (offset_unit * i);
+                md.length = (i - 1 == num_mds) ? size / 2 : size;
+                md.options = 0;
+                md.eq_handle = portals4_btl->recv_eq_h;
+                md.ct_handle = PTL_CT_NONE;
+
+                opal_output_verbose(50, opal_btl_base_framework.framework_output,
+                                "Binding md from %p of length %lx",
+                                md.start, md.length);
+
+                ret = PtlMDBind(portals4_btl->portals_ni_h,
+                            &md,
+                            &portals4_btl->send_md_hs[i]); 
+                if (PTL_OK != ret) {
+                    opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                    "%s:%d: PtlMDBind failed for NI %d: %d\n",
+                                    __FILE__, __LINE__, interface, ret);
+                    goto error;
+                }
+            }
+            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlMDBind (all memory) OK for NI %d\n", interface));
+        }
+#else
+        md.start = 0;
+        md.length = PTL_SIZE_MAX;
+        md.options = 0;
+        md.eq_handle = portals4_btl->recv_eq_h;
+        md.ct_handle = PTL_CT_NONE;
+
+        ret = PtlMDBind(portals4_btl->portals_ni_h,
+                    &md,
+                    &portals4_btl->send_md_h); 
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed for NI %d: %d\n",
+                            __FILE__, __LINE__, interface, ret);
+            goto error;
+        }
+#endif
+
+        /* Handle long overflows */
+        me.start = NULL;
+        me.length = 0;
+        me.ct_handle = PTL_CT_NONE;
+        me.min_free = 0;
+        me.uid = PTL_UID_ANY;
+        me.options = PTL_ME_OP_PUT |
+            PTL_ME_EVENT_LINK_DISABLE |
+            PTL_ME_EVENT_COMM_DISABLE |
+            PTL_ME_EVENT_UNLINK_DISABLE;
+        if (mca_btl_portals4_component.use_logical) {
+            me.match_id.rank = PTL_RANK_ANY;
+        } else {
+            me.match_id.phys.nid = PTL_NID_ANY;
+            me.match_id.phys.pid = PTL_PID_ANY;
+        }
+        me.match_bits = BTL_PORTALS4_LONG_MSG;
+        me.ignore_bits = BTL_PORTALS4_CONTEXT_MASK |
+            BTL_PORTALS4_SOURCE_MASK |
+            BTL_PORTALS4_TAG_MASK;
+        ret = PtlMEAppend(portals4_btl->portals_ni_h,
+                      portals4_btl->recv_idx,
+                      &me,
+                      PTL_OVERFLOW_LIST,
+                      NULL,
+                      &portals4_btl->long_overflow_me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlMEAppend failed for NI %d: %d",
+                            __FILE__, __LINE__, interface, ret);
+            goto error;
+        }
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlMEAppend (overflow list) OK for NI %d", interface));
+    }
+
+    ret = mca_btl_portals4_recv_enable(portals4_btl);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: Initialization of recv buffer failed: %d",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    return OPAL_SUCCESS;
+
+ error:
+    opal_output_verbose(1, opal_btl_base_framework.framework_output, "Error in btl_portals4_init_interface");
+
+    for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+        portals4_btl = mca_btl_portals4_component.btls[interface];
+        if (NULL != portals4_btl) mca_btl_portals4_free_module(portals4_btl);
+    }
+    mca_btl_portals4_component.num_btls = 0;
+    if (NULL != mca_btl_portals4_component.btls)  free(mca_btl_portals4_component.btls);
+    if (NULL != mca_btl_portals4_component.eqs_h) free(mca_btl_portals4_component.eqs_h);
+    mca_btl_portals4_component.btls = NULL;
+    mca_btl_portals4_component.eqs_h = NULL;
+
+    return OPAL_ERROR;
+}
+
 int
 mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
                           size_t nprocs,
@@ -179,7 +371,13 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
     }
 
     if (need_activate && portals4_btl->portals_num_procs > 0) {
-        ret = mca_btl_portals4_recv_enable(portals4_btl);
+        ret = btl_portals4_init_interface();
+        if (OPAL_SUCCESS != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: portals4 interface initialization failed: %d",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
     }
     return OPAL_SUCCESS;
 }
