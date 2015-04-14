@@ -22,6 +22,8 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CONFIG_SUBDIR],[
+OPAL_VAR_SCOPE_PUSH([subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file subdir_args subdir_dots total_dir dir_part temp])
+
 #
 # Invoke configure in a specific subdirectory.
 #
@@ -123,6 +125,7 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
     export CXXFLAGS CXXCPPFLAGS
     export FCFLAGS
     export LDFLAGS LIBS
+
     sub_configure="$SHELL '$subdir_srcdir/configure'"
     AC_MSG_NOTICE([running $sub_configure $subdir_args --cache-file=$subdir_cache_file --srcdir=$subdir_srcdir --disable-option-checking])
     eval "$sub_configure $subdir_args \
@@ -146,5 +149,4 @@ fi
 # Clean up
 #
 
-unset subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file
-unset subdir_args subdir_dots total_dir dir_part temp])dnl
+OPAL_VAR_SCOPE_POP])dnl
