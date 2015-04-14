@@ -661,7 +661,7 @@ static void mca_btl_vader_progress_endpoints (void)
     for (int i = 0 ; i < count ; ++i) {
         mca_btl_vader_progress_waiting ((mca_btl_base_endpoint_t *) opal_list_remove_first (&mca_btl_vader_component.pending_endpoints));
     }
-    OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 }
 
 static int mca_btl_vader_component_progress (void)
