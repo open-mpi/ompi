@@ -760,6 +760,43 @@ void opal_info_do_hostname()
 }
 
 
+static char *escape_quotes(const char *value)
+{
+    const char *src;
+    int num_quotes = 0;
+    for (src = value; src != NULL && *src != '\0'; ++src) {
+        if ('"' == *src) {
+            ++num_quotes;
+        }
+    }
+
+    // If there are no quotes in the string, there's nothing to do
+    if (0 == num_quotes) {
+        return NULL;
+    }
+
+    // If we have quotes, make a new string.  Copy over the old
+    // string, escaping the quotes along the way.  This is simple and
+    // clear to read; it's not particularly efficient (performance is
+    // definitely not important here).
+    char *quoted_value;
+    quoted_value = calloc(1, strlen(value) + num_quotes + 1);
+    if (NULL == quoted_value) {
+        return NULL;
+    }
+
+    char *dest;
+    for (src = value, dest = quoted_value; *src != '\0'; ++src, ++dest) {
+        if ('"' == *src) {
+            *dest++ = '\\';
+        }
+        *dest = *src;
+    }
+
+    return quoted_value;
+}
+
+
 /*
  * Private variables - set some reasonable screen size defaults
  */
@@ -886,7 +923,23 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         }
     } else {
         if (NULL != plain_message && 0 < strlen(plain_message)) {
-            printf("%s:%s\n", plain_message, value);
+            // Escape any double quotes in the value.
+            char *quoted_value;
+            quoted_value = escape_quotes(value);
+            if (NULL != quoted_value) {
+                value = quoted_value;
+            }
+
+            char *colon = strchr(value, ':');
+            if (NULL != colon) {
+                printf("%s:\"%s\"\n", plain_message, value);
+            } else {
+                printf("%s:%s\n", plain_message, value);
+            }
+
+            if (NULL != quoted_value) {
+                free(quoted_value);
+            }
         } else {
             printf("%s\n", value);
         }
