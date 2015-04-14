@@ -608,4 +608,5 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ weak alias or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DESTRUCTOR, [$opal_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
+  AM_CONDITIONAL(HAVE_ATTRIBUTE_DESTRUCTOR, [test x$opal_cv___attribute__destructor = x1])
 ])

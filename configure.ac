@@ -799,6 +799,20 @@ m4_ifdef([project_ompi], [OMPI_FIND_MPI_AINT_COUNT_OFFSET])
 # checkpoint results
 AC_CACHE_SAVE
 
+##################################
+# Linker characteristics
+##################################
+
+AC_MSG_CHECKING([the linker for support for the -fini option])
+LDFLAGS_save=$LDFLAGS
+LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
+AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
+            opal_ld_fini=1], [AC_MSG_RESULT([no])
+            opal_ld_fini=0])
+AM_CONDITIONAL(HAVE_LD_FINI, [test x$opal_ld_fini = x1])
+AC_DEFINE_UNQUOTED(OPAL_HAVE_LD_FINI, [$opal_ld_fini],
+                   [Whether linker has support for the -fini option])
+LDFLAGS=$LDFLAGS_save
 
 ##################################
 # Libraries
