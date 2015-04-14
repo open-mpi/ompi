@@ -37,6 +37,10 @@ opal_shmem_base_close(void)
         opal_shmem_base_module->module_finalize();
     }
 
+    opal_shmem_base_selected = false;
+    opal_shmem_base_component = NULL;
+    opal_shmem_base_module = NULL;
+
     return mca_base_framework_components_close (&opal_shmem_base_framework,
                                                 NULL);
 }
