@@ -132,7 +132,9 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
             esac
         done
 
-        contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"
+        # Must also pass down CPPFLAGS/LDFLAGS so that VT's MPI
+        # applications can find mpi.h and -lmpi.
+        contrib_vt_args="$contrib_vt_args CPPFLAGS=-I$OMPI_TOP_SRCDIR/ompi/include LDFLAGS=-L$OMPI_TOP_BUILDDIR/ompi/.libs $with_contrib_vt_flags"
 
         # Run VampirTrace's configure and see if it succeeded
         OMPI_CONFIG_SUBDIR([ompi/contrib/vt/vt],
