@@ -177,7 +177,7 @@ static inline int
 ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, 
                               void *start, int length, int contextid, int tag,
                               int localrank,
-                              ptl_process_t *proc,
+                              ptl_process_t ptl_proc,
                               ompi_mtl_portals4_isend_request_t *ptl_request)
 {
     int ret;
@@ -204,7 +204,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
             PTL_ME_USE_ONCE | 
             PTL_ME_EVENT_LINK_DISABLE |
             PTL_ME_EVENT_UNLINK_DISABLE;
-        me.match_id = *proc;
+        me.match_id = ptl_proc;
         me.match_bits = hdr_data;
         me.ignore_bits = 0;
 
@@ -244,7 +244,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                  (ptl_size_t) ((char*) start - (char*) base),
                  length,
 		 PTL_ACK_REQ,
-		 *proc,
+		 ptl_proc,
 		 ompi_mtl_portals4.recv_idx,
 		 match_bits,
 		 0,
@@ -266,7 +266,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
 static inline int
 ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                              int localrank, 
-                             ptl_process_t *proc,
+                             ptl_process_t ptl_proc,
                              ompi_mtl_portals4_isend_request_t *ptl_request)
 {
     int ret;
@@ -292,7 +292,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
         PTL_ME_USE_ONCE | 
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE;
-    me.match_id = *proc;
+    me.match_id = ptl_proc;
     me.match_bits = hdr_data;
     me.ignore_bits = 0;
 
@@ -322,7 +322,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                  (ptl_size_t) ((char*) start - (char*) base),
                  put_length,
                  PTL_ACK_REQ,
-                 *proc,
+                 ptl_proc,
                  ompi_mtl_portals4.recv_idx,
                  match_bits,
                  0,
@@ -370,7 +370,7 @@ ompi_mtl_portals4_pending_list_progress()
                                                 pending->contextid,
                                                 pending->tag,
                                                 pending->my_rank,
-                                                pending->proc,
+                                                pending->ptl_proc,
                                                 pending->ptl_request);
         } else {
             ret = ompi_mtl_portals4_long_isend(pending->start,
@@ -378,7 +378,7 @@ ompi_mtl_portals4_pending_list_progress()
                                                pending->contextid,
                                                pending->tag,
                                                pending->my_rank,
-                                               pending->proc,
+                                               pending->ptl_proc,
                                                pending->ptl_request);
         }
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -404,12 +404,18 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     void *start;
     size_t length;
     bool free_after;
-    ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dest);
-    ptl_process_t *proc = (ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
+    ptl_process_t ptl_proc;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     opal_free_list_item_t *item;
     ompi_mtl_portals4_pending_request_t *pending;
 #endif
+
+    if ((ompi_mtl_portals4.use_logical) && (MPI_COMM_WORLD == comm)) {
+        ptl_proc.rank = dest;
+    } else {
+        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dest);
+        ptl_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    }
 
     ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ret) return ret;
@@ -421,8 +427,8 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Send %lu to %x,%x of length %d\n",
                          ptl_request->opcount,
-                         proc->phys.nid, 
-                         proc->phys.pid, 
+                         ptl_proc.phys.nid,
+                         ptl_proc.phys.pid,
                          (int)length));
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
@@ -438,7 +444,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->tag = tag;
     pending->my_rank = comm->c_my_rank;
     pending->fc_notified = 0;
-    pending->proc = proc;
+    pending->ptl_proc = ptl_proc;
     pending->ptl_request = ptl_request;
 
     if (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) <= 0)) {
@@ -470,7 +476,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
                                             comm->c_contextid,
                                             tag,
                                             comm->c_my_rank,
-                                            proc,
+                                            ptl_proc,
                                             ptl_request);
     } else {
         ret = ompi_mtl_portals4_long_isend(start,
@@ -478,7 +484,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
                                            comm->c_contextid,
                                            tag,
                                            comm->c_my_rank,
-                                           proc,
+                                           ptl_proc,
                                            ptl_request);
     }
     

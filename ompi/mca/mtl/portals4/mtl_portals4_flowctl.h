@@ -26,7 +26,7 @@ struct ompi_mtl_portals4_pending_request_t {
     int tag;
     int my_rank;
     int fc_notified;
-    ptl_process_t *proc;
+    ptl_process_t ptl_proc;
     struct ompi_mtl_portals4_isend_request_t *ptl_request;
 };
 typedef struct ompi_mtl_portals4_pending_request_t ompi_mtl_portals4_pending_request_t;

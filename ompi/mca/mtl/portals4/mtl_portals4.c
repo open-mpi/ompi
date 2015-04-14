@@ -56,6 +56,235 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
     }
 };
 
+static int
+portals4_init_interface(void)
+{
+    unsigned int ret;
+    ptl_md_t md;
+    ptl_me_t me;
+
+    /* create event queues */
+    ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
+                     ompi_mtl_portals4.send_queue_size,
+                     &ompi_mtl_portals4.send_eq_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlEQAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+    ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
+                     ompi_mtl_portals4.recv_queue_size,
+                     &ompi_mtl_portals4.recv_eq_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlEQAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* Create send and long message (read) portal table entries */
+    ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+                     PTL_PT_ONLY_USE_ONCE | 
+                     PTL_PT_ONLY_TRUNCATE | 
+                     PTL_PT_FLOWCTRL,
+                     ompi_mtl_portals4.recv_eq_h,
+                     REQ_RECV_TABLE_ID,
+                     &ompi_mtl_portals4.recv_idx);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+    ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+                     PTL_PT_ONLY_USE_ONCE |
+                     PTL_PT_ONLY_TRUNCATE,
+                     ompi_mtl_portals4.send_eq_h,
+                     REQ_READ_TABLE_ID,
+                     &ompi_mtl_portals4.read_idx);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* bind zero-length md for sending acks */
+    md.start     = NULL;
+    md.length    = 0;
+    md.options   = 0;
+    md.eq_handle = PTL_EQ_NONE;
+    md.ct_handle = PTL_CT_NONE;
+
+    ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                    &md,
+                    &ompi_mtl_portals4.zero_md_h); 
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
+       to have a single MD across all of memory */
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
+        ptl_size_t size = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) - 1;
+        ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
+
+        ompi_mtl_portals4.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
+        if (NULL == ompi_mtl_portals4.send_md_hs) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Error allocating MD array",
+                                __FILE__, __LINE__);
+            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            goto error;
+        }
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            ompi_mtl_portals4.send_md_hs[i] = PTL_INVALID_HANDLE;
+        }
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            md.start = (char*) (offset_unit * i);
+            md.length = (i - 1 == num_mds) ? size / 2 : size;
+            md.options = 0;
+            md.eq_handle = ompi_mtl_portals4.send_eq_h;
+            md.ct_handle = PTL_CT_NONE;
+
+            opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                                "Binding md from %p of length %lx",
+                                md.start, md.length);
+
+            ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                            &md,
+                            &ompi_mtl_portals4.send_md_hs[i]); 
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: PtlMDBind failed: %d\n",
+                                    __FILE__, __LINE__, ret);
+                goto error;
+            }
+        }
+    }
+#else
+        md.start = 0;
+        md.length = PTL_SIZE_MAX;
+        md.options = 0;
+        md.eq_handle = ompi_mtl_portals4.send_eq_h;
+        md.ct_handle = PTL_CT_NONE;
+
+        ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                        &md,
+                        &ompi_mtl_portals4.send_md_h); 
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: PtlMDBind failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            goto error;
+        }
+#endif
+
+    /* Handle long overflows */
+    me.start = NULL;
+    me.length = 0;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.uid = ompi_mtl_portals4.uid;
+    me.options = PTL_ME_OP_PUT | 
+        PTL_ME_EVENT_LINK_DISABLE |
+        PTL_ME_EVENT_COMM_DISABLE | 
+        PTL_ME_EVENT_UNLINK_DISABLE;
+    if (ompi_mtl_portals4.use_logical) {
+        me.match_id.rank = PTL_RANK_ANY;
+    } else {
+        me.match_id.phys.nid = PTL_NID_ANY;
+        me.match_id.phys.pid = PTL_PID_ANY;
+    }
+    me.match_bits = MTL_PORTALS4_LONG_MSG;
+    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK | 
+        MTL_PORTALS4_SOURCE_MASK | 
+        MTL_PORTALS4_TAG_MASK;
+    ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
+                      ompi_mtl_portals4.recv_idx,
+                      &me,
+                      PTL_OVERFLOW_LIST,
+                      NULL,
+                      &ompi_mtl_portals4.long_overflow_me_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlMEAppend failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* attach short unex recv blocks */
+    ret = ompi_mtl_portals4_recv_short_init();
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: short receive block initialization failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    ompi_mtl_portals4.opcount = 0;
+#if OPAL_ENABLE_DEBUG
+    ompi_mtl_portals4.recv_opcount = 0;
+#endif
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ret = ompi_mtl_portals4_flowctl_init();
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: ompi_mtl_portals4_flowctl_init failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+#endif
+
+ error:
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
+        PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    }
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    if (NULL != ompi_mtl_portals4.send_md_hs) {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_hs[i], PTL_INVALID_HANDLE)) {
+                PtlMDRelease(ompi_mtl_portals4.send_md_hs[i]);
+            }
+        }
+
+        free(ompi_mtl_portals4.send_md_hs);
+    }
+#else
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    }
+#endif
+    if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
+    }
+    if (ompi_mtl_portals4.recv_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.send_eq_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.recv_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.recv_eq_h);
+    }
+    return OMPI_ERROR;
+}
 
 int
 ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
@@ -65,6 +294,17 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
     int ret, me;
     size_t i;
     bool new_found = false;
+    ptl_process_t *maptable;
+
+    if (ompi_mtl_portals4.use_logical) {
+        maptable = malloc(sizeof(ptl_process_t) * nprocs);
+        if (NULL == maptable) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: malloc failed\n",
+                                __FILE__, __LINE__);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    }
 
     /* Get the list of ptl_process_id_t from the runtime and copy into structure */
     for (i = 0 ; i < nprocs ; ++i) {
@@ -108,20 +348,64 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                     __FILE__, __LINE__, ret);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            *peer_id = *modex_id;
+            if (ompi_mtl_portals4.use_logical) {
+                peer_id->rank = i;
+                maptable[i].phys.pid = modex_id->phys.pid;
+                maptable[i].phys.nid = modex_id->phys.nid;
+                opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                    "logical: global rank=%d pid=%d nid=%d\n",
+                    (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
+            } else {
+                *peer_id = *modex_id;
+            }
+
             procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = peer_id;
 
             new_found = true;
         } else {
             ptl_process_t *proc = (ptl_process_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
-            if (proc->phys.nid != modex_id->phys.nid ||
-                proc->phys.pid != modex_id->phys.pid) {
+            if (ompi_mtl_portals4.use_logical) {
+                if ((size_t)proc->rank != i) {
+                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: existing peer and rank don't match\n",
+                                    __FILE__, __LINE__);
+                    return OMPI_ERROR;
+                }
+                maptable[i].phys.pid = modex_id->phys.pid;
+                maptable[i].phys.nid = modex_id->phys.nid;
+            }
+            else if (proc->phys.nid != modex_id->phys.nid ||
+                     proc->phys.pid != modex_id->phys.pid) {
                 opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: existing peer and modex peer don't match\n",
                                     __FILE__, __LINE__);
                 return OMPI_ERROR;
             }
         }
+    }
+
+    if (ompi_mtl_portals4.use_logical) {
+        ret = PtlSetMap(ompi_mtl_portals4.ni_h, nprocs, maptable);
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: logical mapping failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "logical mapping OK\n");
+        free(maptable);
+    }
+
+    portals4_init_interface();
+
+    /* activate progress callback */
+    ret = opal_progress_register(ompi_mtl_portals4_progress);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: opal_progress_register failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL

@@ -123,8 +123,12 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_MANAGE_LOCAL | 
         PTL_ME_MAY_ALIGN;
-    me.match_id.phys.nid = PTL_NID_ANY;
-    me.match_id.phys.pid = PTL_PID_ANY;
+    if (ompi_mtl_portals4.use_logical) {
+        me.match_id.rank = PTL_RANK_ANY;
+    } else {
+        me.match_id.phys.nid = PTL_NID_ANY;
+        me.match_id.phys.pid = PTL_PID_ANY;
+    }
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
 

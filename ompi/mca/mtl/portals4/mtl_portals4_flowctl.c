@@ -88,8 +88,12 @@ ompi_mtl_portals4_flowctl_init(void)
     me.length = 0;
     me.min_free = 0;
     me.uid = ompi_mtl_portals4.uid;
-    me.match_id.phys.nid = PTL_NID_ANY;
-    me.match_id.phys.pid = PTL_PID_ANY;
+    if (ompi_mtl_portals4.use_logical) {
+        me.match_id.rank = PTL_RANK_ANY;
+    } else {
+        me.match_id.phys.nid = PTL_NID_ANY;
+        me.match_id.phys.pid = PTL_PID_ANY;
+    }
     me.ignore_bits = 0;
 
     me.options = PTL_ME_OP_PUT | 
@@ -248,24 +252,35 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
     ompi_mtl_portals4.flowctl.epoch_counter = 0;
 
     ompi_mtl_portals4.flowctl.num_procs = npeers;
-    ompi_mtl_portals4.flowctl.root =
-        *((ptl_process_t*) procs[0]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
-    if (0 == me) {
-        ompi_mtl_portals4.flowctl.i_am_root = true;
-    } else {
-        ompi_mtl_portals4.flowctl.i_am_root = false;
-        ompi_mtl_portals4.flowctl.parent = 
-            *((ptl_process_t*) procs[(me - 1) / 2]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    if (0 == me) ompi_mtl_portals4.flowctl.i_am_root = true;
+    else         ompi_mtl_portals4.flowctl.i_am_root = false;
+
+    if (ompi_mtl_portals4.use_logical) {
+        ompi_mtl_portals4.flowctl.root.rank = 0;
+        if (false == ompi_mtl_portals4.flowctl.i_am_root) {
+            ompi_mtl_portals4.flowctl.parent.rank =  (me - 1) / 2;
+        }
+        ompi_mtl_portals4.flowctl.me.rank = me;
     }
-    ompi_mtl_portals4.flowctl.me =
-        *((ptl_process_t*) procs[me]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    else {
+        ompi_mtl_portals4.flowctl.root =
+            *((ptl_process_t*) procs[0]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+        if (false == ompi_mtl_portals4.flowctl.i_am_root) {
+            ompi_mtl_portals4.flowctl.parent = 
+                *((ptl_process_t*) procs[(me - 1) / 2]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+        }
+        ompi_mtl_portals4.flowctl.me =
+            *((ptl_process_t*) procs[me]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    }
 
     for (i = 0 ; i < 2 ; ++i) {
         size_t tmp = (2 * me) + i + 1;
         if (tmp < npeers) {
             ompi_mtl_portals4.flowctl.num_children++;
-            ompi_mtl_portals4.flowctl.children[i] = 
-                *((ptl_process_t*) procs[tmp]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+            if (ompi_mtl_portals4.use_logical)
+                ompi_mtl_portals4.flowctl.children[i].rank = tmp;
+            else ompi_mtl_portals4.flowctl.children[i] = 
+                    *((ptl_process_t*) procs[tmp]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
         }
     }
 

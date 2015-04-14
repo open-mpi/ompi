@@ -68,8 +68,14 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     int ret;
 
     if  (MPI_ANY_SOURCE == src) {
-        remote_proc.phys.nid = PTL_NID_ANY;
-        remote_proc.phys.pid = PTL_PID_ANY;
+        if (ompi_mtl_portals4.use_logical) {
+            remote_proc.rank = PTL_RANK_ANY;
+        } else {
+            remote_proc.phys.nid = PTL_NID_ANY;
+            remote_proc.phys.pid = PTL_PID_ANY;
+        }
+    } else if ((ompi_mtl_portals4.use_logical) && (MPI_COMM_WORLD == comm)) {
+        remote_proc.rank = src;
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
         remote_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
@@ -140,8 +146,14 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
                         __FILE__, __LINE__, comm->c_contextid, src, tag);
 
     if  (MPI_ANY_SOURCE == src) {
-        remote_proc.phys.nid = PTL_NID_ANY;
-        remote_proc.phys.pid = PTL_PID_ANY;
+        if (ompi_mtl_portals4.use_logical) {
+            remote_proc.rank = PTL_RANK_ANY;
+        } else {
+            remote_proc.phys.nid = PTL_NID_ANY;
+            remote_proc.phys.pid = PTL_PID_ANY;
+        }
+    } else if ((ompi_mtl_portals4.use_logical) && (MPI_COMM_WORLD == comm)) {
+        remote_proc.rank = src;
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
         remote_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);

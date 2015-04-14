@@ -38,6 +38,9 @@ struct mca_mtl_portals4_send_request_t;
 struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
+    /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
+    int use_logical;
+
     /** Eager limit; messages greater than this use a rendezvous protocol */
     unsigned long long eager_limit;
     /** Size of short message blocks */
