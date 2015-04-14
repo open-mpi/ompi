@@ -2124,7 +2124,12 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
                  full_name);
 
         /* Output the value */
-        asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
+        char *colon = strchr(value_string, ':');
+        if (NULL != colon) {
+            asprintf(out[0] + line++, "%svalue:\"%s\"", tmp, value_string);
+        } else {
+            asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
+        }
 
         /* Output the source */
         asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
