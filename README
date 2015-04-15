@@ -16,6 +16,7 @@ Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -573,6 +574,11 @@ MPI Collectives
   * "netpatterns"       - Provides an implementation of algorithm patterns
   * "commpatterns"      - Provides collectives for bootstrap
 
+- The "cuda" coll component provides CUDA-aware support for the reduction type collectives
+  with GPU buffers. This component is only compiled into the library when the library has
+  been configured with CUDA-aware support.  It intercepts calls to the reduction collectives,
+  copies the data to staging buffers if GPU buffers, then calls underlying collectives to do
+  the work.
 
 OSHMEM Collectives
 -----------
