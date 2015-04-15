@@ -145,11 +145,8 @@ OPAL_DECLSPEC char * mca_base_component_to_string(const mca_base_component_t *a)
 
 /* mca_base_component_find.c */
 
-OPAL_DECLSPEC int mca_base_component_find(const char *directory, const char *type,
-                                          const mca_base_component_t *static_components[],
-					  const char *requested_components,
-                                          opal_list_t *found_components,
-                                          bool open_dso_components);
+OPAL_DECLSPEC int mca_base_component_find (const char *directory, mca_base_framework_t *framework,
+                                           bool ignore_requested, bool open_dso_components);
 
 /**
  * Parse the requested component string and return an opal_argv of the requested
@@ -176,8 +173,7 @@ int mca_base_component_parse_requested (const char *requested, bool *include_mod
  * This function closes and releases any components that do not match the filter_name and
  * filter flags.
  */
-OPAL_DECLSPEC int mca_base_components_filter (const char *framework_name, opal_list_t *components, int output_id,
-					      const char *filter_names, uint32_t filter_flags);
+OPAL_DECLSPEC int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter_flags);
 
 
 

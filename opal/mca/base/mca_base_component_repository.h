@@ -17,6 +17,19 @@
  * $HEADER$
  */
 
+/**
+ * @file mca_base_component_repository.h
+ *
+ * This file provide the external interface to our base component
+ * module.  Most of the components that depend on it, will use the
+ * retain_component() function to increase the reference count on a
+ * particular component (as opposed to the retain() function, which is
+ * internal to the opal/mca/base).  But it's convenient to have all
+ * the functions exported from one header file rather than to separate
+ * retain_component() and retain() into two separate header files
+ * (i.e., have a separate header file just for retain()).
+ */
+
 #ifndef MCA_BASE_COMPONENT_REPOSITORY_H
 #define MCA_BASE_COMPONENT_REPOSITORY_H
 
@@ -26,31 +39,71 @@
 #include "opal/mca/dl/base/base.h"
 
 BEGIN_C_DECLS
+struct mca_base_component_repository_item_t {
+    opal_list_item_t super;
 
-    OPAL_DECLSPEC int mca_base_component_repository_init(void);
+    char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
+    char ri_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
 
-/* This file provide the external interface to our base component
- * module.  Most of the components that depend on it, will use the
- * retain_component() function to increase the reference count on a
- * particular component (as opposed to the retain() function, which is
- * internal to the opal/mca/base).  But it's convenient to have all
- * the functions exported from one header file rather than to separate
- * retain_component() and retain() into two separate header files
- * (i.e., have a separate header file just for retain()).
+    char *ri_path;
+    char *ri_base;
+
+    opal_dl_handle_t *ri_dlhandle;
+    const mca_base_component_t *ri_component_struct;
+};
+typedef struct mca_base_component_repository_item_t mca_base_component_repository_item_t;
+
+OBJ_CLASS_DECLARATION(mca_base_component_repository_item_t);
+
+/**
+ * @brief initialize the component repository
+ *
+ * This function must be called before any frameworks are registered or
+ * opened. It is responsible for setting up the repository of dynamically
+ * loaded components. The initial search path is taken from the
+ * mca_base_component_path MCA parameter. mca_base_open () is a
+ * prerequisite call as it registers the mca_base_component_path parameter.
  */
-    OPAL_DECLSPEC int mca_base_component_repository_retain(char *type, 
-                              opal_dl_handle_t *component_handle,
-                              const mca_base_component_t *component_struct);
+OPAL_DECLSPEC int mca_base_component_repository_init(void);
 
-    OPAL_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
-                              const char *name);
-    OPAL_DECLSPEC int mca_base_component_repository_link(const char *src_type, 
-                              const char *src_name,
-                              const char *depend_type,
-                              const char *depend_name);
-    OPAL_DECLSPEC void mca_base_component_repository_release(const mca_base_component_t *component);
-    OPAL_DECLSPEC void mca_base_component_repository_finalize(void);
-    
+/**
+ * @brief add search path for dynamically loaded components
+ *
+ * @param[in] path        delimited list of search paths to add
+ */
+OPAL_DECLSPEC int mca_base_component_repository_add (const char *path);
+
+
+/**
+ * @brief return the list of components that match a given framework
+ *
+ * @param[in]  framework  framework to match
+ * @param[out] framework_components components that match this framework
+ *
+ * The list returned in {framework_components} is owned by the component
+ * repository and CAN NOT be modified by the caller.
+ */
+OPAL_DECLSPEC int mca_base_component_repository_get_components (mca_base_framework_t *framework,
+                                                                opal_list_t **framework_components);
+
+/**
+ * @brief finalize the mca component repository
+ */
+OPAL_DECLSPEC void mca_base_component_repository_finalize(void);
+
+/**
+ * @brief open the repository item and add it to the framework's component
+ * list
+ *
+ * @param[in] framework   framework that matches the component
+ * @param[in] ri          dynamic component to open
+ */
+int mca_base_component_repository_open (mca_base_framework_t *framework,
+                                        mca_base_component_repository_item_t *ri);
+
+
+void mca_base_component_repository_release(const mca_base_component_t *component);
+
 END_C_DECLS
 
 #endif /* MCA_BASE_COMPONENT_REPOSITORY_H */

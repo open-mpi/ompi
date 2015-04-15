@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -39,8 +39,7 @@
 /*
  * Local functions
  */
-static int register_components(const char *project_name, const char *type_name,
-                               int output_id, opal_list_t *src, opal_list_t *dest);
+static int register_components(mca_base_framework_t *framework);
 /**
  * Function for finding and opening either all MCA components, or the
  * one that was specifically requested via a MCA parameter.
@@ -50,28 +49,16 @@ int mca_base_framework_components_register (mca_base_framework_t *framework,
 {
     bool open_dso_components = !(flags & MCA_BASE_REGISTER_STATIC_ONLY);
     bool ignore_requested = !!(flags & MCA_BASE_REGISTER_ALL);
-    opal_list_t components_found;
     int ret;
 
     /* Find and load requested components */
-    ret = mca_base_component_find(NULL, framework->framework_name,
-                                  framework->framework_static_components,
-                                  ignore_requested ? NULL : framework->framework_selection,
-                                  &components_found, open_dso_components);
-
+    ret = mca_base_component_find(NULL, framework, ignore_requested, open_dso_components);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
     /* Register all remaining components */
-    ret = register_components(framework->framework_project, framework->framework_name,
-                              framework->framework_output, &components_found,
-                              &framework->framework_components);
-
-    OBJ_DESTRUCT(&components_found);
-
-    /* All done */
-    return ret;
+    return register_components(framework);
 }
 
 /*
@@ -81,24 +68,21 @@ int mca_base_framework_components_register (mca_base_framework_t *framework,
  * components is in the requested_components_array, try to open it.
  * If it opens, add it to the components_available list.
  */
-static int register_components(const char *project_name, const char *type_name,
-                               int output_id, opal_list_t *src, opal_list_t *dest)
+static int register_components(mca_base_framework_t *framework)
 {
     int ret;
-    opal_list_item_t *item;
     mca_base_component_t *component;
-    mca_base_component_list_item_t *cli;
+    mca_base_component_list_item_t *cli, *next;
+    int output_id = framework->framework_output;
     
     /* Announce */
     opal_output_verbose(10, output_id,
-                        "mca: base: components_register: registering %s components",
-                        type_name);
+                        "mca: base: components_register: registering framework %s components",
+                        framework->framework_name);
     
     /* Traverse the list of found components */
     
-    OBJ_CONSTRUCT(dest, opal_list_t);
-    while (NULL != (item = opal_list_remove_first (src))) {
-        cli = (mca_base_component_list_item_t *) item;
+    OPAL_LIST_FOREACH_SAFE(cli, next, &framework->framework_components, mca_base_component_list_item_t) {
         component = (mca_base_component_t *)cli->cli_component;
 
         opal_output_verbose(10, output_id, 
@@ -142,7 +126,7 @@ static int register_components(const char *project_name, const char *type_name,
                                     component->mca_component_name);
             }
 
-            mca_base_component_unload (component, output_id);
+            opal_list_remove_item (&framework->framework_components, &cli->super);
 
             /* Release this list item */
             OBJ_RELEASE(cli);
@@ -168,8 +152,6 @@ static int register_components(const char *project_name, const char *type_name,
                                          0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY | MCA_BASE_VAR_FLAG_INTERNAL,
                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
                                          &component->mca_component_release_version);
-        
-        opal_list_append(dest, item);
     }
     
     /* All done */

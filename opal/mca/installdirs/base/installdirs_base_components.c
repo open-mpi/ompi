@@ -172,4 +172,4 @@ opal_installdirs_base_close(void)
 /* Declare the installdirs framework */
 MCA_BASE_FRAMEWORK_DECLARE(opal, installdirs, NULL, NULL, opal_installdirs_base_open,
                            opal_installdirs_base_close, mca_installdirs_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_NOREGISTER);
+                           MCA_BASE_FRAMEWORK_FLAG_NOREGISTER | MCA_BASE_FRAMEWORK_FLAG_NO_DSO);
