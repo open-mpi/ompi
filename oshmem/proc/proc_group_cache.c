@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +14,8 @@
 #include "oshmem/runtime/runtime.h"
 
 OBJ_CLASS_INSTANCE(oshmem_group_cache_t, opal_object_t, NULL, NULL);
-opal_list_t oshmem_group_cache_list;
-unsigned int oshmem_group_cache_size;
+opal_list_t oshmem_group_cache_list = {{0}};
+unsigned int oshmem_group_cache_size = 0;
 oshmem_group_t* find_group_in_cache(int PE_start, int logPE_stride, int PE_size)
 {
     int cache_look_up_id[3] = { PE_start, logPE_stride, PE_size };

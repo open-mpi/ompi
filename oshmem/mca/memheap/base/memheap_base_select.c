@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,7 +22,7 @@
 #include "oshmem/mca/memheap/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-mca_memheap_base_module_t mca_memheap;
+mca_memheap_base_module_t mca_memheap = {0};
 
 /**
  * Function for weeding out memheap components that shouldn't be executed.

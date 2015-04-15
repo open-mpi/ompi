@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -101,7 +103,7 @@ int oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
 long *preconnect_value = 0;
 int shmem_api_logger_output = -1;
 
-MPI_Comm oshmem_comm_world;
+MPI_Comm oshmem_comm_world = {0};
 
 opal_thread_t *oshmem_mpi_main_thread = NULL;
 
@@ -130,43 +132,50 @@ opal_thread_t *oshmem_mpi_main_thread = NULL;
  ompi/include/mpif-common.h.
  */
 
-#define INST(type, upper_case, lower_case, single_u, double_u)   \
-    type lower_case; \
-type upper_case; \
-type single_u;  \
-type double_u
+#define INST(type, value, upper_case, lower_case, single_u, double_u)   \
+    type lower_case = value; \
+type upper_case = value; \
+type single_u = value;  \
+type double_u = value
 
 INST(int,
+     0,
      MPI_FORTRAN_BOTTOM,
      mpi_fortran_bottom,
      mpi_fortran_bottom_,
      mpi_fortran_bottom__);
 INST(int,
+     0,
      MPI_FORTRAN_IN_PLACE,
      mpi_fortran_in_place,
      mpi_fortran_in_place_,
      mpi_fortran_in_place__);
 INST(char *,
+     NULL,
      MPI_FORTRAN_ARGV_NULL,
      mpi_fortran_argv_null,
      mpi_fortran_argv_null_,
      mpi_fortran_argv_null__);
 INST(double,
+     0.0,
      MPI_FORTRAN_ARGVS_NULL,
      mpi_fortran_argvs_null,
      mpi_fortran_argvs_null_,
      mpi_fortran_argvs_null__);
 INST(int *,
+     NULL,
      MPI_FORTRAN_ERRCODES_IGNORE,
      mpi_fortran_errcodes_ignore,
      mpi_fortran_errcodes_ignore_,
      mpi_fortran_errcodes_ignore__);
 INST(int *,
+     NULL,
      MPI_FORTRAN_STATUS_IGNORE,
      mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_,
      mpi_fortran_status_ignore__);
 INST(double,
+     0.0,
      MPI_FORTRAN_STATUSES_IGNORE,
      mpi_fortran_statuses_ignore,
      mpi_fortran_statuses_ignore_,
@@ -175,9 +184,9 @@ INST(double,
 /*
  * Hash tables for MPI_Type_create_f90* functions
  */
-opal_hash_table_t ompi_mpi_f90_integer_hashtable;
-opal_hash_table_t ompi_mpi_f90_real_hashtable;
-opal_hash_table_t ompi_mpi_f90_complex_hashtable;
+opal_hash_table_t ompi_mpi_f90_integer_hashtable = {{0}};
+opal_hash_table_t ompi_mpi_f90_real_hashtable = {{0}};
+opal_hash_table_t ompi_mpi_f90_complex_hashtable = {{0}};
 
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
@@ -196,8 +205,8 @@ static void* shmem_opal_thread(void* argc)
 }
 #endif
 
-int oshmem_shmem_inglobalexit;
-int oshmem_shmem_globalexit_status;
+int oshmem_shmem_inglobalexit = 0;
+int oshmem_shmem_globalexit_status = -1;
 
 static void sighandler__SIGUSR1(int signum)
 {
