@@ -1277,6 +1277,8 @@ static int read_files(char *file_list, opal_list_t *file_values, char sep)
     for (i = count - 1; i >= 0; --i) {
         mca_base_parse_paramfile(mca_base_var_file_list[i], file_values);
     }
+    opal_argv_free(mca_base_var_file_list);
+    mca_base_var_file_list = NULL;
 
     mca_base_internal_env_store();
 
