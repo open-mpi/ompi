@@ -23,8 +23,6 @@
 
 #if OPAL_ASSEMBLY_ARCH == OPAL_SPARC
 
-#if OPAL_WANT_SMP_LOCKS
-
 #define LOCKS_TABLE_SIZE 8
 /* make sure to get into reasonably useful bits (so shift at least 5) */
 #define FIND_LOCK(addr) (&(locks_table[(((unsigned long) addr) >> 8) &  \
@@ -41,15 +39,6 @@ static opal_atomic_lock_t locks_table[LOCKS_TABLE_SIZE] = {
     { { OPAL_ATOMIC_UNLOCKED } },
     { { OPAL_ATOMIC_UNLOCKED } }
 };
-
-# else /* OPAL_WANT_SMP_LOCKS */
-
-#define LOCKS_TABLE_SIZE 1
-#define FIND_LOCK(addr) (&(locks_table[0]))
-
-static opal_atomic_lock_t locks_table[1] = { OPAL_ATOMIC_UNLOCKED };
-
-#endif /* OPAL_WANT_SMP_LOCKS */
 
 
 int32_t

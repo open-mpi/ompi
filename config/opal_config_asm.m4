@@ -890,20 +890,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     esac
     OPAL_VAR_SCOPE_POP
 
-    AC_MSG_CHECKING([whether to enable smp locks])
-    AC_ARG_ENABLE([smp-locks], 
-        [AC_HELP_STRING([--enable-smp-locks],
-            [enable smp locks in atomic ops.  Do not disable if code will ever run in SMP or multi-threaded environment. (default: enabled)])])
-    if test "$enable_smp_locks" != "no"; then
-        AC_MSG_RESULT([yes])
-        want_smp_locks=1
-    else
-        AC_MSG_RESULT([no])
-        want_smp_locks=0
-    fi
-    AC_DEFINE_UNQUOTED([OPAL_WANT_SMP_LOCKS], [$want_smp_locks],
-                       [whether we want to have smp locks in atomic ops or not])
-
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
          [Enable use of __sync builtin atomics (default: disabled)])])
