@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,8 +14,8 @@
  *                         reserved. 
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,9 +45,10 @@ char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
 
+static bool opal_register_done = false;
+
 int opal_register_params(void)
 {
-    static bool opal_register_done = false;
     int ret;
 
     if (opal_register_done) {
@@ -162,6 +164,13 @@ int opal_register_params(void)
     if (OPAL_SUCCESS != ret) { 
         return ret; 
     }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_deregister_params(void)
+{
+    opal_register_done = false;
 
     return OPAL_SUCCESS;
 }
