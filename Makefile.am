@@ -12,6 +12,8 @@
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,6 +34,7 @@ dist-hook:
 install-exec-hook:
 	-@$(top_srcdir)/config/find_common_syms \
 	    --brief \
+	    --info \
 	    --top_builddir=$(top_builddir) \
 	    --top_srcdir=$(top_srcdir) \
 	    --objext=$(OBJEXT)
