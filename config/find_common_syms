@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +28,7 @@ my @sym_whitelist = ();
 
 sub usage {
     print STDERR <<EOT;
-Usage: $0 --top_builddir=BUILDDIR --top_srcdir=SRCDIR [--objext=OBJEXT] [--brief] [--full-path]
+Usage: $0 --top_builddir=BUILDDIR --top_srcdir=SRCDIR [--objext=OBJEXT] [--brief] [--full-path] [--info]
 
 Searches for all ".OBJEXT" files in BUILDDIR and checks for the existence of
 common symbols.  Common symbols are problematic for some platforms, including
@@ -39,6 +41,7 @@ EOT
 
 my $all = 0;
 my $brief = 0;
+my $info = 0;
 my $objext = 'o';
 my $top_builddir = '';
 my $top_srcdir = '';
@@ -47,6 +50,7 @@ GetOptions(
     "all!" => \$all,
     "brief!" => \$brief,
     "full-path!" => \$print_full_obj_path,
+    "info!" => \$info,
     "objext=s" => \$objext,
     "top_builddir=s" => \$top_builddir,
     "top_srcdir=s" => \$top_srcdir,
@@ -117,7 +121,7 @@ OBJECT: while (my $obj_line = <FIND>) {
 }
 close(FIND);
 
-if ($n > 0) {
+if (!$info and $n > 0) {
     exit 1;
 } else {
     exit 0;
