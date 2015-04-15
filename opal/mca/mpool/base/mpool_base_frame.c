@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -51,10 +51,10 @@
 /* whether we actually used the mem hooks or not */
 int mca_mpool_base_used_mem_hooks = 0;
 
-uint32_t mca_mpool_base_page_size; 
-uint32_t mca_mpool_base_page_size_log;
+uint32_t mca_mpool_base_page_size = 0; 
+uint32_t mca_mpool_base_page_size_log = 0;
 
-opal_list_t mca_mpool_base_modules;
+opal_list_t mca_mpool_base_modules = {{0}};
 
 /**
  * Function for finding and opening either all MCA components, or the one

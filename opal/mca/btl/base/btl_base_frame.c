@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +30,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 
-mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX];
+mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX] = {{0}};
 
 /*
  *  mca_btl_base_descriptor_t
@@ -69,7 +71,7 @@ OBJ_CLASS_INSTANCE(
 char* mca_btl_base_include = NULL;
 char* mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
-opal_list_t mca_btl_base_modules_initialized;
+opal_list_t mca_btl_base_modules_initialized = {{0}};
 bool mca_btl_base_thread_multiple_override = false;
 
 static int mca_btl_base_register(mca_base_register_flag_t flags)

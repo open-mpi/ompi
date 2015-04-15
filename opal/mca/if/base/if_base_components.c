@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +21,7 @@
 #include "opal/mca/if/base/static-components.h"
 
 /* instantiate the global list of interfaces */
-opal_list_t opal_if_list;
+opal_list_t opal_if_list = {{0}};
 bool opal_if_do_not_resolve = false;
 bool opal_if_retain_loopback = false;
 

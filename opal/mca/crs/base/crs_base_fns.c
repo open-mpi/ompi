@@ -8,8 +8,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- *
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,9 +46,9 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn;
-opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn;
-opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn;
+opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn = NULL;
+opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn = NULL;
+opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn = NULL;
 
 /******************
  * Local Functions

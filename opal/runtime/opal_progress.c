@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -58,7 +60,7 @@ static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
 
 /* do we want to call sched_yield() if nothing happened */
-bool opal_progress_yield_when_idle;
+bool opal_progress_yield_when_idle = false;
 
 #if OPAL_PROGRESS_USE_TIMERS
 static opal_timer_t event_progress_last_time = 0;

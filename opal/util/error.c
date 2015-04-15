@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,7 +48,7 @@ struct converter_info_t {
 typedef struct converter_info_t converter_info_t;
 
 /* all default to NULL */
-converter_info_t converters[MAX_CONVERTERS];
+converter_info_t converters[MAX_CONVERTERS] = {{0}};
 
 static int
 opal_strerror_int(int errnum, const char **str)
