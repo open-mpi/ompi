@@ -274,6 +274,7 @@ static void mca_base_component_repository_release_internal (mca_base_component_r
 
 void mca_base_component_repository_release(const mca_base_component_t *component)
 {
+#if OPAL_HAVE_DL_SUPPORT
     mca_base_component_repository_item_t *ri;
     opal_list_t *component_list;
     int ret;
@@ -292,6 +293,7 @@ void mca_base_component_repository_release(const mca_base_component_t *component
             break;
         }
     }
+#endif
 }
 
 
