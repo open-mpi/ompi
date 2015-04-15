@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -37,7 +37,7 @@
 
 opal_convertor_t* oshmem_shmem_local_convertor = NULL;
 
-opal_list_t oshmem_proc_list;
+opal_list_t oshmem_proc_list = {{0}};
 static opal_mutex_t oshmem_proc_lock;
 oshmem_proc_t* oshmem_proc_local_proc = NULL;
 
@@ -545,7 +545,7 @@ int oshmem_proc_unpack(opal_buffer_t* buf,
     return OSHMEM_SUCCESS;
 }
 
-opal_pointer_array_t oshmem_group_array;
+opal_pointer_array_t oshmem_group_array = {{0}};
 
 oshmem_group_t* oshmem_group_all = NULL;
 oshmem_group_t* oshmem_group_self = NULL;
