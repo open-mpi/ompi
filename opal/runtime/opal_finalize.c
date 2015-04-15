@@ -55,6 +55,18 @@
 
 extern int opal_initialized;
 extern int opal_util_initialized;
+extern bool opal_init_called;
+
+static void __opal_attribute_destructor__ opal_cleanup (void)
+{
+    if (!opal_initialized) {
+        /* nothing to do */
+        return;
+    }
+
+    /* finalize the class/object system */
+    opal_class_finalize();
+}
 
 int
 opal_finalize_util(void)
@@ -97,8 +109,9 @@ opal_finalize_util(void)
     /* close the dss */
     opal_dss_close();
 
-    /* finalize the class/object system */
-    opal_class_finalize();
+#if !(OPAL_HAVE_LD_FINI || OPAL_HAVE_ATTRIBUTE_DESTRUCTOR)
+    opal_cleanup ();
+#endif
 
     return OPAL_SUCCESS;
 }

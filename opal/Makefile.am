@@ -55,7 +55,18 @@ libopen_pal_la_LIBADD = \
         util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS)
 libopen_pal_la_DEPENDENCIES = $(libopen_pal_la_LIBADD)
+
+if HAVE_ATTRIBUTE_DESTRUCTOR
+
 libopen_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
+
+else
+if HAVE_LD_FINI
+
+libopen_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) -Wl,-fini,opal_cleanup
+
+endif
+endif
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
