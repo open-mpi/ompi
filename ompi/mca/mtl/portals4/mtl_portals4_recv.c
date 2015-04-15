@@ -77,6 +77,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlGet failed: %d",
                             __FILE__, __LINE__, ret);
+        PtlMDRelease(request->md_h);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -311,7 +312,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                            ptl_request);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-                PtlMDRelease(ptl_request->md_h);
                 goto callback_error;
             }
         }
