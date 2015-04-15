@@ -61,6 +61,9 @@ Trunk (not on release branches yet)
   via --enable-mpi-cxx.
 - Remove embedded VampirTrace.  It is in maintenance mode since 2013.
   Please consider Score-P (score-p.org) as an external replacement.
+- usNIC BTL updated to use libfabric.
+- OFI MTL.
+
 
 1.8.5
 -----
@@ -71,6 +74,8 @@ Trunk (not on release branches yet)
 - Fixed linker error on OS X when using the clang compiler.  Thanks to
   Erick Schnetter for reporting the error and helping track down the
   source of the problem.
+- Fixed MPI_THREAD_MULTIPLE deadlock error in the vader BTL.  Thanks
+  to Thomas Klimpel for reporting the issue.
 - Fixed several Valgrind warnings.  Thanks for Lisandro Dalcin for
   contributing a patch fixing some one-sided code paths.
 - Fixed version compatibility test in OOB that broke ABI within the
@@ -83,13 +88,14 @@ Trunk (not on release branches yet)
   the issues.
 - Correct default binding patterns when --use-hwthread-cpus was
   specified and nprocs <= 2.
-- Remove warnings about -finline-functions when compiling with clang.
+- Fix warnings about -finline-functions when compiling with clang.
 - Updated the embedded hwloc with several bug fixes, including the
   "duplicate Lhwloc1 symbol" that multiple users reported on some
   platforms.
-- Don't error out if mpirun with default bindings (i.e., no binding
-  was specified), and one or more nodes do not support bindings.
-  Thanks to Annu Desari for pointing out the problem.
+- Do not error when mpirun is invoked with with default bindings
+  (i.e., no binding was specified), and one or more nodes do not
+  support bindings.  Thanks to Annu Desari for pointing out the
+  problem.
 - Let root invoke "mpirun --version" to check the version without
   printing the "Don't run as root!" warnings.  Thanks to Robert McLay
   for the suggestion.
