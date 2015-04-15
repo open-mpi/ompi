@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -101,7 +103,7 @@ static int output(int output_id, const char *format, va_list arglist);
 
 /* global state */
 bool opal_output_redirected_to_syslog = false;
-int opal_output_redirected_syslog_pri;
+int opal_output_redirected_syslog_pri = -1;
 
 /*
  * Local state

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 
 #include "opal/mca/reachable/base/static-components.h"
 
-opal_reachable_base_module_t opal_reachable;
+opal_reachable_base_module_t opal_reachable = {0};
 
 static int opal_reachable_base_frame_register(mca_base_register_flag_t flags)
 {

@@ -100,7 +100,7 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
 
 // local variables
 static int init_cntr = 0;
-opal_process_name_t native_pname;
+opal_process_name_t native_pname = {0};
 static uint32_t sm_flag;
 
 static void unpack_segment_info(opal_buffer_t *buf, opal_process_name_t *id, char** seg_info)
