@@ -13,10 +13,10 @@
 
 #include "opal/include/opal/sys/atomic.h"
 
-opal_free_list_t ompi_comm_requests;
-opal_list_t ompi_comm_requests_active;
-opal_mutex_t ompi_comm_request_mutex;
-bool ompi_comm_request_progress_active;
+static opal_free_list_t ompi_comm_requests;
+static opal_list_t ompi_comm_requests_active;
+static opal_mutex_t ompi_comm_request_mutex;
+bool ompi_comm_request_progress_active = false;
 bool ompi_comm_request_initialized = false;
 
 typedef struct ompi_comm_request_item_t {
