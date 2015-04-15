@@ -31,6 +31,7 @@
 #include "mtl_portals4_request.h"
 #include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
+#include "ompi/runtime/mpiruntime.h"
 
 static int param_priority;
 
@@ -265,6 +266,12 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 {
     int ret;
     ptl_process_t id;
+
+    if (enable_mpi_threads && ompi_mpi_thread_multiple) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "mtl portals4 is initialized for threads");
+    }
+
 
     /* Initialize Portals and create a physical, matching interface */
     ret = PtlInit();
