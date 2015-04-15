@@ -73,20 +73,16 @@ Trunk (not on release branches yet)
   source of the problem.
 - Fixed several Valgrind warnings.  Thanks for Lisandro Dalcin for
   contributing a patch fixing some one-sided code paths.
-- (**** Ralph, need some text about the oob version number change, and
-  the ABI break it caused.  ALSO need to put notice of ABI breakage in
-  README).
+- Fixed version compatibility test in OOB that broke ABI within the
+  1.8 series. NOTE: this will not resolve the problem between pre-1.8.5
+  versions, but will fix it going forward.
 - Fix some issues related to running on Intel Xeon Phi coprocessors.
-  (*** ^Ralph, please verify -- this is in regards to
-  fd322444438ebea6cb797e30bdbe00e5eb166d5a)
-- Opprotunistically switch away from using GNU Libtool's libltdl
+- Opportunistically switch away from using GNU Libtool's libltdl
   library when possible (by default).
 - Fix some VampirTrace errors.  Thanks to Paul Hargrove for reporting
   the issues.
 - Correct default binding patterns when --use-hwthread-cpus was
   specified and nprocs <= 2.
-  (*** ^Ralph, please verify)
-(*** Ralph, are there any other user-noticable changes/fixes for ORTE?)
 - Remove warnings about -finline-functions when compiling with clang.
 - Updated the embedded hwloc with several bug fixes, including the
   "duplicate Lhwloc1 symbol" that multiple users reported on some
@@ -142,7 +138,7 @@ Trunk (not on release branches yet)
 - Fixed a number of minor issues with CUDA support, including
   registering of shared memory and supporting reduction support for
   GPU buffers.
-- Improved support for Cray platforms.
+- Improved support for building OMPI on Cray platforms.
 - Fixed performance regression introduced by the inadvertent default
   enabling of MPI_THREAD_MULTIPLE support.
 

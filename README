@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -1633,6 +1633,13 @@ Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
 (linked against Open MPI v1.7.2 shared libraries) will likely *not*
 work with Open MPI v1.9 shared libraries.
+
+NOTE: The 1.8 series suffered an inadvertent break in ABI compatibility
+prior to release 1.8.5 due to a test that rejected TCP connections from
+processes compiled against another version. The test incorrectly checked
+all three parts of the version number, thus preventing a process compiled
+against 1.8.3 from connecting to one compiled against 1.8.4. This was fixed
+in 1.8.5, so ABI will be maintained from there forward.
 
 ===========================================================================
 
