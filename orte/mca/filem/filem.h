@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/class/opal_object.h"
@@ -393,8 +394,7 @@ ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
  * Macro for use in components that are of type FILEM
  */
 #define ORTE_FILEM_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "filem", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("filem", 2, 0, 0)
 
 END_C_DECLS
 

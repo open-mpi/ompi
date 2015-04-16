@@ -16,7 +16,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"

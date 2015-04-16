@@ -1,6 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2012-2014 Los Alamos National Security, Inc.  All rights
+ *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -213,8 +215,7 @@ typedef struct {
  * Macro for use in components that are of type dstore
  */
 #define OPAL_DSTORE_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "dstore", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("dstore", 2, 0, 0)
 
 /* Global structure for accessing store functions */
 OPAL_DECLSPEC extern opal_dstore_base_API_t opal_dstore;  /* holds base function pointers */

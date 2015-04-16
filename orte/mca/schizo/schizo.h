@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +24,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -84,8 +87,7 @@ typedef struct {
  * Macro for use in components that are of type schizo
  */
 #define MCA_SCHIZO_BASE_VERSION_1_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "schizo", 1, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("schizo", 1, 0, 0)
 
 
 END_C_DECLS

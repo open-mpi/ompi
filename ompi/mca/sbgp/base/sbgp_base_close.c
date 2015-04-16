@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/mca/sbgp/base/base.h"

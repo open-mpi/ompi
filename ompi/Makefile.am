@@ -12,7 +12,7 @@
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 # 
@@ -189,6 +189,7 @@ include mpi/man/man3/Makefile.extra
 include mpiext/Makefile.am
 include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
+include mca/Makefile.am
 
 # Ensure that the man page directory exists before we try to make man
 # page files (because ompi/mpi/man/man3 has no config.status-generated

@@ -31,7 +31,7 @@
 #endif
 
 #include "opal/class/opal_ring_buffer.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/output.h"

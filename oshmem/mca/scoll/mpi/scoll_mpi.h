@@ -13,7 +13,7 @@
 #include "oshmem_config.h"
 
 #include "shmem.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/request/request.h"
 #include "oshmem/util/oshmem_util.h"

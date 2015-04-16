@@ -18,7 +18,7 @@
 #include "mpi.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"

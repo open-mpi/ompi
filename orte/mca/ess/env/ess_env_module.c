@@ -36,7 +36,7 @@
 #include "opal/runtime/opal.h"
 
 #include "orte/util/show_help.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/output.h"

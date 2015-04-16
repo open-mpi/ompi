@@ -16,7 +16,7 @@
 #include "oshmem_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 
 #include "oshmem/mca/memheap/memheap.h"
 

@@ -23,7 +23,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/btl/btl.h"
 
 #ifndef MCA_BML_R2_H

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -139,7 +142,6 @@ END_C_DECLS
  * Macro for use in components that are of type memory
  */
 #define OPAL_MEMORY_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "memory", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("memory", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMORY_MEMORY_H */

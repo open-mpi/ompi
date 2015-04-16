@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -89,8 +90,7 @@ typedef struct opal_installdirs_base_component_2_0_0_t opal_installdirs_base_com
  * Macro for use in components that are of type installdirs
  */
 #define OPAL_INSTALLDIRS_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "installdirs", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("installdirs", 2, 0, 0)
 
 END_C_DECLS
 

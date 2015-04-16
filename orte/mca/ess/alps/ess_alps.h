@@ -20,7 +20,7 @@
 #define ORTE_ESS_ALPS_H
 
 #include "orte_config.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "orte/mca/ess/ess.h"
 
 #include "alps/alps.h"

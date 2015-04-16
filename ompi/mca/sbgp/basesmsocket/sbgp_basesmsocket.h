@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/mca/sbgp/base/base.h"
 #include "opal/mca/mpool/mpool.h"

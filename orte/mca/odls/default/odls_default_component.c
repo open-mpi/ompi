@@ -31,7 +31,7 @@
 #endif
 #include <ctype.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/odls/odls.h"

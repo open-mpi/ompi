@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -49,7 +50,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/class/opal_object.h"
@@ -315,8 +316,7 @@ typedef orte_errmgr_base_component_3_0_0_t orte_errmgr_base_component_t;
  * Macro for use in components that are of type errmgr
  */
 #define ORTE_ERRMGR_BASE_VERSION_3_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "errmgr", 3, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("errmgr", 3, 0, 0)
 
 END_C_DECLS
 

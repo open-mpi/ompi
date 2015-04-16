@@ -14,7 +14,7 @@
 #include <string.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -30,7 +30,7 @@
 #define MCA_BML_H
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -577,7 +577,6 @@ typedef struct mca_bml_base_module_t mca_bml_base_module_t;
  * Macro for use in modules that are of type bml
  */
 #define MCA_BML_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "bml", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("bml", 2, 0, 0)
 
 #endif /* OMPI_MCA_BML_H */

@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -80,8 +83,7 @@ typedef struct opal_pstat_base_module_1_0_0_t opal_pstat_base_module_t;
  * Macro for use in components that are of type pstat
  */
 #define OPAL_PSTAT_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "pstat", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("pstat", 2, 0, 0)
 
 /* Global structure for accessing pstat functions */
 OPAL_DECLSPEC extern opal_pstat_base_module_t opal_pstat;
