@@ -2150,6 +2150,9 @@ int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
 			               fh->f_comm,
 			               fh->f_comm->c_coll.coll_allreduce_module);
     
+    //Set final number of aggregators in file handle
+    fh->f_final_num_aggrs = final_num_aggrs;
+
     //Print final number of aggregators if required
 
     /*if(fh->f_rank == 0){

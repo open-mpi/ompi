@@ -190,8 +190,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	    return ret;
 	}
 	
-	two_phase_num_io_procs = 
-	    ceil((float)fh->f_size/fh->f_procs_per_group);
+	two_phase_num_io_procs = fh->f_final_num_aggrs;
 	
     }
     
