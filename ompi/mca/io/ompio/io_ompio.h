@@ -349,6 +349,7 @@ struct mca_io_ompio_file_t {
     int f_init_procs_per_group;
     int *f_init_procs_in_group;
 
+    int f_final_num_aggrs;
 
     mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;
     mca_io_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
