@@ -126,7 +126,7 @@ int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t 
     /* make a copy of the values */
     new_enum->enum_values = calloc (new_enum->enum_value_count + 1, sizeof (*new_enum->enum_values));
     if (NULL == new_enum->enum_values) {
-        OBJ_DESTRUCT(new_enum);
+        OBJ_RELEASE(new_enum);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
