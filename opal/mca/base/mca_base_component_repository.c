@@ -197,6 +197,8 @@ int mca_base_component_repository_add (const char *path)
         }
     } while (NULL != (dir = strtok_r (NULL, sep, &ctx)));
 
+    free (path_to_use);
+
 #endif /* OPAL_HAVE_DL_SUPPORT */
 
     return OPAL_SUCCESS;
@@ -401,6 +403,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
 
         /* done with the structure name */
         free (struct_name);
+        struct_name = NULL;
 
         /* We found the public struct.  Make sure its MCA major.minor
            version is the same as ours. TODO -- add checks for project version (from framework) */
