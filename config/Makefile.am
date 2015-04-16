@@ -24,7 +24,8 @@ EXTRA_DIST = \
         distscript.csh \
         opal_get_version.m4sh \
         ltmain_pgi_tp.diff \
-        opal_mca_priority_sort.pl
+        opal_mca_priority_sort.pl \
+        find_common_syms
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh
