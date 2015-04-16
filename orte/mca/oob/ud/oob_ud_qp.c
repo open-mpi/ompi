@@ -12,6 +12,7 @@
  *
  */
 
+#include "oob_ud_component.h"
 #include "oob_ud_qp.h"
 #include "oob_ud.h"
 
@@ -72,12 +73,16 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
     init_attr.send_cq = qp->ib_send_cq;
     init_attr.recv_cq = qp->ib_recv_cq;
 
-    init_attr.cap.max_send_sge    = 32;
-    init_attr.cap.max_recv_sge    = 32; /* GRH, data */
+    mca_oob_ud_device_t *device = (mca_oob_ud_device_t *) opal_list_get_first (&mca_oob_ud_component.ud_devices);
+    opal_output_verbose(80, orte_oob_base_framework.framework_output,
+                        "%s oob:ud:qp_init create queue pair for device: device->attr.max_sge = %d, device->attr.max_qp_wr = %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), device->attr.max_sge, device->attr.max_qp_wr);
+
+    init_attr.cap.max_send_sge    = 1;
+    init_attr.cap.max_recv_sge    = 2; /* GRH, data */
     init_attr.cap.max_inline_data = 0; /* don't use inline data for now */
-    /* NTH: fix these */
-    init_attr.cap.max_recv_wr     = 4096;
-    init_attr.cap.max_send_wr     = 4096;
+    init_attr.cap.max_recv_wr     = min(4096, device->attr.max_qp_wr);
+    init_attr.cap.max_send_wr     = min(4096, device->attr.max_qp_wr);
 
     qp->ib_qp = ibv_create_qp (port->device->ib_pd, &init_attr);
     if (NULL == qp->ib_qp) {
@@ -258,6 +263,7 @@ int mca_oob_ud_qp_post_send (mca_oob_ud_qp_t *qp, struct ibv_send_wr *wr,
 }
 
 int mca_oob_ud_qp_post_recv (mca_oob_ud_qp_t *qp, struct ibv_recv_wr *wr) {
+ 
     struct ibv_recv_wr *bad_wr;
     int rc;
 
@@ -265,22 +271,23 @@ int mca_oob_ud_qp_post_recv (mca_oob_ud_qp_t *qp, struct ibv_recv_wr *wr) {
     if (0 != rc) {
         opal_output (0, "%s oob:ud:qp_post_recv failed. errno = %d",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+ 
         return ORTE_ERROR;
     }
     return ORTE_SUCCESS;
 }
 
 int mca_oob_ud_qp_data_aquire (struct mca_oob_ud_port_t *port, mca_oob_ud_qp_t **qp_ptr) {
-    int rc;
+    int rc = ORTE_SUCCESS;
     opal_free_list_item_t *item;
 
     do {
         item = opal_free_list_get_st (&port->data_qps);
         if (NULL == item) {
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                 "%s oob:ud:qp_data_aquire error allocating new data qp",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
+                                 "%s oob:ud:qp_data_aquire error allocating new data qp. error = %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+            rc = ORTE_ERR_TEMP_OUT_OF_RESOURCE;		
             break;
         }
 

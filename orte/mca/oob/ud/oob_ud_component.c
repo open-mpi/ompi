@@ -213,7 +213,6 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
                                            struct ibv_device *ib_device)
 {
     int rc, port_num;
-    struct ibv_device_attr dev_attr;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                          "%s oob:ud:device_setup attempting to setup ib device %p",
@@ -237,7 +236,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
         return ORTE_ERROR;
     }
 
-    rc = ibv_query_device (device->ib_context, &dev_attr);
+    rc = ibv_query_device (device->ib_context, &device->attr);
     if (0 != rc) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                              "%s oob:ud:device_setup error querying device. errno = %d",
@@ -261,7 +260,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
         return ORTE_ERROR;
     }
 
-    for (port_num = 1 ; port_num <= dev_attr.phys_port_cnt ; ++port_num) {
+    for (port_num = 1 ; port_num <= device->attr.phys_port_cnt ; ++port_num) {
         mca_oob_ud_port_t *port = OBJ_NEW(mca_oob_ud_port_t);
 
         if (NULL == port) {
