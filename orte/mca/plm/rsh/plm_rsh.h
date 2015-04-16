@@ -13,7 +13,6 @@
  *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,9 +62,6 @@ struct orte_plm_rsh_component_t {
     char *agent;
     bool assume_same_shell;
     bool pass_environ_mca_params;
-    char *ssh_args;
-    char *pass_path;
-    char *pass_libpath;
 };
 typedef struct orte_plm_rsh_component_t orte_plm_rsh_component_t;
 
