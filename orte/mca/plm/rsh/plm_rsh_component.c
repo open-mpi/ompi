@@ -208,7 +208,23 @@ static int rsh_component_register(void)
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
-                                            & mca_plm_rsh_component.ssh_args);
+                                            &mca_plm_rsh_component.ssh_args);
+
+    mca_plm_rsh_component.pass_path = NULL;
+    (void) mca_base_component_var_register (c, "pass_path",
+                                            "Prepend the specified path to the remote shell's path",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.pass_path);
+
+    mca_plm_rsh_component.pass_libpath = NULL;
+    (void) mca_base_component_var_register (c, "pass_libpath",
+                                            "Prepend the specified library path to the remote shell's LD_LIBRARY_PATH",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.pass_libpath);
 
     return ORTE_SUCCESS;
 }
