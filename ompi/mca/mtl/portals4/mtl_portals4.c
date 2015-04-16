@@ -246,6 +246,8 @@ portals4_init_interface(void)
     }
 #endif
 
+    return OMPI_SUCCESS;
+
  error:
     if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
         PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
