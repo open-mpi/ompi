@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,7 +117,7 @@ typedef struct {
 } orte_info_component_map_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_info_component_map_t);
 
-extern opal_pointer_array_t component_map;
+extern opal_pointer_array_t orte_component_map;
 
 void orte_info_components_open(void);
 void orte_info_components_close(void);
