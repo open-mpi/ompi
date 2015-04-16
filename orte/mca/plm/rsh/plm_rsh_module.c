@@ -14,7 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -372,6 +372,15 @@ static int setup_launch(int *argcptr, char ***argvptr,
      */
     argv = opal_argv_copy(rsh_agent_argv);
     argc = opal_argv_count(rsh_agent_argv);
+    /* if any ssh args were provided, now is the time to add them */
+    if (NULL != mca_plm_rsh_component.ssh_args) {
+        char **ssh_argv;
+        ssh_argv = opal_argv_split(mca_plm_rsh_component.ssh_args, ' ');
+        for (i=0; NULL != ssh_argv[i]; i++) {
+            opal_argv_append(&argc, &argv, ssh_argv[i]);
+        }
+        opal_argv_free(ssh_argv);
+    }
     *node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
     

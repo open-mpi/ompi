@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -201,6 +202,13 @@ static int rsh_component_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.pass_environ_mca_params);
+    mca_plm_rsh_component.ssh_args = NULL;
+    (void) mca_base_component_var_register (c, "args",
+                                            "Arguments to add to rsh/ssh",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            & mca_plm_rsh_component.ssh_args);
 
     return ORTE_SUCCESS;
 }
