@@ -554,7 +554,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     { NULL, '\0', "dvm", "dvm", 0,
       &orterun_globals.dvm, OPAL_CMD_LINE_TYPE_BOOL,
-      "Programming model/language being used (default=\"ompi\")" },
+      "Create a persistent distributed virtual machine (DVM)" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
