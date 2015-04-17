@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,28 +36,22 @@ static int dstore_hash_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 opal_dstore_base_component_t mca_dstore_hash_component = {
-    {
+    .base_version = {
         OPAL_DSTORE_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "hash",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "hash",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        NULL,
-        NULL,
-        dstore_hash_query,
-        NULL
+        .mca_query_component = dstore_hash_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    component_create,
-    NULL,
-    NULL
+    .create_handle = component_create,
 };
 
 static int dstore_hash_query(mca_base_module_t **module, int *priority)

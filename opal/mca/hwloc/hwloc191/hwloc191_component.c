@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved. 
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -37,20 +40,15 @@ const opal_hwloc_component_t mca_hwloc_hwloc191_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .base_version = {
         OPAL_HWLOC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "hwloc191",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
-
-        /* Component open and close functions */
-        NULL,
-        NULL
+        .mca_component_name = "hwloc191",
+        MCA_BASE_MAKE_VERSION(component,  OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -43,27 +46,25 @@ static int opal_mpool_rgpusm_verbose = 0;
 
 mca_mpool_rgpusm_component_t mca_mpool_rgpusm_component = {
     {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+        /* First, the mca_base_component_t struct containing meta
+           information about the component itself */
 
-      {
-          MCA_MPOOL_BASE_VERSION_2_0_0,
+        .mpool_version = {
+            MCA_MPOOL_BASE_VERSION_2_0_0,
 
-          "rgpusm", /* MCA component name */
-          OPAL_MAJOR_VERSION,  /* MCA component major version */
-          OPAL_MINOR_VERSION,  /* MCA component minor version */
-          OPAL_RELEASE_VERSION,  /* MCA component release version */
-          rgpusm_open,  /* component open  */
-          rgpusm_close,
-          NULL,
-          rgpusm_register
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
+            .mca_component_name = "rgpusm",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
+            .mca_open_component = rgpusm_open,
+            .mca_close_component = rgpusm_close,
+            .mca_register_component_params = rgpusm_register,
+        },
+        .mpool_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
 
-      rgpusm_init
+        .mpool_init = rgpusm_init
     }
 };
 

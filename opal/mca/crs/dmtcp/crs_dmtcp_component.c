@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c)      2010-2011 Alex Brick <bricka@ccs.neu.edu>.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -37,30 +40,27 @@ opal_crs_dmtcp_component_t mca_crs_dmtcp_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itself
          */
-        {
+        .base_version = {
             OPAL_CRS_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "dmtcp",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "dmtcp",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
             
             /* Component open and close functions */
-            crs_dmtcp_open,
-            crs_dmtcp_close,
-            opal_crs_dmtcp_component_query,
-            crs_dmtcp_register
+            .mca_open_component = crs_dmtcp_open,
+            .mca_close_component = crs_dmtcp_close,
+            .mca_query_component = opal_crs_dmtcp_component_query,
+            .mca_register_component_params = crs_dmtcp_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1
+
+        .verbose = 0,
+        .output_handle = -1
     }
 };
 

@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,22 +68,20 @@ opal_memory_linux_component_t mca_memory_linux_component = {
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
-        {
+        .memoryc_version = {
             OPAL_MEMORY_BASE_VERSION_2_0_0,
             
             /* Component name and version */
-            "linux",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "linux",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
             
             /* Component open and close functions */
-            linux_open,
-            linux_close,
-            NULL,
-            linux_register,
+            .mca_open_component = linux_open,
+            .mca_close_component = linux_close,
+            .mca_register_component_params = linux_register,
         },
-        {
+        .memoryc_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
@@ -91,9 +89,8 @@ opal_memory_linux_component_t mca_memory_linux_component = {
         /* Memory framework functions.  These function pointer values
            are replaced by memory_linux_ummunotify.c at run time if we
            end up using ummunotify support. */
-        NULL,
-        opal_memory_base_component_register_empty,
-        opal_memory_base_component_deregister_empty
+        .memoryc_register = opal_memory_base_component_register_empty,
+        .memoryc_deregister = opal_memory_base_component_deregister_empty,
     },
 
     /* Component-specific data, filled in later (compiler will 0/NULL

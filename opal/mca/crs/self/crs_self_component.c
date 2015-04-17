@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, Inc.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,20 +48,19 @@ opal_crs_self_component_t mca_crs_self_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itself
          */
-        {
+        .base_version = {
             OPAL_CRS_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "self",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "self",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
             
             /* Component open and close functions */
-            crs_self_open,
-            crs_self_close,
-            opal_crs_self_component_query,
-            crs_self_register
+            .mca_open_component = crs_self_open,
+            .mca_close_component = crs_self_close,
+            .mca_query_component = opal_crs_self_component_query,
+            .mca_register_component_params = crs_self_register,
         },
         {
             /* The component is checkpoint ready */

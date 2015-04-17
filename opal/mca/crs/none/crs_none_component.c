@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,32 +41,28 @@ opal_crs_none_component_t mca_crs_none_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itnone
          */
-        {
+        .base_version = {
             OPAL_CRS_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "none",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "none",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
             
             /* Component open and close functions */
-            crs_none_open,
-            crs_none_close,
-            opal_crs_none_component_query,
-            crs_none_register
+            .mca_open_component = crs_none_open,
+            .mca_close_component = crs_none_close,
+            .mca_query_component = opal_crs_none_component_query,
+            .mca_register_component_params = crs_none_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1,
-        /* Default priority */
-        1
+
+        .verbose = 0,
+        .output_handle = -1,
+        .priority = 1,
     }
 };
 

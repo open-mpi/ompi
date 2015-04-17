@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved. 
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
@@ -102,20 +102,19 @@ const opal_event_component_t mca_event_libevent2022_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .base_version = {
         OPAL_EVENT_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "libevent2022",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "libevent2022",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component functions */
         .mca_open_component = libevent2022_open,
         .mca_register_component_params = libevent2022_register
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }

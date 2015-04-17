@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +43,7 @@ opal_reachable_base_component_t mca_reachable_netlink_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .base_version = {
         /* Indicate that we are a reachable v1.1.0 component (which also
            implies a specific MCA version) */
 
@@ -48,20 +51,19 @@ opal_reachable_base_component_t mca_reachable_netlink_component = {
 
         /* Component name and version */
 
-        "netlink",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "netlink",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
 
-        reachable_netlink_open,
-        reachable_netlink_close,
-        reachable_netlink_component_query,
-        component_register
+        .mca_open_component = reachable_netlink_open,
+        .mca_close_component = reachable_netlink_close,
+        .mca_query_component = reachable_netlink_component_query,
+        .mca_register_component_params = component_register,
     },
     /* Next the MCA v1.0.0 component meta data */
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
