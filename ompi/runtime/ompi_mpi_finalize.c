@@ -99,7 +99,7 @@ int ompi_mpi_finalize(void)
     ompi_proc_t** procs;
     size_t nprocs;
     OPAL_TIMING_DECLARE(tm);
-    OPAL_TIMING_INIT(&tm);
+    OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
