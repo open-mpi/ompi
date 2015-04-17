@@ -27,13 +27,11 @@ static int opal_common_ugni_module_ref_count = 0;
 opal_common_ugni_module_t opal_common_ugni_module;
 
 mca_base_component_t opal_common_ugni_component = {
-    MCA_BASE_VERSION_2_0_0,
-    "common",
-    MCA_BASE_VERSION_2_0_0,
-    "ugni",
-    MCA_BASE_VERSION_2_0_0,
-    NULL,
-    NULL
+    OPAL_MCA_BASE_VERSION_2_1_0("common", 1, 0, 0),
+    .mca_component_name = "ugni",
+    .mca_component_major_version = 1,
+    .mca_component_minor_version = 0,
+    .mca_component_release_version = 0,
 };
 
 static inline int
