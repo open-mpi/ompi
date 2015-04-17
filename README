@@ -124,25 +124,24 @@ General notes
   - PBS Pro, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - Cray XE and XC
+  - Cray XE, XC, and XK
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
 
 - Systems that have been tested are:
   - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, and Portland (*)
-  - OS X (10.6, 10.7, 10.8, 10.9), 32 and 64 bit (x86_64), with gcc and
-    Absoft compilers (*)
+  - OS X (10.6, 10.7, 10.8, 10.9, 10.10), 32 and 64 bit (x86_64), with
+    XCode and Absoft compilers (*)
 
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
   - Cygwin 32 & 64 bit with gcc
-  - ARMv4, ARMv5, ARMv6, ARMv7 (when using non-inline assembly; only
-    ARMv7 is fully supported when -DOMPI_DISABLE_INLINE_ASM is used).
+  - ARMv4, ARMv5, ARMv6, ARMv7, ARMv8
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
-    with Oracle Solaris Studio 12.2 and 12.3
+    with Oracle Solaris Studio 12.2, 12.3, and 12.4
 
 Compiler Notes
 --------------
