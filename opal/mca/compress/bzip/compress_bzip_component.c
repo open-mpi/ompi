@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,30 +41,27 @@ opal_compress_bzip_component_t mca_compress_bzip_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itbzip
          */
-        {
+        .base_version = {
             OPAL_COMPRESS_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "bzip",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "bzip",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
             
             /* Component open and close functions */
-            compress_bzip_open,
-            compress_bzip_close,
-            opal_compress_bzip_component_query,
-            compress_bzip_register
+            .mca_open_component = compress_bzip_open,
+            .mca_close_component = compress_bzip_close,
+            .mca_query_component = opal_compress_bzip_component_query,
+            .mca_register_component_params = compress_bzip_register
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1
+
+        .verbose = 0,
+        .output_handle = -1,
     }
 };
 

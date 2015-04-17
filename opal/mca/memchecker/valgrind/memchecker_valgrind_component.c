@@ -1,10 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
- *
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,22 +52,21 @@ const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component =
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
+    .base_version = {
         OPAL_MEMCHECKER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "valgrind",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "valgrind",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        valgrind_open,
-        valgrind_close,
-        opal_memchecker_valgrind_component_query,
-        valgrind_register
+        .mca_open_component = valgrind_open,
+        .mca_close_component = valgrind_close,
+        .mca_query_component = opal_memchecker_valgrind_component_query,
+        .mca_register_component_params = valgrind_register
     },
-    {
+    .base_data = {
         /* Valgrind does not offer functionality to save the state  */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }

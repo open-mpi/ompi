@@ -1171,9 +1171,8 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 #define MCA_BTL_DEFAULT_VERSION(name)                       \
     MCA_BTL_BASE_VERSION_3_0_0,                             \
     .mca_component_name = name,                             \
-    .mca_component_major_version = OPAL_MAJOR_VERSION,      \
-    .mca_component_minor_version = OPAL_MINOR_VERSION,      \
-    .mca_component_release_version = OPAL_RELEASE_VERSION   \
+    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, \
+                          OPAL_RELEASE_VERSION)
 
 END_C_DECLS
 
