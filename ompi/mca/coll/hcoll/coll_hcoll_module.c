@@ -18,6 +18,11 @@ int hcoll_comm_attr_keyval;
  */
 int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
+
+    if (enable_mpi_threads) {
+        HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not suppported; skipping hcoll component");
+        return OMPI_ERROR;
+    }
     return OMPI_SUCCESS;
 }
 
