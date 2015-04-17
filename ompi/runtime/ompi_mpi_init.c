@@ -388,7 +388,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *error = NULL;
     char *cmd=NULL, *av=NULL;
     OPAL_TIMING_DECLARE(tm);
-    OPAL_TIMING_INIT(&tm);
+    OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */

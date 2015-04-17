@@ -59,10 +59,6 @@ struct interval_descr{
     double interval, overhead;
 };
 
-opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t);
-void opal_timing_init(opal_timing_t *t);
-opal_timing_prep_t opal_timing_prep_ev(opal_timing_t *t, const char *fmt, ...);
-
 static OBJ_CLASS_INSTANCE(opal_timing_event_t, opal_list_item_t, NULL, NULL);
 
 
@@ -165,26 +161,45 @@ static double get_ts_cycle(void)
 {
         return ((double) opal_timer_base_get_cycles()) / opal_timer_base_get_freq();
 }
-#elif OPAL_TIMER_USEC_NATIVE
+#endif
+
+#if OPAL_TIMER_USEC_NATIVE
 static double get_ts_usec(void)
 {
         return ((double) opal_timer_base_get_usec()) / 1000000.0;
 }
 #endif
 
-static get_ts_t _init_timestamping(void)
+static get_ts_t _init_timestamping(opal_timer_type_t type)
 {
-    if( !opal_initialized ){
-        return get_ts_gettimeofday;
-    }
-#if OPAL_TIMER_CYCLE_NATIVE
-        return get_ts_cycle;
-#elif OPAL_TIMER_USEC_NATIVE
-        return get_ts_usec;
-#endif
-    return get_ts_gettimeofday;
-}
+    switch (type) {
+        case OPAL_TIMING_GET_TIME_OF_DAY:
+            return get_ts_gettimeofday;
 
+        case OPAL_TIMING_CYCLE_NATIVE:
+#if OPAL_TIMER_CYCLE_NATIVE
+           return get_ts_cycle;
+#else
+           return NULL;
+#endif // OPAL_TIMER_CYCLE_NATIVE
+        case OPAL_TIMING_USEC_NATIVE:
+#if OPAL_TIMER_USEC_NATIVE
+            return get_ts_usec;
+#else
+            return NULL;
+#endif // OPAL_TIMER_USEC_NATIVE
+        default:
+            if( !opal_initialized ){
+                return get_ts_gettimeofday;
+            }
+#if OPAL_TIMER_CYCLE_NATIVE
+            return get_ts_cycle;
+#elif OPAL_TIMER_USEC_NATIVE
+            return get_ts_usec;
+#endif
+            return get_ts_gettimeofday;
+    }
+}
 
 opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
 {
@@ -209,7 +224,7 @@ opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
     return t->buffer + tmp;
 }
 
-void opal_timing_init(opal_timing_t *t)
+int opal_timing_init(opal_timing_t *t, opal_timer_type_t type)
 {
     memset(t,0,sizeof(*t));
 
@@ -223,8 +238,11 @@ void opal_timing_init(opal_timing_t *t)
      * will be allocated at first event report */
     t->buffer_offset = t->buffer_size;
     /* initialize gettime function */
-    t->get_ts = _init_timestamping();
-
+    t->get_ts = _init_timestamping(type);
+    if (NULL == t->get_ts) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    return OPAL_SUCCESS;
 }
 
 opal_timing_prep_t opal_timing_prep_ev(opal_timing_t *t, const char *fmt, ...)

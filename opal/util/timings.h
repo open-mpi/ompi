@@ -16,6 +16,13 @@
 #include "opal/class/opal_list.h"
 #include "opal/runtime/opal_params.h"
 
+typedef enum {
+    OPAL_TIMING_AUTOMATIC_TIMER,
+    OPAL_TIMING_GET_TIME_OF_DAY,
+    OPAL_TIMING_CYCLE_NATIVE,
+    OPAL_TIMING_USEC_NATIVE
+} opal_timer_type_t;
+
 #if OPAL_ENABLE_TIMING
 
 #define OPAL_TIMING_DESCR_MAX 1024
@@ -94,7 +101,7 @@ int opal_timing_set_jobid(char *jid);
  * @retval OPAL_SUCCESS On success
  * @retval OPAL_ERROR On failure
  */
-void opal_timing_init(opal_timing_t *t);
+int opal_timing_init(opal_timing_t *t, opal_timer_type_t type);
 
 /**
  * Prepare timing event, do all printf-like processing.
@@ -278,7 +285,16 @@ void opal_timing_release(opal_timing_t *t);
  *
  * @see opal_timing_init()
  */
-#define OPAL_TIMING_INIT(t) opal_timing_init(t)
+#define OPAL_TIMING_INIT(t) opal_timing_init(t, OPAL_TIMING_AUTOMATIC_TIMER)
+
+/**
+ * Main macro for use in initializing opal timing handler;
+ * will be "compiled out" when OPAL is configured without
+ * --enable-timing.
+ *
+ * @see opal_timing_init()
+ */
+#define OPAL_TIMING_INIT_EXT(t, type) opal_timing_init(t, type)
 
 /**
  * Macro that enqueues event with its description to the specified
@@ -407,6 +423,8 @@ void opal_timing_release(opal_timing_t *t);
 #define OPAL_TIMING_DECLARE_EXT(x, t)
 
 #define OPAL_TIMING_INIT(t)
+
+#define OPAL_TIMING_INIT_EXT(t, type)
 
 #define OPAL_TIMING_EVENT(x)
 
