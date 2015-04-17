@@ -309,7 +309,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
     const unsigned int mtu = send_req->req_mtu;
     const struct timeval aquire_timeout = {0, 500000};
     mca_oob_ud_msg_t *com_msg;
-    int data_len, rc;
+    int data_len;
+    int rc = ORTE_SUCCESS;
 
     opal_output_verbose(10, orte_oob_base_framework.framework_output,
                          "%s oob:ud:send_try sending to %s, tag = %d, "
@@ -504,7 +505,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
         /* send data */
         rc = mca_oob_ud_qp_post_send (send_req->req_qp, send_req->req_wr.send, 0);
         if (ORTE_SUCCESS != rc) {
-            opal_output (0, "error posting send!");
+            opal_output (0, "%s oob:ud:send_try error posting send!",
+		             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             break;
         }
 
@@ -532,7 +534,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
     }
 
     if (ORTE_SUCCESS != rc) {
-        opal_output (0, "send error! rc = %d", rc);
+        opal_output (0, "%s oob:ud:send_try send error! rc = %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
         /* damn */
         return mca_oob_ud_send_complete (send_req, rc);
     }

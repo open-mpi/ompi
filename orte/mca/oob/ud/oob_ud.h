@@ -103,7 +103,7 @@ static inline void mca_oob_ud_fill_sge (struct ibv_sge *sge, void *addr,
 
 struct mca_oob_ud_device_t {
     opal_list_item_t super;
-
+    struct ibv_device_attr  attr;
     struct ibv_context      *ib_context;
     struct ibv_comp_channel *ib_channel;
     struct ibv_pd           *ib_pd;
