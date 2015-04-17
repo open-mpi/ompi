@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
@@ -21,7 +21,6 @@
 #include "mtl_ofi.h"
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_request.h"
-#include "mtl_ofi_message.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -90,12 +89,6 @@ ompi_mtl_ofi_component_open(void)
     ompi_mtl_ofi.base.mtl_request_size =
         sizeof(ompi_mtl_ofi_request_t) - sizeof(struct mca_mtl_request_t);
 
-    OBJ_CONSTRUCT(&ompi_mtl_ofi.free_messages, opal_free_list_t);
-    opal_free_list_init(&ompi_mtl_ofi.free_messages,
-                        sizeof(ompi_mtl_ofi_message_t), 8,
-                        OBJ_CLASS(ompi_mtl_ofi_message_t), 0, 0,
-                        1, -1, 1, NULL, 0, NULL, NULL, NULL);
-
     ompi_mtl_ofi.domain =  NULL;
     ompi_mtl_ofi.av     =  NULL;
     ompi_mtl_ofi.cq     =  NULL;
@@ -116,8 +109,6 @@ ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_ofi_component_close(void)
 {
-    OBJ_DESTRUCT(&ompi_mtl_ofi.free_messages);
-
     return OMPI_SUCCESS;
 }
 

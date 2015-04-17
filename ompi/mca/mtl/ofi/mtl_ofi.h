@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -38,7 +38,6 @@
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_request.h"
 #include "mtl_ofi_endpoint.h"
-#include "mtl_ofi_message.h"
 
 BEGIN_C_DECLS
 
@@ -597,6 +596,54 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
     return OMPI_SUCCESS;
 }
 
+/**
+ * Called when a mrecv request completes.
+ */
+__opal_attribute_always_inline__ static inline int
+ompi_mtl_ofi_mrecv_callback(struct fi_cq_tagged_entry *wc,
+                            ompi_mtl_ofi_request_t *ofi_req)
+{
+    struct mca_mtl_request_t *mrecv_req = ofi_req->mrecv_req;
+    ompi_status_public_t *status = &mrecv_req->ompi_req->req_status;
+    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
+    status->MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
+    status->MPI_ERROR = MPI_SUCCESS;
+    status->_ucount = wc->len;
+
+    free(ofi_req);
+
+    mrecv_req->completion_callback(mrecv_req);
+
+    return OMPI_SUCCESS;
+}
+
+/**
+ * Called when an error occured on a mrecv request.
+ */
+__opal_attribute_always_inline__ static inline int
+ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
+                                  ompi_mtl_ofi_request_t *ofi_req)
+{
+    struct mca_mtl_request_t *mrecv_req = ofi_req->mrecv_req;
+    ompi_status_public_t *status = &mrecv_req->ompi_req->req_status;
+    status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
+    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
+
+    /* FIXME: This could be done on a single line... */
+    switch (error->err) {
+        case FI_EMSGSIZE:
+            status->MPI_ERROR = MPI_ERR_TRUNCATE;
+            break;
+        default:
+            status->MPI_ERROR = MPI_ERR_INTERN;
+    }
+
+    free(ofi_req);
+
+    mrecv_req->completion_callback(mrecv_req);
+
+    return OMPI_SUCCESS;
+}
 
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
@@ -604,13 +651,15 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
                     struct ompi_message_t **message,
                     struct mca_mtl_request_t *mtl_request)
 {
-    ompi_mtl_ofi_request_t *ofi_req = (ompi_mtl_ofi_request_t*) mtl_request;
+    ompi_mtl_ofi_request_t *ofi_req =
+        (ompi_mtl_ofi_request_t *)(*message)->req_ptr;
     void *start;
     size_t length;
     bool free_after;
+    struct iovec iov;
+    struct fi_msg_tagged msg;
     int ret;
-    ompi_mtl_ofi_message_t *ofi_message =
-        (ompi_mtl_ofi_message_t*) (*message)->req_ptr;
+    uint64_t msgflags = FI_CLAIM;
 
     ret = ompi_mtl_datatype_recv_buf(convertor, &start, &length, &free_after);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -618,35 +667,52 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     }
 
     ofi_req->type = OMPI_MTL_OFI_RECV;
-    ofi_req->event_callback = ompi_mtl_ofi_recv_callback;
-    ofi_req->error_callback = ompi_mtl_ofi_recv_error_callback;
+    ofi_req->event_callback = ompi_mtl_ofi_mrecv_callback;
+    ofi_req->error_callback = ompi_mtl_ofi_mrecv_error_callback;
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
     ofi_req->convertor = convertor;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
+    ofi_req->mrecv_req = mtl_request;
 
-    (*message) = MPI_MESSAGE_NULL;
+    /**
+     * fi_trecvmsg with FI_CLAIM
+     */
+    iov.iov_base = start;
+    iov.iov_len = length;
+    msg.msg_iov = &iov;
+    msg.desc = NULL;
+    msg.iov_count = 1;
+    msg.addr = 0;
+    msg.tag = 0;
+    msg.ignore = 0;
+    msg.context = (void *)&ofi_req->ctx;
+    msg.data = 0;
 
-    return ompi_mtl_ofi_recv_callback(&(ofi_message->wc), ofi_req);
+    ret = fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags);
+    if (ret < 0) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: unexpected return code from fi_trecvmsg: %d",
+                            __FILE__, __LINE__, ret);
+        return ompi_mtl_ofi_get_error(-ret);
+    }
+
+    return OMPI_SUCCESS;
 }
 
 /**
- * Called when a probe request completes. Read fi_cq_tagged_entry's
- * data field to determine whether or not a matching message was found.
+ * Called when a probe request completes.
  */
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_probe_callback(struct fi_cq_tagged_entry *wc,
                             ompi_mtl_ofi_request_t *ofi_req)
 {
-    if (wc->data > 0) {
-        ofi_req->match_state = 1;
-        ofi_req->status.MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
-        ofi_req->status.MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
-        ofi_req->status.MPI_ERROR = MPI_SUCCESS;
-        ofi_req->status._ucount = wc->len;
-    } else {
-        ofi_req->match_state = 0;
-    }
+    ofi_req->match_state = 1;
+    ofi_req->match_bits = wc->tag;
+    ofi_req->status.MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
+    ofi_req->status.MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
+    ofi_req->status.MPI_ERROR = MPI_SUCCESS;
+    ofi_req->status._ucount = wc->len;
     ofi_req->completion_count--;
 
     return OMPI_SUCCESS;
@@ -659,8 +725,9 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_probe_error_callback(struct fi_cq_err_entry *error,
                                   ompi_mtl_ofi_request_t *ofi_req)
 {
-    ofi_req->super.ompi_req->req_status.MPI_ERROR = MPI_ERR_INTERN;
+    ofi_req->status.MPI_ERROR = MPI_ERR_INTERN;
     ofi_req->completion_count--;
+
     return OMPI_SUCCESS;
 }
 
@@ -676,9 +743,10 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     fi_addr_t remote_proc = 0;
-    size_t length = 0;
     uint64_t match_bits, mask_bits;
     int ret;
+    struct fi_msg_tagged msg;
+    uint64_t msgflags = FI_PEEK;
 
     /**
      * If the source is known, use its peer_fiaddr.
@@ -691,66 +759,52 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
 
     MTL_OFI_SET_RECV_BITS(match_bits, mask_bits, comm->c_contextid, src, tag);
 
+    /**
+     * fi_trecvmsg with FI_PEEK:
+     * Initiate a search for a match in the hardware or software queue.
+     * The search can complete immediately with -ENOMSG.
+     * If successful, libfabric will enqueue a context entry into the completion
+     * queue to make the search nonblocking.  This code will poll until the
+     * entry is enqueued.
+     */
+    msg.msg_iov = NULL;
+    msg.desc = NULL;
+    msg.iov_count = 0;
+    msg.addr = remote_proc;
+    msg.tag = match_bits;
+    msg.ignore = mask_bits;
+    msg.context = (void *)&ofi_req.ctx;
+    msg.data = 0;
+
     ofi_req.type = OMPI_MTL_OFI_PROBE;
     ofi_req.event_callback = ompi_mtl_ofi_probe_callback;
     ofi_req.error_callback = ompi_mtl_ofi_probe_error_callback;
     ofi_req.completion_count = 1;
     ofi_req.match_state = 0;
 
-    ret = fi_tsearch(ompi_mtl_ofi.ep,
-                     &match_bits,
-                     mask_bits,
-                     0,
-                     &remote_proc,
-                     &length,
-                     (void *)&ofi_req.ctx);
-
-    /**
-     * Probe is a blocking operation. fi_tsearch() is non-blocking.
-     * We inspect the return code and decide what to do.
-     * The request can either:
-     *     - be queued successfully,
-     *     - return no matching message, or
-     *     - return a matching message.
-     */
-    if (0 == ret) {
-        /**
-         * The search request was queued successfully. Wait until complete.
-         */
-        while (0 < ofi_req.completion_count) {
-            opal_progress();
-        }
-
-        *flag = ofi_req.match_state;
-        if (1 == *flag) {
-            *status = ofi_req.status;
-        }
-    } else if (1 == ret) {
-        /**
-         * The search request completed and a matching message was found.
-         */
-        ofi_req.match_state = 1;
-        ofi_req.status.MPI_SOURCE = MTL_OFI_GET_SOURCE(match_bits);
-        ofi_req.status.MPI_TAG = MTL_OFI_GET_TAG(match_bits);
-        ofi_req.status.MPI_ERROR = MPI_SUCCESS;
-        ofi_req.status._ucount = length;
-        *flag = 1;
-        *status = ofi_req.status;
-    } else if (ret < 0 && -FI_ENOMSG == ret) {
+    ret = fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags);
+    if (ret < 0 && -FI_ENOMSG == ret) {
         /**
          * The search request completed but no matching message was found.
          */
         *flag = 0;
-    } else if (ret < 0 && ret != -FI_ENOMSG) {
+        return OMPI_SUCCESS;
+    } else if (ret < 0) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_tsearch failed: %d (%s)",
-                            __FILE__, __LINE__, ret, fi_strerror(ret));
-        return ompi_mtl_ofi_get_error(-ret);
-    } else {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: unexpected return code from fi_tsearch: %d",
+                            "%s:%d: unexpected return code from fi_trecvmsg: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_ofi_get_error(-ret);
+    }
+
+    while (0 < ofi_req.completion_count) {
+        opal_progress();
+    }
+
+    *flag = ofi_req.match_state;
+    if (1 == *flag) {
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ofi_req.status;
+        }
     }
 
     return OMPI_SUCCESS;
@@ -765,13 +819,19 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
                      struct ompi_message_t **message,
                      struct ompi_status_public_t *status)
 {
-    struct ompi_mtl_ofi_request_t ofi_req;
+    struct ompi_mtl_ofi_request_t *ofi_req;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     fi_addr_t remote_proc = 0;
-    size_t length = 0;
     uint64_t match_bits, mask_bits;
     int ret;
+    struct fi_msg_tagged msg;
+    uint64_t msgflags = FI_PEEK | FI_CLAIM;
+
+    ofi_req = malloc(sizeof *ofi_req);
+    if (NULL == ofi_req) {
+        return OMPI_ERROR;
+    }
 
     /**
      * If the source is known, use its peer_fiaddr.
@@ -784,64 +844,52 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
 
     MTL_OFI_SET_RECV_BITS(match_bits, mask_bits, comm->c_contextid, src, tag);
 
-    ofi_req.type = OMPI_MTL_OFI_PROBE;
-    ofi_req.event_callback = ompi_mtl_ofi_probe_callback;
-    ofi_req.error_callback = ompi_mtl_ofi_probe_error_callback;
-    ofi_req.completion_count = 1;
-    ofi_req.match_state = 0;
-
-    ret = fi_tsearch(ompi_mtl_ofi.ep,
-                     &match_bits,
-                     mask_bits,
-                     FI_CLAIM,
-                     &remote_proc,
-                     &length,
-                     (void *)&ofi_req.ctx);
-
     /**
-     * Probe is a blocking operation. fi_tsearch() is non-blocking.
-     * We inspect the return code and decide what to do.
-     * The request can either:
-     *     - be queued successfully,
-     *     - return no matching message, or
-     *     - return a matching message.
+     * fi_trecvmsg with FI_PEEK and FI_CLAIM:
+     * Initiate a search for a match in the hardware or software queue.
+     * The search can complete immediately with -ENOMSG.
+     * If successful, libfabric will enqueue a context entry into the completion
+     * queue to make the search nonblocking.  This code will poll until the
+     * entry is enqueued.
      */
-    if (ret == 0) {
+    msg.msg_iov = NULL;
+    msg.desc = NULL;
+    msg.iov_count = 0;
+    msg.addr = remote_proc;
+    msg.tag = match_bits;
+    msg.ignore = mask_bits;
+    msg.context = (void *)&ofi_req->ctx;
+    msg.data = 0;
+
+    ofi_req->type = OMPI_MTL_OFI_PROBE;
+    ofi_req->event_callback = ompi_mtl_ofi_probe_callback;
+    ofi_req->error_callback = ompi_mtl_ofi_probe_error_callback;
+    ofi_req->completion_count = 1;
+    ofi_req->match_state = 0;
+
+    ret = fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags);
+    if (ret < 0 && -FI_ENOMSG == ret) {
         /**
-         * The search request was queued successfully. Wait until complete.
+         * The search request completed but no matching message was found.
          */
-        while (0 < ofi_req.completion_count) {
-            opal_progress();
+        *matched = 0;
+        return OMPI_SUCCESS;
+    } else if (ret < 0) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: unexpected return code from fi_trecvmsg: %d",
+                            __FILE__, __LINE__, ret);
+        return ompi_mtl_ofi_get_error(-ret);
+    }
+
+    while (0 < ofi_req->completion_count) {
+        opal_progress();
+    }
+
+    *matched = ofi_req->match_state;
+    if (1 == *matched) {
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ofi_req->status;
         }
-        *matched = ofi_req.match_state;
-        if (1 == *matched) {
-            *status = ofi_req.status;
-
-            (*message) = ompi_message_alloc();
-            if (NULL == (*message)) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-
-            (*message)->comm = comm;
-            (*message)->req_ptr = ofi_req.message;
-            (*message)->peer = status->MPI_SOURCE;
-            (*message)->count = status->_ucount;
-
-            if (NULL == (*message)->req_ptr) {
-                ompi_message_return(*message);
-                *message = NULL;
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-        } else {
-            (*message) = MPI_MESSAGE_NULL;
-        }
-    } else if (1 == ret) {
-        /**
-         * The search request completed and a matching message was found.
-         */
-        *matched = 1;
-        *status = ofi_req.status;
-        ofi_req.match_state = 1;
 
         (*message) = ompi_message_alloc();
         if (NULL == (*message)) {
@@ -849,30 +897,12 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
         }
 
         (*message)->comm = comm;
-        (*message)->req_ptr = ofi_req.message;
-        (*message)->peer = status->MPI_SOURCE;
-        (*message)->count = status->_ucount;
+        (*message)->req_ptr = ofi_req;
+        (*message)->peer = ofi_req->status.MPI_SOURCE;
+        (*message)->count = ofi_req->status._ucount;
 
-        if (NULL == (*message)->req_ptr) {
-            ompi_message_return(*message);
-            *message = NULL;
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-    } else if (ret < 0 && ret == -FI_ENOMSG) {
-        /**
-         * The search request completed but no matching message was found.
-         */
-        *matched = 0;
-    } else if (ret < 0 && ret != -FI_ENOMSG) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_tsearch failed: %d (%s)",
-                            __FILE__, __LINE__, ret, fi_strerror(ret));
-        return ompi_mtl_ofi_get_error(-ret);
     } else {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: unexpected return code from fi_tsearch: %d",
-                            __FILE__, __LINE__, ret);
-        return ompi_mtl_ofi_get_error(-ret);
+        (*message) = MPI_MESSAGE_NULL;
     }
 
     return OMPI_SUCCESS;
