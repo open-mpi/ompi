@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 #
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -21,8 +21,6 @@ mtl_ofi_sources = \
 				   mtl_ofi_component.c \
 				   mtl_ofi_endpoint.h \
 				   mtl_ofi_endpoint.c \
-				   mtl_ofi_message.h \
-				   mtl_ofi_message.c \
 				   mtl_ofi_request.h \
 				   mtl_ofi_types.h
 
