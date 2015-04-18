@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2015 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,25 +36,23 @@ static int mca_pml_v_enable(bool enable);
 
 mca_pml_base_component_2_0_0_t mca_pml_v_component =
 {
-  /* First, the mca_base_component_t struct containing meta
-   * information about the component itself */
-  {
-    MCA_PML_BASE_VERSION_2_0_0,
-    "v", /* MCA component name */
-    OMPI_MAJOR_VERSION,  /* MCA component major version */
-    OMPI_MINOR_VERSION,  /* MCA component minor version */
-    OMPI_RELEASE_VERSION,  /* MCA component release version */
-    mca_pml_v_component_open,
-    mca_pml_v_component_close,
-    NULL,
-    mca_pml_v_component_register
-  },
-  {
-      MCA_BASE_METADATA_PARAM_NONE /* Component is not checkpointable */
-  },
+    /* First, the mca_base_component_t struct containing meta
+     * information about the component itself */
+    .pmlm_version = {
+        MCA_PML_BASE_VERSION_2_0_0,
+        .mca_component_name = "v",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_open_component = mca_pml_v_component_open,
+        .mca_close_component = mca_pml_v_component_close,
+        .mca_register_component_params = mca_pml_v_component_register,
+    },
+    .pmlm_data = {
+        MCA_BASE_METADATA_PARAM_NONE /* Component is not checkpointable */
+    },
 
-  mca_pml_v_component_init,  /* component init */
-  mca_pml_v_component_finalize   /* component finalize */
+    .pmlm_init = mca_pml_v_component_init,
+    .pmlm_finalize = mca_pml_v_component_finalize,
 };
 
 static bool pml_v_enable_progress_treads = OPAL_ENABLE_PROGRESS_THREADS;

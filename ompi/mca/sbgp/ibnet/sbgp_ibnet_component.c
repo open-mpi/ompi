@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,27 +65,25 @@ mca_sbgp_ibnet_component_t mca_sbgp_ibnet_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .sbgp_version = {
             MCA_SBGP_BASE_VERSION_2_0_0,
 
             /* Component name and version */
 
-            "ibnet",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "ibnet",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
 
-            mca_sbgp_ibnet_open,            /* mca_open_component */
-            mca_sbgp_ibnet_close,           /* mca_close_component */
-            NULL,                           /* mca_query_component */
-            mca_sbgp_ibnet_register_params, /* mca_register_component_params */
+            .mca_open_component = mca_sbgp_ibnet_open,
+            .mca_close_component = mca_sbgp_ibnet_close,
+            .mca_register_component_params = mca_sbgp_ibnet_register_params,
         },
 
-        mca_sbgp_ibnet_init_query,          /* sbgp_init_query */
-        mca_sbgp_ibnet_select_procs,        /* select_procs */
-        0,                                  /* (default) priority */
+        .sbgp_init_query = mca_sbgp_ibnet_init_query,
+        .select_procs =mca_sbgp_ibnet_select_procs,
+        .priority = 0,
     },
 
     /* verbose mode */

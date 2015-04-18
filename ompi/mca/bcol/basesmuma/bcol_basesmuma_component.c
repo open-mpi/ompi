@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -76,33 +76,29 @@ mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .bcol_version = {
             MCA_BCOL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
 
-            "basesmuma",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "basesmuma",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
 
-            basesmuma_open,
-            basesmuma_close,
-            NULL,
-            basesmuma_register
+            .mca_open_component = basesmuma_open,
+            .mca_close_component = basesmuma_close,
+            .mca_register_component_params = basesmuma_register,
         },
 
         /* Initialization / querying functions */
 
-        mca_bcol_basesmuma_init_query,
-        mca_bcol_basesmuma_comm_query,
-        NULL,
-        NULL,
-        false,
-        false,
-        0, /* (default) priority */
+        .collm_init_query = mca_bcol_basesmuma_init_query,
+        .collm_comm_query = mca_bcol_basesmuma_comm_query,
+        .init_done = false,
+        .need_ordering = false,
+        .priority = 0, /* (default) priority */
     },
 };
 

@@ -53,29 +53,27 @@ mca_coll_portals4_component_t mca_coll_portals4_component = {
         /* First, the mca_component_t struct containing meta information
          * about the component itself */
 
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "portals4",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "portals4",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
-            portals4_open,
-            portals4_close,
-            NULL,
-            portals4_register
+            .mca_open_component = portals4_open,
+            .mca_close_component = portals4_close,
+            .mca_register_component_params = portals4_register
         },
-        {
+        .collm_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
-        portals4_init_query,
-        portals4_comm_query
+        .collm_init_query = portals4_init_query,
+        .collm_comm_query = portals4_comm_query,
     }, 
 };
 

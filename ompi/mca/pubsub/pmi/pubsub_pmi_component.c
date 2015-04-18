@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -29,22 +29,21 @@ static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 static int my_priority = 100;  /* must be above "orte" component */
 
 ompi_pubsub_base_component_t mca_pubsub_pmi_component = {
-    {
+    .base_version = {
         OMPI_PUBSUB_BASE_VERSION_2_0_0,
         
-        "pmi", /* MCA component name */
-        OMPI_MAJOR_VERSION,  /* MCA component major version */
-        OMPI_MINOR_VERSION,  /* MCA component minor version */
-        OMPI_RELEASE_VERSION,  /* MCA component release version */
-        pubsub_pmi_component_open,  /* component open */
-        pubsub_pmi_component_close, /* component close */
-        pubsub_pmi_component_query, /* component query */
-        pubsub_pmi_component_register /* component register */
+        .mca_component_name = "pmi",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_open_component = pubsub_pmi_component_open,
+        .mca_close_component = pubsub_pmi_component_close,
+        .mca_query_component = pubsub_pmi_component_query,
+        .mca_register_component_params = pubsub_pmi_component_register,
     },
-    {
+    .base_data = {
         /* This component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int pubsub_pmi_component_register(void)

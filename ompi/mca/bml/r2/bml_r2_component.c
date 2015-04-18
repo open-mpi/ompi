@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,23 +34,21 @@ mca_bml_base_component_2_0_0_t mca_bml_r2_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
-    {
+    .bml_version = {
         MCA_BML_BASE_VERSION_2_0_0,
 
-        "r2", /* MCA component name */
-        OMPI_MAJOR_VERSION,  /* MCA component major version */
-        OMPI_MINOR_VERSION,  /* MCA component minor version */
-        OMPI_RELEASE_VERSION,  /* MCA component release version */
-        mca_bml_r2_component_open,  /* component open */
-        mca_bml_r2_component_close, /* component close */
-        NULL,
-        mca_bml_r2_component_register
+        .mca_component_name = "r2",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_open_component = mca_bml_r2_component_open,
+        .mca_close_component = mca_bml_r2_component_close,
+        .mca_register_component_params = mca_bml_r2_component_register,
     },
-    {
+    .bml_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    mca_bml_r2_component_init
+    .bml_init = mca_bml_r2_component_init,
 };
 
 static int mca_bml_r2_component_register(void)

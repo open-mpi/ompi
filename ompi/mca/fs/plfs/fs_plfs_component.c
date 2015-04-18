@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,23 +50,22 @@ mca_fs_base_component_2_0_0_t mca_fs_plfs_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .fsm_version = {
         MCA_FS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "plfs",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        .mca_component_name = "plfs",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
         .mca_register_component_params = plfs_register,
     },
-    {
+    .fsm_data = {
         /* This component is checkpointable */
       MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    mca_fs_plfs_component_init_query,      /* get thread level */
-    mca_fs_plfs_component_file_query,      /* get priority and actions */
-    mca_fs_plfs_component_file_unquery     /* undo what was done by previous function */
+    .fsm_init_query = mca_fs_plfs_component_init_query,      /* get thread level */
+    .fsm_file_query = mca_fs_plfs_component_file_query,      /* get priority and actions */
+    .fsm_file_unquery = mca_fs_plfs_component_file_unquery,  /* undo what was done by previous function */
 };
 
 static int

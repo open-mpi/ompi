@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -6,6 +7,8 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,24 +37,22 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
  */
 mca_topo_basic_component_t mca_topo_basic_component = 
 {
-    {
+    .topoc_version = {
         MCA_TOPO_BASE_VERSION_2_2_0,
-
-        "basic",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-
+        .mca_component_name = "basic",
+        .mca_component_major_version = OMPI_MAJOR_VERSION,
+        .mca_component_minor_version = OMPI_MINOR_VERSION,
+        .mca_component_release_version = OMPI_RELEASE_VERSION,
         /* NULLs for the rest of the function pointers */
     },
 
-    {
+    .topoc_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    init_query,
-    comm_query
+    .topoc_init_query = init_query,
+    .topoc_comm_query = comm_query,
 };
 
 

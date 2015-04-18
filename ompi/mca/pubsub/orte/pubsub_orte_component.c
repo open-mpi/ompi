@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,22 +36,21 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
 
-        {
-          OMPI_PUBSUB_BASE_VERSION_2_0_0,
+        .base_version = {
+            OMPI_PUBSUB_BASE_VERSION_2_0_0,
         
-          "orte", /* MCA component name */
-          OMPI_MAJOR_VERSION,  /* MCA component major version */
-          OMPI_MINOR_VERSION,  /* MCA component minor version */
-          OMPI_RELEASE_VERSION,  /* MCA component release version */
-          pubsub_orte_component_open,  /* component open */
-          pubsub_orte_component_close, /* component close */
-          pubsub_orte_component_query, /* component query */
-          pubsub_orte_component_register /* component register */
+            .mca_component_name = "orte",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = pubsub_orte_component_open,
+            .mca_close_component = pubsub_orte_component_close,
+            .mca_query_component = pubsub_orte_component_query,
+            .mca_register_component_params = pubsub_orte_component_register,
         },
-        {
+        .base_data = {
             /* This component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

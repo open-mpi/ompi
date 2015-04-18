@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,25 +51,23 @@ ompi_op_x86_component_t mca_op_x86_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
     {
-        {
+        .opc_version = {
             OMPI_OP_BASE_VERSION_1_0_0,
-            
-            "x86",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
-            x86_component_open,
-            x86_component_close,
-            NULL,
-            x86_component_register
+
+            .mca_component_name = "x86",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = x86_component_open,
+            .mca_close_component = x86_component_close,
+            .mca_register_component_params = x86_component_register,
         },
-        {
+        .opc_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        x86_component_init_query,
-        x86_component_op_query,
+
+        .opc_init_query = x86_component_init_query,
+        .opc_op_query = x86_component_op_query,
     },
 
     /* Now comes the x86-component-specific data.  In this case,

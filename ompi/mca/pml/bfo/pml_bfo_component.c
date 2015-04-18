@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +14,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,26 +60,23 @@ mca_pml_base_component_2_0_0_t mca_pml_bfo_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
-    {
-      MCA_PML_BASE_VERSION_2_0_0,
-    
-      "bfo", /* MCA component name */
-      OMPI_MAJOR_VERSION,  /* MCA component major version */
-      OMPI_MINOR_VERSION,  /* MCA component minor version */
-      OMPI_RELEASE_VERSION,  /* MCA component release version */
-      mca_pml_bfo_component_open,  /* component open */
-      mca_pml_bfo_component_close, /* component close */
-      NULL,
-      mca_pml_bfo_component_register
+    .pmlm_version = {
+        MCA_PML_BASE_VERSION_2_0_0,
+
+        .mca_component_name = "bfo",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_open_component = mca_pml_bfo_component_open,
+        .mca_close_component = mca_pml_bfo_component_close,
+        .mca_register_component_params = mca_pml_bfo_component_register,
     },
-    {
+    .pmlm_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    mca_pml_bfo_component_init,  /* component init */
-    mca_pml_bfo_component_fini   /* component finalize */
-    
+    .pmlm_init = mca_pml_bfo_component_init,
+    .pmlm_finalize = mca_pml_bfo_component_fini,
 };
 
 void *mca_pml_bfo_seg_alloc( struct mca_mpool_base_module_t* mpool,

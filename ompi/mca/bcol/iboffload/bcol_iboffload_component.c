@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
@@ -7,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,25 +97,23 @@ mca_bcol_iboffload_component_t mca_bcol_iboffload_component = {
 
             /* Component name and version */
 
-            "iboffload",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "iboffload",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
 
-            iboffload_open,
-            iboffload_close,
-            NULL, /* query */
-            mca_bcol_iboffload_register_params,
+            .mca_open_component = iboffload_open,
+            .mca_close_component = iboffload_close,
+            .mca_register_component_params = mca_bcol_iboffload_register_params,
         },
 
-        mca_bcol_iboffload_init_query,
-        mca_bcol_iboffload_comm_query,
-        mca_bcol_iboffload_coll_supported,
-        mca_bcol_iboffload_coll_support_all_types,
-        false,
-        true, /* collective calls with iboffload should to be ordered */
+        .collm_init_query = mca_bcol_iboffload_init_query,
+        .collm_comm_query = mca_bcol_iboffload_comm_query,
+        .coll_support = mca_bcol_iboffload_coll_supported,
+        .coll_support_all_types = mca_bcol_iboffload_coll_support_all_types,
+        .init_done = false,
+        .need_ordering = true, /* collective calls with iboffload should to be ordered */
     },
     /* iboffload-component specifc information */
     .verbose = 0, /* verbose */
