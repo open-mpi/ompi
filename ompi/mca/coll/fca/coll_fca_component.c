@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1056,30 +1059,28 @@ mca_coll_fca_component_t mca_coll_fca_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itfca */
     {
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "fca",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "fca",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
-            fca_open,
-            fca_close,
-            NULL,
-            fca_register     
+            .mca_open_component = fca_open,
+            .mca_close_component = fca_close,
+            .mca_register_component_params = fca_register,
         },
-        {
+        .collm_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
 
-        mca_coll_fca_init_query,
-        mca_coll_fca_comm_query,
+        .collm_init_query = mca_coll_fca_init_query,
+        .collm_comm_query = mca_coll_fca_comm_query,
     }
 };
 

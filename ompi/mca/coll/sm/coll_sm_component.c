@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -61,30 +62,27 @@ mca_coll_sm_component_t mca_coll_sm_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
         
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "sm",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "sm",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component functions */
-            NULL, /* open */
-            sm_close,
-            NULL, /* query */
-            sm_register
+            .mca_close_component = sm_close,
+            .mca_query_component = sm_register,
         },
-        {
+        .collm_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
-        
-        mca_coll_sm_init_query,
-        mca_coll_sm_comm_query,
+
+        .collm_init_query = mca_coll_sm_init_query,
+        .collm_comm_query = mca_coll_sm_comm_query,
     },
 
     /* sm-component specifc information */

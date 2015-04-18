@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,30 +60,26 @@ const mca_coll_base_component_2_0_0_t mca_coll_self_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .collm_version = {
         MCA_COLL_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "self",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        .mca_component_name = "self",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
 
         /* Component open and close functions */
-        NULL,
-        NULL,
-        NULL,
-        self_register
+        .mca_register_component_params = self_register,
     },
-    {
+    .collm_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
     /* Initialization / querying functions */
 
-    mca_coll_self_init_query,
-    mca_coll_self_comm_query
+    .collm_init_query = mca_coll_self_init_query,
+    .collm_comm_query = mca_coll_self_comm_query,
 };
 
 static int self_register(void)

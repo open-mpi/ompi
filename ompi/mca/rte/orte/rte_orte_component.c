@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -49,22 +52,19 @@ ompi_rte_orte_component_t mca_rte_orte_component = {
         /* First, the mca_component_t struct containing meta information
            about the component itself */
 
-        {
+        .base_version = {
             OMPI_RTE_BASE_VERSION_1_0_0,
 
             /* Component name and version */
-            "orte",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "orte",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
-            rte_orte_open,
-            rte_orte_close,
-            NULL,
-            NULL
+            .mca_open_component = rte_orte_open,
+            .mca_close_component = rte_orte_close,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },

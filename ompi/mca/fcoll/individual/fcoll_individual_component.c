@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,24 +59,23 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component = {
     /* First, the mca_component_t struct containing meta information
      * about the component itself */
 
-    {
-     MCA_FCOLL_BASE_VERSION_2_0_0,
+    .fcollm_version = {
+        MCA_FCOLL_BASE_VERSION_2_0_0,
 
-     /* Component name and version */
-     "individual",
-     OMPI_MAJOR_VERSION,
-     OMPI_MINOR_VERSION,
-     OMPI_RELEASE_VERSION,
-     .mca_register_component_params = individual_register,
+        /* Component name and version */
+        .mca_component_name = "individual",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_register_component_params = individual_register,
     },
-    {
+    .fcollm_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    mca_fcoll_individual_component_init_query,
-    mca_fcoll_individual_component_file_query,
-    mca_fcoll_individual_component_file_unquery
+    .fcollm_init_query = mca_fcoll_individual_component_init_query,
+    .fcollm_file_query = mca_fcoll_individual_component_file_query,
+    .fcollm_file_unquery = mca_fcoll_individual_component_file_unquery,
 };
 
 
