@@ -458,7 +458,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
     } else if (NULL != prefix_dir) {
         asprintf(&lib_base, "%s/%s", prefix_dir, param);
     }
-
+    free(param);
+    
     /* we now need to assemble the actual cmd that will be executed - this depends
      * upon whether or not a prefix directory is being used
      */
@@ -470,6 +471,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
 
         value = opal_basename(opal_install_dirs.bindir);
         asprintf(&bin_base, "%s/%s", prefix_dir, value);
+        free(value);
         
         if (NULL != orted_cmd) {
             if (0 == strcmp(orted_cmd, "orted")) {
@@ -477,9 +479,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
                 (void)asprintf(&full_orted_cmd, "%s/%s", bin_base, orted_cmd);
             } else {
                 /* someone specified something different, so don't prefix it */
-                full_orted_cmd = strdup(orted_cmd);
+                full_orted_cmd = orted_cmd;
+                orted_cmd = NULL;
             }
         }
+    } else {
+        full_orted_cmd = orted_cmd;
+        orted_cmd = NULL;
     }
 
     if (NULL != lib_base || NULL != bin_base) {
@@ -575,7 +581,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
         /* no prefix directory, so just aggregate the result */
         asprintf(&final_cmd, "%s %s",
                  (orted_prefix != NULL ? orted_prefix : ""),
-                 (orted_cmd != NULL ? orted_cmd : ""));
+                 (full_orted_cmd != NULL ? full_orted_cmd : ""));
+        if (NULL != full_orted_cmd) free(full_orted_cmd);
     }
     /* now add the final cmd to the argv array */
     opal_argv_append(&argc, &argv, final_cmd);
