@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009     Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,24 +43,21 @@ static int smtp_register(void);
  */
 orte_notifier_smtp_component_t mca_notifier_smtp_component = {
     {
-        {
+        .base_version = {
             ORTE_NOTIFIER_BASE_VERSION_1_0_0,
-            
-            "smtp",
-            
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            
-            NULL,
-            smtp_close,
-            smtp_component_query,
-            smtp_register,
+
+            .mca_component_name = "smtp",
+
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_close_component = smtp_close,
+            .mca_query_component = smtp_component_query,
+            .mca_register_component_params = smtp_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     },
 };
 

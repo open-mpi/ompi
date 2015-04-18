@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,25 +41,23 @@ static int orte_rml_ftrm_close(void);
 orte_rml_component_t mca_rml_ftrm_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
-      {
+    .rml_version = {
         ORTE_RML_BASE_VERSION_2_0_0,
 
-        "ftrm", /* MCA component name */
-        ORTE_MAJOR_VERSION,    /* MCA component major version */
-        ORTE_MINOR_VERSION,    /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
+        .mca_component_name = "ftrm",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
-        orte_rml_ftrm_open,    /* component open */
-        orte_rml_ftrm_close,   /* component close */
-        NULL,
-        orte_rml_ftrm_register,
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
+        .mca_open_component = orte_rml_ftrm_open,
+        .mca_close_component = orte_rml_ftrm_close,
+        .mca_register_component_params = orte_rml_ftrm_register,
+    },
+    .rml_data = {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    },
 
-      orte_rml_ftrm_component_init
+    .rml_init = orte_rml_ftrm_component_init,
 };
 
 orte_rml_module_t orte_rml_ftrm_module = {

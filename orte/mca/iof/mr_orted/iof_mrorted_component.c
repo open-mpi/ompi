@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -34,23 +35,22 @@ const char *mca_iof_mr_orted_component_version_string =
 
 orte_iof_mrorted_component_t mca_iof_mr_orted_component = {
     {
-        {
+        .iof_version = {
             ORTE_IOF_BASE_VERSION_2_0_0,
-            
-            "mr_orted", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            
+
+            .mca_component_name = "mr_orted",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
             /* Component open, close, and query functions */
-            mr_orted_open,
-            mr_orted_close,
-            mr_orted_query
+            .mca_open_component = mr_orted_open,
+            .mca_close_component = mr_orted_close,
+            .mca_query_component = mr_orted_query,
         },
-        {
+        .iof_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

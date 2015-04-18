@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,22 +55,21 @@ orte_rmaps_rf_component_t mca_rmaps_rank_file_component = {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
 
-        {
+        .base_version = {
             ORTE_RMAPS_BASE_VERSION_2_0_0,
 
-            "rank_file", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            orte_rmaps_rank_file_open,  /* component open  */
-            orte_rmaps_rank_file_close, /* component close */
-            orte_rmaps_rank_file_query, /* component query */
-            orte_rmaps_rank_file_register
+            .mca_component_name = "rank_file",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = orte_rmaps_rank_file_open,
+            .mca_close_component = orte_rmaps_rank_file_close,
+            .mca_query_component = orte_rmaps_rank_file_query,
+            .mca_register_component_params = orte_rmaps_rank_file_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 
