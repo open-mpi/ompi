@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,30 +54,25 @@ mca_sshmem_mmap_component_t mca_sshmem_mmap_component = {
         /**
          * common MCA component data
          */
-        {
+        .base_version = {
             MCA_SSHMEM_BASE_VERSION_2_0_0,
 
             /* component name and version */
-            "mmap",
-            OSHMEM_MAJOR_VERSION,
-            OSHMEM_MINOR_VERSION,
-            OSHMEM_RELEASE_VERSION,
+            .mca_component_name = "mmap",
+            MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                                  OSHMEM_RELEASE_VERSION),
 
-            /* component open */
-            mmap_open,
-            /* component close */
-            mmap_close,
-            /* component query */
-            mmap_query,
-            /* component register */
-            mmap_register
+            .mca_open_component = mmap_open,
+            .mca_close_component = mmap_close,
+            .mca_query_component = mmap_query,
+            .mca_register_component_params = mmap_register,
         },
         /* MCA v2.0.0 component meta data */
-        {
+        .base_data = {
             /* the component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        mmap_runtime_query,
+        .runtime_query = mmap_runtime_query,
     },
 };
 

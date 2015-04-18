@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,29 +66,24 @@ mca_sshmem_sysv_component_t mca_sshmem_sysv_component = {
     /* ////////////////////////////////////////////////////////////////////// */
     {
         /* common MCA component data */
-        {
+        .base_version = {
             MCA_SSHMEM_BASE_VERSION_2_0_0,
 
             /* component name and version */
-            "sysv",
-            OSHMEM_MAJOR_VERSION,
-            OSHMEM_MINOR_VERSION,
-            OSHMEM_RELEASE_VERSION,
+            .mca_component_name = "sysv",
+            MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                                  OSHMEM_RELEASE_VERSION),
 
-            /* component open */
-            sysv_open,
-            /* component close */
-            NULL,
-            /* component query */
-            sysv_query,
-            sysv_register
+            .mca_open_component = sysv_open,
+            .mca_query_component = sysv_query,
+            .mca_register_component_params = sysv_register,
         },
         /* MCA v2.0.0 component meta data */
-        {
+        .base_data = {
             /* the component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        sysv_runtime_query,
+        .runtime_query = sysv_runtime_query,
     },
     /* ////////////////////////////////////////////////////////////////////// */
     /* sysv component-specific information */

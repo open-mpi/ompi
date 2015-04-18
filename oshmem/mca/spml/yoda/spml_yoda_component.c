@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,26 +33,23 @@ mca_spml_base_component_2_0_0_t mca_spml_yoda_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
-    {
+    .spmlm_version = {
         MCA_SPML_BASE_VERSION_2_0_0,
 
-        "yoda",                        /* MCA component name */
-        OSHMEM_MAJOR_VERSION,          /* MCA component major version */
-        OSHMEM_MINOR_VERSION,          /* MCA component minor version */
-        OSHMEM_RELEASE_VERSION,        /* MCA component release version */
-        mca_spml_yoda_component_open,  /* component open */
-        mca_spml_yoda_component_close, /* component close */
-        NULL,
-        mca_spml_yoda_component_register
+        .mca_component_name = "yoda",
+        MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                              OSHMEM_RELEASE_VERSION),
+        .mca_open_component = mca_spml_yoda_component_open,
+        .mca_close_component = mca_spml_yoda_component_close,
+        .mca_register_component_params = mca_spml_yoda_component_register,
     },
-    {
+    .spmlm_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    mca_spml_yoda_component_init,    /* component init */
-    mca_spml_yoda_component_fini     /* component finalize */
-
+    .spmlm_init = mca_spml_yoda_component_init,
+    .spmlm_finalize = mca_spml_yoda_component_fini,
 };
 
 static inline void mca_spml_yoda_param_register_int(const char *param_name,

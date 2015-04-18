@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,34 +48,27 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .atomic_version = {
         MCA_ATOMIC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "mxm",
-        OSHMEM_MAJOR_VERSION,
-        OSHMEM_MINOR_VERSION,
-        OSHMEM_RELEASE_VERSION,
+        .mca_component_name = "mxm",
+        MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                              OSHMEM_RELEASE_VERSION),
 
-        /* component open */
-        _mxm_open,
-        /* component close */
-        NULL,
-        /* component query */
-        NULL,
-        /* component register */
-        _mxm_register
+        .mca_open_component = _mxm_open,
+        .mca_register_component_params = _mxm_register,
     },
-    {
+    .atomic_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
     /* Initialization / querying functions */
 
-    mca_atomic_mxm_init,
-    mca_atomic_mxm_finalize,
-    mca_atomic_mxm_query
+    .atomic_init = mca_atomic_mxm_init,
+    .atomic_finalize  = mca_atomic_mxm_finalize,
+    .atomic_query = mca_atomic_mxm_query,
 };
 
 static int _mxm_register(void)
