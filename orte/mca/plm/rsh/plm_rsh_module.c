@@ -332,7 +332,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char **argv;
     char *param, *value;
     orte_plm_rsh_shell_t remote_shell, local_shell;
-    char *lib_base, *bin_base;
     int orted_argc;
     char **orted_argv;
     char *orted_cmd, *orted_prefix, *final_cmd;
@@ -621,12 +620,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * only if they aren't already present
          */
         for (i = 0; NULL != environ[i]; ++i) {
-            if (0 == strncmp(OPAL_MCA_PREFIX"mca_base_env_list", environ[i],
-                             strlen(OPAL_MCA_PREFIX"mca_base_env_list"))) {
+            if (0 == strncmp("OMPI_MCA_mca_base_env_list", environ[i],
+                             strlen("OMPI_MCA_mca_base_env_list"))) {
                 /* ignore this one */
                 continue;
             }
-            if (0 == strncmp(OPAL_MCA_PREFIX, environ[i], 9)) {
+            if (0 == strncmp("OMPI_MCA_", environ[i], 9)) {
                 /* check for duplicate in app->env - this
                  * would have been placed there by the
                  * cmd line processor. By convention, we
