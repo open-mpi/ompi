@@ -109,7 +109,7 @@ opal_finalize_util(void)
     /* close the dss */
     opal_dss_close();
 
-#if !(OPAL_HAVE_LD_FINI || OPAL_HAVE_ATTRIBUTE_DESTRUCTOR)
+#if OPAL_NO_LIB_DESTRUCTOR
     opal_cleanup ();
 #endif
 
