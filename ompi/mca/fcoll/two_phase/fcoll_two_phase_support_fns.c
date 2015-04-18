@@ -359,12 +359,12 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					  int num_aggregators,
 					  int *aggregator_list)
 {
-    
+    int ret = MPI_SUCCESS;
     int *count_my_req_per_proc, count_my_req_procs;
     size_t *buf_idx = NULL;
     int i, l, proc;
     OMPI_MPI_OFFSET_TYPE fd_len, rem_len, curr_idx, off;
-    mca_io_ompio_access_array_t *my_req;
+    mca_io_ompio_access_array_t *my_req = NULL;
     
     
     *count_my_req_per_proc_ptr = (int*)malloc(fh->f_size*sizeof(int)); 
@@ -415,7 +415,8 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
     *my_req_ptr =  (mca_io_ompio_access_array_t *)
 	malloc (fh->f_size * sizeof(mca_io_ompio_access_array_t));
     if ( NULL == *my_req_ptr ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto err_exit;
     }
     my_req = *my_req_ptr;
     
@@ -426,14 +427,16 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 		malloc(count_my_req_per_proc[i] * sizeof(OMPI_MPI_OFFSET_TYPE));
 	    
 	    if ( NULL == my_req[i].offsets ) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
+	        ret =  OMPI_ERR_OUT_OF_RESOURCE;
+                goto err_exit;
 	    }
 
 	    my_req[i].lens = (int *)
 		malloc(count_my_req_per_proc[i] * sizeof(int));
 
 	    if ( NULL == my_req[i].lens ) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
+	        ret =  OMPI_ERR_OUT_OF_RESOURCE;
+                goto err_exit;
 	    }
 	    count_my_req_procs++;
 	}
@@ -502,6 +505,21 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
     *count_my_req_procs_ptr = count_my_req_procs;
     *buf_indices = buf_idx;
     
-    return OMPI_SUCCESS;
+    return ret;
+err_exit:
+    if (NULL != my_req) {
+        for (i = 0; i < fh->f_size; i++) {
+            if (NULL != my_req[i].offsets) {
+                free(my_req[i].offsets);
+            }
+            if (NULL != my_req[i].lens) {
+                free(my_req[i].lens);
+            }
+        }
+    }
+    if (NULL != buf_idx) {
+        free(buf_idx);
+    }
+    return ret;
 }
-/*Two-phase support functions ends here!*/				    
+/*Two-phase support functions ends here!*/
