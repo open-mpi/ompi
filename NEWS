@@ -127,6 +127,8 @@ included in the vX.Y.Z section and be denoted as:
     noticing and sending a patch.
   - Updated configure paths in HACKING.  Thanks to Maximilien Levesque
     for the fix.
+  - Fixed Fortran typo in MPI_WIN_LOCK_ALL.  Thanks to Thomas Jahns
+    for pointing out the issue.
 - Fixed a number of MPI one-sided bugs.
 - Fixed MPI_COMM_SPAWN when invoked from a singleton job.
 - Fixed a number of minor issues with CUDA support, including
