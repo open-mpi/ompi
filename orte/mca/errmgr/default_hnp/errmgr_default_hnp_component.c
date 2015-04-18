@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -38,21 +41,20 @@ orte_errmgr_base_component_t mca_errmgr_default_hnp_component = {
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component default_hnp
      */
-    {
+    .base_version = {
         ORTE_ERRMGR_BASE_VERSION_3_0_0,
         /* Component name and version */
-        "default_hnp",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
+        .mca_component_name = "default_hnp",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+
         /* Component open and close functions */
-        default_hnp_open,
-        default_hnp_close,
-        default_hnp_component_query,
-        default_hnp_register
+        .mca_open_component = default_hnp_open,
+        .mca_close_component = default_hnp_close,
+        .mca_query_component = default_hnp_component_query,
+        .mca_register_component_params = default_hnp_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

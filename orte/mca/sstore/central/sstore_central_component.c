@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,29 +42,26 @@ orte_sstore_central_component_t mca_sstore_central_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itcentral
          */
-        {
+        .base_version = {
             ORTE_SSTORE_BASE_VERSION_2_0_0,
             /* Component name and version */
-            "central",
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            
+            .mca_component_name = "central",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
             /* Component open and close functions */
-            sstore_central_open,
-            sstore_central_close,
-            orte_sstore_central_component_query,
-            sstore_central_register
+            .mca_open_component = sstore_central_open,
+            .mca_close_component = sstore_central_close,
+            .mca_query_component = orte_sstore_central_component_query,
+            .mca_register_component_params = sstore_central_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1
+        .verbose = 0,
+        .output_handle = -1,
     },
 };
 

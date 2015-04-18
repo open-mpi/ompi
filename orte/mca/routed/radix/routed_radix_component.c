@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -31,22 +32,19 @@ orte_routed_radix_component_t mca_routed_radix_component = {
         /* First, the mca_base_component_t struct containing meta
         information about the component itself */
 
-        {
-        ORTE_ROUTED_BASE_VERSION_2_0_0,
+        .base_version = {
+            ORTE_ROUTED_BASE_VERSION_2_0_0,
 
-        "radix", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        NULL,
-        NULL,
-        orte_routed_radix_component_query,
-        orte_routed_radix_component_register
+            .mca_component_name = "radix",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_query_component = orte_routed_radix_component_query,
+            .mca_register_component_params = orte_routed_radix_component_register,
         },
-        {
-        /* This component can be checkpointed */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        .base_data = {
+            /* This component can be checkpointed */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
     }
 };
 

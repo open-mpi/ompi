@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -35,26 +36,24 @@ const char *mca_iof_mr_hnp_component_version_string =
 orte_iof_mrhnp_component_t mca_iof_mr_hnp_component = {
     {
         /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+           information about the component itself */
         
-        {
+        .iof_version = {
             ORTE_IOF_BASE_VERSION_2_0_0,
-            
-            "mr_hnp", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            
+
+            .mca_component_name = "mr_hnp",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
             /* Component open, close, and query functions */
-            mrhnp_open,
-            mrhnp_close,
-            mrhnp_query 
+            .mca_open_component = mrhnp_open,
+            .mca_close_component = mrhnp_close,
+            .mca_query_component = mrhnp_query,
         },
-        {
+        .iof_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
     }
 };
 

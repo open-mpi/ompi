@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -28,21 +28,18 @@ orte_routed_component_t mca_routed_debruijn_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
-      {
+    .base_version = {
         ORTE_ROUTED_BASE_VERSION_2_0_0,
 
-        "debruijn", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        NULL,
-        NULL,
-        orte_routed_debruijn_component_query
-      },
-      {
-          /* This component can be checkpointed */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      }
+        .mca_component_name = "debruijn",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_query_component = orte_routed_debruijn_component_query
+    },
+    .base_data = {
+        /* This component can be checkpointed */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    },
 };
 
 static int orte_routed_debruijn_component_query(mca_base_module_t **module, int *priority)

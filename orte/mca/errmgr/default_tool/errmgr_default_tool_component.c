@@ -38,21 +38,20 @@ orte_errmgr_base_component_t mca_errmgr_default_tool_component =
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component
      */
-    {
+    .base_version = {
         ORTE_ERRMGR_BASE_VERSION_3_0_0,
         /* Component name and version */
-        "default_tool",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
+        .mca_component_name = "default_tool",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+
         /* Component open and close functions */
-        errmgr_default_tool_open,
-        errmgr_default_tool_close,
-        errmgr_default_tool_component_query,
-        errmgr_default_tool_register
+        .mca_open_component = errmgr_default_tool_open,
+        .mca_close_component = errmgr_default_tool_close,
+        .mca_query_component = errmgr_default_tool_component_query,
+        .mca_register_component_params = errmgr_default_tool_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

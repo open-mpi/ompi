@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,24 +68,23 @@ orte_plm_lsf_component_t mca_plm_lsf_component = {
         /* First, the mca_component_t struct containing meta information
            about the component itself */
 
-        {
+        .base_version = {
             ORTE_PLM_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "lsf",
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
+            .mca_component_name = "lsf",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
 
             /* Component open and close functions */
-            plm_lsf_open,
-            plm_lsf_close,
-            orte_plm_lsf_component_query
+            .mca_open_component = plm_lsf_open,
+            .mca_close_component = plm_lsf_close,
+            .mca_query_component = orte_plm_lsf_component_query,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

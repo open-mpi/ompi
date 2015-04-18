@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,22 +40,19 @@ bool rmaps_lama_can_oversubscribe = false;
 bool rmaps_lama_am_oversubscribing = false;
 
 orte_rmaps_base_component_t mca_rmaps_lama_component = {
-    {
+    .base_version = {
         ORTE_RMAPS_BASE_VERSION_2_0_0,
         
-        "lama", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        NULL,  /* component open  */
-        NULL,  /* component close */
-        orte_rmaps_lama_query,  /* component query */
-        orte_rmaps_lama_register  /* component register */
+        .mca_component_name = "lama",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_query_component = orte_rmaps_lama_query,
+        .mca_register_component_params = orte_rmaps_lama_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 

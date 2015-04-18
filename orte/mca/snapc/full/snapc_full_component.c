@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,29 +52,26 @@ orte_snapc_full_component_t mca_snapc_full_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component itfull
          */
-        {
+        .base_version = {
             ORTE_SNAPC_BASE_VERSION_2_0_0,
             /* Component name and version */
-            "full",
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
+            .mca_component_name = "full",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
             
             /* Component open and close functions */
-            snapc_full_open,
-            snapc_full_close,
-            orte_snapc_full_component_query,
-            snapc_full_register
+            .mca_open_component = snapc_full_open,
+            .mca_close_component = snapc_full_close,
+            .mca_query_component = orte_snapc_full_component_query,
+            .mca_register_component_params = snapc_full_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1
+        .verbose = 0,
+        .output_handle = -1,
     }
 };
 

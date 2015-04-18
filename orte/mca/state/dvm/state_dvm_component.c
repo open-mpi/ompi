@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -37,20 +40,19 @@ orte_state_base_component_t mca_state_dvm_component =
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component
      */
-    {
+    .base_version = {
         ORTE_STATE_BASE_VERSION_1_0_0,
         /* Component name and version */
-        "dvm",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "dvm",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
         
         /* Component open and close functions */
-        state_dvm_open,
-        state_dvm_close,
-        state_dvm_component_query
+        .mca_open_component = state_dvm_open,
+        .mca_close_component = state_dvm_close,
+        .mca_query_component = state_dvm_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

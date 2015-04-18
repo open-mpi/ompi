@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,21 +36,20 @@ static int filem_raw_query(mca_base_module_t **module, int *priority);
 bool orte_filem_raw_flatten_trees=false;
 
 orte_filem_base_component_t mca_filem_raw_component = {
-    {
+    .base_version = {
         ORTE_FILEM_BASE_VERSION_2_0_0,
         /* Component name and version */
-        "raw",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-            
+        .mca_component_name = "raw",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+
         /* Component open and close functions */
-        filem_raw_open,
-        filem_raw_close,
-        filem_raw_query,
-        filem_raw_register
+        .mca_open_component = filem_raw_open,
+        .mca_close_component = filem_raw_close,
+        .mca_query_component = filem_raw_query,
+        .mca_register_component_params = filem_raw_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -40,24 +41,23 @@ static int pmi_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 orte_ess_base_component_t mca_ess_pmi_component = {
-    {
+    .base_version = {
         ORTE_ESS_BASE_VERSION_3_0_0,
 
         /* Component name and version */
-        "pmi",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "pmi",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        pmi_component_open,
-        pmi_component_close,
-        pmi_component_query
+        .mca_open_component = pmi_component_open,
+        .mca_close_component = pmi_component_close,
+        .mca_query_component = pmi_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int pmi_component_open(void)

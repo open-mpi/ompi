@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,22 +44,21 @@ static int my_priority;
 
 orte_rmaps_res_component_t mca_rmaps_resilient_component = {
     {
-        {
+        .base_version = {
             ORTE_RMAPS_BASE_VERSION_2_0_0,
             
-            "resilient", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            orte_rmaps_resilient_open,  /* component open  */
-            orte_rmaps_resilient_close, /* component close */
-            orte_rmaps_resilient_query, /* component query */
-            orte_rmaps_resilient_register
+            .mca_component_name = "resilient",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = orte_rmaps_resilient_open,
+            .mca_close_component = orte_rmaps_resilient_close,
+            .mca_query_component = orte_rmaps_resilient_query,
+            .mca_register_component_params = orte_rmaps_resilient_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

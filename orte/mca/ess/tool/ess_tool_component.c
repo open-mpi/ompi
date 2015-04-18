@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,24 +40,23 @@ extern orte_ess_base_module_t orte_ess_tool_module;
  * and pointers to our public functions in it
  */
 orte_ess_base_component_t mca_ess_tool_component = {
-    {
+    .base_version = {
         ORTE_ESS_BASE_VERSION_3_0_0,
 
         /* Component name and version */
-        "tool",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "tool",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        orte_ess_tool_component_open,
-        orte_ess_tool_component_close,
-        orte_ess_tool_component_query
+        .mca_open_component = orte_ess_tool_component_open,
+        .mca_close_component = orte_ess_tool_component_close,
+        .mca_query_component = orte_ess_tool_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 

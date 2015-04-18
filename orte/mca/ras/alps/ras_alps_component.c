@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -46,25 +46,23 @@ orte_ras_base_component_t mca_ras_alps_component = {
     /* First, the mca_base_component_t struct containing meta information about
      * the component itself
      * */
-    {
+    .base_version = {
         ORTE_RAS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "alps",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "alps",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        ras_alps_open,
-        NULL,
-        orte_ras_alps_component_query,
-        ras_alps_register
+        .mca_open_component = ras_alps_open,
+        .mca_query_component = orte_ras_alps_component_query,
+        .mca_register_component_params = ras_alps_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 /* simple function used to strip off characters on and after a period. NULL

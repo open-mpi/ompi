@@ -10,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
@@ -100,33 +100,29 @@ static int component_ft_event(int state);
  */
 mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
-        {
+        .oob_base = {
             MCA_OOB_BASE_VERSION_2_0_0,
-            "tcp", /* MCA module name */
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            tcp_component_open,  /* component open */
-            tcp_component_close, /* component close */
-            NULL, /* component query */
-            tcp_component_register, /* component register */
+            .mca_component_name = "tcp",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = tcp_component_open,
+            .mca_close_component = tcp_component_close,
+            .mca_register_component_params = tcp_component_register,
         },
-        {
+        .oob_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        0,   // reserve space for an assigned index
-        30, // default priority of this transport
-        component_available,
-        component_startup,
-        component_shutdown,
-        component_send,
-        component_get_addr,
-        component_set_addr,
-        component_is_reachable
+        .priority = 30, // default priority of this transport
+        .available = component_available,
+        .startup = component_startup,
+        .shutdown = component_shutdown,
+        .send_nb = component_send,
+        .get_addr = component_get_addr,
+        .set_addr = component_set_addr,
+        .is_reachable = component_is_reachable,
 #if OPAL_ENABLE_FT_CR == 1
-        ,
-        component_ft_event
+        .ft_event = component_ft_event,
 #endif
     },
 };
