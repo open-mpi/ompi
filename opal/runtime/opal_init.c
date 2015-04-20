@@ -70,6 +70,7 @@
 const char opal_version_string[] = OPAL_IDENT_STRING;
 
 int opal_initialized = 0;
+bool opal_init_called = false;
 int opal_util_initialized = 0;
 /* We have to put a guess in here in case hwloc is not available.  If
    hwloc is available, this value will be overwritten when the
@@ -253,6 +254,18 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
+
+#if OPAL_NO_LIB_DESTRUCTOR
+    if (opal_init_called) {
+        /* can't use show_help here */
+        fprintf (stderr, "opal_init_util: attempted to initialize after finalize without compiler "
+                 "support for either __attribute__(destructor) or linker support for -fini -- process "
+                 "will likely abort\n");
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+#endif
+
+    opal_init_called = true;
 
     /* initialize the memory allocator */
     opal_malloc_init();
