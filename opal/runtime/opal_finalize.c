@@ -113,7 +113,7 @@ opal_finalize_util(void)
 
     opal_datatype_finalize();
 
-#if !(OPAL_HAVE_LD_FINI || OPAL_HAVE_ATTRIBUTE_DESTRUCTOR)
+#if OPAL_NO_LIB_DESTRUCTOR
     opal_cleanup ();
 #endif
 
