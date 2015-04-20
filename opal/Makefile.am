@@ -55,6 +55,12 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
 lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = $(lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD)
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
 
+if OPAL_DESTRUCTOR_USE_FINI
+
+lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS += -Wl,-fini -Wl,opal_cleanup
+
+endif
+
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
