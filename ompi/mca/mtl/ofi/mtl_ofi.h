@@ -56,8 +56,8 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_progress(void)
 {
     int ret, count = 0;
-    struct fi_cq_tagged_entry wc;
-    struct fi_cq_err_entry error;
+    struct fi_cq_tagged_entry wc = { 0 };
+    struct fi_cq_err_entry error = { 0 };
     ompi_mtl_ofi_request_t *ofi_req = NULL;
 
     /**
@@ -66,7 +66,6 @@ ompi_mtl_ofi_progress(void)
      * Call the request's callback.
      */
     while (true) {
-        memset(&wc, 0, sizeof(wc));
         ret = fi_cq_read(ompi_mtl_ofi.cq, (void *)&wc, 1);
         if (ret > 0) {
             count++;
@@ -86,7 +85,6 @@ ompi_mtl_ofi_progress(void)
              * An error occured and is being reported via the CQ.
              * Read the error and forward it to the upper layer.
              */
-            memset(&error, 0, sizeof(error));
             ret = fi_cq_readerr(ompi_mtl_ofi.cq,
                                 &error,
                                 0);
