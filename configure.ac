@@ -804,12 +804,14 @@ AC_CACHE_SAVE
 ##################################
 
 AC_MSG_CHECKING([the linker for support for the -fini option])
+OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
 LDFLAGS_save=$LDFLAGS
 LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
 AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
         opal_ld_have_fini=1], [AC_MSG_RESULT([no])
         opal_ld_have_fini=0])
 LDFLAGS=$LDFLAGS_save
+OPAL_VAR_SCOPE_POP
 
 opal_destructor_use_fini=0
 opal_no_destructor=0
