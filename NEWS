@@ -68,7 +68,6 @@ Trunk (not on release branches yet)
 1.8.5
 -----
 
-- Open MPI requires a C99-compliant compiler
 - Fixed configure problems in some cases when using an external hwloc
   installation.  Thanks to Erick Schnetter for reporting the error and
   helping track down the source of the problem.
