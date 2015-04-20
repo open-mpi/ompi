@@ -131,7 +131,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.  The bits specified
-     *           with cancel implement MPI semantics.
+     *           implement MPI semantics.
      *           Tagged is used to support tag matching.
      *           We expect to register all memory up front for use with this
      *           endpoint, so the MTL requires dynamic memory regions
@@ -146,7 +146,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->mode             = FI_CONTEXT;
     hints->ep_attr->type    = FI_EP_RDM;      /* Reliable datagram         */
     hints->caps             = FI_TAGGED;      /* Tag matching interface    */
-    hints->caps            |= FI_CANCEL;      /* Support cancel            */
     hints->caps            |= FI_DYNAMIC_MR;  /* Global dynamic mem region */
 
     /**
