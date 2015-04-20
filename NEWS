@@ -53,8 +53,12 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-Trunk (not on release branches yet)
------------------------------------
+Master (not on release branches yet)
+------------------------------------
+
+- ompi_info parsable output now escapes double quotes in values, and
+  also quotes values can contains colons.  Thanks to Lev Givon for the
+  suggestion.
 - CUDA-aware support can now handle GPUs within a node that do not
   support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
