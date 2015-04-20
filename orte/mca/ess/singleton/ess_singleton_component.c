@@ -84,7 +84,7 @@ orte_ess_singleton_component_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &orte_ess_singleton_server_uri);
-    (void) mca_base_var_register_synonym(ret, "orte", NULL, NULL, "server", 0);
+    (void) mca_base_var_register_synonym(ret, "orte", "orte", NULL, "server", 0);
 
     return ORTE_SUCCESS;
 }
