@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -140,7 +140,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string);
  */
 static void var_constructor (mca_base_var_t *p);
 static void var_destructor (mca_base_var_t *p);
-OBJ_CLASS_INSTANCE(mca_base_var_t, opal_object_t, 
+OBJ_CLASS_INSTANCE(mca_base_var_t, opal_object_t,
                    var_constructor, var_destructor);
 
 static void fv_constructor (mca_base_var_file_value_t *p);
@@ -190,7 +190,7 @@ static int compare_strings (const char *str1, const char *str2) {
     if ((NULL != str1 && 0 == strcmp (str1, "*")) ||
         (NULL == str1 && NULL == str2)) {
         return 0;
-    } 
+    }
 
     if (NULL != str1 && NULL != str2) {
         return strcmp (str1, str2);
@@ -265,7 +265,7 @@ int mca_base_var_init(void)
 
         /* Set this before we register the parameter, below */
 
-        mca_base_var_initialized = true; 
+        mca_base_var_initialized = true;
 
         mca_base_var_cache_files(false);
 
@@ -404,7 +404,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
 
     /* We may need this later */
     home = (char*)opal_home_directory();
-    
+
     if(NULL == cwd) {
         cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
         if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
@@ -598,7 +598,7 @@ static int var_set_string (mca_base_var_t *var, char *value)
         return OPAL_SUCCESS;
     }
 
-    /* Replace all instances of ~/ in a path-style string with the 
+    /* Replace all instances of ~/ in a path-style string with the
        user's home directory. This may be handled by the enumerator
        in the future. */
     if (0 == strncmp (value, "~/", 2)) {
@@ -850,7 +850,7 @@ static int var_get (int vari, mca_base_var_t **var_out, bool original)
         *var_out = NULL;
     }
 
-    /* Check for bozo cases */    
+    /* Check for bozo cases */
     if (!mca_base_var_initialized) {
         return OPAL_ERROR;
     }
@@ -945,7 +945,7 @@ static int var_find (const char *project_name, const char *framework_name,
  * Find the index for an MCA parameter based on its name components.
  */
 int mca_base_var_find (const char *project_name, const char *framework_name,
-                       const char *component_name, const char *variable_name) 
+                       const char *component_name, const char *variable_name)
 {
     return var_find (project_name, framework_name, component_name, variable_name, false);
 }
@@ -1003,7 +1003,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
     int ret;
 
     /* Check for bozo cases */
-    
+
     if (!mca_base_var_initialized) {
         return OPAL_ERROR;
     }
@@ -1626,7 +1626,7 @@ static int var_set_from_env (mca_base_var_t *var)
     bool is_synonym = VAR_IS_SYNONYM(var[0]);
     char *source_env, *value_env;
     int ret;
-    
+
     if (is_synonym) {
         ret = var_get (var->mbv_synonym_for, &var, true);
         if (OPAL_SUCCESS != ret) {
@@ -1750,7 +1750,7 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
         /* found it */
         if (VAR_IS_DEFAULT_ONLY(var[0])) {
             opal_show_help("help-mca-var.txt", "default-only-param-set",
-                           true, var_full_name);            
+                           true, var_full_name);
 
             return OPAL_ERR_NOT_FOUND;
         }
@@ -1960,7 +1960,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
             break;
         case MCA_BASE_VAR_TYPE_STRING:
         case MCA_BASE_VAR_TYPE_VERSION_STRING:
-            ret = asprintf (value_string, "%s", 
+            ret = asprintf (value_string, "%s",
                             value->stringval ? value->stringval : "");
             break;
         case MCA_BASE_VAR_TYPE_BOOL:
@@ -2033,7 +2033,7 @@ int mca_base_var_check_exclusive (const char *project,
         str_b = source_name(var_b);
 
         /* Print it all out */
-        opal_show_help("help-mca-var.txt", 
+        opal_show_help("help-mca-var.txt",
                        "mutually-exclusive-vars",
                        true, var_a->mbv_full_name,
                        str_a, var_b->mbv_full_name,
