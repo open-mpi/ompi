@@ -58,6 +58,9 @@ typedef struct mca_mtl_ofi_module_t {
     /** Optional user-specified OFI provider name */
     char *provider_name;
 
+    /** Maximum inject size */
+    size_t max_inject_size;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
