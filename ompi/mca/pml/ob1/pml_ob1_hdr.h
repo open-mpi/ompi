@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -201,14 +201,12 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
 #define MCA_PML_OB1_RGET_HDR_NTOH(h)                    \
     do {                                                \
         MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv);        \
-        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt);       \
         (h).hdr_src_ptr = ntoh64((h).hdr_src_ptr);      \
     } while (0)
 
 #define MCA_PML_OB1_RGET_HDR_HTON(h)                    \
     do {                                                \
         MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv);        \
-        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt);       \
         (h).hdr_src_ptr = hton64((h).hdr_src_ptr);      \
     } while (0) 
 
@@ -354,7 +352,6 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
 #define MCA_PML_OB1_RDMA_HDR_NTOH(h)                       \
     do {                                                   \
         MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common);       \
-        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt);          \
         (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
         (h).hdr_dst_ptr = ntoh64((h).hdr_dst_ptr);         \
         (h).hdr_dst_size = ntoh64((h).hdr_dst_size);       \
@@ -363,7 +360,6 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
 #define MCA_PML_OB1_RDMA_HDR_HTON(h)                       \
     do {                                                   \
         MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common);       \
-        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt);          \
         (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
         (h).hdr_dst_ptr = hton64((h).hdr_dst_ptr);         \
         (h).hdr_dst_size = hton64((h).hdr_dst_size);       \

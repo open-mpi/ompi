@@ -662,7 +662,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     mca_pml_ob1_fin_hdr_prepare ((mca_pml_ob1_fin_hdr_t *) fin->des_segments->seg_addr.pval,
                                  0, hdr_frag.lval, status ? status : (int64_t) rdma_size);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
+    ob1_hdr_hton((mca_pml_ob1_hdr_t *) fin->des_segments->seg_addr.pval, MCA_PML_OB1_HDR_TYPE_FIN, proc);
 
     /* queue request */
     rc = mca_bml_base_send( bml_btl, fin, MCA_PML_OB1_HDR_TYPE_FIN );
