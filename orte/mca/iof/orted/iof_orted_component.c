@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,23 +45,22 @@ const char *mca_iof_orted_component_version_string =
 
 orte_iof_orted_component_t mca_iof_orted_component = {
     {
-        {
+        .iof_version = {
             ORTE_IOF_BASE_VERSION_2_0_0,
-            
-            "orted", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            
+
+            .mca_component_name = "orted",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
             /* Component open, close, and query functions */
-            orte_iof_orted_open,
-            orte_iof_orted_close,
-            orte_iof_orted_query
+            .mca_open_component = orte_iof_orted_open,
+            .mca_close_component = orte_iof_orted_close,
+            .mca_query_component = orte_iof_orted_query,
         },
-        {
+        .iof_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

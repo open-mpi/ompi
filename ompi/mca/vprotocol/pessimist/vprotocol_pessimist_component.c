@@ -35,25 +35,24 @@ mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
 {
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
-    {
-      MCA_VPROTOCOL_BASE_VERSION_2_0_0,
+    .pmlm_version = {
+        MCA_VPROTOCOL_BASE_VERSION_2_0_0,
 
-      "pessimist", /* MCA component name */
-      OMPI_MAJOR_VERSION,  /* MCA component major version */
-      OMPI_MINOR_VERSION,  /* MCA component minor version */
-      OMPI_RELEASE_VERSION,  /* MCA component release version */
-      mca_vprotocol_pessimist_component_open,  /* component open */
-      mca_vprotocol_pessimist_component_close, /* component close */
-      NULL,
-      mca_vprotocol_pessimist_component_register
+        .mca_component_name = "pessimist",
+        .mca_component_major_version = OMPI_MAJOR_VERSION,
+        .mca_component_minor_version = OMPI_MINOR_VERSION,
+        .mca_component_release_version = OMPI_RELEASE_VERSION,
+        .mca_open_component = mca_vprotocol_pessimist_component_open,
+        .mca_close_component = mca_vprotocol_pessimist_component_close,
+        .mca_register_component_params = mca_vprotocol_pessimist_component_register,
     },
-    {
+    .pmlm_data = {
         /* component is not checkpointable */
         MCA_BASE_METADATA_PARAM_NONE
     },
 
-    mca_vprotocol_pessimist_component_init,  /* component init */
-    mca_vprotocol_pessimist_component_finalize   /* component finalize */
+    .pmlm_init = mca_vprotocol_pessimist_component_init,
+    .pmlm_finalize = mca_vprotocol_pessimist_component_finalize,
 };
 
 /** MCA level functions

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,9 +64,8 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
 
             /* component name and version */
             .mca_component_name = "mmap",
-            .mca_component_major_version = OPAL_MAJOR_VERSION,
-            .mca_component_minor_version = OPAL_MINOR_VERSION,
-            .mca_component_release_version = OPAL_RELEASE_VERSION,
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
             .mca_open_component = mmap_open,
             .mca_close_component = mmap_close,

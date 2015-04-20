@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
@@ -61,25 +62,23 @@ static int isolated_component_close(void);
  */
 
 orte_plm_base_component_t mca_plm_isolated_component = {
-    {
+    .base_version = {
         ORTE_PLM_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "isolated",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "isolated",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        isolated_component_open,
-        isolated_component_close,
-        isolated_component_query,
-        NULL
+        .mca_open_component = isolated_component_open,
+        .mca_close_component = isolated_component_close,
+        .mca_query_component = isolated_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int isolated_component_open(void)

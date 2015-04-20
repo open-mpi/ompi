@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,6 +9,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -40,30 +43,27 @@ opal_crs_criu_component_t mca_crs_criu_component = {
         /* Handle the general mca_component_t struct containing
          *  meta information about the component itself
          */
-        {
+        .base_version = {
             OPAL_CRS_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "criu",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "criu",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
             /* Component open and close functions */
-            crs_criu_open,
-            crs_criu_close,
-            opal_crs_criu_component_query,
-            crs_criu_register
+            .mca_open_component = crs_criu_open,
+            .mca_close_component = crs_criu_close,
+            .mca_query_component = opal_crs_criu_component_query,
+            .mca_register_component_params = crs_criu_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1
+        .verbose = 0,
+        .output_handle = -1,
     },
     /* criu log file */
     LOG_FILE,

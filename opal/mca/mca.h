@@ -361,18 +361,20 @@ typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
 #define MCA_BASE_VERSION_MINOR 1
 #define MCA_BASE_VERSION_RELEASE 0
 
-#define MCA_BASE_VERSION_2_1_0(project, project_major, project_minor, project_release, type, type_major, type_minor, type_release) \
+#define MCA_BASE_MAKE_VERSION(level, MAJOR, MINOR, RELEASE) \
+    .mca_## level ##_major_version = MAJOR,                 \
+    .mca_## level ##_minor_version = MINOR,                 \
+    .mca_## level ##_release_version = RELEASE
+
+
+#define MCA_BASE_VERSION_2_1_0(PROJECT, project_major, project_minor, project_release, TYPE, type_major, type_minor, type_release) \
     .mca_major_version = MCA_BASE_VERSION_MAJOR,                        \
     .mca_minor_version = MCA_BASE_VERSION_MINOR,                        \
     .mca_release_version = MCA_BASE_VERSION_RELEASE,                    \
-    .mca_project_name = project,                                        \
-    .mca_project_major_version = project_major,                         \
-    .mca_project_minor_version = project_minor,                         \
-    .mca_project_release_version = project_release,                     \
-    .mca_type_name = type,                                              \
-    .mca_type_major_version = type_major,                               \
-    .mca_type_minor_version = type_minor,                               \
-    .mca_type_release_version = type_release
+    .mca_project_name = PROJECT,                                        \
+    MCA_BASE_MAKE_VERSION(project, project_major, project_minor, project_release), \
+    .mca_type_name = TYPE,                                              \
+    MCA_BASE_MAKE_VERSION(type, type_major, type_minor, type_release)
 
 #define OPAL_MCA_BASE_VERSION_2_1_0(type, type_major, type_minor, type_release) \
     MCA_BASE_VERSION_2_1_0("opal", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION, type, type_major, type_minor, type_release)

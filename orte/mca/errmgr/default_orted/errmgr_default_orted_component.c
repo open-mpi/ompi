@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -38,24 +41,23 @@ orte_errmgr_base_component_t mca_errmgr_default_orted_component =
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component itdefault_orted
      */
-    {
+    .base_version = {
         ORTE_ERRMGR_BASE_VERSION_3_0_0,
         /* Component name and version */
-        "default_orted",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
+        .mca_component_name = "default_orted",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+
         /* Component open and close functions */
-        errmgr_default_orted_open,
-        errmgr_default_orted_close,
-        errmgr_default_orted_component_query,
-        errmgr_default_orted_register
+        .mca_open_component = errmgr_default_orted_open,
+        .mca_close_component = errmgr_default_orted_close,
+        .mca_query_component = errmgr_default_orted_component_query,
+        .mca_register_component_params = errmgr_default_orted_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int my_priority;

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
@@ -78,25 +79,24 @@ orte_plm_rsh_component_t mca_plm_rsh_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
-        ORTE_PLM_BASE_VERSION_2_0_0,
+        .base_version = {
+            ORTE_PLM_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        "rsh",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+            /* Component name and version */
+            .mca_component_name = "rsh",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        rsh_component_open,
-        rsh_component_close,
-        rsh_component_query,
-        rsh_component_register
-    },
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+            /* Component open and close functions */
+            .mca_open_component = rsh_component_open,
+            .mca_close_component = rsh_component_close,
+            .mca_query_component = rsh_component_query,
+            .mca_register_component_params = rsh_component_register,
+        },
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
     }
 };
 

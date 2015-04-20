@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,23 +24,21 @@ static mca_memheap_base_module_t* mca_memheap_ptmalloc_component_init(memheap_co
 static int _basic_open(void);
 
 mca_memheap_base_component_t mca_memheap_ptmalloc_component = {
-    {
+    .memheap_version = {
         MCA_MEMHEAP_BASE_VERSION_2_0_0,
 
-        "ptmalloc", /* MCA component name */
-        OSHMEM_MAJOR_VERSION,  /* MCA component major version */
-        OSHMEM_MINOR_VERSION,  /* MCA component minor version */
-        OSHMEM_RELEASE_VERSION,  /* MCA component release version */
-        
-        _basic_open,
-        mca_memheap_ptmalloc_component_close,
-        NULL
+        .mca_component_name= "ptmalloc",
+        MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                              OSHMEM_RELEASE_VERSION),
+
+        .mca_open_component = _basic_open,
+        .mca_close_component = mca_memheap_ptmalloc_component_close,
     },
-    {
+    .memheap_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    mca_memheap_ptmalloc_component_init
+    .memheap_init = mca_memheap_ptmalloc_component_init,
 };
 
 /* Open component */

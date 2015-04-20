@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -75,9 +75,8 @@ mca_coll_ml_component_t mca_coll_ml_component = {
             /* Component name and version */
 
             .mca_component_name = "ml",
-            .mca_component_major_version = OMPI_MAJOR_VERSION,
-            .mca_component_minor_version = OMPI_MINOR_VERSION,
-            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open, close, and register functions */
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,20 +48,19 @@ static int opal_timer_altix_close(void);
 const opal_timer_base_component_2_0_0_t mca_timer_altix_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
+    .timerc_version = {
         OPAL_TIMER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "altix",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "altix",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        opal_timer_altix_open,
-        opal_timer_altix_close
+        .mca_open_component = opal_timer_altix_open,
+        .mca_close_component = opal_timer_altix_close,
     },
-    {
+    .timerc_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

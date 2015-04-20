@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,25 +63,24 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .base_version = {
             ORTE_PLM_BASE_VERSION_2_0_0,
             
             /* Component name and version */
-            "slurm",
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            
+            .mca_component_name = "slurm",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
             /* Component open and close functions */
-            plm_slurm_open,
-            plm_slurm_close,
-            orte_plm_slurm_component_query,
-            plm_slurm_register
+            .mca_open_component = plm_slurm_open,
+            .mca_close_component = plm_slurm_close,
+            .mca_query_component = orte_plm_slurm_component_query,
+            .mca_register_component_params = plm_slurm_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 
     /* Other orte_plm_slurm_component_t items -- left uninitialized

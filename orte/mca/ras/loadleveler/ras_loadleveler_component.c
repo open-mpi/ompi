@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,25 +45,23 @@ static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int 
 orte_ras_base_component_t mca_ras_loadleveler_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
-    {
+    .base_version = {
         ORTE_RAS_BASE_VERSION_2_0_0,
-        
+
         /* Component name and version */
-        "loadleveler",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "loadleveler",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
         
         /* Component open and close functions */
-        orte_ras_loadleveler_open,
-        NULL,
-        orte_ras_loadleveler_component_query,
-        orte_ras_loadleveler_register
+        .mca_open_component = orte_ras_loadleveler_open,
+        .mca_query_component = orte_ras_loadleveler_component_query,
+        .mca_register_component_params = orte_ras_loadleveler_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int orte_ras_loadleveler_register(void)

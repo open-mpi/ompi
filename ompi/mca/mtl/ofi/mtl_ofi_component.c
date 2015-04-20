@@ -39,24 +39,23 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
         /* First, the mca_base_component_t struct containing meta
          * information about the component itself */
 
-        {
+        .mtl_version = {
             MCA_MTL_BASE_VERSION_2_0_0,
 
-            "ofi", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            ompi_mtl_ofi_component_open,  /* component open */
-            ompi_mtl_ofi_component_close, /* component close */
-            ompi_mtl_ofi_component_query,
-            ompi_mtl_ofi_component_register
+            .mca_component_name = "ofi",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = ompi_mtl_ofi_component_open,
+            .mca_close_component = ompi_mtl_ofi_component_close,
+            .mca_query_component = ompi_mtl_ofi_component_query,
+            .mca_register_component_params = ompi_mtl_ofi_component_register,
         },
-        {
+        .mtl_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
-        ompi_mtl_ofi_component_init,  /* component init */
+        .mtl_init = ompi_mtl_ofi_component_init,
     }
 };
 

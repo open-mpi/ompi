@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,35 +82,32 @@ mca_io_base_component_2_0_0_t mca_io_romio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
-    {
+    .io_version = {
         MCA_IO_BASE_VERSION_2_0_0,
-        "romio",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-        open_component,
-        close_component,
-        NULL,
-        register_component
+        .mca_component_name = "romio",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
+        .mca_open_component = open_component,
+        .mca_close_component = close_component,
+        .mca_register_component_params = register_component,
     },
-    {
+    .io_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
     /* Initial configuration / Open a new file */
 
-    init_query,
-    file_query,
-    file_unquery,
+    .io_init_query = init_query,
+    .io_file_query = file_query,
+    .io_file_unquery = file_unquery,
 
     /* Delete a file */
 
-    delete_query,
-    NULL,
-    delete_select,
+    .io_delete_query = delete_query,
+    .io_delete_select = delete_select,
 
-    register_datarep
+    .io_register_datarep = register_datarep,
 };
 
 static char *ompi_io_romio_version = ROMIO_VERSION_STRING;
