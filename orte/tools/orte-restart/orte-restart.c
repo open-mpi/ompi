@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -356,8 +357,11 @@ static int initialize(int argc, char *argv[]) {
     /* Don't free the environment variable name. It is used again below */
 
     /*
-     * Setup any ORTE stuff we might need
-     */
+    /* we are never allowed to operate as a distributed tool,
+     * so insist on the ess/tool component */
+    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    
+    /* Setup any ORTE stuff we might need */
     if (OPAL_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         exit_status = ret;
         goto cleanup;
