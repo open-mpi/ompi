@@ -267,7 +267,7 @@ opal_init_util(int* pargc, char*** pargv)
         return OPAL_SUCCESS;
     }
 
-#if !(OPAL_HAVE_LD_FINI || OPAL_HAVE_ATTRIBUTE_DESTRUCTOR)
+#if OPAL_NO_LIB_DESTRUCTOR
     if (opal_init_called) {
         /* can't use show_help here */
         fprintf (stderr, "opal_init_util: attempted to initialize after finalize without compiler "

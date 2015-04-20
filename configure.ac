@@ -807,12 +807,23 @@ AC_MSG_CHECKING([the linker for support for the -fini option])
 LDFLAGS_save=$LDFLAGS
 LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
 AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
-            opal_ld_fini=1], [AC_MSG_RESULT([no])
-            opal_ld_fini=0])
-AM_CONDITIONAL(HAVE_LD_FINI, [test x$opal_ld_fini = x1])
-AC_DEFINE_UNQUOTED(OPAL_HAVE_LD_FINI, [$opal_ld_fini],
-                   [Whether linker has support for the -fini option])
+        opal_ld_have_fini=1], [AC_MSG_RESULT([no])
+        opal_ld_have_fini=0])
 LDFLAGS=$LDFLAGS_save
+
+opal_destructor_use_fini=0
+opal_no_destructor=0
+if test x$opal_cv___attribute__destructor = x0 ; then
+    if test x$opal_ld_have_fini = x1 ; then
+        opal_destructor_use_fini=1
+    else
+        opal_no_destructor=1;
+    fi
+fi
+
+AC_DEFINE_UNQUOTED(OPAL_NO_LIB_DESTRUCTOR, [$opal_no_destructor],
+    [Whether libraries can be configured with destructor functions])
+AM_CONDITIONAL(OPAL_DESTRUCTOR_USE_FINI, [test x$opal_destructor_use_fini = x1])
 
 ##################################
 # Libraries
