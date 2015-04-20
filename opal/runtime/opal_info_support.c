@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -118,39 +118,39 @@ int opal_info_init(int argc, char **argv,
 
     /* Initialize the argv parsing handle */
     if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
-        opal_show_help("help-opal_info.txt", "lib-call-fail", true, 
+        opal_show_help("help-opal_info.txt", "lib-call-fail", true,
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
     }
-    
+
     /* add the cmd line options */
-    opal_cmd_line_make_opt3(opal_info_cmd_line, 'V', NULL, "version", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'V', NULL, "version", 0,
                             "Show version of Open MPI");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "param", 2, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "param", 2,
                             "Show MCA parameters.  The first parameter is the framework (or the keyword \"all\"); the second parameter is the specific component name (or the keyword \"all\").");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "params", 2, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "params", 2,
                             "Synonym for --param");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "internal", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "internal", 0,
                             "Show internal MCA parameters (not meant to be modified by users)");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "path", 1, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "path", 1,
                             "Show paths that Open MPI was configured with.  Accepts the following parameters: prefix, bindir, libdir, incdir, mandir, pkglibdir, sysconfdir, all");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "arch", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "arch", 0,
                             "Show architecture Open MPI was compiled on");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, 'c', NULL, "config", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'c', NULL, "config", 0,
                             "Show configuration options");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 't', NULL, "type", 1,
                             "Show internal MCA parameters with the type specified in parameter.");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, 'h', NULL, "help", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'h', NULL, "help", 0,
                             "Show this help message");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "pretty-print", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "pretty-print", 0,
                             "When used in conjunction with other parameters, the output is displayed in 'pretty-print' format (default)");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "parsable", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "parsable", 0,
                             "When used in conjunction with other parameters, the output is displayed in a machine-parsable format");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "parseable", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "parseable", 0,
                             "Synonym for --parsable");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "hostname", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "hostname", 0,
                             "Show the hostname that Open MPI was configured and built on");
-    opal_cmd_line_make_opt3(opal_info_cmd_line, 'a', NULL, "all", 0, 
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'a', NULL, "all", 0,
                             "Show all configuration options and MCA parameters");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'l', NULL, "level", 1,
                             "Show only variables with at most this level (1-9)");
@@ -159,7 +159,7 @@ int opal_info_init(int argc, char **argv,
 
     /* set our threading level */
     opal_set_using_threads(false);
-    
+
     /* Get MCA parameters, if any */
     if( OPAL_SUCCESS != mca_base_open() ) {
         opal_show_help("help-opal_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
@@ -167,12 +167,12 @@ int opal_info_init(int argc, char **argv,
         return OPAL_ERROR;
     }
     mca_base_cmd_line_setup(opal_info_cmd_line);
-    
+
     /* Initialize the opal_output system */
     if (!opal_output_init()) {
         return OPAL_ERROR;
     }
-    
+
     /* Do the parsing */
     ret = opal_cmd_line_parse(opal_info_cmd_line, false, argc, argv);
     if (OPAL_SUCCESS != ret) {
@@ -182,14 +182,14 @@ int opal_info_init(int argc, char **argv,
                     opal_strerror(ret));
         }
     }
-    if (!cmd_error && 
-        (opal_cmd_line_is_taken(opal_info_cmd_line, "help") || 
+    if (!cmd_error &&
+        (opal_cmd_line_is_taken(opal_info_cmd_line, "help") ||
          opal_cmd_line_is_taken(opal_info_cmd_line, "h"))) {
         char *str, *usage;
 
         want_help = true;
         usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
-        str = opal_show_help_string("help-opal_info.txt", "usage", 
+        str = opal_show_help_string("help-opal_info.txt", "usage",
                                     true, usage);
         if (NULL != str) {
             printf("%s", str);
@@ -206,9 +206,9 @@ int opal_info_init(int argc, char **argv,
         opal_finalize_util();
         exit(cmd_error ? 1 : 0);
     }
-    
+
     mca_base_cmd_line_process_args(opal_info_cmd_line, &app_env, &global_env);
-    
+
 
     /* set the flags */
     if (opal_cmd_line_is_taken(opal_info_cmd_line, "pretty-print")) {
@@ -221,7 +221,7 @@ int opal_info_init(int argc, char **argv,
         /* register only selected components */
         opal_info_register_flags = MCA_BASE_REGISTER_DEFAULT;
     }
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -334,10 +334,10 @@ void opal_info_close_components(void)
 void opal_info_show_path(const char *type, const char *value)
 {
     char *pretty, *path;
-    
+
     pretty = strdup(type);
     pretty[0] = toupper(pretty[0]);
-    
+
     asprintf(&path, "path:%s", type);
     opal_info_out(pretty, path, value);
     free(pretty);
@@ -348,7 +348,7 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 {
     int i, count;
     char *scope;
-    
+
     /* Check bozo case */
     count = opal_cmd_line_get_ninsts(cmd_line, "path");
     for (i = 0; i < count; ++i) {
@@ -358,7 +358,7 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
             break;
         }
     }
-    
+
     if (want_all) {
         opal_info_show_path(opal_info_path_prefix, opal_install_dirs.prefix);
         opal_info_show_path(opal_info_path_exec_prefix, opal_install_dirs.exec_prefix);
@@ -382,7 +382,7 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
         count = opal_cmd_line_get_ninsts(cmd_line, "path");
         for (i = 0; i < count; ++i) {
             scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
-            
+
             if (0 == strcmp(opal_info_path_prefix, scope)) {
                 opal_info_show_path(opal_info_path_prefix, opal_install_dirs.prefix);
             } else if (0 == strcmp(opal_info_path_bindir, scope)) {
@@ -478,9 +478,9 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
             }
         }
     }
-    
+
     /* Show the params */
-    
+
     if (want_all) {
         for (i = 0; i < mca_types->size; ++i) {
             if (NULL == (type = (char *)opal_pointer_array_get_item(mca_types, i))) {
@@ -492,7 +492,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
         for (i = 0; i < count; ++i) {
             type = opal_cmd_line_get_param(opal_info_cmd_line, p, (int)i, 0);
             component = opal_cmd_line_get_param(opal_info_cmd_line, p, (int)i, 1);
-            
+
             for (found = false, i = 0; i < mca_types->size; ++i) {
                 if (NULL == (str = (char *)opal_pointer_array_get_item(mca_types, i))) {
                     continue;
@@ -502,14 +502,14 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
                     break;
                 }
             }
-            
+
             if (!found) {
                 char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
                 opal_show_help("help-opal_info.txt", "not-found", true, type);
                 free(usage);
                 exit(1);
             }
-            
+
             opal_info_show_mca_params(type, component, max_level, want_internal);
         }
     }
@@ -705,7 +705,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
             opal_info_out("", "", message);
             free (message);
         }
-        free(strings);      
+        free(strings);
     }
 
     groups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, const int);
@@ -720,7 +720,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
     }
 }
 
-void opal_info_show_mca_params(const char *type, const char *component, 
+void opal_info_show_mca_params(const char *type, const char *component,
                                mca_base_var_info_lvl_t max_level, bool want_internal)
 {
     const mca_base_var_group_t *group;
@@ -760,6 +760,43 @@ void opal_info_do_hostname()
 }
 
 
+static char *escape_quotes(const char *value)
+{
+    const char *src;
+    int num_quotes = 0;
+    for (src = value; src != NULL && *src != '\0'; ++src) {
+        if ('"' == *src) {
+            ++num_quotes;
+        }
+    }
+
+    // If there are no quotes in the string, there's nothing to do
+    if (0 == num_quotes) {
+        return NULL;
+    }
+
+    // If we have quotes, make a new string.  Copy over the old
+    // string, escaping the quotes along the way.  This is simple and
+    // clear to read; it's not particularly efficient (performance is
+    // definitely not important here).
+    char *quoted_value;
+    quoted_value = calloc(1, strlen(value) + num_quotes + 1);
+    if (NULL == quoted_value) {
+        return NULL;
+    }
+
+    char *dest;
+    for (src = value, dest = quoted_value; *src != '\0'; ++src, ++dest) {
+        if ('"' == *src) {
+            *dest++ = '\\';
+        }
+        *dest = *src;
+    }
+
+    return quoted_value;
+}
+
+
 /*
  * Private variables - set some reasonable screen size defaults
  */
@@ -767,7 +804,7 @@ void opal_info_do_hostname()
 static int centerpoint = 24;
 static int screen_width = 78;
 
-/* 
+/*
  * Prints the passed integer in a pretty or parsable format.
  */
 void opal_info_out(const char *pretty_message, const char *plain_message, const char *value)
@@ -776,7 +813,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
     char *spaces = NULL;
     char *filler = NULL;
     char *pos, *v, savev, *v_to_free;
-    
+
 #ifdef HAVE_ISATTY
     /* If we have isatty(), if this is not a tty, then disable
      * wrapping for grep-friendly behavior
@@ -785,7 +822,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         screen_width = INT_MAX;
     }
 #endif
-    
+
 #ifdef TIOCGWINSZ
     if (screen_width < INT_MAX) {
         struct winsize size;
@@ -813,13 +850,13 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
 
     if (opal_info_pretty && NULL != pretty_message) {
         if (centerpoint > (int)strlen(pretty_message)) {
-            asprintf(&spaces, "%*s", centerpoint - 
+            asprintf(&spaces, "%*s", centerpoint -
                      (int)strlen(pretty_message), " ");
         } else {
             spaces = strdup("");
 #if OPAL_ENABLE_DEBUG
             if (centerpoint < (int)strlen(pretty_message)) {
-                opal_show_help("help-opal_info.txt", 
+                opal_show_help("help-opal_info.txt",
                                "developer warning: field too long", false,
                                pretty_message, centerpoint);
             }
@@ -833,14 +870,14 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         }
         free(spaces);
         spaces = NULL;
-        
+
         while (true) {
             if (strlen(v) < max_value_width) {
                 printf("%s%s\n", filler, v);
                 break;
             } else {
                 asprintf(&spaces, "%*s", centerpoint + 2, " ");
-                
+
                 /* Work backwards to find the first space before
                  * max_value_width
                  */
@@ -853,11 +890,11 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
                      * space after max_value_width.
                      */
                     pos = strchr(&v[max_value_width], ' ');
-                    
+
                     if (NULL == pos) {
-                        
+
                         /* There's just no spaces.  So just print it and be done. */
-                        
+
                         printf("%s%s\n", filler, v);
                         break;
                     } else {
@@ -870,7 +907,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
                     printf("%s%s\n", filler, v);
                     v = pos + 1;
                 }
-                
+
                 /* Reset for the next iteration */
                 free(filler);
                 filler = strdup(spaces);
@@ -886,7 +923,23 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         }
     } else {
         if (NULL != plain_message && 0 < strlen(plain_message)) {
-            printf("%s:%s\n", plain_message, value);
+            // Escape any double quotes in the value.
+            char *quoted_value;
+            quoted_value = escape_quotes(value);
+            if (NULL != quoted_value) {
+                value = quoted_value;
+            }
+
+            char *colon = strchr(value, ':');
+            if (NULL != colon) {
+                printf("%s:\"%s\"\n", plain_message, value);
+            } else {
+                printf("%s:%s\n", plain_message, value);
+            }
+
+            if (NULL != quoted_value) {
+                free(quoted_value);
+            }
         } else {
             printf("%s\n", value);
         }
@@ -896,12 +949,12 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
     }
 }
 
-void opal_info_out_int(const char *pretty_message, 
-                       const char *plain_message, 
+void opal_info_out_int(const char *pretty_message,
+                       const char *plain_message,
                        int value)
 {
     char *valstr;
-    
+
     asprintf(&valstr, "%d", (int)value);
     opal_info_out(pretty_message, plain_message, valstr);
     free(valstr);
@@ -913,7 +966,7 @@ void opal_info_out_int(const char *pretty_message,
  */
 void opal_info_show_component_version(opal_pointer_array_t *mca_types,
                                       opal_pointer_array_t *component_map,
-                                      const char *type_name, 
+                                      const char *type_name,
                                       const char *component_name,
                                       const char *scope, const char *ver_type)
 {
@@ -924,7 +977,7 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
     int j;
     char *pos;
     opal_info_component_map_t *map;
-    
+
     /* see if all components wanted */
     if (0 == strcmp(opal_info_component_all, component_name)) {
         want_all_components = true;
@@ -933,7 +986,7 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
     /* see if all types wanted */
     if (0 != strcmp(opal_info_type_all, type_name)) {
         /* Check to see if the type is valid */
-    
+
         for (found = false, j = 0; j < mca_types->size; ++j) {
             if (NULL == (pos = (char*)opal_pointer_array_get_item(mca_types, j))) {
                 continue;
@@ -943,14 +996,14 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
                 break;
             }
         }
-    
+
         if (!found) {
             return;
         }
     } else {
         want_all_types = true;
     }
-    
+
     /* Now that we have a valid type, find the right components */
     for (j=0; j < component_map->size; j++) {
         if (NULL == (map = (opal_info_component_map_t*)opal_pointer_array_get_item(component_map, j))) {
@@ -960,7 +1013,7 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
             /* found it! */
             OPAL_LIST_FOREACH(cli, map->components, mca_base_component_list_item_t) {
                 const mca_base_component_t *component = cli->cli_component;
-                if (want_all_components || 
+                if (want_all_components ||
                     0 == strcmp(component->mca_component_name, component_name)) {
                     opal_info_show_mca_version(component, scope, ver_type);
                 }
@@ -989,22 +1042,22 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
     char *api_version;
     char *component_version;
     char *tmp;
-    
+
     if (0 == strcmp(ver_type, opal_info_ver_all) ||
         0 == strcmp(ver_type, opal_info_ver_mca)) {
         want_mca = true;
     }
-    
+
     if (0 == strcmp(ver_type, opal_info_ver_all) ||
         0 == strcmp(ver_type, opal_info_ver_type)) {
         want_type = true;
     }
-    
+
     if (0 == strcmp(ver_type, opal_info_ver_all) ||
         0 == strcmp(ver_type, opal_info_ver_component)) {
         want_component = true;
     }
-    
+
     mca_version = opal_info_make_version_str(scope, component->mca_major_version,
                                              component->mca_minor_version,
                                              component->mca_release_version, "",
@@ -1015,13 +1068,13 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
                                              "");
     component_version = opal_info_make_version_str(scope, component->mca_component_major_version,
                                                    component->mca_component_minor_version,
-                                                   component->mca_component_release_version, 
+                                                   component->mca_component_release_version,
                                                    "", "");
     if (opal_info_pretty) {
         asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
         asprintf(&content, "%s (", component->mca_component_name);
-        
+
         if (want_mca) {
             asprintf(&tmp, "%sMCA v%s", content, mca_version);
             free(content);
@@ -1058,13 +1111,13 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
         } else {
             tmp = NULL;
         }
-        
+
         opal_info_out(message, NULL, tmp);
         free(message);
         if (NULL != tmp) {
             free(tmp);
         }
-        
+
     } else {
         asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
         if (want_mca) {
@@ -1104,7 +1157,7 @@ char *opal_info_make_version_str(const char *scope,
 {
     char *str = NULL, *tmp;
     char temp[BUFSIZ];
-    
+
     temp[BUFSIZ - 1] = '\0';
     if (0 == strcmp(scope, opal_info_ver_full) ||
         0 == strcmp(scope, opal_info_ver_all)) {
@@ -1126,11 +1179,11 @@ char *opal_info_make_version_str(const char *scope,
     } else if (0 == strcmp(scope, opal_info_ver_repo)) {
         str = strdup(repo);
     }
-    
+
     if (NULL == str) {
         str = strdup(temp);
     }
-    
+
     return str;
 }
 
@@ -1139,9 +1192,9 @@ void opal_info_show_opal_version(const char *scope)
     char *tmp, *tmp2;
 
     asprintf(&tmp, "%s:version:full", opal_info_type_opal);
-    tmp2 = opal_info_make_version_str(scope, 
-                                      OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                      OPAL_RELEASE_VERSION, 
+    tmp2 = opal_info_make_version_str(scope,
+                                      OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                      OPAL_RELEASE_VERSION,
                                       OPAL_GREEK_VERSION,
                                       OPAL_REPO_REV);
     opal_info_out("OPAL", tmp, tmp2);
