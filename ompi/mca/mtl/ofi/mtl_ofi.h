@@ -307,19 +307,35 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                               comm->c_my_rank, tag, 0);
     }
 
-    ret_length = fi_tsend(ompi_mtl_ofi.ep,
-                          start,
-                          length,
-                          ompi_mtl_ofi.mr,
-                          endpoint->peer_fiaddr,
-                          match_bits,
-                          (void *) &ofi_req->ctx);
+    if (ompi_mtl_ofi.max_inject_size >= length) {
+        ret_length = fi_tinject(ompi_mtl_ofi.ep,
+                                start,
+                                length,
+                                endpoint->peer_fiaddr,
+                                match_bits);
+        if (OPAL_UNLIKELY(0 > ret_length)) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: fi_tinject failed: %zd",
+                                __FILE__, __LINE__, ret_length);
+            return ompi_mtl_ofi_get_error(ret);
+        }
+        
+        ofi_req->event_callback(NULL,ofi_req);
+    } else {
+        ret_length = fi_tsend(ompi_mtl_ofi.ep,
+                              start,
+                              length,
+                              ompi_mtl_ofi.mr,
+                              endpoint->peer_fiaddr,
+                              match_bits,
+                              (void *) &ofi_req->ctx);
 
-    if (OPAL_UNLIKELY(0 > ret_length)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_tsend failed: %zd",
-                            __FILE__, __LINE__, ret_length);
-        return ompi_mtl_ofi_get_error(ret);
+        if (OPAL_UNLIKELY(0 > ret_length)) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: fi_tsend failed: %zd",
+                                __FILE__, __LINE__, ret_length);
+            return ompi_mtl_ofi_get_error(ret);
+        }
     }
 
     return OMPI_SUCCESS;

@@ -243,6 +243,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
+     * Save the maximum inject size.
+     */
+    ompi_mtl_ofi.max_inject_size = prov->tx_attr->inject_size;
+
+    /**
      * Create the objects that will be bound to the endpoint.
      * The objects include:
      *     - completion queue for events
