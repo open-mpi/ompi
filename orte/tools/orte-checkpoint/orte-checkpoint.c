@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -602,6 +603,10 @@ static int ckpt_init(int argc, char *argv[]) {
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
+    
+    /* we are never allowed to operate as a distributed tool,
+     * so insist on the ess/tool component */
+    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
     
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
