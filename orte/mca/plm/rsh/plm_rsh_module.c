@@ -502,7 +502,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
              */
-<            (void)asprintf (&final_cmd,
+            (void)asprintf (&final_cmd,
                             "%s%s%s PATH=%s%s$PATH ; export PATH ; "
                             "LD_LIBRARY_PATH=%s%s$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                             "DYLD_LIBRARY_PATH=%s%s$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
