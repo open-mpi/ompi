@@ -195,6 +195,29 @@ OPAL_DECLSPEC int mca_base_framework_open (mca_base_framework_t *framework,
  */
 OPAL_DECLSPEC int mca_base_framework_close (mca_base_framework_t *framework);
 
+
+/**
+ * Check if a framework is already registered
+ *
+ * @param[in] framework framework to query
+ *
+ * @retval true if the framework's mca variables are registered
+ * @retval false if not
+ */
+OPAL_DECLSPEC bool mca_base_framework_is_registered (struct mca_base_framework_t *framework);
+
+
+/**
+ * Check if a framework is already open
+ *
+ * @param[in] framework framework to query
+ *
+ * @retval true if the framework is open
+ * @retval false if not
+ */
+OPAL_DECLSPEC bool mca_base_framework_is_open (struct mca_base_framework_t *framework);
+
+
 /**
  * Macro to declare an MCA framework
  *
