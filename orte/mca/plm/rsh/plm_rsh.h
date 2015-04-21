@@ -64,7 +64,6 @@ struct orte_plm_rsh_component_t {
     bool assume_same_shell;
     bool pass_environ_mca_params;
     char *ssh_args;
-    char *pass_path;
     char *pass_libpath;
 };
 typedef struct orte_plm_rsh_component_t orte_plm_rsh_component_t;
