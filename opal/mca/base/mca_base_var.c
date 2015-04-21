@@ -1859,6 +1859,7 @@ static void var_destructor(mca_base_var_t *var)
         NULL != var->mbv_storage &&
         NULL != var->mbv_storage->stringval) {
         free (var->mbv_storage->stringval);
+        var->mbv_storage->stringval = NULL;
     }
 
     /* don't release the boolean enumerator */
