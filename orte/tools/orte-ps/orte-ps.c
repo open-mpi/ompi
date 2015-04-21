@@ -14,6 +14,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -421,6 +422,10 @@ static int orte_ps_init(int argc, char *argv[]) {
     free(tmp_env_var);
 #endif
 
+    /* we are never allowed to operate as a distributed tool,
+     * so insist on the ess/tool component */
+    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
