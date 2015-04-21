@@ -35,12 +35,11 @@ int mca_topo_base_lazy_init(void)
 {
     int err;
 
-    if (0 == opal_list_get_size(&ompi_topo_base_framework.framework_components)) {
-        ompi_topo_base_framework.framework_open(MCA_BASE_OPEN_FIND_COMPONENTS);
+    if (!mca_base_framework_is_open (&ompi_topo_base_framework)) {
         /**
-         * Register all available components, giving them a chance to access the MCA parameters.
+         * Register and open all available components, giving them a chance to access the MCA parameters.
          */
-        mca_base_framework_register(&ompi_topo_base_framework, MCA_BASE_REGISTER_DEFAULT);
+        mca_base_framework_open (&ompi_topo_base_framework, MCA_BASE_REGISTER_DEFAULT);
         if (OMPI_SUCCESS !=
             (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
