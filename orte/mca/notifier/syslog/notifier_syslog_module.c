@@ -126,7 +126,8 @@ static void myreport(orte_notifier_request_t *req)
 
     syslog(req->severity, "[%s]%s JOBID %s REPORTS STATE %s: %s", tod,
            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-           ORTE_JOBID_PRINT(req->jdata->jobid),
+           ORTE_JOBID_PRINT((NULL == req->jdata) ?
+                            ORTE_JOBID_INVALID : req->jdata->jobid),
            orte_job_state_to_str(req->state),
            (NULL == req->msg) ? "<N/A>" : req->msg);
 }
