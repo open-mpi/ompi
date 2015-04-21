@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -13,6 +13,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
+#include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 
@@ -35,6 +36,16 @@ int MPI_T_finalize (void)
     }
 
     if (0 == --mpit_init_count) {
+        (void) ompi_info_close_components ();
+
+        if ((!ompi_mpi_initialized || ompi_mpi_finalized) &&
+            (NULL != ompi_mpi_main_thread)) {
+            /* we are not between MPI_Init and MPI_Finalize so we
+             * have to free the ompi_mpi_main_thread */
+            OBJ_RELEASE(ompi_mpi_main_thread);
+            ompi_mpi_main_thread = NULL;
+        }
+
         (void) opal_finalize_util ();
     }
 

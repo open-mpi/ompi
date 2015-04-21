@@ -1050,6 +1050,7 @@ static int usnic_component_progress(void)
             assert(channel->chan_deferred_recv == NULL);
 
             int ret = fi_cq_read(channel->cq, &completion, 1);
+            assert(0 != ret);
             if (OPAL_LIKELY(1 == ret)) {
                 opal_memchecker_base_mem_defined(&completion,
                                                  sizeof(completion));
@@ -1063,10 +1064,9 @@ static int usnic_component_progress(void)
                     count += usnic_handle_completion(module, channel,
                                                      &completion);
                 }
-            } else if (OPAL_LIKELY(0 == ret)) {
+            } else if (OPAL_LIKELY(-FI_EAGAIN == ret)) {
                 continue;
-            }
-            else {
+            } else {
                 usnic_handle_cq_error(module, channel, ret);
             }
         }
@@ -1194,7 +1194,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
 
 static int usnic_component_progress_2(void)
 {
-    int i, j, count = 0, num_events;
+    int i, j, count = 0, num_events, ret;
     opal_btl_usnic_module_t* module;
     static struct fi_cq_entry completions[OPAL_BTL_USNIC_NUM_COMPLETIONS];
     opal_btl_usnic_channel_t *channel;
@@ -1218,16 +1218,21 @@ static int usnic_component_progress_2(void)
                 channel->chan_deferred_recv = NULL;
             }
 
-            num_events = fi_cq_read(channel->cq, completions,
-                                           OPAL_BTL_USNIC_NUM_COMPLETIONS);
-            opal_memchecker_base_mem_defined(&num_events, sizeof(num_events));
+            num_events = ret =
+                fi_cq_read(channel->cq, completions,
+                           OPAL_BTL_USNIC_NUM_COMPLETIONS);
+            assert(0 != ret);
+            opal_memchecker_base_mem_defined(&ret, sizeof(ret));
+            if (OPAL_UNLIKELY(ret < 0 && -FI_EAGAIN != ret)) {
+                usnic_handle_cq_error(module, channel, num_events);
+                num_events = 0;
+            } else if (-FI_EAGAIN == ret) {
+                num_events = 0;
+            }
+
             opal_memchecker_base_mem_defined(completions,
                                              sizeof(completions[0]) *
                                              num_events);
-            if (OPAL_UNLIKELY(num_events < 0)) {
-                usnic_handle_cq_error(module, channel, num_events);
-            }
-
             /* Handle each event */
             for (j = 0; j < num_events; j++) {
                 count += usnic_handle_completion(module, channel,

@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */

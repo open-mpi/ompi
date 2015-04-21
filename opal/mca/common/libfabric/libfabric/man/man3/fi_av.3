@@ -1,4 +1,4 @@
-.TH fi_av 3 "2015\-03\-11" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_av 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_av - Address vector operations
@@ -170,19 +170,19 @@ The name field allows the underlying provider to identify a shared AV.
 If the name field is non-NULL and the AV is not opened for read-only
 access, a named AV will be created, if it does not already exist.
 .PP
-\f[I]map_addr\f[] : The map_addr determines the base FI_ADDR address
+\f[I]map_addr\f[] : The map_addr determines the base fi_addr_t address
 that a provider should use when sharing an AV of type FI_AV_MAP between
 processes.
 Processes that provide the same value for map_addr to a shared AV may
-use the same FI_ADDR values returned from an fi_av_insert call.
+use the same fi_addr_t values returned from an fi_av_insert call.
 .PP
 The map_addr may be used by the provider to mmap memory allocated for a
 shared AV between processes; however, the provider is not required to
 use the map_addr in this fashion.
-The only requirement is that an FI_ADDR returned as part of an
+The only requirement is that an fi_addr_t returned as part of an
 fi_av_insert call on one process is usable on another process which
 opens an AV of the same name at the same map_addr value.
-The relationship between the map_addr and any returned FI_ADDR is not
+The relationship between the map_addr and any returned fi_addr_t is not
 defined.
 .PP
 If name is non-NULL and map_addr is 0, then the map_addr used by the

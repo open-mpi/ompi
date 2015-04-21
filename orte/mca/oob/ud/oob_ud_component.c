@@ -59,32 +59,29 @@ static void mca_oob_ud_device_destruct (mca_oob_ud_device_t *device);
  */
 mca_oob_ud_component_t mca_oob_ud_component = {
     {
-        {
+        .oob_base = {
             MCA_OOB_BASE_VERSION_2_0_0,
-            "ud", /* MCA module name */
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            mca_oob_ud_component_open,  /* component open */
-            mca_oob_ud_component_close, /* component close */
-            NULL, /* component query */
-            mca_oob_ud_component_register, /* component register */
+            .mca_component_name = "ud",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = mca_oob_ud_component_open,
+            .mca_close_component = mca_oob_ud_component_close,
+            .mca_register_component_params = mca_oob_ud_component_register,
         },
-        {
+        .oob_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        0,  // reserve space for an assigned index
-        0,  //set the priority so that we will select this component only if someone directs to do so
-        mca_oob_ud_component_available, //available
-        mca_oob_ud_component_startup, //startup
-        mca_oob_ud_component_shutdown, //shutdown
-        mca_oob_ud_component_send_nb, //send_nb
-        mca_oob_ud_component_get_addr,
-        mca_oob_ud_component_set_addr,
-        mca_oob_ud_component_is_reachable, //is_reachable
+        .priority = 0,  //set the priority so that we will select this component only if someone directs to do so
+        .available = mca_oob_ud_component_available, //available
+        .startup = mca_oob_ud_component_startup, //startup
+        .shutdown = mca_oob_ud_component_shutdown, //shutdown
+        .send_nb = mca_oob_ud_component_send_nb, //send_nb
+        .get_addr = mca_oob_ud_component_get_addr,
+        .set_addr = mca_oob_ud_component_set_addr,
+        .is_reachable = mca_oob_ud_component_is_reachable, //is_reachable
 #if OPAL_ENABLE_FT_CR == 1
-        mca_oob_ud_component_ft_event,
+        .ft_event = mca_oob_ud_component_ft_event,
 #endif // OPAL_ENABLE_FT_CR
     },
 };
@@ -213,7 +210,6 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
                                            struct ibv_device *ib_device)
 {
     int rc, port_num;
-    struct ibv_device_attr dev_attr;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                          "%s oob:ud:device_setup attempting to setup ib device %p",
@@ -237,7 +233,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
         return ORTE_ERROR;
     }
 
-    rc = ibv_query_device (device->ib_context, &dev_attr);
+    rc = ibv_query_device (device->ib_context, &device->attr);
     if (0 != rc) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                              "%s oob:ud:device_setup error querying device. errno = %d",
@@ -261,7 +257,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
         return ORTE_ERROR;
     }
 
-    for (port_num = 1 ; port_num <= dev_attr.phys_port_cnt ; ++port_num) {
+    for (port_num = 1 ; port_num <= device->attr.phys_port_cnt ; ++port_num) {
         mca_oob_ud_port_t *port = OBJ_NEW(mca_oob_ud_port_t);
 
         if (NULL == port) {

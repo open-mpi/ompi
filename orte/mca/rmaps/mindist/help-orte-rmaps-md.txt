@@ -35,8 +35,8 @@ On at least one node, more than one of the specified device was discovered.
 In this scenario, passing the 'auto' option to the rmaps minimum 
 distance mapper is ambiguous and therefore not valid.
 Please select the particular device that you would like 
-to be mapped nearest via -mca rmaps_base_mapping_policy dist:<device>
-or --map-by dist:<device>, e.g. --map-by dist:mlx4_0.
+to be mapped nearest via -mca rmaps_dist_device <device> option,
+e.g. --map-by dist -mca rmaps_dist_device mlx4_0.
 
   Device type: %s
   #Devices: %d

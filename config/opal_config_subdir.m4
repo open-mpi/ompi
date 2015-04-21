@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -22,6 +22,8 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CONFIG_SUBDIR],[
+OPAL_VAR_SCOPE_PUSH([subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file subdir_args subdir_dots total_dir dir_part temp])
+
 #
 # Invoke configure in a specific subdirectory.
 #
@@ -111,16 +113,6 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
     # Construct the --cache-file argument
     #
 
-dnl    case $cache_file in
-dnl    [[\\/]* | ?:[\\/]*] )
-dnl	# Absolute path
-dnl	subdir_cache_file="$cache_file"
-dnl	;;
-dnl    *)
-dnl	# Relative path
-dnl        subdir_cache_file="$subdir_dots$cache_file"
-dnl	;;
-dnl    esac
     # BWB - subdir caching is a pain since we change CFLAGS and all that.  
     # Just disable it for now
     subdir_cache_file="/dev/null"
@@ -129,10 +121,6 @@ dnl    esac
     # Invoke the configure script in the subdirectory
     #
 
-    export CFLAGS CPPFLAGS
-    export CXXFLAGS CXXCPPFLAGS
-    export FCFLAGS
-    export LDFLAGS LIBS
     sub_configure="$SHELL '$subdir_srcdir/configure'"
     AC_MSG_NOTICE([running $sub_configure $subdir_args --cache-file=$subdir_cache_file --srcdir=$subdir_srcdir --disable-option-checking])
     eval "$sub_configure $subdir_args \
@@ -156,5 +144,4 @@ fi
 # Clean up
 #
 
-unset subdir_parent sub_configure subdir_dir subdir_srcdir subdir_cache_file
-unset subdir_args subdir_dots total_dir dir_part temp])dnl
+OPAL_VAR_SCOPE_POP])dnl

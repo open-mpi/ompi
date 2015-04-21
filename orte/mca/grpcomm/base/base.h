@@ -32,7 +32,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/odls/odls_types.h"
@@ -84,6 +84,8 @@ ORTE_DECLSPEC int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
                                              void *cbdata);
 
 ORTE_DECLSPEC orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig, bool create);
+ORTE_DECLSPEC void orte_grpcomm_base_mark_distance_recv(orte_grpcomm_coll_t *coll, uint32_t distance);
+ORTE_DECLSPEC unsigned int orte_grpcomm_base_check_distance_recv(orte_grpcomm_coll_t *coll, uint32_t distance);
 
 END_C_DECLS
 #endif

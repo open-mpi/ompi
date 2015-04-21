@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,11 +10,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,30 +97,27 @@ static bool component_is_reachable(orte_process_name_t *peer);
  */
 mca_oob_usock_component_t mca_oob_usock_component = {
     {
-        {
+        .oob_base = {
             MCA_OOB_BASE_VERSION_2_0_0,
-            "usock", /* MCA module name */
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            usock_component_open,  /* component open */
-            usock_component_close, /* component close */
-            NULL, /* component query */
-            usock_component_register, /* component register */
+            .mca_component_name = "usock",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = usock_component_open,
+            .mca_close_component = usock_component_close,
+            .mca_register_component_params = usock_component_register,
         },
-        {
+        .oob_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        0,   // reserve space for an assigned index
-        100, // default priority of this transport
-        component_available,
-        component_startup,
-        component_shutdown,
-        component_send,
-        component_get_addr,
-        component_set_addr,
-        component_is_reachable
+        .priority = 100,
+        .available = component_available,
+        .startup = component_startup,
+        .shutdown = component_shutdown,
+        .send_nb = component_send,
+        .get_addr = component_get_addr,
+        .set_addr = component_set_addr,
+        .is_reachable = component_is_reachable,
     },
 };
 
@@ -538,6 +536,7 @@ mca_oob_usock_peer_t* mca_oob_usock_peer_lookup(const orte_process_name_t *name)
 
 static void peer_cons(mca_oob_usock_peer_t *peer)
 {
+    peer->auth_method = NULL;
     peer->sd = -1;
     peer->state = MCA_OOB_USOCK_UNCONNECTED;
     peer->retries = 0;
@@ -550,6 +549,9 @@ static void peer_cons(mca_oob_usock_peer_t *peer)
 }
 static void peer_des(mca_oob_usock_peer_t *peer)
 {
+    if (NULL != peer->auth_method) {
+        free(peer->auth_method);
+    }
     if (0 <= peer->sd) {
         CLOSE_THE_SOCKET(peer->sd);
     }

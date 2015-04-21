@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -449,7 +449,8 @@ char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
 static void obj_data_const(opal_hwloc_obj_data_t *ptr)
 {
     ptr->available = NULL;
-    ptr->npus = UINT_MAX;
+    ptr->npus_calculated = false;
+    ptr->npus = 0;
     ptr->idx = UINT_MAX;
     ptr->num_bound = 0;
 }
@@ -522,13 +523,11 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
     if (NULL == spec) {
         if (opal_hwloc_use_hwthreads_as_cpus) {
             /* default to bind-to hwthread */
-            OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_HWTHREAD);
+            OPAL_SET_DEFAULT_BINDING_POLICY(tmp, OPAL_BIND_TO_HWTHREAD);
         } else {
             /* default to bind-to core */
-            OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_CORE);
+            OPAL_SET_DEFAULT_BINDING_POLICY(tmp, OPAL_BIND_TO_CORE);
         }
-        /* note that no binding policy was specified */
-        tmp &= ~OPAL_BIND_GIVEN;
     } else if (0 == strncasecmp(spec, "none", strlen("none"))) {
         OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_NONE);
     } else {

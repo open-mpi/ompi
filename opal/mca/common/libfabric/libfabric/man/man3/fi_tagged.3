@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-03\-04" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_tagged 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -253,11 +253,6 @@ will immediately be posted after the current call returns.
 Use of this flag may improve performance by enabling the provider to
 optimize its access to the fabric hardware.
 .PP
-\f[I]FI_REMOTE_SIGNAL\f[] : Indicates that a completion event at the
-target process should be generated for the given operation.
-The remote endpoint must be configured with FI_REMOTE_SIGNAL, or this
-flag will be ignored by the target.
-.PP
 \f[I]FI_INJECT\f[] : Applies to fi_tsendmsg.
 Indicates that the outbound data buffer should be returned to user
 immediately after the send call returns, even if the operation is
@@ -265,9 +260,14 @@ handled asynchronously.
 This may require that the underlying provider implementation copy the
 data into a local buffer and transfer out of that buffer.
 .PP
-\f[I]FI_REMOTE_COMPLETE\f[] : Applies to fi_tsendmsg.
+\f[I]FI_INJECT_COMPLETE\f[] : Applies to fi_tsendmsg.
+Indicates that a completion should be generated when the source
+buffer(s) may be reused.
+.PP
+\f[I]FI_TRANSMIT_COMPLETE\f[] : Applies to fi_tsendmsg.
 Indicates that a completion should not be generated until the operation
-has completed on the remote side.
+has been successfully transmitted and is no longer being tracked by the
+provider.
 .PP
 \f[I]FI_FENCE\f[] : Applies to transmits.
 Indicates that the requested operation, also known as the fenced

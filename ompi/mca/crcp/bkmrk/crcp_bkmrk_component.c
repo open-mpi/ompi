@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,31 +50,27 @@ ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component = {
         /* Handle the general mca_component_t struct containing 
          *  meta information about the component
          */
-        {
+        .base_version = {
             OMPI_CRCP_BASE_VERSION_2_0_0,
             /* Component name and version */
-            "bkmrk",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
-            
+            .mca_component_name = "bkmrk",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+
             /* Component open and close functions */
-            crcp_bkmrk_open,
-            crcp_bkmrk_close,
-            ompi_crcp_bkmrk_component_query,
-            crcp_bkmrk_register
+            .mca_open_component = crcp_bkmrk_open,
+            .mca_close_component = crcp_bkmrk_close,
+            .mca_query_component = ompi_crcp_bkmrk_component_query,
+            .mca_register_component_params = crcp_bkmrk_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1,
-        /* Default priority */
-        20
+        .verbose = 0,
+        .output_handle = -1,
+        .priority = 20,
     }
 };
 

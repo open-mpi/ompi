@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
 
@@ -75,7 +76,7 @@ typedef struct {
     /* number reported in */
     size_t nreported;
     /* distance masks for receive */
-    uint32_t distance_mask_recv;
+    uint32_t *distance_mask_recv;
     /* received buckets */
     opal_buffer_t ** buffers;
     /* callback function */
@@ -173,10 +174,8 @@ typedef orte_grpcomm_base_component_3_0_0_t orte_grpcomm_base_component_t;
  * Macro for use in components that are of type grpcomm v3.0.0
  */
 #define ORTE_GRPCOMM_BASE_VERSION_3_0_0 \
-  /* grpcomm v3.0 is chained to MCA v2.0 */ \
-  MCA_BASE_VERSION_2_0_0, \
-  /* grpcomm v3.0 */ \
-  "grpcomm", 3, 0, 0
+    /* grpcomm v3.0 is chained to MCA v2.0 */ \
+    ORTE_MCA_BASE_VERSION_2_1_0("grpcomm", 3, 0, 0)
 
 /* Global structure for accessing grpcomm functions */
 ORTE_DECLSPEC extern orte_grpcomm_API_module_t orte_grpcomm;

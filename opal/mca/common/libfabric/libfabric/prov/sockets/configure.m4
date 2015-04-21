@@ -1,4 +1,4 @@
-dnl Configury specific to the libfabrics sockets provider
+dnl Configury specific to the libfabric sockets provider
 
 dnl Called to configure this provider
 dnl

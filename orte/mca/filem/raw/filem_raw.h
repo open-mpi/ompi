@@ -13,7 +13,7 @@
 
 #include "orte_config.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/event/event.h"
 

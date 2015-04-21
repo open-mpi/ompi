@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -126,8 +129,7 @@ typedef struct opal_if_base_component_2_0_0_t opal_if_base_component_t;
  * Macro for use in components that are of type if
  */
 #define OPAL_IF_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "if", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("if", 2, 0, 0)
 
 END_C_DECLS
 

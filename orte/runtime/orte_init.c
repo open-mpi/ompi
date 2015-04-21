@@ -182,7 +182,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (NULL != opal_process_info.nodename) {
         free(opal_process_info.nodename);
     }
-    opal_process_info.nodename = orte_process_info.nodename;
+    /* opal_finalize_util will call free on this pointer so set from strdup */
+    opal_process_info.nodename = strdup (orte_process_info.nodename);
 
     /* setup the dstore framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {

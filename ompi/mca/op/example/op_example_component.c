@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,25 +48,23 @@ ompi_op_example_component_t mca_op_example_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
     {
-        {
+        .opc_version = {
             OMPI_OP_BASE_VERSION_1_0_0,
-            
-            "example",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
-            example_component_open,
-            example_component_close,
-            NULL,
-            example_component_register
+
+            .mca_component_name = "example",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = example_component_open,
+            .mca_close_component = example_component_close,
+            .mca_register_component_params = example_component_register,
         },
-        {
+        .opc_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        example_component_init_query,
-        example_component_op_query,
+
+        .opc_init_query = example_component_init_query,
+        .opc_op_query = example_component_op_query,
     },
 
     /* Now comes the example-component-specific data.  In this case,

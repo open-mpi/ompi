@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
@@ -342,7 +343,10 @@ void ompi_mpi_thread_level(int requested, int *provided)
             ompi_mpi_thread_provided = *provided = requested;
         }
     }
-    ompi_mpi_main_thread = opal_thread_get_self();
+
+    if (!ompi_mpi_main_thread) {
+        ompi_mpi_main_thread = opal_thread_get_self();
+    }
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
@@ -384,7 +388,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *error = NULL;
     char *cmd=NULL, *av=NULL;
     OPAL_TIMING_DECLARE(tm);
-    OPAL_TIMING_INIT(&tm);
+    OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */

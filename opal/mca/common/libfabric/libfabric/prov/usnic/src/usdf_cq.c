@@ -157,7 +157,6 @@ usdf_cq_read_common(struct fid_cq *fcq, void *buf, size_t count,
 	while (entry < last) {
 		ret = usd_poll_cq(cq->c.hard.cq_cq, &cq->cq_comp);
 		if (ret == -EAGAIN) {
-			ret = 0;
 			break;
 		}
 		if (cq->cq_comp.uc_status != 0) {
@@ -428,7 +427,7 @@ usdf_cq_post_soft_data(struct usdf_cq_hard *hcq, void *context, size_t len)
 	usdf_cq_post_soft(hcq, context, len, FI_CQ_FORMAT_DATA);
 }
 
-ssize_t
+static ssize_t
 usdf_cq_sread_soft(struct fid_cq *cq, void *buf, size_t count, const void *cond,
 		int timeout)
 {
@@ -451,7 +450,6 @@ usdf_cq_read_common_soft(struct fid_cq *fcq, void *buf, size_t count,
 	uint8_t *last;
 	void *tail;
 	size_t entry_len;
-	ssize_t ret;
 
 	cq = cq_ftou(fcq);
 	if (cq->cq_comp.uc_status != 0) {
@@ -472,10 +470,10 @@ usdf_cq_read_common_soft(struct fid_cq *fcq, void *buf, size_t count,
 		entry_len = sizeof(struct fi_cq_data_entry);
 		break;
 	default:
-		return 0;
+		USDF_WARN("unexpected CQ format, internal error\n");
+		return -FI_EOPNOTSUPP;
 	}
 
-	ret = 0;
 	entry = buf;
 	last = entry + (entry_len * count);
 	tail = cq->c.soft.cq_tail;
@@ -495,7 +493,7 @@ usdf_cq_read_common_soft(struct fid_cq *fcq, void *buf, size_t count,
 	if (entry > (uint8_t *)buf) {
 		return (entry - (uint8_t *)buf) / entry_len;
 	} else {
-		return ret;
+		return -FI_EAGAIN;
 	}
 }
 
@@ -648,61 +646,75 @@ usdf_cq_close(fid_t fid)
 static struct fi_ops_cq usdf_cq_context_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_context,
-	.sread = usdf_cq_sread,
 	.readfrom = usdf_cq_readfrom_context,
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_context_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_context_soft,
-	.sread = usdf_cq_sread_soft,
 	.readfrom = usdf_cq_readfrom_context_soft,
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread_soft,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_msg_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_msg,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_msg_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_msg_soft,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_data_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_data,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops_cq usdf_cq_data_soft_ops = {
 	.size = sizeof(struct fi_ops_cq),
 	.read = usdf_cq_read_data_soft,
-	.sread = usdf_cq_sread,
 	.readfrom = fi_no_cq_readfrom,  /* XXX */
 	.readerr = usdf_cq_readerr,
-	.strerror = usdf_cq_strerror
+	.sread = usdf_cq_sread,
+	.sreadfrom = fi_no_cq_sreadfrom,
+	.signal = fi_no_cq_signal,
+	.strerror = usdf_cq_strerror,
 };
 
 static struct fi_ops usdf_cq_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = usdf_cq_close,
+	.bind = fi_no_bind,
 	.control = usdf_cq_control,
+	.ops_open = fi_no_ops_open,
 };
 
 /*
@@ -856,6 +868,7 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	cq->cq_fid.fid.context = context;
 	cq->cq_fid.fid.ops = &usdf_cq_fi_ops;
+	atomic_init(&cq->cq_refcnt, 0);
 
 	switch (attr->format) {
 	case FI_CQ_FORMAT_CONTEXT:

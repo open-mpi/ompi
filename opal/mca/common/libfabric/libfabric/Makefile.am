@@ -27,7 +27,8 @@ rdmainclude_HEADERS =
 # internal utility functions shared by in-tree providers:
 common_srcs = \
 	src/common.c \
-	src/enosys.c
+	src/enosys.c \
+	src/log.c
 
 # ensure dl-built providers link back to libfabric
 linkback = $(top_builddir)/src/libfabric.la
@@ -37,12 +38,10 @@ src_libfabric_la_SOURCES = \
 	include/fi_enosys.h \
 	include/fi_indexer.h \
 	include/fi_list.h \
-	include/fi_log.h \
 	include/fi_rbuf.h \
 	include/prov.h \
 	src/fabric.c \
 	src/fi_tostr.c \
-	src/log.c \
 	$(common_srcs)
 
 if MACOS
@@ -215,8 +214,8 @@ _usnic_files = \
 	prov/usnic/src/usdf_timer.h
 
 _usnic_cppflags = \
-        -D__LIBUSNIC__ \
-        -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(usnic_libnl_CPPFLAGS) \
+        -D__LIBUSNIC__ -DWANT_DEBUG_MSGS=0 \
+        -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(usnic_nl_CPPFLAGS) \
         -I$(top_srcdir)/prov/usnic/src/usnic_direct
 
 rdmainclude_HEADERS += \
@@ -226,13 +225,16 @@ if HAVE_USNIC_DL
 pkglib_LTLIBRARIES += libusnic-fi.la
 libusnic_fi_la_CPPFLAGS = $(AM_CPPFLAGS) $(_usnic_cppflags)
 libusnic_fi_la_SOURCES = $(_usnic_files) $(common_srcs)
-libusnic_fi_la_LDFLAGS = -module -avoid-version -shared -export-dynamic
-libusnic_fi_la_LIBADD = $(linkback) $(usnic_libnl_LIBS)
+libusnic_fi_la_LDFLAGS = \
+        $(usnic_ln_LDFLAGS) \
+        -module -avoid-version -shared -export-dynamic
+libusnic_fi_la_LIBADD = $(linkback) $(usnic_nl_LIBS)
 libusnic_fi_la_DEPENDENCIES = $(linkback)
 else !HAVE_USNIC_DL
 src_libfabric_la_SOURCES += $(_usnic_files)
 src_libfabric_la_CPPFLAGS += $(_usnic_cppflags)
-src_libfabric_la_LIBADD += $(usnic_libnl_LIBS)
+src_libfabric_la_LDFLAGS += $(usnic_nl_LDFLAGS)
+src_libfabric_la_LIBADD += $(usnic_nl_LIBS)
 endif !HAVE_USNIC_DL
 
 endif HAVE_USNIC
@@ -287,6 +289,7 @@ rdmainclude_HEADERS += \
 	$(top_srcdir)/include/rdma/fi_cm.h \
 	$(top_srcdir)/include/rdma/fi_domain.h \
 	$(top_srcdir)/include/rdma/fi_eq.h \
+	$(top_srcdir)/include/rdma/fi_log.h \
 	$(top_srcdir)/include/rdma/fi_prov.h \
 	$(top_srcdir)/include/rdma/fi_rma.h \
 	$(top_srcdir)/include/rdma/fi_endpoint.h \
@@ -328,6 +331,11 @@ real_man_pages = \
         man/man3/fi_trigger.3 \
         man/man3/fi_version.3 \
         man/man7/fabric.7 \
+        man/man7/fi_provider.7 \
+        man/man7/fi_psm.7 \
+        man/man7/fi_sockets.7 \
+        man/man7/fi_usnic.7 \
+        man/man7/fi_verbs.7 \
         man/man7/fi_direct.7
 
 dummy_man_pages = \
@@ -362,7 +370,7 @@ dummy_man_pages = \
         man/man3/fi_cq_sread.3 \
         man/man3/fi_cq_sreadfrom.3 \
         man/man3/fi_cq_strerror.3 \
-        man/man3/fi_cq_write.3 \
+        man/man3/fi_cq_signal.3 \
         man/man3/fi_domain_bind.3 \
         man/man3/fi_domain_query.3 \
         man/man3/fi_dupinfo.3 \
@@ -397,7 +405,9 @@ dummy_man_pages = \
         man/man3/fi_mr_regattr.3 \
         man/man3/fi_mr_regv.3 \
         man/man3/fi_open.3 \
+        man/man3/fi_open_ops.3 \
         man/man3/fi_passive_ep.3 \
+        man/man3/fi_pep_bind.3 \
         man/man3/fi_poll_add.3 \
         man/man3/fi_poll_del.3 \
         man/man3/fi_poll_open.3 \
@@ -410,6 +420,7 @@ dummy_man_pages = \
         man/man3/fi_reject.3 \
         man/man3/fi_rx_addr.3 \
         man/man3/fi_rx_size_left.3 \
+        man/man3/fi_scalable_ep_bind.3 \
         man/man3/fi_send.3 \
         man/man3/fi_senddata.3 \
         man/man3/fi_sendmsg.3 \

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([libfabric], [1.0.0rc3], [ofiwg@lists.openfabrics.org])
+AC_INIT([libfabric], [1.0.0rc5], [ofiwg@lists.openfabrics.org])
 AC_CONFIG_SRCDIR([src/fabric.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -91,6 +91,13 @@ dnl Checks for libraries
 AC_CHECK_LIB(pthread, pthread_mutex_init, [],
     AC_MSG_ERROR([pthread_mutex_init() not found.  libfabric requires libpthread.]))
 
+AC_CHECK_FUNC([pthread_spin_init],
+	[have_spinlock=1],
+	[have_spinlock=0])
+
+AC_DEFINE_UNQUOTED([PT_LOCK_SPIN], [$have_spinlock],
+	[Define to 1 if pthread_spin_init is available.])
+
 have_clock_gettime=0
 have_host_get_clock_service=0
 
@@ -102,9 +109,9 @@ AC_SEARCH_LIBS([clock_gettime],[rt],
 			 not found.])])])
 
 AC_DEFINE_UNQUOTED(HAVE_CLOCK_GETTIME, [$have_clock_gettime],
-		   [Define HAVE_CLOCK_GETTIME to 1 if available.])
+		   [Define to 1 if clock_gettime is available.])
 AC_DEFINE_UNQUOTED(HAVE_HOST_GET_CLOCK_SERVICE, [$have_host_get_clock_service],
-		   [Define HAVE_HOST_GET_CLOCK_SERVICE to 1 if available.])
+		   [Define to 1 if host_clock_get_service is available.])
 
 dnl Check for gcc atomic intrinsics
 AC_MSG_CHECKING(compiler support for c11 atomics)

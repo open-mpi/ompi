@@ -62,6 +62,7 @@ extern "C" {
 struct fi_provider {
 	uint32_t version;
 	uint32_t fi_version;
+	struct fi_context context;
 	const char *name;
 	int	(*getinfo)(uint32_t version, const char *node, const char *service,
 			uint64_t flags, struct fi_info *hints, struct fi_info **info);

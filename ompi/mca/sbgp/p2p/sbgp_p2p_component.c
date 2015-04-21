@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -64,29 +64,24 @@ mca_sbgp_p2p_component_t mca_sbgp_p2p_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .sbgp_version = {
             MCA_SBGP_BASE_VERSION_2_0_0,
             /* Component name and version */
 
-            "p2p",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "p2p",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
 
-            p2p_open,
-            p2p_close,
-            NULL,
-            p2p_register
+            .mca_open_component = p2p_open,
+            .mca_close_component = p2p_close,
+            .mca_register_component_params = p2p_register,
         },
 
-    mca_sbgp_p2p_init_query,
-    /* select function */
-    mca_sbgp_p2p_select_procs,
-
-    /* (default) priority */
-    0
+        .sbgp_init_query = mca_sbgp_p2p_init_query,
+        .select_procs = mca_sbgp_p2p_select_procs,
+        .priority = 0,
     }
 
 };

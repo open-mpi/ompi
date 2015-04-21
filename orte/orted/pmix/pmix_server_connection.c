@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -83,8 +83,9 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
     pmix_server_hdr_t hdr;
     int rc;
     size_t sdsize;
-    opal_sec_cred_t *cred;
-
+    char *cred;
+    size_t credsize;
+    
     opal_output_verbose(2, pmix_server_output,
                         "%s SEND CONNECT ACK", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -96,17 +97,18 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
     hdr.tag = UINT32_MAX;
 
     /* get our security credential*/
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
-                                                         ORTE_PROC_MY_NAME, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
+                                                         opal_dstore_internal,
+                                                         ORTE_PROC_MY_NAME, &cred, &credsize))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* set the number of bytes to be read beyond the header */
-    hdr.nbytes = strlen(orte_version_string) + 1 + cred->size;
+    hdr.nbytes = strlen(orte_version_string) + 1 + credsize;
 
     /* create a space for our message */
-    sdsize = (sizeof(hdr) + strlen(opal_version_string) + 1 + cred->size);
+    sdsize = (sizeof(hdr) + strlen(opal_version_string) + 1 + credsize);
     if (NULL == (msg = (char*)malloc(sdsize))) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -115,8 +117,8 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
     /* load the message */
     memcpy(msg, &hdr, sizeof(hdr));
     memcpy(msg+sizeof(hdr), opal_version_string, strlen(opal_version_string));
-    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1, cred->credential, cred->size);
-
+    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1, cred, credsize);
+    free(cred);
 
     if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
@@ -210,7 +212,8 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
     char *msg;
     char *version;
     int rc;
-    opal_sec_cred_t creds;
+    char *cred;
+    size_t credsize;
     pmix_server_peer_t *peer;
     pmix_server_hdr_t hdr;
     orte_process_name_t sender;
@@ -365,10 +368,14 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
                         ORTE_NAME_PRINT(&peer->name));
 
     /* check security token */
-    creds.credential = (char*)(msg + strlen(version) + 1);
-    creds.size = strlen(creds.credential);
-    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
+    cred =  (char*)(msg + strlen(version) + 1);
+    credsize = hdr.nbytes - strlen(version) - 1;
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(cred, credsize, &peer->auth_method))) {
         ORTE_ERROR_LOG(rc);
+        peer->state = PMIX_SERVER_FAILED;
+        CLOSE_THE_SOCKET(peer->sd);
+        free(msg);
+        return ORTE_ERR_UNREACH;
     }
     free(msg);
 
@@ -452,8 +459,10 @@ static bool usock_peer_recv_blocking(pmix_server_peer_t* peer,
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
                                 (NULL == peer) ? 0 : peer->state);
-            peer->state = PMIX_SERVER_FAILED;
-            CLOSE_THE_SOCKET(peer->sd);
+            if (NULL != peer) {
+                peer->state = PMIX_SERVER_FAILED;
+                CLOSE_THE_SOCKET(peer->sd);
+            }
             return false;
         }
 

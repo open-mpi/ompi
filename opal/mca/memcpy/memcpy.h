@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -41,7 +44,6 @@ typedef struct opal_memcpy_base_component_2_0_0_t opal_memcpy_base_component_2_0
  * Macro for use in components that are of type memcpy
  */
 #define OPAL_MEMCPY_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "memcpy", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("memcpy", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMCPY_MEMCPY_H */

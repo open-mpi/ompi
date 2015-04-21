@@ -216,35 +216,39 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         }
     }
 
-    /* Loop polling for USD destination creation completion (they were
-       individually started in btl_usnic_proc.c)
-
-       In the loop below, the num_left value is decremented by a value
-       we get back from the event queue.  There are error cases where
-       we (theothetically) can get a corrupted event entry back, and
-       not know how much to decrement num_left.  Hence, num_left can
-       be inaccurate.  In such cases, this is probably indicative of a
-       larger error.  Plus, we're not even all the way through module
-       init yet, so only sane thing to do is abort. */
+    /* Loop polling for fi_av_insert completion (they were
+       individually started in btl_usnic_proc.c) */
     while (num_left > 0) {
         opal_btl_usnic_addr_context_t *context;
 
         ret = fi_eq_sread(module->av_eq, &event, &entry, sizeof(entry), -1, 0);
+
+        /* fi_eq_sread() will return ret==sizeof(entry) if there are
+           no entries on the error queue and the event read completes
+           successfully.  We'll get a non-error event back for every
+           fi_av_insert(), even if that insert errors out. */
         if (sizeof(entry) == ret) {
             context = entry.context;
-            /* The usnic provider returns the number of inserts
-               completed in entry.data */
-            num_left -= entry.data;
             free(context);
+            --num_left;
             ret = 0;
         }
 
+        /* fi_eq_sread() will return -FI_EAVAIL if there's something
+           on the error queue.
+
+           Note that if an fi_av_insert() fails, it will *first*
+           return an entry on the error queue (i.e., have
+           fi_eq_sread() return -FI_EVAIL), and *second* it will
+           return an entry on the normal queue.  Meaning: the failed
+           fi_av_insert() context will show up twice.  So don't free
+           the context (or anything associated with it) here in this
+           error case, because the same context will show up in the
+           non-error case (above). */
         else if (-FI_EAVAIL == ret) {
             ret = fi_eq_readerr(module->av_eq, &err_entry, 0);
             if (sizeof(err_entry) == ret) {
-                /* An err_entry is returned for each errored
-                   insertion */
-                --num_left;
+                context = err_entry.context;
 
                 /* Got some kind of address failure.  This usually means
                    that we couldn't find a route to that peer (e.g., the
@@ -252,16 +256,21 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                    can't reach this peer, and print a pretty warning. */
                 if (EADDRNOTAVAIL == err_entry.err ||
                      EHOSTUNREACH == err_entry.err) {
-                    context = err_entry.context;
-                    add_procs_warn_unreachable(module, context->endpoint);
 
-                    /* NULL out this endpoint in the array so that the
-                       caller knows it's unreachable */
-                    /* RFXXX - index in context? */
+                    /* Note that endpoint was passed in a context in
+                       USNIC_NUM_CHANNELS fi_av_insert() calls.
+                       Meaning: if that address fails to resolve,
+                       we'll get USNIC_NUM_CHANNELS error events back
+                       with a context containing that endpoint.
+
+                       We therefore only want to print a pretty
+                       warning about (and OBJ_RELEASE) that endpoint
+                       the *first* time it is reported. */
                     for (i = 0; i < array_len; ++i) {
                         if (endpoints[i] == context->endpoint) {
+                            add_procs_warn_unreachable(module,
+                                                       context->endpoint);
                             OBJ_RELEASE(context->endpoint);
-
                             endpoints[i] = NULL;
                             break;
                         }
@@ -282,9 +291,15 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                                    "Failed to insert address to AV");
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
                     error_occurred = true;
-                    /* we can't break here, need to finish reaping all inserts */
-                    continue;
+
+                    /* we can't break here, need to finish reaping all
+                       inserts */
                 }
+
+                /* Don't free the context or the endpoint -- events
+                   that come in as errors will *also* come in as real
+                   events */
+
             } else {
                 /* If we get here, it means fi_eq_readerr() failed
                    badly, which means something has gone tremendously
@@ -308,7 +323,9 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
         } else {
             /* If we get here, it means fi_eq_readerr() failed badly,
                which means something has gone tremendously wrong.
-               Probably the only safe thing to do here is exit. */
+               Given that we're potentially not even all the way
+               through MPI_INIT yet, the only sane thing to do here is
+               exit. */
             opal_show_help("help-mpi-btl-usnic.txt",
                            "internal error during init",
                            true,

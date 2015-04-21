@@ -265,8 +265,7 @@ OPAL_DECLSPEC int mca_mpool_base_remove(void * base);
  * Macro for use in components that are of type mpool
  */
 #define MCA_MPOOL_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "mpool", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 2, 0, 0)
 
 #endif /* MCA_MPOOL_H */
 

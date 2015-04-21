@@ -41,7 +41,6 @@ ssize_t _psmx_tagged_recv(struct fid_ep *ep, void *buf, size_t len,
 	psm_mq_req_t psm_req;
 	uint64_t psm_tag, psm_tagsel;
 	struct fi_context *fi_context;
-	int user_fi_context = 0;
 	int err;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
@@ -73,8 +72,9 @@ ssize_t _psmx_tagged_recv(struct fid_ep *ep, void *buf, size_t len,
 	}
 
 	if (tag & ep_priv->domain->reserved_tag_bits) {
-		PSMX_WARN("%s: warning: using reserved tag bits."
-			"tag=%lx. reserved_bits=%lx.\n", __func__, tag,
+		FI_WARN(&psmx_prov, FI_LOG_EP_DATA,
+			"using reserved tag bits."
+			"tag=%lx. reserved_bits=%lx.\n", tag,
 			ep_priv->domain->reserved_tag_bits);
 	}
 
@@ -89,7 +89,6 @@ ssize_t _psmx_tagged_recv(struct fid_ep *ep, void *buf, size_t len,
 			return -FI_EINVAL;
 
 		fi_context = context;
-		user_fi_context= 1;
 		PSMX_CTXT_TYPE(fi_context) = PSMX_TRECV_CONTEXT;
 		PSMX_CTXT_USER(fi_context) = buf;
 		PSMX_CTXT_EP(fi_context) = ep_priv;
@@ -98,10 +97,11 @@ ssize_t _psmx_tagged_recv(struct fid_ep *ep, void *buf, size_t len,
 	err = psm_mq_irecv(ep_priv->domain->psm_mq,
 			   psm_tag, psm_tagsel, 0, /* flags */
 			   buf, len, (void *)fi_context, &psm_req);
+
 	if (err != PSM_OK)
 		return psmx_errno(err);
 
-	if (user_fi_context)
+	if (fi_context == context)
 		PSMX_CTXT_REQ(fi_context) = psm_req;
 
 	return 0;
@@ -259,7 +259,7 @@ static ssize_t psmx_tagged_recvmsg(struct fid_ep *ep, const struct fi_msg_tagged
 				 msg->context, flags);
 }
 
-static ssize_t psmx_tagged_recv_no_flag(struct fid_ep *ep, void *buf, 
+static ssize_t psmx_tagged_recv_no_flag(struct fid_ep *ep, void *buf,
 					size_t len, void *desc, fi_addr_t src_addr,
 					uint64_t tag, uint64_t ignore,
 					void *context)
@@ -269,7 +269,7 @@ static ssize_t psmx_tagged_recv_no_flag(struct fid_ep *ep, void *buf,
 					tag, ignore, context);
 }
 
-static ssize_t psmx_tagged_recv_no_event(struct fid_ep *ep, void *buf, 
+static ssize_t psmx_tagged_recv_no_event(struct fid_ep *ep, void *buf,
 					size_t len, void *desc, fi_addr_t src_addr,
 					uint64_t tag, uint64_t ignore,
 					void *context)
@@ -360,9 +360,10 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 	psm_mq_req_t psm_req;
 	uint64_t psm_tag;
 	struct fi_context *fi_context;
-	int user_fi_context = 0;
 	int err;
 	size_t idx;
+	int no_completion = 0;
+	struct psmx_cq_event *event;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
@@ -392,8 +393,9 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 	}
 
 	if (tag & ep_priv->domain->reserved_tag_bits) {
-		PSMX_WARN("%s: warning: using reserved tag bits."
-			"tag=%lx. reserved_bits=%lx.\n", __func__, tag,
+		FI_WARN(&psmx_prov, FI_LOG_EP_DATA,
+			"using reserved tag bits."
+			"tag=%lx. reserved_bits=%lx.\n", tag,
 			ep_priv->domain->reserved_tag_bits);
 	}
 
@@ -411,18 +413,41 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 
 	psm_tag = tag & (~ep_priv->domain->reserved_tag_bits);
 
+	if ((flags & PSMX_NO_COMPLETION) ||
+	    (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)))
+		no_completion = 1;
+
 	if (flags & FI_INJECT) {
-		fi_context = malloc(sizeof(*fi_context) + len);
-		if (!fi_context)
-			return -FI_ENOMEM;
+		if (len > PSMX_INJECT_SIZE)
+			return -FI_EMSGSIZE;
 
-		memcpy((void *)fi_context + sizeof(*fi_context), buf, len);
-		buf = (void *)fi_context + sizeof(*fi_context);
+		err = psm_mq_send(ep_priv->domain->psm_mq, psm_epaddr, 0,
+				  psm_tag, buf, len);
 
-		PSMX_CTXT_TYPE(fi_context) = PSMX_INJECT_CONTEXT;
-		PSMX_CTXT_EP(fi_context) = ep_priv;
+		if (err != PSM_OK)
+			return psmx_errno(err);
+
+		if (ep_priv->send_cntr)
+			psmx_cntr_inc(ep_priv->send_cntr);
+
+		if (ep_priv->send_cq && !no_completion) {
+			event = psmx_cq_create_event(
+					ep_priv->send_cq,
+					context, (void *)buf, flags, len,
+					0 /* data */, psm_tag,
+					0 /* olen */,
+					0 /* err */);
+
+			if (event)
+				psmx_cq_enqueue_event(ep_priv->send_cq, event);
+			else
+				return -FI_ENOMEM;
+		}
+
+		return 0;
 	}
-	else if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION) && !context) {
+
+	if (no_completion && !context) {
 		fi_context = &ep_priv->nocomp_send_context;
 	}
 	else {
@@ -430,12 +455,9 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 			return -FI_EINVAL;
 
 		fi_context = context;
-		if (fi_context != &ep_priv->sendimm_context) {
-			user_fi_context = 1;
-			PSMX_CTXT_TYPE(fi_context) = PSMX_TSEND_CONTEXT;
-			PSMX_CTXT_USER(fi_context) = (void *)buf;
-			PSMX_CTXT_EP(fi_context) = ep_priv;
-		}
+		PSMX_CTXT_TYPE(fi_context) = PSMX_TSEND_CONTEXT;
+		PSMX_CTXT_USER(fi_context) = (void *)buf;
+		PSMX_CTXT_EP(fi_context) = ep_priv;
 	}
 
 	err = psm_mq_isend(ep_priv->domain->psm_mq, psm_epaddr, 0,
@@ -444,7 +466,7 @@ ssize_t _psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
 	if (err != PSM_OK)
 		return psmx_errno(err);
 
-	if (user_fi_context)
+	if (fi_context == context)
 		PSMX_CTXT_REQ(fi_context) = psm_req;
 
 	return 0;
@@ -589,30 +611,26 @@ ssize_t psmx_tagged_inject_no_flag_av_map(struct fid_ep *ep, const void *buf, si
 {
 	struct psmx_fid_ep *ep_priv;
 	psm_epaddr_t psm_epaddr;
-	psm_mq_req_t psm_req;
 	uint64_t psm_tag;
-	struct fi_context *fi_context;
 	int err;
+
+	if (len > PSMX_INJECT_SIZE)
+		return -FI_EMSGSIZE;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
 	psm_epaddr = (psm_epaddr_t) dest_addr;
 	psm_tag = tag & (~ep_priv->domain->reserved_tag_bits);
 
-	fi_context = malloc(sizeof(*fi_context) + len);
-	if (!fi_context)
-		return -FI_ENOMEM;
+	err = psm_mq_send(ep_priv->domain->psm_mq, psm_epaddr, 0, psm_tag, buf, len);
 
-	memcpy((void *)fi_context + sizeof(*fi_context), buf, len);
-	buf = (void *)fi_context + sizeof(*fi_context);
+	if (err != PSM_OK)
+		return psmx_errno(err);
 
-	PSMX_CTXT_TYPE(fi_context) = PSMX_INJECT_CONTEXT;
-	PSMX_CTXT_EP(fi_context) = ep_priv;
+	if (ep_priv->send_cntr)
+		psmx_cntr_inc(ep_priv->send_cntr);
 
-	err = psm_mq_isend(ep_priv->domain->psm_mq, psm_epaddr, 0,
-			   psm_tag, buf, len, (void*)fi_context, &psm_req);
-
-	return psmx_errno(err);
+	return 0;
 }
 
 ssize_t psmx_tagged_inject_no_flag_av_table(struct fid_ep *ep, const void *buf, size_t len,
@@ -621,11 +639,12 @@ ssize_t psmx_tagged_inject_no_flag_av_table(struct fid_ep *ep, const void *buf, 
 	struct psmx_fid_ep *ep_priv;
 	struct psmx_fid_av *av;
 	psm_epaddr_t psm_epaddr;
-	psm_mq_req_t psm_req;
 	uint64_t psm_tag;
-	struct fi_context *fi_context;
 	int err;
 	size_t idx;
+
+	if (len > PSMX_INJECT_SIZE)
+		return -FI_EMSGSIZE;
 
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
@@ -637,20 +656,15 @@ ssize_t psmx_tagged_inject_no_flag_av_table(struct fid_ep *ep, const void *buf, 
 	psm_epaddr = av->psm_epaddrs[idx];
 	psm_tag = tag & (~ep_priv->domain->reserved_tag_bits);
 
-	fi_context = malloc(sizeof(*fi_context) + len);
-	if (!fi_context)
-		return -FI_ENOMEM;
+	err = psm_mq_send(ep_priv->domain->psm_mq, psm_epaddr, 0, psm_tag, buf, len);
 
-	memcpy((void *)fi_context + sizeof(*fi_context), buf, len);
-	buf = (void *)fi_context + sizeof(*fi_context);
+	if (err != PSM_OK)
+		return psmx_errno(err);
 
-	PSMX_CTXT_TYPE(fi_context) = PSMX_INJECT_CONTEXT;
-	PSMX_CTXT_EP(fi_context) = ep_priv;
+	if (ep_priv->send_cntr)
+		psmx_cntr_inc(ep_priv->send_cntr);
 
-	err = psm_mq_isend(ep_priv->domain->psm_mq, psm_epaddr, 0,
-			   psm_tag, buf, len, (void*)fi_context, &psm_req);
-
-	return psmx_errno(err);
+	return 0;
 }
 
 static ssize_t psmx_tagged_send(struct fid_ep *ep, const void *buf, size_t len,
@@ -818,7 +832,7 @@ static ssize_t psmx_tagged_inject(struct fid_ep *ep, const void *buf, size_t len
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
 	return _psmx_tagged_send(ep, buf, len, NULL, dest_addr, tag, NULL,
-				 ep_priv->flags | FI_INJECT);
+				 ep_priv->flags | FI_INJECT | PSMX_NO_COMPLETION);
 }
 
 static ssize_t psmx_tagged_search(struct fid_ep *ep, uint64_t *tag, uint64_t ignore,
@@ -833,8 +847,9 @@ static ssize_t psmx_tagged_search(struct fid_ep *ep, uint64_t *tag, uint64_t ign
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 
 	if ((*tag) & ep_priv->domain->reserved_tag_bits) {
-		PSMX_WARN("%s: warning: using reserved tag bits."
-			"tag=%lx. reserved_bits=%lx.\n", __func__, *tag,
+		FI_WARN(&psmx_prov, FI_LOG_EP_DATA,
+			"using reserved tag bits."
+			"tag=%lx. reserved_bits=%lx.\n", *tag,
 			ep_priv->domain->reserved_tag_bits);
 	}
 

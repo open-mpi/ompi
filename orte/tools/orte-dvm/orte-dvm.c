@@ -72,6 +72,7 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_info_support.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -101,6 +102,7 @@ static struct {
     char *report_uri;
     char *basename;
     char *prefix;
+    bool run_as_root;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -127,6 +129,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
+
+    { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
+      &myglobals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
+      "Allow execution as root (STRONGLY DISCOURAGED)" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
@@ -161,6 +167,45 @@ int main(int argc, char *argv[])
         return rc;
     }
 
+    /* print version if requested.  Do this before check for help so
+       that --version --help works as one might expect. */
+    if (myglobals.version) {
+        char *str;
+        str = opal_info_make_version_str("all", 
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
+                                         OPAL_RELEASE_VERSION, 
+                                         OPAL_GREEK_VERSION,
+                                         OPAL_REPO_REV);
+        if (NULL != str) {
+            fprintf(stdout, "%s %s\n\nReport bugs to %s\n",
+                    myglobals.basename, str, PACKAGE_BUGREPORT);
+            free(str);
+        }
+        exit(0);
+    }
+
+    /* check if we are running as root - if we are, then only allow
+     * us to proceed if the allow-run-as-root flag was given. Otherwise,
+     * exit with a giant warning flag
+     */
+    if (0 == geteuid() && !myglobals.run_as_root) {
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        if (myglobals.help) {
+            fprintf(stderr, "%s cannot provide the help message when run as root\n", myglobals.basename);
+        } else {
+            /* show_help is not yet available, so print an error manually */
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", myglobals.basename);
+        }
+        fprintf(stderr, " This is *strongly* discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
+        fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
+        fprintf(stderr, "your system in an unusable state.\n\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
+        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        exit(1);
+    }
+
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
@@ -177,28 +222,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-    /* Check for some "global" command line params */
-    /* print version if requested.  Do this before check for help so
-       that --version --help works as one might expect. */
-    if (myglobals.version) {
-        char *str;
-        char *project_name = NULL;
-        if (0 == strcmp(myglobals.basename, "ompi-dvm")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        str = opal_show_help_string("help-orterun.txt", "orterun:version", 
-                                    false,
-                                    myglobals.basename, project_name, OPAL_VERSION,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        exit(0);
-    }
-
     /* Check for help request */
     if (myglobals.help) {
         char *str, *args = NULL;
@@ -230,7 +253,7 @@ int main(int argc, char *argv[])
     orte_register_params();
 
     /* specify the DVM state machine */
-    putenv("OMPI_MCA_state=dvm");
+    opal_setenv("OMPI_MCA_state", "dvm", true, &environ);
     
     /* Intialize our Open RTE environment */
     if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {

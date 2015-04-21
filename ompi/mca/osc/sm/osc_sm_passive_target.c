@@ -3,6 +3,7 @@
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -150,16 +151,34 @@ ompi_osc_sm_unlock(int target,
     /* ensure all memory operations have completed */
     opal_atomic_mb();
 
-    if (lock_none == module->outstanding_locks[target]) {
+    switch (module->outstanding_locks[target]) {
+    case lock_none:
         return OMPI_ERR_RMA_SYNC;
-    }
 
-    if (module->outstanding_locks[target] == lock_nocheck) {
+    case lock_nocheck:
         ret = OMPI_SUCCESS;
-    } else if (module->outstanding_locks[target] == lock_exclusive) {
+        break;
+
+    case lock_exclusive:
         ret = end_exclusive(module, target);
-    } else if (module->outstanding_locks[target] == lock_shared) {
+        break;
+
+    case lock_shared:
         ret = end_shared(module, target);
+        break;
+
+    default:
+        // This is an OMPI programming error -- cause some pain.
+        assert(module->outstanding_locks[target] == lock_none ||
+               module->outstanding_locks[target] == lock_nocheck ||
+               module->outstanding_locks[target] == lock_exclusive ||
+               module->outstanding_locks[target] == lock_shared);
+
+         // In non-developer builds, assert() will be a no-op, so
+         // ensure the error gets reported
+        opal_output(0, "Unknown lock type in ompi_osc_sm_unlock -- this is an OMPI programming error");
+        ret = OMPI_ERR_BAD_PARAM;
+        break;
     }
 
     module->outstanding_locks[target] = lock_none;

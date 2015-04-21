@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2015\-02\-28" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_domain 3 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -77,6 +77,10 @@ that the provider should perform all memory registration operations
 asynchronously, with the completion reported through the event queue.
 If an event queue is not bound to the domain with the FI_REG_MR flag,
 then memory registration requests complete synchronously.
+.PP
+See \f[C]fi_av_bind\f[](3), \f[C]fi_ep_bind\f[](3),
+\f[C]fi_mr_bind\f[](3), \f[C]fi_pep_bind\f[](3), and
+\f[C]fi_scalable_ep_bind\f[](3) for more information.
 .SS fi_close
 .PP
 The fi_close call is used to release all resources associated with a
@@ -174,8 +178,8 @@ Conceptualy, FI_THREAD_ENDPOINT maps well to providers that implement
 fabric services in hardware but use a single command queue to access
 different data flows.
 .PP
-\f[I]FI_THREAD_COMPLETION\f[] The completion threading model is intended
-for providers that make use of manual progress.
+\f[I]FI_THREAD_COMPLETION\f[] : The completion threading model is
+intended for providers that make use of manual progress.
 Applications must serialize access to all objects that are associated
 through the use of having a shared completion structure.
 This includes endpoint, completion queue, counter, wait set, and poll
@@ -466,6 +470,6 @@ vectors.
 .SH SEE ALSO
 .PP
 \f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_av\f[](3),
-\f[C]fi_eq\f[](3), \f[C]fi_mr\f[](3)
+\f[C]fi_ep\f[](3), \f[C]fi_eq\f[](3), \f[C]fi_mr\f[](3)
 .SH AUTHORS
 OpenFabrics.

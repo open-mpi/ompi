@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2015\-03\-11" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_eq 3 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -28,27 +28,25 @@ int\ fi_close(struct\ fid\ *eq);
 
 int\ fi_control(struct\ fid\ *eq,\ int\ command,\ void\ *arg);
 
-int\ fi_eq_read(struct\ fid_eq\ *eq,\ uint32_t\ *event,
+ssize_t\ fi_eq_read(struct\ fid_eq\ *eq,\ uint32_t\ *event,
 \ \ \ \ void\ *buf,\ size_t\ len,\ uint64_t\ flags);
 
-int\ fi_eq_readerr(struct\ fid_eq\ *eq,\ struct\ fi_eq_err_entry\ *buf,
-\ \ \ \ size_t\ len,\ uint64_t\ flags);
+ssize_t\ fi_eq_readerr(struct\ fid_eq\ *eq,\ struct\ fi_eq_err_entry\ *buf,
+\ \ \ \ uint64_t\ flags);
 
-int\ fi_eq_write(struct\ fid_eq\ *eq,\ uint32_t\ event,
+ssize_t\ fi_eq_write(struct\ fid_eq\ *eq,\ uint32_t\ event,
 \ \ \ \ const\ void\ *buf,\ size_t\ len,\ uint64_t\ flags);
 
-int\ fi_eq_sread(struct\ fid_eq\ *eq,\ uint32_t\ *event,
+ssize_t\ fi_eq_sread(struct\ fid_eq\ *eq,\ uint32_t\ *event,
 \ \ \ \ void\ *buf,\ size_t\ len,\ int\ timeout,\ uint64_t\ flags);
 
 const\ char\ *\ fi_eq_strerror(struct\ fid_eq\ *eq,\ int\ prov_errno,
-\ \ \ \ \ \ const\ void\ *err_data,\ void\ *buf,\ size_t\ len);
+\ \ \ \ \ \ const\ void\ *err_data,\ char\ *buf,\ size_t\ len);
 \f[]
 .fi
 .SH ARGUMENTS
 .PP
 \f[I]fabric\f[] : Opened fabric descriptor
-.PP
-\f[I]domain\f[] : Open resource domain
 .PP
 \f[I]eq\f[] : Event queue
 .PP
@@ -258,7 +256,7 @@ Connection notifications are reported using
 struct\ fi_eq_cm_entry\ {
 \ \ \ \ fid_t\ \ \ \ \ \ \ \ \ \ \ \ fid;\ \ \ \ \ \ \ \ /*\ fid\ associated\ with\ request\ */
 \ \ \ \ struct\ fi_info\ \ *info;\ \ \ \ \ \ \ /*\ endpoint\ information\ */
-\ \ \ \ uint8_t\ \ \ \ \ \ \ \ \ data[0];\ \ \ \ \ /*\ app\ connection\ data\ */
+\ \ \ \ uint8_t\ \ \ \ \ \ \ \ \ data[];\ \ \ \ \ /*\ app\ connection\ data\ */
 };
 \f[]
 .fi
@@ -344,7 +342,6 @@ struct\ fi_eq_err_entry\ {
 \ \ \ \ fid_t\ \ \ \ \ \ \ \ \ \ \ \ fid;\ \ \ \ \ \ \ \ /*\ fid\ associated\ with\ error\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ *context;\ \ \ \ /*\ operation\ context\ */
 \ \ \ \ uint64_t\ \ \ \ \ \ \ \ \ data;\ \ \ \ \ \ \ /*\ completion-specific\ data\ */
-\ \ \ \ uint32_t\ \ \ \ \ \ \ \ \ index;\ \ \ \ \ \ /*\ index\ for\ vector\ ops\ */
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ err;\ \ \ \ \ \ \ \ /*\ positive\ error\ code\ */
 \ \ \ \ int\ \ \ \ \ \ \ \ \ \ \ \ \ \ prov_errno;\ /*\ provider\ error\ code\ */
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ *err_data;\ \ \ /*\ additional\ error\ data\ */
@@ -378,18 +375,15 @@ read past the end of the referenced buffer.
 fi_eq_open : Returns 0 on success.
 On error, a negative value corresponding to fabric errno is returned.
 .PP
-fi_eq_read / fi_eq_readerr
-.PD 0
-.P
-.PD
-fi_eq_sread
-.PD 0
-.P
-.PD
-fi_eq_write : On success, returns the number of bytes read from or
-written to the event queue.
+fi_eq_read / fi_eq_readerr / fi_eq_sread : On success, returns the
+number of bytes read from the event queue.
 On error, a negative value corresponding to fabric errno is returned.
-On timeout, fi_eq_sread returns -FI_ETIMEDOUT.
+If no data is available to be read from the event queue, -FI_EAGAIN is
+returned.
+.PP
+fi_eq_write : On success, returns the number of bytes written to the
+event queue.
+On error, a negative value corresponding to fabric errno is returned.
 .PP
 fi_eq_strerror : Returns a character string interpretation of the
 provider specific error returned with a completion.

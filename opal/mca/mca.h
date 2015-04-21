@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -241,6 +244,10 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
 
 
 /**
+ * Maximum length of MCA project string names.
+ */
+#define MCA_BASE_MAX_PROJECT_NAME_LEN 15
+/**
  * Maximum length of MCA framework string names.
  */
 #define MCA_BASE_MAX_TYPE_NAME_LEN 31
@@ -257,7 +264,7 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
  * particular version of a specific framework, and to publish its own
  * name and version.
  */
-struct mca_base_component_2_0_0_t {
+struct mca_base_component_2_1_0_t {
 
   int mca_major_version; 
   /**< Major number of the MCA. */
@@ -265,6 +272,18 @@ struct mca_base_component_2_0_0_t {
   /**< Minor number of the MCA. */
   int mca_release_version;
   /**< Release number of the MCA. */
+
+  char mca_project_name[MCA_BASE_MAX_PROJECT_NAME_LEN + 1];
+  /**< String name of the project that this component belongs to. */
+  int mca_project_major_version;
+  /**< Major version number of the project that this component
+     belongs to. */
+  int mca_project_minor_version;
+  /**< Minor version number of the project that this component
+     belongs to. */
+  int mca_project_release_version;
+  /**< Release version number of the project that this component
+     belongs to. */
 
   char mca_type_name[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
   /**< String name of the framework that this component belongs to. */
@@ -302,9 +321,9 @@ struct mca_base_component_2_0_0_t {
 };
 /** Unversioned convenience typedef; use this name in
     frameworks/components to stay forward source-compatible */
-typedef struct mca_base_component_2_0_0_t mca_base_component_t;
+typedef struct mca_base_component_2_1_0_t mca_base_component_t;
 /** Versioned convenience typedef */
-typedef struct mca_base_component_2_0_0_t mca_base_component_2_0_0_t;
+typedef struct mca_base_component_2_1_0_t mca_base_component_2_1_0_t;
 
 /*
  * Metadata Bit field parameters
@@ -339,9 +358,25 @@ typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
  * component header files (e.g., coll.h) for examples of its usage.
  */
 #define MCA_BASE_VERSION_MAJOR 2
-#define MCA_BASE_VERSION_MINOR 0
+#define MCA_BASE_VERSION_MINOR 1
 #define MCA_BASE_VERSION_RELEASE 0
-#define MCA_BASE_VERSION_2_0_0 MCA_BASE_VERSION_MAJOR, MCA_BASE_VERSION_MINOR, MCA_BASE_VERSION_RELEASE
 
+#define MCA_BASE_MAKE_VERSION(level, MAJOR, MINOR, RELEASE) \
+    .mca_## level ##_major_version = MAJOR,                 \
+    .mca_## level ##_minor_version = MINOR,                 \
+    .mca_## level ##_release_version = RELEASE
+
+
+#define MCA_BASE_VERSION_2_1_0(PROJECT, project_major, project_minor, project_release, TYPE, type_major, type_minor, type_release) \
+    .mca_major_version = MCA_BASE_VERSION_MAJOR,                        \
+    .mca_minor_version = MCA_BASE_VERSION_MINOR,                        \
+    .mca_release_version = MCA_BASE_VERSION_RELEASE,                    \
+    .mca_project_name = PROJECT,                                        \
+    MCA_BASE_MAKE_VERSION(project, project_major, project_minor, project_release), \
+    .mca_type_name = TYPE,                                              \
+    MCA_BASE_MAKE_VERSION(type, type_major, type_minor, type_release)
+
+#define OPAL_MCA_BASE_VERSION_2_1_0(type, type_major, type_minor, type_release) \
+    MCA_BASE_VERSION_2_1_0("opal", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION, type, type_major, type_minor, type_release)
 
 #endif /* OPAL_MCA_H */

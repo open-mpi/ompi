@@ -37,35 +37,40 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 	if (ep->ep.tagged) {
 		if (ep->flags) {
 			ep->ep.tagged = &psmx_tagged_ops;
-			PSMX_DEBUG("generic tagged ops.\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"generic tagged ops.\n");
 		}
 		else if (ep->send_cq_event_flag && ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and event suppression\n");
 		}
 		else if (ep->send_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and send event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and send event suppression\n");
 		}
 		else if (ep->recv_cq_event_flag) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0 and recv event suppression\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0 and recv event suppression\n");
 		}
 		else {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_table;
 			else
 				ep->ep.tagged = &psmx_tagged_ops_no_flag_av_map;
-			PSMX_DEBUG("tagged ops optimized for op_flags=0\n");
+			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
+				"tagged ops optimized for op_flags=0\n");
 		}
 	}
 }
@@ -276,6 +281,7 @@ static struct fi_ops psmx_fi_ops = {
 	.close = psmx_ep_close,
 	.bind = psmx_ep_bind,
 	.control = psmx_ep_control,
+	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_ep psmx_ep_ops = {
@@ -325,10 +331,6 @@ int psmx_ep_open(struct fid_domain *domain, struct fi_info *info,
 	PSMX_CTXT_EP(&ep_priv->nocomp_send_context) = ep_priv;
 	PSMX_CTXT_TYPE(&ep_priv->nocomp_recv_context) = PSMX_NOCOMP_RECV_CONTEXT;
 	PSMX_CTXT_EP(&ep_priv->nocomp_recv_context) = ep_priv;
-	PSMX_CTXT_TYPE(&ep_priv->sendimm_context) = PSMX_INJECT_CONTEXT;
-	PSMX_CTXT_EP(&ep_priv->sendimm_context) = ep_priv;
-	PSMX_CTXT_TYPE(&ep_priv->writeimm_context) = PSMX_INJECT_WRITE_CONTEXT;
-	PSMX_CTXT_EP(&ep_priv->writeimm_context) = ep_priv;
 
 	if (ep_cap & FI_TAGGED)
 		ep_priv->ep.tagged = &psmx_tagged_ops;
@@ -389,7 +391,7 @@ int psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
 {
 	struct psmx_fid_stx *stx_priv;
 
-	PSMX_DEBUG("\n");
+	FI_INFO(&psmx_prov, FI_LOG_EP_DATA, "\n");
 
 	stx_priv = (struct psmx_fid_stx *) calloc(1, sizeof *stx_priv);
 	if (!stx_priv)

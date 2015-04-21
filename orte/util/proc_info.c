@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,14 +32,20 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #include <ctype.h>
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
+
+#include "orte/util/attr.h"
 
 #include "orte/util/proc_info.h"
 
@@ -63,6 +69,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .num_daemons =                     1,
     .num_nodes =                       1,
     .nodename =                        NULL,
+    .aliases =                         NULL,
     .pid =                             0,
     .proc_type =                       ORTE_PROC_TYPE_NONE,
     .sync_buf =                        NULL,
@@ -97,7 +104,8 @@ int orte_proc_info(void)
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
     char **prefixes;
     bool match;
-
+    struct in_addr buf;
+    
     if (init) {
         return ORTE_SUCCESS;
     }
@@ -163,12 +171,18 @@ int orte_proc_info(void)
 
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    /* add this to our list of aliases */
+    opal_argv_append_nosize(&orte_process_info.aliases, hostname);
+    
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
-        if (!opal_net_isaddr(hostname)) {
+        if (0 == inet_pton(AF_INET, hostname, &buf) &&
+            0 == inet_pton(AF_INET6, hostname, &buf)) {
             /* not an IP address, so remove any domain info */
             if (NULL != (ptr = strchr(hostname, '.'))) {
                 *ptr = '\0';
+                /* add this to our list of aliases */
+                opal_argv_append_nosize(&orte_process_info.aliases, hostname);
             }
         }
     }
@@ -200,6 +214,8 @@ int orte_proc_info(void)
                 } else {
                     orte_process_info.nodename = strdup(&hostname[idx]);
                 }
+                /* add this to our list of aliases */
+                opal_argv_append_nosize(&orte_process_info.aliases, orte_process_info.nodename);
                 match = true;
                 break;
             }
@@ -212,6 +228,9 @@ int orte_proc_info(void)
     } else {
         orte_process_info.nodename = strdup(hostname);
     }
+
+    /* add "localhost" to our list of aliases */
+    opal_argv_append_nosize(&orte_process_info.aliases, "localhost");
 
     /* get the number of nodes in the job */
     orte_process_info.num_nodes = 1;
@@ -314,6 +333,34 @@ int orte_proc_info_finalize(void)
 
     OBJ_DESTRUCT(&orte_process_info.super);
 
+    opal_argv_free(orte_process_info.aliases);
+    
     init = false;
     return ORTE_SUCCESS;
+}
+
+bool orte_ifislocal(const char *hostname)
+{
+    int i;
+    
+    /* see if it matches any of our known aliases */
+    if (NULL != orte_process_info.aliases) {
+        for (i=0; NULL != orte_process_info.aliases[i]; i++) {
+            if (0 == strcmp(hostname, orte_process_info.aliases[i])) {
+                return true;
+            }
+        }
+    }
+
+    /* okay, have to resolve the address - the opal_ifislocal
+     * function will not attempt to resolve the address if
+     * told not to do so */
+    if (opal_ifislocal(hostname)) {
+        /* add this to our known aliases */
+        opal_argv_append_nosize(&orte_process_info.aliases, hostname);
+        return true;
+    }
+
+    /* not me */
+    return false;
 }

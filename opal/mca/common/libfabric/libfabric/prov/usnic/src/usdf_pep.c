@@ -65,7 +65,7 @@
 #include "usdf_cm.h"
 #include "usdf_msg.h"
 
-int
+static int
 usdf_pep_bind(fid_t fid, fid_t bfid, uint64_t flags)
 {
 	struct usdf_pep *pep;
@@ -313,7 +313,7 @@ usdf_pep_listen_cb(void *v)
 	return 0;
 }
 
-int
+static int
 usdf_pep_listen(struct fid_pep *fpep)
 {
 	struct usdf_pep *pep;
@@ -341,17 +341,17 @@ usdf_pep_listen(struct fid_pep *fpep)
 	return 0;
 }
 
-ssize_t
+static ssize_t
 usdf_pep_cancel(fid_t fid, void *context)
 {
 	return -FI_EINVAL;
 }
 
-int
+static int
 usdf_pep_reject(struct fid_pep *pep, fi_connreq_t connreq,
 		const void *param, size_t paramlen)
 {
-	return 0;
+	return -FI_ENOSYS;
 }
 
 static void
@@ -393,7 +393,7 @@ usdf_pep_grow_backlog(struct usdf_pep *pep)
 	return 0;
 }
 
-int
+static int
 usdf_pep_close(fid_t fid)
 {
 	struct usdf_pep *pep;
@@ -405,7 +405,7 @@ usdf_pep_close(fid_t fid)
 
 	usdf_pep_free_cr_lists(pep);
 	close(pep->pep_sock);
-	if (&pep->pep_eq != NULL) {
+	if (pep->pep_eq != NULL) {
 		atomic_dec(&pep->pep_eq->eq_refcnt);
 	}
 	atomic_dec(&pep->pep_fabric->fab_refcnt);
@@ -429,6 +429,8 @@ static struct fi_ops_ep usdf_pep_base_ops = {
 	.setopt = fi_no_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
+	.rx_size_left = fi_no_rx_size_left,
+	.tx_size_left = fi_no_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_pep_cm_ops = {

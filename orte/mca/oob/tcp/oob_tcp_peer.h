@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,10 +43,12 @@ typedef struct {
      * value that retaining the name makes sense
      */
     orte_process_name_t name;
+    char *auth_method;  // method they used to authenticate
     int sd;
     opal_list_t addrs;
     mca_oob_tcp_addr_t *active_addr;
     mca_oob_tcp_state_t state;
+    int num_retries;
     opal_event_t send_event;    /**< registration with event thread for send events */
     bool send_ev_active;
     opal_event_t recv_event;    /**< registration with event thread for recv events */

@@ -329,6 +329,7 @@ usdf_fill_info_dgram(
 	dattrp->threading = FI_THREAD_UNSPEC;
 	dattrp->control_progress = FI_PROGRESS_AUTO;
 	dattrp->data_progress = FI_PROGRESS_MANUAL;
+	dattrp->resource_mgmt = FI_RM_DISABLED;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -434,6 +435,7 @@ usdf_fill_info_msg(
 	dattrp->threading = FI_THREAD_UNSPEC;
 	dattrp->control_progress = FI_PROGRESS_AUTO;
 	dattrp->data_progress = FI_PROGRESS_MANUAL;
+	dattrp->resource_mgmt = FI_RM_DISABLED;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -537,6 +539,7 @@ usdf_fill_info_rdm(
 	dattrp->threading = FI_THREAD_UNSPEC;
 	dattrp->control_progress = FI_PROGRESS_AUTO;
 	dattrp->data_progress = FI_PROGRESS_MANUAL;
+	dattrp->resource_mgmt = FI_RM_DISABLED;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -655,6 +658,10 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 	if (__usdf_devinfo == NULL) {
 		ret = usdf_get_devinfo();
 		if (ret != 0) {
+			USDF_WARN("failed to usdf_get_devinfo, ret=%d (%s)\n",
+					ret, fi_strerror(-ret));
+			if (ret == -FI_ENODEV)
+				ret = -FI_ENODATA;
 			goto fail;
 		}
 	}
@@ -857,6 +864,7 @@ static struct fi_ops_fabric usdf_ops_fabric = {
 	.domain = usdf_domain_open,
 	.passive_ep = usdf_pep_open,
 	.eq_open = usdf_eq_open,
+	.wait_open = fi_no_wait_open,
 };
 
 static int
@@ -986,7 +994,7 @@ static void usdf_fini(void)
 {
 }
 
-static struct fi_provider usdf_ops = {
+struct fi_provider usdf_ops = {
 	.name = USDF_PROV_NAME,
 	.version = USDF_PROV_VERSION,
 	.fi_version = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION),

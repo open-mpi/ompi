@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -40,7 +41,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/mca/rml/base/base.h"
 
@@ -80,8 +81,7 @@ typedef struct {
  * Macro for use in components that are of type oob
  */
 #define MCA_OOB_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "oob", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("oob", 2, 0, 0)
 
 END_C_DECLS
 

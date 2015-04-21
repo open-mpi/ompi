@@ -29,11 +29,13 @@ enum mca_base_register_flag_t {
 typedef enum mca_base_register_flag_t mca_base_register_flag_t;
 
 enum mca_base_open_flag_t {
-    MCA_BASE_OPEN_DEFAULT = 0,
+    MCA_BASE_OPEN_DEFAULT         = 0,
     /** Find components in mca_base_components_find. Used by
      mca_base_framework_open() when NOREGISTER is specified
      by the framework */
-    MCA_BASE_OPEN_FIND_COMPONENTS = 1
+    MCA_BASE_OPEN_FIND_COMPONENTS = 1,
+    /** Do not open DSO components */
+    MCA_BASE_OPEN_STATIC_ONLY     = 2,
 };
 
 typedef enum mca_base_open_flag_t mca_base_open_flag_t;
@@ -114,7 +116,8 @@ typedef enum {
     MCA_BASE_FRAMEWORK_FLAG_REGISTERED = 2,
     /** Framework does not have any DSO components */
     MCA_BASE_FRAMEWORK_FLAG_NO_DSO     = 4,
-
+    /** Internal. Don't set outside mca_base_framework.h */
+    MCA_BASE_FRAMEWORK_FLAG_OPEN       = 8,
     /**
      * The upper 16 bits are reserved for project specific flags.
      */

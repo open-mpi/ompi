@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,22 +28,20 @@ static int sec_basic_component_close(void);
  * and pointers to our public functions in it
  */
 opal_sec_base_component_t mca_sec_basic_component = {
-    {
+    .base_version = {
         OPAL_SEC_BASE_VERSION_1_0_0,
 
         /* Component name and version */
-        "basic",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "basic",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        sec_basic_component_open,
-        sec_basic_component_close,
-        sec_basic_component_query,
-        NULL
+        .mca_open_component = sec_basic_component_open,
+        .mca_close_component = sec_basic_component_close,
+        .mca_query_component = sec_basic_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }

@@ -55,24 +55,21 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_DATA, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_DATA, __VA_ARGS__)
+
 static ssize_t sock_comm_send_socket(struct sock_conn *conn, const void *buf, size_t len)
 {
 	ssize_t ret;
-	size_t rem = len;
-	size_t offset = 0, done_len = 0;
 
-	while(rem > 0) {
-		len = MIN(rem, SOCK_COMM_BUF_SZ);
-		ret = send(conn->sock_fd, (char *)buf + offset, len, 0);
-		if (ret <= 0) 
-			break;
-		
-		done_len += ret;
-		rem -= ret;
-		offset += ret;
-	}	
-	SOCK_LOG_INFO("WROTE %lu on wire\n", done_len);
-	return done_len;
+	ret = write(conn->sock_fd, buf, len);
+	if (ret < 0) {
+		SOCK_LOG_INFO("write %s\n", strerror(errno));
+		ret = 0;
+	}
+
+	SOCK_LOG_INFO("wrote to network: %lu\n", ret);
+	return ret;
 }
 
 ssize_t sock_comm_flush(struct sock_conn *conn)
@@ -84,15 +81,15 @@ ssize_t sock_comm_flush(struct sock_conn *conn)
 	endlen = conn->outbuf.size - (conn->outbuf.rcnt & conn->outbuf.size_mask);
 
 	xfer_len = MIN(len, endlen);
-	ret1 = sock_comm_send_socket(conn, conn->outbuf.buf + 
-				     (conn->outbuf.rcnt & conn->outbuf.size_mask), 
+	ret1 = sock_comm_send_socket(conn, conn->outbuf.buf +
+				     (conn->outbuf.rcnt & conn->outbuf.size_mask),
 				     xfer_len);
 	if (ret1 > 0)
 		conn->outbuf.rcnt += ret1;
 
 	if (ret1 == xfer_len && xfer_len < len) {
 		ret2 = sock_comm_send_socket(conn, conn->outbuf.buf +
-					     (conn->outbuf.rcnt & conn->outbuf.size_mask), 
+					     (conn->outbuf.rcnt & conn->outbuf.size_mask),
 					     len - xfer_len);
 		if (ret2 > 0)
 			conn->outbuf.rcnt += ret2;
@@ -111,10 +108,11 @@ ssize_t sock_comm_send(struct sock_conn *conn, const void *buf, size_t len)
 		used = rbused(&conn->outbuf);
 		if (used == sock_comm_flush(conn)) {
 			return sock_comm_send_socket(conn, buf, len);
-		} else 
+		} else {
 			return 0;
+		}
 	}
-		
+
 	if (rbavail(&conn->outbuf) < len) {
 		ret = sock_comm_flush(conn);
 		if (ret <= 0)
@@ -124,41 +122,44 @@ ssize_t sock_comm_send(struct sock_conn *conn, const void *buf, size_t len)
 	ret = MIN(rbavail(&conn->outbuf), len);
 	rbwrite(&conn->outbuf, buf, ret);
 	rbcommit(&conn->outbuf);
-	SOCK_LOG_INFO("Buffered %lu\n", ret);
+	SOCK_LOG_INFO("buffered %lu\n", ret);
 	return ret;
 }
 
-ssize_t sock_comm_recv_socket(struct sock_conn *conn, void *buf, size_t len)
+static ssize_t sock_comm_recv_socket(struct sock_conn *conn, void *buf, size_t len)
 {
 	ssize_t ret;
+	
+	ret = read(conn->sock_fd, buf, len);
+	if (ret < 0) {
+		SOCK_LOG_INFO("read %s\n", strerror(errno));
+		ret = 0;
+	}
 
-	ret = recv(conn->sock_fd, buf, len, 0);
-	if (ret <= 0)
-		return 0;
-
-	SOCK_LOG_INFO("READ from wire: %lu\n", ret);
+	if (ret > 0)
+		SOCK_LOG_INFO("read from network: %lu\n", ret);
 	return ret;
 }
 
-ssize_t sock_comm_recv_buffer(struct sock_conn *conn)
+static ssize_t sock_comm_recv_buffer(struct sock_conn *conn)
 {
 	int ret;
 	size_t endlen;
-	endlen = conn->inbuf.size - 
-		(conn->inbuf.wpos & conn->inbuf.size_mask);
 
-	if ((ret = sock_comm_recv_socket(conn, (char*) conn->inbuf.buf + 
+	endlen = conn->inbuf.size - (conn->inbuf.wpos & conn->inbuf.size_mask);
+	ret = sock_comm_recv_socket(conn,(char*) conn->inbuf.buf +
 					 (conn->inbuf.wpos & conn->inbuf.size_mask), 
-					 endlen)) <= 0)
+					 endlen);
+	if (ret <= 0)
 		return 0;
-	
+
 	conn->inbuf.wpos += ret;
 	rbcommit(&conn->inbuf);
 	if (ret != endlen)
 		return ret;
 
-	if ((ret = sock_comm_recv_socket(conn, conn->inbuf.buf, 
-					 rbavail(&conn->inbuf))) <= 0)
+	ret = sock_comm_recv_socket(conn, conn->inbuf.buf, rbavail(&conn->inbuf));
+	if (ret <= 0)
 		return 0;
 
 	conn->inbuf.wpos += ret;
@@ -181,12 +182,12 @@ ssize_t sock_comm_recv(struct sock_conn *conn, void *buf, size_t len)
 	read_len = MIN(len, used);
 	rbread(&conn->inbuf, buf, read_len);
 	if (len > used) {
-		ret = sock_comm_recv_socket(conn, (char*)buf + used, len - used);
+		ret = sock_comm_recv_socket(conn, (char*) buf + used, len - used);
 		if (ret <= 0)
 			ret = 0;
 		sock_comm_recv_buffer(conn);
 	}
-	SOCK_LOG_INFO("Read %lu from buffer\n", ret + read_len);
+	SOCK_LOG_INFO("read from buffer: %lu\n", ret + read_len);
 	return ret + read_len;
 }
 
@@ -200,30 +201,26 @@ ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
 	return 0;
 }
 
+ssize_t sock_comm_data_avail(struct sock_conn *conn)
+{
+	sock_comm_recv_buffer(conn);
+	return rbused(&conn->inbuf);
+}
+
 int sock_comm_buffer_init(struct sock_conn *conn)
 {
-	int optval;
-	uint64_t flags;
 	socklen_t size = SOCK_COMM_BUF_SZ;
 	socklen_t optlen = sizeof(socklen_t);
 
-	optval = 1;
-	if (setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
-		       &optval, sizeof optval))
-		SOCK_LOG_ERROR("setsockopt failed\n");
-
-	flags = fcntl(conn->sock_fd, F_GETFL, 0);
-	if (fcntl(conn->sock_fd, F_SETFL, flags | O_NONBLOCK))
-		SOCK_LOG_ERROR("fcntl failed\n");
-
+	sock_set_sockopts(conn->sock_fd);
 	rbinit(&conn->inbuf, SOCK_COMM_BUF_SZ);
 	rbinit(&conn->outbuf, SOCK_COMM_BUF_SZ);
 
 	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen))
-		SOCK_LOG_ERROR("setsockopt failed\n");
+		SOCK_LOG_ERROR("setsockopt SO_RCVBUF failed\n");
 
 	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen))
-		SOCK_LOG_ERROR("setsockopt failed\n");
+		SOCK_LOG_ERROR("setsockopt SO_SNDBUF failed\n");
 
 	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen))
 		SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);

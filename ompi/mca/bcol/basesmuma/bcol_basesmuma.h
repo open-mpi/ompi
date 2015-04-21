@@ -26,7 +26,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/patterns/net/netpatterns.h"
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
 #include "opal/datatype/opal_datatype.h"

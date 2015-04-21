@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -61,21 +61,20 @@ orte_rml_component_t mca_rml_oob_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
-      {
+    .rml_version = {
         ORTE_RML_BASE_VERSION_2_0_0,
 
-        "oob", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        rml_oob_open,  /* component open */
-        rml_oob_close, /* component close */
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
-      rml_oob_init
+        .mca_component_name = "oob",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_open_component = rml_oob_open,
+        .mca_close_component = rml_oob_close,
+    },
+    .rml_data = {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    },
+    .rml_init = rml_oob_init,
 };
 
 orte_rml_oob_module_t orte_rml_oob_module = {

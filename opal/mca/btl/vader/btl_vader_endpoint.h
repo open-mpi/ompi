@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -48,14 +48,16 @@ typedef struct mca_btl_base_endpoint_t {
     /* per peer buffers */
     struct {
         unsigned char *buffer; /**< starting address of peer's fast box out */
-        unsigned int start, seq;
         uint32_t *startp;
+        unsigned int start;
+        uint16_t seq;
     } fbox_in;
 
     struct {
         unsigned char *buffer; /**< starting address of peer's fast box in */
-        unsigned int start, end, seq;
         uint32_t *startp;      /**< pointer to location storing start offset */
+        unsigned int start, end;
+        uint16_t seq;
     } fbox_out;
 
     int32_t peer_smp_rank;  /**< my peer's SMP process rank.  Used for accessing

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All Rights Reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,7 +49,7 @@
 #include <syslog.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -122,7 +123,9 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
                             "job %s error %s severity %s",              \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_JOBID_PRINT((j)->jobid),               \
+                            ORTE_JOBID_PRINT((NULL == (j)) ?            \
+                                             ORTE_JOBID_INVALID :       \
+                                             (j)->jobid),               \
                             ORTE_ERROR_NAME((e)),                       \
                             orte_notifier_base_sev2str(s));             \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
@@ -147,7 +150,9 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
                             "%s notifier[%s:%d] job %s state %s",       \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_JOBID_PRINT((j)->jobid),               \
+                            ORTE_JOBID_PRINT((NULL == (j)) ?            \
+                                             ORTE_JOBID_INVALID :       \
+                                             (j)->jobid),               \
                             orte_job_state_to_str(st));                 \
         _n = OBJ_NEW(orte_notifier_request_t);                          \
         _n->jdata = (j);                                                \
@@ -210,10 +215,8 @@ typedef struct {
  * Macro for use in components that are of type notifier v1.0.0
  */
 #define ORTE_NOTIFIER_BASE_VERSION_1_0_0 \
-  /* notifier v1.0 is chained to MCA v2.0 */ \
-  MCA_BASE_VERSION_2_0_0, \
-  /* notifier v1.0 */ \
-  "notifier", 1, 0, 0
+    /* notifier v1.0 is chained to MCA v2.0 */ \
+    ORTE_MCA_BASE_VERSION_2_1_0("notifier", 1, 0, 0)
 
 END_C_DECLS
 

@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,22 +27,19 @@ static int rtc_hwloc_register(void);
 static int my_priority;
 
 orte_rtc_base_component_t mca_rtc_hwloc_component = {
-    {
+    .base_version = {
         ORTE_RTC_BASE_VERSION_1_0_0,
         
-        "hwloc", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        NULL,  /* component open  */
-        NULL,  /* component close */
-        rtc_hwloc_query,  /* component query */
-        rtc_hwloc_register  /* component register */
+        .mca_component_name = "hwloc",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_query_component = rtc_hwloc_query,
+        .mca_register_component_params = rtc_hwloc_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 

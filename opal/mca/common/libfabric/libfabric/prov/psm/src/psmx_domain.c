@@ -37,7 +37,7 @@ static int psmx_domain_close(fid_t fid)
 	struct psmx_fid_domain *domain;
 	int err;
 
-	PSMX_DEBUG("\n");
+	FI_INFO(&psmx_prov, FI_LOG_DOMAIN, "\n");
 
 	domain = container_of(fid, struct psmx_fid_domain, domain.fid);
 
@@ -75,6 +75,7 @@ static struct fi_ops psmx_fi_ops = {
 	.close = psmx_domain_close,
 	.bind = fi_no_bind,
 	.control = fi_no_control,
+	.ops_open = fi_no_ops_open,
 };
 
 static struct fi_ops_domain psmx_domain_ops = {
@@ -82,6 +83,7 @@ static struct fi_ops_domain psmx_domain_ops = {
 	.av_open = psmx_av_open,
 	.cq_open = psmx_cq_open,
 	.endpoint = psmx_ep_open,
+	.scalable_ep = fi_no_scalable_ep,
 	.cntr_open = psmx_cntr_open,
 	.poll_open = psmx_poll_open,
 	.stx_ctx = psmx_stx_ctx,
@@ -96,7 +98,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct psm_ep_open_opts opts;
 	int err = -FI_ENOMEM;
 
-	PSMX_DEBUG("\n");
+	FI_INFO(&psmx_prov, FI_LOG_DOMAIN, "\n");
 
 	fabric_priv = container_of(fabric, struct psmx_fid_fabric, fabric);
 	if (fabric_priv->active_domain) {
@@ -105,7 +107,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 		return 0;
 	}
 
-	if (!info->domain_attr->name || strncmp(info->domain_attr->name, "psm", 3))
+	if (!info->domain_attr->name || strncmp(info->domain_attr->name, PSMX_DOMAIN_NAME, PSMX_DOMAIN_NAME_LEN))
 		return -FI_EINVAL;
 
 	domain_priv = (struct psmx_fid_domain *) calloc(1, sizeof *domain_priv);
@@ -125,8 +127,8 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_ep_open(fabric_priv->uuid, &opts,
 			  &domain_priv->psm_ep, &domain_priv->psm_epid);
 	if (err != PSM_OK) {
-		PSMX_WARN("%s: psm_ep_open returns %d, errno=%d\n",
-			__func__, err, errno);
+		FI_WARN(&psmx_prov, FI_LOG_CQ,
+			"psm_ep_open returns %d, errno=%d\n", err, errno);
 		err = psmx_errno(err);
 		goto err_out_free_domain;
 	}
@@ -134,8 +136,8 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_mq_init(domain_priv->psm_ep, PSM_MQ_ORDERMASK_ALL,
 			  NULL, 0, &domain_priv->psm_mq);
 	if (err != PSM_OK) {
-		PSMX_WARN("%s: psm_mq_init returns %d, errno=%d\n",
-			__func__, err, errno);
+		FI_WARN(&psmx_prov, FI_LOG_CQ,
+			"psm_mq_init returns %d, errno=%d\n", err, errno);
 		err = psmx_errno(err);
 		goto err_out_close_ep;
 	}

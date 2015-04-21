@@ -23,7 +23,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
@@ -119,7 +119,7 @@ static void ccon(orte_grpcomm_coll_t *p)
     p->dmns = NULL;
     p->ndmns = 0;
     p->nreported = 0;
-    p->distance_mask_recv = 0;
+    p->distance_mask_recv = NULL;
     p->cbfunc = NULL;
     p->cbdata = NULL;
     p->buffers = NULL;
@@ -134,6 +134,9 @@ static void cdes(orte_grpcomm_coll_t *p)
         free(p->dmns);
     }
     free(p->buffers);
+    if (NULL != p->distance_mask_recv) {
+        free(p->distance_mask_recv);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_grpcomm_coll_t,
                    opal_list_item_t,

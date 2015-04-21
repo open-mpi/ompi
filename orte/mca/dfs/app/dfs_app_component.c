@@ -1,5 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -39,20 +41,19 @@ orte_dfs_base_component_t mca_dfs_app_component =
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component
      */
-    {
+    .base_version = {
         ORTE_DFS_BASE_VERSION_1_0_0,
         /* Component name and version */
-        "app",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
+        .mca_component_name = "app",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+
         /* Component open and close functions */
-        dfs_app_open,
-        dfs_app_close,
-        dfs_app_component_query
+        .mca_open_component = dfs_app_open,
+        .mca_close_component = dfs_app_close,
+        .mca_query_component = dfs_app_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

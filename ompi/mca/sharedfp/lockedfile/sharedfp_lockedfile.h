@@ -21,7 +21,7 @@
 #define MCA_SHAREDFP_LOCKEDFILE_H
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 
