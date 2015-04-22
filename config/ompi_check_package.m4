@@ -6,20 +6,20 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
-# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix, 
+# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix,
 #                            [action-if-found], [action-if-not-found],
 #                            includes)
 # --------------------------------------------------------------------
@@ -31,7 +31,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
 
     # so this sucks, but there's no way to get through the progression
     # of header includes without killing off the cache variable and trying
-    # again...  
+    # again...
     unset ompi_Header
 
     ompi_check_package_header_happy="no"
@@ -51,7 +51,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
 	  AS_IF([test "$ompi_check_package_header_happy" = "yes"], [$4], [$5])],
           [$4])
     unset ompi_check_package_header_happy
-    
+
     AS_VAR_POPDEF([ompi_Header])dnl
 ])
 
@@ -75,8 +75,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
           [ # libdir was specified - search only there
            $1_LDFLAGS="$$1_LDFLAGS -L$6"
            LDFLAGS="$LDFLAGS -L$6"
-           AC_CHECK_LIB([$2], [$3], 
-                        [ompi_check_package_lib_happy="yes"], 
+           AC_CHECK_LIB([$2], [$3],
+                        [ompi_check_package_lib_happy="yes"],
                         [ompi_check_package_lib_happy="no"], [$4])
            AS_IF([test "$ompi_check_package_lib_happy" = "no"],
                  [LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
@@ -87,8 +87,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
            AS_IF([test "$ompi_check_package_libdir" = "" -o "$ompi_check_package_libdir" = "/usr" -o "$ompi_check_package_libdir" = "/usr/local"],
                [ # try as is...
                 AC_VERBOSE([looking for library without search path])
-                AC_CHECK_LIB([$2], [$3], 
-                        [ompi_check_package_lib_happy="yes"], 
+                AC_CHECK_LIB([$2], [$3],
+                        [ompi_check_package_lib_happy="yes"],
                         [ompi_check_package_lib_happy="no"], [$4])
                 AS_IF([test "$ompi_check_package_lib_happy" = "no"],
                     [ # no go on the as is..  see what happens later...
@@ -101,8 +101,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib"
                      LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib"
                      AC_VERBOSE([looking for library in lib])
-                     AC_CHECK_LIB([$2], [$3], 
-                               [ompi_check_package_lib_happy="yes"], 
+                     AC_CHECK_LIB([$2], [$3],
+                               [ompi_check_package_lib_happy="yes"],
                                [ompi_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$ompi_check_package_lib_happy" = "no"],
                          [ # no go on the as is..  see what happens later...
@@ -115,8 +115,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
                     [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib64"
                      LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib64"
                      AC_VERBOSE([looking for library in lib64])
-                     AC_CHECK_LIB([$2], [$3], 
-                               [ompi_check_package_lib_happy="yes"], 
+                     AC_CHECK_LIB([$2], [$3],
+                               [ompi_check_package_lib_happy="yes"],
                                [ompi_check_package_lib_happy="no"], [$4])
                      AS_IF([test "$ompi_check_package_lib_happy" = "no"],
                          [ # no go on the as is..  see what happens later...
@@ -130,13 +130,13 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
 
     AS_VAR_POPDEF([ompi_Lib])dnl
 ])
-    
 
-# OMPI_CHECK_PACKAGE(prefix, 
-#                    header, 
-#                    library, 
-#                    function, 
-#                    extra-libraries, 
+
+# OMPI_CHECK_PACKAGE(prefix,
+#                    header,
+#                    library,
+#                    function,
+#                    extra-libraries,
 #                    dir-prefix,
 #                    libdir-prefix,
 #                    [action-if-found], [action-if-not-found],
@@ -155,7 +155,7 @@ AC_DEFUN([OMPI_CHECK_PACKAGE],[
     ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
     ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    _OMPI_CHECK_PACKAGE_HEADER([$1], [$2], [$6], 
+    _OMPI_CHECK_PACKAGE_HEADER([$1], [$2], [$6],
           [_OMPI_CHECK_PACKAGE_LIB([$1], [$3], [$4], [$5], [$6], [$7],
                 [ompi_check_package_happy="yes"],
                 [ompi_check_package_happy="no"])],
@@ -172,4 +172,4 @@ AC_DEFUN([OMPI_CHECK_PACKAGE],[
     CPPFLAGS="$ompi_check_package_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
     LIBS="$ompi_check_package_$1_save_LIBS"
-]) 
+])
