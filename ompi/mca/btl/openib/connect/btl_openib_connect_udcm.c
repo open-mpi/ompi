@@ -550,6 +550,13 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     BTL_VERBOSE(("created cpc module %p for btl %p",
                  (void*)m, (void*)btl));
 
+    OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->cm_recv_msg_queue, opal_list_t);
+    OBJ_CONSTRUCT(&m->cm_recv_msg_queue_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->flying_messages, opal_list_t);
+    OBJ_CONSTRUCT(&m->cm_timeout_lock, opal_mutex_t);
+
     m->btl = btl;
 
     /* Create completion channel */
@@ -621,15 +628,6 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     ompi_btl_openib_fd_monitor(m->cm_channel->fd, OPAL_EV_READ,
                                udcm_cq_event_dispatch, m);
     m->channel_monitored = true;
-
-    OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue, opal_list_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue_lock, opal_mutex_t);
-
-    OBJ_CONSTRUCT(&m->flying_messages, opal_list_t);
-
-    OBJ_CONSTRUCT(&m->cm_timeout_lock, opal_mutex_t);
 
     udcm_timeout_tv.tv_sec  = udcm_timeout / 1000000;
     udcm_timeout_tv.tv_usec = udcm_timeout - 1000000 *
