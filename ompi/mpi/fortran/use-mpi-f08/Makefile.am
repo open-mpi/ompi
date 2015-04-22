@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -805,6 +805,7 @@ endif
 libmpi_usempif08_la_LIBADD = \
         $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
+        $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
         $(top_builddir)/ompi/libmpi.la
 libmpi_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
 libmpi_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
