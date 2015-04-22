@@ -129,21 +129,23 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 /* match/ignore bit manipulation
  *
  * 0123 4567 01234567 01234567 01234567 01234567 01234567 01234567 01234567
- *     |             |                 |
- * ^   | context id  |      source     |            message tag
- * |   |             |                 |
+ *     |             |                          |
+ * ^   | context id  |          source          |        message tag
+ * |   |             |                          |
  * +---- protocol
  */
 
+#define MTL_PORTALS4_MAX_TAG       ((1UL << 24) -1)
+
 #define MTL_PORTALS4_PROTOCOL_MASK 0xF000000000000000ULL
 #define MTL_PORTALS4_CONTEXT_MASK  0x0FFF000000000000ULL
-#define MTL_PORTALS4_SOURCE_MASK   0x0000FFFF00000000ULL
-#define MTL_PORTALS4_TAG_MASK      0x00000000FFFFFFFFULL
+#define MTL_PORTALS4_SOURCE_MASK   0x0000FFFFFF000000ULL
+#define MTL_PORTALS4_TAG_MASK      0x0000000000FFFFFFULL
 
 #define MTL_PORTALS4_PROTOCOL_IGNR MTL_PORTALS4_PROTOCOL_MASK
 #define MTL_PORTALS4_CONTEXT_IGNR  MTL_PORTALS4_CONTEXT_MASK
 #define MTL_PORTALS4_SOURCE_IGNR   MTL_PORTALS4_SOURCE_MASK
-#define MTL_PORTALS4_TAG_IGNR      0x000000007FFFFFFFULL
+#define MTL_PORTALS4_TAG_IGNR      0x00000000007FFFFFULL
 
 #define MTL_PORTALS4_SHORT_MSG      0x1000000000000000ULL
 #define MTL_PORTALS4_LONG_MSG       0x2000000000000000ULL
@@ -152,9 +154,9 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \
     {                                                                   \
         match_bits = contextid;                                         \
-        match_bits = (match_bits << 16);                                \
+        match_bits = (match_bits << 24);                                \
         match_bits |= source;                                           \
-        match_bits = (match_bits << 32);                                \
+        match_bits = (match_bits << 24);                                \
         match_bits |= (MTL_PORTALS4_TAG_MASK & tag) | type;             \
     }
 
@@ -165,14 +167,14 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
         ignore_bits = MTL_PORTALS4_PROTOCOL_IGNR;                       \
                                                                         \
         match_bits = contextid;                                         \
-        match_bits = (match_bits << 16);                                \
+        match_bits = (match_bits << 24);                                \
                                                                         \
         if (MPI_ANY_SOURCE == source) {                                 \
-            match_bits = (match_bits << 32);                            \
+            match_bits = (match_bits << 24);                            \
             ignore_bits |= MTL_PORTALS4_SOURCE_IGNR;                    \
         } else {                                                        \
             match_bits |= source;                                       \
-            match_bits = (match_bits << 32);                            \
+            match_bits = (match_bits << 24);                            \
         }                                                               \
                                                                         \
         if (MPI_ANY_TAG == tag) {                                       \
@@ -192,7 +194,7 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_GET_TAG(match_bits)                \
     ((int)(match_bits & MTL_PORTALS4_TAG_MASK))
 #define MTL_PORTALS4_GET_SOURCE(match_bits)             \
-    ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 32))
+    ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 24))
 
 
 #define MTL_PORTALS4_SYNC_MSG       0x8000000000000000ULL
