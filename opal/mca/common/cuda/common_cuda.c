@@ -989,11 +989,12 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
 {
     CUmemorytype memType;
     CUresult result;
-    CUipcMemHandle memHandle;
+    CUipcMemHandle *memHandle;
     CUdeviceptr pbase;
     size_t psize;
 
     mca_mpool_common_cuda_reg_t *cuda_reg = (mca_mpool_common_cuda_reg_t*)newreg;
+    memHandle = (CUipcMemHandle *)cuda_reg->data.memHandle;
 
     /* We should only be there if this is a CUDA device pointer */
     result = cuFunc.cuPointerGetAttribute(&memType,
@@ -1002,8 +1003,8 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     assert(CU_MEMORYTYPE_DEVICE == memType);
 
     /* Get the memory handle so we can send it to the remote process. */
-    result = cuFunc.cuIpcGetMemHandle(&memHandle, (CUdeviceptr)base);
-    CUDA_DUMP_MEMHANDLE((100, &memHandle, "GetMemHandle-After"));
+    result = cuFunc.cuIpcGetMemHandle(memHandle, (CUdeviceptr)base);
+    CUDA_DUMP_MEMHANDLE((100, memHandle, "GetMemHandle-After"));
 
     if (CUDA_SUCCESS != result) {
         opal_show_help("help-mpi-common-cuda.txt", "cuIpcGetMemHandle failed",
@@ -1031,7 +1032,6 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     /* Store all the information in the registration */
     cuda_reg->base.base = (void *)pbase;
     cuda_reg->base.bound = (unsigned char *)pbase + psize - 1;
-    memcpy(&cuda_reg->data.memHandle, &memHandle, sizeof(memHandle));
     cuda_reg->data.memh_seg_addr.pval = (void *) pbase;
     cuda_reg->data.memh_seg_len = psize;
 
@@ -1091,15 +1091,15 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
                        mca_mpool_base_registration_t *hdrreg)
 {
     CUresult result;
-    CUipcMemHandle memHandle;
+    CUipcMemHandle *memHandle;
     mca_mpool_common_cuda_reg_t *cuda_newreg = (mca_mpool_common_cuda_reg_t*)newreg;
 
-    /* Need to copy into memory handle for call into CUDA library. */
-    memcpy(&memHandle, cuda_newreg->data.memHandle, sizeof(memHandle));
-    CUDA_DUMP_MEMHANDLE((100, &memHandle, "Before call to cuIpcOpenMemHandle"));
+    /* Save in local variable to avoid ugly casting */
+    memHandle = (CUipcMemHandle *)cuda_newreg->data.memHandle;
+    CUDA_DUMP_MEMHANDLE((100, memHandle, "Before call to cuIpcOpenMemHandle"));
 
     /* Open the memory handle and store it into the registration structure. */
-    result = cuFunc.cuIpcOpenMemHandle((CUdeviceptr *)&newreg->alloc_base, memHandle,
+    result = cuFunc.cuIpcOpenMemHandle((CUdeviceptr *)&newreg->alloc_base, *memHandle,
                                        CU_IPC_MEM_LAZY_ENABLE_PEER_ACCESS);
 
     /* If there are some stale entries in the cache, they can cause other
@@ -1120,7 +1120,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
         opal_output_verbose(10, mca_common_cuda_output,
                             "CUDA: cuIpcOpenMemHandle passed: base=%p (remote base=%p,size=%d)",
                             newreg->alloc_base, base, (int)size);
-        CUDA_DUMP_MEMHANDLE((200, &memHandle, "cuIpcOpenMemHandle"));
+        CUDA_DUMP_MEMHANDLE((200, memHandle, "cuIpcOpenMemHandle"));
     }
 
     return OPAL_SUCCESS;
