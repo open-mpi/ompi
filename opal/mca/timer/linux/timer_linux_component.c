@@ -9,6 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,7 +114,7 @@ opal_timer_linux_open(void)
             ret = sscanf(loc, "%f", &cpu_f);
             if (1 == ret) {
                 /* numer is in MHz - convert to Hz and make an integer */
-                opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
+                opal_timer_linux_freq = (opal_timer_t) (cpu_f * 1000000);
             }
         }
     }
