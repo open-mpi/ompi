@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -128,7 +129,7 @@ static int opal_timer_linux_find_freq(void)
             ret = sscanf(loc, "%f", &cpu_f);
             if (1 == ret) {
                 /* numer is in MHz - convert to Hz and make an integer */
-                opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
+                opal_timer_linux_freq = (opal_timer_t) (cpu_f * 1000000);
             }
         }
     }
