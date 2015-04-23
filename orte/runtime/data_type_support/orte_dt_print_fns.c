@@ -534,6 +534,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
             } else {
                 strcpy(locale, "UNKNOWN");
             }
+        } else {
+            strcpy(locale, "UNKNOWN");
         }
         if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
             if (NULL != bd) {
@@ -541,8 +543,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
                     strcpy(bind, "UNBOUND");
                 }
             } else {
-                strcpy(bind, "UNKNOWN");
+                strcpy(bind, "UNBOUND");
             }
+        } else {
+            strcpy(bind, "UNBOUND");
         }
         asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
                  orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
