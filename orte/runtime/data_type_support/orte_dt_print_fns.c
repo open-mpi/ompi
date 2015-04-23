@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
@@ -544,7 +544,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
                 strcpy(bind, "UNKNOWN");
             }
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale: %s\tBinding: %s", tmp, pfx2,
+        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n\t\tBinding: %s", tmp, pfx2,
                  orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, bind);
     }
 #else
