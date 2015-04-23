@@ -544,8 +544,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
                 strcpy(bind, "UNKNOWN");
             }
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n\t\tBinding: %s", tmp, pfx2,
-                 orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, bind);
+        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
+                 orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
     }
 #else
     asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld", tmp, pfx2,
