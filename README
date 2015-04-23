@@ -1126,25 +1126,11 @@ MISCELLANEOUS SUPPORT LIBRARIES
   hwloc can discover PCI devices and locality, which can be useful for
   Open MPI in assigning message passing resources to MPI processes.
 
---with-libltdl(=value)
-  This option specifies where to find the GNU Libtool libltdl support
-  library.  The following values are permitted:
-
-    internal:    Use Open MPI's internal copy of libltdl.
-    external:    Use an external libltdl installation (rely on default
-                 compiler and linker paths to find it)
-    <no value>:  Same as "internal".
-    <directory>: Specify the location of a specific libltdl
-                 installation to use
-
-  By default (or if --with-libltdl is specified with no VALUE), Open
-  MPI will build and use the copy of libltdl that it has in its source
-  tree.  However, if the VALUE is "external", Open MPI will look for
-  the relevant libltdl header file and library in default compiler /
-  linker locations.  Or, VALUE can be a directory tree where the
-  libltdl header file and library can be found.  This option allows
-  operating systems to include Open MPI and use their default libltdl
-  installation instead of Open MPI's bundled libltdl.
+--with-libltdl=<directory>
+  Specify the directory where the GNU Libtool libltdl libraries and
+  header files are located.  This option is generally only necessary
+  if the libltdl headers and libraries are not in default
+  compiler/linker search paths.
 
   Note that this option is ignored if --disable-dlopen is specified.
 
