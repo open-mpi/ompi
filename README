@@ -599,7 +599,7 @@ Network Support
     - Intel Phi SCIF
     - SMCUDA
     - Cisco usNIC
-    - uGNI (Cray Gemini, Ares)
+    - uGNI (Cray Gemini, Aries)
     - vader (XPMEM, Linux CMA, Linux KNEM, and general shared memory)
 
   - "cm" supports a smaller number of networks (and they cannot be
@@ -648,7 +648,7 @@ Network Support
   Although the usNIC is accessed via the OpenFabrics / Verbs API
   stack, this BTL is specific to the Cisco usNIC device.
 
-- uGNI is a Cray library for communicating over the Gemini and Ares
+- uGNI is a Cray library for communicating over the Gemini and Aries
   interconnects.
 
 - The OpenFabrics Enterprise Distribution (OFED) software package v1.0
@@ -923,12 +923,13 @@ NETWORKING SUPPORT / OPTIONS
   Set configuration values for Portals 4
 
 --with-psm=<directory>
-  Specify the directory where the QLogic InfiniPath PSM library and
+  Specify the directory where the InfiniPath PSM library and
   header files are located.  This option is generally only necessary
   if the InfiniPath headers and libraries are not in default
   compiler/linker search paths.
 
-  PSM is the support library for QLogic InfiniPath network adapters.
+  PSM is the support library for QLogic InfiniPath and Intel TrueScale
+  network adapters.
 
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
