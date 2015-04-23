@@ -203,7 +203,7 @@ int ompi_osc_rdma_lock(int lock_type, int target, int assert, ompi_win_t *win)
     /* delay all eager sends until we've heard back.. */
     OPAL_THREAD_LOCK(&module->lock);
     module->passive_eager_send_active[target] = false;
-    module->passive_target_access_epoch = true;
+    ++module->passive_target_access_epoch;
 
     /* when the lock ack returns we will be in an access epoch with this peer */
     peer->access_epoch = true;
@@ -303,7 +303,7 @@ int ompi_osc_rdma_unlock(int target, ompi_win_t *win)
 
     module->passive_eager_send_active[target] = false;
     module->epoch_outgoing_frag_count[target] = 0;
-    module->passive_target_access_epoch = false;
+    --module->passive_target_access_epoch;
 
     peer->access_epoch = false;
 
@@ -335,7 +335,7 @@ int ompi_osc_rdma_lock_all(int assert, struct ompi_win_t *win)
     for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
         module->passive_eager_send_active[i] = false;
     }
-    module->passive_target_access_epoch = true;
+    ++module->passive_target_access_epoch;
     module->all_access_epoch = true;
 
     /* create lock item */
@@ -442,7 +442,7 @@ int ompi_osc_rdma_unlock_all (struct ompi_win_t *win)
     opal_list_remove_item (&module->outstanding_locks, &lock->super);
     OBJ_RELEASE(lock);
 
-    module->passive_target_access_epoch = false;
+    --module->passive_target_access_epoch;
     module->all_access_epoch = false;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -839,6 +839,7 @@ void ompi_osc_rdma_process_lock_ack (ompi_osc_rdma_module_t *module,
                                  "osc rdma: lock ack %d", lock_ack_header->source));
 
             lock->lock_acks_received++;
+            opal_condition_broadcast(&module->cond);
             module->passive_eager_send_active[lock_ack_header->source] = true;
             return;
         }
@@ -882,6 +883,8 @@ void ompi_osc_rdma_process_unlock_ack (ompi_osc_rdma_module_t *module, int sourc
     }
 
     lock->unlock_acks_received++;
+
+    opal_condition_broadcast(&module->cond);
 }
 
 /**
