@@ -82,10 +82,10 @@ cd "$distdir"
 echo "*** Now in distdir: $distdir"
 
 #
-# Get the latest config.guess and config.sub from ftp.gnu.org
+# Get the latest config.guess and config.sub from gnu.org's Git
 #
 
-echo "*** Downloading latest config.sub/config.guess from ftp.gnu.org..."
+echo "*** Downloading latest config.sub/config.guess from gnu.org..."
 cd config
 set configdir="`pwd`"
 mkdir tmp.$$
@@ -95,8 +95,8 @@ wget -t 1 -T 10 -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.gi
 wget -t 1 -T 10 -O config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=master'
 chmod +x config.guess config.sub
 
-# Recently, ftp.gnu.org has had zero-legnth config.guess / config.sub
-# files, which causes the automated nightly SVN snapshot tarball to
+# Recently, gnu.org's Git has had zero-legnth config.guess / config.sub
+# files, which causes the automated nightly snapshot tarball to
 # fail to be made correctly.  This is a primitive attempt to fix that.
 # If we got zero-length files from wget, use a config.guess /
 # config.sub from a known location that is more recent than what ships
@@ -108,21 +108,21 @@ chmod +x config.guess config.sub
 # unreleased software...
 
 set happy=0
-if (! -f config.guess || ! -s config.guess) then
-    echo " - WARNING: Got bad config.guess from ftp.gnu.org (non-existent or empty)"
+if (! -f config.guess || -z config.guess) then
+    echo " - WARNING: Got bad config.guess from gnu.org (non-existent or empty)"
 else
     ./config.guess >& /dev/null
     if ($status != 0) then
-        echo " - WARNING: Got bad config.guess from ftp.gnu.org (not executable)"
+        echo " - WARNING: Got bad config.guess from gnu.org (not executable)"
     else
-        if (! -f config.sub || ! -s config.sub) then
-            echo " - WARNING: Got bad config.sub from ftp.gnu.org (non-existent or empty)"
+        if (! -f config.sub || -z config.sub) then
+            echo " - WARNING: Got bad config.sub from gnu.org (non-existent or empty)"
         else
             ./config.sub `./config.guess` >& /dev/null
             if ($status != 0) then
                 echo " - WARNING: Got bad config.sub from ftp.gnu.org (not executable)"
             else
-                echo " - Got good config.guess and config.sub from ftp.gnu.org"
+                echo " - Got good config.guess and config.sub from gnu.org"
                 cp -f config.sub config.guess ..
                 set happy=1
             endif
@@ -144,7 +144,7 @@ cd ..
 #
 
 echo "*** Now in: `pwd`"
-echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
+echo "*** Replacing config.sub/config.guess with latest from gnu.org..."
 foreach file (config.guess config.sub)
     foreach dir (opal orte ompi)
         if (-d $dir) then
