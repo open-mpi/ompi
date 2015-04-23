@@ -22,16 +22,16 @@
 # $HEADER$
 #
 
-srcdir="$1"
+srcdir=$1
 builddir=$PWD
-distdir="$builddir/$2"
-OMPI_VERSION="$3"
-OMPI_REPO_REV="$4"
+distdir=$builddir/$2
+OMPI_VERSION=$3
+OMPI_REPO_REV=$4
 
 if test x"$2" = x ; then
     echo "Must supply relative distdir as argv[2] -- aborting"
     exit 1
-elif test x"$OMPI_VERSION" = x ; then
+elif test x$OMPI_VERSION = x ; then
     echo "Must supply version as argv[1] -- aborting"
     exit 1
 fi
