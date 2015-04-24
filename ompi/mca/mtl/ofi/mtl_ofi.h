@@ -128,11 +128,6 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
                 "fi_close failed: %s", strerror(errno));
         abort();
     }
-    if (fi_close((fid_t)ompi_mtl_ofi.mr)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
     if (fi_close((fid_t)ompi_mtl_ofi.cq)) {
         opal_output(ompi_mtl_base_framework.framework_output,
                 "fi_close failed: %s", strerror(errno));
@@ -287,7 +282,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
         ret_length = fi_trecv(ompi_mtl_ofi.ep,
                               NULL,
                               0,
-                              ompi_mtl_ofi.mr,
+                              NULL,
                               endpoint->peer_fiaddr,
                               match_bits | MTL_OFI_SYNC_SEND_ACK,
                               0, /* Exact match, no ignore bits */
@@ -323,7 +318,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
         ret_length = fi_tsend(ompi_mtl_ofi.ep,
                               start,
                               length,
-                              ompi_mtl_ofi.mr,
+                              NULL,
                               endpoint->peer_fiaddr,
                               match_bits,
                               (void *) &ofi_req->ctx);
@@ -498,7 +493,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
 	    ret_length = fi_tsend(ompi_mtl_ofi.ep,
                               NULL,
                               0,
-                              ompi_mtl_ofi.mr,
+                              NULL,
                               ofi_req->remote_addr,
                               wc->tag | MTL_OFI_SYNC_SEND_ACK,
                               (void *) &ofi_req->ctx);
@@ -591,7 +586,7 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
     ret_length = fi_trecv(ompi_mtl_ofi.ep,
                           start,
                           length,
-                          ompi_mtl_ofi.mr,
+                          NULL,
                           remote_addr,
                           match_bits,
                           mask_bits,
