@@ -30,7 +30,7 @@
 #endif
 #include <stdio.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"

@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -10,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +31,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss_types.h"
@@ -121,8 +121,7 @@ typedef orte_odls_base_component_2_0_0_t orte_odls_base_component_t;
  * Macro for use in modules that are of type odls
  */
 #define ORTE_ODLS_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "odls", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("odls", 2, 0, 0)
 
 /* Global structure for accessing ODLS functions
 */

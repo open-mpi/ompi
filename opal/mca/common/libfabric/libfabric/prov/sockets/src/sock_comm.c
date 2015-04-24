@@ -55,6 +55,9 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_DATA, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_DATA, __VA_ARGS__)
+
 static ssize_t sock_comm_send_socket(struct sock_conn *conn, const void *buf, size_t len)
 {
 	ssize_t ret;
@@ -123,7 +126,7 @@ ssize_t sock_comm_send(struct sock_conn *conn, const void *buf, size_t len)
 	return ret;
 }
 
-ssize_t sock_comm_recv_socket(struct sock_conn *conn, void *buf, size_t len)
+static ssize_t sock_comm_recv_socket(struct sock_conn *conn, void *buf, size_t len)
 {
 	ssize_t ret;
 	
@@ -133,11 +136,12 @@ ssize_t sock_comm_recv_socket(struct sock_conn *conn, void *buf, size_t len)
 		ret = 0;
 	}
 
-	SOCK_LOG_INFO("read from network: %lu\n", ret);
+	if (ret > 0)
+		SOCK_LOG_INFO("read from network: %lu\n", ret);
 	return ret;
 }
 
-ssize_t sock_comm_recv_buffer(struct sock_conn *conn)
+static ssize_t sock_comm_recv_buffer(struct sock_conn *conn)
 {
 	int ret;
 	size_t endlen;
@@ -197,26 +201,26 @@ ssize_t sock_comm_peek(struct sock_conn *conn, void *buf, size_t len)
 	return 0;
 }
 
+ssize_t sock_comm_data_avail(struct sock_conn *conn)
+{
+	sock_comm_recv_buffer(conn);
+	return rbused(&conn->inbuf);
+}
+
 int sock_comm_buffer_init(struct sock_conn *conn)
 {
-	int optval;
 	socklen_t size = SOCK_COMM_BUF_SZ;
 	socklen_t optlen = sizeof(socklen_t);
 
-	optval = 1;
-	if (setsockopt(conn->sock_fd, IPPROTO_TCP, TCP_NODELAY,
-		       &optval, sizeof optval))
-		SOCK_LOG_ERROR("setsockopt failed\n");
-
-	fd_set_nonblock(conn->sock_fd);
+	sock_set_sockopts(conn->sock_fd);
 	rbinit(&conn->inbuf, SOCK_COMM_BUF_SZ);
 	rbinit(&conn->outbuf, SOCK_COMM_BUF_SZ);
 
 	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, optlen))
-		SOCK_LOG_ERROR("setsockopt failed\n");
+		SOCK_LOG_ERROR("setsockopt SO_RCVBUF failed\n");
 
 	if (setsockopt(conn->sock_fd, SOL_SOCKET, SO_SNDBUF, &size, optlen))
-		SOCK_LOG_ERROR("setsockopt failed\n");
+		SOCK_LOG_ERROR("setsockopt SO_SNDBUF failed\n");
 
 	if (!getsockopt(conn->sock_fd, SOL_SOCKET, SO_RCVBUF, &size, &optlen))
 		SOCK_LOG_INFO("SO_RCVBUF: %d\n", size);

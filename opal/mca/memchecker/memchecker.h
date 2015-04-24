@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -178,7 +181,6 @@ typedef struct opal_memchecker_base_module_1_0_0_t opal_memchecker_base_module_t
  * Macro for use in components that are of type memchecker
  */
 #define OPAL_MEMCHECKER_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "memchecker", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("memchecker", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMCHECKER_MEMCHECKER_H */

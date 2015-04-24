@@ -33,7 +33,7 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 
 
 BEGIN_C_DECLS

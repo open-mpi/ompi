@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 UT-Battelle, LLC
  * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -64,7 +64,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/mca/crs/crs.h"
@@ -595,8 +595,7 @@ typedef struct mca_coll_base_comm_coll_t mca_coll_base_comm_coll_t;
  * Macro for use in components that are of type coll
  */
 #define MCA_COLL_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "coll", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("coll", 2, 0, 0)
 
 
 /* ******************************************************************** */

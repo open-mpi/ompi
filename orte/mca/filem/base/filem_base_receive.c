@@ -40,7 +40,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/util/output.h"
 
 #include "opal/dss/dss.h"

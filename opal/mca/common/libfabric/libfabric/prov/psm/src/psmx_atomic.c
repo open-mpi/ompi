@@ -380,6 +380,8 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 	struct psmx_cq_event *event;
 	struct psmx_fid_mr *mr;
 	struct psmx_fid_ep *target_ep;
+	struct psmx_fid_cntr *cntr = NULL;
+	struct psmx_fid_cntr *mr_cntr = NULL;
 	void *tmp_buf;
 	uint64_t cq_flags;
 
@@ -400,29 +402,16 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		if (!op_error) {
 			addr += mr->offset;
 			psmx_atomic_do_write(addr, src, datatype, op, count);
-			if (mr->cq) {
-				event = psmx_cq_create_event(
-						mr->cq,
-						0, /* context */
-						addr,
-						FI_REMOTE_WRITE | FI_ATOMIC,
-						len,
-						0, /* data */
-						0, /* tag */
-						0, /* olen */
-						0 /* err */);
-
-				if (event)
-					psmx_cq_enqueue_event(mr->cq, event);
-				else
-					err = -FI_ENOMEM;
-			}
-			if (mr->cntr)
-				psmx_cntr_inc(mr->cntr);
 
 			target_ep = mr->domain->atomics_ep;
-			if (target_ep->remote_write_cntr)
-				psmx_cntr_inc(target_ep->remote_write_cntr);
+			cntr = target_ep->remote_write_cntr;
+			mr_cntr = mr->cntr;
+
+			if (cntr)
+				psmx_cntr_inc(cntr);
+
+			if (mr_cntr && mr_cntr != cntr)
+				psmx_cntr_inc(mr_cntr);
 		}
 
 		rep_args[0].u32w0 = PSMX_AM_REP_ATOMIC_WRITE;
@@ -461,44 +450,21 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 							 datatype, op, count);
 			else
 				err = -FI_ENOMEM;
-			if (op != FI_ATOMIC_READ) {
-				if (mr->cq) {
-					event = psmx_cq_create_event(
-							mr->cq,
-							0, /* context */
-							addr,
-							cq_flags,
-							len,
-							0, /* data */
-							0, /* tag */
-							0, /* olen */
-							0 /* err */);
-
-					if (event)
-						psmx_cq_enqueue_event(mr->cq, event);
-					else
-						err = -FI_ENOMEM;
-				}
-				if (mr->cntr)
-					psmx_cntr_inc(mr->cntr);
-			}
 
 			target_ep = mr->domain->atomics_ep;
-			if (op == FI_ATOMIC_WRITE) {
-				if (target_ep->remote_write_cntr)
-					psmx_cntr_inc(target_ep->remote_write_cntr);
-			}
-			else if (op == FI_ATOMIC_READ) {
-				if (target_ep->remote_read_cntr)
-					psmx_cntr_inc(target_ep->remote_read_cntr);
+			if (op == FI_ATOMIC_READ) {
+				cntr = target_ep->remote_read_cntr;
 			}
 			else {
-				if (target_ep->remote_write_cntr)
-					psmx_cntr_inc(target_ep->remote_write_cntr);
-				if (target_ep->remote_read_cntr &&
-				    target_ep->remote_read_cntr != target_ep->remote_write_cntr)
-					psmx_cntr_inc(target_ep->remote_read_cntr);
+				cntr = target_ep->remote_write_cntr;
+				mr_cntr = mr->cntr;
 			}
+
+			if (cntr)
+				psmx_cntr_inc(cntr);
+
+			if (mr_cntr && mr_cntr != cntr)
+				psmx_cntr_inc(mr_cntr);
 		}
 		else {
 			tmp_buf = NULL;
@@ -534,32 +500,16 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 							 tmp_buf, datatype, op, count);
 			else
 				err = -FI_ENOMEM;
-			if (mr->cq) {
-				event = psmx_cq_create_event(
-						mr->cq,
-						0, /* context */
-						addr,
-						FI_REMOTE_WRITE | FI_ATOMIC,
-						len,
-						0, /* data */
-						0, /* tag */
-						0, /* olen */
-						0 /* err */);
-
-				if (event)
-					psmx_cq_enqueue_event(mr->cq, event);
-				else
-					err = -FI_ENOMEM;
-			}
-			if (mr->cntr)
-				psmx_cntr_inc(mr->cntr);
 
 			target_ep = mr->domain->atomics_ep;
-			if (target_ep->remote_write_cntr)
-				psmx_cntr_inc(target_ep->remote_write_cntr);
-			if (target_ep->remote_read_cntr &&
-			    target_ep->remote_read_cntr != target_ep->remote_write_cntr)
-				psmx_cntr_inc(target_ep->remote_read_cntr);
+			cntr = target_ep->remote_write_cntr;
+			mr_cntr = mr->cntr;
+
+			if (cntr)
+				psmx_cntr_inc(cntr);
+
+			if (mr_cntr && mr_cntr != cntr)
+				psmx_cntr_inc(mr_cntr);
 		}
 		else {
 			tmp_buf = NULL;
@@ -652,6 +602,8 @@ static int psmx_atomic_self(int am_cmd,
 	struct psmx_fid_mr *mr;
 	struct psmx_cq_event *event;
 	struct psmx_fid_ep *target_ep;
+	struct psmx_fid_cntr *cntr = NULL;
+	struct psmx_fid_cntr *mr_cntr = NULL;
 	size_t len;
 	int no_event;
 	int err = 0;
@@ -698,48 +650,23 @@ static int psmx_atomic_self(int am_cmd,
 		break;
 	}
 
-	if (op != FI_ATOMIC_READ) {
-		if (mr->cq) {
-			event = psmx_cq_create_event(
-					mr->cq,
-					0, /* context */
-					(void *)addr,
-					FI_REMOTE_WRITE | FI_ATOMIC,
-					len,
-					0, /* data */
-					0, /* tag */
-					0, /* olen */
-					0 /* err */);
-
-			if (event)
-				psmx_cq_enqueue_event(mr->cq, event);
-			else
-				err = -FI_ENOMEM;
-		}
-		if (mr->cntr)
-			psmx_cntr_inc(mr->cntr);
-	}
-
 	target_ep = mr->domain->atomics_ep;
-	if (op == FI_ATOMIC_WRITE) {
-		if (target_ep->remote_write_cntr)
-			psmx_cntr_inc(target_ep->remote_write_cntr);
-	}
-	else if (op == FI_ATOMIC_READ) {
-		if (target_ep->remote_read_cntr)
-			psmx_cntr_inc(target_ep->remote_read_cntr);
+	if (op == FI_ATOMIC_READ) {
+		cntr = target_ep->remote_read_cntr;
 	}
 	else {
-		if (target_ep->remote_write_cntr)
-			psmx_cntr_inc(target_ep->remote_write_cntr);
-		if (am_cmd != PSMX_AM_REQ_ATOMIC_WRITE &&
-		    target_ep->remote_read_cntr &&
-		    target_ep->remote_read_cntr != target_ep->remote_write_cntr)
-			psmx_cntr_inc(target_ep->remote_read_cntr);
+		cntr = target_ep->remote_write_cntr;
+		mr_cntr = mr->cntr;
 	}
 
+	if (cntr)
+		psmx_cntr_inc(cntr);
+
+	if (mr_cntr && mr_cntr != cntr)
+		psmx_cntr_inc(mr_cntr);
+
 gen_local_event:
-	no_event = ((flags & FI_INJECT) ||
+	no_event = ((flags & PSMX_NO_COMPLETION) ||
 		    (ep->send_cq_event_flag && !(flags & FI_COMPLETION)));
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
@@ -860,16 +787,15 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 		memset((void *)req, 0, sizeof(*req));
 		memcpy((void *)req+sizeof(*req), (void *)buf, len);
 		buf = (void *)req + sizeof(*req);
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_WRITE;
 	req->atomic.buf = (void *)buf;
@@ -954,7 +880,8 @@ static ssize_t psmx_atomic_inject(struct fid_ep *ep,
 	ep_priv = container_of(ep, struct psmx_fid_ep, ep);
 	return _psmx_atomic_write(ep, buf, count, NULL/*desc*/,
 				  dest_addr, addr, key,
-				  datatype, op, NULL, ep_priv->flags | FI_INJECT);
+				  datatype, op, NULL,
+				  ep_priv->flags | FI_INJECT | PSMX_NO_COMPLETION);
 }
 
 ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
@@ -1047,16 +974,15 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 		memset((void *)req, 0, sizeof(*req));
 		memcpy((void *)req+sizeof(*req), (void *)buf, len);
 		buf = (void *)req + sizeof(*req);
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_READWRITE;
 	req->atomic.buf = (void *)buf;
@@ -1257,15 +1183,11 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 		memcpy((void *)req + sizeof(*req) + len, (void *)compare, len);
 		buf = (void *)req + sizeof(*req);
 		compare = buf + len;
-		req->no_event = 1;
 	}
 	else {
 		req = calloc(1, sizeof(*req));
 		if (!req)
 			return -FI_ENOMEM;
-
-		if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION))
-			req->no_event = 1;
 
 		if (compare != buf + len) {
 			tmp_buf = malloc(len * 2);
@@ -1276,6 +1198,9 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 			memcpy(tmp_buf + len, compare, len);
 		}
 	}
+
+	req->no_event = (flags & PSMX_NO_COMPLETION) ||
+			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_COMPWRITE;
 	req->atomic.buf = (void *)buf;

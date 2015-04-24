@@ -10,10 +10,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -523,36 +523,33 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 
 #if OPAL_HAVE_HWLOC
     {
-        char *locale=NULL;
-        char *bind = NULL;
         hwloc_obj_t loc=NULL, bd=NULL;
-        char *cpu_bitmap=NULL;
+        char locale[1024], bind[1024];
 
-        orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING);
         if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
             if (NULL != loc) {
-                hwloc_bitmap_list_asprintf(&locale, loc->cpuset);
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(locale, sizeof(locale), src->node->topology, loc->cpuset)) {
+                    strcpy(locale, "UNBOUND");
+                }
+            } else {
+                strcpy(locale, "UNKNOWN");
             }
+        } else {
+            strcpy(locale, "UNKNOWN");
         }
         if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
             if (NULL != bd) {
-                hwloc_bitmap_list_asprintf(&bind, bd->cpuset);
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(bind, sizeof(bind), src->node->topology, bd->cpuset)) {
+                    strcpy(bind, "UNBOUND");
+                }
+            } else {
+                strcpy(bind, "UNBOUND");
             }
+        } else {
+            strcpy(bind, "UNBOUND");
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\tLocale: %s\tBind location: %s\tBinding: %s", tmp, pfx2,
-                 orte_proc_state_to_str(src->state), (long)src->app_idx,
-                 (NULL == locale) ? "UNKNOWN" : locale,
-                 (NULL == bind) ? "UNKNOWN" : bind,
-                 (NULL == cpu_bitmap) ? "NULL" : cpu_bitmap);
-        if (NULL != locale) {
-            free(locale);
-        }
-        if (NULL != bind) {
-            free(bind);
-        }
-        if (NULL != cpu_bitmap) {
-            free(cpu_bitmap);
-        }
+        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
+                 orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
     }
 #else
     asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld", tmp, pfx2,

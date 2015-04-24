@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -161,7 +162,7 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss_types.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
@@ -186,8 +187,7 @@ typedef struct ompi_rte_base_component_1_0_0_t ompi_rte_component_t;
  * Macro for use in components that are of type rte
  */
 #define OMPI_RTE_BASE_VERSION_1_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "rte", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("rte", 2, 0, 0)
 
 END_C_DECLS
 

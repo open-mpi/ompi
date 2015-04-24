@@ -24,7 +24,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "ompi/mca/fcoll/fcoll.h"

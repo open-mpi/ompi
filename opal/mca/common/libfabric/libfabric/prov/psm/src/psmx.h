@@ -39,18 +39,23 @@ extern "C" {
 #include "fi.h"
 #include "fi_enosys.h"
 #include "fi_list.h"
-#include "fi_log.h"
+#include <rdma/fi_log.h>
 
-#define PSMX_PROVNAME "psm"
+#define PSMX_PROV_NAME		"psm"
+#define PSMX_PROV_NAME_LEN	3
+#define PSMX_DOMAIN_NAME	"psm"
+#define PSMX_DOMAIN_NAME_LEN	3
+#define PSMX_FABRIC_NAME	"psm"
+#define PSMX_FABRIC_NAME_LEN	3
+
 #define PSMX_DEFAULT_UUID	"0FFF0FFF-0000-0000-0000-0FFF0FFF0FFF"
 
-#define PSMX_DEBUG(...) FI_LOG(2, PSMX_PROVNAME, __VA_ARGS__)
-#define PSMX_WARN(...)	FI_WARN(PSMX_PROVNAME, __VA_ARGS__)
+extern struct fi_provider psmx_prov;
 
 #define PSMX_TIME_OUT	120
 
 #define PSMX_OP_FLAGS	(FI_INJECT | FI_MULTI_RECV | FI_COMPLETION | \
-			 FI_TRIGGER | FI_REMOTE_SIGNAL | FI_REMOTE_COMPLETE)
+			 FI_TRIGGER | FI_INJECT_COMPLETE | FI_COMMIT_COMPLETE)
 
 #define PSMX_CAP_EXT	(0)
 
@@ -58,7 +63,6 @@ extern "C" {
 			 FI_RMA | FI_MULTI_RECV | \
                          FI_READ | FI_WRITE | FI_SEND | FI_RECV | \
                          FI_REMOTE_READ | FI_REMOTE_WRITE | \
-                         FI_REMOTE_SIGNAL | \
 			 FI_CANCEL | FI_TRIGGER | \
 			 FI_DYNAMIC_MR | \
 			 PSMX_CAP_EXT)
@@ -72,6 +76,9 @@ extern "C" {
 
 #define PSMX_MSG_BIT	(0x1ULL << 63)
 #define PSMX_RMA_BIT	(0x1ULL << 62)
+
+/* Bits 60 .. 63 of the flag are provider specific */
+#define PSMX_NO_COMPLETION	(1ULL << 60)
 
 enum psmx_context_type {
 	PSMX_NOCOMP_SEND_CONTEXT = 1,
@@ -110,6 +117,7 @@ union psmx_pi {
 #define PSMX_AM_FLAG_MASK	0xFFFF0000
 #define PSMX_AM_EOM		0x40000000
 #define PSMX_AM_DATA		0x20000000
+#define PSMX_AM_FORCE_ACK	0x10000000
 
 #ifndef PSMX_AM_USE_SEND_QUEUE
 #define PSMX_AM_USE_SEND_QUEUE	0
@@ -148,6 +156,8 @@ struct psmx_am_request {
 			uint64_t addr;
 			uint64_t key;
 			void	*context;
+			void	*peer_context;
+			void	*peer_addr;
 			uint64_t data;
 		} write;
 		struct {
@@ -499,7 +509,6 @@ struct psmx_fid_stx {
 struct psmx_fid_mr {
 	struct fid_mr		mr;
 	struct psmx_fid_domain	*domain;
-	struct psmx_fid_cq	*cq;
 	struct psmx_fid_cntr	*cntr;
 	uint64_t		access;
 	uint64_t		flags;
@@ -517,8 +526,6 @@ struct psmx_env {
 	int name_server;
 	int am_msg;
 	int tagged_rma;
-	int debug;
-	int warning;
 	char *uuid;
 };
 
@@ -595,6 +602,8 @@ int	psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 				psm_amarg_t *args, int nargs, void *src, uint32_t len);
 int	psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 				psm_amarg_t *args, int nargs, void *src, uint32_t len);
+
+void	psmx_am_ack_rma(struct psmx_am_request *req);
 
 struct	psmx_fid_mr *psmx_mr_hash_get(uint64_t key);
 int	psmx_mr_validate(struct psmx_fid_mr *mr, uint64_t addr, size_t len, uint64_t access);

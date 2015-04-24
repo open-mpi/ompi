@@ -80,6 +80,7 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_info_support.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -147,6 +148,7 @@ static struct {
     bool report_bindings;
     char *slot_list;
     bool debug;
+    bool run_as_root;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -316,6 +318,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
     
+    { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
+      &myglobals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
+      "Allow execution as root (STRONGLY DISCOURAGED)" },
+
 /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -348,7 +354,6 @@ int main(int argc, char *argv[])
     opal_cmd_line_t cmd_line;
     char *param;
     orte_job_t *jdata=NULL;
-    char *hnpenv;
     opal_buffer_t *req;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
     
@@ -368,6 +373,45 @@ int main(int argc, char *argv[])
                     opal_strerror(rc));
         }
         return rc;
+    }
+
+    /* print version if requested.  Do this before check for help so
+       that --version --help works as one might expect. */
+    if (myglobals.version) {
+        char *str;
+        str = opal_info_make_version_str("all", 
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
+                                         OPAL_RELEASE_VERSION, 
+                                         OPAL_GREEK_VERSION,
+                                         OPAL_REPO_REV);
+        if (NULL != str) {
+            fprintf(stdout, "%s %s\n\nReport bugs to %s\n",
+                    myglobals.basename, str, PACKAGE_BUGREPORT);
+            free(str);
+        }
+        exit(0);
+    }
+
+    /* check if we are running as root - if we are, then only allow
+     * us to proceed if the allow-run-as-root flag was given. Otherwise,
+     * exit with a giant warning flag
+     */
+    if (0 == geteuid() && !myglobals.run_as_root) {
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        if (myglobals.help) {
+            fprintf(stderr, "%s cannot provide the help message when run as root\n", myglobals.basename);
+        } else {
+            /* show_help is not yet available, so print an error manually */
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", myglobals.basename);
+        }
+        fprintf(stderr, " This is *strongly* discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
+        fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
+        fprintf(stderr, "your system in an unusable state.\n\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
+        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        exit(1);
     }
 
     /*
@@ -439,12 +483,11 @@ int main(int argc, char *argv[])
         fclose(fp);
         input[strlen(input)-1] = '\0';  /* remove newline */
         /* construct the target hnp info */
-        asprintf(&hnpenv, "OMPI_MCA_orte_hnp_uri=%s", input);
+        opal_setenv("OMPI_MCA_orte_hnp_uri", input, true, &environ);
     } else {
         /* should just be the uri itself - construct the target hnp info */
-        asprintf(&hnpenv, "OMPI_MCA_orte_hnp_uri=%s", myglobals.hnp);
+        opal_setenv("OMPI_MCA_orte_hnp_uri", myglobals.hnp, true, &environ);
     }
-    putenv(hnpenv);  // must not free
 
     /* Setup MCA params */
     orte_register_params();
@@ -452,6 +495,10 @@ int main(int argc, char *argv[])
     /* flag that I am a TOOL */
     orte_process_info.proc_type = ORTE_PROC_TOOL;
 
+    /* we are never allowed to operate as a distributed tool,
+     * so insist on the ess/tool component */
+    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    
     if (myglobals.debug) {
         orte_devel_level_output = true;
     }
@@ -694,50 +741,6 @@ static int init_globals(void)
 
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
-    /* print version if requested.  Do this before check for help so
-       that --version --help works as one might expect. */
-    if (myglobals.version) {
-        char *str, *project_name = NULL;
-        if (0 == strcmp(myglobals.basename, "ompi-submit")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        str = opal_show_help_string("help-orterun.txt", "orterun:version", 
-                                    false,
-                                    myglobals.basename, project_name, OPAL_VERSION,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        exit(0);
-    }
-
-    /* Check for help request */
-    if (myglobals.help) {
-        char *str, *args = NULL;
-        char *project_name = NULL;
-        if (0 == strcmp(myglobals.basename, "ompi-submit")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        args = opal_cmd_line_get_usage_msg(cmd_line);
-        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    myglobals.basename, project_name, OPAL_VERSION,
-                                    myglobals.basename, args,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        free(args);
-
-        /* If someone asks for help, that should be all we do */
-        exit(0);
-    }
-
     /* check for request to report pid */
     if (NULL != myglobals.report_pid) {
         FILE *fp;

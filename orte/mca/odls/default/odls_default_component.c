@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +34,7 @@
 #endif
 #include <ctype.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/odls/odls.h"
@@ -46,23 +49,22 @@
 orte_odls_base_component_t mca_odls_default_component = {
     /* First, the mca_component_t struct containing meta information
     about the component itself */
-    {
+    .version = {
         ORTE_ODLS_BASE_VERSION_2_0_0,
         /* Component name and version */
-        "default",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+        .mca_component_name = "default",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        orte_odls_default_component_open,
-        orte_odls_default_component_close,
-        orte_odls_default_component_query,
+        .mca_open_component = orte_odls_default_component_open,
+        .mca_close_component = orte_odls_default_component_close,
+        .mca_query_component = orte_odls_default_component_query,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 

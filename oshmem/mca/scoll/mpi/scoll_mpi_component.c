@@ -1,10 +1,13 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 #include <stdio.h>
 
@@ -29,34 +32,32 @@ mca_scoll_mpi_component_t mca_scoll_mpi_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itfca */
     {
-        {
+        .scoll_version = {
             MCA_SCOLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "mpi",
-            OSHMEM_MAJOR_VERSION,
-            OSHMEM_MINOR_VERSION,
-            OSHMEM_RELEASE_VERSION,
+            .mca_component_name = "mpi",
+            MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                                  OSHMEM_RELEASE_VERSION),
 
             /* Component open and close functions */
-            mpi_open,
-            mpi_close,
-            NULL,
-            mpi_register
+            .mca_open_component = mpi_open,
+            .mca_close_component = mpi_close,
+            .mca_register_component_params = mpi_register,
         },
-        {
+        .scoll_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
 
-        mca_scoll_mpi_init_query,
-        mca_scoll_mpi_comm_query,
+        .scoll_init = mca_scoll_mpi_init_query,
+        .scoll_query = mca_scoll_mpi_comm_query,
     },
     77, /* priority */
     0,  /* verbose level */
-    0,   /* mpi_enable */
+    1,   /* mpi_enable */
     2   /*mpi_np */
 };
 

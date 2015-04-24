@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,10 +50,9 @@ opal_dl_dlopen_component_t mca_dl_dlopen_component = {
             OPAL_DL_BASE_VERSION_1_0_0,
 
             /* Component name and version */
-            "dlopen",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
+            .mca_component_name = "dlopen",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
             /* Component functions */
             .mca_register_component_params = dlopen_component_register,
@@ -67,10 +69,6 @@ opal_dl_dlopen_component_t mca_dl_dlopen_component = {
         /* The dl framework members */
         .priority = 80
     },
-
-    /* Now fill in the dlopen component-specific members */
-    .filename_suffixes_mca_storage = ".so,.dylib,.dll,.sl",
-    .filename_suffixes = NULL
 };
 
 
@@ -78,6 +76,7 @@ static int dlopen_component_register(void)
 {
     int ret;
 
+    mca_dl_dlopen_component.filename_suffixes_mca_storage = ".so,.dylib,.dll,.sl";
     ret =
         mca_base_component_var_register(&mca_dl_dlopen_component.base.base_version,
                                         "filename_suffixes",

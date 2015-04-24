@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,24 +50,23 @@ static int orte_ras_gridengine_verbose;
 
 orte_ras_gridengine_component_t mca_ras_gridengine_component = {
     {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+        /* First, the mca_base_component_t struct containing meta
+           information about the component itself */
 
-      {
-        ORTE_RAS_BASE_VERSION_2_0_0,
-        "gridengine",                /* MCA component name */
-        ORTE_MAJOR_VERSION,          /* MCA component major version */
-        ORTE_MINOR_VERSION,          /* MCA component minor version */
-        ORTE_RELEASE_VERSION,        /* MCA component release version */
-        orte_ras_gridengine_open,    /* component open  */
-        orte_ras_gridengine_close,    /* component close */
-        orte_ras_gridengine_component_query,
-        orte_ras_gridengine_register
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      }
+        .base_version = {
+            ORTE_RAS_BASE_VERSION_2_0_0,
+            .mca_component_name = "gridengine",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = orte_ras_gridengine_open,
+            .mca_close_component = orte_ras_gridengine_close,
+            .mca_query_component = orte_ras_gridengine_component_query,
+            .mca_register_component_params = orte_ras_gridengine_register,
+        },
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
     }
 };
 

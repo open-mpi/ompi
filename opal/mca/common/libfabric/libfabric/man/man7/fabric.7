@@ -1,4 +1,4 @@
-.TH fabric 7 "2015\-03\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fabric 7 "2015\-03\-27" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 Fabric Interface Library
@@ -168,6 +168,69 @@ Atomic operations include well-known functionality, such as atomic-add
 and compare-and-swap, plus several other pre-defined calls.
 Unlike other data transfer interfaces, atomic operations are aware of
 the data formatting at the target memory region.
+.SH LOGGING INTERFACE
+.PP
+Logging can be controlled using the FI_LOG_LEVEL, FI_LOG_PROV, and
+FI_LOG_SUBSYSTEMS environment variables.
+.PP
+\f[I]FI_LOG_LEVEL\f[] : FI_LOG_LEVEL controls the amount of logging data
+that is output.
+The following log levels are defined.
+.IP \[bu] 2
+\f[I]Warn\f[] : Warn is the least verbose setting and is intended for
+reporting errors or warnings.
+.IP \[bu] 2
+\f[I]Trace\f[] : Trace is more verbose and is meant to include
+non-detailed output helpful to tracing program execution.
+.IP \[bu] 2
+\f[I]Info\f[] : Info is high traffic and meant for detailed output.
+.IP \[bu] 2
+\f[I]Debug\f[] : Debug is high traffic and is likely to impact
+application performance.
+Debug output is only available if the library has been compiled with
+debugging enabled.
+.PP
+\f[I]FI_LOG_PROV\f[] : The FI_LOG_PROV environment variable enables or
+disables logging from specific providers.
+Providers can be enabled by listing them in a comma separated fashion.
+If the list begins with the \[aq]^\[aq] symbol, then the list will be
+negated.
+By default all providers are enabled.
+.PP
+Example: To enable logging from the psm and sockets provider:
+FI_LOG_PROV="psm,sockets"
+.PP
+Example: To enable logging from providers other than psm:
+FI_LOG_PROV="^psm"
+.PP
+\f[I]FI_LOG_SUBSYS\f[] : The FI_LOG_SUBSYS environment variable enables
+or disables logging at the subsystem level.
+The syntax for enabling or disabling subsystems is similar to that used
+for FI_LOG_PROV.
+The following subsystems are defined.
+.IP \[bu] 2
+\f[I]core\f[] : Provides output related to the core framework and its
+management of providers.
+.IP \[bu] 2
+\f[I]fabric\f[] : Provides output specific to interactions associated
+with the fabric object.
+.IP \[bu] 2
+\f[I]domain\f[] : Provides outout specific to interactions associated
+with the domain object.
+.IP \[bu] 2
+\f[I]ep_ctrl\f[] : Provides outout specific to endpoint non-data
+transfer operations, such as CM operations.
+.IP \[bu] 2
+\f[I]ep_data\f[] : Provides outout specific to endpoint data transfer
+operations.
+.IP \[bu] 2
+\f[I]av\f[] : Provides outout specific to address vector operations.
+.IP \[bu] 2
+\f[I]cq\f[] : Provides outout specific to completion queue operations.
+.IP \[bu] 2
+\f[I]eq\f[] : Provides outout specific to event queue operations.
+.IP \[bu] 2
+\f[I]mr\f[] : Provides outout specific to memory registration.
 .SH SEE ALSO
 .PP
 \f[C]fi_provider\f[](7), \f[C]fi_getinfo\f[](3),

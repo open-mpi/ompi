@@ -1,7 +1,7 @@
 This README is for userspace RDMA fabric library.
 
-Version Libfabric v1.0.0rc3
-Released on 2015-03-26
+Version Libfabric v1.0.0rc5
+Released on 2015-04-02
 
 Building
 ========

@@ -50,6 +50,46 @@ sub subst {
 }
 
 ###############################################################################
+# Check to see that the source tree is clean / has no local changes
+###############################################################################
+
+if (-d ".git") {
+    open(GIT_STATUS, "git status --porcelain|") ||
+        die "Can't run git status to verify that the source tree is clean";
+    my $clean = 1;
+    while (<GIT_STATUS>) {
+        chomp;
+        if ($_ =~ m/^([^?! ].|.[^?! ]) (.+)$/) {
+            my $file = $2;
+            print "*** WARNING: found modified file in source tree: $file\n";
+
+            # There is one exception that is allowed: the nightly
+            # tarball script changes configure.ac to set the correct
+            # version number.  In this case, the nightly tarball
+            # script will set a magic environment variable with the
+            # SHA1 hash of the ok-to-be-modified file.  See if it is
+            # set, and if the SHA1 hash agrees.
+            if (exists($ENV{"LIBFABRIC_DISTSCRIPT_SHA1_$file"})) {
+                my $sha1 = `sha1sum $file`;
+                chomp($sha1);
+                if ($sha1 eq $ENV{"LIBFABRIC_DISTSCRIPT_SHA1_$file"}) {
+                    print "*** ...but an environment variable override says that this is ok!\n";
+                } else {
+                    $clean = 0;
+                }
+            } else {
+                $clean = 0;
+            }
+        }
+    }
+    close(GIT_STATUS);
+    if (!$clean) {
+        print "*** WARNING: Source tree is not clean.\n";
+        die "Refusing to make tarball";
+    }
+}
+
+###############################################################################
 # Change into the new distribution tree
 ###############################################################################
 
@@ -58,11 +98,17 @@ subst("README");
 
 chdir("man");
 opendir(my $dh, ".") || die "Can't open man directory: $!";
-my @files = grep { /\.\d$/ && -f "./$_" } readdir($dh);
+my @subdirs = grep { /man\d+/ && -d "./$_" } readdir($dh);
 closedir $dh;
 
-foreach my $file (@files) {
-    subst($file);
+foreach my $dir (@subdirs) {
+    opendir(my $dh, $dir) || die "Can't open man/$dir directory: $!";
+    my @files = grep { /\.\d$/ && -f "$dir/$_" } readdir($dh);
+    closedir $dh;
+
+    foreach my $file (@files) {
+        subst("$dir/$file");
+    }
 }
 
 exit(0);

@@ -237,6 +237,14 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EMBEDDED],[
                 [$opal_common_libfabric_alias_symbols],
                 [Define to 1 if the linker supports alias attribute.])
 
+            AC_CHECK_FUNC([pthread_spin_init],
+                [opal_common_libfabric_have_spinlock=1],
+                [opal_common_libfabric_have_spinlock=0])
+
+            AC_DEFINE_UNQUOTED([PT_LOCK_SPIN],
+                [$opal_common_libfabric_have_spinlock],
+                [Define PT_LOCK_SPIN to 1 if available.])
+
             # Do stuff for specific providers
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_USNIC
             _OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM

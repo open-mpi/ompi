@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
- *                         rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/runtime/opal_params.h"
 
 #include "orte/util/proc_info.h"
@@ -31,22 +31,21 @@ static int rcd_register(void);
  * Struct of function pointers that need to be initialized
  */
 orte_grpcomm_base_component_t mca_grpcomm_rcd_component = {
-    {
+    .base_version = {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
 
-        "rcd", /* MCA module name */
-        ORTE_MAJOR_VERSION,  /* MCA module major version */
-        ORTE_MINOR_VERSION,  /* MCA module minor version */
-        ORTE_RELEASE_VERSION,  /* MCA module release version */
-        rcd_open,  /* component open */
-        rcd_close, /* component close */
-        rcd_query, /* component query */
-        rcd_register
+        .mca_component_name = "rcd",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_open_component = rcd_open,
+        .mca_close_component = rcd_close,
+        .mca_query_component = rcd_query,
+        .mca_register_component_params = rcd_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int rcd_register(void)

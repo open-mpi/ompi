@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -148,3 +149,16 @@ Please either specify an absolute path to the file, or check
 that the file is in your current working directory...and ensure
 that you have read permissions on the file.
 
+#
+[deprecated-amca]
+You're using the --am option. Please be advised that this option is deprecated;
+you should use --tune instead. The --tune option allows one to specify mca
+parameters as well as environment variables from within a file using the same
+command line syntax (e.g. -mca var val -mca var "val" -x var=val -x var).
+The --am option will be removed in a future release.
+#
+[no-oob]
+A call was made to launch additional processes, but this process has
+no active out-of-band transports and therefore cannot execute this call.
+Please check to see if you have the "oob" MCA parameter set and ensure
+that it is either unset or at least includes the tcp transport.

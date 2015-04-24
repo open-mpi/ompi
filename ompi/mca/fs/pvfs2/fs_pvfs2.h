@@ -32,7 +32,7 @@
 #include "pvfs2-compat.h"
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 

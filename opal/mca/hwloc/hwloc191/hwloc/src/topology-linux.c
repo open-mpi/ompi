@@ -2505,6 +2505,10 @@ look_powerpc_device_tree(struct hwloc_topology *topology,
   DIR *dt;
   struct dirent *dirent;
 
+  /* only works for Power so far, and not useful on ARM */
+  if (strncmp(data->utsname.machine, "ppc", 3))
+      return;
+
   ofroot = "/sys/firmware/devicetree/base/cpus";
   ofrootlen = 34;
   dt = hwloc_opendir(ofroot, root_fd);
@@ -2571,6 +2575,10 @@ look_powerpc_device_tree(struct hwloc_topology *topology,
         }
         free(threads);
       } else if ((unsigned int)-1 != reg) {
+       /* Doesn't work on ARM because cpu "reg" do not start at 0.
+	* We know the first cpu "reg" is the lowest. The others are likely
+	* in order assuming the device-tree shows objects in order.
+	*/
         cpuset = hwloc_bitmap_alloc();
         hwloc_bitmap_set(cpuset, reg);
       }

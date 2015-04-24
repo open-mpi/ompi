@@ -31,8 +31,6 @@
 #ifndef OPAL_SYS_ARCH_ATOMIC_H
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
-#if OPAL_WANT_SMP_LOCKS
-
 #if (OPAL_ASM_ARM_VERSION >= 7)
 
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
@@ -61,16 +59,6 @@
 #define WMB() MB()
 
 #endif
-
-#else
-
-#define MB()
-#define RMB()
-#define WMB()
-
-#endif /* OPAL_WANT_SMP_LOCKS */
-
-
 
 /**********************************************************************
  *

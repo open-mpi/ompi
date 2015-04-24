@@ -29,11 +29,13 @@ enum mca_base_register_flag_t {
 typedef enum mca_base_register_flag_t mca_base_register_flag_t;
 
 enum mca_base_open_flag_t {
-    MCA_BASE_OPEN_DEFAULT = 0,
+    MCA_BASE_OPEN_DEFAULT         = 0,
     /** Find components in mca_base_components_find. Used by
      mca_base_framework_open() when NOREGISTER is specified
      by the framework */
-    MCA_BASE_OPEN_FIND_COMPONENTS = 1
+    MCA_BASE_OPEN_FIND_COMPONENTS = 1,
+    /** Do not open DSO components */
+    MCA_BASE_OPEN_STATIC_ONLY     = 2,
 };
 
 typedef enum mca_base_open_flag_t mca_base_open_flag_t;
@@ -192,6 +194,29 @@ OPAL_DECLSPEC int mca_base_framework_open (mca_base_framework_t *framework,
  * Call a framework's close function.
  */
 OPAL_DECLSPEC int mca_base_framework_close (mca_base_framework_t *framework);
+
+
+/**
+ * Check if a framework is already registered
+ *
+ * @param[in] framework framework to query
+ *
+ * @retval true if the framework's mca variables are registered
+ * @retval false if not
+ */
+OPAL_DECLSPEC bool mca_base_framework_is_registered (struct mca_base_framework_t *framework);
+
+
+/**
+ * Check if a framework is already open
+ *
+ * @param[in] framework framework to query
+ *
+ * @retval true if the framework is open
+ * @retval false if not
+ */
+OPAL_DECLSPEC bool mca_base_framework_is_open (struct mca_base_framework_t *framework);
+
 
 /**
  * Macro to declare an MCA framework

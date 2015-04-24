@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +35,7 @@
 #include "oshmem/types.h"
 #include "oshmem/constants.h"
 
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "oshmem/mca/sshmem/sshmem_types.h"
@@ -165,11 +168,10 @@ typedef struct mca_sshmem_base_module_2_0_0_t mca_sshmem_base_module_t;
 
 /**
  * macro for use in components that are of type sshmem
- * see: opal/mca/mca.h for more information
+ * see: oshmem/mca/mca.h for more information
  */
 #define MCA_SSHMEM_BASE_VERSION_2_0_0                                          \
-    MCA_BASE_VERSION_2_0_0,                                                    \
-    "sshmem", 2, 0, 0
+    OSHMEM_MCA_BASE_VERSION_2_1_0("sshmem", 2, 0, 0)
 
 END_C_DECLS
 

@@ -26,7 +26,7 @@
 #include "mpi.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"

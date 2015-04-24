@@ -66,9 +66,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
     # This is stolen from autoconf to peek under the covers to get the
     # cache variable for the library check.  one should not copy this
     # code into other places unless you want much pain and suffering
-    AS_LITERAL_IF([$2],
-                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_search_$2_$3])],
-                  [AS_VAR_PUSHDEF([opal_Lib], [ac_cv_search_$2''_$3])])dnl
+    AS_VAR_PUSHDEF([opal_Lib], [ac_cv_search_$3])
 
     # see comment above
     unset opal_Lib

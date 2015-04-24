@@ -57,6 +57,8 @@
 #include "sock.h"
 #include "sock_util.h"
 
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EP_DATA, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EP_DATA, __VA_ARGS__)
 
 #define PE_INDEX(_pe, _e) (_e - &_pe->pe_table[0])
 #define SOCK_GET_RX_ID(_addr, _bits) ((_bits) == 0) ? 0 : \
@@ -112,7 +114,8 @@ static void sock_pe_release_entry(struct sock_pe *pe,
 		if (pe_entry->conn->tx_pe_entry == pe_entry)
 			pe_entry->conn->tx_pe_entry = NULL;
 	} else {
-		pe_entry->conn->rx_pe_entry = NULL;
+		if (pe_entry->conn->rx_pe_entry == pe_entry)
+			pe_entry->conn->rx_pe_entry = NULL;
 	}
 
 	pe->num_free_entries++;
@@ -178,7 +181,7 @@ static void sock_pe_report_tx_completion(struct sock_pe_entry *pe_entry)
 				pe_entry->comp->eq, 
 				&pe_entry->comp->send_cntr->cntr_fid.fid, 
 				pe_entry->comp->send_cntr->cntr_fid.fid.context, 
-				-FI_ENOSPC, -FI_ENOSPC, NULL);
+				0, FI_ENOSPC, -FI_ENOSPC, NULL, 0);
 		}				
 	}
 }
@@ -206,7 +209,7 @@ static void sock_pe_report_rx_completion(struct sock_pe_entry *pe_entry)
 				pe_entry->comp->eq, 
 				&pe_entry->comp->recv_cq->cq_fid.fid, 
 				pe_entry->comp->recv_cq->cq_fid.fid.context, 
-				-FI_ENOSPC, -FI_ENOSPC, NULL);
+				0, FI_ENOSPC, -FI_ENOSPC, NULL, 0);
 		}
 	}
 }
@@ -598,10 +601,6 @@ static int sock_pe_process_rx_read(struct sock_pe *pe, struct sock_rx_ctx *rx_ct
 	pe_entry->buf = pe_entry->pe.rx.rx_iov[0].iov.addr;
 	pe_entry->data_len = data_len;
 
-	if (pe_entry->flags & FI_REMOTE_SIGNAL) {
-		sock_pe_report_rx_completion(pe_entry);
-	}
-
 	sock_pe_report_remote_read(rx_ctx, pe_entry);
 	sock_pe_send_response(pe, rx_ctx, pe_entry, data_len, 
 			      SOCK_OP_READ_COMPLETE);	
@@ -669,8 +668,7 @@ static int sock_pe_process_rx_write(struct sock_pe *pe, struct sock_rx_ctx *rx_c
 		sock_pe_report_error(pe_entry, rem);
 		goto out;
 	} else {
-		if (pe_entry->flags & FI_REMOTE_SIGNAL ||
-			pe_entry->flags & FI_REMOTE_CQ_DATA) {
+		if (pe_entry->flags & FI_REMOTE_CQ_DATA) {
 			sock_pe_report_rx_completion(pe_entry);
 		}
 	}
@@ -1087,8 +1085,7 @@ static int sock_pe_process_rx_atomic(struct sock_pe *pe, struct sock_rx_ctx *rx_
 	pe_entry->buf = pe_entry->pe.rx.rx_iov[0].iov.addr;
 	pe_entry->data_len = offset;
 	
-	if (pe_entry->flags & FI_REMOTE_SIGNAL ||
-		pe_entry->flags & FI_REMOTE_CQ_DATA) {
+	if (pe_entry->flags & FI_REMOTE_CQ_DATA) {
 		sock_pe_report_rx_completion(pe_entry);
 	}
 	
@@ -1104,7 +1101,7 @@ err:
 	return -FI_EINVAL;
 }
 
-int sock_pe_progress_buffered_rx(struct sock_rx_ctx *rx_ctx)
+static int sock_pe_progress_buffered_rx(struct sock_rx_ctx *rx_ctx)
 {
 	struct dlist_entry *entry;
 	struct sock_pe_entry pe_entry;
@@ -1323,7 +1320,7 @@ static int sock_pe_process_rx_send(struct sock_pe *pe, struct sock_rx_ctx *rx_ct
 	}
 
 out:
-	if (pe_entry->msg_hdr.flags & FI_REMOTE_COMPLETE) {
+	if (pe_entry->msg_hdr.flags & FI_TRANSMIT_COMPLETE) {
 		sock_pe_send_response(pe, rx_ctx, pe_entry, 0, 
 				      SOCK_OP_SEND_COMPLETE);
 	}
@@ -1677,7 +1674,7 @@ static int sock_pe_progress_tx_send(struct sock_pe *pe,
 		pe_entry->conn->tx_pe_entry = NULL;
 		SOCK_LOG_INFO("Send complete\n");
 		
-		if (!(pe_entry->flags & FI_REMOTE_COMPLETE)) {
+		if (pe_entry->flags & FI_INJECT_COMPLETE) {
 			sock_pe_report_tx_completion(pe_entry);
 			pe_entry->is_complete = 1;
 		}
@@ -1768,7 +1765,7 @@ static int sock_pe_progress_rx_pe_entry(struct sock_pe *pe,
 	}
 	
 out:
-	if (pe_entry->is_complete) {
+	if (pe_entry->is_complete && !pe_entry->pe.rx.pending_send) {
 		sock_pe_release_entry(pe, pe_entry);
 		SOCK_LOG_INFO("[%p] RX done\n", pe_entry);
 	}
@@ -1968,6 +1965,10 @@ static int sock_pe_new_tx_entry(struct sock_pe *pe, struct sock_tx_ctx *tx_ctx)
 		msg_hdr->rx_id = 0;
 	}
 
+	if (pe_entry->flags & FI_INJECT_COMPLETE) {
+		pe_entry->flags &= ~FI_TRANSMIT_COMPLETE;
+	}
+
 	msg_hdr->dest_iov_len = pe_entry->pe.tx.tx_op.dest_iov_len;
 	msg_hdr->flags = htonll(pe_entry->flags);
 	pe_entry->total_len = msg_hdr->msg_len;
@@ -1978,35 +1979,35 @@ static int sock_pe_new_tx_entry(struct sock_pe *pe, struct sock_tx_ctx *tx_ctx)
 
 void sock_pe_add_tx_ctx(struct sock_pe *pe, struct sock_tx_ctx *ctx)
 {
-	fastlock_acquire(&pe->list_lock);
+	pthread_mutex_lock(&pe->list_lock);
 	dlistfd_insert_tail(&ctx->pe_entry, &pe->tx_list);
-	fastlock_release(&pe->list_lock);
+	pthread_mutex_unlock(&pe->list_lock);
 	SOCK_LOG_INFO("TX ctx added to PE\n");
 }
 
 void sock_pe_add_rx_ctx(struct sock_pe *pe, struct sock_rx_ctx *ctx)
 {
-	fastlock_acquire(&pe->list_lock);
+	pthread_mutex_lock(&pe->list_lock);
 	dlistfd_insert_tail(&ctx->pe_entry, &pe->rx_list);
-	fastlock_release(&pe->list_lock);
+	pthread_mutex_unlock(&pe->list_lock);
 	SOCK_LOG_INFO("RX ctx added to PE\n");
 }
 
 void sock_pe_remove_tx_ctx(struct sock_tx_ctx *tx_ctx)
 {
-	fastlock_acquire(&tx_ctx->domain->pe->list_lock);
+	pthread_mutex_lock(&tx_ctx->domain->pe->list_lock);
 	dlist_remove(&tx_ctx->pe_entry);
-	fastlock_release(&tx_ctx->domain->pe->list_lock);
+	pthread_mutex_unlock(&tx_ctx->domain->pe->list_lock);
 }
 
 void sock_pe_remove_rx_ctx(struct sock_rx_ctx *rx_ctx)
 {
-	fastlock_acquire(&rx_ctx->domain->pe->list_lock);
+	pthread_mutex_lock(&rx_ctx->domain->pe->list_lock);
 	dlist_remove(&rx_ctx->pe_entry);
-	fastlock_release(&rx_ctx->domain->pe->list_lock);
+	pthread_mutex_unlock(&rx_ctx->domain->pe->list_lock);
 }
 
-int sock_pe_progress_rx_ep(struct sock_pe *pe, struct sock_ep *ep,
+static int sock_pe_progress_rx_ep(struct sock_pe *pe, struct sock_ep *ep,
 			   struct sock_rx_ctx *rx_ctx)
 {
 	struct sock_conn *conn;
@@ -2035,7 +2036,7 @@ int sock_pe_progress_rx_ep(struct sock_pe *pe, struct sock_ep *ep,
 					      conn->sock_fd);
 				return ret;
 			}
-			data_avail = (ret == 1);
+			data_avail = (ret == 1 && sock_comm_data_avail(conn));
 		}
 		
 		if (data_avail && conn->rx_pe_entry == NULL &&
@@ -2159,7 +2160,7 @@ static void *sock_pe_progress_thread(void *data)
 			usleep(sock_progress_thread_wait * 1000);
 		}
 
-		fastlock_acquire(&pe->list_lock);		
+		pthread_mutex_lock(&pe->list_lock);		
 		if (!dlistfd_empty(&pe->tx_list)) {
 			for (entry = pe->tx_list.list.next;
 			     entry != &pe->tx_list.list; entry = entry->next) {
@@ -2168,7 +2169,7 @@ static void *sock_pe_progress_thread(void *data)
 				ret = sock_pe_progress_tx_ctx(pe, tx_ctx);
 				if (ret < 0) {
 					SOCK_LOG_ERROR("failed to progress TX\n");
-					fastlock_release(&pe->list_lock);
+					pthread_mutex_unlock(&pe->list_lock);
 					return NULL;
 				}
 			}
@@ -2182,12 +2183,12 @@ static void *sock_pe_progress_thread(void *data)
 				ret = sock_pe_progress_rx_ctx(pe, rx_ctx);
 				if (ret < 0) {
 					SOCK_LOG_ERROR("failed to progress RX\n");
-					fastlock_release(&pe->list_lock);
+					pthread_mutex_unlock(&pe->list_lock);
 					return NULL;
 				}
 			}
 		}
-		fastlock_release(&pe->list_lock);
+		pthread_mutex_unlock(&pe->list_lock);
 	}
 	
 	SOCK_LOG_INFO("Progress thread terminated\n");
@@ -2224,7 +2225,7 @@ struct sock_pe *sock_pe_init(struct sock_domain *domain)
 	dlistfd_head_init(&pe->tx_list);
 	dlistfd_head_init(&pe->rx_list);
 	fastlock_init(&pe->lock);
-	fastlock_init(&pe->list_lock);
+	pthread_mutex_init(&pe->list_lock, NULL);
 	pe->domain = domain;
 
 	if (domain->progress_mode == FI_PROGRESS_AUTO) {
@@ -2254,7 +2255,7 @@ void sock_pe_finalize(struct sock_pe *pe)
 	}
 	
 	fastlock_destroy(&pe->lock);
-	fastlock_destroy(&pe->list_lock);
+	pthread_mutex_destroy(&pe->list_lock);
 	dlistfd_head_free(&pe->tx_list);
 	dlistfd_head_free(&pe->rx_list);
 	free(pe);

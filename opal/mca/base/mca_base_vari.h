@@ -148,6 +148,13 @@ OPAL_DECLSPEC int mca_base_var_generate_full_name4 (const char *project, const c
 /**
  * \internal
  *
+ * Call save_value callback for generated internal mca parameter storing env variables
+ */
+OPAL_DECLSPEC int mca_base_internal_env_store(void);
+
+/**
+ * \internal
+ *
  * Initialize/finalize MCA variable groups
  */
 OPAL_DECLSPEC int mca_base_var_group_init (void);

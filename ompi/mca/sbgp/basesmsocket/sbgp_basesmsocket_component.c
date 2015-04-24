@@ -3,7 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -79,31 +79,26 @@ mca_sbgp_basesmsocket_component_t mca_sbgp_basesmsocket_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .sbgp_version = {
             MCA_SBGP_BASE_VERSION_2_0_0,
 
             /* Component name and version */
 
-            "basesmsocket",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "basesmsocket",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
 
-            basesmsocket_open,
-            basesmsocket_close,
-            NULL,
-            basesmsocket_register
+            .mca_open_component = basesmsocket_open,
+            .mca_close_component = basesmsocket_close,
+            .mca_register_component_params = basesmsocket_register,
         },
 
-    mca_sbgp_basesmsocket_init_query,
-    mca_sbgp_basesmsocket_select_procs,
-
-    /* (default) priority */
-    0
+        .sbgp_init_query = mca_sbgp_basesmsocket_init_query,
+        .select_procs = mca_sbgp_basesmsocket_select_procs,
+        .priority = 0,
     }
-
 };
 
 /*

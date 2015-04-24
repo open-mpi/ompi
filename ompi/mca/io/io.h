@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +24,7 @@
 #define MCA_IO_H
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/request/request.h"
 
 /*
@@ -66,8 +69,7 @@ typedef enum mca_io_base_version_t mca_io_base_version_t;
  * 1-1 mapping of all MPI-IO functions
  */
 #define MCA_IO_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "io", 2, 0, 0
+    OMPI_MCA_BASE_VERSION_2_1_0("io", 2, 0, 0)
 
 /*
  * Component

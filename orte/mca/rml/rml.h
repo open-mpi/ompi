@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,10 +10,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved.
- * Copyright (c) 2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015 Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
@@ -710,8 +711,7 @@ ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
 
 /** Macro for use in components that are of type rml */
 #define ORTE_RML_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "rml", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("rml", 2, 0, 0)
 
 
 /* ******************************************************************** */

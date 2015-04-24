@@ -10,13 +10,13 @@
 /* Set to 1 to use c11 atomic functions */
 #undef HAVE_ATOMICS
 
-/* Define HAVE_CLOCK_GETTIME to 1 if available. */
+/* Define to 1 if clock_gettime is available. */
 #undef HAVE_CLOCK_GETTIME
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define HAVE_HOST_GET_CLOCK_SERVICE to 1 if available. */
+/* Define to 1 if host_clock_get_service is available. */
 #undef HAVE_HOST_GET_CLOCK_SERVICE
 
 /* Define to 1 if you have the <infiniband/verbs.h> header file. */
@@ -127,6 +127,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to 1 if pthread_spin_init is available. */
+#undef PT_LOCK_SPIN
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

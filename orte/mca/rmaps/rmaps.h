@@ -47,7 +47,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 
 #include "orte/runtime/orte_globals.h"
 

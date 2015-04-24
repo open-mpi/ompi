@@ -10,9 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.
- *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
@@ -100,33 +100,29 @@ static int component_ft_event(int state);
  */
 mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
-        {
+        .oob_base = {
             MCA_OOB_BASE_VERSION_2_0_0,
-            "tcp", /* MCA module name */
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
-            tcp_component_open,  /* component open */
-            tcp_component_close, /* component close */
-            NULL, /* component query */
-            tcp_component_register, /* component register */
+            .mca_component_name = "tcp",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+            .mca_open_component = tcp_component_open,
+            .mca_close_component = tcp_component_close,
+            .mca_register_component_params = tcp_component_register,
         },
-        {
+        .oob_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        0,   // reserve space for an assigned index
-        30, // default priority of this transport
-        component_available,
-        component_startup,
-        component_shutdown,
-        component_send,
-        component_get_addr,
-        component_set_addr,
-        component_is_reachable
+        .priority = 30, // default priority of this transport
+        .available = component_available,
+        .startup = component_startup,
+        .shutdown = component_shutdown,
+        .send_nb = component_send,
+        .get_addr = component_get_addr,
+        .set_addr = component_set_addr,
+        .is_reachable = component_is_reachable,
 #if OPAL_ENABLE_FT_CR == 1
-        ,
-        component_ft_event
+        .ft_event = component_ft_event,
 #endif
     },
 };
@@ -433,6 +429,23 @@ static int tcp_component_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_probes);
+
+    mca_oob_tcp_component.retry_delay = 0;
+    (void)mca_base_component_var_register(component, "retry_delay",
+                                          "Time (in sec) to wait before trying to connect to peer again",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.retry_delay);
+
+    mca_oob_tcp_component.max_recon_attempts = 10;
+    (void)mca_base_component_var_register(component, "max_recon_attempts",
+                                          "Max number of times to attempt connection before giving up (-1 -> never give up)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_oob_tcp_component.max_recon_attempts);
+
     return ORTE_SUCCESS;
 }
 
@@ -1205,6 +1218,7 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
     OBJ_CONSTRUCT(&peer->addrs, opal_list_t);
     peer->active_addr = NULL;
     peer->state = MCA_OOB_TCP_UNCONNECTED;
+    peer->num_retries = 0;
     OBJ_CONSTRUCT(&peer->send_queue, opal_list_t);
     peer->send_msg = NULL;
     peer->recv_msg = NULL;

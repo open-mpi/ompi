@@ -209,6 +209,7 @@ static int mca_btl_vader_component_register (void)
                                            "single_copy_mechanism", "Single copy mechanism to use (defaults to best available)",
                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP, &mca_btl_vader_component.single_copy_mechanism);
+    OBJ_RELEASE(new_enum);
 
 #if OPAL_BTL_VADER_HAVE_KNEM
     /* Currently disabling DMA mode by default; it's not clear that this is useful in all applications and architectures. */
@@ -660,7 +661,7 @@ static void mca_btl_vader_progress_endpoints (void)
     for (int i = 0 ; i < count ; ++i) {
         mca_btl_vader_progress_waiting ((mca_btl_base_endpoint_t *) opal_list_remove_first (&mca_btl_vader_component.pending_endpoints));
     }
-    OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 }
 
 static int mca_btl_vader_component_progress (void)

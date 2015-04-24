@@ -1,6 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved. 
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -37,20 +39,18 @@ const opal_event_component_t mca_event_external_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .base_version = {
         OPAL_EVENT_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "external",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "external",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        event_external_open,
-        NULL
+        .mca_open_component = event_external_open,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }

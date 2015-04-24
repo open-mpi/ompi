@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -627,7 +629,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
       temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
       if (NULL == temp_disp_index) {
 	  opal_output (1, "OUT OF MEMORY\n");
-	  return OMPI_ERR_OUT_OF_RESOURCE;
+          ret = OMPI_ERR_OUT_OF_RESOURCE;
+          goto exit;
       }
       global_count = 0;
       for (i=0;i<entries_per_aggregator;i++){

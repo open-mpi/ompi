@@ -32,7 +32,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/odls/odls_types.h"

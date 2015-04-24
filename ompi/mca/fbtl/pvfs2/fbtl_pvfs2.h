@@ -21,7 +21,7 @@
 #define MCA_FBTL_PVFS2_H
 
 #include "ompi_config.h"
-#include "opal/mca/mca.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/fs/pvfs2/fs_pvfs2.h"

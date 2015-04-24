@@ -545,7 +545,8 @@ static int usock_recv_connect_ack(void)
     char *msg;
     char *version;
     int rc;
-    opal_sec_cred_t creds;
+    char *cred;
+    size_t credsize;
     pmix_usock_hdr_t hdr;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
@@ -632,11 +633,14 @@ static int usock_recv_connect_ack(void)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check security token */
-    creds.method = (char*)(msg + strlen(version) + 1);
-    creds.credential = (char*)(msg + strlen(version) + 1 + strlen(creds.method) + 1);
-    creds.size = hdr.nbytes - strlen(version) - 1 - strlen(creds.method) - 1;
-    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
+    cred = (char*)(msg + strlen(version) + 1);
+    credsize = hdr.nbytes - strlen(version) - 1;
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(cred, credsize, NULL))) {
         OPAL_ERROR_LOG(rc);
+        mca_pmix_native_component.state = PMIX_USOCK_FAILED;
+        CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        free(msg);
+        return OPAL_ERR_UNREACH;
     }
     free(msg);
 

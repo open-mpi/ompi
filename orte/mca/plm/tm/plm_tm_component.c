@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,25 +65,24 @@ orte_plm_tm_component_t mca_plm_tm_component = {
         /* First, the mca_component_t struct containing meta information
            about the component itself */
 
-        {
+        .base_version = {
             ORTE_PLM_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "tm",
-            ORTE_MAJOR_VERSION,
-            ORTE_MINOR_VERSION,
-            ORTE_RELEASE_VERSION,
+            .mca_component_name = "tm",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
 
             /* Component open and close functions */
-            plm_tm_open,
-            plm_tm_close,
-            orte_plm_tm_component_query,
-            plm_tm_register
+            .mca_open_component = plm_tm_open,
+            .mca_close_component = plm_tm_close,
+            .mca_query_component = orte_plm_tm_component_query,
+            .mca_register_component_params = plm_tm_register,
         },
-        {
+        .base_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
     }
 };
 

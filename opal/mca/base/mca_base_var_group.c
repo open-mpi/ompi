@@ -188,7 +188,12 @@ static int group_register (const char *project_name, const char *framework_name,
 
     group_id = group_find (project_name, framework_name, component_name, true);
     if (0 <= group_id) {
-        (void) mca_base_var_group_get_internal (group_id, &group, true);
+        ret = mca_base_var_group_get_internal (group_id, &group, true);
+        if (OPAL_SUCCESS != ret) {
+            /* something went horribly wrong */
+            assert (NULL != group);
+            return ret;
+        }
         group->group_isvalid = true;
         mca_base_var_groups_timestamp++;
 

@@ -1,4 +1,4 @@
-.TH fi_provider 7 "2015\-03\-16" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_provider 7 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 Fabric Interface Providers
@@ -82,10 +82,7 @@ routines.
 Access domains must support opening address vector maps and tables.
 .IP \[bu] 2
 Address vectors associated with domains that may be identified using IP
-addresses must support FI_SOCKADDR_IN and FI_SOCKADDR_IN6 input formats.
-.IP \[bu] 2
-Address vectors must support FI_ADDR, FI_ADDR_INDEX, and FI_AV output
-formats.
+addresses must support the FI_SOCKADDR_IN input format.
 .IP \[bu] 2
 Access domains must support opening completion queues and counters.
 .IP \[bu] 2
@@ -99,6 +96,37 @@ A provider is expected to be forward compatible, and must be able to be
 compiled against expanded \f[C]fi_xxx_ops\f[] structures that define new
 functions added after the provider was written.
 Any unknown functions must be set to NULL.
+.SH LOGGING INTERFACE
+.PP
+Logging is performed using the FI_ERR, FI_LOG, and FI_DEBUG macros.
+.SS DEFINITIONS
+.IP
+.nf
+\f[C]
+#define\ FI_ERR(prov_name,\ subsystem,\ ...)
+
+#define\ FI_LOG(prov_name,\ prov,\ level,\ subsystem,\ ...)
+
+#define\ FI_DEBUG(prov_name,\ subsystem,\ ...)
+\f[]
+.fi
+.SS ARGUMENTS
+.PP
+\f[I]prov_name\f[] : String representing the provider name.
+.PP
+\f[I]prov\f[] : Provider context structure.
+.PP
+\f[I]level\f[] : Log level associated with log statement.
+.PP
+\f[I]subsystem\f[] : Subsystem being logged from.
+.SS DESCRIPTION
+.PP
+\f[I]FI_ERR\f[] : Always logged.
+.PP
+\f[I]FI_LOG\f[] : Logged if the intended provider, log level, and
+subsystem parameters match the user supplied values.
+.PP
+\f[I]FI_DEBUG\f[] : Logged if configured with the --enable-debug flag.
 .SH SEE ALSO
 .PP
 \f[C]fi_psm\f[](7), \f[C]fi_sockets\f[](7), \f[C]fi_usnic\f[](7),

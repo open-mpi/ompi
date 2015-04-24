@@ -43,7 +43,7 @@ use File::Path;
 use Getopt::Long;
 
 my $diffdir = "diffdir";
-my $btlsdir = "../ompi/mca/btl";
+my $btlsdir = "../opal/mca/btl";
 my $cmd;
 my $cmd_output;
 my $contents;

@@ -164,6 +164,7 @@ opal_installdirs_base_close(void)
     free(opal_install_dirs.opaldatadir);
     free(opal_install_dirs.opallibdir);
     free(opal_install_dirs.opalincludedir);
+    memset (&opal_install_dirs, 0, sizeof (opal_install_dirs));
 
     return mca_base_framework_components_close (&opal_installdirs_base_framework, NULL);
 }
@@ -171,4 +172,4 @@ opal_installdirs_base_close(void)
 /* Declare the installdirs framework */
 MCA_BASE_FRAMEWORK_DECLARE(opal, installdirs, NULL, NULL, opal_installdirs_base_open,
                            opal_installdirs_base_close, mca_installdirs_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_NOREGISTER);
+                           MCA_BASE_FRAMEWORK_FLAG_NOREGISTER | MCA_BASE_FRAMEWORK_FLAG_NO_DSO);

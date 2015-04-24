@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
@@ -115,8 +115,10 @@ int orte_oob_base_select(void)
         }
     }
 
-    if (0 == opal_list_get_size(&orte_oob_base.actives)) {
-        /* no support available means we really cannot run */
+    if (0 == opal_list_get_size(&orte_oob_base.actives) &&
+        !orte_standalone_operation) {
+        /* no support available means we really cannot run unless
+         * we are a singleton */
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "mca:oob:select: Init failed to return any available transports");
         orte_show_help("help-oob-base.txt", "no-interfaces-avail", true);

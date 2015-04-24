@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,13 +10,14 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,25 +79,24 @@ orte_plm_rsh_component_t mca_plm_rsh_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
-        ORTE_PLM_BASE_VERSION_2_0_0,
+        .base_version = {
+            ORTE_PLM_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        "rsh",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+            /* Component name and version */
+            .mca_component_name = "rsh",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        rsh_component_open,
-        rsh_component_close,
-        rsh_component_query,
-        rsh_component_register
-    },
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+            /* Component open and close functions */
+            .mca_open_component = rsh_component_open,
+            .mca_close_component = rsh_component_close,
+            .mca_query_component = rsh_component_query,
+            .mca_register_component_params = rsh_component_register,
+        },
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
     }
 };
 
@@ -108,21 +109,21 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "num_concurrent",
                                             "How many plm_rsh_agent instances to invoke concurrently (must be > 0)",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.num_concurrent);
 
     mca_plm_rsh_component.force_rsh = false;
     (void) mca_base_component_var_register (c, "force_rsh", "Force the launcher to always use rsh",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.force_rsh);
     mca_plm_rsh_component.disable_qrsh = false;
     (void) mca_base_component_var_register (c, "disable_qrsh",
-                                            "Disable the launcher to use qrsh when under the Grid Engine parallel environment",
+                                            "Disable the use of qrsh when under the Grid Engine parallel environment",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.disable_qrsh);
 
@@ -130,7 +131,7 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "daemonize_qrsh",
                                             "Daemonize the orted under the Grid Engine parallel environment",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.daemonize_qrsh);
 
@@ -138,7 +139,7 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "disable_llspawn",
                                             "Disable the use of llspawn when under the LoadLeveler environment",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.disable_llspawn);
 
@@ -146,7 +147,7 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "daemonize_llspawn",
                                             "Daemonize the orted when under the LoadLeveler environment",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.daemonize_llspawn);
 
@@ -161,7 +162,7 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "delay",
                                             "Delay between invocations of the remote agent (sec[:usec])",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_4,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_delay_string);
 
@@ -169,7 +170,7 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "no_tree_spawn",
                                             "If set to true, do not launch via a tree-based topology",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.no_tree_spawn);
 
@@ -178,7 +179,7 @@ static int rsh_component_register(void)
     var_id = mca_base_component_var_register (c, "agent",
                                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
                                               MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                              OPAL_INFO_LVL_9,
+                                              OPAL_INFO_LVL_2,
                                               MCA_BASE_VAR_SCOPE_READONLY,
                                               &mca_plm_rsh_component.agent);
     (void) mca_base_var_register_synonym (var_id, "orte", "pls", NULL, "rsh_agent", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
@@ -188,7 +189,7 @@ static int rsh_component_register(void)
     var_id = mca_base_component_var_register (c, "assume_same_shell",
                                               "If set to true, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell [default: 1]",
                                               MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                              OPAL_INFO_LVL_9,
+                                              OPAL_INFO_LVL_2,
                                               MCA_BASE_VAR_SCOPE_READONLY,
                                               &mca_plm_rsh_component.assume_same_shell);
     /* XXX -- var_conversion -- Why does this component register orte_assume_same_shell? Components should ONLY register THEIR OWN variables. */
@@ -198,9 +199,24 @@ static int rsh_component_register(void)
     (void) mca_base_component_var_register (c, "pass_environ_mca_params",
                                             "If set to false, do not include mca params from the environment on the orted cmd line",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_component.pass_environ_mca_params);
+    mca_plm_rsh_component.ssh_args = NULL;
+    (void) mca_base_component_var_register (c, "args",
+                                            "Arguments to add to rsh/ssh",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_2,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.ssh_args);
+
+    mca_plm_rsh_component.pass_libpath = NULL;
+    (void) mca_base_component_var_register (c, "pass_libpath",
+                                            "Prepend the specified library path to the remote shell's LD_LIBRARY_PATH",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_2,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.pass_libpath);
 
     return ORTE_SUCCESS;
 }

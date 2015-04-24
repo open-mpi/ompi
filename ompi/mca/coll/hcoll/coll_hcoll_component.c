@@ -1,10 +1,13 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 #include "ompi_config.h"
 #include <stdio.h>
@@ -31,30 +34,28 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itfca */
     {
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "hcoll",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "hcoll",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
-            hcoll_open,
-            hcoll_close,
-            NULL,
-            hcoll_register
+            .mca_open_component = hcoll_open,
+            .mca_close_component = hcoll_close,
+            .mca_register_component_params = hcoll_register,
         },
-        {
+        .collm_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
 
-        mca_coll_hcoll_init_query,
-        mca_coll_hcoll_comm_query,
+        .collm_init_query = mca_coll_hcoll_init_query,
+        .collm_comm_query = mca_coll_hcoll_comm_query,
     },
     90, /* priority */
     0,  /* verbose level */
@@ -190,7 +191,7 @@ static int hcoll_register(void)
 
     CHECK(reg_int("enable",NULL,
                   "[1|0|] Enable/Disable HCOL",
-                  0 /*disable by default*/,
+                  1,
                   &mca_coll_hcoll_component.hcoll_enable,
                   0));
 

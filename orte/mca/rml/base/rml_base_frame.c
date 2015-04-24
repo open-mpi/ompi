@@ -20,7 +20,7 @@
 #endif
 
 #include "opal/dss/dss.h"
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/util/output.h"
 

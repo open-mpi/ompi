@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
- *                         All rights reserved. 
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -59,24 +60,22 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
-      {
-        MCA_MPOOL_BASE_VERSION_2_0_0,
+        .mpool_version = {
+            MCA_MPOOL_BASE_VERSION_2_0_0,
 
-        "sm", /* MCA component name */
-        OPAL_MAJOR_VERSION,  /* MCA component major version */
-        OPAL_MINOR_VERSION,  /* MCA component minor version */
-        OPAL_RELEASE_VERSION,  /* MCA component release version */
-        mca_mpool_sm_open,  /* component open  */
-        mca_mpool_sm_close,
-        NULL,
-        mca_mpool_sm_register
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
+            .mca_component_name = "sm",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
+            .mca_open_component = mca_mpool_sm_open,
+            .mca_close_component = mca_mpool_sm_close,
+            .mca_register_component_params = mca_mpool_sm_register,
+        },
+        .mpool_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
 
-      mca_mpool_sm_init
+        .mpool_init = mca_mpool_sm_init,
     }
 };
 

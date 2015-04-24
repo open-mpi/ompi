@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c)      2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *                         Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -23,7 +26,7 @@
 #include "orte/types.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/class/opal_object.h"
@@ -91,8 +94,11 @@ typedef uint32_t orte_sstore_base_key_t;
  * Therefore, it needs to be marked specially. */
 #define SSTORE_METADATA_GLOBAL_MIGRATING       22
 
+/** TUNE Parameter to be preserved for ompi-restart */
+#define SSTORE_METADATA_GLOBAL_TUNE_PARAM      23
+
 /** */
-#define SSTORE_METADATA_MAX                    23
+#define SSTORE_METADATA_MAX                    24
 
 /**
  * Storage handle
@@ -159,6 +165,9 @@ struct orte_sstore_base_global_snapshot_info_1_0_0_t {
 
     /** AMCA parameter used */
     char *amca_param;
+
+    /** TUNE parameter used */
+    char *tune_param;
 
     /** Internal use only: Cache some information on the structure */
     int num_seqs;
@@ -395,8 +404,7 @@ ORTE_DECLSPEC extern orte_sstore_base_module_t orte_sstore;
  * Macro for use in components that are of type SSTORE
  */
 #define ORTE_SSTORE_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "sstore", 2, 0, 0
+    ORTE_MCA_BASE_VERSION_2_1_0("sstore", 2, 0, 0)
 
 END_C_DECLS
 

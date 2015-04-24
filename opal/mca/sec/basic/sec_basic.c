@@ -29,7 +29,7 @@ static int init(void);
 static void finalize(void);
 static int get_my_cred(int dstorehandle,
                        opal_process_name_t *my_id,
-                       opal_sec_cred_t **cred);
+                       opal_sec_cred_t *cred);
 static int authenticate(opal_sec_cred_t *cred);
 
 opal_sec_base_module_t opal_sec_basic_module = {
@@ -56,7 +56,7 @@ static void finalize(void)
 
 static int get_my_cred(int dstorehandle,
                        opal_process_name_t *my_id,
-                       opal_sec_cred_t **cred)
+                       opal_sec_cred_t *cred)
 {
     opal_list_t vals;
     opal_value_t *kv;
@@ -77,26 +77,31 @@ static int get_my_cred(int dstorehandle,
                 my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
             } else {
                 my_cred.credential = strdup(kv->data.string);
-                my_cred.size = strlen(kv->data.string);
+                my_cred.size = strlen(kv->data.string)+1;  // include the NULL
                 OBJ_RELEASE(kv);
             }
         } else {
-            my_cred.credential = strdup("12345");
+            my_cred.credential = strdup("1234567");
             my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
         }
         OPAL_LIST_DESTRUCT(&vals);
     }
     initialized = true;
 
-    *cred = &my_cred;
+    cred->method = strdup("basic");
+    cred->credential = strdup(my_cred.credential);
+    cred->size = my_cred.size;
 
     return OPAL_SUCCESS;
 }
 
 static int authenticate(opal_sec_cred_t *cred)
 {
+    opal_output_verbose(5, opal_sec_base_framework.framework_output,
+                        "opal_sec:basic Received credential %s of size %lu",
+                        cred->credential, (unsigned long)cred->size);
 
-    if (0 == strncmp(cred->credential, "12345", strlen("12345"))) {
+    if (0 == strncmp(cred->credential, "1234567", strlen("1234567"))) {
         return OPAL_SUCCESS;
     }
     return OPAL_ERR_AUTHENTICATION_FAILED;

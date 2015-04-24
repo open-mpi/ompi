@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,7 +25,7 @@
 
 #include <string.h>
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -115,6 +115,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using byslot");
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+                } else if (opal_hwloc_use_hwthreads_as_cpus) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using byhwthread");
+                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYHWTHREAD);
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using bycore");
@@ -188,6 +192,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using byslot");
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                } else if (opal_hwloc_use_hwthreads_as_cpus) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using byhwthread");
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYHWTHREAD);
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps mapping not given - using bycore");
@@ -239,25 +247,53 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             jdata->map->binding = opal_hwloc_binding_policy;
         } else {
-            /* if nothing was specified, then we default to a policy
-             * based on number of procs and cpus_per_rank */
-            if (2 <= nprocs) {
+            orte_mapping_policy_t mpol;
+            mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
+            /* if the user explicitly mapped-by some object, then we default
+             * to binding to that object */
+            if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
+                ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
+                if (ORTE_MAPPING_BYHWTHREAD == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                } else if (ORTE_MAPPING_BYCORE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                } else if (ORTE_MAPPING_BYL1CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L1CACHE);
+                } else if (ORTE_MAPPING_BYL2CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L2CACHE);
+                } else if (ORTE_MAPPING_BYL3CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L3CACHE);
+                } else if (ORTE_MAPPING_BYSOCKET == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                } else if (ORTE_MAPPING_BYNUMA == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                }
+            } else if (ORTE_MAPPING_BYNODE == mpol || ORTE_MAPPING_BYBOARD == mpol) {
+                jdata->map->binding = OPAL_BIND_TO_NONE;
+            } else if (nprocs <= 2) {
+                /* if nothing was specified, then we default to a policy
+                 * based on number of procs and cpus_per_rank */
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
-                    /* for performance, bind to core */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                    if (opal_hwloc_use_hwthreads_as_cpus) {
+                        /* if we are using hwthread cpus, then bind to those */
+                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                    } else {
+                        /* for performance, bind to core */
+                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                    }
                 }
             } else {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
                     /* for performance, bind to socket */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 }
             }
         }

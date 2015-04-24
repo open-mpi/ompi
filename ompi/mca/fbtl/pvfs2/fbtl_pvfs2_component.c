@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,22 +47,19 @@ mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    {
+    .fbtlm_version = {
         MCA_FBTL_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "pvfs2",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-        NULL,
-        NULL
+        .mca_component_name = "pvfs2",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
     },
-    {
+    .fbtlm_data = {
         /* This component is checkpointable */
       MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    mca_fbtl_pvfs2_component_init_query,      /* get thread level */
-    mca_fbtl_pvfs2_component_file_query,      /* get priority and actions */
-    mca_fbtl_pvfs2_component_file_unquery     /* undo what was done by previous function */
+    .fbtlm_init_query = mca_fbtl_pvfs2_component_init_query,      /* get thread level */
+    .fbtlm_file_query = mca_fbtl_pvfs2_component_file_query,      /* get priority and actions */
+    .fbtlm_file_unquery = mca_fbtl_pvfs2_component_file_unquery,  /* undo what was done by previous function */
 };

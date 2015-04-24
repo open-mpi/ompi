@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-03\-23" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_endpoint 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -454,6 +454,8 @@ indicated by fi_tx_size_left.
 .PP
 The fi_ep_attr structure defines the set of attributes associated with
 an endpoint.
+Endpoint attributes may be further refined using the transmit and
+receive context attributes as shown below.
 .IP
 .nf
 \f[C]
@@ -467,8 +469,6 @@ struct\ fi_ep_attr\ {
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_order_war_size;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ max_order_waw_size;
 \ \ \ \ uint64_t\ \ \ \ \ \ \ \ mem_tag_format;
-\ \ \ \ uint64_t\ \ \ \ \ \ \ \ msg_order;
-\ \ \ \ uint64_t\ \ \ \ \ \ \ \ comp_order;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ tx_ctx_cnt;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ rx_ctx_cnt;
 };
@@ -641,118 +641,6 @@ A provider may increase the size of the fields.
 It is recommended that field sizes be ordered from smallest to largest.
 A generic, unstructured tag and mask can be achieved by requesting a bit
 array consisting of alternating 1\[aq]s and 0\[aq]s.
-.SS msg_order - Message Ordering
-.PP
-Message ordering refers to the order in which transport layer headers
-(as viewed by the application) are processed.
-Relaxed message order enables data transfers to be sent and received out
-of order, which may improve performance by utilizing multiple paths
-through the fabric from the initiating endpoint to a target endpoint.
-Message order applies only between a single source and destination
-endpoint pair.
-Ordering between different target endpoints is not defined.
-.PP
-Message order is determined using a set of ordering bits.
-Each set bit indicates that ordering is maintained between data
-transfers of the specified type.
-Message order is defined for [read | write | send] operations submitted
-by an application after [read | write | send] operations.
-.PP
-Message ordering only applies to the processing of transport headers.
-Message ordering is necessary, but does not guarantee the order in which
-data is sent or received by the transport layer.
-.PP
-\f[I]FI_ORDER_RAR\f[] : Read after read.
-If set, RMA and atomic read operations are processed in the order
-submitted relative to other RMA and atomic read operations.
-If not set, RMA and atomic reads may be processed out of order from
-their submission.
-.PP
-\f[I]FI_ORDER_RAW\f[] : Read after write.
-If set, RMA and atomic read operations are processed in the order
-submitted relative to RMA and atomic write operations.
-If not set, RMA and atomic reads may be processed ahead of RMA and
-atomic writes.
-.PP
-\f[I]FI_ORDER_RAS\f[] : Read after send.
-If set, RMA and atomic read operations are processed in the order
-submitted relative to message send operations, including tagged sends.
-If not set, RMA and atomic reads may be processed ahead of sends.
-.PP
-\f[I]FI_ORDER_WAR\f[] : Write after read.
-If set, RMA and atomic write operations are processed in the order
-submitted relative to RMA and atomic read operations.
-If not set, RMA and atomic writes may be processed ahead of RMA and
-atomic reads.
-.PP
-\f[I]FI_ORDER_WAW\f[] : Write after write.
-If set, RMA and atomic write operations are processed in the order
-submitted relative to other RMA and atomic write operations.
-If not set, RMA and atomic writes may be processed out of order from
-their submission.
-.PP
-\f[I]FI_ORDER_WAS\f[] : Write after send.
-If set, RMA and atomic write operations are processed in the order
-submitted relative to message send operations, including tagged sends.
-If not set, RMA and atomic writes may be processed ahead of sends.
-.PP
-\f[I]FI_ORDER_SAR\f[] : Send after read.
-If set, message send operations, including tagged sends, are processed
-in order submitted relative to RMA and atomic read operations.
-If not set, message sends may be processed ahead of RMA and atomic
-reads.
-.PP
-\f[I]FI_ORDER_SAW\f[] : Send after write.
-If set, message send operations, including tagged sends, are processed
-in order submitted relative to RMA and atomic write operations.
-If not set, message sends may be processed ahead of RMA and atomic
-writes.
-.PP
-\f[I]FI_ORDER_SAS\f[] : Send after send.
-If set, message send operations, including tagged sends, are processed
-in the order submitted relative to other message send.
-If not set, message sends may be processed out of order from their
-submission.
-.SS comp_order - Completion Ordering
-.PP
-Completion ordering refers to the order in which completed requests are
-written into the completion queue.
-Completion ordering is similar to message order.
-Relaxed completion order may enable faster reporting of completed
-transfers, allow acknowledgments to be sent over different fabric paths,
-and support more sophisticated retry mechanisms.
-This can result in lower-latency completions, particularly when using
-unconnected endpoints.
-Strict completion ordering may require that providers queue completed
-operations or limit available optimizations
-.PP
-For transmit requests, completion ordering depends on the endpoint
-communication type.
-For unreliable communication, completion ordering applies to all data
-transfer requests submitted to an endpoint.
-For reliable communication, completion ordering only applies to requests
-that target a single destination endpoint.
-Completion ordering of requests that target different endpoints over a
-reliable transport is not defined.
-.PP
-Applications should specify the completion ordering that they support or
-require.
-Providers should return the completion order that they actually provide,
-with the constraint that the returned ordering is stricter than that
-specified by the application.
-Supported completion order values are:
-.PP
-\f[I]FI_ORDER_NONE\f[] : No ordering is defined for completed
-operations.
-Requests submitted to the transmit and receive queues may complete in
-any order.
-.PP
-\f[I]FI_ORDER_STRICT\f[] : Requests complete in the order in which they
-are submitted, in the case of transmit requests, or processed, in the
-case of receive operations, by the provider.
-Transmit operations complete in the order in which the requests were
-submitted.
-Receive operations complete in order, subject to buffer matching.
 .SS tx_ctx_cnt - Transmit Context Count
 .PP
 Number of transmit contexts to associate with the endpoint.
@@ -793,6 +681,267 @@ request.
 .PP
 See the scalable endpoint and shared contexts sections for additional
 details.
+.SH TRANSMIT CONTEXT ATTRIBUTES
+.PP
+Attribute specific to the transmit capabilities of an endpoint are
+specified using struct fi_tx_attr.
+.IP
+.nf
+\f[C]
+struct\ fi_tx_attr\ {
+\ \ \ \ uint64_t\ \ caps;
+\ \ \ \ uint64_t\ \ mode;
+\ \ \ \ uint64_t\ \ op_flags;
+\ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
+\ \ \ \ size_t\ \ \ \ inject_size;
+\ \ \ \ size_t\ \ \ \ size;
+\ \ \ \ size_t\ \ \ \ iov_limit;
+\ \ \ \ size_t\ \ \ \ rma_iov_limit;
+};
+\f[]
+.fi
+.SS caps - Capabilities
+.PP
+The requested capabilities of the context.
+The capabilities must be a subset of those requested of the associated
+endpoint.
+See the CAPABILITIES section if fi_getinfo(3) for capability details.
+.SS mode
+.PP
+The operational mode bits of the context.
+The mode bits will be a subset of those associated with the endpoint.
+See the MODE section of fi_getinfo(3) for details.
+.SS op_flags - Default transmit operation flags
+.PP
+Flags that control the operation of operations submitted against the
+context.
+Applicable flags are listed in the Operation Flags section.
+.SS msg_order - Message Ordering
+.PP
+Message ordering refers to the order in which transport layer headers
+(as viewed by the application) are processed.
+Relaxed message order enables data transfers to be sent and received out
+of order, which may improve performance by utilizing multiple paths
+through the fabric from the initiating endpoint to a target endpoint.
+Message order applies only between a single source and destination
+endpoint pair.
+Ordering between different target endpoints is not defined.
+.PP
+Message order is determined using a set of ordering bits.
+Each set bit indicates that ordering is maintained between data
+transfers of the specified type.
+Message order is defined for [read | write | send] operations submitted
+by an application after [read | write | send] operations.
+.PP
+Message ordering only applies to the end to end transmission of
+transport headers.
+Message ordering is necessary, but does not guarantee, the order in
+which message data is sent or received by the transport layer.
+Message ordering requires matching ordering semantics on the receiving
+side of a data transfer operation in order to guarantee that ordering is
+met.
+.PP
+\f[I]FI_ORDER_NONE\f[] : No ordering is specified.
+This value may be used as input in order to obtain the default message
+order supported by the provider.
+.PP
+\f[I]FI_ORDER_RAR\f[] : Read after read.
+If set, RMA and atomic read operations are transmitted in the order
+submitted relative to other RMA and atomic read operations.
+If not set, RMA and atomic reads may be transmitted out of order from
+their submission.
+.PP
+\f[I]FI_ORDER_RAW\f[] : Read after write.
+If set, RMA and atomic read operations are transmitted in the order
+submitted relative to RMA and atomic write operations.
+If not set, RMA and atomic reads may be transmitted ahead of RMA and
+atomic writes.
+.PP
+\f[I]FI_ORDER_RAS\f[] : Read after send.
+If set, RMA and atomic read operations are transmitted in the order
+submitted relative to message send operations, including tagged sends.
+If not set, RMA and atomic reads may be transmitted ahead of sends.
+.PP
+\f[I]FI_ORDER_WAR\f[] : Write after read.
+If set, RMA and atomic write operations are transmitted in the order
+submitted relative to RMA and atomic read operations.
+If not set, RMA and atomic writes may be transmitted ahead of RMA and
+atomic reads.
+.PP
+\f[I]FI_ORDER_WAW\f[] : Write after write.
+If set, RMA and atomic write operations are transmitted in the order
+submitted relative to other RMA and atomic write operations.
+If not set, RMA and atomic writes may be transmitted out of order from
+their submission.
+.PP
+\f[I]FI_ORDER_WAS\f[] : Write after send.
+If set, RMA and atomic write operations are transmitted in the order
+submitted relative to message send operations, including tagged sends.
+If not set, RMA and atomic writes may be transmitted ahead of sends.
+.PP
+\f[I]FI_ORDER_SAR\f[] : Send after read.
+If set, message send operations, including tagged sends, are transmitted
+in order submitted relative to RMA and atomic read operations.
+If not set, message sends may be transmitted ahead of RMA and atomic
+reads.
+.PP
+\f[I]FI_ORDER_SAW\f[] : Send after write.
+If set, message send operations, including tagged sends, are transmitted
+in order submitted relative to RMA and atomic write operations.
+If not set, message sends may be transmitted ahead of RMA and atomic
+writes.
+.PP
+\f[I]FI_ORDER_SAS\f[] : Send after send.
+If set, message send operations, including tagged sends, are transmitted
+in the order submitted relative to other message send.
+If not set, message sends may be transmitted out of order from their
+submission.
+.SS comp_order - Completion Ordering
+.PP
+Completion ordering refers to the order in which completed requests are
+written into the completion queue.
+Completion ordering is similar to message order.
+Relaxed completion order may enable faster reporting of completed
+transfers, allow acknowledgments to be sent over different fabric paths,
+and support more sophisticated retry mechanisms.
+This can result in lower-latency completions, particularly when using
+unconnected endpoints.
+Strict completion ordering may require that providers queue completed
+operations or limit available optimizations
+.PP
+For transmit requests, completion ordering depends on the endpoint
+communication type.
+For unreliable communication, completion ordering applies to all data
+transfer requests submitted to an endpoint.
+For reliable communication, completion ordering only applies to requests
+that target a single destination endpoint.
+Completion ordering of requests that target different endpoints over a
+reliable transport is not defined.
+.PP
+Applications should specify the completion ordering that they support or
+require.
+Providers should return the completion order that they actually provide,
+with the constraint that the returned ordering is stricter than that
+specified by the application.
+Supported completion order values are:
+.PP
+\f[I]FI_ORDER_NONE\f[] : No ordering is defined for completed
+operations.
+Requests submitted to the transmit context may complete in any order.
+.PP
+\f[I]FI_ORDER_STRICT\f[] : Requests complete in the order in which they
+are submitted to the transmit context.
+.SS inject_size
+.PP
+The requested inject operation size (see the FI_INJECT flag) that the
+context will support.
+This is the maximum size data transfer that can be associated with an
+inject operation (such as fi_inject) or may be used with the FI_INJECT
+data transfer flag.
+.SS size
+.PP
+The size of the context.
+The size is specified as the minimum number of transmit operations that
+may be posted to the endpoint without the operation returning
+-FI_EAGAIN.
+.SS iov_limit
+.PP
+This is the maximum number of IO vectors (scatter-gather elements) that
+a single posted operation may reference.
+.SS rma_iov_limit
+.PP
+This is the maximum number of RMA IO vectors (scatter-gather elements)
+that an RMA or atomic operation may reference.
+The rma_iov_limit corresponds to the rma_iov_count values in RMA and
+atomic operations.
+See struct fi_msg_rma and struct fi_msg_atomic in fi_rma.3 and
+fi_atomic.3, for additional details.
+This limit applies to both the number of RMA IO vectors that may be
+specified when initiating an operation from the local endpoint, as well
+as the maximum number of IO vectors that may be carried in a single
+request from a remote endpoint.
+.SH RECEIVE CONTEXT ATTRIBUTES
+.PP
+Attribute specific to the receive capabilities of an endpoint are
+specified using struct fi_rx_attr.
+.IP
+.nf
+\f[C]
+struct\ fi_rx_attr\ {
+\ \ \ \ uint64_t\ \ caps;
+\ \ \ \ uint64_t\ \ mode;
+\ \ \ \ uint64_t\ \ op_flags;
+\ \ \ \ uint64_t\ \ msg_order;
+\ \ \ \ uint64_t\ \ comp_order;
+\ \ \ \ size_t\ \ \ \ total_buffered_recv;
+\ \ \ \ size_t\ \ \ \ size;
+\ \ \ \ size_t\ \ \ \ iov_limit;
+};
+\f[]
+.fi
+.SS caps - Capabilities
+.PP
+The requested capabilities of the context.
+The capabilities must be a subset of those requested of the associated
+endpoint.
+See the CAPABILITIES section if fi_getinfo(3) for capability details.
+.SS mode
+.PP
+The operational mode bits of the context.
+The mode bits will be a subset of those associated with the endpoint.
+See the MODE section of fi_getinfo(3) for details.
+.SS op_flags - Default receive operation flags
+.PP
+Flags that control the operation of operations submitted against the
+context.
+Applicable flags are listed in the Operation Flags section.
+.SS msg_order - Message Ordering
+.PP
+For a description of message ordering, see the msg_order field in the
+\f[I]Transmit Context Attribute\f[] section.
+Receive context message ordering defines the order in which received
+transport message headers are processed when received by an endpoint.
+.PP
+The following ordering flags, as defined for transmit ordering, also
+apply to the processing of received operations: FI_ORDER_NONE,
+FI_ORDER_RAR, FI_ORDER_RAW, FI_ORDER_RAS, FI_ORDER_WAR, FI_ORDER_WAW,
+FI_ORDER_WAS, FI_ORDER_SAR, FI_ORDER_SAW, and FI_ORDER_SAS.
+.SS comp_order - Completion Ordering
+.PP
+For a description of completion ordering, see the comp_order field in
+the \f[I]Transmit Context Attribute\f[] section.
+.PP
+\f[I]FI_ORDER_NONE\f[] : No ordering is defined for completed
+operations.
+Receive operations may complete in any order, regardless of their
+submission order.
+.PP
+\f[I]FI_ORDER_STRICT\f[] : Receive operations complete in the order in
+which they are processed by the receive context, based on the receive
+side msg_order attribute.
+.PP
+\f[I]FI_ORDER_DATA\f[] : When set, this bit indicates that received data
+is written into memory in order.
+Data ordering applies to memory accessed as part of a single operation
+and between operations if message ordering is guaranteed.
+.SS total_buffered_recv
+.PP
+Defines the total available space allocated by the provider to buffer
+messages that are received for which there is no matching receive
+operation.
+If set to 0, any messages that arrive before a receive buffer has been
+posted are lost.
+.SS size
+.PP
+The size of the context.
+The size is specified as the minimum number of receive operations that
+may be posted to the endpoint without the operation returning
+-FI_EAGAIN.
+.SS iov_limit
+.PP
+This is the maximum number of IO vectors (scatter-gather elements) that
+a single posted operating may reference.
 .SH SCALABLE ENDPOINTS
 .PP
 A scalable endpoint is a communication portal that supports multiple
@@ -832,69 +981,6 @@ Support for per transmit context attributes is provider specific and not
 guaranteed.
 Providers will return the actual attributes assigned to the context
 through the attr parameter, if provided.
-.IP
-.nf
-\f[C]
-struct\ fi_tx_attr\ {
-\ \ \ \ uint64_t\ \ caps;
-\ \ \ \ uint64_t\ \ mode;
-\ \ \ \ uint64_t\ \ op_flags;
-\ \ \ \ uint64_t\ \ msg_order;
-\ \ \ \ uint64_t\ \ comp_order;
-\ \ \ \ size_t\ \ \ \ inject_size;
-\ \ \ \ size_t\ \ \ \ size;
-\ \ \ \ size_t\ \ \ \ iov_limit;
-\ \ \ \ size_t\ \ \ \ rma_iov_limit;
-};
-\f[]
-.fi
-.PP
-\f[I]caps\f[] : The requested capabilities of the context.
-The capabilities must be a subset of those requested of the associated
-endpoint.
-See the CAPABILITIES section if fi_getinfo(3) for capability details.
-.PP
-\f[I]mode\f[] : The operational mode bits of the context.
-The mode bits will be a subset of those associated with the endpoint.
-See the MODE section of fi_getinfo(3) for details.
-.PP
-\f[I]op_flags\f[] : Flags that control the operation of operations
-submitted against the context.
-Applicable flags are listed in the Operation Flags section.
-.PP
-\f[I]msg_order\f[] : The message ordering requirements of the context.
-The message ordering must be the same or more relaxed than those
-specified of the associated endpoint.
-See the fi_endpoint Message Ordering section.
-.PP
-\f[I]comp_order\f[] : The completion ordering requirements of the
-context.
-The completion ordering must be the same or more relaxed than those
-specified of the associated endpoint.
-See the fi_endpoint Completion Ordering section.
-.PP
-\f[I]inject_size\f[] : The requested inject operation size (see the
-FI_INJECT flag) that the context will support.
-See the fi_endpoint Inject Size section.
-.PP
-\f[I]size\f[] : The size of the context, in bytes.
-The size is usually used as an output value by applications wishing to
-track if sufficient space is available in the local queue to post a new
-operation.
-.PP
-\f[I]iov_limit\f[] : This is the maximum number of IO vectors
-(scatter-gather elements) that a single posted operation may reference.
-.PP
-\f[I]rma_iov_limit\f[] : This is the maximum number of RMA IO vectors
-(scatter-gather elements) that an RMA or atomic operation may reference.
-The rma_iov_limit corresponds to the rma_iov_count values in RMA and
-atomic operations.
-See struct fi_msg_rma and struct fi_msg_atomic in fi_rma.3 and
-fi_atomic.3, for additional details.
-This limit applies to both the number of RMA IO vectors that may be
-specified when initiating an operation from the local endpoint, as well
-as the maximum number of IO vectors that may be carried in a single
-request from a remote endpoint.
 .SS fi_rx_context
 .PP
 Receive contexts are independent receive queues for receiving incoming
@@ -930,59 +1016,6 @@ Support for per receive context attributes is provider specific and not
 guaranteed.
 Providers will return the actual attributes assigned to the context
 through the attr parameter, if provided.
-.IP
-.nf
-\f[C]
-struct\ fi_rx_attr\ {
-\ \ \ \ uint64_t\ \ caps;
-\ \ \ \ uint64_t\ \ mode;
-\ \ \ \ uint64_t\ \ op_flags;
-\ \ \ \ uint64_t\ \ msg_order;
-\ \ \ \ uint64_t\ \ comp_order;
-\ \ \ \ size_t\ \ \ \ total_buffered_recv;
-\ \ \ \ size_t\ \ \ \ size;
-\ \ \ \ size_t\ \ \ \ iov_limit;
-};
-\f[]
-.fi
-.PP
-\f[I]caps\f[] : The requested capabilities of the context.
-The capabilities must be a subset of those requested of the associated
-endpoint.
-See the CAPABILITIES section if fi_getinfo(3) for capability details.
-.PP
-\f[I]mode\f[] : The operational mode bits of the context.
-The mode bits will be a subset of those associated with the endpoint.
-See the MODE section of fi_getinfo(3) for details.
-.PP
-\f[I]op_flags\f[] : Flags that control the operation of operations
-submitted against the context.
-Applicable flags are listed in the Operation Flags section.
-.PP
-\f[I]msg_order\f[] : The message ordering requirements of the context.
-The message ordering must be the same or more relaxed than those
-specified of the associated endpoint.
-See the fi_endpoint Message Ordering section.
-.PP
-\f[I]comp_order\f[] : The completion ordering requirements of the
-context.
-The completion ordering must be the same or more relaxed than those
-specified of the associated endpoint.
-See the fi_endpoint Completion Ordering section.
-.PP
-\f[I]total_buffered_recv\f[] : Defines the total available space
-allocated by the provider to buffer messages that are received for which
-there is no matching receive operation.
-If set to 0, any messages that arrive before a receive buffer has been
-posted are lost.
-.PP
-\f[I]size\f[] : The size of the context, in bytes.
-The size is usually used as an output value by applications wishing to
-track if sufficient space is available in the local queue to post a new
-operation.
-.PP
-\f[I]iov_limit\f[] : This is the maximum number of IO vectors
-(scatter-gather elements) that a single posted operating may reference.
 .SH SHARED CONTEXTS
 .PP
 Shared contexts are transmit and receive contexts explicitly shared
@@ -1073,26 +1106,22 @@ received that cannot fit into the remaining free buffer space.
 \f[I]FI_COMPLETION\f[] : Indicates that a completion entry should be
 generated for data transfer operations.
 .PP
-\f[I]FI_REMOTE_SIGNAL\f[] : Indicates that a completion entry at the
-target process should be generated for the given operation.
-The remote endpoint must be configured with FI_REMOTE_SIGNAL, or this
-flag will be ignored by the target.
-The local endpoint must be configured with the FI_REMOTE_SIGNAL
-capability in order to specify this flag.
+\f[I]FI_INJECT_COMPLETE\f[] : Indicates that a completion should be
+generated when the source buffer(s) may be reused.
+FI_INJECT_COMPLETE allows for the provider to complete an operation
+after all source data has been cached, and while the operation may still
+be in the process of being transmitted.
 .PP
-\f[I]FI_REMOTE_COMPLETE\f[] : Generally, this flag indicates that an
-operation will not complete until it has been accepted into the fabric
-and acknowledged by a remote service.
-When used with unreliable endpoints, local completions should not be
-generated until the associated operation has been successfully delivered
-into the fabric.
-For example, the corresponding messages have been placed on the wire.
-When used with reliable endpoints, this flag indicates that the
-operation will not complete until it has been acknowledged by the
-target, or a proxy for the target that is responsible for ensuring its
-reliable delivery.
-For example, this flag often implies that a completion is not generated
-until an ack has been received from the target.
+\f[I]FI_TRANSMIT_COMPLETE\f[] : Indicates that a completion should not
+be generated until an operation has been successfully transmitted and is
+no longer being tracked by the provider.
+For reliable endpoints, this flag generally indicates that an operation
+will not complete until it has been accepted into the fabric and
+acknowledged by a remote service.
+For unreliable endpoints, this flag indicates that an operation will not
+complete until it has been successfully delivered into the fabric.
+For example, the corresponding message has been placed on the wire.
+FI_TRANSMIT_COMPLETE is the default completion model for all endpoints.
 .PP
 Note that when set, if the target endpoint experiences an error
 receiving the transferred data, that error will often be reported back
@@ -1100,7 +1129,9 @@ to the initiator of the request.
 This includes errors which may not normally be reported to the
 initiator, such as remote buffer overruns.
 .PP
-\f[I]FI_REMOTE_COMMIT\f[] : This flag is defined for future use.
+\f[I]FI_COMMIT_COMPLETE\f[] : Indicates that a completion should not be
+generated until an operation has successfully been processed at the
+target, with the data placed into the specified destination buffer.
 .SH NOTES
 .PP
 Users should call fi_close to release all resources allocated to the

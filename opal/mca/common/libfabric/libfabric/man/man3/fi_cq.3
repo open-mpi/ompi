@@ -1,4 +1,4 @@
-.TH fi_cq 3 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_cq 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_cq - Completion queue operations
@@ -8,9 +8,6 @@ fi_cq_open / fi_close : Open/close a completion queue
 fi_control : Control CQ operation or attributes.
 .PP
 fi_cq_read / fi_cq_readfrom / fi_cq_readerr : Read a completion from a
-completion queue
-.PP
-fi_cq_write / fi_cq_writeerr : Writes a completion or error event to a
 completion queue
 .PP
 fi_cq_sread / fi_cq_sreadfrom : A synchronous (blocking) read that waits
@@ -32,24 +29,21 @@ int\ fi_close(struct\ fid\ *cq);
 
 int\ fi_control(struct\ fid\ *cq,\ int\ command,\ void\ *arg);
 
-int\ fi_cq_read(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count);
+ssize_t\ fi_cq_read(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count);
 
-int\ fi_cq_readfrom(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
+ssize_t\ fi_cq_readfrom(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
 \ \ \ \ fi_addr_t\ *src_addr);
 
-int\ fi_cq_readerr(struct\ fid_cq\ *cq,\ struct\ fi_cq_err_entry\ *buf,
+ssize_t\ fi_cq_readerr(struct\ fid_cq\ *cq,\ struct\ fi_cq_err_entry\ *buf,
 \ \ \ \ uint64_t\ flags);
 
-int\ fi_cq_write(struct\ fid_cq\ *cq,\ const\ void\ *buf,\ size_t\ len);
-
-int\ fi_cq_writeerr(struct\ fid_cq\ *cq,\ struct\ fi_cq_err_entry\ *buf,
-\ \ \ \ size_t\ len,\ uint64_t\ flags);
-
-int\ fi_cq_sread(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
+ssize_t\ fi_cq_sread(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
 \ \ \ \ const\ void\ *cond,\ int\ timeout);
 
-int\ fi_cq_sreadfrom(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
+ssize_t\ fi_cq_sreadfrom(struct\ fid_cq\ *cq,\ void\ *buf,\ size_t\ count,
 \ \ \ \ fi_addr_t\ *src_addr,\ const\ void\ *cond,\ int\ timeout);
+
+int\ fi_cq_signal(struct\ fid_cq\ *cq);
 
 const\ char\ *\ fi_cq_strerror(struct\ fid_cq\ *cq,\ int\ prov_errno,
 \ \ \ \ \ \ const\ void\ *err_data,\ char\ *buf,\ size_t\ len);
@@ -129,25 +123,7 @@ struct\ fi_cq_attr\ {
 A value of 0 indicates that the provider may choose a default value.
 .PP
 \f[I]flags\f[] : Flags that control the configuration of the CQ.
-.IP \[bu] 2
-\f[I]FI_WRITE\f[] : Indicates that the application requires support for
-inserting user events into the CQ.
-If this flag is set, then the fi_cq_write and fi_cq_writeerr operations
-must be supported by the provider.
-If the FI_WRITE flag is not set, then the application may not invoke
-fi_cq_write of fi_cq_writeerr.
-.IP \[bu] 2
-\f[I]FI_REMOTE_SIGNAL\f[] : If specified, this indicates that the CQ
-should only signal its wait object upon receiving a remote operation
-with FI_REMOTE_SIGNAL set, provided that all other wait conditions have
-been met.
-The use of FI_REMOTE_SIGNAL may improve system utilization by deferring
-processing of an CQ until a remote endpoint has completed all necessary
-operations.
-FI_REMOTE_SIGNAL should be treated as an optimization.
-Providers are not required to wait until a remote operation with
-FI_REMOTE_SIGNAL is received before signaling a wait object associated
-with an CQ.
+This field must be 0.
 .PP
 \f[I]format\f[] : Completion queues allow the application to select the
 amount of detail that it must store and report.
@@ -390,21 +366,14 @@ The contents of the buffer will remain valid until a subsequent read
 call against the CQ.
 Users may call fi_cq_strerror to convert provider specific error
 information into a printable string for debugging purposes.
-.SS fi_cq_write / fi_cq_writeerr
+.SS fi_cq_signal
 .PP
-The fi_cq_write and fi_cq_writeerr operations insert user-generated
-completion entries into a completion queue.
-fi_cq_write inserts non-error events into the CQ.
-The format of the fi_cq_write event must be the same as the fi_cq_format
-attribute defined for the CQ when it was created.
-fi_cq_writeerr inserts error events into the CQ.
-The error event format is struct fi_cq_err_entry.
-The number of entries to insert into the CQ is determined by the len
-parameter.
-Len must be a multiple of the size of the event to insert.
-.PP
-User events inserted into a CQ with be associated with the source
-address FI_ADDR_NOTAVAIL.
+The fi_cq_signal call will signal the wait object used by the
+fi_cq_sread and fi_cq_sreadfrom function.
+This may be used to wake-up a thread that is blocked waiting to read a
+completion operation.
+The fi_cq_signal operation is only available if the CQ was configured
+with a wait object.
 .SH COMPLETION FLAGS
 .PP
 Completion flags provide additional details regarding the completed
@@ -456,7 +425,7 @@ This completion flag indicates that the receive buffer referenced by the
 completion has been consumed and was released by the provider.
 .SH RETURN VALUES
 .PP
-fi_cq_open : Returns 0 on success.
+fi_cq_open / fi_cq_signal : Returns 0 on success.
 On error, a negative value corresponding to fabric errno is returned.
 .PP
 fi_cq_read / fi_cq_readfrom / fi_cq_readerr fi_cq_sread /
@@ -465,10 +434,6 @@ retrieved from the completion queue.
 On error, a negative value corresponding to fabric errno is returned.
 If no completions are available to return from the CQ, -FI_EAGAIN will
 be returned.
-.PP
-fi_cq_write / fi_cq_writeerr : On success, returns the number of bytes
-read from or written to the completion queue.
-On error, a negative value corresponding to fabric errno is returned.
 .PP
 fi_cq_strerror : Returns a character string interpretation of the
 provider specific error returned with a completion.

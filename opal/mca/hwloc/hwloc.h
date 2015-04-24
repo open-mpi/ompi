@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -61,8 +64,7 @@ typedef struct opal_hwloc_base_component_2_0_0_t opal_hwloc_component_t;
  * Macro for use in components that are of type hwloc
  */
 #define OPAL_HWLOC_BASE_VERSION_2_0_0 \
-    MCA_BASE_VERSION_2_0_0, \
-    "hwloc", 2, 0, 0
+    OPAL_MCA_BASE_VERSION_2_1_0("hwloc", 2, 0, 0)
 
 
 /* ******************************************************************** */
@@ -195,6 +197,14 @@ typedef uint16_t opal_binding_policy_t;
     ((pol) & 0x0fff)
 #define OPAL_SET_BINDING_POLICY(target, pol) \
     (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_GIVEN)
+#define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)            \
+    do {                                                        \
+        if (!OPAL_BINDING_POLICY_IS_SET((target))) {            \
+            (target) = (pol) | (((target) & 0xf000) |           \
+                                OPAL_BIND_IF_SUPPORTED);        \
+        }                                                       \
+    } while(0);
+
 /* check if policy is set */
 #define OPAL_BINDING_POLICY_IS_SET(pol) \
     ((pol) & 0x4000)

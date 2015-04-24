@@ -19,12 +19,12 @@
 #include "mca_base_var.h"
 #include "opal/mca/base/base.h"
 
-static bool framework_is_registered (struct mca_base_framework_t *framework)
+bool mca_base_framework_is_registered (struct mca_base_framework_t *framework)
 {
     return !!(framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_REGISTERED);
 }
 
-static bool framework_is_open (struct mca_base_framework_t *framework)
+bool mca_base_framework_is_open (struct mca_base_framework_t *framework)
 {
     return !!(framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_OPEN);
 }
@@ -61,9 +61,11 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
 
     framework->framework_refcnt++;
 
-    if (framework_is_registered (framework)) {
+    if (mca_base_framework_is_registered (framework)) {
         return OPAL_SUCCESS;
     }
+
+    OBJ_CONSTRUCT(&framework->framework_components, opal_list_t);
 
     if (framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
         flags |= MCA_BASE_REGISTER_STATIC_ONLY;
@@ -141,12 +143,16 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
     }
 
     /* check if this framework is already open */
-    if (framework_is_open (framework)) {
+    if (mca_base_framework_is_open (framework)) {
         return OPAL_SUCCESS;
     }
 
     if (MCA_BASE_FRAMEWORK_FLAG_NOREGISTER & framework->framework_flags) {
         flags |= MCA_BASE_OPEN_FIND_COMPONENTS;
+
+        if (MCA_BASE_FRAMEWORK_FLAG_NO_DSO & framework->framework_flags) {
+            flags |= MCA_BASE_OPEN_STATIC_ONLY;
+        }
     }
 
     /* lock all of this frameworks's variables */
@@ -174,8 +180,8 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
 }
 
 int mca_base_framework_close (struct mca_base_framework_t *framework) {
-    bool is_open = framework_is_open (framework);
-    bool is_registered = framework_is_registered (framework);
+    bool is_open = mca_base_framework_is_open (framework);
+    bool is_registered = mca_base_framework_is_registered (framework);
     int ret, group_id;
 
     assert (NULL != framework);
@@ -220,6 +226,8 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     }
 
     framework->framework_flags &= ~(MCA_BASE_FRAMEWORK_FLAG_REGISTERED | MCA_BASE_FRAMEWORK_FLAG_OPEN);
+
+    OBJ_DESTRUCT(&framework->framework_components);
 
     framework_close_output (framework);
 

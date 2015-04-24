@@ -481,43 +481,8 @@ OPAL_VAR_SCOPE_POP
 # Check for other compiler characteristics
 #
 
-OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
-if test "$GCC" = "yes"; then
-
-    # gcc 2.96 will emit oodles of warnings if you use "inline" with
-    # -pedantic (which we do in developer builds).  However,
-    # "__inline__" is ok.  So we have to force gcc to select the
-    # right one.  If you use -pedantic, the AC_C_INLINE test will fail
-    # (because it names a function foo() -- without the (void)).  So
-    # we turn off all the picky flags, turn on -ansi mode (which is
-    # implied by -pedantic), and set warnings to be errors.  Hence,
-    # this does the following (for 2.96):
-    #
-    # - causes the check for "inline" to emit a warning, which then
-    # fails
-    # - checks for __inline__, which then emits no error, and works
-    #
-    # This also works nicely for gcc 3.x because "inline" will work on
-    # the first check, and all is fine.  :-)
-
-    CFLAGS_save=$CFLAGS
-    CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY -Werror -ansi"
-fi
-AC_C_INLINE
-# Microsoft compilers support 2 versions of restrict. One for functions, and
-# one for variables. The problem is that they don't have an equivalent
-# syntax, and the autoconf restrict detection is unable to detect them
-# correctly. It detect the restrict keyword as __restrict which break the
-# rules for function syntax which is declspec(restrict).
-if test "x$opal_cv_c_compiler_vendor" != "xmicrosoft"; then
-    AC_C_RESTRICT
-fi
 OPAL_C_WEAK_SYMBOLS
 OPAL_C_MACRO_WEAK_SYMBOLS
-if test "$GCC" = "yes"; then
-    CFLAGS=$CFLAGS_save
-fi
-OPAL_VAR_SCOPE_POP
 
 if test "x$CC" = "xicc"; then
     OPAL_CHECK_ICC_VARARGS
@@ -834,6 +799,33 @@ m4_ifdef([project_ompi], [OMPI_FIND_MPI_AINT_COUNT_OFFSET])
 # checkpoint results
 AC_CACHE_SAVE
 
+##################################
+# Linker characteristics
+##################################
+
+AC_MSG_CHECKING([the linker for support for the -fini option])
+OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+LDFLAGS_save=$LDFLAGS
+LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
+AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
+        opal_ld_have_fini=1], [AC_MSG_RESULT([no])
+        opal_ld_have_fini=0])
+LDFLAGS=$LDFLAGS_save
+OPAL_VAR_SCOPE_POP
+
+opal_destructor_use_fini=0
+opal_no_destructor=0
+if test x$opal_cv___attribute__destructor = x0 ; then
+    if test x$opal_ld_have_fini = x1 ; then
+        opal_destructor_use_fini=1
+    else
+        opal_no_destructor=1;
+    fi
+fi
+
+AC_DEFINE_UNQUOTED(OPAL_NO_LIB_DESTRUCTOR, [$opal_no_destructor],
+    [Whether libraries can be configured with destructor functions])
+AM_CONDITIONAL(OPAL_DESTRUCTOR_USE_FINI, [test x$opal_destructor_use_fini = x1])
 
 ##################################
 # Libraries
@@ -1002,29 +994,21 @@ AC_PROG_EGREP
 AM_PROG_AS
 AM_PROG_LEX
 
-# If we don't have GNU Flex and we don't have a generated .c file
-# (distribution tarballs will have the .c file included, but SVN
-# checkouts will not), then error.  Must have GNU Flex -- other
-# versions of Lex are not workable (all things being equal, since this
-# is *only* required for developers, we decided that it really was not
-# worth it to be portable between different versions of lex ;-).
+# If we don't have Flex and we don't have a generated .c file
+# (distribution tarballs will have the .c file included, but git
+# clones will not), then error.  Must have Flex -- other versions of
+# Lex are not workable (all things being equal, since this is *only*
+# required for developers, we decided that it really was not worth it
+# to be portable between different versions of lex ;-).
 
 if test -z "$LEX" || \
    test -n "`echo $LEX | $GREP missing`" || \
    test "`basename $LEX`" != "flex"; then
     if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
-        AC_MSG_WARN([*** Could not find GNU Flex on your system.])
-        AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
+        AC_MSG_WARN([*** Could not find Flex on your system.])
+        AC_MSG_WARN([*** Flex is required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
-        AC_MSG_WARN([*** YOU DO NOT NEED FLEX FOR DISTRIBUTION TARBALLS!])
-        AC_MSG_WARN([*** If you absolutely cannot install GNU Flex on this system])
-        AC_MSG_WARN([*** consider using a distribution tarball, or generate the])
-        AC_MSG_WARN([*** following files on another system (using Flex) and])
-        AC_MSG_WARN([*** copy them here:])
-        for lfile in `find . -name \*.l -print`; do
-            cfile="`echo $lfile | cut -d. -f-2`"
-            AC_MSG_WARN([***     $cfile.c])
-        done
+        AC_MSG_WARN([*** YOU DO NOT NEED FLEX WHEN BUILDING DISTRIBUTION TARBALLS!])
         AC_MSG_ERROR([Cannot continue])
     fi
 fi

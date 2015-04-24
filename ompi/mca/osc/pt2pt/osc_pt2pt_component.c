@@ -57,25 +57,22 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
-        { /* ompi_base_component_t */
+        .osc_version = {
             OMPI_OSC_BASE_VERSION_3_0_0,
-            "pt2pt",
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            component_open,
-            NULL,
-            NULL,
-            component_register
+            .mca_component_name = "pt2pt",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = component_open,
+            .mca_register_component_params = component_register,
         },
-        { /* mca_base_component_data */
+        .osc_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
-        component_init,
-        component_query,
-        component_select,
-        component_finalize
+        .osc_init = component_init,
+        .osc_query = component_query,
+        .osc_select = component_select,
+        .osc_finalize = component_finalize,
     }
 };
 
@@ -348,8 +345,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->cond, opal_condition_t);
     OBJ_CONSTRUCT(&module->acc_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&module->queued_frags, opal_list_t);
-    OBJ_CONSTRUCT(&module->queued_frags_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->locks_pending_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
@@ -396,6 +391,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (NULL == module->peers) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
+    }
+
+    for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
+        OBJ_CONSTRUCT(module->peers + i, ompi_osc_pt2pt_peer_t);
     }
 
     /* peer op count data */
@@ -497,3 +496,19 @@ ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_t, opal_list_item_t, NULL, NULL);
+
+void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
+{
+    OBJ_CONSTRUCT(&peer->queued_frags, opal_list_t);
+    OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
+}
+
+void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)
+{
+    OBJ_DESTRUCT(&peer->queued_frags);
+    OBJ_DESTRUCT(&peer->lock);
+}
+
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_peer_t, opal_object_t,
+                   ompi_osc_pt2pt_peer_construct,
+                   ompi_osc_pt2pt_peer_destruct);

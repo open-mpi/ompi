@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
@@ -56,11 +56,9 @@ int mca_base_framework_components_open (mca_base_framework_t *framework,
 {
     /* Open flags are not used at this time. Suppress compiler warning. */
     if (flags & MCA_BASE_OPEN_FIND_COMPONENTS) {
+        bool open_dso_components = !(flags & MCA_BASE_OPEN_STATIC_ONLY);
         /* Find and load requested components */
-        int ret = mca_base_component_find(NULL, framework->framework_name,
-                                          framework->framework_static_components,
-                                          framework->framework_selection,
-                                          &framework->framework_components, true);
+        int ret = mca_base_component_find(NULL, framework, false, open_dso_components);
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
@@ -68,53 +66,6 @@ int mca_base_framework_components_open (mca_base_framework_t *framework,
 
     /* Open all registered components */
     return open_components (framework);
-}
-
-int mca_base_components_open (const char *type_name, int output_id,
-			      const mca_base_component_t **static_components,
-			      opal_list_t *components_available,
-			      bool open_dso_components)
-{
-    /* create a dummy framework --  this leaks -- i know -- but it is temporary */
-    mca_base_register_flag_t register_flags;
-    mca_base_framework_t *dummy_framework;
-    opal_list_item_t *item;
-    int ret;
-
-    dummy_framework = calloc (1, sizeof(*dummy_framework));
-
-    dummy_framework->framework_static_components = static_components;
-    dummy_framework->framework_output = output_id;
-    dummy_framework->framework_name   = strdup(type_name);
-
-    if (open_dso_components) {
-        register_flags = MCA_BASE_REGISTER_STATIC_ONLY;
-    } else {
-        register_flags = MCA_BASE_REGISTER_DEFAULT;
-    }
-
-    ret = mca_base_framework_components_register (dummy_framework, register_flags);
-    if (OPAL_SUCCESS != ret) {
-        free (dummy_framework);
-        return ret;
-    }
-
-    ret = mca_base_framework_components_open (dummy_framework, 0);
-    if (OPAL_SUCCESS != ret) {
-        (void) mca_base_framework_components_close (dummy_framework, NULL);
-        free (dummy_framework);
-        return ret;
-    }
-
-    OBJ_CONSTRUCT(components_available, opal_list_t);
-
-    while (NULL != (item = opal_list_remove_first(&dummy_framework->framework_components))) {
-        opal_list_append(components_available, item);
-    }
-
-    OBJ_DESTRUCT(&dummy_framework->framework_components);
-
-    return OPAL_SUCCESS;
 }
 
 /*
@@ -152,16 +103,13 @@ static int open_components(mca_base_framework_t *framework)
 
     /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag 
        we need to trim down and close any extra components we do not want open */
-    ret = mca_base_components_filter (framework->framework_name, &framework->framework_components,
-                                      framework->framework_output, framework->framework_selection,
-                                      open_only_flags);
+    ret = mca_base_components_filter (framework, open_only_flags);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
     /* Announce */
-    opal_output_verbose(10, output_id,
-                        "mca: base: components_open: opening %s components",
+    opal_output_verbose(10, output_id, "mca: base: components_open: opening %s components",
                         framework->framework_name);
     
     /* Traverse the list of components */

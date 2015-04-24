@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -53,24 +54,23 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
         /* First, the mca_base_component_t struct containing meta
          * information about the component itself */
         
-        {
+        .mtl_version = {
             MCA_MTL_BASE_VERSION_2_0_0,
-            
-            "psm", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            ompi_mtl_psm_component_open,  /* component open */
-            ompi_mtl_psm_component_close,  /* component close */
-            ompi_mtl_psm_component_query,  /* component close */
-            ompi_mtl_psm_component_register
+
+            .mca_component_name = "psm",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
+            .mca_open_component = ompi_mtl_psm_component_open,
+            .mca_close_component = ompi_mtl_psm_component_close,
+            .mca_query_component = ompi_mtl_psm_component_query,
+            .mca_register_component_params = ompi_mtl_psm_component_register,
         },
-        {
+        .mtl_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
-        
-        ompi_mtl_psm_component_init  /* component init */
+
+        .mtl_init = ompi_mtl_psm_component_init,
     }
 };
 
@@ -272,14 +272,6 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     }
 
      
-    err = psm_error_register_handler(NULL /* no ep */,
-			             PSM_ERRHANDLER_NOP);
-    if (err) {
-        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
-		    psm_error_get_string(err));
-	return NULL;
-    }
-    
 #if PSM_VERNO >= 0x010c
     /* Set infinipath debug level */
     err = psm_setopt(PSM_COMPONENT_CORE, 0, PSM_CORE_OPT_DEBUG, 
@@ -327,6 +319,15 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     ompi_mtl_psm.super.mtl_request_size = 
       sizeof(mca_mtl_psm_request_t) - 
       sizeof(struct mca_mtl_request_t);
+
+    /* don't register the err handler until we know we will be active */
+    err = psm_error_register_handler(NULL /* no ep */,
+			             PSM_ERRHANDLER_NOP);
+    if (err) {
+        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
+		    psm_error_get_string(err));
+	return NULL;
+    }
     
     return &ompi_mtl_psm.super;
 }

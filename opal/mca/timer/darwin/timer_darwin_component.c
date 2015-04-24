@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -33,20 +34,17 @@ static int opal_timer_darwin_open(void);
 const opal_timer_base_component_2_0_0_t mca_timer_darwin_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
+    .timerc_version = {
         OPAL_TIMER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "darwin",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "darwin",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        opal_timer_darwin_open,
-        NULL
+        .mca_open_component = opal_timer_darwin_open,
     },
-    {
+    .timerc_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },

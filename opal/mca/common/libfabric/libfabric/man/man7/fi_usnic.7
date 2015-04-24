@@ -1,4 +1,4 @@
-.TH fi_usnic 7 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_usnic 7 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 The usNIC Fabric Provider
@@ -10,9 +10,6 @@ It utilizes the Cisco usNIC (userspace NIC) capabilities of the VIC to
 enable ultra low latency and other offload capabilities on Ethernet
 networks.
 .SH RELEASE NOTES
-.PP
-The following capabilities are currently supported via the
-\f[I]usnic\f[] libfabric provider:
 .IP \[bu] 2
 The \f[I]usnic\f[] libfabric provider requires the use of the "libnl"
 library.
@@ -49,9 +46,35 @@ extensively tested as the underlying layer for Open MPI\[aq]s
 \f[I]FI_EP_MSG\f[] and \f[I]FI_EP_RDM\f[] endpoints are implemented, but
 are only lightly tested.
 It is likely that there are still some bugs in these endpoint types.
+RMA is not yet supported.
 .IP \[bu] 2
-Other capabilities, such as the tag matching interface and RDMA
-operations, are not yet implemented.
+\f[C]fi_provider\f[](7) lists requirements for all providers.
+The following limitations exist in the \f[I]usnic\f[] provider:
+.RS 2
+.IP \[bu] 2
+\f[I]fi_getname\f[] is not supported on \f[I]FI_EP_DGRAM\f[],
+\f[I]FI_EP_MSG\f[], and passive endpoints.
+.IP \[bu] 2
+multicast operations are not supported on \f[I]FI_EP_DGRAM\f[] and
+\f[I]FI_EP_RDM\f[] endpoints.
+.IP \[bu] 2
+\f[I]FI_EP_MSG\f[] endpoints only support connect, accept, and shutdown
+CM operations.
+.IP \[bu] 2
+Passive endpoints only support listen CM operations.
+.IP \[bu] 2
+\f[I]FI_EP_DGRAM\f[] endpoints support \f[C]fi_sendmsg()\f[] and
+\f[C]fi_recvmsg()\f[], but all flags are ignored.
+.IP \[bu] 2
+\f[I]FI_EP_RDM\f[] and \f[I]FI_EP_MSG\f[] endponts do not support
+\f[C]fi_sendmsg()\f[] and \f[C]fi_recvmsg()\f[].
+.IP \[bu] 2
+Address vectors only support \f[C]FI_AV_MAP\f[].
+.IP \[bu] 2
+No counters are supported.
+.IP \[bu] 2
+The tag matching interface is not supported.
+.RE
 .IP \[bu] 2
 The usnic libfabric provider supports extensions that provide
 information and functionality beyond the standard libfabric interface.

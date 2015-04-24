@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -16,8 +16,6 @@
 
 #define TO_OFI_REQ(_ptr_ctx) \
     container_of((_ptr_ctx), struct ompi_mtl_ofi_request_t, ctx)
-
-struct ompi_mtl_ofi_message_t;
 
 typedef enum {
     OMPI_MTL_OFI_SEND,
@@ -54,9 +52,6 @@ struct ompi_mtl_ofi_request_t {
     /** Match state used by Probe */
     int match_state;
 
-    /** Associated message */
-    struct ompi_mtl_ofi_message_t *message;
-
     /** Reference to the communicator used to  */
     /*  lookup source of an ANY_SOURCE Recv    */
     struct ompi_communicator_t *comm;
@@ -81,6 +76,9 @@ struct ompi_mtl_ofi_request_t {
 
     /** Parent request which needs to be ACKed (e.g. Synchronous Send) */
     struct ompi_mtl_ofi_request_t *parent;
+
+    /** Pointer to Mrecv request to complete */
+    struct mca_mtl_request_t *mrecv_req;
 };
 typedef struct ompi_mtl_ofi_request_t ompi_mtl_ofi_request_t;
 

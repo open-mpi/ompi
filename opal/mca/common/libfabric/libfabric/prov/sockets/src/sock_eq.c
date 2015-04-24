@@ -47,7 +47,27 @@
 #include "sock.h"
 #include "sock_util.h"
 
-ssize_t sock_eq_sread(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
+#define SOCK_LOG_INFO(...) _SOCK_LOG_INFO(FI_LOG_EQ, __VA_ARGS__)
+#define SOCK_LOG_ERROR(...) _SOCK_LOG_ERROR(FI_LOG_EQ, __VA_ARGS__)
+
+static void sock_eq_clean_err_data_list(struct sock_eq *eq, int free_all)
+{
+	struct dlist_entry *entry, *next_entry;
+	struct sock_eq_err_data_entry *err_data_entry;
+
+	for (entry = eq->err_data_list.next; entry != &eq->err_data_list;) {
+		next_entry = entry->next;
+		err_data_entry = container_of(
+			entry, struct sock_eq_err_data_entry, entry);
+		if (free_all || err_data_entry->do_free) {
+			dlist_remove(entry);
+			free(err_data_entry);
+		}
+		entry = next_entry;
+	}
+}
+
+static ssize_t sock_eq_sread(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 		      int timeout, uint64_t flags)
 {
 	int ret;
@@ -56,6 +76,7 @@ ssize_t sock_eq_sread(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 	struct sock_eq_entry *entry;
 
 	sock_eq = container_of(eq, struct sock_eq, eq);
+	sock_eq_clean_err_data_list(sock_eq, 0);
 	if (!dlistfd_empty(&sock_eq->err_list)) {
 		return -FI_EAVAIL;
 	}
@@ -66,6 +87,9 @@ ssize_t sock_eq_sread(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 			return -FI_EAGAIN;
 		}
 		ret = dlistfd_wait_avail(&sock_eq->list, timeout);
+		if (!dlistfd_empty(&sock_eq->err_list)) {
+			return -FI_EAVAIL;
+		}
 		if (ret <= 0)
 			return (ret == 0 || ret == -FI_ETIMEDOUT) ? 
 				-FI_EAGAIN : ret;
@@ -95,19 +119,21 @@ out:
 }
 
 
-ssize_t sock_eq_read(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
+static ssize_t sock_eq_read(struct fid_eq *eq, uint32_t *event, void *buf, size_t len,
 		     uint64_t flags)
 {
 	return sock_eq_sread(eq, event, buf, len, 0, flags);
 }
 
-ssize_t sock_eq_readerr(struct fid_eq *eq, struct fi_eq_err_entry *buf,
+static ssize_t sock_eq_readerr(struct fid_eq *eq, struct fi_eq_err_entry *buf,
 			uint64_t flags)
 {
 	int ret;
 	struct sock_eq *sock_eq;
 	struct dlist_entry *list;
 	struct sock_eq_entry *entry;
+	struct fi_eq_err_entry *err_entry;
+	struct sock_eq_err_data_entry *err_data_entry;
 
 	sock_eq = container_of(eq, struct sock_eq, eq);
 	fastlock_acquire(&sock_eq->lock);
@@ -123,6 +149,14 @@ ssize_t sock_eq_readerr(struct fid_eq *eq, struct fi_eq_err_entry *buf,
 	memcpy(buf, entry->event, entry->len);
 
 	if (!(flags & FI_PEEK)) {
+		err_entry = (struct fi_eq_err_entry *) entry->event;
+		if (err_entry->err_data) {
+			err_data_entry = container_of(
+				err_entry->err_data, struct sock_eq_err_data_entry,
+				err_data);
+			err_data_entry->do_free = 1;
+		}
+		
 		dlistfd_remove(list, &sock_eq->err_list);
 		free(entry);
 	}
@@ -155,10 +189,12 @@ ssize_t sock_eq_report_event(struct sock_eq *sock_eq, uint32_t event,
 }
 
 ssize_t sock_eq_report_error(struct sock_eq *sock_eq, fid_t fid, void *context,
-			     int err, int prov_errno, void *err_data)
+			     uint64_t data, int err, int prov_errno, 
+			     void *err_data, size_t err_data_size)
 {
 	struct fi_eq_err_entry *err_entry;
 	struct sock_eq_entry *entry;
+	struct sock_eq_err_data_entry *err_data_entry;
 
 	entry = calloc(1, sizeof(*err_entry) + sizeof(*entry));
 	if (!entry)
@@ -167,13 +203,30 @@ ssize_t sock_eq_report_error(struct sock_eq *sock_eq, fid_t fid, void *context,
 	err_entry = (struct fi_eq_err_entry *) entry->event;
 	err_entry->fid = fid;
 	err_entry->context = context;
+	err_entry->data = data;
 	err_entry->err = err;
 	err_entry->prov_errno = prov_errno;
 	err_entry->err_data = err_data;
+	err_entry->err_data_size = err_data_size;
 	entry->len = sizeof(*err_entry);
+	
+	if (err_data) {
+		err_data_entry = (struct sock_eq_err_data_entry*) 
+			calloc(1, sizeof(*err_data_entry) + err_data_size);
+		if (!err_data_entry) {
+			free(entry);
+			return -FI_ENOMEM;
+		}
+		
+		err_data_entry->do_free = 0;
+		memcpy(err_data_entry->err_data, err_data, err_data_size);
+		err_entry->err_data = err_data_entry->err_data;
+		dlist_insert_tail(&err_data_entry->entry, &sock_eq->err_data_list);
+	}
 
 	fastlock_acquire(&sock_eq->lock);
 	dlistfd_insert_tail(&entry->entry, &sock_eq->err_list);
+	dlistfd_signal(&sock_eq->list);
 	if (sock_eq->signal) 
 		sock_wait_signal(sock_eq->waitset);
 	fastlock_release(&sock_eq->lock);
@@ -195,12 +248,12 @@ static ssize_t sock_eq_write(struct fid_eq *eq, uint32_t event,
 
 }
 
-const char * sock_eq_strerror(struct fid_eq *eq, int prov_errno,
+static const char * sock_eq_strerror(struct fid_eq *eq, int prov_errno,
 			      const void *err_data, char *buf, size_t len)
 {
 	if (buf && len)
-		return strncpy(buf, strerror(prov_errno), len);
-	return strerror(prov_errno);
+		return strncpy(buf, strerror(-prov_errno), len);
+	return strerror(-prov_errno);
 }
 
 static struct fi_ops_eq sock_eq_ops = {
@@ -212,11 +265,13 @@ static struct fi_ops_eq sock_eq_ops = {
 	.strerror = sock_eq_strerror,
 };
 
-int sock_eq_fi_close(struct fid *fid)
+static int sock_eq_fi_close(struct fid *fid)
 {
 	struct sock_eq *sock_eq;
 
 	sock_eq = container_of(fid, struct sock_eq, eq);
+	sock_eq_clean_err_data_list(sock_eq, 1);
+
 	dlistfd_head_free(&sock_eq->list);
 	dlistfd_head_free(&sock_eq->err_list);
 	fastlock_destroy(&sock_eq->lock);
@@ -229,7 +284,7 @@ int sock_eq_fi_close(struct fid *fid)
 	return 0;
 }
 
-int sock_eq_control(struct fid *fid, int command, void *arg)
+static int sock_eq_control(struct fid *fid, int command, void *arg)
 {
 	int ret = 0;
 	struct sock_eq *eq;
@@ -375,6 +430,7 @@ int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	else 
 		memcpy(&sock_eq->attr, attr, sizeof(struct fi_eq_attr));
 
+	dlist_init(&sock_eq->err_data_list);
 	ret = dlistfd_head_init(&sock_eq->list);
 	if (ret)
 		goto err1;

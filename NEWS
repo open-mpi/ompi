@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -53,14 +53,107 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-Trunk (not on release branches yet)
------------------------------------
+Master (not on release branches yet)
+------------------------------------
+
+- ompi_info parsable output now escapes double quotes in values, and
+  also quotes values can contains colons.  Thanks to Lev Givon for the
+  suggestion.
 - CUDA-aware support can now handle GPUs within a node that do not
   support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
 - Remove embedded VampirTrace.  It is in maintenance mode since 2013.
   Please consider Score-P (score-p.org) as an external replacement.
+- usNIC BTL updated to use libfabric.
+- OFI MTL.
+
+
+1.8.5
+-----
+
+- Fixed configure problems in some cases when using an external hwloc
+  installation.  Thanks to Erick Schnetter for reporting the error and
+  helping track down the source of the problem.
+- Fixed linker error on OS X when using the clang compiler.  Thanks to
+  Erick Schnetter for reporting the error and helping track down the
+  source of the problem.
+- Fixed MPI_THREAD_MULTIPLE deadlock error in the vader BTL.  Thanks
+  to Thomas Klimpel for reporting the issue.
+- Fixed several Valgrind warnings.  Thanks for Lisandro Dalcin for
+  contributing a patch fixing some one-sided code paths.
+- Fixed version compatibility test in OOB that broke ABI within the
+  1.8 series. NOTE: this will not resolve the problem between pre-1.8.5
+  versions, but will fix it going forward.
+- Fix some issues related to running on Intel Xeon Phi coprocessors.
+- Opportunistically switch away from using GNU Libtool's libltdl
+  library when possible (by default).
+- Fix some VampirTrace errors.  Thanks to Paul Hargrove for reporting
+  the issues.
+- Correct default binding patterns when --use-hwthread-cpus was
+  specified and nprocs <= 2.
+- Fix warnings about -finline-functions when compiling with clang.
+- Updated the embedded hwloc with several bug fixes, including the
+  "duplicate Lhwloc1 symbol" that multiple users reported on some
+  platforms.
+- Do not error when mpirun is invoked with with default bindings
+  (i.e., no binding was specified), and one or more nodes do not
+  support bindings.  Thanks to Annu Desari for pointing out the
+  problem.
+- Let root invoke "mpirun --version" to check the version without
+  printing the "Don't run as root!" warnings.  Thanks to Robert McLay
+  for the suggestion.
+- Fixed several bugs in OpenSHMEM support.
+- Extended vader shared memory support to 32-bit architectures.
+- Fix handling of very large datatypes.  Thanks to Bogdan Sataric for
+  the bug report.
+- Fixed a bug in handling subarray MPI datatypes, and a bug when using
+  MPI_LB and MPI_UB.  Thanks to Gus Correa for pointing out the issue.
+- Restore user-settable bandwidth and latency PML MCA variables.
+- Multiple bug fixes for cleanup during MPI_FINALIZE in unusual
+  situations.
+- Added support for TCP keepalive signals to ensure timely termination
+  when sockets between daemons cannot be created (e.g., due to a
+  firewall).
+- Added MCA parameter to allow full use of a SLURM allocation when
+  started from a tool (supports LLNL debugger).
+- Fixed several bugs in the configure logic for PMI and hwloc.
+- Fixed incorrect interface index in TCP communications setup.  Thanks
+  to Mark Kettenis for spotting the problem and providing a patch.
+- Fixed MPI_IREDUCE_SCATTER with single-process communicators when
+  MPI_IN_PLACE was not used.
+- Added XRC support for OFED v3.12 and higher.
+- Various updates and bug fixes to the Mellanox hcoll collective
+  support.
+- Fix problems with Fortran compilers that did not support
+  REAL*16/COMPLEX*32 types.  Thanks to Orion Poplawski for identifying
+  the issue.
+- Fixed problem with rpath/runpath support in pkg-config files.
+  Thanks to Christoph Junghans for notifying us of the issue.
+- Man page fixes:
+  - Removed erroneous "color" discussion from MPI_COMM_SPLIT_TYPE.
+    Thanks to Erick Schnetter for spotting the outdated text.
+  - Fixed prototypes for MPI_IBARRIER.  Thanks to Maximilian for
+    finding the issue.
+  - Updated docs about buffer usage in non-blocking communications.
+    Thanks to Alexander Pozdneev for citing the outdated text.
+  - Added documentation about the 'ompi_unique' MPI_Info key with
+    MPI_PUBLISH_NAME.
+  - Fixed typo in MPI_INTERCOMM_MERGE.  Thanks to Harald Servat for
+    noticing and sending a patch.
+  - Updated configure paths in HACKING.  Thanks to Maximilien Levesque
+    for the fix.
+  - Fixed Fortran typo in MPI_WIN_LOCK_ALL.  Thanks to Thomas Jahns
+    for pointing out the issue.
+- Fixed a number of MPI one-sided bugs.
+- Fixed MPI_COMM_SPAWN when invoked from a singleton job.
+- Fixed a number of minor issues with CUDA support, including
+  registering of shared memory and supporting reduction support for
+  GPU buffers.
+- Improved support for building OMPI on Cray platforms.
+- Fixed performance regression introduced by the inadvertent default
+  enabling of MPI_THREAD_MULTIPLE support.
+
 
 1.8.4
 -----

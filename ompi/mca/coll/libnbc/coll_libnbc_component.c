@@ -55,29 +55,27 @@ ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
     {
         /* First, the mca_component_t struct containing meta information
          * about the component itself */
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-            "libnbc",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "libnbc",
+            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                  OMPI_RELEASE_VERSION),
 
             /* Component open and close functions */
-            libnbc_open,
-            libnbc_close,
-            NULL,
-            libnbc_register
+            .mca_open_component = libnbc_open,
+            .mca_close_component = libnbc_close,
+            .mca_register_component_params = libnbc_register,
         },
-        {
+        .collm_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
         /* Initialization / querying functions */
-        libnbc_init_query,
-        libnbc_comm_query
+        .collm_init_query = libnbc_init_query,
+        .collm_comm_query = libnbc_comm_query,
     }
 };
 

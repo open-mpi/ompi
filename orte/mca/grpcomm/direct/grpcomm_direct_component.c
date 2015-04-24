@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
- *                         rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/mca.h"
+#include "orte/mca/mca.h"
 #include "opal/runtime/opal_params.h"
 
 #include "orte/util/proc_info.h"
@@ -31,22 +31,21 @@ static int direct_register(void);
  * Struct of function pointers that need to be initialized
  */
 orte_grpcomm_base_component_t mca_grpcomm_direct_component = {
-    {
+    .base_version = {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
 
-        "direct", /* MCA module name */
-        ORTE_MAJOR_VERSION,  /* MCA module major version */
-        ORTE_MINOR_VERSION,  /* MCA module minor version */
-        ORTE_RELEASE_VERSION,  /* MCA module release version */
-        direct_open,  /* component open */
-        direct_close, /* component close */
-        direct_query, /* component query */
-        direct_register
+        .mca_component_name = "direct",
+        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                              ORTE_RELEASE_VERSION),
+        .mca_open_component = direct_open,
+        .mca_close_component = direct_close,
+        .mca_query_component = direct_query,
+        .mca_register_component_params = direct_register,
     },
-    {
+    .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
 };
 
 static int direct_register(void)

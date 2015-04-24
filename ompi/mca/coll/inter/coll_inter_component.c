@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,32 +58,28 @@ static int inter_register(void);
 
 const mca_coll_base_component_2_0_0_t mca_coll_inter_component = {
 
-  /* First, the mca_component_t struct containing meta information
-     about the component itself */
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
 
-  {
-    MCA_COLL_BASE_VERSION_2_0_0,
+    .collm_version = {
+        MCA_COLL_BASE_VERSION_2_0_0,
 
-    /* Component name and version */
-    "inter",
-    OMPI_MAJOR_VERSION,
-    OMPI_MINOR_VERSION,
-    OMPI_RELEASE_VERSION,
+        /* Component name and version */
+        .mca_component_name = "inter",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
 
-    /* Component open and close functions */
-    NULL,
-    NULL,
-    NULL,
-    inter_register
-  },
-  {
-      /* This component is checkpointable */
-      MCA_BASE_METADATA_PARAM_CHECKPOINT
-  },
+        /* Component open and close functions */
+        .mca_register_component_params = inter_register,
+    },
+    .collm_data = {
+        /* This component is checkpointable */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    },
 
-  /* Initialization / querying functions */
-  mca_coll_inter_init_query,
-  mca_coll_inter_comm_query
+    /* Initialization / querying functions */
+    .collm_init_query = mca_coll_inter_init_query,
+    .collm_comm_query = mca_coll_inter_comm_query,
 };
 
 

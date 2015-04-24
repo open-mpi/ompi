@@ -15,7 +15,7 @@
 #define MCA_MEMHEAP_BUDDY_H
 
 #include "oshmem_config.h"
-#include "opal/mca/mca.h"
+#include "oshmem/mca/mca.h"
 #include "opal/class/opal_list.h" 
 #include "opal/threads/mutex.h"
 #include "oshmem/mca/memheap/memheap.h"

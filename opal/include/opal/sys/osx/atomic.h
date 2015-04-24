@@ -26,11 +26,7 @@
 #include <libkern/OSAtomic.h>
 
 
-#if OPAL_WANT_SMP_LOCKS
 #define MB() OSMemoryBarrier
-#else
-#define MB()
-#endif
 
 
 /**********************************************************************
@@ -79,11 +75,7 @@ static inline void opal_atomic_wmb(void)
 static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicCompareAndSwap32Barrier(oldval, newval, addr);
-#else
-    return OSAtomicCompareAndSwap32(oldval, newval, addr);
-#endif
+    return OSAtomicCompareAndSwap32 (oldval, newval, addr);
 }
 
 #define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
@@ -93,11 +85,7 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicCompareAndSwap64Barrier(oldval, newval, addr);
-#else
-    return OSAtomicCompareAndSwap64(oldval, newval, addr);
-#endif
+    return OSAtomicCompareAndSwap64 (oldval, newval, addr);
 }
 
 #define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
@@ -112,11 +100,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
  */
 static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd32Barrier (i, v);
-#else
     return OSAtomicAdd32 (i, v);
-#endif
 }
 
 /**
@@ -128,11 +112,7 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
  */
 static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd64Barrier (i, v);
-#else
     return OSAtomicAdd64 (i, v);
-#endif
 }
 
 /**
@@ -144,11 +124,7 @@ static inline int64_t opal_atomic_add_64(volatile int64_t* v, int64_t i)
  */
 static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd32Barrier (-i, v);
-#else
     return OSAtomicAdd32 (-i, v);
-#endif
 }
 
 /**
@@ -160,11 +136,7 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
  */
 static inline int64_t opal_atomic_sub_64(volatile int64_t* v, int64_t i)
 {
-#if OPAL_WANT_SMP_LOCKS
-    return OSAtomicAdd64Barrier (-i, v);
-#else
     return OSAtomicAdd64 (-i, v);
-#endif
 }
 
 static inline void opal_atomic_init(opal_atomic_lock_t* lock, int32_t value)

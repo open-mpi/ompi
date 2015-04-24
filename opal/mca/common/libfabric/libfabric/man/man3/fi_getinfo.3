@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-03\-19" "Libfabric Programmer\[aq]s Manual" "\@VERSION\@"
+.TH fi_getinfo 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -42,8 +42,8 @@ reaching specified node or service, subject to any provided hints.
 Callers may specify NULL for node, service, and hints in order to
 retrieve information about what providers are available and their
 optimal usage models.
-If no matching fabric information is available, info will be set to
-NULL.
+If no matching fabric information is available, info will be set to NULL
+and the call will return -FI_ENODATA.
 .PP
 Based on the input hints, node, and service parameters, a list of fabric
 domains and endpoints will be returned.
@@ -80,10 +80,18 @@ Node, service, or hints may be provided, with any combination being
 supported.
 If node is provided, fi_getinfo will attempt to resolve the fabric
 address to the given node.
-The hints parameter, if provided, may be used to control the resulting
-output as indicated below.
 If node is not given, fi_getinfo will attempt to resolve the fabric
 addressing information based on the provided hints.
+.PP
+The hints parameter, if provided, may be used to limit the resulting
+output as indicated below.
+As a general rule, specifying a non-zero value for input hints indicates
+that a provider must support the requested value or fail the operation
+with -FI_ENODATA.
+With the exception of mode bits, hints that are set to zero are treated
+as a wildcard.
+A zeroed hint value results in providers either returning a default
+value or a value that works best for their implementation.
 .PP
 The caller must call fi_freeinfo to release fi_info structures returned
 by this call.
@@ -148,6 +156,9 @@ is NULL.
 \f[I]src_addr - source address\f[] : If specified, indicates the source
 address.
 This field will be ignored in hints if FI_SOURCE is specified.
+On output a provider shall return an address that corresponds to the
+indicated fabric or domain, with the format indicated by the returned
+\f[I]addr_format\f[] field.
 .PP
 \f[I]dest_addr - destination address\f[] : If specified, indicates the
 destination address.
@@ -231,7 +242,7 @@ Message capabilities imply support for send and/or receive queues.
 Endpoints supporting this capability support operations defined by
 struct fi_ops_msg.
 .PP
-The ep_cap may be used to specify or restrict the type of messaging
+The caps may be used to specify or restrict the type of messaging
 operations that are supported.
 In the absence of any relevant flags, FI_MSG implies the ability to send
 and receive messages.
@@ -323,11 +334,6 @@ This flag requires that FI_RMA and/or FI_ATOMIC be set.
 capable of receiving write memory operations from remote endpoints.
 This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
-\f[I]FI_REMOTE_SIGNAL\f[] : Indicates that the endpoint support the
-FI_REMOTE_SIGNAL flag on data transfer operations.
-Support requires marking outbound data transfers as signaled and
-handling incoming transfers appropriately.
-.PP
 \f[I]FI_CANCEL\f[] : Indicates that the user desires the ability to
 cancel outstanding data transfer operations.
 If FI_CANCEL is not set, a provider may optimize code paths with the
@@ -354,12 +360,12 @@ a provider must enable support for only those primary capabilities which
 were selected.
 Secondary capabilities may optionally be requested by an application.
 If requested, a provider must support the capability or fail the
-fi_getinfo request (FI_ENOSYS).
+fi_getinfo request (FI_ENODATA).
 A provider may optionally report non-selected secondary capabilities if
 doing so would not compromise performance or security.
 .PP
 Primary capabilities: FI_MSG, FI_RMA, FI_TAGGED, FI_ATOMIC,
-FI_NAMED_RX_CTX, FI_DIRECTD_RECV, FI_READ, FI_WRITE, FI_RECV, FI_SEND,
+FI_NAMED_RX_CTX, FI_DIRECTED_RECV, FI_READ, FI_WRITE, FI_RECV, FI_SEND,
 FI_REMOTE_READ, and FI_REMOTE_WRITE.
 .PP
 Secondary capabilities: FI_DYNAMIC_MR, FI_MULTI_RECV, FI_SOURCE,
@@ -463,6 +469,13 @@ The FI_ASYNC_IOV mode indicates that the application must provide the
 buffering needed for the IO vectors.
 When set, an application must not modify an IO vector until the
 associated operation has completed.
+.PP
+\f[I]FI_RX_CQ_DATA\f[] : This mode bit only applies to data transfers
+that set FI_REMOTE_CQ_DATA.
+When set, a data transfer that carries remote CQ data will consume a
+receive buffer at the target.
+This is true even for operations that would normally not consume posted
+receive buffers, such as RMA write operations.
 .SH ADDRESSING FORMATS
 .PP
 Multiple fabric interfaces take as input either a source or destination
@@ -541,8 +554,6 @@ complete the operation.
 .PP
 \f[I]FI_ENODATA\f[] : Indicates that no providers could be found which
 support the requested fabric information.
-.PP
-\f[I]FI_ENOSYS\f[] : No fabric providers were found.
 .SH NOTES
 .PP
 If hints are provided, the operation will be controlled by the values

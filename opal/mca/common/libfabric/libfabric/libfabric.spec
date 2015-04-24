@@ -1,5 +1,5 @@
 Name: libfabric
-Version: 1.0.0rc3
+Version: 1.0.0rc5
 Release: 1%{?dist}
 Summary: User-space RDMA Fabric Interfaces
 Group: System Environment/Libraries
@@ -8,7 +8,7 @@ Url: http://www.github.com/ofiwg/libfabric
 Source: http://www.openfabrics.org/downloads/fabrics/%{name}-%{version}.tar.bz2
 Prefix: ${_prefix}
 
-BuildRequires: libnl3-devel
+BuildRequires: libnl-devel
 BuildRequires: librdmacm-devel
 BuildRequires: libibverbs-devel
 BuildRequires: infinipath-psm-devel
@@ -61,5 +61,5 @@ rm -rf %{buildroot}
 %{_mandir}/man7/*
 
 %changelog
-* Mon Feb 16 2015 Open Fabrics Interfaces Working Group <ofiwg@lists.openfabrics.org> 1.0.0
-- Release 1.0.0rc2
+* Tue Apr 1 2015 Open Fabrics Interfaces Working Group <ofiwg@lists.openfabrics.org> 1.0.0
+- Release 1.0.0rc5

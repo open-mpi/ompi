@@ -1007,7 +1007,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             return;
         } else {
             jdatorted->num_reported++;
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                 "%s plm:base:orted_report_launch recvd %d of %d reported daemons",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
+                bool dvm = true;
                 jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 /* activate the daemons_reported state for all jobs
                  * whose daemons were launched
@@ -1016,9 +1021,14 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
                         continue;
                     }
+                    dvm = false;
                     if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
                     }
+                }
+                if (dvm) {
+                    /* must be launching a DVM - activate the state */
+                    ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
                 }
             }
         }
@@ -1122,7 +1132,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *nodes)
 {
     char *param = NULL;
-    const char **tmp_value;
+    const char **tmp_value, **tmp_value2;
     int loc_id;
     char *tmp_force = NULL;
     int i, j, cnt, rc;
@@ -1289,7 +1299,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      */
     /* Add the 'prefix' param */
     tmp_value = NULL;
-    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+
+    loc_id = mca_base_var_find("opal", "mca", "base", "envar_file_prefix");
     if (loc_id < 0) {
         rc = OPAL_ERR_NOT_FOUND;
         ORTE_ERROR_LOG(rc);
@@ -1301,13 +1312,29 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         return rc;
     }
     if( NULL != tmp_value && NULL != tmp_value[0] ) {
+        /* Could also use the short version '-tune'
+         * but being verbose has some value
+         */
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "mca_base_envar_file_prefix");
+        opal_argv_append(argc, argv, tmp_value[0]);
+    }
+
+    tmp_value2 = NULL;
+    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+    mca_base_var_get_value(loc_id, &tmp_value2, NULL, NULL);
+    if( NULL != tmp_value2 && NULL != tmp_value2[0] ) {
         /* Could also use the short version '-am'
          * but being verbose has some value
          */
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "mca_base_param_file_prefix");
-        opal_argv_append(argc, argv, tmp_value[0]);
-    
+        opal_argv_append(argc, argv, tmp_value2[0]);
+        orte_show_help("help-plm-base.txt", "deprecated-amca", true);
+    }
+
+    if ((NULL != tmp_value && NULL != tmp_value[0])
+        || (NULL != tmp_value2 && NULL != tmp_value2[0])) {
         /* Add the 'path' param */
         tmp_value = NULL;
         loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");

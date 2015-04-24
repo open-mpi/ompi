@@ -33,22 +33,16 @@
 #ifndef _SOCK_UTIL_H_
 #define _SOCK_UTIL_H_
 
-#include "fi_log.h"
-
-#define SOCK_ERROR (1)
-#define SOCK_WARN (2)
-#define SOCK_INFO (3)
+#include <rdma/fi_log.h>
 
 extern useconds_t sock_progress_thread_wait;
 
 extern const char sock_fab_name[];
 extern const char sock_dom_name[];
 extern const char sock_prov_name[];
+extern struct fi_provider sock_prov;
 
-#define SOCK_LOG_INFO(...) FI_LOG(SOCK_INFO, sock_prov_name, __VA_ARGS__)
-
-#define SOCK_LOG_WARN(...) FI_WARN(sock_prov_name, __VA_ARGS__)
-
-#define SOCK_LOG_ERROR(...) FI_WARN(sock_prov_name, __VA_ARGS__)
+#define _SOCK_LOG_INFO(subsys, ...) FI_INFO(&sock_prov, subsys, __VA_ARGS__);
+#define _SOCK_LOG_ERROR(subsys, ...) FI_WARN(&sock_prov, subsys, __VA_ARGS__);
 
 #endif
