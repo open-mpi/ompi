@@ -862,34 +862,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
     AC_REQUIRE([AM_PROG_AS])
 
-    # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
-    # with our assembly (!).  So remove it from CCASFLAGS if it's
-    # there (and we're on Leopard).
-    OPAL_VAR_SCOPE_PUSH([opal_config_asm_flags_new opal_config_asm_flag])
-    AC_MSG_CHECKING([if need to remove -g from CCASFLAGS])
-    case "$host" in
-        *-apple-darwin9.*)
-            for opal_config_asm_flag in $CCASFLAGS; do
-                # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
-                # for an explanation of @<:@ and @:>@ -- they m4 expand 
-                # to [ and ]
-                case $opal_config_asm_flag in
-                -g)            ;;
-                -g@<:@0-9@:>@) ;;
-                *)
-                    opal_config_asm_flags_new="$opal_config_asm_flags_new $opal_config_asm_flag"
-                    ;;
-                esac
-            done
-            CCASFLAGS="$opal_config_asm_flags_new"
-            AC_MSG_RESULT([OS X Leopard - yes ($CCASFLAGS)])
-            ;;
-        *)
-            AC_MSG_RESULT([no])
-            ;;
-    esac
-    OPAL_VAR_SCOPE_POP
-
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
          [Enable use of __sync builtin atomics (default: disabled)])])
