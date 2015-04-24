@@ -497,13 +497,13 @@ ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_t, opal_list_item_t, NULL, NULL);
 
-void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
+static void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
 {
     OBJ_CONSTRUCT(&peer->queued_frags, opal_list_t);
     OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
 }
 
-void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)
+static void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)
 {
     OBJ_DESTRUCT(&peer->queued_frags);
     OBJ_DESTRUCT(&peer->lock);
