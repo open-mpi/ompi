@@ -267,9 +267,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 } else if (ORTE_MAPPING_BYNUMA == mpol) {
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
-                } else if (ORTE_MAPPING_BYHWTHREAD == mpol) {
-                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
                 }
+            } else if (ORTE_MAPPING_BYNODE == mpol || ORTE_MAPPING_BYBOARD == mpol) {
+                jdata->map->binding = OPAL_BIND_TO_NONE;
             } else if (nprocs <= 2) {
                 /* if nothing was specified, then we default to a policy
                  * based on number of procs and cpus_per_rank */
