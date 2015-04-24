@@ -91,7 +91,6 @@ ompi_mtl_ofi_component_open(void)
     ompi_mtl_ofi.domain =  NULL;
     ompi_mtl_ofi.av     =  NULL;
     ompi_mtl_ofi.cq     =  NULL;
-    ompi_mtl_ofi.mr     =  NULL;
     ompi_mtl_ofi.ep     =  NULL;
 
     return OMPI_SUCCESS;
@@ -130,11 +129,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * mode:  Select capabilities MTL is prepared to support.
      *        In this case, MTL will pass in context into communication calls
      * ep_type:  reliable datagram operation
-     * caps:     Capabilities required from the provider.  The bits specified
-     *           implement MPI semantics.
-     *           Tagged is used to support tag matching.
-     *           We expect to register all memory up front for use with this
-     *           endpoint, so the MTL requires dynamic memory regions
+     * caps:     Capabilities required from the provider.
+     *           Tag matching is specified to implement MPI semantics.
      */
     hints = fi_allocinfo();
     if (!hints) {
@@ -146,7 +142,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->mode             = FI_CONTEXT;
     hints->ep_attr->type    = FI_EP_RDM;      /* Reliable datagram         */
     hints->caps             = FI_TAGGED;      /* Tag matching interface    */
-    hints->caps            |= FI_DYNAMIC_MR;  /* Global dynamic mem region */
 
     /**
      * Refine filter for additional capabilities
@@ -275,27 +270,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, fi_strerror(-ret));
         goto error;
     }
-
-    /**
-     * All OFI communication routines require at least one MR.
-     * This MTL only needs a single MR.
-     */
-    ret = fi_mr_reg(ompi_mtl_ofi.domain,  /* In:  Domain object              */
-                    0,                    /* In:  Lower memory address       */
-                    UINTPTR_MAX,          /* In:  Upper memory address       */
-                    FI_SEND | FI_RECV,    /* In:  Expose MR for read/write   */
-                    0ULL,                 /* In:  base MR offset             */
-                    0ULL,                 /* In:  requested key              */
-                    0ULL,                 /* In:  No flags                   */
-                    &ompi_mtl_ofi.mr,     /* Out: memregion object           */
-                    NULL);                /* Context: memregion events       */
-    if (0 != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: fi_mr_reg failed: %s\n",
-                            __FILE__, __LINE__, fi_strerror(-ret));
-        goto error;
-    }
-
+    
     /**
      * Bind the CQ and AV to the endpoint object.
      */
@@ -393,9 +368,6 @@ error:
     }
     if (ompi_mtl_ofi.cq) {
         (void) fi_close((fid_t)ompi_mtl_ofi.cq);
-    }
-    if (ompi_mtl_ofi.mr) {
-        (void) fi_close((fid_t)ompi_mtl_ofi.mr);
     }
     if (ompi_mtl_ofi.ep) {
         (void) fi_close((fid_t)ompi_mtl_ofi.ep);

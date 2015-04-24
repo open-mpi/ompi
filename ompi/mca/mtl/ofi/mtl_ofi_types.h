@@ -43,9 +43,6 @@ typedef struct mca_mtl_ofi_module_t {
     /** Completion queue handle */
     struct fid_cq *cq;
 
-    /** Memory region handle */
-    struct fid_mr *mr;
-
     /** Endpoint to communicate on */
     struct fid_ep *ep;
 
