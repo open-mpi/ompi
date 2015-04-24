@@ -79,6 +79,10 @@ ORTE_DECLSPEC void orte_rml_open_channel_recv_callback(int status,
                                                        orte_process_name_t* sender,
                                                        opal_buffer_t *buffer,
                                                        orte_rml_tag_t tag, void *cbdata);
+ORTE_DECLSPEC void orte_rml_close_channel_recv_callback(int status,
+                                                        orte_process_name_t* sender,
+                                                        opal_buffer_t *buffer,
+                                                        orte_rml_tag_t tag, void *cbdata);
 
 /* ******************************************************************** */
 
@@ -693,7 +697,6 @@ struct orte_rml_module_t {
 
     /** close a qos messaging channel */
     orte_rml_module_close_channel_fn_t           close_channel;
-
 };
 /** Convienence typedef */
 typedef struct orte_rml_module_t orte_rml_module_t;

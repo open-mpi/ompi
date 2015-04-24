@@ -27,7 +27,7 @@ static int noop_open (void *qos_channel,
                        opal_buffer_t * buf);
 static int noop_send ( void *qos_channel, orte_rml_send_t *msg);
 static int noop_recv (void *channel, orte_rml_recv_t *msg);
-static void noop_close (void * channel);
+static int noop_close (void * channel);
 static int noop_init_recv (void *channel, opal_list_t *attributes);
 static int noop_cmp (void *channel, opal_list_t *attributes);
 static void noop_send_callback (orte_rml_send_t *msg);
@@ -42,7 +42,8 @@ orte_qos_module_t orte_qos_noop_module = {
    noop_recv,
    noop_close,
    noop_init_recv,
-   noop_cmp
+   noop_cmp,
+   noop_send_callback
 };
 
 /**
@@ -86,11 +87,12 @@ static void qos_noop_shutdown (void) {
 
 static void* noop_create (opal_list_t *qos_attributes, uint32_t channel_num) {
     orte_qos_base_channel_t * noop_chan;
-    int32_t rc, *window, *type;
+    int32_t rc, *window, *type, window_val;
     orte_qos_type_t type_val = orte_qos_noop;
     noop_chan = OBJ_NEW (orte_qos_base_channel_t);
     noop_chan->channel_num = channel_num;
     type = &type_val;
+    window = &window_val;
     // TBD _ we ignore inapplicable attributes for now - need to return error?
     // get attributes of interest to the base and store them locally.
     if (ORTE_SUCCESS == (rc = orte_set_attribute( &noop_chan->attributes, ORTE_QOS_TYPE, ORTE_ATTR_GLOBAL, (void*)type, OPAL_UINT8))) {
@@ -144,9 +146,15 @@ static int noop_recv (void *qos_channel, orte_rml_recv_t *msg) {
     return ORTE_SUCCESS;
 }
 
-static void noop_close (void * channel) {
-    orte_qos_base_channel_t *noop_chan = (orte_qos_base_channel_t*) channel;
-    OBJ_RELEASE (noop_chan);
+static int noop_close (void * channel) {
+    orte_qos_base_channel_t *noop_chan;
+    if(NULL != channel) {
+        noop_chan = (orte_qos_base_channel_t*) channel;
+        OBJ_RELEASE (noop_chan);
+        return ORTE_SUCCESS;
+    } else
+        return ORTE_ERR_BAD_PARAM;
+
 }
 
 static int noop_init_recv (void *channel, opal_list_t *attributes) {

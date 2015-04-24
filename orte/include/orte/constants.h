@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,7 +141,11 @@ enum {
     ORTE_ERR_QOS_ACK_WINDOW_FULL            = (ORTE_ERR_BASE - 49),
     ORTE_ERR_ACK_TIMEOUT_SENDER             = (ORTE_ERR_BASE - 50),
     ORTE_ERR_ACK_TIMEOUT_RECEIVER           = (ORTE_ERR_BASE - 51),
-    ORTE_ERR_LOST_MSG_IN_WINDOW             = (ORTE_ERR_BASE - 52)
+    ORTE_ERR_LOST_MSG_IN_WINDOW             = (ORTE_ERR_BASE - 52),
+    ORTE_ERR_CHANNEL_BUSY                   = (ORTE_ERR_BASE - 53),
+    ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 54),
+    ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
+    ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

@@ -112,7 +112,7 @@ static void channel_des (orte_qos_base_channel_t *ptr)
     OPAL_LIST_DESTRUCT(&ptr->attributes);
 }
 OBJ_CLASS_INSTANCE (orte_qos_base_channel_t,
-                    opal_object_t,
+                    opal_list_item_t,
                     channel_cons, channel_des);
 
 

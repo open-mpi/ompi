@@ -53,6 +53,7 @@
 
 static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all);
 
+
 void orte_rml_base_post_recv(int sd, short args, void *cbdata)
 {
     orte_rml_recv_request_t *req = (orte_rml_recv_request_t*)cbdata;
@@ -119,58 +120,12 @@ void orte_rml_base_post_recv(int sd, short args, void *cbdata)
     OBJ_RELEASE(req);
 }
 
-static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all)
+void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg)
 {
-    opal_list_item_t *item, *next;
-    orte_rml_recv_t *msg;
-    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
-
-    /* scan thru the list of unmatched recvd messages and
-     * see if any matches this spec - if so, push the first
-     * into the recvd msg queue and look no further
-     */
-    item = opal_list_get_first(&orte_rml_base.unmatched_msgs);
-    while (item != opal_list_get_end(&orte_rml_base.unmatched_msgs)) {
-        next = opal_list_get_next(item);
-        msg = (orte_rml_recv_t*)item;
-        opal_output_verbose(5, orte_rml_base_framework.framework_output,
-                            "%s checking recv for %s against unmatched msg from %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&rcv->peer),
-                            ORTE_NAME_PRINT(&msg->sender));
-
-        /* since names could include wildcards, must use
-         * the more generalized comparison function
-         */
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &rcv->peer) &&
-            msg->tag == rcv->tag) {
-            ORTE_RML_ACTIVATE_MESSAGE(msg);
-            opal_list_remove_item(&orte_rml_base.unmatched_msgs, item);
-            if (!get_all) {
-                break;
-            }
-        }
-        item = next;
-    }
-}
-
-void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
-{
-    orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
     orte_rml_posted_recv_t *post;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
     opal_buffer_t buf;
-
-    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s message received from %s for tag %d on channel=%d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag,
-                         msg->channel_num));
-
-    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
-                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
-
+    orte_rml_recv_t *msg = *recv_msg;
     /* see if we have a waiting recv for this message */
     OPAL_LIST_FOREACH(post, &orte_rml_base.posted_recvs, orte_rml_posted_recv_t) {
         /* since names could include wildcards, must use
@@ -178,15 +133,6 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
          */
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &post->peer) &&
             msg->tag == post->tag) {
-            if ((ORTE_RML_INVALID_CHANNEL_NUM != msg->channel_num) &&
-                 (NULL != orte_rml_base_get_channel(msg->channel_num) )) {
-                 OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                                    "%s calling recv msg on  channel=%d",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    msg->channel_num));
-                 // call channel for recv post processing
-                 orte_rml_base_process_recv_channel (orte_rml_base_get_channel(msg->channel_num), msg);
-             }
             /* deliver the data to this location */
             if (post->buffer_data) {
                 /* deliver it in a buffer */
@@ -198,13 +144,13 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                 /* the user must have unloaded the buffer if they wanted
                  * to retain ownership of it, so release whatever remains
                  */
-           /*    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                                      "%s message received  bytes from %s for tag %d on channel=%d called callback",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&msg->sender),
                                      msg->tag,
-                                     msg->channel_num));*/
-                 OBJ_DESTRUCT(&buf);
+                                     msg->channel_num));
+                OBJ_DESTRUCT(&buf);
             } else {
                 /* deliver as an iovec */
                 post->cbfunc.iov(ORTE_SUCCESS, &msg->sender, &msg->iov, 1, msg->tag, post->cbdata);
@@ -232,16 +178,96 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
             return;
         }
     }
-
     /* we get here if no matching recv was found - we then hold
      * the message until such a recv is issued
      */
+     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                            "%s message received  bytes from %s for tag %d on channel=%d Not Matched adding to unmatched msgs",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&msg->sender),
+                            msg->tag,
+                            msg->channel_num));
+     opal_list_append(&orte_rml_base.unmatched_msgs, &msg->super);
+}
+
+static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all)
+{
+    opal_list_item_t *item, *next;
+    orte_rml_recv_t *msg;
+    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
+
+    /* scan thru the list of unmatched recvd messages and
+     * see if any matches this spec - if so, push the first
+     * into the recvd msg queue and look no further
+     */
+    item = opal_list_get_first(&orte_rml_base.unmatched_msgs);
+    while (item != opal_list_get_end(&orte_rml_base.unmatched_msgs)) {
+        next = opal_list_get_next(item);
+        msg = (orte_rml_recv_t*)item;
+        opal_output_verbose(5, orte_rml_base_framework.framework_output,
+                            "%s checking recv for %s against unmatched msg from %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&rcv->peer),
+                            ORTE_NAME_PRINT(&msg->sender));
+
+        /* since names could include wildcards, must use
+         * the more generalized comparison function
+         */
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &rcv->peer) &&
+            msg->tag == rcv->tag) {
+            ORTE_RML_REACTIVATE_MESSAGE(msg);
+            opal_list_remove_item(&orte_rml_base.unmatched_msgs, item);
+            if (!get_all) {
+                break;
+            }
+        }
+        item = next;
+    }
+}
+
+void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
+{
+    orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s message received  bytes from %s for tag %d on channel=%d Not Matched adding to unmatched msgs",
+                         "%s message received from %s for tag %d on channel=%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender),
                          msg->tag,
                          msg->channel_num));
-    opal_list_append(&orte_rml_base.unmatched_msgs, &msg->super);
+
+    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
+                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
+    if ((ORTE_RML_INVALID_CHANNEL_NUM != msg->channel_num) &&
+            (NULL != orte_rml_base_get_channel(msg->channel_num) )) {
+
+        // call channel for recv post processing
+        if (ORTE_SUCCESS != (orte_rml_base_process_recv_channel (orte_rml_base_get_channel(msg->channel_num), msg)))
+        {
+            /* the qos channel has determined an error so we cannot complete this msg to the caller */
+            OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                 "%s QoS channel receive error - cannot complete msg on channel=%d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 msg->channel_num));
+            return;
+        }
+
+    }
+    orte_rml_base_complete_recv_msg (&msg);
 }
 
+void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata)
+{
+    orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                         "%s reprocessing msg received from %s for tag %d on channel=%d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&msg->sender),
+                         msg->tag,
+                         msg->channel_num));
+
+    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
+                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
+    orte_rml_base_complete_recv_msg ( &msg);
+    /* the msg should be matched and released in this path
+     add an assert (msg!= NULL) ?? */
+}

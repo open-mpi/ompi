@@ -216,6 +216,10 @@ int orte_rml_base_select(void)
     orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_OPEN_CHANNEL_REQ,
                              ORTE_RML_PERSISTENT, orte_rml_open_channel_recv_callback,
                              NULL);
+    /* post a persistent recieve for close channel request */
+    orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_CLOSE_CHANNEL_REQ,
+                             ORTE_RML_PERSISTENT, orte_rml_close_channel_recv_callback,
+                             NULL);
     return ORTE_SUCCESS;
 }
 
@@ -266,11 +270,11 @@ static void channel_cons(orte_rml_channel_t *ptr)
     ptr->channel_num = ORTE_RML_INVALID_CHANNEL_NUM;
     ptr->qos = NULL;
     ptr->qos_channel_ptr = NULL;
-    ptr->receive = false;
+    ptr->recv = false;
 }
 
 OBJ_CLASS_INSTANCE(orte_rml_channel_t,
-                   opal_object_t,
+                   opal_list_item_t,
                    channel_cons, NULL);
 
 static void open_channel_cons(orte_rml_open_channel_t *ptr)
@@ -282,10 +286,19 @@ OBJ_CLASS_INSTANCE(orte_rml_open_channel_t,
                    opal_list_item_t,
                    open_channel_cons, NULL);
 
+static void close_channel_cons(orte_rml_close_channel_t *ptr)
+{
+    ptr->cbdata = NULL;
+    ptr->channel = NULL;
+}
+OBJ_CLASS_INSTANCE(orte_rml_close_channel_t,
+                   opal_list_item_t,
+                   close_channel_cons, NULL);
+
 static void send_req_cons(orte_rml_send_request_t *ptr)
 {
     OBJ_CONSTRUCT(&ptr->post.send, orte_rml_send_t);
-    OBJ_CONSTRUCT(&ptr->post.channel, orte_rml_open_channel_t);
+    OBJ_CONSTRUCT(&ptr->post.open_channel, orte_rml_open_channel_t);
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
                    opal_object_t,

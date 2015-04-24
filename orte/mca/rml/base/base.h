@@ -133,13 +133,14 @@ typedef enum  {
  * It contains a pointer to a struct that contains the QoS specific channel data.
  */
 typedef struct {
+    opal_list_item_t super;
     orte_rml_channel_num_t  channel_num; // the channel number reference (exposed to the user).
     orte_process_name_t   peer; //  the other end point (peer) of the channel
     orte_rml_channel_num_t  peer_channel; // peer channel number
     void * qos;  // pointer to QoS component specific module
     void * qos_channel_ptr; // pointer to QoS component specific channel struct
     orte_rml_channel_state_t state; // channel state
-    bool receive; // set to true if this is a receive (peer opened) channel. (Default is send channel)
+    bool recv; // set to true if this is a receive (peer opened) channel. (Default is send channel)
 } orte_rml_channel_t;
 OBJ_CLASS_DECLARATION(orte_rml_channel_t);
 
@@ -198,13 +199,28 @@ typedef struct {
 } orte_rml_open_channel_t;
 OBJ_CLASS_DECLARATION(orte_rml_open_channel_t);
 
+/* structure to send RML channel close messages - used internally */
+typedef struct {
+    opal_list_item_t super;
+    /* msg send status */
+    int status;
+     /* channel object */
+    orte_rml_channel_t *channel;
+    /* user's callback function */
+    orte_rml_channel_callback_fn_t cbfunc;
+    /* user's cbdata */
+    void *cbdata;
+} orte_rml_close_channel_t;
+OBJ_CLASS_DECLARATION(orte_rml_close_channel_t);
+
 /* define an object for transferring send requests to the event lib */
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
     union {
         orte_rml_send_t send;
-        orte_rml_open_channel_t channel;
+        orte_rml_open_channel_t open_channel;
+        orte_rml_close_channel_t close_channel;
     }post;
 } orte_rml_send_request_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_request_t);
@@ -277,6 +293,21 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
     } while(0);
 
+/*
+ reactivates rcv msg on the unposted rcvd list when a match occurs
+ need a different path as the QoS recv processing was already done
+ for this process
+*/
+#define ORTE_RML_REACTIVATE_MESSAGE(m)                         \
+    do {                                                      \
+    /* setup the event */                                   \
+    opal_event_set(orte_event_base, &(m)->ev, -1,           \
+                   OPAL_EV_WRITE,                           \
+                   orte_rml_base_reprocess_msg, (m));         \
+    opal_event_set_priority(&(m)->ev, ORTE_MSG_PRI);        \
+    opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
+} while(0);
+
 #define ORTE_RML_SEND_COMPLETE(m)                                       \
     do {                                                                \
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
@@ -318,7 +349,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
     }while(0);
 
 
-#define ORTE_RML_OPEN_CHANNEL_COMPLETE(m)                                \
+#define ORTE_RML_OPEN_CHANNEL_COMPLETE(m)                               \
  do {                                                                  \
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
                               "%s-%s open channel message complete at %s:%d", \
@@ -331,7 +362,17 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
                            NULL, (m)->cbdata) ;                     \
     }while(0);
 
-
+#define ORTE_RML_CLOSE_CHANNEL_COMPLETE(m)                           \
+    do {                                                             \
+    opal_output_verbose(5, orte_rml_base_framework.framework_output, \
+                    "%s-%d close channel message complete at %s:%d", \
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                        (m)->channel->channel_num,                  \
+                        __FILE__, __LINE__);                        \
+    /* call the callback function  */                               \
+    (m)->cbfunc((m)->status,  (m)->channel->channel_num,            \
+                NULL, NULL, (m)->cbdata) ;                          \
+}while(0);
 /*
  * This is the base priority for a RML wrapper component
  * If there exists more than one wrapper, then the one with
@@ -348,19 +389,25 @@ ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_error(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_open_channel(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_open_channel_send_callback ( int status, orte_process_name_t* sender,
+ORTE_DECLSPEC void orte_rml_base_close_channel(int fd, short flags, void *cbdata);
+ORTE_DECLSPEC void orte_rml_base_open_channel_send_callback ( int status, orte_process_name_t* sender,
                                                          opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                          void* cbdata);
-ORTE_DECLSPEC void orte_rml_open_channel_resp_callback (int status, orte_process_name_t* peer,
+ORTE_DECLSPEC void orte_rml_base_open_channel_resp_callback (int status, orte_process_name_t* peer,
                                                         struct opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                         void* cbdata);
-ORTE_DECLSPEC void orte_rml_open_channel_reply_send_callback ( int status, orte_process_name_t* sender,
+ORTE_DECLSPEC void orte_rml_base_open_channel_reply_send_callback ( int status, orte_process_name_t* sender,
                                                                opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                                void* cbdata);
 ORTE_DECLSPEC void orte_rml_base_prep_send_channel (orte_rml_channel_t *channel,
                                       orte_rml_send_t *send);
-ORTE_DECLSPEC void orte_rml_base_process_recv_channel (orte_rml_channel_t *channel,
+ORTE_DECLSPEC int orte_rml_base_process_recv_channel (orte_rml_channel_t *channel,
                                       orte_rml_recv_t *recv);
+ORTE_DECLSPEC void orte_rml_base_close_channel_send_callback ( int status, orte_process_name_t* sender,
+                                             opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
+ORTE_DECLSPEC void orte_rml_base_send_close_channel ( orte_rml_close_channel_t *close_chan);
+ORTE_DECLSPEC void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata);
+ORTE_DECLSPEC void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg);
 END_C_DECLS
 
 #endif /* MCA_RML_BASE_H */

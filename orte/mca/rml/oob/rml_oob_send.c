@@ -302,10 +302,10 @@ int orte_rml_oob_open_channel(orte_process_name_t * peer,
         return ORTE_ERROR_QOS_UNAVAILABLE;*/
     /* process the request in an event to be safe */
     req = OBJ_NEW(orte_rml_send_request_t);
-    req->post.channel.dst = *peer;
-    req->post.channel.qos_attributes = qos_attributes;
-    req->post.channel.cbfunc = cbfunc;
-    req->post.channel.cbdata = cbdata;
+    req->post.open_channel.dst = *peer;
+    req->post.open_channel.qos_attributes = qos_attributes;
+    req->post.open_channel.cbfunc = cbfunc;
+    req->post.open_channel.cbdata = cbdata;
     /* setup the event for the open callback */
     opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, orte_rml_base_open_channel, req);
     opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
@@ -317,14 +317,46 @@ int orte_rml_oob_open_channel(orte_process_name_t * peer,
     return ORTE_SUCCESS;
 }
 
-int orte_rml_oob_send_channel_nb (orte_rml_channel_num_t channel,
+int orte_rml_oob_send_channel_nb (orte_rml_channel_num_t channel_num,
                                   struct iovec* msg,
                                   int count,
                                   orte_rml_tag_t tag,
                                   orte_rml_send_channel_callback_fn_t cbfunc,
                                   void* cbdata)
 {
-    // TO DO
+    orte_rml_send_request_t *req;
+    orte_rml_channel_t *channel;
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+                         "%s rml_send_buffer to channel %d at tag %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         channel_num, tag));
+
+    if (ORTE_RML_TAG_INVALID == tag) {
+        /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    channel = (orte_rml_channel_t*) orte_rml_base_get_channel (channel_num);
+    if (NULL == channel) {
+        /* cannot send to a non existing or closed channel */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    /* get ourselves into an event to protect against
+    * race conditions and threads
+    */
+    req = OBJ_NEW(orte_rml_send_request_t);
+    req->post.send.dst = channel->peer;
+    req->post.send.iov = msg;
+    req->post.send.count = count;
+    req->post.send.tag = tag;
+    req->post.send.cbfunc.iov = cbfunc;
+    req->post.send.cbdata = cbdata;
+    req->post.send.channel = channel;
+    /* setup the event for the send callback */
+    opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, send_msg, req);
+    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
+    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
     return ORTE_SUCCESS;
 }
 
@@ -374,9 +406,22 @@ int orte_rml_oob_close_channel (orte_rml_channel_num_t channel_num,
                                 void* cbdata)
 {
     orte_rml_channel_t *channel;
+    orte_rml_send_request_t *req;
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+                         "%s rml_close_channel channel num %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         channel_num));
     channel = orte_rml_base_get_channel (channel_num);
-    if (NULL != channel) {
-        // TO DO
-    }
+    if (NULL == channel)
+        return ORTE_ERR_BAD_PARAM;
+    /* process the request in an event to be safe */
+    req = OBJ_NEW(orte_rml_send_request_t);
+    req->post.close_channel.channel = channel;
+    req->post.close_channel.cbfunc = cbfunc;
+    req->post.close_channel.cbdata = cbdata;
+    /* setup the event for the open callback */
+    opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, orte_rml_base_close_channel, req);
+    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
+    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
     return ORTE_SUCCESS;
 }

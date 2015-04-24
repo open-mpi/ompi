@@ -45,6 +45,7 @@ ORTE_DECLSPEC extern orte_qos_base_t orte_qos_base;
 #define ORTE_QOS_MAX_WINDOW_SIZE 1000
 
 typedef struct orte_qos_base_channel {
+    opal_list_item_t super;
     uint32_t channel_num;
     opal_list_t attributes;
 } orte_qos_base_channel_t;

@@ -118,12 +118,13 @@ int orte_qos_open_channel (void *qos_mod, void *qos_channel, opal_buffer_t * buf
     return ORTE_ERR_BAD_PARAM;
 }
 
-void orte_qos_close_channel (void *qos_mod, void *qos_channel) {
+int orte_qos_close_channel (void *qos_mod, void *qos_channel) {
     orte_qos_module_t *qos = (orte_qos_module_t *) (qos_mod);
-    if (NULL != qos)
-        qos->close (qos_channel);
+    if ((NULL != qos) && (NULL != qos_channel))
+        return (qos->close (qos_channel));
     else
         ORTE_ERROR_LOG (ORTE_ERR_BAD_PARAM);
+    return (ORTE_ERR_BAD_PARAM);
 }
 
 void orte_qos_init_recv_channel (void *qos_mod, void *qos_channel, opal_list_t * qos_attributes) {
@@ -155,9 +156,10 @@ int orte_qos_recv_channel (void *qos_mod, void *qos_channel, orte_rml_recv_t *ms
     orte_qos_module_t *qos = (orte_qos_module_t *) (qos_mod);
     if (NULL != qos)
         return(qos->recv(qos_channel, msg));
-    else
+    else {
         ORTE_ERROR_LOG (ORTE_ERR_BAD_PARAM);
-    return ORTE_ERROR;
+        return ORTE_ERROR;
+    }
 }
 
 

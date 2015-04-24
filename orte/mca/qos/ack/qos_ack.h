@@ -35,6 +35,7 @@ BEGIN_C_DECLS
 #define ACK_WINDOW_COMPLETE         0
 #define ACK_TIMEOUT                 1
 #define ACK_OUT_OF_ORDER            2
+#define ACK_RECV_MISSED_MSG         3 /* received previously missed msgs*/
 
 typedef enum {
     orte_qos_ack_channel_state_inactive = 0,
@@ -46,6 +47,7 @@ typedef enum {
 
 /* Ack Qos channel data structure */
 typedef struct orte_qos_ack_channel {
+    opal_list_item_t super;
      uint32_t channel_num;
     // we retain the attributes  so we can compare channels - we can get rid of this and compare incoming attributes
     // with attributes of interest to this channel type
@@ -76,13 +78,24 @@ typedef struct orte_qos_ack_channel {
 
 OBJ_CLASS_DECLARATION(orte_qos_ack_channel_t);
 
-
 extern orte_qos_module_t  orte_qos_ack_module;
+int  orte_qos_ack_channel_get_msg_room (orte_qos_ack_channel_t * ack_chan,
+                                                      uint32_t seq_num)
+{
+     return ack_chan->seq_num_to_room_num[(seq_num % QOS_ACK_MAX_OUTSTANDING_MSGS)];
+}
+
+void orte_qos_ack_channel_set_msg_room (orte_qos_ack_channel_t * ack_chan,
+                                                        uint32_t seq_num, int room_num)
+{
+    ack_chan->seq_num_to_room_num[(seq_num % QOS_ACK_MAX_OUTSTANDING_MSGS)] = room_num;
+}
 
 ORTE_DECLSPEC void orte_qos_ack_msg_ack_timeout_callback (struct opal_hotel_t *hotel,
                                                       int room_num, void *occupant);
 ORTE_DECLSPEC void orte_qos_ack_msg_window_timeout_callback (int fd, short flags, void *cbdata);
-
+ORTE_DECLSPEC void orte_qos_ack_recv_msg_timeout_callback (struct opal_hotel_t *hotel,
+                                                      int room_num, void *occupant);
 END_C_DECLS
 
 #endif /* MCA_QOS_ACK_H */

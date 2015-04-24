@@ -55,7 +55,7 @@ typedef int (*mca_qos_base_component_ft_event_fn_t)(int state);
 #endif
 ORTE_DECLSPEC void * orte_qos_create_channel (void *qos_mod, opal_list_t *qos_attributes, uint32_t channel_num);
 ORTE_DECLSPEC int orte_qos_open_channel (void *qos_mod, void *qos_channel, opal_buffer_t * buffer);
-ORTE_DECLSPEC void orte_qos_close_channel (void *qos_mod, void *qos_channel);
+ORTE_DECLSPEC int orte_qos_close_channel (void *qos_mod, void *qos_channel);
 ORTE_DECLSPEC void orte_qos_init_recv_channel (void *qos_mod, void *qos_channel, opal_list_t *qos_attributes);
 ORTE_DECLSPEC int orte_qos_cmp_channel (void *qos_mod, void *qos_channel, opal_list_t *qos_attributes);
 ORTE_DECLSPEC int orte_qos_send_channel (void *qos_mod, void *qos_channel, orte_rml_send_t *msg);
@@ -91,7 +91,7 @@ typedef int (*orte_qos_base_module_recv_fn_t) ( void * channel,
  * this function is called when a message is received on a channel
  */
 
-typedef void (*orte_qos_base_module_close_fn_t) ( void * channel);
+typedef int (*orte_qos_base_module_close_fn_t) ( void * channel);
 /**
  * qos module (channel) init recv
  * this function is used to initialize a channel for receiving msgs (called in response to open_channel req from peer)

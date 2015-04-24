@@ -285,6 +285,20 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
 }
 
 /**
+ * Returns true if the hotel is empty (no occupant)
+ * @param hotel Pointer to hotel (IN)
+ * @return bool true if empty false if there is a occupant(s)
+ *
+ */
+static inline bool opal_hotel_is_empty (opal_hotel_t *hotel)
+{
+    if (hotel->last_unoccupied_room == hotel->num_rooms - 1)
+        return true;
+    else
+        return false;
+}
+
+/**
  * Destroy a hotel.
  *
  * @param hotel Pointer to hotel (IN)
