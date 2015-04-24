@@ -256,7 +256,7 @@ static int ompi_osc_pt2pt_lock_internal_execute (ompi_osc_pt2pt_module_t *module
 
     if (0 == (assert & MPI_MODE_NOCHECK)) {
         lock->lock_acks_expected = (-1 == target) ? ompi_comm_size (module->comm) : 1;
-        lock->unlock_acks_expected = (-1 == target) ? ompi_comm_size (module->comm) : 1;
+        lock->unlock_acks_expected = lock->lock_acks_expected;
 
         if (my_rank != target && target != -1) {
             ret = ompi_osc_pt2pt_lock_remote (module, target, lock);
@@ -488,14 +488,8 @@ int ompi_osc_pt2pt_sync (struct ompi_win_t *win)
 static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_outstanding_lock_t *lock,
                                       int target)
 {
-    int peer_count, ret, flush_count;
+    int ret, flush_count;
     int my_rank = ompi_comm_rank (module->comm);
-
-    if (-1 == lock->target) {
-        peer_count = ompi_comm_size(module->comm);
-    } else {
-        peer_count = 1;
-    }
 
     /* wait until ack has arrived from target, since we need to be
        able to eager send before we can transfer all the data... */
@@ -504,8 +498,14 @@ static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_
         opal_condition_wait(&module->cond, &module->lock);
     }
 
-    lock->flush_acks_expected = peer_count;
     lock->flushing = true;
+
+    if (-1 == target) {
+        lock->flush_acks_expected = ompi_comm_size(module->comm) - 1;
+    } else {
+        lock->flush_acks_expected = 1;
+    }
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     if (-1 == target) {
