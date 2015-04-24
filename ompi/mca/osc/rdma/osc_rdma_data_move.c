@@ -1654,6 +1654,10 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
     switch (base_header->type) {
     case OMPI_OSC_RDMA_HDR_TYPE_FRAG:
         process_frag(module, (ompi_osc_rdma_frag_header_t *) base_header);
+
+        /* only data fragments should be included in the completion counters */
+        mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
+                                  source : MPI_PROC_NULL);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_POST:
         (void) osc_rdma_incoming_post (module, source);
@@ -1678,13 +1682,6 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
 
     /* restart the receive request */
     OPAL_THREAD_LOCK(&module->lock);
-
-    /* post messages come unbuffered and should NOT increment the incoming completion
-     * counters */
-    if (OMPI_OSC_RDMA_HDR_TYPE_POST != base_header->type) {
-        mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
-                                  source : MPI_PROC_NULL);
-    }
 
     osc_rdma_gc_clean ();
 

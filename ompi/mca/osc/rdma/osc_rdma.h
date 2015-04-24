@@ -161,8 +161,8 @@ struct ompi_osc_rdma_module_t {
        received. */
     uint64_t flush_ack_received_count;
 
-    /** True if the access epoch is a passive target access epoch */
-    bool passive_target_access_epoch;
+    /** Number of targets locked/being locked */
+    unsigned int passive_target_access_epoch;
 
     /** start sending data eagerly */
     bool active_eager_send_active;
