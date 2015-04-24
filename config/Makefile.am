@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights
 #                         reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +21,7 @@
 #
 
 EXTRA_DIST = \
-        distscript.csh \
+        distscript.sh \
         opal_get_version.m4sh \
         ltmain_pgi_tp.diff \
         opal_mca_priority_sort.pl \
