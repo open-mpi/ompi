@@ -37,6 +37,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <assert.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -127,55 +128,128 @@ static inline uint64_t roundup_power_of_two(uint64_t n)
 
 #if PT_LOCK_SPIN == 1
 
-#define fastlock_t pthread_spinlock_t
-#define fastlock_init(lock) pthread_spin_init(lock, PTHREAD_PROCESS_PRIVATE)
-#define fastlock_destroy(lock) pthread_spin_destroy(lock)
-#define fastlock_acquire(lock) pthread_spin_lock(lock)
-#define fastlock_release(lock) pthread_spin_unlock(lock)
+#define fastlock_t_ pthread_spinlock_t
+#define fastlock_init_(lock) pthread_spin_init(lock, PTHREAD_PROCESS_PRIVATE)
+#define fastlock_destroy_(lock) pthread_spin_destroy(lock)
+#define fastlock_acquire_(lock) pthread_spin_lock(lock)
+#define fastlock_release_(lock) pthread_spin_unlock(lock)
 
 #else
 
-#define fastlock_t pthread_mutex_t
-#define fastlock_init(lock) pthread_mutex_init(lock, NULL)
-#define fastlock_destroy(lock) pthread_mutex_destroy(lock)
-#define fastlock_acquire(lock) pthread_mutex_lock(lock)
-#define fastlock_release(lock) pthread_mutex_unlock(lock)
+#define fastlock_t_ pthread_mutex_t
+#define fastlock_init_(lock) pthread_mutex_init(lock, NULL)
+#define fastlock_destroy_(lock) pthread_mutex_destroy(lock)
+#define fastlock_acquire_(lock) pthread_mutex_lock(lock)
+#define fastlock_release_(lock) pthread_mutex_unlock(lock)
 
 #endif /* PT_LOCK_SPIN */
 
+#if ENABLE_DEBUG
+
+typedef struct {
+	fastlock_t_ impl;
+	int is_initialized;
+} fastlock_t;
+
+#  define fastlock_init(lock)                     \
+	do {                                      \
+		(lock)->is_initialized = 1;       \
+		fastlock_init_(&(lock)->impl);    \
+	} while (0)
+
+#  define fastlock_destroy(lock)                  \
+	do {                                      \
+		assert((lock)->is_initialized);   \
+		(lock)->is_initialized = 0;       \
+		fastlock_destroy_(&(lock)->impl); \
+	} while (0)
+
+static inline int fastlock_acquire(fastlock_t *lock)
+{
+	assert(lock->is_initialized);
+	return fastlock_acquire_(&lock->impl);
+}
+
+#  define fastlock_release(lock)                  \
+	do {                                      \
+		assert((lock)->is_initialized);   \
+		fastlock_release_(&(lock)->impl); \
+	} while (0)
+
+#else /* !ENABLE_DEBUG */
+
+#  define fastlock_t fastlock_t_
+#  define fastlock_init(lock) fastlock_init_(lock)
+#  define fastlock_destroy(lock) fastlock_destroy_(lock)
+#  define fastlock_acquire(lock) fastlock_acquire_(lock)
+#  define fastlock_release(lock) fastlock_release_(lock)
+
+#endif
+
+
+#if ENABLE_DEBUG
+#define ATOMIC_IS_INITIALIZED(atomic) assert(atomic->is_initialized)
+#else
+#define ATOMIC_IS_INITIALIZED(atomic)
+#endif
 
 #ifdef HAVE_ATOMICS
-typedef atomic_int atomic_t;
+typedef struct {
+    atomic_int val;
+#if ENABLE_DEBUG
+    int is_initialized;
+#endif
+} atomic_t;
 
 static inline int atomic_inc(atomic_t *atomic)
 {
-	return atomic_fetch_add_explicit(atomic, 1, memory_order_acq_rel) + 1;
+	ATOMIC_IS_INITIALIZED(atomic);
+	return atomic_fetch_add_explicit(&atomic->val, 1, memory_order_acq_rel) + 1;
 }
 
 static inline int atomic_dec(atomic_t *atomic)
 {
-	return atomic_fetch_sub_explicit(atomic, 1, memory_order_acq_rel) - 1;
+	ATOMIC_IS_INITIALIZED(atomic);
+	return atomic_fetch_sub_explicit(&atomic->val, 1, memory_order_acq_rel) - 1;
 }
 
 static inline int atomic_set(atomic_t *atomic, int value)
 {
-	atomic_store(atomic, value);
+	ATOMIC_IS_INITIALIZED(atomic);
+	atomic_store(&atomic->val, value);
 	return value;
 }
 
 static inline int atomic_get(atomic_t *atomic)
 {
-	return atomic_load(atomic);
+	ATOMIC_IS_INITIALIZED(atomic);
+	return atomic_load(&atomic->val);
+}
+
+/* avoid using "atomic_init" so we don't conflict with symbol/macro from stdatomic.h */
+static inline void atomic_initialize(atomic_t *atomic, int value)
+{
+	atomic_init(&atomic->val, value);
+#if ENABLE_DEBUG
+	atomic->is_initialized = 1;
+#endif
 }
 
 #else
 
-typedef struct { fastlock_t lock; int val; } atomic_t;
+typedef struct {
+	fastlock_t lock;
+	int val;
+#if ENABLE_DEBUG
+	int is_initialized;
+#endif
+} atomic_t;
 
 static inline int atomic_inc(atomic_t *atomic)
 {
 	int v;
 
+	ATOMIC_IS_INITIALIZED(atomic);
 	fastlock_acquire(&atomic->lock);
 	v = ++(atomic->val);
 	fastlock_release(&atomic->lock);
@@ -186,6 +260,7 @@ static inline int atomic_dec(atomic_t *atomic)
 {
 	int v;
 
+	ATOMIC_IS_INITIALIZED(atomic);
 	fastlock_acquire(&atomic->lock);
 	v = --(atomic->val);
 	fastlock_release(&atomic->lock);
@@ -194,20 +269,26 @@ static inline int atomic_dec(atomic_t *atomic)
 
 static inline int atomic_set(atomic_t *atomic, int value)
 {
+	ATOMIC_IS_INITIALIZED(atomic);
 	fastlock_acquire(&atomic->lock);
 	atomic->val = value;
 	fastlock_release(&atomic->lock);
 	return value;
 }
 
-static inline void atomic_init(atomic_t *atomic, int value)
+/* avoid using "atomic_init" so we don't conflict with symbol/macro from stdatomic.h */
+static inline void atomic_initialize(atomic_t *atomic, int value)
 {
 	fastlock_init(&atomic->lock);
 	atomic->val = value;
+#if ENABLE_DEBUG
+	atomic->is_initialized = 1;
+#endif
 }
 
 static inline int atomic_get(atomic_t *atomic)
 {
+	ATOMIC_IS_INITIALIZED(atomic);
 	return atomic->val;
 }
 
@@ -228,6 +309,7 @@ int fi_rma_initiate_allowed(uint64_t caps);
 int fi_rma_target_allowed(uint64_t caps);
 
 uint64_t fi_gettime_ms(void);
+int fi_fd_nonblock(int fd);
 
 #define RDMA_CONF_DIR  SYSCONFDIR "/" RDMADIR
 #define FI_CONF_DIR RDMA_CONF_DIR "/fabric"

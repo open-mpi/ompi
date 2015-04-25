@@ -1,4 +1,4 @@
-.TH fi_msg 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_msg 3 "2015\-04\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_msg - Message data transfer operations
@@ -190,7 +190,7 @@ See fi_getinfo for additional details on FI_REMOTE_CQ_DATA.
 .PP
 \f[I]FI_COMPLETION\f[] : Indicates that a completion entry should be
 generated for the specified operation.
-The endpoint must be bound to an event queue with FI_COMPLETION that
+The endpoint must be bound to a completion queue with FI_COMPLETION that
 corresponds to the specified operation, or this flag is ignored.
 .PP
 \f[I]FI_MORE\f[] : Indicates that the user has additional requests that

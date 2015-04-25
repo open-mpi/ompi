@@ -56,8 +56,7 @@ int sock_cntr_progress(struct sock_cntr *cntr)
 	struct sock_rx_ctx *rx_ctx;
 	struct dlist_entry *entry;
 
-	if (cntr->domain->progress_mode == FI_PROGRESS_AUTO && 
-	    !sock_progress_thread_wait)
+	if (cntr->domain->progress_mode == FI_PROGRESS_AUTO)
 		return 0;
 
 	fastlock_acquire(&cntr->list_lock);
@@ -359,11 +358,11 @@ int sock_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
 	pthread_mutex_init(&_cntr->mut, NULL);
 	fastlock_init(&_cntr->list_lock);
 
-	atomic_init(&_cntr->ref, 0);
-	atomic_init(&_cntr->err_cnt, 0);
+	atomic_initialize(&_cntr->ref, 0);
+	atomic_initialize(&_cntr->err_cnt, 0);
 
-	atomic_init(&_cntr->value, 0);
-	atomic_init(&_cntr->threshold, ~0);
+	atomic_initialize(&_cntr->value, 0);
+	atomic_initialize(&_cntr->threshold, ~0);
 
 	dlist_init(&_cntr->tx_list);
 	dlist_init(&_cntr->rx_list);

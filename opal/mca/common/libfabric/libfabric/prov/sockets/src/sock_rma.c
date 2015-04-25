@@ -34,7 +34,6 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -88,9 +87,12 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 		return -FI_EINVAL;
 	}
 
-	assert(tx_ctx->enabled && 
-	       msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT &&
-	       msg->rma_iov_count <= SOCK_EP_MAX_IOV_LIMIT);
+	if (msg->iov_count > SOCK_EP_MAX_IOV_LIMIT ||
+		msg->rma_iov_count > SOCK_EP_MAX_IOV_LIMIT)
+		return -FI_EINVAL;
+	
+	if (!tx_ctx->enabled)
+		return -FI_EOPBADSTATE;
 
 	if (sock_ep->connected) {
 		conn = sock_ep_lookup_conn(sock_ep);
@@ -111,7 +113,8 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 		goto err;
 	}
 
-	flags |= tx_ctx->attr.op_flags;	
+	if (flags & SOCK_USE_OP_FLAGS)
+		flags |= tx_ctx->attr.op_flags;	
 	memset(&tx_op, 0, sizeof(struct sock_op));
 	tx_op.op = SOCK_OP_READ;
 	tx_op.src_iov_len = msg->rma_iov_count;
@@ -120,10 +123,6 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 	sock_tx_ctx_write_op_send(tx_ctx, &tx_op, flags, (uintptr_t) msg->context,
 			msg->addr, (uintptr_t) msg->msg_iov[0].iov_base,
 			sock_ep, conn);
-
-	if (flags & FI_REMOTE_CQ_DATA) {
-		sock_tx_ctx_write(tx_ctx, &msg->data, sizeof(msg->data));
-	}
 
 	src_len = 0;
 	for (i = 0; i< msg->rma_iov_count; i++) {
@@ -153,7 +152,6 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 	return 0;
 
 err:
-	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -182,7 +180,7 @@ static ssize_t sock_ep_rma_read(struct fid_ep *ep, void *buf, size_t len,
 	msg.addr = src_addr;
 	msg.context = context;
 
-	return sock_ep_rma_readmsg(ep, &msg, 0);
+	return sock_ep_rma_readmsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_readv(struct fid_ep *ep, const struct iovec *iov,
@@ -210,7 +208,7 @@ static ssize_t sock_ep_rma_readv(struct fid_ep *ep, const struct iovec *iov,
 	msg.addr = src_addr;
 	msg.context = context;
 
-	return sock_ep_rma_readmsg(ep, &msg, 0);
+	return sock_ep_rma_readmsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep, 
@@ -241,9 +239,13 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 		return -FI_EINVAL;
 	}
 
-	assert(tx_ctx->enabled && 
-	       msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT &&
-	       msg->rma_iov_count <= SOCK_EP_MAX_IOV_LIMIT);
+	if (msg->iov_count > SOCK_EP_MAX_IOV_LIMIT || 
+		msg->rma_iov_count > SOCK_EP_MAX_IOV_LIMIT)
+		return -FI_EINVAL;
+	
+	if (!tx_ctx->enabled)
+		return -FI_EOPBADSTATE;
+
 	if (sock_ep->connected) {
 		conn = sock_ep_lookup_conn(sock_ep);
 	} else {
@@ -253,7 +255,8 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	if (!conn)
 		return -FI_EAGAIN;
 
-	flags |= tx_ctx->attr.op_flags;
+	if (flags & SOCK_USE_OP_FLAGS)
+		flags |= tx_ctx->attr.op_flags;
 	memset(&tx_op, 0, sizeof(struct sock_op));
 	tx_op.op = SOCK_OP_WRITE;
 	tx_op.dest_iov_len = msg->rma_iov_count;
@@ -263,7 +266,10 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 		for (i=0; i< msg->iov_count; i++) {
 			total_len += msg->msg_iov[i].iov_len;
 		}
-		assert(total_len <= SOCK_EP_MAX_INJECT_SZ);
+		if (total_len > SOCK_EP_MAX_INJECT_SZ) {
+			ret = -FI_EINVAL;
+			goto err;
+		}
 		tx_op.src_iov_len = total_len;
 	} else {
 		total_len += msg->iov_count * sizeof(union sock_iov);
@@ -323,7 +329,6 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	return 0;
 
 err:
-	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -354,7 +359,7 @@ static ssize_t sock_ep_rma_write(struct fid_ep *ep, const void *buf,
 	msg.addr = dest_addr;
 	msg.context = context;
 
-	return sock_ep_rma_writemsg(ep, &msg, 0);
+	return sock_ep_rma_writemsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_writev(struct fid_ep *ep, 
@@ -384,7 +389,7 @@ static ssize_t sock_ep_rma_writev(struct fid_ep *ep,
 	msg.context = context;
 	msg.addr = dest_addr;
 
-	return sock_ep_rma_writemsg(ep, &msg, 0);
+	return sock_ep_rma_writemsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_writedata(struct fid_ep *ep, const void *buf, 
@@ -413,7 +418,7 @@ static ssize_t sock_ep_rma_writedata(struct fid_ep *ep, const void *buf,
 	msg.context = context;
 	msg.data = data;
 
-	return sock_ep_rma_writemsg(ep, &msg, FI_REMOTE_CQ_DATA);
+	return sock_ep_rma_writemsg(ep, &msg, FI_REMOTE_CQ_DATA | SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_inject(struct fid_ep *ep, const void *buf, 
@@ -439,7 +444,8 @@ static ssize_t sock_ep_rma_inject(struct fid_ep *ep, const void *buf,
 	msg.msg_iov = &msg_iov;
 	msg.addr = dest_addr;
 
-	return sock_ep_rma_writemsg(ep, &msg, FI_INJECT | SOCK_NO_COMPLETION);
+	return sock_ep_rma_writemsg(ep, &msg, FI_INJECT | 
+				    SOCK_NO_COMPLETION | SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_rma_injectdata(struct fid_ep *ep, const void *buf, 
@@ -466,7 +472,7 @@ static ssize_t sock_ep_rma_injectdata(struct fid_ep *ep, const void *buf,
 	msg.addr = dest_addr;
 	msg.data = data;
 	return sock_ep_rma_writemsg(ep, &msg, FI_INJECT | FI_REMOTE_CQ_DATA |
-		SOCK_NO_COMPLETION);
+		SOCK_NO_COMPLETION | SOCK_USE_OP_FLAGS);
 }
 
 

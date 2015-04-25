@@ -1,4 +1,4 @@
-.TH fi_mr 3 "2015\-04\-02" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_mr 3 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_mr - Memory region operations
@@ -100,26 +100,47 @@ buffers before using them for local operations (e.g.
 send and receive data buffers), and the mem_desc parameter into data
 transfer operations is ignored.
 .PP
-Providers may support applications registering any range of addresses in
-their virtual address space, whether or not those addresses are back by
-physical pages or have been allocated to the app.
-Support for this ability is specified through the FI_DYNAMIC_MR
-capability flag.
-Providers that lack this capability require that registered memory
-regions be backed by allocated memory pages.
+Further behavior of memory registration operations is controlled based
+on the mr_mode field in the domain attribute.
 .PP
-The attributes of a registered memory region may be specified by either
-the provider or, if supported, the application.
-Relevant attributes include the MR key associated with the region and
-the address (offset) used by peer applications when accessing the region
-through RMA or atomic operations.
-The FI_PROV_MR_ATTR mode bit indicates if the provider will supply these
-attribute values, or if the application may select them.
-Provider supplied values will require that an application exchange the
-memory region attributes with peers if RMA is required.
+\f[I]Basic Memory Registration Mode\f[] : If the mr_mode field is set to
+FI_MR_BASIC, then memory registration operations are set to basic mode.
+In basic mode, registration occurs on allocated data buffers, and the MR
+attributes are selected by the provider.
+.PP
+Basic mode uses provider assigned attributes for the registered buffers.
+The local memory descriptor and remote memory key are selected by the
+provider.
+The address used to access a buffer as the target of an RMA or atomic
+operation is the same as the virtual address of the buffer.
+.PP
+Applications that support the basic registration mode will need to
+exchange MR parameters with remote peers for RMA and atomic operations.
+The exchanged data should include both the address of the memory region
+as well as the MR key.
+.PP
+\f[I]Scalable Memory Registration Mode\f[] : If the mr_mode field is set
+to FI_MR_SCALABLE, then memory registration operations are set to
+scalable mode.
+In scalable mode, registration occurs on memory address ranges, and the
+MR attributes are selected by the user.
+.PP
+Memory regions registered as the target of RMA and atomic operations are
+associated with a MR key selected by the application.
+If local registrations are required (see FI_LOCAL_MR mode), the local
+descriptor will be the same as the remote key.
+The resulting memory region will be accessible by remote peers starting
+at a base address of 0.
+Because scalable registration mode refers to memory regions, versus data
+buffers, the address ranges given for a registration request do not need
+to map to data buffers allocated by the application at the time the
+registration call is made.
+That is, an application can register any range of addresses in their
+virtual address space, whether or not those addresses are backed by
+physical pages or have been allocated.
 .PP
 The registrations functions -- fi_mr_reg, fi_mr_regv, and fi_mr_regattr
--- are used to register one or more memory buffers with fabric
+-- are used to register one or more memory regions with fabric
 resources.
 The main difference between registration functions are the number and
 type of parameters that they accept as input.
@@ -182,20 +203,12 @@ Because MR keys must be provided by a remote process, an application can
 use the requested_key parameter to indicate that a specific key value be
 returned.
 Support for user requested keys is provider specific and is determined
-by the FI_PROV_MR_ATTR mode bit.
-Access domains must be opened with the FI_PROV_MR_ATTR mode cleared in
-order to enable support for application selectable MR keys.
-The requested_key parameter is ignored for memory registration calls
-unless the access flags include either FI_REMOTE_READ or
-FI_REMOTE_WRITE.
+by the mr_mode domain attribute.
 .PP
 Remote RMA and atomic operations indicate the location within a
 registered memory region by specifying an address.
-By default, the RMA target address is a 0-based offset between the
-registered buf address and the end of the registered memory region (buf
-+ len), unless the FI_PROV_MR_ATTR mode bit has been set.
-If the FI_PROV_MR_ATTR mode bit is enabled, the RMA target address
-defaults to the starting virtual address of buf.
+The location is referenced by adding the offset to either the base
+virtual address of the buffer or to 0, depending on the mr_mode.
 .PP
 The offset parameter is reserved for future use and must be 0.
 .PP
@@ -259,19 +272,7 @@ bitwise OR of the following flags.
 write or atomic operation modify the memory region.
 .SH FLAGS
 .PP
-The following flags are usable with fi_mr_reg, fi_mr_regv,
-fi_mr_regattr.
-.PP
-\f[I]FI_MR_KEY\f[] : Indicates that the registered memory region should
-be associated with the specified requested_key.
-If this flag is not provided, the requested_key parameter is ignored.
-It is an error to specify this flag on domains with the FI_PROV_MR_ATTR
-mode bit set.
-.PP
-\f[I]FI_MR_OFFSET\f[] : Associates the registered memory region with the
-specified offset as its base target address.
-If this flag is not provided, the offset parameter is ignored.
-When set, any overlapping registration is replaced.
+Flags are reserved for future use and must be 0.
 .SH RETURN VALUES
 .PP
 Returns 0 on success.

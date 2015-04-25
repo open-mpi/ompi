@@ -70,6 +70,8 @@ usdf_pep_bind(fid_t fid, fid_t bfid, uint64_t flags)
 {
 	struct usdf_pep *pep;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	pep = pep_fidtou(fid);
 
 	switch (bfid->fclass) {
@@ -157,7 +159,7 @@ usdf_pep_conn_info(struct usdf_connreq *crp)
 	sin->sin_port = reqp->creq_port;
 
 	ip->dest_addr = sin;
-	ip->connreq = (fi_connreq_t)crp;
+	ip->handle = (fid_t) crp;
 	return ip;
 fail:
 	fi_freeinfo(ip);
@@ -321,6 +323,8 @@ usdf_pep_listen(struct fid_pep *fpep)
 	struct usdf_fabric *fp;
 	int ret;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	pep = pep_ftou(fpep);
 	fp = pep->pep_fabric;
 
@@ -344,13 +348,15 @@ usdf_pep_listen(struct fid_pep *fpep)
 static ssize_t
 usdf_pep_cancel(fid_t fid, void *context)
 {
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 	return -FI_EINVAL;
 }
 
 static int
-usdf_pep_reject(struct fid_pep *pep, fi_connreq_t connreq,
+usdf_pep_reject(struct fid_pep *pep, fid_t handle,
 		const void *param, size_t paramlen)
 {
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 	return -FI_ENOSYS;
 }
 
@@ -385,6 +391,7 @@ usdf_pep_grow_backlog(struct usdf_pep *pep)
 		if (crp == NULL) {
 			return -FI_ENOMEM;
 		}
+		crp->handle.fclass = FI_CLASS_CONNREQ;
 		pthread_spin_lock(&pep->pep_cr_lock);
 		TAILQ_INSERT_TAIL(&pep->pep_cr_free, crp, cr_link);
 		++pep->pep_cr_alloced;
@@ -397,6 +404,8 @@ static int
 usdf_pep_close(fid_t fid)
 {
 	struct usdf_pep *pep;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	pep = pep_fidtou(fid);
 	if (atomic_get(&pep->pep_refcnt) > 0) {
@@ -435,6 +444,7 @@ static struct fi_ops_ep usdf_pep_base_ops = {
 
 static struct fi_ops_cm usdf_pep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
+	.setname = fi_no_setname,
 	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
@@ -452,6 +462,8 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 	struct usdf_fabric *fp;
 	int ret;
 	int optval;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	if (info->ep_attr->type != FI_EP_MSG) {
 		return -FI_ENODEV;
@@ -522,7 +534,7 @@ usdf_pep_open(struct fid_fabric *fabric, struct fi_info *info,
 		goto fail;
 	}
 
-	atomic_init(&pep->pep_refcnt, 0);
+	atomic_initialize(&pep->pep_refcnt, 0);
 	atomic_inc(&fp->fab_refcnt);
 
 	*pep_o = pep_utof(pep);

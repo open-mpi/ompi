@@ -57,8 +57,7 @@ int sock_cq_progress(struct sock_cq *cq)
 	struct sock_rx_ctx *rx_ctx;
 	struct dlist_entry *entry;
 
-	if (cq->domain->progress_mode == FI_PROGRESS_AUTO && 
-	    !sock_progress_thread_wait)
+	if (cq->domain->progress_mode == FI_PROGRESS_AUTO)
 		return 0;
 
 	fastlock_acquire(&cq->list_lock);
@@ -230,8 +229,11 @@ static ssize_t sock_cq_sreadfrom(struct fid_cq *cq, void *buf, size_t count,
 	ssize_t cq_entry_len, avail;
 	
 	sock_cq = container_of(cq, struct sock_cq, cq_fid);
-	cq_entry_len = sock_cq->cq_entry_size;
+	if (rbused(&sock_cq->cqerr_rb)) {
+		return -FI_EAVAIL;
+	}
 
+	cq_entry_len = sock_cq->cq_entry_size;
 	if (sock_cq->attr.wait_cond == FI_CQ_COND_THRESHOLD) {
 		threshold = MIN((uintptr_t) cond, count);
 	}else{
@@ -459,7 +461,7 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	if (!sock_cq)
 		return -FI_ENOMEM;
 	
-	atomic_init(&sock_cq->ref, 0);
+	atomic_initialize(&sock_cq->ref, 0);
 	sock_cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	sock_cq->cq_fid.fid.context = context;
 	sock_cq->cq_fid.fid.ops = &sock_cq_fi_ops;
@@ -574,7 +576,7 @@ int sock_cq_report_error(struct sock_cq *cq, struct sock_pe_entry *entry,
 	if (entry->type == SOCK_PE_RX) {
 		err_entry.buf = (void *) (uintptr_t) entry->pe.rx.rx_iov[0].iov.addr;
 	}else {
-		err_entry.buf = (void *) (uintptr_t) entry->pe.tx.data.tx_iov[0].src.iov.addr;
+		err_entry.buf = (void *) (uintptr_t) entry->pe.tx.tx_iov[0].src.iov.addr;
 	}
 
 	rbwrite(&cq->cqerr_rb, &err_entry, sizeof(err_entry));

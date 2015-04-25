@@ -267,9 +267,7 @@ static int psmx_mr_reg(struct fid *fid, const void *buf, size_t len,
 	domain = container_of(fid, struct fid_domain, fid);
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
-	if (flags & FI_MR_KEY) {
-		if (domain_priv->mode & FI_PROV_MR_ATTR)
-			return -FI_EBADFLAGS;
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		if (psmx_mr_hash_get(requested_key))
 			return -FI_ENOKEY;
 	}
@@ -282,10 +280,9 @@ static int psmx_mr_reg(struct fid *fid, const void *buf, size_t len,
 	mr_priv->mr.fid.context = context;
 	mr_priv->mr.fid.ops = &psmx_fi_ops;
 	mr_priv->mr.mem_desc = mr_priv;
-	if (flags & FI_MR_KEY) {
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		key = requested_key;
-	}
-	else {
+	} else {
 		key = (uint64_t)(uintptr_t)mr_priv;
 		while (psmx_mr_hash_get(key))
 			key++;
@@ -297,7 +294,7 @@ static int psmx_mr_reg(struct fid *fid, const void *buf, size_t len,
 	mr_priv->iov_count = 1;
 	mr_priv->iov[0].iov_base = (void *)buf;
 	mr_priv->iov[0].iov_len = len;
-	mr_priv->offset = (flags & FI_MR_OFFSET) ?
+	mr_priv->offset = (domain_priv->mr_mode == FI_MR_SCALABLE) ?
 				((uint64_t)mr_priv->iov[0].iov_base - offset) :
 				0;
 
@@ -325,9 +322,7 @@ static int psmx_mr_regv(struct fid *fid,
 	domain = container_of(fid, struct fid_domain, fid);
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
-	if (flags & FI_MR_KEY) {
-		if (domain_priv->mode & FI_PROV_MR_ATTR)
-			return -FI_EBADFLAGS;
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		if (psmx_mr_hash_get(requested_key))
 			return -FI_ENOKEY;
 	}
@@ -345,10 +340,9 @@ static int psmx_mr_regv(struct fid *fid,
 	mr_priv->mr.fid.context = context;
 	mr_priv->mr.fid.ops = &psmx_fi_ops;
 	mr_priv->mr.mem_desc = mr_priv;
-	if (flags & FI_MR_KEY) {
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		key = requested_key;
-	}
-	else {
+	} else {
 		key = (uint64_t)(uintptr_t)mr_priv;
 		while (psmx_mr_hash_get(key))
 			key++;
@@ -361,7 +355,7 @@ static int psmx_mr_regv(struct fid *fid,
 	for (i=0; i<count; i++)
 		mr_priv->iov[i] = iov[i];
 	psmx_mr_normalize_iov(mr_priv->iov, &mr_priv->iov_count);
-	mr_priv->offset = (flags & FI_MR_OFFSET) ?
+	mr_priv->offset = (domain_priv->mr_mode == FI_MR_SCALABLE) ?
 				((uint64_t)mr_priv->iov[0].iov_base - offset) :
 				0;
 
@@ -387,9 +381,7 @@ static int psmx_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	domain = container_of(fid, struct fid_domain, fid);
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
-	if (flags & FI_MR_KEY) {
-		if (domain_priv->mode & FI_PROV_MR_ATTR)
-			return -FI_EBADFLAGS;
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		if (psmx_mr_hash_get(attr->requested_key))
 			return -FI_ENOKEY;
 	}
@@ -410,10 +402,9 @@ static int psmx_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	mr_priv->mr.fid.context = attr->context;
 	mr_priv->mr.fid.ops = &psmx_fi_ops;
 	mr_priv->mr.mem_desc = mr_priv;
-	if (flags & FI_MR_KEY) {
+	if (domain_priv->mr_mode == FI_MR_SCALABLE) {
 		key = attr->requested_key;
-	}
-	else {
+	} else {
 		key = (uint64_t)(uintptr_t)mr_priv;
 		while (psmx_mr_hash_get(key))
 			key++;
@@ -426,7 +417,7 @@ static int psmx_mr_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	for (i=0; i<attr->iov_count; i++)
 		mr_priv->iov[i] = attr->mr_iov[i];
 	psmx_mr_normalize_iov(mr_priv->iov, &mr_priv->iov_count);
-	mr_priv->offset = (flags & FI_MR_OFFSET) ?
+	mr_priv->offset = (domain_priv->mr_mode == FI_MR_SCALABLE) ?
 				((uint64_t)mr_priv->iov[0].iov_base - attr->offset) :
 				0;
 

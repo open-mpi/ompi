@@ -186,6 +186,7 @@ usdf_msg_recv(struct fid_ep *fep, void *buf, size_t len,
 
 	rqe = TAILQ_FIRST(&rx->r.msg.rx_free_rqe);
 	TAILQ_REMOVE(&rx->r.msg.rx_free_rqe, rqe, ms_link);
+	--rx->r.msg.rx_num_free_rqe;
 
 	rqe->ms_context = context;
 	rqe->ms_iov[0].iov_base = buf;
@@ -196,6 +197,7 @@ usdf_msg_recv(struct fid_ep *fep, void *buf, size_t len,
 	rqe->ms_cur_ptr = buf;
 	rqe->ms_iov_resid = len;
 	rqe->ms_length = 0;
+	rqe->ms_resid = len;
 
 	TAILQ_INSERT_TAIL(&rx->r.msg.rx_posted_rqe, rqe, ms_link);
 
@@ -219,6 +221,7 @@ usdf_msg_send(struct fid_ep *fep, const void *buf, size_t len, void *desc,
 	struct usdf_tx *tx;
 	struct usdf_msg_qe *wqe;
 	struct usdf_domain *udp;
+	uint64_t op_flags;
 
 	ep = ep_ftou(fep);
 	tx = ep->ep_tx;
@@ -244,6 +247,10 @@ usdf_msg_send(struct fid_ep *fep, const void *buf, size_t len, void *desc,
 	wqe->ms_resid = len;
 	wqe->ms_length = len;
 
+	op_flags = ep->ep_tx->tx_attr.op_flags;
+	wqe->ms_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(op_flags & FI_COMPLETION) ? 1 : 0;
+
 	/* add send to EP, and add EP to TX list if not present */
 	TAILQ_INSERT_TAIL(&ep->e.msg.ep_posted_wqe, wqe, ms_link);
 	usdf_msg_ep_ready(ep);
@@ -263,23 +270,199 @@ usdf_msg_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
 }
 
 ssize_t
-usdf_msg_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
+usdf_msg_sendv(struct fid_ep *fep, const struct iovec *iov, void **desc,
                  size_t count, fi_addr_t dest_addr, void *context)
 {
-	return -FI_ENOSYS;
+	int i;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_msg_qe *wqe;
+	struct usdf_domain *udp;
+	size_t tot_len;
+	uint64_t op_flags;
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+
+	if (TAILQ_EMPTY(&tx->t.msg.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	wqe = TAILQ_FIRST(&tx->t.msg.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.msg.tx_free_wqe, wqe, ms_link);
+
+	wqe->ms_context = context;
+	tot_len = 0;
+	for (i = 0; i < count; ++i) {
+		wqe->ms_iov[i].iov_base = (void *)iov[i].iov_base;
+		wqe->ms_iov[i].iov_len = iov[i].iov_len;
+		tot_len += iov[i].iov_len;
+	}
+	wqe->ms_last_iov = count - 1;
+
+	wqe->ms_cur_iov = 0;
+	wqe->ms_cur_ptr = iov[0].iov_base;
+	wqe->ms_iov_resid = iov[0].iov_len;
+	wqe->ms_resid = tot_len;
+	wqe->ms_length = tot_len;
+
+	op_flags = ep->ep_tx->tx_attr.op_flags;
+	wqe->ms_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(op_flags & FI_COMPLETION) ? 1 : 0;
+
+	/* add send to EP, and add EP to TX list if not present */
+	TAILQ_INSERT_TAIL(&ep->e.msg.ep_posted_wqe, wqe, ms_link);
+	usdf_msg_ep_ready(ep);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+
+	usdf_domain_progress(udp);
+
+	return 0;
 }
 
 ssize_t
-usdf_msg_sendmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
+usdf_msg_sendmsg(struct fid_ep *fep, const struct fi_msg *msg, uint64_t flags)
 {
-	return -FI_ENOSYS;
+	int i;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_msg_qe *wqe;
+	struct usdf_domain *udp;
+	size_t tot_len;
+	const struct iovec *iov;
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+	iov = msg->msg_iov;
+
+	if (flags & ~USDF_MSG_SUPP_SENDMSG_FLAGS) {
+		USDF_DBG("one or more flags in 0x%llx not supported\n", flags);
+		return -FI_EOPNOTSUPP;
+	}
+
+	/* check for inject overrun before acquiring lock and allocating wqe,
+	 * easier to unwind this way */
+	if (flags & FI_INJECT) {
+		iov = msg->msg_iov;
+		tot_len = 0;
+		for (i = 0; i < msg->iov_count; ++i) {
+			tot_len += iov[i].iov_len;
+			if (tot_len > USDF_MSG_MAX_INJECT_SIZE) {
+				USDF_DBG_SYS(EP_DATA, "max inject len exceeded (%zu)\n",
+						tot_len);
+				return -FI_EINVAL;
+			}
+		}
+	}
+
+	if (TAILQ_EMPTY(&tx->t.msg.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	wqe = TAILQ_FIRST(&tx->t.msg.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.msg.tx_free_wqe, wqe, ms_link);
+
+	wqe->ms_context = msg->context;
+	if (flags & FI_INJECT) {
+		tot_len = 0;
+		for (i = 0; i < msg->iov_count; ++i) {
+			assert(tot_len + iov[i].iov_len <= USDF_MSG_MAX_INJECT_SIZE);
+			memcpy(&wqe->ms_inject_buf[tot_len], iov[i].iov_base,
+				iov[i].iov_len);
+			tot_len += iov[i].iov_len;
+		}
+		wqe->ms_iov[0].iov_base = wqe->ms_inject_buf;
+		wqe->ms_iov[0].iov_len = tot_len;
+		wqe->ms_last_iov = 0;
+
+	} else {
+		tot_len = 0;
+		for (i = 0; i < msg->iov_count; ++i) {
+			wqe->ms_iov[i].iov_base = (void *)iov[i].iov_base;
+			wqe->ms_iov[i].iov_len = iov[i].iov_len;
+			tot_len += iov[i].iov_len;
+		}
+		wqe->ms_last_iov = msg->iov_count - 1;
+	}
+
+	wqe->ms_cur_iov = 0;
+	wqe->ms_resid = tot_len;
+	wqe->ms_length = tot_len;
+	wqe->ms_cur_ptr = iov[0].iov_base;
+	wqe->ms_iov_resid = iov[0].iov_len;
+
+	wqe->ms_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(flags & FI_COMPLETION) ? 1 : 0;
+
+	/* add send to EP, and add EP to TX list if not present */
+	TAILQ_INSERT_TAIL(&ep->e.msg.ep_posted_wqe, wqe, ms_link);
+	usdf_msg_ep_ready(ep);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+
+	usdf_domain_progress(udp);
+
+	return 0;
 }
 
 ssize_t
-usdf_msg_inject(struct fid_ep *ep, const void *buf, size_t len,
+usdf_msg_inject(struct fid_ep *fep, const void *buf, size_t len,
 		fi_addr_t dest_addr)
 {
-	return -FI_ENOSYS;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_msg_qe *wqe;
+	struct usdf_domain *udp;
+
+	if (len > USDF_MSG_MAX_INJECT_SIZE) {
+		USDF_WARN("cannot inject more than inject_size bytes\n");
+		return -EINVAL;
+	}
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+
+	if (TAILQ_EMPTY(&tx->t.msg.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	wqe = TAILQ_FIRST(&tx->t.msg.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.msg.tx_free_wqe, wqe, ms_link);
+
+	wqe->ms_context = NULL;
+	memcpy(wqe->ms_inject_buf, buf, len);
+	wqe->ms_iov[0].iov_base = wqe->ms_inject_buf;
+	wqe->ms_iov[0].iov_len = len;
+	wqe->ms_last_iov = 0;
+
+	wqe->ms_cur_iov = 0;
+	wqe->ms_cur_ptr = buf;
+	wqe->ms_iov_resid = len;
+	wqe->ms_resid = len;
+	wqe->ms_length = len;
+
+	/* fi_inject() never signals a completion */
+	wqe->ms_signal_comp = 0;
+
+	/* add send to EP, and add EP to TX list if not present */
+	TAILQ_INSERT_TAIL(&ep->e.msg.ep_posted_wqe, wqe, ms_link);
+	usdf_msg_ep_ready(ep);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+
+	usdf_domain_progress(udp);
+
+	return 0;
 }
 
 ssize_t
@@ -417,7 +600,7 @@ usdf_msg_send_segment(struct usdf_tx *tx, struct usdf_ep *ep)
 
 		/* add packet lengths */
 		sent = ep->ep_domain->dom_fabric->fab_dev_attrs->uda_mtu -
-			space;
+			sizeof(*hdr) - space;
 		hdr->hdr.uh_ip.tot_len = htons(
 				sent + sizeof(struct rudp_pkt) -
 				sizeof(struct ether_header));
@@ -590,11 +773,15 @@ static void inline
 usdf_msg_recv_complete(struct usdf_ep *ep, struct usdf_msg_qe *rqe)
 {
 	struct usdf_cq_hard *hcq;
+	struct usdf_rx *rx;
 
-	hcq = ep->ep_rx->r.msg.rx_hcq;
+	rx = ep->ep_rx;
+	hcq = rx->r.msg.rx_hcq;
+
 	hcq->cqh_post(hcq, rqe->ms_context, rqe->ms_length);
 
-	TAILQ_INSERT_HEAD(&ep->ep_rx->r.msg.rx_free_rqe, rqe, ms_link);
+	TAILQ_INSERT_HEAD(&rx->r.msg.rx_free_rqe, rqe, ms_link);
+	++rx->r.msg.rx_num_free_rqe;
 }
 
 static inline void
@@ -658,7 +845,10 @@ usdf_msg_process_ack(struct usdf_ep *ep, uint16_t seq)
 		wqe = TAILQ_FIRST(&ep->e.msg.ep_sent_wqe);
 		if (RUDP_SEQ_LE(wqe->ms_last_seq, seq)) {
 			TAILQ_REMOVE(&ep->e.msg.ep_sent_wqe, wqe, ms_link);
-			hcq->cqh_post(hcq, wqe->ms_context, wqe->ms_length);
+			USDF_DBG_SYS(EP_DATA, "send complete, signal_comp=%u\n", wqe->ms_signal_comp); // XXX DJG
+			if (wqe->ms_signal_comp)
+				hcq->cqh_post(hcq, wqe->ms_context,
+						wqe->ms_length);
 
 			TAILQ_INSERT_HEAD(&ep->ep_tx->t.msg.tx_free_wqe,
 					wqe, ms_link);
@@ -780,6 +970,7 @@ usdf_msg_handle_recv(struct usdf_domain *udp, struct usd_completion *comp)
 	uint8_t *rqe_ptr;
 	size_t cur_iov;
 	size_t iov_resid;
+	size_t ms_resid;
 	size_t rxlen;
 	size_t copylen;
 	int ret;
@@ -831,12 +1022,14 @@ usdf_msg_handle_recv(struct usdf_domain *udp, struct usd_completion *comp)
 		rqe_ptr = (uint8_t *)rqe->ms_cur_ptr;
 		iov_resid = rqe->ms_iov_resid;
 		cur_iov = rqe->ms_cur_iov;
+		ms_resid = rqe->ms_resid;
 		while (rxlen > 0) {
 			copylen = MIN(rxlen, iov_resid);
 			memcpy(rqe_ptr, rx_ptr, copylen);
 			rx_ptr += copylen;
 			rxlen -= copylen;
 			iov_resid -= copylen;
+			ms_resid -= copylen;
 			if (iov_resid == 0) {
 				if (cur_iov == rqe->ms_last_iov) {
 					break;
@@ -848,6 +1041,10 @@ usdf_msg_handle_recv(struct usdf_domain *udp, struct usd_completion *comp)
 				rqe_ptr += copylen;
 			}
 		}
+		rqe->ms_cur_ptr = rqe_ptr;
+		rqe->ms_iov_resid = iov_resid;
+		rqe->ms_cur_iov = cur_iov;
+		rqe->ms_resid = ms_resid;
 		break;
 
 	case RUDP_OP_LAST:
@@ -872,12 +1069,14 @@ usdf_msg_handle_recv(struct usdf_domain *udp, struct usd_completion *comp)
 		rqe_ptr = (uint8_t *)rqe->ms_cur_ptr;
 		iov_resid = rqe->ms_iov_resid;
 		cur_iov = rqe->ms_cur_iov;
+		ms_resid = rqe->ms_resid;
 		while (rxlen > 0) {
 			copylen = MIN(rxlen, iov_resid);
 			memcpy(rqe_ptr, rx_ptr, copylen);
 			rx_ptr += copylen;
 			rxlen -= copylen;
 			iov_resid -= copylen;
+			ms_resid -= copylen;
 			if (iov_resid == 0) {
 				if (cur_iov == rqe->ms_last_iov) {
 					break;
@@ -889,6 +1088,12 @@ usdf_msg_handle_recv(struct usdf_domain *udp, struct usd_completion *comp)
 				rqe_ptr += copylen;
 			}
 		}
+		/*
+		* Normally we need to store back the updated values of
+		* ms_resid, ms_cur_iov, ms_cur_ptr and ms_iov_resid. But
+		* being the last step of the process, updating these
+		* values are not necessary
+		*/
 		if (rxlen > 0) {
 			rqe->ms_length -= rxlen;
 /* printf("RQE truncated XXX\n"); */
@@ -924,4 +1129,34 @@ usdf_msg_hcq_progress(struct usdf_cq_hard *hcq)
 			break;
 		}
 	}
+}
+
+ssize_t usdf_msg_rx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+	struct usdf_rx *rx;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
+
+	ep = ep_ftou(fep);
+	rx = ep->ep_rx;
+	if (rx == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	return rx->r.msg.rx_num_free_rqe;
+}
+
+ssize_t usdf_msg_tx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	if (tx == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	return tx->t.msg.tx_num_free_wqe;
 }
