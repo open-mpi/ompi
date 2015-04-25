@@ -45,9 +45,9 @@ int main(int argc, char *argv[])
 
 /* Only have the body of this test if we have thread support */
 
-opal_mutex_t mutex;
-opal_condition_t thr1_cond;
-opal_condition_t thr2_cond;
+opal_mutex_t mutex = {};
+opal_condition_t thr1_cond = {};
+opal_condition_t thr2_cond = {};
 
 static volatile int thr1_count = 0;
 static volatile int thr2_count = 0;
