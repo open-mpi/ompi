@@ -113,6 +113,8 @@ int psmx_am_init(struct psmx_fid_domain *domain)
 	size_t size;
 	int err = 0;
 
+	FI_INFO(&psmx_prov, FI_LOG_CORE, "\n");
+
 	if (!psmx_am_handlers_initialized) {
 		err = psm_am_get_parameters(psm_ep, &psmx_am_param,
 						sizeof(psmx_am_param), &size);

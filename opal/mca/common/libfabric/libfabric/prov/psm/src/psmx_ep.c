@@ -40,7 +40,7 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
 				"generic tagged ops.\n");
 		}
-		else if (ep->send_cq_event_flag && ep->recv_cq_event_flag) {
+		else if (ep->send_selective_completion && ep->recv_selective_completion) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_event_av_table;
 			else
@@ -48,7 +48,7 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
 				"tagged ops optimized for op_flags=0 and event suppression\n");
 		}
-		else if (ep->send_cq_event_flag) {
+		else if (ep->send_selective_completion) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_send_event_av_table;
 			else
@@ -56,7 +56,7 @@ static void psmx_ep_optimize_ops(struct psmx_fid_ep *ep)
 			FI_INFO(&psmx_prov, FI_LOG_EP_DATA,
 				"tagged ops optimized for op_flags=0 and send event suppression\n");
 		}
-		else if (ep->recv_cq_event_flag) {
+		else if (ep->recv_selective_completion) {
 			if (ep->av && ep->av->type == FI_AV_TABLE)
 				ep->ep.tagged = &psmx_tagged_ops_no_recv_event_av_table;
 			else
@@ -177,13 +177,13 @@ static int psmx_ep_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 			return -FI_EINVAL;
 		if (flags & FI_SEND) {
 			ep->send_cq = cq;
-			if (flags & FI_COMPLETION)
-				ep->send_cq_event_flag = 1;
+			if (flags & FI_SELECTIVE_COMPLETION)
+				ep->send_selective_completion = 1;
 		}
 		if (flags & FI_RECV) {
 			ep->recv_cq = cq;
-			if (flags & FI_COMPLETION)
-				ep->recv_cq_event_flag = 1;
+			if (flags & FI_SELECTIVE_COMPLETION)
+				ep->recv_selective_completion = 1;
 		}
 		psmx_ep_optimize_ops(ep);
 		break;
@@ -276,6 +276,16 @@ static int psmx_ep_control(fid_t fid, int command, void *arg)
 	return 0;
 }
 
+static ssize_t psmx_rx_size_left(struct fid_ep *ep)
+{
+	return 0x7fffffff; /* a random choice */
+}
+
+static ssize_t psmx_tx_size_left(struct fid_ep *ep)
+{
+	return 0x7fffffff; /* a random choice */
+}
+
 static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_ep_close,
@@ -291,8 +301,8 @@ static struct fi_ops_ep psmx_ep_ops = {
 	.setopt = psmx_ep_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
-	.rx_size_left = fi_no_rx_size_left,
-	.tx_size_left = fi_no_tx_size_left,
+	.rx_size_left = psmx_rx_size_left,
+	.tx_size_left = psmx_tx_size_left,
 };
 
 int psmx_ep_open(struct fid_domain *domain, struct fi_info *info,

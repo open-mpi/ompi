@@ -106,6 +106,8 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 	uint32_t cnt = 0;
 	void *dest_addr = NULL;
 	int ep_type = FI_EP_RDM;
+	int av_type = FI_AV_UNSPEC;
+	enum fi_mr_mode mr_mode = FI_MR_SCALABLE;
 	int caps = 0;
 	uint64_t max_tag_value = 0;
 	int err = -FI_ENODATA;
@@ -124,6 +126,17 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 		dest_addr = psmx_resolve_name(node, 0);
 
 	if (hints) {
+		switch (hints->addr_format) {
+		case FI_FORMAT_UNSPEC:
+		case FI_ADDR_PSMX:
+			break;
+		default:
+			FI_INFO(&psmx_prov, FI_LOG_CORE,
+				"hints->addr_format=%d, supported=%d,%d.\n",
+				hints->addr_format, FI_FORMAT_UNSPEC, FI_ADDR_PSMX);
+			goto err_out;
+		}
+
 		if (hints->ep_attr) {
 			switch (hints->ep_attr->type) {
 			case FI_EP_UNSPEC:
@@ -217,12 +230,44 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 			goto err_out;
 		}
 
-		if (hints->domain_attr && hints->domain_attr->name &&
-		    strncmp(hints->domain_attr->name, PSMX_DOMAIN_NAME, PSMX_DOMAIN_NAME_LEN)) {
-			FI_INFO(&psmx_prov, FI_LOG_CORE,
-				"hints->domain_name=%s, supported=psm\n",
-				hints->domain_attr->name);
-			goto err_out;
+		if (hints->domain_attr) {
+			if (hints->domain_attr->name &&
+			    strncmp(hints->domain_attr->name, PSMX_DOMAIN_NAME,
+				    PSMX_DOMAIN_NAME_LEN)) {
+				FI_INFO(&psmx_prov, FI_LOG_CORE,
+					"hints->domain_name=%s, supported=psm\n",
+					hints->domain_attr->name);
+				goto err_out;
+			}
+
+			switch (hints->domain_attr->av_type) {
+			case FI_AV_UNSPEC:
+			case FI_AV_MAP:
+			case FI_AV_TABLE:
+				av_type = hints->domain_attr->av_type;
+				break;
+			default:
+				FI_INFO(&psmx_prov, FI_LOG_CORE,
+					"hints->domain_attr->av_type=%d, supported=%d %d %d\n",
+					hints->domain_attr->av_type, FI_AV_UNSPEC, FI_AV_MAP,
+					FI_AV_TABLE);
+				goto err_out;
+			}
+
+			switch (hints->domain_attr->mr_mode) {
+			case FI_MR_UNSPEC:
+				break;
+			case FI_MR_BASIC:
+			case FI_MR_SCALABLE:
+				mr_mode = hints->domain_attr->mr_mode;
+				break;
+			default:
+				FI_INFO(&psmx_prov, FI_LOG_CORE,
+					"hints->domain_attr->mr_mode=%d, supported=%d %d %d\n",
+					hints->domain_attr->mr_mode, FI_MR_UNSPEC, FI_MR_BASIC,
+					FI_MR_SCALABLE);
+				goto err_out;
+			}
 		}
 
 		if (hints->ep_attr) {
@@ -253,6 +298,7 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 
 	psmx_info->ep_attr->type = ep_type;
 	psmx_info->ep_attr->protocol = FI_PROTO_PSMX;
+	psmx_info->ep_attr->protocol_version = PSM_VERNO;
 	psmx_info->ep_attr->max_msg_size = PSMX_MAX_MSG_SIZE;
 	psmx_info->ep_attr->mem_tag_format = fi_tag_format(max_tag_value);
 	psmx_info->ep_attr->tx_ctx_cnt = 1;
@@ -262,6 +308,19 @@ static int psmx_getinfo(uint32_t version, const char *node, const char *service,
 	psmx_info->domain_attr->control_progress = FI_PROGRESS_MANUAL;
 	psmx_info->domain_attr->data_progress = FI_PROGRESS_MANUAL;
 	psmx_info->domain_attr->name = strdup(PSMX_DOMAIN_NAME);
+	psmx_info->domain_attr->resource_mgmt = FI_RM_ENABLED;
+	psmx_info->domain_attr->av_type = av_type;
+	psmx_info->domain_attr->mr_mode = mr_mode;
+	psmx_info->domain_attr->mr_key_size = sizeof(uint64_t);
+	psmx_info->domain_attr->cq_data_size = 4;
+	psmx_info->domain_attr->cq_cnt = 65535;
+	psmx_info->domain_attr->ep_cnt = 65535;
+	psmx_info->domain_attr->tx_ctx_cnt = 1;
+	psmx_info->domain_attr->rx_ctx_cnt = 1;
+	psmx_info->domain_attr->max_ep_tx_ctx = 65535;
+	psmx_info->domain_attr->max_ep_rx_ctx = 1;
+	psmx_info->domain_attr->max_ep_stx_ctx = 65535;
+	psmx_info->domain_attr->max_ep_srx_ctx = 0;
 
 	psmx_info->next = NULL;
 	psmx_info->caps = (hints && hints->caps) ? hints->caps : caps;
@@ -328,7 +387,7 @@ static struct fi_ops_fabric psmx_fabric_ops = {
 	.size = sizeof(struct fi_ops_fabric),
 	.domain = psmx_domain_open,
 	.passive_ep = fi_no_passive_ep,
-	.eq_open = fi_no_eq_open,
+	.eq_open = psmx_eq_open,
 	.wait_open = psmx_wait_open,
 };
 

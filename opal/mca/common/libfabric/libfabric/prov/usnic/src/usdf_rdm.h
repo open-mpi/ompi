@@ -41,12 +41,17 @@
 #define USDF_RDM_SUPP_MODE (FI_LOCAL_MR)
 #define USDF_RDM_REQ_MODE (FI_LOCAL_MR)
 
+#define USDF_RDM_SUPP_SENDMSG_FLAGS \
+	(FI_INJECT_COMPLETE | FI_TRANSMIT_COMPLETE | FI_INJECT | FI_COMPLETION)
+
 #define USDF_RDM_MAX_SGE 8
 #define USDF_RDM_DFLT_SGE 8
 #define USDF_RDM_MAX_CTX_SIZE 1024
 #define USDF_RDM_DFLT_CTX_SIZE 128
 
 #define USDF_RDM_MAX_MSG UINT_MAX
+
+#define USDF_RDM_MAX_INJECT_SIZE 64
 
 #define USDF_RDM_FREE_BLOCK (16 * 1024)
 #define USDF_RDM_HASH_SIZE (64 * 1024)
@@ -69,6 +74,11 @@ struct usdf_rdm_qe {
 	const uint8_t *rd_cur_ptr;
 	size_t rd_resid;      	/* amount remaining in entire rdm */
 	size_t rd_iov_resid;    /* amount remaining in current iov */
+
+	/* points at buffer no larger than USDF_RDM_MAX_INJECT_SIZE */
+	uint8_t *rd_inject_buf;
+
+	uint8_t rd_signal_comp;
 
 	TAILQ_ENTRY(usdf_rdm_qe) rd_link;
 
@@ -158,5 +168,7 @@ ssize_t usdf_rdm_inject(struct fid_ep *ep, const void *buf, size_t len,
 	fi_addr_t src_addr);
 	
 
+ssize_t usdf_rdm_rx_size_left(struct fid_ep *fep);
+ssize_t usdf_rdm_tx_size_left(struct fid_ep *fep);
 
 #endif /* _USDF_RDM_H_ */

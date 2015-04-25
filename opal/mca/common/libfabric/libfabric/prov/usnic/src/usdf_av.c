@@ -233,6 +233,8 @@ usdf_am_insert_async(struct fid_av *fav, const void *addr, size_t count,
 	int ret;
 	int i;
 
+	USDF_TRACE_SYS(AV, "\n");
+
 	if ((flags & ~FI_MORE) != 0) {
 		return -FI_EBADFLAGS;
 	}
@@ -313,7 +315,7 @@ usdf_am_insert_async(struct fid_av *fav, const void *addr, size_t count,
 	/* resolve all addresses we can */
 	usdf_av_insert_progress(insert);
 
-	return count;
+	return 0;
 
 fail:
 	if (insert != NULL) {
@@ -336,6 +338,8 @@ usdf_am_insert_sync(struct fid_av *fav, const void *addr, size_t count,
 	int ret_count;
 	int ret;
 	int i;
+
+	USDF_TRACE_SYS(AV, "\n");
 
 	if ((flags & ~FI_MORE) != 0) {
 		return -FI_EBADFLAGS;
@@ -378,6 +382,8 @@ usdf_am_remove(struct fid_av *fav, fi_addr_t *fi_addr, size_t count,
 	struct usdf_dest *dest;
 	struct usdf_av *av;
 
+	USDF_TRACE_SYS(AV, "\n");
+
 	av = av_ftou(fav);
 
 	if (av->av_flags & FI_READ) {
@@ -398,6 +404,8 @@ usdf_am_lookup(struct fid_av *av, fi_addr_t fi_addr, void *addr,
 	struct usdf_dest *dest;
 	struct sockaddr_in sin = { 0 };
 	size_t copylen;
+
+	USDF_TRACE_SYS(AV, "\n");
 
 	dest = (struct usdf_dest *)(uintptr_t)fi_addr;
 
@@ -436,6 +444,8 @@ usdf_av_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 {
 	struct usdf_av *av;
 
+	USDF_TRACE_SYS(AV, "\n");
+
 	av = av_fidtou(fid);
 
 	switch (bfid->fclass) {
@@ -457,6 +467,8 @@ static int
 usdf_av_close(struct fid *fid)
 {
 	struct usdf_av *av;
+
+	USDF_TRACE_SYS(AV, "\n");
 
 	av = container_of(fid, struct usdf_av, av_fid.fid);
 	if (atomic_get(&av->av_refcnt) > 0) {
@@ -488,6 +500,8 @@ usdf_am_get_distance(struct fid_av *fav, void *addr, int *metric_o)
 	struct sockaddr_in *sin;
 	int ret;
 
+	USDF_TRACE_SYS(DOMAIN, "\n");
+
 	av = av_ftou(fav);
 	udp = av->av_domain;
 	sin = addr;
@@ -498,7 +512,7 @@ usdf_am_get_distance(struct fid_av *fav, void *addr, int *metric_o)
 }
 
 static struct fi_usnic_ops_av usdf_usnic_ops_av = {
-	.size = sizeof(struct fi_usnic_ops_fabric),
+	.size = sizeof(struct fi_usnic_ops_av),
 	.get_distance = usdf_am_get_distance,
 };
 
@@ -506,6 +520,8 @@ static int
 usdf_av_ops_open(struct fid *fid, const char *ops_name, uint64_t flags,
 		void **ops, void *context)
 {
+	USDF_TRACE_SYS(AV, "\n");
+
 	if (strcmp(ops_name, FI_USNIC_AV_OPS_1) == 0) {
 		*ops = &usdf_usnic_ops_av;
 	} else {
@@ -550,6 +566,8 @@ usdf_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	struct usdf_domain *udp;
 	struct usdf_av *av;
 
+	USDF_TRACE_SYS(AV, "\n");
+
 	if ((attr->flags & ~(FI_EVENT | FI_READ)) != 0) {
 		return -FI_ENOSYS;
 	}
@@ -572,9 +590,9 @@ usdf_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	av->av_flags = attr->flags;
 
 	pthread_spin_init(&av->av_lock, PTHREAD_PROCESS_PRIVATE);
-	atomic_init(&av->av_active_inserts, 0);
+	atomic_initialize(&av->av_active_inserts, 0);
 
-	atomic_init(&av->av_refcnt, 0);
+	atomic_initialize(&av->av_refcnt, 0);
 	atomic_inc(&udp->dom_refcnt);
 	av->av_domain = udp;
 

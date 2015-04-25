@@ -55,7 +55,8 @@ static void *psmx_wait_progress(void *args)
 
 	while (1) {
 		pthread_mutex_lock(&psmx_wait_mutex);
-		pthread_cond_wait(&psmx_wait_cond, &psmx_wait_mutex);
+		if (!psmx_wait_thread_enabled)
+			pthread_cond_wait(&psmx_wait_cond, &psmx_wait_mutex);
 		pthread_mutex_unlock(&psmx_wait_mutex);
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 

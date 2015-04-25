@@ -47,9 +47,6 @@ extern "C" {
 	((type *) ((char *)ptr - offsetof(type, field)))
 #endif
 
-#define FI_DEFINE_HANDLE(name) struct name##_s { int dummy; }; \
-				typedef struct name##_s *name
-
 enum {
 	FI_MAJOR_VERSION	= 1,
 	FI_MINOR_VERSION	= 0,
@@ -88,56 +85,47 @@ typedef struct fid *fid_t;
  */
 #define FI_PROV_SPECIFIC	(1 << 31)
 
-/* fi_info and operation flags - pass into endpoint ops calls.
- * A user may also set these on a endpoint by using fcntl, which has the
- * affect of applying them to all applicable operations.
+/*
+ * Flags
+ * The 64-bit flag field is used as follows:
+ * 1-grow up    common (usable with multiple operations)
+ * 59-grow down operation specific (used for single call/class)
+ * 60 - 63      provider specific
  */
 
-/* FI capabilities */
 #define FI_MSG			(1ULL << 1)
 #define FI_RMA			(1ULL << 2)
 #define FI_TAGGED		(1ULL << 3)
 #define FI_ATOMIC		(1ULL << 4)
 #define FI_ATOMICS		FI_ATOMIC
-#define FI_DYNAMIC_MR		(1ULL << 7)
-#define FI_NAMED_RX_CTX		(1ULL << 8)
-#define FI_DIRECTED_RECV	(1ULL << 10)
 
-/*
- * Flags
- * The 64-bit flag field is divided as follows:
- * bits		use
- *  0 - 10	operation specific (used for a single call)
- * 11 - 32	common (usable with multiple operations)
- * 33 - 59	reserved
- * 60 - 63	provider specific
- */
-
-#define FI_INJECT		(1ULL << 11)
-#define FI_MULTI_RECV		(1ULL << 12)
-#define FI_SOURCE		(1ULL << 13)
-#define FI_SYMMETRIC		(1ULL << 14)
-
-#define FI_READ			(1ULL << 16)
-#define FI_WRITE		(1ULL << 17)
-#define FI_RECV			(1ULL << 18)
-#define FI_SEND			(1ULL << 19)
+#define FI_READ			(1ULL << 8)
+#define FI_WRITE		(1ULL << 9)
+#define FI_RECV			(1ULL << 10)
+#define FI_SEND			(1ULL << 11)
 #define FI_TRANSMIT		FI_SEND
-#define FI_REMOTE_READ		(1ULL << 20)
-#define FI_REMOTE_WRITE		(1ULL << 21)
+#define FI_REMOTE_READ		(1ULL << 12)
+#define FI_REMOTE_WRITE		(1ULL << 13)
 
-#define FI_REMOTE_CQ_DATA	(1ULL << 24)
-#define FI_CANCEL		(1ULL << 25)
-#define FI_MORE			(1ULL << 26)
-#define FI_PEEK			(1ULL << 27)
-#define FI_TRIGGER		(1ULL << 28)
-#define FI_FENCE		(1ULL << 29)
+#define FI_MULTI_RECV		(1ULL << 16)
+#define FI_REMOTE_CQ_DATA	(1ULL << 17)
+#define FI_MORE			(1ULL << 18)
+#define FI_PEEK			(1ULL << 19)
+#define FI_TRIGGER		(1ULL << 20)
+#define FI_FENCE		(1ULL << 21)
 
-#define FI_EVENT		(1ULL << 32)
-#define FI_COMPLETION		FI_EVENT
-#define FI_INJECT_COMPLETE	(1ULL << 33)
-#define FI_TRANSMIT_COMPLETE	(1ULL << 34)
-#define FI_COMMIT_COMPLETE	(1ULL << 35)
+#define FI_COMPLETION		(1ULL << 24)
+#define FI_EVENT		FI_COMPLETION
+#define FI_INJECT		(1ULL << 25)
+#define FI_INJECT_COMPLETE	(1ULL << 26)
+#define FI_TRANSMIT_COMPLETE	(1ULL << 27)
+#define FI_DELIVERY_COMPLETE	(1ULL << 28)
+
+/* fi_getinfo()-specific flags */
+#define FI_RMA_EVENT		(1ULL << 56)
+#define FI_SOURCE		(1ULL << 57)
+#define FI_NAMED_RX_CTX		(1ULL << 58)
+#define FI_DIRECTED_RECV	(1ULL << 59)
 
 
 struct fi_ioc {
@@ -161,12 +149,17 @@ enum {
 #define FI_ADDR_NOTAVAIL	UINT64_MAX
 #define FI_SHARED_CONTEXT	(-(size_t)1)
 typedef uint64_t		fi_addr_t;
-FI_DEFINE_HANDLE(fi_connreq_t);
 
 enum fi_av_type {
 	FI_AV_UNSPEC,
 	FI_AV_MAP,
 	FI_AV_TABLE
+};
+
+enum fi_mr_mode {
+	FI_MR_UNSPEC,
+	FI_MR_BASIC,
+	FI_MR_SCALABLE
 };
 
 enum fi_progress {
@@ -227,12 +220,11 @@ enum {
 };
 
 /* Mode bits */
-#define FI_CONTEXT		(1ULL << 0)
-#define FI_LOCAL_MR		(1ULL << 1)
-#define FI_PROV_MR_ATTR		(1ULL << 2)
-#define FI_MSG_PREFIX		(1ULL << 3)
-#define FI_ASYNC_IOV		(1ULL << 4)
-#define FI_RX_CQ_DATA		(1ULL << 5)
+#define FI_CONTEXT		(1ULL << 59)
+#define FI_MSG_PREFIX		(1ULL << 58)
+#define FI_ASYNC_IOV		(1ULL << 57)
+#define FI_RX_CQ_DATA		(1ULL << 56)
+#define FI_LOCAL_MR		(1ULL << 55)
 
 struct fi_tx_attr {
 	uint64_t		caps;
@@ -279,6 +271,7 @@ struct fi_domain_attr {
 	enum fi_progress	data_progress;
 	enum fi_resource_mgmt	resource_mgmt;
 	enum fi_av_type		av_type;
+	enum fi_mr_mode		mr_mode;
 	size_t			mr_key_size;
 	size_t			cq_data_size;
 	size_t			cq_cnt;
@@ -287,6 +280,8 @@ struct fi_domain_attr {
 	size_t			rx_ctx_cnt;
 	size_t			max_ep_tx_ctx;
 	size_t			max_ep_rx_ctx;
+	size_t			max_ep_stx_ctx;
+	size_t			max_ep_srx_ctx;
 };
 
 struct fi_fabric_attr {
@@ -305,7 +300,7 @@ struct fi_info {
 	size_t			dest_addrlen;
 	void			*src_addr;
 	void			*dest_addr;
-	fi_connreq_t		connreq;
+	fid_t			handle;
 	struct fi_tx_attr	*tx_attr;
 	struct fi_rx_attr	*rx_attr;
 	struct fi_ep_attr	*ep_attr;
@@ -331,11 +326,15 @@ enum {
 	FI_CLASS_CQ,
 	FI_CLASS_CNTR,
 	FI_CLASS_WAIT,
-	FI_CLASS_POLL
+	FI_CLASS_POLL,
+	FI_CLASS_CONNREQ
 };
 
 struct fi_eq_attr;
 struct fi_wait_attr;
+
+/* fi_bind()-specific flags */
+#define FI_SELECTIVE_COMPLETION	(1ULL << 59)
 
 struct fi_ops {
 	size_t	size;

@@ -162,6 +162,7 @@ usdf_dgram_senddata(struct fid_ep *fep, const void *buf, size_t len,
 			void *desc, uint64_t data, fi_addr_t dest_addr,
 			void *context)
 {
+	USDF_TRACE_SYS(EP_DATA, "\n"); /* XXX delete once implemented */
 	return -FI_ENOSYS;
 }
 
@@ -265,6 +266,7 @@ usdf_dgram_sendv(struct fid_ep *fep, const struct iovec *iov, void **desc,
 ssize_t
 usdf_dgram_sendmsg(struct fid_ep *fep, const struct fi_msg *msg, uint64_t flags)
 {
+	USDF_DBG_SYS(EP_DATA, "flags ignored!");
 	return usdf_dgram_sendv(fep, msg->msg_iov, msg->desc, msg->iov_count,
 				(fi_addr_t)msg->addr, msg->context);
 }
@@ -319,6 +321,8 @@ ssize_t usdf_dgram_rx_size_left(struct fid_ep *fep)
 {
 	struct usdf_ep *ep;
 
+	USDF_DBG_SYS(EP_DATA, "\n");
+
 	if (fep == NULL)
 		return -FI_EINVAL;
 
@@ -340,6 +344,8 @@ ssize_t usdf_dgram_rx_size_left(struct fid_ep *fep)
 ssize_t usdf_dgram_tx_size_left(struct fid_ep *fep)
 {
 	struct usdf_ep *ep;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
 
 	if (fep == NULL)
 		return -FI_EINVAL;
@@ -524,6 +530,8 @@ ssize_t usdf_dgram_prefix_rx_size_left(struct fid_ep *fep)
 {
 	struct usdf_ep *ep;
 
+	USDF_DBG_SYS(EP_DATA, "\n");
+
 	if (fep == NULL)
 		return -FI_EINVAL;
 
@@ -541,6 +549,8 @@ ssize_t usdf_dgram_prefix_rx_size_left(struct fid_ep *fep)
 ssize_t usdf_dgram_prefix_tx_size_left(struct fid_ep *fep)
 {
 	struct usdf_ep *ep;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
 
 	if (fep == NULL)
 		return -FI_EINVAL;

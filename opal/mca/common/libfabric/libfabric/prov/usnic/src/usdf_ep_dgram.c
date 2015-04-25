@@ -74,6 +74,8 @@ usdf_ep_dgram_enable(struct fid_ep *fep)
 	struct usd_qp_impl *uqp;
 	int ret;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_ftou(fep);
 
 	if (ep->e.dg.ep_wcq == NULL) {
@@ -157,6 +159,8 @@ usdf_ep_dgram_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	struct usdf_ep *ep;
 	struct usdf_cq *cq;
 	int ret;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	ep = ep_fidtou(fid);
 
@@ -256,6 +260,8 @@ usdf_ep_dgram_close(fid_t fid)
 {
 	struct usdf_ep *ep;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_fidtou(fid);
 
 	if (atomic_get(&ep->ep_refcnt) > 0) {
@@ -330,6 +336,7 @@ static struct fi_ops_msg usdf_dgram_prefix_ops = {
 
 static struct fi_ops_cm usdf_cm_dgram_ops = {
 	.size = sizeof(struct fi_ops_cm),
+	.setname = fi_no_setname,
 	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
@@ -342,6 +349,8 @@ static struct fi_ops_cm usdf_cm_dgram_ops = {
 static int usdf_ep_dgram_control(struct fid *fid, int command, void *arg)
 {
 	struct fid_ep *ep;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	switch (fid->fclass) {
 	case FI_CLASS_EP:
@@ -374,6 +383,8 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 	struct usdf_domain *udp;
 	struct usdf_ep *ep;
 	int ret;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	if ((info->caps & ~USDF_DGRAM_CAPS) != 0) {
 		return -FI_EBADF;
@@ -434,7 +445,7 @@ usdf_ep_dgram_open(struct fid_domain *domain, struct fi_info *info,
 		ep->ep_fid.ops = &usdf_base_dgram_ops;
 		ep->ep_fid.msg = &usdf_dgram_ops;
 	}
-	atomic_init(&ep->ep_refcnt, 0);
+	atomic_initialize(&ep->ep_refcnt, 0);
 	atomic_inc(&udp->dom_refcnt);
 
 	*ep_o = ep_utof(ep);

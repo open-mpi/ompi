@@ -63,6 +63,8 @@ usdf_domain_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 {
         struct usdf_domain *udp;
 
+	USDF_TRACE_SYS(DOMAIN, "\n");
+
         udp = dom_fidtou(fid);
 
         switch (bfid->fclass) {
@@ -130,7 +132,7 @@ usdf_dom_rdc_alloc_data(struct usdf_domain *udp)
 		return -FI_ENOMEM;
 	}
 	SLIST_INIT(&udp->dom_rdc_free);
-	atomic_init(&udp->dom_rdc_free_cnt, 0);
+	atomic_initialize(&udp->dom_rdc_free_cnt, 0);
 	for (i = 0; i < USDF_RDM_FREE_BLOCK; ++i) {
 		rdc = calloc(1, sizeof(*rdc));
 		if (rdc == NULL) {
@@ -160,6 +162,8 @@ usdf_domain_close(fid_t fid)
 {
 	struct usdf_domain *udp;
 	int ret;
+
+	USDF_TRACE_SYS(DOMAIN, "\n");
 
 	udp = container_of(fid, struct usdf_domain, dom_fid.fid);
 	if (atomic_get(&udp->dom_refcnt) > 0) {
@@ -222,16 +226,31 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	size_t addrlen;
 	int ret;
 
+	USDF_TRACE_SYS(DOMAIN, "\n");
+
+	if (info->domain_attr != NULL) {
+		switch (info->domain_attr->mr_mode) {
+		case FI_MR_UNSPEC:
+		case FI_MR_BASIC:
+			break;
+		default:
+			/* the caller ignored our fi_getinfo results */
+			USDF_WARN_SYS(DOMAIN, "MR mode (%d) not supported\n",
+				info->domain_attr->mr_mode);
+			return -FI_ENODATA;
+		}
+	}
+
 	udp = calloc(1, sizeof *udp);
 	if (udp == NULL) {
-		USDF_DEBUG("unable to alloc mem for domain\n");
+		USDF_DBG("unable to alloc mem for domain\n");
 		ret = -FI_ENOMEM;
 		goto fail;
 	}
 
 	fp = fab_fidtou(fabric);
 
-	USDF_DEBUG("uda_devname=%s\n", fp->fab_dev_attrs->uda_devname);
+	USDF_DBG("uda_devname=%s\n", fp->fab_dev_attrs->uda_devname);
 
 	/*
 	 * Make sure address format is good and matches this fabric
@@ -291,7 +310,7 @@ usdf_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 
 	udp->dom_fabric = fp;
 	LIST_INSERT_HEAD(&fp->fab_domain_list, udp, dom_link);
-	atomic_init(&udp->dom_refcnt, 0);
+	atomic_initialize(&udp->dom_refcnt, 0);
 	atomic_inc(&fp->fab_refcnt);
 
 	*domain = &udp->dom_fid;

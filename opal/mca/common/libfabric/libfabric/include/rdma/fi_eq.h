@@ -135,7 +135,7 @@ struct fi_eq_err_entry {
 	uint64_t		data;
 	int			err;
 	int			prov_errno;
-	/* err_data is available until the next time the CQ is read */
+	/* err_data is available until the next time the EQ is read */
 	void			*err_data;
 	size_t			err_data_size;
 };

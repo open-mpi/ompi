@@ -119,7 +119,9 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	domain_priv->domain.fid.ops = &psmx_fi_ops;
 	domain_priv->domain.ops = &psmx_domain_ops;
 	domain_priv->domain.mr = &psmx_mr_ops;
+	domain_priv->mr_mode = info->domain_attr->mr_mode;
 	domain_priv->mode = info->mode;
+	domain_priv->caps = info->caps;
 	domain_priv->fabric = fabric_priv;
 
 	psm_ep_open_opts_get_defaults(&opts);
@@ -127,7 +129,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_ep_open(fabric_priv->uuid, &opts,
 			  &domain_priv->psm_ep, &domain_priv->psm_epid);
 	if (err != PSM_OK) {
-		FI_WARN(&psmx_prov, FI_LOG_CQ,
+		FI_WARN(&psmx_prov, FI_LOG_CORE,
 			"psm_ep_open returns %d, errno=%d\n", err, errno);
 		err = psmx_errno(err);
 		goto err_out_free_domain;
@@ -136,7 +138,7 @@ int psmx_domain_open(struct fid_fabric *fabric, struct fi_info *info,
 	err = psm_mq_init(domain_priv->psm_ep, PSM_MQ_ORDERMASK_ALL,
 			  NULL, 0, &domain_priv->psm_mq);
 	if (err != PSM_OK) {
-		FI_WARN(&psmx_prov, FI_LOG_CQ,
+		FI_WARN(&psmx_prov, FI_LOG_CORE,
 			"psm_mq_init returns %d, errno=%d\n", err, errno);
 		err = psmx_errno(err);
 		goto err_out_close_ep;
@@ -166,8 +168,12 @@ err_out:
 
 int psmx_domain_check_features(struct psmx_fid_domain *domain, int ep_cap)
 {
-	if ((ep_cap & PSMX_CAPS) != ep_cap)
-		return -FI_EINVAL;
+	if ((domain->caps & ep_cap & ~PSMX_SUB_CAPS) != (ep_cap & ~PSMX_SUB_CAPS)) {
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"caps mismatch: domain->caps=%llx, ep->caps=%llx, mask=%llx\n",
+			domain->caps, ep_cap, ~PSMX_SUB_CAPS);
+		return -FI_EOPNOTSUPP;
+	}
 
 	if ((ep_cap & FI_TAGGED) && domain->tagged_ep &&
 	    fi_recv_allowed(ep_cap))
@@ -194,6 +200,13 @@ int psmx_domain_enable_ep(struct psmx_fid_domain *domain, struct psmx_fid_ep *ep
 
 	if (ep)
 		ep_cap = ep->caps;
+
+	if ((domain->caps & ep_cap & ~PSMX_SUB_CAPS) != (ep_cap & ~PSMX_SUB_CAPS)) {
+		FI_INFO(&psmx_prov, FI_LOG_CORE,
+			"caps mismatch: domain->caps=%llx, ep->caps=%llx, mask=%llx\n",
+			domain->caps, ep_cap, ~PSMX_SUB_CAPS);
+		return -FI_EOPNOTSUPP;
+	}
 
 	if (ep_cap & FI_MSG)
 		domain->reserved_tag_bits |= PSMX_MSG_BIT;

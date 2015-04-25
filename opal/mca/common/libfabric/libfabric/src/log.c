@@ -32,18 +32,14 @@
  *
  */
 
-#include <errno.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <inttypes.h>
 
 #include <rdma/fi_errno.h>
-#include "fi.h"
 #include <rdma/fi_log.h>
 
+#include "fi.h"
 
 static const char * const log_subsys[] = {
 	[FI_LOG_CORE] = "core",
@@ -126,7 +122,8 @@ void fi_log_fini(void)
 	fi_free_filter(&prov_log_filter);
 }
 
-int fi_log_enabled(const struct fi_provider *prov, enum fi_log_level level,
+__attribute__((visibility ("default")))
+int DEFAULT_SYMVER_PRE(fi_log_enabled)(const struct fi_provider *prov, enum fi_log_level level,
 		   enum fi_log_subsys subsys)
 {
 	struct fi_prov_context *ctx;
@@ -135,8 +132,10 @@ int fi_log_enabled(const struct fi_provider *prov, enum fi_log_level level,
 	return ((FI_LOG_TAG(ctx->disable_logging, level, subsys) & log_mask) ==
 		FI_LOG_TAG(ctx->disable_logging, level, subsys));
 }
+DEFAULT_SYMVER(fi_log_enabled_, fi_log_enabled);
 
-void fi_log(const struct fi_provider *prov, enum fi_log_level level,
+__attribute__((visibility ("default")))
+void DEFAULT_SYMVER_PRE(fi_log)(const struct fi_provider *prov, enum fi_log_level level,
 	    enum fi_log_subsys subsys, const char *func, int line,
 	    const char *fmt, ...)
 {
@@ -155,3 +154,4 @@ void fi_log(const struct fi_provider *prov, enum fi_log_level level,
 
 	fprintf(stderr, "%s", buf);
 }
+DEFAULT_SYMVER(fi_log_, fi_log);
