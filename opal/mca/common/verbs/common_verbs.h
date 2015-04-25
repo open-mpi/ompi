@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
- * Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -179,6 +179,11 @@ OPAL_DECLSPEC int opal_common_verbs_qp_test(struct ibv_context *device_context,
  *
  */
 int opal_common_verbs_fork_test(void);
+
+/*
+ * Register fake verbs drivers
+ */
+void opal_common_verbs_register_fake_drivers(void);
 
 END_C_DECLS
 
