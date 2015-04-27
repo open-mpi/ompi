@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -1067,6 +1067,11 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
     memset(&rget_reg, 0, sizeof(rget_reg));
     memcpy(&rget_reg.data.memHandle, remote_handle->reg_data.memHandle,
            sizeof(remote_handle->reg_data.memHandle));
+#if !OPAL_CUDA_SYNC_MEMOPS
+    /* Only need the remote event handle when syncing with remote events */
+    memcpy(&rget_reg.data.evtHandle, remote_handle->reg_data.evtHandle,
+           sizeof(remote_handle->reg_data.evtHandle));
+#endif
 
     /* Open the memory handle to the remote memory.  If it is cached, then
      * we just retrieve it from cache and avoid a call to open the handle.  That
