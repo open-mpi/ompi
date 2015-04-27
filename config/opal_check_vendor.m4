@@ -109,6 +109,11 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
           [OPAL_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)], 
                [opal_check_compiler_vendor_result="intel"])])
 
+    # Fujitsu
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__FUJITSU)], 
+               [opal_check_compiler_vendor_result="fujitsu"])])
+
     # GNU
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IFDEF_IFELSE([__GNUC__], 
