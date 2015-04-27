@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -862,34 +862,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
     AC_REQUIRE([AM_PROG_AS])
 
-    # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
-    # with our assembly (!).  So remove it from CCASFLAGS if it's
-    # there (and we're on Leopard).
-    OPAL_VAR_SCOPE_PUSH([opal_config_asm_flags_new opal_config_asm_flag])
-    AC_MSG_CHECKING([if need to remove -g from CCASFLAGS])
-    case "$host" in
-        *-apple-darwin9.*)
-            for opal_config_asm_flag in $CCASFLAGS; do
-                # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
-                # for an explanation of @<:@ and @:>@ -- they m4 expand 
-                # to [ and ]
-                case $opal_config_asm_flag in
-                -g)            ;;
-                -g@<:@0-9@:>@) ;;
-                *)
-                    opal_config_asm_flags_new="$opal_config_asm_flags_new $opal_config_asm_flag"
-                    ;;
-                esac
-            done
-            CCASFLAGS="$opal_config_asm_flags_new"
-            AC_MSG_RESULT([OS X Leopard - yes ($CCASFLAGS)])
-            ;;
-        *)
-            AC_MSG_RESULT([no])
-            ;;
-    esac
-    OPAL_VAR_SCOPE_POP
-
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
          [Enable use of __sync builtin atomics (default: disabled)])])
@@ -988,7 +960,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
             ;;
 
-        powerpc-*|powerpc64-*|rs6000-*|ppc-*)
+        powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
                 opal_cv_asm_arch="POWERPC32"

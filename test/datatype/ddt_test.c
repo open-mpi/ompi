@@ -41,7 +41,7 @@ mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../..
 #define DUMP_DATA_AFTER_COMMIT 0x00000001
 #define CHECK_PACK_UNPACK      0x00000002
 
-uint32_t remote_arch;
+uint32_t remote_arch = 0xffffffff;
 
 static int test_upper( unsigned int length )
 {

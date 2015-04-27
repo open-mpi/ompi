@@ -247,9 +247,32 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             jdata->map->binding = opal_hwloc_binding_policy;
         } else {
-            /* if nothing was specified, then we default to a policy
-             * based on number of procs and cpus_per_rank */
-            if (nprocs <= 2) {
+            orte_mapping_policy_t mpol;
+            mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
+            /* if the user explicitly mapped-by some object, then we default
+             * to binding to that object */
+            if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
+                ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
+                if (ORTE_MAPPING_BYHWTHREAD == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                } else if (ORTE_MAPPING_BYCORE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                } else if (ORTE_MAPPING_BYL1CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L1CACHE);
+                } else if (ORTE_MAPPING_BYL2CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L2CACHE);
+                } else if (ORTE_MAPPING_BYL3CACHE == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L3CACHE);
+                } else if (ORTE_MAPPING_BYSOCKET == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                } else if (ORTE_MAPPING_BYNUMA == mpol) {
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                }
+            } else if (ORTE_MAPPING_BYNODE == mpol || ORTE_MAPPING_BYBOARD == mpol) {
+                jdata->map->binding = OPAL_BIND_TO_NONE;
+            } else if (nprocs <= 2) {
+                /* if nothing was specified, then we default to a policy
+                 * based on number of procs and cpus_per_rank */
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */

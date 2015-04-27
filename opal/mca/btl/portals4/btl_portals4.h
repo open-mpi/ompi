@@ -284,6 +284,8 @@ int mca_btl_portals4_get_error(int ptl_error);
 struct mca_btl_base_registration_handle_t {
     /** Portals4 match bits */
     ptl_match_bits_t key;
+    /** Portals4 me_h */
+    ptl_handle_me_t me_h;
 };
 
 /*
