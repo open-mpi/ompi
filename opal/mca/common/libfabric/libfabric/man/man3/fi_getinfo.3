@@ -1,4 +1,4 @@
-.TH fi_getinfo 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_getinfo 3 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_getinfo / fi_freeinfo - Obtain / free fabric interface information
@@ -113,9 +113,9 @@ struct\ fi_info\ {
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest_addrlen;
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *src_addr;
 \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *dest_addr;
-\ \ \ \ fi_connreq_t\ \ \ \ \ \ \ \ \ \ connreq;
-\ \ \ \ struct\ fi_tx_attr\ *tx_attr;
-\ \ \ \ struct\ fi_rx_attr\ *rx_attr;
+\ \ \ \ fid_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ handle;
+\ \ \ \ struct\ fi_tx_attr\ \ \ \ \ *tx_attr;
+\ \ \ \ struct\ fi_rx_attr\ \ \ \ \ *rx_attr;
 \ \ \ \ struct\ fi_ep_attr\ \ \ \ \ *ep_attr;
 \ \ \ \ struct\ fi_domain_attr\ *domain_attr;
 \ \ \ \ struct\ fi_fabric_attr\ *fabric_attr;
@@ -165,10 +165,18 @@ destination address.
 This field will be ignored in hints unless the node and service
 parameters are NULL or FI_SOURCE is specified.
 .PP
-\f[I]connreq - connection request\f[] : References a specific connection
-request, otherwise the field must be NULL.
+\f[I]handle - provider context handle\f[] : References a provider
+specific handle.
+The use of this field is operation specific.
+Unless its use is described for a given operation, the handle field must
+be NULL.
+It is commonly used by applications that make use of connection-oriented
+endpoints.
+For other applications, the field should usually be NULL.
+.PP
 This field is used when processing connection requests and responses.
-See fi_eq(3), fi_reject(3), and fi_endpoint(3).
+It is also used to inherit endpoint\[aq]s attributes.
+See fi_eq(3), fi_reject(3), and fi_endpoint(3) .
 .PP
 \f[I]tx_attr - transmit context attributes\f[] : Optionally supplied
 transmit context attributes.
@@ -280,13 +288,6 @@ Applications can use the FI_READ, FI_WRITE, FI_REMOTE_READ, and
 FI_REMOTE_WRITE flags to restrict the types of atomic operations
 supported by an endpoint.
 .PP
-\f[I]FI_DYNAMIC_MR\f[] : The provider supports applications registering
-any range of addresses in their virtual address space, whether or not
-those addresses are back by physical pages or have been allocated to the
-app.
-Providers that lack this capability require that registered memory
-regions be backed by allocated memory pages.
-.PP
 \f[I]FI_NAMED_RX_CTX\f[] : Requests that endpoints which support
 multiple receive contexts allow an initiator to target (or name) a
 specific receive context as part of a data transfer operation.
@@ -334,10 +335,13 @@ This flag requires that FI_RMA and/or FI_ATOMIC be set.
 capable of receiving write memory operations from remote endpoints.
 This flag requires that FI_RMA and/or FI_ATOMIC be set.
 .PP
-\f[I]FI_CANCEL\f[] : Indicates that the user desires the ability to
-cancel outstanding data transfer operations.
-If FI_CANCEL is not set, a provider may optimize code paths with the
-assumption that fi_cancel will not be used by the application.
+\f[I]FI_RMA_EVENT\f[] : Requests that an endpoint support the generation
+of completion events when it is the target of an RMA and/or atomic
+operation.
+If set, the provider will support both completion queue and counter
+events.
+This flag requires that FI_REMOTE_READ and/or FI_REMOTE_WRITE be enabled
+on the endpoint.
 .PP
 \f[I]FI_TRIGGER\f[] : Indicates that the endpoint should support
 triggered operations.
@@ -368,8 +372,7 @@ Primary capabilities: FI_MSG, FI_RMA, FI_TAGGED, FI_ATOMIC,
 FI_NAMED_RX_CTX, FI_DIRECTED_RECV, FI_READ, FI_WRITE, FI_RECV, FI_SEND,
 FI_REMOTE_READ, and FI_REMOTE_WRITE.
 .PP
-Secondary capabilities: FI_DYNAMIC_MR, FI_MULTI_RECV, FI_SOURCE,
-FI_CANCEL, FI_FENCE
+Secondary capabilities: FI_MULTI_RECV, FI_SOURCE, FI_FENCE
 .SH MODE
 .PP
 The operational mode bits are used to convey requirements that an
@@ -440,23 +443,6 @@ Providers are required to define a msg_prefix_size that is a multiple of
 Additionally, applications may receive provider generated packets that
 do not contain application data.
 Such received messages will indicate a transfer size of 0 bytes.
-.PP
-\f[I]FI_PROV_MR_ATTR\f[] : The provider assigns one or more attributes
-associated with a memory registration request.
-The provider will set this mode if it returns the memory registration
-keys that applications must use, or if it requires that the MR offset
-associated with a memory region be the same as the virtual address of
-the memory.
-.PP
-Applications that support provider MR attributes will need to exchange
-MR parameters with remote peers for RMA and atomic operations.
-The exchanged data should include both the address of the memory region
-as well as the MR key.
-If this mode is disabled, then applications may select the MR key
-associated with a registration request, and the resulting memory region
-will start at a base address of 0.
-Applications can request that providers select MR attributes by forcing
-this bit set after fi_getinfo returns.
 .PP
 \f[I]FI_ASYNC_IOV\f[] : Applications can reference multiple data buffers
 as part of a single transmit operation through the use of IO vectors

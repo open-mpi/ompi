@@ -26,17 +26,17 @@
 
 #define N 331
 
-uint32_t remote_arch;
+uint32_t remote_arch = 0xffffffff;
 
 struct foo_t {
     int i[3];
     double d[3];
-} foo, *bar;
+} foo = {}, *bar = NULL;
 
 struct pfoo_t {
     int i[2];
     double d[2];
-} pfoo, *pbar;
+} pfoo = {}, *pbar = NULL;
 
 static void print_hex(void* ptr, int count, int space)
 {

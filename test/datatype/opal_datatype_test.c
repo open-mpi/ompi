@@ -41,7 +41,7 @@ gcc -DHAVE_CONFIG_H -I. -I../../include -I../.. -I../../include -I../../../ompi-
 #define GET_TIME(TV)   gettimeofday( &(TV), NULL )
 #define ELAPSED_TIME(TSTART, TEND)  (((TEND).tv_sec - (TSTART).tv_sec) * 1000000 + ((TEND).tv_usec - (TSTART).tv_usec))
 
-uint32_t remote_arch;
+uint32_t remote_arch = 0xffffffff;
 
 /**
  * Generic function computing the amount of memory to be allocated to fit

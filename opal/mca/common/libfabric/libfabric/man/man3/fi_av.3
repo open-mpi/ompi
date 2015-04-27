@@ -1,4 +1,4 @@
-.TH fi_av 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_av 3 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_av - Address vector operations
@@ -271,20 +271,24 @@ references during data transfer operations.
 .PP
 For AV\[aq]s of type FI_AV_TABLE, addresses are placed into the table in
 order.
-That is, the first address inserted may be referenced at index 0.
-The fi_addr parameter may be NULL in this case.
-Otherwise, fi_addr must reference an array of fi_addr_t, and the buffer
-must remain valid until the insertion operation completes.
+An address is inserted at the lowest index that corresponds to an unused
+table location, with indices starting at 0.
+That is, the first address inserted may be referenced at index 0, the
+second at index 1, and so forth.
+When addresses are inserted into an AV table, the assigned fi_addr
+values will be simple indices corresponding to the entry into the table
+where the address was inserted.
+Index values accumulate across successive insert calls in the order the
+calls are made, not necessarily in the order the insertions complete.
+.PP
+Because insertions occur at a pre-determined index, the fi_addr
+parameter may be NULL.
+If fi_addr is non-NULL, it must reference an array of fi_addr_t, and the
+buffer must remain valid until the insertion operation completes.
 Note that if fi_addr is NULL and synchronous operation is requested,
 individual insertion failures cannot be reported and the application
 must use other calls, such as \f[C]fi_av_lookup\f[] to learn which
 specific addresses failed to insert.
-When addresses are inserted into an AV of type FI_AV_TABLE, the assigned
-fi_addr values will be simple indices corresponding to the entry into
-the table where the address was inserted.
-Addresses are indexed in order of their insertion.
-Index values accumulate across successive insert calls in the order the
-calls are made, not necessarily in the order the insertions complete.
 .PP
 \f[I]flags\f[] : The following flag may be passed to fi_av_insert
 .IP \[bu] 2
@@ -325,7 +329,7 @@ numeric suffix if nodecnt > 1.
 .PP
 As an example, if node = "10.1.1.1", nodecnt = 2, service = "5000", and
 svccnt = 2, the following addresses will be inserted into the AV in the
-order shown: 10.1.1.1:5000, 10.1.1.1:5001, 10.1.1.2:5000, 10.1.1.1:5001.
+order shown: 10.1.1.1:5000, 10.1.1.1:5001, 10.1.1.2:5000, 10.1.1.2:5001.
 If node were replaced by the hostname "host10", the addresses would be:
 host10:5000, host10:5001, host11:5000, host11:5001.
 .PP
@@ -388,12 +392,18 @@ been specified.
 Similarly, a provider may lazily release resources from removed entries.
 .SH RETURN VALUES
 .PP
-The insert calls return the number of addresses successfully inserted or
-the number of asynchronous insertions initiated if FI_EVENT is set.
+Insertion calls for an AV opened for synchronous operation will return
+the number of addresses that were successfully inserted.
+In the case of failure, the return value will be less than the number of
+addresses that were specified.
 .PP
-Other calls return 0 on success.
+Insertion calls for an AV opened for asynchronous operation (with
+FI_EVENT flag specified) will return 0 if the operation was successfully
+initiated.
+In the case of failure, a negative fabric errno will be returned.
 .PP
-On error, a negative value corresponding to fabric errno is returned.
+All other calls return 0 on success, or a negative value corresponding
+to fabric errno on error.
 Fabric errno values are defined in \f[C]rdma/fi_errno.h\f[].
 .SH ERRORS
 .SH SEE ALSO

@@ -90,7 +90,7 @@ ssize_t _psmx_recv(struct fid_ep *ep, void *buf, size_t len,
 		psm_tagsel = PSMX_MSG_BIT;
 	}
 
-	if (ep_priv->recv_cq_event_flag && !(flags & FI_COMPLETION) && !context) {
+	if (ep_priv->recv_selective_completion && !(flags & FI_COMPLETION) && !context) {
 		fi_context = &ep_priv->nocomp_recv_context;
 	}
 	else {
@@ -245,7 +245,7 @@ ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,
 	psm_tag = ep_priv->domain->psm_epid | PSMX_MSG_BIT;
 
 	if ((flags & PSMX_NO_COMPLETION) ||
-	    (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)))
+	    (ep_priv->send_selective_completion && !(flags & FI_COMPLETION)))
 		no_completion = 1;
 
 	if (flags & FI_INJECT) {

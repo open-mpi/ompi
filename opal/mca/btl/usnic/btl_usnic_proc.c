@@ -696,7 +696,7 @@ static int start_av_insert(opal_btl_usnic_module_t *module,
     ret = fi_av_insert(module->av, &sin, 1,
             &endpoint->endpoint_remote_addrs[channel], 0, context);
     /* Did an error occur? */
-    if (1 != ret) {
+    if (0 != ret) {
         opal_show_help("help-mpi-btl-usnic.txt", "libfabric API failed",
                        true,
                        opal_process_info.nodename,

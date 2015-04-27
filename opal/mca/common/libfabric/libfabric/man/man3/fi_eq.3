@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_eq 3 "2015\-04\-13" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -306,6 +306,29 @@ is done through the FI_SHUTDOWN event.
 Shutdown notification uses struct fi_eq_cm_entry as declared above.
 The fid field for a shutdown notification refers to the active
 endpoint\[aq]s fid_ep.
+.PP
+\f[I]Asynchronous Error Notification\f[] : Asynchronous errors are used
+to report problems with fabric resources.
+Reported errors may be fatal or transient, based on the error, and
+result in the resource becoming disabled.
+Disabled resources will fail operations submitted against them until
+they are explicitly re-enabled by the application.
+.PP
+Asynchronous errors may be reported for completion queues and endpoints
+of all types.
+CQ errors can result when resource management has been disabled, and the
+provider has detected a queue overrun.
+Endpoint errors may be result of numerous actions, but are often
+associated with a failed operation.
+Operations may fail because of buffer overruns, invalid permissions,
+incorrect memory access keys, network routing failures, network
+reachability issues, etc.
+.PP
+Asynchronous errors are reported using struct fi_eq_err_entry, as
+defined below.
+The fabric descriptor (fid) associated with the error is provided as
+part of the error data.
+An error code is also available to determine the cause of the error.
 .SS fi_eq_sread
 .PP
 The fi_eq_sread call is the blocking (or synchronous) equivalent to

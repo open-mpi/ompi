@@ -68,6 +68,8 @@ usdf_ep_port_bind(struct usdf_ep *ep, struct fi_info *info)
 	socklen_t addrlen;
 	int ret;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	sin = (struct sockaddr_in *)info->src_addr;
 	ret = bind(ep->e.dg.ep_sock, (struct sockaddr *)sin, sizeof(*sin));
 	if (ret == -1) {
@@ -87,6 +89,8 @@ int
 usdf_endpoint_open(struct fid_domain *domain, struct fi_info *info,
 	    struct fid_ep **ep_o, void *context)
 {
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	switch (info->ep_attr->type) {
 	case FI_EP_DGRAM:
 		return usdf_ep_dgram_open(domain, info, ep_o, context);

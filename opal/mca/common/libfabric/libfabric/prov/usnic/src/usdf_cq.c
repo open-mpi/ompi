@@ -66,11 +66,28 @@
 #include "usdf_progress.h"
 #include "usdf_cq.h"
 
+static inline int usdf_cqe_to_flags(struct usd_completion *comp)
+{
+	switch (comp->uc_type) {
+	case USD_COMPTYPE_SEND:
+		return (FI_MSG | FI_SEND);
+	case USD_COMPTYPE_RECV:
+		return (FI_MSG | FI_RECV);
+	default:
+		USDF_DBG_SYS(CQ, "WARNING: unknown completion type! (%d)\n",
+				comp->uc_type);
+		return 0;
+	}
+
+}
+
 static ssize_t
 usdf_cq_readerr(struct fid_cq *fcq, struct fi_cq_err_entry *entry,
 	        uint64_t flags)
 {
 	struct usdf_cq *cq;
+
+	USDF_TRACE_SYS(CQ, "\n");
 
 	cq = container_of(fcq, struct usdf_cq, cq_fid);
 
@@ -109,6 +126,7 @@ static ssize_t
 usdf_cq_sread(struct fid_cq *cq, void *buf, size_t count, const void *cond,
 		int timeout)
 {
+	USDF_TRACE_SYS(CQ, "\n"); /* XXX delete once implemented */
 	return -FI_ENOSYS;
 }
 
@@ -171,13 +189,13 @@ usdf_cq_read_common(struct fid_cq *fcq, void *buf, size_t count,
 		case FI_CQ_FORMAT_MSG:
 			msg_entry = (struct fi_cq_msg_entry *)entry;
 			msg_entry->op_context = cq->cq_comp.uc_context;
-			msg_entry->flags = 0;
+			msg_entry->flags = usdf_cqe_to_flags(&cq->cq_comp);
 			msg_entry->len = cq->cq_comp.uc_bytes;
 			break;
 		case FI_CQ_FORMAT_DATA:
 			data_entry = (struct fi_cq_data_entry *)entry;
 			data_entry->op_context = cq->cq_comp.uc_context;
-			data_entry->flags = 0;
+			data_entry->flags = usdf_cqe_to_flags(&cq->cq_comp);
 			data_entry->len = cq->cq_comp.uc_bytes;
 			data_entry->buf = 0; /* XXX */
 			data_entry->data = 0;
@@ -600,6 +618,7 @@ usdf_cq_strerror(struct fid_cq *eq, int prov_errno, const void *err_data,
 static int
 usdf_cq_control(fid_t fid, int command, void *arg)
 {
+	USDF_TRACE_SYS(CQ, "\n");
 	return -FI_ENOSYS;
 }
 
@@ -609,6 +628,8 @@ usdf_cq_close(fid_t fid)
 	struct usdf_cq *cq;
 	struct usdf_cq_hard *hcq;
 	int ret;
+
+	USDF_TRACE_SYS(CQ, "\n");
 
 	cq = container_of(fid, struct usdf_cq, cq_fid.fid);
 	if (atomic_get(&cq->cq_refcnt) > 0) {
@@ -804,7 +825,7 @@ usdf_cq_make_soft(struct usdf_cq *cq)
 			hcq->cqh_ucq = ucq;
 			hcq->cqh_progress = rtn;
 
-			atomic_init(&hcq->cqh_refcnt,
+			atomic_initialize(&hcq->cqh_refcnt,
 					atomic_get(&cq->cq_refcnt));
 			TAILQ_INSERT_HEAD(&cq->c.soft.cq_list, hcq, cqh_link);
 		}
@@ -853,6 +874,8 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	struct usdf_domain *udp;
 	int ret;
 
+	USDF_TRACE_SYS(CQ, "\n");
+
 	udp = dom_ftou(domain);
 	ret = usdf_cq_process_attr(attr, udp);
 	if (ret != 0) {
@@ -868,7 +891,7 @@ usdf_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 	cq->cq_fid.fid.fclass = FI_CLASS_CQ;
 	cq->cq_fid.fid.context = context;
 	cq->cq_fid.fid.ops = &usdf_cq_fi_ops;
-	atomic_init(&cq->cq_refcnt, 0);
+	atomic_initialize(&cq->cq_refcnt, 0);
 
 	switch (attr->format) {
 	case FI_CQ_FORMAT_CONTEXT:

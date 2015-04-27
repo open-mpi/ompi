@@ -55,7 +55,8 @@ extern struct fi_provider psmx_prov;
 #define PSMX_TIME_OUT	120
 
 #define PSMX_OP_FLAGS	(FI_INJECT | FI_MULTI_RECV | FI_COMPLETION | \
-			 FI_TRIGGER | FI_INJECT_COMPLETE | FI_COMMIT_COMPLETE)
+			 FI_TRIGGER | FI_INJECT_COMPLETE | \
+			 FI_TRANSMIT_COMPLETE | FI_DELIVERY_COMPLETE)
 
 #define PSMX_CAP_EXT	(0)
 
@@ -63,11 +64,14 @@ extern struct fi_provider psmx_prov;
 			 FI_RMA | FI_MULTI_RECV | \
                          FI_READ | FI_WRITE | FI_SEND | FI_RECV | \
                          FI_REMOTE_READ | FI_REMOTE_WRITE | \
-			 FI_CANCEL | FI_TRIGGER | \
-			 FI_DYNAMIC_MR | \
+			 FI_TRIGGER | \
+			 FI_RMA_EVENT | \
 			 PSMX_CAP_EXT)
 
 #define PSMX_CAPS2	((PSMX_CAPS | FI_DIRECTED_RECV) & ~FI_TAGGED)
+
+#define PSMX_SUB_CAPS	(FI_READ | FI_WRITE | FI_REMOTE_READ | FI_REMOTE_WRITE | \
+			 FI_SEND | FI_RECV)
 
 #define PSMX_MODE	(FI_CONTEXT)
 
@@ -247,6 +251,8 @@ struct psmx_fid_domain {
 	struct psmx_fid_ep	*rma_ep;
 	struct psmx_fid_ep	*atomics_ep;
 	uint64_t		mode;
+	uint64_t		caps;
+	enum fi_mr_mode		mr_mode;
 
 	int			am_initialized;
 
@@ -288,6 +294,18 @@ struct psmx_cq_event {
 	struct slist_entry list_entry;
 };
 
+struct psmx_eq_event {
+	int event;
+	union {
+		struct fi_eq_entry		data;
+		struct fi_eq_cm_entry		cm;
+		struct fi_eq_err_entry		err;
+	} eqe;
+	int error;
+	size_t entry_size;
+	struct slist_entry list_entry;
+};
+
 struct psmx_fid_wait {
 	struct fid_wait			wait;
 	struct psmx_fid_fabric		*fabric;
@@ -320,9 +338,21 @@ struct psmx_fid_cq {
 	size_t				event_count;
 	struct slist			event_queue;
 	struct slist			free_list;
+	pthread_mutex_t			mutex;
 	struct psmx_cq_event		*pending_error;
 	struct psmx_fid_wait		*wait;
 	int				wait_cond;
+	int				wait_is_local;
+};
+
+struct psmx_fid_eq {
+	struct fid_eq			eq;
+	struct psmx_fid_fabric		*fabric;
+	struct slist			event_queue;
+	struct slist			error_queue;
+	struct slist			free_list;
+	pthread_mutex_t			mutex;
+	struct psmx_fid_wait		*wait;
 	int				wait_is_local;
 };
 
@@ -472,7 +502,9 @@ struct psmx_fid_cntr {
 struct psmx_fid_av {
 	struct fid_av		av;
 	struct psmx_fid_domain	*domain;
+	struct psmx_fid_eq	*eq;
 	int			type;
+	uint64_t		flags;
 	size_t			addrlen;
 	size_t			count;
 	size_t			last;
@@ -492,8 +524,8 @@ struct psmx_fid_ep {
 	struct psmx_fid_cntr	*read_cntr;
 	struct psmx_fid_cntr	*remote_write_cntr;
 	struct psmx_fid_cntr	*remote_read_cntr;
-	int			send_cq_event_flag:1;
-	int			recv_cq_event_flag:1;
+	int			send_selective_completion:1;
+	int			recv_selective_completion:1;
 	uint64_t		flags;
 	uint64_t		caps;
 	struct fi_context	nocomp_send_context;
@@ -558,6 +590,8 @@ int	psmx_stx_ctx(struct fid_domain *domain, struct fi_tx_attr *attr,
 		     struct fid_stx **stx, void *context);
 int	psmx_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 		     struct fid_cq **cq, void *context);
+int	psmx_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
+		     struct fid_eq **eq, void *context);
 int	psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		     struct fid_av **av, void *context);
 int	psmx_cntr_open(struct fid_domain *domain, struct fi_cntr_attr *attr,
@@ -577,6 +611,12 @@ int	psmx_epid_to_epaddr(struct psmx_fid_domain *domain,
 			    psm_epid_t epid, psm_epaddr_t *epaddr);
 void	psmx_query_mpi(void);
 
+void	psmx_eq_enqueue_event(struct psmx_fid_eq *eq, struct psmx_eq_event *event);
+struct	psmx_eq_event *psmx_eq_create_event(struct psmx_fid_eq *eq,
+					uint32_t event_num,
+					void *context, uint64_t data,
+					int err, int prov_errno,
+					void *err_data, size_t err_data_size);
 void	psmx_cq_enqueue_event(struct psmx_fid_cq *cq, struct psmx_cq_event *event);
 struct	psmx_cq_event *psmx_cq_create_event(struct psmx_fid_cq *cq,
 					void *op_context, void *buf,
@@ -620,8 +660,10 @@ static inline void psmx_cntr_inc(struct psmx_fid_cntr *cntr)
 
 static inline void psmx_progress(struct psmx_fid_domain *domain)
 {
-	psmx_cq_poll_mq(NULL, domain, NULL, 0, NULL);
-	psmx_am_progress(domain);
+	if (domain) {
+		psmx_cq_poll_mq(NULL, domain, NULL, 0, NULL);
+		psmx_am_progress(domain);
+	}
 }
 
 ssize_t _psmx_send(struct fid_ep *ep, const void *buf, size_t len,

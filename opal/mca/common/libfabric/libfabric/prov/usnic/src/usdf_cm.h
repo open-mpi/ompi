@@ -53,6 +53,7 @@ struct usdf_connreq_msg {
 } __attribute__((packed));
 
 struct usdf_connreq {
+	struct fid handle;
 	int cr_sockfd;
 	struct usdf_pep *cr_pep;
 	struct usdf_ep *cr_ep;

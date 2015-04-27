@@ -81,8 +81,7 @@ struct sock_rx_entry *sock_rx_new_buffered_entry(struct sock_rx_ctx *rx_ctx,
 	struct sock_rx_entry *rx_entry;
 
 	if (rx_ctx->buffered_len + len >= rx_ctx->attr.total_buffered_recv) {
-		SOCK_LOG_ERROR("Reached max buffered recv limit\n");
-		return NULL;
+		SOCK_LOG_ERROR("Exceeded buffered recv limit\n");
 	}
 
 	rx_entry = calloc(1, sizeof(*rx_entry) + len);
@@ -114,7 +113,7 @@ inline size_t sock_rx_avail_len(struct sock_rx_entry *rx_entry)
 
 struct sock_rx_entry *sock_rx_get_entry(struct sock_rx_ctx *rx_ctx, 
 					uint64_t addr, uint64_t tag, 
-					uint8_t op_type)
+					uint8_t is_tagged)
 {
 	struct dlist_entry *entry;
 	struct sock_rx_entry *rx_entry;
@@ -123,7 +122,7 @@ struct sock_rx_entry *sock_rx_get_entry(struct sock_rx_ctx *rx_ctx,
 	     entry != &rx_ctx->rx_entry_list; entry = entry->next) {
 
 		rx_entry = container_of(entry, struct sock_rx_entry, entry);
-		if (rx_entry->is_busy || (op_type != rx_entry->is_tagged))
+		if (rx_entry->is_busy || (is_tagged != rx_entry->is_tagged))
 			continue;
 
 		if (((rx_entry->tag & ~rx_entry->ignore) == (tag & ~rx_entry->ignore)) &&
@@ -132,6 +131,32 @@ struct sock_rx_entry *sock_rx_get_entry(struct sock_rx_ctx *rx_ctx,
 		     (rx_ctx->av && 
 		      !sock_av_compare_addr(rx_ctx->av, addr, rx_entry->addr)))) {
 			rx_entry->is_busy = 1;
+			return rx_entry;
+		}
+	}
+	return NULL;
+}
+
+struct sock_rx_entry *sock_rx_get_buffered_entry(struct sock_rx_ctx *rx_ctx, 
+						 uint64_t addr, uint64_t tag, 
+						 uint64_t ignore, uint8_t is_tagged)
+{
+	struct dlist_entry *entry;
+	struct sock_rx_entry *rx_entry;
+
+	for (entry = rx_ctx->rx_buffered_list.next;
+	     entry != &rx_ctx->rx_buffered_list; entry = entry->next) {
+		
+		rx_entry = container_of(entry, struct sock_rx_entry, entry);
+		if (rx_entry->is_busy || (is_tagged != rx_entry->is_tagged) ||
+		    rx_entry->is_claimed)
+			continue;
+
+		if (((rx_entry->tag & ~ignore) == (tag & ~ignore)) &&
+		    (rx_entry->addr == FI_ADDR_UNSPEC || addr == FI_ADDR_UNSPEC || 
+		     rx_entry->addr == addr ||
+		     (rx_ctx->av && 
+		      !sock_av_compare_addr(rx_ctx->av, addr, rx_entry->addr)))) {
 			return rx_entry;
 		}
 	}
