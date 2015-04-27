@@ -34,7 +34,6 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -50,13 +49,17 @@ const struct fi_domain_attr sock_domain_attr = {
 	.control_progress = FI_PROGRESS_AUTO,
 	.data_progress = FI_PROGRESS_AUTO,
 	.resource_mgmt = FI_RM_ENABLED,
+	.mr_mode = FI_MR_SCALABLE,
 	.mr_key_size = sizeof(uint16_t),
 	.cq_data_size = sizeof(uint64_t),
+	.cq_cnt = SOCK_EP_MAX_CQ_CNT,
 	.ep_cnt = SOCK_EP_MAX_EP_CNT,
 	.tx_ctx_cnt = SOCK_EP_MAX_TX_CNT,
 	.rx_ctx_cnt = SOCK_EP_MAX_RX_CNT,
 	.max_ep_tx_ctx = SOCK_EP_MAX_TX_CNT,
 	.max_ep_rx_ctx = SOCK_EP_MAX_RX_CNT,
+	.max_ep_stx_ctx = SOCK_EP_MAX_EP_CNT,
+	.max_ep_srx_ctx = SOCK_EP_MAX_EP_CNT,
 };
 
 int sock_verify_domain_attr(struct fi_domain_attr *attr)
@@ -114,8 +117,35 @@ int sock_verify_domain_attr(struct fi_domain_attr *attr)
 		SOCK_LOG_INFO("Resource mgmt not supported!\n");
 		return -FI_ENODATA;
 	}
+
+	switch (attr->av_type) {
+	case FI_AV_UNSPEC:
+	case FI_AV_MAP:
+	case FI_AV_TABLE:
+		break;
+
+	default:
+		SOCK_LOG_INFO("AV type not supported!\n");
+		return -FI_ENODATA;
+	}
+
+	switch (attr->mr_mode) {
+	case FI_MR_UNSPEC:
+	case FI_MR_BASIC:
+	case FI_MR_SCALABLE:
+		break;
+	default:
+		SOCK_LOG_INFO("MR mode not supported\n");
+		return -FI_ENODATA;
+	}
+
+	if(attr->mr_key_size > sock_domain_attr.mr_key_size)
+		return -FI_ENODATA;
 	
 	if(attr->cq_data_size > sock_domain_attr.cq_data_size)
+		return -FI_ENODATA;
+
+	if(attr->cq_cnt > sock_domain_attr.cq_cnt)
 		return -FI_ENODATA;
 
 	if(attr->ep_cnt > sock_domain_attr.ep_cnt)
@@ -144,6 +174,7 @@ static int sock_dom_close(struct fid *fid)
 
 	sock_pe_finalize(dom->pe);
 	fastlock_destroy(&dom->lock);
+	sock_dom_remove_from_list(dom);
 	free(dom);
 	return 0;
 }
@@ -184,14 +215,18 @@ static int sock_mr_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	switch (bfid->fclass) {
 	case FI_CLASS_CQ:
 		cq = container_of(bfid, struct sock_cq, cq_fid.fid);
-		assert(mr->domain == cq->domain);
+		if (mr->domain != cq->domain)
+			return -FI_EINVAL;
+
 		if (flags & FI_REMOTE_WRITE)
 			mr->cq = cq;
 		break;
 
 	case FI_CLASS_CNTR:
 		cntr = container_of(bfid, struct sock_cntr, cntr_fid.fid);
-		assert(mr->domain == cntr->domain);
+		if (mr->domain != cntr->domain)
+			return -FI_EINVAL;
+
 		if (flags & FI_REMOTE_WRITE)
 			mr->cntr = cntr;
 		break;
@@ -225,7 +260,7 @@ struct sock_mr *sock_mr_verify_key(struct sock_domain *domain, uint16_t key,
 	if (!mr)
 		return NULL;
 
-	if (mr->flags & FI_MR_OFFSET)
+	if (domain->attr.mr_mode == FI_MR_SCALABLE)
 		buf = (char*)buf + mr->offset;
 	
 	for (i = 0; i < mr->iov_count; i++) {
@@ -256,20 +291,19 @@ static int sock_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	uint64_t key;
 	struct fid_domain *domain;
 
-	if (fid->fclass != FI_CLASS_DOMAIN) {
-		SOCK_LOG_ERROR("memory registration only supported "
-				"for struct fid_domain\n");
+	if (fid->fclass != FI_CLASS_DOMAIN || !attr || attr->iov_count <= 0) {
 		return -FI_EINVAL;
 	}
+
 	domain = container_of(fid, struct fid_domain, fid);
-
 	dom = container_of(domain, struct sock_domain, dom_fid);
-	if (!(dom->info.mode & FI_PROV_MR_ATTR) && 
+	if ((dom->attr.mr_mode == FI_MR_SCALABLE) &&
 	    ((attr->requested_key > IDX_MAX_INDEX) ||
-	    idm_lookup(&dom->mr_idm, (int) attr->requested_key)))
+	     idm_lookup(&dom->mr_idm, (int) attr->requested_key)))
 		return -FI_ENOKEY;
-
-	_mr = calloc(1, sizeof(*_mr) + sizeof(_mr->mr_iov) * (attr->iov_count - 1));
+	
+	_mr = calloc(1, sizeof(*_mr) + 
+		     sizeof(_mr->mr_iov) * (attr->iov_count - 1));
 	if (!_mr)
 		return -FI_ENOMEM;
 
@@ -280,13 +314,13 @@ static int sock_regattr(struct fid *fid, const struct fi_mr_attr *attr,
 	_mr->domain = dom;
 	_mr->access = attr->access;
 	_mr->flags = flags;
-	_mr->offset = (flags & FI_MR_OFFSET) ?
+	_mr->offset = (dom->attr.mr_mode == FI_MR_SCALABLE) ?
 		(uintptr_t) attr->mr_iov[0].iov_base + attr->offset : 
 		(uintptr_t) attr->mr_iov[0].iov_base;
 
 	fastlock_acquire(&dom->lock);
-	key = (dom->info.mode & FI_PROV_MR_ATTR) ?
-	      sock_get_mr_key(dom) : (uint16_t) attr->requested_key;
+	key = (dom->attr.mr_mode == FI_MR_BASIC) ?
+		sock_get_mr_key(dom) : (uint16_t) attr->requested_key;
 	if (idm_set(&dom->mr_idm, key, _mr) < 0)
 		goto err;
 	_mr->mr_fid.key = key;
@@ -434,9 +468,9 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 	sock_domain = calloc(1, sizeof *sock_domain);
 	if (!sock_domain)
 		return -FI_ENOMEM;
-	
+
 	fastlock_init(&sock_domain->lock);
-	atomic_init(&sock_domain->ref, 0);
+	atomic_initialize(&sock_domain->ref, 0);
 
 	if (info) {
 		sock_domain->info = *info;
@@ -471,6 +505,13 @@ int sock_domain(struct fid_fabric *fabric, struct fi_info *info,
 
 	sock_domain->fab = fab;
 	*dom = &sock_domain->dom_fid;
+
+	if (info->domain_attr)
+		sock_domain->attr = *(info->domain_attr);
+	else
+		sock_domain->attr = sock_domain_attr;
+
+	sock_dom_add_to_list(sock_domain);
 	return 0;
 
 err:

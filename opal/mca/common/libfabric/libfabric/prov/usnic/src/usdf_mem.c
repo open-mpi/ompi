@@ -98,7 +98,7 @@ usdf_reg_mr(struct fid *fid, const void *buf, size_t len,
 	}
 
 	if (fid->fclass != FI_CLASS_DOMAIN) {
-		USDF_DEBUG("memory registration only supported "
+		USDF_DBG("memory registration only supported "
 				"for struct fid_domain\n");
 		return -FI_EINVAL;
 	}

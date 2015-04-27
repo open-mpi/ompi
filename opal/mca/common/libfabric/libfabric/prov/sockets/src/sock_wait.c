@@ -132,6 +132,9 @@ static int sock_wait_wait(struct fid_wait *wait_fid, int timeout)
 			cq = container_of(list_item->fid,
 					  struct sock_cq, cq_fid);
 			sock_cq_progress(cq);
+			if (rbused(&cq->cqerr_rb)) {
+				return 1;
+			}
 			break;
 
 		case FI_CLASS_CNTR:

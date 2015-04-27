@@ -78,6 +78,8 @@ usdf_tx_rdm_enable(struct usdf_tx *tx)
 	int ret;
 	int i;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	udp = tx->tx_domain;
 
 	hcq = tx->t.rdm.tx_hcq;
@@ -110,13 +112,24 @@ usdf_tx_rdm_enable(struct usdf_tx *tx)
 		goto fail;
 	}
 
+	ret = usd_alloc_mr(tx->tx_domain->dom_dev,
+			tx->tx_attr.size * USDF_RDM_MAX_INJECT_SIZE,
+			(void **)&tx->t.rdm.tx_inject_bufs);
+	if (ret) {
+		USDF_INFO("usd_alloc_mr failed (%s)\n", strerror(-ret));
+		goto fail;
+	}
+
 	/* populate free list */
 	TAILQ_INIT(&tx->t.rdm.tx_free_wqe);
 	wqe = tx->t.rdm.tx_wqe_buf;
 	for (i = 0; i < tx->tx_attr.size; ++i) {
+		wqe->rd_inject_buf =
+			&tx->t.rdm.tx_inject_bufs[USDF_RDM_MAX_INJECT_SIZE * i];
 		TAILQ_INSERT_TAIL(&tx->t.rdm.tx_free_wqe, wqe, rd_link);
 		++wqe;
 	}
+	tx->t.rdm.tx_num_free_wqe = tx->tx_attr.size;
 
 	return 0;
 
@@ -125,7 +138,14 @@ fail:
 		free(tx->t.rdm.tx_wqe_buf);
 		tx->t.rdm.tx_wqe_buf = NULL;
 		TAILQ_INIT(&tx->t.rdm.tx_free_wqe);
+		tx->t.rdm.tx_num_free_wqe = 0;
 	}
+
+	if (tx->t.rdm.tx_inject_bufs != NULL) {
+		usd_free_mr(tx->t.rdm.tx_inject_bufs);
+		tx->t.rdm.tx_inject_bufs = NULL;
+	}
+
 	if (tx->tx_qp != NULL) {
 		usd_destroy_qp(tx->tx_qp);
 	}
@@ -144,6 +164,8 @@ usdf_rx_rdm_enable(struct usdf_rx *rx)
 	size_t mtu;
 	int ret;
 	int i;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	udp = rx->rx_domain;
 
@@ -201,6 +223,7 @@ usdf_rx_rdm_enable(struct usdf_rx *rx)
 		TAILQ_INSERT_TAIL(&rx->r.rdm.rx_free_rqe, rqe, rd_link);
 		++rqe;
 	}
+	rx->r.rdm.rx_num_free_rqe = rx->rx_attr.size;
 
 	return 0;
 
@@ -209,6 +232,7 @@ fail:
 		free(rx->r.rdm.rx_rqe_buf);
 		rx->r.rdm.rx_rqe_buf = NULL;
 		TAILQ_INIT(&rx->r.rdm.rx_free_rqe);
+		rx->r.rdm.rx_num_free_rqe = 0;
 	}
 	if (rx->r.rdm.rx_bufs != NULL) {
 		usd_free_mr(rx->r.rdm.rx_bufs);
@@ -272,6 +296,9 @@ usdf_ep_rdm_getopt(fid_t fid, int level, int optname,
 		  void *optval, size_t *optlen)
 {
 	struct usdf_ep *ep;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_fidtou(fid);
 	(void)ep;
 
@@ -289,6 +316,9 @@ usdf_ep_rdm_setopt(fid_t fid, int level, int optname,
 		  const void *optval, size_t optlen)
 {
 	struct usdf_ep *ep;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_fidtou(fid);
 	(void)ep;
 
@@ -304,6 +334,8 @@ usdf_ep_rdm_setopt(fid_t fid, int level, int optname,
 static ssize_t
 usdf_ep_rdm_cancel(fid_t fid, void *context)
 {
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+	/* XXX should this have a non-empty implementation? */
 	return 0;
 }
 
@@ -321,6 +353,13 @@ usdf_rdm_fill_tx_attr(struct fi_tx_attr *txattr)
 	if (txattr->iov_limit == 0) {
 		txattr->iov_limit = USDF_RDM_DFLT_SGE;
 	}
+
+	if (txattr->op_flags & ~USDF_RDM_SUPP_SENDMSG_FLAGS) {
+		USDF_WARN("one or more flags in 0x%llx not supported\n",
+			txattr->op_flags);
+		return -FI_EOPNOTSUPP;
+	}
+
 	return 0;
 }
 
@@ -403,7 +442,7 @@ usdf_ep_rdm_bind_cq(struct usdf_ep *ep, struct usdf_cq *cq, uint64_t flags)
 			goto fail;
 		}
 		hcq->cqh_cq = cq;
-		atomic_init(&hcq->cqh_refcnt, 0);
+		atomic_initialize(&hcq->cqh_refcnt, 0);
 		hcq->cqh_progress = usdf_rdm_hcq_progress;
 		switch (cq->cq_attr.format) {
 		default:
@@ -441,6 +480,8 @@ usdf_ep_rdm_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	struct usdf_ep *ep;
 	struct usdf_cq *cq;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_fidtou(fid);
 
 	switch (bfid->fclass) {
@@ -456,11 +497,19 @@ usdf_ep_rdm_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
 	case FI_CLASS_CQ:
 		if (flags & FI_SEND) {
 			cq = cq_fidtou(bfid);
+			if (flags & FI_SELECTIVE_COMPLETION)
+				ep->ep_tx_dflt_signal_comp = 0;
+			else
+				ep->ep_tx_dflt_signal_comp = 1;
 			usdf_ep_rdm_bind_cq(ep, cq, FI_SEND);
 		}
 
 		if (flags & FI_RECV) {
 			cq = cq_fidtou(bfid);
+			if (flags & FI_SELECTIVE_COMPLETION)
+				ep->ep_rx_dflt_signal_comp = 0;
+			else
+				ep->ep_rx_dflt_signal_comp = 1;
 			usdf_ep_rdm_bind_cq(ep, cq, FI_RECV);
 		}
 		break;
@@ -487,6 +536,8 @@ usdf_rdm_rx_ctx_close(fid_t fid)
 {
 	struct usdf_rx *rx;
 	struct usdf_cq_hard *hcq;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	rx = rx_fidtou(fid);
 
@@ -524,6 +575,8 @@ usdf_rdm_tx_ctx_close(fid_t fid)
 	struct usdf_tx *tx;
 	struct usdf_cq_hard *hcq;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	tx = tx_fidtou(fid);
 
 	if (atomic_get(&tx->tx_refcnt) > 0) {
@@ -537,6 +590,7 @@ usdf_rdm_tx_ctx_close(fid_t fid)
 	}
 
 	if (tx->tx_qp != NULL) {
+		usd_free_mr(tx->t.rdm.tx_inject_bufs);
 		free(tx->t.rdm.tx_wqe_buf);
 		usd_destroy_qp(tx->tx_qp);
 	}
@@ -592,6 +646,8 @@ usdf_ep_rdm_close(fid_t fid)
 {
 	struct usdf_ep *ep;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = ep_fidtou(fid);
 
 	if (atomic_get(&ep->ep_refcnt) > 0) {
@@ -628,12 +684,13 @@ static struct fi_ops_ep usdf_base_rdm_ops = {
 	.setopt = usdf_ep_rdm_setopt,
 	.tx_ctx = fi_no_tx_ctx,
 	.rx_ctx = fi_no_rx_ctx,
-	.rx_size_left = fi_no_rx_size_left,
-	.tx_size_left = fi_no_tx_size_left,
+	.rx_size_left = usdf_rdm_rx_size_left,
+	.tx_size_left = usdf_rdm_tx_size_left,
 };
 
 static struct fi_ops_cm usdf_cm_rdm_ops = {
 	.size = sizeof(struct fi_ops_cm),
+	.setname = fi_no_setname,
 	.getname = usdf_cm_rdm_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
@@ -659,6 +716,8 @@ static struct fi_ops_msg usdf_rdm_ops = {
 static int usdf_ep_rdm_control(struct fid *fid, int command, void *arg)
 {
 	struct fid_ep *ep;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	switch (fid->fclass) {
 	case FI_CLASS_EP:
@@ -694,6 +753,8 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 	struct usdf_ep *ep;
 	int ret;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
 	ep = NULL;
 	rx = NULL;
 	tx = NULL;
@@ -727,6 +788,8 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 	ep->ep_domain = udp;
 	ep->ep_caps = info->caps;
 	ep->ep_mode = info->mode;
+	ep->ep_tx_dflt_signal_comp = 1;
+	ep->ep_rx_dflt_signal_comp = 1;
 
 	/* implicitly create TX context if not to be shared */
 	if (info->ep_attr == NULL ||
@@ -737,10 +800,10 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 			goto fail;
 		}
 		tx->tx_fid.fid.fclass = FI_CLASS_TX_CTX;
-		atomic_init(&tx->tx_refcnt, 0);
+		atomic_initialize(&tx->tx_refcnt, 0);
 		tx->tx_domain = udp;
 		tx->tx_progress = usdf_rdm_tx_progress;
-		atomic_init(&tx->t.rdm.tx_next_msg_id, 1);
+		atomic_initialize(&tx->t.rdm.tx_next_msg_id, 1);
 		atomic_inc(&udp->dom_refcnt);
 
 		if (info->tx_attr != NULL) {
@@ -773,7 +836,7 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 		}
 
 		rx->rx_fid.fid.fclass = FI_CLASS_RX_CTX;
-		atomic_init(&rx->rx_refcnt, 0);
+		atomic_initialize(&rx->rx_refcnt, 0);
 		rx->rx_domain = udp;
 		rx->r.rdm.rx_tx = tx;
 		rx->r.rdm.rx_sock = -1;
@@ -803,7 +866,7 @@ usdf_ep_rdm_open(struct fid_domain *domain, struct fi_info *info,
 		atomic_inc(&rx->rx_refcnt);
 	}
 
-	atomic_init(&ep->ep_refcnt, 0);
+	atomic_initialize(&ep->ep_refcnt, 0);
 	atomic_inc(&udp->dom_refcnt);
 
 	*ep_o = ep_utof(ep);

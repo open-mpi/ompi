@@ -171,6 +171,10 @@ int fi_no_atomic_compwritevalid(struct fid_ep *ep,
 /*
  * struct fi_ops_cm
  */
+int fi_no_setname(fid_t fid, void *addr, size_t addrlen)
+{
+	return -FI_ENOSYS;
+}
 int fi_no_getname(fid_t fid, void *addr, size_t *addrlen)
 {
 	return -FI_ENOSYS;
@@ -192,7 +196,7 @@ int fi_no_accept(struct fid_ep *ep, const void *param, size_t paramlen)
 {
 	return -FI_ENOSYS;
 }
-int fi_no_reject(struct fid_pep *pep, fi_connreq_t connreq,
+int fi_no_reject(struct fid_pep *pep, fid_t handle,
 		const void *param, size_t paramlen)
 {
 	return -FI_ENOSYS;

@@ -247,6 +247,7 @@ _psm_files = \
 	prov/psm/src/psmx_init.c \
 	prov/psm/src/psmx_domain.c \
 	prov/psm/src/psmx_cq.c \
+	prov/psm/src/psmx_eq.c \
 	prov/psm/src/psmx_cntr.c \
 	prov/psm/src/psmx_av.c \
 	prov/psm/src/psmx_ep.c \
@@ -434,7 +435,6 @@ dummy_man_pages = \
         man/man3/fi_trecv.3 \
         man/man3/fi_trecvmsg.3 \
         man/man3/fi_trecvv.3 \
-        man/man3/fi_tsearch.3 \
         man/man3/fi_tsend.3 \
         man/man3/fi_tsenddata.3 \
         man/man3/fi_tsendmsg.3 \

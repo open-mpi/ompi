@@ -140,6 +140,7 @@ static int sock_conn_map_insert(struct sock_conn_map *map,
 	map->table[index].ep = ep;
 	sock_comm_buffer_init(&map->table[index]);
 	map->used++;
+	sock_pe_signal(ep->domain->pe);
 	return index + 1;
 }				 
 
@@ -157,13 +158,20 @@ int fd_set_nonblock(int fd)
 	return ret;
 }
 
-void sock_set_sockopts(int sock)
+static void sock_set_sockopt_reuseaddr(int sock)
 {
 	int optval;
 	optval = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
 		SOCK_LOG_ERROR("setsockopt reuseaddr failed\n");
+}
 
+void sock_set_sockopts(int sock)
+{
+	int optval;
+	optval = 1;
+
+	sock_set_sockopt_reuseaddr(sock);
 	if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof optval))
 		SOCK_LOG_ERROR("setsockopt nodelay failed\n");
 
@@ -180,15 +188,27 @@ uint16_t sock_conn_map_connect(struct sock_ep *ep,
 	struct timeval tv;
 	socklen_t optlen;
 	fd_set fds;
+	struct sockaddr_in src_addr;
 
 	conn_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (conn_fd < 0) {
 		SOCK_LOG_ERROR("failed to create conn_fd, errno: %d\n", errno);
 		return 0;
 	}
+
+	memcpy(&src_addr, ep->src_addr, sizeof src_addr);
+	src_addr.sin_port = 0;
+	optlen = sizeof src_addr;
+
+	sock_set_sockopt_reuseaddr(conn_fd);
+	if (bind(conn_fd, (struct sockaddr*) &src_addr, optlen)) {
+		SOCK_LOG_ERROR("bind failed : %s\n", strerror(errno));
+		close(conn_fd);
+		return 0;
+	}
 	
-	SOCK_LOG_INFO("Connecting to: %s:%d\n", inet_ntoa(addr->sin_addr),
-		      ntohs(addr->sin_port));
+	SOCK_LOG_INFO("Connecting to: %s:%d from %s\n", inet_ntoa(addr->sin_addr),
+		      ntohs(addr->sin_port), inet_ntoa(src_addr.sin_addr));
 
 	if (connect(conn_fd, (struct sockaddr *) addr, sizeof *addr) < 0) {
 		if (errno == EINPROGRESS) {
@@ -291,6 +311,7 @@ static void *_sock_conn_listen(void *arg)
 	poll_fds[0].fd = listener->sock;
 	poll_fds[1].fd = listener->signal_fds[1];
 	poll_fds[0].events = poll_fds[1].events = POLLIN;
+	listener->is_ready = 1;
 
  	while (listener->do_listen) {
 		if (poll(poll_fds, 2, -1) > 0) {
@@ -433,8 +454,13 @@ int sock_conn_listen(struct sock_ep *ep)
 		goto err;
 
 	fd_set_nonblock(listener->signal_fds[1]);
-	return pthread_create(&listener->listener_thread, 0, 
-			      _sock_conn_listen, ep);
+	if (pthread_create(&listener->listener_thread, 0, 
+			   _sock_conn_listen, ep)) {
+		SOCK_LOG_ERROR("failed to create conn listener thread\n");
+		goto err;
+	}
+	while (!*((volatile int*)&listener->is_ready));
+	return 0;
 err:
 	if (listen_fd >= 0)
 		close(listen_fd);

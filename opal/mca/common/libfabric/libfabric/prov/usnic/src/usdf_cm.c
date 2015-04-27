@@ -137,6 +137,11 @@ usdf_cm_msg_accept(struct fid_ep *fep, const void *param, size_t paramlen)
 	int ret;
 	int n;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
+	if (paramlen > USDF_MAX_CONN_DATA)
+		return -FI_EINVAL;
+
 	ep = ep_ftou(fep);
 	udp = ep->ep_domain;
 	fp = udp->dom_fabric;
@@ -372,6 +377,11 @@ usdf_cm_msg_connect(struct fid_ep *fep, const void *addr,
 	struct usd_qp_impl *qp;
 	int ret;
 
+	USDF_TRACE_SYS(EP_CTRL, "\n");
+
+	if (paramlen > USDF_MAX_CONN_DATA)
+		return -FI_EINVAL;
+
 	ep = ep_ftou(fep);
 	udp = ep->ep_domain;
 	fp = udp->dom_fabric;
@@ -385,6 +395,7 @@ usdf_cm_msg_connect(struct fid_ep *fep, const void *addr,
 		goto fail;
 	}
 
+	crp->handle.fclass = FI_CLASS_CONNREQ;
 	crp->cr_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (crp->cr_sockfd == -1) {
 		ret = -errno;
@@ -461,17 +472,8 @@ fail:
 int
 usdf_cm_msg_shutdown(struct fid_ep *ep, uint64_t flags)
 {
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 	return -FI_ENOSYS;
-}
-
-/*
- * Check a message CQ for completions and progress the send engine as needed,
- * create completions for the app if anything needs to be percolated up
- */
-int
-usdf_cq_msg_poll(struct usd_cq *ucq, struct usd_completion *comp)
-{
-	return -EAGAIN;
 }
 
 /*
@@ -483,6 +485,8 @@ int usdf_cm_rdm_getname(fid_t fid, void *addr, size_t *addrlen)
 	struct usdf_rx *rx;
 	struct sockaddr_in sin;
 	size_t copylen;
+
+	USDF_TRACE_SYS(EP_CTRL, "\n");
 
 	ep = ep_fidtou(fid);
 	rx = ep->ep_rx;

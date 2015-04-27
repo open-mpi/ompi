@@ -1,4 +1,4 @@
-.TH fi_cq 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_cq 3 "2015\-04\-03" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_cq - Completion queue operations
@@ -368,8 +368,8 @@ Users may call fi_cq_strerror to convert provider specific error
 information into a printable string for debugging purposes.
 .SS fi_cq_signal
 .PP
-The fi_cq_signal call will signal the wait object used by the
-fi_cq_sread and fi_cq_sreadfrom function.
+The fi_cq_signal call will unblock any thread waiting in fi_cq_sread or
+fi_cq_sreadfrom.
 This may be used to wake-up a thread that is blocked waiting to read a
 completion operation.
 The fi_cq_signal operation is only available if the CQ was configured
@@ -380,44 +380,47 @@ Completion flags provide additional details regarding the completed
 operation.
 The following completion flags are defined.
 .PP
-*FI_SEND : Indicates that the completion was for a send operation.
+\f[I]FI_SEND\f[] : Indicates that the completion was for a send
+operation.
 This flag may be combined with an FI_MSG or FI_TAGGED flag.
 .PP
-*FI_RECV : Indicates that the completion was for a receive operation.
+\f[I]FI_RECV\f[] : Indicates that the completion was for a receive
+operation.
 This flag may be combined with an FI_MSG or FI_TAGGED flag.
 .PP
-*FI_RMA : Indicates that an RMA operation completed.
+\f[I]FI_RMA\f[] : Indicates that an RMA operation completed.
 This flag may be combined with an FI_READ, FI_WRITE, FI_REMOTE_READ, or
 FI_REMOTE_WRITE flag.
 .PP
-*FI_ATOMIC : Indicates that an atomic operation completed.
+\f[I]FI_ATOMIC\f[] : Indicates that an atomic operation completed.
 This flag may be combined with an FI_READ, FI_WRITE, FI_REMOTE_READ, or
 FI_REMOTE_WRITE flag.
 .PP
-*FI_MSG : Indicates that a message-based operation completed.
+\f[I]FI_MSG\f[] : Indicates that a message-based operation completed.
 This flag may be combined with an FI_SEND or FI_RECV flag.
 .PP
-*FI_TAGGED : Indicates that a tagged message operation completed.
+\f[I]FI_TAGGED\f[] : Indicates that a tagged message operation
+completed.
 This flag may be combined with an FI_SEND or FI_RECV flag.
 .PP
-*FI_READ : Indicates that a locally initiated RMA or atomic read
+\f[I]FI_READ\f[] : Indicates that a locally initiated RMA or atomic read
 operation has completed.
 This flag may be combined with an FI_RMA or FI_ATOMIC flag.
 .PP
-*FI_WRITE : Indicates that a locally initiated RMA or atomic write
-operation has completed.
+\f[I]FI_WRITE\f[] : Indicates that a locally initiated RMA or atomic
+write operation has completed.
 This flag may be combined with an FI_RMA or FI_ATOMIC flag.
 .PP
-*FI_REMOTE_READ : Indicates that a remotely initiated RMA or atomic read
-operation has completed.
+\f[I]FI_REMOTE_READ\f[] : Indicates that a remotely initiated RMA or
+atomic read operation has completed.
 This flag may be combined with an FI_RMA or FI_ATOMIC flag.
 .PP
-*FI_REMOTE_WRITE : Indicates that a remotely initiated RMA or atomic
-read operation has completed.
+\f[I]FI_REMOTE_WRITE\f[] : Indicates that a remotely initiated RMA or
+atomic read operation has completed.
 This flag may be combined with an FI_RMA or FI_ATOMIC flag.
 .PP
-*FI_REMOTE_CQ_DATA : This indicates that remote CQ data is available as
-part of the completion.
+\f[I]FI_REMOTE_CQ_DATA\f[] : This indicates that remote CQ data is
+available as part of the completion.
 .PP
 \f[I]FI_MULTI_RECV\f[] : This flag applies to receive buffers that were
 posted with the FI_MULTI_RECV flag set.
