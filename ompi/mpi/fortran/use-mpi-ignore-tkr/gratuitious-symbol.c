@@ -6,6 +6,10 @@
  * $HEADER$
  */
 
+/* Declare the function below so that compilers don't complain about
+   the lack of prototype. */
+int ompi_mpi_ignore_tkr_module_abi_symbol(void);
+
 /*
  * This function is located in libmpi_usempi_ignore_tkr.la.
  *
