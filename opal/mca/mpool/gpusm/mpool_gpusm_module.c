@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
@@ -48,8 +48,8 @@
  */
 static void mca_mpool_gpusm_registration_constructor( mca_mpool_gpusm_registration_t *item )
 {
-    mca_common_cuda_construct_event_and_handle((uint64_t **)&item->event,
-                                               (void **)&item->evtHandle);
+    mca_common_cuda_construct_event_and_handle(&item->event,
+                                               (void *)&item->evtHandle);
 }
 
 /**
@@ -57,7 +57,7 @@ static void mca_mpool_gpusm_registration_constructor( mca_mpool_gpusm_registrati
  */
 static void mca_mpool_gpusm_registration_destructor( mca_mpool_gpusm_registration_t *item )
 {
-    mca_common_cuda_destruct_event((uint64_t *)item->event);
+    mca_common_cuda_destruct_event(item->event);
 }
 
 OBJ_CLASS_INSTANCE(mca_mpool_gpusm_registration_t, mca_mpool_base_registration_t, 
