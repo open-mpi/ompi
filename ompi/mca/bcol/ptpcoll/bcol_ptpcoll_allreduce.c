@@ -232,10 +232,12 @@ int bcol_ptpcoll_allreduce_narraying_init(bcol_function_args_t *input_args,
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
     uint64_t sequence_number = input_args->sequence_num;
     uint32_t buffer_index = input_args->buffer_index;
-    int count = input_args->count;
-    struct ompi_datatype_t *dtype = input_args->dtype;
     size_t buffer_size;
     int tag;
+#if OPAL_ENABLE_DEBUG
+    int count = input_args->count;
+    struct ompi_datatype_t *dtype = input_args->dtype;
+#endif
 
     tag = (PTPCOLL_TAG_OFFSET + sequence_number * PTPCOLL_TAG_FACTOR) & (ptpcoll_module->tag_mask);
     ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag = tag = -tag;
