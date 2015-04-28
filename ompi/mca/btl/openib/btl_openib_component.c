@@ -1497,6 +1497,9 @@ static uint64_t calculate_max_reg (const char *device_name)
         return (max_reg * 7) >> 3;
     }
 
+    /* Default to being able to register everything (to ensure that
+       max_reg is initialized in all cases) */
+    max_reg = mem_total;
     if (!strncmp(device_name, "mlx5", 4)) {
         max_reg = 2 * mem_total;
 
