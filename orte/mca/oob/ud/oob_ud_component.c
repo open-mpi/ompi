@@ -19,9 +19,11 @@
 #include "orte/types.h"
 #include "opal/types.h"
 
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 
 #include "oob_ud_component.h"
 
@@ -168,6 +170,47 @@ static int mca_oob_ud_component_register (void)
                                           MCA_BASE_VAR_SCOPE_LOCAL,
                                           &mca_oob_ud_component.ud_timeout_usec);
 
+
+    mca_oob_ud_component.ud_qp_max_send_sge = 1;
+    (void)mca_base_component_var_register(component, "max_send_sge",
+                                          "Requested max number of outstanding WRs in the SQ",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_oob_ud_component.ud_qp_max_send_sge);
+
+    mca_oob_ud_component.ud_qp_max_recv_sge = 2;
+    (void)mca_base_component_var_register(component, "max_recv_sge",
+                                          "Requested max number of outstanding WRs in the RQ",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_oob_ud_component.ud_qp_max_recv_sge);
+
+
+    mca_oob_ud_component.ud_qp_max_send_wr = 4096;
+    (void)mca_base_component_var_register(component, "max_send_wr",
+                                          "Requested max number of scatter/gather (s/g) elements in a WR in the SQ",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_oob_ud_component.ud_qp_max_send_wr);
+
+    mca_oob_ud_component.ud_qp_max_recv_wr = 4096;
+    (void)mca_base_component_var_register(component, "max_recv_wr",
+                                          "Requested max number of scatter/gather (s/g) elements in a WR in the RQ",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_oob_ud_component.ud_qp_max_recv_wr);
+
+    mca_oob_ud_component.ud_qp_max_inline_data = 0;
+    (void)mca_base_component_var_register(component, "max_inline_data",
+                                          "Requested max number of data (bytes) that can be posted inline to the SQ",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_oob_ud_component.ud_qp_max_inline_data);
     return ORTE_SUCCESS;
 }
 
@@ -253,7 +296,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
         mca_oob_ud_port_t *port = OBJ_NEW(mca_oob_ud_port_t);
 
         if (NULL == port) {
-            opal_output (0, "oob:ud:device_setup malloc failure. errno = %d", errno);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
@@ -298,10 +341,15 @@ static int mca_oob_ud_component_startup(void)
     }
 
     devices = ibv_get_device_list (&num_devices);
-    if (NULL == devices || 0 == num_devices) {
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                             "%s oob:ud:component_init no devices found",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    if (NULL == devices) {
+        orte_show_help("help-oob-ud.txt", "no-devices-error", true,
+                       orte_process_info.nodename, strerror(errno));
+        return ORTE_ERROR;
+    }
+
+    if (0 == num_devices) {
+        orte_show_help("help-oob-ud.txt", "no-devices-available", true,
+                       orte_process_info.nodename);
         return ORTE_ERROR;
     }
 
@@ -309,8 +357,7 @@ static int mca_oob_ud_component_startup(void)
         mca_oob_ud_device_t *device = OBJ_NEW(mca_oob_ud_device_t);
 
         if (NULL == device) {
-            opal_output (0, "oob:ud:component_init malloc failure. errno = %d",
-                         errno);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERROR;
         }
 
@@ -330,9 +377,8 @@ static int mca_oob_ud_component_startup(void)
     ibv_free_device_list (devices);
 
     if (0 == opal_list_get_size (&mca_oob_ud_component.ud_devices)) {
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                             "%s oob:ud:component_init no usable devices found.",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_show_help("help-oob-ud.txt", "no-devices-usable", true,
+                       orte_process_info.nodename);
         return ORTE_ERROR;
     }
 
@@ -391,6 +437,8 @@ static int mca_oob_ud_component_startup(void)
     }
 
     if (!found_one) {
+        orte_show_help("help-oob-ud.txt", "no-ports-usable", true,
+                       orte_process_info.nodename);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -550,8 +598,7 @@ static bool mca_oob_ud_component_is_reachable(orte_process_name_t *peer_name)
     hop = orte_routed.get_route(peer_name);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
-        opal_output (0, "%s oob:ud:component_is_reachable peer %s is unreachable",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer_name));
+        ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
         return false;
     }
     return true;
@@ -621,9 +668,8 @@ static inline int mca_oob_ud_port_recv_start (mca_oob_ud_port_t *port)
 
     rc = ibv_req_notify_cq (port->listen_qp.ib_recv_cq, 0);
     if (0 != rc) {
-        opal_output (0, "%s oob:ud:port_recv_start error requesting completion"
-                     "notifications. rc = %d, errno = %d",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc, errno);
+        orte_show_help("help-oob-ud.txt", "notify-cq-failed", true,
+                       orte_process_info.nodename, strerror(errno));
         return ORTE_ERROR;
     }
 
@@ -643,8 +689,7 @@ static inline int mca_oob_ud_alloc_reg_mem (struct ibv_pd *pd, mca_oob_ud_reg_me
 
     posix_memalign ((void **)&reg_mem->ptr, sysconf(_SC_PAGESIZE), buffer_len);
     if (NULL == reg_mem->ptr) {
-        opal_output (0, "%s oob:ud:alloc_reg_mem malloc failed! errno = %d",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
@@ -652,8 +697,8 @@ static inline int mca_oob_ud_alloc_reg_mem (struct ibv_pd *pd, mca_oob_ud_reg_me
 
     reg_mem->mr = ibv_reg_mr (pd, reg_mem->ptr, buffer_len, IBV_ACCESS_LOCAL_WRITE);
     if (NULL == reg_mem->mr) {
-        opal_output (0, "%s oob:ud:alloc_reg_mem failed to register memory. errno = %d",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        orte_show_help("help-oob-ud.txt", "reg-mr-failed", true,
+                       orte_process_info.nodename, reg_mem->ptr, buffer_len, strerror(errno));
         return ORTE_ERROR;
     }
 
