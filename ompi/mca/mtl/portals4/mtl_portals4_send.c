@@ -264,7 +264,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
 }
 
 static inline int
-ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
+ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
                              int localrank, 
                              ptl_process_t ptl_proc,
                              ompi_mtl_portals4_isend_request_t *ptl_request)
@@ -425,11 +425,11 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     ptl_request->event_count = 0;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Send %lu to %x,%x of length %d\n",
+                         "Send %lu to %x,%x of length %ld\n",
                          ptl_request->opcount,
                          ptl_proc.phys.nid,
                          ptl_proc.phys.pid,
-                         (int)length));
+                         (int64_t)length));
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     item = opal_free_list_get (&ompi_mtl_portals4.flowctl.pending_fl);
