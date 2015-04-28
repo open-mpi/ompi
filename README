@@ -911,9 +911,11 @@ NETWORKING SUPPORT / OPTIONS
   headers and libraries are not in default compiler/linker search
   paths.
 
-  Portals4 is the support library for Cray interconnects, but is also
-  available on other platforms (e.g., there is a Portals4 library
-  implemented over regular TCP).
+  Portals is a low-level network API for high-performance networking
+  on high-performance computing systems developed by Sandia National
+  Laboratories, Intel Corporation, and the University of New Mexico.
+  The Portals 4 Reference Implementation is a complete implementation
+  of Portals 4, with transport over InfiniBand verbs and UDP.
 
 --with-portals4-libdir=<directory>
   Location of libraries to link with for Portals4 support.
