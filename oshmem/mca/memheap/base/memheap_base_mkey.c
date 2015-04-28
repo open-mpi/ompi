@@ -372,7 +372,7 @@ static int oshmem_mkey_recv_cb(void)
     n = 0;
     r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
     assert(r);
-    while(r != opal_list_get_end(&memheap_oob.req_list)) {
+    while(r != (oob_comm_request_t*) opal_list_get_end(&memheap_oob.req_list)) {
         my_MPI_Test(&r->recv_req, &flag, &status);
         if (OPAL_LIKELY(0 == flag)) {
             return n;
