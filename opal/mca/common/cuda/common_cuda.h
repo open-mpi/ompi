@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -72,8 +72,8 @@ OPAL_DECLSPEC int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t 
 OPAL_DECLSPEC int mca_common_cuda_memhandle_matches(mca_mpool_common_cuda_reg_t *new_reg,
                                                     mca_mpool_common_cuda_reg_t *old_reg);
 
-OPAL_DECLSPEC void mca_common_cuda_construct_event_and_handle(uint64_t **event, void **handle);
-OPAL_DECLSPEC void mca_common_cuda_destruct_event(uint64_t *event);
+OPAL_DECLSPEC void mca_common_cuda_construct_event_and_handle(uintptr_t *event, void *handle);
+OPAL_DECLSPEC void mca_common_cuda_destruct_event(uintptr_t event);
 
 OPAL_DECLSPEC int cuda_getmemhandle(void *base, size_t, mca_mpool_base_registration_t *newreg,
                                     mca_mpool_base_registration_t *hdrreg);

@@ -1155,7 +1155,7 @@ int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
     return OPAL_SUCCESS;
 }
 
-void mca_common_cuda_construct_event_and_handle(uint64_t **event, void **handle)
+void mca_common_cuda_construct_event_and_handle(uintptr_t *event, void *handle)
 {
     CUresult result;
 
@@ -1175,7 +1175,7 @@ void mca_common_cuda_construct_event_and_handle(uint64_t **event, void **handle)
 
 }
 
-void mca_common_cuda_destruct_event(uint64_t *event)
+void mca_common_cuda_destruct_event(uintptr_t event)
 {
     CUresult result;
 
