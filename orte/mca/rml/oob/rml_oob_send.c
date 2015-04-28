@@ -233,6 +233,12 @@ int orte_rml_oob_send_nb(orte_process_name_t* peer,
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
+    if( NULL == peer ||
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /* cannot send to an invalid peer */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
     /* get ourselves into an event to protect against
      * race conditions and threads
      */
@@ -270,7 +276,12 @@ int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-
+    if( NULL == peer ||
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /* cannot send to an invalid peer */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
     /* get ourselves into an event to protect against
      * race conditions and threads
      */
@@ -298,8 +309,12 @@ int orte_rml_oob_open_channel(orte_process_name_t * peer,
                          "%s rml_open_channel to peer %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer)));
-    /*if (!(orte_qos_base_have_qos_component_for_channel(qos_attributes)))
-        return ORTE_ERROR_QOS_UNAVAILABLE;*/
+    if( NULL == peer ||
+            OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /* cannot send to an invalid peer */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
     /* process the request in an event to be safe */
     req = OBJ_NEW(orte_rml_send_request_t);
     req->post.open_channel.dst = *peer;

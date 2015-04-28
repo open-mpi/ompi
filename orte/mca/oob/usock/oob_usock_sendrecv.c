@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -292,7 +292,6 @@ void mca_oob_usock_send_handler(int sd, short flags, void *cbdata)
             peer->send_msg = (mca_oob_usock_send_t*)
                 opal_list_remove_first(&peer->send_queue);
         }
-
         /* if nothing else to do unregister for send event notifications */
         if (NULL == peer->send_msg && peer->send_ev_active) {
             opal_event_del(&peer->send_event);
@@ -526,6 +525,9 @@ void mca_oob_usock_recv_handler(int sd, short flags, void *cbdata)
                 if (peer->recv_msg->hdr.dst.jobid == ORTE_PROC_MY_NAME->jobid &&
                     peer->recv_msg->hdr.dst.vpid == ORTE_PROC_MY_NAME->vpid) {
                     /* yes - post it to the RML for delivery */
+                    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                       "%s DELIVERING TO RML",
+                                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                     ORTE_RML_POST_MESSAGE(&peer->recv_msg->hdr.origin, peer->recv_msg->hdr.tag,
                                           peer->recv_msg->hdr.channel, peer->recv_msg->hdr.seq_num,
                                           peer->recv_msg->data,

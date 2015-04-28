@@ -582,11 +582,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                                           peer->recv_msg->hdr.channel, peer->recv_msg->hdr.seq_num,
                                           peer->recv_msg->data,
                                           peer->recv_msg->hdr.nbytes);
-                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s DELIVERED TO RML tag = %d channel = %d seq_num = %d",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        peer->recv_msg->hdr.tag, peer->recv_msg->hdr.channel,
-                                        peer->recv_msg->hdr.seq_num);
                     OBJ_RELEASE(peer->recv_msg);
                 } else {
                     /* promote this to the OOB as some other transport might

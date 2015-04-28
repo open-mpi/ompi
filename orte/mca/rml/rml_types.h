@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -154,14 +154,11 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_CONFIRM_SPAWN          53
 
 /*** QOS specific  RML TAGS ***/
-#define ORTE_RML_TAG_OPEN_CHANNEL_REQ           54
-#define ORTE_RML_TAG_OPEN_CHANNEL_RESP          55
-#define ORTE_RML_TAG_MSG_ACK                    56
-#define ORTE_RML_TAG_CLOSE_CHANNEL_REQ          57
-#define ORTE_RML_TAG_CLOSE_CHANNEL_ACCEPT       58
-
-
-
+#define ORTE_RML_TAG_OPEN_CHANNEL_REQ       54
+#define ORTE_RML_TAG_OPEN_CHANNEL_RESP      55
+#define ORTE_RML_TAG_MSG_ACK                56
+#define ORTE_RML_TAG_CLOSE_CHANNEL_REQ      57
+#define ORTE_RML_TAG_CLOSE_CHANNEL_ACCEPT   58
 #define ORTE_RML_TAG_MAX                   100
 
 

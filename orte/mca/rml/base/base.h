@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014 -2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,7 +112,6 @@ ORTE_DECLSPEC extern opal_list_t orte_rml_base_components;
  * Component structure pointer for the currently selected RML
  * component.  Useable between calls to orte_rml_base_select() and
  * orte_rml_base_close().
- *
  * @note This pointer should not be used outside the RML base.  It is
  * available outside the RML base only for the F/T component.
  */

@@ -152,17 +152,8 @@ typedef struct {
  * Macro for use in components that are of type oob
  */
 #define MCA_QOS_BASE_VERSION_2_0_0 \
-MCA_BASE_VERSION_2_0_0, \
-"qos", 2, 0, 0
+ORTE_MCA_BASE_VERSION_2_1_0 ("qos", 2, 0, 0)
 
 END_C_DECLS
 
 #endif
-
-
-
-
-
-
-
-

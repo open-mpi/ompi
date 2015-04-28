@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014 -2015      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +80,6 @@ static int orte_rml_base_close(void)
 
     while (NULL != (item = opal_list_remove_first(&orte_rml_base.posted_recvs))) {
         OBJ_RELEASE(item);
-
     }
     OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
 
@@ -165,7 +164,6 @@ int orte_rml_base_select(void)
                 if (NULL != selected_module && NULL != selected_module->finalize) {
                     selected_module->finalize();
                 }
-
                 selected_priority = priority;
                 selected_component = component;
                 selected_module = module;
@@ -354,5 +352,3 @@ static void prq_des(orte_rml_recv_request_t *ptr)
 OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
                    opal_object_t,
                    prq_cons, prq_des);
-
-

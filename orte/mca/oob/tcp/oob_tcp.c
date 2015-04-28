@@ -239,7 +239,7 @@ static int parse_uri(const uint16_t af_family,
     else if (AF_INET6 == af_family) {
         struct sockaddr_in6 *in6;
         memset(inaddr, 0, sizeof(struct sockaddr_in6));=
-        in6 = (struct sockaddr_in6*) inaddr; 
+        in6 = (struct sockaddr_in6*) inaddr;
         if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
             opal_output (0, "oob_tcp_parse_uri: Could not convert %s\n", host);
             return ORTE_ERR_BAD_PARAM;
@@ -249,8 +249,6 @@ static int parse_uri(const uint16_t af_family,
     else {
         return ORTE_ERR_NOT_SUPPORTED;
     }
-
-
     return ORTE_SUCCESS;
 }
 
@@ -582,7 +580,6 @@ static void recv_handler(int sd, short flg, void *cbdata)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
             }
         }
-
         /* is the peer instance willing to accept this connection */
         peer->sd = sd;
         if (mca_oob_tcp_peer_accept(peer) == false) {

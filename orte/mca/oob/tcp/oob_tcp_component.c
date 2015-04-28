@@ -162,7 +162,6 @@ static int tcp_component_open(void)
            "open" failing is not printed */
         return ORTE_ERR_NOT_AVAILABLE;
     }
-
     return ORTE_SUCCESS;
 }
 
@@ -320,7 +319,6 @@ static int tcp_component_register(void)
     }
 #endif
 #endif
-
     dyn_port_string = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv4_ports",
                                           "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -406,7 +404,7 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
-    
+
     mca_oob_tcp_component.keepalive_time = 10;
     (void)mca_base_component_var_register(component, "keepalive_time",
                                           "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
@@ -495,7 +493,6 @@ static bool component_available(void)
                          i, opal_ifindextokindex(i));
             continue;
         }
-
         /* ignore non-ip4/6 interfaces */
         if (AF_INET != my_ss.ss_family
 #if OPAL_ENABLE_IPV6
@@ -504,7 +501,6 @@ static bool component_available(void)
             ) {
             continue;
         }
-
         kindex = opal_ifindextokindex(i);
         if (kindex <= 0) {
             continue;
@@ -638,7 +634,7 @@ static int component_startup(void)
 
 static void component_shutdown(void)
 {
-    int i;
+    int i = 0;
     opal_list_item_t *item;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
@@ -745,20 +741,26 @@ static int component_set_addr(orte_process_name_t *peer,
     found = false;
 
     for (i=0; NULL != uris[i]; i++) {
+        tcpuri = strdup(uris[i]);
+        if (NULL == tcpuri) {
+            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                                "%s oob:tcp: out of memory",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            continue;
+        }
         if (0 == strncmp(uris[i], "tcp:", 4)) {
             af_family = AF_INET;
-            tcpuri = strdup(uris[i]);
             host = tcpuri + strlen("tcp://");
         } else if (0 == strncmp(uris[i], "tcp6:", 5)) {
 #if OPAL_ENABLE_IPV6
             af_family = AF_INET6;
-            tcpuri = strdup(uris[i]);
             host = tcpuri + strlen("tcp6://");
 #else
             /* we don't support this connection type */
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp: address %s not supported",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uris[i]);
+            free(tcpuri);
             continue;
 #endif
         } else {
@@ -766,6 +768,7 @@ static int component_set_addr(orte_process_name_t *peer,
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp: ignoring address %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uris[i]);
+            free(tcpuri);
             continue;
         }
 
@@ -774,26 +777,18 @@ static int component_set_addr(orte_process_name_t *peer,
                             "%s oob:tcp: working peer %s address %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(peer), uris[i]);
-
         /* separate the ports from the network addrs */
         ports = strrchr(tcpuri, ':');
         *ports = '\0';
         ports++;
 
         /* split the addrs */
-        if (NULL == host || 0 == strlen(host)) {
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "FORMAT ERROR IN ADDR: %s",
-                                (NULL == host) ? "NULL" : "ZERO LENGTH");
-            free(tcpuri);
-            return ORTE_ERR_BAD_PARAM;
-        }
-
         /* if this is a tcp6 connection, the first one will have a '['
          * at the beginning of it, and the last will have a ']' at the
          * end - we need to remove those extra characters
          */
         hptr = host;
+#if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             if ('[' == host[0]) {
                 hptr = &host[1];
@@ -802,6 +797,7 @@ static int component_set_addr(orte_process_name_t *peer,
                 host[strlen(host)-1] = '\0';
             }
         }
+#endif
         addrs = opal_argv_split(hptr, ',');
 
 
@@ -1179,7 +1175,6 @@ static char **split_and_resolve(char **orig_str, char *name)
                 break;
             }
         }
-
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
             orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
