@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -376,11 +378,11 @@ static avail_io_t *query(const mca_base_component_t *component,
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
-    /* io v2.0.0 */
+    /* MCA version check */
 
-    if (2 == component->mca_major_version &&
-        0 == component->mca_minor_version &&
-        0 == component->mca_release_version) {
+    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
+        MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
+        MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
         ioc_200 = (mca_io_base_component_2_0_0_t *) component;
         
         return query_2_0_0(ioc_200, file);
