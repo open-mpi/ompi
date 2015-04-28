@@ -52,7 +52,7 @@ int orte_ess_base_proc_binding(void)
     struct hwloc_topology_support *support;
     char *map;
     int ret;
-    char *error;
+    char *error=NULL;
     hwloc_cpuset_t mycpus;
 
     /* Determine if we were pre-bound or not */
@@ -299,6 +299,7 @@ int orte_ess_base_proc_binding(void)
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
                                              OPAL_SCOPE_NON_PEER,
                                              OPAL_DB_CPUSET, orte_process_info.cpuset, OPAL_STRING))) {
+        error = "dbstore cpuset";
         ORTE_ERROR_LOG(ret);
         goto error;
     }
@@ -309,7 +310,8 @@ int orte_ess_base_proc_binding(void)
     if (ORTE_ERR_SILENT != ret) {
         orte_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
-                       true, error, ORTE_ERROR_NAME(ret), ret);
+                       true, (NULL == error) ? "UNKNOWN" : error,
+                       ORTE_ERROR_NAME(ret), ret);
     }
 
     return ORTE_ERR_SILENT;
