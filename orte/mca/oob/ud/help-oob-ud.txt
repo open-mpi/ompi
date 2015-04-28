@@ -6,13 +6,114 @@
 # Copyright (c) 2004-2006 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+#               2015      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
+#
+[no-devices-available]
+No available RDMA devices found:
+
+Hostname: %s
+
+Please contact your system administrator.
+#
+[no-devices-error]
+Failed to get list of the available RDMA devices:
+
+Hostname: %s
+Error:    %s
+#
+[no-devices-usable]
+No usable devices found:
+
+Hostname: %s
+#
+[no-ports-usable]
+No usable ports found:
+
+Hostname: %s
+#
+[reg-mr-failed]
+Failed to register memory region (MR):
+
+Hostname: %s
+Address:  %x
+Length:   %lu
+Error:    %s
+#
+[notify-cq-failed]
+Failed to request completion notification on a completion queue (CQ):
+
+Hostname: %s
+Error:    %s
+#
+[create-cq-failed]
+Failed to create a completion queue (CQ):
+
+Hostname: %s
+Requested CQE: %d
+Error:    %s
+
+Check the CQE attribute.
+#
+[create-qp-failed]
+Failed to create a queue pair (QP):
+
+Hostname: %s
+Requested max number of outstanding WRs in the SQ:                %u
+Requested max number of outstanding WRs in the RQ:                %u
+Requested max number of SGEs in a WR in the SQ:                   %u
+Requested max number of SGEs in a WR in the RQ:                   %u
+Requested max number of data that can be posted inline to the SQ: %u
+Error:    %s
+
+Check requested attributes.
+#
+[poll-cq-failed]
+Failed to poll the CQ cq for work completions:
+
+Hostname: %s
+Number of entries: %d
+Error:    %s
+#
+[poll-cq-failed-wc]
+Failed to poll the CQ cq for work completions:
+
+Hostname: %s
+Number of entries: %d
+Entry ID :         %d
+WC status: %d
+#
+[post-send-failed]
+Failed to post a list of work requests (WRs) to a send queue:
+
+Hostname: %s
+Error:    %s
+#
+[post-recv-failed]
+Failed to post a list of work requests (WRs) to a receive queue:
+
+Hostname: %s
+Error:    %s
+#
+[modify-qp-failed]
+Failed to modify the attributes of a queue pair (QP):
+
+Hostname: %s
+Mask for QP attributes to be modified: %d
+Error:    %s
+#
+[destroy-qp-failed]
+Failed to destroy a queue pair (QP):
+
+Hostname: %s
+Error:    %s
 #

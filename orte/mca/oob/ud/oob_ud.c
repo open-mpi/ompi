@@ -21,6 +21,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/routed/routed.h"
 
@@ -217,8 +218,9 @@ int mca_oob_ud_register_iov (struct iovec *iov, int count, struct ibv_mr **ib_mr
                                            IBV_ACCESS_REMOTE_WRITE);
             if (NULL == ib_mr[iov_index]) {
                 /* Ruh-roh */
-                opal_output (0, "%s oob:ud:register_iov error registering memory. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                orte_show_help("help-oob-ud.txt", "reg-mr-failed", true,
+                       orte_process_info.nodename, iov[iov_index].iov_base,
+                       iov[iov_index].iov_len,strerror(errno));
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -264,8 +266,8 @@ int mca_oob_ud_register_buf (char *buf, int size, struct ibv_mr **ib_mr_buf,
                                 IBV_ACCESS_LOCAL_WRITE |
                                 IBV_ACCESS_REMOTE_WRITE);
         if (NULL == *ib_mr_buf) {
-            opal_output (0, "%s oob:ud:mca_oob_ud_register_buf error registering memory. errno = %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+            orte_show_help("help-oob-ud.txt", "reg-mr-failed", true,
+                       orte_process_info.nodename, buf, size, strerror(errno));
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }

@@ -12,6 +12,7 @@
  *
  */
 #include "oob_ud_send.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 static void mca_oob_ud_send_cb (mca_oob_ud_msg_t *msg, int rc)
 {
@@ -41,7 +42,7 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
 
     rc = mca_oob_ud_recv_alloc (req);
     if (ORTE_SUCCESS != rc) {
-        opal_output (0, "%s oob:ud:mca_oob_ud_send_self malloc failed!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        ORTE_ERROR_LOG(rc);
         if (MCA_OOB_UD_REQ_IOV == req->req_data_type) {
             free (req->req_data.iov.uiov);
         }
@@ -80,15 +81,13 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
         buffer = OBJ_NEW(opal_buffer_t);
 
         if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, msg->buffer))) {
-            opal_output (0, "%s oob:ud:mca_oob_ud_send_self copy_payload failed %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+            ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buffer);
             return rc;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&req->req_data.buf.p, &req->req_data.buf.size)))
         {
-            opal_output (0, "%s oob:ud:mca_oob_ud_send_self unload buffer failed %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+            ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buffer);
             free(req->req_data.buf.p);
             return rc;
@@ -134,16 +133,13 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
     hop = orte_routed.get_route(&op->msg->dst);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
-        opal_output (0, "%s oob:ud:send_nb peer %s is unreachable",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&op->msg->dst));
+        ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
         return ORTE_ERR_UNREACH;
     }
 
     rc = mca_oob_ud_peer_lookup (&hop, &peer);
     if(ORTE_SUCCESS != rc || NULL == peer) {
-        opal_output (0, "%s oob:ud:send_nb peer %s not found",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                     ORTE_NAME_PRINT(&hop));
+        ORTE_ERROR_LOG((NULL == peer) ? ORTE_ERR_UNREACH : rc);
         return (NULL == peer) ? ORTE_ERR_UNREACH : rc;
     }
 
@@ -157,7 +153,7 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
 
     send_req = OBJ_NEW(mca_oob_ud_req_t);
     if (!send_req) {
-        opal_output(0, "oob:ud:send_nb malloc failed! errno = %d", errno);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
@@ -188,16 +184,14 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
             buffer = OBJ_NEW(opal_buffer_t);
 
             if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, op->msg->buffer))) {
-                opal_output (0, "%s oob:ud:send_nb copy_payload failed %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+                ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buffer);
                 return rc;
             }
 
             if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&send_req->req_data.buf.p, &send_req->req_data.buf.size)))
             {
-                opal_output (0, "%s oob:ud:send_nb unload buffer failed %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+                ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buffer);
                 free(send_req->req_data.buf.p);
                 return rc;
@@ -288,7 +282,7 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
         /* send request */
         rc = mca_oob_ud_msg_post_send (req_msg);
         if (ORTE_SUCCESS != rc) {
-            opal_output (0, "msg send failed with status = %d", rc);
+            ORTE_ERROR_LOG(rc);
             break;
         }
     } while (0);
@@ -340,9 +334,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
                 /* allocate space for memory registers */
                 send_req->req_data.iov.mr = (struct ibv_mr **) calloc (send_req->req_data.iov.count, sizeof (struct ibv_mr *));
                 if (NULL == send_req->req_data.iov.mr) {
-                    opal_output (0, "%s oob:ud:send_try error allocating space for memory registers. errno = %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
+                    ORTE_ERROR_LOG(rc);
                     break;
                 }
             }
@@ -386,9 +379,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
         if (wr_count && NULL == send_req->req_wr.send) {
             send_req->req_wr.send = (struct ibv_send_wr *) calloc (wr_count, sizeof (struct ibv_send_wr));
             if (NULL == send_req->req_wr.send) {
-                opal_output (0, "%s oob:ud:send_try error allocating work requests. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
+                ORTE_ERROR_LOG(rc);
                 break;
             }
         }
@@ -397,9 +389,8 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
             send_req->req_sge = (struct ibv_sge *) calloc (sge_count, sizeof (struct ibv_sge));
 
             if (NULL == send_req->req_sge) {
-                opal_output (0, "%s oob:ud:send_try error allocating sges. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
+                ORTE_ERROR_LOG(rc);
                 break;
             }
         }
@@ -505,8 +496,7 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
         /* send data */
         rc = mca_oob_ud_qp_post_send (send_req->req_qp, send_req->req_wr.send, 0);
         if (ORTE_SUCCESS != rc) {
-            opal_output (0, "%s oob:ud:send_try error posting send!",
-		             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            ORTE_ERROR_LOG(rc);
             break;
         }
 
@@ -534,8 +524,7 @@ int mca_oob_ud_send_try (mca_oob_ud_req_t *send_req) {
     }
 
     if (ORTE_SUCCESS != rc) {
-        opal_output (0, "%s oob:ud:send_try send error! rc = %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+        ORTE_ERROR_LOG(rc);
         /* damn */
         return mca_oob_ud_send_complete (send_req, rc);
     }

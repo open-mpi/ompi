@@ -16,8 +16,10 @@
 #include "orte/types.h"
 #include "opal/types.h"
 
-#include "orte/util/name_fns.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 
 #include "math.h"
 
@@ -147,8 +149,7 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
                 /* allocate space for memory registers */
                 recv_req->req_data.iov.mr = (struct ibv_mr **) calloc (recv_req->req_data.iov.count, sizeof (struct ibv_mr *));
                 if (NULL == recv_req->req_data.iov.mr) {
-                    opal_output (0, "%s oob:ud:recv_try error allocating space for memory registers. errno = %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     break;
                 }
@@ -196,8 +197,7 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
             /* allocate work requests */
             recv_req->req_wr.recv  = (struct ibv_recv_wr *) calloc (wr_count, sizeof (struct ibv_recv_wr));
             if (NULL == recv_req->req_wr.recv) {
-                opal_output (0, "%s oob:ud:recv_try error allocating work requests. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 break;
             }
@@ -207,8 +207,7 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
             /* allocate scatter-gather lists. we need more to hold the grh */
             recv_req->req_sge = (struct ibv_sge *) calloc (sge_count, sizeof (struct ibv_sge));
             if (NULL == recv_req->req_sge) {
-                opal_output (0, "%s oob:ud:recv_try error allocating sges. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 break;
             }
@@ -218,8 +217,7 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
             /* allocate grh buffers */
             recv_req->req_grh = (struct ibv_grh *) calloc (wr_count, sizeof (struct ibv_grh));
             if (NULL == recv_req->req_grh) {
-                opal_output (0, "%s oob:ud:recv_try error allocating space for GRHs. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 break;
             }
@@ -231,8 +229,9 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
                                                wr_count * sizeof (struct ibv_grh),
                                                IBV_ACCESS_LOCAL_WRITE);
             if (NULL == recv_req->req_grh_mr) {
-                opal_output (0, "%s oob:ud:recv_try error allocating registering GRH memory. errno = %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+                orte_show_help("help-oob-ud.txt", "reg-mr-failed", true,
+                       orte_process_info.nodename, recv_req->req_grh,
+                       wr_count * sizeof (struct ibv_grh), strerror(errno));
                 /* could not register memory */
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 break;
@@ -481,8 +480,7 @@ int mca_oob_ud_recv_match_send (mca_oob_ud_port_t *port, mca_oob_ud_peer_t *peer
 
     rc = mca_oob_ud_get_recv_req (msg_hdr->msg_origin, msg_hdr->msg_data.req.tag, &req,  msg_hdr->msg_data.req.data_iovec_used);
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "%s oob:ud:recv_start mca_oob_ud_get_recv_req failed %d",
-             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
@@ -496,7 +494,7 @@ int mca_oob_ud_recv_match_send (mca_oob_ud_port_t *port, mca_oob_ud_peer_t *peer
     do {
         rc = mca_oob_ud_recv_alloc (req);
         if (ORTE_SUCCESS != rc) {
-            opal_output (0, "%s oob:ud:recv_start malloc failed!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            ORTE_ERROR_LOG(rc);
             free (req->req_data.iov.uiov);
             OBJ_RELEASE(req);
             req = NULL;
