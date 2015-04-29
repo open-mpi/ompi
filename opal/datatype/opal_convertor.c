@@ -453,8 +453,10 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
  * Compute the remote size.
  */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype) \
 {                                                                         \
+    uint32_t bdt_mask;                                                  \
+    bdt_mask = datatype->bdt_used & convertor->master->hetero_mask;     \
     if( OPAL_UNLIKELY(0 != (bdt_mask)) ) {                                \
         opal_convertor_master_t* master;                                  \
         int i;                                                            \
@@ -474,8 +476,14 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
     }                                                                     \
 }
 #else
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
+#if OPAL_ENABLE_DEBUG
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype)         \
+    uint32_t bdt_mask;                                                  \
+    bdt_mask = datatype->bdt_used & convertor->master->hetero_mask;     \
     assert(0 == (bdt_mask))
+#else
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype)
+#endif
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
@@ -487,7 +495,6 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
  */
 #define OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
-        uint32_t bdt_mask;                                              \
                                                                         \
         /* If the data is empty we just mark the convertor as           \
          * completed. With this flag set the pack and unpack functions  \
@@ -523,9 +530,7 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
             }                                                           \
         }                                                               \
                                                                         \
-        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
-        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype,        \
-                                            bdt_mask );                 \
+        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype );      \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \

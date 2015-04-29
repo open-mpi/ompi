@@ -1405,7 +1405,9 @@ hwloc_export_obj_userdata_base64(void *reserved,
   hwloc__xml_export_state_t state = reserved;
   size_t encoded_length;
   char *encoded_buffer;
+#ifdef HWLOC_DEBUG
   int ret;
+#endif
 
   if (name && hwloc__xml_export_check_buffer(name, strlen(name)) < 0) {
     errno = EINVAL;
@@ -1419,8 +1421,12 @@ hwloc_export_obj_userdata_base64(void *reserved,
     return -1;
   }
 
+#ifdef HWLOC_DEBUG
   ret = hwloc_encode_to_base64(buffer, length, encoded_buffer, encoded_length+1);
   assert(ret == (int) encoded_length);
+#else
+  (void)hwloc_encode_to_base64(buffer, length, encoded_buffer, encoded_length+1);
+#endif
 
   hwloc__export_obj_userdata(state, 1, name, length, encoded_buffer, encoded_length);
 
