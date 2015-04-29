@@ -18,11 +18,12 @@ int hcoll_comm_attr_keyval;
  */
 int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
-
+#if HCOLL_API < HCOLL_VERSION(3,2)
     if (enable_mpi_threads) {
         HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not suppported; skipping hcoll component");
         return OMPI_ERROR;
     }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -56,15 +57,11 @@ static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_modul
 void mca_coll_hcoll_mem_release_cb(void *buf, size_t length,
                                           void *cbdata, bool from_alloc)
 {
-#if HCOLL_API > HCOLL_VERSION(3,0)
     hcoll_mem_unmap(buf, length, cbdata, from_alloc);
-#endif
 }
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
-    mca_coll_hcoll_module_t *module;
-    ompi_communicator_t *comm;
     int context_destroyed;
 
     if (hcoll_module->comm == &ompi_mpi_comm_world.comm){
@@ -236,10 +233,18 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
            call */
         opal_progress_register(mca_coll_hcoll_progress);
 
-        hcoll_set_runtime_tag_offset(MCA_COLL_BASE_TAG_HCOLL_BASE, mca_pml.pml_max_tag);
-
         HCOL_VERBOSE(10,"Calling hcoll_init();");
+#if HCOLL_API >= HCOLL_VERSION(3,2)
+        hcoll_read_init_opts(&cm->init_opts);
+        cm->init_opts->base_tag = MCA_COLL_BASE_TAG_HCOLL_BASE;
+        cm->init_opts->max_tag = mca_pml.pml_max_tag;
+        cm->init_opts->enable_thread_support = ompi_mpi_thread_multiple;
+
+        rc = hcoll_init_with_opts(&cm->init_opts);
+#else
+        hcoll_set_runtime_tag_offset(MCA_COLL_BASE_TAG_HCOLL_BASE, mca_pml.pml_max_tag);
         rc = hcoll_init();
+#endif
 
         if (HCOLL_SUCCESS != rc){
             cm->hcoll_enable = 0;
@@ -248,7 +253,11 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
             return NULL;
         }
 
+#if HCOLL_API >= HCOLL_VERSION(3,2)
+        if (cm->using_mem_hooks && cm->init_opts->mem_hook_needed) {
+#else
         if (cm->using_mem_hooks && hcoll_check_mem_release_cb_needed()) {
+#endif
             opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
         } else {
             cm->using_mem_hooks = 0;
@@ -264,8 +273,8 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
             HCOL_ERROR("Hcol comm keyval create failed");
             return NULL;
         }
-
     }
+
     hcoll_module = OBJ_NEW(mca_coll_hcoll_module_t);
     if (!hcoll_module){
         if (!cm->libhcoll_initialized) {
@@ -294,7 +303,6 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         }
         return NULL;
     }
-
 
     hcoll_module->super.coll_module_enable = mca_coll_hcoll_module_enable;
     hcoll_module->super.coll_barrier = hcoll_collectives.coll_barrier ? mca_coll_hcoll_barrier : NULL;
