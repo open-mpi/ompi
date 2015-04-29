@@ -383,8 +383,8 @@ void sock_fabric_remove_service(struct sock_fabric *fab, int service)
 	fastlock_release(&fab->lock);
 }
 
-static int sock_get_src_addr(struct sockaddr_in *dest_addr,
-			     struct sockaddr_in *src_addr)
+int sock_get_src_addr(struct sockaddr_in *dest_addr,
+		      struct sockaddr_in *src_addr)
 {
 	int sock, ret;
 	socklen_t len;
@@ -402,6 +402,7 @@ static int sock_get_src_addr(struct sockaddr_in *dest_addr,
 	}
 
 	ret = getsockname(sock, (struct sockaddr *) src_addr, &len);
+	src_addr->sin_port = 0;
 	if (ret) {
 		SOCK_LOG_INFO("getsockname failed\n");
 		ret = -errno;

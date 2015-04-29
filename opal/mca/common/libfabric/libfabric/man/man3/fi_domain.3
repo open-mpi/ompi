@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_domain 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -177,7 +177,7 @@ data flows.
 FI_THREAD_FID, but with the added restriction that serialization is
 required when accessing the same endpoint, even if multiple transmit and
 receive contexts are used.
-Conceptualy, FI_THREAD_ENDPOINT maps well to providers that implement
+Conceptually, FI_THREAD_ENDPOINT maps well to providers that implement
 fabric services in hardware but use a single command queue to access
 different data flows.
 .PP

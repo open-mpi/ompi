@@ -86,6 +86,7 @@ libfabric_usnic_headers = \
 	libfabric/prov/usnic/src/usdf_cq.h \
 	libfabric/prov/usnic/src/usdf_dgram.h \
 	libfabric/prov/usnic/src/usdf_endpoint.h \
+	libfabric/prov/usnic/src/usdf_fake_ibv.c \
 	libfabric/prov/usnic/src/usdf_msg.h \
 	libfabric/prov/usnic/src/usdf_progress.h \
 	libfabric/prov/usnic/src/usdf_rdm.h \

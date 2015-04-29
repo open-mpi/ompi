@@ -126,9 +126,15 @@ int psmx_am_init(struct psmx_fid_domain *domain)
 		if (err)
 			return psmx_errno(err);
 
-		assert(psmx_am_handlers_idx[0] == PSMX_AM_RMA_HANDLER);
-		assert(psmx_am_handlers_idx[1] == PSMX_AM_MSG_HANDLER);
-		assert(psmx_am_handlers_idx[2] == PSMX_AM_ATOMIC_HANDLER);
+		if ((psmx_am_handlers_idx[0] != PSMX_AM_RMA_HANDLER) ||
+		    (psmx_am_handlers_idx[1] != PSMX_AM_MSG_HANDLER) ||
+		    (psmx_am_handlers_idx[2] != PSMX_AM_ATOMIC_HANDLER)) {
+			FI_WARN(&psmx_prov, FI_LOG_CORE,
+				"failed to register one or mroe AM handlers "
+				"at indecies %d, %d, %d\n", PSMX_AM_RMA_HANDLER,
+				PSMX_AM_MSG_HANDLER, PSMX_AM_ATOMIC_HANDLER);
+			return -FI_EBUSY;
+		}
 
 		psmx_am_handlers_initialized = 1;
 	}

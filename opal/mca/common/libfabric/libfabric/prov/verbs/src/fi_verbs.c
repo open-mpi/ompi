@@ -48,6 +48,7 @@
 
 #include <infiniband/ib.h>
 #include <infiniband/verbs.h>
+#include <infiniband/driver.h>
 #include <rdma/rdma_cma.h>
 
 #include <rdma/fabric.h>
@@ -174,6 +175,8 @@ const struct fi_domain_attr verbs_domain_attr = {
 	.mr_mode		= FI_MR_BASIC,
 	.mr_key_size		= sizeof_field(struct ibv_sge, lkey),
 	.cq_data_size		= sizeof_field(struct ibv_send_wr, imm_data),
+	.tx_ctx_cnt		= 1024,
+	.rx_ctx_cnt		= 1024,
 	.max_ep_tx_ctx		= 1,
 	.max_ep_rx_ctx		= 1,
 };
@@ -193,7 +196,6 @@ const struct fi_rx_attr verbs_rx_attr = {
 	.mode			= VERBS_RX_MODE,
 	.msg_order		= VERBS_MSG_ORDER,
 	.total_buffered_recv	= 0,
-	.size			= 256,
 };
 
 const struct fi_tx_attr verbs_tx_attr = {
@@ -202,7 +204,7 @@ const struct fi_tx_attr verbs_tx_attr = {
 	.op_flags		= VERBS_TX_OP_FLAGS,
 	.msg_order		= VERBS_MSG_ORDER,
 	.inject_size		= 0,
-	.size			= 256,
+	.rma_iov_limit		= 1,
 };
 
 static struct fi_info *verbs_info = NULL;
@@ -603,8 +605,9 @@ static int fi_ibv_rai_to_fi(struct rdma_addrinfo *rai, struct fi_info *fi)
  	return 0;
 }
 
-static inline int fi_ibv_get_inject_size(struct ibv_context *ctx, 
-		const struct fi_info *hints, struct fi_info *info)
+static inline int fi_ibv_get_qp_cap(struct ibv_context *ctx,
+		const struct fi_info *hints, struct ibv_device_attr *device_attr,
+		struct fi_info *info)
 {
 	struct ibv_pd *pd;
 	struct ibv_cq *cq;
@@ -622,13 +625,24 @@ static inline int fi_ibv_get_inject_size(struct ibv_context *ctx,
 		goto err1;
 	}
 
+
+	/* TODO: serialize access to string buffers */
+	fi_read_file(FI_CONF_DIR, "def_send_wr",
+			def_send_wr, sizeof def_send_wr);
+	fi_read_file(FI_CONF_DIR, "def_recv_wr",
+			def_recv_wr, sizeof def_recv_wr);
+	fi_read_file(FI_CONF_DIR, "def_send_sge",
+			def_send_sge, sizeof def_send_sge);
+	fi_read_file(FI_CONF_DIR, "def_recv_sge",
+			def_recv_sge, sizeof def_recv_sge);
+
 	memset(&init_attr, 0, sizeof init_attr);
 	init_attr.send_cq = cq;
 	init_attr.recv_cq = cq;
-	init_attr.cap.max_send_wr = 1;
-	init_attr.cap.max_recv_wr = 1;
-	init_attr.cap.max_send_sge = 1;
-	init_attr.cap.max_recv_sge = 1;
+	init_attr.cap.max_send_wr = atoi(def_send_wr);
+	init_attr.cap.max_recv_wr = atoi(def_recv_wr);
+	init_attr.cap.max_send_sge = MIN(atoi(def_send_sge), device_attr->max_sge);
+	init_attr.cap.max_recv_sge = MIN(atoi(def_recv_sge), device_attr->max_sge);
 
 	if (hints && hints->tx_attr && hints->tx_attr->inject_size) {
 		init_attr.cap.max_inline_data = hints->tx_attr->inject_size;
@@ -646,7 +660,12 @@ static inline int fi_ibv_get_inject_size(struct ibv_context *ctx,
 		goto err2;
 	}
 
-	info->tx_attr->inject_size = init_attr.cap.max_inline_data;
+	info->tx_attr->inject_size	= init_attr.cap.max_inline_data;
+	info->tx_attr->iov_limit 	= init_attr.cap.max_send_sge;
+	info->tx_attr->size	 	= init_attr.cap.max_send_wr;
+
+	info->rx_attr->iov_limit 	= init_attr.cap.max_recv_sge;
+	info->rx_attr->size	 	= init_attr.cap.max_recv_wr;
 
 	ibv_destroy_qp(qp);
 err2:
@@ -664,24 +683,20 @@ static int fi_ibv_get_device_attrs(struct ibv_context *ctx,
 	struct ibv_port_attr port_attr;
 	int ret = 0;
 
-	ret = fi_ibv_get_inject_size(ctx, hints, info);
-	if (ret)
-		return ret;
-
 	ret = ibv_query_device(ctx, &device_attr);
 	if (ret)
 		return -errno;
 
 	info->domain_attr->cq_cnt 		= device_attr.max_cq;
 	info->domain_attr->ep_cnt 		= device_attr.max_qp;
-	/* TODO find correct optimum values for ctx_cnt */
-	info->domain_attr->tx_ctx_cnt 		= device_attr.max_qp;
-	info->domain_attr->rx_ctx_cnt 		= device_attr.max_qp;
+	info->domain_attr->tx_ctx_cnt 		= MIN(info->domain_attr->tx_ctx_cnt, device_attr.max_qp);
+	info->domain_attr->rx_ctx_cnt 		= MIN(info->domain_attr->rx_ctx_cnt, device_attr.max_qp);
 	info->domain_attr->max_ep_tx_ctx 	= device_attr.max_qp;
 	info->domain_attr->max_ep_rx_ctx 	= device_attr.max_qp;
-	info->tx_attr->iov_limit 		= device_attr.max_sge;
-	info->tx_attr->rma_iov_limit 		= device_attr.max_sge;
-	info->rx_attr->iov_limit 		= device_attr.max_sge;
+
+	ret = fi_ibv_get_qp_cap(ctx, hints, &device_attr, info);
+	if (ret)
+		return ret;
 
 	ret = ibv_query_port(ctx, 1, &port_attr);
 	if (ret)
@@ -690,6 +705,33 @@ static int fi_ibv_get_device_attrs(struct ibv_context *ctx,
 	info->ep_attr->max_msg_size 		= port_attr.max_msg_sz;
 	info->ep_attr->max_order_raw_size 	= port_attr.max_msg_sz;
 	info->ep_attr->max_order_waw_size	= port_attr.max_msg_sz;
+
+	return 0;
+}
+
+/*
+ * USNIC plugs into the verbs framework, but is not a usable device.
+ * Manually check for devices and fail gracefully if none are present.
+ * This avoids the lower libraries (libibverbs and librdmacm) from
+ * reporting error messages to stderr.
+ */
+static int fi_ibv_have_device(void)
+{
+	struct ibv_device **devs;
+	struct ibv_context *verbs;
+	int i;
+
+	devs = ibv_get_device_list(NULL);
+	if (!devs)
+		return 0;
+
+	for (i = 0; devs[i]; i++) {
+		verbs = ibv_open_device(devs[i]);
+		if (verbs) {
+			ibv_close_device(verbs);
+			return 1;
+		}
+	}
 
 	return 0;
 }
@@ -709,16 +751,23 @@ static int fi_ibv_init_info(const struct fi_info *hints)
 	if (verbs_info)
 		goto unlock;
 
+	if (!fi_ibv_have_device()) {
+		ret = -FI_ENODATA;
+		goto err1;
+	}
+
 	/* TODO Handle the case where multiple devices are returned */
 	ctx_list = rdma_get_devices(&num_devices);
-	if (!num_devices)
-		return -errno;
+	if (!num_devices) {
+		ret = (errno == ENODEV) ? -FI_ENODATA : -errno;
+		goto err1;
+	}
 
 	ctx = *ctx_list;
 
 	if (!(fi = fi_allocinfo())) {
 		ret = -FI_ENOMEM;
-		goto err1;
+		goto err2;
 	}
 
 	fi->caps		= VERBS_CAPS;
@@ -732,20 +781,20 @@ static int fi_ibv_init_info(const struct fi_info *hints)
 
 	ret = fi_ibv_get_device_attrs(ctx, hints, fi);
 	if (ret)
-		goto err2;
+		goto err3;
 
 	switch (ctx->device->transport_type) {
 	case IBV_TRANSPORT_IB:
 		if(ibv_query_gid(ctx, 1, 0, &gid)) {
 			ret = -errno;
-			goto err2;
+			goto err3;
 		}
 
 		name_len =  strlen(VERBS_IB_PREFIX) + INET6_ADDRSTRLEN;
 
 		if (!(fi->fabric_attr->name = calloc(1, name_len + 1))) {
 			ret = -FI_ENOMEM;
-			goto err2;
+			goto err3;
 		}
 
 		snprintf(fi->fabric_attr->name, name_len, VERBS_IB_PREFIX "%lx",
@@ -757,7 +806,7 @@ static int fi_ibv_init_info(const struct fi_info *hints)
 		fi->fabric_attr->name = strdup(VERBS_IWARP_FABRIC);
 		if (!fi->fabric_attr->name) {
 			ret = -FI_ENOMEM;
-			goto err2;
+			goto err3;
 		}
 
 		fi->ep_attr->protocol = FI_PROTO_IWARP;
@@ -766,25 +815,26 @@ static int fi_ibv_init_info(const struct fi_info *hints)
 	default:
 		FI_INFO(&fi_ibv_prov, FI_LOG_CORE, "Unknown transport type");
 		ret = -FI_ENODATA;
-		goto err2;
+		goto err3;
 	}
 
 	if (!(fi->domain_attr->name = strdup(ctx->device->name))) {
 		ret = -FI_ENOMEM;
-		goto err2;
+		goto err3;
 	}
 
 	verbs_info = fi;
 	rdma_free_devices(ctx_list);
-
 unlock:
 	pthread_mutex_unlock(&verbs_info_lock);
-
 	return 0;
-err2:
+
+err3:
 	fi_freeinfo(fi);
-err1:
+err2:
 	rdma_free_devices(ctx_list);
+err1:
+	pthread_mutex_unlock(&verbs_info_lock);
 	return ret;
 }
 
@@ -3176,6 +3226,7 @@ static int fi_ibv_pep_listen(struct fid_pep *pep)
 
 static struct fi_ops_cm fi_ibv_pep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
+	.setname = fi_no_setname,
 	.getname = fi_ibv_pep_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
@@ -3254,6 +3305,7 @@ err:
 static int fi_ibv_fabric_close(fid_t fid)
 {
 	fi_freeinfo(verbs_info);
+	verbs_info = NULL;
 	free(fid);
 	return 0;
 }

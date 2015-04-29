@@ -349,7 +349,7 @@ static void sock_pe_report_rx_error(struct sock_pe_entry *pe_entry, int rem)
 		sock_cntr_err_inc(pe_entry->comp->recv_cntr);
 	if (pe_entry->comp->recv_cq)
 		sock_cq_report_error(pe_entry->comp->recv_cq, pe_entry, rem, 
-				     FI_ENOSPC, -FI_ENOSPC, NULL);
+				     FI_ETRUNC, -FI_ETRUNC, NULL);
 }
 
 static void sock_pe_report_tx_rma_read_err(struct sock_pe_entry *pe_entry, int err)

@@ -116,6 +116,12 @@
 			   FI_ORDER_SAR | FI_ORDER_SAW | FI_ORDER_SAS)
 
 #define SOCK_EP_COMP_ORDER (FI_ORDER_STRICT | FI_ORDER_DATA)
+#define SOCK_EP_DEFAULT_OP_FLAGS (FI_TRANSMIT_COMPLETE)
+
+#define SOCK_EP_SET_TX_OP_FLAGS(_flags) do {			\
+		if (!((_flags) & FI_INJECT_COMPLETE))		\
+			(_flags) |= FI_TRANSMIT_COMPLETE;	\
+	} while (0)
 
 #define SOCK_MODE (0)
 #define SOCK_NO_COMPLETION (1ULL << 60)
@@ -817,7 +823,8 @@ int sock_dgram_verify_ep_attr(struct fi_ep_attr *ep_attr, struct fi_tx_attr *tx_
 			      struct fi_rx_attr *rx_attr);
 int sock_msg_verify_ep_attr(struct fi_ep_attr *ep_attr, struct fi_tx_attr *tx_attr,
 			    struct fi_rx_attr *rx_attr);
-
+int sock_get_src_addr(struct sockaddr_in *dest_addr,
+		      struct sockaddr_in *src_addr);
 
 struct fi_info *sock_fi_info(enum fi_ep_type ep_type, 
 			     struct fi_info *hints, void *src_addr, void *dest_addr);

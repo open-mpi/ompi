@@ -1,4 +1,4 @@
-.TH fi_tagged 3 "2015\-04\-17" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_tagged 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_tagged - Tagged data transfer operations
@@ -257,7 +257,7 @@ of FI_ENOMSG.
 .PP
 If a peek request locates a matching message, the operation will
 complete successfully.
-The returned completion data will indicate the metadata associated with
+The returned completion data will indicate the meta-data associated with
 the message, such as the message length, completion flags, available CQ
 data, tag, and source address.
 The data available is subject to the completion entry format (e.g.

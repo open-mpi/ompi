@@ -750,10 +750,12 @@ usdf_rdm_inject(struct fid_ep *fep, const void *buf, size_t len,
 	wqe->rd_msg_id_be = htonl(msg_id);
 
 	memcpy(wqe->rd_inject_buf, buf, len);
+	wqe->rd_iov[0].iov_base = wqe->rd_inject_buf;
+	wqe->rd_iov[0].iov_len = len;
 	wqe->rd_last_iov = 0;
 
 	wqe->rd_cur_iov = 0;
-	wqe->rd_cur_ptr = buf;
+	wqe->rd_cur_ptr = wqe->rd_inject_buf;
 	wqe->rd_iov_resid = len;
 	wqe->rd_resid = len;
 	wqe->rd_length = len;

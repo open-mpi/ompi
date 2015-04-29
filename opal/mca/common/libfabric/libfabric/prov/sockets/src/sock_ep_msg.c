@@ -77,7 +77,7 @@ static const struct fi_ep_attr sock_msg_ep_attr = {
 static const struct fi_tx_attr sock_msg_tx_attr = {
 	.caps = SOCK_EP_MSG_CAP,
 	.mode = SOCK_MODE,
-	.op_flags = FI_TRANSMIT_COMPLETE,
+	.op_flags = SOCK_EP_DEFAULT_OP_FLAGS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
 	.size = SOCK_EP_TX_SZ,
@@ -254,10 +254,75 @@ static int sock_ep_cm_getname(fid_t fid, void *addr, size_t *addrlen)
 		SOCK_LOG_ERROR("Invalid argument\n");
 		return -FI_EINVAL;
 	}
+	return (*addrlen == sizeof(struct sockaddr_in)) ? 0 : -FI_ETOOSMALL;
+}
+
+static int sock_pep_create_listener(struct sock_pep *pep)
+{
+	int optval, ret;
+	socklen_t addr_size;
+	struct sockaddr_in addr;
+	struct addrinfo *s_res = NULL, *p;
+	struct addrinfo hints;
+	char sa_ip[INET_ADDRSTRLEN] = {0};
+	char sa_port[NI_MAXSERV] = {0};
+
+	pep->cm.do_listen = 1;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_protocol = IPPROTO_UDP;
+
+	memcpy(sa_ip, inet_ntoa(pep->src_addr.sin_addr), INET_ADDRSTRLEN);
+	sprintf(sa_port, "%d", ntohs(pep->src_addr.sin_port));
+
+	ret = getaddrinfo(sa_ip, sa_port, &hints, &s_res);
+	if (ret) {
+		SOCK_LOG_ERROR("no available AF_INET address service:%s, %s\n",
+			       sa_port, gai_strerror(ret));
+		return -FI_EINVAL;
+	}
+
+	for (p=s_res; p; p=p->ai_next) {
+		pep->cm.sock = socket(p->ai_family, p->ai_socktype,
+				     p->ai_protocol);
+		if (pep->cm.sock >= 0) {
+			optval = 1;
+			if (setsockopt(pep->cm.sock, SOL_SOCKET, SO_REUSEADDR, &optval, 
+				       sizeof optval))
+				SOCK_LOG_ERROR("setsockopt failed\n");
+			
+			if (!bind(pep->cm.sock, s_res->ai_addr, s_res->ai_addrlen))
+				break;
+			close(pep->cm.sock);
+			pep->cm.sock = -1;
+		}
+	}
+
+	freeaddrinfo(s_res);
+	if (pep->cm.sock < 0)
+		return -FI_EIO;
+	
+	optval = 1;
+	if (setsockopt(pep->cm.sock, SOL_SOCKET, SO_REUSEADDR, &optval, 
+		       sizeof optval))
+		SOCK_LOG_ERROR("setsockopt failed\n");
+	
+	if (pep->src_addr.sin_port == 0) {
+		addr_size = sizeof(addr);
+		if (getsockname(pep->cm.sock, (struct sockaddr*)&addr, &addr_size))
+			return -FI_EINVAL;
+		pep->src_addr.sin_port = addr.sin_port;
+	}
+	
+	SOCK_LOG_INFO("Listener thread bound to %s:%d\n",
+		      sa_ip, ntohs(pep->src_addr.sin_port));
 	return 0;
 }
 
-static int sock_ep_cm_setnmae(fid_t fid, void *addr, size_t addrlen)
+static int sock_ep_cm_setname(fid_t fid, void *addr, size_t addrlen)
 {
 	struct sock_ep *sock_ep = NULL;
 	struct sock_pep *sock_pep = NULL;
@@ -272,13 +337,13 @@ static int sock_ep_cm_setnmae(fid_t fid, void *addr, size_t addrlen)
 		if (sock_ep->listener.listener_thread)
 			return -FI_EINVAL;
 		memcpy(sock_ep->src_addr, addr, addrlen);
-		break;
+		return sock_conn_listen(sock_ep);
 	case FI_CLASS_PEP:
 		sock_pep = container_of(fid, struct sock_pep, pep.fid);
 		if (sock_pep->cm.listener_thread)
 			return -FI_EINVAL;
 		memcpy(&sock_pep->src_addr, addr, addrlen);
-		break;
+		return sock_pep_create_listener(sock_pep);
 	default:
 		SOCK_LOG_ERROR("Invalid argument\n");
 		return -FI_EINVAL;
@@ -298,7 +363,7 @@ static int sock_ep_cm_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen)
 	sock_ep = container_of(ep, struct sock_ep, ep);
 	*addrlen = MIN(*addrlen, sizeof(struct sockaddr_in));
 	memcpy(addr, sock_ep->dest_addr, *addrlen);
-	return 0;
+	return (*addrlen == sizeof(struct sockaddr_in)) ? 0 : -FI_ETOOSMALL;
 }
 
 static int sock_ep_cm_create_socket(void)
@@ -678,6 +743,8 @@ static int sock_ep_cm_connect(struct fid_ep *ep, const void *addr,
 	req->ep_attr = *_ep->info.ep_attr;
 	req->domain_attr = *_ep->info.domain_attr;
 	req->fabric_attr = *_ep->info.fabric_attr;
+	req->fabric_attr.fabric = NULL;
+	req->domain_attr.domain = NULL;
 
 	if (param && paramlen)
 		memcpy(&req->user_data, param, paramlen);
@@ -777,7 +844,7 @@ static int sock_ep_cm_shutdown(struct fid_ep *ep, uint64_t flags)
 
 struct fi_ops_cm sock_ep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.setname = sock_ep_cm_setnmae,
+	.setname = sock_ep_cm_setname,
 	.getname = sock_ep_cm_getname,
 	.getpeer = sock_ep_cm_getpeer,
 	.connect = sock_ep_cm_connect,
@@ -791,6 +858,7 @@ static int sock_msg_endpoint(struct fid_domain *domain, struct fi_info *info,
 		struct sock_ep **ep, void *context, size_t fclass)
 {
 	int ret;
+	struct sock_pep *pep;
 
 	if (info) {
 		if (info->ep_attr) {
@@ -813,10 +881,15 @@ static int sock_msg_endpoint(struct fid_domain *domain, struct fi_info *info,
 				return ret;
 		}
 	}
-	
+
 	ret = sock_alloc_endpoint(domain, info, ep, context, fclass);
 	if (ret)
 		return ret;
+
+	if (info && info->handle && info->handle->fclass == FI_CLASS_PEP) {
+		pep = container_of(info->handle, struct sock_pep, pep.fid);
+		memcpy((*ep)->src_addr, &pep->src_addr, sizeof *(*ep)->src_addr);
+	}
 
 	if (!info || !info->ep_attr) 
 		(*ep)->ep_attr = sock_msg_ep_attr;
@@ -1046,69 +1119,8 @@ out:
 	return NULL;
 }
 
-static int sock_pep_create_listener_thread(struct sock_pep *pep)
-{
-	int optval, ret;
-	socklen_t addr_size;
-	struct sockaddr_in addr;
-	struct addrinfo *s_res = NULL, *p;
-	struct addrinfo hints;
-	char sa_ip[INET_ADDRSTRLEN] = {0};
-	char sa_port[NI_MAXSERV] = {0};
-
-	pep->cm.do_listen = 1;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
-	hints.ai_protocol = IPPROTO_UDP;
-
-	memcpy(sa_ip, inet_ntoa(pep->src_addr.sin_addr), INET_ADDRSTRLEN);
-	sprintf(sa_port, "%d", ntohs(pep->src_addr.sin_port));
-
-	ret = getaddrinfo(sa_ip, sa_port, &hints, &s_res);
-	if (ret) {
-		SOCK_LOG_ERROR("no available AF_INET address service:%s, %s\n",
-			       sa_port, gai_strerror(ret));
-		return -FI_EINVAL;
-	}
-
-	for (p=s_res; p; p=p->ai_next) {
-		pep->cm.sock = socket(p->ai_family, p->ai_socktype,
-				     p->ai_protocol);
-		if (pep->cm.sock >= 0) {
-			optval = 1;
-			if (setsockopt(pep->cm.sock, SOL_SOCKET, SO_REUSEADDR, &optval, 
-				       sizeof optval))
-				SOCK_LOG_ERROR("setsockopt failed\n");
-			
-			if (!bind(pep->cm.sock, s_res->ai_addr, s_res->ai_addrlen))
-				break;
-			close(pep->cm.sock);
-			pep->cm.sock = -1;
-		}
-	}
-
-	freeaddrinfo(s_res);
-	if (pep->cm.sock < 0)
-		return -FI_EIO;
-	
-	optval = 1;
-	if (setsockopt(pep->cm.sock, SOL_SOCKET, SO_REUSEADDR, &optval, 
-		       sizeof optval))
-		SOCK_LOG_ERROR("setsockopt failed\n");
-	
-	if (pep->src_addr.sin_port == 0) {
-		addr_size = sizeof(addr);
-		if (getsockname(pep->cm.sock, (struct sockaddr*)&addr, &addr_size))
-			return -FI_EINVAL;
-		pep->src_addr.sin_port = addr.sin_port;
-	}
-	
-	SOCK_LOG_INFO("Listener thread bound to %s:%d\n",
-		      sa_ip, ntohs(pep->src_addr.sin_port));
-	
+static int sock_pep_start_listener_thread(struct sock_pep *pep)
+{	
 	if (pthread_create(&pep->cm.listener_thread, NULL, 
 			   sock_pep_listener_thread, (void *)pep)) {
 		SOCK_LOG_ERROR("Couldn't create listener thread\n");
@@ -1121,7 +1133,15 @@ static int sock_pep_listen(struct fid_pep *pep)
 {
 	struct sock_pep *_pep;
 	_pep = container_of(pep, struct sock_pep, pep);
-	return sock_pep_create_listener_thread(_pep);
+	if (_pep->cm.listener_thread)
+		return 0;
+
+	if (!_pep->cm.do_listen && sock_pep_create_listener(_pep)) {
+		SOCK_LOG_ERROR("Failed to create pep thread\n");
+		return -FI_EINVAL;
+	}
+	
+	return sock_pep_start_listener_thread(_pep);
 }
 
 static int sock_pep_reject(struct fid_pep *pep, fid_t handle,
@@ -1170,7 +1190,7 @@ out:
 
 static struct fi_ops_cm sock_pep_cm_ops = {
 	.size = sizeof(struct fi_ops_cm),
-	.setname = sock_ep_cm_setnmae,
+	.setname = sock_ep_cm_setname,
 	.getname = sock_ep_cm_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,

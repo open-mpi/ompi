@@ -104,6 +104,7 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	if (!conn)
 		return -FI_EAGAIN;
 
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
 
@@ -162,7 +163,6 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		for (i = 0; i< msg->iov_count; i++) {
 			tx_iov.ioc.addr = (uintptr_t) msg->msg_iov[i].addr;
 			tx_iov.ioc.count = msg->msg_iov[i].count;
-			tx_iov.ioc.key = (uintptr_t) msg->desc[i];
 			sock_tx_ctx_write(tx_ctx, &tx_iov, sizeof(tx_iov));
 			src_len += (tx_iov.ioc.count * datatype_sz);
 		}

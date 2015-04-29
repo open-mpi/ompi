@@ -201,6 +201,7 @@ _usnic_files = \
 	prov/usnic/src/usdf_ep_rdm.c \
 	prov/usnic/src/usdf_eq.c \
 	prov/usnic/src/usdf_fabric.c \
+	prov/usnic/src/usdf_fake_ibv.c \
 	prov/usnic/src/usdf_mem.c \
 	prov/usnic/src/usdf_msg.c \
 	prov/usnic/src/usdf_msg.h \
