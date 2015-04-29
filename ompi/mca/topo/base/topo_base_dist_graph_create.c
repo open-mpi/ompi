@@ -281,7 +281,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
 int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                     ompi_communicator_t *comm_old,
                                     int n, int nodes[],
-                                    int degrees[], int targets[],
+                                    int degrees[], int targets[], 
                                     int weights[],
                                     ompi_info_t *info, int reorder,
                                     ompi_communicator_t **newcomm)
