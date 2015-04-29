@@ -969,6 +969,7 @@ mca_btl_sm_component_init(int *num_btls,
     }
 #endif
 
+
     return btls;
 
  no_knem:

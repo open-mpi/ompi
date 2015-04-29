@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,6 +43,7 @@
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/qos/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -88,7 +89,6 @@ int orte_ess_base_tool_setup(void)
         progress_thread_running = true;
         orte_event_base_active = true;
     }
-    
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -100,7 +100,6 @@ int orte_ess_base_tool_setup(void)
         error = "orte_state_base_select";
         goto error;
     }
-
     /* open and setup the error manager */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -112,7 +111,6 @@ int orte_ess_base_tool_setup(void)
         error = "orte_errmgr_base_select";
         goto error;
     }
-
     /* Setup the communication infrastructure */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -124,7 +122,6 @@ int orte_ess_base_tool_setup(void)
         error = "orte_oob_base_select";
         goto error;
     }
-
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -134,6 +131,17 @@ int orte_ess_base_tool_setup(void)
     if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
+        goto error;
+    }
+    /* Messaging QoS Layer */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_qos_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_qos_base_select";
         goto error;
     }
     /* Routed system */
@@ -147,20 +155,17 @@ int orte_ess_base_tool_setup(void)
         error = "orte_routed_base_select";
         goto error;
     }
-    
     /* since I am a tool, then all I really want to do is communicate.
      * So setup communications and be done - finding the HNP
      * to which I want to communicate and setting up a route for
      * that link is my responsibility
      */
-    
     /* enable communication via the rml */
     if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml.enable_comm";
         goto error;
     }
-    
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on
@@ -174,16 +179,16 @@ int orte_ess_base_tool_setup(void)
         error = "define session dir names";
         goto error;
     }
-    
+
     /* setup the routed info - the selected routed component
-     * will know what to do. 
+     * will know what to do.
      */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
     }
-    
+
     /* setup I/O forwarding system - must come after we init routes */
     if (NULL != orte_process_info.my_hnp_uri) {
         /* only do this if we were given an HNP */
@@ -207,7 +212,7 @@ int orte_ess_base_tool_setup(void)
         /* we don't select the plm framework as we only want the
          * base proxy functions */
     }
-    
+
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Setup the SnapC
@@ -233,7 +238,7 @@ int orte_ess_base_tool_setup(void)
         error = "orte_sstore_base_select";
         goto error;
     }
-    
+
     /* Tools do not need all the OPAL CR stuff */
     opal_cr_set_enabled(false);
 #endif
@@ -251,12 +256,12 @@ int orte_ess_base_tool_setup(void)
     }
 
     return ORTE_SUCCESS;
-    
+
  error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
-    
+
     return ret;
 }
 
@@ -286,5 +291,5 @@ int orte_ess_base_tool_finalize(void)
         opal_stop_progress_thread("orte", true);
         progress_thread_running = false;
     }
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }

@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -80,8 +80,7 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_del_exception_handler,
 
     orte_rml_ftrm_ft_event,
-    
-    orte_rml_ftrm_purge
+    orte_rml_ftrm_purge,
 };
 
 int rml_ftrm_output_handle;

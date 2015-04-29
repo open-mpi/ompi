@@ -4,6 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +81,8 @@ int mca_oob_ud_get_recv_req (const orte_process_name_t name, const int tag,
 
     req->req_origin       = name;
     req->req_tag          = tag;
-
+    req->req_channel      = ORTE_RML_INVALID_CHANNEL_NUM;
+    req->req_seq_num      = 0;
     /* this receive was not expected */
     req->type             = MCA_OOB_UD_REQ_RECV;
 

@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2012-2013 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,7 +24,7 @@
  *
  * One use case for this class is for ACK-based network retransmission
  * schemes (NACK-based retransmission schemes probably can use
- * opal_ring_buffer).  
+ * opal_ring_buffer).
  *
  * For ACK-based retransmission schemes, a hotel might be used
  * something like this:
@@ -61,7 +62,7 @@ BEGIN_C_DECLS
 struct opal_hotel_t;
 
 /* User-supplied function to be invoked when an occupant is evicted. */
-typedef void (*opal_hotel_eviction_callback_fn_t)(struct opal_hotel_t *hotel, 
+typedef void (*opal_hotel_eviction_callback_fn_t)(struct opal_hotel_t *hotel,
                                                   int room_num,
                                                   void *occupant);
 
@@ -246,6 +247,55 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
     /* Don't bother returning whether we actually checked someone out
        or not (because this is in the critical performance path) --
        assume the upper layer knows what it's doing. */
+}
+
+/**
+ * Check the specified occupant out of the hotel and return the occupant.
+ *
+ * @param hotel Pointer to hotel (IN)
+ * @param room Room number to checkout (IN)
+ * @param void * occupant (OUT)
+ * If there is an occupant in the room, their timer is canceled and
+ * they are checked out.
+ *
+ * Use this checkout and when caller needs the occupant
+ */
+static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, int room_num, void **occupant)
+{
+    opal_hotel_room_t *room;
+
+    /* Bozo check */
+    assert(room_num < hotel->num_rooms);
+
+    /* If there's an occupant in the room, check them out */
+    room = &(hotel->rooms[room_num]);
+    if (OPAL_LIKELY(NULL != room->occupant)) {
+        opal_output (10, "checking out occupant %p from room num %d", room->occupant, room_num);
+        *occupant = room->occupant;
+        room->occupant = NULL;
+        opal_event_del(&(room->eviction_timer_event));
+        hotel->last_unoccupied_room++;
+        assert(hotel->last_unoccupied_room < hotel->num_rooms);
+        hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
+    }
+    else {
+        opal_output( 0, " OOPS there is no occupant in room_num %d", room_num);
+   }
+
+}
+
+/**
+ * Returns true if the hotel is empty (no occupant)
+ * @param hotel Pointer to hotel (IN)
+ * @return bool true if empty false if there is a occupant(s)
+ *
+ */
+static inline bool opal_hotel_is_empty (opal_hotel_t *hotel)
+{
+    if (hotel->last_unoccupied_room == hotel->num_rooms - 1)
+        return true;
+    else
+        return false;
 }
 
 /**
