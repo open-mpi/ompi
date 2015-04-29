@@ -172,10 +172,8 @@ static int recv_nb(struct dte_data_representation_t data,
     }
     if (HCOL_DTE_IS_INLINE(data)){
         /*do inline nb recv*/
-        int rc;
         size_t size;
         ompi_request_t *ompi_req;
-        ompi_free_list_item_t *item;
 
         if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
             fprintf(stderr, "***Error in hcolrte_rml_recv_nb: buffer pointer is NULL"
@@ -243,10 +241,8 @@ static int send_nb( dte_data_representation_t data,
     }
     if (HCOL_DTE_IS_INLINE(data)){
         /*do inline nb recv*/
-        int rc;
         size_t size;
         ompi_request_t *ompi_req;
-        ompi_free_list_item_t *item;
         if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
             fprintf(stderr, "***Error in hcolrte_rml_send_nb: buffer pointer is NULL"
                     " for non DTE_ZERO INLINE data representation\n");
