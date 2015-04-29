@@ -105,12 +105,12 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
 
     used = snprintf(buf, length, "%s frag %p iov_cnt %d iov_idx %d size %lu\n",
                     msg, (void*)frag, (int)frag->iov_cnt, (int)frag->iov_idx, frag->size);
-    if (used >= length) return length;
+    if ((size_t)used >= length) return length;
     for( i = 0; i < (int)frag->iov_cnt; i++ ) {
         used += snprintf(&buf[used], length - used, "[%s%p:%lu] ",
                          (i < (int)frag->iov_idx ? "*" : ""),
                          frag->iov[i].iov_base, frag->iov[i].iov_len);
-        if (used >= length) return length;
+        if ((size_t)used >= length) return length;
     }
     return used;
 }

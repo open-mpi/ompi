@@ -1640,8 +1640,10 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
     ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
     ompi_osc_rdma_header_base_t *base_header = 
         (ompi_osc_rdma_header_base_t *) module->incoming_buffer;
-    size_t incoming_length = request->req_status._ucount;
     int source = request->req_status.MPI_SOURCE;
+#if OPAL_ENABLE_DEBUG
+    size_t incoming_length = request->req_status._ucount;
+#endif
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
