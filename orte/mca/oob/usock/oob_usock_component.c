@@ -24,7 +24,7 @@
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of things like EAGAIN, EINPROGRESS, etc. It has been
  * verified that this will not conflict with other error codes that
- * are returned by these functions under UNIX/Linux environments 
+ * are returned by these functions under UNIX/Linux environments
  */
 
 #include "orte_config.h"
@@ -251,9 +251,9 @@ static int component_send(orte_rml_send_t *msg)
     orte_proc_t *proc;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:usock:send_nb to peer %s:%d",
+                        "%s oob:usock:send_nb to peer %s:%d to channel=%d seq_num =%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag);
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->dst_channel, msg->seq_num);
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* daemons can only reach local procs */

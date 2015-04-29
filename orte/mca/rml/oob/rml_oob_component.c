@@ -6,17 +6,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -78,7 +79,6 @@ orte_rml_component_t mca_rml_oob_component = {
 };
 
 orte_rml_oob_module_t orte_rml_oob_module = {
-    {
         orte_rml_oob_init,
         orte_rml_oob_fini,
 
@@ -97,11 +97,13 @@ orte_rml_oob_module_t orte_rml_oob_module = {
 
         orte_rml_oob_add_exception,
         orte_rml_oob_del_exception,
-
         orte_rml_oob_ft_event,
-        
-        orte_rml_oob_purge
-    }
+        orte_rml_oob_purge,
+
+        orte_rml_oob_open_channel,
+        orte_rml_oob_send_channel_nb,
+        orte_rml_oob_send_buffer_channel_nb,
+        orte_rml_oob_close_channel
 };
 
 /* Local variables */
@@ -127,11 +129,11 @@ rml_oob_init(int* priority)
         *priority = 1;
         return &orte_rml_oob_module.super;
     }
-    
+
     *priority = 1;
-    
+
     OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);
-    
+
     init_done = true;
     return &orte_rml_oob_module.super;
 }
@@ -141,7 +143,7 @@ orte_rml_oob_init(void)
 {
     /* enable the base receive to get updates on contact info */
     orte_rml_base_comm_start();
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -151,7 +153,7 @@ orte_rml_oob_fini(void)
 {
     opal_list_item_t *item;
 
-    while (NULL != 
+    while (NULL !=
            (item = opal_list_remove_first(&orte_rml_oob_module.exceptions))) {
         OBJ_RELEASE(item);
     }
@@ -159,7 +161,7 @@ orte_rml_oob_fini(void)
 
     /* clear the base receive */
     orte_rml_base_comm_stop();
-    
+
     return ORTE_SUCCESS;
 }
 
