@@ -144,9 +144,9 @@ static int register_param (const char *type_name, const char *component_name,
             param.param_value->stringval = (char *) default_value;
         }
         break;
-    case MCA_BASE_PARAM_TYPE_MAX:
+    default:
         OBJ_DESTRUCT(&param);
-        return OPAL_ERROR;
+        return OPAL_ERROR;  
     }
 
     var_index = mca_base_var_register (NULL, type_name, component_name,
