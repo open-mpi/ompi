@@ -205,6 +205,7 @@ static ssize_t sock_ep_sendmsg(struct fid_ep *ep, const struct fi_msg *msg,
 	SOCK_LOG_INFO("New sendmsg on TX: %p using conn: %p\n", 
 		      tx_ctx, conn);
 
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
 	memset(&tx_op, 0, sizeof(struct sock_op));
@@ -516,6 +517,7 @@ static ssize_t sock_ep_tsendmsg(struct fid_ep *ep,
 	if (!conn)
 		return -FI_EAGAIN;
 	
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
 

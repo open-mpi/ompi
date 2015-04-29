@@ -1,4 +1,4 @@
-.TH fi_eq 3 "2015\-04\-13" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_eq 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_eq - Event queue operations
@@ -244,7 +244,7 @@ corresponding object type (e.g., see \f[C]fi_av\f[](3) for a description
 of how asynchronous address vector insertions are completed).
 .PP
 \f[I]Connection Notification\f[] : Connection notifications are
-connection management notifications used to setup or teardown
+connection management notifications used to setup or tear down
 connections between endpoints.
 There are three connection notification events: FI_CONNREQ,
 FI_CONNECTED, and FI_SHUTDOWN.
@@ -322,7 +322,7 @@ Endpoint errors may be result of numerous actions, but are often
 associated with a failed operation.
 Operations may fail because of buffer overruns, invalid permissions,
 incorrect memory access keys, network routing failures, network
-reachability issues, etc.
+reach-ability issues, etc.
 .PP
 Asynchronous errors are reported using struct fi_eq_err_entry, as
 defined below.

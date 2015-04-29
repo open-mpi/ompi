@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-04\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_endpoint 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -1086,8 +1086,8 @@ counters.
 Completed receive operations are posted to the CQs bound to the
 endpoint.
 An endpoint may only be associated with a single receive context, and
-all connectless endpoints associated with a shared receive context must
-also share the same address vector.
+all connectionless endpoints associated with a shared receive context
+must also share the same address vector.
 .PP
 Endpoints associated with a shared transmit context may use dedicated
 receive contexts, and vice-versa.

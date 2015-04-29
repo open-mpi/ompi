@@ -456,7 +456,8 @@ ssize_t usdf_msg_ud_prefix_recv(struct fid_ep *ep, void *buf, size_t len, void *
 	void *context);
 ssize_t usdf_msg_ud_prefix_recvv(struct fid_ep *ep, const struct iovec *iov,
 	void **desc, size_t count, void *context);
-	
 
+/* Fake IBV provider */
+void usdf_setup_fake_ibv_provider(void);
 
 #endif /* _USDF_H_ */

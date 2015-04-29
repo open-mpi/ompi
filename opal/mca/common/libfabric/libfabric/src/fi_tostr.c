@@ -61,6 +61,8 @@
  * Indentation delineates lists and dictionaries (or they can be inline).
  */
 
+#define FI_BUFSIZ 8192
+
 #define TAB "    "
 
 #define CASEENUMSTR(SYM) \
@@ -77,11 +79,11 @@ static void fi_remove_comma(char *buffer)
 
 static void strcatf(char *dest, const char *fmt, ...)
 {
-	size_t len = strlen(dest);
+	size_t len = strnlen(dest,FI_BUFSIZ);
 	va_list arglist;
 
 	va_start (arglist, fmt);
-	vsnprintf(&dest[len], BUFSIZ - 1 - len, fmt, arglist);
+	vsnprintf(&dest[len], FI_BUFSIZ - 1 - len, fmt, arglist);
 	va_end (arglist);
 }
 
@@ -555,7 +557,7 @@ char *DEFAULT_SYMVER_PRE(fi_tostr)(const void *data, enum fi_type datatype)
 	enumval = *(const int *) data;
 
 	if (!buf) {
-		buf = calloc(BUFSIZ, 1);
+		buf = calloc(FI_BUFSIZ, 1);
 		if (!buf)
 			return NULL;
 	}

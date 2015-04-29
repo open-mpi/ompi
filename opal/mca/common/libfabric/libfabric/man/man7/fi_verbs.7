@@ -1,11 +1,11 @@
-.TH fi_verbs 7 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_verbs 7 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 The Verbs Fabric Provider
 .SH OVERVIEW
 .PP
 The verbs provider enables applications using OFI to be run over any
-verbs hardware (Infiniband, iWARP, etc).
+verbs hardware (Infiniband, iWarp, etc).
 It uses the Linux Verbs API for network transport and provides a
 translation OFI calls to appropriate verbs API calls.
 It uses librdmacm for communication management and libibverbs for other
@@ -25,7 +25,7 @@ Applications must take responsibility of posting receives for any
 incoming CQ data.
 .PP
 \f[I]Progress\f[] : Verbs provider supports FI_PROGRESS_AUTO:
-Asynchonous operations make forward progress automatically.
+Asynchronous operations make forward progress automatically.
 .PP
 \f[I]Operation flags\f[] : Verbs provider supports FI_INJECT,
 FI_COMPLETION, FI_REMOTE_CQ_DATA.
@@ -43,7 +43,7 @@ supported.
 are not supported.
 .PP
 \f[I]Endpoint features\f[] : Scalable endpoints and shared contexts are
-not suppoted.
+not supported.
 fi_cancel, fi_tx/rx_size_left and fi_alias operations are not supported.
 .PP
 \f[I]Others\f[] : Other unsupported features include resource

@@ -1,4 +1,4 @@
-.TH fi_psm 7 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_psm 7 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
 .SH NAME
 .PP
 The PSM Fabric Provider
@@ -94,7 +94,7 @@ The name server won\[aq]t work properly if there are more than one
 processes from the same job (i.e.
 with the same UUID) running on the same node and acting as servers.
 For such scenario it is recommended to have each process getting local
-transport address with \f[I]fi_cm_getname\f[] and exchanginge the
+transport address with \f[I]fi_cm_getname\f[] and exchanging the
 addresses with out-of-band mechanism.
 .PP
 The name server is on by default.
@@ -106,7 +106,7 @@ created when the name server is on.
 of the PSM Active Message functions.
 The Active Message functions has limit on the size of data can be
 transferred in a single message.
-Large transfers can be divided into small chunks and be pipelined.
+Large transfers can be divided into small chunks and be pipe-lined.
 However, the bandwidth is sub-optimal by doing this way.
 .PP
 The \f[I]psm\f[] provider use PSM tag-matching message queue functions

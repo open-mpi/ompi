@@ -151,6 +151,9 @@ struct usd_qp_ops {
     int (*qo_post_send_iov)(struct usd_qp *qp,
             struct usd_dest *dest, const struct iovec* iov,
             size_t iov_count, uint32_t flags, void *context);
+    int (*qo_post_send_one_vlan)(struct usd_qp *qp,
+            struct usd_dest *dest, const void *buf, size_t len,
+            u_int16_t vlan, uint32_t flags, void *context);
 };
 
 /*
@@ -264,7 +267,7 @@ struct usd_device_entry {
  * Send flags
  */
 enum usd_send_flag_shift {
-    USD_SFS_SIGNAL
+    USD_SFS_SIGNAL,
 };
 #define USD_SF_SIGNAL (1 << USD_SFS_SIGNAL)
 
@@ -537,6 +540,28 @@ usd_post_send_one(
 {
     return qp->uq_ops.qo_post_send_one(
             qp, dest, buf, len, flags, context);
+}
+
+/*
+ * post a single-buffer send from registered memory to specified VLAN
+ * IN:
+ *     qp
+ *     dest
+ *     buf -
+ * Requires 2 send credits
+ */
+static inline int
+usd_post_send_one_vlan(
+    struct usd_qp *qp,
+    struct usd_dest *dest,
+    const void *buf,
+    size_t len,
+    u_int16_t vlan,
+    uint32_t flags,
+    void *context)
+{
+    return qp->uq_ops.qo_post_send_one_vlan(
+            qp, dest, buf, len, vlan, flags, context);
 }
 
 /*

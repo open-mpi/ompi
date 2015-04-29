@@ -134,6 +134,7 @@ struct usnic_vnic_barres_info {
 
 struct usnic_ib_create_qp_resp_v0 {
 	USNIC_IB_CREATE_QP_RESP_V0_FIELDS
+	u32				reserved[9];
 };
 
 struct usnic_ib_create_qp_resp {
@@ -146,6 +147,10 @@ struct usnic_ib_create_qp_resp {
 			u32 pad_to_8byte;
 		} v1;
 	} u;
+
+	/* v0 had a "reserved[9]" field, must not shrink the response or we can
+	 * corrupt newer clients running on older kernels */
+	u32				reserved[6];
 };
 
 #define USNIC_CTX_RESP_VERSION 1

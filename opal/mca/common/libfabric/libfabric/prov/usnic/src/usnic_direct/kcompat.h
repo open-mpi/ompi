@@ -56,6 +56,7 @@
 #include <linux/version.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
+#include <linux/pci.h>
 
 #ifndef PCI_VENDOR_ID_CISCO
 #define PCI_VENDOR_ID_CISCO	0x1137
@@ -204,8 +205,19 @@ static inline bool skb_flow_dissect(const struct sk_buff *skb, struct flow_keys 
 #endif /*LINUX >= 3.3.0*/
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0))
+#if (!RHEL_RELEASE_CODE || (RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(6, 6)))
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 12, 0))
+enum pkt_hash_types {
+	PKT_HASH_TYPE_NONE,	/* Undefined type */
+	PKT_HASH_TYPE_L2,	/* Input: src_MAC, dest_MAC */
+	PKT_HASH_TYPE_L3,	/* Input: src_IP, dst_IP */
+	PKT_HASH_TYPE_L4,	/* Input: src_IP, dst_IP, src_port, dst_port */
+};
+#endif /*kernel < 3.13 */
+#endif /*  !rhel or rhel < 6.6 */
 #define skb_get_hash_raw(skb) (skb)->rxhash
-#endif
+#define skb_set_hash(skb, hash, type) skb->rxhash = (type == PKT_HASH_TYPE_L4) ? hash : 0;
+#endif /* kernel < 3.14 */
 
 #if !defined(__VMKLNX__) && (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
 #define enic_wq_lock(wq_lock) spin_lock_irqsave(wq_lock, flags)

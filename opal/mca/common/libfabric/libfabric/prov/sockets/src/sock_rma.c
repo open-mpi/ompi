@@ -113,6 +113,7 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 		goto err;
 	}
 
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;	
 	memset(&tx_op, 0, sizeof(struct sock_op));
@@ -137,7 +138,6 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 	for (i = 0; i< msg->iov_count; i++) {
 		tx_iov.iov.addr = (uintptr_t) msg->msg_iov[i].iov_base;
 		tx_iov.iov.len = msg->msg_iov[i].iov_len;
-		tx_iov.iov.key = (uintptr_t) msg->desc[i];
 		sock_tx_ctx_write(tx_ctx, &tx_iov, sizeof(tx_iov));
 		dst_len += tx_iov.iov.len;
 	}
@@ -255,6 +255,7 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	if (!conn)
 		return -FI_EAGAIN;
 
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
 	memset(&tx_op, 0, sizeof(struct sock_op));
@@ -304,7 +305,6 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 		for (i = 0; i< msg->iov_count; i++) {
 			tx_iov.iov.addr = (uintptr_t) msg->msg_iov[i].iov_base;
 			tx_iov.iov.len = msg->msg_iov[i].iov_len;
-			tx_iov.iov.key = (uintptr_t) msg->desc[i];
 			sock_tx_ctx_write(tx_ctx, &tx_iov, sizeof(tx_iov));
 			src_len += tx_iov.iov.len;
 		}

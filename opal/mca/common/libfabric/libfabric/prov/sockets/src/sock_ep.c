@@ -36,6 +36,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "sock.h"
 #include "sock_util.h"
@@ -1321,6 +1322,9 @@ struct fi_info *sock_fi_info(enum fi_ep_type ep_type, struct fi_info *hints,
 		if (hints->rx_attr)
 			*(info->rx_attr) = *(hints->rx_attr);
 
+		if (hints->handle)
+			info->handle = hints->handle;
+
 		sock_set_domain_attr(hints->domain_attr, info->domain_attr);
 		sock_set_fabric_attr(hints->fabric_attr, info->fabric_attr);
 	} else {
@@ -1330,6 +1334,39 @@ struct fi_info *sock_fi_info(enum fi_ep_type ep_type, struct fi_info *hints,
 
 	info->ep_attr->type = ep_type;
 	return info;
+}
+
+static int sock_ep_assign_src_addr(struct sock_ep *sock_ep, struct fi_info *info)
+{
+	int ret;
+	struct addrinfo ai, *rai = NULL;
+	char hostname[HOST_NAME_MAX];
+
+	sock_ep->src_addr = calloc(1, sizeof(struct sockaddr_in));
+	if (!sock_ep->src_addr)
+		return -FI_ENOMEM;
+	
+	if (info && info->dest_addr) {
+		return sock_get_src_addr(info->dest_addr, sock_ep->src_addr);
+	} else {
+		memset(&ai, 0, sizeof(ai));
+		ai.ai_family = AF_INET;
+		ai.ai_socktype = SOCK_STREAM;
+		
+		if (gethostname(hostname, sizeof hostname) != 0) {
+			SOCK_LOG_INFO("gethostname failed!\n");
+			return -FI_EINVAL;
+		}
+		ret = getaddrinfo(hostname, NULL, &ai, &rai);
+		if (ret) {
+			SOCK_LOG_INFO("getaddrinfo failed!\n");
+			return -FI_EINVAL;
+		}
+		memcpy(sock_ep->src_addr, (struct sockaddr_in *)rai->ai_addr,
+			sizeof *sock_ep->src_addr);
+		freeaddrinfo(rai);
+	}
+	return 0;
 }
 
 int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
@@ -1421,6 +1458,11 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 		}
 		sock_ep->info.handle = info->handle;
 	}
+
+	if (!sock_ep->src_addr && sock_ep_assign_src_addr(sock_ep, info)) {
+		SOCK_LOG_ERROR("failed to get src_address\n");
+		goto err;
+	}
 	
 	atomic_initialize(&sock_ep->ref, 0);
 	atomic_initialize(&sock_ep->num_tx_ctx, 0);
@@ -1490,6 +1532,10 @@ int sock_alloc_endpoint(struct fid_domain *domain, struct fi_info *info,
 	return 0;
 	
 err:
+	if (sock_ep->src_addr)
+		free(sock_ep->src_addr);
+	if (sock_ep->dest_addr)
+		free(sock_ep->dest_addr);
 	free(sock_ep);
 	return -FI_EINVAL;
 }
