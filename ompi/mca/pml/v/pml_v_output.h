@@ -26,10 +26,16 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
 {
     va_list list;
     char *str;
+#if OPAL_ENABLE_DEBUG
     int ret;
+#endif
     va_start(list, fmt);
+#if OPAL_ENABLE_DEBUG
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
+#else
+    (void)vasprintf(&str, fmt, list);
+#endif
     opal_output(0, "%s", str);
     free(str);
     va_end(list);    
@@ -56,10 +62,16 @@ static inline void V_OUTPUT(const char* fmt, ... )
 {
     va_list list;
     char *str;
+#if OPAL_ENABLE_DEBUG
     int ret;
+#endif
     va_start(list, fmt);
+#if OPAL_ENABLE_DEBUG
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
+#else
+    (void)vasprintf(&str, fmt, list);
+#endif
     opal_output(mca_pml_v.output, "%s", str);
     free(str);
     va_end(list);
@@ -68,10 +80,16 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) __opal_attribu
 static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_list list;
     char *str;
+#if OPAL_ENABLE_DEBUG
     int ret;
+#endif
     va_start(list, fmt);
+#if OPAL_ENABLE_DEBUG
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
+#else
+    (void)vasprintf(&str, fmt, list);
+#endif
     opal_output_verbose(V, mca_pml_v.output, "%s", str);
     free(str);
     va_end(list);
