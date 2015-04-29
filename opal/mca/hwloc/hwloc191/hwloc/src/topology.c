@@ -3075,6 +3075,7 @@ hwloc__check_children(struct hwloc_obj *parent)
   /* check that children complete_cpuset are properly ordered, empty ones may be anywhere
    * (can be wrong for main cpuset since removed PUs can break the ordering).
    */
+#ifdef HWLOC_DEBUG
   if (parent->complete_cpuset) {
     int firstchild;
     int prev_firstchild = -1; /* -1 works fine with first comparisons below */
@@ -3088,6 +3089,7 @@ hwloc__check_children(struct hwloc_obj *parent)
       prev_firstchild = firstchild;
     }
   }
+#endif
 
   /* checks for all children */
   for(j=1; j<parent->arity; j++) {
