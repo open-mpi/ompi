@@ -1885,7 +1885,7 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
     int i, line_count, line = 0, enum_count = 0;
     char *value_string, *source_string, *tmp;
     int synonym_count, ret, *synonyms = NULL;
-    mca_base_var_t *var, *original;
+    mca_base_var_t *var, *original=NULL;
     mca_base_var_group_t *group;
 
     ret = var_get(vari, &var, false);

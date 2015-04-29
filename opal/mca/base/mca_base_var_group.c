@@ -148,7 +148,7 @@ static int group_find (const char *project_name, const char *framework_name,
                        const char *component_name, bool invalidok)
 {
     char *full_name;
-    int ret, index;
+    int ret, index=0;
 
     if (!mca_base_var_initialized) {
         return OPAL_ERR_NOT_FOUND;
