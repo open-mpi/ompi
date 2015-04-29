@@ -10,7 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +61,10 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
                                      uint32_t count_by_segment,
                                      ompi_coll_tree_t* tree )
 {
-    int err = 0, line, i, rank, size, segindex, req_index;
+    int err = 0, line, i, rank, segindex, req_index;
+#if OPAL_ENABLE_DEBUG
+    int size;
+#endif
     int num_segments; /* Number of segments */
     int sendcount;    /* number of elements sent in this segment */ 
     size_t realsegsize, type_size;
@@ -71,9 +75,11 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     ompi_request_t **send_reqs = NULL;
 #endif
 
+#if OPAL_ENABLE_DEBUG
     size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
     assert( size > 1 );
+#endif
+    rank = ompi_comm_rank(comm);
 
     ompi_datatype_get_extent (datatype, &lb, &extent);
     ompi_datatype_type_size( datatype, &type_size );
@@ -262,8 +268,9 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     return (MPI_SUCCESS);
   
  error_hndl:
-    OPAL_OUTPUT( (ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d",
-                  __FILE__, line, err, rank) );
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
 #if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     if( NULL != send_reqs ) free(send_reqs);
 #endif
@@ -628,7 +635,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     return (MPI_SUCCESS);
   
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank);
     return (err);
 }
 

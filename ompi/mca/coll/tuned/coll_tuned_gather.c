@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,8 +206,9 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     if (NULL != tempbuf)
         free(tempbuf);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -340,9 +342,9 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
 
     return MPI_SUCCESS;
  error_hndl:
-    OPAL_OUTPUT (( ompi_coll_tuned_stream, 
-                   "ERROR_HNDL: node %d file %s line %d error %d\n", 
-                   rank, __FILE__, line, ret ));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "ERROR_HNDL: node %d file %s line %d error %d\n", 
+                        rank, __FILE__, line, ret );
     return ret;
 }
 

@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -196,9 +197,9 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     return MPI_SUCCESS;
  
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, 
-                 err, rank));
+                 err, rank);
     return err;
 }
 
@@ -341,9 +342,9 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, 
-                 rank));
+                 rank);
     if (tmpbuf != NULL) free(tmpbuf_free);
     if (weallocated) {
         if (displs != NULL) free(displs);
@@ -508,9 +509,9 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error, 
-                 rank));
+                 rank);
     if (NULL != reqs) free(reqs);
     return error;
 }
@@ -568,9 +569,9 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
-                 rank));
+                 rank);
     return err;
 }
 

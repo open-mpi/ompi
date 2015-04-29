@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -91,15 +92,17 @@ int ompi_coll_tuned_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
             *status = statuses[err_index];
         }
         err = statuses[err_index].MPI_ERROR;
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
-                                              " stage of ompi_coll_tuned_sendrecv_zero\n",
-                      __FILE__, line, err, (0 == err_index ? "receive" : "send")));
+        opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                            "%s:%d: Error %d occurred in the %s"
+                            " stage of ompi_coll_tuned_sendrecv_zero\n",
+                            __FILE__, line, err, (0 == err_index ? "receive" : "send"));
     } else {
         /* Error discovered during the posting of the irecv or isend,
          * and no status is available.
          */
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
-                      __FILE__, line, err));
+        opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                            "%s:%d: Error %d occurred\n",
+                            __FILE__, line, err);
         if (MPI_STATUS_IGNORE != status) {
             status->MPI_ERROR = err;
         }

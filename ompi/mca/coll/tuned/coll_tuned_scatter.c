@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -182,8 +183,9 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     if (NULL != tempbuf)
         free(tempbuf);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 

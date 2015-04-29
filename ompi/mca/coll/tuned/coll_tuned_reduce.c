@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -351,9 +352,9 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
     return OMPI_SUCCESS;
 
  error_hndl:  /* error handler */
-    OPAL_OUTPUT (( ompi_coll_tuned_stream, 
-                   "ERROR_HNDL: node %d file %s line %d error %d\n", 
-                   rank, __FILE__, line, ret ));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "ERROR_HNDL: node %d file %s line %d error %d\n", 
+                        rank, __FILE__, line, ret );
     if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
     if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
     if( accumbuf_free != NULL ) free(accumbuf);

@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,15 +92,17 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
             err_index = 0;
         }
         err = statuses[err_index].MPI_ERROR;
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
-                                              " stage of ompi_coll_tuned_sendrecv_zero\n",
-                      __FILE__, line, err, (0 == err_index ? "receive" : "send")));
+        opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                            "%s:%d: Error %d occurred in the %s"
+                            " stage of ompi_coll_tuned_sendrecv_zero\n",
+                            __FILE__, line, err, (0 == err_index ? "receive" : "send"));
     } else {
         /* Error discovered during the posting of the irecv or isend,
          * and no status is available.
          */
-        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
-                      __FILE__, line, err));
+        opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                            "%s:%d: Error %d occurred\n",
+                            __FILE__, line, err);
     }
     return err;
 }
@@ -182,8 +185,9 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d", 
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -260,8 +264,9 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -295,8 +300,9 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d", 
+                        __FILE__, line, err, rank);
     return err;
 }
 

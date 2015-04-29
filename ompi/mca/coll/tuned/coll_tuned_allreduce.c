@@ -13,6 +13,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -287,8 +288,9 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
-                 __FILE__, line, rank, ret));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tRank %d Error occurred %d\n",
+                        __FILE__, line, rank, ret);
     if (NULL != inplacebuf) free(inplacebuf);
     return ret;
 }
@@ -546,8 +548,9 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
-                 __FILE__, line, rank, ret));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tRank %d Error occurred %d\n",
+                        __FILE__, line, rank, ret);
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;
@@ -865,8 +868,9 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
-                 __FILE__, line, rank, ret));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tRank %d Error occurred %d\n",
+                        __FILE__, line, rank, ret);
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;

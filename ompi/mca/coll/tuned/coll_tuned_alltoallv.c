@@ -16,6 +16,7 @@
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -193,9 +194,9 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     return MPI_SUCCESS;
  
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line, 
-                 err, rank, step));
+                 err, rank, step);
     return err;
 }
 

@@ -14,6 +14,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -626,8 +627,9 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
-                 __FILE__, line, rank, ret));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tRank %d Error occurred %d\n",
+                        __FILE__, line, rank, ret);
     if (NULL != displs) free(displs);
     if (NULL != accumbuf_free) free(accumbuf_free);
     if (NULL != inbuf_free[0]) free(inbuf_free[0]);
