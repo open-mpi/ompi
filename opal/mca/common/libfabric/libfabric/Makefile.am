@@ -201,7 +201,6 @@ _usnic_files = \
 	prov/usnic/src/usdf_ep_rdm.c \
 	prov/usnic/src/usdf_eq.c \
 	prov/usnic/src/usdf_fabric.c \
-	prov/usnic/src/usdf_fake_ibv.c \
 	prov/usnic/src/usdf_mem.c \
 	prov/usnic/src/usdf_msg.c \
 	prov/usnic/src/usdf_msg.h \
@@ -213,6 +212,10 @@ _usnic_files = \
 	prov/usnic/src/usdf_rudp.h \
 	prov/usnic/src/usdf_timer.c \
 	prov/usnic/src/usdf_timer.h
+
+if HAVE_VERBS
+_usnic_files += prov/usnic/src/usdf_fake_ibv.c
+endif
 
 _usnic_cppflags = \
         -D__LIBUSNIC__ -DWANT_DEBUG_MSGS=0 \

@@ -1093,7 +1093,7 @@ struct fi_provider usdf_ops = {
 
 USNIC_INI
 {
-#ifdef HAVE_VERBS
+#if HAVE_VERBS
 	usdf_setup_fake_ibv_provider();
 #endif
 	return (&usdf_ops);
