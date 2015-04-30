@@ -20,6 +20,7 @@ noinst_HEADERS +=                      \
     adio/include/mpipr.h               \
     adio/include/mpiu_greq.h           \
     adio/include/nopackage.h           \
+    adio/include/romioconf-undefs.h    \
     adio/include/mpiu_external32.h     \
     adio/include/hint_fns.h
 
