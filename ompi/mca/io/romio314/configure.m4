@@ -20,15 +20,15 @@
 # $HEADER$
 #
 
-AC_DEFUN([MCA_ompi_io_romio_POST_CONFIG], [
+AC_DEFUN([MCA_ompi_io_romio314_POST_CONFIG], [
     AM_CONDITIONAL([MCA_io_romio_SHOULD_BUILD], [test $1 -eq 1])
 ])
 
 
 # MCA_io_romio_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
-    AC_CONFIG_FILES([ompi/mca/io/romio/Makefile])
+AC_DEFUN([MCA_ompi_io_romio314_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/io/romio314/Makefile])
 
     OPAL_VAR_SCOPE_PUSH([io_romio_flags io_romio_flags_define io_romio_happy io_romio_save_LIBS])
     AC_ARG_ENABLE([io-romio],
@@ -83,7 +83,7 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                    io_romio_flags="$io_romio_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio --disable-weak-symbols --enable-strict"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
-                   OPAL_CONFIG_SUBDIR([ompi/mca/io/romio/romio],
+                   OPAL_CONFIG_SUBDIR([ompi/mca/io/romio314/romio],
                                       [$io_romio_flags],
                                       [io_romio_happy=1], [io_romio_happy=0])
 
@@ -94,7 +94,7 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                            # the wrapper settings
                           io_romio_save_LIBS="$LIBS"
                           LIBS=
-                          . ompi/mca/io/romio/romio/localdefs
+                          . ompi/mca/io/romio314/romio/localdefs
                           io_romio_LIBS="$LIBS"
                           LIBS="$io_romio_save_LIBS"
 
