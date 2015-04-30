@@ -8,11 +8,6 @@
  *   Copyright (C) 2008 Sun Microsystems, Lustre group
  */
 
-#ifdef _STDC_C99
-#define _XOPEN_SOURCE 600
-#else
-#define _XOPEN_SOURCE 500
-#endif
 #include <unistd.h>
 
 #include <stdlib.h>

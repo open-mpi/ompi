@@ -36,7 +36,12 @@
    of correct programs */
 #define MPIU_THREAD_CS_ENTER(x,y)
 #define MPIU_THREAD_CS_EXIT(x,y)
-#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do {} while (0)
+/* The MPI_DATATYPE_ISCOMMITTED macro now always sets err_=0.
+   This is an optimistic approach for Open MPI, but it is likely other
+   upper layers already checked the datatype was committed.
+   Not setting err_ is incorrect since it can lead to use of
+   uninitialized variable.*/
+#define MPIO_DATATYPE_ISCOMMITTED(dtype_, err_) do { err_ = 0; } while (0)
 #ifdef HAVE_WINDOWS_H
 #define MPIU_UNREFERENCED_ARG(a) a
 #else
