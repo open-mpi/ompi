@@ -85,13 +85,16 @@ int bcol_basesmuma_free_buff( sm_buffer_mgmt * buff_block,
     /* local variables */
     int ret=OMPI_SUCCESS;
     int memory_bank;
+#if OPAL_ENABLE_DEBUG
     uint64_t generation;
+#endif
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
     /* get the bank index that will be used */
     memory_bank=buff_id& buff_block->mask;
     memory_bank = memory_bank SHIFT_DOWN buff_block->log2_num_buffs_per_mem_bank;
 
+#if OPAL_ENABLE_DEBUG
     /* get the generation of the bank this maps to */
     generation = buff_id SHIFT_DOWN (buff_block->log2_number_of_buffs);
 
@@ -99,6 +102,7 @@ int bcol_basesmuma_free_buff( sm_buffer_mgmt * buff_block,
      *   associated with this bank have been freed.
      */
     assert(generation == buff_block->ctl_buffs_mgmt[memory_bank].bank_gen_counter);
+#endif
 
     /*
      * increment counter of completed buffers

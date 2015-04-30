@@ -13,6 +13,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -213,8 +214,9 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
  err_hndl:
     if( NULL != new_rcounts ) free(new_rcounts);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -300,8 +302,9 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -505,8 +508,9 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
@@ -566,8 +570,9 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+    opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
+                        "%s:%4d\tError occurred %d, rank %2d",
+                        __FILE__, line, err, rank);
     return err;
 }
 
