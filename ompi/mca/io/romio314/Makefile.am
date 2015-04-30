@@ -32,7 +32,7 @@ endif
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_ompi_io_romio_DSO
+if MCA_BUILD_ompi_io_romio314_DSO
 lib =
 lib_sources =
 component = mca_io_romio.la
