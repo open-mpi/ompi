@@ -340,7 +340,7 @@ int mca_btl_tcp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t 
 
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
     if( OPAL_UNLIKELY(NULL == frag) ) {
-        return OPAL_ERR_OUT_OF_RESOURCE;;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     frag->endpoint = endpoint;
