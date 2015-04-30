@@ -4,7 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,10 +108,11 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
 
     req->rml_msg->status = ORTE_SUCCESS;
 
-    if( NULL == req->rml_msg->channel)
-        ORTE_RML_SEND_COMPLETE(req->rml_msg->msg);
-    else
-        ORTE_QOS_SEND_COMPLETE(req->rml_msg->msg);
+    if( NULL == req->rml_msg->channel) {
+        ORTE_RML_SEND_COMPLETE(req->rml_msg);
+    } else {
+        ORTE_QOS_SEND_COMPLETE(req->rml_msg);
+    }
 
     return size;
 }
