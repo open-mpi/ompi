@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -468,11 +470,12 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
 
-    /* description of next datatype should be 64 bits aligned */
-    OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
     /* copy the aray of counts (32 bits aligned) */
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += args->ci * sizeof(int);
+
+    /* description of next datatype should be 64 bits aligned */
+    OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
 
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
