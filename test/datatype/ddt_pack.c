@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +58,7 @@ main(int argc, char* argv[])
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
-    if (unpacked_dt == MPI_INT) {
+    if (unpacked_dt == MPI_INT32_T) {
         printf("\tPASSED\n");
     } else {
         printf("\tFAILED: datatypes don't match\n");
