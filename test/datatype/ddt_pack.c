@@ -32,6 +32,16 @@
 #include <string.h>
 #endif
 
+static int get_extents(MPI_Datatype type, MPI_Aint *lb, MPI_Aint *extent, MPI_Aint *true_lb, MPI_Aint *true_extent) {
+    int ret;
+
+    ret = MPI_Type_get_extent(type, lb, extent);
+    if (MPI_SUCCESS != ret) return ret;
+    ret = MPI_Type_get_true_extent(type, true_lb, true_extent);
+    if (MPI_SUCCESS != ret) return ret;
+
+    return 0;
+}
 
 int
 main(int argc, char* argv[])
@@ -43,7 +53,9 @@ main(int argc, char* argv[])
     int ret = 0;
     int         blen[2];
     MPI_Aint    disp[2];
-    MPI_Datatype newType, types[2], struct_type;
+    MPI_Datatype newType, types[2], struct_type, vec_type;
+    MPI_Aint    old_lb, old_extent, old_true_lb, old_true_extent;
+    MPI_Aint    lb, extent, true_lb, true_extent;
 
     MPI_Init(&argc, &argv);
 
@@ -66,6 +78,45 @@ main(int argc, char* argv[])
         goto cleanup;
     }
 
+    printf("---> Less Basic test with MPI_Type_vector\n");
+
+    ret = MPI_Type_vector(2, 1, 1, MPI_INT, &vec_type);
+    if (ret != 0) goto cleanup;
+
+    ret = MPI_Type_commit(&vec_type);
+    if (ret != 0) goto cleanup;
+
+    ret = get_extents(vec_type, &old_lb, &old_extent, &old_true_lb, &old_true_extent);
+    if (ret != 0) goto cleanup;
+
+    packed_ddt_len = ompi_datatype_pack_description_length(vec_type);
+    ptr = payload = malloc(packed_ddt_len);
+    ret = ompi_datatype_get_pack_description(vec_type, &packed_ddt);
+    if (ret != 0) goto cleanup;
+    memcpy(payload, packed_ddt, packed_ddt_len);
+    ret = MPI_Type_free(&vec_type);
+    if (ret != 0) goto cleanup;
+
+    unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
+                                                          ompi_proc_local());
+    free(ptr);
+    if (unpacked_dt == NULL) {
+        printf("\tFAILED: could not unpack datatype\n");
+        ret = 1;
+        goto cleanup;
+    } else {
+        ret = get_extents(unpacked_dt, &lb, &extent, &true_lb, &true_extent);
+        if (ret != 0) goto cleanup;
+
+        if (old_lb != lb || old_extent != extent ||
+            old_true_lb != true_lb || old_true_extent != extent) {
+            printf("\tFAILED: datatypes don't match\n");
+            ret = 1;
+            goto cleanup;
+        }
+        printf("\tPASSED\n");
+    }
+
     printf("---> Advanced test with hindexed\n");
     
     blen[0] = 10;
@@ -80,6 +131,9 @@ main(int argc, char* argv[])
     ret = MPI_Type_commit(&newType);
     if (ret != 0) goto cleanup;
 
+    ret = get_extents(newType, &old_lb, &old_extent, &old_true_lb, &old_true_extent);
+    if (ret != 0) goto cleanup;
+
     packed_ddt_len = ompi_datatype_pack_description_length(newType);
     ptr = payload = malloc(packed_ddt_len);
     ret = ompi_datatype_get_pack_description(newType, &packed_ddt);
@@ -88,12 +142,21 @@ main(int argc, char* argv[])
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
-    if (unpacked_dt != NULL) {
-        printf("\tPASSED\n");
-    } else {
-        printf("\tFAILED: datatypes don't match\n");
+    if (unpacked_dt == NULL) {
+        printf("\tFAILED: could not unpack datatype\n");
         ret = 1;
         goto cleanup;
+    } else {
+        ret = get_extents(unpacked_dt, &lb, &extent, &true_lb, &true_extent);
+        if (ret != 0) goto cleanup;
+
+        if (old_lb != lb || old_extent != extent ||
+            old_true_lb != true_lb || old_true_extent != extent) {
+            printf("\tFAILED: datatypes don't match\n");
+            ret = 1;
+            goto cleanup;
+        }
+        printf("\tPASSED\n");
     }
 
     printf("---> Even more advanced test using the previous type and struct\n");
@@ -109,20 +172,39 @@ main(int argc, char* argv[])
     ret = MPI_Type_commit(&struct_type);
     if (ret != 0) goto cleanup;
 
+    ret = MPI_Type_free(&newType);
+    if (ret != 0) goto cleanup;
+
+    ret = get_extents(struct_type, &old_lb, &old_extent, &old_true_lb, &old_true_extent);
+    if (ret != 0) goto cleanup;
+
     packed_ddt_len = ompi_datatype_pack_description_length(struct_type);
     ptr = payload = malloc(packed_ddt_len);
     ret = ompi_datatype_get_pack_description(struct_type, &packed_ddt);
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
+
+    ret = MPI_Type_free(&struct_type);
+    if (ret != 0) goto cleanup;
+
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
-    if (unpacked_dt != NULL) {
-        printf("\tPASSED\n");
-    } else {
-        printf("\tFAILED: datatypes don't match\n");
+    if (unpacked_dt == NULL) {
+        printf("\tFAILED: could not unpack datatype\n");
         ret = 1;
         goto cleanup;
+    } else {
+        ret = get_extents(unpacked_dt, &lb, &extent, &true_lb, &true_extent);
+        if (ret != 0) goto cleanup;
+
+        if (old_lb != lb || old_extent != extent ||
+            old_true_lb != true_lb || old_true_extent != extent) {
+            printf("\tFAILED: datatypes don't match\n");
+            ret = 1;
+            goto cleanup;
+        }
+        printf("\tPASSED\n");
     }
 
  cleanup:
