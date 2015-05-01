@@ -238,15 +238,6 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_datatype_args_t*)d[pos]->args)->total_pack_size;
-#if OPAL_ALIGN_WORD_SIZE_INTEGERS
-            /*
-             * as total_pack_size is always aligned to
-             * MPI_Aint (aka OPAL_PTRDIFF_TYPE) size their sum
-             * will be aligned to ...
-             */
-            assert( pArgs->total_pack_size ==
-                    OPAL_ALIGN(pArgs->total_pack_size, sizeof(OPAL_PTRDIFF_TYPE), int) );
-#endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
         } else {
             pArgs->total_pack_size += 2 * sizeof(int);  /* _NAMED + predefined id */
         }
