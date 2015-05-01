@@ -123,7 +123,19 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                     node->topology = t;
                 }
             }
+        } else if (orte_do_not_launch) {
+            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            t = node->topology;
+            for (i=1; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (NULL == node->topology) {
+                    node->topology = t;
+                }
+            }
         }
+
         /* if this is an unmanaged allocation, then set the default
          * slots on each node as directed or using default
          */
@@ -135,6 +147,9 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                         continue;
                     }
                     if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                             "%s plm:base:setting slots for node %s by %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, orte_set_slots));
                         if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
                             node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
                                                                              HWLOC_OBJ_CORE, 0,
@@ -1736,7 +1751,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             }
             OBJ_RELEASE(nptr);
         }
-        OBJ_DESTRUCT(&tnodes);
+        OPAL_LIST_DESTRUCT(&tnodes);
         /* if we didn't get anything, then we are the only node in the
          * allocation - so there is nothing else to do as no other
          * daemons are to be launched

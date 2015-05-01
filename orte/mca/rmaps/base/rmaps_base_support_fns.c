@@ -540,23 +540,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
-    /* - if a max number was given, only take that many */
-    if (0 < orte_max_vm_size &&
-        orte_max_vm_size < (int)opal_list_get_size(allocated_nodes)) {
-        item = opal_list_get_first(allocated_nodes);
-        num_slots = 0;
-        for (i=0; i < orte_max_vm_size; i++) {
-            node = (orte_node_t*)item;
-            num_slots += node->slots - node->slots_inuse;
-            item = opal_list_get_next(item);
-        }
-        while (item != opal_list_get_end(allocated_nodes)) {
-            next  = opal_list_get_next(item);
-            opal_list_remove_item(allocated_nodes, item);
-            OBJ_RELEASE(item);  /* "un-retain" it */
-        }
-    }
-
     /* pass back the total number of available slots */
     *total_num_slots = num_slots;
     
