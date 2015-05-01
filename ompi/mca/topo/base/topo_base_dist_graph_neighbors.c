@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  */
 
@@ -30,17 +30,21 @@ int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
 
     if (!OMPI_COMM_IS_DIST_GRAPH(comm)) {
         return OMPI_ERR_NOT_FOUND;
-    } else if (maxindegree < dg->indegree || maxoutdegree < dg->outdegree) {
-        return OMPI_ERR_BAD_PARAM;
+    }
+    if (maxindegree > dg->indegree) {
+        maxindegree = dg->indegree;
+    }
+    if (maxoutdegree > dg->outdegree) {
+        maxoutdegree = dg->outdegree;
     }
 
-    for (i = 0; i < dg->indegree; ++i) {
+    for (i = 0; i < maxindegree; ++i) {
         sources[i] = dg->in[i];
         if (NULL != dg->inw) {
             sourceweights[i] = dg->inw[i];
         }
     }
-    for (i = 0; i < dg->outdegree; ++i) {
+    for (i = 0; i < maxoutdegree; ++i) {
         destinations[i] = dg->out[i];
         if (NULL != dg->outw) {
             destweights[i] = dg->outw[i];
