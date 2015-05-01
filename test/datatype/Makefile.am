@@ -14,8 +14,8 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo
-    MPI_CHECKS = to_self ddt_pack
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo ddt_pack
+    MPI_CHECKS = to_self
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
 
