@@ -579,8 +579,11 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
                                                    number_of_datatype );
     next_buffer += (4 * sizeof(int));  /* move after the header */
 
-    /* The pointer should always be aligned on MPI_Aint, aka OPAL_PTRDIFF_TYPE */
-    OMPI_DATATYPE_ALIGN_PTR(next_buffer, char*);
+    /* description of the displacements (if ANY !)  should always be aligned
+       on MPI_Aint, aka OPAL_PTRDIFF_TYPE */
+    if (number_of_disp > 0) {
+        OMPI_DATATYPE_ALIGN_PTR(next_buffer, char*);
+    }
 
     array_of_disp   = (OPAL_PTRDIFF_TYPE*)next_buffer;
     next_buffer    += number_of_disp * sizeof(OPAL_PTRDIFF_TYPE);
