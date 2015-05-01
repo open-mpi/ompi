@@ -111,9 +111,6 @@ main(int argc, char* argv[])
 
     memcpy(payload, packed_ddt, packed_ddt_len);
 
-    ret = MPI_Type_free(&struct_type);
-    if (ret != 0) goto cleanup;
-
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload, ompi_proc_local());
     free(ptr);
     if (unpacked_dt == NULL) {
@@ -132,6 +129,9 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
+    ret = MPI_Type_free(&struct_type);
+    if (ret != 0) goto cleanup;
+
     ret = MPI_Type_free(&unpacked_dt);
     if (ret != 0) goto cleanup;
 
@@ -158,8 +158,6 @@ main(int argc, char* argv[])
     if (ret != 0) goto cleanup;
 
     memcpy(payload, packed_ddt, packed_ddt_len);
-    ret = MPI_Type_free(&vec_type);
-    if (ret != 0) goto cleanup;
 
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
@@ -180,6 +178,9 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
+    ret = MPI_Type_free(&vec_type);
+    if (ret != 0) goto cleanup;
+
     ret = MPI_Type_free(&unpacked_dt);
     if (ret != 0) goto cleanup;
 
@@ -209,9 +210,6 @@ main(int argc, char* argv[])
     ret = ompi_datatype_get_pack_description(newType, &packed_ddt);
     if (ret != 0) goto cleanup;
 
-    ret = MPI_Type_free(&newType);
-    if (ret != 0) goto cleanup;
-
     memcpy(payload, packed_ddt, packed_ddt_len);
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                                ompi_proc_local());
@@ -232,6 +230,9 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
+    ret = MPI_Type_free(&newType);
+    if (ret != 0) goto cleanup;
+
     ret = MPI_Type_free(&unpacked_dt);
     if (ret != 0) goto cleanup;
 
@@ -281,6 +282,10 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
+    ret = MPI_Type_free(&newType);
+    if (ret != 0) goto cleanup;
+
+    newType = unpacked_dt;  /* save it for later */
 
     /**
      *
@@ -313,9 +318,6 @@ main(int argc, char* argv[])
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
 
-    ret = MPI_Type_free(&struct_type);
-    if (ret != 0) goto cleanup;
-
     unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
@@ -335,6 +337,12 @@ main(int argc, char* argv[])
         }
         printf("\tPASSED\n");
     }
+    ret = MPI_Type_free(&struct_type);
+    if (ret != 0) goto cleanup;
+
+    ret = MPI_Type_free(&unpacked_dt);
+    if (ret != 0) goto cleanup;
+
 
  cleanup:
     MPI_Finalize();
