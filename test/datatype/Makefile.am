@@ -15,7 +15,7 @@
 
 if PROJECT_OMPI
     MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo
-    MPI_CHECKS = to_self
+    MPI_CHECKS = to_self ddt_pack
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
 
@@ -33,13 +33,9 @@ ddt_raw_SOURCES = ddt_raw.c ddt_lib.c ddt_lib.h
 ddt_raw_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 ddt_raw_LDADD = $(top_builddir)/ompi/libmpi.la
 
-# Temporarily removed, per
-# https://github.com/open-mpi/ompi-release/pull/267.  This test needs
-# to be revised to not call MPI_Init (it needs to only call
-# opal_init_util).
-#ddt_pack_SOURCES = ddt_pack.c
-#ddt_pack_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-#ddt_pack_LDADD = $(top_builddir)/ompi/libmpi.la
+ddt_pack_SOURCES = ddt_pack.c
+ddt_pack_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+ddt_pack_LDADD = $(top_builddir)/ompi/libmpi.la
 
 checksum_SOURCES = checksum.c
 checksum_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
