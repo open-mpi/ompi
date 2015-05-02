@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2009 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -12,7 +12,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_pack
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw
     MPI_CHECKS = to_self ddt_pack
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
