@@ -304,6 +304,25 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
 
+/**
+ * Get the ompi_proc_t for a given process name
+ *
+ * @param[in] proc_name opal process name
+ *
+ * @returns cached or new ompi_proc_t for the given process name
+ *
+ * This function looks up the given process name in the hash of existing
+ * ompi_proc_t structures. If no ompi_proc_t structure exists matching the
+ * given name a new ompi_proc_t is allocated, initialized, and returned.
+ *
+ * @note The ompi_proc_t is added to the local list of processes but is not
+ * added to any communicator. ompi_comm_peer_lookup is responsible for caching
+ * the ompi_proc_t on a communicator.
+ */
+OMPI_DECLSPEC opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name);
+
+
+OMPI_DECLSPEC opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name);
 
 END_C_DECLS
 

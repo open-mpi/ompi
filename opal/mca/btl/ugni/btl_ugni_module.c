@@ -91,6 +91,7 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags_bb, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list_lock,opal_mutex_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
+    OBJ_CONSTRUCT(&ugni_module->endpoint_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ugni_module->endpoints, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
     OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, opal_free_list_t);
@@ -208,6 +209,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ugni_module->smsg_mboxes);
     OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
     OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
+    OBJ_DESTRUCT(&ugni_module->endpoint_lock);
     OBJ_DESTRUCT(&ugni_module->endpoints);
 
     OBJ_DESTRUCT(&ugni_module->eager_get_pending);
