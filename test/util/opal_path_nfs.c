@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,13 +30,20 @@
 #include <stdlib.h>
 #include <dirent.h>
 
+#include <sys/param.h>
+#include <sys/mount.h>
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+
 #include "support.h"
 #include "opal/util/path.h"
 #include "opal/util/output.h"
 
-/*
 #define DEBUG
-*/
 
 #if !defined(__linux__)
 /* This test currently only works on Linux */
@@ -106,6 +116,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
     char ** dirs_tmp;
     bool * nfs_tmp;
     char buffer[SIZE];
+    struct statfs mystatfs;
 
     rc = system (cmd);
 
@@ -114,7 +125,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         **dirs = NULL;
         *nfs = NULL;
     }
-    dirs_tmp = (char**) malloc (MAX_DIR * sizeof(char**));
+    dirs_tmp = (char**) calloc (MAX_DIR, sizeof(char**));
     nfs_tmp = (bool*) malloc (MAX_DIR * sizeof(bool));
 
     file = fopen("opal_path_nfs.out", "r");
@@ -124,7 +135,10 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         int mount_known;
         char fs[MAXNAMLEN];
 
-        dirs_tmp[i] = malloc (MAXNAMLEN);
+        if (!dirs_tmp[i]) {
+            dirs_tmp[i] = malloc (MAXNAMLEN);
+        }
+
         if (2 != (rc = sscanf (buffer, "%s %s\n", dirs_tmp[i], fs))) {
             goto out;
         }
@@ -147,6 +161,11 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         /* If we get an fs type of "none", skip it (e.g.,
            http://www.open-mpi.org/community/lists/devel/2012/09/11493.php) */
         if (0 == strcasecmp(fs, "none")) {
+            continue;
+        }
+
+        /* If we can not stat the fs, skip it */
+        if (statfs (dirs_tmp[i], &mystatfs)) {
             continue;
         }
 
