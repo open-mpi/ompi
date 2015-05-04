@@ -401,6 +401,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_compare_proc = _process_name_compare;
     opal_convert_string_to_process_name = _convert_string_to_process_name;
     opal_convert_process_name_to_string = _convert_process_name_to_string;
+    opal_proc_for_name = ompi_proc_for_name;
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
