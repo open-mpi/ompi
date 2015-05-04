@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,10 +35,10 @@ endif
 if MCA_BUILD_ompi_io_romio314_DSO
 lib =
 lib_sources =
-component = mca_io_romio.la
+component = mca_io_romio314.la
 component_sources = $(sources)
 else
-lib = libmca_io_romio.la
+lib = libmca_io_romio314.la
 lib_sources = $(sources)
 component =
 component_sources =
@@ -48,13 +48,13 @@ libs = romio/libromio_dist.la
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_io_romio_la_SOURCES = $(component_sources)
-mca_io_romio_la_LIBADD = $(libs)
-mca_io_romio_la_DEPENDENCIES = $(libs)
-mca_io_romio_la_LDFLAGS = -module -avoid-version
+mca_io_romio314_la_SOURCES = $(component_sources)
+mca_io_romio314_la_LIBADD = $(libs)
+mca_io_romio314_la_DEPENDENCIES = $(libs)
+mca_io_romio314_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_io_romio_la_SOURCES = $(lib_sources)
-libmca_io_romio_la_LIBADD = $(libs)
-libmca_io_romio_la_DEPENDENCIES = $(libs)
-libmca_io_romio_la_LDFLAGS = -module -avoid-version
+libmca_io_romio314_la_SOURCES = $(lib_sources)
+libmca_io_romio314_la_LIBADD = $(libs)
+libmca_io_romio314_la_DEPENDENCIES = $(libs)
+libmca_io_romio314_la_LDFLAGS = -module -avoid-version
