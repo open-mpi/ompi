@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     nproc = _num_pes();
     proc = _my_pe();
 
-    printf("Hello, world, I am %d of %d\n", 
+    printf("Hello, world, I am %d of %d\n",
            proc, nproc);
 
     return 0;

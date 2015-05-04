@@ -1,7 +1,7 @@
 !
 ! Copyright (c) 2014      Mellanox Technologies, Inc.
 !                         All rights reserved.
-! Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -21,4 +21,3 @@ program hello_oshmem
 
     write(*, '("Hello, world, I am ", i2, " of ", i2)') proc, nproc
 end program hello_oshmem
-
