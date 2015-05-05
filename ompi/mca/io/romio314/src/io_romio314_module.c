@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -29,7 +29,7 @@
  * Global functions that do not need to be prototyped in a header
  * because ROMIO just expects these functions to exist.
  */
-int MPIR_Status_set_bytes(ompi_status_public_t *status, 
+int MPIR_Status_set_bytes(ompi_status_public_t *status,
                           struct ompi_datatype_t *datatype, int size);
 void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 
@@ -109,7 +109,7 @@ mca_io_base_module_2_0_0_t mca_io_romio314_module = {
  * MPI status.  Conveniently, it maps directly to
  * MPI_Status_set_elements (almost like they planned that... hmmm...).
  */
-int MPIR_Status_set_bytes(ompi_status_public_t *status, 
+int MPIR_Status_set_bytes(ompi_status_public_t *status,
                           struct ompi_datatype_t *datatype, int nbytes)
 {
     /* Note that ROMIO is going to give a number of *bytes* here, but
