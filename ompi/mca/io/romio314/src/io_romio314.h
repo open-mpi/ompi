@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -34,13 +34,13 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_romio314_component;
 
 /*
- * global variables, instantiated in module.c  
+ * global variables, instantiated in module.c
  */
 extern opal_mutex_t mca_io_romio314_mutex;
 extern mca_io_base_module_2_0_0_t mca_io_romio314_module;
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_romio314_component;
 
-/* 
+/*
  * Private data for ROMIO modules
  */
 struct mca_io_romio314_data_t {
@@ -55,7 +55,7 @@ typedef struct mca_io_romio314_data_t mca_io_romio314_data_t;
 
 
 /*
- *  mca->ROMIO module routines:    
+ *  mca->ROMIO module routines:
  *    ROMIO_PREFIX(file_XXX)
  *  ROMIO operations names:
  *    ROMIO_PREFIX(MPI_File_XXX)
@@ -172,7 +172,7 @@ int mca_io_romio314_file_get_position (struct ompi_file_t *fh,
 int mca_io_romio314_file_get_byte_offset (struct ompi_file_t *fh,
                                        MPI_Offset offset,
                                        MPI_Offset * disp);
-    
+
 /* Section 9.4.4 */
 int mca_io_romio314_file_read_shared (struct ompi_file_t *fh,
                                    void *buf,
@@ -271,4 +271,4 @@ int mca_io_romio314_file_sync (struct ompi_file_t *fh);
 /* End Prototypes */
 
 END_C_DECLS
-#endif                          /* MCA_IO_ROMIO314_H */
+#endif /* MCA_IO_ROMIO314_H */
