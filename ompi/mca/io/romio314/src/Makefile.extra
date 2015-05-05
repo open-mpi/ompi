@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,10 +38,10 @@ AM_CPPFLAGS = \
         -I$(top_builddir)
 
 sources += \
-	src/io_romio.h \
-	src/io_romio_component.c \
-	src/io_romio_file_open.c \
-	src/io_romio_file_read.c \
-	src/io_romio_file_write.c \
-	src/io_romio_module.c
+	src/io_romio314.h \
+	src/io_romio314_component.c \
+	src/io_romio314_file_open.c \
+	src/io_romio314_file_read.c \
+	src/io_romio314_file_write.c \
+	src/io_romio314_module.c
 
