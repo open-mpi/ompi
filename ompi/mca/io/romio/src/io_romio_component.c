@@ -117,13 +117,13 @@ static char *ompi_io_romio_complete_configure_params = MCA_io_romio_COMPLETE_CON
 static int register_component(void)
 {
     /* Use a low priority, but allow other components to be lower */
-    priority_param = 10;
+    priority_param = 20;
     (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
                                            "priority", "Priority of the io romio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &priority_param);
-    delete_priority_param = 10;
+    delete_priority_param = 20;
     (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
                                            "delete_priority", "Delete priority of the io romio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
