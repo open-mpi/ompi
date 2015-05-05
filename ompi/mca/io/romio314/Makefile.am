@@ -22,7 +22,7 @@ EXTRA_DIST = autogen.subdirs
 sources =
 include src/Makefile.extra
 
-if MCA_io_romio_SHOULD_BUILD
+if MCA_io_romio314_SHOULD_BUILD
 # Need to set both SUBDIRS and DIST_SUBDIRS due to oddities with AM
 SUBDIRS = romio
 DIST_SUBDIRS = romio

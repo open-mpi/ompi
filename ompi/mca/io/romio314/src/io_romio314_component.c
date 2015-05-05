@@ -27,7 +27,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
-#include "io_romio.h"
+#include "io_romio314.h"
 
 #define ROMIO_VERSION_STRING "from MPICH v3.0.4"
 
@@ -68,17 +68,17 @@ static int delete_priority_param = 20;
 /*
  * Global, component-wide ROMIO mutex because ROMIO is not thread safe
  */
-opal_mutex_t mca_io_romio_mutex;
+opal_mutex_t mca_io_romio314_mutex;
 
 
 /*
  * Public string showing this component's version number
  */
-const char *mca_io_romio_component_version_string =
+const char *mca_io_romio314_component_version_string =
 "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
 
 
-mca_io_base_component_2_0_0_t mca_io_romio_component = {
+mca_io_base_component_2_0_0_t mca_io_romio314_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
@@ -110,44 +110,44 @@ mca_io_base_component_2_0_0_t mca_io_romio_component = {
     .io_register_datarep = register_datarep,
 };
 
-static char *ompi_io_romio_version = ROMIO_VERSION_STRING;
-static char *ompi_io_romio_user_configure_params = MCA_io_romio_USER_CONFIGURE_FLAGS;
-static char *ompi_io_romio_complete_configure_params = MCA_io_romio_COMPLETE_CONFIGURE_FLAGS;
+static char *ompi_io_romio314_version = ROMIO_VERSION_STRING;
+static char *ompi_io_romio314_user_configure_params = MCA_io_romio314_USER_CONFIGURE_FLAGS;
+static char *ompi_io_romio314_complete_configure_params = MCA_io_romio314_COMPLETE_CONFIGURE_FLAGS;
 
 static int register_component(void)
 {
     /* Use a low priority, but allow other components to be lower */
     priority_param = 10;
-    (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
+    (void) mca_base_component_var_register(&mca_io_romio314_component.io_version,
                                            "priority", "Priority of the io romio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &priority_param);
     delete_priority_param = 10;
-    (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
+    (void) mca_base_component_var_register(&mca_io_romio314_component.io_version,
                                            "delete_priority", "Delete priority of the io romio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &delete_priority_param);
-    (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
+    (void) mca_base_component_var_register(&mca_io_romio314_component.io_version,
                                            "version", "Version of ROMIO", MCA_BASE_VAR_TYPE_STRING,
                                            NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio_version);
-    (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio314_version);
+    (void) mca_base_component_var_register(&mca_io_romio314_component.io_version,
                                            "user_configure_params",
                                            "User-specified command line parameters passed to ROMIO's configure script",
                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0,
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio_user_configure_params);
-    (void) mca_base_component_var_register(&mca_io_romio_component.io_version,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio314_user_configure_params);
+    (void) mca_base_component_var_register(&mca_io_romio314_component.io_version,
                                            "complete_configure_params",
                                            "Complete set of command line parameters passed to ROMIO's configure script",
                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0,
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio_complete_configure_params);
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio314_complete_configure_params);
 
     return OMPI_SUCCESS;
 }
@@ -155,7 +155,7 @@ static int register_component(void)
 static int open_component(void)
 {
     /* Create the mutex */
-    OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_io_romio314_mutex, opal_mutex_t);
 
     return OMPI_SUCCESS;
 }
@@ -163,7 +163,7 @@ static int open_component(void)
 
 static int close_component(void)
 {
-    OBJ_DESTRUCT(&mca_io_romio_mutex);
+    OBJ_DESTRUCT(&mca_io_romio314_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -186,14 +186,14 @@ file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
 {
-    mca_io_romio_data_t *data;
+    mca_io_romio314_data_t *data;
 
     *priority = priority_param;
 
     /* Allocate a space for this module to hang private data (e.g.,
        the ROMIO file handle) */
 
-    data = malloc(sizeof(mca_io_romio_data_t));
+    data = malloc(sizeof(mca_io_romio314_data_t));
     if (NULL == data) {
         return NULL;
     }
@@ -202,7 +202,7 @@ file_query(struct ompi_file_t *file,
 
     /* All done */
 
-    return &mca_io_romio_module;
+    return &mca_io_romio314_module;
 }
 
 
@@ -237,9 +237,9 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 {
     int ret;
 
-    OPAL_THREAD_LOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
     ret = ROMIO_PREFIX(MPI_File_delete)(filename, info);
-    OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
     return ret;
 }
@@ -254,10 +254,10 @@ register_datarep(char * datarep,
 {
     int ret;
 
-    OPAL_THREAD_LOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK(&mca_io_romio314_mutex);
     ret = ROMIO_PREFIX(MPI_Register_datarep(datarep, read_fn, write_fn,
                                             extent_fn, state));
-    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK(&mca_io_romio314_mutex);
 
     return ret;
 }
