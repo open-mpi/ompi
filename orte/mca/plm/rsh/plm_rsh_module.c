@@ -670,6 +670,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
     /* protect the params */
     mca_base_cmd_line_wrap_args(argv);
 
+    /* tell the daemon we are in a tree spawn */
+    opal_argv_append(&argc, &argv, "--tree-spawn");
+
     value = opal_argv_join(argv, ' ');
     if (sysconf(_SC_ARG_MAX) < (int)strlen(value)) {
         orte_show_help("help-plm-rsh.txt", "cmd-line-too-long",
@@ -844,9 +847,6 @@ static int remote_spawn(opal_buffer_t *launch)
         OBJ_DESTRUCT(&coll);
         goto cleanup;
     }
-
-    /* tell the daemon we are in a tree spawn */
-    opal_argv_append(&argc, &argv, "--tree-spawn");
 
     /* get the daemon job object */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
