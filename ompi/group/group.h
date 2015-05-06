@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -339,9 +339,37 @@ static inline struct ompi_proc_t* ompi_group_peer_lookup(ompi_group_t *group, in
 #if OMPI_GROUP_SPARSE
     return ompi_group_get_proc_ptr (group, peer_id);
 #else
+    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
+        intptr_t sentinel = -(intptr_t) group->grp_proc_pointers[peer_id];
+        /* replace sentinel value with an actual ompi_proc_t */
+        group->grp_proc_pointers[peer_id] =
+            (ompi_proc_t *) ompi_proc_for_name (*((opal_process_name_t *) &sentinel));
+        OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
+    }
     return group->grp_proc_pointers[peer_id];
 #endif
 }
+
+static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t *group, int peer_id)
+{
+#if OPAL_ENABLE_DEBUG
+    if (peer_id >= group->grp_proc_count) {
+        opal_output(0, "ompi_group_peer_lookup_existing: invalid peer index (%d)", peer_id);
+        return (struct ompi_proc_t *) NULL;
+    }
+#endif
+#if OMPI_GROUP_SPARSE
+    return ompi_group_get_proc_ptr (group, peer_id);
+#else
+    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
+        return NULL;
+    }
+
+    return group->grp_proc_pointers[peer_id];
+#endif
+}
+
+bool ompi_group_have_remote_peers (ompi_group_t *group);
 
 /**
  *  Function to print the group info
