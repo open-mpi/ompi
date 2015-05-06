@@ -1518,40 +1518,38 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
                        char *nodename, int *argc, char ***argv)
 {
     orte_plm_rsh_shell_t remote_shell, local_shell;
-    char *param;
     int rc;
-
+    FILE *fp;
+    char path[256];
+    bool skip;
+    
     /* What is our local shell? */
     local_shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
 
-#if OPAL_ENABLE_GETPWUID
-    {
-        struct passwd *p;
 
-        p = getpwuid(getuid());
-        if( NULL == p ) {
-            /* This user is unknown to the system. Therefore, there is no reason we
-             * spawn whatsoever in his name. Give up with a HUGE error message.
-             */
-            orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
-            return ORTE_ERR_FATAL;
+    /* Open the command for reading. */
+    fp = popen("ps -p $$ | awk '{print $4}'", "r");
+    if (fp == NULL) {
+        orte_show_help("help-plm-rsh.txt", "popen-failed", true);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Read the output a line at a time - output it. */
+    skip = true;
+    while (fgets(path, sizeof(path)-1, fp) != NULL) {
+        /* skip the first line - the second contains the name of the shell */
+        if (skip) {
+            skip = false;
+            continue;
         }
-        param = p->pw_shell;
-        local_shell = find_shell(p->pw_shell);
+        break;
     }
-#endif
+    /* close */
+    pclose(fp);
+    local_shell = find_shell(path);
 
-    /* If we didn't find it in getpwuid(), try looking at the $SHELL
-       environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
-    */
-    if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell && 
-        NULL != (param = getenv("SHELL"))) {
-        local_shell = find_shell(param);
-    }
-    
     if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell) {
-        opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
-                    (NULL != param) ? param : "unknown");
+        opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n", path);
         local_shell = ORTE_PLM_RSH_SHELL_BASH;
     }
     

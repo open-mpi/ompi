@@ -60,10 +60,9 @@ will cause the system to deadlock.
 To avoid deadlock, either increase the number of concurrent daemons, or
 remove the debug-daemons flag.
 
-[unknown-user]
-The user (%d) is unknown to the system (i.e. there is no corresponding
-entry in the password file). Please contact your system administrator
-for a fix.
+[popen-failed]
+We were unable to run a command to determine the shell being used - we
+are not able to continue.
 #
 [cannot-resolve-shell-with-prefix]
 The rsh launcher has been given a prefix to use, but could not determine
