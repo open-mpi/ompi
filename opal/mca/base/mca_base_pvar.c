@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -296,7 +297,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
             }
 
             opal_hash_table_set_value_ptr (&mca_base_pvar_index_hash, pvar->name, strlen (pvar->name),
-                                           (void *)(uintptr_t) pvar->pvar_index);
+                                           (void *)(uintptr_t) pvar_count);
 
             pvar_count++;
             ret = OPAL_SUCCESS;
