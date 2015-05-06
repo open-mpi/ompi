@@ -134,10 +134,8 @@ check_win_ok(ompi_communicator_t *comm, int flavor)
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
-        if (!OPAL_PROC_ON_LOCAL_NODE(ompi_comm_peer_lookup(comm, i)->super.proc_flags)) {
-            return OMPI_ERR_RMA_SHARED;
-        }
+    if (ompi_group_have_remote_peers (comm->c_local_group)) {
+        return OMPI_ERR_RMA_SHARED;
     }
 
     return OMPI_SUCCESS;
