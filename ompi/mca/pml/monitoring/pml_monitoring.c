@@ -220,6 +220,9 @@ static void output_monitoring( FILE *pf )
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, sent_data[i], messages_count[i]);
         }
+        /* reset phase array */
+        sent_data[i] = 0;
+        messages_count[i] = 0;
     }
 
     if( 1 == filter_monitoring() ) return;
@@ -229,6 +232,9 @@ static void output_monitoring( FILE *pf )
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
         }
+        /* reset phase array */
+        filtered_sent_data[i] = 0;
+        filtered_messages_count[i] = 0;
     }
 }
 

@@ -20,6 +20,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 
 static int mca_pml_monitoring_enabled = 0;
+static int mca_pml_monitoring_output_enabled = 0;
 static int mca_pml_monitoring_active = 0;
 static int mca_pml_monitoring_current_state = 0;
 static char* mca_pml_monitoring_current_filename = NULL;
@@ -99,10 +100,26 @@ mca_pml_monitoring_messages_notify(mca_base_pvar_t *pvar,
 
     return OMPI_ERROR;
 }
-union {
-    unsigned long ulong;
-    int (*fct)(char*);
-} hidden_fct = { .fct = ompi_mca_pml_monitoring_flush };
+
+static int
+mca_pml_monitoring_get_flush(const struct mca_base_pvar_t *pvar, void *value, void *obj)
+{
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event,
+                                void *obj, int *count)
+{
+    switch event {
+        case MCA_BASE_PVAR_HANDLE_BIND:
+        case MCA_BASE_PVAR_HANDLE_UNBIND:
+        case MCA_BASE_PVAR_HANDLE_START:
+        case MCA_BASE_PVAR_HANDLE_STOP:
+            return OMPI_SUCCESS;
+        }
+    return OMPI_ERROR;
+}
 
 int mca_pml_monitoring_enable(bool enable)
 {
@@ -138,6 +155,20 @@ static int mca_pml_monitoring_component_open(void)
         opal_pointer_array_add(&mca_pml_base_pml,
                                strdup(mca_pml_monitoring_component.pmlm_version.mca_component_name));
     }
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_pml_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
+                                    mca_base_pvar_event_t event,
+                                    void *obj_handle,
+                                    int *count)
+{
+    if (MCA_BASE_PVAR_HANDLE_BIND == event) {
+        /* Return the size of the communicator as the number of values */
+        *count = ompi_comm_size ((ompi_communicator_t *) obj_handle);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -234,6 +265,22 @@ static int mca_pml_monitoring_component_register(void)
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_enabled);
 
+    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable_output",
+                                          "Enable the PML monitoring textual output at MPI_Finalize. This value should be different than 0 in order for the output to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
+
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
+                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                  mca_pml_monitoring_get_messages_count, NULL, mca_pml_monitoring_comm_size_notify, NULL);
+
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
+                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                 mca_pml_monitoring_get_messages_size, NULL, mca_pml_monitoring_comm_size_notify, NULL);
     return OMPI_SUCCESS;
 }
 
