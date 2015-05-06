@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
@@ -102,12 +102,25 @@ int ompi_comm_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_comm_world, ompi_communicator_t);
     assert(ompi_mpi_comm_world.comm.c_f_to_c_index == 0);
     group = OBJ_NEW(ompi_group_t);
-    group->grp_proc_pointers = ompi_proc_world(&size);
-    group->grp_proc_count    = (int)size;
+
+    size = ompi_process_info.num_procs;
+    group->grp_proc_pointers = (ompi_proc_t **) calloc (size, sizeof (ompi_proc_t *));
+    group->grp_proc_count = size;
+
+    for (size_t i = 0 ; i < size ; ++i) {
+        opal_process_name_t name = {.vpid = i, .jobid = OMPI_PROC_MY_NAME->jobid};
+        group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_lookup (name);
+        if (NULL == group->grp_proc_pointers[i]) {
+            /* set sentinel value */
+            group->grp_proc_pointers[i] = (ompi_proc_t *)(-*((intptr_t *) &name));
+        } else {
+            OBJ_RETAIN (ompi_proc_local_proc);
+        }
+    }
+
     OMPI_GROUP_SET_INTRINSIC (group);
     OMPI_GROUP_SET_DENSE (group);
     ompi_set_group_rank(group, ompi_proc_local());
-    ompi_group_increment_proc_count (group);
 
     ompi_mpi_comm_world.comm.c_contextid    = 0;
     ompi_mpi_comm_world.comm.c_id_start_index = 4;
