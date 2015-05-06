@@ -568,3 +568,23 @@ int ompi_group_compare(ompi_group_t *group1,
 
     return return_value;
 }
+
+bool ompi_group_have_remote_peers (ompi_group_t *group)
+{
+    for (size_t i = 0 ; i < group->grp_proc_count ; ++i) {
+        ompi_proc_t *proc = NULL;
+#if OMPI_GROUP_SPARSE
+        proc = ompi_group_peer_lookup (group, i);
+#else
+        if ((intptr_t) group->grp_proc_pointers[i] < 0) {
+            return true;
+        }
+        proc = group->grp_proc_pointers[i];
+#endif
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            return true;
+        }
+    }
+
+    return false;
+}

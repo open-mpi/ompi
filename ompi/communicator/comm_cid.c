@@ -139,54 +139,8 @@ static opal_mutex_t ompi_cid_lock;
 static opal_list_t ompi_registered_comms;
 
 
-/* This variable is zero (false) if all processes in MPI_COMM_WORLD
- * did not require MPI_THREAD_MULTIPLE support, and is 1 (true) as
- * soon as at least one process requested support for THREAD_MULTIPLE */
-static int ompi_comm_world_thread_level_mult=0;
-
-
 int ompi_comm_cid_init (void)
 {
-#if OMPI_ENABLE_THREAD_MULTIPLE
-    ompi_proc_t **procs, *thisproc;
-    uint8_t thread_level;
-    uint8_t *tlpointer;
-    int ret;
-    size_t i, size, numprocs;
-
-    /** Note that the following call only returns processes
-     * with the same jobid. This is on purpose, since
-     * we switch for the dynamic communicators anyway
-     * to the original (slower) cid allocation algorithm.
-     */
-    procs = ompi_proc_world ( &numprocs );
-
-    for ( i=0; i<numprocs; i++ ) {
-        thisproc = procs[i];
-
-        OPAL_MODEX_RECV_STRING(ret, "MPI_THREAD_LEVEL",
-                               &thisproc->super.proc_name,
-                               (uint8_t**)&tlpointer, &size);
-        if (OMPI_SUCCESS == ret) {
-            thread_level = *((uint8_t *) tlpointer);
-            if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {
-                ompi_comm_world_thread_level_mult = 1;
-                break;
-            }
-        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
-            if (ompi_mpi_thread_multiple) {
-                ompi_comm_world_thread_level_mult = 1;
-            }
-            break;
-        } else {
-            return ret;
-        }
-    }
-    free(procs);
-#else
-    ompi_comm_world_thread_level_mult = 0; // silence compiler warning if not used
-#endif
-
     return OMPI_SUCCESS;
 }
 
