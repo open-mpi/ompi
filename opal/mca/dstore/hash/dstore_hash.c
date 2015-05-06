@@ -179,6 +179,11 @@ static int fetch(struct opal_dstore_base_module_t *imod,
 
     /* if the key is NULL, that we want everything */
     if (NULL == key) {
+        /* must provide an output list or this makes no sense */
+        if (NULL == kvs) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
         OPAL_LIST_FOREACH(kv, &proc_data->data, opal_value_t) {
             /* copy the value */
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
@@ -207,6 +212,12 @@ static int fetch(struct opal_dstore_base_module_t *imod,
         return OPAL_ERR_NOT_FOUND;
     }
 
+    /* if the user provided a NULL list object, then they
+     * just wanted to know if the key was present */
+    if (NULL == kvs) {
+        return OPAL_SUCCESS;
+    }
+    
     /* create the copy */
     if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
         OPAL_ERROR_LOG(rc);
