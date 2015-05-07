@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +89,7 @@ void* orte_qos_get_module (opal_list_t *qos_attributes)
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                              "%s qos_base_get_module returning  qos module %p type =%d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             &qos_comp->mod, type_val));
+                             (void*)&qos_comp->mod, type_val));
         return (void*)(&qos_comp->mod);
     } else {
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,

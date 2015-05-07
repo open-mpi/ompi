@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,7 @@ static int orte_qos_base_register(mca_base_register_flag_t flags)
 #if OPAL_ENABLE_TIMING
     /* Detailed timing setup */
     orte_qos_base.timing = false;
-    (void) mca_base_var_rtegister ("orte", "qos", "base", "timing",
+    (void) mca_base_var_register ("orte", "qos", "base", "timing",
                                   "Enable QOS timings",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,

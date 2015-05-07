@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  *
- * Copyright (c) 2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,7 @@ void orte_rml_base_close_channel(int fd, short flags, void *cbdata)
                          "%s rml_close_channel to peer %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&req->post.close_channel.channel->peer)));
-    OPAL_TIMING_EVENT((&tm_rml, "to %s", ORTE_NAME_PRINT(&peer)));
+    OPAL_TIMING_EVENT((&tm_rml, "to %s", ORTE_NAME_PRINT(&req->post.close_channel.channel->peer)));
     close_chan = OBJ_NEW(orte_rml_close_channel_t);
     close_chan->channel = req->post.close_channel.channel;
     close_chan->cbfunc = req->post.close_channel.cbfunc;
@@ -242,7 +243,7 @@ void orte_rml_base_open_channel_resp_callback (int status,
                          "%s rml_open_channel_resp_callback to peer %s status = %d channel = %p",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer), status,
-                         channel));
+                         (void*)channel));
     int32_t rc;
     bool peer_resp = false;
     int32_t count = 1;
@@ -287,7 +288,7 @@ void orte_rml_base_open_channel_resp_callback (int status,
                          "%s rml_open_channel_resp_callback to peer %s status = %d channel =%p num = %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer), req->status,
-                         channel, channel->channel_num));
+                         (void*)channel, channel->channel_num));
     ORTE_RML_OPEN_CHANNEL_COMPLETE(req);
     OBJ_RELEASE(req);
 }
@@ -528,7 +529,7 @@ void orte_rml_close_channel_recv_callback (int status,
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s rml_close_channel_recv_callback for channel num =%d channel=%p",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         channel_num, channel));
+                         channel_num, (void*)channel));
     if (NULL != channel) {
           orte_qos_close_channel ( channel->qos, channel->qos_channel_ptr);
           opal_pointer_array_set_item ( &orte_rml_base.open_channels, channel->channel_num, NULL);
