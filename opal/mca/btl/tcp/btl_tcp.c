@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -72,6 +72,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         struct opal_proc_t* opal_proc = procs[i];
         mca_btl_tcp_proc_t* tcp_proc;
         mca_btl_base_endpoint_t* tcp_endpoint;
+        bool existing_found = false;
 
         /* Do not create loopback TCP connections */
         if( my_proc == opal_proc ) {
@@ -90,28 +91,43 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
 
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
 
-        /* The btl_proc datastructure is shared by all TCP BTL
-         * instances that are trying to reach this destination.
-         * Cache the peer instance on the btl_proc.
-         */
-        tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
-        if(NULL == tcp_endpoint) {
-            OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-            return OPAL_ERR_OUT_OF_RESOURCE;
+        for (int j = 0 ; j < tcp_proc->proc_endpoint_count ; ++j) {
+            tcp_endpoint = tcp_proc->proc_endpoints[i];
+            if (tcp_endpoint->endpoint_btl == tcp_btl) {
+                existing_found = true;
+                break;
+            }
         }
 
-        tcp_endpoint->endpoint_btl = tcp_btl;
-        rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
-        if(rc != OPAL_SUCCESS) {
-            OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-            OBJ_RELEASE(tcp_endpoint);
-            continue;
+        if (!existing_found) {
+            /* The btl_proc datastructure is shared by all TCP BTL
+             * instances that are trying to reach this destination.
+             * Cache the peer instance on the btl_proc.
+             */
+            tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
+            if(NULL == tcp_endpoint) {
+                OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+
+            tcp_endpoint->endpoint_btl = tcp_btl;
+            rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
+            if(rc != OPAL_SUCCESS) {
+                OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+                OBJ_RELEASE(tcp_endpoint);
+                continue;
+            }
+
+            opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
         }
 
-        opal_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+
+        if (NULL != reachable) {
+            opal_bitmap_set_bit(reachable, i);
+        }
+
         peers[i] = tcp_endpoint;
-        opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
 
         /* we increase the count of MPI users of the event library
            once per peer, so that we are used until we aren't
