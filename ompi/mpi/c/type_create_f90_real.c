@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -105,7 +105,7 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
         snprintf(datatype->name, MPI_MAX_OBJECT_NAME, "COMBINER %s",
                  (*newtype)->name);
 
-        ompi_datatype_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
+        ompi_datatype_set_args( datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
 
         rc = opal_hash_table_set_value_uint64( &ompi_mpi_f90_real_hashtable, key, datatype );
         if (OMPI_SUCCESS != rc) {
