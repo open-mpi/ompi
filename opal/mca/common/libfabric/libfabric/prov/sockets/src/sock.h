@@ -702,7 +702,8 @@ struct sock_pe_entry {
 	uint8_t type;
 	uint8_t is_complete;
 	uint8_t is_error;
-	uint8_t reserved[5];
+	uint8_t mr_checked;
+	uint8_t reserved[4];
 
 	uint64_t done_len;
 	uint64_t total_len;
@@ -739,6 +740,13 @@ struct sock_pe {
 typedef int (*sock_cq_report_fn) (struct sock_cq *cq, fi_addr_t addr,
 				  struct sock_pe_entry *pe_entry);
 
+struct sock_cq_overflow_entry_t {
+	size_t len;
+	fi_addr_t addr;
+	struct dlist_entry entry;
+	char cq_entry[0];
+};
+
 struct sock_cq {
 	struct fid_cq cq_fid;
 	struct sock_domain *domain;
@@ -749,6 +757,7 @@ struct sock_cq {
 	struct ringbuf addr_rb;
 	struct ringbuffd cq_rbfd;
 	struct ringbuf cqerr_rb;
+	struct dlist_entry overflow_list;
 	fastlock_t lock;
 	fastlock_t list_lock;
 
@@ -876,6 +885,10 @@ int sock_msg_passive_ep(struct fid_fabric *fabric, struct fi_info *info,
 			struct fid_pep **pep, void *context);
 int sock_ep_enable(struct fid_ep *ep);
 int sock_ep_disable(struct fid_ep *ep);
+int sock_ep_is_send_cq_low(struct sock_comp *comp, uint64_t flags);
+int sock_ep_is_recv_cq_low(struct sock_comp *comp, uint64_t flags);
+int sock_ep_is_write_cq_low(struct sock_comp *comp, uint64_t flags);
+int sock_ep_is_read_cq_low(struct sock_comp *comp, uint64_t flags);
 
 
 int sock_stx_ctx(struct fid_domain *domain,
@@ -889,6 +902,7 @@ int sock_cq_open(struct fid_domain *domain, struct fi_cq_attr *attr,
 int sock_cq_report_error(struct sock_cq *cq, struct sock_pe_entry *entry,
 			 size_t olen, int err, int prov_errno, void *err_data);
 int sock_cq_progress(struct sock_cq *cq);
+int sock_cq_check_size_ok(struct sock_cq *cq);
 
 
 int sock_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,

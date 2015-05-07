@@ -1,5 +1,5 @@
 Name: libfabric
-Version: 1.0.0rc6
+Version: 1.0.0
 Release: 1%{?dist}
 Summary: User-space RDMA Fabric Interfaces
 Group: System Environment/Libraries
@@ -61,5 +61,5 @@ rm -rf %{buildroot}
 %{_mandir}/man7/*
 
 %changelog
-* Fri Apr 24 2015 Open Fabrics Interfaces Working Group <ofiwg@lists.openfabrics.org> 1.0.0
-- Release 1.0.0rc6
+* Sun May 3 2015 Open Fabrics Interfaces Working Group <ofiwg@lists.openfabrics.org> 1.0.0
+- Release 1.0.0

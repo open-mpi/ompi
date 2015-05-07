@@ -121,7 +121,8 @@ typedef struct fid *fid_t;
 #define FI_TRANSMIT_COMPLETE	(1ULL << 27)
 #define FI_DELIVERY_COMPLETE	(1ULL << 28)
 
-/* fi_getinfo()-specific flags */
+/* fi_getinfo()-specific flags/caps */
+#define FI_NUMERICHOST		(1ULL << 55)
 #define FI_RMA_EVENT		(1ULL << 56)
 #define FI_SOURCE		(1ULL << 57)
 #define FI_NAMED_RX_CTX		(1ULL << 58)
@@ -134,7 +135,7 @@ struct fi_ioc {
 };
 
 /*
- * Format for transport addresses: sendto, writeto, etc.
+ * Format for transport addresses to insert into address vectors
  */
 enum {
 	FI_FORMAT_UNSPEC,	/* void * */
@@ -351,8 +352,6 @@ struct fid {
 	void			*context;
 	struct fi_ops		*ops;
 };
-
-#define FI_NUMERICHOST		(1ULL << 1)
 
 int fi_getinfo(uint32_t version, const char *node, const char *service,
 	       uint64_t flags, struct fi_info *hints, struct fi_info **info);

@@ -108,6 +108,11 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
 
+	if (sock_ep_is_write_cq_low(&tx_ctx->comp, flags)) {
+		SOCK_LOG_ERROR("CQ size low\n");
+		return -FI_EAGAIN;
+	}
+
 	src_len = 0;
 	datatype_sz = fi_datatype_size(msg->datatype);
 	if (flags & FI_INJECT) {
@@ -182,10 +187,12 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		dst_len += (tx_iov.ioc.count * datatype_sz);
 	}
 	
-	if (dst_len != src_len) {
+	if (msg->iov_count && dst_len != src_len) {
 		SOCK_LOG_ERROR("Buffer length mismatch\n");
 		ret = -FI_EINVAL;
 		goto err;
+	} else {
+		src_len = dst_len;
 	}
 
 	dst_len = 0;
@@ -228,6 +235,24 @@ err:
 static ssize_t sock_ep_atomic_writemsg(struct fid_ep *ep,
 			const struct fi_msg_atomic *msg, uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_MIN:
+	case FI_MAX: 
+	case FI_SUM:
+	case FI_PROD:
+	case FI_LOR:
+	case FI_LAND:
+	case FI_BOR:
+	case FI_BAND:
+	case FI_LXOR: 
+	case FI_BXOR:
+	case FI_ATOMIC_WRITE:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, NULL, NULL, 0,
 				  NULL, NULL, 0, flags);
 }
@@ -324,6 +349,25 @@ static ssize_t sock_ep_atomic_readwritemsg(struct fid_ep *ep,
 					    struct fi_ioc *resultv, void **result_desc, 
 					    size_t result_count, uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_MIN:
+	case FI_MAX: 
+	case FI_SUM:
+	case FI_PROD:
+	case FI_LOR:
+	case FI_LAND:
+	case FI_BOR:
+	case FI_BAND:
+	case FI_LXOR: 
+	case FI_BXOR:
+	case FI_ATOMIC_READ:
+	case FI_ATOMIC_WRITE:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, NULL, NULL, 0,
 				 resultv, result_desc, result_count, flags);
 }
@@ -399,6 +443,20 @@ static ssize_t sock_ep_atomic_compwritemsg(struct fid_ep *ep,
 			struct fi_ioc *resultv, void **result_desc, size_t result_count,
 			uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_CSWAP:
+	case FI_CSWAP_NE:
+	case FI_CSWAP_LE:
+	case FI_CSWAP_LT:
+	case FI_CSWAP_GE:
+	case FI_CSWAP_GT:
+	case FI_MSWAP:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, comparev, compare_desc, compare_count,
 				 resultv, result_desc, result_count, flags);
 }

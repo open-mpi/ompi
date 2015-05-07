@@ -225,10 +225,6 @@ static int psmx_atomic_do_write(void *dest, void *src,
 				dest,src,count,PSMX_BXOR);
 		break;
 
-	case FI_ATOMIC_READ:
-		/* do nothing */
-		break;
-
 	case FI_ATOMIC_WRITE:
 		SWITCH_ALL_TYPE(datatype,PSMX_ATOMIC_WRITE,
 				dest,src,count,PSMX_COPY);
@@ -1315,7 +1311,6 @@ static int psmx_atomic_writevalid(struct fid_ep *ep,
 	case FI_BAND:
 	case FI_LXOR:
 	case FI_BXOR:
-	case FI_ATOMIC_READ:
 	case FI_ATOMIC_WRITE:
 		break;
 
