@@ -4,6 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -286,7 +287,11 @@ void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
     case MCA_OOB_UD_REQ_SEND:
         if (req->req_data_type != MCA_OOB_UD_REQ_TR) {
             req->rml_msg->status = rc;
-            ORTE_RML_SEND_COMPLETE(req->rml_msg);
+            if( NULL == req->rml_msg->channel) {
+                ORTE_RML_SEND_COMPLETE(req->rml_msg);
+            } else {
+                ORTE_QOS_SEND_COMPLETE(req->rml_msg);
+            }
         }
         break;
     case MCA_OOB_UD_REQ_RECV:
@@ -302,11 +307,11 @@ void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
                     memcpy (&data[datalen], req->req_data.iov.uiov[i].iov_base, req->req_data.iov.uiov[i].iov_len);
                     datalen += req->req_data.iov.uiov[i].iov_len;
                 }
-                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag, data, datalen);
+                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag, req->req_channel, req->req_seq_num, data, datalen);
                 free(data);
             } else {
-                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag,
-                                       req->req_data.buf.p, req->req_data.buf.size);
+                ORTE_RML_POST_MESSAGE(&req->req_origin, req->req_tag, req->req_channel, req->req_seq_num,
+                                      req->req_data.buf.p, req->req_data.buf.size);
             }
         } else {
             opal_output_verbose(1, orte_oob_base_framework.framework_output,
@@ -318,7 +323,8 @@ void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
             snd->dst = req->req_target;
             snd->origin =  req->req_origin;
             snd->tag = req->req_tag;
-
+            snd->dst_channel = req->req_channel;
+            snd->seq_num = req->req_seq_num;
             if (MCA_OOB_UD_REQ_IOV == req->req_data_type) {
                 char *data = (char *)calloc(req->req_data.iov.count, sizeof(struct iovec));
                 int datalen = 0;

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,10 +14,11 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014 -2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -75,10 +76,32 @@ void orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
                                  orte_rml_buffer_callback_fn_t cbfunc,
                                  void* cbdata);
 
-void orte_rml_oob_recv_cancel(orte_process_name_t* peer, 
+void orte_rml_oob_recv_cancel(orte_process_name_t* peer,
                               orte_rml_tag_t tag);
 
-int orte_rml_oob_ping(const char* uri, 
+int orte_rml_oob_open_channel(orte_process_name_t * peer,
+                              opal_list_t * qos_attributes,
+                              orte_rml_channel_callback_fn_t cbfunc,
+                              void *cbdata);
+
+int orte_rml_oob_send_channel_nb (orte_rml_channel_num_t channel,
+                               struct iovec* msg,
+                               int count,
+                               orte_rml_tag_t tag,
+                               orte_rml_send_channel_callback_fn_t cbfunc,
+                               void* cbdata);
+
+int orte_rml_oob_send_buffer_channel_nb (orte_rml_channel_num_t channel,
+                                         opal_buffer_t *buffer,
+                                         orte_rml_tag_t tag,
+                                         orte_rml_send_buffer_channel_callback_fn_t cbfunc,
+                                         void* cbdata);
+
+int orte_rml_oob_close_channel (orte_rml_channel_num_t channel,
+                                orte_rml_channel_callback_fn_t cbfunc,
+                                void* cbdata);
+
+int orte_rml_oob_ping(const char* uri,
                       const struct timeval* tv);
 
 char* orte_rml_oob_get_uri(void);

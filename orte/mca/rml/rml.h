@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +21,7 @@
  * $HEADER$
  */
 
-/** 
+/**
  * @file
  *
  * Runtime Messaging Layer (RML) Communication Interface
@@ -74,11 +76,20 @@ ORTE_DECLSPEC void orte_rml_recv_callback(int status, orte_process_name_t* sende
                                           opal_buffer_t *buffer,
                                           orte_rml_tag_t tag, void *cbdata);
 
+ORTE_DECLSPEC void orte_rml_open_channel_recv_callback(int status,
+                                                        orte_process_name_t* sender,
+                                                        opal_buffer_t *buffer,
+                                                        orte_rml_tag_t tag, void *cbdata);
+ORTE_DECLSPEC void orte_rml_close_channel_recv_callback(int status,
+                                                        orte_process_name_t* sender,
+                                                        opal_buffer_t *buffer,
+                                                        orte_rml_tag_t tag, void *cbdata);
+
 /* ******************************************************************** */
 
 
 /**
- * RML component initialization 
+ * RML component initialization
  *
  * Create an instance (module) of the given RML component.  Upon
  * returning, the module data structure should be fully populated and
@@ -175,7 +186,6 @@ typedef void (*orte_rml_buffer_callback_fn_t)(int status,
                                               struct opal_buffer_t* buffer,
                                               orte_rml_tag_t tag,
                                               void* cbdata);
-
 
 /**
  * Function prototype for exception callback
@@ -284,7 +294,7 @@ typedef void (*orte_rml_module_set_contact_info_fn_t)(const char *contact_info);
  * @param[in] contact_info The contact info string for the remote process
  * @param[in] tv           Timeout after which the ping should be failed
  *
- * @retval ORTE_SUCESS The process is available and will allow connections 
+ * @retval ORTE_SUCESS The process is available and will allow connections
  *                     from the local process
  * @retval ORTE_ERROR  An unspecified error occurred during the update
  */
@@ -388,7 +398,7 @@ typedef void (*orte_rml_module_recv_buffer_nb_fn_t)(orte_process_name_t* peer,
  *
  * Attempt to cancel a posted non-blocking receive.
  *
- * @param[in] peer    Peer process or ORTE_NAME_WILDCARD, exactly as passed 
+ * @param[in] peer    Peer process or ORTE_NAME_WILDCARD, exactly as passed
  *                    to the non-blocking receive call
  * @param[in] tag     Posted receive tag
  */
@@ -428,6 +438,155 @@ typedef int  (*orte_rml_module_ft_event_fn_t)(int state);
  * and is to be restarted
  */
 typedef void (*orte_rml_module_purge_fn_t)(orte_process_name_t *peer);
+
+/********* NEW RML QOS MESSAGING APIS *****************/
+/***** Questions *****/
+/*
+1 : Should we provide a func for the user to get qos attributes of a channel? (do we allow for sets??)
+2: Should open channel - have a channel error callback function?
+*/
+typedef void (*orte_rml_channel_callback_fn_t) (int status,
+                                                orte_rml_channel_num_t channel_num,
+                                                orte_process_name_t * peer,
+                                                opal_list_t *qos_attributes,
+                                                void * cbdata);
+/**
+ * Funtion prototype for callback from non-blocking iovec send on a channel
+ *
+ * Funtion prototype for callback from non-blocking iovec send on a channel
+ * On send, the iovec pointer will be the same pointer passed to
+ * send_nb and count will equal the count given to send.
+ *
+ *
+ * @note The parameter in/out parameters are relative to the user's callback
+ * function.
+ *
+ * @param[in] status  Completion status
+ * @param[in] channel Opaque channel number on which the msg was sent (input to rml_send_channel)
+ * @param[in] msg     Pointer to the array of iovec that was sent
+ *                    or to a single iovec that has been recvd
+ * @param[in] count   Number of iovecs in the array
+ * @param[in] tag     User defined tag for matching send/recv
+ * @param[in] cbdata  User data passed to send_nb()
+ */
+typedef void (*orte_rml_send_channel_callback_fn_t)(int status,
+                                        orte_rml_channel_num_t channel,
+                                        struct iovec* msg,
+                                        int count,
+                                        orte_rml_tag_t tag,
+                                        void* cbdata);
+/**
+ * Funtion prototype for callback from non-blocking buffer send on a channel
+ *
+ * Function prototype for callback from non-blocking buffer send on a
+ * channel. On send, the buffer will be the same pointer passed to
+ * send_buffer_nb.
+ *
+ * @note The parameter in/out parameters are relative to the user's callback
+ * function.
+ *
+ * @param[in] status  Completion status
+ * @param[in] channel channel number on which the msg was sent
+ * @param[in] buffer  Message buffer
+ * @param[in] tag     User defined tag for matching send
+ * @param[in] cbdata  User data passed to send_buffer_nb()
+ */
+typedef void (*orte_rml_send_buffer_channel_callback_fn_t)(int status,
+                                              orte_rml_channel_num_t channel,
+                                              struct opal_buffer_t* buffer,
+                                              orte_rml_tag_t tag,
+                                              void* cbdata);
+
+/**
+ * * Open a messaging channel with specified QoS to a specific peer
+ *
+ * @param[in]  peer             End point Peer to which the channel needs to be opened
+ * @param[in]  qos_attributes   List of Quality of Service Attributes for the channel
+ * @param[in] cbfunc            Callback function on channel create (open) comlpetion
+ * @param[in] cbdata            User data to provide during completion callback
+ *
+ * @retval ORTE_SUCCESS - the channel was successfully created at the source and a request was sent to the dest.
+ * @retval ORTE_ERROR   - unknown error
+ * @retval ORTE_ERROR_UNSUPPORTED_QOS - the requested QoS cannot be provided.
+ */
+typedef int (*orte_rml_module_open_channel_fn_t)(orte_process_name_t* peer,
+                                                    opal_list_t *qos_attributes,
+                                                    orte_rml_channel_callback_fn_t cbfunc,
+                                                    void* cbdata);
+
+/**
+ * Send an iovec non-blocking message
+ *
+ * Send an array of iovecs to the specified peer.  The call
+ * will return immediately, although the iovecs may not be modified
+ * until the completion callback is triggered.  The iovecs *may* be
+ * passed to another call to send_nb before the completion callback is
+ * triggered.  The callback being triggered does not give any
+ * indication of remote completion.
+ *
+ * @param[in] channel  Channel number of the specific channel  (given to user in the channel open completion callback fn.)
+ * @param[in] msg    Pointer to an array of iovecs to be sent
+ * @param[in] count  Number of iovecs in array
+ * @param[in] tag    User defined tag for matching send/recv
+ * @param[in] cbfunc Callback function on message comlpetion
+ * @param[in] cbdata User data to provide during completion callback
+ *
+ * @retval ORTE_SUCCESS The message was successfully started
+ * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
+ * @retval ORTE_ERR_CHANNEL_UNKNOWN Channel specified does not exist.
+ * @retval ORTE_ERROR  An unspecified error occurred
+ */
+typedef int (*orte_rml_module_send_channel_nb_fn_t)(orte_rml_channel_num_t channel,
+                                            struct iovec* msg,
+                                            int count,
+                                            orte_rml_tag_t tag,
+                                            orte_rml_send_channel_callback_fn_t cbfunc,
+                                            void* cbdata);
+
+
+/**
+ * Send a buffer non-blocking message
+ *
+ * Send a buffer on specific prestablished channel.  The call
+ * will return immediately, although the buffer may not be modified
+ * until the completion callback is triggered.  The buffer *may* be
+ * passed to another call to send_nb before the completion callback is
+ * triggered.  The callback being triggered does not give any
+ * indication of remote completion.
+ *
+ * @param[in] channel  Channel number of the specific channel  (given to user in the channel open completion callback fn.)
+ * @param[in] buffer   Pointer to buffer to be sent
+ * @param[in] tag      User defined tag for matching send/recv
+ * @param[in] cbfunc   Callback function on message comlpetion
+ * @param[in] cbdata User data to provide during completion callback
+ *
+ * @retval ORTE_SUCCESS The message was successfully started
+ * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
+ * @retval ORTE_ERR_CHANNEL_UNKNOWN Channel specified does not exist.
+ * @retval ORTE_ERROR  An unspecified error occurred
+ */
+
+typedef int (*orte_rml_module_send_buffer_channel_nb_fn_t) (orte_rml_channel_num_t channel,
+                                                         struct opal_buffer_t * buffer,
+                                                         orte_rml_tag_t tag,
+                                                         orte_rml_send_buffer_channel_callback_fn_t cbfunc,
+                                                         void* cbdata);
+
+/**
+ * * close a messaging channel with specified QoS to a specific peer
+ *
+ * @param[in]  peer             End point Peer to which the channel needs to be opened
+ * @param[in]  channel_num      The channel number returned in the channel open completion callback function.
+ * @param[in] cbfunc            Callback function on channel close comlpetion
+ * @param[in] cbdata            User data to provide during completion callback
+ *
+ * @retval ORTE_SUCCESS - the channel was successfully closed at the source and a request was sent to the dest.
+ * @retval ORTE_ERROR   - unknown error
+ * @retval ORTE_ERROR_UNKNOWN_CHANNEL - cannot find the specified QoS channel
+ */
+typedef int (*orte_rml_module_close_channel_fn_t)( orte_rml_channel_num_t channel_num,
+                                                    orte_rml_channel_callback_fn_t cbfunc,
+                                                    void* cbdata);
 
 /* ******************************************************************** */
 
@@ -474,9 +633,21 @@ struct orte_rml_module_t {
 
     /** Fault tolerance handler */
     orte_rml_module_ft_event_fn_t                ft_event;
-    
+
     /** Purge information */
     orte_rml_module_purge_fn_t                   purge;
+
+    /** Open a qos messaging channel to a peer*/
+    orte_rml_module_open_channel_fn_t            open_channel;
+
+    /** send a non blocking iovec message over a channel */
+    orte_rml_module_send_channel_nb_fn_t         send_channel_nb;
+
+    /** send a non blocking buffer message over a channel */
+    orte_rml_module_send_buffer_channel_nb_fn_t  send_buffer_channel_nb;
+
+    /** close a qos messaging channel */
+    orte_rml_module_close_channel_fn_t           close_channel;
 };
 /** Convienence typedef */
 typedef struct orte_rml_module_t orte_rml_module_t;

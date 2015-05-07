@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -123,6 +123,8 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \
+        msg->hdr.channel = (m)->dst_channel;                            \
+        msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \
@@ -164,6 +166,8 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \
+        msg->hdr.channel = (m)->dst_channel;                            \
+        msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \
