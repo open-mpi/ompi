@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,14 +79,14 @@ typedef struct orte_qos_ack_channel {
 OBJ_CLASS_DECLARATION(orte_qos_ack_channel_t);
 
 extern orte_qos_module_t  orte_qos_ack_module;
-int  orte_qos_ack_channel_get_msg_room (orte_qos_ack_channel_t * ack_chan,
+static inline int  orte_qos_ack_channel_get_msg_room (orte_qos_ack_channel_t * ack_chan,
                                                       uint32_t seq_num)
 {
      return ack_chan->seq_num_to_room_num[(seq_num % QOS_ACK_MAX_OUTSTANDING_MSGS)];
 }
 
-void orte_qos_ack_channel_set_msg_room (orte_qos_ack_channel_t * ack_chan,
-                                                        uint32_t seq_num, int room_num)
+static inline void orte_qos_ack_channel_set_msg_room (orte_qos_ack_channel_t * ack_chan,
+                                                      uint32_t seq_num, int room_num)
 {
     ack_chan->seq_num_to_room_num[(seq_num % QOS_ACK_MAX_OUTSTANDING_MSGS)] = room_num;
 }

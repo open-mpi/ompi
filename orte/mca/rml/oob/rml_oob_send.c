@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -365,7 +365,7 @@ int orte_rml_oob_send_channel_nb (orte_rml_channel_num_t channel_num,
     req->post.send.iov = msg;
     req->post.send.count = count;
     req->post.send.tag = tag;
-    req->post.send.cbfunc.iov = cbfunc;
+    req->post.send.cbfunc.iov_chan = cbfunc;
     req->post.send.cbdata = cbdata;
     req->post.send.channel = channel;
     /* setup the event for the send callback */

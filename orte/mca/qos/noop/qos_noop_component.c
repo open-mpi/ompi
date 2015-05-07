@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014 - 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,8 +87,10 @@ static void qos_noop_shutdown (void) {
 
 static void* noop_create (opal_list_t *qos_attributes, uint32_t channel_num) {
     orte_qos_base_channel_t * noop_chan;
-    int32_t rc, *window, *type, window_val;
+    int32_t rc, *window, window_val;
     orte_qos_type_t type_val = orte_qos_noop;
+    orte_qos_type_t *type;
+    
     noop_chan = OBJ_NEW (orte_qos_base_channel_t);
     noop_chan->channel_num = channel_num;
     type = &type_val;
@@ -118,7 +120,8 @@ static void* noop_create (opal_list_t *qos_attributes, uint32_t channel_num) {
     return noop_chan;
 }
 
-static int noop_open (void *qos_channel, opal_buffer_t * buf)  {
+static int noop_open (void *qos_channel, opal_buffer_t * buf)
+{
     int32_t rc = ORTE_SUCCESS;
     orte_qos_base_channel_t *noop_chan;
     noop_chan = (orte_qos_base_channel_t*) (qos_channel);
@@ -129,24 +132,27 @@ static int noop_open (void *qos_channel, opal_buffer_t * buf)  {
     return rc;
 }
 
-static int noop_send ( void *qos_channel,  orte_rml_send_t *msg) {
+static int noop_send ( void *qos_channel,  orte_rml_send_t *msg)
+{
     //nothing to do
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s noop_send msg = %p to peer = %s\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, ORTE_NAME_PRINT(&msg->dst)));
+                         (void*)msg, ORTE_NAME_PRINT(&msg->dst)));
     return ORTE_SUCCESS;
 }
 
-static int noop_recv (void *qos_channel, orte_rml_recv_t *msg) {
+static int noop_recv (void *qos_channel, orte_rml_recv_t *msg)
+{
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s noop_recv msg = %p from peer = %s\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, ORTE_NAME_PRINT(&msg->sender)));
+                         (void*)msg, ORTE_NAME_PRINT(&msg->sender)));
     return ORTE_SUCCESS;
 }
 
-static int noop_close (void * channel) {
+static int noop_close (void * channel)
+{
     orte_qos_base_channel_t *noop_chan;
     if(NULL != channel) {
         noop_chan = (orte_qos_base_channel_t*) channel;
@@ -157,11 +163,13 @@ static int noop_close (void * channel) {
 
 }
 
-static int noop_init_recv (void *channel, opal_list_t *attributes) {
+static int noop_init_recv (void *channel, opal_list_t *attributes)
+{
     return ORTE_SUCCESS;
 }
 
-static int noop_cmp (void *channel, opal_list_t *attributes) {
+static int noop_cmp (void *channel, opal_list_t *attributes)
+{
     int32_t chan_typea, chan_typeb,  *ptr, window_sizea, window_sizeb;
     orte_qos_base_channel_t *noop_chan = (orte_qos_base_channel_t*) channel;
     ptr = &chan_typea;
@@ -183,7 +191,8 @@ static int noop_cmp (void *channel, opal_list_t *attributes) {
         return ORTE_ERROR;
 }
 
-static void noop_send_callback (orte_rml_send_t *msg) {
+static void noop_send_callback (orte_rml_send_t *msg)
+{
     // nothing to do for noop
     ORTE_RML_SEND_COMPLETE(msg);
 }

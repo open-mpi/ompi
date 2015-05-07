@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +50,6 @@ void orte_qos_ack_msg_send_callback ( int status,
                                       void* cbdata);
 static inline int process_out_of_order_msg ( orte_qos_ack_channel_t *channel,
                                              orte_rml_recv_t *msg);
-static int hack = 0;
 /**
  * ack module definition
  */
@@ -143,7 +142,7 @@ static void* ack_create (opal_list_t *qos_attributes, uint32_t channel_num) {
                                 OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                                                      "%s ack_create created channel = %p window = %d timeout =%d retry = %d",
                                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                     ack_chan,
+                                                     (void*)ack_chan,
                                                      ack_chan->window,
                                                      ack_chan->timeout_secs,
                                                      ack_chan->retry));
@@ -158,7 +157,7 @@ static void* ack_create (opal_list_t *qos_attributes, uint32_t channel_num) {
                                 OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                                                      "%s ack_create created channel = %p window = %d timeout =%d retry = %d",
                                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                     ack_chan,
+                                                     (void*)ack_chan,
                                                      ack_chan->window,
                                                      ack_chan->timeout_secs,
                                                      ack_chan->retry));
@@ -194,7 +193,7 @@ static int ack_open (void *qos_channel, opal_buffer_t * buf)  {
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_open channel = %p init hotel timeout =%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ack_chan, eviction_timeout));
+                         (void*)ack_chan, eviction_timeout));
     /* set the message window timer event, but don't activate it */
     /*opal_event_set(opal_event_base,
                    &ack_chan->msg_window_timer_event,
@@ -217,7 +216,7 @@ static int ack_send ( void *qos_channel,  orte_rml_send_t *msg) {
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                              "%s ack_send msg = %p to peer = %s\n begining window at seq_num = %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             msg, ORTE_NAME_PRINT(&msg->dst), ack_chan->out_msg_seq_num));
+                             (void*)msg, ORTE_NAME_PRINT(&msg->dst), ack_chan->out_msg_seq_num));
         ack_chan->state = orte_qos_ack_channel_state_filling_window;
     }
     else
@@ -238,14 +237,14 @@ static int ack_send ( void *qos_channel,  orte_rml_send_t *msg) {
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                              "%s ack_send msg = %p to peer = %s returned with error %d\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             msg, ORTE_NAME_PRINT(&msg->dst),
+                             (void*)msg, ORTE_NAME_PRINT(&msg->dst),
                              ORTE_ERR_QOS_ACK_WINDOW_FULL));
         return ORTE_ERR_QOS_ACK_WINDOW_FULL;
     }
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_send msg = %p to peer = %s\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, ORTE_NAME_PRINT(&msg->dst)));
+                         (void*)msg, ORTE_NAME_PRINT(&msg->dst)));
     return ORTE_SUCCESS;
 }
 
@@ -410,7 +409,7 @@ static int ack_recv (void *qos_channel, orte_rml_recv_t *msg) {
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_recv msg = %p seq_num = %d from peer = %s\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, msg->seq_num,
+                         (void*)msg, msg->seq_num,
                          ORTE_NAME_PRINT(&msg->sender)));
     /** HACK - drop every third msg to stimulate lost msg */
  /*   if ((msg->seq_num == 3) && (hack == 0)) {
@@ -472,7 +471,7 @@ static int ack_init_recv (void *channel, opal_list_t *attributes) {
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_open channel = %p init hotel timeout =%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ack_chan, eviction_timeout));
+                         (void*)ack_chan, eviction_timeout));
     opal_event_evtimer_set (orte_event_base, &ack_chan->msg_ack_timer_event,
                             orte_qos_ack_msg_window_timeout_callback, (void *) ack_chan);
     return rc;
@@ -491,7 +490,7 @@ static void ack_send_callback (orte_rml_send_t *msg)
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_send_callback for msg = %p seq num =%d\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, msg->seq_num));
+                         (void*)msg, msg->seq_num));
     ack_chan = (orte_qos_ack_channel_t *) msg->channel->qos_channel_ptr;
     /* if msg->status != SUCCESS - then evict all messages in the window and
        complete them?? */
@@ -503,14 +502,14 @@ static void ack_send_callback (orte_rml_send_t *msg)
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                              "%s ack_send_callback for msg = %p seq num =%d SEND FAILED status = %d\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             msg, msg->seq_num, msg->status));
+                             (void*)msg, msg->seq_num, msg->status));
         /* evict message from hotel and send end of window to receiver?? */
 
     }
 }
 
 void orte_qos_ack_msg_ack_timeout_callback (struct opal_hotel_t *hotel,
-                                                       int room_num, void *occupant)
+                                            int room_num, void *occupant)
 {
     orte_rml_send_t *msg;
     orte_qos_ack_channel_t *ack_chan;
@@ -519,7 +518,7 @@ void orte_qos_ack_msg_ack_timeout_callback (struct opal_hotel_t *hotel,
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                         "%s orte_qos_ack_msg_ack_timeout_callback for msg = %p seq num =%d\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        msg, msg->seq_num));
+                         (void*)msg, msg->seq_num));
     /* for now complete only the msg that timed out
       TO DO : handle the completion of all messages in the window */
     msg->status = ORTE_ERR_ACK_TIMEOUT_SENDER;
@@ -530,18 +529,21 @@ void orte_qos_ack_msg_ack_timeout_callback (struct opal_hotel_t *hotel,
 }
 
 void orte_qos_ack_recv_msg_timeout_callback (struct opal_hotel_t *hotel,
-        int room_num, void *occupant)
+                                             int room_num, void *occupant)
 {
-    orte_rml_recv_t *msg;
+    orte_rml_recv_t *msg = (orte_rml_recv_t *) occupant;
+#if 0
     orte_qos_ack_channel_t *ack_chan;
     orte_rml_channel_t *channel;
-    msg = (orte_rml_recv_t *) occupant;
+    
     channel = orte_rml_base_get_channel(msg->channel_num);
     ack_chan = (orte_qos_ack_channel_t*) channel->qos_channel_ptr;
+#endif
+    
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s OOPS received msg = %p seq num =%d timed out on ACK Queue\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         msg, msg->seq_num));
+                         (void*)msg, msg->seq_num));
     /* Need to determine correct action here as the sender hasn't responded yet to
        a lost msg event */
     /* This is highly unlikely - lets assert to enable debug*/
@@ -554,8 +556,8 @@ void orte_qos_ack_recv_msg_timeout_callback (struct opal_hotel_t *hotel,
 }
 
 void orte_qos_ack_channel_process_ack (int status, orte_process_name_t* sender,
-                                                opal_buffer_t *buffer,
-                                                orte_rml_tag_t tag, void *cbdata)
+                                       opal_buffer_t *buffer,
+                                       orte_rml_tag_t tag, void *cbdata)
 {
     /*  process ack received for the msg */
     uint32_t num_msgs_acked, channel_num, i;
@@ -566,14 +568,13 @@ void orte_qos_ack_channel_process_ack (int status, orte_process_name_t* sender,
     orte_qos_ack_channel_t *ack_chan;
     uint32_t *seq_num_array;
     uint32_t ack_type;
-    uint32_t num_missed_msgs;
     uint32_t missed_msg_seq_num = 0;
     num_values = 1;
     /* unpack channel number first */
     opal_dss.unpack(buffer, (void*) &channel_num, &num_values, OPAL_UINT32);
     OPAL_OUTPUT_VERBOSE((5, orte_qos_base_framework.framework_output,
-                            "orte_qos_ack_channel_process_ack recieved ack on channel = %d",
-                            channel_num));
+                         "orte_qos_ack_channel_process_ack recieved ack on channel = %d",
+                         channel_num));
     channel = orte_rml_base_get_channel (channel_num);
     if ((NULL != channel) || (NULL != channel->qos_channel_ptr)) {
         ack_chan = (orte_qos_ack_channel_t *) (channel->qos_channel_ptr);
@@ -585,72 +586,72 @@ void orte_qos_ack_channel_process_ack (int status, orte_process_name_t* sender,
         /* unpack num messages acked */
         opal_dss.unpack(buffer, (void*) &num_msgs_acked, &num_values, OPAL_UINT32);
         OPAL_OUTPUT_VERBOSE((5, orte_qos_base_framework.framework_output,
-                            "orte_qos_ack_channel_process_ack recieved ack type %d for %d msgs on channel = %d",
+                             "orte_qos_ack_channel_process_ack recieved ack type %d for %d msgs on channel = %d",
                              ack_type, num_msgs_acked, channel_num));
         if (ACK_OUT_OF_ORDER != ack_type)   {
             //handle normal ACK
             for (i = 0; i < num_msgs_acked; i++)
-            {
-                opal_dss.unpack(buffer, (void*) &seq_num_array[i], &num_values, OPAL_UINT32);
-                room_num = orte_qos_ack_channel_get_msg_room (ack_chan, seq_num_array[i]);
-                opal_hotel_checkout_and_return_occupant(&ack_chan->outstanding_msgs, room_num, &occupant);
-                orte_qos_ack_channel_set_msg_room(ack_chan, seq_num_array[i], -1);
-                if((occupant != NULL) && (room_num != -1)) {
-                    msg = (orte_rml_send_t*) occupant;
-                    OPAL_OUTPUT_VERBOSE((10, orte_rml_base_framework.framework_output,
-                                    "Releasing sent message with tag %d and seq_num %d after receiving Ack from dest ",
-                                     msg->tag, msg->seq_num ));
-                    msg->status = ORTE_SUCCESS;
-                    ORTE_RML_SEND_COMPLETE(msg);
-                } else {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rml_base_framework.framework_output,
-                                     "OOPS received an ACK for already completed seq_num =%d ",
-                                     seq_num_array[i] ));
-                }
-            }
-        } else {
-            // handle out of order ACK - complete msgs received in order, retry the lost msg.
-            for (i = 0; i < num_msgs_acked; i++)
-            {
-                opal_dss.unpack(buffer, (void*) &seq_num_array[i], &num_values, OPAL_UINT32);
-                room_num = orte_qos_ack_channel_get_msg_room (ack_chan, seq_num_array[i]);
-                opal_hotel_checkout_and_return_occupant(&ack_chan->outstanding_msgs, room_num, &occupant);
-                orte_qos_ack_channel_set_msg_room(ack_chan, seq_num_array[i], -1);
-                if ((NULL != occupant) && ((i == 0 )|| (seq_num_array[i] == seq_num_array[i-1] +1 ))) {
-                    msg = (orte_rml_send_t*) occupant;
-                    msg->status = ORTE_SUCCESS;
-                    ORTE_RML_SEND_COMPLETE(msg);
-                } else {
-                    if (NULL != occupant) {
-                        num_missed_msgs = (seq_num_array[i] - seq_num_array [i-1] - 1);
-                        assert( i == num_msgs_acked -1);
-                         /* recheck the ith msg */
-                        opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)occupant, &room_num);
-                        orte_qos_ack_channel_set_msg_room (ack_chan, seq_num_array[i], room_num);
-                        /* resend and recheck all the missed msgs*/
-                        missed_msg_seq_num = seq_num_array[i-1] + 1;
-                        for (; missed_msg_seq_num < seq_num_array[i]; missed_msg_seq_num++) {
-                            room_num = orte_qos_ack_channel_get_msg_room (ack_chan, missed_msg_seq_num);
-                            opal_hotel_checkout_and_return_occupant (&ack_chan->outstanding_msgs, room_num, &occupant);
-                            assert ( NULL != occupant);
-                            missed_msg = (orte_rml_send_t*) occupant;
-                            missed_msg->status = ORTE_ERR_LOST_MSG_IN_WINDOW;
-                            opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)missed_msg, &room_num);
-                            orte_qos_ack_channel_set_msg_room (ack_chan, missed_msg_seq_num, room_num);
-                            /* send this out on wire directly */
-                            ORTE_OOB_SEND (missed_msg);
-                        } //end for
+                {
+                    opal_dss.unpack(buffer, (void*) &seq_num_array[i], &num_values, OPAL_UINT32);
+                    room_num = orte_qos_ack_channel_get_msg_room (ack_chan, seq_num_array[i]);
+                    opal_hotel_checkout_and_return_occupant(&ack_chan->outstanding_msgs, room_num, &occupant);
+                    orte_qos_ack_channel_set_msg_room(ack_chan, seq_num_array[i], -1);
+                    if((occupant != NULL) && (room_num != -1)) {
+                        msg = (orte_rml_send_t*) occupant;
+                        OPAL_OUTPUT_VERBOSE((10, orte_rml_base_framework.framework_output,
+                                             "Releasing sent message with tag %d and seq_num %d after receiving Ack from dest ",
+                                             msg->tag, msg->seq_num ));
+                        msg->status = ORTE_SUCCESS;
+                        ORTE_RML_SEND_COMPLETE(msg);
                     } else {
                         OPAL_OUTPUT_VERBOSE((10, orte_rml_base_framework.framework_output,
                                              "OOPS received an ACK for already completed seq_num =%d ",
                                              seq_num_array[i] ));
-                    }//end  if (NULL != occupant)
-                } //end else
-            } // end for
+                    }
+                }
+        } else {
+            // handle out of order ACK - complete msgs received in order, retry the lost msg.
+            for (i = 0; i < num_msgs_acked; i++)
+                {
+                    opal_dss.unpack(buffer, (void*) &seq_num_array[i], &num_values, OPAL_UINT32);
+                    room_num = orte_qos_ack_channel_get_msg_room (ack_chan, seq_num_array[i]);
+                    opal_hotel_checkout_and_return_occupant(&ack_chan->outstanding_msgs, room_num, &occupant);
+                    orte_qos_ack_channel_set_msg_room(ack_chan, seq_num_array[i], -1);
+                    if ((NULL != occupant) && ((i == 0 )|| (seq_num_array[i] == seq_num_array[i-1] +1 ))) {
+                        msg = (orte_rml_send_t*) occupant;
+                        msg->status = ORTE_SUCCESS;
+                        ORTE_RML_SEND_COMPLETE(msg);
+                    } else {
+                        if (NULL != occupant) {
+                            // num_missed_msgs = (seq_num_array[i] - seq_num_array [i-1] - 1);
+                            assert( i == num_msgs_acked -1);
+                            /* recheck the ith msg */
+                            opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)occupant, &room_num);
+                            orte_qos_ack_channel_set_msg_room (ack_chan, seq_num_array[i], room_num);
+                            /* resend and recheck all the missed msgs*/
+                            missed_msg_seq_num = seq_num_array[i-1] + 1;
+                            for (; missed_msg_seq_num < seq_num_array[i]; missed_msg_seq_num++) {
+                                room_num = orte_qos_ack_channel_get_msg_room (ack_chan, missed_msg_seq_num);
+                                opal_hotel_checkout_and_return_occupant (&ack_chan->outstanding_msgs, room_num, &occupant);
+                                assert ( NULL != occupant);
+                                missed_msg = (orte_rml_send_t*) occupant;
+                                missed_msg->status = ORTE_ERR_LOST_MSG_IN_WINDOW;
+                                opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)missed_msg, &room_num);
+                                orte_qos_ack_channel_set_msg_room (ack_chan, missed_msg_seq_num, room_num);
+                                /* send this out on wire directly */
+                                ORTE_OOB_SEND (missed_msg);
+                            } //end for
+                        } else {
+                            OPAL_OUTPUT_VERBOSE((10, orte_rml_base_framework.framework_output,
+                                                 "OOPS received an ACK for already completed seq_num =%d ",
+                                                 seq_num_array[i] ));
+                        }//end  if (NULL != occupant)
+                    } //end else
+                } // end for
         }//end out of order ack processing
         free(seq_num_array);
     }else {
-          OPAL_OUTPUT_VERBOSE((5, orte_qos_base_framework.framework_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_qos_base_framework.framework_output,
                              "orte_qos_ack_channel_msg_ack_recv_callback recieved ack on non existent channel = %d",
                              channel_num));
     }
@@ -671,13 +672,13 @@ void orte_qos_ack_msg_send_callback ( int status,
 
 void orte_qos_ack_msg_window_timeout_callback (int fd, short flags, void *cbdata)
 {
-    int32_t rc;
+    // int32_t rc;
     orte_qos_ack_channel_t *ack_chan = (orte_qos_ack_channel_t*) cbdata;
     OPAL_OUTPUT_VERBOSE ((0, orte_qos_base_framework.framework_output,
                           " orte_qos_ack_msg_window_timeout_callback for channel = %p last acked seq num = %d, last received seq num =%d",
-                            ack_chan, ack_chan->ack_msg_seq_num, ack_chan->in_msg_seq_num ));
+                          (void*)ack_chan, ack_chan->ack_msg_seq_num, ack_chan->in_msg_seq_num ));
     /*  send  ack message */
-    rc = send_ack(ack_chan, ack_chan->channel_num, ACK_TIMEOUT, ack_chan->in_msg_seq_num);
+    send_ack(ack_chan, ack_chan->channel_num, ACK_TIMEOUT, ack_chan->in_msg_seq_num);
 
 }
 
