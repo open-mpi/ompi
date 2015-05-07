@@ -1,0 +1,71 @@
+.TH fi_verbs 7 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0"
+.SH NAME
+.PP
+The Verbs Fabric Provider
+.SH OVERVIEW
+.PP
+The verbs provider enables applications using OFI to be run over any
+verbs hardware (Infiniband, iWarp, etc).
+It uses the Linux Verbs API for network transport and provides a
+translation OFI calls to appropriate verbs API calls.
+It uses librdmacm for communication management and libibverbs for other
+control and data transfer operations.
+.SH SUPPORTED FEATURES
+.PP
+The verbs provider supports a subset of OFI features.
+.PP
+\f[I]Endpoint types\f[] : Only FI_EP_MSG is supported.
+.PP
+\f[I]Endpoint capabilities\f[] : FI_MSG, FI_RMA, FI_ATOMIC.
+.PP
+\f[I]Modes\f[] : Verbs provider requires applications to support the
+following modes: FI_LOCAL_MR for all applications.
+FI_RX_CQ_DATA for applications that want to use RMA.
+Applications must take responsibility of posting receives for any
+incoming CQ data.
+.PP
+\f[I]Progress\f[] : Verbs provider supports FI_PROGRESS_AUTO:
+Asynchronous operations make forward progress automatically.
+.PP
+\f[I]Operation flags\f[] : Verbs provider supports FI_INJECT,
+FI_COMPLETION, FI_REMOTE_CQ_DATA.
+.PP
+\f[I]Msg Ordering\f[] : Verbs provider support the following messaging
+ordering on the TX side: * Read after Read * Read after Write * Read
+after Send * Write after Write * Write after Send * Send after Write *
+Send after Send
+.SH UNSUPPORTED FEATURES
+.PP
+\f[I]Control Interfaces\f[] : Counters and address vectors are not
+supported.
+.PP
+\f[I]Data transfer interfaces\f[] : Tagged messaging and multi-receive
+are not supported.
+.PP
+\f[I]Endpoint features\f[] : Scalable endpoints and shared contexts are
+not supported.
+fi_cancel, fi_tx/rx_size_left and fi_alias operations are not supported.
+.PP
+\f[I]Others\f[] : Other unsupported features include resource
+management, polling.
+.SH LIMITATIONS
+.PP
+\f[I]CQ\f[] : cq_readfrom operations are not supported.
+.PP
+\f[I]CM\f[] : fi_setname is not yet supported.
+.PP
+\f[I]EQ\f[] : fi_eq_write is not supported.
+.PP
+\f[I]Memory Regions\f[] : Adding regions via s/g list is not supported.
+Generic fi_mr_regattr is not supported.
+No support for binding memory regions to a counter.
+.PP
+\f[I]Wait objects\f[] : Only FI_WAIT_FD wait object is supported.
+Wait sets are not supported.
+.PP
+\f[I]Others\f[] : No direct inject calls yet.
+.SH SEE ALSO
+.PP
+\f[C]fabric\f[](7), \f[C]fi_provider\f[](7),
+.SH AUTHORS
+OpenFabrics.
