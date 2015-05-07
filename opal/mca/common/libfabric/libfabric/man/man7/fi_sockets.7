@@ -1,4 +1,4 @@
-.TH fi_sockets 7 "2015\-04\-23" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc6"
+.TH fi_sockets 7 "2015\-05\-01" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0"
 .SH NAME
 .PP
 The Sockets Fabric Provider
@@ -37,8 +37,11 @@ When progress is set to auto, a background thread runs to ensure that
 progress is made for asynchronous requests.
 .SH LIMITATIONS
 .PP
-The sockets provider attempts to emulate the entire API set, including
-all defined options.
+Sockets provider currently do not support triggered operations.
+This will be added in future releases.
+.PP
+Sockets provider attempts to emulate the entire API set (except the
+triggered operations), including all defined options.
 In order to support development on a wide range of systems, it is
 implemented over TCP sockets.
 As a result, the performance numbers are lower compared to other

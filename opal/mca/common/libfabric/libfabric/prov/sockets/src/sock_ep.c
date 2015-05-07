@@ -1554,3 +1554,34 @@ struct sock_conn *sock_ep_lookup_conn(struct sock_ep *ep)
 	return sock_conn_map_lookup_key(&ep->domain->r_cmap, ep->key);
 }
 
+int sock_ep_is_send_cq_low(struct sock_comp *comp, uint64_t flags)
+{
+	return (comp && comp->send_cq && !(flags & SOCK_NO_COMPLETION) &&
+	    (!comp->send_cq_event || 
+	     (comp->send_cq_event &&  (flags & FI_COMPLETION)))) &&
+		!sock_cq_check_size_ok(comp->send_cq);
+}
+
+int sock_ep_is_recv_cq_low(struct sock_comp *comp, uint64_t flags)
+{
+	return (comp && comp->recv_cq && !(flags & SOCK_NO_COMPLETION) &&
+	    (!comp->recv_cq_event || 
+	     (comp->recv_cq_event && (flags & FI_COMPLETION)))) &&
+		!sock_cq_check_size_ok(comp->recv_cq);
+}
+
+int sock_ep_is_write_cq_low(struct sock_comp *comp, uint64_t flags)
+{
+	return (comp && comp->write_cq && !(flags & SOCK_NO_COMPLETION) &&
+	    (!comp->write_cq_event || 
+	     (comp->write_cq_event && (flags & FI_COMPLETION)))) &&
+		!sock_cq_check_size_ok(comp->write_cq);
+}
+
+int sock_ep_is_read_cq_low(struct sock_comp *comp, uint64_t flags)
+{
+	return (comp && comp->read_cq && !(flags & SOCK_NO_COMPLETION) &&
+	    (!comp->read_cq_event || 
+	     (comp->read_cq_event && (flags & FI_COMPLETION)))) &&
+		!sock_cq_check_size_ok(comp->read_cq);
+}

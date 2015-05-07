@@ -116,6 +116,13 @@ static ssize_t sock_ep_rma_readmsg(struct fid_ep *ep,
 	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;	
+
+	if (sock_ep_is_read_cq_low(&tx_ctx->comp, flags)) {
+		SOCK_LOG_ERROR("CQ size low\n");
+		ret = -FI_EAGAIN;
+		goto err;
+	}
+
 	memset(&tx_op, 0, sizeof(struct sock_op));
 	tx_op.op = SOCK_OP_READ;
 	tx_op.src_iov_len = msg->rma_iov_count;
@@ -258,6 +265,12 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 	SOCK_EP_SET_TX_OP_FLAGS(flags);
 	if (flags & SOCK_USE_OP_FLAGS)
 		flags |= tx_ctx->attr.op_flags;
+
+	if (sock_ep_is_write_cq_low(&tx_ctx->comp, flags)) {
+		SOCK_LOG_ERROR("CQ size low\n");
+		return -FI_EAGAIN;
+	}
+
 	memset(&tx_op, 0, sizeof(struct sock_op));
 	tx_op.op = SOCK_OP_WRITE;
 	tx_op.dest_iov_len = msg->rma_iov_count;
@@ -268,8 +281,7 @@ static ssize_t sock_ep_rma_writemsg(struct fid_ep *ep,
 			total_len += msg->msg_iov[i].iov_len;
 		}
 		if (total_len > SOCK_EP_MAX_INJECT_SZ) {
-			ret = -FI_EINVAL;
-			goto err;
+			return -FI_EINVAL;
 		}
 		tx_op.src_iov_len = total_len;
 	} else {
