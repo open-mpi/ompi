@@ -23,7 +23,6 @@
 #define MCA_BTL_USNIC_PROC_H
 
 #include "opal/class/opal_object.h"
-#include "ompi/proc/proc.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_endpoint.h"
@@ -38,15 +37,15 @@ BEGIN_C_DECLS
  * Also cache an instance of mca_btl_base_endpoint_t for each BTL
  * module that attempts to open a connection to the process.
  */
-typedef struct ompi_btl_usnic_proc_t {
+typedef struct opal_btl_usnic_proc_t {
     /** allow proc to be placed on a list */
     opal_list_item_t super;
 
-    /** pointer to corresponding ompi_proc_t */
-    ompi_proc_t *proc_ompi;
+    /** pointer to corresponding opal_proc_t */
+    opal_proc_t *proc_opal;
 
     /** Addresses received via modex for this remote proc */
-    ompi_btl_usnic_addr_t* proc_modex;
+    opal_btl_usnic_modex_t* proc_modex;
     /** Number of entries in the proc_modex array */
     size_t proc_modex_count;
     /** Whether the modex entry is "claimed" by a module or not */
@@ -75,26 +74,26 @@ typedef struct ompi_btl_usnic_proc_t {
      * that is not equal to -1.
      */
     bool proc_match_exists;
-} ompi_btl_usnic_proc_t;
+} opal_btl_usnic_proc_t;
 
-OBJ_CLASS_DECLARATION(ompi_btl_usnic_proc_t);
+OBJ_CLASS_DECLARATION(opal_btl_usnic_proc_t);
 
 
-ompi_btl_usnic_proc_t *ompi_btl_usnic_proc_lookup_ompi(ompi_proc_t* ompi_proc);
+opal_btl_usnic_proc_t *opal_btl_usnic_proc_lookup_ompi(opal_proc_t* opal_proc);
 
-struct ompi_btl_usnic_module_t;
+struct opal_btl_usnic_module_t;
 
-ompi_btl_usnic_endpoint_t *
-ompi_btl_usnic_proc_lookup_endpoint(struct ompi_btl_usnic_module_t *receiver,
+opal_btl_usnic_endpoint_t *
+opal_btl_usnic_proc_lookup_endpoint(struct opal_btl_usnic_module_t *receiver,
                                     uint64_t sender_hashed_rte_name);
 
-int ompi_btl_usnic_proc_match(ompi_proc_t* ompi_proc,
-                              struct ompi_btl_usnic_module_t *module,
-                              ompi_btl_usnic_proc_t **proc);
+int opal_btl_usnic_proc_match(opal_proc_t* opal_proc,
+                              struct opal_btl_usnic_module_t *module,
+                              opal_btl_usnic_proc_t **proc);
 int
-ompi_btl_usnic_create_endpoint(struct ompi_btl_usnic_module_t *module,
-                ompi_btl_usnic_proc_t *proc,
-                ompi_btl_usnic_endpoint_t **endpoint_o);
+opal_btl_usnic_create_endpoint(struct opal_btl_usnic_module_t *module,
+                opal_btl_usnic_proc_t *proc,
+                opal_btl_usnic_endpoint_t **endpoint_o);
 
 END_C_DECLS
 

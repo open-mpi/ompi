@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,9 +12,7 @@
  * is set.
  */
 
-#include "ompi_config.h"
-
-#include <infiniband/verbs.h>
+#include "opal_config.h"
 
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
@@ -24,9 +22,13 @@
 #define OPAL_HWLOC_WANT_VERBS_HELPER 1
 #include "opal/mca/hwloc/hwloc.h"
 
-#include "ompi/constants.h"
+#include "opal/constants.h"
+
+#if BTL_IN_OPAL
+#include "opal/mca/btl/base/base.h"
+#else
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/common/verbs/common_verbs.h"
+#endif
 
 #include "btl_usnic_hwloc.h"
 
@@ -50,7 +52,7 @@ static int get_distance_matrix(void)
                                                          HWLOC_OBJ_NODE);
     }
 
-    return (NULL == matrix) ? OMPI_ERROR : OMPI_SUCCESS;
+    return (NULL == matrix) ? OPAL_ERROR : OPAL_SUCCESS;
 }
 
 /*
@@ -103,60 +105,79 @@ static int find_my_numa_node(void)
     hwloc_bitmap_t cpuset;
 
     if (NULL != my_numa_node) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Get this process' binding */
     cpuset = hwloc_bitmap_alloc();
     if (NULL == cpuset) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     if (0 != hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0)) {
         hwloc_bitmap_free(cpuset);
-        return OMPI_ERR_NOT_AVAILABLE;
+        return OPAL_ERR_NOT_AVAILABLE;
     }
 
     /* Get the largest object type in the cpuset */
     obj = find_numa_node(cpuset);
     hwloc_bitmap_free(cpuset);
     if (NULL == obj) {
-        return OMPI_ERR_NOT_AVAILABLE;
+        return OPAL_ERR_NOT_AVAILABLE;
     }
 
     /* Happiness */
     my_numa_node = obj;
     num_numa_nodes = hwloc_get_nbobjs_by_type(opal_hwloc_topology,
                                               HWLOC_OBJ_NODE);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 }
 
 /*
  * Find a NUMA node covering the device associated with this module
  */
-static hwloc_obj_t find_device_numa(ompi_btl_usnic_module_t *module)
+static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
 {
+    struct fi_usnic_info *uip;
     hwloc_obj_t obj;
-    hwloc_bitmap_t cpuset;
 
     /* Bozo checks */
     assert(NULL != matrix);
     assert(NULL != my_numa_node);
 
-    /* Find the NUMA node for the device */
-    cpuset = hwloc_bitmap_alloc();
-    if (NULL == cpuset) {
-        return NULL;
+    uip = &module->usnic_info;
+
+    /* Look for the IP device name in the hwloc topology (the usnic
+       device is simply an alternate API to reach the same device, so
+       if we find the IP device name, we've found the usNIC device) */
+    obj = NULL;
+    while (NULL != (obj = hwloc_get_next_osdev(opal_hwloc_topology, obj))) {
+        assert(HWLOC_OBJ_OS_DEVICE == obj->type);
+        if (0 == strcmp(obj->name, uip->ui.v1.ui_ifname)) {
+            break;
+        }
     }
-    if (0 != hwloc_ibv_get_device_cpuset(opal_hwloc_topology,
-                                         module->device,
-                                         cpuset)) {
-        hwloc_bitmap_free(cpuset);
+
+    /* Did not find it */
+    if (NULL == obj) {
         return NULL;
     }
 
-    obj = find_numa_node(cpuset);
-    hwloc_bitmap_free(cpuset);
+    /* Search upwards to find the device's NUMA node */
+    /* Go upwards until we hit the NUMA node or run out of parents */
+    while (obj->type > HWLOC_OBJ_NODE &&
+           NULL != obj->parent) {
+        obj = obj->parent;
+    }
+
+    /* Make sure we ended up on the NUMA node */
+    if (obj->type != HWLOC_OBJ_NODE) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by NUMA distance not possible",
+                            module->fabric_info->fabric_attr->name);
+        return NULL;
+    }
+
     return obj;
 }
 
@@ -164,7 +185,7 @@ static hwloc_obj_t find_device_numa(ompi_btl_usnic_module_t *module)
  * Public entry point: find the hwloc NUMA distance from this process
  * to the usnic device in the specified module.
  */
-int ompi_btl_usnic_hwloc_distance(ompi_btl_usnic_module_t *module)
+int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 {
     int ret;
     hwloc_obj_t dev_numa;
@@ -176,25 +197,25 @@ int ompi_btl_usnic_hwloc_distance(ompi_btl_usnic_module_t *module)
     if (!proc_bound()) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: not sorting devices by NUMA distance (process not bound)");
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:filter_numa: filtering devices by NUMA distance");
 
     /* Get the hwloc distance matrix for all NUMA nodes */
-    if (OMPI_SUCCESS != (ret = get_distance_matrix())) {
+    if (OPAL_SUCCESS != (ret = get_distance_matrix())) {
         return ret;
     }
 
     /* Find my NUMA node */
-    if (OMPI_SUCCESS != (ret = find_my_numa_node())) {
+    if (OPAL_SUCCESS != (ret = find_my_numa_node())) {
         return ret;
     }
     /* If my_numa_node is still NULL, that means we span more than 1
        NUMA node.  So... no sorting/pruning for you! */
     if (NULL == my_numa_node) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Find the NUMA node covering this module's device */
@@ -203,15 +224,15 @@ int ompi_btl_usnic_hwloc_distance(ompi_btl_usnic_module_t *module)
     /* Lookup the distance between my NUMA node and the NUMA node of
        the device */
     if (NULL != dev_numa) {
-        module->numa_distance = 
+        module->numa_distance =
             matrix->latency[dev_numa->logical_index * num_numa_nodes +
                             my_numa_node->logical_index];
 
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: %s is distance %d from me",
-                            ibv_get_device_name(module->device),
+                            module->fabric_info->fabric_attr->name,
                             module->numa_distance);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

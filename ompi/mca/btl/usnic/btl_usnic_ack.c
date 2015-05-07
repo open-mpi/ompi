@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -7,7 +7,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <errno.h>
 #include <string.h>
@@ -29,11 +29,11 @@
  * Force a retrans of a segment
  */
 static void
-ompi_btl_usnic_force_retrans(
-    ompi_btl_usnic_endpoint_t *endpoint,
-    ompi_btl_usnic_seq_t ack_seq)
+opal_btl_usnic_force_retrans(
+    opal_btl_usnic_endpoint_t *endpoint,
+    opal_btl_usnic_seq_t ack_seq)
 {
-    ompi_btl_usnic_send_segment_t *sseg;
+    opal_btl_usnic_send_segment_t *sseg;
     int is;
 
     is = WINDOW_SIZE_MOD(ack_seq+1);
@@ -59,14 +59,14 @@ ompi_btl_usnic_force_retrans(
  * or via piggy-back on a regular send)
  */
 void
-ompi_btl_usnic_handle_ack(
-    ompi_btl_usnic_endpoint_t *endpoint,
-    ompi_btl_usnic_seq_t ack_seq)
+opal_btl_usnic_handle_ack(
+    opal_btl_usnic_endpoint_t *endpoint,
+    opal_btl_usnic_seq_t ack_seq)
 {
-    ompi_btl_usnic_seq_t is;
-    ompi_btl_usnic_send_segment_t *sseg;
-    ompi_btl_usnic_send_frag_t *frag;
-    ompi_btl_usnic_module_t *module;
+    opal_btl_usnic_seq_t is;
+    opal_btl_usnic_send_segment_t *sseg;
+    opal_btl_usnic_send_frag_t *frag;
+    opal_btl_usnic_module_t *module;
     uint32_t bytes_acked;
 
     module = endpoint->endpoint_module;
@@ -84,7 +84,7 @@ ompi_btl_usnic_handle_ack(
     } else if (ack_seq == endpoint->endpoint_ack_seq_rcvd) {
         ++module->stats.num_dup_acks;
 
-        ompi_btl_usnic_force_retrans(endpoint, ack_seq);
+        opal_btl_usnic_force_retrans(endpoint, ack_seq);
         return;
     }
 
@@ -131,15 +131,15 @@ ompi_btl_usnic_handle_ack(
 #if MSGDEBUG1
         opal_output(0, "   ACKED seg %p frag %p ack_bytes=%"PRIu32" left=%zd dst_seg[0].seg_addr=%p des_flags=0x%x\n",
                 (void*)sseg, (void*)frag, bytes_acked,
-                frag->sf_ack_bytes_left-bytes_acked,
-                frag->sf_base.uf_dst_seg[0].seg_addr.pval,
+                frag->sf_ack_bytes_left - bytes_acked,
+                frag->sf_base.uf_local_seg[0].seg_addr.pval,
                 frag->sf_base.uf_base.des_flags);
 #endif
 
         /* If all ACKs received, and this is a put or a regular send
          * that needs a callback, perform the callback now
          *
-         * NOTE on sf_ack_bytes_left - here we check for 
+         * NOTE on sf_ack_bytes_left - here we check for
          *      sf_ack_bytes_left == bytes_acked
          * as opposed to adjusting sf_ack_bytes_left and checking for 0 because
          * if we don't, the callback function may call usnic_free() and free
@@ -147,17 +147,27 @@ ompi_btl_usnic_handle_ack(
          * fragment really needs to be freed, we'll take care of it in a few
          * lines below.
          */
-        if (frag->sf_ack_bytes_left == bytes_acked &&
-            ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
-             (frag->sf_base.uf_base.des_flags &
-              MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
-            OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+        if (frag->sf_ack_bytes_left == bytes_acked) {
+#if BTL_VERSION == 30
+            if (frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) {
+                OPAL_BTL_USNIC_DO_PUT_FRAG_CB(module, frag, "put completion");
+            } else if (frag->sf_base.uf_base.des_flags &
+                       MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
+#else
+            if ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
+                (frag->sf_base.uf_base.des_flags &
+                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+                OPAL_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
+            }
+#endif
         }
 
         /* free this segment */
         sseg->ss_ack_pending = false;
         if (sseg->ss_send_posted == 0) {
-            ompi_btl_usnic_release_send_segment(module, frag, sseg);
+            opal_btl_usnic_release_send_segment(module, frag, sseg);
         }
 
         /* when no bytes left to ACK, fragment send is truly done */
@@ -165,7 +175,7 @@ ompi_btl_usnic_handle_ack(
         frag->sf_ack_bytes_left -= bytes_acked;
 
         /* OK to return this fragment? */
-        ompi_btl_usnic_send_frag_return_cond(module, frag);
+        opal_btl_usnic_send_frag_return_cond(module, frag);
 
         /* indicate this segment has been ACKed */
         endpoint->endpoint_sent_segs[WINDOW_SIZE_MOD(is)] = NULL;
@@ -175,26 +185,21 @@ ompi_btl_usnic_handle_ack(
     endpoint->endpoint_ack_seq_rcvd = ack_seq;
 
     /* send window may have opened, possibly make endpoint ready-to-send */
-    ompi_btl_usnic_check_rts(endpoint);
+    opal_btl_usnic_check_rts(endpoint);
 }
 
 /*
  * Send an ACK
  */
 void
-ompi_btl_usnic_ack_send(
-    ompi_btl_usnic_module_t *module,
-    ompi_btl_usnic_endpoint_t *endpoint)
+opal_btl_usnic_ack_send(
+    opal_btl_usnic_module_t *module,
+    opal_btl_usnic_endpoint_t *endpoint)
 {
-    ompi_btl_usnic_ack_segment_t *ack;
-#if MSGDEBUG1
-    uint8_t mac[6];
-    char src_mac[32];
-    char dest_mac[32];
-#endif
+    opal_btl_usnic_ack_segment_t *ack;
 
     /* Get an ACK frag.  If we don't get one, just discard this ACK. */
-    ack = ompi_btl_usnic_ack_segment_alloc(module);
+    ack = opal_btl_usnic_ack_segment_alloc(module);
     if (OPAL_UNLIKELY(NULL == ack)) {
         opal_output(0, "====================== No frag for sending the ACK -- skipped");
         abort();
@@ -205,29 +210,33 @@ ompi_btl_usnic_ack_send(
     ack->ss_base.us_btl_header->ack_seq =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
 
-    ack->ss_base.us_sg_entry[0].length = 
-        sizeof(ompi_btl_usnic_btl_header_t);
+    ack->ss_len = sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
-    memset(src_mac, 0, sizeof(src_mac));
-    memset(dest_mac, 0, sizeof(dest_mac));
-    ompi_btl_usnic_sprintf_mac(src_mac, module->if_mac);
-    ompi_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
-    ompi_btl_usnic_sprintf_mac(dest_mac, mac);
+    {
+        char remote_ip[IPV4STRADDRLEN];
+        struct opal_btl_usnic_modex_t *modex =
+            &endpoint->endpoint_remote_modex;
+        opal_btl_usnic_snprintf_ipv4_addr(remote_ip, sizeof(remote_ip),
+                                          modex->ipv4_addr,
+                                          modex->netmask);
 
-    opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u", 
-                ack->ss_base.us_sg_entry[0].length,
-                ack->ss_base.us_btl_header->ack_seq, dest_mac,
-                endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+
+        opal_output(0, "--> Sending ACK, length %d, seq %" UDSEQ " to %s, port %u",
+                    ack->ss_len,
+                    ack->ss_base.us_btl_header->ack_seq,
+                    remote_ip,
+                    modex->ports[ack->ss_channel]);
+    }
 #endif
 
     /* Do we need to check the connectivity?  If enabled, we'll check
        the connectivity at either first send to peer X or first ACK to
        peer X. */
-    ompi_btl_usnic_check_connectivity(module, endpoint);
+    opal_btl_usnic_check_connectivity(module, endpoint);
 
     /* send the ACK */
-    ompi_btl_usnic_post_segment(module, endpoint, ack);
+    opal_btl_usnic_post_ack(module, endpoint, ack);
 
     /* Stats */
     ++module->stats.num_ack_sends;
@@ -239,11 +248,10 @@ ompi_btl_usnic_ack_send(
  * Sending an ACK has completed, return the segment to the free list
  */
 void
-ompi_btl_usnic_ack_complete(ompi_btl_usnic_module_t *module,
-                                   ompi_btl_usnic_ack_segment_t *ack)
+opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
+                                   opal_btl_usnic_ack_segment_t *ack)
 {
-    ompi_btl_usnic_ack_segment_return(module, ack);
-    ++module->mod_channels[ack->ss_channel].sd_wqe;
+    opal_btl_usnic_ack_segment_return(module, ack);
 }
 
 /*****************************************************************************/
@@ -253,16 +261,16 @@ ompi_btl_usnic_ack_complete(ompi_btl_usnic_module_t *module,
  * corresponding ACK.
  */
 void
-ompi_btl_usnic_ack_timeout(
+opal_btl_usnic_ack_timeout(
     opal_hotel_t *hotel,
-    int room_num, 
+    int room_num,
     void *occupant)
 {
-    ompi_btl_usnic_send_segment_t *seg;
-    ompi_btl_usnic_endpoint_t *endpoint;
-    ompi_btl_usnic_module_t *module;
+    opal_btl_usnic_send_segment_t *seg;
+    opal_btl_usnic_endpoint_t *endpoint;
+    opal_btl_usnic_module_t *module;
 
-    seg = (ompi_btl_usnic_send_segment_t*) occupant;
+    seg = (opal_btl_usnic_send_segment_t*) occupant;
     endpoint = seg->ss_parent_frag->sf_endpoint;
     module = endpoint->endpoint_module;
 
@@ -278,7 +286,7 @@ ompi_btl_usnic_ack_timeout(
     seg->ss_hotel_room = -1;
 
     /* Queue up this frag to be resent */
-    opal_list_append(&(module->pending_resend_segs), 
+    opal_list_append(&(module->pending_resend_segs),
                      &(seg->ss_base.us_list.super));
 
     /* Stats */

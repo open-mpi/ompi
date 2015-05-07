@@ -10,10 +10,11 @@
 #ifndef BTL_USNIC_GRAPH_TEST_H
 #define BTL_USNIC_GRAPH_TEST_H
 
-#include <stdlib.h>
-#include "btl_usnic_test.h"
+#if OPAL_BTL_USNIC_UNIT_TESTS
 
-#if OMPI_BTL_USNIC_UNIT_TESTS
+#include <stdlib.h>
+#include <sys/time.h>
+#include "btl_usnic_test.h"
 
 #define check_graph_is_consistent(g)                                         \
     do {                                                                     \
@@ -24,8 +25,8 @@
 
 #define check_has_in_out_degree(g, u, expected_indegree, expected_outdegree)   \
     do {                                                                       \
-        check_int_eq(ompi_btl_usnic_gr_indegree(g, (u)), expected_indegree);   \
-        check_int_eq(ompi_btl_usnic_gr_outdegree(g, (u)), expected_outdegree); \
+        check_int_eq(opal_btl_usnic_gr_indegree(g, (u)), expected_indegree);   \
+        check_int_eq(opal_btl_usnic_gr_outdegree(g, (u)), expected_outdegree); \
     } while (0)
 
 /* Check the given path for sanity and that it does not have a cycle.  Uses
@@ -64,7 +65,7 @@ static void e_cleanup(void *e_data)
 }
 
 /* a utility function for comparing integer pairs, useful for sorting the edge
- * list returned by ompi_btl_usnic_solve_bipartite_assignment */
+ * list returned by opal_btl_usnic_solve_bipartite_assignment */
 static int cmp_int_pair(const void *a, const void *b)
 {
     int *ia = (int *)a;
@@ -89,9 +90,22 @@ static int cmp_int_pair(const void *a, const void *b)
     }
 }
 
+/* Simple time function so that we don't have to deal with the
+   complexity of finding mpi.h to use MPI_Wtime */
+static double gettime(void)
+{
+    double wtime;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+
+    return wtime;
+}
+
 static int test_graph_create(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
     int user_data;
@@ -99,53 +113,53 @@ static int test_graph_create(void *ctx)
 
     /* TEST CASE: check zero-vertex case */
     g = NULL;
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
-    check(ompi_btl_usnic_gr_order(g) == 0);
+    check(opal_btl_usnic_gr_order(g) == 0);
     check_graph_is_consistent(g);
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: check nonzero-vertex case with no cleanup routines */
     g = NULL;
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
     check_graph_is_consistent(g);
     for (i = 0; i < 4; ++i) {
         index = -1;
-        err = ompi_btl_usnic_gr_add_vertex(g, &user_data, &index);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, &user_data, &index);
+        check_err_code(err, OPAL_SUCCESS);
         check(index == i);
     }
-    check(ompi_btl_usnic_gr_order(g) == 4);
+    check(opal_btl_usnic_gr_order(g) == 4);
     check_graph_is_consistent(g);
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: make sure cleanup routines are invoked properly */
     g = NULL;
     v_cleanup_count = 0;
     e_cleanup_count = 0;
-    err = ompi_btl_usnic_gr_create(&v_cleanup, &e_cleanup, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(&v_cleanup, &e_cleanup, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
     check_graph_is_consistent(g);
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, &user_data, &index);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, &user_data, &index);
+        check_err_code(err, OPAL_SUCCESS);
         check(index == i);
     }
-    check(ompi_btl_usnic_gr_order(g) == 5);
+    check(opal_btl_usnic_gr_order(g) == 5);
     check_graph_is_consistent(g);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
                                      /*capacity=*/2, &user_data);
     check_graph_is_consistent(g);
     check(v_cleanup_count == 0);
     check(e_cleanup_count == 0);
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
     check(v_cleanup_count == 5);
     check(e_cleanup_count == 1);
 
@@ -154,7 +168,7 @@ static int test_graph_create(void *ctx)
 
 static int test_graph_clone(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g, *gx;
+    opal_btl_usnic_graph_t *g, *gx;
     int i;
     int err;
     int user_data;
@@ -164,42 +178,42 @@ static int test_graph_clone(void *ctx)
     g = NULL;
     v_cleanup_count = 0;
     e_cleanup_count = 0;
-    err = ompi_btl_usnic_gr_create(&v_cleanup, &e_cleanup, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(&v_cleanup, &e_cleanup, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
     check_graph_is_consistent(g);
 
     /* add 5 edges */
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, &user_data, &index);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, &user_data, &index);
+        check_err_code(err, OPAL_SUCCESS);
     }
-    check(ompi_btl_usnic_gr_order(g) == 5);
+    check(opal_btl_usnic_gr_order(g) == 5);
     check_graph_is_consistent(g);
 
     /* and two edges */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
                                      /*capacity=*/2, &user_data);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_graph_is_consistent(g);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/1, /*cost=*/2,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/1, /*cost=*/2,
                                      /*capacity=*/100, &user_data);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_graph_is_consistent(g);
 
     /* now clone it and ensure that we get the same kind of graph */
     gx = NULL;
-    err = ompi_btl_usnic_gr_clone(g, /*copy_user_data=*/false, &gx);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_clone(g, /*copy_user_data=*/false, &gx);
+    check_err_code(err, OPAL_SUCCESS);
     check(gx != NULL);
 
     /* double check that cleanups still happen as expected after cloning */
-    err = ompi_btl_usnic_gr_free(gx);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(gx);
+    check_err_code(err, OPAL_SUCCESS);
     check(v_cleanup_count == 0);
     check(e_cleanup_count == 0);
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
     check(v_cleanup_count == 5);
     check(e_cleanup_count == 2);
 
@@ -208,48 +222,48 @@ static int test_graph_clone(void *ctx)
 
 static int test_graph_accessors(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
 
     /* TEST CASE: check _indegree/_outdegree/_order work correctly */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
 
-        check(ompi_btl_usnic_gr_indegree(g, i) == 0);
-        check(ompi_btl_usnic_gr_outdegree(g, i) == 0);
+        check(opal_btl_usnic_gr_indegree(g, i) == 0);
+        check(opal_btl_usnic_gr_outdegree(g, i) == 0);
     }
 
-    check(ompi_btl_usnic_gr_order(g) == 4);
+    check(opal_btl_usnic_gr_order(g) == 4);
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/2,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/2,
                                      /*capacity=*/1, NULL);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/1, /*cost=*/2,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/1, /*cost=*/2,
                                      /*capacity=*/1, NULL);
 
-    check(ompi_btl_usnic_gr_indegree(g,  0) == 0);
-    check(ompi_btl_usnic_gr_outdegree(g, 0) == 2);
-    check(ompi_btl_usnic_gr_indegree(g,  1) == 1);
-    check(ompi_btl_usnic_gr_outdegree(g, 1) == 0);
-    check(ompi_btl_usnic_gr_indegree(g,  2) == 1);
-    check(ompi_btl_usnic_gr_outdegree(g, 2) == 0);
-    check(ompi_btl_usnic_gr_indegree(g,  3) == 0);
-    check(ompi_btl_usnic_gr_outdegree(g, 3) == 0);
+    check(opal_btl_usnic_gr_indegree(g,  0) == 0);
+    check(opal_btl_usnic_gr_outdegree(g, 0) == 2);
+    check(opal_btl_usnic_gr_indegree(g,  1) == 1);
+    check(opal_btl_usnic_gr_outdegree(g, 1) == 0);
+    check(opal_btl_usnic_gr_indegree(g,  2) == 1);
+    check(opal_btl_usnic_gr_outdegree(g, 2) == 0);
+    check(opal_btl_usnic_gr_indegree(g,  3) == 0);
+    check(opal_btl_usnic_gr_outdegree(g, 3) == 0);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     return TEST_PASSED;
 }
 
 static int test_graph_assignment_solver(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
     int nme;
@@ -262,33 +276,33 @@ static int test_graph_assignment_solver(void *ctx)
      * 0 --> 2
      * 1 --> 3
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/2,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/2,
                                      /*capacity=*/1, NULL);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
     check(me[0] == 0 && me[1] == 2);
     check(me[2] == 1 && me[3] == 3);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: left side has more vertices than the right side
@@ -297,30 +311,30 @@ static int test_graph_assignment_solver(void *ctx)
      * 1 --> 4
      * 2 --> 4
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -328,8 +342,8 @@ static int test_graph_assignment_solver(void *ctx)
     check(me[2] == 2 && me[3] == 4);
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* test Christian's case:
@@ -339,30 +353,30 @@ static int test_graph_assignment_solver(void *ctx)
      *
      * make sure that 0-->2 & 1-->3 get chosen.
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/5,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/5,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -370,8 +384,8 @@ static int test_graph_assignment_solver(void *ctx)
     check(me[2] == 1 && me[3] == 3);
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* Also need to do this version of it to be safe:
      * 0 --> 2
@@ -380,30 +394,30 @@ static int test_graph_assignment_solver(void *ctx)
      *
      * Should choose 0-->2 & 1-->3 here too.
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/1,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/5,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/5,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -411,8 +425,8 @@ static int test_graph_assignment_solver(void *ctx)
     check(me[2] == 1 && me[3] == 3);
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: test Christian's case with negative weights:
      * 0 --> 2
@@ -421,30 +435,30 @@ static int test_graph_assignment_solver(void *ctx)
      *
      * make sure that 0-->2 & 1-->3 get chosen.
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-1,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-10,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-5,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-5,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -452,8 +466,8 @@ static int test_graph_assignment_solver(void *ctx)
     check(me[2] == 1 && me[3] == 3);
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: add some disconnected vertices
@@ -464,30 +478,30 @@ static int test_graph_assignment_solver(void *ctx)
      *
      * make sure that 0-->2 & 1-->3 get chosen.
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-1,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-10,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-5,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-5,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -495,8 +509,8 @@ static int test_graph_assignment_solver(void *ctx)
     check(me[2] == 1 && me[3] == 3);
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: sample UDP graph from bldsb005 + bldsb007
      * 0 --> 2 (cost -4294967296)
@@ -506,33 +520,33 @@ static int test_graph_assignment_solver(void *ctx)
      *
      * Make sure that either (0-->2 && 1-->3) or (0-->3 && 1-->2) get chosen.
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 4; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-4294967296,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-4294967296,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/-4294967296,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/-4294967296,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-4294967296,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-4294967296,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-4294967296,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/-4294967296,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 2);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -545,8 +559,8 @@ static int test_graph_assignment_solver(void *ctx)
     }
     free(me);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: check that simple cases are solved correctly
@@ -554,32 +568,32 @@ static int test_graph_assignment_solver(void *ctx)
      * 0 --> 2
      * 1 --> 2
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 3; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-100,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/-100,
                                      /*capacity=*/1, NULL);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/-100,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/2, /*cost=*/-100,
                                      /*capacity=*/1, NULL);
 
     me = NULL;
-    err = ompi_btl_usnic_solve_bipartite_assignment(g,
+    err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                     &nme,
                                                     &me);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
     check_int_eq(nme, 1);
     check(me != NULL);
     qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
     check((me[0] == 0 || me[0] == 1) && me[1] == 2);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: performance sanity check
@@ -591,32 +605,32 @@ static int test_graph_assignment_solver(void *ctx)
      * 2 --> 4
      */
 #define NUM_ITER (10000)
-    start = MPI_Wtime();
+    start = gettime();
     for (iter = 0; iter < NUM_ITER; ++iter) {
-        err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+        check_err_code(err, OPAL_SUCCESS);
         check(g != NULL);
 
         for (i = 0; i < 5; ++i) {
-            err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-            check_err_code(err, OMPI_SUCCESS);
+            err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+            check_err_code(err, OPAL_SUCCESS);
         }
 
-        err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
+        err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
                                         /*capacity=*/1, NULL);
-        check_err_code(err, OMPI_SUCCESS);
-        err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
+        check_err_code(err, OPAL_SUCCESS);
+        err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
                                         /*capacity=*/1, NULL);
-        check_err_code(err, OMPI_SUCCESS);
-        err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
+        check_err_code(err, OPAL_SUCCESS);
+        err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
                                         /*capacity=*/1, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        check_err_code(err, OPAL_SUCCESS);
 
         me = NULL;
-        err = ompi_btl_usnic_solve_bipartite_assignment(g,
+        err = opal_btl_usnic_solve_bipartite_assignment(g,
                                                         &nme,
                                                         &me);
-        check_err_code(err, OMPI_SUCCESS);
+        check_err_code(err, OPAL_SUCCESS);
         check_int_eq(nme, 2);
         check(me != NULL);
         qsort(me, nme, 2*sizeof(int), &cmp_int_pair);
@@ -624,10 +638,10 @@ static int test_graph_assignment_solver(void *ctx)
         check(me[2] == 2 && me[3] == 4);
         free(me);
 
-        err = ompi_btl_usnic_gr_free(g);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_free(g);
+        check_err_code(err, OPAL_SUCCESS);
     }
-    end = MPI_Wtime();
+    end = gettime();
     /* ensure that this operation on a 1000 node cluster will take less than one second */
     check(((end - start) / NUM_ITER) < 0.001);
 #if 0
@@ -640,7 +654,7 @@ static int test_graph_assignment_solver(void *ctx)
 
 static int test_graph_bellman_ford(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
     bool path_found;
@@ -655,33 +669,33 @@ static int test_graph_bellman_ford(void *ctx)
      *
      * should yield the path 5,1,3,6 (see costs in code below)
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 6; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/2, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/2,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/3, /*cost=*/2,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/4, /*v=*/0, /*cost=*/0,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/4, /*v=*/0, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/4, /*v=*/1, /*cost=*/0,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/4, /*v=*/1, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/5, /*cost=*/0,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/5, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/5, /*cost=*/0,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/5, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     pred = malloc(6*sizeof(*pred));
     check(pred != NULL);
@@ -693,8 +707,8 @@ static int test_graph_bellman_ford(void *ctx)
     check_int_eq(pred[1], 4);
     free(pred);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: left side has more vertices than the right side, then
@@ -704,27 +718,27 @@ static int test_graph_bellman_ford(void *ctx)
      * 1 --> 4
      * 2 --> 4
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     err = bipartite_to_flow(g);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     pred = malloc(7*sizeof(*pred));
     check(pred != NULL);
@@ -738,8 +752,8 @@ static int test_graph_bellman_ford(void *ctx)
     check_int_eq(pred[2], 5);
     free(pred);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: same as previous, but with very large cost values (try to
      * catch incorrect integer conversions)
@@ -748,27 +762,27 @@ static int test_graph_bellman_ford(void *ctx)
      * 1 --> 4
      * 2 --> 4
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/INT32_MAX+10LL,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/INT32_MAX+10LL,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/INT32_MAX+2LL,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/INT32_MAX+2LL,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/INT32_MAX+1LL,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/INT32_MAX+1LL,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     err = bipartite_to_flow(g);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     pred = malloc(7*sizeof(*pred));
     check(pred != NULL);
@@ -782,8 +796,8 @@ static int test_graph_bellman_ford(void *ctx)
     check_int_eq(pred[2], 5);
     free(pred);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     /* TEST CASE: left side has more vertices than the right side, then
      * convert to a flow network.  Negative costs are used, but should not
@@ -793,27 +807,27 @@ static int test_graph_bellman_ford(void *ctx)
      * 1 --> 4
      * 2 --> 4
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-1,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/-1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/-2,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/-2,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/-10,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/-10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     err = bipartite_to_flow(g);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
     pred = malloc(7*sizeof(*pred));
     check(pred != NULL);
@@ -827,15 +841,15 @@ static int test_graph_bellman_ford(void *ctx)
     check_int_eq(pred[2], 5);
     free(pred);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     return TEST_PASSED;
 }
 
 static int test_graph_flow_conversion(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
 
@@ -846,26 +860,26 @@ static int test_graph_flow_conversion(void *ctx)
      * 1 --> 4
      * 2 --> 4
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     for (i = 0; i < 5; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/0, /*v=*/3, /*cost=*/10,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/1, /*v=*/4, /*cost=*/2,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
-    check_int_eq(ompi_btl_usnic_gr_order(g), 5);
+    check_int_eq(opal_btl_usnic_gr_order(g), 5);
     check_has_in_out_degree(g, 0, /*exp_indeg=*/0, /*exp_outdeg=*/1);
     check_has_in_out_degree(g, 1, /*exp_indeg=*/0, /*exp_outdeg=*/1);
     check_has_in_out_degree(g, 2, /*exp_indeg=*/0, /*exp_outdeg=*/1);
@@ -874,9 +888,9 @@ static int test_graph_flow_conversion(void *ctx)
 
     /* this should add two nodes and a bunch of edges */
     err = bipartite_to_flow(g);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
-    check_int_eq(ompi_btl_usnic_gr_order(g), 7);
+    check_int_eq(opal_btl_usnic_gr_order(g), 7);
     check_has_in_out_degree(g, 0, /*exp_indeg=*/2, /*exp_outdeg=*/2);
     check_has_in_out_degree(g, 1, /*exp_indeg=*/2, /*exp_outdeg=*/2);
     check_has_in_out_degree(g, 2, /*exp_indeg=*/2, /*exp_outdeg=*/2);
@@ -885,8 +899,8 @@ static int test_graph_flow_conversion(void *ctx)
     check_has_in_out_degree(g, 5, /*exp_indeg=*/3, /*exp_outdeg=*/3);
     check_has_in_out_degree(g, 6, /*exp_indeg=*/2, /*exp_outdeg=*/2);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
 
     /* TEST CASE: empty graph
@@ -894,72 +908,72 @@ static int test_graph_flow_conversion(void *ctx)
      * there's no reason that the code should bother to support this, it's not
      * useful
      */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
-    check_int_eq(ompi_btl_usnic_gr_order(g), 0);
+    check_int_eq(opal_btl_usnic_gr_order(g), 0);
     err = bipartite_to_flow(g);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     return TEST_PASSED;
 }
 
 static int test_graph_param_checking(void *ctx)
 {
-    ompi_btl_usnic_graph_t *g;
+    opal_btl_usnic_graph_t *g;
     int i;
     int err;
 
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    check_err_code(err, OPAL_SUCCESS);
     check(g != NULL);
 
     /* try with no vertices */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/5, /*cost=*/0,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/3, /*v=*/5, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
 
     for (i = 0; i < 6; ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(g, NULL, NULL);
-        check_err_code(err, OMPI_SUCCESS);
+        err = opal_btl_usnic_gr_add_vertex(g, NULL, NULL);
+        check_err_code(err, OPAL_SUCCESS);
     }
 
     /* try u out of range */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/9, /*v=*/5, /*cost=*/0,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/9, /*v=*/5, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/6, /*v=*/5, /*cost=*/0,
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/6, /*v=*/5, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
 
     /* try v out of range */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/8, /*cost=*/0,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/8, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/6, /*cost=*/0,
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/6, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
 
     /* try adding an edge that already exists */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/0,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/0,
+    check_err_code(err, OPAL_SUCCESS);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/4, /*cost=*/0,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_EXISTS);
+    check_err_code(err, OPAL_EXISTS);
 
     /* try an edge with an out of range cost */
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/3, /*cost=*/INT64_MAX,
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/3, /*cost=*/INT64_MAX,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_ERR_BAD_PARAM);
-    err = ompi_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/3, /*cost=*/INT64_MAX-1,
+    check_err_code(err, OPAL_ERR_BAD_PARAM);
+    err = opal_btl_usnic_gr_add_edge(g, /*u=*/2, /*v=*/3, /*cost=*/INT64_MAX-1,
                                      /*capacity=*/1, NULL);
-    check_err_code(err, OMPI_SUCCESS);
+    check_err_code(err, OPAL_SUCCESS);
 
-    err = ompi_btl_usnic_gr_free(g);
-    check_err_code(err, OMPI_SUCCESS);
+    err = opal_btl_usnic_gr_free(g);
+    check_err_code(err, OPAL_SUCCESS);
 
     return TEST_PASSED;
 }
@@ -1051,6 +1065,6 @@ USNIC_REGISTER_TEST("test_graph_flow_conversion", test_graph_flow_conversion, NU
 USNIC_REGISTER_TEST("test_graph_param_checking", test_graph_param_checking, NULL)
 USNIC_REGISTER_TEST("test_graph_helper_macros", test_graph_helper_macros, NULL)
 
-#endif /* OMPI_BTL_USNIC_UNIT_TESTS */
+#endif /* OPAL_BTL_USNIC_UNIT_TESTS */
 
 #endif /* BTL_USNIC_GRAPH_TEST_H */

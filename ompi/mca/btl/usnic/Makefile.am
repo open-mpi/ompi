@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -13,14 +13,13 @@
 #                         reserved.
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_usnic_CPPFLAGS) 
-AM_CFLAGS = $(btl_usnic_CFLAGS)
+AM_CPPFLAGS = -DBTL_IN_OPAL=0 $(opal_common_libfabric_CPPFLAGS)
 
 EXTRA_DIST = README.txt README.test
 
@@ -31,19 +30,9 @@ test_sources = \
     test/btl_usnic_component_test.h \
     test/btl_usnic_graph_test.h
 
-libnl_utils_sources = \
-    btl_usnic_libnl_utils.h
-
-if OMPI_BTL_USNIC_BUILD_LIBNL1_UTILS
-libnl_utils_sources += btl_usnic_libnl1_utils.c
-endif OMPI_BTL_USNIC_BUILD_LIBNL1_UTILS
-
-if OMPI_BTL_USNIC_BUILD_LIBNL3_UTILS
-libnl_utils_sources += btl_usnic_libnl3_utils.c
-endif OMPI_BTL_USNIC_BUILD_LIBNL3_UTILS
-
 sources = \
     btl_usnic_compat.h \
+    btl_usnic_compat.c \
     btl_usnic_module.c \
     btl_usnic_module.h \
     btl_usnic.h \
@@ -55,8 +44,6 @@ sources = \
     btl_usnic_cagent.c \
     btl_usnic_endpoint.c \
     btl_usnic_endpoint.h \
-    btl_usnic_ext.h \
-    btl_usnic_ext.c \
     btl_usnic_frag.c \
     btl_usnic_frag.h \
     btl_usnic_graph.h \
@@ -76,8 +63,7 @@ sources = \
     btl_usnic_util.h \
     btl_usnic_test.c \
     btl_usnic_test.h \
-    $(test_sources) \
-    $(libnl_utils_sources)
+    $(test_sources)
 
 if OPAL_HAVE_HWLOC
 sources += btl_usnic_hwloc.c
@@ -102,17 +88,17 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
-mca_btl_usnic_la_LDFLAGS = -module -avoid-version $(btl_usnic_LDFLAGS) 
-mca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS) \
-    $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la
+mca_btl_usnic_la_LDFLAGS = -module -avoid-version
+mca_btl_usnic_la_LIBADD = $(opal_common_libfabric_LIBADD)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
-libmca_btl_usnic_la_LDFLAGS= -module -avoid-version $(btl_usnic_LDFLAGS) 
-libmca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS)
+libmca_btl_usnic_la_LDFLAGS= -module -avoid-version $(btl_usnic_LDFLAGS)
 
 if OMPI_BTL_USNIC_BUILD_UNIT_TESTS
-ompi_btl_usnic_run_tests_SOURCES = test/ompi_btl_usnic_run_tests.c
-ompi_btl_usnic_run_tests_LDADD = -ldl
-bin_PROGRAMS = ompi_btl_usnic_run_tests
+usnic_btl_run_tests_CPPFLAGS = \
+    -DBTL_USNIC_RUN_TESTS_SYMBOL=\"ompi_btl_usnic_run_tests\"
+usnic_btl_run_tests_SOURCES = test/usnic_btl_run_tests.c
+usnic_btl_run_tests_LDADD = -ldl
+bin_PROGRAMS = usnic_btl_run_tests
 endif OMPI_BTL_USNIC_BUILD_UNIT_TESTS

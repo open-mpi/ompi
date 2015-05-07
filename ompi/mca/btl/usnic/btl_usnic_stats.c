@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -7,7 +7,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -16,18 +16,18 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 
-#include "ompi/proc/proc.h"
-
+#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 #include "btl_usnic_stats.h"
+#include "btl_usnic_util.h"
 
 /*
  * Local variables
  */
 static mca_base_var_type_t pvar_type = MCA_BASE_VAR_TYPE_MAX;
 
-static inline void usnic_stats_reset(ompi_btl_usnic_module_t *module)
+static inline void usnic_stats_reset(opal_btl_usnic_module_t *module)
 {
     int i;
 
@@ -74,8 +74,8 @@ static inline void usnic_stats_reset(ompi_btl_usnic_module_t *module)
  * NOTE: this routine ignores the setting of stats_enable, so it can be used
  * for debugging routines even when normal stats reporting is not enabled.
  */
-void ompi_btl_usnic_print_stats(
-    ompi_btl_usnic_module_t *module,
+void opal_btl_usnic_print_stats(
+    opal_btl_usnic_module_t *module,
     const char *prefix,
     bool reset_stats)
 {
@@ -84,7 +84,7 @@ void ompi_btl_usnic_print_stats(
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
              prefix,
-             ompi_proc_local()->proc_name.vpid,
+             opal_proc_local_get()->proc_name.vpid,
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
@@ -127,7 +127,7 @@ void ompi_btl_usnic_print_stats(
         module->stats.pml_send_callbacks == 0) {
         int64_t send_unacked, su_min = WINDOW_SIZE * 2, su_max = 0;
         int64_t recv_depth, rd_min = WINDOW_SIZE * 2, rd_max = 0;
-        ompi_btl_usnic_endpoint_t *endpoint;
+        opal_btl_usnic_endpoint_t *endpoint;
         opal_list_item_t *item;
 
         rd_min = su_min = WINDOW_SIZE * 2;
@@ -183,7 +183,7 @@ void ompi_btl_usnic_print_stats(
  */
 static void usnic_stats_callback(int fd, short flags, void *arg)
 {
-    ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) arg;
+    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) arg;
     char tmp[128];
 
     if (!mca_btl_usnic_component.stats_enabled) {
@@ -192,7 +192,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 
     snprintf(tmp, sizeof(tmp), "%4lu", ++module->stats.report_num);
 
-    ompi_btl_usnic_print_stats(module, tmp,
+    opal_btl_usnic_print_stats(module, tmp,
                                /*reset=*/mca_btl_usnic_component.stats_relative);
 
     /* In OMPI v1.6, we have to re-add this event (because there's an
@@ -204,7 +204,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 /*
  * Initialize usnic module statistics
  */
-int ompi_btl_usnic_stats_init(ompi_btl_usnic_module_t *module)
+int opal_btl_usnic_stats_init(opal_btl_usnic_module_t *module)
 {
     if (mca_btl_usnic_component.stats_enabled) {
         usnic_stats_reset(module);
@@ -219,22 +219,22 @@ int ompi_btl_usnic_stats_init(ompi_btl_usnic_module_t *module)
                        &(module->stats.timeout));
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /*
  * Finalize usnic module statistics
  */
-int ompi_btl_usnic_stats_finalize(ompi_btl_usnic_module_t *module)
+int opal_btl_usnic_stats_finalize(opal_btl_usnic_module_t *module)
 {
     /* Disable the stats callback event, and then call the stats
        callback manually to display the final stats */
     if (mca_btl_usnic_component.stats_enabled) {
         opal_event_del(&(module->stats.timer_event));
-        ompi_btl_usnic_print_stats(module, "final", /*reset_stats=*/false);
+        opal_btl_usnic_print_stats(module, "final", /*reset_stats=*/false);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /************************************************************************/
@@ -253,7 +253,7 @@ static int usnic_pvar_notify(struct mca_base_pvar_t *pvar,
 
     /* Don't care about the other events */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -264,16 +264,15 @@ static int usnic_pvar_notify(struct mca_base_pvar_t *pvar,
 static int usnic_pvar_read(const struct mca_base_pvar_t *pvar,
                            void *value, void *bound_obj)
 {
-    size_t i;
     size_t offset = (size_t) pvar->ctx;
     uint64_t *array = (uint64_t*) value;
 
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         char *base = (char*) &(mca_btl_usnic_component.usnic_active_modules[i]->stats);
         array[i] = *((uint64_t*) (base + offset));
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -310,14 +309,13 @@ static void register_pvar_highwater(char *name, char *desc, size_t offset)
 static int usnic_pvar_enum_read(const struct mca_base_pvar_t *pvar,
                                 void *value, void *bound_obj)
 {
-    size_t i;
     int *array = (int *) value;
 
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         array[i] = i;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -376,13 +374,13 @@ static bool setup_mpit_pvar_type(void)
  */
 static void setup_mpit_pvars_enum(void)
 {
-    size_t i;
+    int i;
     int rc __opal_attribute_unused__;
     mca_base_var_enum_value_t *devices;
     static mca_base_var_enum_t *devices_enum;
-    struct ibv_device *device;
-    ompi_btl_usnic_module_t *m;
+    opal_btl_usnic_module_t *m;
     unsigned char *c;
+    struct sockaddr_in *sin;
 
     devices = calloc(mca_btl_usnic_component.num_modules + 1,
                      sizeof(*devices));
@@ -392,15 +390,14 @@ static void setup_mpit_pvars_enum(void)
         char *str;
 
         m = mca_btl_usnic_component.usnic_active_modules[i];
-        c = (unsigned char*) &m->if_ipv4_addr;
+        sin = m->fabric_info->src_addr;
+        c = (unsigned char*) &sin->sin_addr.s_addr;
 
-        device = m->device;
         devices[i].value = i;
-        rc = asprintf(&str, "%s,%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
-                 ibv_get_device_name(device),
-                 m->if_name,
-                 c[0], c[1], c[2], c[3],
-                 m->if_cidrmask);
+        rc = asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
+                      m->fabric_info->fabric_attr->name,
+                      c[0], c[1], c[2], c[3],
+                      usnic_netmask_to_cidrlen(sin->sin_addr.s_addr));
         assert(rc > 0);
         devices[i].string = str;
     }
@@ -427,9 +424,10 @@ static void setup_mpit_pvars_enum(void)
 
     /* Free the strings (mca_base_var_enum_create() strdup()'ed them
        into private storage, so we don't need them any more) */
-    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+    for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         free((char*) devices[i].string);
-    }    
+    }
+    free(devices);
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar
@@ -444,7 +442,7 @@ static void setup_mpit_pvars_enum(void)
 static void setup_mpit_pvars_highwatermark(void)
 {
 #define REGISTERHW(field, desc) \
-    register_pvar_highwater(#field, (desc), offsetof(ompi_btl_usnic_module_stats_t, field))
+    register_pvar_highwater(#field, (desc), offsetof(opal_btl_usnic_module_stats_t, field))
 
     REGISTERHW(max_sent_window_size,
                "Maximum number of entries in all send windows from this peer");
@@ -459,7 +457,7 @@ static void setup_mpit_pvars_highwatermark(void)
 static void setup_mpit_pvars_counters(void)
 {
 #define REGISTERC(field, desc) \
-    register_pvar_counter(#field, (desc), offsetof(ompi_btl_usnic_module_stats_t, field))
+    register_pvar_counter(#field, (desc), offsetof(opal_btl_usnic_module_stats_t, field))
 
     REGISTERC(num_total_sends,
               "Total number of sends (MPI data, ACKs, retransmissions, etc.)");
@@ -515,12 +513,12 @@ static void setup_mpit_pvars_counters(void)
 /*
  * Initialize MPI_T performance variables
  */
-int ompi_btl_usnic_setup_mpit_pvars(void)
+int opal_btl_usnic_setup_mpit_pvars(void)
 {
     /* If we cannot find a compatible pvar type, we're done (i.e.,
        don't register any pvars) */
     if (!setup_mpit_pvar_type()) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Setup the usnic_X device enumeration pvar */
@@ -537,5 +535,5 @@ int ompi_btl_usnic_setup_mpit_pvars(void)
     }
 
     /* All done */
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

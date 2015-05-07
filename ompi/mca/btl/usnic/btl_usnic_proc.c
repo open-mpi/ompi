@@ -11,26 +11,24 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
+#include <netinet/in.h>
 
-#include "ompi_config.h"
-
-#include <infiniband/verbs.h>
+#include "opal_config.h"
 
 #include "opal_stdint.h"
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
+#include "opal/constants.h"
 
-#include "ompi/runtime/ompi_module_exchange.h"
-#include "ompi/constants.h"
-
+#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
 #include "btl_usnic_proc.h"
 #include "btl_usnic_endpoint.h"
@@ -51,9 +49,9 @@ enum {
 #define PROC_INDEX(proc_vertex) ((proc_vertex) - mca_btl_usnic_component.num_modules)
 #define MODULE_INDEX(module_vertex) (module_vertex)
 
-static void proc_construct(ompi_btl_usnic_proc_t* proc)
+static void proc_construct(opal_btl_usnic_proc_t* proc)
 {
-    proc->proc_ompi = 0;
+    proc->proc_opal = 0;
     proc->proc_modex = NULL;
     proc->proc_modex_count = 0;
     proc->proc_modex_claimed = NULL;
@@ -67,7 +65,7 @@ static void proc_construct(ompi_btl_usnic_proc_t* proc)
 }
 
 
-static void proc_destruct(ompi_btl_usnic_proc_t* proc)
+static void proc_destruct(opal_btl_usnic_proc_t* proc)
 {
     /* remove from list of all proc instances */
     opal_list_remove_item(&mca_btl_usnic_component.usnic_procs, &proc->super);
@@ -96,27 +94,27 @@ static void proc_destruct(ompi_btl_usnic_proc_t* proc)
 }
 
 
-OBJ_CLASS_INSTANCE(ompi_btl_usnic_proc_t,
-                   opal_list_item_t, 
+OBJ_CLASS_INSTANCE(opal_btl_usnic_proc_t,
+                   opal_list_item_t,
                    proc_construct,
                    proc_destruct);
 
 /*
  * Look for an existing usnic process instance based on the
- * associated ompi_proc_t instance.
+ * associated opal_proc_t instance.
  */
-ompi_btl_usnic_proc_t *
-ompi_btl_usnic_proc_lookup_ompi(ompi_proc_t* ompi_proc)
+opal_btl_usnic_proc_t *
+opal_btl_usnic_proc_lookup_ompi(opal_proc_t* opal_proc)
 {
-    ompi_btl_usnic_proc_t* usnic_proc;
+    opal_btl_usnic_proc_t* usnic_proc;
 
-    for (usnic_proc = (ompi_btl_usnic_proc_t*)
+    for (usnic_proc = (opal_btl_usnic_proc_t*)
              opal_list_get_first(&mca_btl_usnic_component.usnic_procs);
-         usnic_proc != (ompi_btl_usnic_proc_t*)
+         usnic_proc != (opal_btl_usnic_proc_t*)
              opal_list_get_end(&mca_btl_usnic_component.usnic_procs);
-         usnic_proc  = (ompi_btl_usnic_proc_t*)
+         usnic_proc  = (opal_btl_usnic_proc_t*)
              opal_list_get_next(usnic_proc)) {
-        if (usnic_proc->proc_ompi == ompi_proc) {
+        if (usnic_proc->proc_opal == opal_proc) {
             return usnic_proc;
         }
     }
@@ -129,26 +127,31 @@ ompi_btl_usnic_proc_lookup_ompi(ompi_proc_t* ompi_proc)
  * Look for an existing usnic proc based on a hashed RTE process
  * name.
  */
-ompi_btl_usnic_endpoint_t *
-ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
-                                    uint64_t sender_hashed_rte_name)
+opal_btl_usnic_endpoint_t *
+opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
+                                    uint64_t sender_proc_name)
 {
-    ompi_btl_usnic_proc_t *proc;
-    ompi_btl_usnic_endpoint_t *endpoint;
+    opal_btl_usnic_proc_t *proc;
+    opal_btl_usnic_endpoint_t *endpoint;
     opal_list_item_t *item;
 
     MSGDEBUG1_OUT("lookup_endpoint: recvmodule=%p sendhash=0x%" PRIx64,
-                  (void *)receiver, sender_hashed_rte_name);
+                  (void *)receiver, sender_proc_name);
 
     opal_mutex_lock(&receiver->all_endpoints_lock);
     for (item = opal_list_get_first(&receiver->all_endpoints);
          item != opal_list_get_end(&receiver->all_endpoints);
          item = opal_list_get_next(item)) {
-        endpoint = container_of(item, ompi_btl_usnic_endpoint_t,
+        endpoint = container_of(item, opal_btl_usnic_endpoint_t,
                                 endpoint_endpoint_li);
         proc = endpoint->endpoint_proc;
-        if (ompi_rte_hash_name(&proc->proc_ompi->proc_name) ==
-            sender_hashed_rte_name) {
+        /* Note that this works today because opal_proc_t->proc_name
+           is unique across the universe.  George is potentially
+           working to give handles instead of proc names, and then
+           have a function pointer to perform comparisons.  This would
+           be bad here in the critical path, though... */
+        if (usnic_compat_rte_hash_name(&(proc->proc_opal->proc_name)) ==
+            sender_proc_name) {
             MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
                           (void *)endpoint);
             opal_mutex_unlock(&receiver->all_endpoints_lock);
@@ -161,156 +164,172 @@ ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
     return NULL;
 }
 
-
 /*
- * Create an ompi_btl_usnic_proc_t and initialize it with modex info
+ * Create an opal_btl_usnic_proc_t and initialize it with modex info
  * and an empty array of endpoints.
+ *
+ * Returns OPAL_ERR_UNREACH if we can't reach the peer (i.e., we can't
+ * find their modex data).
  */
-static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
+static int create_proc(opal_proc_t *opal_proc,
+                       opal_btl_usnic_proc_t **usnic_proc)
 {
-    ompi_btl_usnic_proc_t *proc = NULL;
+    opal_btl_usnic_proc_t *proc = NULL;
     size_t size;
     int rc;
 
+    *usnic_proc = NULL;
+
     /* Create the proc if it doesn't already exist */
-    proc = OBJ_NEW(ompi_btl_usnic_proc_t);
+    proc = OBJ_NEW(opal_btl_usnic_proc_t);
     if (NULL == proc) {
-        return NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* Initialize number of peers */
     proc->proc_endpoint_count = 0;
-    proc->proc_ompi = ompi_proc;
+    proc->proc_opal = opal_proc;
 
     /* query for the peer address info */
-    rc = ompi_modex_recv(&mca_btl_usnic_component.super.btl_version,
-                         ompi_proc, (void*)&proc->proc_modex,
-                         &size);
+    usnic_compat_modex_recv(&rc, &mca_btl_usnic_component.super.btl_version,
+                            opal_proc, &proc->proc_modex, &size);
 
     /* If this proc simply doesn't have this key, then they're not
        running the usnic BTL -- just ignore them.  Otherwise, show an
        error message. */
-    if (OPAL_ERR_DATA_VALUE_NOT_FOUND == rc ||
-        OPAL_ERR_NOT_FOUND == rc) {
+    if (OPAL_ERR_NOT_FOUND == rc) {
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERR_UNREACH;
     } else if (OPAL_SUCCESS != rc) {
-        opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        "<none>", "<none>",
-                       "ompi_modex_recv() failed", __FILE__, __LINE__,
+                       "opal_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERROR;
     }
 
-    if ((size % sizeof(ompi_btl_usnic_addr_t)) != 0) {
+    if ((size % sizeof(opal_btl_usnic_modex_t)) != 0) {
         char msg[1024];
 
-        snprintf(msg, sizeof(msg), 
+        snprintf(msg, sizeof(msg),
                  "sizeof(modex for peer %s data) == %d, expected multiple of %d",
-                 OMPI_NAME_PRINT(&ompi_proc->proc_name),
-                 (int) size, (int) sizeof(ompi_btl_usnic_addr_t));
+                 usnic_compat_proc_name_print(&opal_proc->proc_name),
+                 (int) size, (int) sizeof(opal_btl_usnic_modex_t));
         opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        "<none>", 0,
                        "invalid modex data", __FILE__, __LINE__,
                        msg);
 
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
-    proc->proc_modex_count = size / sizeof(ompi_btl_usnic_addr_t);
-    if (0 == proc->proc_modex_count) {
-        proc->proc_endpoints = NULL;
-        OBJ_RELEASE(proc);
-        return NULL;
-    }
-
-    /* Sanity check: ensure that the remote proc agrees with this proc
-       on whether we're doing UDP or not.  Note that all endpoints on
-       the remote proc will have the same "use_udp" value, so we only
-       need to check one of them. */
-    if (proc->proc_modex[0].use_udp !=
-        mca_btl_usnic_component.use_udp) {
+    /* See if the peer has the same underlying wire protocol as me.
+       If not, then print an error and ignore this peer. */
+// RFXXX - things are weird when i force this to fail
+    if (mca_btl_usnic_component.transport_protocol !=
+        proc->proc_modex->protocol) {
+        uint64_t proto;
+        char protostr[32];
+        proto = mca_btl_usnic_component.transport_protocol;
+        memset(protostr, 0, sizeof(protostr));
+        strncpy(protostr, fi_tostr(&proto, FI_TYPE_PROTOCOL),
+                sizeof(protostr) - 1);
+        proto = proc->proc_modex->protocol;
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",
                        true,
-                       ompi_process_info.nodename,
-                       proc->proc_ompi->proc_hostname);
+                       opal_process_info.nodename,
+                       protostr,
+                       "peer",
+                       fi_tostr(&proto, FI_TYPE_PROTOCOL));
+
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERR_UNREACH;
     }
 
-    proc->proc_modex_claimed = (bool*) 
+    proc->proc_modex_count = size / sizeof(opal_btl_usnic_modex_t);
+    if (0 == proc->proc_modex_count) {
+        proc->proc_endpoints = NULL;
+        OBJ_RELEASE(proc);
+        return OPAL_ERR_UNREACH;
+    }
+
+    proc->proc_modex_claimed = (bool*)
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     proc->proc_endpoints = (mca_btl_base_endpoint_t**)
         calloc(proc->proc_modex_count, sizeof(mca_btl_base_endpoint_t*));
     if (NULL == proc->proc_endpoints) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
-        return NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    return proc;
+    *usnic_proc = proc;
+    return OPAL_SUCCESS;
 }
 
 /* Compare the addresses of the local interface corresponding to module and the
  * remote interface corresponding to proc_modex_addr.  Returns a weight value
  * (higher values indicate more desirable connections). */
 static uint64_t compute_weight(
-    ompi_btl_usnic_module_t *module,
-    ompi_btl_usnic_addr_t *proc_modex_addr)
+    opal_btl_usnic_module_t *module,
+    opal_btl_usnic_modex_t *proc_modex_addr)
 {
     char my_ip_string[INET_ADDRSTRLEN], peer_ip_string[INET_ADDRSTRLEN];
+    struct sockaddr_in sin;
+    struct sockaddr_in *sinp;
+    struct fi_usnic_info *uip;
     uint32_t mynet, peernet;
-    int err, metric;
+    int err;
+    int metric;
     uint32_t min_link_speed_gbps;
 
-    inet_ntop(AF_INET, &module->if_ipv4_addr,
+    uip = &module->usnic_info;
+    sinp = module->fabric_info->src_addr;
+    inet_ntop(AF_INET, &sinp->sin_addr,
               my_ip_string, sizeof(my_ip_string));
     inet_ntop(AF_INET, &proc_modex_addr->ipv4_addr,
               peer_ip_string, sizeof(peer_ip_string));
 
     /* Just compare the CIDR-masked IP address to see if they're on
        the same network.  If so, we're good. */
-    mynet   = ompi_btl_usnic_get_ipv4_subnet(module->if_ipv4_addr,
-                                             module->if_cidrmask);
-    peernet = ompi_btl_usnic_get_ipv4_subnet(proc_modex_addr->ipv4_addr,
-                                             proc_modex_addr->cidrmask);
+    mynet = sinp->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
+    peernet = proc_modex_addr->ipv4_addr & proc_modex_addr->netmask;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:%s: checking my IP address/subnet (%s/%d) vs. peer (%s/%d): %s",
-                        __func__, my_ip_string, module->if_cidrmask,
-                        peer_ip_string, proc_modex_addr->cidrmask,
+                        __func__, my_ip_string,
+                        usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be),
+                        peer_ip_string,
+                        usnic_netmask_to_cidrlen(proc_modex_addr->netmask),
                         (mynet == peernet ? "match" : "DO NOT match"));
-
-    if (!mca_btl_usnic_component.use_udp) {
-        if (mynet != peernet) {
-            return WEIGHT_UNREACHABLE;
-        } else {
-            return 1; /* any positive weight is fine */
-        }
-    }
 
     min_link_speed_gbps = MIN(module->super.btl_bandwidth,
                               proc_modex_addr->link_speed_mbps) / 1000;
 
+    /* Returned metric is:
+     *    0 - same VLAN
+     *    1..MAXINT - relative distance metric
+     *    -1 - unreachable
+     */
     metric = 0;
-    err = ompi_btl_usnic_nl_ip_rt_lookup(mca_btl_usnic_component.unlsk,
-                                         module->if_name,
-                                         module->if_ipv4_addr,
-                                         proc_modex_addr->ipv4_addr,
-                                         &metric);
-    if (0 != err) {
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = proc_modex_addr->ipv4_addr;
+    err = module->usnic_av_ops->get_distance(module->av, &sin, &metric);
+    if (0 != err || (0 == err && -1 == metric)) {
         return 0; /* no connectivity */
     }
     else {
@@ -352,7 +371,7 @@ static uint64_t compute_weight(
  * "match_modex")
  */
 static void edge_pairs_to_match_table(
-    ompi_btl_usnic_proc_t *proc,
+    opal_btl_usnic_proc_t *proc,
     bool proc_is_left,
     int nme,
     int *me)
@@ -406,18 +425,18 @@ static void edge_pairs_to_match_table(
  * vertices appear before the proc vertices.
  */
 static int create_proc_module_graph(
-    ompi_btl_usnic_proc_t *proc,
+    opal_btl_usnic_proc_t *proc,
     bool proc_is_left,
-    ompi_btl_usnic_graph_t **g_out)
+    opal_btl_usnic_graph_t **g_out)
 {
     int err;
     int i, j;
     int u, v;
     int num_modules;
-    ompi_btl_usnic_graph_t *g = NULL;
+    opal_btl_usnic_graph_t *g = NULL;
 
     if (NULL == g_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *g_out = NULL;
 
@@ -425,29 +444,29 @@ static int create_proc_module_graph(
 
     /* Construct a bipartite graph with remote interfaces on the one side and
      * local interfaces (modules) on the other. */
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &g);
-    if (OMPI_SUCCESS != err) {
-        OMPI_ERROR_LOG(err);
+    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    if (OPAL_SUCCESS != err) {
+        OPAL_ERROR_LOG(err);
         goto out;
     }
 
     /* create vertices for each interface (local and remote) */
     for (i = 0; i < num_modules; ++i) {
         int idx = -1;
-        err = ompi_btl_usnic_gr_add_vertex(g,
+        err = opal_btl_usnic_gr_add_vertex(g,
                                            mca_btl_usnic_component.usnic_active_modules[i],
                                            &idx);
-        if (OMPI_SUCCESS != err) {
-            OMPI_ERROR_LOG(err);
+        if (OPAL_SUCCESS != err) {
+            OPAL_ERROR_LOG(err);
             goto out_free_graph;
         }
         assert(idx == MODULE_VERTEX(i));
     }
     for (i = 0; i < (int)proc->proc_modex_count; ++i) {
         int idx = -1;
-        err = ompi_btl_usnic_gr_add_vertex(g, &proc->proc_modex[i], &idx);
-        if (OMPI_SUCCESS != err) {
-            OMPI_ERROR_LOG(err);
+        err = opal_btl_usnic_gr_add_vertex(g, &proc->proc_modex[i], &idx);
+        if (OPAL_SUCCESS != err) {
+            OPAL_ERROR_LOG(err);
             goto out_free_graph;
         }
         assert(idx == (int)PROC_VERTEX(i));
@@ -490,21 +509,21 @@ static int create_proc_module_graph(
             opal_output_verbose(20, USNIC_OUT,
                                 "btl:usnic:%s: adding edge (%d,%d) with cost=%" PRIi64 " for edge module[%d] <--> endpoint[%d]",
                                 __func__, u, v, cost, i, j);
-            err = ompi_btl_usnic_gr_add_edge(g, u, v, cost,
+            err = opal_btl_usnic_gr_add_edge(g, u, v, cost,
                                              /*capacity=*/1,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err) {
-                OMPI_ERROR_LOG(err);
+            if (OPAL_SUCCESS != err) {
+                OPAL_ERROR_LOG(err);
                 goto out_free_graph;
             }
         }
     }
 
     *g_out = g;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 out_free_graph:
-    ompi_btl_usnic_gr_free(g);
+    opal_btl_usnic_gr_free(g);
 out:
     return err;
 }
@@ -521,20 +540,18 @@ out:
  * canonicalize this match ordering somehow, probably by (jobid,vpid) pair or
  * by the interface MAC or IP address.
  */
-static int match_modex(ompi_btl_usnic_module_t *module,
-                       ompi_btl_usnic_proc_t *proc,
+static int match_modex(opal_btl_usnic_module_t *module,
+                       opal_btl_usnic_proc_t *proc,
                        int *index_out)
 {
-    int err = OMPI_SUCCESS;
+    int err = OPAL_SUCCESS;
     size_t i;
     uint32_t num_modules;
-    ompi_btl_usnic_graph_t *g = NULL;
-    int nme;
-    int *me;
+    opal_btl_usnic_graph_t *g = NULL;
     bool proc_is_left;
 
     if (NULL == index_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *index_out = -1;
 
@@ -551,8 +568,8 @@ static int match_modex(ompi_btl_usnic_module_t *module,
         proc->proc_ep_match_table = malloc(num_modules *
                                        sizeof(*proc->proc_ep_match_table));
         if (NULL == proc->proc_ep_match_table) {
-            OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
         /* initialize to "no matches" */
@@ -566,28 +583,34 @@ static int match_modex(ompi_btl_usnic_module_t *module,
          * sides are always setting up the exact same graph by always putting
          * the process with the lower (jobid,vpid) on the "left".
          */
+#if 0
+        proc_is_left = (proc->proc_opal->proc_name <
+                        opal_proc_local_get()->proc_name);
+#else
         proc_is_left =
-            (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
-                                          &proc->proc_ompi->proc_name,
-                                          &(ompi_proc_local()->proc_name)) < 0);
+            usnic_compat_proc_name_compare(proc->proc_opal->proc_name,
+                                           opal_proc_local_get()->proc_name);
+#endif
 
         err = create_proc_module_graph(proc, proc_is_left, &g);
-        if (OMPI_SUCCESS != err) {
+        if (OPAL_SUCCESS != err) {
             goto out_free_table;
         }
 
-        nme = 0;
-        err = ompi_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
-        if (OMPI_SUCCESS != err) {
-            OMPI_ERROR_LOG(err);
+        int nme = 0;
+        int *me = NULL;
+        err = opal_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
+        if (OPAL_SUCCESS != err) {
+            OPAL_ERROR_LOG(err);
             goto out_free_graph;
         }
 
         edge_pairs_to_match_table(proc, proc_is_left, nme, me);
+        free(me);
 
-        err = ompi_btl_usnic_gr_free(g);
-        if (OMPI_SUCCESS != err) {
-            OMPI_ERROR_LOG(err);
+        err = opal_btl_usnic_gr_free(g);
+        if (OPAL_SUCCESS != err) {
+            OPAL_ERROR_LOG(err);
             return err;
         }
     }
@@ -595,8 +618,9 @@ static int match_modex(ompi_btl_usnic_module_t *module,
 
     if (!proc->proc_match_exists) {
         opal_output_verbose(5, USNIC_OUT, "btl:usnic:%s: unable to find any valid interface pairs for proc %s",
-                            __func__, OMPI_NAME_PRINT(&proc->proc_ompi->proc_name));
-        return OMPI_ERR_NOT_FOUND;
+                            __func__,
+                            usnic_compat_proc_name_print(&proc->proc_opal->proc_name));
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* assuming no strange failure cases, this should always be present */
@@ -614,24 +638,24 @@ static int match_modex(ompi_btl_usnic_module_t *module,
      * the min of the two MTUs?  Another choice is to disqualify this pairing
      * before running the matching algorithm on it. */
     if (*index_out >= 0 &&
-        proc->proc_modex[*index_out].mtu != (uint16_t) module->if_mtu) {
+        proc->proc_modex[*index_out].max_msg_size !=
+        (uint16_t) module->fabric_info->ep_attr->max_msg_size) {
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
-                    true,
-                    ompi_process_info.nodename,
-                    ibv_get_device_name(module->device),
-                    module->if_name,
-                    module->if_mtu,
-                    (NULL == proc->proc_ompi->proc_hostname) ?
-                    "unknown" : proc->proc_ompi->proc_hostname,
-                    proc->proc_modex[*index_out].mtu);
+                       true,
+                       opal_process_info.nodename,
+                       module->fabric_info->fabric_attr->name,
+                       module->fabric_info->ep_attr->max_msg_size,
+                       (NULL == proc->proc_opal->proc_hostname) ?
+                       "unknown" : proc->proc_opal->proc_hostname,
+                       proc->proc_modex[*index_out].max_msg_size);
         *index_out = -1;
-        return OMPI_ERR_UNREACH;
+        return OPAL_ERR_UNREACH;
     }
 
-    return (*index_out == -1 ? OMPI_ERR_NOT_FOUND : OMPI_SUCCESS);
+    return (*index_out == -1 ? OPAL_ERR_NOT_FOUND : OPAL_SUCCESS);
 
 out_free_graph:
-    ompi_btl_usnic_gr_free(g);
+    opal_btl_usnic_gr_free(g);
 out_free_table:
     free(proc->proc_ep_match_table);
     proc->proc_ep_match_table = NULL;
@@ -640,55 +664,108 @@ out_free_table:
 }
 
 /*
+ * Initiate the process to create a USD dest.
+ * It will be polled for completion later.
+ */
+static int start_av_insert(opal_btl_usnic_module_t *module,
+                                  opal_btl_usnic_endpoint_t *endpoint,
+                                  int channel)
+{
+    int ret;
+    opal_btl_usnic_modex_t *modex = &endpoint->endpoint_remote_modex;
+    opal_btl_usnic_addr_context_t *context;
+    struct sockaddr_in sin;
+
+    context = calloc(1, sizeof(*context));
+    context->endpoint = endpoint;
+    context->channel_id = channel;
+
+    char str[IPV4STRADDRLEN];
+    opal_btl_usnic_snprintf_ipv4_addr(str, sizeof(str), modex->ipv4_addr,
+                                      modex->netmask);
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic:start_av_insert: to channel %d at %s:%d",
+                        channel, str, modex->ports[channel]);
+
+    /* build remote address */
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(modex->ports[channel]);
+    sin.sin_addr.s_addr = modex->ipv4_addr;
+
+    ret = fi_av_insert(module->av, &sin, 1,
+            &endpoint->endpoint_remote_addrs[channel], 0, context);
+    /* Did an error occur? */
+    if (0 != ret) {
+        opal_show_help("help-mpi-btl-usnic.txt", "libfabric API failed",
+                       true,
+                       opal_process_info.nodename,
+                       module->fabric_info->fabric_attr->name,
+                       "fi_av_insert()", __FILE__, __LINE__,
+                       ret,
+                       "Failed to initiate AV insert");
+        free(context);
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
  * Create an endpoint and claim the matched modex slot
  */
 int
-ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
-                ompi_btl_usnic_proc_t *proc,
-                ompi_btl_usnic_endpoint_t **endpoint_o)
+opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
+                opal_btl_usnic_proc_t *proc,
+                opal_btl_usnic_endpoint_t **endpoint_o)
 {
-    int err;
+    int rc;
     int modex_index;
-    ompi_btl_usnic_endpoint_t *endpoint;
+    opal_btl_usnic_endpoint_t *endpoint;
 
     /* look for matching modex info */
-    err = match_modex(module, proc, &modex_index);
-    if (OMPI_SUCCESS != err) {
+    rc = match_modex(module, proc, &modex_index);
+    if (OPAL_SUCCESS != rc) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:create_endpoint: did not match usnic modex info for peer %s",
-                            OMPI_NAME_PRINT(&proc->proc_ompi->proc_name));
-        return err;
+                            usnic_compat_proc_name_print(&proc->proc_opal->proc_name));
+        return rc;
     }
 
-    endpoint = OBJ_NEW(ompi_btl_usnic_endpoint_t);
+    endpoint = OBJ_NEW(opal_btl_usnic_endpoint_t);
     if (NULL == endpoint) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* Initalize the endpoint */
     endpoint->endpoint_module = module;
     assert(modex_index >= 0 && modex_index < (int)proc->proc_modex_count);
-    endpoint->endpoint_remote_addr = proc->proc_modex[modex_index];
+    endpoint->endpoint_remote_modex = proc->proc_modex[modex_index];
+
+    /* Start creating destinations; one for each channel.  These
+       progress in the background.a */
+    for (int i = 0; i < USNIC_NUM_CHANNELS; ++i)  {
+        rc = start_av_insert(module, endpoint, i);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(endpoint);
+            return rc;
+        }
+    }
 
     /* Initialize endpoint sequence number info */
-    endpoint->endpoint_next_seq_to_send = module->local_addr.isn;
+    endpoint->endpoint_next_seq_to_send = module->local_modex.isn;
     endpoint->endpoint_ack_seq_rcvd = endpoint->endpoint_next_seq_to_send - 1;
     endpoint->endpoint_next_contig_seq_to_recv =
-        endpoint->endpoint_remote_addr.isn;
+        endpoint->endpoint_remote_modex.isn;
     endpoint->endpoint_highest_seq_rcvd =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
     endpoint->endpoint_rfstart = WINDOW_SIZE_MOD(endpoint->endpoint_next_contig_seq_to_recv);
-
-    /* Defer creating the ibv_ah.  Since calling ibv_create_ah() may
-       trigger ARP resolution, it's better to batch all the endpoints'
-       calls to ibv_create_ah() together to get some parallelism. */
-    endpoint->endpoint_remote_ah = NULL;
 
     /* Now claim that modex slot */
     proc->proc_modex_claimed[modex_index] = true;
     MSGDEBUG1_OUT("create_endpoint: module=%p claimed endpoint=%p on proc=%p (hash=0x%" PRIx64 ")\n",
                   (void *)module, (void *)endpoint, (void *)proc,
-                  ompi_rte_hash_name(&proc->proc_ompi->proc_name));
+                  proc->proc_opal->proc_name);
 
     /* Save the endpoint on this proc's array of endpoints */
     proc->proc_endpoints[proc->proc_endpoint_count] = endpoint;
@@ -707,12 +784,12 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
     opal_mutex_unlock(&module->all_endpoints_lock);
 
     *endpoint_o = endpoint;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /*
  * If we haven't done so already, receive the modex info for the
- * specified ompi_proc.  Search that proc's modex info; if we can find
+ * specified opal_proc.  Search that proc's modex info; if we can find
  * matching address info, then create an endpoint.
  *
  * If we don't find a match, it's not an error: just return "not
@@ -721,27 +798,24 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
  * This routine transfers ownership of an object reference to the caller, who
  * is eventually responsible for transferring or releasing that reference.
  *
- * There is a one-to-one correspondence between a ompi_proc_t and a
- * ompi_btl_usnic_proc_t instance.  We cache additional data on the
- * ompi_btl_usnic_proc_t: specifically, the list of
- * ompi_btl_usnic_endpoint_t instances, and published addresses/modex
+ * There is a one-to-one correspondence between a opal_proc_t and a
+ * opal_btl_usnic_proc_t instance.  We cache additional data on the
+ * opal_btl_usnic_proc_t: specifically, the list of
+ * opal_btl_usnic_endpoint_t instances, and published addresses/modex
  * info.
  */
-int ompi_btl_usnic_proc_match(ompi_proc_t *ompi_proc,
-                              ompi_btl_usnic_module_t *module,
-                              ompi_btl_usnic_proc_t **proc)
+int opal_btl_usnic_proc_match(opal_proc_t *opal_proc,
+                              opal_btl_usnic_module_t *module,
+                              opal_btl_usnic_proc_t **proc)
 {
     /* Check if we have already created a proc structure for this peer
        ompi process */
-    *proc = ompi_btl_usnic_proc_lookup_ompi(ompi_proc);
+    *proc = opal_btl_usnic_proc_lookup_ompi(opal_proc);
     if (*proc != NULL) {
         OBJ_RETAIN(*proc);
+        return OPAL_SUCCESS;
     } else {
         /* If not, go make one */
-        *proc = create_proc(ompi_proc);
-        if (NULL == *proc) {
-            return OMPI_ERR_NOT_FOUND;
-        }
+        return create_proc(opal_proc, proc);
     }
-    return OMPI_SUCCESS;
 }
