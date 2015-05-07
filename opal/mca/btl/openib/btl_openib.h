@@ -875,6 +875,18 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp);
 const char* btl_openib_get_transport_name(mca_btl_openib_transport_type_t transport_type);
 
 /**
+ * Get an endpoint for a process
+ *
+ * @param btl (IN)    BTL module
+ * @param proc (IN)   opal process object
+ *
+ * This function will return an existing endpoint if one exists otherwise it will allocate
+ * a new endpoint and return it.
+ */
+struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_module_t *btl,
+                                                       struct opal_proc_t *proc);
+
+/**
  * Get a transport type of btl.
  */
 
