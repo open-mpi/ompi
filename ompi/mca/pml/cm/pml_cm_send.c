@@ -153,11 +153,26 @@ mca_pml_cm_send(void *buf,
         opal_convertor_t convertor;
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dst);
 
-        opal_convertor_copy_and_prepare_for_send(
+#if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+	if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) {
+		
+		convertor.remoteArch = ompi_proc->super.proc_convertor->remoteArch;
+		convertor.flags      = ompi_proc->super.proc_convertor->flags;
+		convertor.master     = ompi_proc->super.proc_convertor->master;
+		
+		convertor.local_size = count * datatype->super.size;
+		convertor.pBaseBuf   = (unsigned char*)buf;
+		convertor.count      = count;
+		convertor.pDesc      = &datatype->super;
+	} else
+#endif
+	{
+		opal_convertor_copy_and_prepare_for_send(
 		ompi_proc->super.proc_convertor,
-                &datatype->super, count, buf, 0,
-                &convertor);
-
+			&datatype->super, count, buf, 0,
+			&convertor);
+	}
+    
         ret = OMPI_MTL_CALL(send(ompi_mtl,                             
                                  comm, 
                                  dst, 
