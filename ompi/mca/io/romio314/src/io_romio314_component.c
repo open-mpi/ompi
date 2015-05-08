@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,7 @@
 #include "ompi/mca/io/io.h"
 #include "io_romio314.h"
 
-#define ROMIO_VERSION_STRING "from MPICH v3.0.4"
+#define ROMIO_VERSION_STRING "from MPICH v3.1.4"
 
 /*
  * Private functions
