@@ -13,6 +13,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -170,13 +172,19 @@ static inline void ompi_osc_pt2pt_unlock_self (ompi_osc_pt2pt_module_t *module, 
 static inline int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, ompi_osc_pt2pt_outstanding_lock_t *lock)
 {
     ompi_osc_pt2pt_header_lock_t lock_req;
+
     int ret;
 
     /* generate a lock request */
     lock_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ;
     lock_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID | OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+    lock_req.padding[0] = 0;
+    lock_req.padding[1] = 0;
+#endif
     lock_req.lock_type = lock->type;
     lock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
+    OSC_PT2PT_HTON(&lock_req, module, target);
 
     ret = ompi_osc_pt2pt_control_send (module, target, &lock_req, sizeof (lock_req));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -197,9 +205,14 @@ static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module,
 
     unlock_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ;
     unlock_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID | OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+    unlock_req.padding[0] = 0;
+    unlock_req.padding[1] = 0;
+#endif
     unlock_req.frag_count = frag_count;
     unlock_req.lock_type = lock->type;
     unlock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
+    OSC_PT2PT_HTON(&unlock_req, module, target);
 
     if (peer->active_frag && peer->active_frag->remain_len < sizeof (unlock_req)) {
         /* the peer should expect one more packet */
@@ -239,6 +252,7 @@ static inline int ompi_osc_pt2pt_flush_remote (ompi_osc_pt2pt_module_t *module, 
                          target, flush_req.frag_count));
 
     /* send control message with unlock request and count */
+    OSC_PT2PT_HTON(&flush_req, module, target);
     ret = ompi_osc_pt2pt_control_send (module, target, &flush_req, sizeof (flush_req));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
@@ -682,6 +696,7 @@ static inline int activate_lock (ompi_osc_pt2pt_module_t *module, int requestor,
         lock_ack.source = ompi_comm_rank(module->comm);
         lock_ack.windx = ompi_comm_get_cid(module->comm);
         lock_ack.lock_ptr = lock_ptr;
+        OSC_PT2PT_HTON(&lock_ack, module, requestor);
 
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                              "osc pt2pt: sending lock to %d", requestor));
@@ -904,7 +919,16 @@ int ompi_osc_pt2pt_process_unlock (ompi_osc_pt2pt_module_t *module, int source,
 
     unlock_ack.base.type = OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_ACK;
     unlock_ack.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+    unlock_ack.padding[0] = 0;
+    unlock_ack.padding[1] = 0;
+    unlock_ack.padding[2] = 0;
+    unlock_ack.padding[3] = 0;
+    unlock_ack.padding[4] = 0;
+    unlock_ack.padding[5] = 0;
+#endif
     unlock_ack.lock_ptr = unlock_header->lock_ptr;
+    OSC_PT2PT_HTON(&unlock_ack, module, source);
 
     ret = ompi_osc_pt2pt_control_send_unbuffered (module, source, &unlock_ack, sizeof (unlock_ack));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -942,6 +966,7 @@ int ompi_osc_pt2pt_process_flush (ompi_osc_pt2pt_module_t *module, int source,
     flush_ack.base.type = OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_ACK;
     flush_ack.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
     flush_ack.serial_number = flush_header->serial_number;
+    OSC_PT2PT_HTON(&flush_ack, module, source);
 
     return ompi_osc_pt2pt_control_send_unbuffered (module, source, &flush_ack, sizeof (flush_ack));
 }
