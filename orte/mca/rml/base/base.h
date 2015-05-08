@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014 -2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -379,7 +379,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
  */
 #define RML_SELECT_WRAPPER_PRIORITY -128
 
-#define ORTE_RML_INVALID_CHANNEL_NUM  1599
+#define ORTE_RML_INVALID_CHANNEL_NUM  UINT32_MAX
 ORTE_DECLSPEC orte_rml_channel_t * orte_rml_base_get_channel (orte_rml_channel_num_t chan_num);
 
 

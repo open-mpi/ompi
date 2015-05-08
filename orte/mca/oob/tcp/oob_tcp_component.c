@@ -83,7 +83,7 @@ static int tcp_component_register(void);
 static int tcp_component_open(void);
 static int tcp_component_close(void);
 
-static bool component_available(void);
+static int component_available(void);
 static int component_startup(void);
 static void component_shutdown(void);
 static int component_send(orte_rml_send_t *msg);
@@ -450,7 +450,7 @@ static int tcp_component_register(void)
 
 static char **split_and_resolve(char **orig_str, char *name);
 
-static bool component_available(void)
+static int component_available(void)
 {
     int i, rc;
     char **interfaces = NULL;
@@ -461,12 +461,6 @@ static bool component_available(void)
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
-
-    /* if we are an APP and we are not direct launched,
-     * then we don't want to be considered */
-    if (!ORTE_PROC_IS_TOOL && ORTE_PROC_IS_APP && !orte_standalone_operation) {
-        return false;
-    }
 
     /* if interface include was given, construct a list
      * of those interfaces which match the specifications - remember,
@@ -522,7 +516,7 @@ static bool component_available(void)
             if (OPAL_ERR_NETWORK_NOT_PARSEABLE == rc) {
                 orte_show_help("help-oob-tcp.txt", "not-parseable", true);
                 opal_argv_free(interfaces);
-                return false;
+                return ORTE_ERR_BAD_PARAM;
             }
             /* if we are including, then ignore this if not present */
             if (including) {
@@ -601,14 +595,14 @@ static bool component_available(void)
         } else if (excluding) {
             orte_show_help("help-oob-tcp.txt", "excluded-all", true, mca_oob_tcp_component.if_exclude);
         }
-        return false;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
 
     /* set the module event base - this is where we would spin off a separate
      * progress thread if so desired */
     mca_oob_tcp_module.ev_base = orte_event_base;
 
-    return true;
+    return ORTE_SUCCESS;
 }
 
 /* Start all modules */

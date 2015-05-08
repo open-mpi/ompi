@@ -48,7 +48,7 @@ int orte_oob_base_select(void)
     mca_base_component_list_item_t *cli, *cmp, *c2;
     mca_oob_base_component_t *component, *c3;
     bool added;
-    int i;
+    int i, rc;
 
     /* Query all available components and ask if their transport is available */
     OPAL_LIST_FOREACH(cli, &orte_oob_base_framework.framework_components, mca_base_component_list_item_t) {
@@ -71,10 +71,12 @@ int orte_oob_base_select(void)
                             "mca:oob:select: Querying component [%s]",
                             component->oob_base.mca_component_name);
 
+        rc = component->available();
+        
         /* If the component is not available, then skip it as
          * it has no available interfaces
          */
-        if (!component->available()) {
+        if (ORTE_SUCCESS != rc && ORTE_ERR_FORCE_SELECT != rc) {
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
                                 "mca:oob:select: Skipping component [%s] - no available interfaces",
                                 component->oob_base.mca_component_name );
@@ -89,6 +91,22 @@ int orte_oob_base_select(void)
             continue;
         }
 
+        if (ORTE_ERR_FORCE_SELECT == rc) {
+            /* this component shall be the *only* component allowed
+             * for use, so shutdown and remove any prior ones */
+            while (NULL != (cmp = (mca_base_component_list_item_t*)opal_list_remove_first(&orte_oob_base.actives))) {
+                c3 = (mca_oob_base_component_t *) cmp->cli_component;
+                if (NULL != c3->shutdown) {
+                    c3->shutdown();
+                }
+                OBJ_RELEASE(cmp);
+            }
+            c2 = OBJ_NEW(mca_base_component_list_item_t);
+            c2->cli_component = (mca_base_component_t*)component;
+            opal_list_append(&orte_oob_base.actives, &c2->super);
+            break;
+        }
+        
         /* record it, but maintain priority order */
         added = false;
         OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {

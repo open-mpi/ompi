@@ -146,6 +146,7 @@ enum {
     ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 54),
     ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
     ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
+    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
