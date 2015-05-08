@@ -13,6 +13,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,7 @@
 #endif
 
 #include "opal/types.h"
+#include "opal/util/arch.h"
 
 enum ompi_osc_pt2pt_hdr_type_t {
     OMPI_OSC_PT2PT_HDR_TYPE_PUT          = 0x01,
@@ -79,9 +82,9 @@ struct ompi_osc_pt2pt_header_acc_t {
 
     uint16_t tag;
     uint32_t count;
-    uint32_t op;
     uint64_t len;
     uint64_t displacement;
+    uint32_t op;
 };
 typedef struct ompi_osc_pt2pt_header_acc_t ompi_osc_pt2pt_header_acc_t;
 
@@ -97,6 +100,9 @@ typedef struct ompi_osc_pt2pt_header_get_t ompi_osc_pt2pt_header_get_t;
 
 struct ompi_osc_pt2pt_header_complete_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
     int frag_count;
 };
 typedef struct ompi_osc_pt2pt_header_complete_t ompi_osc_pt2pt_header_complete_t;
@@ -105,7 +111,6 @@ struct ompi_osc_pt2pt_header_cswap_t {
     ompi_osc_pt2pt_header_base_t base;
 
     uint16_t tag;
-
     uint32_t len;
     uint64_t displacement;
 };
@@ -119,6 +124,9 @@ typedef struct ompi_osc_pt2pt_header_post_t ompi_osc_pt2pt_header_post_t;
 
 struct ompi_osc_pt2pt_header_lock_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
     int32_t lock_type;
     uint64_t lock_ptr;
 };
@@ -134,20 +142,29 @@ typedef struct ompi_osc_pt2pt_header_lock_ack_t ompi_osc_pt2pt_header_lock_ack_t
 
 struct ompi_osc_pt2pt_header_unlock_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
     int32_t lock_type;
-    uint32_t frag_count;
     uint64_t lock_ptr;
+    uint32_t frag_count;
 };
 typedef struct ompi_osc_pt2pt_header_unlock_t ompi_osc_pt2pt_header_unlock_t;
 
 struct ompi_osc_pt2pt_header_unlock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[6];
+#endif
     uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_unlock_ack_t ompi_osc_pt2pt_header_unlock_ack_t;
 
 struct ompi_osc_pt2pt_header_flush_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
     uint32_t frag_count;
     uint64_t serial_number;
 };
@@ -155,6 +172,9 @@ typedef struct ompi_osc_pt2pt_header_flush_t ompi_osc_pt2pt_header_flush_t;
 
 struct ompi_osc_pt2pt_header_flush_ack_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[6];
+#endif
     uint64_t serial_number;
 };
 typedef struct ompi_osc_pt2pt_header_flush_ack_t ompi_osc_pt2pt_header_flush_ack_t;
@@ -185,5 +205,249 @@ union ompi_osc_pt2pt_header_t {
     ompi_osc_pt2pt_frag_header_t       frag;
 };
 typedef union ompi_osc_pt2pt_header_t ompi_osc_pt2pt_header_t;
+
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#define MCA_OSC_PT2PT_FRAG_HDR_NTOH(h)       \
+    (h).windx = ntohs((h).windx);               \
+    (h).source = ntohl((h).source);             \
+    (h).num_ops = ntohl((h).num_ops);           \
+    (h).pad = ntohl((h).pad);
+#define MCA_OSC_PT2PT_FRAG_HDR_HTON(h)       \
+    (h).windx = htons((h).windx);               \
+    (h).source = htonl((h).source);             \
+    (h).num_ops = htonl((h).num_ops);           \
+    (h).pad = htonl((h).pad);
+ 
+#define MCA_OSC_PT2PT_PUT_HDR_NTOH(h)        \
+    (h).tag = ntohs((h).tag);                   \
+    (h).count = ntohl((h).count);               \
+    (h).len = ntoh64((h).len);                  \
+    (h).displacement = ntoh64((h).displacement);
+#define MCA_OSC_PT2PT_PUT_HDR_HTON(h)        \
+    (h).tag = htons((h).tag);                   \
+    (h).count = htonl((h).count);               \
+    (h).len = hton64((h).len);                  \
+    (h).displacement = hton64((h).displacement);
+
+#define MCA_OSC_PT2PT_GET_HDR_NTOH(h)        \
+    (h).tag = ntohs((h).tag);                   \
+    (h).count = ntohl((h).count);               \
+    (h).len = ntoh64((h).len);                  \
+    (h).displacement = ntoh64((h).displacement);
+#define MCA_OSC_PT2PT_GET_HDR_HTON(h)        \
+    (h).tag = htons((h).tag);                   \
+    (h).count = htonl((h).count);               \
+    (h).len = hton64((h).len);                  \
+    (h).displacement = hton64((h).displacement);
+
+#define MCA_OSC_PT2PT_ACC_HDR_NTOH(h)        \
+    (h).tag = ntohs((h).tag);                   \
+    (h).count = ntohl((h).count);               \
+    (h).len = ntoh64((h).len);                  \
+    (h).displacement = ntoh64((h).displacement);\
+    (h).op = ntohl((h).op);
+#define MCA_OSC_PT2PT_ACC_HDR_HTON(h)        \
+    (h).tag = htons((h).tag);                   \
+    (h).count = htonl((h).count);               \
+    (h).len = hton64((h).len);                  \
+    (h).displacement = hton64((h).displacement);\
+    (h).op = htonl((h).op);
+
+#define MCA_OSC_PT2PT_LOCK_HDR_NTOH(h)       \
+    (h).lock_type = ntohl((h).lock_type);       \
+    (h).lock_ptr = ntoh64((h).lock_ptr)
+#define MCA_OSC_PT2PT_LOCK_HDR_HTON(h)       \
+    (h).lock_type = htonl((h).lock_type);       \
+    (h).lock_ptr = hton64((h).lock_ptr)
+
+#define MCA_OSC_PT2PT_UNLOCK_HDR_NTOH(h)     \
+    (h).lock_type = ntohl((h).lock_type);       \
+    (h).lock_ptr = ntoh64((h).lock_ptr);        \
+    (h).frag_count = ntohl((h).frag_count)
+#define MCA_OSC_PT2PT_UNLOCK_HDR_HTON(h)     \
+    (h).lock_type = htonl((h).lock_type);       \
+    (h).lock_ptr = hton64((h).lock_ptr);        \
+    (h).frag_count = htonl((h).frag_count)
+
+#define MCA_OSC_PT2PT_LOCK_ACK_HDR_NTOH(h)   \
+    (h).windx = ntohs((h).windx);               \
+    (h).source = ntohl((h).source);             \
+    (h).lock_ptr = ntoh64((h).lock_ptr)
+#define MCA_OSC_PT2PT_LOCK_ACK_HDR_HTON(h)   \
+    (h).windx = htonl((h).windx);               \
+    (h).source= htonl((h).source);              \
+    (h).lock_ptr = hton64((h).lock_ptr)
+
+#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_NTOH(h) \
+    (h).lock_ptr = ntoh64((h).lock_ptr);
+#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_HTON(h) \
+    (h).lock_ptr = hton64((h).lock_ptr);
+
+#define MCA_OSC_PT2PT_COMPLETE_HDR_NTOH(h)   \
+    (h).frag_count = ntohl((h).frag_count)
+#define MCA_OSC_PT2PT_COMPLETE_HDR_HTON(h)   \
+    (h).frag_count = htonl((h).frag_count)
+
+#define MCA_OSC_PT2PT_FLUSH_HDR_NTOH(h)      \
+    (h).frag_count = ntohl((h).frag_count);     \
+    (h).serial_number = ntoh64((h).serial_number)
+#define MCA_OSC_PT2PT_FLUSH_HDR_HTON(h)      \
+    (h).frag_count = htonl((h).frag_count);     \
+    (h).serial_number = ntoh64((h).serial_number)
+
+#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_NTOH(h)  \
+    (h).serial_number = ntoh64((h).serial_number)
+#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_HTON(h)  \
+    (h).serial_number = ntoh64((h).serial_number)
+
+#define MCA_OSC_PT2PT_POST_HDR_NTOH(h)       \
+    (h).windx = ntohs((h).windx)
+#define MCA_OSC_PT2PT_POST_HDR_HTON(h)       \
+    (h).windx = htons((h).windx)
+
+#define MCA_OSC_PT2PT_CSWAP_HDR_NTOH(h)      \
+    (h).tag = ntohs((h).tag);                   \
+    (h).len = ntohl((h).len);                   \
+    (h).displacement = ntoh64((h).displacement)
+#define MCA_OSC_PT2PT_CSWAP_HDR_HTON(h)      \
+    (h).tag = htons((h).tag);                   \
+    (h).len = htonl((h).len);                   \
+    (h).displacement = hton64((h).displacement)
+#endif /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
+
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+static inline __opal_attribute_always_inline__ void
+osc_pt2pt_ntoh(ompi_osc_pt2pt_header_t *hdr)
+{
+    if(!(hdr->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO))
+        return;
+
+    switch(hdr->base.type) {
+        case OMPI_OSC_PT2PT_HDR_TYPE_PUT:
+        case OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG:
+            MCA_OSC_PT2PT_PUT_HDR_NTOH(hdr->put);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_ACC:
+        case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC:
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
+            MCA_OSC_PT2PT_ACC_HDR_NTOH(hdr->acc);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET:
+            MCA_OSC_PT2PT_GET_HDR_NTOH(hdr->get);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP:
+        case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP_LONG:
+            MCA_OSC_PT2PT_CSWAP_HDR_NTOH(hdr->cswap);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE:
+            MCA_OSC_PT2PT_COMPLETE_HDR_NTOH(hdr->complete);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_POST:
+            MCA_OSC_PT2PT_POST_HDR_NTOH(hdr->post);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
+            MCA_OSC_PT2PT_LOCK_HDR_NTOH(hdr->lock);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
+            MCA_OSC_PT2PT_LOCK_ACK_HDR_NTOH(hdr->lock_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
+            MCA_OSC_PT2PT_UNLOCK_HDR_NTOH(hdr->unlock);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_ACK:
+            MCA_OSC_PT2PT_UNLOCK_ACK_HDR_NTOH(hdr->unlock_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
+            MCA_OSC_PT2PT_FLUSH_HDR_NTOH(hdr->flush);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_ACK:
+            MCA_OSC_PT2PT_FLUSH_ACK_HDR_NTOH(hdr->flush_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FRAG:
+            MCA_OSC_PT2PT_FRAG_HDR_NTOH(hdr->frag);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+#else
+#define osc_pt2pt_ntoh(h)    \
+    do { } while (0)
+#endif /* !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
+
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#define osc_pt2pt_hton(h, p) \
+    osc_pt2pt_hton_intr((ompi_osc_pt2pt_header_t *)(h), (p));
+static inline __opal_attribute_always_inline__ void
+osc_pt2pt_hton_intr(ompi_osc_pt2pt_header_t *hdr, const ompi_proc_t *proc)
+{
+#ifdef WORDS_BIGENDIAN
+    hdr->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+#else
+    if(!(proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN))
+        return;
+
+    hdr->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+    switch(hdr->base.type) {
+        case OMPI_OSC_PT2PT_HDR_TYPE_PUT:
+        case OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG:
+            MCA_OSC_PT2PT_PUT_HDR_HTON(hdr->put);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_ACC:
+        case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC:
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
+            MCA_OSC_PT2PT_ACC_HDR_HTON(hdr->acc);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_GET:
+            MCA_OSC_PT2PT_GET_HDR_HTON(hdr->get);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP:
+        case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP_LONG:
+            MCA_OSC_PT2PT_CSWAP_HDR_HTON(hdr->cswap);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE:
+            MCA_OSC_PT2PT_COMPLETE_HDR_HTON(hdr->complete);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_POST:
+            MCA_OSC_PT2PT_POST_HDR_HTON(hdr->post);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
+            MCA_OSC_PT2PT_LOCK_HDR_HTON(hdr->lock);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
+            MCA_OSC_PT2PT_LOCK_ACK_HDR_HTON(hdr->lock_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
+            MCA_OSC_PT2PT_UNLOCK_HDR_HTON(hdr->unlock);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_ACK:
+            MCA_OSC_PT2PT_UNLOCK_ACK_HDR_HTON(hdr->unlock_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
+            MCA_OSC_PT2PT_FLUSH_HDR_HTON(hdr->flush);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_ACK:
+            MCA_OSC_PT2PT_FLUSH_ACK_HDR_HTON(hdr->flush_ack);
+            break;
+        case OMPI_OSC_PT2PT_HDR_TYPE_FRAG:
+            MCA_OSC_PT2PT_FRAG_HDR_HTON(hdr->frag);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+#endif /* WORDS_BIGENDIAN */
+}
+#define OSC_PT2PT_HTON(h, m, r) \
+        osc_pt2pt_hton_intr((ompi_osc_pt2pt_header_t *)(h), ompi_comm_peer_lookup((m)->comm, (r)));
+#else
+#define osc_pt2pt_hton(h, p) \
+    do { } while (0)
+#define OSC_PT2PT_HTON(h, m, r) \
+    do { } while (0)
+#endif /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 #endif /* OMPI_MCA_OSC_PT2PT_HDR_H */

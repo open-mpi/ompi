@@ -12,7 +12,7 @@
  *                         reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -561,7 +561,6 @@ static inline int process_get (ompi_osc_pt2pt_module_t* module, int target,
 static inline int osc_pt2pt_accumulate_buffer (void *target, void *source, size_t source_len, ompi_proc_t *proc,
                                               int count, ompi_datatype_t *datatype, ompi_op_t *op)
 {
-    void *buffer = source;
     int ret;
 
     assert (NULL != target && NULL != source);
@@ -576,6 +575,7 @@ static inline int osc_pt2pt_accumulate_buffer (void *target, void *source, size_
         ompi_datatype_t *primitive_datatype = NULL;
         uint32_t primitive_count;
         size_t buflen;
+        void *buffer;
 
         ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
         primitive_count *= count;
@@ -589,19 +589,18 @@ static inline int osc_pt2pt_accumulate_buffer (void *target, void *source, size_
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        osc_pt2pt_copy_on_recv (buffer, source, source_len, proc, count, datatype);
-    }
+        osc_pt2pt_copy_on_recv (buffer, source, source_len, proc, primitive_count, primitive_datatype);
+
+        ret = ompi_osc_base_process_op(target, buffer, source_len, datatype,
+                                       count, op);
+
+        free(buffer);
+    } else
 #endif
 
     /* copy the data from the temporary buffer into the user window */
-    ret = ompi_osc_base_process_op(target, buffer, source_len, datatype,
+    ret = ompi_osc_base_process_op(target, source, source_len, datatype,
                                    count, op);
-
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->super.proc_arch != ompi_proc_local()->super.proc_arch) {
-        free(buffer);
-    }
-#endif
 
     return ret;
 }
@@ -682,8 +681,19 @@ static int accumulate_cb (ompi_request_t *request)
         /* no more requests needed before the buffer can be accumulated */
 
         if (acc_data->source) {
-            ret = osc_pt2pt_accumulate_buffer (acc_data->target, acc_data->source, acc_data->source_len,
-                                              acc_data->proc, acc_data->count, acc_data->datatype, acc_data->op);
+            ompi_datatype_t *primitive_datatype = NULL;
+            uint32_t primitive_count;
+
+            assert (NULL != acc_data->target && NULL != acc_data->source);
+
+            ompi_osc_base_get_primitive_type_info(acc_data->datatype, &primitive_datatype, &primitive_count);
+            primitive_count *= acc_data->count;
+
+            if (acc_data->op == &ompi_mpi_op_replace.op) {
+                ret = ompi_datatype_sndrcv(acc_data->source, primitive_count, primitive_datatype, acc_data->target, acc_data->count, acc_data->datatype);
+            } else {
+                ret = ompi_osc_base_process_op(acc_data->target, acc_data->source, acc_data->source_len, acc_data->datatype, acc_data->count, acc_data->op);
+            }
         }
 
         /* drop the accumulate lock */
@@ -1215,6 +1225,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
     struct ompi_datatype_t *datatype;
     void *buffer = NULL;
     uint64_t data_len;
+    ompi_proc_t * proc;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1222,7 +1233,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
                          ompi_comm_rank(module->comm),
                          source));
 
-    ret = datatype_create (module, source, NULL, &datatype, (void **) &data);
+    ret = datatype_create (module, source, &proc, &datatype, (void **) &data);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
@@ -1232,13 +1243,18 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
     if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
         /* make a copy of the data since the buffer needs to be returned */
         if (data_len) {
+            ompi_datatype_t *primitive_datatype = NULL;
+            uint32_t primitive_count;
             buffer = malloc (data_len);
             if (OPAL_UNLIKELY(NULL == buffer)) {
                 OBJ_RELEASE(datatype);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            memcpy (buffer, data, data_len);
+            ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
+            primitive_count *= acc_header->count;
+
+            osc_pt2pt_copy_on_recv (buffer, data, data_len, proc, primitive_count, primitive_datatype);
         }
 
         ret = ompi_osc_pt2pt_gacc_start (module, source, buffer, data_len, datatype,
@@ -1543,6 +1559,7 @@ static inline int process_frag (ompi_osc_pt2pt_module_t *module,
                              header->base.flags));
 
         if (OPAL_LIKELY(!(header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE))) {
+            osc_pt2pt_ntoh(header);
             switch (header->base.type) {
             case OMPI_OSC_PT2PT_HDR_TYPE_PUT:
                 ret = process_put(module, frag->source, &header->put);
@@ -1617,8 +1634,8 @@ static inline int process_frag (ompi_osc_pt2pt_module_t *module,
 static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 {
     ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) request->req_complete_cb_data;
-    ompi_osc_pt2pt_header_base_t *base_header =
-        (ompi_osc_pt2pt_header_base_t *) module->incoming_buffer;
+    ompi_osc_pt2pt_header_t *base_header =
+        (ompi_osc_pt2pt_header_t *) module->incoming_buffer;
     size_t incoming_length = request->req_status._ucount;
     int source = request->req_status.MPI_SOURCE;
 
@@ -1628,14 +1645,15 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "received pt2pt callback for fragment. source = %d, count = %u, type = 0x%x",
-                         source, (unsigned) incoming_length, base_header->type));
+                         source, (unsigned) incoming_length, base_header->base.type));
 
-    switch (base_header->type) {
+    osc_pt2pt_ntoh(base_header);
+    switch (base_header->base.type) {
     case OMPI_OSC_PT2PT_HDR_TYPE_FRAG:
         process_frag(module, (ompi_osc_pt2pt_frag_header_t *) base_header);
 
         /* only data fragments should be included in the completion counters */
-        mark_incoming_completion (module, (base_header->flags & OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET) ? source : MPI_PROC_NULL);
+        mark_incoming_completion (module, (base_header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET) ? source : MPI_PROC_NULL);
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_POST:
         (void) osc_pt2pt_incoming_post (module, source);
@@ -1652,7 +1670,7 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
     default:
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "received unexpected message of type %x",
-                             (int) base_header->type));
+                             (int) base_header->base.type));
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
