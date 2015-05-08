@@ -12,6 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -488,7 +489,7 @@ int ompi_osc_pt2pt_sync (struct ompi_win_t *win)
 static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_outstanding_lock_t *lock,
                                       int target)
 {
-    int ret, flush_count;
+    int ret;
     int my_rank = ompi_comm_rank (module->comm);
 
     /* wait until ack has arrived from target, since we need to be
@@ -510,7 +511,6 @@ static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_
 
     if (-1 == target) {
         /* NTH: no local flush */
-        flush_count = ompi_comm_size(module->comm) - 1;
         for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             if (i == my_rank) {
                 continue;
@@ -522,7 +522,6 @@ static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_
             }
         }
     } else {
-        flush_count = 1;
 
         /* send control message with flush request and count */
         ret = ompi_osc_pt2pt_flush_remote (module, target, lock);
