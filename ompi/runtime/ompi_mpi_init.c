@@ -18,7 +18,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -257,37 +257,37 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
    ompi/include/mpif-common.h.
  */
 
-#define INST(type, upper_case, lower_case, single_u, double_u)   \
-type lower_case; \
-type upper_case; \
-type single_u;  \
-type double_u
+#define INST(type, value, upper_case, lower_case, single_u, double_u)   \
+type lower_case = value; \
+type upper_case = value; \
+type single_u = value;  \
+type double_u = value
 
-INST(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
+INST(int, -1, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
-INST(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
+INST(int, -1, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
-INST(int, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
+INST(int, -1, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
      mpi_fortran_unweighted_, mpi_fortran_unweighted__);
-INST(int, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
+INST(int, -1, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
      mpi_fortran_weights_empty_, mpi_fortran_weights_empty__);
-INST(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
+INST(char *, NULL, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-INST(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
+INST(char *, NULL, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
      mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-INST(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
+INST(int *, NULL, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
      mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
+INST(int *, NULL, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-INST(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
+INST(int *, NULL, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
       mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*
  * Hash tables for MPI_Type_create_f90* functions
  */
-opal_hash_table_t ompi_mpi_f90_integer_hashtable;
-opal_hash_table_t ompi_mpi_f90_real_hashtable;
-opal_hash_table_t ompi_mpi_f90_complex_hashtable;
+opal_hash_table_t ompi_mpi_f90_integer_hashtable = {{0}};
+opal_hash_table_t ompi_mpi_f90_real_hashtable = {{0}};
+opal_hash_table_t ompi_mpi_f90_complex_hashtable = {{0}};
 
 /*
  * Per MPI-2:9.5.3, MPI_REGISTER_DATAREP is a memory leak.  There is
@@ -296,9 +296,9 @@ opal_hash_table_t ompi_mpi_f90_complex_hashtable;
  * de-registered during MPI_FINALIZE so that memory-tracking debuggers
  * don't show Open MPI as leaking memory.
  */
-opal_list_t ompi_registered_datareps;
+opal_list_t ompi_registered_datareps = {{0}};
 
-bool ompi_enable_timing, ompi_enable_timing_ext;
+bool ompi_enable_timing = false, ompi_enable_timing_ext = false;
 extern bool ompi_mpi_yield_when_idle;
 extern int ompi_mpi_event_tick_rate;
 

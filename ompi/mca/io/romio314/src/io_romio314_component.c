@@ -70,7 +70,7 @@ static int delete_priority_param = 20;
 /*
  * Global, component-wide ROMIO mutex because ROMIO is not thread safe
  */
-opal_mutex_t mca_io_romio314_mutex;
+opal_mutex_t mca_io_romio314_mutex = {{0}};
 
 
 /*

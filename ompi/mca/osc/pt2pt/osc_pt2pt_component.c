@@ -14,6 +14,8 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,7 +123,7 @@ ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
     }
 };
 
-bool ompi_osc_pt2pt_no_locks;
+bool ompi_osc_pt2pt_no_locks = false;
 
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca

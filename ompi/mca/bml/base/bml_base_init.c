@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +37,7 @@ mca_bml_base_module_t mca_bml = {
     NULL,                    /* bml_finalize*/
     NULL                     /* FT event */
 };
-mca_bml_base_component_t mca_bml_component;
+mca_bml_base_component_t mca_bml_component = {{0}};
 
 static bool init_called = false;
 

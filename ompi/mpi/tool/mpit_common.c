@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +13,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-opal_mutex_t mpit_big_lock;
+opal_mutex_t mpit_big_lock = {{0}};
 
 volatile uint32_t mpit_init_count = 0;
 volatile int32_t initted = 0;

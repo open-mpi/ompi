@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,13 +81,13 @@ static int delete_priority_param = 30;
 /*
  * Global, component-wide OMPIO mutex because OMPIO is not thread safe
  */
-opal_mutex_t mca_io_ompio_mutex;
+opal_mutex_t mca_io_ompio_mutex = {{0}};
 
 
 /*
  * Global list of requests for this component
  */
-opal_list_t mca_io_ompio_pending_requests;
+opal_list_t mca_io_ompio_pending_requests = {{0}};
 
 
 /*

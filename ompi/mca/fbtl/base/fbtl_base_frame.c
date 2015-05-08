@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,8 +43,8 @@
  * Global variables; most of which are loaded by back-ends of MCA
  * variables
  */
-mca_fbtl_base_component_t mca_fbtl_base_selected_component;
-mca_fbtl_base_module_t mca_fbtl;
+mca_fbtl_base_component_t mca_fbtl_base_selected_component = {{0}};
+mca_fbtl_base_module_t mca_fbtl = {0};
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, fbtl, NULL, NULL, NULL, NULL,
                            mca_fbtl_base_static_components, 0);

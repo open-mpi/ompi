@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
@@ -45,7 +45,7 @@
 #include "ompi_common_dll_defs.h"
 
 /* Basic callbacks into the debugger */
-const mqs_basic_callbacks *mqs_basic_entrypoints;
+const mqs_basic_callbacks *mqs_basic_entrypoints = NULL;
 
 #if defined(WORDS_BIGENDIAN)
 static int host_is_big_endian = 1;
