@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +46,7 @@
 /*
  * Global variables
  */
-orte_grpcomm_base_t orte_grpcomm_base;
+orte_grpcomm_base_t orte_grpcomm_base = {{{0}}};
 
 orte_grpcomm_API_module_t orte_grpcomm = {
     orte_grpcomm_API_xcast,

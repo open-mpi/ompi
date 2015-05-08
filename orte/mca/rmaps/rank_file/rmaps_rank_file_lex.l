@@ -16,6 +16,8 @@
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *  
  * $COPYRIGHT$
  * 
@@ -43,7 +45,7 @@ END_C_DECLS
  * global variables
  */
 int orte_rmaps_rank_file_line=1;
-orte_rmaps_rank_file_value_t orte_rmaps_rank_file_value;
+orte_rmaps_rank_file_value_t orte_rmaps_rank_file_value = {0};
 bool orte_rmaps_rank_file_done = false;
 
 %}

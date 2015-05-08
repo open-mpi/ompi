@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +58,7 @@ OBJ_CLASS_INSTANCE(orte_info_component_map_t,
                    component_map_construct,
                    component_map_destruct);
 
-opal_pointer_array_t component_map;
+opal_pointer_array_t component_map = {{0}};
 
 /*
  * Private variables

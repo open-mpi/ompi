@@ -184,7 +184,7 @@ OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
  * Global variables
  */
 
-orte_iof_base_t orte_iof_base;
+orte_iof_base_t orte_iof_base = {0};
 
 static int orte_iof_base_register(mca_base_register_flag_t flags)
 {

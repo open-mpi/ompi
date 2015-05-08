@@ -7,6 +7,8 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,8 +67,8 @@ OBJ_CLASS_INSTANCE(orte_routed_jobfam_t, opal_object_t,
                    jfamconst, jfamdest);
 
 orte_routed_module_t orte_routed = {0};
-bool orte_routed_base_wait_sync;
-opal_pointer_array_t orte_routed_jobfams;
+bool orte_routed_base_wait_sync = false;
+opal_pointer_array_t orte_routed_jobfams = {{0}};
 
 static int orte_routed_base_open(mca_base_open_flag_t flags)
 {

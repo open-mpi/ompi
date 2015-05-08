@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@
 /*
  * Global variables
  */
-orte_qos_base_t orte_qos_base;
+orte_qos_base_t orte_qos_base = {{{0}}};
 OPAL_TIMING_DECLARE(tm_qos)
 
 static int orte_qos_base_register(mca_base_register_flag_t flags)

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,10 +51,10 @@
 /*
  * Global variables
  */
-opal_list_t orte_notifier_base_components_available;
+opal_list_t orte_notifier_base_components_available = {{0}};
 int orte_notifier_debug_output = -1;
 
-orte_notifier_base_t orte_notifier_base;
+orte_notifier_base_t orte_notifier_base = {0};
 
 static char *notifier_severity = NULL;
 static bool use_progress_thread = false;

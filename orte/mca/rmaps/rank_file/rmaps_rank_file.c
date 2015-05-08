@@ -15,6 +15,8 @@
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *  
  * $COPYRIGHT$
  * 
@@ -53,7 +55,7 @@
 static int orte_rmaps_rank_file_parse(const char *);
 static char *orte_rmaps_rank_file_parse_string_or_int(void);
 static const char *orte_rmaps_rank_file_name_cur = NULL;
-char *orte_rmaps_rank_file_slot_list;
+char *orte_rmaps_rank_file_slot_list = NULL;
 
 /*
  * Local variable

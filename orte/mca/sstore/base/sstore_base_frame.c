@@ -5,6 +5,8 @@
  * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,18 +49,18 @@ orte_sstore_base_module_t orte_sstore = {
     NULL, /* fetch_app_deps */
     NULL  /* wait_all_deps  */
 };
-int orte_sstore_context;
+int orte_sstore_context = -1;
 
 bool   orte_sstore_base_is_checkpoint_available = false;
-char * orte_sstore_base_local_metadata_filename;
-char * orte_sstore_base_global_metadata_filename;
-char * orte_sstore_base_local_snapshot_fmt;
+char * orte_sstore_base_local_metadata_filename = NULL;
+char * orte_sstore_base_global_metadata_filename = NULL;
+char * orte_sstore_base_local_snapshot_fmt = NULL;
 char * orte_sstore_base_global_snapshot_dir = NULL;
 char * orte_sstore_base_global_snapshot_ref = NULL;
 char * orte_sstore_base_prelaunch_location  = NULL;
 
-orte_sstore_base_handle_t orte_sstore_handle_current;
-orte_sstore_base_handle_t orte_sstore_handle_last_stable;
+orte_sstore_base_handle_t orte_sstore_handle_current = {0};
+orte_sstore_base_handle_t orte_sstore_handle_last_stable = {0};
 
 /* Determine the context of this module */
 int orte_sstore_base_determine_context(void);
