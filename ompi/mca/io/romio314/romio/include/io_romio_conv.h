@@ -23,7 +23,7 @@
 #ifdef ROMIO_PREFIX
 #undef ROMIO_PREFIX
 #endif
-#define ROMIO_PREFIX(foo) mca_io_romio_dist_##foo
+#define ROMIO_PREFIX(foo) mca_io_romio314_dist_##foo
 
 /* Section 9.2 */
 /* Begin Prototypes */
