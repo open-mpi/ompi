@@ -83,7 +83,7 @@ static int usock_component_register(void);
 static int usock_component_open(void);
 static int usock_component_close(void);
 
-static bool component_available(void);
+static int component_available(void);
 static int component_startup(void);
 static void component_shutdown(void);
 static int component_send(orte_rml_send_t *msg);
@@ -155,7 +155,7 @@ static int usock_component_register(void)
 }
 
 
-static bool component_available(void)
+static int component_available(void)
 {
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:usock: component_available called");
@@ -164,22 +164,25 @@ static bool component_available(void)
     if (!orte_create_session_dirs ||
         NULL == orte_process_info.tmpdir_base ||
         NULL == orte_process_info.top_session_dir) {
-        return false;
+        return ORTE_ERR_NOT_SUPPORTED;
     }
 
     /* this component is not available to tools */
     if (ORTE_PROC_IS_TOOL) {
-        return false;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
 
-    /* direct-launched apps cannot use it either */
-    if (ORTE_PROC_IS_APP &&
-        (NULL == orte_process_info.my_daemon_uri)) {
-        return false;
+    if (ORTE_PROC_IS_APP) {
+        if (NULL == orte_process_info.my_daemon_uri) {
+            /* direct-launched apps cannot use it */
+           return ORTE_ERR_NOT_AVAILABLE;
+        }
+        /* apps launched by daemons *must* use it */
+        return ORTE_ERR_FORCE_SELECT;
     }
 
     /* otherwise, we are available */
-    return true;
+    return ORTE_SUCCESS;
 }
 
 /* Start the module */
