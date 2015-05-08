@@ -315,6 +315,7 @@ do {                                                                    \
 }
 
 extern void mca_pml_cm_recv_request_completion(struct mca_mtl_request_t *mtl_request);
+extern void mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request);
 
 #endif
 

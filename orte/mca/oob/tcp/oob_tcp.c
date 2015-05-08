@@ -238,7 +238,7 @@ static int parse_uri(const uint16_t af_family,
 #if OPAL_ENABLE_IPV6
     else if (AF_INET6 == af_family) {
         struct sockaddr_in6 *in6;
-        memset(inaddr, 0, sizeof(struct sockaddr_in6));=
+        memset(inaddr, 0, sizeof(struct sockaddr_in6));
         in6 = (struct sockaddr_in6*) inaddr;
 
         if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
