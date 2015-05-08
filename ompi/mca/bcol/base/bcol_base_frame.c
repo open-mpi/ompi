@@ -49,10 +49,10 @@ static int mca_bcol_base_register(mca_base_register_flag_t flags);
 MCA_BASE_FRAMEWORK_DECLARE(ompi, bcol, NULL, mca_bcol_base_register, mca_bcol_base_open, mca_bcol_base_close,
                            mca_bcol_base_static_components, 0);
 
-OMPI_DECLSPEC opal_list_t mca_bcol_base_components_in_use;
-OMPI_DECLSPEC char *ompi_bcol_bcols_string;
-OMPI_DECLSPEC int bcol_mpool_compatibility[BCOL_SIZE][BCOL_SIZE];
-OMPI_DECLSPEC int bcol_mpool_index[BCOL_SIZE][BCOL_SIZE];
+OMPI_DECLSPEC opal_list_t mca_bcol_base_components_in_use = {{0}};
+OMPI_DECLSPEC char *ompi_bcol_bcols_string = NULL;
+OMPI_DECLSPEC int bcol_mpool_compatibility[BCOL_SIZE][BCOL_SIZE] = {{0}};
+OMPI_DECLSPEC int bcol_mpool_index[BCOL_SIZE][BCOL_SIZE] = {{0}};
 
 static void bcol_base_module_constructor(mca_bcol_base_module_t *module)
 {

@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,9 +40,9 @@
  * Table for Fortran <-> C communicator handle conversion.  Note that
  * these are not necessarily global.
  */
-opal_pointer_array_t ompi_mpi_windows; 
+opal_pointer_array_t ompi_mpi_windows = {{0}}; 
 
-ompi_predefined_win_t ompi_mpi_win_null;
+ompi_predefined_win_t ompi_mpi_win_null = {{{0}}};
 ompi_predefined_win_t *ompi_mpi_win_null_addr = &ompi_mpi_win_null;
 
 static void ompi_win_construct(ompi_win_t *win);

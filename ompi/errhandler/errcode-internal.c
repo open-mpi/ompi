@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 #include "ompi/errhandler/errcode-internal.h"
 
 /* Table holding all error codes */
-opal_pointer_array_t ompi_errcodes_intern;
+opal_pointer_array_t ompi_errcodes_intern = {{0}};
 int ompi_errcode_intern_lastused=0;
 
 static ompi_errcode_intern_t ompi_success_intern;

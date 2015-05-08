@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,9 +56,9 @@
 /*
  * Global variables
  */
-ompi_predefined_info_t ompi_mpi_info_null;
+ompi_predefined_info_t ompi_mpi_info_null = {{{{0}}}};
 ompi_predefined_info_t *ompi_mpi_info_null_addr = &ompi_mpi_info_null;
-ompi_predefined_info_t ompi_mpi_info_env;
+ompi_predefined_info_t ompi_mpi_info_env = {{{{0}}}};
 
 
 /*
@@ -88,7 +90,7 @@ OBJ_CLASS_INSTANCE(ompi_info_entry_t,
 /*
  * The global fortran <-> C translation table
  */
-opal_pointer_array_t ompi_info_f_to_c_table;
+opal_pointer_array_t ompi_info_f_to_c_table = {{0}};
 
 /*
  * This function is called during ompi_init and initializes the

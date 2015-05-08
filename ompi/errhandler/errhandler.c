@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +37,7 @@
 /*
  * Table for Fortran <-> C errhandler handle conversion
  */
-opal_pointer_array_t ompi_errhandler_f_to_c_table;
+opal_pointer_array_t ompi_errhandler_f_to_c_table = {{0}};
 
 
 /*
@@ -55,16 +57,16 @@ OBJ_CLASS_INSTANCE(ompi_errhandler_t, opal_object_t, ompi_errhandler_construct,
 /*
  * _addr flavors are for F03 bindings
  */
-ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
+ompi_predefined_errhandler_t ompi_mpi_errhandler_null = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr = 
     &ompi_mpi_errhandler_null;
-ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
+ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr = 
     &ompi_mpi_errors_are_fatal;
-ompi_predefined_errhandler_t ompi_mpi_errors_return;
+ompi_predefined_errhandler_t ompi_mpi_errors_return = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr = 
     &ompi_mpi_errors_return;
-ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
+ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions = {{{0}}};
 ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr = 
     &ompi_mpi_errors_throw_exceptions;
 

@@ -14,6 +14,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,9 +59,9 @@ int   ompi_coll_tuned_alltoall_intermediate_msg = 3000;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
-coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT];
+coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
 /* max algorithm values */
-int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
+int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT] = {0};
 
 /*
  * Local function

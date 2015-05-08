@@ -11,6 +11,8 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,7 +51,7 @@ OMPI_DECLSPEC ompi_dpm_base_module_t ompi_dpm = {
     ompi_dpm_base_null_paccept,
     ompi_dpm_base_null_pclose
 };
-ompi_dpm_base_component_t ompi_dpm_base_selected_component;
+ompi_dpm_base_component_t ompi_dpm_base_selected_component = {{0}};
 
 static int ompi_dpm_base_close(void)
 {

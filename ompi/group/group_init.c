@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,13 +40,13 @@ OBJ_CLASS_INSTANCE(ompi_group_t,
 /*
  * Table for Fortran <-> C group handle conversion
  */
-opal_pointer_array_t ompi_group_f_to_c_table;
+opal_pointer_array_t ompi_group_f_to_c_table = {{0}};
 
 /*
  * Predefined group objects
  */
-ompi_predefined_group_t ompi_mpi_group_empty;
-ompi_predefined_group_t ompi_mpi_group_null;
+ompi_predefined_group_t ompi_mpi_group_empty = {{{0}}};
+ompi_predefined_group_t ompi_mpi_group_null = {{{0}}};
 ompi_predefined_group_t *ompi_mpi_group_empty_addr = &ompi_mpi_group_empty;
 ompi_predefined_group_t *ompi_mpi_group_null_addr = &ompi_mpi_group_null;
 

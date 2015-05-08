@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reseved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

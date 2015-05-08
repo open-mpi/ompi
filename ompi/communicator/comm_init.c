@@ -18,6 +18,8 @@
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,13 +48,13 @@
 ** on cid.
 ** 
 */
-opal_pointer_array_t ompi_mpi_communicators; 
-opal_pointer_array_t ompi_comm_f_to_c_table;
+opal_pointer_array_t ompi_mpi_communicators = {{0}}; 
+opal_pointer_array_t ompi_comm_f_to_c_table = {{0}};
 
-ompi_predefined_communicator_t  ompi_mpi_comm_world;
-ompi_predefined_communicator_t  ompi_mpi_comm_self;
-ompi_predefined_communicator_t  ompi_mpi_comm_null;
-ompi_communicator_t  *ompi_mpi_comm_parent;
+ompi_predefined_communicator_t  ompi_mpi_comm_world = {{{0}}};
+ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{0}}};
+ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{0}}};
+ompi_communicator_t  *ompi_mpi_comm_parent = NULL;
 
 ompi_predefined_communicator_t *ompi_mpi_comm_world_addr = 
     &ompi_mpi_comm_world;

@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -81,9 +83,9 @@ mca_pml_base_module_t mca_pml = {
     0                        /* pml_max_tag */
 };
 
-mca_pml_base_component_t mca_pml_base_selected_component;
-opal_pointer_array_t mca_pml_base_pml;
-char *ompi_pml_base_bsend_allocator_name;
+mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
+opal_pointer_array_t mca_pml_base_pml = {{0}};
+char *ompi_pml_base_bsend_allocator_name = NULL;
 
 #if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
 static char *ompi_pml_base_wrapper = NULL;

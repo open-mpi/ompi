@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +36,7 @@
 /*
  * Table for Fortran <-> C op handle conversion
  */
-opal_pointer_array_t *ompi_op_f_to_c_table;
+opal_pointer_array_t *ompi_op_f_to_c_table = {0};
 
 
 /*
@@ -61,41 +63,41 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 /*
  * Intrinsic MPI_Op objects (_addr flavors are for F03 bindings)
  */
-ompi_predefined_op_t ompi_mpi_op_null;
+ompi_predefined_op_t ompi_mpi_op_null = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_null_addr = &ompi_mpi_op_null;
-ompi_predefined_op_t ompi_mpi_op_max;
+ompi_predefined_op_t ompi_mpi_op_max = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_max_addr = &ompi_mpi_op_max;
-ompi_predefined_op_t ompi_mpi_op_min;
+ompi_predefined_op_t ompi_mpi_op_min = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_min_addr = &ompi_mpi_op_min;
-ompi_predefined_op_t ompi_mpi_op_sum;
+ompi_predefined_op_t ompi_mpi_op_sum = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_sum_addr = &ompi_mpi_op_sum;
-ompi_predefined_op_t ompi_mpi_op_prod;
+ompi_predefined_op_t ompi_mpi_op_prod = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_prod_addr = &ompi_mpi_op_prod;
-ompi_predefined_op_t ompi_mpi_op_land;
+ompi_predefined_op_t ompi_mpi_op_land = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_land_addr = &ompi_mpi_op_land;
-ompi_predefined_op_t ompi_mpi_op_band;
+ompi_predefined_op_t ompi_mpi_op_band = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_band_addr = &ompi_mpi_op_band;
-ompi_predefined_op_t ompi_mpi_op_lor;
+ompi_predefined_op_t ompi_mpi_op_lor = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_lor_addr = &ompi_mpi_op_lor;
-ompi_predefined_op_t ompi_mpi_op_bor;
+ompi_predefined_op_t ompi_mpi_op_bor = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_bor_addr = &ompi_mpi_op_bor;
-ompi_predefined_op_t ompi_mpi_op_lxor;
+ompi_predefined_op_t ompi_mpi_op_lxor = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_lxor_addr = &ompi_mpi_op_lxor;
-ompi_predefined_op_t ompi_mpi_op_bxor;
+ompi_predefined_op_t ompi_mpi_op_bxor = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_bxor_addr = &ompi_mpi_op_bxor;
-ompi_predefined_op_t ompi_mpi_op_maxloc;
+ompi_predefined_op_t ompi_mpi_op_maxloc = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_maxloc_addr = &ompi_mpi_op_maxloc;
-ompi_predefined_op_t ompi_mpi_op_minloc;
+ompi_predefined_op_t ompi_mpi_op_minloc = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_minloc_addr = &ompi_mpi_op_minloc;
-ompi_predefined_op_t ompi_mpi_op_replace;
+ompi_predefined_op_t ompi_mpi_op_replace = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_replace_addr = &ompi_mpi_op_replace;
-ompi_predefined_op_t ompi_mpi_op_no_op;
+ompi_predefined_op_t ompi_mpi_op_no_op = {{{0}}};
 ompi_predefined_op_t *ompi_mpi_op_no_op_addr = &ompi_mpi_op_no_op;
 
 /*
  * Map from ddt->id to position in op function pointer array
  */
-int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED];
+int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED] = {0};
 
 /* Get the c complex operator associated with a fortran complex type */
 #define FORTRAN_COMPLEX_OP_TYPE_X(type) OMPI_OP_BASE_TYPE_ ## type
