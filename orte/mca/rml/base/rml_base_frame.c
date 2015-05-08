@@ -5,7 +5,9 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014 -2015      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,8 +37,8 @@
  * component's public mca_base_component_t struct. */
 #include "orte/mca/rml/base/static-components.h"
 
-orte_rml_module_t orte_rml;
-orte_rml_base_t   orte_rml_base;
+orte_rml_module_t orte_rml = {0};
+orte_rml_base_t   orte_rml_base = {{{0}}};
 OPAL_TIMING_DECLARE(tm_rml)
 
 orte_rml_component_t *orte_rml_component = NULL;

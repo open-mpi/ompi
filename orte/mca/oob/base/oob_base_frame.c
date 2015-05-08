@@ -13,6 +13,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +49,7 @@
 /*
  * Global variables
  */
-orte_oob_base_t orte_oob_base;
+orte_oob_base_t orte_oob_base = {0};
 OPAL_TIMING_DECLARE(tm_oob)
 
 static int orte_oob_base_register(mca_base_register_flag_t flags)

@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -66,7 +66,7 @@ orte_odls_base_module_t orte_odls = {0};
 /*
  * Framework global variables
  */
-orte_odls_globals_t orte_odls_globals;
+orte_odls_globals_t orte_odls_globals = {0};
 
 static int orte_odls_base_register(mca_base_register_flag_t flags)
 {

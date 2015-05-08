@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,12 +25,12 @@
 #include "orte/runtime/orte_locks.h"
 
 /* for everyone */
-opal_atomic_lock_t orte_finalize_lock;
+opal_atomic_lock_t orte_finalize_lock = {{0}};
 
 /* for HNPs */
-opal_atomic_lock_t orte_abort_inprogress_lock;
-opal_atomic_lock_t orte_jobs_complete_lock;
-opal_atomic_lock_t orte_quit_lock;
+opal_atomic_lock_t orte_abort_inprogress_lock = {{0}};
+opal_atomic_lock_t orte_jobs_complete_lock = {{0}};
+opal_atomic_lock_t orte_quit_lock = {{0}};
 
 int orte_locks_init(void)
 {

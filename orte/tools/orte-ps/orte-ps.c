@@ -15,6 +15,8 @@
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -164,7 +166,7 @@ typedef struct {
     pid_t pid;
 } orte_ps_globals_t;
 
-orte_ps_globals_t orte_ps_globals;
+orte_ps_globals_t orte_ps_globals = {0};
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,

@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -97,10 +97,10 @@ static int _convert_string_to_process_name(opal_process_name_t *name,
 int orte_initialized = 0;
 bool orte_finalizing = false;
 bool orte_debug_flag = false;
-int orte_debug_verbosity;
+int orte_debug_verbosity = -1;
 char *orte_prohibited_session_dirs = NULL;
 bool orte_create_session_dirs = true;
-opal_event_base_t *orte_event_base;
+opal_event_base_t *orte_event_base = {0};
 bool orte_event_base_active = true;
 bool orte_proc_is_bound = false;
 int orte_progress_thread_debug = -1;

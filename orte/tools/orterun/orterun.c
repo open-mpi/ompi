@@ -127,11 +127,11 @@ volatile int MPIR_being_debugged = 0;
 volatile int MPIR_debug_state = 0;
 int MPIR_i_am_starter = 0;
 int MPIR_partial_attach_ok = 1;
-char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
-char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
+char MPIR_executable_path[MPIR_MAX_PATH_LENGTH] = {0};
+char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH] = {0};
 volatile int MPIR_forward_output = 0;
 volatile int MPIR_forward_comm = 0;
-char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
+char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH] = {0};
 int MPIR_force_to_main = 0;
 static void orte_debugger_dump(void);
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
@@ -167,7 +167,7 @@ static char *ompi_server=NULL;
 /*
  * Globals
  */
-struct orterun_globals_t orterun_globals;
+struct orterun_globals_t orterun_globals = {0};
 static bool globals_init = false;
 
 static opal_cmd_line_init_t cmd_line_init[] = {

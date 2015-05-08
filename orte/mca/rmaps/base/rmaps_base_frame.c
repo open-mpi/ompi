@@ -51,7 +51,7 @@
 /*
  * Global variables
  */
-orte_rmaps_base_t orte_rmaps_base;
+orte_rmaps_base_t orte_rmaps_base = {{{0}}};
 bool orte_rmaps_base_pernode = false;
 int orte_rmaps_base_n_pernode = 0;
 int orte_rmaps_base_n_persocket = 0;
