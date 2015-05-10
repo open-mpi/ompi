@@ -173,15 +173,25 @@ static int mca_oob_ud_component_register (void)
 }
 
 static int  mca_oob_ud_component_available(void) {
+    int ret;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                     "oob:ud: component_available called");
 
-    /* set the module event base - this is where we would spin off a separate
-     * progress thread if so desired */
-    mca_oob_ud_module.ev_base = orte_event_base;
+    /*
+     * check if we actually have HCAs on this node,
+     * if not, no way we can use ud.
+     */
+    if (opal_common_verbs_check_basics()) {
+        /* set the module event base - this is where we would spin off a separate
+         * progress thread if so desired */
+        mca_oob_ud_module.ev_base = orte_event_base;
+        ret = ORTE_SUCCESS;
+    } else {
+        ret = ORTE_ERR_NOT_AVAILABLE;
+    }
 
-    return ORTE_SUCCESS;
+    return ret;
 }
 
 static int port_mtus[] = {0, 256, 512, 1024, 2048, 4096};

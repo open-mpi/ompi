@@ -20,6 +20,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
 
 /* This is crummy, but <infiniband/driver.h> doesn't work on all
    platforms with all compilers.  Specifically, trying to include it
@@ -43,25 +46,45 @@ const char *ibv_get_sysfs_path(void);
 
 bool opal_common_verbs_check_basics(void)
 {
+    bool ret = false;
+    char *file = NULL;
 #if defined(__linux__)
-    int rc;
-    char *file;
+    int rc, ndevs = -2; /* for . and .. */
     struct stat s;
+    struct dirent *dp;
+    DIR *dir = NULL;
 
     /* Check to see if $sysfsdir/class/infiniband/ exists */
     asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
     if (NULL == file) {
-        return false;
+        goto fn_exit;
     }
-    rc = stat(file, &s);
-    free(file);
-    if (0 != rc || !S_ISDIR(s.st_mode)) {
-        return false;
-    }
-#endif
 
-    /* It exists and is a directory -- good enough */
-    return true;
+    /* okay, let's see if here are actually devices there or
+     * are we just being faked out */
+
+    rc = stat(file, &s);
+    if (0 != rc) {
+        goto fn_exit;
+    }
+
+    if (S_ISDIR(s.st_mode)) {
+        dir = opendir(file);
+        if (NULL != dir) {
+            while ((dp = readdir(dir)) != NULL) ndevs++;
+            closedir(dir);
+        }
+        ret = (0 < ndevs) ? true : false;
+    } else {
+        ret = false;
+    }
+
+#endif
+ fn_exit:
+    if (NULL != file)
+        free(file);
+
+    return ret;
 }
 
 int opal_common_verbs_fork_test(void)
