@@ -197,8 +197,6 @@ ompi_osc_portals4_rput(void *origin_addr,
     ptl_process_t peer = ompi_osc_portals4_get_peer(module, target);
     size_t length;
     size_t offset;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "rput: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
@@ -228,9 +226,8 @@ ompi_osc_portals4_rput(void *origin_addr,
             return ret;
         }
         length *= origin_count;
-        ompi_osc_portals4_get_md(origin_addr, module->req_md_h, &md_h, &md_base);
-        ret = PtlPut(md_h,
-                     (ptl_size_t) ((char*) origin_addr - (char*) md_base),
+        ret = PtlPut(module->req_md_h,
+                     (ptl_size_t) origin_addr,
                      length,
                      PTL_ACK_REQ,
                      peer,
@@ -267,8 +264,6 @@ ompi_osc_portals4_rget(void *origin_addr,
     ptl_process_t peer = ompi_osc_portals4_get_peer(module, target);
     size_t length;
     size_t offset;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "rget: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
@@ -298,9 +293,8 @@ ompi_osc_portals4_rget(void *origin_addr,
             return ret;
         }
         length *= origin_count;
-        ompi_osc_portals4_get_md(origin_addr, module->req_md_h, &md_h, &md_base);
-        ret = PtlGet(md_h,
-                     (ptl_size_t) ((char*) origin_addr - (char*) md_base),
+        ret = PtlGet(module->req_md_h,
+                     (ptl_size_t) origin_addr,
                      length,
                      peer,
                      module->pt_idx,
@@ -338,8 +332,6 @@ ompi_osc_portals4_raccumulate(void *origin_addr,
     size_t offset;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "raccumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s 0x%lx",
@@ -372,8 +364,7 @@ ompi_osc_portals4_raccumulate(void *origin_addr,
         length *= origin_count;
         sent = 0;
 
-        ompi_osc_portals4_get_md(origin_addr, module->req_md_h, &md_h, &md_base);
-        md_offset = ((char*) origin_addr - (char*) md_base);
+        md_offset = (ptl_size_t) origin_addr;
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
@@ -381,7 +372,7 @@ ompi_osc_portals4_raccumulate(void *origin_addr,
             request->ops_expected++;
 
             if (MPI_REPLACE == op) {
-                ret = PtlPut(md_h,
+                ret = PtlPut(module->req_md_h,
                              md_offset + sent,
                              msg_length,
                              PTL_ACK_REQ,
@@ -398,7 +389,7 @@ ompi_osc_portals4_raccumulate(void *origin_addr,
                 ret = ompi_osc_portals4_get_op(op, &ptl_op);
                 if (OMPI_SUCCESS != ret) return ret;
 
-                ret = PtlAtomic(md_h,
+                ret = PtlAtomic(module->req_md_h,
                                 offset + sent,
                                 msg_length,
                                 PTL_ACK_REQ,
@@ -475,8 +466,6 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
         sent = 0;
 
         if (MPI_REPLACE == op) {
-            ptl_handle_md_t result_md_h, origin_md_h;
-            void *result_md_base, *origin_md_base;
             ptl_size_t result_md_offset, origin_md_offset;
 
             ret = ompi_datatype_type_size(origin_dt, &length);
@@ -486,10 +475,8 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             }
             length *= origin_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->req_md_h, &result_md_h, &result_md_base);
-            result_md_offset = ((char*) result_addr - (char*) result_md_base);
-            ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-            origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+            result_md_offset = (ptl_size_t) result_addr;
+            origin_md_offset = (ptl_size_t) origin_addr;
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
@@ -497,9 +484,9 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
                 (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
-                ret = PtlSwap(result_md_h,
+                ret = PtlSwap(module->req_md_h,
                               result_md_offset + sent,
-                              origin_md_h,
+                              module->md_h,
                               origin_md_offset + sent,
                               msg_length,
                               peer,
@@ -514,8 +501,6 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
                 sent += msg_length;
             } while (sent < length);
         } else if (MPI_NO_OP == op) {
-            ptl_handle_md_t md_h;
-            void *md_base;
             ptl_size_t md_offset;
 
             ret = ompi_datatype_type_size(target_dt, &length);
@@ -525,8 +510,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             }
             length *= target_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->req_md_h, &md_h, &md_base);
-            md_offset = ((char*) result_addr - (char*) md_base);
+            md_offset = (ptl_size_t) result_addr;
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
@@ -534,7 +518,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
                 (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
-                ret = PtlGet(md_h,
+                ret = PtlGet(module->req_md_h,
                              md_offset + sent,
                              msg_length,
                              peer,
@@ -545,8 +529,6 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
                 sent += msg_length;
             } while (sent < length);
         } else {
-            ptl_handle_md_t result_md_h, origin_md_h;
-            void *result_md_base, *origin_md_base;
             ptl_size_t result_md_offset, origin_md_offset;
 
             ret = ompi_datatype_type_size(origin_dt, &length);
@@ -556,10 +538,8 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
             }
             length *= origin_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->req_md_h, &result_md_h, &result_md_base);
-            result_md_offset = ((char*) result_addr - (char*) result_md_base);
-            ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-            origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+            result_md_offset = (ptl_size_t) result_addr;
+            origin_md_offset = (ptl_size_t) origin_addr;
 
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) return ret;
@@ -573,9 +553,9 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
                 (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
-                ret = PtlFetchAtomic(result_md_h,
+                ret = PtlFetchAtomic(module->req_md_h,
                                      result_md_offset + sent,
-                                     origin_md_h,
+                                     module->md_h,
                                      origin_md_offset + sent,
                                      msg_length,
                                      peer,
@@ -615,8 +595,6 @@ ompi_osc_portals4_put(void *origin_addr,
     ptl_process_t peer = ompi_osc_portals4_get_peer(module, target);
     size_t length;
     size_t offset;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "put: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
@@ -639,9 +617,8 @@ ompi_osc_portals4_put(void *origin_addr,
             return ret;
         }
         length *= origin_count;
-        ompi_osc_portals4_get_md(origin_addr, module->md_h, &md_h, &md_base);
-        ret = PtlPut(md_h,
-                     (ptl_size_t) ((char*) origin_addr - (char*) md_base),
+        ret = PtlPut(module->md_h,
+                     (ptl_size_t) origin_addr,
                      length,
                      PTL_ACK_REQ,
                      peer,
@@ -675,8 +652,6 @@ ompi_osc_portals4_get(void *origin_addr,
     ptl_process_t peer = ompi_osc_portals4_get_peer(module, target);
     size_t length;
     size_t offset;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "get: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
@@ -699,9 +674,8 @@ ompi_osc_portals4_get(void *origin_addr,
             return ret;
         }
         length *= origin_count;
-        ompi_osc_portals4_get_md(origin_addr, module->md_h, &md_h, &md_base);
-        ret = PtlGet(md_h,
-                     (ptl_size_t) ((char*) origin_addr - (char*) md_base),
+        ret = PtlGet(module->md_h,
+                     (ptl_size_t) origin_addr,
                      length,
                      peer,
                      module->pt_idx,
@@ -736,8 +710,6 @@ ompi_osc_portals4_accumulate(void *origin_addr,
     size_t offset;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptl_handle_md_t md_h;
-    void *md_base;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "accumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
@@ -764,15 +736,14 @@ ompi_osc_portals4_accumulate(void *origin_addr,
         length *= origin_count;
         sent = 0;
 
-        ompi_osc_portals4_get_md(origin_addr, module->md_h, &md_h, &md_base);
-        md_offset = ((char*) origin_addr - (char*) md_base);
+        md_offset = (ptl_size_t) origin_addr;
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
             (void)opal_atomic_add_64(&module->opcount, 1);
 
             if (MPI_REPLACE == op) {
-                ret = PtlPut(md_h,
+                ret = PtlPut(module->md_h,
                              md_offset + sent,
                              msg_length,
                              PTL_ACK_REQ,
@@ -789,7 +760,7 @@ ompi_osc_portals4_accumulate(void *origin_addr,
                 ret = ompi_osc_portals4_get_op(op, &ptl_op);
                 if (OMPI_SUCCESS != ret) return ret;
 
-                ret = PtlAtomic(md_h,
+                ret = PtlAtomic(module->md_h,
                                 md_offset + sent,
                                 msg_length,
                                 PTL_ACK_REQ,
@@ -858,8 +829,6 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
     } else {
         sent = 0;
         if (MPI_REPLACE == op) {
-            ptl_handle_md_t result_md_h, origin_md_h;
-            void *result_md_base, *origin_md_base;
             ptl_size_t result_md_offset, origin_md_offset;
 
             ret = ompi_datatype_type_size(origin_dt, &length);
@@ -868,19 +837,17 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             }
             length *= origin_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->md_h, &result_md_h, &result_md_base);
-            result_md_offset = ((char*) result_addr - (char*) result_md_base);
-            ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-            origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+            result_md_offset = (ptl_size_t) result_addr;
+            origin_md_offset = (ptl_size_t) origin_addr;
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
                 (void)opal_atomic_add_64(&module->opcount, 1);
 
-                ret = PtlSwap(result_md_h,
+                ret = PtlSwap(module->md_h,
                               result_md_offset + sent,
-                              origin_md_h,
+                              module->md_h,
                               origin_md_offset + sent,
                               msg_length,
                               peer,
@@ -895,8 +862,6 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
                 sent += msg_length;
             } while (sent < length);
         } else if (MPI_NO_OP == op) {
-            ptl_handle_md_t md_h;
-            void *md_base;
             ptl_size_t md_offset;
 
             ret = ompi_datatype_type_size(target_dt, &length);
@@ -905,15 +870,14 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             }
             length *= target_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->md_h, &md_h, &md_base);
-            md_offset = ((char*) result_addr - (char*) md_base);
+            md_offset = (ptl_size_t) result_addr;
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
                 (void)opal_atomic_add_64(&module->opcount, 1);
 
-                ret = PtlGet(md_h,
+                ret = PtlGet(module->md_h,
                              md_offset + sent,
                              msg_length,
                              peer,
@@ -924,8 +888,6 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
                 sent += msg_length;
             } while (sent < length);
         } else {
-            ptl_handle_md_t result_md_h, origin_md_h;
-            void *result_md_base, *origin_md_base;
             ptl_size_t result_md_offset, origin_md_offset; 
 
             ret = ompi_datatype_type_size(origin_dt, &length);
@@ -934,10 +896,8 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
             }
             length *= origin_count;
 
-            ompi_osc_portals4_get_md(result_addr, module->md_h, &result_md_h, &result_md_base);
-            result_md_offset = ((char*) result_addr - (char*) result_md_base);
-            ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-            origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+            result_md_offset = (ptl_size_t) result_addr;
+            origin_md_offset = (ptl_size_t) origin_addr;
 
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) return ret;
@@ -951,9 +911,9 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
 
                 (void)opal_atomic_add_64(&module->opcount, 1);
 
-                ret = PtlFetchAtomic(result_md_h,
+                ret = PtlFetchAtomic(module->md_h,
                                      result_md_offset + sent,
-                                     origin_md_h,
+                                     module->md_h,
                                      origin_md_offset + sent,
                                      msg_length,
                                      peer,
@@ -992,8 +952,6 @@ ompi_osc_portals4_compare_and_swap(void *origin_addr,
     size_t length;
     size_t offset;
     ptl_datatype_t ptl_dt;
-    ptl_handle_md_t result_md_h, origin_md_h;
-    void *result_md_base, *origin_md_base;
     ptl_size_t result_md_offset, origin_md_offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1014,16 +972,14 @@ ompi_osc_portals4_compare_and_swap(void *origin_addr,
 
     assert(length < module->fetch_atomic_max);
 
-    ompi_osc_portals4_get_md(result_addr, module->md_h, &result_md_h, &result_md_base);
-    result_md_offset = ((char*) result_addr - (char*) result_md_base);
-    ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-    origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+    result_md_offset = (ptl_size_t) result_addr;
+    origin_md_offset = (ptl_size_t) origin_addr;
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
-    ret = PtlSwap(result_md_h,
+    ret = PtlSwap(module->md_h,
                   result_md_offset,
-                  origin_md_h,
+                  module->md_h,
                   origin_md_offset,
                   length,
                   peer,
@@ -1082,18 +1038,14 @@ ompi_osc_portals4_fetch_and_op(void *origin_addr,
     (void)opal_atomic_add_64(&module->opcount, 1);
 
     if (MPI_REPLACE == op) {
-        ptl_handle_md_t result_md_h, origin_md_h;
-        void *result_md_base, *origin_md_base;
         ptl_size_t result_md_offset, origin_md_offset;
 
-        ompi_osc_portals4_get_md(result_addr, module->md_h, &result_md_h, &result_md_base);
-        result_md_offset = ((char*) result_addr - (char*) result_md_base);
-        ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-        origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+        result_md_offset = (ptl_size_t) result_addr;
+        origin_md_offset = (ptl_size_t) origin_addr;
 
-        ret = PtlSwap(result_md_h,
+        ret = PtlSwap(module->md_h,
                       result_md_offset,
-                      origin_md_h,
+                      module->md_h,
                       origin_md_offset,
                       length,
                       peer,
@@ -1106,14 +1058,11 @@ ompi_osc_portals4_fetch_and_op(void *origin_addr,
                       PTL_SWAP,
                       ptl_dt);
     } else if (MPI_NO_OP == op) {
-        ptl_handle_md_t md_h;
-        void *md_base;
         ptl_size_t md_offset;
 
-        ompi_osc_portals4_get_md(result_addr, module->md_h, &md_h, &md_base);
-        md_offset = ((char*) result_addr - (char*) md_base);
+        md_offset = (ptl_size_t) result_addr;
 
-        ret = PtlGet(md_h,
+        ret = PtlGet(module->md_h,
                      md_offset,
                      length,
                      peer,
@@ -1122,21 +1071,17 @@ ompi_osc_portals4_fetch_and_op(void *origin_addr,
                      offset,
                      NULL);
     } else {
-        ptl_handle_md_t result_md_h, origin_md_h;
-        void *result_md_base, *origin_md_base;
         ptl_size_t result_md_offset, origin_md_offset; 
 
         ret = ompi_osc_portals4_get_op(op, &ptl_op);
         if (OMPI_SUCCESS != ret) return ret;
 
-        ompi_osc_portals4_get_md(result_addr, module->md_h, &result_md_h, &result_md_base);
-        result_md_offset = ((char*) result_addr - (char*) result_md_base);
-        ompi_osc_portals4_get_md(origin_addr, module->md_h, &origin_md_h, &origin_md_base);
-        origin_md_offset = ((char*) origin_addr - (char*) origin_md_base);
+        result_md_offset = (ptl_size_t) result_addr;
+        origin_md_offset = (ptl_size_t) origin_addr;
 
-        ret = PtlFetchAtomic(result_md_h,
+        ret = PtlFetchAtomic(module->md_h,
                              result_md_offset,
-                             origin_md_h,
+                             module->md_h,
                              origin_md_offset,
                              length,
                              peer,

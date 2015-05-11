@@ -184,8 +184,6 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     ptl_match_bits_t match_bits;
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
-    ptl_handle_md_t md_h;
-    void *base;
 
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
                                MTL_PORTALS4_SHORT_MSG);
@@ -233,23 +231,20 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                              ptl_request->opcount, hdr_data, match_bits));
     }
 
-    ompi_mtl_portals4_get_md(start, &md_h, &base);
-
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Send %lu, start: %p, base: %p, offset: %lx",
-                         ptl_request->opcount, start, base,
-                         (ptl_size_t) ((char*) start - (char*) base)));
+                         "Send %lu, start: %p",
+                         ptl_request->opcount, start));
 
-    ret = PtlPut(md_h,
-                 (ptl_size_t) ((char*) start - (char*) base),
+    ret = PtlPut(ompi_mtl_portals4.send_md_h,
+                 (ptl_size_t) start,
                  length,
-		 PTL_ACK_REQ,
-		 ptl_proc,
-		 ompi_mtl_portals4.recv_idx,
-		 match_bits,
-		 0,
+                 PTL_ACK_REQ,
+                 ptl_proc,
+                 ompi_mtl_portals4.recv_idx,
+                 match_bits,
+                 0,
                  ptl_request,
-		 hdr_data);
+                 hdr_data);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
@@ -274,8 +269,6 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
     ptl_size_t put_length;
-    ptl_handle_md_t md_h;
-    void *base;
 
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
                                MTL_PORTALS4_LONG_MSG);
@@ -316,10 +309,8 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     put_length = (rndv == ompi_mtl_portals4.protocol) ? 
         (ptl_size_t) ompi_mtl_portals4.eager_limit : (ptl_size_t) length;
 
-    ompi_mtl_portals4_get_md(start, &md_h, &base);
-
-    ret = PtlPut(md_h,
-                 (ptl_size_t) ((char*) start - (char*) base),
+    ret = PtlPut(ompi_mtl_portals4.send_md_h,
+                 (ptl_size_t) start,
                  put_length,
                  PTL_ACK_REQ,
                  ptl_proc,

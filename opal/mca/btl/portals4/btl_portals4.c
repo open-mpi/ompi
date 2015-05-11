@@ -139,52 +139,7 @@ btl_portals4_init_interface(void)
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
             "PtlMDBind (zero-length md=%d) OK for NI %d", portals4_btl->zero_md_h, interface));
 
-        /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
-           to have a single MD across all of memory */
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-        {
-            int i;
-            int num_mds = mca_btl_portals4_get_num_mds();
-            ptl_size_t size = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) - 1;
-            ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
-
-            portals4_btl->send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
-            if (NULL == portals4_btl->send_md_hs) {
-                opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                "%s:%d: Error allocating MD array",
-                                __FILE__, __LINE__);
-                ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
-                goto error;
-            }
-
-            for (i = 0 ; i < num_mds ; ++i) {
-                portals4_btl->send_md_hs[i] = PTL_INVALID_HANDLE;
-            }
-
-            for (i = 0 ; i < num_mds ; ++i) {
-                md.start = (char*) (offset_unit * i);
-                md.length = (i - 1 == num_mds) ? size / 2 : size;
-                md.options = 0;
-                md.eq_handle = portals4_btl->recv_eq_h;
-                md.ct_handle = PTL_CT_NONE;
-
-                opal_output_verbose(50, opal_btl_base_framework.framework_output,
-                                "Binding md from %p of length %lx",
-                                md.start, md.length);
-
-                ret = PtlMDBind(portals4_btl->portals_ni_h,
-                            &md,
-                            &portals4_btl->send_md_hs[i]); 
-                if (PTL_OK != ret) {
-                    opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                    "%s:%d: PtlMDBind failed for NI %d: %d\n",
-                                    __FILE__, __LINE__, interface, ret);
-                    goto error;
-                }
-            }
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlMDBind (all memory) OK for NI %d\n", interface));
-        }
-#else
+        /* Bind MD across all memory */
         md.start = 0;
         md.length = PTL_SIZE_MAX;
         md.options = 0;
@@ -200,7 +155,6 @@ btl_portals4_init_interface(void)
                             __FILE__, __LINE__, interface, ret);
             goto error;
         }
-#endif
 
         /* Handle long overflows */
         me.start = NULL;
@@ -653,27 +607,10 @@ void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl)
         mca_btl_portals4_component_progress();
     }
 
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    if (NULL != portals4_btl->send_md_hs) {
-        int i;
-        int num_mds = mca_btl_portals4_get_num_mds();
-
-        for (i = 0 ; i < num_mds ; ++i) {
-            if (!PtlHandleIsEqual(portals4_btl->send_md_hs[i], PTL_INVALID_HANDLE)) {
-                PtlMDRelease(portals4_btl->send_md_hs[i]);
-                portals4_btl->send_md_hs[i] = PTL_INVALID_HANDLE;
-            }
-        }
-
-        free(portals4_btl->send_md_hs);
-        portals4_btl->send_md_hs = NULL;
-    }
-#else
     if (!PtlHandleIsEqual(portals4_btl->send_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(portals4_btl->send_md_h);
         portals4_btl->send_md_h = PTL_INVALID_HANDLE;
     }
-#endif
     if (!PtlHandleIsEqual(portals4_btl->zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(portals4_btl->zero_md_h);
         portals4_btl->zero_md_h = PTL_INVALID_HANDLE;

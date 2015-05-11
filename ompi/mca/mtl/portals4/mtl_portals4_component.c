@@ -225,12 +225,6 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
 
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    ompi_mtl_portals4.send_md_hs = NULL;
-#else
-    ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
-#endif
-
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
@@ -485,3 +479,4 @@ ompi_mtl_portals4_progress(void)
 
     return count;
 }
+
