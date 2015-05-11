@@ -74,8 +74,6 @@ ompi_osc_portals4_complete(struct ompi_win_t *win)
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     int ret, i, size;
-    ptl_handle_md_t md_h;
-    void *base;
 
     ret = ompi_osc_portals4_complete_all(module);
     if (ret != OMPI_SUCCESS) return ret;
@@ -84,13 +82,11 @@ ompi_osc_portals4_complete(struct ompi_win_t *win)
         module->state.post_count = 0;
         PtlAtomicSync();
 
-        ompi_osc_portals4_get_md(&module->one, module->md_h, &md_h, &base);
-
         size = ompi_group_size(module->start_group);
         for (i = 0 ; i < size ; ++i) {
 
-            ret = PtlAtomic(md_h,
-                            (ptl_size_t) ((char*) &module->one - (char*) base),
+            ret = PtlAtomic(module->md_h,
+                            (ptl_size_t) &module->one,
                             sizeof(module->one),
                             PTL_ACK_REQ,
                             ompi_osc_portals4_get_peer_group(module->start_group, i),
@@ -124,8 +120,6 @@ ompi_osc_portals4_post(struct ompi_group_t *group,
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     int ret, i, size;
-    ptl_handle_md_t md_h;
-    void *base;
 
     if (0 == (assert & MPI_MODE_NOCHECK)) {
         OBJ_RETAIN(group);
@@ -134,12 +128,10 @@ ompi_osc_portals4_post(struct ompi_group_t *group,
         module->state.complete_count = 0;
         PtlAtomicSync();
 
-        ompi_osc_portals4_get_md(&module->one, module->md_h, &md_h, &base);
-
         size = ompi_group_size(module->post_group);
         for (i = 0 ; i < size ; ++i) {
-            ret = PtlAtomic(md_h,
-                            (ptl_size_t) ((char*) &module->one - (char*) base),
+            ret = PtlAtomic(module->md_h,
+                            (ptl_size_t) &module->one,
                             sizeof(module->one),
                             PTL_ACK_REQ,
                             ompi_osc_portals4_get_peer_group(module->post_group, i),

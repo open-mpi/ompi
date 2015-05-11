@@ -120,12 +120,8 @@ struct mca_btl_portals4_module_t {
     /** MD handle for sending ACKS */
     ptl_handle_md_t zero_md_h;
 
-    /** Send MD handle(s).  Use opal_mtl_portals4_get_md() to get the right md */
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    ptl_handle_md_t *send_md_hs;
-#else
+    /** Send MD handle */
     ptl_handle_md_t send_md_h;
-#endif
 
     /** long message receive overflow ME.  Persistent ME, first in
         overflow list on the recv_idx portal table. */
@@ -176,36 +172,6 @@ typedef struct mca_btl_portals4_module_t mca_btl_portals4_module_t;
     }
 
 #define REQ_BTL_TABLE_ID	2
-
-/*
- * See note in ompi/mtl/portals4/mtl_portals4.h for how we deal with
- * platforms that don't allow us to crate an MD that covers all of
- * memory.
- */
-static inline void
-opal_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr, mca_btl_portals4_module_t *portals4_btl)
-{
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    int mask = (1ULL << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1)) - 1;
-    int which = (((uintptr_t) ptr) >> (OPAL_PORTALS4_MAX_MD_SIZE - 1)) & mask;
-    *md_h = portals4_btl->send_md_hs[which];
-    *base_ptr = (void*) (which * (1ULL << (OPAL_PORTALS4_MAX_MD_SIZE - 1)));
-#else
-    *md_h = portals4_btl->send_md_h;
-    *base_ptr = 0;
-#endif
-}
-
-
-static inline int
-mca_btl_portals4_get_num_mds(void)
-{
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    return (1 << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1));
-#else
-    return 1;
-#endif
-}
 
 int mca_btl_portals4_component_progress(void);
 void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl);

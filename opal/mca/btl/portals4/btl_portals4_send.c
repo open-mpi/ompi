@@ -36,9 +36,6 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
     mca_btl_portals4_frag_t *frag = (mca_btl_portals4_frag_t*) descriptor;
     ptl_match_bits_t match_bits, msglen_type;
     ptl_size_t put_length;
-    int64_t offset;
-    ptl_handle_md_t md_h;
-    void *base;
     int ret;
 
     frag->endpoint = endpoint;
@@ -50,9 +47,6 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
     else msglen_type = BTL_PORTALS4_SHORT_MSG;
 
     BTL_PORTALS4_SET_SEND_BITS(match_bits, 0, 0, tag, msglen_type);
-
-    opal_btl_portals4_get_md(frag->segments[0].base.seg_addr.pval, &md_h, &base, portals4_btl);
-    offset = (ptl_size_t) ((char*) frag->segments[0].base.seg_addr.pval - (char*) base);
 
     /* reserve space in the event queue for rdma operations immediately */
     while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >
@@ -71,8 +65,8 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
                          (void*)frag,  endpoint->ptl_proc.rank, endpoint->ptl_proc.phys.pid, tag, 
                          put_length, (uint64_t)match_bits));
 
-    ret = PtlPut(md_h,
-                 (ptl_size_t) offset,
+    ret = PtlPut(portals4_btl->send_md_h,
+                 (ptl_size_t) frag->segments[0].base.seg_addr.pval,
                  put_length, /* fragment length */
                  (mca_btl_portals4_component.portals_need_ack ? PTL_ACK_REQ : PTL_NO_ACK_REQ),
                  endpoint->ptl_proc,
@@ -85,8 +79,10 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
         opal_output(opal_btl_base_framework.framework_output, "mca_btl_portals4_send: PtlPut failed with error %d", ret);
         return OPAL_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlPut frag=%p rank=%x pid=%x tag=%x addr=%p len=%ld match_bits=%lx\n",
-        (void*)frag,  endpoint->ptl_proc.rank, endpoint->ptl_proc.phys.pid, tag, (void *)offset, put_length, (uint64_t)match_bits));
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "PtlPut frag=%p rank=%x pid=%x tag=%x addr=%p len=%ld match_bits=%lx",
+            (void*)frag,  endpoint->ptl_proc.rank, endpoint->ptl_proc.phys.pid, tag,
+            (void *)frag->segments[0].base.seg_addr.pval, put_length, (uint64_t)match_bits));
 
     return OPAL_SUCCESS;
 }

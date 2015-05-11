@@ -441,64 +441,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         goto error;
     }
     
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    {
-        int i;
-        int num_mds = ompi_mtl_portals4_get_num_mds();
-        ptl_size_t size = 1ULL << OPAL_PORTALS4_MAX_MD_SIZE;
-        ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
-
-        module->md_h = malloc(sizeof(ptl_handle_md_t) * num_mds);
-        if (NULL == module->md_h) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto error;
-        }
-        for (i = 0 ; i < num_mds ; ++i) {
-            module->md_h[i] = PTL_INVALID_HANDLE;
-        }
-
-        module->req_md_h = malloc(sizeof(ptl_handle_md_t) * num_mds);
-        if (NULL == module->req_md_h) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto error;
-        }
-        for (i = 0 ; i < num_mds ; ++i) {
-            module->req_md_h[i] = PTL_INVALID_HANDLE;
-        }
-
-        for (i = 0 ; i < num_mds ; ++i) {
-            md.start = (char*) (offset_unit * i);
-            md.length = (i - 1 == num_mds) ? size / 2 : size;
-
-            md.options = PTL_MD_EVENT_SUCCESS_DISABLE | PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
-            md.eq_handle = mca_osc_portals4_component.matching_eq_h;
-            md.ct_handle = module->ct_h;
-            ret = PtlMDBind(module->ni_h, &md, &module->md_h);
-            if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: PtlMDBind failed: %d\n",
-                                    __FILE__, __LINE__, ret);
-                goto error;
-            }
-
-            md.options = PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
-            md.eq_handle = mca_osc_portals4_component.matching_eq_h;
-            md.ct_handle = module->ct_h;
-            ret = PtlMDBind(module->ni_h, &md, &module->req_md_h);
-            if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: PtlMDBind failed: %d\n",
-                                    __FILE__, __LINE__, ret);
-                goto error;
-            }
-        }
-#else
     md.start = 0;
     md.length = PTL_SIZE_MAX;
     md.options = PTL_MD_EVENT_SUCCESS_DISABLE | PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
     md.eq_handle = mca_osc_portals4_component.matching_eq_h;
     md.ct_handle = module->ct_h;
-    ret = PtlMDBind(module->ni_h, &md, &module->md_h[0]);
+    ret = PtlMDBind(module->ni_h, &md, &module->md_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: PtlMDBind failed: %d\n",
@@ -511,18 +459,17 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     md.options = PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
     md.eq_handle = mca_osc_portals4_component.matching_eq_h;
     md.ct_handle = module->ct_h;
-    ret = PtlMDBind(module->ni_h, &md, &module->req_md_h[0]);
+    ret = PtlMDBind(module->ni_h, &md, &module->req_md_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: PtlMDBind failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
     }
-#endif
 
     if (MPI_WIN_FLAVOR_DYNAMIC == flavor) {
         me.start = 0;
-        me.length = SIZE_MAX;
+        me.length = PTL_SIZE_MAX;
     } else {
         me.start = *base;
         me.length = size;
@@ -619,12 +566,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* BWB: FIX ME: This is all wrong... */
     if (0 != module->ct_h) PtlCTFree(module->ct_h);
     if (0 != module->data_me_h) PtlMEUnlink(module->data_me_h);
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    /* BWB: FIX ME */
-#else 
-    if (0 != module->req_md_h) PtlMDRelease(module->req_md_h[0]);
-    if (0 != module->md_h) PtlMDRelease(module->md_h[0]);
-#endif
+    if (0 != module->req_md_h) PtlMDRelease(module->req_md_h);
+    if (0 != module->md_h) PtlMDRelease(module->md_h);
     if (NULL != module->comm) ompi_comm_free(&module->comm);
     if (NULL != module) free(module);
 
@@ -659,12 +602,8 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
 
     /* cleanup */
     PtlMEUnlink(module->data_me_h);
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    /* BWB: FIX ME */
-#else 
-    PtlMDRelease(module->md_h[0]);
-    PtlMDRelease(module->req_md_h[0]);
-#endif
+    PtlMDRelease(module->md_h);
+    PtlMDRelease(module->req_md_h);
     PtlCTFree(module->ct_h);
     if (NULL != module->disp_units) free(module->disp_units);
     ompi_comm_free(&module->comm);
