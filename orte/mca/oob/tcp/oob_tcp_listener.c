@@ -876,6 +876,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
 static void tcp_ev_cons(mca_oob_tcp_listener_t* event)
 {
     event->ev_active = false;
+    event->sd = -1;
 }
 static void tcp_ev_des(mca_oob_tcp_listener_t* event)
 {
@@ -883,6 +884,10 @@ static void tcp_ev_des(mca_oob_tcp_listener_t* event)
         opal_event_del(&event->event);
     }
     event->ev_active = false;
+    if (0 <= event->sd) {
+        CLOSE_THE_SOCKET(event->sd);
+        event->sd = -1;
+    }
 }
 
 OBJ_CLASS_INSTANCE(mca_oob_tcp_listener_t,

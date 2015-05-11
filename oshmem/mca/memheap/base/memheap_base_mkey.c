@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +58,7 @@ struct oob_comm {
 
 static mca_memheap_map_t* memheap_map = NULL;
 
-struct oob_comm memheap_oob;
+struct oob_comm memheap_oob = {{{0}}};
 
 static int send_buffer(int pe, opal_buffer_t *msg);
 

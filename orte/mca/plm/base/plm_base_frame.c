@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,7 +44,7 @@
 /*
  * Global variables for use within PLM frameworks
  */
-orte_plm_globals_t orte_plm_globals;
+orte_plm_globals_t orte_plm_globals = {0};
 
 /*
  * The default module

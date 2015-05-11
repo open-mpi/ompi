@@ -309,6 +309,20 @@ void pmix_server_process_message(pmix_server_peer_t *peer)
                     OBJ_DESTRUCT(&bremote);
                     return;
                 }
+                /* unpack it ourselves to harvest the RML URI out of it as
+                 * we may need it */
+                cnt = 1;
+                while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+                    if (0 == strcmp(kp->key, OPAL_DSTORE_URI)) {
+                        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &id, kp))) {
+                            OPAL_ERROR_LOG(rc);
+                        }
+                        OBJ_RELEASE(kp);
+                        break;
+                    }
+                    OBJ_RELEASE(kp);
+                    cnt = 1;
+                }
             }
             if (OPAL_SUCCESS != (rc = opal_dstore.store(handle, &id, &kv))) {
                 ORTE_ERROR_LOG(rc);

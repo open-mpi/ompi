@@ -45,6 +45,7 @@ cppflags = \
 	-DRDMADIR=\"/tmp\" \
 	-DEXTDIR=\"$(pkglibdir)\" \
 	-DENABLE_DEBUG=0 \
+        -DHAVE_VERBS=0 \
 	'-DVERSION="embedded libfabric de8444c9771ab9022d952a27134e44e5d8a5d722"' \
 	'-DPACKAGE="embedded libfabric de8444c9771ab9022d952a27134e44e5d8a5d722"'
 libadd = $(opal_common_libfabric_embedded_LIBADD)
@@ -177,6 +178,7 @@ libfabric_psm_sources = \
 	libfabric/prov/psm/src/psmx_init.c \
 	libfabric/prov/psm/src/psmx_domain.c \
 	libfabric/prov/psm/src/psmx_cq.c \
+	libfabric/prov/psm/src/psmx_eq.c \
 	libfabric/prov/psm/src/psmx_cntr.c \
 	libfabric/prov/psm/src/psmx_av.c \
 	libfabric/prov/psm/src/psmx_ep.c \

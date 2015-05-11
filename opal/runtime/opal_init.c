@@ -80,7 +80,7 @@ int opal_util_initialized = 0;
    hwloc is available, this value will be overwritten when the
    hwloc data is loaded. */
 int opal_cache_line_size = 128;
-bool opal_warn_on_fork;
+bool opal_warn_on_fork = true;
 
 static int
 opal_err2str(int errnum, const char **errmsg)

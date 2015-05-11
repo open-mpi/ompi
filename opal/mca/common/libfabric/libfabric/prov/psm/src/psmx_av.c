@@ -125,8 +125,12 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 	int i, j;
 	fi_addr_t *result = NULL;
 	struct psmx_epaddr_context *epaddr_context;
+	struct psmx_eq_event *event;
 
 	av_priv = container_of(av, struct psmx_fid_av, av);
+
+	if ((av_priv->flags & FI_EVENT) && !av_priv->eq)
+		return -FI_ENOEQ;
 
 	errors = (psm_error_t *) calloc(count, sizeof *errors);
 	if (!errors)
@@ -194,6 +198,21 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 					"at the other side.\n");
 			fi_addr[i] = FI_ADDR_NOTAVAIL;
 			error_count++;
+
+			if (av_priv->flags & FI_EVENT) {
+				event = psmx_eq_create_event(av_priv->eq,
+							     FI_AV_COMPLETE,		/* event */
+							     context,			/* context */
+							     i,				/* data: failed index */
+							     psmx_errno(errors[i]),	/* err */
+							     errors[i],			/* prov_errno */
+							     NULL,			/* err_data */
+							     0);			/* err_data_size */
+				if (!event)
+					return -FI_ENOMEM;
+
+				psmx_eq_enqueue_event(av_priv->eq, event);
+			}
 		}
 	}
 
@@ -214,7 +233,22 @@ static int psmx_av_insert(struct fid_av *av, const void *addr, size_t count,
 		av_priv->last += count;
 	}
 
-	return count - error_count;
+	if (!(av_priv->flags & FI_EVENT))
+		return count - error_count;
+
+	event = psmx_eq_create_event(av_priv->eq,
+				     FI_AV_COMPLETE,		/* event */
+				     context,			/* context */
+				     count - error_count,	/* data: succ count */
+				     0,				/* err */
+				     0,				/* prov_errno */
+				     NULL,			/* err_data */
+				     0);			/* err_data_size */
+	if (!event)
+		return -FI_ENOMEM;
+
+	psmx_eq_enqueue_event(av_priv->eq, event);
+	return 0;
 }
 
 static int psmx_av_remove(struct fid_av *av, fi_addr_t *fi_addr, size_t count,
@@ -287,10 +321,33 @@ static int psmx_av_close(fid_t fid)
 	return 0;
 }
 
+static int psmx_av_bind(struct fid *fid, struct fid *bfid, uint64_t flags)
+{
+	struct psmx_fid_av *av;
+	struct psmx_fid_eq *eq;
+
+	av = container_of(fid, struct psmx_fid_av, av.fid);
+
+	if (!bfid)
+		return -FI_EINVAL;
+
+	switch (bfid->fclass) {
+	case FI_CLASS_EQ:
+		eq = container_of(bfid, struct psmx_fid_eq, eq.fid);
+		av->eq = eq;
+		break;
+
+	default:
+		return -FI_ENOSYS;
+	}
+
+	return 0;
+}
+
 static struct fi_ops psmx_fi_ops = {
 	.size = sizeof(struct fi_ops),
 	.close = psmx_av_close,
-	.bind = fi_no_bind,
+	.bind = psmx_av_bind,
 	.control = fi_no_control,
 	.ops_open = fi_no_ops_open,
 };
@@ -312,6 +369,7 @@ int psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	struct psmx_fid_av *av_priv;
 	int type = FI_AV_MAP;
 	size_t count = 64;
+	uint64_t flags = 0;
 
 	domain_priv = container_of(domain, struct psmx_fid_domain, domain);
 
@@ -329,6 +387,14 @@ int psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 		}
 
 		count = attr->count;
+		flags = attr->flags;
+
+		if (flags & (FI_READ | FI_SYMMETRIC)) {
+			FI_INFO(&psmx_prov, FI_LOG_AV,
+				"attr->flags=%x, supported=%x\n",
+				attr->flags, FI_EVENT);
+			return -FI_EINVAL;
+		}
 	}
 
 	av_priv = (struct psmx_fid_av *) calloc(1, sizeof *av_priv);
@@ -339,6 +405,7 @@ int psmx_av_open(struct fid_domain *domain, struct fi_av_attr *attr,
 	av_priv->type = type;
 	av_priv->addrlen = sizeof(psm_epaddr_t);
 	av_priv->count = count;
+	av_priv->flags = flags;
 
 	av_priv->av.fid.fclass = FI_CLASS_AV;
 	av_priv->av.fid.context = context;

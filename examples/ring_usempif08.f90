@@ -3,12 +3,12 @@
 ! Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 !                         University Research and Technology
 !                         Corporation.  All rights reserved.
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
 !
-! Simple ring test program using the MPI-3 mpi_f08 module.
+! Simple ring test program using the Fortran mpi_f08 module bindings.
 !
 program ring
   use mpi_f08
@@ -28,7 +28,7 @@ program ring
   tag = 201
   next = mod((rank + 1), size)
   from = mod((rank + size - 1), size)
-      
+
 ! If we are the "master" process (i.e., MPI_COMM_WORLD rank 0), put
 ! the number of times to go around the ring in the message.
 
@@ -57,7 +57,7 @@ program ring
   endif
 
   call MPI_SEND(message, 1, MPI_INTEGER, next, tag, MPI_COMM_WORLD)
-      
+
   if (message .eq. 0) then
      write(*, '("Process ", i2, " exiting")') rank
      goto 20
@@ -76,4 +76,4 @@ program ring
 
   call MPI_FINALIZE()
 end program
-      
+

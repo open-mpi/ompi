@@ -3,6 +3,8 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,9 +37,9 @@
 /*
 **  * Global variables
 **   */
-opal_list_t mca_sbgp_base_components_in_use;
+opal_list_t mca_sbgp_base_components_in_use = {{0}};
 int mca_sbgp_base_components_in_use_inited=0;
-OMPI_DECLSPEC char *ompi_sbgp_subgroups_string;
+OMPI_DECLSPEC char *ompi_sbgp_subgroups_string = NULL;
 
 static void mca_sbgp_base_destruct (mca_sbgp_base_module_t *module)
 {

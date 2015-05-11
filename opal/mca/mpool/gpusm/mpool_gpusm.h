@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
@@ -37,9 +37,9 @@ BEGIN_C_DECLS
 #define EVTHANDLE_SIZE 8
 struct mca_mpool_gpusm_registration_t { 
     mca_mpool_base_registration_t base;
-    uint64_t memHandle[MEMHANDLE_SIZE];
-    uint64_t evtHandle[EVTHANDLE_SIZE];
-	uint64_t event;
+    uint64_t memHandle[MEMHANDLE_SIZE]; /* CUipcMemHandle */
+    uint64_t evtHandle[EVTHANDLE_SIZE]; /* CUipcEventHandle */
+    uintptr_t event;                    /* CUevent */
 };  
 typedef struct mca_mpool_gpusm_registration_t mca_mpool_gpusm_registration_t; 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_gpusm_registration_t); 

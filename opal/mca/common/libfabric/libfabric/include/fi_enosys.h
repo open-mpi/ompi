@@ -150,6 +150,7 @@ int fi_no_atomic_compwritevalid(struct fid_ep *ep,
 /*
 static struct fi_ops_cm X = {
 	.size = sizeof(struct fi_ops_cm),
+	.setname = fi_no_setname,
 	.getname = fi_no_getname,
 	.getpeer = fi_no_getpeer,
 	.connect = fi_no_connect,
@@ -159,13 +160,14 @@ static struct fi_ops_cm X = {
 	.shutdown = fi_no_shutdown,
 };
 */
+int fi_no_setname(fid_t fid, void *addr, size_t addrlen);
 int fi_no_getname(fid_t fid, void *addr, size_t *addrlen);
 int fi_no_getpeer(struct fid_ep *ep, void *addr, size_t *addrlen);
 int fi_no_connect(struct fid_ep *ep, const void *addr,
 		const void *param, size_t paramlen);
 int fi_no_listen(struct fid_pep *pep);
 int fi_no_accept(struct fid_ep *ep, const void *param, size_t paramlen);
-int fi_no_reject(struct fid_pep *pep, fi_connreq_t connreq,
+int fi_no_reject(struct fid_pep *pep, fid_t handle,
 		const void *param, size_t paramlen);
 int fi_no_shutdown(struct fid_ep *ep, uint64_t flags);
 

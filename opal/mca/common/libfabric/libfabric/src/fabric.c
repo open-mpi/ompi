@@ -527,7 +527,7 @@ struct fi_info *DEFAULT_SYMVER_PRE(fi_dupinfo)(const struct fi_info *info)
 	if (!info)
 		return fi_allocinfo_internal();
 
-	dup = malloc(sizeof(*dup));
+	dup = calloc(1, sizeof(*dup));
 	if (dup == NULL) {
 		return NULL;
 	}
@@ -542,42 +542,42 @@ struct fi_info *DEFAULT_SYMVER_PRE(fi_dupinfo)(const struct fi_info *info)
 	dup->next = NULL;
 
 	if (info->src_addr != NULL) {
-		dup->src_addr = malloc(dup->src_addrlen);
+		dup->src_addr = calloc(1, dup->src_addrlen);
 		if (dup->src_addr == NULL) {
 			goto fail;
 		}
 		memcpy(dup->src_addr, info->src_addr, info->src_addrlen);
 	}
 	if (info->dest_addr != NULL) {
-		dup->dest_addr = malloc(dup->dest_addrlen);
+		dup->dest_addr = calloc(1, dup->dest_addrlen);
 		if (dup->dest_addr == NULL) {
 			goto fail;
 		}
 		memcpy(dup->dest_addr, info->dest_addr, info->dest_addrlen);
 	}
 	if (info->tx_attr != NULL) {
-		dup->tx_attr = malloc(sizeof(*dup->tx_attr));
+		dup->tx_attr = calloc(1, sizeof(*dup->tx_attr));
 		if (dup->tx_attr == NULL) {
 			goto fail;
 		}
 		*dup->tx_attr = *info->tx_attr;
 	}
 	if (info->rx_attr != NULL) {
-		dup->rx_attr = malloc(sizeof(*dup->rx_attr));
+		dup->rx_attr = calloc(1, sizeof(*dup->rx_attr));
 		if (dup->rx_attr == NULL) {
 			goto fail;
 		}
 		*dup->rx_attr = *info->rx_attr;
 	}
 	if (info->ep_attr != NULL) {
-		dup->ep_attr = malloc(sizeof(*dup->ep_attr));
+		dup->ep_attr = calloc(1, sizeof(*dup->ep_attr));
 		if (dup->ep_attr == NULL) {
 			goto fail;
 		}
 		*dup->ep_attr = *info->ep_attr;
 	}
 	if (info->domain_attr) {
-		dup->domain_attr = malloc(sizeof(*dup->domain_attr));
+		dup->domain_attr = calloc(1, sizeof(*dup->domain_attr));
 		if (dup->domain_attr == NULL) {
 			goto fail;
 		}
@@ -591,7 +591,7 @@ struct fi_info *DEFAULT_SYMVER_PRE(fi_dupinfo)(const struct fi_info *info)
 		}
 	}
 	if (info->fabric_attr) {
-		dup->fabric_attr = malloc(sizeof(*dup->fabric_attr));
+		dup->fabric_attr = calloc(1, sizeof(*dup->fabric_attr));
 		if (dup->fabric_attr == NULL) {
 			goto fail;
 		}

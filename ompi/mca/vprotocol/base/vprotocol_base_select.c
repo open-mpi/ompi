@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +22,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/pml/v/pml_v_output.h"
 
-mca_vprotocol_base_module_t mca_vprotocol;
+mca_vprotocol_base_module_t mca_vprotocol = {0};
 mca_vprotocol_base_component_t mca_vprotocol_component = {
     {MCA_VPROTOCOL_BASE_VERSION_0_0_0} /* Initialized with invalid version */    
 };

@@ -24,7 +24,7 @@
 #include "opal/mca/btl/ugni/btl_ugni.h"
 
 static int opal_common_ugni_module_ref_count = 0;
-opal_common_ugni_module_t opal_common_ugni_module;
+opal_common_ugni_module_t opal_common_ugni_module = {0};
 
 mca_base_component_t opal_common_ugni_component = {
     OPAL_MCA_BASE_VERSION_2_1_0("common", 1, 0, 0),

@@ -225,10 +225,6 @@ static int psmx_atomic_do_write(void *dest, void *src,
 				dest,src,count,PSMX_BXOR);
 		break;
 
-	case FI_ATOMIC_READ:
-		/* do nothing */
-		break;
-
 	case FI_ATOMIC_WRITE:
 		SWITCH_ALL_TYPE(datatype,PSMX_ATOMIC_WRITE,
 				dest,src,count,PSMX_COPY);
@@ -383,7 +379,6 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 	struct psmx_fid_cntr *cntr = NULL;
 	struct psmx_fid_cntr *mr_cntr = NULL;
 	void *tmp_buf;
-	uint64_t cq_flags;
 
 	switch (args[0].u32w0 & PSMX_AM_OP_MASK) {
 	case PSMX_AM_REQ_ATOMIC_WRITE:
@@ -428,12 +423,9 @@ int psmx_am_atomic_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		datatype = args[4].u32w0;
 		op = args[4].u32w1;
-		cq_flags = FI_REMOTE_WRITE | FI_ATOMIC;
 
-		if (op == FI_ATOMIC_READ) {
+		if (op == FI_ATOMIC_READ)
 			len = fi_datatype_size(datatype) * count;
-			cq_flags = FI_REMOTE_READ | FI_ATOMIC;
-		}
 
 		assert(len == fi_datatype_size(datatype) * count);
 
@@ -667,7 +659,7 @@ static int psmx_atomic_self(int am_cmd,
 
 gen_local_event:
 	no_event = ((flags & PSMX_NO_COMPLETION) ||
-		    (ep->send_cq_event_flag && !(flags & FI_COMPLETION)));
+		    (ep->send_selective_completion && !(flags & FI_COMPLETION)));
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
 				ep->send_cq,
@@ -795,7 +787,7 @@ ssize_t _psmx_atomic_write(struct fid_ep *ep,
 	}
 
 	req->no_event = (flags & PSMX_NO_COMPLETION) ||
-			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
+			(ep_priv->send_selective_completion && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_WRITE;
 	req->atomic.buf = (void *)buf;
@@ -982,7 +974,7 @@ ssize_t _psmx_atomic_readwrite(struct fid_ep *ep,
 	}
 
 	req->no_event = (flags & PSMX_NO_COMPLETION) ||
-			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
+			(ep_priv->send_selective_completion && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_READWRITE;
 	req->atomic.buf = (void *)buf;
@@ -1200,7 +1192,7 @@ ssize_t _psmx_atomic_compwrite(struct fid_ep *ep,
 	}
 
 	req->no_event = (flags & PSMX_NO_COMPLETION) ||
-			(ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
+			(ep_priv->send_selective_completion && !(flags & FI_COMPLETION));
 
 	req->op = PSMX_AM_REQ_ATOMIC_COMPWRITE;
 	req->atomic.buf = (void *)buf;
@@ -1319,7 +1311,6 @@ static int psmx_atomic_writevalid(struct fid_ep *ep,
 	case FI_BAND:
 	case FI_LXOR:
 	case FI_BXOR:
-	case FI_ATOMIC_READ:
 	case FI_ATOMIC_WRITE:
 		break;
 

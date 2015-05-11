@@ -34,7 +34,6 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -89,10 +88,13 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		return -FI_EINVAL;
 	}
 
-	assert(tx_ctx->enabled && 
-	       msg->iov_count <= SOCK_EP_MAX_IOV_LIMIT &&
-	       msg->rma_iov_count <= SOCK_EP_MAX_IOV_LIMIT);
+	if (msg->iov_count > SOCK_EP_MAX_IOV_LIMIT || 
+	    msg->rma_iov_count > SOCK_EP_MAX_IOV_LIMIT)
+		return -FI_EINVAL;
 	
+	if (!tx_ctx->enabled)
+		return -FI_EOPBADSTATE;
+
 	if (sock_ep->connected) {
 		conn = sock_ep_lookup_conn(sock_ep);
 	} else {
@@ -102,19 +104,30 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	if (!conn)
 		return -FI_EAGAIN;
 
+	SOCK_EP_SET_TX_OP_FLAGS(flags);
+	if (flags & SOCK_USE_OP_FLAGS)
+		flags |= tx_ctx->attr.op_flags;
+
+	if (sock_ep_is_write_cq_low(&tx_ctx->comp, flags)) {
+		SOCK_LOG_ERROR("CQ size low\n");
+		return -FI_EAGAIN;
+	}
+
 	src_len = 0;
 	datatype_sz = fi_datatype_size(msg->datatype);
 	if (flags & FI_INJECT) {
 		for (i=0; i< msg->iov_count; i++) {
 			src_len += (msg->msg_iov[i].count * datatype_sz);
 		}
-		assert(src_len <= SOCK_EP_MAX_INJECT_SZ);
+		if (src_len > SOCK_EP_MAX_INJECT_SZ) {
+			return -FI_EINVAL;
+		}
 		total_len = src_len;
 	} else {
 		total_len = msg->iov_count * sizeof(union sock_iov);
 	}
 
-	total_len += (sizeof(tx_op) +
+	total_len += (sizeof(struct sock_op_send) +
 		      (msg->rma_iov_count * sizeof(union sock_iov)) +
 		      (result_count * sizeof (union sock_iov)));
 	
@@ -124,7 +137,6 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		goto err;
 	}
 
-	flags |= tx_ctx->attr.op_flags;
 	memset(&tx_op, 0, sizeof(tx_op));
 	tx_op.op = SOCK_OP_ATOMIC;
 	tx_op.dest_iov_len = msg->rma_iov_count;
@@ -156,12 +168,15 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		for (i = 0; i< msg->iov_count; i++) {
 			tx_iov.ioc.addr = (uintptr_t) msg->msg_iov[i].addr;
 			tx_iov.ioc.count = msg->msg_iov[i].count;
-			tx_iov.ioc.key = (uintptr_t) msg->desc[i];
 			sock_tx_ctx_write(tx_ctx, &tx_iov, sizeof(tx_iov));
 			src_len += (tx_iov.ioc.count * datatype_sz);
 		}
 	}
-	assert(src_len <= SOCK_EP_MAX_ATOMIC_SZ);
+
+	if (src_len > SOCK_EP_MAX_ATOMIC_SZ) {
+		ret = -FI_EINVAL;
+		goto err;
+	}
 
 	dst_len = 0;
 	for (i = 0; i< msg->rma_iov_count; i++) {
@@ -172,10 +187,12 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 		dst_len += (tx_iov.ioc.count * datatype_sz);
 	}
 	
-	if (dst_len != src_len) {
+	if (msg->iov_count && dst_len != src_len) {
 		SOCK_LOG_ERROR("Buffer length mismatch\n");
 		ret = -FI_EINVAL;
 		goto err;
+	} else {
+		src_len = dst_len;
 	}
 
 	dst_len = 0;
@@ -210,7 +227,6 @@ static ssize_t sock_ep_tx_atomic(struct fid_ep *ep,
 	return 0;
 
 err:
-	SOCK_LOG_INFO("Not enough space for TX entry, try again\n");
 	sock_tx_ctx_abort(tx_ctx);
 	return ret;
 }
@@ -219,6 +235,24 @@ err:
 static ssize_t sock_ep_atomic_writemsg(struct fid_ep *ep,
 			const struct fi_msg_atomic *msg, uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_MIN:
+	case FI_MAX: 
+	case FI_SUM:
+	case FI_PROD:
+	case FI_LOR:
+	case FI_LAND:
+	case FI_BOR:
+	case FI_BAND:
+	case FI_LXOR: 
+	case FI_BXOR:
+	case FI_ATOMIC_WRITE:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, NULL, NULL, 0,
 				  NULL, NULL, 0, flags);
 }
@@ -251,7 +285,7 @@ static ssize_t sock_ep_atomic_write(struct fid_ep *ep,
 	msg.context = context;
 	msg.data = 0;
 
-	return sock_ep_atomic_writemsg(ep, &msg, 0);
+	return sock_ep_atomic_writemsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_writev(struct fid_ep *ep,
@@ -279,7 +313,7 @@ static ssize_t sock_ep_atomic_writev(struct fid_ep *ep,
 	msg.context = context;
 	msg.data = 0;
 
-	return sock_ep_atomic_writemsg(ep, &msg, 0);
+	return sock_ep_atomic_writemsg(ep, &msg, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_inject(struct fid_ep *ep, const void *buf, size_t count,
@@ -306,7 +340,8 @@ static ssize_t sock_ep_atomic_inject(struct fid_ep *ep, const void *buf, size_t 
 	msg.op = op;
 	msg.data = 0;
 
-	return sock_ep_atomic_writemsg(ep, &msg, FI_INJECT | SOCK_NO_COMPLETION);
+	return sock_ep_atomic_writemsg(ep, &msg, FI_INJECT | 
+				       SOCK_NO_COMPLETION | SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_readwritemsg(struct fid_ep *ep, 
@@ -314,6 +349,25 @@ static ssize_t sock_ep_atomic_readwritemsg(struct fid_ep *ep,
 					    struct fi_ioc *resultv, void **result_desc, 
 					    size_t result_count, uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_MIN:
+	case FI_MAX: 
+	case FI_SUM:
+	case FI_PROD:
+	case FI_LOR:
+	case FI_LAND:
+	case FI_BOR:
+	case FI_BAND:
+	case FI_LXOR: 
+	case FI_BXOR:
+	case FI_ATOMIC_READ:
+	case FI_ATOMIC_WRITE:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, NULL, NULL, 0,
 				 resultv, result_desc, result_count, flags);
 }
@@ -351,7 +405,7 @@ static ssize_t sock_ep_atomic_readwrite(struct fid_ep *ep,
 	resultv.count = 1;
     
 	return sock_ep_atomic_readwritemsg(ep, &msg, 
-					    &resultv, &result_desc, 1, 0);
+					    &resultv, &result_desc, 1, SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_readwritev(struct fid_ep *ep,
@@ -379,7 +433,8 @@ static ssize_t sock_ep_atomic_readwritev(struct fid_ep *ep,
 	msg.context = context;
 	
 	return sock_ep_atomic_readwritemsg(ep, &msg, 
-					    resultv, result_desc, result_count, 0);
+					   resultv, result_desc, result_count, 
+					   SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_compwritemsg(struct fid_ep *ep,
@@ -388,6 +443,20 @@ static ssize_t sock_ep_atomic_compwritemsg(struct fid_ep *ep,
 			struct fi_ioc *resultv, void **result_desc, size_t result_count,
 			uint64_t flags)
 {
+	switch (msg->op) {
+	case FI_CSWAP:
+	case FI_CSWAP_NE:
+	case FI_CSWAP_LE:
+	case FI_CSWAP_LT:
+	case FI_CSWAP_GE:
+	case FI_CSWAP_GT:
+	case FI_MSWAP:
+		break;
+	default:
+		SOCK_LOG_ERROR("Invalid operation type\n");
+		return -FI_EINVAL;
+	}
+
 	return sock_ep_tx_atomic(ep, msg, comparev, compare_desc, compare_count,
 				 resultv, result_desc, result_count, flags);
 }
@@ -429,7 +498,8 @@ static ssize_t sock_ep_atomic_compwrite(struct fid_ep *ep,
 	comparev.count = 1;
 
 	return sock_ep_atomic_compwritemsg(ep, &msg, &comparev, &compare_desc, 1,
-					    &resultv, &result_desc, 1, 0);
+					   &resultv, &result_desc, 1, 
+					   SOCK_USE_OP_FLAGS);
 }
 
 static ssize_t sock_ep_atomic_compwritev(struct fid_ep *ep,
@@ -458,7 +528,8 @@ static ssize_t sock_ep_atomic_compwritev(struct fid_ep *ep,
 	msg.context = context;
 	
 	return sock_ep_atomic_compwritemsg(ep, &msg, comparev, compare_desc, 1,
-					    resultv, result_desc, 1, 0);
+					   resultv, result_desc, 1, 
+					   SOCK_USE_OP_FLAGS);
 }
 
 static int sock_ep_atomic_valid(struct fid_ep *ep, enum fi_datatype datatype, 

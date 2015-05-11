@@ -67,14 +67,12 @@
 #include "usdf_av.h"
 #include "usdf_progress.h"
 
-#define PRINTF if (0) printf
-
 static inline void
 usdf_rdm_rdc_ready(struct usdf_rdm_connection *rdc, struct usdf_tx *tx)
 {
 	/* skip if we have pending send messages */
 	if (!TAILQ_EMPTY(&rdc->dc_wqe_sent)) {
-PRINTF("SKIP rdc %p ready due to pending wqe\n", rdc);
+		USDF_DBG_SYS(EP_DATA, "SKIP rdc %p ready due to pending wqe\n", rdc);
 		return;
 	}
 	if (!TAILQ_ON_LIST(rdc, dc_tx_link)) {
@@ -87,7 +85,9 @@ PRINTF("SKIP rdc %p ready due to pending wqe\n", rdc);
 				tx, tx_link);
 		}
 	}
-else PRINTF("RDC %p already on list\n", rdc);
+	else {
+		USDF_DBG_SYS(EP_DATA, "RDC %p already on list\n", rdc);
+	}
 }
 
 static inline uint16_t
@@ -182,7 +182,7 @@ usdf_rdm_rdc_insert(struct usdf_domain *udp, struct usdf_rdm_connection *rdc)
 	hash_index = usdf_rdm_rdc_hash_helper(
 		(uint16_t *)&rdc->dc_hdr.uh_ip.daddr,
 		rdc->dc_hdr.uh_udp.dest);
-PRINTF("insert rdc %p at %u\n", rdc, hash_index);
+	USDF_DBG_SYS(EP_DATA, "insert rdc %p at %u\n", rdc, hash_index);
 
 	rdc->dc_hash_next = udp->dom_rdc_hashtab[hash_index];
 	udp->dom_rdc_hashtab[hash_index] = rdc;
@@ -197,7 +197,7 @@ usdf_rdm_rdc_remove(struct usdf_domain *udp, struct usdf_rdm_connection *rdc)
 	hash_index = usdf_rdm_rdc_hash_helper(
 		(uint16_t *)&rdc->dc_hdr.uh_ip.daddr,
 		rdc->dc_hdr.uh_udp.dest);
-PRINTF("remove rdc %p from %u\n", rdc, hash_index);
+	USDF_DBG_SYS(EP_DATA, "remove rdc %p from %u\n", rdc, hash_index);
 
 	if (udp->dom_rdc_hashtab[hash_index] == rdc) {
 		udp->dom_rdc_hashtab[hash_index] = rdc->dc_hash_next;
@@ -435,6 +435,7 @@ usdf_rdm_recv(struct fid_ep *fep, void *buf, size_t len,
 
 	rqe = TAILQ_FIRST(&rx->r.rdm.rx_free_rqe);
 	TAILQ_REMOVE(&rx->r.rdm.rx_free_rqe, rqe, rd_link);
+	--rx->r.msg.rx_num_free_rqe;
 
 	rqe->rd_context = context;
 	rqe->rd_iov[0].iov_base = buf;
@@ -445,7 +446,7 @@ usdf_rdm_recv(struct fid_ep *fep, void *buf, size_t len,
 	rqe->rd_cur_ptr = buf;
 	rqe->rd_iov_resid = len;
 	rqe->rd_length = 0;
-PRINTF("RECV post rqe=%p len=%lu\n", rqe, len);
+	USDF_DBG_SYS(EP_DATA, "RECV post rqe=%p len=%lu\n", rqe, len);
 
 	TAILQ_INSERT_TAIL(&rx->r.rdm.rx_posted_rqe, rqe, rd_link);
 
@@ -472,6 +473,81 @@ usdf_rdm_send(struct fid_ep *fep, const void *buf, size_t len, void *desc,
 	struct usdf_dest *dest;
 	struct usdf_rdm_connection *rdc;
 	uint32_t msg_id;
+	uint64_t op_flags;
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+	dest = (struct usdf_dest *)dest_addr;
+
+	if (TAILQ_EMPTY(&tx->t.rdm.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	rdc = usdf_rdm_rdc_tx_get(dest, ep);
+	if (rdc == NULL) {
+		pthread_spin_unlock(&udp->dom_progress_lock);
+		return -FI_EAGAIN;
+	}
+
+	wqe = TAILQ_FIRST(&tx->t.rdm.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.rdm.tx_free_wqe, wqe, rd_link);
+	--tx->t.rdm.tx_num_free_wqe;
+
+	wqe->rd_context = context;
+
+	msg_id = atomic_inc(&tx->t.rdm.tx_next_msg_id);
+	wqe->rd_msg_id_be = htonl(msg_id);
+
+	wqe->rd_iov[0].iov_base = (void *)buf;
+	wqe->rd_iov[0].iov_len = len;
+	wqe->rd_last_iov = 0;
+
+	wqe->rd_cur_iov = 0;
+	wqe->rd_cur_ptr = buf;
+	wqe->rd_iov_resid = len;
+	wqe->rd_resid = len;
+	wqe->rd_length = len;
+
+	op_flags = ep->ep_tx->tx_attr.op_flags;
+	wqe->rd_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(op_flags & FI_COMPLETION);
+
+	/* add send to TX list */
+	TAILQ_INSERT_TAIL(&rdc->dc_wqe_posted, wqe, rd_link);
+	usdf_rdm_rdc_ready(rdc, tx);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+	USDF_DBG_SYS(EP_DATA, "SEND posted len=%lu, ID = %d\n", len, msg_id);
+
+	usdf_domain_progress(udp);
+
+	return 0;
+}
+
+ssize_t
+usdf_rdm_senddata(struct fid_ep *fep, const void *buf, size_t len, void *desc,
+		uint64_t data, fi_addr_t dest_addr, void *context)
+{
+	return -FI_ENOSYS;
+}
+
+ssize_t
+usdf_rdm_sendv(struct fid_ep *fep, const struct iovec *iov, void **desc,
+                 size_t count, fi_addr_t dest_addr, void *context)
+{
+	int i;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_rdm_qe *wqe;
+	struct usdf_domain *udp;
+	struct usdf_dest *dest;
+	struct usdf_rdm_connection *rdc;
+	uint32_t msg_id;
+	size_t tot_len;
+	uint64_t op_flags;
 
 	ep = ep_ftou(fep);
 	tx = ep->ep_tx;
@@ -498,22 +574,30 @@ usdf_rdm_send(struct fid_ep *fep, const void *buf, size_t len, void *desc,
 	msg_id = atomic_inc(&tx->t.rdm.tx_next_msg_id);
 	wqe->rd_msg_id_be = htonl(msg_id);
 
-	wqe->rd_iov[0].iov_base = (void *)buf;
-	wqe->rd_iov[0].iov_len = len;
-	wqe->rd_last_iov = 0;
+	tot_len = 0;
+	for (i = 0; i < count; ++i) {
+		wqe->rd_iov[i].iov_base = (void *)iov[i].iov_base;
+		wqe->rd_iov[i].iov_len = iov[i].iov_len;
+		tot_len += iov[i].iov_len;
+	}
+	wqe->rd_last_iov = count - 1;
 
 	wqe->rd_cur_iov = 0;
-	wqe->rd_cur_ptr = buf;
-	wqe->rd_iov_resid = len;
-	wqe->rd_resid = len;
-	wqe->rd_length = len;
+	wqe->rd_cur_ptr = iov[0].iov_base;
+	wqe->rd_iov_resid = iov[0].iov_len;
+	wqe->rd_resid = tot_len;
+	wqe->rd_length = tot_len;
+
+	op_flags = ep->ep_tx->tx_attr.op_flags;
+	wqe->rd_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(op_flags & FI_COMPLETION);
 
 	/* add send to TX list */
 	TAILQ_INSERT_TAIL(&rdc->dc_wqe_posted, wqe, rd_link);
 	usdf_rdm_rdc_ready(rdc, tx);
 
 	pthread_spin_unlock(&udp->dom_progress_lock);
-PRINTF("SEND posted len=%lu, ID = %d\n", len, msg_id);
+	USDF_DBG_SYS(EP_DATA, "SENDV posted len=%lu, ID=%d\n", tot_len, msg_id);
 
 	usdf_domain_progress(udp);
 
@@ -521,30 +605,174 @@ PRINTF("SEND posted len=%lu, ID = %d\n", len, msg_id);
 }
 
 ssize_t
-usdf_rdm_senddata(struct fid_ep *ep, const void *buf, size_t len, void *desc,
-		uint64_t data, fi_addr_t dest_addr, void *context)
+usdf_rdm_sendmsg(struct fid_ep *fep, const struct fi_msg *msg, uint64_t flags)
 {
-	return -FI_ENOSYS;
+	int i;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_rdm_qe *wqe;
+	struct usdf_domain *udp;
+	struct usdf_dest *dest;
+	struct usdf_rdm_connection *rdc;
+	uint32_t msg_id;
+	size_t tot_len;
+	const struct iovec *iov;
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+	dest = (struct usdf_dest *)msg->addr;
+
+	if (flags & ~USDF_RDM_SUPP_SENDMSG_FLAGS) {
+		USDF_DBG("one or more flags in 0x%llx not supported\n", flags);
+		return -FI_EOPNOTSUPP;
+	}
+
+	/* check for inject overrun before acquiring lock and allocating msg id,
+	 * easier to unwind this way */
+	if (flags & FI_INJECT) {
+		iov = msg->msg_iov;
+		tot_len = 0;
+		for (i = 0; i < msg->iov_count; ++i) {
+			tot_len += iov[i].iov_len;
+			if (tot_len > USDF_RDM_MAX_INJECT_SIZE) {
+				USDF_DBG_SYS(EP_DATA, "max inject len exceeded (%zu)\n",
+						tot_len);
+				return -FI_EINVAL;
+			}
+		}
+	}
+
+	if (TAILQ_EMPTY(&tx->t.rdm.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	rdc = usdf_rdm_rdc_tx_get(dest, ep);
+	if (rdc == NULL) {
+		pthread_spin_unlock(&udp->dom_progress_lock);
+		return -FI_EAGAIN;
+	}
+
+	wqe = TAILQ_FIRST(&tx->t.rdm.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.rdm.tx_free_wqe, wqe, rd_link);
+
+	wqe->rd_context = msg->context;
+
+	msg_id = atomic_inc(&tx->t.rdm.tx_next_msg_id);
+	wqe->rd_msg_id_be = htonl(msg_id);
+
+	iov = msg->msg_iov;
+	tot_len = 0;
+	if (flags & FI_INJECT) {
+		/* copy to the the wqe's tiny injection buffer */
+		for (i = 0; i < msg->iov_count; ++i) {
+			assert(tot_len + iov[i].iov_len <= USDF_RDM_MAX_INJECT_SIZE);
+			memcpy(&wqe->rd_inject_buf[tot_len], iov[i].iov_base,
+				iov[i].iov_len);
+			tot_len += iov[i].iov_len;
+		}
+		wqe->rd_iov[0].iov_base = wqe->rd_inject_buf;
+		wqe->rd_iov[0].iov_len = tot_len;
+		wqe->rd_last_iov = 0;
+	} else {
+		for (i = 0; i < msg->iov_count; ++i) {
+			wqe->rd_iov[i].iov_base = (void *)iov[i].iov_base;
+			wqe->rd_iov[i].iov_len = iov[i].iov_len;
+			tot_len += iov[i].iov_len;
+		}
+		wqe->rd_last_iov = msg->iov_count - 1;
+	}
+
+	wqe->rd_cur_iov = 0;
+	wqe->rd_cur_ptr = iov[0].iov_base;
+	wqe->rd_iov_resid = iov[0].iov_len;
+	wqe->rd_resid = tot_len;
+	wqe->rd_length = tot_len;
+
+	wqe->rd_signal_comp = ep->ep_tx_dflt_signal_comp ||
+		(flags & FI_COMPLETION);
+
+	/* add send to TX list */
+	TAILQ_INSERT_TAIL(&rdc->dc_wqe_posted, wqe, rd_link);
+	usdf_rdm_rdc_ready(rdc, tx);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+	USDF_DBG_SYS(EP_DATA, "SENDMSG posted len=%lu, ID=%d\n",
+			tot_len, msg_id);
+
+	usdf_domain_progress(udp);
+
+	return 0;
 }
 
 ssize_t
-usdf_rdm_sendv(struct fid_ep *ep, const struct iovec *iov, void **desc,
-                 size_t count, fi_addr_t dest_addr, void *context)
-{
-	return -FI_ENOSYS;
-}
-
-ssize_t
-usdf_rdm_sendmsg(struct fid_ep *ep, const struct fi_msg *msg, uint64_t flags)
-{
-	return -FI_ENOSYS;
-}
-
-ssize_t
-usdf_rdm_inject(struct fid_ep *ep, const void *buf, size_t len,
+usdf_rdm_inject(struct fid_ep *fep, const void *buf, size_t len,
 		fi_addr_t dest_addr)
 {
-	return -FI_ENOSYS;
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+	struct usdf_rdm_qe *wqe;
+	struct usdf_domain *udp;
+	struct usdf_dest *dest;
+	struct usdf_rdm_connection *rdc;
+	uint32_t msg_id;
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	udp = ep->ep_domain;
+	dest = (struct usdf_dest *)dest_addr;
+
+	if (len > USDF_RDM_MAX_INJECT_SIZE) {
+		USDF_DBG_SYS(EP_DATA, "max inject len exceeded (%zu)\n", len);
+		return -FI_EINVAL;
+	}
+
+	if (TAILQ_EMPTY(&tx->t.rdm.tx_free_wqe)) {
+		return -FI_EAGAIN;
+	}
+
+	pthread_spin_lock(&udp->dom_progress_lock);
+
+	rdc = usdf_rdm_rdc_tx_get(dest, ep);
+	if (rdc == NULL) {
+		pthread_spin_unlock(&udp->dom_progress_lock);
+		return -FI_EAGAIN;
+	}
+
+	wqe = TAILQ_FIRST(&tx->t.rdm.tx_free_wqe);
+	TAILQ_REMOVE(&tx->t.rdm.tx_free_wqe, wqe, rd_link);
+
+	wqe->rd_context = NULL;
+
+	msg_id = atomic_inc(&tx->t.rdm.tx_next_msg_id);
+	wqe->rd_msg_id_be = htonl(msg_id);
+
+	memcpy(wqe->rd_inject_buf, buf, len);
+	wqe->rd_iov[0].iov_base = wqe->rd_inject_buf;
+	wqe->rd_iov[0].iov_len = len;
+	wqe->rd_last_iov = 0;
+
+	wqe->rd_cur_iov = 0;
+	wqe->rd_cur_ptr = wqe->rd_inject_buf;
+	wqe->rd_iov_resid = len;
+	wqe->rd_resid = len;
+	wqe->rd_length = len;
+
+	/* inject never generates a completion */
+	wqe->rd_signal_comp = 0;
+
+	/* add send to TX list */
+	TAILQ_INSERT_TAIL(&rdc->dc_wqe_posted, wqe, rd_link);
+	usdf_rdm_rdc_ready(rdc, tx);
+
+	pthread_spin_unlock(&udp->dom_progress_lock);
+	USDF_DBG_SYS(EP_DATA, "INJECT posted len=%lu, ID = %d\n", len, msg_id);
+
+	usdf_domain_progress(udp);
+
+	return 0;
 }
 
 ssize_t
@@ -637,7 +865,7 @@ usdf_rdm_send_segment(struct usdf_tx *tx, struct usdf_rdm_connection *rdc)
 				(sizeof(struct rudp_pkt) -
 				 sizeof(struct ether_header) -
 				 sizeof(struct iphdr)) + sent);
-PRINTF("TX 1seg=%lu, s/i = %u/%u\n", sent, ntohs(hdr->msg.m.rc_data.seqno), ntohl(hdr->msg.msg_id));
+	USDF_DBG_SYS(EP_DATA, "TX 1seg=%lu, s/i = %u/%u\n", sent, ntohs(hdr->msg.m.rc_data.seqno), ntohl(hdr->msg.msg_id));
 
 		index = _usd_post_send_one(wq, hdr,
 				sent + sizeof(*hdr), 1);
@@ -721,7 +949,7 @@ if ((random() % 177) == 0 && resid == 0) {
 		hdr->msg.m.rc_data.length = htons(sent);
 		hdr->msg.m.rc_data.seqno = htons(rdc->dc_next_tx_seq);
 		++rdc->dc_next_tx_seq;
-PRINTF("TX sge=%lu, s/i = %u/%u\n", sent, ntohs(hdr->msg.m.rc_data.seqno), ntohl(hdr->msg.msg_id));
+	USDF_DBG_SYS(EP_DATA, "TX sge=%lu, s/i = %u/%u\n", sent, ntohs(hdr->msg.m.rc_data.seqno), ntohl(hdr->msg.msg_id));
 					
 		wmb();
 		iowrite64(index, &vwq->ctrl->posted_index);
@@ -772,12 +1000,12 @@ usdf_rdm_send_ack(struct usdf_tx *tx, struct usdf_rdm_connection *rdc)
 		seq = rdc->dc_ack_seq + 1;
 		hdr->msg.m.nak.nak_seq = htons(seq);
 		rdc->dc_send_nak = 0;
-PRINTF("TX NAK seq=%d\n", seq);
+	USDF_DBG_SYS(EP_DATA, "TX NAK seq=%d\n", seq);
 	} else {
 		hdr->msg.opcode = htons(RUDP_OP_ACK);
 		seq = rdc->dc_ack_seq;
 		hdr->msg.m.ack.ack_seq = htons(seq);
-PRINTF("TXACK seq=%u:%u\n", seq, rdc->dc_rx_msg_id);
+		USDF_DBG_SYS(EP_DATA, "TXACK seq=%u:%u\n", seq, rdc->dc_rx_msg_id);
 	}
 	hdr->msg.msg_id = htonl(rdc->dc_ack_msg_id);
 
@@ -879,11 +1107,12 @@ usdf_rdm_recv_complete(struct usdf_rx *rx, struct usdf_rdm_connection *rdc,
 {
 	struct usdf_cq_hard *hcq;
 
-PRINTF("RECV complete ID=%u len=%lu\n", rdc->dc_rx_msg_id, rqe->rd_length);
+	USDF_DBG_SYS(EP_DATA, "RECV complete ID=%u len=%lu\n", rdc->dc_rx_msg_id, rqe->rd_length);
 	hcq = rx->r.rdm.rx_hcq;
 	hcq->cqh_post(hcq, rqe->rd_context, rqe->rd_length);
 
 	TAILQ_INSERT_HEAD(&rx->r.rdm.rx_free_rqe, rqe, rd_link);
+	++rx->r.msg.rx_num_free_rqe;
 
 	rdc->dc_cur_rqe = NULL;
 }
@@ -956,7 +1185,7 @@ usdf_rdm_check_seq_id(struct usdf_rdm_connection *rdc, struct usdf_rx *rx,
 		msg_delta = RUDP_SEQ_DIFF(msg_id, rdc->dc_rx_msg_id);
 	}
 	rqe = rdc->dc_cur_rqe;
-PRINTF("RXSEQ %u:%u, msg_delt=%d, rqe=%p\n", seq, msg_id, msg_delta, rqe);
+	USDF_DBG_SYS(EP_DATA, "RXSEQ %u:%u, msg_delt=%d, rqe=%p\n", seq, msg_id, msg_delta, rqe);
 
 	/* old message ID */
 	if (msg_delta < 0) {
@@ -965,14 +1194,14 @@ PRINTF("RXSEQ %u:%u, msg_delt=%d, rqe=%p\n", seq, msg_id, msg_delta, rqe);
 	/* current message ID */
 	} else if (msg_delta == 0) {
 		if (RUDP_SEQ_LT(seq, rdc->dc_next_rx_seq)) {
-PRINTF("old SEQ, ACK %u\n", (uint16_t)(rdc->dc_next_rx_seq));
+			USDF_DBG_SYS(EP_DATA, "old SEQ, ACK %u\n", (uint16_t)(rdc->dc_next_rx_seq));
 			usdf_set_ack(rdc, msg_id, rdc->dc_next_rx_seq);
 		} else if (seq == rdc->dc_next_rx_seq) {
-PRINTF("old SEQ, ACK %u\n", (uint16_t)(rdc->dc_next_rx_seq));
+			USDF_DBG_SYS(EP_DATA, "old SEQ, ACK %u\n", (uint16_t)(rdc->dc_next_rx_seq));
 			usdf_set_ack(rdc, msg_id, rdc->dc_next_rx_seq);
 			++rdc->dc_next_rx_seq;
 		} else {
-PRINTF("future SEQ, NAK %u\n", rdc->dc_next_rx_seq);
+			USDF_DBG_SYS(EP_DATA, "future SEQ, NAK %u\n", rdc->dc_next_rx_seq);
 			usdf_set_nak(rdc, msg_id, rdc->dc_next_rx_seq - 1);
 			rqe = NULL;
 		}
@@ -984,7 +1213,7 @@ PRINTF("future SEQ, NAK %u\n", rdc->dc_next_rx_seq);
 		} else if (seq != 0) {
 			usdf_set_nak(rdc, msg_id, -1);
 		} else if (TAILQ_EMPTY(&rx->r.rdm.rx_posted_rqe)) {
-printf("RX overrun?????\n");
+			USDF_WARN("RX overrun?????\n"); /* XXX */
 			usdf_set_nak(rdc, msg_id, -1);
 		} else {
 			rqe = TAILQ_FIRST(&rx->r.rdm.rx_posted_rqe);
@@ -994,7 +1223,7 @@ printf("RX overrun?????\n");
 			rdc->dc_rx_msg_id = msg_id;
 			usdf_set_ack(rdc, msg_id, 0);
 			rdc->dc_next_rx_seq = 1;
-PRINTF("start new msg, rqe=%p\n", rqe);
+			USDF_DBG_SYS(EP_DATA, "start new msg, rqe=%p\n", rqe);
 		}
 	}
 	return rqe;
@@ -1016,19 +1245,19 @@ usdf_rdm_process_ack(struct usdf_rdm_connection *rdc,
 	} else if (!TAILQ_EMPTY(&rdc->dc_wqe_posted)) {
 		wqe = TAILQ_FIRST(&rdc->dc_wqe_posted);
 	} else {
-PRINTF("ACK no WQEs\n");
+		USDF_DBG_SYS(EP_DATA, "ACK no WQEs\n");
 		return;
 	}
 
 	/* drop if not for this message */
 	if (msg_id != ntohl(wqe->rd_msg_id_be)) {
-PRINTF("ACK ID %u != %u\n", msg_id, ntohl(wqe->rd_msg_id_be));
+		USDF_DBG_SYS(EP_DATA, "ACK ID %u != %u\n", msg_id, ntohl(wqe->rd_msg_id_be));
 		return;
 	}
 
 	/* don't try to ACK what we don't think we've sent */
 	max_ack = rdc->dc_next_tx_seq - 1;
-PRINTF("ACK %u max = %u\n", seq, max_ack);
+	USDF_DBG_SYS(EP_DATA, "ACK %u max = %u\n", seq, max_ack);
 	if (RUDP_SEQ_GT(seq, max_ack)) {
 		seq = max_ack;
 	}
@@ -1052,17 +1281,19 @@ PRINTF("ACK %u max = %u\n", seq, max_ack);
 		if (!TAILQ_EMPTY(&rdc->dc_wqe_sent)) {
 			if (wqe->rd_resid == 0) {
 				TAILQ_REMOVE(&rdc->dc_wqe_sent, wqe, rd_link);
-PRINTF("send ID=%u complete\n", msg_id);
-				hcq->cqh_post(hcq, wqe->rd_context,
-						wqe->rd_length);
+				USDF_DBG_SYS(EP_DATA, "send ID=%u complete\n", msg_id);
+				if (wqe->rd_signal_comp)
+					hcq->cqh_post(hcq, wqe->rd_context,
+							wqe->rd_length);
 
 				TAILQ_INSERT_HEAD(&tx->t.rdm.tx_free_wqe,
 					wqe, rd_link);
+				++tx->t.rdm.tx_num_free_wqe;
 
 				/* prepare for next message */
 				rdc->dc_next_tx_seq = 0;
 				rdc->dc_last_rx_ack = rdc->dc_next_tx_seq - 1;
-PRINTF("posted %s, sent %s\n", TAILQ_EMPTY(&rdc->dc_wqe_posted)?"empty":"occupied", TAILQ_EMPTY(&rdc->dc_wqe_sent)?"empty":"occupied");
+				USDF_DBG_SYS(EP_DATA, "posted %s, sent %s\n", TAILQ_EMPTY(&rdc->dc_wqe_posted)?"empty":"occupied", TAILQ_EMPTY(&rdc->dc_wqe_sent)?"empty":"occupied");
 				if (!TAILQ_EMPTY(&rdc->dc_wqe_posted)) {
 					usdf_rdm_rdc_ready(rdc, tx);
 				}
@@ -1094,7 +1325,7 @@ usdf_rdm_process_nak(struct usdf_rdm_connection *rdc, struct usdf_tx *tx,
 	if (!TAILQ_EMPTY(&rdc->dc_wqe_sent)) {
 		wqe = TAILQ_FIRST(&rdc->dc_wqe_sent);
 		wqe_msg_id = ntohl(wqe->rd_msg_id_be);
-PRINTF("NAK %u:%u, next = %u:%u\n", seq, msg_id, rdc->dc_next_tx_seq, wqe_msg_id);
+		USDF_DBG_SYS(EP_DATA, "NAK %u:%u, next = %u:%u\n", seq, msg_id, rdc->dc_next_tx_seq, wqe_msg_id);
 		if (msg_id != wqe_msg_id) {
 			return;
 		}
@@ -1103,18 +1334,18 @@ PRINTF("NAK %u:%u, next = %u:%u\n", seq, msg_id, rdc->dc_next_tx_seq, wqe_msg_id
 	} else if (!TAILQ_EMPTY(&rdc->dc_wqe_posted)) {
 		wqe = TAILQ_FIRST(&rdc->dc_wqe_posted);
 		wqe_msg_id = ntohl(wqe->rd_msg_id_be);
-PRINTF("NAK %u:%u, next = %u:%u (posted)\n", seq, msg_id, rdc->dc_next_tx_seq, wqe_msg_id);
+		USDF_DBG_SYS(EP_DATA, "NAK %u:%u, next = %u:%u (posted)\n", seq, msg_id, rdc->dc_next_tx_seq, wqe_msg_id);
 		if (msg_id != wqe_msg_id) {
 			return;
 		}
 	} else {
-PRINTF("NAK Nothing send or posted\n");
+		USDF_DBG_SYS(EP_DATA, "NAK Nothing send or posted\n");
 		return;
 	}
 
 	/* reset WQE to old sequence # */
 	rewind = RUDP_SEQ_DIFF(rdc->dc_next_tx_seq, seq);
-PRINTF("rewind = %d\n", rewind);
+	USDF_DBG_SYS(EP_DATA, "rewind = %d\n", rewind);
 	if (rewind > 0) {
 		rdc->dc_seq_credits = USDF_RUDP_SEQ_CREDITS;
 		rdc->dc_next_tx_seq = seq;
@@ -1142,7 +1373,7 @@ usdf_rdm_rdc_timeout(void *vrdc)
 
 	rdc = vrdc;
 	udp = rdc->dc_tx->tx_domain;
-PRINTF("RDC timer fire\n");
+	USDF_DBG_SYS(EP_DATA, "RDC timer fire\n");
 
 	pthread_spin_lock(&udp->dom_progress_lock);
 
@@ -1181,7 +1412,7 @@ PRINTF("RDC timer fire\n");
 gotnak:
 	/* wqe set above */
 	nak = rdc->dc_last_rx_ack + 1;
-PRINTF("TIMEOUT nak=%u:%u\n", nak, ntohl(wqe->rd_msg_id_be));
+	USDF_DBG_SYS(EP_DATA, "TIMEOUT nak=%u:%u\n", nak, ntohl(wqe->rd_msg_id_be));
 	usdf_rdm_process_nak(rdc, rdc->dc_tx, nak, ntohl(wqe->rd_msg_id_be));
 
 done:
@@ -1197,7 +1428,7 @@ usdf_rdm_rx_ack(struct usdf_rdm_connection *rdc, struct usdf_tx *tx,
 
 	seq = ntohs(pkt->msg.m.nak.nak_seq);
 	msg_id = ntohl(pkt->msg.msg_id);
-PRINTF("RXACK %u:%u\n", seq, msg_id);
+	USDF_DBG_SYS(EP_DATA, "RXACK %u:%u\n", seq, msg_id);
 	usdf_rdm_process_ack(rdc, tx, seq, msg_id);
 }
 
@@ -1326,4 +1557,34 @@ usdf_rdm_hcq_progress(struct usdf_cq_hard *hcq)
 			break;
 		}
 	}
+}
+
+ssize_t usdf_rdm_rx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+	struct usdf_rx *rx;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
+
+	ep = ep_ftou(fep);
+	rx = ep->ep_rx;
+	if (rx == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	return rx->r.rdm.rx_num_free_rqe;
+}
+
+ssize_t usdf_rdm_tx_size_left(struct fid_ep *fep)
+{
+	struct usdf_ep *ep;
+	struct usdf_tx *tx;
+
+	USDF_DBG_SYS(EP_DATA, "\n");
+
+	ep = ep_ftou(fep);
+	tx = ep->ep_tx;
+	if (tx == NULL)
+		return -FI_EOPBADSTATE; /* EP not enabled */
+
+	return tx->t.rdm.tx_num_free_wqe;
 }

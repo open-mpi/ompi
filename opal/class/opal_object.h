@@ -5,15 +5,13 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
  * Additional copyrights may follow
- * 
  * $HEADER$
  */
 
@@ -46,13 +44,13 @@
  *   OBJ_CLASS_DECLARATION(sally_t);
  * @endcode
  * All classes must have a parent which is also class.
- * 
+ *
  * In an implementation (.c) file, instantiate a class descriptor for
  * the class like this:
  * @code
  *   OBJ_CLASS_INSTANCE(sally_t, parent_t, sally_construct, sally_destruct);
  * @endcode
- * This macro actually expands to 
+ * This macro actually expands to
  * @code
  *   opal_class_t sally_t_class = {
  *     "sally_t",
@@ -240,7 +238,7 @@ struct opal_object_t {
  * constructor.
  *
  * @param type          Type (class) of the object
- * @return              Pointer to the object 
+ * @return              Pointer to the object
  */
 static inline opal_object_t *opal_obj_new(opal_class_t * cls);
 #if OPAL_ENABLE_DEBUG
@@ -304,12 +302,14 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * to NULL.
  *
  * @param object        Pointer to the object
+ *
+ *
  */
 #if OPAL_ENABLE_DEBUG
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
@@ -457,7 +457,7 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
  *
  * @param size          Size of the object
  * @param cls           Pointer to the class descriptor of this object
- * @return              Pointer to the object 
+ * @return              Pointer to the object
  */
 static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 {

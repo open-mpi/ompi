@@ -15,6 +15,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,8 +50,8 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t, NULL, NULL
 /* 
  * use globals for the tree and the tree_item free list.. 
  */
-opal_rb_tree_t mca_mpool_base_tree; 
-opal_free_list_t mca_mpool_base_tree_item_free_list;
+opal_rb_tree_t mca_mpool_base_tree = {{0}}; 
+opal_free_list_t mca_mpool_base_tree_item_free_list = {{{0}}};
 static opal_mutex_t tree_lock;
 
 /*

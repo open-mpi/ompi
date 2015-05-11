@@ -4,10 +4,11 @@
 !                         Corporation.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
-! Sample MPI "hello world" application in Fortran 90
+! Sample MPI "hello world" application using the Fortran mpi module
+! bindings.
 !
 program main
     use mpi

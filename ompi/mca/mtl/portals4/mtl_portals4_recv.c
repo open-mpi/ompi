@@ -392,10 +392,10 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Recv %lu from %x,%x of length %d (0x%lx, 0x%lx, 0x%lx)\n",
+                         "Recv %lu from %x,%x of length %ld (0x%lx, 0x%lx, 0x%lx)\n",
                          ptl_request->opcount,
                          remote_proc.phys.nid, remote_proc.phys.pid, 
-                         (int)length, match_bits, ignore_bits, (unsigned long) ptl_request));
+                         (int64_t)length, match_bits, ignore_bits, (unsigned long) ptl_request));
 
     me.start = start;
     me.length = length;
@@ -473,9 +473,9 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                         "Mrecv %lu of length %d (0x%lx)\n",
+                         "Mrecv %lu of length %ld (0x%lx)\n",
                          ptl_request->opcount,
-                         (int)length, (unsigned long) ptl_request));
+                         (int64_t)length, (unsigned long) ptl_request));
 
     (*message) = MPI_MESSAGE_NULL;
 

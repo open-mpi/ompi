@@ -11,6 +11,8 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -40,7 +42,7 @@ opal_crs_base_module_t opal_crs = {
     NULL  /* crs_reg_thread         */
 };
 
-opal_crs_base_component_t opal_crs_base_selected_component;
+opal_crs_base_component_t opal_crs_base_selected_component = {{0}};
 
 extern bool opal_crs_base_do_not_select;
 static int opal_crs_base_register(mca_base_register_flag_t flags);

@@ -138,7 +138,7 @@ int pmix_server_local_handle = -1;
 int pmix_server_remote_handle = -1;
 int pmix_server_global_handle = -1;
 int pmix_segment_size = -1;
-opal_list_t pmix_server_pending_dmx_reqs;
+opal_list_t pmix_server_pending_dmx_reqs = {{0}};
 static bool initialized = false;
 static struct sockaddr_un address;
 static int pmix_server_listener_socket = -1;

@@ -17,6 +17,8 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ bool opal_timing_overhead = true;
 #endif
 
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
-bool opal_cuda_support;
+bool opal_cuda_support = false;
 #if OPAL_ENABLE_FT_CR == 1
 bool opal_base_distill_checkpoint_ready = false;
 #endif

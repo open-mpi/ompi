@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +33,7 @@ opal_sec_API_module_t opal_sec = {
     opal_sec_base_get_cred,
     opal_sec_base_validate
 };
-opal_list_t opal_sec_base_actives;
+opal_list_t opal_sec_base_actives = {{0}};
 
 static int opal_sec_base_close(void)
 {

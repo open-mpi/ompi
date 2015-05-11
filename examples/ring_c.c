@@ -4,7 +4,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  *
- * Simple ring test program
+ * Simple ring test program in C.
  */
 
 #include <stdio.h>
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
- 
+
     /* Calculate the rank of the next process in the ring.  Use the
        modulus operator so that the last process "wraps around" to
        rank zero. */
@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
     if (0 == rank) {
         message = 10;
 
-        printf("Process 0 sending %d to %d, tag %d (%d processes in ring)\n", 
+        printf("Process 0 sending %d to %d, tag %d (%d processes in ring)\n",
                message, next, tag, size);
-        MPI_Send(&message, 1, MPI_INT, next, tag, MPI_COMM_WORLD); 
+        MPI_Send(&message, 1, MPI_INT, next, tag, MPI_COMM_WORLD);
         printf("Process 0 sent to %d\n", next);
     }
 
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
        and can quit normally. */
 
     while (1) {
-        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD, 
+        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
         if (0 == rank) {
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
     }
-    
+
     /* All done */
 
     MPI_Finalize();

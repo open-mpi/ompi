@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,8 +21,8 @@
  * If you wonder why these 2 freelists are declared here read the comment
  * in the spml_base_request.h file.
  */
-opal_free_list_t mca_spml_base_put_requests/* = {{{0}}}*/;
-opal_free_list_t mca_spml_base_get_requests /*= {{{0}}}*/;
+opal_free_list_t mca_spml_base_put_requests = {{{0}}};
+opal_free_list_t mca_spml_base_get_requests = {{{0}}};
 opal_free_list_t mca_spml_base_atomic_requests = { { { 0 } } };
 
 static void mca_spml_base_request_construct(mca_spml_base_request_t* req)

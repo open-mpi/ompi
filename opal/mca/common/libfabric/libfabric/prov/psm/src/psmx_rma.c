@@ -50,7 +50,7 @@ static inline void psmx_am_enqueue_rma(struct psmx_fid_domain *domain,
  *	args[2].u64	addr
  *	args[3].u64	key
  *	args[4].u64	data (optional) / tag(long protocol)
- *	args[5].u64	<unused> / data (optional, long protocol)
+ *	payload		<unused> / data (optional, long protocol)
  *
  * Write REP:
  *	args[0].u32w0	cmd, flag
@@ -146,7 +146,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		mr = psmx_mr_hash_get(key);
 		op_error = mr ?
-			psmx_mr_validate(mr, (uint64_t)rma_addr, len, FI_REMOTE_WRITE) :
+			psmx_mr_validate(mr, (uint64_t)rma_addr, rma_len, FI_REMOTE_WRITE) :
 			-FI_EINVAL;
 		if (op_error) {
 			rep_args[0].u32w0 = PSMX_AM_REP_WRITE | eom;
@@ -172,7 +172,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 			req->write.context = (void *)args[4].u64;
 			req->write.peer_context = (void *)args[1].u64;
 			req->write.peer_addr = (void *)epaddr;
-			req->write.data = has_data ? args[5].u64 : 0;
+			req->write.data = has_data ? *(uint64_t *)src: 0;
 			req->cq_flags = FI_REMOTE_WRITE | FI_RMA | (has_data ? FI_REMOTE_CQ_DATA : 0),
 			PSMX_CTXT_TYPE(&req->fi_context) = PSMX_REMOTE_WRITE_CONTEXT;
 			PSMX_CTXT_USER(&req->fi_context) = mr;
@@ -217,7 +217,7 @@ int psmx_am_rma_handler(psm_am_token_t token, psm_epaddr_t epaddr,
 		key = args[3].u64;
 		mr = psmx_mr_hash_get(key);
 		op_error = mr ?
-			psmx_mr_validate(mr, (uint64_t)rma_addr, len, FI_REMOTE_WRITE) :
+			psmx_mr_validate(mr, (uint64_t)rma_addr, rma_len, FI_REMOTE_READ) :
 			-FI_EINVAL;
 		if (op_error) {
 			rep_args[0].u32w0 = PSMX_AM_REP_READ | eom;
@@ -401,7 +401,7 @@ static ssize_t psmx_rma_self(int am_cmd,
 	}
 
 	no_event = (flags & PSMX_NO_COMPLETION) ||
-		   (ep->send_cq_event_flag && !(flags & FI_COMPLETION));
+		   (ep->send_selective_completion && !(flags & FI_COMPLETION));
 
 	if (ep->send_cq && !no_event) {
 		event = psmx_cq_create_event(
@@ -551,7 +551,7 @@ ssize_t _psmx_read(struct fid_ep *ep, void *buf, size_t len,
 	PSMX_CTXT_USER(&req->fi_context) = context;
 	PSMX_CTXT_EP(&req->fi_context) = ep_priv;
 
-	if (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION)) {
+	if (ep_priv->send_selective_completion && !(flags & FI_COMPLETION)) {
 		PSMX_CTXT_TYPE(&req->fi_context) = PSMX_NOCOMP_READ_CONTEXT;
 		req->no_event = 1;
 	}
@@ -571,7 +571,7 @@ ssize_t _psmx_read(struct fid_ep *ep, void *buf, size_t len,
 		args[4].u64 = psm_tag;
 		psm_am_request_short((psm_epaddr_t) src_addr,
 					PSMX_AM_RMA_HANDLER, args, 5, NULL, 0,
-					PSM_AM_FLAG_NOREPLY, NULL, NULL);
+					0, NULL, NULL);
 
 		return 0;
 	}
@@ -708,7 +708,7 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 				     addr, key, context, flags, data);
 
 	no_event = (flags & PSMX_NO_COMPLETION) ||
-		   (ep_priv->send_cq_event_flag && !(flags & FI_COMPLETION));
+		   (ep_priv->send_selective_completion && !(flags & FI_COMPLETION));
 
 	if (flags & FI_INJECT) {
 		if (len > PSMX_INJECT_SIZE)
@@ -747,6 +747,9 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 	chunk_size = MIN(PSMX_AM_CHUNK_SIZE, psmx_am_param.max_request_short);
 
 	if (psmx_env.tagged_rma && len > chunk_size) {
+		void *payload = NULL;
+		int payload_len = 0;
+
 		psm_tag = PSMX_RMA_BIT | ep_priv->domain->psm_epid;
 		args[0].u32w0 = PSMX_AM_REQ_WRITE_LONG;
 		args[0].u32w1 = len;
@@ -756,12 +759,13 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 		args[4].u64 = psm_tag;
 		nargs = 5;
 		if (flags & FI_REMOTE_CQ_DATA) {
-			args[5].u64 = data;
 			args[0].u32w0 |= PSMX_AM_DATA;
-			nargs++;
+			payload = &data;
+			payload_len = sizeof(data);
+			am_flags = 0;
 		}
 
-		if (flags & FI_COMMIT_COMPLETE) {
+		if (flags & FI_DELIVERY_COMPLETE) {
 			args[0].u32w0 |= PSMX_AM_FORCE_ACK;
 			psm_context = NULL;
 		}
@@ -769,9 +773,14 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 			psm_context = (void *)&req->fi_context;
 		}
 
+		/* NOTE: if nargs is greater than 5, the following psm_mq_isend
+		 * would hang if the destination is on the same node (i.e. going
+		 * through the shared memory path). As the result, the immediate
+		 * data is sent as payload instead of args[5].
+		 */
 		psm_am_request_short((psm_epaddr_t) dest_addr,
 					PSMX_AM_RMA_HANDLER, args, nargs,
-					NULL, 0, am_flags | PSM_AM_FLAG_NOREPLY,
+					payload, payload_len, am_flags,
 					NULL, NULL);
 
 		psm_mq_isend(ep_priv->domain->psm_mq, (psm_epaddr_t) dest_addr,
@@ -790,7 +799,7 @@ ssize_t _psmx_write(struct fid_ep *ep, const void *buf, size_t len,
 		psm_am_request_short((psm_epaddr_t) dest_addr,
 					PSMX_AM_RMA_HANDLER, args, nargs,
 					(void *)buf, chunk_size,
-					am_flags | PSM_AM_FLAG_NOREPLY, NULL, NULL);
+					am_flags, NULL, NULL);
 		buf += chunk_size;
 		addr += chunk_size;
 		len -= chunk_size;

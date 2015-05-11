@@ -41,8 +41,8 @@
 extern "C" {
 #endif
 
-#define FI_CLAIM		(1ULL << 0)
-#define FI_DISCARD		FI_CANCEL
+#define FI_CLAIM		(1ULL << 59)
+#define FI_DISCARD		(1ULL << 58)
 
 struct fi_msg_tagged {
 	const struct iovec	*msg_iov;
@@ -77,8 +77,6 @@ struct fi_ops_tagged {
 			uint64_t data, fi_addr_t dest_addr, uint64_t tag, void *context);
 	ssize_t	(*injectdata)(struct fid_ep *ep, const void *buf, size_t len,
 			uint64_t data, fi_addr_t dest_addr, uint64_t tag);
-	ssize_t (*search)(struct fid_ep *ep, uint64_t *tag, uint64_t ignore,
-			uint64_t flags, fi_addr_t *src_addr, size_t *len, void *context);
 };
 
 
@@ -147,14 +145,6 @@ fi_tinjectdata(struct fid_ep *ep, const void *buf, size_t len,
 		uint64_t data, fi_addr_t dest_addr, uint64_t tag)
 {
 	return ep->tagged->injectdata(ep, buf, len, data, dest_addr, tag);
-}
-
-static inline ssize_t
-fi_tsearch(struct fid_ep *ep, uint64_t *tag, uint64_t ignore, uint64_t flags,
-	   fi_addr_t *src_addr, size_t *len, void *context)
-{
-	return ep->tagged->search(ep, tag, ignore, flags, src_addr,
-				  len, context);
 }
 
 

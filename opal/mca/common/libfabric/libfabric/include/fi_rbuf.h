@@ -138,6 +138,12 @@ static inline void rbread(struct ringbuf *rb, void *buf, size_t len)
 	rb->rcnt += len;
 }
 
+static inline size_t rbdiscard(struct ringbuf *rb, size_t len)
+{
+	size_t used_len = MIN(rbused(rb), len);
+	rb->rcnt += used_len;
+	return used_len;
+}
 
 /*
  * Ring buffer with blocking read support using an fd
@@ -212,18 +218,19 @@ static inline size_t rbfdavail(struct ringbuffd *rbfd)
 
 static inline void rbfdsignal(struct ringbuffd *rbfd)
 {
+	char c = 0;
 	if (rbfd->fdwcnt == rbfd->fdrcnt) {
-		if (write(rbfd->fd[RB_WRITE_FD], rbfd, sizeof rbfd) == sizeof rbfd)
+		if (write(rbfd->fd[RB_WRITE_FD], &c, sizeof c) == sizeof c)
 			rbfd->fdwcnt++;
 	}
 }
 
 static inline void rbfdreset(struct ringbuffd *rbfd)
 {
-	void *buf;
+	char c;
 
 	if (rbfdempty(rbfd) && (rbfd->fdrcnt < rbfd->fdwcnt)) {
-		if (read(rbfd->fd[RB_READ_FD], &buf, sizeof buf) == sizeof buf)
+		if (read(rbfd->fd[RB_READ_FD], &c, sizeof c) == sizeof c)
 			rbfd->fdrcnt++;
 	}
 }

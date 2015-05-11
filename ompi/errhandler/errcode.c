@@ -14,6 +14,8 @@
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,84 +36,84 @@
 #include "ompi/constants.h"
 
 /* Table holding all error codes */
-opal_pointer_array_t ompi_mpi_errcodes;
+opal_pointer_array_t ompi_mpi_errcodes = {{0}};
 int ompi_mpi_errcode_lastused=0;
 int ompi_mpi_errcode_lastpredefined=0;
 
-ompi_mpi_errcode_t ompi_success;
-ompi_mpi_errcode_t ompi_err_buffer;
-ompi_mpi_errcode_t ompi_err_count;
-ompi_mpi_errcode_t ompi_err_type;
-ompi_mpi_errcode_t ompi_err_tag;
-ompi_mpi_errcode_t ompi_err_comm;
-ompi_mpi_errcode_t ompi_err_rank;
-ompi_mpi_errcode_t ompi_err_request;
-ompi_mpi_errcode_t ompi_err_root;
-ompi_mpi_errcode_t ompi_err_group;
-ompi_mpi_errcode_t ompi_err_op;
-ompi_mpi_errcode_t ompi_err_topology;
-ompi_mpi_errcode_t ompi_err_dims;
-ompi_mpi_errcode_t ompi_err_arg;
-ompi_mpi_errcode_t ompi_err_unknown;
-ompi_mpi_errcode_t ompi_err_truncate;
-ompi_mpi_errcode_t ompi_err_other;
-ompi_mpi_errcode_t ompi_err_intern;
-ompi_mpi_errcode_t ompi_err_in_status;
-ompi_mpi_errcode_t ompi_err_pending;
+static ompi_mpi_errcode_t ompi_success;
+static ompi_mpi_errcode_t ompi_err_buffer;
+static ompi_mpi_errcode_t ompi_err_count;
+static ompi_mpi_errcode_t ompi_err_type;
+static ompi_mpi_errcode_t ompi_err_tag;
+static ompi_mpi_errcode_t ompi_err_comm;
+static ompi_mpi_errcode_t ompi_err_rank;
+static ompi_mpi_errcode_t ompi_err_request;
+static ompi_mpi_errcode_t ompi_err_root;
+static ompi_mpi_errcode_t ompi_err_group;
+static ompi_mpi_errcode_t ompi_err_op;
+static ompi_mpi_errcode_t ompi_err_topology;
+static ompi_mpi_errcode_t ompi_err_dims;
+static ompi_mpi_errcode_t ompi_err_arg;
+ompi_mpi_errcode_t ompi_err_unknown = {{0}};
+static ompi_mpi_errcode_t ompi_err_truncate;
+static ompi_mpi_errcode_t ompi_err_other;
+static ompi_mpi_errcode_t ompi_err_intern;
+static ompi_mpi_errcode_t ompi_err_in_status;
+static ompi_mpi_errcode_t ompi_err_pending;
 
-ompi_mpi_errcode_t ompi_err_access;
-ompi_mpi_errcode_t ompi_err_amode;
-ompi_mpi_errcode_t ompi_err_assert;
-ompi_mpi_errcode_t ompi_err_bad_file;
-ompi_mpi_errcode_t ompi_err_base;
-ompi_mpi_errcode_t ompi_err_conversion;
-ompi_mpi_errcode_t ompi_err_disp;
-ompi_mpi_errcode_t ompi_err_dup_datarep;
-ompi_mpi_errcode_t ompi_err_file_exists;
-ompi_mpi_errcode_t ompi_err_file_in_use;
-ompi_mpi_errcode_t ompi_err_file;
-ompi_mpi_errcode_t ompi_err_info_key;
-ompi_mpi_errcode_t ompi_err_info_nokey;
-ompi_mpi_errcode_t ompi_err_info_value;
-ompi_mpi_errcode_t ompi_err_info;
-ompi_mpi_errcode_t ompi_err_io;
-ompi_mpi_errcode_t ompi_err_keyval;
-ompi_mpi_errcode_t ompi_err_locktype;
-ompi_mpi_errcode_t ompi_err_name;
-ompi_mpi_errcode_t ompi_err_no_mem;
-ompi_mpi_errcode_t ompi_err_not_same;
-ompi_mpi_errcode_t ompi_err_no_space;
-ompi_mpi_errcode_t ompi_err_no_such_file;
-ompi_mpi_errcode_t ompi_err_port;
-ompi_mpi_errcode_t ompi_err_quota;
-ompi_mpi_errcode_t ompi_err_read_only;
-ompi_mpi_errcode_t ompi_err_rma_conflict;
-ompi_mpi_errcode_t ompi_err_rma_sync;
-ompi_mpi_errcode_t ompi_err_service;
-ompi_mpi_errcode_t ompi_err_size;
-ompi_mpi_errcode_t ompi_err_spawn;
-ompi_mpi_errcode_t ompi_err_unsupported_datarep;
-ompi_mpi_errcode_t ompi_err_unsupported_operation;
-ompi_mpi_errcode_t ompi_err_win;
-ompi_mpi_errcode_t ompi_t_err_memory;
-ompi_mpi_errcode_t ompi_t_err_not_initialized;
-ompi_mpi_errcode_t ompi_t_err_cannot_init;
-ompi_mpi_errcode_t ompi_t_err_invalid_index;
-ompi_mpi_errcode_t ompi_t_err_invalid_item;
-ompi_mpi_errcode_t ompi_t_err_invalid_handle;
-ompi_mpi_errcode_t ompi_t_err_out_of_handles;
-ompi_mpi_errcode_t ompi_t_err_out_of_sessions;
-ompi_mpi_errcode_t ompi_t_err_invalid_session;
-ompi_mpi_errcode_t ompi_t_err_cvar_set_not_now;
-ompi_mpi_errcode_t ompi_t_err_cvar_set_never;
-ompi_mpi_errcode_t ompi_t_err_pvar_no_startstop;
-ompi_mpi_errcode_t ompi_t_err_pvar_no_write;
-ompi_mpi_errcode_t ompi_t_err_pvar_no_atomic;
-ompi_mpi_errcode_t ompi_err_rma_range;
-ompi_mpi_errcode_t ompi_err_rma_attach;
-ompi_mpi_errcode_t ompi_err_rma_flavor;
-ompi_mpi_errcode_t ompi_err_rma_shared;
-ompi_mpi_errcode_t ompi_t_err_invalid;
+static ompi_mpi_errcode_t ompi_err_access;
+static ompi_mpi_errcode_t ompi_err_amode;
+static ompi_mpi_errcode_t ompi_err_assert;
+static ompi_mpi_errcode_t ompi_err_bad_file;
+static ompi_mpi_errcode_t ompi_err_base;
+static ompi_mpi_errcode_t ompi_err_conversion;
+static ompi_mpi_errcode_t ompi_err_disp;
+static ompi_mpi_errcode_t ompi_err_dup_datarep;
+static ompi_mpi_errcode_t ompi_err_file_exists;
+static ompi_mpi_errcode_t ompi_err_file_in_use;
+static ompi_mpi_errcode_t ompi_err_file;
+static ompi_mpi_errcode_t ompi_err_info_key;
+static ompi_mpi_errcode_t ompi_err_info_nokey;
+static ompi_mpi_errcode_t ompi_err_info_value;
+static ompi_mpi_errcode_t ompi_err_info;
+static ompi_mpi_errcode_t ompi_err_io;
+static ompi_mpi_errcode_t ompi_err_keyval;
+static ompi_mpi_errcode_t ompi_err_locktype;
+static ompi_mpi_errcode_t ompi_err_name;
+static ompi_mpi_errcode_t ompi_err_no_mem;
+static ompi_mpi_errcode_t ompi_err_not_same;
+static ompi_mpi_errcode_t ompi_err_no_space;
+static ompi_mpi_errcode_t ompi_err_no_such_file;
+static ompi_mpi_errcode_t ompi_err_port;
+static ompi_mpi_errcode_t ompi_err_quota;
+static ompi_mpi_errcode_t ompi_err_read_only;
+static ompi_mpi_errcode_t ompi_err_rma_conflict;
+static ompi_mpi_errcode_t ompi_err_rma_sync;
+static ompi_mpi_errcode_t ompi_err_service;
+static ompi_mpi_errcode_t ompi_err_size;
+static ompi_mpi_errcode_t ompi_err_spawn;
+static ompi_mpi_errcode_t ompi_err_unsupported_datarep;
+static ompi_mpi_errcode_t ompi_err_unsupported_operation;
+static ompi_mpi_errcode_t ompi_err_win;
+static ompi_mpi_errcode_t ompi_t_err_memory;
+static ompi_mpi_errcode_t ompi_t_err_not_initialized;
+static ompi_mpi_errcode_t ompi_t_err_cannot_init;
+static ompi_mpi_errcode_t ompi_t_err_invalid_index;
+static ompi_mpi_errcode_t ompi_t_err_invalid_item;
+static ompi_mpi_errcode_t ompi_t_err_invalid_handle;
+static ompi_mpi_errcode_t ompi_t_err_out_of_handles;
+static ompi_mpi_errcode_t ompi_t_err_out_of_sessions;
+static ompi_mpi_errcode_t ompi_t_err_invalid_session;
+static ompi_mpi_errcode_t ompi_t_err_cvar_set_not_now;
+static ompi_mpi_errcode_t ompi_t_err_cvar_set_never;
+static ompi_mpi_errcode_t ompi_t_err_pvar_no_startstop;
+static ompi_mpi_errcode_t ompi_t_err_pvar_no_write;
+static ompi_mpi_errcode_t ompi_t_err_pvar_no_atomic;
+static ompi_mpi_errcode_t ompi_err_rma_range;
+static ompi_mpi_errcode_t ompi_err_rma_attach;
+static ompi_mpi_errcode_t ompi_err_rma_flavor;
+static ompi_mpi_errcode_t ompi_err_rma_shared;
+static ompi_mpi_errcode_t ompi_t_err_invalid;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);

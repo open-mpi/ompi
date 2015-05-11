@@ -52,9 +52,20 @@
 
 extern struct fi_provider usdf_ops;
 
-#define USDF_WARN(...) FI_WARN(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
-#define USDF_INFO(...) FI_INFO(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
-#define USDF_DEBUG(...) FI_DBG(&usdf_ops, FI_LOG_CORE, __VA_ARGS__ )
+#define USDF_WARN_SYS(subsys, ...) \
+	FI_WARN(&usdf_ops, FI_LOG_ ## subsys, __VA_ARGS__)
+#define USDF_TRACE_SYS(subsys, ...) \
+	FI_TRACE(&usdf_ops, FI_LOG_ ## subsys, __VA_ARGS__)
+#define USDF_INFO_SYS(subsys, ...) \
+	FI_INFO(&usdf_ops, FI_LOG_ ## subsys, __VA_ARGS__)
+#define USDF_DBG_SYS(subsys, ...) \
+	FI_DBG(&usdf_ops, FI_LOG_ ## subsys, __VA_ARGS__)
+
+/* default to "FI_LOG_FABRIC" */
+#define USDF_WARN(...) USDF_WARN_SYS(FABRIC, __VA_ARGS__)
+#define USDF_TRACE(...) USDF_TRACE_SYS(FABRIC, __VA_ARGS__)
+#define USDF_INFO(...) USDF_INFO_SYS(FABRIC, __VA_ARGS__)
+#define USDF_DBG(...)  USDF_DBG_SYS(FABRIC, __VA_ARGS__)
 
 #define USDF_HDR_BUF_ENTRY 64
 #define USDF_EP_CAP_PIO (1ULL << 63)
@@ -182,19 +193,23 @@ struct usdf_tx {
 		struct {
 			struct usdf_cq_hard *tx_hcq;
 
+			uint8_t *tx_inject_bufs;
 			struct usdf_msg_qe *tx_wqe_buf;
 			TAILQ_HEAD(,usdf_msg_qe) tx_free_wqe;
 			TAILQ_HEAD(,usdf_ep) tx_ep_ready;
 			TAILQ_HEAD(,usdf_ep) tx_ep_have_acks;
+			size_t tx_num_free_wqe;
 		} msg;
 		struct {
 			struct usdf_cq_hard *tx_hcq;
 
 			atomic_t tx_next_msg_id;
 			struct usdf_rdm_qe *tx_wqe_buf;
+			uint8_t *tx_inject_bufs;
 			TAILQ_HEAD(,usdf_rdm_qe) tx_free_wqe;
 			TAILQ_HEAD(,usdf_rdm_connection) tx_rdc_ready;
 			TAILQ_HEAD(,usdf_rdm_connection) tx_rdc_have_acks;
+			size_t tx_num_free_wqe;
 		} rdm;
 	} t;
 };
@@ -219,6 +234,7 @@ struct usdf_rx {
 			struct usdf_msg_qe *rx_rqe_buf;
 			TAILQ_HEAD(,usdf_msg_qe) rx_free_rqe;
 			TAILQ_HEAD(,usdf_msg_qe) rx_posted_rqe;
+			size_t rx_num_free_rqe;
 		} msg;
 		struct {
 			int rx_sock;
@@ -229,6 +245,7 @@ struct usdf_rx {
 			struct usdf_rdm_qe *rx_rqe_buf;
 			TAILQ_HEAD(,usdf_rdm_qe) rx_free_rqe;
 			TAILQ_HEAD(,usdf_rdm_qe) rx_posted_rqe;
+			size_t rx_num_free_rqe;
 		} rdm;
 	} r;
 };
@@ -243,6 +260,9 @@ struct usdf_ep {
 	atomic_t ep_refcnt;
 	uint64_t ep_caps;
 	uint64_t ep_mode;
+
+	uint8_t ep_tx_dflt_signal_comp;
+	uint8_t ep_rx_dflt_signal_comp;
 
 	uint32_t ep_wqe;	/* requested queue sizes */
 	uint32_t ep_rqe;
@@ -436,7 +456,8 @@ ssize_t usdf_msg_ud_prefix_recv(struct fid_ep *ep, void *buf, size_t len, void *
 	void *context);
 ssize_t usdf_msg_ud_prefix_recvv(struct fid_ep *ep, const struct iovec *iov,
 	void **desc, size_t count, void *context);
-	
 
+/* Fake IBV provider */
+void usdf_setup_fake_ibv_provider(void);
 
 #endif /* _USDF_H_ */

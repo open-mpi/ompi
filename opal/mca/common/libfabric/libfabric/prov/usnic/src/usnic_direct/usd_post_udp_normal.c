@@ -78,7 +78,50 @@ usd_post_send_one_udp_normal(
         qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
 
     last_post = _usd_post_send_two(wq, hdr, sizeof(*hdr), buf, len,
-                                   USD_SF_ISSET(flags, SIGNAL));
+                           USD_SF_ISSET(flags, SIGNAL));
+
+    info = &wq->uwq_post_info[last_post];
+    info->wp_context = context;
+    info->wp_len = len;
+
+    return 0;
+}
+
+static int
+usd_post_send_one_vlan_udp_normal(
+    struct usd_qp *uqp,
+    struct usd_dest *dest,
+    const void *buf,
+    size_t len,
+    uint16_t vlan,
+    uint32_t flags,
+    void *context)
+{
+    struct usd_qp_impl *qp;
+    struct usd_udp_hdr *hdr;
+    struct usd_wq *wq;
+    uint32_t last_post;
+    uint8_t *copybuf;
+    struct usd_wq_post_info *info;
+
+    qp = to_qpi(uqp);
+    wq = &qp->uq_wq;
+    copybuf = wq->uwq_copybuf + wq->uwq_post_index * USD_SEND_MAX_COPY;
+
+    hdr = (struct usd_udp_hdr *)copybuf;
+    memcpy(hdr, &dest->ds_dest.ds_udp.u_hdr, sizeof(*hdr));
+
+    /* adjust lengths and insert source port */
+    hdr->uh_ip.tot_len = htons(len + sizeof(struct usd_udp_hdr) -
+                               sizeof(struct ether_header));
+    hdr->uh_udp.len = htons((sizeof(struct usd_udp_hdr) -
+                             sizeof(struct ether_header) -
+                             sizeof(struct iphdr)) + len);
+    hdr->uh_udp.source =
+        qp->uq_attrs.uqa_local_addr.ul_addr.ul_udp.u_addr.sin_port;
+
+    last_post = _usd_post_send_two_vlan(wq, hdr, sizeof(*hdr), buf, len,
+                            USD_SF_ISSET(flags, SIGNAL), vlan);
 
     info = &wq->uwq_post_info[last_post];
     info->wp_context = context;
@@ -278,4 +321,5 @@ struct usd_qp_ops usd_qp_ops_udp_normal = {
     .qo_post_send_one_copy = usd_post_send_one_copy_udp_normal,
     .qo_post_send_two_copy = usd_post_send_two_copy_udp_normal,
     .qo_post_send_iov = usd_post_send_iov_udp_normal,
+    .qo_post_send_one_vlan = usd_post_send_one_vlan_udp_normal,
 };

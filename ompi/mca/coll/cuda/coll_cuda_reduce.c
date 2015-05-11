@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +35,7 @@ mca_coll_cuda_reduce(void *sbuf, void *rbuf, int count,
 {
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
     ptrdiff_t true_lb, true_extent, lb, extent;
-    char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2;
+    char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     const char *sbuf2;
     size_t bufsize;
     int rc;

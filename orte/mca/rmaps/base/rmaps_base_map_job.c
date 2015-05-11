@@ -409,9 +409,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      */
     if (jdata->map->display_map) {
         char *output=NULL;
-        int i, j;
+        int i, j, cnt;
         orte_node_t *node;
         orte_proc_t *proc;
+        char tmp1[1024];
 
         if (orte_display_diffable_output) {
             /* intended solely to test mapping methods, this output
@@ -421,40 +422,38 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
              * the output a line at a time here
              */
             /* display just the procs in a diffable format */
-            opal_output(orte_clean_output, "<map>\n\t<jobid=%s>\n\t<offset=%s>",
-                        ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
+            opal_output(orte_clean_output, "<map>\n");
             fflush(stderr);
             /* loop through nodes */
+            cnt = 0;
             for (i=0; i < jdata->map->nodes->size; i++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
                     continue;
                 }
-                opal_output(orte_clean_output, "\t<host name=%s>", (NULL == node->name) ? "UNKNOWN" : node->name);
+                opal_output(orte_clean_output, "\t<host num=%d>", cnt);
                 fflush(stderr);
+                cnt++;
                 for (j=0; j < node->procs->size; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
 #if OPAL_HAVE_HWLOC
                     {
-                        char locale[64];
-                        hwloc_obj_t loc;
-                        char *cpu_bitmap;
+                        hwloc_obj_t bd=NULL;;
 
-                        loc = NULL;
-                        if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
-                            hwloc_bitmap_list_snprintf(locale, 64, loc->cpuset);
+                        memset(tmp1, 0, 1024);
+                        orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
+                        if (NULL == bd) {
+                            (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                        } else {
+                            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology, bd->cpuset)) {
+                                (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                            }
                         }
-                        cpu_bitmap = NULL;
-                        orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING);
-                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s binding=%s>",
+                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
                                     ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
                                     (unsigned long)proc->local_rank,
-                                    (unsigned long)proc->node_rank, locale,
-                                    (NULL == cpu_bitmap) ? "NULL" : cpu_bitmap);
-                        if (NULL != cpu_bitmap) {
-                            free(cpu_bitmap);
-                        }
+                                    (unsigned long)proc->node_rank, tmp1);
                     }
 #else
                     opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu>",
@@ -467,6 +466,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 opal_output(orte_clean_output, "\t</host>");
                 fflush(stderr);
             }
+            
 #if OPAL_HAVE_HWLOC
             {
                 opal_hwloc_locality_t locality;

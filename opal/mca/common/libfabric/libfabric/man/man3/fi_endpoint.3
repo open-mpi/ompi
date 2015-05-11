@@ -1,4 +1,4 @@
-.TH fi_endpoint 3 "2015\-03\-31" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_endpoint 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0"
 .SH NAME
 .PP
 fi_endpoint - Fabric endpoint operations
@@ -124,6 +124,7 @@ ssize_t\ fi_tx_size_left(struct\ fid_ep\ *ep);
 \f[I]fid\f[] : On creation, specifies a fabric or access domain.
 On bind, identifies the event queue, completion queue or address vector
 to bind to the endpoint.
+In other cases, it\[aq]s a fabric identifier of an associated resource.
 .PP
 \f[I]info\f[] : Details about the fabric interface endpoint to be
 opened, obtained from fi_getinfo.
@@ -134,16 +135,18 @@ opened, obtained from fi_getinfo.
 .PP
 \f[I]pep\f[] : A passive fabric endpoint.
 .PP
-\f[I]fid\f[] : Fabric identifier of an associated resource.
-.PP
 \f[I]context\f[] : Context associated with the endpoint or asynchronous
 operation.
+.PP
+\f[I]index\f[] : Index to retrieve a specific transmit/receive context.
+.PP
+\f[I]attr\f[] : Transmit or receive context attributes.
 .PP
 \f[I]flags\f[] : Additional flags to apply to the operation.
 .PP
 \f[I]command\f[] : Command of control operation to perform on endpoint.
 .PP
-\f[I]arg\f[] : Optional control argument
+\f[I]arg\f[] : Optional control argument.
 .PP
 \f[I]level\f[] : Protocol level at which the desired option resides.
 .PP
@@ -156,8 +159,10 @@ operation.
 .PP
 Endpoints are transport level communication portals.
 There are two types of endpoints: active and passive.
-Passive endpoints belong to a fabric domain and are used to listen for
-incoming connection requests.
+Passive endpoints belong to a fabric domain and are most often used to
+listen for incoming connection requests.
+However, a passive endpoint may be used to reserve a fabric address that
+can be granted to an active endpoint.
 Active endpoints belong to access domains and can perform data
 transfers.
 .PP
@@ -212,8 +217,17 @@ fi_info flags that control the operation of an endpoint are defined
 below.
 See section SCALABLE ENDPOINTS.
 .PP
-If an active endpoint is associated with a connection request, the
-fi_info connreq must reference the corresponding request.
+If an active endpoint is allocated in order to accept a connection
+request, the fi_info parameter must be the same as the fi_info structure
+provided with the connection request (FI_CONNREQ) event.
+.PP
+An active endpoint may acquire the properties of a passive endpoint by
+setting the fi_info handle field to the passive endpoint fabric
+descriptor.
+This is useful for applications that need to reserve the fabric address
+of an endpoint prior to knowing if the endpoint will be used on the
+active or passive side of a connection.
+For example, this feature is useful for simulating socket semantics.
 .SS fi_close
 .PP
 Closes an endpoint and release all resources associated with it.
@@ -258,19 +272,20 @@ The FI_SEND flag may be used interchangeably.
 the specified completion queue.
 This includes received messages.
 .PP
-\f[I]FI_COMPLETION\f[] : By default, data transfer operations generate
-completion entries into a completion queue after they have successfully
-completed.
+\f[I]FI_SELECTIVE_COMPLETION\f[] : By default, data transfer operations
+generate completion entries into a completion queue after they have
+successfully completed.
 Applications can use this bind flag to selectively enable when
 completions are generated.
-If FI_COMPLETION is specified, data transfer operations will not
-generate entries for successful completions unless FI_COMPLETION is set
-as an operational flag for the given operation.
-FI_COMPLETION must be OR\[aq]ed with FI_SEND and/or FI_RECV flags.
+If FI_SELECTIVE_COMPLETION is specified, data transfer operations will
+not generate entries for successful completions unless FI_COMPLETION is
+set as an operational flag for the given operation.
+FI_SELECTIVE_COMPLETION must be OR\[aq]ed with FI_SEND and/or FI_RECV
+flags.
 .PP
-When set the user must determine when a request that does NOT have
-FI_COMPLETION set has completed indirectly, usually based on the
-completion of a subsequent operation.
+When FI_SELECTIVE_COMPLETION is set, the user must determine when a
+request that does NOT have FI_COMPLETION set has completed indirectly,
+usually based on the completion of a subsequent operation.
 Use of this flag may improve performance by allowing the provider to
 avoid writing a completion entry for every operation.
 .PP
@@ -280,10 +295,11 @@ using the following general approach:
 .nf
 \f[C]
 \ \ fi_tx_attr::op_flags\ =\ 0;\ //\ default\ -\ no\ completion
-\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_SELECTIVE_COMPLETION);
 \ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
 \ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
 \ \ fi_sendmsg(ep,\ ...,\ FI_COMPLETION);\ //\ completion!
+\ \ fi_inject(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion
 \f[]
 .fi
 .PP
@@ -293,10 +309,27 @@ modifying the operational flags:
 .nf
 \f[C]
 \ \ fi_tx_attr::op_flags\ =\ FI_COMPLETION;\ //\ default\ -\ completion
-\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_COMPLETION);
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND\ |\ FI_SELECTIVE_COMPLETION);
 \ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ //\ completion
 \ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ //\ completion
 \ \ fi_sendmsg(ep,\ ...,\ 0);\ //\ no\ completion!
+\ \ fi_inject(ep,\ ...);\ \ \ \ \ //\ no\ completion!
+\f[]
+.fi
+.PP
+Example: Omitting FI_SELECTIVE_COMPLETION when binding will generate
+completions for all non-fi_inject calls:
+.IP
+.nf
+\f[C]
+\ \ fi_tx_attr::op_flags\ =\ 0;
+\ \ fi_ep_bind(ep,\ cq,\ FI_SEND);\ \ //\ default\ -\ completion
+\ \ fi_send(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ completion
+\ \ fi_sendv(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ completion
+\ \ fi_sendmsg(ep,\ ...,\ 0);\ \ \ \ \ \ \ \ \ \ \ \ \ //\ completion!
+\ \ fi_sendmsg(ep,\ ...,\ FI_COMPLETION);\ //\ completion
+\ \ fi_sendmsg(ep,\ ...,\ FI_INJECT|FI_COMPLETION);\ //\ completion!
+\ \ fi_inject(ep,\ ...);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ no\ completion!
 \f[]
 .fi
 .PP
@@ -322,10 +355,14 @@ successful RMA write or atomic operation is initiated from the endpoint.
 \f[I]FI_REMOTE_READ\f[] : Increments the specified counter whenever a
 successful RMA read or atomic fetch operation is initiated from a remote
 endpoint that targets the given endpoint.
+Use of this flag requires that the endpoint be created using
+FI_RMA_EVENT.
 .PP
 \f[I]FI_REMOTE_WRITE\f[] : Increments the specified counter whenever a
 successful RMA write or atomic operation is initiated from a remote
 endpoint that targets the given endpoint.
+Use of this flag requires that the endpoint be created using
+FI_RMA_EVENT.
 .PP
 Connectionless endpoints must be bound to a single address vector.
 If an endpoint is using a shared transmit and/or receive context, the
@@ -353,11 +390,12 @@ assigned to it.
 .PP
 Calling connect or accept on an endpoint will implicitly enable an
 endpoint if it has not already been enabled.
+.PP
+Fi_enable may also be used to re-enable an endpoint that has been
+disabled as a result of experiencing an asynchronous error.
 .SS fi_cancel
 .PP
 fi_cancel attempts to cancel an outstanding asynchronous operation.
-The endpoint must have been configured to support cancelable operations
--- see FI_CANCEL flag -- in order for this call to succeed.
 Canceling an operation causes the fabric provider to search for the
 operation and, if it is still pending, complete it as having been
 canceled.
@@ -1048,8 +1086,8 @@ counters.
 Completed receive operations are posted to the CQs bound to the
 endpoint.
 An endpoint may only be associated with a single receive context, and
-all connectless endpoints associated with a shared receive context must
-also share the same address vector.
+all connectionless endpoints associated with a shared receive context
+must also share the same address vector.
 .PP
 Endpoints associated with a shared transmit context may use dedicated
 receive contexts, and vice-versa.
@@ -1108,30 +1146,46 @@ generated for data transfer operations.
 .PP
 \f[I]FI_INJECT_COMPLETE\f[] : Indicates that a completion should be
 generated when the source buffer(s) may be reused.
-FI_INJECT_COMPLETE allows for the provider to complete an operation
-after all source data has been cached, and while the operation may still
-be in the process of being transmitted.
+A completion guarantees that the buffers will not be read from again and
+the application may reclaim them.
+No other guarantees are made with respect to the state of the operation.
 .PP
-\f[I]FI_TRANSMIT_COMPLETE\f[] : Indicates that a completion should not
-be generated until an operation has been successfully transmitted and is
-no longer being tracked by the provider.
-For reliable endpoints, this flag generally indicates that an operation
-will not complete until it has been accepted into the fabric and
-acknowledged by a remote service.
-For unreliable endpoints, this flag indicates that an operation will not
-complete until it has been successfully delivered into the fabric.
-For example, the corresponding message has been placed on the wire.
-FI_TRANSMIT_COMPLETE is the default completion model for all endpoints.
+Note: This flag is used to control when a completion entry is inserted
+into a completion queue.
+It does not apply to operations that do not generate a completion queue
+entry, such as the fi_inject operation.
 .PP
-Note that when set, if the target endpoint experiences an error
-receiving the transferred data, that error will often be reported back
-to the initiator of the request.
-This includes errors which may not normally be reported to the
-initiator, such as remote buffer overruns.
+\f[I]FI_TRANSMIT_COMPLETE\f[] : Indicates that a completion should be
+generated when the transmit operation has completed relative to the
+local provider.
+The exact behavior is dependent on the endpoint type.
 .PP
-\f[I]FI_COMMIT_COMPLETE\f[] : Indicates that a completion should not be
-generated until an operation has successfully been processed at the
-target, with the data placed into the specified destination buffer.
+For reliable endpoints:
+.PP
+Indicates that a completion should be generated when the operation has
+been delivered to the peer endpoint.
+A completion guarantees that the operation is no longer dependent on the
+fabric or local resources.
+The state of the operation at the peer endpoint is not defined.
+.PP
+For unreliable endpoints:
+.PP
+Indicates that a completion should be generated when the operation has
+been delivered to the fabric.
+A completion guarantees that the operation is no longer dependent on
+local resources.
+The state of the operation within the fabric is not defined.
+.PP
+\f[I]FI_DELIVERY_COMPLETE\f[] : Indicates that a completion should not
+be generated until an operation has been processed by the destination
+endpoint(s).
+A completion guarantees that the result of the operation is available.
+.PP
+This completion mode applies only to reliable endpoints.
+For operations that return data to the initiator, such as RMA read or
+atomic-fetch, the source endpoint is also considered a destination
+endpoint.
+This is the default completion mode for such operations.
 .SH NOTES
 .PP
 Users should call fi_close to release all resources allocated to the

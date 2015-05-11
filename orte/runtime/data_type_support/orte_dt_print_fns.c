@@ -474,7 +474,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
             hwloc_cpuset_t mycpus;
             char tmp1[1024], tmp2[1024];
             char *str=NULL, *cpu_bitmap=NULL;
-;
+
             if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
                 NULL != src->node->topology) {
                 mycpus = hwloc_bitmap_alloc();

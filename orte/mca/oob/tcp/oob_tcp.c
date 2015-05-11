@@ -9,11 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -240,7 +240,7 @@ static int parse_uri(const uint16_t af_family,
         struct sockaddr_in6 *in6;
         memset(inaddr, 0, sizeof(struct sockaddr_in6));
         in6 = (struct sockaddr_in6*) inaddr;
-        
+
         if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
             opal_output (0, "oob_tcp_parse_uri: Could not convert %s\n", host);
             return ORTE_ERR_BAD_PARAM;
@@ -250,8 +250,6 @@ static int parse_uri(const uint16_t af_family,
     else {
         return ORTE_ERR_NOT_SUPPORTED;
     }
-        
-
     return ORTE_SUCCESS;
 }
 
@@ -274,7 +272,7 @@ static void process_set_peer(int fd, short args, void *cbdata)
 
     if (AF_INET != pop->af_family) {
             opal_output_verbose(20, orte_oob_base_framework.framework_output,
-	                        "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                            "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         goto cleanup;
     }
 
@@ -401,10 +399,10 @@ static void process_send(int fd, short args, void *cbdata)
     orte_process_name_t hop;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d",
+                        "%s:[%s:%d] processing send to peer %s:%d to channel =%d seq_num = %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag);
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->dst_channel, op->msg->seq_num);
 
     /* do we have a route to this peer (could be direct)? */
     hop = orte_routed.get_route(&op->msg->dst);
@@ -546,7 +544,7 @@ static void resend(struct mca_oob_tcp_msg_error_t *mp)
  * socket to recv.  This is called for the listen sockets to accept an
  * incoming connection, on new sockets trying to complete the software
  * connection process, and for probes.  Data on an established
- * connection is handled elsewhere. 
+ * connection is handled elsewhere.
  */
 static void recv_handler(int sd, short flg, void *cbdata)
 {
@@ -583,7 +581,6 @@ static void recv_handler(int sd, short flg, void *cbdata)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
             }
         }
-        
         /* is the peer instance willing to accept this connection */
         peer->sd = sd;
         if (mca_oob_tcp_peer_accept(peer) == false) {

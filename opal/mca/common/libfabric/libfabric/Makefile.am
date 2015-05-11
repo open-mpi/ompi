@@ -213,6 +213,10 @@ _usnic_files = \
 	prov/usnic/src/usdf_timer.c \
 	prov/usnic/src/usdf_timer.h
 
+if HAVE_VERBS
+_usnic_files += prov/usnic/src/usdf_fake_ibv.c
+endif
+
 _usnic_cppflags = \
         -D__LIBUSNIC__ -DWANT_DEBUG_MSGS=0 \
         -DHAVE_LIBNL3=$(HAVE_LIBNL3) $(usnic_nl_CPPFLAGS) \
@@ -247,6 +251,7 @@ _psm_files = \
 	prov/psm/src/psmx_init.c \
 	prov/psm/src/psmx_domain.c \
 	prov/psm/src/psmx_cq.c \
+	prov/psm/src/psmx_eq.c \
 	prov/psm/src/psmx_cntr.c \
 	prov/psm/src/psmx_av.c \
 	prov/psm/src/psmx_ep.c \
@@ -434,7 +439,6 @@ dummy_man_pages = \
         man/man3/fi_trecv.3 \
         man/man3/fi_trecvmsg.3 \
         man/man3/fi_trecvv.3 \
-        man/man3/fi_tsearch.3 \
         man/man3/fi_tsend.3 \
         man/man3/fi_tsenddata.3 \
         man/man3/fi_tsendmsg.3 \

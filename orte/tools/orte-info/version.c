@@ -166,8 +166,8 @@ void orte_info_show_component_version(const char *type_name,
     
     /* Now that we have a valid type, find the right component list */
     components = NULL;
-    for (j=0; j < component_map.size; j++) {
-        if (NULL == (map = (orte_info_component_map_t*)opal_pointer_array_get_item(&component_map, j))) {
+    for (j=0; j < orte_component_map.size; j++) {
+        if (NULL == (map = (orte_info_component_map_t*)opal_pointer_array_get_item(&orte_component_map, j))) {
             continue;
         }
         if (0 == strcmp(type_name, map->type)) {

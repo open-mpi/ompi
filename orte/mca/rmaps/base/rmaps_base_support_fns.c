@@ -477,8 +477,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
  complete:
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
-     * we do so
-     */
+     * we do so */
     num_slots = 0;
     item  = opal_list_get_first(allocated_nodes);
     while (item != opal_list_get_end(allocated_nodes)) {
@@ -540,7 +539,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             return ORTE_ERR_SILENT;
         }
     }
-    
+
+    /* pass back the total number of available slots */
     *total_num_slots = num_slots;
     
     if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {

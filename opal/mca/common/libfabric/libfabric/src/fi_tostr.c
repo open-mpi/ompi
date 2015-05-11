@@ -61,6 +61,8 @@
  * Indentation delineates lists and dictionaries (or they can be inline).
  */
 
+#define FI_BUFSIZ 8192
+
 #define TAB "    "
 
 #define CASEENUMSTR(SYM) \
@@ -77,20 +79,20 @@ static void fi_remove_comma(char *buffer)
 
 static void strcatf(char *dest, const char *fmt, ...)
 {
-	size_t len = strlen(dest);
+	size_t len = strnlen(dest,FI_BUFSIZ);
 	va_list arglist;
 
 	va_start (arglist, fmt);
-	vsnprintf(&dest[len], BUFSIZ - 1 - len, fmt, arglist);
+	vsnprintf(&dest[len], FI_BUFSIZ - 1 - len, fmt, arglist);
 	va_end (arglist);
 }
 
 static void fi_tostr_flags(char *buf, uint64_t flags)
 {
-	IFFLAGSTR(flags, FI_INJECT);
-	IFFLAGSTR(flags, FI_MULTI_RECV);
-	IFFLAGSTR(flags, FI_SOURCE);
-	IFFLAGSTR(flags, FI_SYMMETRIC);
+	IFFLAGSTR(flags, FI_MSG);
+	IFFLAGSTR(flags, FI_RMA);
+	IFFLAGSTR(flags, FI_TAGGED);
+	IFFLAGSTR(flags, FI_ATOMIC);
 
 	IFFLAGSTR(flags, FI_READ);
 	IFFLAGSTR(flags, FI_WRITE);
@@ -99,14 +101,18 @@ static void fi_tostr_flags(char *buf, uint64_t flags)
 	IFFLAGSTR(flags, FI_REMOTE_READ);
 	IFFLAGSTR(flags, FI_REMOTE_WRITE);
 
+	IFFLAGSTR(flags, FI_MULTI_RECV);
 	IFFLAGSTR(flags, FI_REMOTE_CQ_DATA);
-	IFFLAGSTR(flags, FI_EVENT);
-	IFFLAGSTR(flags, FI_INJECT_COMPLETE);
-	IFFLAGSTR(flags, FI_TRANSMIT_COMPLETE);
-	IFFLAGSTR(flags, FI_CANCEL);
 	IFFLAGSTR(flags, FI_MORE);
 	IFFLAGSTR(flags, FI_PEEK);
 	IFFLAGSTR(flags, FI_TRIGGER);
+	IFFLAGSTR(flags, FI_FENCE);
+
+	IFFLAGSTR(flags, FI_EVENT);
+	IFFLAGSTR(flags, FI_INJECT);
+	IFFLAGSTR(flags, FI_INJECT_COMPLETE);
+	IFFLAGSTR(flags, FI_TRANSMIT_COMPLETE);
+	IFFLAGSTR(flags, FI_DELIVERY_COMPLETE);
 
 	fi_remove_comma(buf);
 }
@@ -173,11 +179,10 @@ static void fi_tostr_order(char *buf, uint64_t flags)
 
 static void fi_tostr_caps(char *buf, uint64_t caps)
 {
-	IFFLAGSTR(caps, FI_MSG);
-	IFFLAGSTR(caps, FI_RMA);
-	IFFLAGSTR(caps, FI_TAGGED);
-	IFFLAGSTR(caps, FI_ATOMICS);
-	IFFLAGSTR(caps, FI_DYNAMIC_MR);
+	IFFLAGSTR(caps, FI_RMA_EVENT);
+	IFFLAGSTR(caps, FI_NAMED_RX_CTX);
+	IFFLAGSTR(caps, FI_SOURCE);
+	IFFLAGSTR(caps, FI_DIRECTED_RECV);
 	fi_tostr_flags(buf, caps);
 
 	fi_remove_comma(buf);
@@ -218,8 +223,8 @@ static void fi_tostr_mode(char *buf, uint64_t mode)
 {
 	IFFLAGSTR(mode, FI_CONTEXT);
 	IFFLAGSTR(mode, FI_LOCAL_MR);
-	IFFLAGSTR(mode, FI_PROV_MR_ATTR);
 	IFFLAGSTR(mode, FI_MSG_PREFIX);
+	IFFLAGSTR(mode, FI_ASYNC_IOV);
 	IFFLAGSTR(mode, FI_RX_CQ_DATA);
 
 	fi_remove_comma(buf);
@@ -439,7 +444,7 @@ static void fi_tostr_info(char *buf, const struct fi_info *info)
 	strcatf(buf, "%sdest_addr: ", TAB);
 	fi_tostr_addr(buf, info->addr_format, info->dest_addr);
 	strcatf(buf, "\n");
-	strcatf(buf, "%sconnreq: %s\n", TAB, info->connreq);
+	strcatf(buf, "%shandle: %s\n", TAB, info->handle);
 
 	fi_tostr_tx_attr(buf, info->tx_attr, TAB);
 	fi_tostr_rx_attr(buf, info->rx_attr, TAB);
@@ -552,7 +557,7 @@ char *DEFAULT_SYMVER_PRE(fi_tostr)(const void *data, enum fi_type datatype)
 	enumval = *(const int *) data;
 
 	if (!buf) {
-		buf = calloc(BUFSIZ, 1);
+		buf = calloc(FI_BUFSIZ, 1);
 		if (!buf)
 			return NULL;
 	}

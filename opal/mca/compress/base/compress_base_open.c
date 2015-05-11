@@ -2,9 +2,10 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- *
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ opal_compress_base_module_t opal_compress = {
     NULL  /* decompress_nb    */
 };
 
-opal_compress_base_component_t opal_compress_base_selected_component;
+opal_compress_base_component_t opal_compress_base_selected_component = {{0}};
 
 static int opal_compress_base_register(mca_base_register_flag_t flags);
 

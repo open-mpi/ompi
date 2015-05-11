@@ -130,6 +130,53 @@ _usd_post_send_two(
     return index;
 }
 
+static inline uint32_t
+_usd_post_send_two_vlan(
+    struct usd_wq *wq,
+    const void *hdr,
+    size_t hdrlen,
+    const void *pkt,
+    size_t pktlen,
+    u_int8_t cq_entry,
+    u_int16_t vlan_tag)
+{
+    struct vnic_wq *vwq;
+    uint32_t index;
+    struct wq_enet_desc *desc;
+    u_int8_t offload_mode = 0, eop;
+    u_int16_t mss = 7, header_length = 0;
+    u_int8_t vlan_tag_insert = 1, loopback = 0, fcoe_encap = 0;
+
+    vwq = &wq->uwq_vnic_wq;
+    desc = wq->uwq_next_desc;
+    index = wq->uwq_post_index;
+
+    eop = 0;
+    wq_enet_desc_enc(desc, (uintptr_t)hdr, hdrlen,
+        mss, header_length, offload_mode,
+        eop, 0, fcoe_encap,
+        vlan_tag_insert, vlan_tag, loopback);
+
+    desc = (struct wq_enet_desc *) ((uintptr_t)wq->uwq_desc_ring + (index<<4));
+    index = (index+1) & wq->uwq_post_index_mask;
+
+    eop = 1;
+    wq_enet_desc_enc(desc, (uintptr_t)pkt, pktlen,
+        mss, header_length, offload_mode,
+        eop, cq_entry, fcoe_encap,
+        vlan_tag_insert, vlan_tag, loopback);
+    wmb();
+
+    iowrite32(index, &vwq->ctrl->posted_index);
+
+    wq->uwq_next_desc = (struct wq_enet_desc *)
+        ((uintptr_t)wq->uwq_desc_ring + (index<<4));
+    wq->uwq_post_index = (index+1) & wq->uwq_post_index_mask;
+    wq->uwq_send_credits -= 2;
+
+    return index;
+}
+
 /*
  * Consume iov count credits, assumes that iov[0] includes usnic header
  */

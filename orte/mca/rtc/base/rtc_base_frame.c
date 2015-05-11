@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +37,7 @@ orte_rtc_API_module_t orte_rtc = {
     orte_rtc_base_set,
     orte_rtc_base_get_avail_vals
 };
-orte_rtc_base_t orte_rtc_base;
+orte_rtc_base_t orte_rtc_base = {{{0}}};
 
 static int orte_rtc_base_close(void)
 {

@@ -2,10 +2,11 @@ C
 C Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 C                         University Research and Technology
 C                         Corporation.  All rights reserved.
-C Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+C Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 C $COPYRIGHT$
 C
-C Sample MPI "hello world" application in Fortran 77
+C Sample MPI "hello world" application using the Fortran mpif.h
+C bindings.
 C
         program main
         implicit none

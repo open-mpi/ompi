@@ -164,6 +164,8 @@ usdf_eq_readerr(struct fid_eq *feq, struct fi_eq_err_entry *entry,
 	uint64_t val;
 	int ret;
 
+	USDF_TRACE_SYS(EQ, "\n");
+
 	eq = eq_ftou(feq);
 	pthread_spin_lock(&eq->eq_lock);
 
@@ -437,6 +439,8 @@ usdf_eq_control(fid_t fid, int command, void *arg)
 {
 	struct usdf_eq *eq;
 
+	USDF_TRACE_SYS(EQ, "\n");
+
 	eq = eq_fidtou(fid);
 
 	switch (command) {
@@ -458,6 +462,8 @@ static int
 usdf_eq_close(fid_t fid)
 {
 	struct usdf_eq *eq;
+
+	USDF_TRACE_SYS(EQ, "\n");
 
 	eq = eq_fidtou(fid);
 
@@ -505,6 +511,8 @@ usdf_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	struct usdf_fabric *fab;
 	int ret;
 
+	USDF_TRACE_SYS(EQ, "\n");
+
 	fab = fab_ftou(fabric);
 
 	eq = calloc(1, sizeof(*eq));
@@ -521,7 +529,7 @@ usdf_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	eq->eq_wait_obj = attr->wait_obj;
 
 	eq->eq_fabric = fab;
-	atomic_init(&eq->eq_refcnt, 0);
+	atomic_initialize(&eq->eq_refcnt, 0);
 	ret = pthread_spin_init(&eq->eq_lock, PTHREAD_PROCESS_PRIVATE);
 	if (ret != 0) {
 		ret = -ret;
@@ -580,7 +588,7 @@ usdf_eq_open(struct fid_fabric *fabric, struct fi_eq_attr *attr,
 	eq->eq_ev_tail = eq->eq_ev_ring;
 	eq->eq_ev_ring_size = attr->size;
 	eq->eq_ev_end = eq->eq_ev_ring + eq->eq_ev_ring_size;
-	atomic_init(&eq->eq_num_events, 0);
+	atomic_initialize(&eq->eq_num_events, 0);
 
 	atomic_inc(&eq->eq_fabric->fab_refcnt);
 	*feq = eq_utof(eq);

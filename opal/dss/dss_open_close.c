@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,10 +34,10 @@
  */
 bool opal_dss_initialized = false;
 int opal_dss_verbose = -1;  /* by default disabled */
-int opal_dss_initial_size;
-int opal_dss_threshold_size;
-opal_pointer_array_t opal_dss_types;
-opal_data_type_t opal_dss_num_reg_types;
+int opal_dss_initial_size = -1;
+int opal_dss_threshold_size = -1;
+opal_pointer_array_t opal_dss_types = {{0}};
+opal_data_type_t opal_dss_num_reg_types = {0};
 opal_dss_buffer_type_t default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
 
 /* variable group id */

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +63,7 @@ enum {
     ORTE_ERR_UNPACK_INADEQUATE_SPACE        = OPAL_ERR_UNPACK_INADEQUATE_SPACE,
     ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER = OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER,
     ORTE_ERR_TYPE_MISMATCH                  = OPAL_ERR_TYPE_MISMATCH,
-    ORTE_ERR_OPERATION_UNSUPPORTED          = OPAL_ERR_OPERATION_UNSUPPORTED, 
+    ORTE_ERR_OPERATION_UNSUPPORTED          = OPAL_ERR_OPERATION_UNSUPPORTED,
     ORTE_ERR_UNKNOWN_DATA_TYPE              = OPAL_ERR_UNKNOWN_DATA_TYPE,
     ORTE_ERR_BUFFER                         = OPAL_ERR_BUFFER,
     ORTE_ERR_DATA_TYPE_REDEF                = OPAL_ERR_DATA_TYPE_REDEF,
@@ -85,7 +86,7 @@ enum {
     ORTE_ERR_CONNECTION_FAILED              = OPAL_ERR_CONNECTION_FAILED,
     ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
     ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
-    
+
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
     Otherwise, the error reporting system will potentially crash,
@@ -133,7 +134,19 @@ enum {
     ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 42),
     ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 43),
     ORTE_ERR_NO_PATH_TO_TARGET              = (ORTE_ERR_BASE - 44),
-    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45)
+    ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45),
+    ORTE_ERR_OPEN_CHANNEL_PEER_FAIL         = (ORTE_ERR_BASE - 46),
+    ORTE_ERR_OPEN_CHANNEL_PEER_REJECT       = (ORTE_ERR_BASE - 47),
+    ORTE_ERR_QOS_TYPE_UNSUPPORTED           = (ORTE_ERR_BASE - 48),
+    ORTE_ERR_QOS_ACK_WINDOW_FULL            = (ORTE_ERR_BASE - 49),
+    ORTE_ERR_ACK_TIMEOUT_SENDER             = (ORTE_ERR_BASE - 50),
+    ORTE_ERR_ACK_TIMEOUT_RECEIVER           = (ORTE_ERR_BASE - 51),
+    ORTE_ERR_LOST_MSG_IN_WINDOW             = (ORTE_ERR_BASE - 52),
+    ORTE_ERR_CHANNEL_BUSY                   = (ORTE_ERR_BASE - 53),
+    ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 54),
+    ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
+    ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
+    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

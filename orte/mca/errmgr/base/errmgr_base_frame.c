@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -51,7 +51,7 @@
 /*
  * Globals
  */
-orte_errmgr_base_t orte_errmgr_base;
+orte_errmgr_base_t orte_errmgr_base = {{{0}}};
 
 /* Public module provides a wrapper around previous functions */
 orte_errmgr_base_module_t orte_errmgr_default_fns = {

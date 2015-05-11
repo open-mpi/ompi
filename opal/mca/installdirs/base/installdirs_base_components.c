@@ -3,6 +3,8 @@
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +21,7 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/installdirs/base/static-components.h"
 
-opal_install_dirs_t opal_install_dirs;
+opal_install_dirs_t opal_install_dirs = {0};
 
 #define CONDITIONAL_COPY(target, origin, field)                 \
     do {                                                        \

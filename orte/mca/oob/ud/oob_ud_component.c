@@ -6,6 +6,8 @@
  *                         and Technology (RIST). All rights reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,7 @@
 static int   mca_oob_ud_component_open (void);
 static int   mca_oob_ud_component_close (void);
 static int   mca_oob_ud_component_register (void);
-static bool  mca_oob_ud_component_available(void);
+static int   mca_oob_ud_component_available(void);
 static int   mca_oob_ud_component_startup(void);
 static int   mca_oob_ud_component_send_nb(orte_rml_send_t *msg);
 static void  mca_oob_ud_component_shutdown(void);
@@ -170,7 +172,7 @@ static int mca_oob_ud_component_register (void)
     return ORTE_SUCCESS;
 }
 
-static bool  mca_oob_ud_component_available(void) {
+static int  mca_oob_ud_component_available(void) {
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                     "oob:ud: component_available called");
@@ -179,7 +181,7 @@ static bool  mca_oob_ud_component_available(void) {
      * progress thread if so desired */
     mca_oob_ud_module.ev_base = orte_event_base;
 
-    return true;
+    return ORTE_SUCCESS;
 }
 
 static int port_mtus[] = {0, 256, 512, 1024, 2048, 4096};
@@ -215,15 +217,6 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
                          "%s oob:ud:device_setup attempting to setup ib device %p",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) ib_device);
 
-
-    /* If fork support is requested, try to enable it */
-    rc = opal_common_verbs_fork_test();
-    if (OPAL_SUCCESS != rc) {
-        opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "%s oob:ud:device_setup failed in ibv_fork_init. errno = %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
-        return ORTE_ERROR;
-    }
 
     device->ib_context = ibv_open_device (ib_device);
     if (NULL == device->ib_context) {
@@ -295,6 +288,15 @@ static int mca_oob_ud_component_startup(void)
     int num_devices, i, rc;
     opal_list_item_t *item, *item2;
     bool found_one = false;
+
+    /* If fork support is requested, try to enable it */
+    rc = opal_common_verbs_fork_test();
+    if (OPAL_SUCCESS != rc) {
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s oob:ud:device_setup failed in ibv_fork_init. errno = %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        return ORTE_ERROR;
+    }
 
     devices = ibv_get_device_list (&num_devices);
     if (NULL == devices || 0 == num_devices) {

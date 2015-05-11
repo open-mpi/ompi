@@ -182,6 +182,80 @@ fail:
 	return ret;		// fi_freeinfo() in caller frees all
 }
 
+static int usdf_fill_domain_attr_dgram(
+	struct fi_domain_attr *dhints,
+	struct fi_domain_attr *dattrp)
+{
+	switch (dhints ? dhints->threading : FI_THREAD_UNSPEC) {
+	case FI_THREAD_UNSPEC:
+	case FI_THREAD_ENDPOINT:
+		/* this is our natural thread safety level */
+		dattrp->threading = FI_THREAD_ENDPOINT;
+		break;
+	case FI_THREAD_FID:
+	case FI_THREAD_COMPLETION:
+	case FI_THREAD_DOMAIN:
+		/* subsets of _ENDPOINT, so supported */
+		dattrp->threading = dhints->threading;
+		break;
+	default:
+		USDF_INFO("cannot support threading=%d\n",
+				dhints->threading);
+		return -FI_ENODATA;
+	}
+
+	switch (dhints ? dhints->control_progress : FI_PROGRESS_UNSPEC) {
+	case FI_PROGRESS_UNSPEC:
+	case FI_PROGRESS_AUTO:
+		dattrp->control_progress = FI_PROGRESS_AUTO;
+		break;
+	case FI_PROGRESS_MANUAL:
+		/* we still behave the same as _AUTO, but we answer _MANUAL as
+		 * requested by the user */
+		dattrp->control_progress = FI_PROGRESS_MANUAL;
+		break;
+	default:
+		USDF_INFO("cannot support control_progress=%d\n",
+				dhints->control_progress);
+		return -FI_ENODATA;
+	}
+
+	switch (dhints ? dhints->data_progress : FI_PROGRESS_UNSPEC) {
+	case FI_PROGRESS_UNSPEC:
+	case FI_PROGRESS_MANUAL:
+		dattrp->data_progress = FI_PROGRESS_MANUAL;
+		break;
+	default:
+		USDF_INFO("cannot support data_progress=%d\n",
+				dhints->data_progress);
+		return -FI_ENODATA;
+	}
+
+	switch (dhints ? dhints->resource_mgmt : FI_RM_UNSPEC) {
+	case FI_RM_UNSPEC:
+	case FI_RM_DISABLED:
+		dattrp->resource_mgmt = FI_RM_DISABLED;
+		break;
+	default:
+		USDF_INFO("cannot support resource_mgmt=%d\n",
+				dhints->resource_mgmt);
+		return -FI_ENODATA;
+	}
+
+	switch (dhints ? dhints->mr_mode : FI_MR_UNSPEC) {
+	case FI_MR_UNSPEC:
+	case FI_MR_BASIC:
+		dattrp->mr_mode = FI_MR_BASIC;
+		break;
+	default:
+		USDF_INFO("cannot support mr_mode=%d\n",
+			dhints->mr_mode);
+		return -FI_ENODATA;
+	}
+
+	return 0;
+}
+
 static int
 usdf_fill_info_dgram(
 	struct fi_info *hints,
@@ -193,7 +267,6 @@ usdf_fill_info_dgram(
 {
 	struct fi_info *fi;
 	struct fi_fabric_attr *fattrp;
-	struct fi_domain_attr *dattrp;
 	struct fi_tx_attr *txattr;
 	struct fi_rx_attr *rxattr;
 	struct fi_ep_attr *eattrp;
@@ -325,11 +398,10 @@ usdf_fill_info_dgram(
 	eattrp->rx_ctx_cnt = 1;
 
 	/* domain attrs */
-	dattrp = fi->domain_attr;
-	dattrp->threading = FI_THREAD_UNSPEC;
-	dattrp->control_progress = FI_PROGRESS_AUTO;
-	dattrp->data_progress = FI_PROGRESS_MANUAL;
-	dattrp->resource_mgmt = FI_RM_DISABLED;
+	ret = usdf_fill_domain_attr_dgram(hints ? hints->domain_attr : NULL,
+						fi->domain_attr);
+	if (ret != 0)
+		goto fail;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -436,6 +508,7 @@ usdf_fill_info_msg(
 	dattrp->control_progress = FI_PROGRESS_AUTO;
 	dattrp->data_progress = FI_PROGRESS_MANUAL;
 	dattrp->resource_mgmt = FI_RM_DISABLED;
+	dattrp->mr_mode = FI_MR_BASIC;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -540,6 +613,7 @@ usdf_fill_info_rdm(
 	dattrp->control_progress = FI_PROGRESS_AUTO;
 	dattrp->data_progress = FI_PROGRESS_MANUAL;
 	dattrp->resource_mgmt = FI_RM_DISABLED;
+	dattrp->mr_mode = FI_MR_BASIC;
 
 	/* add to tail of list */
 	if (*fi_first == NULL) {
@@ -615,6 +689,8 @@ usdf_get_distance(
     uint32_t nh_ip_addr;
     int ret;
 
+    USDF_TRACE("\n");
+
     ret = usnic_nl_rt_lookup(dap->uda_ipaddr_be, daddr_be,
             dap->uda_ifindex, &nh_ip_addr);
     if (ret != 0) {
@@ -646,6 +722,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 	int d;
 	int ret;
 
+	USDF_TRACE("\n");
+
 	fi_first = NULL;
 	fi_last = NULL;
 	ai = NULL;
@@ -670,7 +748,8 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 	if (node != NULL || service != NULL) {
 		ret = getaddrinfo(node, service, NULL, &ai);
 		if (ret != 0) {
-			return -errno;
+			ret = -errno;
+			goto fail;
 		}
 		if (flags & FI_SOURCE) {
 			src = (struct sockaddr_in *)ai->ai_addr;
@@ -693,7 +772,7 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 
 		/* skip this device if it has some problem */
 		if (!dep->ue_dev_ok) {
-			USDF_DEBUG("skipping %s/%s\n", dap->uda_devname,
+			USDF_DBG("skipping %s/%s\n", dap->uda_devname,
 				dap->uda_ifname);
 			continue;
 		}
@@ -706,7 +785,7 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 				goto fail;
 			}
 			if (metric == -1) {
-				USDF_DEBUG("dest %s unreachable from %s/%s, skipping\n",
+				USDF_DBG("dest %s unreachable from %s/%s, skipping\n",
 					inet_ntoa(dest->sin_addr),
 					dap->uda_devname, dap->uda_ifname);
 				continue;
@@ -717,7 +796,7 @@ usdf_getinfo(uint32_t version, const char *node, const char *service,
 		if (hints != NULL) {
 			ret = usdf_validate_hints(hints, dap);
 			if (ret != 0) {
-				USDF_DEBUG("hints do not match for %s/%s, skipping\n",
+				USDF_DBG("hints do not match for %s/%s, skipping\n",
 					dap->uda_devname, dap->uda_ifname);
 				continue;
 			}
@@ -780,6 +859,8 @@ usdf_fabric_close(fid_t fid)
 	int ret;
 	void *rv;
 
+	USDF_TRACE("\n");
+
 	fp = fab_fidtou(fid);
 	if (atomic_get(&fp->fab_refcnt) > 0) {
 		return -FI_EBUSY;
@@ -816,6 +897,8 @@ usdf_usnic_getinfo(uint32_t version, struct fid_fabric *fabric,
 	struct usdf_fabric *fp;
 	struct usd_device_attrs *dap;
 
+	USDF_TRACE("\n");
+
 	fp = fab_ftou(fabric);
 	dap = fp->fab_dev_attrs;
 
@@ -842,6 +925,8 @@ static int
 usdf_fabric_ops_open(struct fid *fid, const char *ops_name, uint64_t flags,
 		void **ops, void *context)
 {
+	USDF_TRACE("\n");
+
 	if (strcmp(ops_name, FI_USNIC_FABRIC_OPS_1) == 0) {
 		*ops = &usdf_usnic_ops_fabric;
 	} else {
@@ -879,6 +964,8 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 	struct sockaddr_in sin;
 	int ret;
 	int d;
+
+	USDF_TRACE("\n");
 
 	/* Make sure this fabric exists */
 	dp = __usdf_devinfo;
@@ -975,7 +1062,7 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 		goto fail;
 	}
 
-	atomic_init(&fp->fab_refcnt, 0);
+	atomic_initialize(&fp->fab_refcnt, 0);
 	fattrp->fabric = fab_utof(fp);
 	fattrp->prov_version = USDF_PROV_VERSION;
 	*fabric = fab_utof(fp);
@@ -986,12 +1073,13 @@ usdf_fabric_open(struct fi_fabric_attr *fattrp, struct fid_fabric **fabric,
 fail:
 	ff = fab_utof(fp);
 	usdf_fabric_close(&ff->fid);
-	USDF_DEBUG("returning %d (%s)\n", ret, fi_strerror(-ret));
+	USDF_DBG("returning %d (%s)\n", ret, fi_strerror(-ret));
 	return ret;
 }
 
 static void usdf_fini(void)
 {
+	USDF_TRACE("\n");
 }
 
 struct fi_provider usdf_ops = {
@@ -1005,5 +1093,8 @@ struct fi_provider usdf_ops = {
 
 USNIC_INI
 {
+#if HAVE_VERBS
+	usdf_setup_fake_ibv_provider();
+#endif
 	return (&usdf_ops);
 }

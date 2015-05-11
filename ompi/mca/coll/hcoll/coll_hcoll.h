@@ -79,6 +79,11 @@ struct mca_coll_hcoll_component_t {
     /** MCA parameter: ON/OFF user defined datatype through HCOLL */
     int   hcoll_datatype_fallback;
 
+#if HCOLL_API >= HCOLL_VERSION(3,2)
+    /* hcoll init options */
+    hcoll_init_opts_t *init_opts;
+#endif
+
     /* FCA global stuff */
     mca_coll_hcoll_ops_t hcoll_ops;
     opal_free_list_t requests;

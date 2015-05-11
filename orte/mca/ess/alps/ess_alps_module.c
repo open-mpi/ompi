@@ -98,19 +98,6 @@ static int rte_init(void)
                 error = "orte_regex_extract_node_names";
                 goto fn_fail;
             }
-
-            /* find our host in the list */
-            for (i=0; NULL != hosts[i]; i++) {
-                if (0 == strncmp(hosts[i], orte_process_info.nodename,
-                                 strlen(hosts[i]))) {
-                    /* correct our vpid - this is probably not necessary with aprun*/
-                    ORTE_PROC_MY_NAME->vpid = starting_vpid + i;
-                    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                                         "ess:alps reset name to %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    break;
-                }
-            }
         }
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);

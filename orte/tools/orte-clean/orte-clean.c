@@ -88,7 +88,7 @@ typedef struct {
     bool debug;
 } orte_clean_globals_t;
 
-orte_clean_globals_t orte_clean_globals;
+orte_clean_globals_t orte_clean_globals = {0};
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,

@@ -46,7 +46,7 @@ opal_timer_t (*opal_timer_base_get_cycles)(void) = opal_timer_base_get_cycles_sy
 opal_timer_t (*opal_timer_base_get_usec)(void) = opal_timer_base_get_usec_sys_timer;
 #endif  /* OPAL_HAVE_CLOCK_GETTIME */
 
-opal_timer_t opal_timer_linux_freq;
+opal_timer_t opal_timer_linux_freq = {0};
 
 static int opal_timer_linux_open(void);
 

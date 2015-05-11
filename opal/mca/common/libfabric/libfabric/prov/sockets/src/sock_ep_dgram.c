@@ -61,7 +61,9 @@
 const struct fi_ep_attr sock_dgram_ep_attr = {
 	.type = FI_EP_DGRAM,
 	.protocol = FI_PROTO_SOCK_TCP,
+	.protocol_version = SOCK_WIRE_PROTO_VERSION,
 	.max_msg_size = SOCK_EP_MAX_MSG_SZ,
+	.msg_prefix_size = SOCK_EP_MSG_PREFIX_SZ,
 	.max_order_raw_size = SOCK_EP_MAX_ORDER_RAW_SZ,
 	.max_order_war_size = SOCK_EP_MAX_ORDER_WAR_SZ,
 	.max_order_waw_size = SOCK_EP_MAX_ORDER_WAW_SZ,
@@ -72,17 +74,21 @@ const struct fi_ep_attr sock_dgram_ep_attr = {
 
 const struct fi_tx_attr sock_dgram_tx_attr = {
 	.caps = SOCK_EP_DGRAM_CAP,
-	.op_flags = FI_TRANSMIT_COMPLETE,
+	.mode = SOCK_MODE,
+	.op_flags = SOCK_EP_DEFAULT_OP_FLAGS,
 	.msg_order = SOCK_EP_MSG_ORDER,
 	.inject_size = SOCK_EP_MAX_INJECT_SZ,
 	.size = SOCK_EP_TX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
+	.rma_iov_limit = 0,
 };
 
 const struct fi_rx_attr sock_dgram_rx_attr = {
 	.caps = SOCK_EP_DGRAM_CAP,
+	.mode = SOCK_MODE,
 	.op_flags = 0,
 	.msg_order = SOCK_EP_MSG_ORDER,
+	.comp_order = SOCK_EP_COMP_ORDER,
 	.total_buffered_recv = SOCK_EP_MAX_BUFF_RECV,
 	.size = SOCK_EP_RX_SZ,
 	.iov_limit = SOCK_EP_MAX_IOV_LIMIT,
@@ -97,6 +103,9 @@ static int sock_dgram_verify_rx_attr(const struct fi_rx_attr *attr)
 		return -FI_ENODATA;
 
 	if ((attr->msg_order | SOCK_EP_MSG_ORDER) != SOCK_EP_MSG_ORDER)
+		return -FI_ENODATA;
+
+	if ((attr->comp_order | SOCK_EP_COMP_ORDER) != SOCK_EP_COMP_ORDER)
 		return -FI_ENODATA;
 
 	if (attr->total_buffered_recv > sock_dgram_rx_attr.total_buffered_recv)
@@ -131,6 +140,9 @@ static int sock_dgram_verify_tx_attr(const struct fi_tx_attr *attr)
 	if (attr->iov_limit > sock_dgram_tx_attr.iov_limit)
 		return -FI_ENODATA;
 
+	if (attr->rma_iov_limit > sock_dgram_tx_attr.rma_iov_limit)
+		return -FI_ENODATA;
+
 	return 0;
 }
 
@@ -147,7 +159,13 @@ int sock_dgram_verify_ep_attr(struct fi_ep_attr *ep_attr,
 			return -FI_ENODATA;
 		}
 
+		if (ep_attr->protocol_version != sock_dgram_ep_attr.protocol_version)
+			return -FI_ENODATA;
+		
 		if (ep_attr->max_msg_size > sock_dgram_ep_attr.max_msg_size)
+			return -FI_ENODATA;
+
+		if (ep_attr->msg_prefix_size > sock_dgram_ep_attr.msg_prefix_size)
 			return -FI_ENODATA;
 
 		if (ep_attr->max_order_raw_size >
@@ -187,6 +205,21 @@ int sock_dgram_fi_info(void *src_addr, void *dest_addr, struct fi_info *hints,
 	*(*info)->tx_attr = sock_dgram_tx_attr;
 	*(*info)->rx_attr = sock_dgram_rx_attr;
 	*(*info)->ep_attr = sock_dgram_ep_attr;
+
+	if (hints && hints->ep_attr) {
+		if (hints->ep_attr->rx_ctx_cnt)
+			(*info)->ep_attr->rx_ctx_cnt = hints->ep_attr->rx_ctx_cnt;
+		if (hints->ep_attr->tx_ctx_cnt)
+			(*info)->ep_attr->tx_ctx_cnt = hints->ep_attr->tx_ctx_cnt;
+	}
+
+	if (hints && hints->rx_attr) {
+		(*info)->rx_attr->op_flags |= hints->rx_attr->op_flags;
+	}
+
+	if (hints && hints->tx_attr) {
+		(*info)->tx_attr->op_flags |= hints->tx_attr->op_flags;
+	}
 
 	(*info)->caps = SOCK_EP_DGRAM_CAP|
 			(*info)->rx_attr->caps | (*info)->tx_attr->caps;

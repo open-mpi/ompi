@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,12 +34,12 @@
 /*
  * Table for Fortran <-> C file handle conversion
  */
-opal_pointer_array_t ompi_file_f_to_c_table; 
+opal_pointer_array_t ompi_file_f_to_c_table = {{0}};
 
 /*
  * MPI_FILE_NULL (_addr flavor is for F03 bindings)
  */
-ompi_predefined_file_t  ompi_mpi_file_null;
+ompi_predefined_file_t  ompi_mpi_file_null = {{{0}}};
 ompi_predefined_file_t  *ompi_mpi_file_null_addr = &ompi_mpi_file_null;
 
 

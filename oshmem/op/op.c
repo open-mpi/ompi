@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,7 @@
 /*
  * Table for op handle conversion
  */
-opal_pointer_array_t oshmem_op_array;
+opal_pointer_array_t oshmem_op_array = {{0}};
 
 /*
  * Class information

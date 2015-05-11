@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,8 +45,8 @@ struct oshmem_lock_prev_pe_container {
 };
 typedef struct oshmem_lock_prev_pe_container oshmem_lock_prev_pe_container_t;
 
-oshmem_lock_counter_t *lock_counter_head;
-oshmem_lock_prev_pe_container_t *lock_prev_pe_container_head;
+oshmem_lock_counter_t *lock_counter_head = NULL;
+oshmem_lock_prev_pe_container_t *lock_prev_pe_container_head = NULL;
 static int *lock_turn;
 static int *lock_inform;
 static int *lock_last_ticket;

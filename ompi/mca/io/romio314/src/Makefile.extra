@@ -1,0 +1,47 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+AM_CPPFLAGS = \
+        -I$(OMPI_TOP_BUILDDIR)/include \
+        -I$(OMPI_TOP_BUILDDIR)/opal \
+        -I$(OMPI_TOP_BUILDDIR)/opal/include \
+        -I$(OMPI_TOP_SRCDIR)/opal \
+        -I$(OMPI_TOP_SRCDIR)/opal/include \
+        -I$(OMPI_TOP_BUILDDIR)/orte \
+        -I$(OMPI_TOP_BUILDDIR)/orte/include \
+        -I$(OMPI_TOP_SRCDIR)/orte \
+        -I$(OMPI_TOP_SRCDIR)/orte/include \
+        -I$(OMPI_TOP_BUILDDIR)/ompi \
+        -I$(OMPI_TOP_BUILDDIR)/ompi/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi \
+        -I$(OMPI_TOP_SRCDIR)/ompi/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio314 \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio314/romio/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio314/romio/adio/include \
+        -I$(top_builddir)
+
+sources += \
+	src/io_romio314.h \
+	src/io_romio314_component.c \
+	src/io_romio314_file_open.c \
+	src/io_romio314_file_read.c \
+	src/io_romio314_file_write.c \
+	src/io_romio314_module.c
+

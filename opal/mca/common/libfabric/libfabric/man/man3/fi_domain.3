@@ -1,4 +1,4 @@
-.TH fi_domain 3 "2015\-03\-24" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0rc5"
+.TH fi_domain 3 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0"
 .SH NAME
 .PP
 fi_domain - Open a fabric access domain
@@ -102,6 +102,7 @@ struct\ fi_domain_attr\ {
 \ \ \ \ enum\ fi_progress\ \ \ \ \ \ data_progress;
 \ \ \ \ enum\ fi_resource_mgmt\ resource_mgmt;
 \ \ \ \ enum\ fi_av_type\ \ \ \ \ \ \ av_type;
+\ \ \ \ enum\ fi_mr_mode\ \ \ \ \ \ \ mr_mode;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mr_key_size;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cq_data_size;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cq_cnt;
@@ -110,6 +111,8 @@ struct\ fi_domain_attr\ {
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rx_ctx_cnt;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max_ep_tx_ctx;
 \ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max_ep_rx_ctx;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max_ep_stx_ctx;
+\ \ \ \ size_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max_ep_srx_ctx;
 };
 \f[]
 .fi
@@ -174,7 +177,7 @@ data flows.
 FI_THREAD_FID, but with the added restriction that serialization is
 required when accessing the same endpoint, even if multiple transmit and
 receive contexts are used.
-Conceptualy, FI_THREAD_ENDPOINT maps well to providers that implement
+Conceptually, FI_THREAD_ENDPOINT maps well to providers that implement
 fabric services in hardware but use a single command queue to access
 different data flows.
 .PP
@@ -389,6 +392,31 @@ support either address vector format.
 In this case, a provider may return FI_AV_UNSPEC to indicate that either
 format is supportable, or may return another AV type to indicate the
 optimal AV type supported by this domain.
+.SS Memory Registration Mode (mr_mode)
+.PP
+Specifies the method of memory registration that is used with this
+domain.
+For additional details on MR mode, see \f[C]fi_mr\f[](3).
+The following values may be specified.
+.PP
+\f[I]FI_MR_UNSPEC\f[] : Any memory registration mode is requested and
+supported.
+.PP
+\f[I]FI_MR_BASIC\f[] : Only basic memory registration operations are
+requested or supported.
+.PP
+\f[I]FI_MR_SCALABLE\f[] : Only scalable memory registration operations
+are requested or supported.
+.PP
+Buffers used in data transfer operations may require notifying the
+provider of their use before a data transfer can occur.
+The mr_mode field indicates the type of memory registration that is
+required, and when registration is necessary.
+Applications that require the use of a specific registration mode should
+set the domain attribute mr_mode to the necessary value when calling
+fi_getinfo.
+The value FI_MR_UNSPEC may be used to indicate support for any
+registration mode.
 .SS MR Key Size (mr_key_size)
 .PP
 Size of the memory region remote access key, in bytes.
@@ -407,8 +435,8 @@ If supported (non-zero value is returned), the minimum size of remote CQ
 data must be at least 4-bytes.
 .SS Completion Queue Count (cq_cnt)
 .PP
-The total number of completion queues supported by the domain, relative
-to any specified or default CQ attributes.
+The optimal number of completion queues supported by the domain,
+relative to any specified or default CQ attributes.
 The cq_cnt value may be a fixed value of the maximum number of CQs
 supported by the underlying provider, or may be a dynamic value, based
 on the default attributes of an allocated CQ, such as the CQ size and
@@ -454,6 +482,14 @@ endpoint.
 .PP
 The maximum number of receive contexts that may be associated with an
 endpoint.
+.SS Maximum Sharing of Transmit Context (max_ep_stx_ctx)
+.PP
+The maximum number of endpoints that may be associated with a shared
+transmit context.
+.SS Maximum Sharing of Receive Context (max_ep_srx_ctx)
+.PP
+The maximum number of endpoints that may be associated with a shared
+receive context.
 .SH RETURN VALUE
 .PP
 Returns 0 on success.

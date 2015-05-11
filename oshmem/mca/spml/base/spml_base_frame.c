@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,10 +45,10 @@
 /*
  * Global variables
  */
-mca_spml_base_module_t mca_spml;
+mca_spml_base_module_t mca_spml = {0};
 
-mca_spml_base_component_t mca_spml_base_selected_component;
-opal_pointer_array_t mca_spml_base_spml;
+mca_spml_base_component_t mca_spml_base_selected_component = {{0}};
+opal_pointer_array_t mca_spml_base_spml = {{0}};
 
 
 static int mca_spml_base_register(mca_base_register_flag_t flags)

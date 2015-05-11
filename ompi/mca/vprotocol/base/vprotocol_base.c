@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +18,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/vprotocol/base/static-components.h"
 
-char *mca_vprotocol_base_include_list;
+char *mca_vprotocol_base_include_list = NULL;
 mca_pml_v_t mca_pml_v = {-1, 0, 0};
 
 /* Load any vprotocol MCA component and call open function of all those 

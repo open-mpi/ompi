@@ -24,7 +24,7 @@
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of things like EAGAIN, EINPROGRESS, etc. It has been
  * verified that this will not conflict with other error codes that
- * are returned by these functions under UNIX/Linux environments 
+ * are returned by these functions under UNIX/Linux environments
  */
 
 #include "orte_config.h"
@@ -83,7 +83,7 @@ static int usock_component_register(void);
 static int usock_component_open(void);
 static int usock_component_close(void);
 
-static bool component_available(void);
+static int component_available(void);
 static int component_startup(void);
 static void component_shutdown(void);
 static int component_send(orte_rml_send_t *msg);
@@ -155,7 +155,7 @@ static int usock_component_register(void)
 }
 
 
-static bool component_available(void)
+static int component_available(void)
 {
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:usock: component_available called");
@@ -164,22 +164,25 @@ static bool component_available(void)
     if (!orte_create_session_dirs ||
         NULL == orte_process_info.tmpdir_base ||
         NULL == orte_process_info.top_session_dir) {
-        return false;
+        return ORTE_ERR_NOT_SUPPORTED;
     }
 
     /* this component is not available to tools */
     if (ORTE_PROC_IS_TOOL) {
-        return false;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
 
-    /* direct-launched apps cannot use it either */
-    if (ORTE_PROC_IS_APP &&
-        (NULL == orte_process_info.my_daemon_uri)) {
-        return false;
+    if (ORTE_PROC_IS_APP) {
+        if (NULL == orte_process_info.my_daemon_uri) {
+            /* direct-launched apps cannot use it */
+           return ORTE_ERR_NOT_AVAILABLE;
+        }
+        /* apps launched by daemons *must* use it */
+        return ORTE_ERR_FORCE_SELECT;
     }
 
     /* otherwise, we are available */
-    return true;
+    return ORTE_SUCCESS;
 }
 
 /* Start the module */
@@ -251,9 +254,9 @@ static int component_send(orte_rml_send_t *msg)
     orte_proc_t *proc;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:usock:send_nb to peer %s:%d",
+                        "%s oob:usock:send_nb to peer %s:%d to channel=%d seq_num =%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag);
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->dst_channel, msg->seq_num);
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* daemons can only reach local procs */

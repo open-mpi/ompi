@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -75,7 +75,7 @@
 static int alps_component_open(void);
 static int alps_component_close(void);
 static int alps_component_register(void);
-static bool component_available(void);
+static int component_available(void);
 static int component_startup(void);
 static void component_shutdown(void);
 static int component_send(orte_rml_send_t *msg);
@@ -128,9 +128,8 @@ static int alps_component_close(void)
     return ORTE_SUCCESS;
 }
 
-static bool component_available(void)
+static int component_available(void)
 {
-    int rc;
     bool flag = false;
 
     /*
@@ -138,7 +137,7 @@ static bool component_available(void)
      */
 
     if (!ORTE_PROC_IS_APP) {
-        return false;
+        return ORTE_ERR_NOT_SUPPORTED;
     }
 
     /*
@@ -146,7 +145,7 @@ static bool component_available(void)
      */
 
     if (NULL != orte_process_info.my_daemon_uri) {
-        return false;
+        return ORTE_ERR_NOT_SUPPORTED;
     }
 
     /*
@@ -155,17 +154,25 @@ static bool component_available(void)
      * the cray job kernel module  - the thing that creates the PAGG
      */
 
-    rc = orte_common_alps_proc_in_pagg(&flag);
+    orte_common_alps_proc_in_pagg(&flag);
+
+#if 0
+    /* HOWARD: This logic makes no sense to me. Regardless of
+     * the conditional, you *always* returned "flag". So why
+     * are you bothering to check anything else?
+     */
     if ((ORTE_SUCCESS == rc) && (ORTE_PROC_IS_APP)) {
         return flag;
     }
-
+#endif
+    
     if (flag) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "oob:alps: component_available called");
+        return ORTE_SUCCESS;
     }
 
-    return flag;
+    return ORTE_ERR_NOT_AVAILABLE;
 }
 
 /* Start all modules */

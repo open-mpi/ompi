@@ -123,7 +123,7 @@ struct slist {
 
 static inline void slist_init(struct slist *list)
 {
-	list->head = NULL;
+	list->head = list->tail = NULL;
 }
 
 static inline int slist_empty(struct slist *list)
@@ -238,17 +238,18 @@ static inline int dlistfd_empty(struct dlistfd_head *head)
 
 static inline void dlistfd_signal(struct dlistfd_head *head)
 {
+	char c = 0;
 	if (head->fdwcnt == head->fdrcnt) {
-		if (write(head->fd[LIST_WRITE_FD], head, sizeof head) == sizeof head)
+		if (write(head->fd[LIST_WRITE_FD], &c, sizeof c) == sizeof c)
 			head->fdwcnt++;
 	}
 }
 
 static inline void dlistfd_reset(struct dlistfd_head *head)
 {
-	void *buf;
+	char c;
 	if (dlistfd_empty(head) && (head->fdrcnt < head->fdwcnt)) {
-		if (read(head->fd[LIST_READ_FD], &buf, sizeof buf) == sizeof buf)
+		if (read(head->fd[LIST_READ_FD], &c, sizeof c) == sizeof c)
 			head->fdrcnt++;
 	}
 }

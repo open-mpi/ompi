@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -54,15 +54,15 @@
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
 /* State Machine */
-opal_list_t orte_job_states;
-opal_list_t orte_proc_states;
+opal_list_t orte_job_states = {{0}};
+opal_list_t orte_proc_states = {{0}};
 
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
 
 /* globals used by RTE */
 bool orte_debug_daemons_file_flag = false;
-bool orte_leave_session_attached;
+bool orte_leave_session_attached = false;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 char *orte_local_cpu_type = NULL;
@@ -79,12 +79,12 @@ bool orte_standalone_operation = false;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
-bool orte_show_resolved_nodenames;
-bool orte_retain_aliases;
-int orte_use_hostname_alias;
+bool orte_show_resolved_nodenames = false;
+bool orte_retain_aliases = false;
+int orte_use_hostname_alias = -1;
 
-int orted_debug_failure;
-int orted_debug_failure_delay;
+int orted_debug_failure = -1;
+int orted_debug_failure_delay = -1;
 bool orte_hetero_apps = false;
 bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
@@ -92,14 +92,14 @@ bool orte_devel_level_output = false;
 bool orte_display_topo_with_map = false;
 bool orte_display_diffable_output = false;
 
-char **orte_launch_environ;
+char **orte_launch_environ = NULL;
 
 bool orte_hnp_is_allocated = false;
-bool orte_allocation_required;
+bool orte_allocation_required = false;
 bool orte_managed_allocation = false;
 char *orte_set_slots = NULL;
-bool orte_display_allocation;
-bool orte_display_devel_allocation;
+bool orte_display_allocation = false;
+bool orte_display_devel_allocation = false;
 bool orte_soft_locations = false;
 int orted_pmi_version = 0;
 
@@ -109,10 +109,10 @@ char **orted_cmd_line=NULL;
 char **orte_fork_agent=NULL;
 
 /* debugger job */
-bool orte_debugger_dump_proctable;
-char *orte_debugger_test_daemon;
-bool orte_debugger_test_attach;
-int orte_debugger_check_rate;
+bool orte_debugger_dump_proctable = false;
+char *orte_debugger_test_daemon = NULL;
+bool orte_debugger_test_attach = false;
+int orte_debugger_check_rate = -1;
 
 /* exit flags */
 int orte_exit_status = 0;
@@ -122,29 +122,29 @@ bool orte_job_term_ordered = false;
 bool orte_orteds_term_ordered = false;
 bool orte_allowed_exit_without_sync = false;
 
-int orte_startup_timeout;
-int orte_timeout_usec_per_proc;
-float orte_max_timeout;
+int orte_startup_timeout = -1;
+int orte_timeout_usec_per_proc = -1;
+float orte_max_timeout = -1.0;
 orte_timer_t *orte_mpiexec_timeout = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
 /* global arrays for data storage */
-opal_pointer_array_t *orte_job_data;
-opal_pointer_array_t *orte_node_pool;
-opal_pointer_array_t *orte_node_topologies;
-opal_pointer_array_t *orte_local_children;
+opal_pointer_array_t *orte_job_data = NULL;
+opal_pointer_array_t *orte_node_pool = NULL;
+opal_pointer_array_t *orte_node_topologies = NULL;
+opal_pointer_array_t *orte_local_children = NULL;
 orte_vpid_t orte_total_procs = 0;
 
 /* IOF controls */
-bool orte_tag_output;
-bool orte_timestamp_output;
-char *orte_output_filename;
+bool orte_tag_output = false;
+bool orte_timestamp_output = false;
+char *orte_output_filename = NULL;
 /* generate new xterm windows to display output from specified ranks */
-char *orte_xterm;
+char *orte_xterm = NULL;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
-bool orte_forward_job_control;
+bool orte_forward_job_control = false;
 
 /* report launch progress */
 bool orte_report_launch_progress = false;
@@ -167,16 +167,16 @@ bool orte_report_bindings = false;
 bool orte_do_not_barrier = false;
 
 /* process recovery */
-bool orte_enable_recovery;
-int32_t orte_max_restarts;
+bool orte_enable_recovery = false;
+int32_t orte_max_restarts = 0;
 
 /* exit status reporting */
-bool orte_report_child_jobs_separately;
-struct timeval orte_child_time_to_exit;
-bool orte_abort_non_zero_exit;
+bool orte_report_child_jobs_separately = false;
+struct timeval orte_child_time_to_exit = {0};
+bool orte_abort_non_zero_exit = false;
 
 /* length of stat history to keep */
-int orte_stat_history_size;
+int orte_stat_history_size = -1;
 
 /* envars to forward */
 char **orte_forwarded_envars = NULL;

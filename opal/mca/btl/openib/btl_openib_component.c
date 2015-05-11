@@ -1509,6 +1509,9 @@ static uint64_t calculate_max_reg (const char *device_name)
         return (max_reg * 7) >> 3;
     }
 
+    /* Default to being able to register everything (to ensure that
+       max_reg is initialized in all cases) */
+    max_reg = mem_total;
     if (!strncmp(device_name, "mlx5", 4)) {
         max_reg = 2 * mem_total;
 
@@ -1578,7 +1581,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* Open up the device */
     dev_context = ibv_open_device(ib_dev);
     if (NULL == dev_context) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_NOT_SUPPORTED;
     }
 
     /* Find out if this device supports RC QPs */
@@ -2529,11 +2532,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* Init CPC components */
-    if (OPAL_SUCCESS != (ret = opal_btl_openib_connect_base_init())) {
-        goto no_btls;
-    }
-
     /* If we are using ptmalloc2 and there are no posix threads
        available, this will cause memory corruption.  Refuse to run.
        Right now, ptmalloc2 is the only memory manager that we have on
@@ -2746,10 +2744,12 @@ btl_openib_component_init(int *num_btl_modules,
 
         found = true;
         ret = init_one_device(&btl_list, dev_sorted[i].ib_dev);
-        if (OPAL_SUCCESS != ret && OPAL_ERR_NOT_SUPPORTED != ret) {
+        if (OPAL_ERR_NOT_SUPPORTED == ret) {
+            ++num_devices_intentionally_ignored;
+            continue;
+        } else if (OPAL_SUCCESS != ret) {
             free(dev_sorted);
             goto no_btls;
-
         }
     }
     free(dev_sorted);
@@ -2786,6 +2786,12 @@ btl_openib_component_init(int *num_btl_modules,
                            "no active ports found", true, 
                            opal_process_info.nodename);
         }
+        goto no_btls;
+    }
+
+    /* Now that we know we have devices and ports that we want to use,
+       init CPC components */
+    if (OPAL_SUCCESS != (ret = opal_btl_openib_connect_base_init())) {
         goto no_btls;
     }
 
