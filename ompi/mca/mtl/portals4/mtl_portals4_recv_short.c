@@ -41,22 +41,92 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
         (ompi_mtl_portals4_recv_short_request_t*) ptl_base_request;
     ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
 
-    if (PTL_EVENT_AUTO_FREE == ev->type) {
-        if (OPAL_UNLIKELY(block->release_on_free)) {
-            opal_list_remove_item(&ompi_mtl_portals4.waiting_recv_short_blocks,
-                                  &block->base);
-            ompi_mtl_portals4_recv_short_block_free(block);
-        } else {
-            ompi_mtl_portals4_activate_block(block);
+    switch (ev->type) {
+    case PTL_EVENT_AUTO_FREE:
+        OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+        switch (block->status) {
+        case BLOCK_STATUS_ACTIVATED: /* May be encountered with multi threading */
+            block->status = BLOCK_STATUS_WAITING_UNLINK;
+            ompi_mtl_portals4.active_recv_short_blocks--;
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
+                                "mtl:portals4 PTL_EVENT_AUTO_FREE received before PTL_EVENT_AUTO_UNLINK"));
+            break;
+
+        case BLOCK_STATUS_WAITING_FREE: /* Normal case */
+            if (OPAL_UNLIKELY(block->release_on_free)) {
+                opal_list_remove_item(&ompi_mtl_portals4.recv_short_blocks,
+                                      &block->base);
+                OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+                ompi_mtl_portals4_recv_short_block_free(block);
+            } else {
+                OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+                ompi_mtl_portals4_activate_block(block);
+            }
+            break;
+
+        default:
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Bad status (%d) when receiving PTL_EVENT_AUTO_FREE",
+                                __FILE__, __LINE__, block->status);
+            break;
         }
-    } else if (PTL_EVENT_AUTO_UNLINK == ev->type) {
-        opal_list_remove_item(&ompi_mtl_portals4.active_recv_short_blocks,
-                              &block->base);
-        opal_list_append(&ompi_mtl_portals4.waiting_recv_short_blocks,
-                         &block->base);
-    } else {
+        break;
+
+    case PTL_EVENT_AUTO_UNLINK:
+        OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+        switch (block->status) {
+        case BLOCK_STATUS_ACTIVATED: /* Normal case */
+            block->status = BLOCK_STATUS_WAITING_FREE;
+            ompi_mtl_portals4.active_recv_short_blocks--;
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            break;
+
+        case BLOCK_STATUS_WAITING_UNLINK: /* May be encountered with multi threading */
+            if (OPAL_UNLIKELY(block->release_on_free)) {
+                opal_list_remove_item(&ompi_mtl_portals4.recv_short_blocks,
+                                      &block->base);
+                OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+                ompi_mtl_portals4_recv_short_block_free(block);
+            } else {
+                OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+                OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
+                                "mtl:portals4 PTL_EVENT_AUTO_UNLINK received after PTL_EVENT_AUTO_FREE"));
+                ompi_mtl_portals4_activate_block(block);
+            }
+            break;
+
+        default:
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Bad status (%d) when receiving PTL_EVENT_AUTO_UNLINK",
+                                __FILE__, __LINE__, block->status);
+            break;
+        }
+        break;
+
+    case PTL_EVENT_LINK:
+        OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+        switch (block->status) {
+        case BLOCK_STATUS_WAITING_LINK:
+            block->status = BLOCK_STATUS_ACTIVATED;
+            ompi_mtl_portals4.active_recv_short_blocks++;
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            break;
+
+        default:
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Bad status (%d) when receiving PTL_EVENT_LINK",
+                                __FILE__, __LINE__, block->status);
+            break;
+        }
+
+    default:
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                             "OVERFLOW EVENT %d, hdr_data = %lx", ev->type, (long unsigned) ev->hdr_data));
+                             "Other EVENT %d, hdr_data = %lx", ev->type, (long unsigned) ev->hdr_data));
+        break;
     }
 
     return OMPI_SUCCESS;
@@ -70,6 +140,7 @@ ompi_mtl_portals4_recv_short_block_alloc(bool release_on_free)
 
     block = OBJ_NEW(ompi_mtl_portals4_recv_short_block_t);
     block->start = malloc(ompi_mtl_portals4.recv_short_size);
+    block->status = BLOCK_STATUS_INACTIVE;
     if (block->start == NULL) return NULL;
 
     block->me_h = PTL_INVALID_HANDLE;
@@ -109,8 +180,6 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     ptl_me_t me;
     int ret;
 
-    opal_list_remove_item(&ompi_mtl_portals4.waiting_recv_short_blocks, &block->base);
-
     ignore_bits = MTL_PORTALS4_CONTEXT_MASK | MTL_PORTALS4_SOURCE_MASK | MTL_PORTALS4_TAG_MASK;
 
     me.start = block->start;
@@ -132,6 +201,10 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
 
+    OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+    block->status = BLOCK_STATUS_WAITING_LINK;
+    OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.recv_idx,
                       &me,
@@ -140,8 +213,6 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
                       &block->me_h);
     if (OPAL_LIKELY(ret == PTL_OK)) {
         ret = OMPI_SUCCESS;
-        opal_list_append(&ompi_mtl_portals4.active_recv_short_blocks,
-                         &block->base);
     } else {
         ret = ompi_mtl_portals4_get_error(ret);
     }
@@ -155,8 +226,8 @@ ompi_mtl_portals4_recv_short_init(void)
 {
     int i;
 
-    OBJ_CONSTRUCT(&(ompi_mtl_portals4.active_recv_short_blocks), opal_list_t);
-    OBJ_CONSTRUCT(&(ompi_mtl_portals4.waiting_recv_short_blocks), opal_list_t);
+    OBJ_CONSTRUCT(&ompi_mtl_portals4.short_block_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&(ompi_mtl_portals4.recv_short_blocks), opal_list_t);
 
     /* create the recv blocks */
     for (i = 0 ; i < ompi_mtl_portals4.recv_short_num ; ++i) {
@@ -165,7 +236,7 @@ ompi_mtl_portals4_recv_short_init(void)
         if (OPAL_UNLIKELY(NULL == block)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        opal_list_append(&ompi_mtl_portals4.waiting_recv_short_blocks,
+        opal_list_append(&ompi_mtl_portals4.recv_short_blocks,
                          &block->base);
         ompi_mtl_portals4_activate_block(block);
     }
@@ -179,16 +250,13 @@ ompi_mtl_portals4_recv_short_fini(void)
 {
     opal_list_item_t *item;
 
-    while (NULL !=  (item = opal_list_remove_first(&ompi_mtl_portals4.active_recv_short_blocks))) {
+    OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+    while (NULL !=  (item = opal_list_remove_first(&ompi_mtl_portals4.recv_short_blocks))) {
         ompi_mtl_portals4_recv_short_block_t *block = 
             (ompi_mtl_portals4_recv_short_block_t*) item;
         ompi_mtl_portals4_recv_short_block_free(block);
     }
-    while (NULL !=  (item = opal_list_remove_first(&ompi_mtl_portals4.waiting_recv_short_blocks))) {
-        ompi_mtl_portals4_recv_short_block_t *block = 
-            (ompi_mtl_portals4_recv_short_block_t*) item;
-        ompi_mtl_portals4_recv_short_block_free(block);
-    }
+    OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -197,7 +265,7 @@ ompi_mtl_portals4_recv_short_fini(void)
 int
 ompi_mtl_portals4_recv_short_link(int count)
 {
-    int active = opal_list_get_size(&ompi_mtl_portals4.active_recv_short_blocks);
+    int active = ompi_mtl_portals4.active_recv_short_blocks;
     int i;
 
     if (active < count) {
@@ -207,8 +275,6 @@ ompi_mtl_portals4_recv_short_link(int count)
             if (NULL == block) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            opal_list_append(&ompi_mtl_portals4.waiting_recv_short_blocks,
-                             &block->base);
             ompi_mtl_portals4_activate_block(block);
         }
     }
