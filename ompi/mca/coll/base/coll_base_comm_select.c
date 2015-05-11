@@ -92,6 +92,9 @@ static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
         }                                                               \
     } while (0)
 
+#define CHECK_NULL(what, comm, func)                                    \
+  ( (what) = # func , NULL == (comm)->c_coll.coll_ ## func)
+
 /*
  * This function is called at the initialization time of every
  * communicator.  It is used to select which coll component will be
@@ -103,6 +106,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 {
     opal_list_t *selectable;
     opal_list_item_t *item;
+    char* which_func = "unknown";
     int ret;
 
     /* Announce */
@@ -201,43 +205,47 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     OBJ_RELEASE(selectable);
 
     /* check to make sure no NULLs */
-    if ((NULL == comm->c_coll.coll_allgather) ||
-        (NULL == comm->c_coll.coll_allgatherv) ||
-        (NULL == comm->c_coll.coll_allreduce) ||
-        (NULL == comm->c_coll.coll_alltoall) ||
-        (NULL == comm->c_coll.coll_alltoallv) ||
-        (NULL == comm->c_coll.coll_alltoallw) ||
-        (NULL == comm->c_coll.coll_barrier) ||
-        (NULL == comm->c_coll.coll_bcast) ||
-        ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_exscan)) ||
-        (NULL == comm->c_coll.coll_gather) ||
-        (NULL == comm->c_coll.coll_gatherv) ||
-        (NULL == comm->c_coll.coll_reduce) ||
-        (NULL == comm->c_coll.coll_reduce_scatter_block) ||
-        (NULL == comm->c_coll.coll_reduce_scatter) ||
-        ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_scan)) ||
-        (NULL == comm->c_coll.coll_scatter) ||
-        (NULL == comm->c_coll.coll_scatterv) ||
-        (NULL == comm->c_coll.coll_iallgather) ||
-        (NULL == comm->c_coll.coll_iallgatherv) ||
-        (NULL == comm->c_coll.coll_iallreduce) ||
-        (NULL == comm->c_coll.coll_ialltoall) ||
-        (NULL == comm->c_coll.coll_ialltoallv) ||
-        (NULL == comm->c_coll.coll_ialltoallw) ||
-        (NULL == comm->c_coll.coll_ibarrier) ||
-        (NULL == comm->c_coll.coll_ibcast) ||
-        ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iexscan)) ||
-        (NULL == comm->c_coll.coll_igather) ||
-        (NULL == comm->c_coll.coll_igatherv) ||
-        (NULL == comm->c_coll.coll_ireduce) ||
-        (NULL == comm->c_coll.coll_ireduce_scatter_block) ||
-        (NULL == comm->c_coll.coll_ireduce_scatter) ||
-        ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
-        (NULL == comm->c_coll.coll_iscatter) ||
-        (NULL == comm->c_coll.coll_iscatterv)) {
+    if (CHECK_NULL(which_func, comm, allgather) ||
+        CHECK_NULL(which_func, comm, allgatherv) ||
+        CHECK_NULL(which_func, comm, allreduce) ||
+        CHECK_NULL(which_func, comm, alltoall) ||
+        CHECK_NULL(which_func, comm, alltoallv) ||
+        CHECK_NULL(which_func, comm, alltoallw) ||
+        CHECK_NULL(which_func, comm, barrier) ||
+        CHECK_NULL(which_func, comm, bcast) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, exscan)) ||
+        CHECK_NULL(which_func, comm, gather) ||
+        CHECK_NULL(which_func, comm, gatherv) ||
+        CHECK_NULL(which_func, comm, reduce) ||
+        CHECK_NULL(which_func, comm, reduce_scatter_block) ||
+        CHECK_NULL(which_func, comm, reduce_scatter) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, scan)) ||
+        CHECK_NULL(which_func, comm, scatter) ||
+        CHECK_NULL(which_func, comm, scatterv) ||
+        CHECK_NULL(which_func, comm, iallgather) ||
+        CHECK_NULL(which_func, comm, iallgatherv) ||
+        CHECK_NULL(which_func, comm, iallreduce) ||
+        CHECK_NULL(which_func, comm, ialltoall) ||
+        CHECK_NULL(which_func, comm, ialltoallv) ||
+        CHECK_NULL(which_func, comm, ialltoallw) ||
+        CHECK_NULL(which_func, comm, ibarrier) ||
+        CHECK_NULL(which_func, comm, ibcast) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iexscan)) ||
+        CHECK_NULL(which_func, comm, igather) ||
+        CHECK_NULL(which_func, comm, igatherv) ||
+        CHECK_NULL(which_func, comm, ireduce) ||
+        CHECK_NULL(which_func, comm, ireduce_scatter_block) ||
+        CHECK_NULL(which_func, comm, ireduce_scatter) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iscan)) ||
+        CHECK_NULL(which_func, comm, iscatter) ||
+        CHECK_NULL(which_func, comm, iscatterv)) {
         /* TODO -- Once the topology flags are set before coll_select then
          * check if neighborhood collectives have been set. */
-        mca_coll_base_comm_unselect(comm);
+
+        opal_show_help("help-mca-coll-base.txt",
+                       "comm-select:no-function-available", true, which_func);
+
+         mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;
     }
     return OMPI_SUCCESS;

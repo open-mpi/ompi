@@ -44,18 +44,13 @@ lk_cas64(ompi_osc_portals4_module_t *module,
 {
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
-    ptl_handle_md_t result_md_h, write_md_h;
-    void *result_base, *write_base;
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
-    ompi_osc_portals4_get_md(result_val, module->md_h, &result_md_h, &result_base);
-    ompi_osc_portals4_get_md(&write_val, module->md_h, &write_md_h, &write_base);
-
-    ret = PtlSwap(result_md_h,
-                  (char*) result_val - (char*) result_base,
-                  write_md_h,
-                  (char*) &write_val - (char*) write_base,
+    ret = PtlSwap(module->md_h,
+                  (ptl_size_t) result_val,
+                  module->md_h,
+                  (ptl_size_t) &write_val,
                   sizeof(int64_t),
                   ompi_osc_portals4_get_peer(module, target),
                   module->pt_idx,
@@ -82,15 +77,11 @@ lk_write64(ompi_osc_portals4_module_t *module,
 {
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
-    ptl_handle_md_t md_h;
-    void *base;
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
-    ompi_osc_portals4_get_md(&write_val, module->md_h, &md_h, &base);
-
-    ret = PtlPut(md_h,
-                 (char*) &write_val - (char*) base,
+    ret = PtlPut(module->md_h,
+                 (ptl_size_t) &write_val,
                  sizeof(int64_t),
                  PTL_ACK_REQ,
                  ompi_osc_portals4_get_peer(module, target),
@@ -116,18 +107,13 @@ lk_add64(ompi_osc_portals4_module_t *module,
 {
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
-    ptl_handle_md_t result_md_h, write_md_h;
-    void *result_base, *write_base;
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
-    ompi_osc_portals4_get_md(result_val, module->md_h, &result_md_h, &result_base);
-    ompi_osc_portals4_get_md(&write_val, module->md_h, &write_md_h, &write_base);
-
-    ret = PtlFetchAtomic(result_md_h,
-                         (char*) result_val - (char*) result_base,
-                         write_md_h,
-                         (char*) &write_val - (char*) write_base,
+    ret = PtlFetchAtomic(module->md_h,
+                         (ptl_size_t) result_val,
+                         module->md_h,
+                         (ptl_size_t) &write_val,
                          sizeof(int64_t),
                          ompi_osc_portals4_get_peer(module, target),
                          module->pt_idx,

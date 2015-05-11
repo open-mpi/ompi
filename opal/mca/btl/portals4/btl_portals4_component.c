@@ -242,11 +242,7 @@ mca_btl_portals4_component_open(void)
 
     mca_btl_portals4_module.recv_eq_h = PTL_EQ_NONE;
 
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    mca_btl_portals4_module.send_md_hs = NULL;
-#else
     mca_btl_portals4_module.send_md_h = PTL_INVALID_HANDLE;
-#endif
 
     mca_btl_portals4_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals4_module.zero_md_h = PTL_INVALID_HANDLE;

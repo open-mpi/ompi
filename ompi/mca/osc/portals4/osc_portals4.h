@@ -76,13 +76,8 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_ni_t ni_h; /* network interface used by this window */
     ptl_pt_index_t pt_idx; /* portal table index used by this window (this will be same across window) */
     ptl_handle_ct_t ct_h; /* Counting event handle used for completion in this window */
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    ptl_handle_md_t *md_h; /* memory descriptor describing all of memory used by this window */
-    ptl_handle_md_t *req_md_h; /* memory descriptor with event completion used by this window */
-#else
-    ptl_handle_md_t md_h[1]; /* memory descriptor describing all of memory used by this window */
-    ptl_handle_md_t req_md_h[1]; /* memory descriptor with event completion used by this window */
-#endif
+    ptl_handle_md_t md_h; /* memory descriptor describing all of memory used by this window */
+    ptl_handle_md_t req_md_h; /* memory descriptor with event completion used by this window */
     ptl_handle_me_t data_me_h; /* data match list entry (MB are CID | OSC_PORTALS4_MB_DATA) */
     ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits are (CID | OSC_PORTALS4_MB_CONTROL). */
     int64_t opcount;
@@ -118,39 +113,6 @@ get_displacement(ompi_osc_portals4_module_t *module,
         return module->disp_unit;
     }
 }
-
-
-/*
- * See note in ompi/mtl/portals4/mtl_portals4.h for how we deal with
- * platforms that don't allow us to crate an MD that covers all of
- * memory.
- */
-static inline void
-ompi_osc_portals4_get_md(const void *ptr, const ptl_handle_md_t *array,
-                         ptl_handle_md_t *md_h, void **base_ptr)
-{
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    int mask = (1ULL << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1)) - 1;
-    int which = (((uintptr_t) ptr) >> (OPAL_PORTALS4_MAX_MD_SIZE - 1)) & mask;
-    *md_h = array[which];
-    *base_ptr = (void*) (which * (1ULL << (OPAL_PORTALS4_MAX_MD_SIZE - 1)));
-#else
-    *md_h = array[0];
-    *base_ptr = 0;
-#endif
-}
-
-
-static inline int
-ompi_osc_portals4_get_num_mds(void)
-{
-#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
-    return (1 << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1));
-#else
-    return 1;
-#endif
-}
-
 
 
 int ompi_osc_portals4_attach(struct ompi_win_t *win, void *base, size_t len);
