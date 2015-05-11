@@ -120,6 +120,13 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
             }
             /* if nobody could reach it, then that's an error */
             if (!reachable) {
+                /* if we are a daemon or HNP, then it could be that
+                 * this is a local proc we just haven't heard from
+                 * yet due to a race condition. Check that situation */
+                if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+                    ORTE_OOB_SEND(msg);
+                    return;
+                }
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
                 return;
@@ -150,8 +157,8 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     msg_sent = false;
     OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
         component = (mca_oob_base_component_t*)cli->cli_component;
-        /* is this peer addressable by this component? */
-        if (!opal_bitmap_is_set_bit(&pr->addressable, component->idx)) {
+        /* is this peer reachable via this component? */
+        if (!component->is_reachable(&msg->dst)) {
             continue;
         }
         /* it is addressable, so attempt to send via that transport */
