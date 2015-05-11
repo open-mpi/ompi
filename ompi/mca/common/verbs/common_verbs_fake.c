@@ -31,6 +31,9 @@
 
 #include "opal_config.h"
 
+#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
 #include <infiniband/verbs.h>
 #ifdef HAVE_INFINIBAND_DRIVER_H
 #include <infiniband/driver.h>
@@ -92,6 +95,31 @@ static struct ibv_device *fake_driver_init(const char *uverbs_sys_path,
 
 void opal_common_verbs_register_fake_drivers(void)
 {
-    /* Register a fake driver for "usnic_verbs" devices */
-    ibv_register_driver("usnic_verbs", fake_driver_init);
+    /* No need to do this more than once */
+    static bool already_done = false;
+    if (already_done) {
+        return;
+    }
+    already_done = true;
+
+    /* If there are any usnic devices, then register a fake driver */
+    DIR *class_dir;
+    class_dir = opendir("/sys/class/infiniband");
+    if (NULL == class_dir) {
+        return;
+    }
+
+    bool found = false;
+    struct dirent *dent;
+    while ((dent = readdir(class_dir)) != NULL) {
+        if (strncmp(dent->d_name, "usnic_", 6) == 0) {
+            found = true;
+            break;
+        }
+    }
+    closedir(class_dir);
+
+    if (found) {
+        ibv_register_driver("usnic_verbs", fake_driver_init);
+    }
 }
