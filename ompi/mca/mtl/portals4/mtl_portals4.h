@@ -83,15 +83,16 @@ struct mca_mtl_portals4_module_t {
         overflow list on the recv_idx portal table. */
     ptl_handle_me_t long_overflow_me_h;
 
-    /** List of active short receive blocks.  Active means that the ME
-        was posted to the overflow list and the UNLINK event has not
-        yet been received. */
-    opal_list_t active_recv_short_blocks;
+    /** List of short receive blocks. */
+    opal_list_t recv_short_blocks;
 
-    /** List of short receive blocks waiting for FREE event.  Blocks
-        are added to this list when the UNLINK event has been
-        received and removed when the FREE event is received. */
-    opal_list_t waiting_recv_short_blocks;
+    /** Number of active short receive blocks. Active means that the ME
+        was posted to the overflow list, the LINK event has been received but the UNLINK or the FREE event has not
+        yet been received. */
+    uint32_t active_recv_short_blocks;
+
+    /** Mutex to protect opal_list */
+    opal_mutex_t short_block_mutex;
 
     /** number of send-side operations started */
     uint64_t opcount;
