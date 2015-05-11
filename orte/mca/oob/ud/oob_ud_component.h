@@ -56,6 +56,11 @@ typedef struct {
     int               ud_max_retries;       /**< max number of retries before declaring peer gone */
     int               ud_timeout_usec;      /**< timeout in microsecond between peer retries */
 
+    int               ud_qp_max_send_sge;
+    int               ud_qp_max_recv_sge;
+    int               ud_qp_max_send_wr;
+    int               ud_qp_max_recv_wr;
+    int               ud_qp_max_inline_data;
 } mca_oob_ud_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_ud_component_t mca_oob_ud_component;

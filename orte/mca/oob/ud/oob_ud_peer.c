@@ -54,8 +54,7 @@ static inline int mca_oob_ud_parse_uri (const char *uri, uint32_t *qp_num,
 
     rc = sscanf (uri, "ud://%u.%hu.%hu", qp_num, lid, port_num);
     if (3 != rc) {
-        opal_output (0, "%s oob:ud:parse_uri error parsing uri. expected 3 elements. got %d",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc);
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
 
