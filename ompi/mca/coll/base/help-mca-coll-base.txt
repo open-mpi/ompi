@@ -23,13 +23,22 @@
 Although some coll components are available on your system, none of
 them said that they could be used for a new communicator.
 
-This is extremely unusual -- either the "basic" or "self" components
+This is extremely unusual -- either the "basic", "libnbc" or "self" components
 should be able to be chosen for any communicator.  As such, this
 likely means that something else is wrong (although you should double
-check that the "basic" and "self" coll components are available on
+check that the "basic", "libnbc" and "self" coll components are available on
 your system -- check the output of the "ompi_info" command).
 #
-[comm-unselect:failed-finalize]
+[comm-select:no-function-available]
+Although some coll components are available on your system, none of
+them said that they could be used for %s on a new communicator.
+
+This is extremely unusual -- either the "basic", "libnbc" or "self" components
+should be able to be chosen for any communicator.  As such, this
+likely means that something else is wrong (although you should double
+check that the "basic", "libnbc" and "self" coll components are available on
+your system -- check the output of the "ompi_info" command).
+#[comm-unselect:failed-finalize]
 A coll module failed to finalize properly when a communicator that was
 using it was destroyed.  
 
