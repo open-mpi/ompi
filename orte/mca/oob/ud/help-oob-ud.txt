@@ -12,32 +12,34 @@
 #                         All rights reserved.
 #               2015      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-[no-devices-available]
-No available RDMA devices found:
+[no-devices-error]
+Open MPI has detected a failure in a basic verbs function call.  This
+is unusual, and may indicate that something is malfunctioning on this
+system.
 
-Hostname: %s
+You job will continue, but Open MPI will ignore the "ud" oob component
+in this run.
+
+Verbs function: ibv_get_device_list()
+Error:          %s
+Hostname:       %s
 
 Please contact your system administrator.
 #
-[no-devices-error]
-Failed to get list of the available RDMA devices:
-
-Hostname: %s
-Error:    %s
-#
-[no-devices-usable]
-No usable devices found:
-
-Hostname: %s
-#
 [no-ports-usable]
-No usable ports found:
+Open MPI has detected that there are UD-capable Verbs devices on your
+system, but none of them were able to be setup properly.  This may
+indicate a problem on this system.
+
+You job will continue, but Open MPI will ignore the "ud" oob component
+in this run.
 
 Hostname: %s
 #

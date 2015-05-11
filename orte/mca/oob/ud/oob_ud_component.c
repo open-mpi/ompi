@@ -344,14 +344,16 @@ static int mca_oob_ud_component_startup(void)
     devices = ibv_get_device_list (&num_devices);
     if (NULL == devices) {
         orte_show_help("help-oob-ud.txt", "no-devices-error", true,
-                       orte_process_info.nodename, strerror(errno));
+                       strerror(errno),
+                       orte_process_info.nodename);
         return ORTE_ERROR;
     }
 
+    /* If there are no devices, it is not an error; we just won't use
+       this component. */
     if (0 == num_devices) {
-        orte_show_help("help-oob-ud.txt", "no-devices-available", true,
-                       orte_process_info.nodename);
-        return ORTE_ERROR;
+        ibv_free_device_list(devices);
+        return ORTE_ERR_NOT_FOUND;
     }
 
     for (i = 0 ; i < num_devices ; ++i) {
@@ -377,10 +379,10 @@ static int mca_oob_ud_component_startup(void)
 
     ibv_free_device_list (devices);
 
+    /* If no usable devices are found, then just ignore this component
+       in this run */
     if (0 == opal_list_get_size (&mca_oob_ud_component.ud_devices)) {
-        orte_show_help("help-oob-ud.txt", "no-devices-usable", true,
-                       orte_process_info.nodename);
-        return ORTE_ERROR;
+        return ORTE_ERR_NOT_FOUND;
     }
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
