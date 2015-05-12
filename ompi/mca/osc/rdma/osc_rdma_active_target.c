@@ -69,11 +69,15 @@ get_comm_ranks(ompi_osc_rdma_module_t *module,
 {
     int *ranks1 = NULL, *ranks2 = NULL;
     bool success = false;
-    int i, ret;
-    
-    ranks1 = malloc(sizeof(int) * ompi_group_size(sub_group));
+    int i, ret, size;
+
+    size = ompi_group_size(sub_group);
+    if (0 == size) {
+        goto cleanup;
+    }
+    ranks1 = malloc(sizeof(int) * size);
     if (NULL == ranks1) goto cleanup;
-    ranks2 = malloc(sizeof(int) * ompi_group_size(sub_group));
+    ranks2 = malloc(sizeof(int) * size);
     if (NULL == ranks2) goto cleanup;
 
     for (i = 0 ; i < ompi_group_size(sub_group) ; ++i) {
