@@ -25,6 +25,8 @@
 
 BEGIN_C_DECLS
 
+extern int opal_util_keyval_parse_lineno;
+
 /**
  * Callback triggered for each key = value pair
  *

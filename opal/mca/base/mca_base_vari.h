@@ -90,6 +90,8 @@ struct mca_base_var_file_value_t {
     char *mbvfv_value;
     /** File it came from */
     char *mbvfv_file;
+    /** Line it came from */
+    int mbvfv_lineno;
 };
 
 /**

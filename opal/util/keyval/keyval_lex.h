@@ -42,6 +42,7 @@ extern FILE *opal_util_keyval_yyin;
 extern bool opal_util_keyval_parse_done;
 extern char *opal_util_keyval_yytext;
 extern int opal_util_keyval_yynewlines;
+extern int opal_util_keyval_yylineno;
 
 /*
  * Make lex-generated files not issue compiler warnings

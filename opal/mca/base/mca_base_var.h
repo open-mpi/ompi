@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -279,6 +279,9 @@ struct mca_base_var_t {
 
     /** Storage for this variable */
     mca_base_var_storage_t *mbv_storage;
+
+    /** File value structure */
+    void *mbv_file_value;
 };
 /**
  * Convenience typedef.
