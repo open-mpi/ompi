@@ -49,9 +49,9 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+  if (MPI_SUCCESS != res || 0 == p) { printf("MPI Error in MPI_Comm_size() (%i:%i)\n", res, p); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
   MPI_Type_extent(datatype, &ext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  if (MPI_SUCCESS != res || 0 == ext) { printf("MPI Error in MPI_Type_extent() (%i:%i)\n", res, (int)ext); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
   
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
   if (NULL == schedule) { printf("Error in malloc()\n"); return NBC_OOR; }
