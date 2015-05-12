@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -8,12 +8,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "ompi/types.h"
-
 #include "mtl_ofi.h"
-#include "mtl_ofi_types.h"
-#include "mtl_ofi_endpoint.h"
 
 /**
  * Initialize state of the endpoint instance.

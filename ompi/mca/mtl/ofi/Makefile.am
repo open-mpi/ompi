@@ -18,6 +18,7 @@ dist_ompidata_DATA = help-mtl-ofi.txt
 mtl_ofi_sources = \
 				   mtl_ofi.h \
 				   mtl_ofi.c \
+				   mtl_ofi_compat.h \
 				   mtl_ofi_component.c \
 				   mtl_ofi_endpoint.h \
 				   mtl_ofi_endpoint.c \

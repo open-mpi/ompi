@@ -12,15 +12,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "opal/mca/event/event.h"
-#include "opal/util/output.h"
-#include "opal/mca/pmix/pmix.h"
-
 #include "mtl_ofi.h"
-#include "mtl_ofi_types.h"
-#include "mtl_ofi_request.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -43,8 +35,7 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
             MCA_MTL_BASE_VERSION_2_0_0,
 
             .mca_component_name = "ofi",
-            MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
-                                  OMPI_RELEASE_VERSION),
+            OFI_COMPAT_MCA_VERSION,
             .mca_open_component = ompi_mtl_ofi_component_open,
             .mca_close_component = ompi_mtl_ofi_component_close,
             .mca_query_component = ompi_mtl_ofi_component_query,
@@ -96,7 +87,7 @@ ompi_mtl_ofi_component_open(void)
     return OMPI_SUCCESS;
 }
 
-static int 
+static int
 ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = param_priority;
@@ -270,7 +261,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, fi_strerror(-ret));
         goto error;
     }
-    
+
     /**
      * Bind the CQ and AV to the endpoint object.
      */
@@ -326,12 +317,13 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
-                    &mca_mtl_ofi_component.super.mtl_version,
-                    &ep_name[0], namelen);
+    OFI_COMPAT_MODEX_SEND(ret,
+                          &mca_mtl_ofi_component.super.mtl_version,
+                          &ep_name,
+                          namelen);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: opal_modex_send failed: %d\n",
+                            "%s:%d: modex_send failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
     }
