@@ -12,16 +12,7 @@
 #ifndef MTL_OFI_TYPES_H_HAS_BEEN_INCLUDED
 #define MTL_OFI_TYPES_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
-#include "ompi/mca/mtl/mtl.h"
-#include "ompi/mca/mtl/base/base.h"
-#include "ompi/communicator/communicator.h"
-
-#include <rdma/fabric.h>
-#include <rdma/fi_domain.h>
-#include <rdma/fi_endpoint.h>
-
-#include "mtl_ofi_endpoint.h"
+#include "mtl_ofi.h"
 
 BEGIN_C_DECLS
 

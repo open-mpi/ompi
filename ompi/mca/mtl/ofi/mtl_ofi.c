@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -8,15 +8,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/proc/proc.h"
-#include "ompi/mca/mtl/mtl.h"
-#include "opal/class/opal_list.h"
-
 #include "mtl_ofi.h"
-#include "mtl_ofi_types.h"
-#include "mtl_ofi_endpoint.h"
 
 OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
@@ -87,14 +79,14 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
      * Retrieve the processes' EP names from modex.
      */
     for (i = 0; i < nprocs; ++i) {
-        OPAL_MODEX_RECV(ret,
-                        &mca_mtl_ofi_component.super.mtl_version,
-                        &procs[i]->super,
-                        (void**)&ep_name,
-                        &size);
+        OFI_COMPAT_MODEX_RECV(ret,
+                              &mca_mtl_ofi_component.super.mtl_version,
+                              procs[i],
+                              (void**)&ep_name,
+                              &size);
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: opal_modex_recv failed: %d\n",
+                                "%s:%d: modex_recv failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto bail;
         }
