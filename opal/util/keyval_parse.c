@@ -10,6 +10,8 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+int opal_util_keyval_parse_lineno = 0;
+
 static const char *keyval_filename;
 static opal_keyval_parse_fn_t keyval_callback;
 static char *key_buffer = NULL;
@@ -104,6 +106,8 @@ cleanup:
 static int parse_line(void)
 {
     int val;
+
+    opal_util_keyval_parse_lineno = opal_util_keyval_yylineno;
 
     /* Save the name name */
     if (key_buffer_len < strlen(opal_util_keyval_yytext) + 1) {
