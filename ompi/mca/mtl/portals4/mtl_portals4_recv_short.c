@@ -43,7 +43,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
 
     switch (ev->type) {
         case PTL_EVENT_AUTO_FREE:
-#ifdef OMPI_ENABLE_THREAD_MULTIPLE
+#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_ACTIVATED: /* May be encountered with multi threading */
@@ -85,7 +85,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
             break;
 
         case PTL_EVENT_AUTO_UNLINK:
-#ifdef OMPI_ENABLE_THREAD_MULTIPLE
+#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_ACTIVATED: /* Normal case */
@@ -122,7 +122,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
             break;
 
         case PTL_EVENT_LINK:
-#ifdef OMPI_ENABLE_THREAD_MULTIPLE
+#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_WAITING_LINK:
@@ -210,7 +210,6 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.uid = ompi_mtl_portals4.uid;
     me.options = 
         PTL_ME_OP_PUT | 
-        PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_MANAGE_LOCAL | 
         PTL_ME_MAY_ALIGN;
     if (ompi_mtl_portals4.use_logical) {
