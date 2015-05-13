@@ -21,7 +21,7 @@ sub cleanup {
 }
 
 sub mydie {
-#    cleanup();
+    cleanup();
 
     die @_;
 }
