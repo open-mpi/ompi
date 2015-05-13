@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
-# Simple script to check all the opal_show_help (and orte_show_help)
-# strings against what is found in help files.
+# Simple script to traverse the OMPI source tree that looks for
+# owner.txt files, and generates <project>_mca_owner.md files.
 #
 
 use strict;
@@ -55,7 +55,7 @@ sub DebugDump {
 sub isTopDir {
     my ($d) = @_;
 
-    # trunk
+    # master
     if (-f "$d/Makefile.ompi-rules") {
         return 1;
     }
