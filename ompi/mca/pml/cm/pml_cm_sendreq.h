@@ -59,6 +59,7 @@ typedef struct mca_pml_cm_hvy_send_request_t mca_pml_cm_hvy_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst,          \
                                            ompi_proc)                   \
 do {                                                                    \
@@ -74,8 +75,20 @@ do {                                                                    \
         sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
     }                                                                   \
 } while(0)
+#else
+#define MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst,          \
+                                           ompi_proc)                   \
+do {                                                                    \
+    sendreq = (mca_pml_cm_thin_send_request_t*)                         \
+        opal_free_list_wait (&mca_pml_base_send_requests);              \
+    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN; \
+    sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;              \
+    sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
+} while(0)
+#endif
 
 
+#if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 #define MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst,           \
                                           ompi_proc)                    \
 {                                                                       \
@@ -90,7 +103,17 @@ do {                                                                    \
         sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
     }                                                                   \
 }
-
+#else
+#define MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst,           \
+                                          ompi_proc)                    \
+{                                                                       \
+    sendreq = (mca_pml_cm_hvy_send_request_t*)                          \
+        opal_free_list_wait (&mca_pml_base_send_requests);              \
+    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY; \
+    sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;              \
+    sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
+}
+#endif
 
 #if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 #define MCA_PML_CM_SEND_REQUEST_INIT_COMMON(req_send,                   \
@@ -138,11 +161,11 @@ do {                                                                    \
     (req_send)->req_base.req_datatype = datatype;                       \
     if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) { \
         (req_send)->req_base.req_convertor.remoteArch =                 \
-            ompi_proc->super.proc_convertor->remoteArch;                \
+            ompi_mpi_local_convertor->remoteArch;                       \
         (req_send)->req_base.req_convertor.flags      =                 \
-            ompi_proc->super.proc_convertor->flags;                     \
+            ompi_mpi_local_convertor->flags;                            \
         (req_send)->req_base.req_convertor.master     =                 \
-            ompi_proc->super.proc_convertor->master;                    \
+            ompi_mpi_local_convertor->master;                           \
         (req_send)->req_base.req_convertor.local_size =                 \
             count * datatype->super.size;                               \
         (req_send)->req_base.req_convertor.pBaseBuf   = (unsigned char*)buf; \
@@ -150,7 +173,7 @@ do {                                                                    \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
     } else {                                                            \
         opal_convertor_copy_and_prepare_for_send(                       \
-            ompi_proc->super.proc_convertor,                            \
+            ompi_mpi_local_convertor,                                   \
             &(datatype->super),                                         \
             count,                                                      \
             buf,                                                        \
