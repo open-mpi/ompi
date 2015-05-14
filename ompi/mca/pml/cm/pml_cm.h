@@ -74,7 +74,9 @@ mca_pml_cm_irecv_init(void *addr,
                       struct ompi_request_t **request)
 {
     mca_pml_cm_hvy_recv_request_t *recvreq;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
+#endif
     
     MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -98,8 +100,10 @@ mca_pml_cm_irecv(void *addr,
 {
     int ret;
     mca_pml_cm_thin_recv_request_t *recvreq;
-    ompi_proc_t* ompi_proc;
-    
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    ompi_proc_t* ompi_proc = NULL;
+#endif
+
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
     
@@ -136,7 +140,9 @@ mca_pml_cm_recv(void *addr,
                 ompi_status_public_t * status)
 {
     int ret;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t *ompi_proc;
+#endif
     opal_convertor_t convertor;
     mca_pml_cm_request_t req;
     mca_mtl_request_t *req_mtl =
@@ -154,6 +160,7 @@ mca_pml_cm_recv(void *addr,
     req.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
     req.req_ompi.req_status._cancelled = 0;
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if( MPI_ANY_SOURCE == src ) {
         ompi_proc = ompi_proc_local_proc;
     } else {
@@ -161,12 +168,22 @@ mca_pml_cm_recv(void *addr,
     }
 
     opal_convertor_copy_and_prepare_for_recv(
-                                  ompi_proc->super.proc_convertor,
-                                  &(datatype->super),
-                                  count,
-                                  addr,
-                                  0,
-                                  &convertor );
+	ompi_proc->super.proc_convertor,
+		&(datatype->super),
+		count,
+		addr,
+		0,
+		&convertor );
+#else
+    opal_convertor_copy_and_prepare_for_recv(
+	ompi_mpi_local_convertor,
+		&(datatype->super),
+		count,
+		addr,
+		0,
+		&convertor );
+#endif
+
     ret = OMPI_MTL_CALL(irecv(ompi_mtl,
                               comm,
                               src,
@@ -198,7 +215,9 @@ mca_pml_cm_isend_init(void* buf,
                         ompi_request_t** request)
 {
     mca_pml_cm_hvy_send_request_t *sendreq;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
+#endif
     
     MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
     if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -225,7 +244,9 @@ mca_pml_cm_isend(void* buf,
   
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) { 
         mca_pml_cm_hvy_send_request_t* sendreq;
-        ompi_proc_t* ompi_proc;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        ompi_proc_t* ompi_proc = NULL;
+#endif
         
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -248,7 +269,9 @@ mca_pml_cm_isend(void* buf,
 
     } else { 
         mca_pml_cm_thin_send_request_t* sendreq;
-        ompi_proc_t* ompi_proc;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        ompi_proc_t* ompi_proc = NULL;
+#endif
         MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
@@ -288,10 +311,11 @@ mca_pml_cm_send(void *buf,
                 ompi_communicator_t* comm)
 {
     int ret = OMPI_ERROR;
+    ompi_proc_t * ompi_proc;
 
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED) { 
         mca_pml_cm_hvy_send_request_t *sendreq;
-        ompi_proc_t * ompi_proc;
+
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
@@ -315,14 +339,13 @@ mca_pml_cm_send(void *buf,
         ompi_request_free( (ompi_request_t**)&sendreq );
     } else { 
         opal_convertor_t convertor;
-        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dst);
 
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 	if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) {
 		
-		convertor.remoteArch = ompi_proc->super.proc_convertor->remoteArch;
-		convertor.flags      = ompi_proc->super.proc_convertor->flags;
-		convertor.master     = ompi_proc->super.proc_convertor->master;
+		convertor.remoteArch = ompi_mpi_local_convertor->remoteArch;
+		convertor.flags      = ompi_mpi_local_convertor->flags;
+		convertor.master     = ompi_mpi_local_convertor->master;
 		
 		convertor.local_size = count * datatype->super.size;
 		convertor.pBaseBuf   = (unsigned char*)buf;
@@ -331,6 +354,7 @@ mca_pml_cm_send(void *buf,
 	} else
 #endif
 	{
+		ompi_proc = ompi_comm_peer_lookup(comm, dst);
 		opal_convertor_copy_and_prepare_for_send(
 		ompi_proc->super.proc_convertor,
 			&datatype->super, count, buf, 0,
@@ -422,9 +446,10 @@ mca_pml_cm_imrecv(void *buf,
 {
     int ret;
     mca_pml_cm_thin_recv_request_t *recvreq;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
+#endif
     ompi_communicator_t *comm = (*message)->comm;
-    int peer = (*message)->peer;
 
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -432,7 +457,7 @@ mca_pml_cm_imrecv(void *buf,
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
                                       comm,
-                                      peer,
+                                      (*message)->peer,
                                       datatype,
                                       buf,
                                       count);
@@ -453,9 +478,10 @@ mca_pml_cm_mrecv(void *buf,
 {
     int ret;
     mca_pml_cm_thin_recv_request_t *recvreq;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
+#endif
     ompi_communicator_t *comm = (*message)->comm;
-    int peer = (*message)->peer;
 
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -463,7 +489,7 @@ mca_pml_cm_mrecv(void *buf,
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
                                       comm, 
-                                      peer,
+                                      (*message)->peer,
                                       datatype,
                                       buf,
                                       count);
