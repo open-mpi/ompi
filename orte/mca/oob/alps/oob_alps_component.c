@@ -156,16 +156,6 @@ static int component_available(void)
 
     orte_common_alps_proc_in_pagg(&flag);
 
-#if 0
-    /* HOWARD: This logic makes no sense to me. Regardless of
-     * the conditional, you *always* returned "flag". So why
-     * are you bothering to check anything else?
-     */
-    if ((ORTE_SUCCESS == rc) && (ORTE_PROC_IS_APP)) {
-        return flag;
-    }
-#endif
-    
     if (flag) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "oob:alps: component_available called");
