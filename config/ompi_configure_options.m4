@@ -161,7 +161,7 @@ case "x$enable_mpi_fortran" in
 
     *)
         AC_MSG_RESULT([unknown: $binding])
-        AC_MSG_WARN([--enable-mpi-fortran only one of the following values: yes, all, none, best-effort, mpifh, usempi, or usempif08])
+        AC_MSG_WARN([--enable-mpi-fortran supports only one of the following values: yes, all, none, best-effort, mpifh, usempi, or usempif08])
         AC_MSG_ERROR([Cannot continue])
         ;;
 esac
