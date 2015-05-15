@@ -19,12 +19,26 @@ int MPI_Ibarrier(MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_BARRIER(\fICOMM\fP,\fI IERROR\fP)
 	INTEGER	\fICOMM\fP,\fI IERROR\fP
 
 MPI_IBARRIER(\fICOMM\fP, \fIREQUEST\fP, \fIIERROR\fP)
 	INTEGER	\fICOMM\fP, \fIREQUEST\fP, \fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Barrier(\fIcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Ibarrier(\fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

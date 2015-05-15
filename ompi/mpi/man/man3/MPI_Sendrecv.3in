@@ -21,7 +21,8 @@ int MPI_Sendrecv(const void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_SENDRECV(\fISENDBUF, SENDCOUNT, SENDTYPE, DEST, SENDTAG,
 		RECVBUF, RECVCOUNT, RECVTYPE, SOURCE, RECVTAG, COMM,
 		STATUS, IERROR\fP)
@@ -29,6 +30,21 @@ MPI_SENDRECV(\fISENDBUF, SENDCOUNT, SENDTYPE, DEST, SENDTAG,
 	INTEGER	\fISENDCOUNT, SENDTYPE, DEST, SENDTAG\fP
 	INTEGER	\fIRECVCOUNT, RECVTYPE, SOURCE, RECVTAG, COMM\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Sendrecv(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIdest\fP, \fIsendtag\fP, \fIrecvbuf\fP,
+		\fIrecvcount\fP, \fIrecvtype\fP, \fIsource\fP, \fIrecvtag\fP, \fIcomm\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIdest\fP, \fIsendtag\fP, \fIrecvcount\fP, \fIsource,\fP
+	\fIrecvtag\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

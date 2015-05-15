@@ -25,7 +25,8 @@ MPI_Rget(void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GET(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, IERROR\fP)
 	<type> \fIORIGIN_ADDR\fP(*)
@@ -39,6 +40,30 @@ MPI_RGET(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	 INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	 INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	 TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Get(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+		\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Rget(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+	\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIwin\fP, \fIrequest,\fP
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

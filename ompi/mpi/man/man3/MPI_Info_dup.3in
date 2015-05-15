@@ -17,9 +17,19 @@ int MPI_Info_dup(MPI_Info \fIinfo\fP, MPI_Info \fI*newinfo\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INFO_DUP(\fIINFO, NEWINFO, IERROR\fP)
 	INTEGER		\fIINFO, NEWINFO, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Info_dup(\fIinfo\fP, \fInewinfo\fP, \fIierror\fP)
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Info), INTENT(OUT) :: \fInewinfo\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

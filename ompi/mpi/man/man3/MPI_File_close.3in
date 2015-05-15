@@ -22,6 +22,14 @@ C Syntax
         	 INTEGER	  FH, IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_close(\fIfh\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(INOUT) :: \fIfh\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

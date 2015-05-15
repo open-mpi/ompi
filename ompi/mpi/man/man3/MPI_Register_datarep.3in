@@ -31,6 +31,19 @@ C Syntax
         	INTEGER	\fIIERROR\fP
 		INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Register_datarep(\fIdatarep\fP, \fIread_conversion_fn\fP, \fIwrite_conversion_fn\fP,
+		\fIdtype_file_extent_fn\fP, \fIextra_state\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIdatarep\fP
+	PROCEDURE(MPI_Datarep_conversion_function) :: \fIread_conversion_fn\fP
+	PROCEDURE(MPI_Datarep_conversion_function) :: \fIwrite_conversion_fn\fP
+	PROCEDURE(MPI_Datarep_extent_function) :: \fIdtype_file_extent_fn\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIextra_state\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

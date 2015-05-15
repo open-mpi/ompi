@@ -18,10 +18,21 @@ int MPI_Intercomm_merge(MPI_Comm \fIintercomm\fP, int\fI high\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INTERCOMM_MERGE(\fIINTERCOMM, HIGH, NEWINTRACOMM, IERROR\fP)
 	INTEGER	\fIINTERCOMM, NEWINTRACOMM, IERROR\fP
 	LOGICAL	\fIHIGH\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Intercomm_merge(\fIintercomm\fP, \fIhigh\fP, \fInewintracomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIintercomm\fP
+	LOGICAL, INTENT(IN) :: \fIhigh\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewintracomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

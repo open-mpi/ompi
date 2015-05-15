@@ -17,10 +17,21 @@ int MPI_Error_string(int \fIerrorcode\fP, char\fI *string\fP, int\fI *resultlen\
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ERROR_STRING(\fIERRORCODE, STRING, RESULTLEN, IERROR\fP)
 	INTEGER		\fIERRORCODE, RESULTLEN, IERROR\fP
 	CHARACTER*(*)	\fISTRING\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Error_string(\fIerrorcode\fP, \fIstring\fP, \fIresultlen\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIerrorcode\fP
+	CHARACTER(LEN=MPI_MAX_ERROR_STRING), INTENT(OUT) :: \fIstring\fP
+	INTEGER, INTENT(OUT) :: \fIresultlen\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

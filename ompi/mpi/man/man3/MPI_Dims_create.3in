@@ -17,9 +17,19 @@ int MPI_Dims_create(int \fInnodes\fP, int\fI ndims\fP, int\fI dims\fP[])
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_DIMS_CREATE(\fINNODES, NDIMS, DIMS, IERROR\fP)
 	INTEGER	\fINNODES, NDIMS, DIMS(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dims_create(\fInnodes\fP, \fIndims\fP, \fIdims\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fInnodes\fP, \fIndims\fP
+	INTEGER, INTENT(INOUT) :: \fIdims(ndims)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

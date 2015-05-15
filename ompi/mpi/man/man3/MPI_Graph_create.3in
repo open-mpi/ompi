@@ -19,12 +19,25 @@ int MPI_Graph_create(MPI_Comm \fIcomm_old\fP, int\fI nnodes\fP, const int\fI ind
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GRAPH_CREATE(\fICOMM_OLD, NNODES, INDEX, EDGES, REORDER,
 		COMM_GRAPH, IERROR\fP)
 	INTEGER	\fICOMM_OLD, NNODES, INDEX(*), EDGES(*)\fP
 	INTEGER	\fICOMM_GRAPH, IERROR\fP
 	LOGICAL   \fIREORDER\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Graph_create(\fIcomm_old\fP, \fInnodes\fP, \fIindex\fP, \fIedges\fP, \fIreorder\fP, \fIcomm_graph\fP,
+		\fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm_old\fP
+	INTEGER, INTENT(IN) :: \fInnodes\fP, \fIindex(nnodes)\fP, \fIedges(*)\fP
+	LOGICAL, INTENT(IN) :: \fIreorder\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIcomm_graph\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

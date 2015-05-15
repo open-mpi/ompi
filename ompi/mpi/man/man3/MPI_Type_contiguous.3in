@@ -18,9 +18,20 @@ int MPI_Type_contiguous(int \fIcount\fP, MPI_Datatype\fI oldtype\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CONTIGUOUS(\fICOUNT, OLDTYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fICOUNT, OLDTYPE, NEWTYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_contiguous(\fIcount\fP, \fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

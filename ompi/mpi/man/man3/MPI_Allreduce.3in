@@ -23,7 +23,8 @@ int MPI_Iallreduce(const void \fI*sendbuf\fP, void \fI*recvbuf\fP, int\fI count\
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ALLREDUCE(\fISENDBUF\fP,\fI RECVBUF\fP, \fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP, \fICOMM\fP, \fIIERROR\fP)
 	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
 	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP,\fI COMM\fP,\fI IERROR\fP
@@ -31,6 +32,30 @@ MPI_ALLREDUCE(\fISENDBUF\fP,\fI RECVBUF\fP, \fICOUNT\fP,\fI DATATYPE\fP,\fI OP\f
 MPI_IALLREDUCE(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
 	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
 	INTEGER	\fICOUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Allreduce(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Iallreduce(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIrequest\fP,
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

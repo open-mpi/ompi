@@ -18,9 +18,19 @@ int MPI_Comm_set_errhandler(MPI_Comm \fIcomm\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_SET_ERRHANDLER(\fICOMM, ERRHANDLER, IERROR\fP)
 	INTEGER	\fICOMM, ERRHANDLER, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_set_errhandler(\fIcomm\fP, \fIerrhandler\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Errhandler), INTENT(IN) :: \fIerrhandler\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

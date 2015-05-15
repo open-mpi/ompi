@@ -13,10 +13,20 @@
 
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_SIZEOF(\fIX, SIZE, IERROR\fP)
 <type>	\fIX\fP
 INTEGER	\fISIZE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Sizeof(\fx\fP, \fIsize\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..) :: \fIx\fP
+	INTEGER, INTENT(OUT) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETER

@@ -16,9 +16,17 @@ int MPI_Pcontrol(const int \fIlevel\fP, \&... )
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_PCONTROL(\fILEVEL\fP)
 	INTEGER	\fILEVEL\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Pcontrol(\fIlevel\fP)
+	INTEGER, INTENT(IN) :: \fIlevel\fP
 
 .fi
 .SH C++ Syntax

@@ -21,9 +21,18 @@ int MPI_Add_error_class(int *\fIerrorclass\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ADD_ERROR_CLASS(\fIERRORCLASS, IERROR\fP)
 	INTEGER	\fIERRORCLASS, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Add_error_class(\fIerrorclass\fP, \fIierror\fP)
+	INTEGER, INTENT(OUT) :: \fIerrorclass\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

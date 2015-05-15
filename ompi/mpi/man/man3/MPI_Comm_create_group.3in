@@ -18,9 +18,21 @@ int MPI_Comm_create_group(MPI_Comm \fIcomm\fP, MPI_Group\fI group\fP, int\fI tag
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_CREATE_GROUP(\fICOMM, GROUP, TAG, NEWCOMM, IERROR\fP)
 	INTEGER	\fICOMM, GROUP, TAG, NEWCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_create_group(\fIcomm\fP, \fIgroup\fP, \fItag\fP, \fInewcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Group), INTENT(IN) :: \fIgroup\fP
+	INTEGER, INTENT(IN) :: \fItag\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

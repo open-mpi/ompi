@@ -18,10 +18,20 @@ int MPI_Win_set_name(MPI_Win \fIwin\fP, const char *\fIwin_name\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_SET_NAME(\fIWIN, WIN_NAME, IERROR\fP)
 	INTEGER \fIWIN, IERROR\fP
 	CHARACTER*(*) \fIWIN_NAME\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_set_name(\fIwin\fP, \fIwin_name\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIwin_name\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

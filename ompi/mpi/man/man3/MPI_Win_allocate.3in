@@ -20,10 +20,25 @@ int MPI_Win_allocate (MPI_Aint \fIsize\fP, int \fIdisp_unit\fP, MPI_Info \fIinfo
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_ALLOCATE(\fSIZE, DISP_UNIT, INFO, COMM, BASEPTR, WIN, IERROR\fP)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISIZE, BASEPTR\fP
 	INTEGER \fIDISP_UNIT, INFO, COMM, WIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_allocate(\fIsize\fP, \fIdisp_unit\fP, \fIinfo\fP, \fIcomm\fP, \fIbaseptr\fP, \fIwin\fP, \fIierror\fP)
+	USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_PTR
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIsize\fP
+	INTEGER, INTENT(IN) :: \fIdisp_unit\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(C_PTR), INTENT(OUT) :: \fIbaseptr\fP
+	TYPE(MPI_Win), INTENT(OUT) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

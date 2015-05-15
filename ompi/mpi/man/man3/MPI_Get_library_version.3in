@@ -17,10 +17,20 @@ int MPI_Get_library_version(char \fI*version\fP, int \fI*resultlen\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GET_LIBRARY_VERSION(\fIVERSION\fP, \fIRESULTLEN\fP, \fIIERROR\fP)
 	CHARACTER*(*)	\fINAME\fP
 	INTEGER \fIRESULTLEN\fP, \fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Get_library_version(\fIversion\fP, \fIresulten\fP, \fIierror\fP)
+	CHARACTER(LEN=MPI_MAX_LIBRARY_VERSION_STRING), INTENT(OUT) :: \fIversion\fP
+	INTEGER, INTENT(OUT) :: \fIresultlen\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

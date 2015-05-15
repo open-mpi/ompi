@@ -19,10 +19,22 @@ int MPI_Cart_map(MPI_Comm \fIcomm\fP, int\fI ndims\fP, const int\fI dims\fP[],
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_CART_MAP(\fICOMM, NDIMS, DIMS, PERIODS, NEWRANK, IERROR\fP)
 	INTEGER	\fICOMM, NDIMS, DIMS(*), NEWRANK, IERROR\fP
 	LOGICAL	\fIPERIODS\fP(*)
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Cart_map(\fIcomm\fP, \fIndims\fP, \fIdims\fP, \fIperiods\fP, \fInewrank\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIndims\fP, \fIdims(ndims)\fP
+	LOGICAL, INTENT(IN) :: \fIperiods(ndims)\fP
+	INTEGER, INTENT(OUT) :: \fInewrank\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

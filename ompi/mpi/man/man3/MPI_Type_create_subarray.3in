@@ -18,12 +18,25 @@ int MPI_Type_create_subarray(int \fIndims\fP, const int \fIarray_of_sizes[]\fP, 
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CREATE_SUBARRAY(\fINDIMS, ARRAY_OF_SIZES, ARRAY_OF_SUBSIZES,
 	ARRAY_OF_STARTS, ORDER, OLDTYPE, NEWTYPE, IERROR\fP)
 
 	INTEGER	\fINDIMS, ARRAY_OF_SIZES(*), ARRAY_OF_SUBSIZES(*),
 	ARRAY_OF_STARTS(*), ORDER, OLDTYPE, NEWTYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_create_subarray(\fIndims\fP, \fIarray_of_sizes\fP, \fIarray_of_subsizes\fP,
+		\fIarray_of_starts\fP, \fIorder\fP, \fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIndims\fP, \fIarray_of_sizes(ndims),\fP
+	\fIarray_of_subsizes(ndims)\fP, \fIarray_of_starts(ndims)\fP, \fIorder\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

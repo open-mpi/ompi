@@ -23,6 +23,15 @@ C Syntax
     	      INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_get_position(\fIfh\fP, \fIoffset\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(OUT) :: \fIoffset\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

@@ -18,10 +18,23 @@ int MPI_Comm_accept(const char *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroo
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_ACCEPT(\fIPORT_NAME, INFO, ROOT, COMM, NEWCOMM, IERROR\fP)
 	CHARACTER*(*)	\fIPORT_NAME\fP
 	INTEGER		\fIINFO, ROOT, COMM, NEWCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_accept(\fIport_name\fP, \fIinfo\fP, \fIroot\fP, \fIcomm\fP, \fInewcomm\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIport_name\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, INTENT(IN) :: \fIroot\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

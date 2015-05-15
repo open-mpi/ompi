@@ -22,6 +22,15 @@ C Syntax
     	      INTEGER 	  FH, FLAG, IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_set_atomicity(\fIfh\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	LOGICAL, INTENT(IN) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

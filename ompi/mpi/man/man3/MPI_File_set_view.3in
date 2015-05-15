@@ -27,6 +27,18 @@ C Syntax
     	 INTEGER(KIND=MPI_OFFSET_KIND) \fIDISP\fP
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_set_view(\fIfh\fP, \fIdisp\fP, \fIetype\fP, \fIfiletype\fP, \fIdatarep\fP, \fIinfo\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: \fIdisp\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIetype\fP, \fIfiletype\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIdatarep\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

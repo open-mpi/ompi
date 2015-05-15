@@ -27,7 +27,8 @@ int MPI_Raccumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, IERROR\fP)
 	<type> \fIORIGIN_ADDR\fP(*)
@@ -41,6 +42,32 @@ MPI_RACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
 	TARGET_DATATYPE, OP, WIN, REQUEST, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Accumulate(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+		\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIop\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Raccumulate(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+	\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIop\fP, \fIwin\fP, \fIrequest,\fP
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

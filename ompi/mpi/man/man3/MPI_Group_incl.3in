@@ -19,9 +19,20 @@ int MPI_Group_incl(MPI_Group \fIgroup\fP, int\fI n\fP, const int\fI ranks\fP[],
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GROUP_INCL(\fIGROUP, N, RANKS, NEWGROUP, IERROR\fP)
 	INTEGER	\fIGROUP, N, RANKS(*), NEWGROUP, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Group_incl(\fIgroup\fP, \fIn\fP, \fIranks\fP, \fInewgroup\fP, \fIierror\fP)
+	TYPE(MPI_Group), INTENT(IN) :: \fIgroup\fP
+	INTEGER, INTENT(IN) :: \fIn\fP, \fIranks(n)\fP
+	TYPE(MPI_Group), INTENT(OUT) :: \fInewgroup\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

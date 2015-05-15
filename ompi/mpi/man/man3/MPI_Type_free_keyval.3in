@@ -17,9 +17,18 @@ int MPI_Type_free_keyval(int *\fItype_keyval\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_FREE_KEYVAL(\fITYPE_KEYVAL, IERROR\fP)
 	INTEGER	\fITYPE_KEYVAL, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_free_keyval(\fItype_keyval\fP, \fIierror\fP)
+	INTEGER, INTENT(INOUT) :: \fItype_keyval\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

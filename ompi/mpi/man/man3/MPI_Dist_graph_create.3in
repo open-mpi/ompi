@@ -20,12 +20,27 @@ int MPI_Dist_graph_create(MPI_Comm \fIcomm_old\fP, int\fI n\fP, const int\fI sou
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_DIST_GRAPH_CREATE(\fICOMM_OLD, N, SOURCES, DEGREES, DESTINATIONS, WEIGHTS,
                 INFO, REORDER, COMM_DIST_GRAPH, IERROR\fP)
 	INTEGER	\fICOMM_OLD, N, SOURCES(*), DEGRES(*), WEIGHTS(*), INFO\fP
 	INTEGER	\fICOMM_DIST_GRAPH, IERROR\fP
 	LOGICAL   \fIREORDER\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dist_Graph_create(\fIcomm_old\fP, \fIn\fP, \fIsources\fP, \fIdegrees\fP, \fIdestinations\fP, \fIweights\fP,
+		\fIinfo\fP, \fIreorder\fP, \fIcomm_dist_graph\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm_old\fP
+	INTEGER, INTENT(IN) :: \fIn\fP, \fIsources(n)\fP, \fIdegrees(n)\fP, \fIdestinations(*)\fP
+	INTEGER, INTENT(IN) :: \fIweights(*)\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	LOGICAL, INTENT(IN) :: reorder
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIcomm_dist_graph\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

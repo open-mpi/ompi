@@ -18,10 +18,20 @@ int MPI_File_create_errhandler(MPI_File_errhandler_function \fI*function\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_FILE_CREATE_ERRHANDLER(\fIFUNCTION, ERRHANDLER, IERROR\fP)
 	EXTERNAL	\fIFUNCTION\fP
 	INTEGER	\fIERRHANDLER, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_create_errhandler(\fIfile_errhandler_fn\fP, \fIerrhandler\fP, \fIierror\fP)
+	PROCEDURE(MPI_File_errhandler_function) :: \fIfile_errhandler_fn\fP
+	TYPE(MPI_Errhandler), INTENT(OUT) :: \fIerrhandler\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

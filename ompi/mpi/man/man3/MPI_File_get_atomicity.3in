@@ -23,6 +23,15 @@ C Syntax
 	LOGICAL \FIFLAG\FP
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_get_atomicity(\fIfh\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
