@@ -747,7 +747,6 @@ static void* listen_thread(opal_object_t *obj)
                                                 (struct sockaddr*)&(pending_connection->addr),
                                                 &addrlen);
                 if (pending_connection->fd < 0) {
-                    CLOSE_THE_SOCKET(pending_connection->fd);
                     OBJ_RELEASE(pending_connection);
                     if (opal_socket_errno != EAGAIN || 
                         opal_socket_errno != EWOULDBLOCK) {

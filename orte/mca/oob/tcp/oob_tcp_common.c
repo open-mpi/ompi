@@ -72,7 +72,7 @@
 /**
  * Set socket buffering
  */
-#if defined(SO_KEEPALIVE) && !OPAL_HAVE_MAC
+#if defined(SO_KEEPALIVE) && !defined(__APPLE__)
 static void set_keepalive(int sd)
 {
     int option;
@@ -182,7 +182,7 @@ void orte_oob_tcp_set_socket_options(int sd)
                             opal_socket_errno);
     }
 #endif
-#if defined(SO_KEEPALIVE) && !OPAL_HAVE_MAC
+#if defined(SO_KEEPALIVE) && !defined(__APPLE__)
     if (0 < mca_oob_tcp_component.keepalive_time) {
         set_keepalive(sd);
     }

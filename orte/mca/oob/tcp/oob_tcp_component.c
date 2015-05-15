@@ -404,7 +404,7 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
-#if !OPAL_HAVE_MAC
+#if !defined(__APPLE__)
     mca_oob_tcp_component.keepalive_time = 10;
     (void)mca_base_component_var_register(component, "keepalive_time",
                                           "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
