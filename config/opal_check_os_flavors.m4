@@ -57,12 +57,6 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVORS],
                        [$opal_have_solaris],
                        [Whether or not we have solaris])
 
-    AS_IF([test "$opal_found_apple" = "yes"],
-          [opal_have_mac=1], [opal_have_mac=0])
-    AC_DEFINE_UNQUOTED([OPAL_HAVE_MAC],
-                       [$opal_have_mac],
-                       [Whether or not we are on a Mac])
-    
     # check for sockaddr_in (a good sign we have TCP)
     AC_CHECK_HEADERS([netdb.h netinet/in.h netinet/tcp.h])
     AC_CHECK_TYPES([struct sockaddr_in], 
