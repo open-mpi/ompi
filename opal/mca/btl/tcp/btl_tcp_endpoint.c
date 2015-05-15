@@ -766,14 +766,14 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
             return OPAL_SUCCESS;
         }
     }
-    btl_endpoint->endpoint_retries++;
+
     {
         char *address;
         address = opal_net_get_hostname((struct sockaddr*) &endpoint_addr);
         BTL_PEER_ERROR( btl_endpoint->endpoint_proc->proc_opal,
                       ( "Unable to connect to the peer %s on port %d: %s\n",
                         address,
-                        btl_endpoint->endpoint_addr->addr_port, strerror(opal_socket_errno) ) );
+                        ntohs(btl_endpoint->endpoint_addr->addr_port), strerror(opal_socket_errno) ) );
     }
     btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
     mca_btl_tcp_endpoint_close(btl_endpoint);
