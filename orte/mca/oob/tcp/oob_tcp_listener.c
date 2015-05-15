@@ -747,9 +747,10 @@ static void* listen_thread(opal_object_t *obj)
                                                 (struct sockaddr*)&(pending_connection->addr),
                                                 &addrlen);
                 if (pending_connection->fd < 0) {
+                    CLOSE_THE_SOCKET(pending_connection->fd);
+                    OBJ_RELEASE(pending_connection);
                     if (opal_socket_errno != EAGAIN || 
                         opal_socket_errno != EWOULDBLOCK) {
-                        CLOSE_THE_SOCKET(pending_connection->fd);
                         if (EMFILE == opal_socket_errno) {
                             ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
                             orte_show_help("help-orterun.txt", "orterun:sys-limit-sockets", true);
@@ -757,7 +758,6 @@ static void* listen_thread(opal_object_t *obj)
                             opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).",
                                         strerror(opal_socket_errno), opal_socket_errno);
                         }
-                        OBJ_RELEASE(pending_connection);
                         goto done;
                     }
                     continue;
