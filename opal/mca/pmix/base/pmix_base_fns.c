@@ -175,10 +175,6 @@ int opal_pmix_base_commit_packed( char** data, int* data_offset,
             return rc;
         }
 
-        if (OPAL_SUCCESS != rc) {
-            break;
-        }
-
         pkey++;
         memmove(encoded_data, encoded_data+max_key-1-*enc_data_offset, encoded_data_len - max_key + *enc_data_offset + 2);
         *enc_data_offset = 0;
