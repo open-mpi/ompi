@@ -23,7 +23,7 @@ static pthread_t mca_btl_ugni_progress_thread_id;
 
 static volatile int stop_progress_thread = 0;
 
-unsigned int mca_btl_ugni_progress_thread_wakeups;
+unsigned int mca_btl_ugni_progress_thread_wakeups = 0;
 
 static void *mca_btl_ugni_prog_thread_fn(void * data)
 {
