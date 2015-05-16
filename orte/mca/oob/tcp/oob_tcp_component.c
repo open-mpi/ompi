@@ -195,8 +195,8 @@ static int tcp_component_close(void)
 static char *static_port_string;
 #if OPAL_ENABLE_IPV6
 static char *static_port_string6;
-#endif
-#endif
+#endif // OPAL_ENABLE_IPV6
+#endif // OPAL_ENABLE_STATIC_PORTS
 
 static char *dyn_port_string;
 #if OPAL_ENABLE_IPV6
@@ -317,8 +317,8 @@ static int tcp_component_register(void)
     } else {
         orte_static_ports = true;
     }
-#endif
-#endif
+#endif // OPAL_ENABLE_IPV6
+#endif // OPAL_ENABLE_STATIC_PORTS
     dyn_port_string = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv4_ports",
                                           "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -384,7 +384,7 @@ static int tcp_component_register(void)
     } else {
         mca_oob_tcp_component.tcp6_dyn_ports = NULL;
     }
-#endif
+#endif // OPAL_ENABLE_IPV6
 
     mca_oob_tcp_component.disable_ipv4_family = false;
     (void)mca_base_component_var_register(component, "disable_ipv4_family",
@@ -402,7 +402,7 @@ static int tcp_component_register(void)
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.disable_ipv6_family);
-#endif
+#endif // OPAL_ENABLE_IPV6
 
     // Default to keepalives every 60 seconds
     mca_oob_tcp_component.keepalive_time = 60;
@@ -575,7 +575,7 @@ static int component_available(void)
                                 opal_net_get_hostname((struct sockaddr*) &my_ss),
                                 (AF_INET == my_ss.ss_family) ? "V4" : "V6");
             opal_argv_append_nosize(&mca_oob_tcp_component.ipv6conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
-#endif
+#endif // OPAL_ENABLE_IPV6
         } else {
             opal_output_verbose(10, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp:init ignoring %s from out list of connections",
@@ -718,7 +718,7 @@ static char* component_get_addr(void)
         free(tmp);
         free(tp);
     }
-#endif
+#endif // OPAL_ENABLE_IPV6
 
     /* return our uri */
     return cptr;
@@ -753,14 +753,14 @@ static int component_set_addr(orte_process_name_t *peer,
 #if OPAL_ENABLE_IPV6
             af_family = AF_INET6;
             host = tcpuri + strlen("tcp6://");
-#else
+#else // OPAL_ENABLE_IPV6
             /* we don't support this connection type */
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "%s oob:tcp: address %s not supported",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uris[i]);
             free(tcpuri);
             continue;
-#endif
+#endif // OPAL_ENABLE_IPV6
         } else {
             /* not one of ours */
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
@@ -795,7 +795,7 @@ static int component_set_addr(orte_process_name_t *peer,
                 host[strlen(host)-1] = '\0';
             }
         }
-#endif
+#endif // OPAL_ENABLE_IPV6
         addrs = opal_argv_split(hptr, ',');
 
 
@@ -811,7 +811,7 @@ static int component_set_addr(orte_process_name_t *peer,
                     }
                     host = mca_oob_tcp_component.ipv6conns[0];
                 } else {
-#endif
+#endif // OPAL_ENABLE_IPV6
                     if (NULL == mca_oob_tcp_component.ipv4conns ||
                         NULL == mca_oob_tcp_component.ipv4conns[0]) {
                         continue;
@@ -880,7 +880,7 @@ static int component_ft_event(int state)
 
     return ORTE_SUCCESS;
 }
-#endif
+#endif // OPAL_ENABLE_FT_CR
 
 void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
 {
