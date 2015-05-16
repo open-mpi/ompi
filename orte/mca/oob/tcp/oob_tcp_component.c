@@ -404,25 +404,29 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif
 
-    
-    mca_oob_tcp_component.keepalive_time = 10;
+    // Default to keepalives every 60 seconds
+    mca_oob_tcp_component.keepalive_time = 60;
     (void)mca_base_component_var_register(component, "keepalive_time",
-                                          "Idle time in seconds before starting to send keepalives (num <= 0 ----> disable keepalive)",
+                                          "Idle time in seconds before starting to send keepalives (keepalive_time <= 0 disables keepalive functionality)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_time);
 
-    mca_oob_tcp_component.keepalive_intvl = 60;
+    // Default to keepalive retry interval time of 5 seconds
+    mca_oob_tcp_component.keepalive_intvl = 5;
     (void)mca_base_component_var_register(component, "keepalive_intvl",
-                                          "Time between keepalives, in seconds",
+                                          "Time between successive keepalive pings when peer has not responded, in seconds (ignored if keepalive_time <= 0)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_intvl);
+
+    // Default to retrying a keepalive 3 times before declaring the
+    // peer kaput
     mca_oob_tcp_component.keepalive_probes = 3;
     (void)mca_base_component_var_register(component, "keepalive_probes",
-                                          "Number of keepalives that can be missed before declaring error",
+                                          "Number of keepalives that can be missed before declaring error (ignored if keepalive_time <= 0)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
