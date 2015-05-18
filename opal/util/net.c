@@ -13,6 +13,8 @@
  *                         reserved. 
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -243,6 +245,19 @@ opal_net_islocalhost(const struct sockaddr *addr)
         return false;
         break;
     }
+}
+
+
+bool
+opal_net_islinklocal(const struct sockaddr_storage* addr)
+{
+    const struct sockaddr_sin6 *inaddr = (struct sockaddr*) addr;
+    assert(AF_INET6 == addr->ss_family);
+#if OPAL_ENABLE_IPV6
+    return IN6_IS_ADDR_LINKLOCAL (&inaddr->sin6_addr);
+#else
+    return false;
+#endif /* OPAL_ENABLE_IPV6 */
 }
 
 

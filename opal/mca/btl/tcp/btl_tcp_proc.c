@@ -355,6 +355,10 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
             if (6 == mca_btl_tcp_component.tcp_disable_family) {
                 continue;
             }
+            if (opal_net_islinklocal(&local_addr)) {
+                /* tcp/btl does not (yet) know how to handle ipv6 linklocal addresses, so skip them */
+                continue;
+            }
 
             local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
                 = (struct sockaddr_storage*) malloc(sizeof(local_addr));
@@ -561,7 +565,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             }
 
             /* check state of ipv6 address pair - ipv6 is always public,
-             * since link-local addresses are skipped in opal_ifinit()
+             * since link-local addresses are skipped in mca_btl_tcp_retrieve_local_interfaces()
              */
             if(NULL != local_interfaces[i]->ipv6_address &&
                NULL != peer_interfaces[j]->ipv6_address) {
