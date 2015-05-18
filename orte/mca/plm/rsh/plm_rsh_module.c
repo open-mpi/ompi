@@ -370,9 +370,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
      and use that on the remote node.
      */
     
-    lib_base = opal_basename(opal_install_dirs.libdir);
-    bin_base = opal_basename(opal_install_dirs.bindir);
-    
     /*
      * Build argv array
      */
