@@ -636,7 +636,7 @@ static void mca_btl_vader_progress_waiting (mca_btl_base_endpoint_t *ep)
             opal_list_prepend (&ep->pending_frags, (opal_list_item_t *) frag);
             opal_list_append (&mca_btl_vader_component.pending_endpoints, &ep->super);
             ep->waiting = true;
-            break;
+            return;
         }
         OPAL_THREAD_LOCK(&ep->lock);
     }
