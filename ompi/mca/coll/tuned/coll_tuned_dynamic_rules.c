@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -304,7 +306,8 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     /* ok have some com sizes, now to find the one closest to my mpi_comsize */
 
     /* make a copy of the first com rule */
-    best_com_p = com_p = alg_p->com_rules;
+    best_com_p = NULL;
+    com_p = alg_p->com_rules;
     i = best = 0;
 
     while( i < alg_p->n_com_sizes ) {
@@ -318,8 +321,13 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
         i++;
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following com rule id %d\n", best_com_p->com_rule_id));
-    ompi_coll_tuned_dump_com_rule (best_com_p);
+    if (NULL == best_com_p) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not find a rule for algo %d and communicator size %d\n", alg_id, mpi_comsize));
+    } else {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following com rule id %d for algo %d and communicator size %d\n",
+                                            best_com_p->com_rule_id, alg_id, mpi_comsize));
+        ompi_coll_tuned_dump_com_rule (best_com_p);
+    }
 
     return (best_com_p);
 }
@@ -354,7 +362,8 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     /* ok have some msg sizes, now to find the one closest to my mpi_msgsize */
 
     /* make a copy of the first msg rule */
-    best_msg_p = msg_p = base_com_rule->msg_rules;
+    best_msg_p = NULL;
+    msg_p = base_com_rule->msg_rules;
     i = best = 0;
 
     while (i<base_com_rule->n_msg_sizes) {
@@ -374,7 +383,12 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
         i++;
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following msg rule id %d\n", best_msg_p->msg_rule_id));
+    if (NULL == best_msg_p) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not find any rule for message size %ld\n", mpi_msgsize));
+        return 0;
+    }
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following msg rule id %d for message size %ld\n", best_msg_p->msg_rule_id, mpi_msgsize));
     ompi_coll_tuned_dump_msg_rule (best_msg_p);
 
     /* return the segment size */
