@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -307,9 +307,6 @@ static int create_listen(void)
             return ORTE_ERR_IN_ERRNO;
         }
 
-        /* setup socket options */
-        orte_oob_tcp_set_socket_options(sd);
-
         /* Enable/disable reusing ports */
         if (orte_static_ports) {
             flags = 1;
@@ -565,10 +562,6 @@ static int create_listen6(void)
             opal_argv_free(ports);
             return ORTE_ERROR;
         }
-
-
-        /* setup socket options */
-        orte_oob_tcp_set_socket_options(sd);
 
         /* Enable/disable reusing ports */
         if (orte_static_ports) {
