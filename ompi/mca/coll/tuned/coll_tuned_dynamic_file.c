@@ -42,6 +42,14 @@ static long getnext (FILE *fptr); /* local function */
 
 static int fileline=0; /* used for verbose error messages */
 
+static int cmp_com_rule (const void * a, const void * b) {
+    return (((ompi_coll_com_rule_t *)a)->mpi_comsize - ((ompi_coll_com_rule_t *)b)->mpi_comsize);
+}
+
+static int cmp_msg_rule (const void * a, const void * b) {
+    return (((ompi_coll_msg_rule_t *)a)->msg_size - ((ompi_coll_msg_rule_t *)b)->msg_size);
+}
+
 /*
  * Reads a rule file called fname
  * Builds the algorithm rule table for a max of n_collectives
@@ -199,19 +207,17 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
                 }
                 msg_p->result_segsize = SS;
 
-                if (!nms && MS) {
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"All algorithms must specify a rule for message size of zero upwards always first!\n"));
-                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Message size was %lu for collective ID %d com rule %d msg rule %d at around line %d\n", MS, CI, ncs, nms, fileline));
-                    goto on_file_error;
-                }
-
                 total_msg_count++;
 
             } /* msg size */
 
+            qsort(com_p->msg_rules, NMS, sizeof(ompi_coll_msg_rule_t), cmp_msg_rule);
+
             total_com_count++;
 
         } /* comm size */
+
+        qsort(alg_p->com_rules, NCS, sizeof(ompi_coll_com_rule_t), cmp_com_rule);
 
         total_alg_count++;
         OPAL_OUTPUT((ompi_coll_tuned_stream, "Done reading dynamic rule for collective ID %d\n", CI));
