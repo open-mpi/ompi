@@ -55,7 +55,8 @@ struct mca_pml_ob1_recv_request_t {
     opal_mutex_t lock;
     mca_bml_base_btl_t *rdma_bml;
     mca_btl_base_registration_handle_t *local_handle;
-    mca_pml_ob1_com_btl_t req_rdma[1];
+    /** The size of this array is set from mca_pml_ob1.max_rdma_per_request */
+    mca_pml_ob1_com_btl_t req_rdma[];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 

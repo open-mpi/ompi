@@ -138,7 +138,7 @@ int mca_pml_ob1_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_ob1.send_ranges, opal_free_list_t);
     opal_free_list_init ( &mca_pml_ob1.send_ranges,
                           sizeof(mca_pml_ob1_send_range_t) +
-                          (mca_pml_ob1.max_send_per_range - 1) * sizeof(mca_pml_ob1_com_btl_t),
+                          sizeof(mca_pml_ob1_com_btl_t[mca_pml_ob1.max_send_per_range]),
                           opal_cache_line_size,
                           OBJ_CLASS(mca_pml_ob1_send_range_t),
                           0,opal_cache_line_size,
@@ -163,8 +163,7 @@ int mca_pml_ob1_enable(bool enable)
      */
     opal_free_list_init ( &mca_pml_base_send_requests,
                           sizeof(mca_pml_ob1_send_request_t) +
-                          (mca_pml_ob1.max_rdma_per_request - 1) *
-                          sizeof(mca_pml_ob1_com_btl_t),
+                          sizeof(mca_pml_ob1_com_btl_t[mca_pml_ob1.max_rdma_per_request]),
                           opal_cache_line_size,
                           OBJ_CLASS(mca_pml_ob1_send_request_t),
                           0,opal_cache_line_size,
@@ -175,8 +174,7 @@ int mca_pml_ob1_enable(bool enable)
 
     opal_free_list_init ( &mca_pml_base_recv_requests,
                           sizeof(mca_pml_ob1_recv_request_t) +
-                          (mca_pml_ob1.max_rdma_per_request - 1) *
-                          sizeof(mca_pml_ob1_com_btl_t),
+                          sizeof(mca_pml_ob1_com_btl_t[mca_pml_ob1.max_rdma_per_request]),
                           opal_cache_line_size,
                           OBJ_CLASS(mca_pml_ob1_recv_request_t),
                           0,opal_cache_line_size,
