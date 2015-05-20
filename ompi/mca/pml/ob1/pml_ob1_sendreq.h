@@ -55,7 +55,8 @@ struct mca_pml_ob1_send_request_t {
     opal_mutex_t req_send_range_lock; 
     opal_list_t req_send_ranges;
     mca_pml_ob1_rdma_frag_t *rdma_frag;
-    mca_pml_ob1_com_btl_t req_rdma[1]; 
+    /** The size of this array is set from mca_pml_ob1.max_rdma_per_request */
+    mca_pml_ob1_com_btl_t req_rdma[];
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -67,7 +68,8 @@ struct mca_pml_ob1_send_range_t {
     uint64_t range_send_length;
     int range_btl_idx;
     int range_btl_cnt;
-    mca_pml_ob1_com_btl_t range_btls[1];
+    /** The size of this array is set from mca_pml_ob1.max_send_per_range */
+    mca_pml_ob1_com_btl_t range_btls[];
 };
 typedef struct mca_pml_ob1_send_range_t mca_pml_ob1_send_range_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
