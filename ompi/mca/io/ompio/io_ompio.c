@@ -279,6 +279,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	}
         displs = (int *) malloc (fh->f_size * sizeof(int));
         if (NULL == displs){
+            free(recvcounts);
             return OMPI_ERR_OUT_OF_RESOURCE;
 	}
 
@@ -296,6 +297,8 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	    malloc (k * sizeof(mca_io_ompio_offlen_array_t));
 	if (NULL == per_process){
             opal_output(1,"Error while allocating per process!\n");
+            free(recvcounts);
+            free(displs);
             return  OMPI_ERR_OUT_OF_RESOURCE;
         }
         for (i=0;i<k;i++){
@@ -335,6 +338,9 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                 malloc (tot_entries * sizeof(mca_io_ompio_offlen_array_t));
             if (NULL == all_process){
                 opal_output(1,"Error while allocating per process!\n");
+                free(per_process);
+                free(recvcounts);
+                free(displs);
                 return  OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -342,11 +348,24 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                 (tot_entries * sizeof(int));
             if (NULL == sorted){
                 opal_output(1,"Error while allocating per process!\n");
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
                 return  OMPI_ERR_OUT_OF_RESOURCE;
             }
 
             adj_matrix = (int **) malloc (fh->f_size *
                                           sizeof(int *));
+            if (NULL == adj_matrix) {
+                opal_output(1,"Error while allocating per process!\n");
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
+                return  OMPI_ERR_OUT_OF_RESOURCE;
+            }
             for (i=0;i<fh->f_size;i++){
                 adj_matrix[i] = (int *) malloc (fh->f_size *
                                                 sizeof (int ));
@@ -399,13 +418,23 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	    if (NULL == column_list){
 		opal_output(1,"Error while allocating column list\n");
                 fclose(fp);
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    values = (int *) malloc ( m * sizeof(int));
 	    if (NULL == values){
 		opal_output(1,"Error while allocating values list\n");
-                free(column_list);
                 fclose(fp);
+                free(column_list);
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    
@@ -413,9 +442,14 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 					sizeof(int));
 	    if (NULL == row_index){
 		opal_output(1,"Error while allocating row_index list\n");
+                fclose(fp);
                 free(values);
                 free(column_list);
-                fclose(fp);
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	    fprintf(fp,"%d %d\n", m, fh->f_size+1);
@@ -1237,6 +1271,7 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
                 opal_output (1, "OUT OF MEMORY\n");
                 free(num_entries);
                 free(broken_index);
+                free(fview_cnt);
                 free(displs);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -1264,6 +1299,9 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
                 for (j=0; j<i; j++) {
                     free(broken[j]);
                 }
+                free(fview_cnt);
+                free(displs);
+                free(global_fview);
                 free(broken);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -1416,7 +1454,7 @@ int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
 {
     void **sbuf = NULL;
     size_t bytes_remaining;
-    size_t *temp_position = NULL;
+    size_t *temp_position;
     size_t part;
     int current;
     int temp = 0;
@@ -1448,6 +1486,8 @@ int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
             sbuf[i] = (void *) malloc (bytes_sent[i]);
             if (NULL == sbuf[i]) {
                 opal_output (1, "OUT OF MEMORY\n");
+                free(sbuf);
+                free(temp_position);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
@@ -1586,23 +1626,16 @@ int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
     for (i=0 ; i<num_aggregators ; i++) {
         if (NULL != sbuf[i]) {
             free (sbuf[i]);
-            sbuf[i] = NULL;
         }
     }
+    free (sbuf);
     if (NULL != req) {
         free (req);
     }
     if (NULL != sendreq) {
         free (sendreq);
     }
-    if (NULL != sbuf) {
-        free (sbuf);
-        sbuf = NULL;
-    }
-    if (NULL != temp_position) {
-        free (temp_position);
-        temp_position = NULL;
-    }
+    free (temp_position);
 
     return rc;
 }
@@ -2198,7 +2231,6 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE sum_bytes = 0;
     
     MPI_Request *sendreq = NULL;
-    MPI_Request *req = NULL;
 
     int start = 0;
     int end = 0;
@@ -2309,6 +2341,13 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
        if (NULL == sendreq) {
           return OMPI_ERR_OUT_OF_RESOURCE;
        }
+       fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+       if (NULL == fh->f_procs_in_group) {
+          opal_output (1, "OUT OF MEMORY\n");
+          free(sendreq);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+ 
        //Communicate grouping info
        for( j = 0 ; j < fh->f_procs_per_group; j++){
            //new aggregator sends new procs_per_group to all its members
@@ -2334,10 +2373,6 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
 
        }
        //All non aggregators
-       req = (MPI_Request *)malloc (2* sizeof(MPI_Request));
-       if (NULL == req) {
-          return OMPI_ERR_OUT_OF_RESOURCE;
-       }
        //All processes receive initial process distribution from aggregators
        MCA_PML_CALL(recv(&fh->f_procs_per_group,
                           1,
@@ -2347,13 +2382,6 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
                           fh->f_comm,
 			  MPI_STATUS_IGNORE));
   
-       fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
-       if (NULL == fh->f_procs_in_group) {
-          opal_output (1, "OUT OF MEMORY\n");
-          free(req);
-          return OMPI_ERR_OUT_OF_RESOURCE;
-       }
- 
        MCA_PML_CALL(recv(fh->f_procs_in_group,
                           fh->f_procs_per_group,
                           MPI_INT,
@@ -2362,18 +2390,10 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
                           fh->f_comm,
 			  MPI_STATUS_IGNORE));
 		
-       if(NULL != req){
-	 free (req);
-	 req =  NULL;
-       }
-       if(is_new_aggregator) {
-         ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
-         if (NULL != sendreq) {
-	    free (sendreq);
-	    sendreq =  NULL;
-	 }
+    if(is_new_aggregator) {
+        ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
+        free (sendreq);
     }
-
 
     return OMPI_SUCCESS;	
 }
@@ -2809,6 +2829,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
     decision_list_tmp = (int* )malloc (fh->f_init_num_aggrs * sizeof(int));
     if (NULL == decision_list_tmp) {
         opal_output (1, "OUT OF MEMORY\n");
+        free(aggr_bytes_per_group_tmp);
         free(start_offsets_lens_tmp);
         free(end_offsets_tmp);
         return OMPI_ERR_OUT_OF_RESOURCE;
