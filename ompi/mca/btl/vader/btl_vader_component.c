@@ -637,24 +637,28 @@ static int mca_btl_vader_poll_fifo (void)
  */
 static void mca_btl_vader_progress_waiting (mca_btl_base_endpoint_t *ep)
 {
-    mca_btl_vader_frag_t *frag;
+    mca_btl_vader_frag_t *frag, *next;
+    int ret = 1;
 
     if (OPAL_UNLIKELY(NULL == ep)) {
         return;
     }
 
     OPAL_THREAD_LOCK(&ep->lock);
-    ep->waiting = false;
-    while (NULL != (frag = (mca_btl_vader_frag_t *) opal_list_remove_first (&ep->pending_frags))) {
+    OPAL_LIST_FOREACH_SAFE(frag, next, &ep->pending_frags, mca_btl_vader_frag_t) {
         OPAL_THREAD_UNLOCK(&ep->lock);
-        if (!vader_fifo_write_ep (frag->hdr, ep)) {
-            opal_list_prepend (&ep->pending_frags, (opal_list_item_t *) frag);
-            opal_list_append (&mca_btl_vader_component.pending_endpoints, &ep->super);
-            ep->waiting = true;
-            break;
+        ret = vader_fifo_write_ep (frag->hdr, ep);
+        if (!ret) {
+            return;
         }
+
         OPAL_THREAD_LOCK(&ep->lock);
+        (void) opal_list_remove_first (&ep->pending_frags);
     }
+
+    ep->waiting = false;
+    opal_list_remove_item (&mca_btl_vader_component.pending_endpoints, &ep->super);
+
     OPAL_THREAD_UNLOCK(&ep->lock);
 }
 
@@ -665,6 +669,7 @@ static void mca_btl_vader_progress_waiting (mca_btl_base_endpoint_t *ep)
  */
 static void mca_btl_vader_progress_endpoints (void)
 {
+    mca_btl_base_endpoint_t *ep, *next;
     int count;
 
     count = opal_list_get_size (&mca_btl_vader_component.pending_endpoints);
@@ -673,8 +678,8 @@ static void mca_btl_vader_progress_endpoints (void)
     }
 
     OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
-    for (int i = 0 ; i < count ; ++i) {
-        mca_btl_vader_progress_waiting ((mca_btl_base_endpoint_t *) opal_list_remove_first (&mca_btl_vader_component.pending_endpoints));
+    OPAL_LIST_FOREACH_SAFE(ep, next, &mca_btl_vader_component.pending_endpoints, mca_btl_base_endpoint_t) {
+        mca_btl_vader_progress_waiting (ep);
     }
     OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
 }
