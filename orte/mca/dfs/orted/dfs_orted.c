@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1649,6 +1651,9 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                 return;
             }
         }
+        if (NULL != read_buf) {
+            free(read_buf);
+        }
         /* send it */
         opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s sending %ld bytes back to %s",
@@ -1661,9 +1666,6 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
             return;
-        }
-        if (NULL != read_buf) {
-            free(read_buf);
         }
         break;
 
@@ -2288,6 +2290,7 @@ static void remote_read(int fd, short args, void *cbdata)
             return;
         }
     }
+    free(read_buf);
     /* send it */
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending %ld bytes back to %s",
@@ -2301,7 +2304,6 @@ static void remote_read(int fd, short args, void *cbdata)
         OBJ_RELEASE(answer);
         return;
     }
-    free(read_buf);
     OBJ_RELEASE(req);
 }
 
