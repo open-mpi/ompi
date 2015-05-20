@@ -10,7 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -73,4 +74,21 @@ attempt to fail, so you may experience a significant hang time.
 
 You may wish to ctrl-c out of your job and activate loopback support
 on at least one interface before trying again.
+#
+[accept failed]
+WARNING: The accept(3) system call failed on a TCP socket.  While this
+should generally never happen on a well-configured HPC system, the
+most common causes when it does occur are:
 
+  * The process ran out of file descriptors
+  * The operating system ran out of file descriptors
+  * The operating system ran out of memory
+
+Your Open MPI job will likely hang until the failure resason is fixed
+(e.g., more file descriptors and/or memory becomes available), and may
+eventually timeout / abort.
+
+  Local host:     %s
+  Errno:          %d (%s)
+  Probable cause: %s
+#
