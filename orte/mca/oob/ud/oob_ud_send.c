@@ -234,6 +234,8 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
 
     req_msg->hdr->msg_origin   = op->msg->origin;
     req_msg->hdr->msg_target   = op->msg->dst;
+    req_msg->hdr->msg_channel  = op->msg->dst_channel;
+    req_msg->hdr->msg_seq_num  = op->msg->seq_num;
 
     req_msg->hdr->msg_data.req.data_len = size;
     req_msg->hdr->msg_data.req.mtu      = port->mtu;
