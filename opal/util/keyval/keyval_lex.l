@@ -1,5 +1,6 @@
 %option nounput
 %option noinput
+%option yylineno
 
 %{ /* -*- C -*- */
 /*

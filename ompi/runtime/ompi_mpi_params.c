@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
@@ -251,9 +251,6 @@ int ompi_mpi_register_params(void)
     mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "preconnect_all",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-    mca_base_var_register_synonym(value, "opal", "opal", NULL, "cuda_support",
-                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-
     /* Sparse group storage support */
     (void) mca_base_var_register("ompi", "mpi", NULL, "have_sparse_group_storage",
                                  "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
@@ -278,31 +275,22 @@ int ompi_mpi_register_params(void)
         ompi_use_sparse_group_storage = false;
     }
 
-    (void) mca_base_var_register("ompi", "mpi", NULL, "built_with_cuda_support",
-                                 "Whether CUDA GPU buffer support is built into library or not",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                 OPAL_INFO_LVL_4,
-                                 MCA_BASE_VAR_SCOPE_CONSTANT,
-                                 &opal_built_with_cuda_support);
+    value = mca_base_var_find ("opal", "opal", NULL, "cuda_support");
+    if (0 <= value) {
+        mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "cuda_support",
+                                      MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
 
-    /* Current default is to enable CUDA support if it is built into library */
-    opal_cuda_support = opal_built_with_cuda_support;
+    value = mca_base_var_find ("opal", "opal", NULL, "built_with_cuda_support");
+    if (0 <= value) {
+        mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "built_with_cuda_support", 0);
+    }
 
-    (void) mca_base_var_register("ompi", "mpi", NULL, "cuda_support",
-                                 "Whether CUDA GPU buffer support is enabled or not",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_4,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_cuda_support);
     if (opal_cuda_support && !opal_built_with_cuda_support) {
         opal_show_help("help-mpi-runtime.txt", "no cuda support",
                        true);
         ompi_rte_abort(1, NULL);
     }
-    mca_base_var_register_synonym(value, "opal", "opal", NULL, "cuda_support",
-                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-
 
     return OMPI_SUCCESS;
 }
