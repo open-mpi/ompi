@@ -260,8 +260,8 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
 
         do {
             /* generate the variable's full name */
-            mca_base_var_generate_full_name4 (NULL, framework, component, name, &pvar->name);
-            if (NULL == pvar->name) {
+            ret = mca_base_var_generate_full_name4 (NULL, framework, component, name, &pvar->name);
+            if (OPAL_SUCCESS != ret) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
             }
