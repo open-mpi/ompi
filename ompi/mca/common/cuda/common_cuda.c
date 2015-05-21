@@ -742,6 +742,14 @@ void mca_common_cuda_fini(void)
 {
     int i;
     CUresult res;
+
+    if (false == common_cuda_initialized) {
+        stage_one_init_ref_count--;
+        opal_output_verbose(20, mca_common_cuda_output,
+                            "CUDA: mca_common_cuda_fini, never completed initialization so "
+                            "skipping fini, ref_count is now %d", stage_one_init_ref_count);
+        return;
+    }
     
     if (0 == stage_one_init_ref_count) {
         opal_output_verbose(20, mca_common_cuda_output,
