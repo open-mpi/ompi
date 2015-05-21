@@ -37,8 +37,7 @@ void mca_base_component_unload (const mca_base_component_t *component, int outpu
                         "mca: base: close: unloading component %s",
                         component->mca_component_name);
 
-    /* XXX -- TODO -- Replace reserved by mca_project_name for 1.9 */
-    ret = mca_base_var_group_find (component->reserved, component->mca_type_name,
+    ret = mca_base_var_group_find (component->mca_project_name, component->mca_type_name,
                                    component->mca_component_name);
     if (0 <= ret) {
         mca_base_var_group_deregister (ret);

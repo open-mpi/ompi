@@ -125,6 +125,7 @@ static int process_repository_item (const char *filename, void *data)
 
     ri = OBJ_NEW(mca_base_component_repository_item_t);
     if (NULL == ri) {
+        free (base);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -227,14 +228,14 @@ int mca_base_component_repository_init(void)
     OBJ_CONSTRUCT(&mca_base_component_repository, opal_hash_table_t);
     ret = opal_hash_table_init (&mca_base_component_repository, 128);
     if (OPAL_SUCCESS != ret) {
-        mca_base_framework_close (&opal_dl_base_framework);
+        (void) mca_base_framework_close (&opal_dl_base_framework);
         return ret;
     }
 
     ret = mca_base_component_repository_add (mca_base_component_path);
     if (OPAL_SUCCESS != ret) {
         OBJ_DESTRUCT(&mca_base_component_repository);
-        mca_base_framework_close (&opal_dl_base_framework);
+        (void) mca_base_framework_close (&opal_dl_base_framework);
         return ret;
     }
 #endif
@@ -325,6 +326,9 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
             return OPAL_ERR_BAD_PARAM;
         }
     }
+
+    /* silence coverity issue (invalid free) */
+    mitem = NULL;
 
     if (NULL != ri->ri_dlhandle) {
         opal_output_verbose(40, 0, "mca_base_component_repository_open: already loaded. returning cached component");
