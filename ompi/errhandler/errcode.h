@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,10 +71,13 @@ static inline bool ompi_mpi_errcode_is_invalid(int errcode)
  */
 static inline int ompi_mpi_errcode_get_class (int errcode)
 {
-    ompi_mpi_errcode_t *err;
+    ompi_mpi_errcode_t *err = NULL;
 
-    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
-    /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
+    if (errcode >= 0) {
+        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+        /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
+    }
+
     if (NULL != err) {
 	if ( err->code != MPI_UNDEFINED ) { 
 	    return err->cls;
@@ -92,6 +97,10 @@ static inline int ompi_mpi_errcode_is_predefined ( int errcode )
 static inline int ompi_mpi_errnum_is_class ( int errnum ) 
 {
     ompi_mpi_errcode_t *err;
+
+    if (errno < 0) {
+        return false;
+    }
 
     if ( errnum <= ompi_mpi_errcode_lastpredefined ) {
 	/* Predefined error values represent an error code and 
@@ -117,11 +126,14 @@ static inline int ompi_mpi_errnum_is_class ( int errnum )
  */
 static inline char* ompi_mpi_errnum_get_string (int errnum)
 {
-    ompi_mpi_errcode_t *err;
-    
-    err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
-    /* If we get a bogus errcode, return a string indicating that this
-       truly should not happen */
+    ompi_mpi_errcode_t *err = NULL;
+
+    if (errnum >= 0) {
+        err = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+        /* If we get a bogus errcode, return a string indicating that this
+           truly should not happen */
+    }
+
     if (NULL != err) {
         return err->errstring;
     } else {

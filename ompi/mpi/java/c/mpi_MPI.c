@@ -500,8 +500,11 @@ static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
         opal_free_list_item_t *freeListItem;
         OPAL_FREE_LIST_GET(&ompi_java_buffers, freeListItem, rc);
 
-        ompi_java_exceptionCheck(env,
-                rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+        ompi_java_exceptionCheck(env, NULL == freeListItem ? MPI_ERR_NO_MEM :
+                                 MPI_SUCCESS);
+        if (NULL == freeListItem) {
+            return NULL;
+        }
 
         *item = (ompi_java_buffer_t*)freeListItem;
         return (*item)->buffer;
@@ -1018,6 +1021,14 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
+    if (rc < 0) {
+        /* handle ompi error code */
+        rc = ompi_errcode_get_mpi_code (rc);
+        /* ompi_mpi_errcode_get_class CAN NOT handle negative error codes.
+         * all Open MPI MPI error codes should be > 0. */
+        assert (rc >= 0);
+    }
+
     if(MPI_SUCCESS == rc)
     {
         return JNI_FALSE;
