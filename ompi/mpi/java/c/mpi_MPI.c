@@ -265,7 +265,10 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         jstring jc = (*env)->NewStringUTF(env, sargs[i]);
         (*env)->SetObjectArrayElement(env, value, i, jc);
         (*env)->DeleteLocalRef(env, jc);
+        free (sargs[i]);
     }
+
+    free (sargs);
 
     findClasses(env);
     initFreeList();
