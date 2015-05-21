@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -304,9 +304,6 @@ static int create_listen(void)
             return ORTE_ERR_IN_ERRNO;
         }
 
-        /* setup socket options */
-        orte_oob_tcp_set_socket_options(sd);
-
         /* Enable/disable reusing ports */
         if (orte_static_ports) {
             flags = 1;
@@ -557,10 +554,6 @@ static int create_listen6(void)
             return ORTE_ERROR;
         }
 
-
-        /* setup socket options */
-        orte_oob_tcp_set_socket_options(sd);
-
         /* Enable/disable reusing ports */
         if (orte_static_ports) {
             flags = 1;
@@ -738,20 +731,43 @@ static void* listen_thread(opal_object_t *obj)
                                                 (struct sockaddr*)&(pending_connection->addr),
                                                 &addrlen);
                 if (pending_connection->fd < 0) {
-                    if (opal_socket_errno != EAGAIN || 
-                        opal_socket_errno != EWOULDBLOCK) {
-                        CLOSE_THE_SOCKET(pending_connection->fd);
-                        if (EMFILE == opal_socket_errno) {
-                            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
-                            orte_show_help("help-orterun.txt", "orterun:sys-limit-sockets", true);
-                        } else {
-                            opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).",
-                                        strerror(opal_socket_errno), opal_socket_errno);
-                        }
-                        OBJ_RELEASE(pending_connection);
+                    OBJ_RELEASE(pending_connection);
+
+                    /* Non-fatal errors */
+                    if (EAGAIN == opal_socket_errno ||
+                        EWOULDBLOCK == opal_socket_errno) {
+                        continue;
+                    }
+
+                    /* If we run out of file descriptors, log an extra
+                       warning (so that the user can know to fix this
+                       problem) and abandon all hope. */
+                    else if (EMFILE == opal_socket_errno) {
+                        CLOSE_THE_SOCKET(sd);
+                        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
+                        orte_show_help("help-oob-tcp.txt",
+                                       "accept failed",
+                                       true,
+                                       orte_process_info.nodename,
+                                       opal_socket_errno,
+                                       strerror(opal_socket_errno),
+                                       "Out of file descriptors");
                         goto done;
                     }
-                    continue;
+
+                    /* For all other cases, close the socket, print a
+                       warning but try to continue */
+                    else {
+                        CLOSE_THE_SOCKET(sd);
+                        orte_show_help("help-oob-tcp.txt",
+                                       "accept failed",
+                                       true,
+                                       orte_process_info.nodename,
+                                       opal_socket_errno,
+                                       strerror(opal_socket_errno),
+                                       "Unknown cause; job will try to continue");
+                        continue;
+                    }
                 }
 
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -837,26 +853,43 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
                         opal_net_get_hostname((struct sockaddr*) &addr),
                         opal_net_get_port((struct sockaddr*) &addr));
     if (sd < 0) {
-        if (EINTR == opal_socket_errno) {
+        /* Non-fatal errors */
+        if (EINTR == opal_socket_errno ||
+            EAGAIN == opal_socket_errno ||
+            EWOULDBLOCK == opal_socket_errno) {
             return;
         }
-        if (opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-            if (EMFILE == opal_socket_errno) {
-                /*
-                 * Close incoming_sd so that orte_show_help will have a file
-                 * descriptor with which to open the help file.  We will be
-                 * exiting anyway, so we don't need to keep it open.
-                 */
-                CLOSE_THE_SOCKET(incoming_sd);
-                ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
-                orte_show_help("help-orterun.txt", "orterun:sys-limit-sockets", true);
-            } else {
-                opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).", 
-                            strerror(opal_socket_errno), opal_socket_errno);
-            }
+
+        /* If we run out of file descriptors, log an extra warning (so
+           that the user can know to fix this problem) and abandon all
+           hope. */
+        else if (EMFILE == opal_socket_errno) {
+            CLOSE_THE_SOCKET(incoming_sd);
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
+            orte_show_help("help-oob-tcp.txt",
+                           "accept failed",
+                           true,
+                           orte_process_info.nodename,
+                           opal_socket_errno,
+                           strerror(opal_socket_errno),
+                           "Out of file descriptors");
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
+            return;
         }
-        return;
+
+        /* For all other cases, close the socket, print a warning but
+           try to continue */
+        else {
+            CLOSE_THE_SOCKET(incoming_sd);
+            orte_show_help("help-oob-tcp.txt",
+                           "accept failed",
+                           true,
+                           orte_process_info.nodename,
+                           opal_socket_errno,
+                           strerror(opal_socket_errno),
+                           "Unknown cause; job will try to continue");
+            return;
+        }
     }
 
     /* process the connection */
