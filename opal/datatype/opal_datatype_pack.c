@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,10 +120,8 @@ opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
     assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((OPAL_PTRDIFF_TYPE)pData->size != extent) );
     DO_DEBUG( opal_output( 0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            pConv->pBaseBuf, *out_size ); );
-    if( stack[1].type != opal_datatype_uint1.id ) {
-        stack[1].count *= opal_datatype_basicDatatypes[stack[1].type]->size;
-        stack[1].type = opal_datatype_uint1.id;
-    }
+    stack[1].type = opal_datatype_uint1.id;
+    stack[1].count = pData->size;
 
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
