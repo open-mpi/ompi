@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -394,6 +394,7 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
 static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 {
     mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
+    ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t *ctl;
     mca_pml_ob1_rdma_hdr_t *hdr;
@@ -417,6 +418,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
                                   recvreq->remote_req_send.lval, frag, recvreq, frag->rdma_offset,
                                   frag->local_address, frag->rdma_length, frag->local_handle,
                                   reg_size);
+    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_PUT, proc);
 
     frag->cbfunc = mca_pml_ob1_put_completion;
 
