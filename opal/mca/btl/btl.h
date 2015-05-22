@@ -14,7 +14,9 @@
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -371,6 +373,17 @@ struct mca_btl_base_segment_t {
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
+#define MCA_BTL_BASE_SEGMENT_HTON(s)                   \
+        (s).seg_addr.lval = hton64((s).seg_addr.lval); \
+        (s).seg_len = hton64((s).seg_len);
+#define MCA_BTL_BASE_SEGMENT_NTOH(s)                   \
+        (s).seg_addr.lval = ntoh64((s).seg_addr.lval); \
+        (s).seg_len = ntoh64((s).seg_len);
+#else
+#define MCA_BTL_BASE_SEGMENT_HTON(s)
+#define MCA_BTL_BASE_SEGMENT_NTOH(s)
+#endif
 /**
  * A descriptor that holds the parameters to a send/put/get
  * operation along w/ a callback routine that is called on
