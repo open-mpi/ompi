@@ -126,11 +126,6 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    char *env = getenv("OMPI_ATTACH");
-    if (NULL != env && 0 < atoi(env)) {
-        volatile int _dbg = 1;
-        while (_dbg) poll(NULL, 0, 1);
-    }
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
     if(libmpi == NULL)
