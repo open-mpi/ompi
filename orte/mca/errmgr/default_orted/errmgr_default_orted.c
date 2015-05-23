@@ -318,6 +318,8 @@ static void proc_errors(int fd, short args, void *cbdata)
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 goto cleanup;
             }
+            /* set the exit code to reflect the problem */
+            child->exit_code = ORTE_ERR_COMM_FAILURE;
             /* pack only the data for this daemon - have to start with the jobid
              * so the receiver can unpack it correctly
              */
