@@ -69,4 +69,3 @@ This is usually due to either a failure of the TCP network
 connection to the node, or possibly an internal failure of
 the daemon itself. We cannot recover from this failure, and
 therefore will terminate the job.
-
