@@ -372,6 +372,9 @@ static void proc_errors(int fd, short args, void *cbdata)
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             /* update our exit code */
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* just in case the exit code hadn't been set, do it here - this
+             * won't override any reported exit code */
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_COMM_FAILURE);
         }
         /* abort the system */
         default_hnp_abort(jdata);
