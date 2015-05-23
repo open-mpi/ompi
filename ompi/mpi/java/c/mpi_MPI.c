@@ -1,9 +1,29 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- *
- * Additional copyrights may follow.
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+/*
+ * This file is almost a complete re-write for Open MPI compared to the
+ * original mpiJava package. Its license and copyright are listed below.
+ * See <path to ompi/mpi/java/README> for more information.
  */
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +75,7 @@
 
 #include "mpi.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errcode-internal.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
@@ -242,8 +263,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, NULL);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -286,8 +306,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, 0);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -487,6 +506,8 @@ static void setArrayRegion(JNIEnv *env, jobject buf, int baseType,
 
 static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
 {
+    int rc;
+
     if(size > ompi_mpi_java_eager)
     {
         *item = NULL;
@@ -494,10 +515,12 @@ static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
     }
     else
     {
-        int rc;
         opal_free_list_item_t *freeListItem;
         OPAL_FREE_LIST_GET(&ompi_java_buffers, freeListItem, rc);
-
+        if (OPAL_SUCCESS != rc) {
+            return NULL;
+        }
+        
         ompi_java_exceptionCheck(env, NULL == freeListItem ? MPI_ERR_NO_MEM :
                                  MPI_SUCCESS);
         if (NULL == freeListItem) {

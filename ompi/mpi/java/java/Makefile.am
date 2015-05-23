@@ -8,6 +8,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.man-page-rules
+
 #
 # We generate three general things in this directory:
 #
@@ -88,33 +90,26 @@ JAVA_H = \
         mpi_Status.h       \
 	mpi_Win.h
 
-# A little verbosity magic; "make" will show the terse output.  "make
-# V=1" will show the actual commands used (just like the other
-# Automake-generated compilation/linker rules).
-V=0
+# A little verbosity magic; see Makefile.ompi-rules for an explanation.
 OMPI_V_JAVAC = $(ompi__v_JAVAC_$V)
 ompi__v_JAVAC_ = $(ompi__v_JAVAC_$AM_DEFAULT_VERBOSITY)
-ompi__v_JAVAC_0 = @echo "  JAVAC " `basename $@`;
+ompi__v_JAVAC_0 = @echo "  JAVAC   " `basename $@`;
 
 OMPI_V_JAVAH = $(ompi__v_JAVAH_$V)
 ompi__v_JAVAH_ = $(ompi__v_JAVAH_$AM_DEFAULT_VERBOSITY)
-ompi__v_JAVAH_0 = @echo "  JAVAH " `basename $@`;
+ompi__v_JAVAH_0 = @echo "  JAVAH   " `basename $@`;
 
 OMPI_V_JAR = $(ompi__v_JAR_$V)
 ompi__v_JAR_ = $(ompi__v_JAR_$AM_DEFAULT_VERBOSITY)
-ompi__v_JAR_0 = @echo "    JAR " `basename $@`;
+ompi__v_JAR_0 = @echo "    JAR   " `basename $@`;
 
 OMPI_V_JAVADOC = $(ompi__v_JAVADOC_$V)
 ompi__v_JAVADOC_ = $(ompi__v_JAVADOC_$AM_DEFAULT_VERBOSITY)
-ompi__v_JAVADOC_0 = @echo "JAVADOC " `basename $@`;
+ompi__v_JAVADOC_0 = @echo "JAVADOC   " `basename $@`;
 
 OMPI_V_JAVADOC_QUIET = $(ompi__v_JAVADOC_QUIET_$V)
 ompi__v_JAVADOC_QUIET_ = $(ompi__v_JAVADOC_QUIET_$AM_DEFAULT_VERBOSITY)
 ompi__v_JAVADOC_QUIET_0 = -quiet
-
-OMPI_V_MKDIR = $(ompi__v_MKDIR_$V)
-ompi__v_MKDIR_ = $(ompi__v_MKDIR_$AM_DEFAULT_VERBOSITY)
-ompi__v_MKDIR_0 = @echo "  MKDIR " $@;
 
 # All the .java files seem to have circular references, such that I
 # can't figure out a linear order in which to compile them
