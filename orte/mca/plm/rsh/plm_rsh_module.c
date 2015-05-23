@@ -970,7 +970,7 @@ static void process_launch_list(int fd, short args, void *cbdata)
         } else { /* father */
             /* indicate this daemon has been launched */
             caddy->daemon->state = ORTE_PROC_STATE_RUNNING;
-            /* record the pid */
+            /* record the pid of the ssh fork */
             caddy->daemon->pid = pid;
             
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -1291,15 +1291,45 @@ static int rsh_terminate_orteds(void)
 
 static int rsh_finalize(void)
 {
-    int rc;
+    int rc, i;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+    pid_t ret;
     
     /* remove launch event */
     opal_event_del(&launch_event);
-    OBJ_DESTRUCT(&launch_list);
+    OPAL_LIST_DESTRUCT(&launch_list);
     
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
+    }
+
+    if ((ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) && orte_abnormal_term_ordered) {
+        /* ensure that any lingering ssh's are gone */
+        if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            return rc;
+        }
+        for (i=0; i < jdata->procs->size; i++) {
+            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            if (0 < proc->pid) {
+                /* this is a daemon we started - see if the ssh process still exists */
+                ret = waitpid(proc->pid, &proc->exit_code, WNOHANG);
+                if (-1 == ret && ECHILD == errno) {
+                    /* The pid no longer exists, so we'll call this "good
+                       enough for government work" */
+                    continue;
+                }
+                if (ret == proc->pid) {
+                    /* already died */
+                    continue;
+                }
+                /* ssh session must still be alive, so kill it */
+                kill(proc->pid, SIGKILL);
+            }
+        }
     }
     
     return rc;
