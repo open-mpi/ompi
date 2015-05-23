@@ -53,6 +53,21 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.8.6
+-----
+
+- Fixed memory leak on Mac OS-X exposed by TCP keepalive
+- Fixed keepalive support to ensure that daemon/node failure
+  results in complete job cleanup
+- Update Java binding support
+- Fixed MPI_THREAD_MULTIPLE bug in vader shared memory BTL
+- Fixed issue during shutdown when CUDA initialization wasn't complete
+- Fixed orted environment when no prefix given
+- Fixed trivial typo in MPI_Neighbor_allgather manpage
+- Fixed tree-spawn support for sh and ksh shells
+- Several data type fixes
+
+
 1.8.5
 -----
 
