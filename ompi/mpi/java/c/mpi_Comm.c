@@ -1,4 +1,28 @@
 /*
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+/*
+ * This file is almost a complete re-write for Open MPI compared to the
+ * original mpiJava package. Its license and copyright are listed below.
+ * See <path to ompi/mpi/java/README> for more information.
+ */
+/*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -124,7 +148,8 @@ static void getNeighbors(JNIEnv *env, MPI_Comm comm, int *out, int *in)
             rc = MPI_Dist_graph_neighbors_count(comm, in, out, &weighted);
             break;
         default:
-            assert(0);
+            rc = MPI_ERR_TOPOLOGY;
+            break;
     }
 
     ompi_java_exceptionCheck(env, rc);
@@ -1050,7 +1075,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
     int rootOrInter = rank == root || inter;
 
     void *sPtr = NULL, *rPtr;
-    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_buffer_t *sItem, *rItem = NULL;
     MPI_Datatype rType;
 
     if(rjType == 0)
@@ -1098,7 +1123,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
                                   sOff, sCount, sType, sBType);
     }
 
-    if(rBuf != NULL)
+    if(rItem != NULL && rBuf != NULL)
     {
         ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
                                   rOff, rCount, rType, rBType);
@@ -1167,7 +1192,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
     int size = rootOrInter ? getSize(env, comm, inter) : 0;
 
     void *sPtr = NULL, *rPtr;
-    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_buffer_t *sItem, *rItem = NULL;
     MPI_Datatype rType;
 
     if(rjType == 0)
@@ -1201,7 +1226,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
 
     ompi_java_exceptionCheck(env, rc);
 
-    if(rBuf != NULL)
+    if(rItem != NULL && rBuf != NULL)
     {
         ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
                                   rOff, rCount, rType, rBType);

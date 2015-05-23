@@ -1,9 +1,29 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- *
- * Additional copyrights may follow.
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+/*
+ * This file is almost a complete re-write for Open MPI compared to the
+ * original mpiJava package. Its license and copyright are listed below.
+ * See <path to ompi/mpi/java/README> for more information.
  */
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +75,7 @@
 
 #include "mpi.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errcode-internal.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
@@ -107,11 +128,6 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    char *env = getenv("OMPI_ATTACH");
-    if (NULL != env && 0 < atoi(env)) {
-        volatile int _dbg = 1;
-        while (_dbg) poll(NULL, 0, 1);
-    }
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
     if(libmpi == NULL)
@@ -247,8 +263,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, NULL);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -270,7 +285,10 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         jstring jc = (*env)->NewStringUTF(env, sargs[i]);
         (*env)->SetObjectArrayElement(env, value, i, jc);
         (*env)->DeleteLocalRef(env, jc);
+        free (sargs[i]);
     }
+
+    free (sargs);
 
     findClasses(env);
     initFreeList();
@@ -288,8 +306,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     {
         jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
         const char *s = (*env)->GetStringUTFChars(env, jc, 0);
-        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
-        strcpy(sargs[i], s);
+        sargs[i] = strdup(s);
         (*env)->ReleaseStringUTFChars(env, jc, s);
         (*env)->DeleteLocalRef(env, jc);
     }
@@ -489,6 +506,8 @@ static void setArrayRegion(JNIEnv *env, jobject buf, int baseType,
 
 static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
 {
+    int rc;
+
     if(size > ompi_mpi_java_eager)
     {
         *item = NULL;
@@ -496,12 +515,17 @@ static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
     }
     else
     {
-        int rc;
         opal_free_list_item_t *freeListItem;
         OPAL_FREE_LIST_GET(&ompi_java_buffers, freeListItem, rc);
-
-        ompi_java_exceptionCheck(env,
-                rc==OPAL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR);
+        if (OPAL_SUCCESS != rc) {
+            return NULL;
+        }
+        
+        ompi_java_exceptionCheck(env, NULL == freeListItem ? MPI_ERR_NO_MEM :
+                                 MPI_SUCCESS);
+        if (NULL == freeListItem) {
+            return NULL;
+        }
 
         *item = (ompi_java_buffer_t*)freeListItem;
         return (*item)->buffer;
@@ -1018,6 +1042,14 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
+    if (rc < 0) {
+        /* handle ompi error code */
+        rc = ompi_errcode_get_mpi_code (rc);
+        /* ompi_mpi_errcode_get_class CAN NOT handle negative error codes.
+         * all Open MPI MPI error codes should be > 0. */
+        assert (rc >= 0);
+    }
+
     if(MPI_SUCCESS == rc)
     {
         return JNI_FALSE;
