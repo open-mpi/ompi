@@ -1292,6 +1292,7 @@ static int rsh_finalize(void)
     int rc, i;
     orte_job_t *jdata;
     orte_proc_t *proc;
+    pid_t ret;
     
     /* remove launch event */
     opal_event_del(&launch_event);
@@ -1311,7 +1312,19 @@ static int rsh_finalize(void)
             if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (proc->state < ORTE_PROC_STATE_UNTERMINATED && 0 < proc->pid) {
+            if (0 < proc->pid) {
+                /* this is a daemon we started - see if the ssh process still exists */
+                ret = waitpid(proc->pid, &proc->exit_code, WNOHANG);
+                if (-1 == ret && ECHILD == errno) {
+                    /* The pid no longer exists, so we'll call this "good
+                       enough for government work" */
+                    continue;
+                }
+                if (ret == proc->pid) {
+                    /* already died */
+                    continue;
+                }
+                /* ssh session must still be alive, so kill it */
                 kill(proc->pid, SIGKILL);
             }
         }
