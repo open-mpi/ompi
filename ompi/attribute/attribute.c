@@ -479,7 +479,7 @@ int ompi_attr_init(void)
 
     keyval_hash = OBJ_NEW(opal_hash_table_t);
     if (NULL == keyval_hash) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     key_bitmap = OBJ_NEW(opal_bitmap_t);
     /*
@@ -487,7 +487,7 @@ int ompi_attr_init(void)
      */
     opal_bitmap_set_max_size (key_bitmap, OMPI_FORTRAN_HANDLE_MAX);
     if (0 != opal_bitmap_init(key_bitmap, 32)) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (int_pos = 0; int_pos < (sizeof(void*) / sizeof(MPI_Fint)); 
@@ -540,7 +540,7 @@ static int ompi_attr_create_keyval_impl(ompi_attribute_type_t type,
     /* Allocate space for the list item */
     keyval = OBJ_NEW(ompi_attribute_keyval_t);
     if (NULL == keyval) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Fill in the list item (must be done before we set the keyval
@@ -667,7 +667,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
     if (NULL == new_attr) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     OPAL_THREAD_LOCK(&attribute_lock);
@@ -698,7 +698,7 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
     if (NULL == new_attr) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     OPAL_THREAD_LOCK(&attribute_lock);
@@ -730,7 +730,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
     if (NULL == new_attr) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     OPAL_THREAD_LOCK(&attribute_lock);
@@ -1056,7 +1056,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     attrs = malloc(sizeof(attribute_value_t *) * num_attrs);
     if (NULL == attrs) {
         OPAL_THREAD_UNLOCK(&attribute_lock);
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     ret = opal_hash_table_get_first_key_uint32(attr_hash, &key, &attr, &node);

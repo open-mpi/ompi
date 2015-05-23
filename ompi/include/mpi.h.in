@@ -610,9 +610,6 @@ enum {
    error codes without breaking ABI. */
 #define MPI_ERR_LASTCODE              92
 
-#define MPI_ERR_SYSRESOURCE          -2
-
-
 /*
  * Comparison results.  Don't change the order of these, the group
  * comparison functions rely on it.
