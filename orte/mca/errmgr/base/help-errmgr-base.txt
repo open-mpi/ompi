@@ -59,3 +59,14 @@ of factors, including an inability to create a connection back
 to mpirun due to a lack of common network interfaces and/or no
 route found between them. Please check network connectivity
 (including firewalls and network routing requirements).
+#
+[node-died]
+ORTE has lost communication with its daemon located on node:
+
+  hostname:  %s
+
+This is usually due to either a failure of the TCP network
+connection to the node, or possibly an internal failure of
+the daemon itself. We cannot recover from this failure, and
+therefore will terminate the job.
+

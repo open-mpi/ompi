@@ -361,12 +361,16 @@ static void proc_errors(int fd, short args, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
         /* record the first one to fail */
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+            /* output an error message so the user knows what happened */
+            orte_show_help("help-errmgr-base.txt", "node-died", true, pptr->node->name);
+            /* mark the daemon job as failed */
             jdata->state = ORTE_JOB_STATE_COMM_FAILED;
             /* point to the lowest rank to cause the problem */
             orte_set_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, ORTE_ATTR_LOCAL, pptr, OPAL_PTR);
             /* retain the object so it doesn't get free'd */
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
+            /* update our exit code */
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
         }
         /* abort the system */

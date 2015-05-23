@@ -431,10 +431,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
     bool timing_same_as_hdr = false;
 #endif
 
-    if (orte_abnormal_term_ordered) {
-        return;
-    }
-
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
