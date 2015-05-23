@@ -328,8 +328,6 @@ $constants->{MPI_ERR_RMA_SHARED} = 71;
 $constants->{MPI_T_ERR_INVALID} = 72;
 $constants->{MPI_ERR_LASTCODE} = 92;
 
-$constants->{MPI_ERR_SYSRESOURCE} = -2;
-
 $constants->{MPI_IDENT} = 0;
 $constants->{MPI_CONGRUENT} = 1;
 $constants->{MPI_SIMILAR} = 2;
