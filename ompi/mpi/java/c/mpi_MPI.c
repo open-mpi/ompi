@@ -12,7 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,6 +75,7 @@
 
 #include "mpi.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errcode-internal.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
