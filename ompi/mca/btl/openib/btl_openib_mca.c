@@ -714,11 +714,11 @@ int btl_openib_register_mca_params(void)
                   32, &mca_btl_openib_component.use_memalign,
                   REGINT_GE_ZERO));
 
-    mca_btl_openib_component.memalign_threshold = mca_btl_openib_component.eager_limit;
+    mca_btl_openib_component.memalign_threshold = mca_btl_openib_module.super.btl_eager_limit;
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "memalign_threshold",
                                           "Allocating memory more than btl_openib_memalign_threshhold"
-                                          "bytes will automatically be algined to the value of btl_openib_memalign bytes."
+                                          "bytes will automatically be aligned to the value of btl_openib_memalign bytes."
                                           "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
