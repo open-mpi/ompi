@@ -117,6 +117,10 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
                                                  num_groups,
                                                  contg_groups);
     }
+    for( i = 0; i < fh->f_size; i++){
+       free(contg_groups[i].procs_in_contg_group);
+    }
+    free(contg_groups);
  
 
     return OMPI_SUCCESS;
@@ -467,11 +471,6 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
 				   fh->f_comm,
 				   fh->f_comm->c_coll.coll_bcast_module);
    
-    if (NULL != contg_groups){
-        free(contg_groups);
-        contg_groups = NULL;
-    }
-
    return OMPI_SUCCESS;
 }
 

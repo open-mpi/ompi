@@ -369,6 +369,18 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
             for (i=0;i<fh->f_size;i++){
                 adj_matrix[i] = (int *) malloc (fh->f_size *
                                                 sizeof (int ));
+                if (NULL == adj_matrix[i]) {
+                    for (j=0; j<i; j++) {
+                        free(adj_matrix[j]);
+                    }
+                    free(adj_matrix);
+                    free(sorted);
+                    free(all_process);
+                    free(per_process);
+                    free(recvcounts);
+                    free(displs);
+                    return  OMPI_ERR_OUT_OF_RESOURCE;
+                 }
             }
 
             for (i=0;i<fh->f_size;i++){
@@ -418,6 +430,10 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	    if (NULL == column_list){
 		opal_output(1,"Error while allocating column list\n");
                 fclose(fp);
+                for (i=0; i<fh->f_size; i++) {
+                    free(adj_matrix[i]);
+                }
+                free(adj_matrix);
                 free(sorted);
                 free(all_process);
                 free(per_process);
@@ -429,6 +445,10 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	    if (NULL == values){
 		opal_output(1,"Error while allocating values list\n");
                 fclose(fp);
+                for (i=0; i<fh->f_size; i++) {
+                    free(adj_matrix[i]);
+                }
+                free(adj_matrix);
                 free(column_list);
                 free(sorted);
                 free(all_process);
@@ -443,6 +463,10 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	    if (NULL == row_index){
 		opal_output(1,"Error while allocating row_index list\n");
                 fclose(fp);
+                for (i=0; i<fh->f_size; i++) {
+                    free(adj_matrix[i]);
+                }
+                free(adj_matrix);
                 free(values);
                 free(column_list);
                 free(sorted);
@@ -1253,6 +1277,7 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
         displs = (int*) malloc (fh->f_size * sizeof (int));
         if (NULL == displs) {
             opal_output (1, "OUT OF MEMORY\n");
+            free(fview_cnt);
             free(num_entries);
             free(broken_index);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1283,6 +1308,11 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
         opal_output (1, "OUT OF MEMORY\n");
         free(num_entries);
         free(broken_index);
+        if (0 == fh->f_rank%fh->f_aggregator_index) {
+            free(global_fview);
+            free(displs);
+            free(fview_cnt);
+        }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1299,9 +1329,11 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
                 for (j=0; j<i; j++) {
                     free(broken[j]);
                 }
-                free(fview_cnt);
-                free(displs);
-                free(global_fview);
+                if (0 == fh->f_rank%fh->f_aggregator_index) {
+                    free(global_fview);
+                    free(displs);
+                    free(fview_cnt);
+                }
                 free(broken);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
