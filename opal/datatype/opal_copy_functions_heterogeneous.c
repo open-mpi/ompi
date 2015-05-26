@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -281,6 +283,30 @@ COPY_TYPE_HETEROGENEOUS( float16, long double )
 #define copy_float16_heterogeneous NULL
 #endif
 
+#if HAVE_FLOAT__COMPLEX
+// COPY_TYPE_HETEROGENEOUS ( float_complex, float _Complex)
+COPY_2TYPE_HETEROGENEOUS( float_complex, float, float )
+#else
+/* #error No basic type for copy function for opal_datatype_float_complex found */
+#define copy_float_complex_heterogeneous NULL
+#endif
+
+#if HAVE_DOUBLE__COMPLEX
+// COPY_TYPE_HETEROGENEOUS ( double_complex, double _Complex)
+COPY_2TYPE_HETEROGENEOUS( double_complex, double, double )
+#else
+/* #error No basic type for copy function for opal_datatype_double_complex found */
+#define copy_double_complex_heterogeneous NULL
+#endif
+
+#if HAVE_LONG_DOUBLE__COMPLEX
+// COPY_TYPE_HETEROGENEOUS ( long_double_complex, long double _Complex)
+COPY_2TYPE_HETEROGENEOUS( long_double_complex, long double, long double )
+#else
+/* #error No basic type for copy function for opal_datatype_long_double_complex found */
+#define copy_long_double_complex_heterogeneous NULL
+#endif
+
 COPY_TYPE_HETEROGENEOUS (wchar, wchar_t)
 
 /* table of predefined copy functions - one for each MPI type */
@@ -304,6 +330,9 @@ conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PR
    (conversion_fct_t) copy_float8_heterogeneous,             /* OPAL_DATATYPE_FLOAT8      */
    (conversion_fct_t) copy_float12_heterogeneous,            /* OPAL_DATATYPE_FLOAT12     */
    (conversion_fct_t) copy_float16_heterogeneous,            /* OPAL_DATATYPE_FLOAT16     */
+   (conversion_fct_t) copy_float_complex_heterogeneous,      /* OPAL_DATATYPE_FLOAT_COMPLEX */
+   (conversion_fct_t) copy_double_complex_heterogeneous,     /* OPAL_DATATYPE_DOUBLE_COMPLEX */
+   (conversion_fct_t) copy_long_double_complex_heterogeneous,/* OPAL_DATATYPE_LONG_DOUBLE_COMPLEX */
    (conversion_fct_t) copy_cxx_bool_heterogeneous,           /* OPAL_DATATYPE_BOOL        */
    (conversion_fct_t) copy_wchar_heterogeneous,              /* OPAL_DATATYPE_WCHAR       */
    NULL,                                                     /* OPAL_DATATYPE_UNAVAILABLE */
