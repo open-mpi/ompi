@@ -50,6 +50,7 @@ AC_DEFUN([MCA_opal_common_libfabric_CONFIG],[
 
     # This is for components that build with libfabric support
     AC_SUBST(opal_common_libfabric_CPPFLAGS)
+    AC_SUBST(opal_common_libfabric_LDFLAGS)
     AC_SUBST(opal_common_libfabric_LIBADD)
 
     # This is for building the libfabric component itself
@@ -303,7 +304,8 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_SETUP_LIBFABRIC_EXTERNAL],[
                        [opal_common_libfabric_happy=1],
                        [opal_common_libfabric_happy=0])
 
-     opal_common_libfabric_LIBADD="-lfabric"
+    opal_common_libfabric_LDFLAGS="-L$opal_libfabric_libdir"
+    opal_common_libfabric_LIBADD="-lfabric"
 ])
 
 # --------------------------------------------------------
