@@ -10,11 +10,11 @@
 #ifndef BTL_USNIC_TEST_H
 #define BTL_USNIC_TEST_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-typedef int (*ompi_btl_usnic_test_fn_t)(void *ctx);
+typedef int (*opal_btl_usnic_test_fn_t)(void *ctx);
 
-#if OMPI_BTL_USNIC_UNIT_TESTS
+#if OPAL_BTL_USNIC_UNIT_TESTS
 #  define test_out(...) fprintf(stderr, __VA_ARGS__)
 #  define check(a)                                                           \
     do {                                                                     \
@@ -54,10 +54,10 @@ typedef int (*ompi_btl_usnic_test_fn_t)(void *ctx);
         }                                                  \
     } while (0)
 
-extern int ompi_btl_usnic_num_tests_run;
-extern int ompi_btl_usnic_num_tests_passed;
-extern int ompi_btl_usnic_num_tests_failed;
-extern int ompi_btl_usnic_num_tests_skipped;
+extern int opal_btl_usnic_num_tests_run;
+extern int opal_btl_usnic_num_tests_passed;
+extern int opal_btl_usnic_num_tests_failed;
+extern int opal_btl_usnic_num_tests_skipped;
 
 enum test_result {
     TEST_PASSED = 0,
@@ -73,23 +73,23 @@ enum test_result {
 __attribute__((__constructor__))                        \
 static void USNIC_PASTE(usnic_reg_ctor_,__LINE__)(void) \
 {                                                       \
-    ompi_btl_usnic_register_test(name, test_fn, ctx);   \
+    opal_btl_usnic_register_test(name, test_fn, ctx);   \
 }                                                       \
 
-#else /* !OMPI_BTL_USNIC_UNIT_TESTS */
+#else /* !OPAL_BTL_USNIC_UNIT_TESTS */
 #  define test_out(...) do {} while(0)
 #  define USNIC_REGISTER_TEST(name, test_fn, ctx)
 #endif
 
 /* Run all registered tests.  Typically called by an external utility that
  * dlopens the usnic BTL shared object.  See run_usnic_tests.c. */
-void ompi_btl_usnic_run_tests(void);
+void opal_btl_usnic_run_tests(void);
 
-void ompi_btl_usnic_register_test(const char *name,
-                                  ompi_btl_usnic_test_fn_t test_fn,
+void opal_btl_usnic_register_test(const char *name,
+                                  opal_btl_usnic_test_fn_t test_fn,
                                   void *ctx);
 
 /* should be called once, at component close time */
-void ompi_btl_usnic_cleanup_tests(void);
+void opal_btl_usnic_cleanup_tests(void);
 
 #endif /* BTL_USNIC_TEST_H */

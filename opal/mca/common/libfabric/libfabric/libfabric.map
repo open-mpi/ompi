@@ -1,0 +1,13 @@
+FABRIC_1.0 {
+	global:
+		fi_getinfo;
+		fi_freeinfo;
+		fi_dupinfo;
+		fi_fabric;
+		fi_version;
+		fi_strerror;
+		fi_tostr;
+		fi_log_enabled;
+		fi_log;
+	local: *;
+};

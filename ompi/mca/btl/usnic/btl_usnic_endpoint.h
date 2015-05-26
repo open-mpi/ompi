@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,10 +19,10 @@
  * $HEADER$
  */
 
-#ifndef OMPI_BTL_USNIC_ENDPOINT_H
-#define OMPI_BTL_USNIC_ENDPOINT_H
+#ifndef OPAL_BTL_USNIC_ENDPOINT_H
+#define OPAL_BTL_USNIC_ENDPOINT_H
 
-#include <infiniband/verbs.h>
+#include <rdma/fabric.h>
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hotel.h"
@@ -35,8 +35,8 @@ BEGIN_C_DECLS
 /*
  * Forward declarations to avoid include loops
  */
-struct ompi_btl_usnic_module_t;
-struct ompi_btl_usnic_send_segment_t;
+struct opal_btl_usnic_module_t;
+struct opal_btl_usnic_send_segment_t;
 
 /*
  * Have the window size as a compile-time constant that is a power of
@@ -58,27 +58,28 @@ struct ompi_btl_usnic_send_segment_t;
 /*
  * Channel IDs
  */
-typedef enum ompi_btl_usnic_channel_id_t {
+typedef enum opal_btl_usnic_channel_id_t {
     USNIC_PRIORITY_CHANNEL,
     USNIC_DATA_CHANNEL,
     USNIC_NUM_CHANNELS
-} ompi_btl_usnic_channel_id_t;
+} opal_btl_usnic_channel_id_t;
 
-typedef struct ompi_btl_usnic_addr_t {
-    union ibv_gid gid;
-    uint32_t qp_num[USNIC_NUM_CHANNELS];
+typedef struct opal_btl_usnic_modex_t {
+    /* Stored in network order */
     uint32_t ipv4_addr;
-    uint32_t cidrmask;
+    /* Stored in host order */
+    uint32_t ports[USNIC_NUM_CHANNELS];
+    uint32_t netmask;
+    /* Stored in host order */
     uint32_t connectivity_udp_port;
     uint32_t link_speed_mbps;
-    uint16_t mtu;
-    ompi_btl_usnic_seq_t isn;
-    uint8_t mac[6];
-    uint8_t use_udp;
-} ompi_btl_usnic_addr_t;
+    uint16_t max_msg_size;
+    opal_btl_usnic_seq_t isn;
+    uint32_t protocol;
+} opal_btl_usnic_modex_t;
 
-struct ompi_btl_usnic_send_segment_t;
-struct ompi_btl_usnic_proc_t;
+struct opal_btl_usnic_send_segment_t;
+struct opal_btl_usnic_proc_t;
 
 /*
  * This is a descriptor for an incoming fragment that is broken
@@ -90,21 +91,22 @@ struct ompi_btl_usnic_proc_t;
  * This is the largest number of fragments that can possibly be in-flight
  * to us from a particular endpoint because eash chunked fragment will occupy
  * at least two segments, and only WINDOW_SIZE segments can be in flight.
- * OK, so there is an extremely pathological case where we could see 
+ * OK, so there is an extremely pathological case where we could see
  * (WINDOW_SIZE/2)+1 "in flight" at once, but just dropping that last one
  * and waiting for retrans is just fine in this hypothetical hyper-pathological
  * case, which is what we'll do.
  */
 #define MAX_ACTIVE_FRAGS (WINDOW_SIZE/2)
-typedef struct ompi_btl_usnic_rx_frag_info_t {
+typedef struct opal_btl_usnic_rx_frag_info_t {
     uint32_t    rfi_frag_id;    /* ID for this fragment */
     uint32_t    rfi_frag_size;  /* bytes in this fragment */
     uint32_t    rfi_bytes_left; /* bytes remaining to RX in fragment */
+    bool        rfi_data_in_pool; /* data in data_pool if true, else malloced */
+    int         rfi_data_pool;  /* if <0, data malloced, else rx buf pool */
     char       *rfi_data;       /* pointer to assembly area */
-    int         rfi_data_pool;  /* if 0, data malloced, else rx buf pool */
-    ompi_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
+    opal_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
                                           when rfi_data_pool is nonzero */
-} ompi_btl_usnic_rx_frag_info_t;
+} opal_btl_usnic_rx_frag_info_t;
 
 /**
  * An abstraction that represents a connection to a remote process.
@@ -114,13 +116,13 @@ typedef struct ompi_btl_usnic_rx_frag_info_t {
  * connectionless, so no connection is ever established.
  */
 typedef struct mca_btl_base_endpoint_t {
-    opal_list_item_t            super;
+    opal_list_item_t super;
 
     /** BTL module that created this connection */
-    struct ompi_btl_usnic_module_t *endpoint_module;
+    struct opal_btl_usnic_module_t *endpoint_module;
 
     /** proc that owns this endpoint */
-    struct ompi_btl_usnic_proc_t *endpoint_proc;
+    struct opal_btl_usnic_proc_t *endpoint_proc;
     int endpoint_proc_index;    /* index in owning proc's endpoint array */
 
     /** True when proc has been deleted, but still have sends that need ACKs */
@@ -133,59 +135,68 @@ typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t endpoint_ack_li;
 
     /** Remote address information */
-    ompi_btl_usnic_addr_t          endpoint_remote_addr;
+    opal_btl_usnic_modex_t endpoint_remote_modex;
 
-    /** Remote address handle */
-    struct ibv_ah*                   endpoint_remote_ah;
+    /** Remote address handle. Need one for each
+        channel because each remote channel has different dest port */
+    fi_addr_t endpoint_remote_addrs[USNIC_NUM_CHANNELS];
 
     /** Send-related data */
-    bool                             endpoint_ready_to_send;
-    opal_list_t                      endpoint_frag_send_queue;
-    int32_t                          endpoint_send_credits;
-    uint32_t                         endpoint_next_frag_id;
+    bool endpoint_ready_to_send;
+    opal_list_t endpoint_frag_send_queue;
+    int32_t endpoint_send_credits;
+    uint32_t endpoint_next_frag_id;
 
     /** Receive-related data */
-    struct ompi_btl_usnic_rx_frag_info_t *endpoint_rx_frag_info;
+    struct opal_btl_usnic_rx_frag_info_t *endpoint_rx_frag_info;
 
     /** OPAL hotel to track outstanding stends */
-    opal_hotel_t                     endpoint_hotel;
+    opal_hotel_t endpoint_hotel;
 
     /** Sliding window parameters for this peer */
     /* Values for the current proc to send to this endpoint on the
        peer proc */
-    ompi_btl_usnic_seq_t             endpoint_next_seq_to_send; /* n_t */
-    ompi_btl_usnic_seq_t             endpoint_ack_seq_rcvd; /* n_a */
+    opal_btl_usnic_seq_t endpoint_next_seq_to_send; /* n_t */
+    opal_btl_usnic_seq_t endpoint_ack_seq_rcvd; /* n_a */
 
-    struct ompi_btl_usnic_send_segment_t    *endpoint_sent_segs[WINDOW_SIZE];
+    struct opal_btl_usnic_send_segment_t *endpoint_sent_segs[WINDOW_SIZE];
 
     /* Values for the current proc to receive from this endpoint on
        the peer proc */
-    bool                            endpoint_ack_needed;
+    bool endpoint_ack_needed;
 
     /* When we receive a packet that needs an ACK, set this
      * to delay the ACK to allow for piggybacking
      */
-    uint64_t                        endpoint_acktime;
+    uint64_t endpoint_acktime;
 
-    ompi_btl_usnic_seq_t            endpoint_next_contig_seq_to_recv; /* n_r */
-    ompi_btl_usnic_seq_t            endpoint_highest_seq_rcvd; /* n_s */
+    opal_btl_usnic_seq_t endpoint_next_contig_seq_to_recv; /* n_r */
+    opal_btl_usnic_seq_t endpoint_highest_seq_rcvd; /* n_s */
 
-    bool                            endpoint_rcvd_segs[WINDOW_SIZE];
-    uint32_t                        endpoint_rfstart;
+    bool endpoint_rcvd_segs[WINDOW_SIZE];
+    uint32_t endpoint_rfstart;
 
-    bool                            endpoint_connectivity_checked;
-    bool                            endpoint_on_all_endpoints;
+    bool endpoint_connectivity_checked;
+    bool endpoint_on_all_endpoints;
 } mca_btl_base_endpoint_t;
 
-typedef mca_btl_base_endpoint_t ompi_btl_usnic_endpoint_t;
-OBJ_CLASS_DECLARATION(ompi_btl_usnic_endpoint_t);
+typedef mca_btl_base_endpoint_t opal_btl_usnic_endpoint_t;
+OBJ_CLASS_DECLARATION(opal_btl_usnic_endpoint_t);
+
+/*
+ * Helper struct for the asynchornous creation of fi_addr array
+ */
+typedef struct {
+    opal_btl_usnic_endpoint_t *endpoint;
+    opal_btl_usnic_channel_id_t channel_id;
+} opal_btl_usnic_addr_context_t;
 
 /*
  * Flush all pending sends and resends from and endpoint
  */
 void
-ompi_btl_usnic_flush_endpoint(
-    ompi_btl_usnic_endpoint_t *endpoint);
+opal_btl_usnic_flush_endpoint(
+    opal_btl_usnic_endpoint_t *endpoint);
 
 END_C_DECLS
 #endif

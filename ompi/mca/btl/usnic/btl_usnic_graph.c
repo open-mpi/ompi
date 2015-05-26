@@ -7,19 +7,24 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdlib.h>
 
 #include "opal_stdint.h"
 #include "opal/class/opal_pointer_array.h"
-
-#include "ompi/constants.h"
+#include "opal/constants.h"
 
 /* mainly for BTL_ERROR */
+#if BTL_IN_OPAL
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#else
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_graph.h"
@@ -34,7 +39,7 @@
 
 #define MAX_COST INT64_MAX
 
-struct ompi_btl_usnic_edge_t {
+struct opal_btl_usnic_edge_t {
     opal_object_t super;
 
     opal_list_item_t outbound_li;
@@ -59,7 +64,7 @@ struct ompi_btl_usnic_edge_t {
     void *e_data;
 };
 
-struct ompi_btl_usnic_vertex_t {
+struct opal_btl_usnic_vertex_t {
     /** index in the graph's array of vertices */
     int v_index;
 
@@ -73,7 +78,7 @@ struct ompi_btl_usnic_vertex_t {
     opal_list_t in_edges;
 };
 
-struct ompi_btl_usnic_graph_t {
+struct opal_btl_usnic_graph_t {
     /** number of vertices currently in this graph */
     int num_vertices;
 
@@ -87,10 +92,10 @@ struct ompi_btl_usnic_graph_t {
     int sink_idx;
 
     /** user callback to clean up the v_data */
-    ompi_btl_usnic_cleanup_fn_t v_data_cleanup_fn;
+    opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn;
 
     /** user callback to clean up the e_data */
-    ompi_btl_usnic_cleanup_fn_t e_data_cleanup_fn;
+    opal_btl_usnic_cleanup_fn_t e_data_cleanup_fn;
 };
 
 #ifndef MAX
@@ -124,26 +129,26 @@ struct ompi_btl_usnic_graph_t {
     do {                               \
         if ((v) < 0 ||                 \
             (v) >= NUM_VERTICES(g)) {  \
-            return OMPI_ERR_BAD_PARAM; \
+            return OPAL_ERR_BAD_PARAM; \
         }                              \
     } while (0)
 
 /* cast away any constness of &g->vertices b/c the opal_pointer_array API is
  * not const-correct */
 #define V_ID_TO_PTR(g, v_id)                                                  \
-    ((ompi_btl_usnic_vertex_t *)                                              \
+    ((opal_btl_usnic_vertex_t *)                                              \
      opal_pointer_array_get_item((opal_pointer_array_t *)&g->vertices, v_id))
 
 #define FOREACH_OUT_EDGE(g,v_id,e_ptr)                         \
     LIST_FOREACH_CONTAINED(e_ptr,                              \
                            &(V_ID_TO_PTR(g, v_id)->out_edges), \
-                           ompi_btl_usnic_edge_t,              \
+                           opal_btl_usnic_edge_t,              \
                            outbound_li)
 
 #define FOREACH_IN_EDGE(g,v_id,e_ptr)                          \
     LIST_FOREACH_CONTAINED(e_ptr,                              \
                            &(V_ID_TO_PTR(g, v_id)->in_edges),  \
-                           ompi_btl_usnic_edge_t,              \
+                           opal_btl_usnic_edge_t,              \
                            inbound_li)
 
 
@@ -161,20 +166,20 @@ static inline void check_add64_overflow(int64_t a, int64_t b)
            !((b < 0) && (a < (INT64_MIN - b))));
 }
 
-static void edge_constructor(ompi_btl_usnic_edge_t *e)
+static void edge_constructor(opal_btl_usnic_edge_t *e)
 {
     OBJ_CONSTRUCT(&e->outbound_li, opal_list_item_t);
     OBJ_CONSTRUCT(&e->inbound_li, opal_list_item_t);
 }
 
-static void edge_destructor(ompi_btl_usnic_edge_t *e)
+static void edge_destructor(opal_btl_usnic_edge_t *e)
 {
     OBJ_DESTRUCT(&e->outbound_li);
     OBJ_DESTRUCT(&e->inbound_li);
 }
 
-OBJ_CLASS_DECLARATION(ompi_btl_usnic_edge_t);
-OBJ_CLASS_INSTANCE(ompi_btl_usnic_edge_t, opal_object_t,
+OBJ_CLASS_DECLARATION(opal_btl_usnic_edge_t);
+OBJ_CLASS_INSTANCE(opal_btl_usnic_edge_t, opal_object_t,
                    edge_constructor, edge_destructor);
 
 static void dump_vec(const char *name, int *vec, int n)
@@ -223,9 +228,9 @@ static void dump_flow(int *flow, int n)
 }
 
 
-static int get_capacity(ompi_btl_usnic_graph_t *g, int source, int target)
+static int get_capacity(opal_btl_usnic_graph_t *g, int source, int target)
 {
-    ompi_btl_usnic_edge_t *e;
+    opal_btl_usnic_edge_t *e;
 
     CHECK_VERTEX_RANGE(g, source);
     CHECK_VERTEX_RANGE(g, target);
@@ -241,9 +246,9 @@ static int get_capacity(ompi_btl_usnic_graph_t *g, int source, int target)
 }
 
 static int
-set_capacity(ompi_btl_usnic_graph_t *g, int source, int target, int cap)
+set_capacity(opal_btl_usnic_graph_t *g, int source, int target, int cap)
 {
-    ompi_btl_usnic_edge_t *e;
+    opal_btl_usnic_edge_t *e;
 
     CHECK_VERTEX_RANGE(g, source);
     CHECK_VERTEX_RANGE(g, target);
@@ -252,15 +257,15 @@ set_capacity(ompi_btl_usnic_graph_t *g, int source, int target, int cap)
         assert(e->source == source);
         if (e->target == target) {
             e->capacity = cap;
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
 
-    return OMPI_ERR_NOT_FOUND;
+    return OPAL_ERR_NOT_FOUND;
 }
 
-static void free_vertex(ompi_btl_usnic_graph_t *g,
-                        ompi_btl_usnic_vertex_t *v)
+static void free_vertex(opal_btl_usnic_graph_t *g,
+                        opal_btl_usnic_vertex_t *v)
 {
     if (NULL != v) {
         if (NULL != g->v_data_cleanup_fn && NULL != v->v_data) {
@@ -270,22 +275,22 @@ static void free_vertex(ompi_btl_usnic_graph_t *g,
     }
 }
 
-int ompi_btl_usnic_gr_create(ompi_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
-                             ompi_btl_usnic_cleanup_fn_t e_data_cleanup_fn,
-                             ompi_btl_usnic_graph_t **g_out)
+int opal_btl_usnic_gr_create(opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
+                             opal_btl_usnic_cleanup_fn_t e_data_cleanup_fn,
+                             opal_btl_usnic_graph_t **g_out)
 {
     int err;
-    ompi_btl_usnic_graph_t *g = NULL;
+    opal_btl_usnic_graph_t *g = NULL;
 
     if (NULL == g_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *g_out = NULL;
 
     g = calloc(1, sizeof(*g));
     if (NULL == g) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_free_g;
     }
 
@@ -303,24 +308,24 @@ int ompi_btl_usnic_gr_create(ompi_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
     }
 
     *g_out = g;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 out_free_g:
     free(g);
     return err;
 }
 
-int ompi_btl_usnic_gr_free(ompi_btl_usnic_graph_t *g)
+int opal_btl_usnic_gr_free(opal_btl_usnic_graph_t *g)
 {
     int i;
-    ompi_btl_usnic_edge_t *e, *next;
-    ompi_btl_usnic_vertex_t *v;
+    opal_btl_usnic_edge_t *e, *next;
+    opal_btl_usnic_vertex_t *v;
 
     /* remove all edges from all out_edges lists */
     for (i = 0; i < NUM_VERTICES(g); ++i) {
         v = V_ID_TO_PTR(g, i);
         LIST_FOREACH_SAFE_CONTAINED(e, next, &v->out_edges,
-                                    ompi_btl_usnic_edge_t, outbound_li) {
+                                    opal_btl_usnic_edge_t, outbound_li) {
             opal_list_remove_item(&v->out_edges, &e->outbound_li);
             OBJ_RELEASE(e);
         }
@@ -329,7 +334,7 @@ int ompi_btl_usnic_gr_free(ompi_btl_usnic_graph_t *g)
     for (i = 0; i < NUM_VERTICES(g); ++i) {
         v = V_ID_TO_PTR(g, i);
         LIST_FOREACH_SAFE_CONTAINED(e, next, &v->in_edges,
-                                    ompi_btl_usnic_edge_t, inbound_li) {
+                                    opal_btl_usnic_edge_t, inbound_li) {
             opal_list_remove_item(&v->in_edges, &e->inbound_li);
 
             if (NULL != g->e_data_cleanup_fn && NULL != e->e_data) {
@@ -346,41 +351,41 @@ int ompi_btl_usnic_gr_free(ompi_btl_usnic_graph_t *g)
     OBJ_DESTRUCT(&g->vertices);
     free(g);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
-int ompi_btl_usnic_gr_clone(const ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
                             bool copy_user_data,
-                            ompi_btl_usnic_graph_t **g_clone_out)
+                            opal_btl_usnic_graph_t **g_clone_out)
 {
     int err;
     int i;
     int index;
-    ompi_btl_usnic_graph_t *gx;
-    ompi_btl_usnic_edge_t *e;
+    opal_btl_usnic_graph_t *gx;
+    opal_btl_usnic_edge_t *e;
 
     if (NULL == g_clone_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *g_clone_out = NULL;
 
     if (copy_user_data) {
         BTL_ERROR(("user data copy requested but not yet supported"));
         abort();
-        return OMPI_ERR_FATAL;
+        return OPAL_ERR_FATAL;
     }
 
     gx = NULL;
-    err = ompi_btl_usnic_gr_create(NULL, NULL, &gx);
-    if (OMPI_SUCCESS != err) {
+    err = opal_btl_usnic_gr_create(NULL, NULL, &gx);
+    if (OPAL_SUCCESS != err) {
         return err;
     }
     assert(NULL != gx);
 
     /* reconstruct all vertices */
     for (i = 0; i < NUM_VERTICES(g); ++i) {
-        err = ompi_btl_usnic_gr_add_vertex(gx, NULL, &index);
-        if (OMPI_SUCCESS != err) {
+        err = opal_btl_usnic_gr_add_vertex(gx, NULL, &index);
+        if (OPAL_SUCCESS != err) {
             goto out_free_gx;
         }
         assert(index == i);
@@ -391,78 +396,78 @@ int ompi_btl_usnic_gr_clone(const ompi_btl_usnic_graph_t *g,
     for (i = 0; i < NUM_VERTICES(g); ++i) {
         FOREACH_OUT_EDGE(g, i, e) {
             assert(i == e->source);
-            err = ompi_btl_usnic_gr_add_edge(gx, e->source, e->target,
+            err = opal_btl_usnic_gr_add_edge(gx, e->source, e->target,
                                              e->cost, e->capacity, NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 goto out_free_gx;
             }
         }
     }
 
     *g_clone_out = gx;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 out_free_gx:
     /* we don't reach in and manipulate gx's state directly, so it should be
      * safe to use the standard free function */
-    ompi_btl_usnic_gr_free(gx);
+    opal_btl_usnic_gr_free(gx);
     return err;
 }
 
-int ompi_btl_usnic_gr_indegree(const ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_gr_indegree(const opal_btl_usnic_graph_t *g,
                                int vertex)
 {
-    ompi_btl_usnic_vertex_t *v;
+    opal_btl_usnic_vertex_t *v;
 
     v = V_ID_TO_PTR(g, vertex);
     return opal_list_get_size(&v->in_edges);
 }
 
-int ompi_btl_usnic_gr_outdegree(const ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_gr_outdegree(const opal_btl_usnic_graph_t *g,
                                 int vertex)
 {
-    ompi_btl_usnic_vertex_t *v;
+    opal_btl_usnic_vertex_t *v;
 
     v = V_ID_TO_PTR(g, vertex);
     return opal_list_get_size(&v->out_edges);
 }
 
-int ompi_btl_usnic_gr_add_edge(ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_gr_add_edge(opal_btl_usnic_graph_t *g,
                                int from,
                                int to,
                                int64_t cost,
                                int capacity,
                                void *e_data)
 {
-    ompi_btl_usnic_edge_t *e;
-    ompi_btl_usnic_vertex_t *v_from, *v_to;
+    opal_btl_usnic_edge_t *e;
+    opal_btl_usnic_vertex_t *v_from, *v_to;
 
     if (from < 0 || from >= NUM_VERTICES(g)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (to < 0 || to >= NUM_VERTICES(g)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (cost == MAX_COST) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (capacity < 0) {
         /* negative cost is fine, but negative capacity is not currently
          * handled appropriately */
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     FOREACH_OUT_EDGE(g, from, e) {
         assert(e->source == from);
         if (e->target == to) {
-            return OMPI_EXISTS;
+            return OPAL_EXISTS;
         }
     }
 
     /* this reference is owned by the out_edges list */
-    e = OBJ_NEW(ompi_btl_usnic_edge_t);
+    e = OBJ_NEW(opal_btl_usnic_edge_t);
     if (NULL == e) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     e->source   = from;
@@ -478,19 +483,19 @@ int ompi_btl_usnic_gr_add_edge(ompi_btl_usnic_graph_t *g,
     v_to = V_ID_TO_PTR(g, to);
     opal_list_append(&v_to->in_edges, &e->inbound_li);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
-int ompi_btl_usnic_gr_add_vertex(ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
                                  void *v_data,
                                  int *index_out)
 {
-    ompi_btl_usnic_vertex_t *v;
+    opal_btl_usnic_vertex_t *v;
 
     v = calloc(1, sizeof(*v));
     if (NULL == v) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* add to the ptr array early to simplify cleanup in the incredibly rare
@@ -498,8 +503,8 @@ int ompi_btl_usnic_gr_add_vertex(ompi_btl_usnic_graph_t *g,
     v->v_index = opal_pointer_array_add(&g->vertices, v);
     if (-1 == v->v_index) {
         free(v);
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     assert(v->v_index == g->num_vertices);
 
@@ -513,10 +518,10 @@ int ompi_btl_usnic_gr_add_vertex(ompi_btl_usnic_graph_t *g,
         *index_out = v->v_index;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
-int ompi_btl_usnic_gr_order(const ompi_btl_usnic_graph_t *g)
+int opal_btl_usnic_gr_order(const opal_btl_usnic_graph_t *g)
 {
     return NUM_VERTICES(g);
 }
@@ -560,7 +565,7 @@ static void shrink_flow_matrix(int *flow, int old_n, int new_n)
  */
 static int
 bottleneck_path(
-    ompi_btl_usnic_graph_t *gx,
+    opal_btl_usnic_graph_t *gx,
     int n,
     int *pred)
 {
@@ -589,7 +594,7 @@ bottleneck_path(
  *
  * The contents of "pred" are only valid if this routine returns true.
  */
-static bool bellman_ford(ompi_btl_usnic_graph_t *gx,
+static bool bellman_ford(opal_btl_usnic_graph_t *gx,
                          int source,
                          int target,
                          int *pred)
@@ -601,25 +606,25 @@ static bool bellman_ford(ompi_btl_usnic_graph_t *gx,
     bool found_target = false;
 
     if (NULL == gx) {
-        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return false;
     }
     if (NULL == pred) {
-        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return false;
     }
     if (source < 0 || source >= NUM_VERTICES(gx)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (target < 0 || target >= NUM_VERTICES(gx)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* initialize */
-    n = ompi_btl_usnic_gr_order(gx);
+    n = opal_btl_usnic_gr_order(gx);
     dist = malloc(n * sizeof(*dist));
     if (NULL == dist) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         goto out;
     }
     for (i = 0; i < n; ++i) {
@@ -637,7 +642,7 @@ static bool bellman_ford(ompi_btl_usnic_graph_t *gx,
 #endif
 
         for (u = 0; u < NUM_VERTICES(gx); ++u) {
-            ompi_btl_usnic_edge_t *e_ptr;
+            opal_btl_usnic_edge_t *e_ptr;
 
             FOREACH_OUT_EDGE(gx, u, e_ptr) {
                 v = e_ptr->target;
@@ -665,7 +670,7 @@ static bool bellman_ford(ompi_btl_usnic_graph_t *gx,
 
     /* check for negative-cost cycles */
     for (u = 0; u < NUM_VERTICES(gx); ++u) {
-        ompi_btl_usnic_edge_t * e_ptr;
+        opal_btl_usnic_edge_t * e_ptr;
 
         FOREACH_OUT_EDGE(gx, u, e_ptr) {
             v = e_ptr->target;
@@ -711,7 +716,7 @@ out:
  * The graph will be left in an undefined state if an error occurs (though
  * freeing it should still be safe).
  */
-static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
+static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
 {
     int err;
     int order;
@@ -719,14 +724,14 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
     int num_left, num_right;
 
     /* grab size before adding extra vertices */
-    order = ompi_btl_usnic_gr_order(g);
+    order = opal_btl_usnic_gr_order(g);
 
-    err = ompi_btl_usnic_gr_add_vertex(g, NULL, &g->source_idx);
-    if (OMPI_SUCCESS != err) {
+    err = opal_btl_usnic_gr_add_vertex(g, NULL, &g->source_idx);
+    if (OPAL_SUCCESS != err) {
         return err;
     }
-    err = ompi_btl_usnic_gr_add_vertex(g, NULL, &g->sink_idx);
-    if (OMPI_SUCCESS != err) {
+    err = opal_btl_usnic_gr_add_vertex(g, NULL, &g->sink_idx);
+    if (OPAL_SUCCESS != err) {
         return err;
     }
 
@@ -740,8 +745,8 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
     num_left = 0;
     num_right = 0;
     for (u = 0; u < order; ++u) {
-        int inbound = ompi_btl_usnic_gr_indegree(g, u);
-        int outbound = ompi_btl_usnic_gr_outdegree(g, u);
+        int inbound = opal_btl_usnic_gr_indegree(g, u);
+        int outbound = opal_btl_usnic_gr_outdegree(g, u);
 
         if (inbound > 0 && outbound > 0) {
             BTL_ERROR(("graph is not (unidirectionally) bipartite"));
@@ -750,11 +755,11 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
         else if (inbound > 0) {
             /* "right" side of the graph, create edges to the sink */
             ++num_right;
-            err = ompi_btl_usnic_gr_add_edge(g, u, g->sink_idx,
+            err = opal_btl_usnic_gr_add_edge(g, u, g->sink_idx,
                                              0, /* no cost */
                                              /*capacity=*/1,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
             }
@@ -762,11 +767,11 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
         else if (outbound > 0) {
             /* "left" side of the graph, create edges to the source */
             ++num_left;
-            err = ompi_btl_usnic_gr_add_edge(g, g->source_idx, u,
+            err = opal_btl_usnic_gr_add_edge(g, g->source_idx, u,
                                              0, /* no cost */
                                              /*capacity=*/1,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
             }
@@ -776,7 +781,7 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
     /* it doesn't make sense to extend this graph with a source and sink
      * unless */
     if (num_right == 0 || num_left == 0) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* now run through and create "residual" edges as well (i.e., create edges
@@ -784,27 +789,27 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
      * $c_f(u,v)=c(u,v)-f(u,v)$).  Residual edges can exist where no edges
      * exist in the original graph.
      */
-    order = ompi_btl_usnic_gr_order(g); /* need residuals for newly created
+    order = opal_btl_usnic_gr_order(g); /* need residuals for newly created
                                            source/sink edges too */
     for (u = 0; u < order; ++u) {
-        ompi_btl_usnic_edge_t * e_ptr;
+        opal_btl_usnic_edge_t * e_ptr;
         FOREACH_OUT_EDGE(g, u, e_ptr) {
             v = e_ptr->target;
 
             /* (u,v) exists, add (v,u) if not already present.  Cost is
              * negative for these edges because "giving back" flow pays us
              * back any cost already incurred. */
-            err = ompi_btl_usnic_gr_add_edge(g, v, u,
+            err = opal_btl_usnic_gr_add_edge(g, v, u,
                                              -e_ptr->cost,
                                              /*capacity=*/0,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err && OMPI_EXISTS != err) {
+            if (OPAL_SUCCESS != err && OPAL_EXISTS != err) {
                 return err;
             }
         }
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /**
@@ -831,7 +836,7 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
  * The result is an array of (u,v) vertex pairs, where (u,v) is an edge in the
  * original graph which has non-zero flow.
  *
- * Returns OMPI error codes like OMPI_SUCCESS/OMPI_ERR_OUT_OF_RESOURCE.
+ * Returns OMPI error codes like OPAL_SUCCESS/OPAL_ERR_OUT_OF_RESOURCE.
  *
  * This version of the algorithm has a theoretical upper bound on its running
  * time of O(|V|^2 * |E| * f), where f is essentially the maximum flow in the
@@ -848,10 +853,10 @@ static int bipartite_to_flow(ompi_btl_usnic_graph_t *g)
  * the faster running time will be worth the additional implementation
  * complexity.
  */
-static int min_cost_flow_ssp(ompi_btl_usnic_graph_t *gx,
+static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
                              int **flow_out)
 {
-    int err = OMPI_SUCCESS;
+    int err = OPAL_SUCCESS;
     int n;
     int *pred = NULL;
     int *flow = NULL;
@@ -861,24 +866,24 @@ static int min_cost_flow_ssp(ompi_btl_usnic_graph_t *gx,
     GRAPH_DEBUG_OUT(("begin min_cost_flow_ssp()"));
 
     if (NULL == flow_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *flow_out = NULL;
 
-    n = ompi_btl_usnic_gr_order(gx);
+    n = opal_btl_usnic_gr_order(gx);
 
     pred = malloc(n*sizeof(*pred));
     if (NULL == pred) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_error;
     }
 
     /* "flow" is a 2d matrix of current flow values, all initialized to zero */
     flow = calloc(n*n, sizeof(*flow));
     if (NULL == flow) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_error;
     }
 
@@ -909,7 +914,7 @@ static int min_cost_flow_ssp(ompi_btl_usnic_graph_t *gx,
             c = get_capacity(gx, u, v) - cap_f_path;
             assert(c >= 0);
             err = set_capacity(gx, u, v, c);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 BTL_ERROR(("unable to set capacity, missing edge?"));
                 abort();
             }
@@ -917,7 +922,7 @@ static int min_cost_flow_ssp(ompi_btl_usnic_graph_t *gx,
             c = get_capacity(gx, v, u) + cap_f_path;
             assert(c >= 0);
             err = set_capacity(gx, v, u, c);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 BTL_ERROR(("unable to set capacity, missing edge?"));
                 abort();
             }
@@ -935,7 +940,7 @@ out_error:
     goto out;
 }
 
-int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
+int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
                                               int *num_match_edges_out,
                                               int **match_edges_out)
 {
@@ -944,18 +949,18 @@ int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
     int u, v;
     int n;
     int *flow = NULL;
-    ompi_btl_usnic_graph_t *gx = NULL;
+    opal_btl_usnic_graph_t *gx = NULL;
 
     if (NULL == match_edges_out || NULL == num_match_edges_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *num_match_edges_out = 0;
     *match_edges_out = NULL;
 
     /* don't perturb the caller's data structure */
-    err = ompi_btl_usnic_gr_clone(g, false, &gx);
-    if (OMPI_SUCCESS != err) {
-        GRAPH_DEBUG_OUT(("ompi_btl_usnic_gr_clone failed"));
+    err = opal_btl_usnic_gr_clone(g, false, &gx);
+    if (OPAL_SUCCESS != err) {
+        GRAPH_DEBUG_OUT(("opal_btl_usnic_gr_clone failed"));
         goto out;
     }
 
@@ -972,9 +977,9 @@ int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
      * direct knowledge of the flow matrix.
      */
     err = bipartite_to_flow(gx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         GRAPH_DEBUG_OUT(("bipartite_to_flow failed"));
-        OMPI_ERROR_LOG(err);
+        OPAL_ERROR_LOG(err);
         return err;
     }
 
@@ -985,19 +990,19 @@ int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
      * accordingly later on.
      */
     err = min_cost_flow_ssp(gx, &flow);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         GRAPH_DEBUG_OUT(("min_cost_flow_ssp failed"));
         return err;
     }
     assert(NULL != flow);
 
     /* don't care about new edges in gx, only old edges in g */
-    n = ompi_btl_usnic_gr_order(g);
+    n = opal_btl_usnic_gr_order(g);
 
 #if GRAPH_DEBUG
     dump_flow(flow, NUM_VERTICES(gx));
 #endif
-    shrink_flow_matrix(flow, ompi_btl_usnic_gr_order(gx), n);
+    shrink_flow_matrix(flow, opal_btl_usnic_gr_order(gx), n);
 #if GRAPH_DEBUG
     dump_flow(flow, n);
 #endif
@@ -1018,8 +1023,8 @@ int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
     *match_edges_out = malloc(*num_match_edges_out * sizeof(*match_edges_out));
     if (NULL == *match_edges_out) {
         *num_match_edges_out = 0;
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out;
     }
 
@@ -1036,7 +1041,7 @@ int ompi_btl_usnic_solve_bipartite_assignment(const ompi_btl_usnic_graph_t *g,
 
 out:
     free(flow);
-    ompi_btl_usnic_gr_free(gx);
+    opal_btl_usnic_gr_free(gx);
     return err;
 }
 

@@ -149,6 +149,7 @@ m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
          [AC_SUBST(liboshmem_so_version)])
+AC_SUBST(libmca_opal_common_libfabric_so_version)
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)

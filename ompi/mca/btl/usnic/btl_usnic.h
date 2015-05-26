@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,12 +21,11 @@
 /**
  * @file
  */
-#ifndef OMPI_BTL_USNIC_H
-#define OMPI_BTL_USNIC_H
+#ifndef OPAL_BTL_USNIC_H
+#define OPAL_BTL_USNIC_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include <sys/types.h>
-#include <infiniband/verbs.h>
 
 #include "opal_stdint.h"
 #include "opal/util/alfg.h"
@@ -34,13 +33,18 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
-#include "ompi/class/ompi_free_list.h"
+#if BTL_IN_OPAL
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/mpool/grdma/mpool_grdma.h"
+#else
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
+#endif
 
-#include "btl_usnic_libnl_utils.h"
 #include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
@@ -51,25 +55,23 @@ BEGIN_C_DECLS
  * when progression gets called.  It could be incremented by different amounts
  * at other times as needed or as tuning dictates.
  */
-extern uint64_t ompi_btl_usnic_ticks;
+extern uint64_t opal_btl_usnic_ticks;
 static inline uint64_t
 get_nsec(void)
 {
-    return ompi_btl_usnic_ticks;
+    return opal_btl_usnic_ticks;
 }
 
 /* RNG buffer declaration */
-extern opal_rng_buff_t ompi_btl_usnic_rand_buff;
+extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 
 #ifndef container_of
 #define container_of(ptr, type, member) ( \
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
 #endif
 
-/* particularly old versions of verbs do not have this function, which will
- * cause unnecessary build failures on other platforms */
-#if !HAVE_DECL_IBV_EVENT_TYPE_STR
-#define ibv_event_type_str(ev_type) "(ibv_event_type_str unavailable)"
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* MSGDEBUG2 prints 1 line at each BTL entry point */
@@ -101,28 +103,28 @@ extern opal_rng_buff_t ompi_btl_usnic_rand_buff;
 #define WANT_FAIL_TO_RESEND_FRAG 0
 
 #if WANT_RECV_FRAG_DROPS > 0
-#define FAKE_RECV_FRAG_DROP (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_RECV_FRAG_DROPS)
+#define FAKE_RECV_FRAG_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_FRAG_DROPS)
 #else
 #define FAKE_RECV_FRAG_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0
-#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_FAIL_TO_SEND_ACK)
+#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_SEND_ACK)
 #else
 #define FAKE_FAIL_TO_SEND_ACK 0
 #endif
 
 #if WANT_FAIL_TO_RESEND_FRAG > 0
-#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
+#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
 #else
 #define FAKE_FAIL_TO_RESEND_FRAG 0
 #endif
 
 
 /**
- * Verbs UD BTL component.
+ * usnic BTL component
  */
-typedef struct ompi_btl_usnic_component_t {
+typedef struct opal_btl_usnic_component_t {
     /** base BTL component */
     mca_btl_base_component_2_0_0_t super;
 
@@ -130,24 +132,21 @@ typedef struct ompi_btl_usnic_component_t {
      * subsequent fastpath fields */
 
     /** Maximum number of BTL modules */
-    uint32_t max_modules;
+    int max_modules;
     /** Number of available/initialized BTL modules */
-    uint32_t num_modules;
+    int num_modules;
 
     /* Cached hashed version of my RTE proc name (to stuff in
        protocol headers) */
     uint64_t my_hashed_rte_name;
 
     /** array of possible BTLs (>= num_modules elements) */
-    struct ompi_btl_usnic_module_t* usnic_all_modules;
+    struct opal_btl_usnic_module_t* usnic_all_modules;
     /** array of pointers to active BTLs (num_modules elements) */
-    struct ompi_btl_usnic_module_t** usnic_active_modules;
+    struct opal_btl_usnic_module_t** usnic_active_modules;
 
     /** convertor packing threshold */
     int pack_lazy_threshold;
-
-    /** does the stack below us speak UDP or custom-L2? */
-    bool use_udp;
 
     /* vvvvvvvvvv non-fastpath fields go below vvvvvvvvvv */
 
@@ -164,9 +163,6 @@ typedef struct ompi_btl_usnic_component_t {
     bool stats_enabled;
     bool stats_relative;
     int stats_frequency;
-
-    /** GID index to use */
-    int gid_index;
 
     /** Whether we want to use NUMA distances to choose which usNIC
         devices to use for short messages */
@@ -188,7 +184,17 @@ typedef struct ompi_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
-    struct usnic_rtnl_sk *unlsk;
+    /** transport header length for all usNIC devices on this server
+        (it is guaranteed that all usNIC devices on a single server
+        will have the same underlying transport, and therefore the
+        same transport header length) */
+    int transport_header_len;
+    uint32_t transport_protocol;
+
+    /* what UDP port do we want to use?  If 0, the system will pick.
+       If nonzero, it is used as the base -- the final number will be
+       (base+my_local_rank). */
+    int udp_port_base;
 
     /** disable the "cannot find route" warnings (for network setups
         where this is known/acceptable) */
@@ -200,9 +206,6 @@ typedef struct ompi_btl_usnic_component_t {
     int connectivity_ack_timeout;
     int connectivity_num_retries;
 
-    /* ibv_create_ah() (i.e., ARP) timeout */
-    int arp_timeout;
-
     /** how many short packets have to be received before outputting
         the "received short packets" warning? */
     uint32_t max_short_packets;
@@ -210,17 +213,17 @@ typedef struct ompi_btl_usnic_component_t {
     /* Prefix for the connectivity map filename (map will be output if
        the prefix is non-NULL) */
     char *connectivity_map_prefix;
-} ompi_btl_usnic_component_t;
+} opal_btl_usnic_component_t;
 
-OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;
+OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
 
-typedef mca_btl_base_recv_reg_t ompi_btl_usnic_recv_reg_t;
+typedef mca_btl_base_recv_reg_t opal_btl_usnic_recv_reg_t;
 
 /**
  * Size for sequence numbers (just to ensure we use the same size
  * everywhere)
  */
-typedef uint16_t ompi_btl_usnic_seq_t;
+typedef uint16_t opal_btl_usnic_seq_t;
 #define UDSEQ PRIu16
 
 /* sequence number comparison macros that allow for rollover.
@@ -236,17 +239,17 @@ typedef uint16_t ompi_btl_usnic_seq_t;
 /**
  * Register the usnic BTL MCA params
  */
-int ompi_btl_usnic_component_register(void); 
+int opal_btl_usnic_component_register(void);
 
 /**
  * Routine which can be called from a debugger to print module, endpoint,
  * fragment, and segment state to standard output. */
-void ompi_btl_usnic_component_debug(void);
+void opal_btl_usnic_component_debug(void);
 
 /**
  * Called to output the connectivity map
  */
-void ompi_btl_usnic_connectivity_map(void);
+void opal_btl_usnic_connectivity_map(void);
 
 END_C_DECLS
 #endif

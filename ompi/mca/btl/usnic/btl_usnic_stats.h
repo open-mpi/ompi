@@ -13,8 +13,8 @@
  * Statistics for the usnic BTL component.
  */
 
-#ifndef OMPI_BTL_USNIC_STATS_H
-#define OMPI_BTL_USNIC_STATS_H
+#ifndef OPAL_BTL_USNIC_STATS_H
+#define OPAL_BTL_USNIC_STATS_H
 
 #include <sys/time.h>
 
@@ -24,7 +24,7 @@
 /**
  * Struct containing all the statistics that are trackedx
  */
-typedef struct ompi_btl_usnic_module_stats_t {
+typedef struct opal_btl_usnic_module_stats_t {
     bool final_stats;
     uint64_t report_num;
 
@@ -58,24 +58,24 @@ typedef struct ompi_btl_usnic_module_stats_t {
 
     opal_event_t timer_event;
     struct timeval timeout;
-} ompi_btl_usnic_module_stats_t;
+} opal_btl_usnic_module_stats_t;
 
 
 /**
  * Initialize the stats on a module.  Must use "struct
- * ompi_btl_usnic_module_t*" here to avoid an #include cycle.
+ * opal_btl_usnic_module_t*" here to avoid an #include cycle.
  */
-int ompi_btl_usnic_stats_init(struct ompi_btl_usnic_module_t *module);
+int opal_btl_usnic_stats_init(struct opal_btl_usnic_module_t *module);
 
 /**
  * Finalize the stats on a module.  Must use "struct
- * ompi_btl_usnic_module_t*" here to avoid an #include cycle.
+ * opal_btl_usnic_module_t*" here to avoid an #include cycle.
  */
-int ompi_btl_usnic_stats_finalize(struct ompi_btl_usnic_module_t *module);
+int opal_btl_usnic_stats_finalize(struct opal_btl_usnic_module_t *module);
 
 /**
  * Initialize the MPI_T performance variables (for all modules)
  */
-int ompi_btl_usnic_setup_mpit_pvars(void);
+int opal_btl_usnic_setup_mpit_pvars(void);
 
 #endif

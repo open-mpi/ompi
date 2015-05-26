@@ -1,0 +1,170 @@
+.TH fi_provider 7 "2015\-04\-28" "Libfabric Programmer\[aq]s Manual" "Libfabric v1.0.0"
+.SH NAME
+.PP
+Fabric Interface Providers
+.SH OVERVIEW
+.PP
+Conceptually, a fabric provider may be viewed as a local hardware NIC
+driver, though a provider is not limited by this definition.
+The first component of libfabric is a general purpose framework that is
+capable of handling different types of fabric hardware.
+All fabric hardware devices and their software drivers are required to
+support this framework.
+Devices and the drivers that plug into the libfabric framework are
+referred to as fabric providers, or simply providers.
+.PP
+This distribution of libfabric contains the following providers
+(although more may be available via run-time plug-ins):
+.PP
+\f[I]PSM\f[] : High-speed InfiniBand networking from Intel.
+See \f[C]fi_psm\f[](7) for more information.
+.PP
+\f[I]Sockets\f[] : A general purpose provider that can be used on any
+network that supports TCP/UDP sockets.
+This provider is not intended to provide performance improvements over
+regular TCP/UDP sockets, but rather to allow developers to write, test,
+and debug application code even on platforms that do not have high-speed
+networking.
+See \f[C]fi_sockets\f[](7) for more information.
+.PP
+\f[I]usNIC\f[] : Ultra low latency Ethernet networking over Cisco
+userspace VIC adapters.
+See \f[C]fi_usnic\f[](7) for more information.
+.PP
+\f[I]Verbs\f[] : This provider uses the Linux Verbs API for network
+transport.
+Application performance is, obviously expected to be similar to that of
+the native Linux Verbs API.
+Analogous to the Sockets provider, the Verbs provider is intended to
+enable developers to write, test, and debug application code on
+platforms that only have Linux Verbs-based networking.
+See \f[C]fi_verbs\f[](7) for more information.
+.SH PROVIDER REQUIREMENTS
+.PP
+Libfabric provides a general framework for supporting multiple types of
+fabric objects and their related interfaces.
+Fabric providers have a large amount of flexibility in selecting which
+components they are able and willing to support, based on specific
+hardware constraints.
+To assist in the development of applications, libfabric specifies the
+following requirements that must be met by any fabric provider, if
+requested by an application.
+.PP
+Note that the instantiation of a specific fabric object is subject to
+application configuration parameters and need not meet these
+requirements.
+.IP \[bu] 2
+A fabric provider must support at least one endpoint type.
+.IP \[bu] 2
+All endpoints must support the message queue data transfer interface
+(fi_ops_msg).
+.IP \[bu] 2
+An endpoint that advertises support for a specific endpoint capability
+must support the corresponding data transfer interface.
+.IP \[bu] 2
+FI_ATOMIC - fi_ops_atomic
+.IP \[bu] 2
+FI_RMA - fi_ops_rma
+.IP \[bu] 2
+FI_TAGGED - fi_ops_tagged
+.IP \[bu] 2
+Endpoints must support all transmit and receive operations for any data
+transfer interface that they support.
+.IP \[bu] 2
+Exception: If an operation is only usable for an operation that the
+provider does not support, and support for that operation is conveyed
+using some other mechanism, the operation may return
+.RS 2
+.IP \[bu] 2
+FI_ENOSYS.
+For example, if the provider does not support injected data, it can set
+the attribute inject_size = 0, and fail all fi_inject operations.
+.RE
+.IP \[bu] 2
+The framework supplies wrappers around the \[aq]msg\[aq] operations that
+can be used.
+For example, the framework implements the sendv() msg operation by
+calling sendmsg().
+Providers may reference the general operation, and supply on the
+sendmsg() implementation.
+.IP \[bu] 2
+Providers must set all operations to an implementation.
+Function pointers may not be left NULL or uninitialized.
+The framework supplies empty functions that return -FI_ENOSYS which can
+be used for this purpose.
+.IP \[bu] 2
+Endpoints must support the CM interface as follows:
+.IP \[bu] 2
+FI_EP_MSG endpoints must support all CM operations.
+.IP \[bu] 2
+FI_EP_DGRAM endpoints must support CM getname and setname.
+.IP \[bu] 2
+FI_EP_RDM endpoints must support CM getname and setname.
+.IP \[bu] 2
+Providers that support connectionless endpoints must support all AV
+operations (fi_ops_av).
+.IP \[bu] 2
+Providers that support memory registration, must support all MR
+operations (fi_ops_mr).
+.IP \[bu] 2
+Providers should support both completion queues and counters.
+.IP \[bu] 2
+If FI_RMA_EVENT is not supported, counter support is limited to local
+events only.
+.IP \[bu] 2
+Completion queues must support the FI_CQ_FORMAT_CONTEXT and
+FI_CQ_FORMAT_MSG.
+.IP \[bu] 2
+Providers that support FI_REMOTE_CQ_DATA shall support
+FI_CQ_FORMAT_DATA.
+.IP \[bu] 2
+Providers that support FI_TAGGED shall support FI_CQ_FORMAT_TAGGED.
+.IP \[bu] 2
+A provider is expected to be forward compatible, and must be able to be
+compiled against expanded \f[C]fi_xxx_ops\f[] structures that define new
+functions added after the provider was written.
+Any unknown functions must be set to NULL.
+.IP \[bu] 2
+Providers shall document in their man page which features they support,
+and any missing requirements.
+.PP
+Future versions of libfabric will automatically enable a more complete
+set of features for providers that focus their implementation on a
+narrow subset of libfabric capabilities.
+.SH LOGGING INTERFACE
+.PP
+Logging is performed using the FI_ERR, FI_LOG, and FI_DEBUG macros.
+.SS DEFINITIONS
+.IP
+.nf
+\f[C]
+#define\ FI_ERR(prov_name,\ subsystem,\ ...)
+
+#define\ FI_LOG(prov_name,\ prov,\ level,\ subsystem,\ ...)
+
+#define\ FI_DEBUG(prov_name,\ subsystem,\ ...)
+\f[]
+.fi
+.SS ARGUMENTS
+.PP
+\f[I]prov_name\f[] : String representing the provider name.
+.PP
+\f[I]prov\f[] : Provider context structure.
+.PP
+\f[I]level\f[] : Log level associated with log statement.
+.PP
+\f[I]subsystem\f[] : Subsystem being logged from.
+.SS DESCRIPTION
+.PP
+\f[I]FI_ERR\f[] : Always logged.
+.PP
+\f[I]FI_LOG\f[] : Logged if the intended provider, log level, and
+subsystem parameters match the user supplied values.
+.PP
+\f[I]FI_DEBUG\f[] : Logged if configured with the --enable-debug flag.
+.SH SEE ALSO
+.PP
+\f[C]fi_psm\f[](7), \f[C]fi_sockets\f[](7), \f[C]fi_usnic\f[](7),
+\f[C]fi_verbs\f[](7),
+.SH AUTHORS
+OpenFabrics.

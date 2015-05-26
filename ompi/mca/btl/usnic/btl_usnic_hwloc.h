@@ -10,13 +10,13 @@
 #ifndef BTL_USNIC_HWLOC_H
 #define BTL_USNIC_HWLOC_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "btl_usnic_module.h"
 
 
 #if OPAL_HAVE_HWLOC
-int ompi_btl_usnic_hwloc_distance(ompi_btl_usnic_module_t *module);
+int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module);
 #endif
 
 #endif /* BTL_USNIC_HWLOC_H */
