@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -11,6 +12,8 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -359,122 +362,98 @@ int opal_crs_base_self_register_continue_callback(opal_crs_base_self_continue_fn
 static int metadata_extract_next_token(FILE *file, char **token, char **value)
 {
     int exit_status = OPAL_SUCCESS;
-    int max_len = 256;
-    char * line = NULL;
-    int line_len = 0;
-    int c = 0, s = 0, v = 0;
-    char *local_token = NULL;
+    const int max_len = 256;
+    /* NTH: as long as max_len remains small (256 bytes) there is no need
+     * to allocate line on the heap */
+    char line[max_len];
+    int line_len = 0, value_len;
     char *local_value = NULL;
     bool end_of_line = false;
+    char *tmp;
 
-    line = (char *) malloc(sizeof(char) * max_len);
-
- try_again:
     /*
      * If we are at the end of the file, then just return
      */
-    if(0 != feof(file) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
+    do {
+        /*
+         * Other wise grab the next token/value pair
+         */
+        if (NULL == fgets(line, max_len, file) ) {
+            /* the calling code doesn't distinguish error types so
+             * returning OPAL_ERROR on error or EOF is ok. if this
+             * changes re-add the check for EOF. */
+            return OPAL_ERROR;
+        }
 
-    /*
-     * Other wise grab the next token/value pair
-     */
-    if (NULL == fgets(line, max_len, file) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-    line_len = strlen(line);
-    /* Strip off the new line if it it there */
-    if('\n' == line[line_len-1]) {
-        line[line_len-1] = '\0';
-        line_len--;
-        end_of_line = true;
-    }
-    else {
-        end_of_line = false;
-    }
+        line_len = strlen(line);
 
-    /* Ignore lines with just '#' too */
-    if(2 >= line_len)
-        goto try_again;
+        /* Strip off the new line if it is there */
+        end_of_line = ('\n' == line[line_len-1]);
+
+        if (end_of_line) {
+            line[--line_len] = '\0';
+        }
+
+        /* Ignore lines with just '#' too */
+    } while (line_len <= 2);
     
     /*
      * Extract the token from the set
      */
-    for(c = 0; 
-        line[c] != ':' && 
-            c < line_len;
-        ++c) {
-        ;
-    }
-    c += 2; /* For the ' ' and the '\0' */
-    local_token = (char *)malloc(sizeof(char) * (c + 1));
-
-    for(s = 0; s < c; ++s) {
-        local_token[s] = line[s];
+    tmp = strchr (line, ':');
+    if (!tmp) {
+        /* no separator */
+        return OPAL_ERROR;
     }
 
-    local_token[s] = '\0';
-    *token = strdup(local_token);
+    tmp = '\0';
 
-    if( NULL != local_token) {
-        free(local_token);
-        local_token = NULL;
+    *token = strdup (line);
+    local_value = strdup (tmp + 1);
+
+    if (NULL == *token || NULL == local_value) {
+        if (local_value) {
+            free (local_value);
+        }
+
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
+
+    value_len = strlen (local_value) + 1;
 
     /*
      * Extract the value from the set
      */
-    local_value = (char *)malloc(sizeof(char) * (line_len - c + 1));
-    for(v = 0, s = c; 
-        s < line_len;
-        ++s, ++v) {
-        local_value[v] = line[s];
-    }
-
     while(!end_of_line) {
         if (NULL == fgets(line, max_len, file) ) {
             exit_status = OPAL_ERROR;
-            goto cleanup;
+            break;
         }
+
         line_len = strlen(line);
-        /* Strip off the new line if it it there */
-        if('\n' == line[line_len-1]) {
-            line[line_len-1] = '\0';
-            line_len--;
-            end_of_line = true;
+
+        /* Strip off the new line if it is there */
+        end_of_line = ('\n' == line[line_len-1]);
+
+        if (end_of_line) {
+            line[--line_len] = '\0';
         }
-        else {
-            end_of_line = false;
-        }
+
+        value_len += line_len;
         
-        local_value = (char *)realloc(local_value, sizeof(char) * line_len);
-        for(s = 0;
-            s < line_len;
-            ++s, ++v) {
-            local_value[v] = line[s];
+        tmp = (char *) realloc(local_value, value_len);
+        if (NULL == tmp) {
+            exit_status = OPAL_ERR_OUT_OF_RESOURCE;
+            break;
         }
+
+        strcat (local_value, line);
     }
 
-    local_value[v] = '\0';
-    *value = strdup(local_value);
-
- cleanup:
-    if( NULL != local_token) {
-        free(local_token);
-        local_token = NULL;
-    }
-
-    if( NULL != local_value) {
-        free(local_value);
-        local_value = NULL;
-    }
-
-    if( NULL != line) {
-        free(line);
-        line = NULL;
+    if (OPAL_SUCCESS == exit_status) {
+        *value = local_value;
+    } else {
+        free (local_value);
     }
 
     return exit_status;
