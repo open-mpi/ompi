@@ -1393,7 +1393,6 @@ static int create_ep(opal_btl_usnic_module_t* module,
                             struct opal_btl_usnic_channel_t *channel)
 {
     int rc;
-    struct sockaddr *sa;
     struct sockaddr_in *sin;
     size_t addrlen;
     struct fi_info *hint;
@@ -1438,12 +1437,16 @@ static int create_ep(opal_btl_usnic_module_t* module,
         channel->info->caps &= ~(1ULL << 63);
     }
 
+    /* This #if prevents compiler warnings about sa being assigned and
+       not used when NDEBUG is defined */
+#if !defined(NDEBUG)
     /* all of the OMPI code assumes IPv4, but some versions of libfabric will
      * return FI_SOCKADDR instead of FI_SOCKADDR_IN, so we need to do a little
      * bit of sanity checking */
     assert(FI_SOCKADDR_IN == channel->info->addr_format ||
            FI_SOCKADDR == channel->info->addr_format);
     if (FI_SOCKADDR == channel->info->addr_format) {
+        struct sockaddr *sa;
         sa = (struct sockaddr *)channel->info->src_addr;
         assert(AF_INET == sa->sa_family);
     }
@@ -1452,6 +1455,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
 
     /* no matter the version of libfabric, this should hold */
     assert(0 == sin->sin_port);
+#endif
 
     rc = fi_endpoint(module->domain, channel->info, &channel->ep, NULL);
     if (0 != rc || NULL == channel->ep) {
