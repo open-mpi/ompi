@@ -15,6 +15,8 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -427,7 +429,7 @@ void mca_pml_ob1_recv_frag_callback_fin(mca_btl_base_module_t* btl,
         return;
     }
 
-    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FIN);
+    ob1_hdr_ntoh((union mca_pml_ob1_hdr_t *)hdr, MCA_PML_OB1_HDR_TYPE_FIN);
     frag = (mca_pml_ob1_rdma_frag_t *) hdr->hdr_frag.pval;
     frag->cbfunc (frag, hdr->hdr_size);
 }
