@@ -25,6 +25,7 @@
 #define OPAL_BTL_USNIC_MODULE_H
 
 #include <rdma/fabric.h>
+#include <rdma/fi_cm.h>
 #include <rdma/fi_eq.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
