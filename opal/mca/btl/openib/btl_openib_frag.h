@@ -427,14 +427,15 @@ static inline mca_btl_openib_coalesced_frag_t *alloc_coalesced_frag(void)
     do {                                                                \
         opal_free_list_return (to_base_frag(frag)->list,                \
                 (opal_free_list_item_t*)(frag));                        \
-    } while(0);
+    } while(0)
 
-#define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(list)                         \
-    while(!opal_list_is_empty(list)){                                    \
-        opal_list_item_t *frag_item;                                     \
-        frag_item = opal_list_remove_first(list);                        \
-        MCA_BTL_IB_FRAG_RETURN(frag_item);                               \
-    }                                                                    \
+#define MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(list)                        \
+    do {                                                                \
+        opal_list_item_t *_frag_item;                                   \
+        while (NULL != (_frag_item = opal_list_remove_first(list))) {   \
+            MCA_BTL_IB_FRAG_RETURN(_frag_item);                         \
+        }                                                               \
+    } while (0)
 
 struct mca_btl_openib_module_t;
 
