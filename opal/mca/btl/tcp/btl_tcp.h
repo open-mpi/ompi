@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -78,6 +78,7 @@ struct mca_btl_tcp_component_t {
     unsigned short tcp6_listen_port;        /**< IPv6 listen port */
     int tcp6_port_min;                      /**< IPv4 minimum port */
     int tcp6_port_range;                    /**< IPv4 port range */
+    bool tcp6_ignore_link_local;            /**< ignore IPv6 link-local addresses */
 #endif
     /* Port range restriction */
 

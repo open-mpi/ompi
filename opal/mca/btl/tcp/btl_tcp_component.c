@@ -279,6 +279,16 @@ static int mca_btl_tcp_component_register(void)
 
     mca_btl_tcp_param_register_int ("disable_family", NULL, 0, OPAL_INFO_LVL_2,  &mca_btl_tcp_component.tcp_disable_family);
 
+#if OPAL_ENABLE_IPV6
+    mca_btl_tcp_component.tcp6_ignore_link_local = true;
+    (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
+                                           "ignore_ipv6_link_local",
+                                           "ignore IPv6 link-local addresses",
+                                           MCA_BASE_VAR_TYPE_BOOL,
+                                           NULL, 0, 0, OPAL_INFO_LVL_2,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_tcp_component.tcp6_ignore_link_local);
+#endif
+
     return mca_btl_tcp_component_verify();
 }
 
