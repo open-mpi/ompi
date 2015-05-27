@@ -689,7 +689,7 @@ static void mca_btl_openib_endpoint_credits(
 
     /* we don't acquire a WQE for credit message - so decrement.
      * Note: doing it for QP used for credit management */
-    qp_get_wqe(ep, des->order);
+    (void) qp_get_wqe(ep, des->order);
 
     if(check_send_credits(ep, qp) || check_eager_rdma_credits(ep))
         mca_btl_openib_endpoint_send_credits(ep, qp);
