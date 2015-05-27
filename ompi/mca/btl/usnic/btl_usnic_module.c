@@ -1394,6 +1394,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
 {
     int rc;
     struct sockaddr_in *sin;
+    size_t addrlen;
     struct fi_info *hint;
 
     hint = fi_dupinfo(module->fabric_info);
@@ -1435,6 +1436,26 @@ static int create_ep(opal_btl_usnic_module_t* module,
     if (channel->chan_index != USNIC_PRIORITY_CHANNEL) {
         channel->info->caps &= ~(1ULL << 63);
     }
+
+    /* This #if prevents compiler warnings about sa being assigned and
+       not used when NDEBUG is defined */
+#if !defined(NDEBUG)
+    /* all of the OMPI code assumes IPv4, but some versions of libfabric will
+     * return FI_SOCKADDR instead of FI_SOCKADDR_IN, so we need to do a little
+     * bit of sanity checking */
+    assert(FI_SOCKADDR_IN == channel->info->addr_format ||
+           FI_SOCKADDR == channel->info->addr_format);
+    if (FI_SOCKADDR == channel->info->addr_format) {
+        struct sockaddr *sa;
+        sa = (struct sockaddr *)channel->info->src_addr;
+        assert(AF_INET == sa->sa_family);
+    }
+    sin = (struct sockaddr_in *)channel->info->src_addr;
+    assert(sizeof(struct sockaddr_in) == channel->info->src_addrlen);
+
+    /* no matter the version of libfabric, this should hold */
+    assert(0 == sin->sin_port);
+#endif
 
     rc = fi_endpoint(module->domain, channel->info, &channel->ep, NULL);
     if (0 != rc || NULL == channel->ep) {
@@ -1494,6 +1515,30 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "fi_enable() failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Immediately after libfabric v1.0 was released, we implemented support
+     * for fi_getname and changed the behavior of fi_endpoint w.r.t. setting
+     * the src_addr field of the fi_info struct passed in.  Before the change
+     * fi_endpoint would set the src_addr field, including the sin_port field
+     * but calling fi_getname would return -FI_ENOSYS.  Afterwards the address
+     * would not be touched relative to whatever was set by fi_getinfo.  So we
+     * must call fi_getname in that case.
+     */
+    if (0 == sin->sin_port) {
+        addrlen = sizeof(struct sockaddr_in);
+        rc = fi_getname(&channel->ep->fid, channel->info->src_addr, &addrlen);
+        if (0 != rc) {
+            opal_show_help("help-mpi-btl-usnic.txt",
+                           "internal error during init",
+                           true,
+                           opal_process_info.nodename,
+                           module->fabric_info->fabric_attr->name,
+                           "fi_getname() failed", __FILE__, __LINE__,
+                           rc, fi_strerror(-rc));
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        assert(0 != sin->sin_port);
     }
 
     /* actual sizes */
