@@ -15,10 +15,9 @@
 
 /************************************************************************/
 
-/* v1.9 and beyond */
+/* v2.0 and beyond */
 
-#if (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 9) || \
-    (OPAL_MAJOR_VERSION >= 2)
+#if (OPAL_MAJOR_VERSION >= 2)
 
 /* OMPI_ERROR_LOG and friends */
 #  include "opal/util/error.h"
@@ -79,7 +78,7 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 
 /************************************************************************/
 
-/* v1.7 and v1.8 */
+/* v1.7, v1.8, and v1.10 (there was no v1.9) */
 
 #elif (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 7)
 
