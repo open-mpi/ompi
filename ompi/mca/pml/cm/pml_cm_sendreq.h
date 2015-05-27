@@ -168,7 +168,8 @@ do {                                                                    \
             ompi_mpi_local_convertor->master;                           \
         (req_send)->req_base.req_convertor.local_size =                 \
             count * datatype->super.size;                               \
-        (req_send)->req_base.req_convertor.pBaseBuf   = (unsigned char*)buf; \
+        (req_send)->req_base.req_convertor.pBaseBuf   =                 \
+            (unsigned char*)buf + datatype->super.true_lb;              \
         (req_send)->req_base.req_convertor.count      = count;          \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
     } else {                                                            \
