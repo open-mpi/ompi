@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -53,7 +53,10 @@ opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size)
     }
 }
 
-
+/**
+ * BEWARE: Do not use the following macro with composed types such as complex. Instead, use
+ * the COPY_2TYPE_HETEROGENEOUS.
+ */
 #define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
 static int32_t                                                                            \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
@@ -284,7 +287,6 @@ COPY_TYPE_HETEROGENEOUS( float16, long double )
 #endif
 
 #if HAVE_FLOAT__COMPLEX
-// COPY_TYPE_HETEROGENEOUS ( float_complex, float _Complex)
 COPY_2TYPE_HETEROGENEOUS( float_complex, float, float )
 #else
 /* #error No basic type for copy function for opal_datatype_float_complex found */
@@ -292,7 +294,6 @@ COPY_2TYPE_HETEROGENEOUS( float_complex, float, float )
 #endif
 
 #if HAVE_DOUBLE__COMPLEX
-// COPY_TYPE_HETEROGENEOUS ( double_complex, double _Complex)
 COPY_2TYPE_HETEROGENEOUS( double_complex, double, double )
 #else
 /* #error No basic type for copy function for opal_datatype_double_complex found */
@@ -300,7 +301,6 @@ COPY_2TYPE_HETEROGENEOUS( double_complex, double, double )
 #endif
 
 #if HAVE_LONG_DOUBLE__COMPLEX
-// COPY_TYPE_HETEROGENEOUS ( long_double_complex, long double _Complex)
 COPY_2TYPE_HETEROGENEOUS( long_double_complex, long double, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_long_double_complex found */
@@ -311,29 +311,29 @@ COPY_TYPE_HETEROGENEOUS (wchar, wchar_t)
 
 /* table of predefined copy functions - one for each MPI type */
 conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
-   NULL,                                                     /* OPAL_DATATYPE_LOOP        */
-   NULL,                                                     /* OPAL_DATATYPE_END_LOOP    */
-   NULL,                                                     /* OPAL_DATATYPE_LB          */
-   NULL,                                                     /* OPAL_DATATYPE_UB          */
-   (conversion_fct_t) copy_int1_heterogeneous,               /* OPAL_DATATYPE_INT1        */
-   (conversion_fct_t) copy_int2_heterogeneous,               /* OPAL_DATATYPE_INT2        */
-   (conversion_fct_t) copy_int4_heterogeneous,               /* OPAL_DATATYPE_INT4        */
-   (conversion_fct_t) copy_int8_heterogeneous,               /* OPAL_DATATYPE_INT8        */
-   (conversion_fct_t) copy_int16_heterogeneous,              /* OPAL_DATATYPE_INT16       */
-   (conversion_fct_t) copy_int1_heterogeneous,               /* OPAL_DATATYPE_UINT1       */
-   (conversion_fct_t) copy_int2_heterogeneous,               /* OPAL_DATATYPE_UINT2       */
-   (conversion_fct_t) copy_int4_heterogeneous,               /* OPAL_DATATYPE_UINT4       */
-   (conversion_fct_t) copy_int8_heterogeneous,               /* OPAL_DATATYPE_UINT8       */
-   (conversion_fct_t) copy_int16_heterogeneous,              /* OPAL_DATATYPE_UINT16      */
-   (conversion_fct_t) copy_float2_heterogeneous,             /* OPAL_DATATYPE_FLOAT2      */
-   (conversion_fct_t) copy_float4_heterogeneous,             /* OPAL_DATATYPE_FLOAT4      */
-   (conversion_fct_t) copy_float8_heterogeneous,             /* OPAL_DATATYPE_FLOAT8      */
-   (conversion_fct_t) copy_float12_heterogeneous,            /* OPAL_DATATYPE_FLOAT12     */
-   (conversion_fct_t) copy_float16_heterogeneous,            /* OPAL_DATATYPE_FLOAT16     */
-   (conversion_fct_t) copy_float_complex_heterogeneous,      /* OPAL_DATATYPE_FLOAT_COMPLEX */
-   (conversion_fct_t) copy_double_complex_heterogeneous,     /* OPAL_DATATYPE_DOUBLE_COMPLEX */
-   (conversion_fct_t) copy_long_double_complex_heterogeneous,/* OPAL_DATATYPE_LONG_DOUBLE_COMPLEX */
-   (conversion_fct_t) copy_cxx_bool_heterogeneous,           /* OPAL_DATATYPE_BOOL        */
-   (conversion_fct_t) copy_wchar_heterogeneous,              /* OPAL_DATATYPE_WCHAR       */
-   NULL,                                                     /* OPAL_DATATYPE_UNAVAILABLE */
+   [OPAL_DATATYPE_LOOP]                = NULL,
+   [OPAL_DATATYPE_END_LOOP]            = NULL,
+   [OPAL_DATATYPE_LB]                  = NULL,
+   [OPAL_DATATYPE_UB]                  = NULL,
+   [OPAL_DATATYPE_INT1]                = (conversion_fct_t) copy_int1_heterogeneous,
+   [OPAL_DATATYPE_INT2]                = (conversion_fct_t) copy_int2_heterogeneous,
+   [OPAL_DATATYPE_INT4]                = (conversion_fct_t) copy_int4_heterogeneous,
+   [OPAL_DATATYPE_INT8]                = (conversion_fct_t) copy_int8_heterogeneous,
+   [OPAL_DATATYPE_INT16]               = (conversion_fct_t) copy_int16_heterogeneous,
+   [OPAL_DATATYPE_UINT1]               = (conversion_fct_t) copy_int1_heterogeneous,
+   [OPAL_DATATYPE_UINT2]               = (conversion_fct_t) copy_int2_heterogeneous,
+   [OPAL_DATATYPE_UINT4]               = (conversion_fct_t) copy_int4_heterogeneous,
+   [OPAL_DATATYPE_UINT8]               = (conversion_fct_t) copy_int8_heterogeneous,
+   [OPAL_DATATYPE_UINT16]              = (conversion_fct_t) copy_int16_heterogeneous,
+   [OPAL_DATATYPE_FLOAT2]              = (conversion_fct_t) copy_float2_heterogeneous,
+   [OPAL_DATATYPE_FLOAT4]              = (conversion_fct_t) copy_float4_heterogeneous,
+   [OPAL_DATATYPE_FLOAT8]              = (conversion_fct_t) copy_float8_heterogeneous,
+   [OPAL_DATATYPE_FLOAT12]             = (conversion_fct_t) copy_float12_heterogeneous,
+   [OPAL_DATATYPE_FLOAT16]             = (conversion_fct_t) copy_float16_heterogeneous,
+   [OPAL_DATATYPE_FLOAT_COMPLEX]       = (conversion_fct_t) copy_float_complex_heterogeneous,
+   [OPAL_DATATYPE_DOUBLE_COMPLEX]      = (conversion_fct_t) copy_double_complex_heterogeneous,
+   [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = (conversion_fct_t) copy_long_double_complex_heterogeneous,
+   [OPAL_DATATYPE_BOOL]                = (conversion_fct_t) copy_cxx_bool_heterogeneous,
+   [OPAL_DATATYPE_WCHAR]               = (conversion_fct_t) copy_wchar_heterogeneous,
+   [OPAL_DATATYPE_UNAVAILABLE]         = NULL,
 };
