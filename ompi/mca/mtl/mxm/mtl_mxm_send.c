@@ -57,6 +57,17 @@ static inline __opal_attribute_always_inline__ int
 
     size_t *buffer_len = &mxm_send_req->base.data.buffer.length;
 
+#if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+    if (convertor->pDesc && 
+	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
+						  convertor->count)) {
+	    mxm_send_req->base.data.buffer.ptr = convertor->pBaseBuf;
+	    mxm_send_req->base.data.buffer.length = convertor->local_size;
+	    mxm_send_req->base.data_type = MXM_REQ_DATA_BUFFER;
+	    return OMPI_SUCCESS;
+    }
+#endif
+
     opal_convertor_get_packed_size(convertor, buffer_len);
     if (0 == *buffer_len) {
         mxm_send_req->base.data.buffer.ptr = NULL;
