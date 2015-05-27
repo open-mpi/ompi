@@ -54,7 +54,7 @@ extern int opal_util_keyval_yylineno;
 #define YY_NO_UNPUT 1
 #define YY_SKIP_YYWRAP 1
 
-enum {
+enum opal_keyval_parse_state_t {
     OPAL_UTIL_KEYVAL_PARSE_DONE,
     OPAL_UTIL_KEYVAL_PARSE_ERROR,
 
@@ -68,5 +68,6 @@ enum {
 
     OPAL_UTIL_KEYVAL_PARSE_MAX
 };
+typedef enum opal_keyval_parse_state_t opal_keyval_parse_state_t;
 
 #endif
