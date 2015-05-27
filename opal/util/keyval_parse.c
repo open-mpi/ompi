@@ -1,3 +1,23 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
 #include "opal_config.h"
 
@@ -19,7 +39,7 @@ static size_t key_buffer_len = 0;
 static opal_mutex_t keyval_mutex;
 
 static int parse_line(void);
-static int parse_line_new(int first_val);
+static int parse_line_new(opal_keyval_parse_state_t first_val);
 static void parse_error(int num);
 
 static char *env_str = NULL;
@@ -249,31 +269,45 @@ static int save_param_name(const char* prefix, const char* suffix)
 static int add_to_env_str(char *var, char *val)
 {
     int sz, varsz, valsz;
+    void *tmp;
+
+    if (NULL == var) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
     if (NULL != env_str) {
-        varsz = (NULL != var) ? strlen(var) : 0;
+        varsz = strlen(var);
         valsz = (NULL != val) ? strlen(val) : 0;
         sz = strlen(env_str)+varsz+valsz+2;
         if (envsize <= sz) {
             envsize *=2;
-            env_str = realloc(env_str, envsize);
-            memset(env_str + strlen(env_str), 0, envsize/2);
+
+            tmp = realloc(env_str, envsize);
+            if (NULL == tmp) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+            env_str = tmp;
         }
         strcat(env_str, ";");
     } else {
-        env_str = malloc(envsize);
-        memset(env_str, 0, envsize);
+        env_str = calloc(1, envsize);
+        if (NULL == env_str) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
+
     strcat(env_str, var);
     if (NULL != val) {
         strcat(env_str, "=");
         strcat(env_str, val);
     }
-    return 0;
+
+    return OPAL_SUCCESS;
 }
 
-static int parse_line_new(int first_val)
+static int parse_line_new(opal_keyval_parse_state_t first_val)
 {
-    int val;
+    opal_keyval_parse_state_t val;
     char *tmp;
 
     val = first_val;
@@ -307,16 +341,14 @@ static int parse_line_new(int first_val)
         } else if (OPAL_UTIL_KEYVAL_PARSE_ENVVAR == val) {
             save_param_name("-x", "=");
             add_to_env_str(key_buffer, NULL);
+        } else {
+            /* we got something unexpected.  Bonk! */
+            parse_error(6);
+            return OPAL_ERROR;
         }
+
         val = opal_util_keyval_yylex();
     }
 
-    if (OPAL_UTIL_KEYVAL_PARSE_DONE == val ||
-            OPAL_UTIL_KEYVAL_PARSE_NEWLINE == val) {
-        return OPAL_SUCCESS;
-    }
-
-    /* Nope -- we got something unexpected.  Bonk! */
-    parse_error(6);
-    return OPAL_ERROR;
+    return OPAL_SUCCESS;
 }
