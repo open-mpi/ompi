@@ -115,19 +115,11 @@ OBJ_CLASS_INSTANCE(opal_crs_base_ckpt_options_t,
  * Utility functions
  */
 int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***value) {
-    int exit_status = OPAL_SUCCESS;
-    char * loc_token = NULL;
-    char * loc_value = NULL;
     int argc = 0;
 
     /* Dummy check */
-    if( NULL == token ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-    if( NULL == metadata ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
+    if (NULL == token || NULL == metadata) {
+        return OPAL_ERROR;
     }
 
     /*
@@ -135,6 +127,8 @@ int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***valu
      */
     rewind(metadata);
     do {
+        char *loc_token = NULL, *loc_value = NULL;
+
         /* Get next token */
         if( OPAL_SUCCESS != metadata_extract_next_token(metadata, &loc_token, &loc_value) ) {
             break;
@@ -144,13 +138,12 @@ int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***valu
         if(0 == strncmp(token, loc_token, strlen(loc_token)) ) {
             opal_argv_append(&argc, value, loc_value);
         }
-    } while(0 == feof(metadata) );
-    
- cleanup:
-    if (NULL != metadata) {
-        rewind(metadata);
-    }
-    return exit_status;
+
+        free (loc_token);
+        free (loc_value);
+    } while (0 == feof(metadata));
+
+    return OPAL_SUCCESS;
 }
 
 int opal_crs_base_extract_expected_component(FILE *metadata, char ** component_name, int *prev_pid)
