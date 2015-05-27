@@ -36,7 +36,7 @@ AC_DEFUN([OMPI_CHECK_MXM],[
            AS_IF([test ! -z "$with_mxm_libdir" -a "$with_mxm_libdir" != "yes"],
                  [ompi_check_mxm_libdir="$with_mxm_libdir"])
 
-           ompi_check_mxm_extra_libs="-L$ompi_check_mxm_libdir"
+           AS_IF([test ! -z "$ompi_check_mxm_libdir"], [ompi_check_mxm_extra_libs="-L$ompi_check_mxm_libdir"],[])
 
            OMPI_CHECK_PACKAGE([$1],
                               [mxm/api/mxm_api.h],
