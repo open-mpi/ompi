@@ -348,7 +348,7 @@ mca_pml_cm_send(void *buf,
 		convertor.master     = ompi_mpi_local_convertor->master;
 		
 		convertor.local_size = count * datatype->super.size;
-		convertor.pBaseBuf   = (unsigned char*)buf;
+		convertor.pBaseBuf   = (unsigned char*)buf + datatype->super.true_lb;
 		convertor.count      = count;
 		convertor.pDesc      = &datatype->super;
 	} else
@@ -356,7 +356,7 @@ mca_pml_cm_send(void *buf,
 	{
 		ompi_proc = ompi_comm_peer_lookup(comm, dst);
 		opal_convertor_copy_and_prepare_for_send(
-		ompi_proc->super.proc_convertor,
+		ompi_proc->proc_convertor,
 			&datatype->super, count, buf, 0,
 			&convertor);
 	}

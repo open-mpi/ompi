@@ -77,8 +77,9 @@ do {                                                                    \
 #define MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst,          \
                                            ompi_proc)                   \
 do {                                                                    \
-    sendreq = (mca_pml_cm_thin_send_request_t*)                         \
-        opal_free_list_wait (&mca_pml_base_send_requests);              \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);		\
+    sendreq = (mca_pml_cm_thin_send_request_t*)item;			\
     sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN; \
     sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;              \
     sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
@@ -106,8 +107,9 @@ do {                                                                    \
 #define MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst,           \
                                           ompi_proc)                    \
 {                                                                       \
-    sendreq = (mca_pml_cm_hvy_send_request_t*)                          \
-        opal_free_list_wait (&mca_pml_base_send_requests);              \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);		\
+    sendreq = (mca_pml_cm_hvy_send_request_t*) item;			\
     sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY; \
     sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;              \
     sendreq->req_mtl.completion_callback = mca_pml_cm_send_request_completion; \
@@ -167,7 +169,8 @@ do {                                                                    \
             ompi_mpi_local_convertor->master;                           \
         (req_send)->req_base.req_convertor.local_size =                 \
             count * datatype->super.size;                               \
-        (req_send)->req_base.req_convertor.pBaseBuf   = (unsigned char*)buf; \
+        (req_send)->req_base.req_convertor.pBaseBuf   =                 \
+            (unsigned char*)buf + datatype->super.true_lb;              \
         (req_send)->req_base.req_convertor.count      = count;          \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
     } else {                                                            \

@@ -39,7 +39,7 @@
 #include "ompi_config.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "opal/mca/mca.h"
-#include "ompi/mca/pml/pml.h" /* for send_mode enum */
+#include "ompi/mca/pml/pml_constants.h" /* for send_mode enum */
 #include "ompi/request/request.h"
 
 BEGIN_C_DECLS
@@ -425,6 +425,8 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 #define MCA_MTL_BASE_VERSION_2_0_0 \
   MCA_BASE_VERSION_2_0_0, \
   "mtl", 2, 0, 0
+
+OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
 
 /*
  * macro for doing direct call / call through struct

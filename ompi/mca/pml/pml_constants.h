@@ -24,7 +24,7 @@
 #define MCA_PML_CONSTANTS_H
 
 #include "ompi_config.h"
-#include "ompi/mca/mca.h"
+#include "opal/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
 typedef enum {
