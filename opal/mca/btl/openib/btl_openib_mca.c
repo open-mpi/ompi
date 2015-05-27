@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -105,6 +105,8 @@ static int reg_string(const char* param_name,
 {
     int index;
 
+    assert (NULL != storage);
+
     /* The MCA variable system will not change this pointer */
     *storage = (char *) default_value;
     index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
@@ -117,7 +119,7 @@ static int reg_string(const char* param_name,
                                              MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == storage || 0 == strlen(*storage))) {
+    if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == *storage || 0 == strlen(*storage))) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OPAL_ERR_BAD_PARAM;
