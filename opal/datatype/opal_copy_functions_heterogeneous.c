@@ -42,20 +42,33 @@
  */
 
 static inline void
-opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size)
+opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size, size_t count)
 {
     size_t i;
     size_t back_i = size - 1;
     uint8_t *to = (uint8_t*) to_p;
     uint8_t *from = (uint8_t*) from_p;
+
+    /* Do the first element */
     for (i = 0 ; i < size ; i++, back_i--) {
         to[back_i] = from[i];
+    }
+    /* Do all the others if any */
+    while(count > 1) {
+        to += size;
+        from += size;
+        count--;
+        for (i = 0 ; i < size ; i++, back_i--) {
+            to[back_i] = from[i];
+        }
     }
 }
 
 /**
- * BEWARE: Do not use the following macro with composed types such as complex. Instead, use
- * the COPY_2TYPE_HETEROGENEOUS.
+ * BEWARE: Do not use the following macro with composed types such as
+ * complex. As the swap is done using the entire type sizeof, the
+ * wrong endianess translation will be done.  Instead, use the
+ * COPY_2SAMETYPE_HETEROGENEOUS.
  */
 #define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
 static int32_t                                                                            \
@@ -72,10 +85,14 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
                                                                         \
     if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
         (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                    \
-        for( i = 0; i < count; i++ ) {                                  \
-            opal_dt_swap_bytes(to, from, sizeof(TYPE));                 \
-            to += to_extent;                                            \
-            from += from_extent;                                        \
+        if( (to_extent == from_extent) && (to_extent == sizeof(TYPE)) ) { \
+            opal_dt_swap_bytes(to, from, sizeof(TYPE), count);          \
+        } else {                                                        \
+            for( i = 0; i < count; i++ ) {                              \
+                opal_dt_swap_bytes(to, from, sizeof(TYPE), 1);          \
+                to += to_extent;                                        \
+                from += from_extent;                                    \
+            }                                                           \
         }                                                               \
     } else if ((OPAL_PTRDIFF_TYPE)sizeof(TYPE) == to_extent &&          \
                (OPAL_PTRDIFF_TYPE)sizeof(TYPE) == from_extent) {        \
@@ -92,6 +109,44 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
     return count;                                                       \
 }
 
+#define COPY_2SAMETYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
+static int32_t                                                                            \
+copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
+                                const char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
+                                char* to, size_t to_length, OPAL_PTRDIFF_TYPE to_extent,          \
+                                OPAL_PTRDIFF_TYPE *advance)             \
+{                                                                       \
+    uint32_t i;                                                         \
+                                                                        \
+    datatype_check( #TYPE, sizeof(TYPE), sizeof(TYPE), &count,          \
+                   from, from_len, from_extent,                         \
+                   to, to_length, to_extent);                           \
+                                                                        \
+    if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
+        (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                    \
+        if( (to_extent == from_extent) && (to_extent == sizeof(TYPE)) ) { \
+            opal_dt_swap_bytes(to, from, sizeof(TYPE), 2 * count);      \
+        } else {                                                        \
+            for( i = 0; i < count; i++ ) {                              \
+                opal_dt_swap_bytes(to, from, sizeof(TYPE), 2);          \
+                to += to_extent;                                        \
+                from += from_extent;                                    \
+            }                                                           \
+        }                                                               \
+    } else if ((OPAL_PTRDIFF_TYPE)sizeof(TYPE) == to_extent &&          \
+               (OPAL_PTRDIFF_TYPE)sizeof(TYPE) == from_extent) {        \
+         MEMCPY( to, from, count * sizeof(TYPE) );                      \
+    } else {                                                            \
+         /* source or destination are non-contigous */                  \
+         for( i = 0; i < count; i++ ) {                                 \
+             MEMCPY( to, from, sizeof(TYPE) );                          \
+             to += to_extent;                                           \
+             from += from_extent;                                       \
+         }                                                              \
+    }                                                                   \
+    *advance = count * from_extent;                                     \
+    return count;                                                       \
+}
 
 #define COPY_2TYPE_HETEROGENEOUS( TYPENAME, TYPE1, TYPE2 )              \
 static int32_t                                                          \
@@ -114,9 +169,9 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
             TYPE1* to_1, *from_1;                                       \
             TYPE2* to_2, *from_2;                                       \
             to_1 = (TYPE1*) to; from_1 = (TYPE1*) from;                 \
-            opal_dt_swap_bytes(to_1, from_1, sizeof(TYPE1));            \
+            opal_dt_swap_bytes(to_1, from_1, sizeof(TYPE1), 1);         \
             to_2 = (TYPE2*) (to_1 + 1); from_2 = (TYPE2*) (from_1 + 1); \
-            opal_dt_swap_bytes(to_2, from_2, sizeof(TYPE2));            \
+            opal_dt_swap_bytes(to_2, from_2, sizeof(TYPE2), 1);         \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
@@ -287,21 +342,21 @@ COPY_TYPE_HETEROGENEOUS( float16, long double )
 #endif
 
 #if HAVE_FLOAT__COMPLEX
-COPY_2TYPE_HETEROGENEOUS( float_complex, float, float )
+COPY_2SAMETYPE_HETEROGENEOUS( float_complex, float )
 #else
 /* #error No basic type for copy function for opal_datatype_float_complex found */
 #define copy_float_complex_heterogeneous NULL
 #endif
 
 #if HAVE_DOUBLE__COMPLEX
-COPY_2TYPE_HETEROGENEOUS( double_complex, double, double )
+COPY_2SAMETYPE_HETEROGENEOUS( double_complex, double )
 #else
 /* #error No basic type for copy function for opal_datatype_double_complex found */
 #define copy_double_complex_heterogeneous NULL
 #endif
 
 #if HAVE_LONG_DOUBLE__COMPLEX
-COPY_2TYPE_HETEROGENEOUS( long_double_complex, long double, long double )
+COPY_2SAMETYPE_HETEROGENEOUS( long_double_complex, long double )
 #else
 /* #error No basic type for copy function for opal_datatype_long_double_complex found */
 #define copy_long_double_complex_heterogeneous NULL
