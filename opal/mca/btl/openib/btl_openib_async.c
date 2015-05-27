@@ -4,7 +4,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
@@ -170,9 +170,10 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
 {
     struct pollfd *async_pollfd_tmp;
     mca_btl_openib_async_cmd_t cmd;
-    int fd,flags,j;
+    int fd,flags,j,ret;
     /* Got command from main thread */
-    if (read(devices_poll->async_pollfd[0].fd, &cmd, sizeof(mca_btl_openib_async_cmd_t)) < 0) {
+    ret = read(devices_poll->async_pollfd[0].fd, &cmd, sizeof(mca_btl_openib_async_cmd_t));
+    if (sizeof(mca_btl_openib_async_cmd_t) != ret) {
         BTL_ERROR(("Read failed [%d]",errno));
         return OPAL_ERROR;
     }
@@ -328,7 +329,6 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
     int j;
     mca_btl_openib_device_t *device = NULL;
     struct ibv_async_event event;
-    bool xrc_event = false;
     int event_type;
 
     /* We need to find correct device and process this event */
@@ -356,6 +356,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         /* is it XRC event ?*/
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
 #else
+        bool xrc_event = false;
         if (IBV_XRC_QP_EVENT_FLAG & event.event_type) {
             xrc_event = true;
             /* Clean the bitnd handel as usual */
@@ -368,14 +369,14 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 BTL_ERROR(("Alternative path migration event reported"));
                 if (APM_ENABLED) {
                     BTL_ERROR(("Trying to find additional path..."));
-                    if (!xrc_event)
-                        mca_btl_openib_load_apm(event.element.qp,
-                                qp2endpoint(event.element.qp, device));
 #if HAVE_XRC && !OPAL_HAVE_CONNECTX_XRC_DOMAINS
-                    else
+                    if (xrc_event)
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
                                 xrc_qp2endpoint(event.element.xrc_qp_num, device));
+                    else
 #endif
+                        mca_btl_openib_load_apm(event.element.qp,
+                                qp2endpoint(event.element.qp, device));
                 }
                 break;
             case IBV_EVENT_DEVICE_FATAL:
@@ -383,6 +384,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 device->got_fatal_event = true;
                 /* It is not critical to protect the counter */
                 OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
+                /* fall through */
             case IBV_EVENT_CQ_ERR:
             case IBV_EVENT_QP_FATAL:
               if (event_type == IBV_EVENT_QP_FATAL) {
@@ -415,15 +417,13 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 opal_show_help("help-mpi-btl-openib.txt", "of error event",
                     true,opal_process_info.nodename, (int)getpid(),
                     event_type,
-                    openib_event_to_str((enum ibv_event_type)event_type),
-                    xrc_event ? "true" : "false");
+                    openib_event_to_str((enum ibv_event_type)event_type));
                 break;
             case IBV_EVENT_PORT_ERR:
                 opal_show_help("help-mpi-btl-openib.txt", "of error event",
                     true,opal_process_info.nodename, (int)getpid(),
                     event_type,
-                    openib_event_to_str((enum ibv_event_type)event_type),
-                    xrc_event ? "true" : "false");
+                    openib_event_to_str((enum ibv_event_type)event_type));
                 /* Set the flag to indicate port error */
                 device->got_port_event = true;
                 OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
@@ -451,7 +451,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             default:
                 opal_show_help("help-mpi-btl-openib.txt", "of unknown event",
                         true,opal_process_info.nodename, (int)getpid(),
-                        event_type, xrc_event ? "true" : "false");
+                        event_type);
         }
         ibv_ack_async_event(&event);
     } else {
@@ -545,7 +545,7 @@ int btl_openib_async_command_done(int exp)
 {
     int comp;
     if (read(mca_btl_openib_component.async_comp_pipe[0], &comp,
-                sizeof(int)) < 0){
+             sizeof(int)) < (int) sizeof (int)){
         BTL_ERROR(("Failed to read from pipe"));
         return OPAL_ERROR;
     }
