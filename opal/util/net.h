@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,6 +86,18 @@ OPAL_DECLSPEC uint32_t opal_net_prefix2netmask(uint32_t prefixlen);
  *                         false otherwise.
  */
 OPAL_DECLSPEC bool opal_net_islocalhost(const struct sockaddr *addr);
+
+
+/**
+ * Determine if given address is an IPV6 local link address
+ *
+ * Determine if the given IP address is an IPV6 local link address
+ *
+ * @param addr             struct sockaddr_storage of IP address
+ * @return                 true if addr is an IPV6 local link address,
+ *                         false otherwise.
+ */
+OPAL_DECLSPEC bool opal_net_islinklocal(const struct sockaddr_storage *addr);
 
 
 /**
