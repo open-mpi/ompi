@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # Copyright (c) 2014-2015 Research Organization for Information Science
@@ -86,6 +86,13 @@ nodist_libmpi_usempi_la_SOURCES += \
      mpi-tkr-sizeof.f90
 endif
 
+# Note that we invoke some OPAL functions directly in
+# libmpi_usempi.la, so we need to link in the OPAL library directly
+# (pulling it in indirectly via libmpi.la does not work on all
+# platforms).
+libmpi_usempi_la_LIBADD = \
+        $(OMPI_MPIEXT_USEMPI_LIBS) \
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 # Set the library version
 libmpi_usempi_la_LDFLAGS = \
         -version-info $(libmpi_usempi_tkr_so_version) \
