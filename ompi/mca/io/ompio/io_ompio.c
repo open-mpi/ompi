@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -2341,15 +2341,11 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
        if (NULL == sendreq) {
           return OMPI_ERR_OUT_OF_RESOURCE;
        }
-       fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
-       if (NULL == fh->f_procs_in_group) {
-          opal_output (1, "OUT OF MEMORY\n");
-          free(sendreq);
-          return OMPI_ERR_OUT_OF_RESOURCE;
-       }
- 
        //Communicate grouping info
        for( j = 0 ; j < fh->f_procs_per_group; j++){
+	   if (fh->f_procs_in_group[j] == fh->f_rank ) {
+	       continue;
+	   }
            //new aggregator sends new procs_per_group to all its members
 	   MCA_PML_CALL(isend(&fh->f_procs_per_group,
                               1,
@@ -2359,42 +2355,49 @@ int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
                               MCA_PML_BASE_SEND_STANDARD,
                               fh->f_comm,
                               &sendreq[r++]));
-                                                                                                                                                                    //new aggregator sends distribution of process to all its new members
-          MCA_PML_CALL(isend(fh->f_procs_in_group,
-                             fh->f_procs_per_group,
-                             MPI_INT,
-                             fh->f_procs_in_group[j],
-                             OMPIO_PROCS_IN_GROUP_TAG,
-                             MCA_PML_BASE_SEND_STANDARD,
-                             fh->f_comm,
-			     &sendreq[r++]));
- 
-	     }
-
+	   //new aggregator sends distribution of process to all its new members
+	   MCA_PML_CALL(isend(fh->f_procs_in_group,
+			      fh->f_procs_per_group,
+			      MPI_INT,
+			      fh->f_procs_in_group[j],
+			      OMPIO_PROCS_IN_GROUP_TAG,
+			      MCA_PML_BASE_SEND_STANDARD,
+			      fh->f_comm,
+			      &sendreq[r++]));
+	   
        }
-       //All non aggregators
-       //All processes receive initial process distribution from aggregators
-       MCA_PML_CALL(recv(&fh->f_procs_per_group,
-                          1,
-                          MPI_INT,
-                          MPI_ANY_SOURCE,
-                          OMPIO_PROCS_PER_GROUP_TAG,
-                          fh->f_comm,
-			  MPI_STATUS_IGNORE));
-  
-       MCA_PML_CALL(recv(fh->f_procs_in_group,
-                          fh->f_procs_per_group,
-                          MPI_INT,
-                          MPI_ANY_SOURCE,
-                          OMPIO_PROCS_IN_GROUP_TAG,
-                          fh->f_comm,
-			  MPI_STATUS_IGNORE));
-		
-    if(is_new_aggregator) {
-        ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
-        free (sendreq);
     }
-
+    else {
+	//All non aggregators
+	//All processes receive initial process distribution from aggregators
+	MCA_PML_CALL(recv(&fh->f_procs_per_group,
+			  1,
+			  MPI_INT,
+			  MPI_ANY_SOURCE,
+			  OMPIO_PROCS_PER_GROUP_TAG,
+			  fh->f_comm,
+			  MPI_STATUS_IGNORE));
+	
+	fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+	if (NULL == fh->f_procs_in_group) {
+	    opal_output (1, "OUT OF MEMORY\n");
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+	
+	MCA_PML_CALL(recv(fh->f_procs_in_group,
+			  fh->f_procs_per_group,
+			  MPI_INT,
+			  MPI_ANY_SOURCE,
+			  OMPIO_PROCS_IN_GROUP_TAG,
+			  fh->f_comm,
+			  MPI_STATUS_IGNORE));
+    }
+    
+    if(is_new_aggregator) {
+	ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
+	free (sendreq);
+    }
+    
     return OMPI_SUCCESS;	
 }
 
