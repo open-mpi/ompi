@@ -1544,8 +1544,8 @@ static uint64_t calculate_max_reg (const char *device_name)
 
     } else if (!strncmp(device_name, "mlx4", 4)) {
         if (0 == stat("/sys/module/mlx4_core/parameters/log_num_mtt", &statinfo)) {
-            mtts_per_seg = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
-            num_mtt = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
+            mtts_per_seg = 1ull << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
+            num_mtt = 1ull << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
             if (1 == num_mtt) {
                 /* NTH: is 19 a minimum? when log_num_mtt is set to 0 use 19 */
                 num_mtt = 1 << 19;
@@ -1557,7 +1557,7 @@ static uint64_t calculate_max_reg (const char *device_name)
 
     } else if (!strncmp(device_name, "mthca", 5)) {
         if (0 == stat("/sys/module/ib_mthca/parameters/num_mtt", &statinfo)) {
-            mtts_per_seg = 1 << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1, 63);
+            mtts_per_seg = 1ull << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1, 63);
             num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20, (uint64_t) -1);
             reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0, (uint64_t) -1);
 
@@ -3544,7 +3544,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     return;
 
 error:
-    if(endpoint && endpoint->endpoint_proc && endpoint->endpoint_proc->proc_opal)
+    if(endpoint->endpoint_proc && endpoint->endpoint_proc->proc_opal)
         remote_proc = endpoint->endpoint_proc->proc_opal;
 
     /* For iWARP, the TCP connection is tied to the QP once the QP is
