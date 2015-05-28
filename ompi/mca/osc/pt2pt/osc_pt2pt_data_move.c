@@ -4,29 +4,30 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include "osc_rdma.h"
-#include "osc_rdma_header.h"
-#include "osc_rdma_data_move.h"
-#include "osc_rdma_obj_convert.h"
-#include "osc_rdma_frag.h"
-#include "osc_rdma_request.h"
+#include "osc_pt2pt.h"
+#include "osc_pt2pt_header.h"
+#include "osc_pt2pt_data_move.h"
+#include "osc_pt2pt_frag.h"
+#include "osc_pt2pt_request.h"
 
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
@@ -34,23 +35,22 @@
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/align.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/memchecker.h"
 
 /**
- * struct osc_rdma_accumulate_data_t:
+ * struct osc_pt2pt_accumulate_data_t:
  *
  * @brief Data associated with an in-progress accumulation operation.
  */
-struct osc_rdma_accumulate_data_t {
+struct osc_pt2pt_accumulate_data_t {
     opal_list_item_t super;
-    ompi_osc_rdma_module_t* module;
+    ompi_osc_pt2pt_module_t* module;
     void *target;
     void *source;
     size_t source_len;
@@ -61,16 +61,16 @@ struct osc_rdma_accumulate_data_t {
     ompi_op_t *op;
     int request_count;
 };
-typedef struct osc_rdma_accumulate_data_t osc_rdma_accumulate_data_t;
+typedef struct osc_pt2pt_accumulate_data_t osc_pt2pt_accumulate_data_t;
 
-static void osc_rdma_accumulate_data_constructor (osc_rdma_accumulate_data_t *acc_data)
+static void osc_pt2pt_accumulate_data_constructor (osc_pt2pt_accumulate_data_t *acc_data)
 {
     acc_data->source = NULL;
     acc_data->datatype = NULL;
     acc_data->op = NULL;
 }
 
-static void osc_rdma_accumulate_data_destructor (osc_rdma_accumulate_data_t *acc_data)
+static void osc_pt2pt_accumulate_data_destructor (osc_pt2pt_accumulate_data_t *acc_data)
 {
     if (acc_data->source) {
         /* the source buffer is always alloc'd */
@@ -86,12 +86,12 @@ static void osc_rdma_accumulate_data_destructor (osc_rdma_accumulate_data_t *acc
     }
 }
 
-OBJ_CLASS_DECLARATION(osc_rdma_accumulate_data_t);
-OBJ_CLASS_INSTANCE(osc_rdma_accumulate_data_t, opal_list_item_t, osc_rdma_accumulate_data_constructor,
-                   osc_rdma_accumulate_data_destructor);
+OBJ_CLASS_DECLARATION(osc_pt2pt_accumulate_data_t);
+OBJ_CLASS_INSTANCE(osc_pt2pt_accumulate_data_t, opal_list_item_t, osc_pt2pt_accumulate_data_constructor,
+                   osc_pt2pt_accumulate_data_destructor);
 
 /**
- * osc_rdma_pending_acc_t:
+ * osc_pt2pt_pending_acc_t:
  *
  * @brief Keep track of accumulate and cswap operations that are
  * waiting on the accumulate lock.
@@ -102,23 +102,23 @@ OBJ_CLASS_INSTANCE(osc_rdma_accumulate_data_t, opal_list_item_t, osc_rdma_accumu
  * accumulate operations will arrive. This structure keep track of
  * those operations.
  */
-struct osc_rdma_pending_acc_t {
+struct osc_pt2pt_pending_acc_t {
     opal_list_item_t super;
-    ompi_osc_rdma_header_t header;
+    ompi_osc_pt2pt_header_t header;
     int source;
     void *data;
     size_t data_len;
     ompi_datatype_t *datatype;
 };
-typedef struct osc_rdma_pending_acc_t osc_rdma_pending_acc_t;
+typedef struct osc_pt2pt_pending_acc_t osc_pt2pt_pending_acc_t;
 
-static void osc_rdma_pending_acc_constructor (osc_rdma_pending_acc_t *pending)
+static void osc_pt2pt_pending_acc_constructor (osc_pt2pt_pending_acc_t *pending)
 {
     pending->data = NULL;
     pending->datatype = NULL;
 }
 
-static void osc_rdma_pending_acc_destructor (osc_rdma_pending_acc_t *pending)
+static void osc_pt2pt_pending_acc_destructor (osc_pt2pt_pending_acc_t *pending)
 {
     if (NULL != pending->data) {
         free (pending->data);
@@ -129,10 +129,10 @@ static void osc_rdma_pending_acc_destructor (osc_rdma_pending_acc_t *pending)
     }
 }
 
-OBJ_CLASS_DECLARATION(osc_rdma_pending_acc_t);
-OBJ_CLASS_INSTANCE(osc_rdma_pending_acc_t, opal_list_item_t,
-                   osc_rdma_pending_acc_constructor, osc_rdma_pending_acc_destructor);
-/* end ompi_osc_rdma_pending_acc_t class */
+OBJ_CLASS_DECLARATION(osc_pt2pt_pending_acc_t);
+OBJ_CLASS_INSTANCE(osc_pt2pt_pending_acc_t, opal_list_item_t,
+                   osc_pt2pt_pending_acc_constructor, osc_pt2pt_pending_acc_destructor);
+/* end ompi_osc_pt2pt_pending_acc_t class */
 
 /**
  * @brief Class for large datatype descriptions
@@ -141,26 +141,26 @@ OBJ_CLASS_INSTANCE(osc_rdma_pending_acc_t, opal_list_item_t,
  * (datatypes that do not fit in an eager fragment). The structure is designed
  * to take advantage of the small datatype description code path.
  */
-struct ompi_osc_rdma_ddt_buffer_t {
+struct ompi_osc_pt2pt_ddt_buffer_t {
     /** allows this class to be stored in the buffer garbage collection
      * list */
     opal_list_item_t super;
 
-    /** OSC RDMA module */
-    ompi_osc_rdma_module_t *module;
+    /** OSC PT2PT module */
+    ompi_osc_pt2pt_module_t *module;
     /** source of this header */
     int source;
     /** header + datatype data */
-    ompi_osc_rdma_header_t *header;
+    ompi_osc_pt2pt_header_t *header;
 };
-typedef struct ompi_osc_rdma_ddt_buffer_t ompi_osc_rdma_ddt_buffer_t;
+typedef struct ompi_osc_pt2pt_ddt_buffer_t ompi_osc_pt2pt_ddt_buffer_t;
 
-static void ompi_osc_rdma_ddt_buffer_constructor (ompi_osc_rdma_ddt_buffer_t *ddt_buffer)
+static void ompi_osc_pt2pt_ddt_buffer_constructor (ompi_osc_pt2pt_ddt_buffer_t *ddt_buffer)
 {
     ddt_buffer->header = NULL;
 }
 
-static void ompi_osc_rdma_ddt_buffer_destructor (ompi_osc_rdma_ddt_buffer_t *ddt_buffer)
+static void ompi_osc_pt2pt_ddt_buffer_destructor (ompi_osc_pt2pt_ddt_buffer_t *ddt_buffer)
 {
     if (ddt_buffer->header) {
         free (ddt_buffer->header);
@@ -168,10 +168,10 @@ static void ompi_osc_rdma_ddt_buffer_destructor (ompi_osc_rdma_ddt_buffer_t *ddt
     }
 }
 
-OBJ_CLASS_DECLARATION(ompi_osc_rdma_ddt_buffer_t);
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_ddt_buffer_t, opal_list_item_t, ompi_osc_rdma_ddt_buffer_constructor,
-                   ompi_osc_rdma_ddt_buffer_destructor);
-/* end ompi_osc_rdma_ddt_buffer_t class */
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_ddt_buffer_t);
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_ddt_buffer_t, opal_list_item_t, ompi_osc_pt2pt_ddt_buffer_constructor,
+                   ompi_osc_pt2pt_ddt_buffer_destructor);
+/* end ompi_osc_pt2pt_ddt_buffer_t class */
 
 /**
  * datatype_buffer_length:
@@ -199,11 +199,11 @@ static inline int datatype_buffer_length (ompi_datatype_t *datatype, int count)
 }
 
 /**
- * ompi_osc_rdma_control_send:
+ * ompi_osc_pt2pt_control_send:
  *
  * @brief send a control message as part of a fragment
  *
- * @param[in]  module  - OSC RDMA module
+ * @param[in]  module  - OSC PT2PT module
  * @param[in]  target  - Target peer's rank
  * @param[in]  data    - Data to send
  * @param[in]  len     - Length of data
@@ -214,34 +214,30 @@ static inline int datatype_buffer_length (ompi_datatype_t *datatype, int count)
  * caller will still need to explicitly flush (either to everyone or
  * to a target) before this is sent.
  */
-int ompi_osc_rdma_control_send (ompi_osc_rdma_module_t *module, int target,
+int ompi_osc_pt2pt_control_send (ompi_osc_pt2pt_module_t *module, int target,
                                void *data, size_t len)
 {
-    ompi_osc_rdma_frag_t *frag;
+    ompi_osc_pt2pt_frag_t *frag;
     char *ptr;
     int ret;
 
-    OPAL_THREAD_LOCK(&module->lock);
-
-    ret = ompi_osc_rdma_frag_alloc(module, target, len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, len, &frag, &ptr);
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
         memcpy (ptr, data, len);
 
-        ret = ompi_osc_rdma_frag_finish(module, frag);
+        ret = ompi_osc_pt2pt_frag_finish(module, frag);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
 
-static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
+static int ompi_osc_pt2pt_control_send_unbuffered_cb (ompi_request_t *request)
 {
     void *ctx = request->req_complete_cb_data;
-    ompi_osc_rdma_module_t *module;
+    ompi_osc_pt2pt_module_t *module;
 
     /* get module pointer and data */
-    module = *(ompi_osc_rdma_module_t **)ctx;
+    module = *(ompi_osc_pt2pt_module_t **)ctx;
 
     /* mark this send as complete */
     mark_outgoing_completion (module);
@@ -250,17 +246,17 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
     free (ctx);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
 
 /**
- * ompi_osc_rdma_control_send_unbuffered:
+ * ompi_osc_pt2pt_control_send_unbuffered:
  *
  * @brief Send an unbuffered control message to a peer.
  *
- * @param[in] module - OSC RDMA module
+ * @param[in] module - OSC PT2PT module
  * @param[in] target - Target rank
  * @param[in] data   - Data to send
  * @param[in] len    - Length of data
@@ -272,16 +268,16 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
  * from its peer). The buffer specified by data will be available
  * when this call returns.
  */
-int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
+int ompi_osc_pt2pt_control_send_unbuffered(ompi_osc_pt2pt_module_t *module,
                                           int target, void *data, size_t len)
 {
     void *ctx, *data_copy;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma: sending unbuffered fragment to %d", target));
+                         "osc pt2pt: sending unbuffered fragment to %d", target));
 
     /* allocate a temporary buffer for this send */
-    ctx = malloc (sizeof(ompi_osc_rdma_module_t*) + len);
+    ctx = malloc (sizeof(ompi_osc_pt2pt_module_t*) + len);
     if (OPAL_UNLIKELY(NULL == ctx)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -291,12 +287,12 @@ int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
     ompi_osc_signal_outgoing (module, MPI_PROC_NULL, 1);
 
     /* store module pointer and data in the buffer */
-    *(ompi_osc_rdma_module_t**)ctx = module;
-    data_copy = (ompi_osc_rdma_module_t**)ctx + 1;
+    *(ompi_osc_pt2pt_module_t**)ctx = module;
+    data_copy = (ompi_osc_pt2pt_module_t**)ctx + 1;
     memcpy (data_copy, data, len);
 
-    return ompi_osc_rdma_isend_w_cb (data_copy, len, MPI_BYTE, target, OSC_RDMA_FRAG_TAG,
-                                     module->comm, ompi_osc_rdma_control_send_unbuffered_cb, ctx);
+    return ompi_osc_pt2pt_isend_w_cb (data_copy, len, MPI_BYTE, target, OSC_PT2PT_FRAG_TAG,
+                                     module->comm, ompi_osc_pt2pt_control_send_unbuffered_cb, ctx);
 }
 
 /**
@@ -305,7 +301,7 @@ int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
  * @brief Utility function that creates a new datatype from a packed
  *        description.
  *
- * @param[in]    module   - OSC RDMA module
+ * @param[in]    module   - OSC PT2PT module
  * @param[in]    peer     - Peer rank
  * @param[out]   datatype - New datatype. Must be released with OBJ_RELEASE.
  * @param[out]   proc     - Optional. Proc for peer.
@@ -313,7 +309,7 @@ int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
  *                          pointer will be updated to the location after the packed
  *                          description.
  */
-static inline int datatype_create (ompi_osc_rdma_module_t *module, int peer, ompi_proc_t **proc, ompi_datatype_t **datatype, void **data)
+static inline int datatype_create (ompi_osc_pt2pt_module_t *module, int peer, ompi_proc_t **proc, ompi_datatype_t **datatype, void **data)
 {
     ompi_datatype_t *new_datatype = NULL;
     ompi_proc_t *peer_proc;
@@ -350,7 +346,7 @@ static inline int datatype_create (ompi_osc_rdma_module_t *module, int peer, omp
  *
  * @shoer Process a put w/ data message
  *
- * @param[in] module     - OSC RDMA module
+ * @param[in] module     - OSC PT2PT module
  * @param[in] source     - Message source
  * @param[in] put_header - Message header + data
  *
@@ -358,14 +354,14 @@ static inline int datatype_create (ompi_osc_rdma_module_t *module, int peer, omp
  * memory region. Note, this function does not handle any bounds
  * checking at the moment.
  */
-static inline int process_put(ompi_osc_rdma_module_t* module, int source,
-                              ompi_osc_rdma_header_put_t* put_header)
+static inline int process_put(ompi_osc_pt2pt_module_t* module, int source,
+                              ompi_osc_pt2pt_header_put_t* put_header)
 {
     char *data = (char*) (put_header + 1);
     ompi_proc_t *proc;
     struct ompi_datatype_t *datatype;
     size_t data_len;
-    void *target = (unsigned char*) module->baseptr + 
+    void *target = (unsigned char*) module->baseptr +
         ((unsigned long) put_header->displacement * module->disp_unit);
     int ret;
 
@@ -381,19 +377,19 @@ static inline int process_put(ompi_osc_rdma_module_t* module, int source,
 
     data_len = put_header->len - ((uintptr_t) data - (uintptr_t) put_header);
 
-    osc_rdma_copy_on_recv (target, data, data_len, proc, put_header->count, datatype);
+    osc_pt2pt_copy_on_recv (target, data, data_len, proc, put_header->count, datatype);
 
     OBJ_RELEASE(datatype);
 
     return put_header->len;
 }
 
-static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
-                                   ompi_osc_rdma_header_put_t* put_header)
+static inline int process_put_long(ompi_osc_pt2pt_module_t* module, int source,
+                                   ompi_osc_pt2pt_header_put_t* put_header)
 {
     char *data = (char*) (put_header + 1);
     struct ompi_datatype_t *datatype;
-    void *target = (unsigned char*) module->baseptr + 
+    void *target = (unsigned char*) module->baseptr +
         ((unsigned long) put_header->displacement * module->disp_unit);
     int ret;
 
@@ -407,7 +403,7 @@ static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
         return ret;
     }
 
-    ret = ompi_osc_rdma_component_irecv (module, target,
+    ret = ompi_osc_pt2pt_component_irecv (module, target,
                                          put_header->count,
                                          datatype, source,
                                          put_header->tag,
@@ -426,7 +422,7 @@ static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
 }
 
 /**
- * osc_rdma_incoming_req_complete:
+ * osc_pt2pt_incoming_req_complete:
  *
  * @brief Completion callback for a receive associate with an access
  *        epoch.
@@ -437,9 +433,9 @@ static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
  *       access epoch completes. When fired this function will increment the
  *       passive or active incoming count.
  */
-static int osc_rdma_incoming_req_complete (ompi_request_t *request)
+static int osc_pt2pt_incoming_req_complete (ompi_request_t *request)
 {
-    ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) request->req_complete_cb_data;
     int rank = MPI_PROC_NULL;
 
     if (request->req_status.MPI_TAG & 0x01) {
@@ -449,21 +445,21 @@ static int osc_rdma_incoming_req_complete (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
 
-struct osc_rdma_get_post_send_cb_data_t {
-    ompi_osc_rdma_module_t *module;
+struct osc_pt2pt_get_post_send_cb_data_t {
+    ompi_osc_pt2pt_module_t *module;
     int peer;
 };
 
-static int osc_rdma_get_post_send_cb (ompi_request_t *request)
+static int osc_pt2pt_get_post_send_cb (ompi_request_t *request)
 {
-    struct osc_rdma_get_post_send_cb_data_t *data =
-        (struct osc_rdma_get_post_send_cb_data_t *) request->req_complete_cb_data;
-    ompi_osc_rdma_module_t *module = data->module;
+    struct osc_pt2pt_get_post_send_cb_data_t *data =
+        (struct osc_pt2pt_get_post_send_cb_data_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = data->module;
     int rank = data->peer;
 
     free (data);
@@ -472,7 +468,7 @@ static int osc_rdma_get_post_send_cb (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
@@ -480,7 +476,7 @@ static int osc_rdma_get_post_send_cb (ompi_request_t *request)
 /**
  * @brief Post a send to match the remote receive for a get operation.
  *
- * @param[in] module   - OSC RDMA module
+ * @param[in] module   - OSC PT2PT module
  * @param[in] source   - Source buffer
  * @param[in] count    - Number of elements in the source buffer
  * @param[in] datatype - Type of source elements.
@@ -491,10 +487,10 @@ static int osc_rdma_get_post_send_cb (ompi_request_t *request)
  *       of a get operation. When this send is complete the get is considered
  *       complete at the target (this process).
  */
-static int osc_rdma_get_post_send (ompi_osc_rdma_module_t *module, void *source, int count,
+static int osc_pt2pt_get_post_send (ompi_osc_pt2pt_module_t *module, void *source, int count,
                                    ompi_datatype_t *datatype, int peer, int tag)
 {
-    struct osc_rdma_get_post_send_cb_data_t *data;
+    struct osc_pt2pt_get_post_send_cb_data_t *data;
 
     data = malloc (sizeof (*data));
     if (OPAL_UNLIKELY(NULL == data)) {
@@ -506,8 +502,8 @@ static int osc_rdma_get_post_send (ompi_osc_rdma_module_t *module, void *source,
      * in an active target epoch) */
     data->peer = (tag & 0x1) ? peer : MPI_PROC_NULL;
 
-    return ompi_osc_rdma_isend_w_cb (source, count, datatype, peer, tag, module->comm,
-                                     osc_rdma_get_post_send_cb, (void *) data);
+    return ompi_osc_pt2pt_isend_w_cb (source, count, datatype, peer, tag, module->comm,
+                                     osc_pt2pt_get_post_send_cb, (void *) data);
 }
 
 /**
@@ -515,12 +511,12 @@ static int osc_rdma_get_post_send (ompi_osc_rdma_module_t *module, void *source,
  *
  * @brief Process a get message from a remote peer
  *
- * @param[in] module     - OSC RDMA module
+ * @param[in] module     - OSC PT2PT module
  * @param[in] target     - Peer process
  * @param[in] get_header - Incoming message header
  */
-static inline int process_get (ompi_osc_rdma_module_t* module, int target,
-                               ompi_osc_rdma_header_get_t* get_header)
+static inline int process_get (ompi_osc_pt2pt_module_t* module, int target,
+                               ompi_osc_pt2pt_header_get_t* get_header)
 {
     char *data = (char *) (get_header + 1);
     struct ompi_datatype_t *datatype;
@@ -539,7 +535,7 @@ static inline int process_get (ompi_osc_rdma_module_t* module, int target,
     }
 
     /* send get data */
-    ret = osc_rdma_get_post_send (module, source, get_header->count, datatype, target, get_header->tag);
+    ret = osc_pt2pt_get_post_send (module, source, get_header->count, datatype, target, get_header->tag);
 
     OBJ_RELEASE(datatype);
 
@@ -547,7 +543,7 @@ static inline int process_get (ompi_osc_rdma_module_t* module, int target,
 }
 
 /**
- * osc_rdma_accumulate_buffer:
+ * osc_pt2pt_accumulate_buffer:
  *
  * @brief Accumulate data into the target buffer.
  *
@@ -559,24 +555,24 @@ static inline int process_get (ompi_osc_rdma_module_t* module, int target,
  * @param[in] datatype   - Type of elements in target buffer
  * @param[in] op         - Operation to be performed
  */
-static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t source_len, ompi_proc_t *proc,
+static inline int osc_pt2pt_accumulate_buffer (void *target, void *source, size_t source_len, ompi_proc_t *proc,
                                               int count, ompi_datatype_t *datatype, ompi_op_t *op)
 {
-    void *buffer = source;
     int ret;
 
     assert (NULL != target && NULL != source);
 
     if (op == &ompi_mpi_op_replace.op) {
-        osc_rdma_copy_on_recv (target, source, source_len, proc, count, datatype);
+        osc_pt2pt_copy_on_recv (target, source, source_len, proc, count, datatype);
         return OMPI_SUCCESS;
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->proc_arch != ompi_proc_local()->proc_arch) {
+    if (proc->super.proc_arch != ompi_proc_local()->super.proc_arch) {
         ompi_datatype_t *primitive_datatype = NULL;
         uint32_t primitive_count;
         size_t buflen;
+        void *buffer;
 
         ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
         primitive_count *= count;
@@ -590,19 +586,18 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        osc_rdma_copy_on_recv (buffer, source, source_len, proc, count, datatype);
-    }
+        osc_pt2pt_copy_on_recv (buffer, source, source_len, proc, primitive_count, primitive_datatype);
+
+        ret = ompi_osc_base_process_op(target, buffer, source_len, datatype,
+                                       count, op);
+
+        free(buffer);
+    } else
 #endif
 
     /* copy the data from the temporary buffer into the user window */
-    ret = ompi_osc_base_process_op(target, buffer, source_len, datatype,
+    ret = ompi_osc_base_process_op(target, source, source_len, datatype,
                                    count, op);
-
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->proc_arch != ompi_proc_local()->proc_arch) {
-        free(buffer);
-    }
-#endif
 
     return ret;
 }
@@ -610,7 +605,7 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
 /**
  * @brief Create an accumulate data object.
  *
- * @param[in]  module        - RDMA OSC module
+ * @param[in]  module        - PT2PT OSC module
  * @param[in]  target        - Target for the accumulation
  * @param[in]  source        - Source of accumulate data. Must be allocated with malloc/calloc/etc
  * @param[in]  source_len    - Length of the source buffer in bytes
@@ -622,16 +617,16 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
  * @param[out] acc_data_out  - New accumulation data
  *
  * This function is used to create a copy of the data needed to perform an accumulation.
- * This data should be provided to ompi_osc_rdma_isend_w_cb or ompi_osc_rdma_irecv_w_cb
+ * This data should be provided to ompi_osc_pt2pt_isend_w_cb or ompi_osc_pt2pt_irecv_w_cb
  * as the ctx parameter with accumulate_cb as the cb parameter.
  */
-static int osc_rdma_accumulate_allocate (ompi_osc_rdma_module_t *module, int peer, void *target, void *source, size_t source_len,
+static int osc_pt2pt_accumulate_allocate (ompi_osc_pt2pt_module_t *module, int peer, void *target, void *source, size_t source_len,
                                          ompi_proc_t *proc, int count, ompi_datatype_t *datatype, ompi_op_t *op,
-                                         int request_count, osc_rdma_accumulate_data_t **acc_data_out)
+                                         int request_count, osc_pt2pt_accumulate_data_t **acc_data_out)
 {
-    osc_rdma_accumulate_data_t *acc_data;
+    osc_pt2pt_accumulate_data_t *acc_data;
 
-    acc_data = OBJ_NEW(osc_rdma_accumulate_data_t);
+    acc_data = OBJ_NEW(osc_pt2pt_accumulate_data_t);
     if (OPAL_UNLIKELY(NULL == acc_data)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -659,14 +654,14 @@ static int osc_rdma_accumulate_allocate (ompi_osc_rdma_module_t *module, int pee
  *
  * @param[in] request      - request
  *
- * The request should be created with ompi_osc_rdma_isend_w_cb or ompi_osc_rdma_irecv_w_cb
- * with ctx allocated by osc_rdma_accumulate_allocate. This callback will free the accumulate
+ * The request should be created with ompi_osc_pt2pt_isend_w_cb or ompi_osc_pt2pt_irecv_w_cb
+ * with ctx allocated by osc_pt2pt_accumulate_allocate. This callback will free the accumulate
  * data once the accumulation operation is complete.
  */
 static int accumulate_cb (ompi_request_t *request)
 {
-    struct osc_rdma_accumulate_data_t *acc_data = (struct osc_rdma_accumulate_data_t *) request->req_complete_cb_data;
-    ompi_osc_rdma_module_t *module = acc_data->module;
+    struct osc_pt2pt_accumulate_data_t *acc_data = (struct osc_pt2pt_accumulate_data_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = acc_data->module;
     int rank = MPI_PROC_NULL;
     int ret = OMPI_SUCCESS;
 
@@ -679,48 +674,55 @@ static int accumulate_cb (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    OPAL_THREAD_LOCK(&module->lock);
-    if (0 == --acc_data->request_count) {
+    if (0 == OPAL_THREAD_ADD32(&acc_data->request_count, -1)) {
         /* no more requests needed before the buffer can be accumulated */
 
         if (acc_data->source) {
-            ret = osc_rdma_accumulate_buffer (acc_data->target, acc_data->source, acc_data->source_len,
-                                              acc_data->proc, acc_data->count, acc_data->datatype, acc_data->op);
+            ompi_datatype_t *primitive_datatype = NULL;
+            uint32_t primitive_count;
+
+            assert (NULL != acc_data->target && NULL != acc_data->source);
+
+            ompi_osc_base_get_primitive_type_info(acc_data->datatype, &primitive_datatype, &primitive_count);
+            primitive_count *= acc_data->count;
+
+            if (acc_data->op == &ompi_mpi_op_replace.op) {
+                ret = ompi_datatype_sndrcv(acc_data->source, primitive_count, primitive_datatype, acc_data->target, acc_data->count, acc_data->datatype);
+            } else {
+                ret = ompi_osc_base_process_op(acc_data->target, acc_data->source, acc_data->source_len, acc_data->datatype, acc_data->count, acc_data->op);
+            }
         }
 
         /* drop the accumulate lock */
-        ompi_osc_rdma_accumulate_unlock (module);
+        ompi_osc_pt2pt_accumulate_unlock (module);
 
-        osc_rdma_gc_add_buffer (&acc_data->super);
+        osc_pt2pt_gc_add_buffer (module, &acc_data->super);
     }
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
-
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_pt2pt_gc_add_request (module, request);
 
     return ret;
 }
 
 
-static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_rdma_header_t *header, int source,
+static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_header_t *header, int source,
                                        char *data, size_t data_len, ompi_datatype_t *datatype)
 {
-    osc_rdma_pending_acc_t *pending_acc;
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+    osc_pt2pt_pending_acc_t *pending_acc;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d: queuing accumulate operation", ompi_comm_size (module->comm)));
 
-    pending_acc = OBJ_NEW(osc_rdma_pending_acc_t);
+    pending_acc = OBJ_NEW(osc_pt2pt_pending_acc_t);
     if (OPAL_UNLIKELY(NULL == pending_acc)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    if (!ompi_osc_rdma_no_locks) {
-        /* NTH: ensure we don't leave wait/process_flush/etc until this
-         * accumulate operation is complete. */
-        module->passive_incoming_frag_signal_count[source]++;
-    }
+    /* NTH: ensure we don't leave wait/process_flush/etc until this
+     * accumulate operation is complete. */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     pending_acc->source = source;
 
@@ -738,13 +740,13 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
 
     /* save the header */
     switch (header->base.type) {
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC:
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC:
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
         pending_acc->header.acc = header->acc;
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
+    case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP:
         pending_acc->header.cswap = header->cswap;
         break;
     default:
@@ -753,16 +755,14 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
     }
 
     /* add to the pending acc queue */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->pending_acc, &pending_acc->super);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    OPAL_THREAD_SCOPED_LOCK(&module->lock, opal_list_append (&module->pending_acc, &pending_acc->super));
 
     return OMPI_SUCCESS;
 }
 
 static int replace_cb (ompi_request_t *request)
 {
-    ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) request->req_complete_cb_data;
     int rank = MPI_PROC_NULL;
 
     if (request->req_status.MPI_TAG & 0x01) {
@@ -772,20 +772,20 @@ static int replace_cb (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     /* unlock the accumulate lock */
-    ompi_osc_rdma_accumulate_unlock (module);
+    ompi_osc_pt2pt_accumulate_unlock (module);
 
     return OMPI_SUCCESS;
 }
 
 /**
- * ompi_osc_rdma_acc_start:
+ * ompi_osc_pt2pt_acc_start:
  *
  * @brief Start an accumulate with data operation.
  *
- * @param[in] module     - OSC RDMA module
+ * @param[in] module     - OSC PT2PT module
  * @param[in] source     - Source rank
  * @param[in] data       - Accumulate data
  * @param[in] data_len   - Length of the accumulate data
@@ -795,10 +795,10 @@ static int replace_cb (ompi_request_t *request)
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
-static int ompi_osc_rdma_acc_start (ompi_osc_rdma_module_t *module, int source, void *data, size_t data_len,
-                                    ompi_datatype_t *datatype, ompi_osc_rdma_header_acc_t *acc_header)
+static int ompi_osc_pt2pt_acc_start (ompi_osc_pt2pt_module_t *module, int source, void *data, size_t data_len,
+                                    ompi_datatype_t *datatype, ompi_osc_pt2pt_header_acc_t *acc_header)
 {
-    void *target = (unsigned char*) module->baseptr + 
+    void *target = (unsigned char*) module->baseptr +
         ((unsigned long) acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
     ompi_proc_t *proc;
@@ -807,22 +807,22 @@ static int ompi_osc_rdma_acc_start (ompi_osc_rdma_module_t *module, int source, 
     proc = ompi_comm_peer_lookup(module->comm, source);
     assert (NULL != proc);
 
-    ret = osc_rdma_accumulate_buffer (target, data, data_len, proc, acc_header->count,
+    ret = osc_pt2pt_accumulate_buffer (target, data, data_len, proc, acc_header->count,
                                       datatype, op);
 
     OBJ_RELEASE(op);
 
-    ompi_osc_rdma_accumulate_unlock (module);
+    ompi_osc_pt2pt_accumulate_unlock (module);
 
     return ret;
 }
 
 /**
- * ompi_osc_rdma_acc_start:
+ * ompi_osc_pt2pt_acc_start:
  *
  * @brief Start a long accumulate operation.
  *
- * @param[in] module     - OSC RDMA module
+ * @param[in] module     - OSC PT2PT module
  * @param[in] source     - Source rank
  * @param[in] datatype   - Accumulation datatype
  * @param[in] acc_header - Accumulate header
@@ -830,9 +830,9 @@ static int ompi_osc_rdma_acc_start (ompi_osc_rdma_module_t *module, int source, 
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
-static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int source, ompi_datatype_t *datatype,
-                                         ompi_osc_rdma_header_acc_t *acc_header) {
-    struct osc_rdma_accumulate_data_t *acc_data;
+static int ompi_osc_pt2pt_acc_long_start (ompi_osc_pt2pt_module_t *module, int source, ompi_datatype_t *datatype,
+                                         ompi_osc_pt2pt_header_acc_t *acc_header) {
+    struct osc_pt2pt_accumulate_data_t *acc_data;
     size_t buflen;
     void *buffer;
     ompi_proc_t *proc;
@@ -844,14 +844,14 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_acc_long_start starting..."));
+                         "ompi_osc_pt2pt_acc_long_start starting..."));
 
     proc = ompi_comm_peer_lookup(module->comm, source);
     assert (NULL != proc);
 
     do {
         if (op == &ompi_mpi_op_replace.op) {
-            ret = ompi_osc_rdma_irecv_w_cb (target, acc_header->count, datatype, source,
+            ret = ompi_osc_pt2pt_irecv_w_cb (target, acc_header->count, datatype, source,
                                             acc_header->tag, module->comm, NULL,
                                             replace_cb, module);
             break;
@@ -873,14 +873,14 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
             break;
         }
 
-        ret = osc_rdma_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
+        ret = osc_pt2pt_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
                                             datatype, op, 1, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             free (buffer);
             break;
         }
 
-        ret = ompi_osc_rdma_irecv_w_cb (buffer, primitive_count, primitive_datatype, source,
+        ret = ompi_osc_pt2pt_irecv_w_cb (buffer, primitive_count, primitive_datatype, source,
                                         acc_header->tag, module->comm, NULL, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
@@ -890,18 +890,18 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
     OBJ_RELEASE(op);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ompi_osc_rdma_accumulate_unlock (module);
+        ompi_osc_pt2pt_accumulate_unlock (module);
     }
 
     return ret;
 }
 
 /**
- * ompi_osc_rdma_gacc_start:
+ * ompi_osc_pt2pt_gacc_start:
  *
  * @brief Start a accumulate with data + get operation.
  *
- * @param[in] module         - OSC RDMA module
+ * @param[in] module         - OSC PT2PT module
  * @param[in] source         - Source rank
  * @param[in] data           - Accumulate data. Must be allocated on the heap.
  * @param[in] data_len       - Length of the accumulate data
@@ -911,13 +911,13 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
-static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source, void *data, size_t data_len,
-                                     ompi_datatype_t *datatype, ompi_osc_rdma_header_acc_t *acc_header)
+static int ompi_osc_pt2pt_gacc_start (ompi_osc_pt2pt_module_t *module, int source, void *data, size_t data_len,
+                                     ompi_datatype_t *datatype, ompi_osc_pt2pt_header_acc_t *acc_header)
 {
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
-    struct osc_rdma_accumulate_data_t *acc_data;
+    struct osc_pt2pt_accumulate_data_t *acc_data;
     ompi_proc_t *proc;
     int ret;
 
@@ -925,13 +925,13 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
     assert (NULL != proc);
 
     do {
-        ret = osc_rdma_accumulate_allocate (module, source, target, data, data_len, proc, acc_header->count,
+        ret = osc_pt2pt_accumulate_allocate (module, source, target, data, data_len, proc, acc_header->count,
                                             datatype, op, 1, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
-        ret = ompi_osc_rdma_isend_w_cb (target, acc_header->count, datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_isend_w_cb (target, acc_header->count, datatype, source, acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
@@ -941,18 +941,18 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
     OBJ_RELEASE(op);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ompi_osc_rdma_accumulate_unlock (module);
+        ompi_osc_pt2pt_accumulate_unlock (module);
     }
 
     return ret;
 }
 
 /**
- * ompi_osc_rdma_gacc_long_start:
+ * ompi_osc_pt2pt_gacc_long_start:
  *
  * @brief Start a long accumulate + get operation.
  *
- * @param[in] module         - OSC RDMA module
+ * @param[in] module         - OSC PT2PT module
  * @param[in] source         - Source rank
  * @param[in] datatype       - Accumulation datatype
  * @param[in] acc_header     - Accumulate header
@@ -960,13 +960,13 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
-static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source, ompi_datatype_t *datatype,
-                                     ompi_osc_rdma_header_acc_t *acc_header)
+static int ompi_osc_gacc_long_start (ompi_osc_pt2pt_module_t *module, int source, ompi_datatype_t *datatype,
+                                     ompi_osc_pt2pt_header_acc_t *acc_header)
 {
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
-    struct osc_rdma_accumulate_data_t *acc_data;
+    struct osc_pt2pt_accumulate_data_t *acc_data;
     ompi_datatype_t *primitive_datatype;
     ompi_request_t *recv_request;
     uint32_t primitive_count;
@@ -995,20 +995,20 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
 
         primitive_count *= acc_header->count;
 
-        ret = osc_rdma_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
+        ret = osc_pt2pt_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
                                             datatype, op, 2, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
-        ret = ompi_osc_rdma_irecv_w_cb (buffer, acc_header->count, datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_irecv_w_cb (buffer, acc_header->count, datatype, source, acc_header->tag,
                                         module->comm, &recv_request, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
             break;
         }
 
-        ret = ompi_osc_rdma_isend_w_cb (target, primitive_count, primitive_datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_isend_w_cb (target, primitive_count, primitive_datatype, source, acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             /* cancel the receive and free the accumulate data */
@@ -1021,18 +1021,18 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
     OBJ_RELEASE(op);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ompi_osc_rdma_accumulate_unlock (module);
+        ompi_osc_pt2pt_accumulate_unlock (module);
     }
 
     return ret;
 }
 
 /**
- * ompi_osc_rdma_cswap_start:
+ * ompi_osc_pt2pt_cswap_start:
  *
  * @brief Start a compare and swap operation
  *
- * @param[in] module       - OSC RDMA module
+ * @param[in] module       - OSC PT2PT module
  * @param[in] source       - Source rank
  * @param[in] data         - Compare and swap data
  * @param[in] data_len     - Length of the compare and swap data. Must be exactly
@@ -1043,8 +1043,8 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
-static int ompi_osc_rdma_cswap_start (ompi_osc_rdma_module_t *module, int source, void *data, ompi_datatype_t *datatype,
-                                      ompi_osc_rdma_header_cswap_t *cswap_header)
+static int ompi_osc_pt2pt_cswap_start (ompi_osc_pt2pt_module_t *module, int source, void *data, ompi_datatype_t *datatype,
+                                      ompi_osc_pt2pt_header_cswap_t *cswap_header)
 {
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) cswap_header->displacement * module->disp_unit);
@@ -1073,64 +1073,64 @@ static int ompi_osc_rdma_cswap_start (ompi_osc_rdma_module_t *module, int source
         mark_incoming_completion (module, (cswap_header->tag & 0x1) ? source : MPI_PROC_NULL);
 
         if (0 == memcmp (target, compare_addr, datatype_size)) {
-            osc_rdma_copy_on_recv (target, origin_addr, datatype_size, proc, 1, datatype);
+            osc_pt2pt_copy_on_recv (target, origin_addr, datatype_size, proc, 1, datatype);
         }
     } while (0);
 
-    ompi_osc_rdma_accumulate_unlock (module);
+    ompi_osc_pt2pt_accumulate_unlock (module);
 
     return ret;
 }
 
 /**
- * ompi_osc_rdma_progress_pending_acc:
+ * ompi_osc_pt2pt_progress_pending_acc:
  *
  * @brief Progress one pending accumulation or compare and swap operation.
  *
- * @param[in] module   - OSC RDMA module
+ * @param[in] module   - OSC PT2PT module
  *
  * If the accumulation lock can be aquired progress one pending
  * accumulate or compare and swap operation.
  */
-int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
+int ompi_osc_pt2pt_progress_pending_acc (ompi_osc_pt2pt_module_t *module)
 {
-    osc_rdma_pending_acc_t *pending_acc;
+    osc_pt2pt_pending_acc_t *pending_acc;
     int ret;
 
     /* try to aquire the lock. it will be unlocked when the accumulate or cswap
      * operation completes */
-    if (ompi_osc_rdma_accumulate_trylock (module)) {
+    if (ompi_osc_pt2pt_accumulate_trylock (module)) {
         return OMPI_SUCCESS;
     }
 
-    pending_acc = (osc_rdma_pending_acc_t *) opal_list_remove_first (&module->pending_acc);
+    pending_acc = (osc_pt2pt_pending_acc_t *) opal_list_remove_first (&module->pending_acc);
     if (OPAL_UNLIKELY(NULL == pending_acc)) {
         /* called without any pending accumulation operations */
-        ompi_osc_rdma_accumulate_unlock (module);
+        ompi_osc_pt2pt_accumulate_unlock (module);
         return OMPI_SUCCESS;
     }
 
     switch (pending_acc->header.base.type) {
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC:
-        ret = ompi_osc_rdma_acc_start (module, pending_acc->source, pending_acc->data, pending_acc->data_len,
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC:
+        ret = ompi_osc_pt2pt_acc_start (module, pending_acc->source, pending_acc->data, pending_acc->data_len,
                                        pending_acc->datatype, &pending_acc->header.acc);
         free (pending_acc->data);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
-        ret = ompi_osc_rdma_acc_long_start (module, pending_acc->source, pending_acc->datatype,
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
+        ret = ompi_osc_pt2pt_acc_long_start (module, pending_acc->source, pending_acc->datatype,
                                             &pending_acc->header.acc);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
-        ret = ompi_osc_rdma_gacc_start (module, pending_acc->source, pending_acc->data,
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC:
+        ret = ompi_osc_pt2pt_gacc_start (module, pending_acc->source, pending_acc->data,
                                         pending_acc->data_len, pending_acc->datatype,
                                         &pending_acc->header.acc);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
         ret = ompi_osc_gacc_long_start (module, pending_acc->source, pending_acc->datatype,
                                         &pending_acc->header.acc);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
-        ret = ompi_osc_rdma_cswap_start (module, pending_acc->source, pending_acc->data,
+    case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP:
+        ret = ompi_osc_pt2pt_cswap_start (module, pending_acc->source, pending_acc->data,
                                          pending_acc->datatype, &pending_acc->header.cswap);
         break;
     default:
@@ -1139,10 +1139,8 @@ int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
         assert (0);
     }
 
-    if (!ompi_osc_rdma_no_locks) {
-        /* signal that an operation is complete */
-        mark_incoming_completion (module, pending_acc->source);
-    }
+    /* signal that an operation is complete */
+    mark_incoming_completion (module, pending_acc->source);
 
     pending_acc->data = NULL;
     OBJ_RELEASE(pending_acc);
@@ -1150,8 +1148,8 @@ int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
     return ret;
 }
 
-static inline int process_acc (ompi_osc_rdma_module_t *module, int source,
-                               ompi_osc_rdma_header_acc_t *acc_header)
+static inline int process_acc (ompi_osc_pt2pt_module_t *module, int source,
+                               ompi_osc_pt2pt_header_acc_t *acc_header)
 {
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
@@ -1171,12 +1169,12 @@ static inline int process_acc (ompi_osc_rdma_module_t *module, int source,
     data_len = acc_header->len - ((char*) data - (char*) acc_header);
 
     /* try to aquire the accumulate lock */
-    if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
-        ret = ompi_osc_rdma_acc_start (module, source, data, data_len, datatype,
+    if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
+        ret = ompi_osc_pt2pt_acc_start (module, source, data, data_len, datatype,
                                        acc_header);
     } else {
         /* couldn't aquire the accumulate lock so queue up the accumulate operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header,
+        ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
                                           source, data, data_len, datatype);
     }
 
@@ -1186,8 +1184,8 @@ static inline int process_acc (ompi_osc_rdma_module_t *module, int source,
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
 
-static inline int process_acc_long (ompi_osc_rdma_module_t* module, int source,
-                                    ompi_osc_rdma_header_acc_t* acc_header)
+static inline int process_acc_long (ompi_osc_pt2pt_module_t* module, int source,
+                                    ompi_osc_pt2pt_header_acc_t* acc_header)
 {
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
@@ -1203,11 +1201,11 @@ static inline int process_acc_long (ompi_osc_rdma_module_t* module, int source,
         return ret;
     }
 
-    if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
-        ret = ompi_osc_rdma_acc_long_start (module, source, datatype, acc_header);
+    if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
+        ret = ompi_osc_pt2pt_acc_long_start (module, source, datatype, acc_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header, source,
+        ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header, source,
                                           NULL, 0, datatype);
     }
 
@@ -1217,13 +1215,14 @@ static inline int process_acc_long (ompi_osc_rdma_module_t* module, int source,
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
 
-static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
-                                  ompi_osc_rdma_header_acc_t *acc_header)
+static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
+                                  ompi_osc_pt2pt_header_acc_t *acc_header)
 {
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     void *buffer = NULL;
     uint64_t data_len;
+    ompi_proc_t * proc;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1231,30 +1230,35 @@ static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
                          ompi_comm_rank(module->comm),
                          source));
 
-    ret = datatype_create (module, source, NULL, &datatype, (void **) &data);
+    ret = datatype_create (module, source, &proc, &datatype, (void **) &data);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
 
     data_len = acc_header->len - ((char*) data - (char*) acc_header);
 
-    if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
+    if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
         /* make a copy of the data since the buffer needs to be returned */
         if (data_len) {
+            ompi_datatype_t *primitive_datatype = NULL;
+            uint32_t primitive_count;
             buffer = malloc (data_len);
             if (OPAL_UNLIKELY(NULL == buffer)) {
                 OBJ_RELEASE(datatype);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            memcpy (buffer, data, data_len);
+            ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
+            primitive_count *= acc_header->count;
+
+            osc_pt2pt_copy_on_recv (buffer, data, data_len, proc, primitive_count, primitive_datatype);
         }
 
-        ret = ompi_osc_rdma_gacc_start (module, source, buffer, data_len, datatype,
+        ret = ompi_osc_pt2pt_gacc_start (module, source, buffer, data_len, datatype,
                                         acc_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header,
+        ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
                                           source, data, data_len, datatype);
     }
 
@@ -1264,8 +1268,8 @@ static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
 
-static inline int process_get_acc_long(ompi_osc_rdma_module_t *module, int source,
-                                       ompi_osc_rdma_header_acc_t *acc_header)
+static inline int process_get_acc_long(ompi_osc_pt2pt_module_t *module, int source,
+                                       ompi_osc_pt2pt_header_acc_t *acc_header)
 {
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
@@ -1281,11 +1285,11 @@ static inline int process_get_acc_long(ompi_osc_rdma_module_t *module, int sourc
         return ret;
     }
 
-    if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
+    if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
         ret = ompi_osc_gacc_long_start (module, source, datatype, acc_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header,
+        ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
                                           source, NULL, 0, datatype);
     }
 
@@ -1296,8 +1300,8 @@ static inline int process_get_acc_long(ompi_osc_rdma_module_t *module, int sourc
 }
 
 
-static inline int process_cswap (ompi_osc_rdma_module_t *module, int source,
-                                 ompi_osc_rdma_header_cswap_t *cswap_header)
+static inline int process_cswap (ompi_osc_pt2pt_module_t *module, int source,
+                                 ompi_osc_pt2pt_header_cswap_t *cswap_header)
 {
     char *data = (char*) (cswap_header + 1);
     struct ompi_datatype_t *datatype;
@@ -1313,11 +1317,11 @@ static inline int process_cswap (ompi_osc_rdma_module_t *module, int source,
         return ret;
     }
 
-    if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
-        ret = ompi_osc_rdma_cswap_start (module, source, data, datatype, cswap_header);
+    if (0 == ompi_osc_pt2pt_accumulate_trylock (module)) {
+        ret = ompi_osc_pt2pt_cswap_start (module, source, data, datatype, cswap_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) cswap_header, source,
+        ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) cswap_header, source,
                                           data, 2 * datatype->super.size, datatype);
     }
 
@@ -1327,129 +1331,117 @@ static inline int process_cswap (ompi_osc_rdma_module_t *module, int source,
     return (OMPI_SUCCESS == ret) ? (int) cswap_header->len : ret;
 }
 
-static inline int process_complete (ompi_osc_rdma_module_t *module, int source,
-                                    ompi_osc_rdma_header_complete_t *complete_header)
+static inline int process_complete (ompi_osc_pt2pt_module_t *module, int source,
+                                    ompi_osc_pt2pt_header_complete_t *complete_header)
 {
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma:  process_complete got complete message from %d. expected fragment count %d. "
+                         "osc pt2pt:  process_complete got complete message from %d. expected fragment count %d. "
                          "current signal count %d. current incomming count: %d",
                          source, complete_header->frag_count, module->active_incoming_frag_signal_count,
                          module->active_incoming_frag_count));
 
-    OPAL_THREAD_LOCK(&module->lock);
-
     /* the current fragment is not part of the frag_count so we need to add it here */
-    module->active_incoming_frag_signal_count += complete_header->frag_count + 1;
-    module->num_complete_msgs++;
+    OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_signal_count,
+                      complete_header->frag_count + 1);
 
-    if (0 == module->num_complete_msgs) {
+
+    if (0 == OPAL_THREAD_ADD32((int32_t *) &module->num_complete_msgs, 1)) {
         opal_condition_broadcast (&module->cond);
     }
-
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     return sizeof (*complete_header);
 }
 
 /* flush and unlock headers cannot be processed from the request callback
  * because some btls do not provide re-entrant progress functions. these
- * fragment will be progressed by the rdma component's progress function */
-static inline int process_flush (ompi_osc_rdma_module_t *module, int source,
-                                 ompi_osc_rdma_header_flush_t *flush_header)
+ * fragment will be progressed by the pt2pt component's progress function */
+static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
+                                 ompi_osc_pt2pt_header_flush_t *flush_header)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "process_flush header = {.frag_count = %d}", flush_header->frag_count));
 
     /* increase signal count by incoming frags */
-    module->passive_incoming_frag_signal_count[source] += flush_header->frag_count;
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) flush_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "%d: process_flush: received message from %d. passive_incoming_frag_signal_count = %d, passive_incoming_frag_count = %d",
-                         ompi_comm_rank(module->comm), source, module->passive_incoming_frag_signal_count[source], module->passive_incoming_frag_count[source]));
+                         "%d: process_flush: received message from %d. passive_incoming_frag_count = %d",
+                         ompi_comm_rank(module->comm), source, peer->passive_incoming_frag_count));
 
-    ret = ompi_osc_rdma_process_flush (module, source, flush_header);
+    ret = ompi_osc_pt2pt_process_flush (module, source, flush_header);
     if (OMPI_SUCCESS != ret) {
-        ompi_osc_rdma_pending_t *pending;
+        ompi_osc_pt2pt_pending_t *pending;
 
-        pending = OBJ_NEW(ompi_osc_rdma_pending_t);
+        pending = OBJ_NEW(ompi_osc_pt2pt_pending_t);
         pending->module = module;
         pending->source = source;
         pending->header.flush = *flush_header;
 
-        OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-        opal_list_append (&mca_osc_rdma_component.pending_operations, &pending->super);
-        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
-
-        /* we now have to count the current fragment */
-        module->passive_incoming_frag_signal_count[source]++;
-    } else {
-        /* need to account for the current fragment */
-        module->passive_incoming_frag_count[source] = -1;
+        osc_pt2pt_add_pending (pending);
     }
+
+    /* signal incomming will increment this counter */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*flush_header);
 }
 
-static inline int process_unlock (ompi_osc_rdma_module_t *module, int source,
-                                  ompi_osc_rdma_header_unlock_t *unlock_header)
+static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
+                                  ompi_osc_pt2pt_header_unlock_t *unlock_header)
 {
+    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "process_unlock header = {.frag_count = %d}", unlock_header->frag_count));
 
     /* increase signal count by incoming frags */
-    module->passive_incoming_frag_signal_count[source] += unlock_header->frag_count;
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) unlock_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "osc rdma: processing unlock request from %d. frag count = %d, signal_count = %d, processed_count = %d",
-                         source, unlock_header->frag_count, (int) module->passive_incoming_frag_signal_count[source],
-                         (int) module->passive_incoming_frag_count[source]));
+                         "osc pt2pt: processing unlock request from %d. frag count = %d, processed_count = %d",
+                         source, unlock_header->frag_count, (int) peer->passive_incoming_frag_count));
 
-    ret = ompi_osc_rdma_process_unlock (module, source, unlock_header);
+    ret = ompi_osc_pt2pt_process_unlock (module, source, unlock_header);
     if (OMPI_SUCCESS != ret) {
-        ompi_osc_rdma_pending_t *pending;
+        ompi_osc_pt2pt_pending_t *pending;
 
-        pending = OBJ_NEW(ompi_osc_rdma_pending_t);
+        pending = OBJ_NEW(ompi_osc_pt2pt_pending_t);
         pending->module = module;
         pending->source = source;
         pending->header.unlock = *unlock_header;
 
-        OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-        opal_list_append (&mca_osc_rdma_component.pending_operations, &pending->super);
-        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
-
-        /* we now have to count the current fragment */
-        module->passive_incoming_frag_signal_count[source]++;
-    } else {
-        /* need to account for the current fragment */
-        module->passive_incoming_frag_count[source] = -1;
+        osc_pt2pt_add_pending (pending);
     }
+
+    /* signal incomming will increment this counter */
+    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*unlock_header);
 }
 
 static int process_large_datatype_request_cb (ompi_request_t *request)
 {
-    ompi_osc_rdma_ddt_buffer_t *ddt_buffer = (ompi_osc_rdma_ddt_buffer_t *) request->req_complete_cb_data;
-    ompi_osc_rdma_module_t *module = ddt_buffer->module;
-    ompi_osc_rdma_header_t *header = ddt_buffer->header;
+    ompi_osc_pt2pt_ddt_buffer_t *ddt_buffer = (ompi_osc_pt2pt_ddt_buffer_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module = ddt_buffer->module;
+    ompi_osc_pt2pt_header_t *header = ddt_buffer->header;
     int source = ddt_buffer->source;
 
     /* process the request */
     switch (header->base.type) {
-    case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG:
         (void) process_put_long (module, source, &header->put);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET:
         (void) process_get (module, source, &header->get);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
         (void) process_acc_long (module, source, &header->acc);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
         (void) process_get_acc_long (module, source, &header->acc);
         break;
     default:
@@ -1459,10 +1451,10 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
     }
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     /* free the datatype buffer */
-    osc_rdma_gc_add_buffer (&ddt_buffer->super);
+    osc_pt2pt_gc_add_buffer (module, &ddt_buffer->super);
 
     return OMPI_SUCCESS;
 }
@@ -1470,36 +1462,36 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
 /**
  * @short process a request with a large datatype
  *
- * @param[in] module - OSC RDMA module
+ * @param[in] module - OSC PT2PT module
  * @param[in] source - header source
  * @param[in] header - header to process
  *
  * It is possible to construct datatypes whos description is too large
- * to fit in an OSC RDMA fragment. In this case the remote side posts
+ * to fit in an OSC PT2PT fragment. In this case the remote side posts
  * a send of the datatype description. This function posts the matching
  * receive and processes the header on completion.
  */
-static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int source, ompi_osc_rdma_header_t *header)
+static int process_large_datatype_request (ompi_osc_pt2pt_module_t *module, int source, ompi_osc_pt2pt_header_t *header)
 {
-    ompi_osc_rdma_ddt_buffer_t *ddt_buffer;
+    ompi_osc_pt2pt_ddt_buffer_t *ddt_buffer;
     int header_len, tag, ret;
     uint64_t ddt_len;
 
     /* determine the header size and receive tag */
     switch (header->base.type) {
-    case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG:
         header_len = sizeof (header->put);
         tag = header->put.tag;
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET:
         header_len = sizeof (header->get);
         tag = header->get.tag;
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
         header_len = sizeof (header->acc);
         tag = header->acc.tag;
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+    case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
         header_len = sizeof (header->acc);
         tag = header->acc.tag;
         break;
@@ -1515,7 +1507,7 @@ static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int s
                          "process_large_datatype_request: processing fragment with type %d. ddt_len %lu",
                          header->base.type, (unsigned long) ddt_len));
 
-    ddt_buffer = OBJ_NEW(ompi_osc_rdma_ddt_buffer_t);
+    ddt_buffer = OBJ_NEW(ompi_osc_pt2pt_ddt_buffer_t);
     if (OPAL_UNLIKELY(NULL == ddt_buffer)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -1531,7 +1523,7 @@ static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int s
 
     memcpy (ddt_buffer->header, header, header_len);
 
-    ret = ompi_osc_rdma_irecv_w_cb ((void *)((uintptr_t) ddt_buffer->header + header_len),
+    ret = ompi_osc_pt2pt_irecv_w_cb ((void *)((uintptr_t) ddt_buffer->header + header_len),
                                     ddt_len, MPI_BYTE, source, tag, module->comm, NULL,
                                     process_large_datatype_request_cb, ddt_buffer);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -1545,71 +1537,72 @@ static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int s
 /*
  * Do all the data movement associated with a fragment
  */
-static inline int process_frag (ompi_osc_rdma_module_t *module,
-                                ompi_osc_rdma_frag_header_t *frag)
+static inline int process_frag (ompi_osc_pt2pt_module_t *module,
+                                ompi_osc_pt2pt_frag_header_t *frag)
 {
-    ompi_osc_rdma_header_t *header;
+    ompi_osc_pt2pt_header_t *header;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma: process_frag: from %d, ops %d",
+                         "osc pt2pt: process_frag: from %d, ops %d",
                          (int) frag->source, (int) frag->num_ops));
 
-    header = (ompi_osc_rdma_header_t *) (frag + 1);
+    header = (ompi_osc_pt2pt_header_t *) (frag + 1);
 
     for (int i = 0 ; i < frag->num_ops ; ++i) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "osc rdma: process_frag: type 0x%x. flag 0x%x. offset %u",
+                             "osc pt2pt: process_frag: type 0x%x. flag 0x%x. offset %u",
                              header->base.type, (unsigned) ((uintptr_t)header - (uintptr_t)frag),
                              header->base.flags));
 
-        if (OPAL_LIKELY(!(header->base.flags & OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE))) {
+        if (OPAL_LIKELY(!(header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE))) {
+            osc_pt2pt_ntoh(header);
             switch (header->base.type) {
-            case OMPI_OSC_RDMA_HDR_TYPE_PUT:
+            case OMPI_OSC_PT2PT_HDR_TYPE_PUT:
                 ret = process_put(module, frag->source, &header->put);
                 break;
-            case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+            case OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG:
                 ret = process_put_long(module, frag->source, &header->put);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_ACC:
+            case OMPI_OSC_PT2PT_HDR_TYPE_ACC:
                 ret = process_acc(module, frag->source, &header->acc);
                 break;
-            case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+            case OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG:
                 ret = process_acc_long (module, frag->source, &header->acc);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_LOCK_REQ:
-                ret = ompi_osc_rdma_process_lock(module, frag->source, &header->lock);
+            case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
+                ret = ompi_osc_pt2pt_process_lock(module, frag->source, &header->lock);
                 if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
                     ret = sizeof (header->lock);
                 }
                 break;
-            case OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_REQ:
+            case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
                 ret = process_unlock(module, frag->source, &header->unlock);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_GET:
+            case OMPI_OSC_PT2PT_HDR_TYPE_GET:
                 ret = process_get (module, frag->source, &header->get);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
+            case OMPI_OSC_PT2PT_HDR_TYPE_CSWAP:
                 ret = process_cswap (module, frag->source, &header->cswap);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
+            case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC:
                 ret = process_get_acc (module, frag->source, &header->acc);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+            case OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG:
                 ret = process_get_acc_long (module, frag->source, &header->acc);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ:
+            case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
                 ret = process_flush (module, frag->source, &header->flush);
                 break;
 
-            case OMPI_OSC_RDMA_HDR_TYPE_COMPLETE:
+            case OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE:
                 ret = process_complete (module, frag->source, &header->complete);
                 break;
 
@@ -1628,70 +1621,63 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
 
         /* the next header will start on an 8-byte boundary. this is done to ensure
          * that the next header and the packed datatype is properly aligned */
-        header = (ompi_osc_rdma_header_t *) OPAL_ALIGN(((uintptr_t) header + ret), 8, uintptr_t);
+        header = (ompi_osc_pt2pt_header_t *) OPAL_ALIGN(((uintptr_t) header + ret), 8, uintptr_t);
     }
 
     return OMPI_SUCCESS;
 }
 
 /* dispatch for callback on message completion */
-static int ompi_osc_rdma_callback (ompi_request_t *request)
+static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 {
-    ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
-    ompi_osc_rdma_header_base_t *base_header = 
-        (ompi_osc_rdma_header_base_t *) module->incoming_buffer;
-    int source = request->req_status.MPI_SOURCE;
-#if OPAL_ENABLE_DEBUG
+    ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) request->req_complete_cb_data;
+    ompi_osc_pt2pt_header_t *base_header =
+        (ompi_osc_pt2pt_header_t *) module->incoming_buffer;
     size_t incoming_length = request->req_status._ucount;
-#endif
+    int source = request->req_status.MPI_SOURCE;
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-    assert(incoming_length >= sizeof(ompi_osc_rdma_header_base_t));
+    assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "received rdma callback for fragment. source = %d, count = %u, type = 0x%x",
-                         source, (unsigned) incoming_length, base_header->type));
+                         "received pt2pt callback for fragment. source = %d, count = %u, type = 0x%x",
+                         source, (unsigned) incoming_length, base_header->base.type));
 
-    switch (base_header->type) {
-    case OMPI_OSC_RDMA_HDR_TYPE_FRAG:
-        process_frag(module, (ompi_osc_rdma_frag_header_t *) base_header);
+    osc_pt2pt_ntoh(base_header);
+    switch (base_header->base.type) {
+    case OMPI_OSC_PT2PT_HDR_TYPE_FRAG:
+        process_frag(module, (ompi_osc_pt2pt_frag_header_t *) base_header);
 
         /* only data fragments should be included in the completion counters */
-        mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
-                                  source : MPI_PROC_NULL);
+        mark_incoming_completion (module, (base_header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET) ? source : MPI_PROC_NULL);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_POST:
-        (void) osc_rdma_incoming_post (module, source);
+    case OMPI_OSC_PT2PT_HDR_TYPE_POST:
+        (void) osc_pt2pt_incoming_post (module, source);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_LOCK_ACK:
-        ompi_osc_rdma_process_lock_ack(module, (ompi_osc_rdma_header_lock_ack_t *) base_header);
+    case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
+        ompi_osc_pt2pt_process_lock_ack(module, (ompi_osc_pt2pt_header_lock_ack_t *) base_header);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_ACK:
-        ompi_osc_rdma_process_flush_ack (module, source, (ompi_osc_rdma_header_flush_ack_t *) base_header);
+    case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_ACK:
+        ompi_osc_pt2pt_process_flush_ack (module, source, (ompi_osc_pt2pt_header_flush_ack_t *) base_header);
         break;
-    case OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_ACK:
-        ompi_osc_rdma_process_unlock_ack (module, source, (ompi_osc_rdma_header_unlock_ack_t *) base_header);
+    case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_ACK:
+        ompi_osc_pt2pt_process_unlock_ack (module, source, (ompi_osc_pt2pt_header_unlock_ack_t *) base_header);
         break;
     default:
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, 
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "received unexpected message of type %x",
-                             (int) base_header->type));
+                             (int) base_header->base.type));
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "finished processing incoming messages"));
 
-    /* restart the receive request */
-    OPAL_THREAD_LOCK(&module->lock);
-
-    osc_rdma_gc_clean ();
+    osc_pt2pt_gc_clean (module);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
-    ompi_osc_rdma_frag_start_receive (module);
-
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_pt2pt_gc_add_request (module, request);
+    ompi_osc_pt2pt_frag_start_receive (module);
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
 
@@ -1701,27 +1687,27 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_rdma_frag_start_receive (ompi_osc_rdma_module_t *module)
+int ompi_osc_pt2pt_frag_start_receive (ompi_osc_pt2pt_module_t *module)
 {
-    return ompi_osc_rdma_irecv_w_cb (module->incoming_buffer, mca_osc_rdma_component.buffer_size + sizeof (ompi_osc_rdma_frag_header_t),
-                                     MPI_BYTE, OMPI_ANY_SOURCE, OSC_RDMA_FRAG_TAG, module->comm, &module->frag_request,
-                                     ompi_osc_rdma_callback, module);
+    return ompi_osc_pt2pt_irecv_w_cb (module->incoming_buffer, mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t),
+                                     MPI_BYTE, OMPI_ANY_SOURCE, OSC_PT2PT_FRAG_TAG, module->comm, &module->frag_request,
+                                     ompi_osc_pt2pt_callback, module);
 }
 
-int ompi_osc_rdma_component_irecv (ompi_osc_rdma_module_t *module, void *buf,
+int ompi_osc_pt2pt_component_irecv (ompi_osc_pt2pt_module_t *module, void *buf,
                                    size_t count, struct ompi_datatype_t *datatype,
                                    int src, int tag, struct ompi_communicator_t *comm)
 {
-    return ompi_osc_rdma_irecv_w_cb (buf, count, datatype, src, tag, comm, NULL,
-                                     osc_rdma_incoming_req_complete, module);
+    return ompi_osc_pt2pt_irecv_w_cb (buf, count, datatype, src, tag, comm, NULL,
+                                     osc_pt2pt_incoming_req_complete, module);
 }
 
 
 static int
 isend_completion_cb(ompi_request_t *request)
 {
-    ompi_osc_rdma_module_t *module = 
-        (ompi_osc_rdma_module_t*) request->req_complete_cb_data;
+    ompi_osc_pt2pt_module_t *module =
+        (ompi_osc_pt2pt_module_t*) request->req_complete_cb_data;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
                          "isend_completion_cb called"));
@@ -1729,33 +1715,28 @@ isend_completion_cb(ompi_request_t *request)
     mark_outgoing_completion(module);
 
     /* put this request on the garbage colletion list */
-    osc_rdma_gc_add_request (request);
+    osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
 
 
-int
-ompi_osc_rdma_component_isend(ompi_osc_rdma_module_t *module,
-                              void *buf,
-                              size_t count,
-                              struct ompi_datatype_t *datatype,
-                              int dest,
-                              int tag,
-                              struct ompi_communicator_t *comm)
+int ompi_osc_pt2pt_component_isend (ompi_osc_pt2pt_module_t *module, void *buf,
+                                    size_t count, struct ompi_datatype_t *datatype,
+                                    int dest, int tag, struct ompi_communicator_t *comm)
 {
-    return ompi_osc_rdma_isend_w_cb (buf, count, datatype, dest, tag, comm,
+    return ompi_osc_pt2pt_isend_w_cb (buf, count, datatype, dest, tag, comm,
                                      isend_completion_cb, module);
 }
 
-int ompi_osc_rdma_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
+int ompi_osc_pt2pt_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
                               ompi_communicator_t *comm, ompi_request_complete_fn_t cb, void *ctx)
 {
     ompi_request_t *request;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma: ompi_osc_rdma_isend_w_cb sending %d bytes to %d with tag %d",
+                         "osc pt2pt: ompi_osc_pt2pt_isend_w_cb sending %d bytes to %d with tag %d",
                          count, target, tag));
 
     ret = MCA_PML_CALL(isend_init(ptr, count, datatype, target, tag,
@@ -1774,7 +1755,7 @@ int ompi_osc_rdma_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, i
     return ret;
 }
 
-int ompi_osc_rdma_irecv_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
+int ompi_osc_pt2pt_irecv_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
                               ompi_communicator_t *comm, ompi_request_t **request_out,
                               ompi_request_complete_fn_t cb, void *ctx)
 {
@@ -1782,7 +1763,7 @@ int ompi_osc_rdma_irecv_w_cb (void *ptr, int count, ompi_datatype_t *datatype, i
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma: ompi_osc_rdma_irecv_w_cb receiving %d bytes from %d with tag %d",
+                         "osc pt2pt: ompi_osc_pt2pt_irecv_w_cb receiving %d bytes from %d with tag %d",
                          count, target, tag));
 
     ret = MCA_PML_CALL(irecv_init(ptr, count, datatype, target, tag, comm, &request));

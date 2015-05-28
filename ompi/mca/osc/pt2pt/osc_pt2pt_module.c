@@ -4,52 +4,48 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include "osc_rdma.h"
+#include "osc_pt2pt.h"
 
 #include "opal/threads/mutex.h"
-#include "ompi/win/win.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/osc/base/base.h"
+
 #include "mpi.h"
 
 
 int
-ompi_osc_rdma_attach(struct ompi_win_t *win, void *base, size_t len)
+ompi_osc_pt2pt_attach(struct ompi_win_t *win, void *base, size_t len)
 {
     return OMPI_SUCCESS;
 }
 
 
 int
-ompi_osc_rdma_detach(struct ompi_win_t *win, void *base)
+ompi_osc_pt2pt_detach(struct ompi_win_t *win, void *base)
 {
     return OMPI_SUCCESS;
 }
 
 
 int
-ompi_osc_rdma_free(ompi_win_t *win)
+ompi_osc_pt2pt_free(ompi_win_t *win)
 {
     int ret = OMPI_SUCCESS;
-    ompi_osc_rdma_module_t *module = GET_MODULE(win);
-    opal_list_item_t *item;
+    ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
 
     if (NULL == module) {
         return OMPI_SUCCESS;
@@ -57,7 +53,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     if (NULL != module->comm) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "rdma component destroying window with id %d",
+                            "pt2pt component destroying window with id %d",
                             ompi_comm_get_cid(module->comm));
 
         /* finish with a barrier */
@@ -67,43 +63,40 @@ ompi_osc_rdma_free(ompi_win_t *win)
         }
 
         /* remove from component information */
-        OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-        opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
-                                            ompi_comm_get_cid(module->comm));
-        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+        OPAL_THREAD_SCOPED_LOCK(&mca_osc_pt2pt_component.lock,
+                                opal_hash_table_remove_value_uint32(&mca_osc_pt2pt_component.modules,
+                                                                    ompi_comm_get_cid(module->comm)));
     }
 
     win->w_osc_module = NULL;
 
     OBJ_DESTRUCT(&module->outstanding_locks);
     OBJ_DESTRUCT(&module->locks_pending);
+    OBJ_DESTRUCT(&module->locks_pending_lock);
     OBJ_DESTRUCT(&module->acc_lock);
     OBJ_DESTRUCT(&module->cond);
     OBJ_DESTRUCT(&module->lock);
 
     /* it is erroneous to close a window with active operations on it so we should
      * probably produce an error here instead of cleaning up */
-    while (NULL != (item = opal_list_remove_first (&module->pending_acc))) {
-        OBJ_RELEASE(item);
-    }
+    OPAL_LIST_DESTRUCT(&module->pending_acc);
+    OPAL_LIST_DESTRUCT(&module->pending_posts);
 
-    OBJ_DESTRUCT(&module->pending_acc);
-
-    while (NULL != (item = opal_list_remove_first (&module->pending_posts))) {
-        OBJ_RELEASE(item);
-    }
-
-    OBJ_DESTRUCT(&module->pending_posts);
-
-    osc_rdma_gc_clean ();
+    osc_pt2pt_gc_clean (module);
+    OPAL_LIST_DESTRUCT(&module->request_gc);
+    OPAL_LIST_DESTRUCT(&module->buffer_gc);
+    OBJ_DESTRUCT(&module->gc_lock);
 
     if (NULL != module->peers) {
+        for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
+            OBJ_DESTRUCT(module->peers + i);
+        }
+
         free(module->peers);
     }
-    if (NULL != module->passive_eager_send_active) free(module->passive_eager_send_active);
-    if (NULL != module->passive_incoming_frag_count) free(module->passive_incoming_frag_count);
-    if (NULL != module->passive_incoming_frag_signal_count) free(module->passive_incoming_frag_signal_count);
+
     if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
+
     if (NULL != module->frag_request) {
         module->frag_request->req_complete_cb = NULL;
         ompi_request_cancel (module->frag_request);
