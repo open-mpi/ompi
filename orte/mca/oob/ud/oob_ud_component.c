@@ -25,7 +25,7 @@
 
 #include "oob_ud.h"
 
-#include "opal/mca/common/verbs/common_verbs.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 static int        mca_oob_ud_component_open (void);
 static int        mca_oob_ud_component_close (void);

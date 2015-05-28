@@ -31,7 +31,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_sshmem_verbs_la_SOURCES = $(sources)
 mca_sshmem_verbs_la_LDFLAGS = -module -avoid-version $(oshmem_verbs_LDFLAGS)
 mca_sshmem_verbs_la_LIBADD  = $(oshmem_verbs_LIBS) \
-							  $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sshmem_verbs_la_SOURCES =$(sources)

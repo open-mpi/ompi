@@ -19,7 +19,8 @@
 
 #include "opal/constants.h"
 #include "opal/util/sys_limits.h"
-#include "opal/mca/common/verbs/common_verbs.h"
+
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
