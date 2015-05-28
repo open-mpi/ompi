@@ -1432,18 +1432,18 @@ format.  Each of the three numbers has a specific meaning:
             compatible with other v1.x releases.
 
   * Minor: The minor number is the second integer in the version
-    string (e.g., v2.5.3). Changes in the minor number indicate a
-    user-observable change in the code base and/or end-user
-    functionality.  Backwards compatibility will still be preserved
-    with prior releases that have the same major version number (e.g.,
-    v2.5.3 is backwards compatible with v2.3.1).
+    string.  Changes in the minor number indicate a user-observable
+    change in the code base and/or end-user functionality.  Backwards
+    compatibility will still be preserved with prior releases that
+    have the same major version number (e.g., v2.5.3 is backwards
+    compatible with v2.3.1).
 
   * Release: The release number is the third integer in the version
-    string (e.g., v4.3.0). Changes in the release number typically
-    indicate a bug fix in the code base and/or end-user functionality.
-    For example, if there is a release that only contains bug fixes
-    and no other user-observable changes or new features, only the
-    third integer will be increased (e.g., from v4.3.0 to v4.3.1).
+    string.  Changes in the release number typically indicate a bug
+    fix in the code base and/or end-user functionality.  For example,
+    if there is a release that only contains bug fixes and no other
+    user-observable changes or new features, only the third integer
+    will be increased (e.g., from v4.3.0 to v4.3.1).
 
   * Quantifier: Open MPI version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
