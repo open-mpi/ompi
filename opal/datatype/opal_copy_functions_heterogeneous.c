@@ -58,7 +58,7 @@ opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size, size_t cou
         to += size;
         from += size;
         count--;
-        for (i = 0 ; i < size ; i++, back_i--) {
+        for (i = 0, back_i = size - 1 ; i < size ; i++, back_i--) {
             to[back_i] = from[i];
         }
     }
