@@ -2,6 +2,11 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ *               2014      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +24,8 @@
 #include "orte/util/proc_info.h"
 
 #include "oob_ud.h"
+
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 static int        mca_oob_ud_component_open (void);
 static int        mca_oob_ud_component_close (void);
@@ -155,6 +162,7 @@ static inline int mca_oob_ud_device_setup (mca_oob_ud_device_t *device,
     OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:device_setup attempting to setup ib device %p",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *) ib_device));
 
+
     device->ib_context = ibv_open_device (ib_device);
     if (NULL == device->ib_context) {
         OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:device_setup error opening device. errno = %d",
@@ -225,6 +233,15 @@ static mca_oob_t *mca_oob_ud_component_init(int *priority)
     *priority = 0;
 
     opal_hash_table_init (&mca_oob_ud_component.ud_peers, 1024);
+
+    /* If fork support is requested, try to enable it */
+    rc = opal_common_verbs_fork_test();
+    if (OPAL_SUCCESS != rc) {
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s oob:ud:device_setup failed in ibv_fork_init. errno = %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        return ORTE_ERROR;
+    }
 
     devices = ibv_get_device_list (&num_devices);
     if (NULL == devices || 0 == num_devices) {

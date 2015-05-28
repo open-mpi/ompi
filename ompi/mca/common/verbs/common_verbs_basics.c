@@ -37,6 +37,9 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/constants.h"
 
 #include "common_verbs.h"
+#include "opal/runtime/opal_params.h"
+#include "opal/util/show_help.h"
+#include "ompi/mca/rte/rte.h"
 
 /***********************************************************************/
 
@@ -63,3 +66,35 @@ bool ompi_common_verbs_check_basics(void)
     return true;
 }
 
+int opal_common_verbs_fork_test(void)
+{
+    int ret = OPAL_SUCCESS;
+
+    /* Make sure that ibv_fork_init is the first ibv_* function to be
+       invoked in this process. */
+#ifdef HAVE_IBV_FORK_INIT
+    if (0 != ompi_common_verbs_want_fork_support) {
+        /* Check if fork support is requested by the user */
+        if (0 != ibv_fork_init()) {
+            /* If the opal_common_verbs_want_fork_support MCA
+             * parameter is >0 but the call to ibv_fork_init() failed,
+             * then return an error code.
+             */
+            if (ompi_common_verbs_want_fork_support > 0) {
+                opal_show_help("help-opal-common-verbs.txt",
+                               "ibv_fork_init fail", true,
+                               ompi_process_info.nodename, errno,
+                               strerror(errno));
+                ret = OPAL_ERROR;
+            }
+        }
+    }
+#endif
+
+    /* Now rgister any necessary fake libibverbs drivers.  We
+       piggyback loading these fake drivers on the fork test because
+       they must be loaded before ibv_get_device_list() is invoked. */
+    opal_common_verbs_register_fake_drivers();
+
+    return ret;
+}

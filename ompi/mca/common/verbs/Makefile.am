@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,6 +17,7 @@ headers = \
 sources = \
 	common_verbs_basics.c \
 	common_verbs_devlist.c \
+	common_verbs_fake.c \
 	common_verbs_find_max_inline.c \
 	common_verbs_find_ports.c \
 	common_verbs_mca.c \

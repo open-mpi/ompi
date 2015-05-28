@@ -266,11 +266,6 @@ int btl_openib_register_mca_params(void)
                    MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &mca_btl_openib_component.cq_poll_batch,
                    REGINT_GE_ONE));
 
-    CHECK(reg_int("want_fork_support", NULL,
-                  "Whether fork support is desired or not "
-                  "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
-                  0, &mca_btl_openib_component.want_fork_support, 0));
-
     asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.ompidatadir);
     if (NULL == str) {

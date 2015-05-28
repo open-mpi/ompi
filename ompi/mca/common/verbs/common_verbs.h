@@ -36,6 +36,7 @@ OMPI_DECLSPEC void ompi_ibv_free_device_list(struct ibv_device **ib_devs);
  * common_verbs_mca.c
  */
 extern bool ompi_common_verbs_warn_nonexistent_if;
+extern int ompi_common_verbs_want_fork_support;
 OMPI_DECLSPEC void ompi_common_verbs_mca_register(mca_base_component_t *component);
 
 /*
@@ -170,7 +171,26 @@ ompi_common_verbs_find_max_inline(struct ibv_device *device,
 OMPI_DECLSPEC int ompi_common_verbs_qp_test(struct ibv_context *device_context, 
                                             int flags);
 
+/*
+ * ibv_fork_init testing - if fork support is requested then ibv_fork_init
+ * should be called right at the beginning of the verbs initialization flow, before ibv_create_* call.
+ *
+ * Known limitations:
+ * If ibv_fork_init is called after ibv_create_* functions - it will have no effect.
+ * OMPI initializes verbs many times during initialization in the following verbs components:
+ *      oob/ud, btl/openib, mtl/mxm, pml/yalla, oshmem/ikrit, oshmem/yoda, ompi/mca/coll/{fca,hcoll}
+ *
+ * So, ibv_fork_init should be called once, in the beginning of the init flow of every verb component
+ * to proper request fork support.
+ *
+ */
+int opal_common_verbs_fork_test(void);
+
+/*
+ * Register fake verbs drivers
+ */
+void opal_common_verbs_register_fake_drivers(void);
+
 END_C_DECLS
 
 #endif
-
