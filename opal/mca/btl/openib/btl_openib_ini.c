@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -345,25 +346,20 @@ static int parse_line(parsed_section_values_t *sv)
 
     /* Next we get the value */
     val = btl_openib_ini_yylex();
-    if (BTL_OPENIB_INI_PARSE_SINGLE_WORD == val ||
-        BTL_OPENIB_INI_PARSE_VALUE == val) {
-        value = strdup(btl_openib_ini_yytext);
-
-        /* Now we need to see the newline */
-        val = btl_openib_ini_yylex();
-        if (BTL_OPENIB_INI_PARSE_NEWLINE != val &&
-            BTL_OPENIB_INI_PARSE_DONE != val) {
-            opal_show_help("help-mpi-btl-openib.txt", "ini file:expected newline", true);
-            free(value);
-            return OPAL_ERROR;
-        }
+    if (BTL_OPENIB_INI_PARSE_SINGLE_WORD != val && BTL_OPENIB_INI_PARSE_VALUE != val) {
+        return OPAL_ERROR;
     }
 
+    value = strdup(btl_openib_ini_yytext);
+
+    /* Now we need to see the newline */
+    val = btl_openib_ini_yylex();
+
     /* If we did not get EOL or EOF, something is wrong */
-    else if (BTL_OPENIB_INI_PARSE_DONE != val &&
-             BTL_OPENIB_INI_PARSE_NEWLINE != val) {
-        opal_show_help("help-mpi-btl-openib.txt", "ini file:expected newline", true);
-        return OPAL_ERROR;
+    if (BTL_OPENIB_INI_PARSE_NEWLINE != val && BTL_OPENIB_INI_PARSE_DONE != val) {
+      opal_show_help("help-mpi-btl-openib.txt", "ini file:expected newline", true);
+      free(value);
+      return OPAL_ERROR;
     }
 
     /* Ok, we got a good parse.  Now figure out what it is and save
@@ -621,19 +617,7 @@ static int save_section(parsed_section_values_t *s)
  */
 int opal_btl_openib_ini_intify(char *str)
 {
-    while (isspace(*str)) {
-        ++str;
-    }
-
-    /* If it's hex, use sscanf() */
-    if (strlen(str) > 3 && 0 == strncasecmp("0x", str, 2)) {
-        unsigned int i;
-        sscanf(str, "%X", &i);
-        return (int) i;
-    }
-
-    /* Nope -- just decimal, so use atoi() */
-    return atoi(str);
+    return strtol (str, NULL, 0);
 }
 
 
@@ -676,13 +660,13 @@ int opal_btl_openib_ini_intify_list(char *value, uint32_t **values, int *len)
         /* Iterate over the values and save them */
         str = value;
         comma = strchr(str, ',');
-        do {
+        while (NULL != comma) {
             *comma = '\0';
             (*values)[*len] = (uint32_t) opal_btl_openib_ini_intify(str);
             ++(*len);
             str = comma + 1;
             comma = strchr(str, ',');
-        } while (NULL != comma);
+        }
         /* Get the last value (i.e., the value after the last
            comma, because it won't have been snarfed in the
            loop) */
