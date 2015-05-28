@@ -3,7 +3,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -1804,11 +1804,11 @@ static int udcm_handle_connect(mca_btl_openib_endpoint_t *lcl_ep,
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
     int rc = OPAL_ERROR;
 
-    do {
-        if (NULL == udep) {
-            break;
-        }
+    if (NULL == udep) {
+        return OPAL_ERROR;
+    }
 
+    do {
         opal_mutex_lock (&udep->udep_lock);
 
         if (true == udep->recv_req) {
