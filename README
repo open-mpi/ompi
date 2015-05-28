@@ -1364,81 +1364,89 @@ Open MPI Version Numbers and Binary Compatibility
 Open MPI has two sets of version numbers that are likely of interest
 to end users / system administrator:
 
-    * Software version number
-    * Shared library version numbers
+  * Software version number
+  * Shared library version numbers
 
-Both are described below, followed by a discussion of application
-binary interface (ABI) compatibility implications.
+Both are predicated on Open MPI's definition of "backwards
+compatibility."
+
+NOTE: The version numbering conventions were changed with the release
+      of v1.10.0.  Most notably, Open MPI no longer uses an "odd/even"
+      release schedule to indicate feature development vs. stable
+      releases.  See the README in releases prior to v1.10.0 for more
+      information (e.g.,
+      https://github.com/open-mpi/ompi-release/blob/v1.8/README#L1392-L1475).
+
+Backwards Compatibility
+-----------------------
+
+Open MPI version Y is backwards compatible with Open MPI version X
+(where Y>X) if users can:
+
+  * Compile an MPI/OSHMEM application with version X, mpirun/oshrun it
+    with version Y, and get the same user-observable behavior.
+  * Invoke ompi_info with the same CLI options in versions X and Y and
+    get the same user-observable behavior.
+
+Note that this definition encompasses several things:
+
+  * Application Binary Interface (ABI)
+  * MPI / OSHMEM run time system
+  * mpirun / oshrun command line options
+  * MCA parameter names / values / meanings
 
 Software Version Number
 -----------------------
 
-The version number of Open MPI distribution tarballs are the union of
-several different values: major, minor, release, and an optional
-quantifier.
+Official Open MPI releases use the common "A.B.C" version identifier
+format.  Each of the three numbers has a specific meaning:
 
   * Major: The major number is the first integer in the version string
-    (e.g., v1.2.3). Changes in the major number typically indicate a
-    significant change in the code base and/or end-user
-    functionality. The major number is always included in the version
-    number.
+    Changes in the major number typically indicate a significant
+    change in the code base and/or end-user functionality, and also
+    indicate a break from backwards compatibility.  Specifically: Open
+    MPI releases with different major version numbers are not
+    backwards compatibile with each other.
+
+    CAVEAT: This rule does not extend to versions prior to v1.10.0.
+            Specifically: v1.10.x is not guaranteed to be backwards
+            compatible with other v1.x releases.
 
   * Minor: The minor number is the second integer in the version
-    string (e.g., v1.2.3). Changes in the minor number typically
-    indicate a incremental change in the code base and/or end-user
-    functionality. The minor number is always included in the version
-    number. Starting with Open MPI v1.3.0, the minor release number
-    took on additional significance (see this wiki page for more
-    details):
-
-    o Even minor release numbers are part of "super-stable"
-      release series (e.g., v1.4.0). Releases in super stable series
-      are well-tested, time-tested, and mature. Such releases are
-      recomended for production sites. Changes between subsequent
-      releases in super stable series are expected to be fairly small.
-    o Odd minor release numbers are part of "feature" release
-      series (e.g., 1.3.7). Releases in feature releases are
-      well-tested, but they are not necessarily time-tested or as
-      mature as super stable releases. Changes between subsequent
-      releases in feature series may be large.
+    string (e.g., v2.5.3). Changes in the minor number indicate a
+    user-observable change in the code base and/or end-user
+    functionality.  Backwards compatibility will still be preserved
+    with prior releases that have the same major version number (e.g.,
+    v2.5.3 is backwards compatible with v2.3.1).
 
   * Release: The release number is the third integer in the version
-    string (e.g., v1.2.3). Changes in the release number typically
-    indicate a bug fix in the code base and/or end-user
-    functionality. If the release number is 0, it is omitted from the
-    version number (e.g., v1.2 has a release number of 0).
+    string (e.g., v4.3.0). Changes in the release number typically
+    indicate a bug fix in the code base and/or end-user functionality.
+    For example, if there is a release that only contains bug fixes
+    and no other user-observable changes or new features, only the
+    third integer will be increased (e.g., from v4.3.0 to v4.3.1).
 
   * Quantifier: Open MPI version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
     include:
 
-    o aX: Indicates an alpha release. X is an integer indicating
-      the number of the alpha release (e.g., v1.2.3a5 indicates the
-      5th alpha release of version 1.2.3).
-    o bX: Indicates a beta release. X is an integer indicating
-      the number of the beta release (e.g., v1.2.3b3 indicates the 3rd
-      beta release of version 1.2.3).
-    o rcX: Indicates a release candidate. X is an integer
-      indicating the number of the release candidate (e.g., v1.2.3rc4
-      indicates the 4th release candidate of version 1.2.3).
-    o Prior to October 2014, nightly snapshot tarballs would include a
-      repository version number as well, such as r1234, indicating
-      that that snapshot tarball was built at Subversion r1234).
+    o aX: Indicates an alpha release. X is an integer indicating the
+      number of the alpha release (e.g., v1.10.3a5 indicates the 5th
+      alpha release of version 1.10.3).
+    o bX: Indicates a beta release. X is an integer indicating the
+      number of the beta release (e.g., v1.10.3b3 indicates the 3rd
+      beta release of version 1.10.3).
+    o rcX: Indicates a release candidate. X is an integer indicating
+      the number of the release candidate (e.g., v1.10.3rc4 indicates
+      the 4th release candidate of version 1.10.3).
 
-Starting in October 2014, although the major, minor, and release
-values (and optional quantifiers) are reported in Open MPI nightly
-snapshot tarballs, the filenames of these snapshot tarballs follow a
-slightly different convention.
+Nightly development snapshot tarballs use a different version number
+scheme; they contain three distinct values:
 
-Specifically, the snapshot tarball filename contains three distinct
-values:
-
-   * Most recent Git tag name on the branch from which the tarball was
-     created.
-
+   * The most recent Git tag name on the branch from which the tarball
+     was created.
    * An integer indicating how many Git commits have occurred since
      that Git tag.
-
    * The Git hash of the tip of the branch.
 
 For example, a snapshot tarball filename of
@@ -1457,25 +1465,6 @@ human-recognizable ordering for snapshot tarballs.
 
 Shared Library Version Number
 -----------------------------
-
-Open MPI started using the GNU Libtool shared library versioning
-scheme with the release of v1.3.2.
-
-NOTE: Only official releases of Open MPI adhere to this versioning
-      scheme. "Beta" releases, release candidates, and nightly
-      tarballs, developer snapshots, and snapshot tarballs likely will
-      all have arbitrary/meaningless shared library version numbers.
-
-For deep voodoo technical reasons, only the MPI API libraries were
-versioned until Open MPI v1.5 was released (i.e., libmpi*so --
-libopen-rte.so or libopen-pal.so were not versioned until v1.5).
-Please see https://svn.open-mpi.org/trac/ompi/ticket/2092 for more
-details.
-
-NOTE: This policy change will cause an ABI incompatibility between MPI
-      applications compiled/linked against the Open MPI v1.4 series;
-      such applications will not be able to upgrade to the Open MPI
-      v1.5 series without re-linking.  Sorry folks!
 
 The GNU Libtool official documentation details how the versioning
 scheme works.  The quick version is that the shared library versions
@@ -1519,14 +1508,14 @@ Here's how we apply those rules specifically to Open MPI:
     * libmca_common_*
 
  3. The following libraries use a slightly modified version of the
-    above rules: rules 4, 5, and 6 only apply to the official MPI
-    interfaces (functions, global variables).  The rationale for this
-    decision is that the vast majority of our users only care about
-    the official/public MPI interfaces; we therefore want the .so
-    version number to reflect only changes to the official MPI API.
-    Put simply: non-MPI API / internal changes to the
-    MPI-application-facing libraries are irrelevant to pure MPI
-    applications.
+    above rules: rules 4, 5, and 6 only apply to the official MPI and
+    OpenSHMEM interfaces (functions, global variables).  The rationale
+    for this decision is that the vast majority of our users only care
+    about the official/public MPI/OSHMEM interfaces; we therefore want
+    the .so version number to reflect only changes to the official
+    MPI/OSHMEM APIs.  Put simply: non-MPI/OSHMEM API / internal
+    changes to the MPI-application-facing libraries are irrelevant to
+    pure MPI/OSHMEM applications.
 
     * libmpi
     * libmpi_mpifh
@@ -1534,81 +1523,9 @@ Here's how we apply those rules specifically to Open MPI:
     * libmpi_usempi_ignore_tkr
     * libmpi_usempif08
     * libmpi_cxx
-
-Application Binary Interface (ABI) Compatibility
-------------------------------------------------
-
-Open MPI provided forward application binary interface (ABI)
-compatibility for MPI applications starting with v1.3.2.  Prior to
-that version, no ABI guarantees were provided.
-
-Starting with v1.3.2, Open MPI provides forward ABI compatibility in
-all versions of a given feature release series and its corresponding
-super stable series.  For example, on a single platform, an MPI
-application linked against Open MPI v1.7.2 shared libraries can be
-updated to point to the shared libraries in any successive v1.7.x or
-v1.8 release and still work properly (e.g., via the LD_LIBRARY_PATH
-environment variable or other operating system mechanism).
-
-* A bug that causes an ABI compatibility issue was discovered after
-  v1.7.3 was released.  The bug only affects users who configure their
-  Fortran compilers to use "large" INTEGERs by default, but still have
-  "normal" ints for C (e.g., 8 byte Fortran INTEGERs and 4 byte C
-  ints).  In this case, the Fortran MPI_STATUS_SIZE value was computed
-  incorrectly.
-
-  Fixing this issue breakes ABI *only in the sizeof(INTEGER) !=
-  sizeof(int) case*.  However, since Open MPI provides ABI guarantees
-  for the v1.7/v1.8 series, this bug is only fixed if Open MPI is
-  configured with the --enable-abi-breaking-fortran-status-i8-fix
-  flag, which, as its name implies, breaks ABI.  For example:
-
-    shell$ ./configure --enable-abi-breaking-fortran-status-i8-fix \
-             CC=icc F77=ifort FC=ifort CXX=icpc \
-             FFLAGS=i8 FCFLAGS=-i8 ...
-
-* A second bug was discovered after v1.7.3 was released that causes
-  ABI to be broken for gfortran users who are using the "mpi" Fortran
-  module.  In short, for versions of gfortran that do not support
-  "ignore TKR" functionality (i.e., gfortran <=v4.8), Open MPI was
-  providing interfaces for MPI subroutines with choice buffers (e.g.,
-  MPI_Send) in the Fortran mpi module.  The MPI-3.0 specification
-  expressly states not to do this.  To be consistent with MPI-3, Open
-  MPI v1.7.4 therefore removed all MPI interfaces with choice buffers
-  from the no-ignore-TKR version of the Fortran mpi module, even
-  though this breaks ABI between v1.7.3 and v1.7.4.  Affected users
-  should be able to recompile their MPI applications with v1.7.4 with
-  no changes.
-
-  Other Fortran compilers that provide "ignore TKR" functionality are
-  not affected by this change.
-
-* The Fortran ABI was inadvertantly changed between Open MPI v1.8.1
-  and v1.8.2 for users who built Open MPI with gfortran >= v4.9.  In
-  particular, if an MPI application was built against Open MPI <=
-  v1.8.2 with gfotran >= v4.9, and the MPI application used
-  MPI_SIZEOF, it will not be ABI compatible with Open MPI v1.8.3.  The
-  ABI incompatibility problem was fixed in v1.8.4.
-
-* The 1.8 series suffered an inadvertent break in ABI compatibility
-  prior to release 1.8.5 due to a test that rejected TCP connections
-  from processes compiled against another version. The test
-  incorrectly checked all three parts of the version number, thus
-  preventing a process compiled against 1.8.3 from connecting to one
-  compiled against 1.8.4. This was fixed in 1.8.5, so ABI will be
-  maintained from there forward.
-
-Open MPI reserves the right to break ABI compatibility at new feature
-release series.  For example, the same MPI application from above
-(linked against Open MPI v1.7.2 shared libraries) will likely *not*
-work with Open MPI v1.9 shared libraries.
-
-NOTE: The 1.8 series suffered an inadvertent break in ABI compatibility
-prior to release 1.8.5 due to a test that rejected TCP connections from
-processes compiled against another version. The test incorrectly checked
-all three parts of the version number, thus preventing a process compiled
-against 1.8.3 from connecting to one compiled against 1.8.4. This was fixed
-in 1.8.5, so ABI will be maintained from there forward.
+    * libmpi_java
+    * liboshmem
+    * liboshmem_java
 
 ===========================================================================
 
