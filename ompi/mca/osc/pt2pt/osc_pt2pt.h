@@ -29,19 +29,19 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/threads/threads.h"
-#include "opal/mca/btl/btl.h"
+#include "opal/util/output.h"
 
 #include "ompi/win/win.h"
+#include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "opal/mca/btl/btl.h"
-#include "ompi/mca/bml/bml.h"
 #include "ompi/memchecker.h"
 
 #include "osc_pt2pt_header.h"
+#include "osc_pt2pt_sync.h"
 
 BEGIN_C_DECLS
 
@@ -85,6 +85,9 @@ struct ompi_osc_pt2pt_peer_t {
     /** make this an opal object */
     opal_object_t super;
 
+    /** rank of this peer */
+    int rank;
+
     /** pointer to the current send fragment for each outgoing target */
     struct ompi_osc_pt2pt_frag_t *active_frag;
 
@@ -94,24 +97,15 @@ struct ompi_osc_pt2pt_peer_t {
     /** fragments queued to this target */
     opal_list_t queued_frags;
 
-    /** number of acks pending.  New requests can not be sent out if there are
-     * acks pending (to fulfill the ordering constraints of accumulate) */
-    uint32_t num_acks_pending;
-
     /** number of fragments incomming (negative - expected, positive - unsynchronized) */
     int32_t passive_incoming_frag_count;
 
-    /** peer is in an access epoch */
-    bool access_epoch;
-
-    /** eager sends are active to this peer */
-    bool eager_send_active;
+    /** unexpected post message arrived */
+    bool unexpected_post;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_peer_t);
-
-#define SEQ_INVALID 0xFFFFFFFFFFFFFFFFULL
 
 /** Module structure.  Exactly one of these is associated with each
     PT2PT window */
@@ -121,6 +115,9 @@ struct ompi_osc_pt2pt_module_t {
 
     /** window should have accumulate ordering... */
     bool accumulate_ordering;
+
+    /** no locks info key value */
+    bool no_locks;
 
     /** pointer to free on cleanup (may be NULL) */
     void *free_after;
@@ -141,11 +138,11 @@ struct ompi_osc_pt2pt_module_t {
     /** condition variable associated with lock */
     opal_condition_t cond;
 
-    /** lock for atomic window updates from reductions */
-    opal_mutex_t acc_lock;
+    /** hash table of peer objects */
+    opal_hash_table_t peer_hash;
 
-    /** peer data */
-    ompi_osc_pt2pt_peer_t *peers;
+    /** lock protecting peer_hash */
+    opal_mutex_t peer_lock;
 
     /** Nmber of communication fragments started for this epoch, by
         peer.  Not in peer data to make fence more manageable. */
@@ -166,29 +163,14 @@ struct ompi_osc_pt2pt_module_t {
     /* Next incoming buffer count at which we want a signal on cond */
     uint32_t active_incoming_frag_signal_count;
 
-    /* Number of flush ack requests send since beginning of time */
-    uint64_t flush_ack_requested_count;
-    /* Number of flush ack replies received since beginning of
-       time. cond should be signalled on every flush reply
-       received. */
-    uint64_t flush_ack_received_count;
-
     /** Number of targets locked/being locked */
     unsigned int passive_target_access_epoch;
 
-    /** start sending data eagerly */
-    bool active_eager_send_active;
-
-    /** Indicates the window is in an all access epoch (fence, lock_all) */
-    bool all_access_epoch;
+    /** Indicates the window is in a pcsw or all access (fence, lock_all) epoch */
+    ompi_osc_pt2pt_sync_t all_sync;
 
     /* ********************* PWSC data ************************ */
     struct ompi_group_t *pw_group;
-    struct ompi_group_t *sc_group;
-
-    /** Number of "ping" messages from the remote post group we've
-        received */
-    int32_t num_post_msgs;
 
     /** Number of "count" messages from the remote complete group
         we've received */
@@ -207,9 +189,7 @@ struct ompi_osc_pt2pt_module_t {
     opal_list_t locks_pending;
 
     /** origin side list of locks currently outstanding */
-    opal_list_t outstanding_locks;
-
-    uint64_t lock_serial_number;
+    opal_hash_table_t outstanding_locks;
 
     unsigned char *incoming_buffer;
     ompi_request_t *frag_request;
@@ -217,10 +197,6 @@ struct ompi_osc_pt2pt_module_t {
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
     opal_list_t        pending_acc;
-
-    /* enforce pscw matching */
-    /** list of unmatched post messages */
-    opal_list_t        pending_posts;
 
     /** Lock for garbage collection lists */
     opal_mutex_t gc_lock;
@@ -233,6 +209,29 @@ struct ompi_osc_pt2pt_module_t {
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
+
+static inline ompi_osc_pt2pt_peer_t *ompi_osc_pt2pt_peer_lookup (ompi_osc_pt2pt_module_t *module,
+                                                                 int rank)
+{
+    ompi_osc_pt2pt_peer_t *peer = NULL;
+    (void) opal_hash_table_get_value_uint32 (&module->peer_hash, rank, (void **) &peer);
+
+    if (OPAL_UNLIKELY(NULL == peer)) {
+        OPAL_THREAD_LOCK(&module->peer_lock);
+        (void) opal_hash_table_get_value_uint32 (&module->peer_hash, rank, (void **) &peer);
+
+        if (NULL == peer) {
+            peer = OBJ_NEW(ompi_osc_pt2pt_peer_t);
+            peer->rank = rank;
+
+            (void) opal_hash_table_set_value_uint32 (&module->peer_hash, rank, (void *) peer);
+        }
+        OPAL_THREAD_UNLOCK(&module->peer_lock);
+    }
+
+    return peer;
+}
+
 
 struct ompi_osc_pt2pt_pending_t {
     opal_list_item_t super;
@@ -262,23 +261,23 @@ int ompi_osc_pt2pt_put(const void *origin_addr,
                              struct ompi_win_t *win);
 
 int ompi_osc_pt2pt_accumulate(const void *origin_addr,
-                                    int origin_count,
-                                    struct ompi_datatype_t *origin_dt,
-                                    int target,
-                                    OPAL_PTRDIFF_TYPE target_disp,
-                                    int target_count,
-                                    struct ompi_datatype_t *target_dt,
-                                    struct ompi_op_t *op,
-                                    struct ompi_win_t *win);
+			      int origin_count,
+			      struct ompi_datatype_t *origin_dt,
+			      int target,
+			      OPAL_PTRDIFF_TYPE target_disp,
+			      int target_count,
+			      struct ompi_datatype_t *target_dt,
+			      struct ompi_op_t *op,
+			      struct ompi_win_t *win);
 
 int ompi_osc_pt2pt_get(void *origin_addr,
-                             int origin_count,
-                             struct ompi_datatype_t *origin_dt,
-                             int target,
-                             OPAL_PTRDIFF_TYPE target_disp,
-                             int target_count,
-                             struct ompi_datatype_t *target_dt,
-                             struct ompi_win_t *win);
+                       int origin_count,
+                       struct ompi_datatype_t *origin_dt,
+                       int target,
+                       OPAL_PTRDIFF_TYPE target_disp,
+                       int target_count,
+                       struct ompi_datatype_t *target_dt,
+                       struct ompi_win_t *win);
 
 int ompi_osc_pt2pt_compare_and_swap(const void *origin_addr,
                                    const void *compare_addr,
@@ -357,7 +356,10 @@ int ompi_osc_pt2pt_rget_accumulate(const void *origin_addr,
 int ompi_osc_pt2pt_fence(int assert, struct ompi_win_t *win);
 
 /* received a post message */
-int osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source);
+void osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source);
+
+/* received a complete message */
+void osc_pt2pt_incoming_complete (ompi_osc_pt2pt_module_t *module, int source, int frag_count);
 
 int ompi_osc_pt2pt_start(struct ompi_group_t *group,
                         int assert,
@@ -451,7 +453,8 @@ static inline void mark_incoming_completion (ompi_osc_pt2pt_module_t *module, in
             opal_condition_broadcast(&module->cond);
         }
     } else {
-        ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+        ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
+
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "mark_incoming_completion marking passive incoming complete. source = %d, count = %d",
                              source, (int) peer->passive_incoming_frag_count + 1));
@@ -705,6 +708,16 @@ static inline int ompi_osc_pt2pt_accumulate_trylock (ompi_osc_pt2pt_module_t *mo
 }
 
 /**
+ * @brief check if this process has this process is in a passive target access epoch
+ *
+ * @param[in] module          osc pt2pt module
+ */
+static inline bool ompi_osc_pt2pt_in_passive_epoch (ompi_osc_pt2pt_module_t *module)
+{
+    return 0 != module->passive_target_access_epoch;
+}
+
+/**
  * ompi_osc_pt2pt_accumulate_unlock:
  *
  * @short Unlock the accumulation lock and release a pending accumulation operation.
@@ -722,9 +735,134 @@ static inline void ompi_osc_pt2pt_accumulate_unlock (ompi_osc_pt2pt_module_t *mo
     }
 }
 
-static inline bool ompi_osc_pt2pt_check_access_epoch (ompi_osc_pt2pt_module_t *module, int rank)
+/**
+ * Find the first outstanding lock of the target.
+ *
+ * @param[in]  module   osc pt2pt module
+ * @param[in]  target   target rank
+ * @param[out] peer     peer object associated with the target
+ *
+ * @returns an outstanding lock on success
+ *
+ * This function looks for an outstanding lock to the target. If a lock exists it is returned.
+ */
+static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_lock_find (ompi_osc_pt2pt_module_t *module, int target,
+                                                                      ompi_osc_pt2pt_peer_t **peer)
 {
-   return module->all_access_epoch || module->peers[rank].access_epoch;
+    ompi_osc_pt2pt_sync_t *outstanding_lock = NULL;
+
+    (void) opal_hash_table_get_value_uint32 (&module->outstanding_locks, (uint32_t) target, (void **) &outstanding_lock);
+    if (NULL != outstanding_lock && peer) {
+        *peer = outstanding_lock->peer_list.peer;
+    }
+
+    return outstanding_lock;
+}
+
+/**
+ * Add an outstanding lock
+ *
+ * @param[in] module   osc pt2pt module
+ * @param[in] lock     lock object
+ *
+ * This function inserts a lock object to the list of outstanding locks. The caller must be holding the module
+ * lock.
+ */
+static inline void ompi_osc_pt2pt_module_lock_insert (struct ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_sync_t *lock)
+{
+    (void) opal_hash_table_set_value_uint32 (&module->outstanding_locks, (uint32_t) lock->sync.lock.target, (void *) lock);
+}
+
+
+/**
+ * Remove an outstanding lock
+ *
+ * @param[in] module   osc pt2pt module
+ * @param[in] lock     lock object
+ *
+ * This function removes a lock object to the list of outstanding locks. The caller must be holding the module
+ * lock.
+ */
+static inline void ompi_osc_pt2pt_module_lock_remove (struct ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_sync_t *lock)
+{
+
+    (void) opal_hash_table_remove_value_uint32 (&module->outstanding_locks, (uint32_t) lock->sync.lock.target);
+}
+
+/**
+ * Lookup a synchronization object associated with the target
+ *
+ * @param[in] module   osc pt2pt module
+ * @param[in] target   target rank
+ * @param[out] peer    peer object
+ *
+ * @returns NULL if the target is not locked, fenced, or part of a pscw sync
+ * @returns synchronization object on success
+ *
+ * This function returns the synchronization object associated with an access epoch for
+ * the target. If the target is not part of any current access epoch then NULL is returned.
+ */
+static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_sync_lookup (ompi_osc_pt2pt_module_t *module, int target,
+                                                                        struct ompi_osc_pt2pt_peer_t **peer)
+{
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "osc/pt2pt: looking for synchronization object for target %d", target));
+
+    switch (module->all_sync.type) {
+    case OMPI_OSC_PT2PT_SYNC_TYPE_NONE:
+        if (!module->no_locks) {
+            return ompi_osc_pt2pt_module_lock_find (module, target, peer);
+        }
+
+        return NULL;
+    case OMPI_OSC_PT2PT_SYNC_TYPE_FENCE:
+    case OMPI_OSC_PT2PT_SYNC_TYPE_LOCK:
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                             "osc/pt2pt: found fence/lock_all access epoch for target %d", target));
+
+        /* fence epoch is now active */
+        module->all_sync.epoch_active = true;
+        if (peer) {
+            *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+        }
+
+        return &module->all_sync;
+    case OMPI_OSC_PT2PT_SYNC_TYPE_PSCW:
+        if (ompi_osc_pt2pt_sync_pscw_peer (module, target, peer)) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                 "osc/pt2pt: found PSCW access epoch target for %d", target));
+            return &module->all_sync;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief check if an access epoch is active
+ *
+ * @param[in] module        osc pt2pt module
+ *
+ * @returns true if any type of access epoch is active
+ * @returns false otherwise
+ *
+ * This function is used to check for conflicting access epochs.
+ */
+static inline bool ompi_osc_pt2pt_access_epoch_active (ompi_osc_pt2pt_module_t *module)
+{
+    return (module->all_sync.epoch_active || ompi_osc_pt2pt_in_passive_epoch (module));
+}
+
+static inline bool ompi_osc_pt2pt_peer_sends_active (ompi_osc_pt2pt_module_t *module, int rank)
+{
+    ompi_osc_pt2pt_sync_t *sync;
+
+    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, NULL);
+    if (!sync) {
+        return false;
+    }
+
+    return sync->eager_send_active;
 }
 
 END_C_DECLS
