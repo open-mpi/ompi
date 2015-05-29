@@ -5,6 +5,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -699,10 +701,12 @@ static void fencenb_cbfunc(opal_buffer_t *buf, void *cbdata)
     }
 
     /* if a callback was provided, execute it */
-    if (NULL != cb && NULL != cb->cbfunc) {
-        cb->cbfunc(rc, NULL, cb->cbdata);
+    if (NULL != cb) {
+        if (NULL != cb->cbfunc) {
+            cb->cbfunc(rc, NULL, cb->cbdata);
+        }
+        OBJ_RELEASE(cb);
     }
-    OBJ_RELEASE(cb);
 }
 
 static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
