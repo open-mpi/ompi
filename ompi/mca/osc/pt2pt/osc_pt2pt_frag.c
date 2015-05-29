@@ -12,17 +12,12 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "opal/class/opal_list.h"
-#include "ompi/mca/osc/base/base.h"
-#include "ompi/mca/pml/pml.h"
-
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_frag.h"
 #include "osc_pt2pt_data_move.h"
 
-static void ompi_osc_pt2pt_frag_constructor (ompi_osc_pt2pt_frag_t *frag){
+static void ompi_osc_pt2pt_frag_constructor (ompi_osc_pt2pt_frag_t *frag)
+{
     frag->buffer = frag->super.ptr;
 }
 
@@ -68,7 +63,7 @@ static int frag_send (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_frag_t *fr
 int ompi_osc_pt2pt_frag_start (ompi_osc_pt2pt_module_t *module,
                                ompi_osc_pt2pt_frag_t *frag)
 {
-    ompi_osc_pt2pt_peer_t *peer = module->peers + frag->target;
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, frag->target);
     int ret;
 
     assert(0 == frag->pending && peer->active_frag != frag);
@@ -79,7 +74,7 @@ int ompi_osc_pt2pt_frag_start (ompi_osc_pt2pt_module_t *module,
 
     /* if eager sends are not active, can't send yet, so buffer and
        get out... */
-    if (!(peer->eager_send_active || module->all_access_epoch) || opal_list_get_size (&peer->queued_frags)) {
+    if (!ompi_osc_pt2pt_peer_sends_active (module, frag->target) || opal_list_get_size (&peer->queued_frags)) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "queuing fragment to peer %d",
                              frag->target));
         OPAL_THREAD_SCOPED_LOCK(&peer->lock,
@@ -97,9 +92,9 @@ int ompi_osc_pt2pt_frag_start (ompi_osc_pt2pt_module_t *module,
     return ret;
 }
 
-static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, int target)
+static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_peer_t *peer)
 {
-    ompi_osc_pt2pt_frag_t *active_frag = module->peers[target].active_frag;
+    ompi_osc_pt2pt_frag_t *active_frag = peer->active_frag;
     int ret = OMPI_SUCCESS;
 
     if (NULL == active_frag) {
@@ -108,16 +103,16 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, in
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: flushing active fragment to target %d. pending: %d", target,
-                         active_frag->pending));
+                         "osc pt2pt: flushing active fragment to target %d. pending: %d",
+                         active_frag->target, active_frag->pending));
 
-    if (opal_atomic_cmpset (&module->peers[target].active_frag, active_frag, NULL)) {
+    if (opal_atomic_cmpset (&peer->active_frag, active_frag, NULL)) {
         if (0 != OPAL_THREAD_ADD32(&active_frag->pending, -1)) {
             /* communication going on while synchronizing; this is an rma usage bug */
             return OMPI_ERR_RMA_SYNC;
         }
 
-        ompi_osc_signal_outgoing (module, target, 1);
+        ompi_osc_signal_outgoing (module, active_frag->target, 1);
         ret = frag_send (module, active_frag);
     }
 
@@ -126,7 +121,7 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, in
 
 int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int target)
 {
-    ompi_osc_pt2pt_peer_t *peer = module->peers + target;
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     ompi_osc_pt2pt_frag_t *frag;
     int ret = OMPI_SUCCESS;
 
@@ -150,7 +145,7 @@ int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int targe
     }
 
     /* flush the active frag */
-    ret = ompi_osc_pt2pt_flush_active_frag (module, target);
+    ret = ompi_osc_pt2pt_flush_active_frag (module, peer);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush target %d finished", target));
@@ -162,41 +157,20 @@ int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int targe
 int ompi_osc_pt2pt_frag_flush_all (ompi_osc_pt2pt_module_t *module)
 {
     int ret = OMPI_SUCCESS;
-    ompi_osc_pt2pt_frag_t *frag;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: frag flush all begin"));
 
-    /* try to start all the queued frags */
+    /* try to start frags queued to all peers */
     for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
-        ompi_osc_pt2pt_peer_t *peer = module->peers + i;
-
-        while (NULL != (frag = ((ompi_osc_pt2pt_frag_t *) opal_list_remove_first (&peer->queued_frags)))) {
-            ret = frag_send(module, frag);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                break;
-            }
-        }
-
-        /* XXX -- TODO -- better error handling */
+        ret = ompi_osc_pt2pt_frag_flush_target (module, i);
         if (OMPI_SUCCESS != ret) {
-            return ret;
+            break;
         }
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: flushing all active fragments"));
-
-    /* flush the active frag */
-    for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-        ret = ompi_osc_pt2pt_flush_active_frag (module, i);
-        if (OMPI_SUCCESS != ret) {
-            return ret;
-        }
-    }
-
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: frag flush all done"));
+                         "osc pt2pt: frag flush all done. ret: %d", ret));
 
     return ret;
 }
