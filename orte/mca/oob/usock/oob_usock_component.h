@@ -51,10 +51,6 @@ typedef struct {
     mca_oob_base_component_t  super;          /**< base OOB component */
     int                       max_retries;    /**< max number of retries before declaring peer gone */
     struct sockaddr_un        address;        /**< address of our rendezvous point */
-    /* connection support */
-    opal_event_t             listener_event;     /**< my listener event */
-    bool                     listener_ev_active;
-    int                      listener_socket;
 } mca_oob_usock_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_usock_component_t mca_oob_usock_component;

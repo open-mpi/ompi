@@ -43,9 +43,6 @@ BEGIN_C_DECLS
  * as someone figures out how to separate the various
  * datastore channels
  */
-OPAL_DECLSPEC extern int opal_dstore_internal;
-OPAL_DECLSPEC extern int opal_dstore_modex;
-
 OPAL_DECLSPEC extern int opal_dstore_peer;
 OPAL_DECLSPEC extern int opal_dstore_internal;
 OPAL_DECLSPEC extern int opal_dstore_nonpeer;
