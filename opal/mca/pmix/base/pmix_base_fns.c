@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -424,11 +424,7 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
                 kv->data.byte = *tmp3;
                 break;
             case OPAL_STRING:
-                if (NULL != tmp3) {
-                    kv->data.string = strdup(tmp3);
-                } else {
-                    kv->data.string = NULL;
-                }
+                kv->data.string = strdup(tmp3);
                 break;
             case OPAL_PID:
                 kv->data.pid = strtoul(tmp3, NULL, 10);
