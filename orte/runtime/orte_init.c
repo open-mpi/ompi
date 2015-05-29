@@ -13,7 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -46,6 +46,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
@@ -203,14 +204,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
-    if (ORTE_PROC_IS_APP) {
-        if (0 > (opal_dstore_modex = opal_dstore.open("MODEX", "sm,hash", NULL))) {
-            error = "opal dstore modex";
-            ret = ORTE_ERR_FATAL;
-            goto error;
-        }
-    }
-
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register();
@@ -258,6 +251,16 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_timing_set_jobid(ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 #endif
 
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* start listening - will be ignored if no listeners
+         * were registered */
+        if (ORTE_SUCCESS != (ret = orte_start_listening())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_start_listening";
+            goto error;
+        }
+    }
+    
     /* All done */
     return ORTE_SUCCESS;
     

@@ -63,6 +63,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/state/state.h"
+#include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/session_dir.h"
@@ -185,6 +186,22 @@ static int component_available(void)
     return ORTE_SUCCESS;
 }
 
+/*
+ * Handler for accepting connections from the event library
+ */
+static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
+{
+    orte_pending_connection_t *pending = (orte_pending_connection_t*)cbdata;
+    int sd;
+
+    sd = pending->fd;
+    pending->fd = -1;
+    OBJ_RELEASE(pending);
+
+    /* process the connection */
+    mca_oob_usock_module.api.accept_connection(sd, NULL);
+}
+
 /* Start the module */
 static int component_startup(void)
 {
@@ -205,11 +222,10 @@ static int component_startup(void)
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "SUNPATH: %s", mca_oob_usock_component.address.sun_path);
 
-    /* if we are a daemon/HNP, start the listening event - this will create
-     * the rendezvous link
-     */
+    /* if we are a daemon/HNP, register our listener */
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
-        if (ORTE_SUCCESS != (rc = orte_oob_usock_start_listening())) {
+        if (ORTE_SUCCESS != (rc = orte_register_listener((struct sockaddr*)&mca_oob_usock_component.address, sizeof(struct sockaddr_un),
+                                                         orte_event_base, connection_event_handler))) {
             ORTE_ERROR_LOG(rc);
         }
     } else {
@@ -235,10 +251,6 @@ static void component_shutdown(void)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
-        if (mca_oob_usock_component.listener_ev_active) {
-            opal_event_del(&mca_oob_usock_component.listener_event);
-            mca_oob_usock_component.listener_ev_active = false;
-        }
         /* delete the rendezvous file */
         unlink(mca_oob_usock_component.address.sun_path);
     }

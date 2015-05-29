@@ -724,11 +724,6 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     /* launch the local procs */
     ORTE_ACTIVATE_LOCAL_LAUNCH(job, odls_default_fork_local_proc);
     
-    opal_dstore_attr_t *attr;
-    attr = pmix_server_create_shared_segment(job);
-    if (NULL != attr) {
-        opal_setenv("PMIX_SEG_INFO", attr->connection_info, true, &orte_launch_environ);
-    }
     return ORTE_SUCCESS;
 }
 

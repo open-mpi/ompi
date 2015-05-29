@@ -12,7 +12,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.
 #                         All rights reserved
-# Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,7 +23,6 @@
 sources = \
           oob_usock_component.h \
           oob_usock.h \
-          oob_usock_listener.h \
           oob_usock_component.c \
           oob_usock_connection.h \
           oob_usock_sendrecv.h \
@@ -31,7 +30,6 @@ sources = \
           oob_usock_peer.h \
           oob_usock_ping.h \
           oob_usock.c \
-          oob_usock_listener.c \
           oob_usock_connection.c \
           oob_usock_sendrecv.c
 

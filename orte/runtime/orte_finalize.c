@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +33,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
+#include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 
@@ -58,6 +59,12 @@ int orte_finalize(void)
     /* flag that we are finalizing */
     orte_finalizing = true;
 
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* stop listening for connections - will
+         * be ignored if no listeners were registered */
+        orte_stop_listening();
+    }
+    
     /* flush the show_help system */
     orte_show_help_finalize();
 
