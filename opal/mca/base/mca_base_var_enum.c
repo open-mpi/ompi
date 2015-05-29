@@ -58,13 +58,16 @@ static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *st
     char *tmp;
     int v;
 
+    /* skip whitespace */
+    string_value += strspn (string_value, " \t\n\v\f\r");
+
     v = strtol (string_value, &tmp, 10);
     if (*tmp != '\0') {
         if (0 == strcmp (string_value, "true") || 0 == strcmp (string_value, "t") ||
-            0 == strcmp (string_value, "enabled")) {
+            0 == strcmp (string_value, "enabled") || 0 == strcmp (string_value, "yes")) {
             v = 1;
         } else if (0 == strcmp (string_value, "false") || 0 == strcmp (string_value, "f") ||
-                   0 == strcmp (string_value, "disabled")) {
+                   0 == strcmp (string_value, "disabled") || 0 == strcmp (string_value, "no")) {
             v = 0;
         } else {
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
@@ -88,7 +91,7 @@ static int mca_base_var_enum_bool_sfv (mca_base_var_enum_t *self, const int valu
 
 static int mca_base_var_enum_bool_dump (mca_base_var_enum_t *self, char **out)
 {
-    *out = strdup ("0: f|false|disabled, 1: t|true|enabled");
+    *out = strdup ("0: f|false|disabled|no, 1: t|true|enabled|yes");
     return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
 }
 
