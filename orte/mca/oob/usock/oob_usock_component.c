@@ -74,7 +74,6 @@
 #include "orte/mca/oob/usock/oob_usock_component.h"
 #include "orte/mca/oob/usock/oob_usock_peer.h"
 #include "orte/mca/oob/usock/oob_usock_connection.h"
-#include "orte/mca/oob/usock/oob_usock_listener.h"
 #include "orte/mca/oob/usock/oob_usock_ping.h"
 /*
  * Local utility functions
