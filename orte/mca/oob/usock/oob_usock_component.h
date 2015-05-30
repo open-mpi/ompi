@@ -40,7 +40,6 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/oob/oob.h"
-#include "oob_usock_listener.h"
 #include "oob_usock_peer.h"
 #include "oob_usock.h"
 
