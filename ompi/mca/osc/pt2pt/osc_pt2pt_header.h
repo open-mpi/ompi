@@ -386,7 +386,7 @@ osc_pt2pt_hton_intr(ompi_osc_pt2pt_header_t *hdr, const ompi_proc_t *proc)
 #ifdef WORDS_BIGENDIAN
     hdr->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
 #else
-    if(!(proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN))
+    if(!(proc->proc_arch & OPAL_ARCH_ISBIGENDIAN))
         return;
 
     hdr->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
