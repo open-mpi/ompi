@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -232,6 +234,18 @@ public final boolean isNull()
 }
 
 /**
+ * Java binding of {@code MPI_COMM_GET_INFO}.
+ * @throws MPIException 
+ */
+public final Info getInfo() throws MPIException
+{
+    MPI.check();
+    return getInfo(handle);
+}
+
+private native void getInfo(long handle, long info) throws MPIException;
+
+/**
  * Java binding of {@code MPI_COMM_SET_INFO}.
  * @param info info object
  * @throws MPIException
@@ -242,7 +256,7 @@ public final void setInfo(Info info) throws MPIException
     setInfo(handle, info.handle);
 }
 
-private native void setInfo(long fh, long info) throws MPIException;
+private native void setInfo(long comm, long info) throws MPIException;
 
 /**
  * Java binding of {@code MPI_COMM_GET_INFO}.
@@ -255,7 +269,7 @@ public final Info getInfo() throws MPIException
     return new Info(getInfo(handle));
 }
 
-private native long getInfo(long fh) throws MPIException;
+private native long getInfo(long comm) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_COMM_DISCONNECT}.

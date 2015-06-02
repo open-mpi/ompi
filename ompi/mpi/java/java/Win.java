@@ -468,4 +468,31 @@ private native void deleteAttr(long win, int keyval) throws MPIException;
 
 private native long free(long win) throws MPIException;
 
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_GET_INFO}.
+ * @throws MPIException
+ */
+public Info getInfo() throws MPIException
+{
+    MPI.check();
+    return getInfo(handle);
+}
+
+private native Info getInfo(long win)
+        throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_SET_INFO}.
+ * @param info the new info
+ * @throws MPIException
+ */
+public void setInfo(Info info) throws MPIException
+{
+    MPI.check();
+    setInfo(handle, info);
+}
+
+private native void setInfo(long win, Info info)
+        throws MPIException;
+
 } // Win

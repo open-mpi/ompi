@@ -279,3 +279,23 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_free(
     ompi_java_exceptionCheck(env, rc);
     return (jlong)win;
 }
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_getInfo(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    MPI_Win win = (MPI_Win)handle;
+    MPI_Info info;
+    int rc = MPI_Win_get_info((MPI_Win)win, &info);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)info;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_setInfo(
+        JNIEnv *env, jobject jthis, jlong handle, jlong i)
+{
+    MPI_Win win = (MPI_Win)handle;
+    MPI_Info info = (MPI_Info)i;
+    int rc = MPI_Win_set_info(win, info);
+    ompi_java_exceptionCheck(env, rc);
+}
+
