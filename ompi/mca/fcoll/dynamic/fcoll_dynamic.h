@@ -54,14 +54,6 @@ int mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                                      struct ompi_datatype_t *datatype, 
                                      ompi_status_public_t * status);
 
-int mca_fcoll_dynamic_file_read_all_begin (mca_io_ompio_file_t *fh, 
-                                           void *buf, 
-                                           int count, 
-                                           struct ompi_datatype_t *datatype);
-
-int mca_fcoll_dynamic_file_read_all_end (mca_io_ompio_file_t *fh, 
-                                         void *buf, 
-                                         ompi_status_public_t * status);
 
 int mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh, 
                                       void *buf, 
@@ -69,14 +61,6 @@ int mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
                                       struct ompi_datatype_t *datatype, 
                                       ompi_status_public_t * status);
 
-int mca_fcoll_dynamic_file_write_all_begin (mca_io_ompio_file_t *fh, 
-                                            void *buf, 
-                                            int count, 
-                                            struct ompi_datatype_t *datatype);
-
-int mca_fcoll_dynamic_file_write_all_end (mca_io_ompio_file_t *fh, 
-                                          void *buf, 
-                                          ompi_status_public_t * status);
 
 END_C_DECLS
 

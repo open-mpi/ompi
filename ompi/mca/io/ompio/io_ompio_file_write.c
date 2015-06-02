@@ -669,8 +669,7 @@ int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_write_at_all_begin(&data->ompio_fh,offset,buf,count,datatype);
-
+    ret = ompio_io_ompio_file_write_at_all_begin (&data->ompio_fh, offset, buf, count, datatype );
     return ret;
 }
 
@@ -685,10 +684,6 @@ int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
     ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_write_all_begin (fh,
-                                                   buf,
-                                                   count,
-                                                   datatype);
 
     /* It is OK to reset the position already here, althgouth 
     ** the operation might still be pending/ongoing, since
@@ -718,9 +713,6 @@ int ompio_io_ompio_file_write_at_all_end (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     
-    ret = fh->f_fcoll->fcoll_file_write_all_end (fh,
-                                                 buf,
-                                                 status);
 
     return ret;
 }
@@ -734,11 +726,6 @@ int mca_io_ompio_file_write_all_begin (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_begin (&data->ompio_fh, 
-                                            buf, 
-                                            count,
-                                            datatype);
 
     return ret;
 }
@@ -751,10 +738,6 @@ int mca_io_ompio_file_write_all_end (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_end (&data->ompio_fh, 
-                                          buf, 
-                                          status);
     
     return ret;
 }

@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2015 University of Houston. All rights reserved.
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -23,11 +23,7 @@ sources = \
         fcoll_individual_module.c \
         fcoll_individual_component.c \
         fcoll_individual_file_read_all.c \
-        fcoll_individual_file_read_all_begin.c \
-        fcoll_individual_file_read_all_end.c \
-        fcoll_individual_file_write_all.c \
-        fcoll_individual_file_write_all_begin.c \
-        fcoll_individual_file_write_all_end.c
+        fcoll_individual_file_write_all.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,14 +53,6 @@ int mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                                      struct ompi_datatype_t *datatype, 
                                      ompi_status_public_t * status);
 
-int mca_fcoll_static_file_read_all_begin (mca_io_ompio_file_t *fh, 
-                                           void *buf, 
-                                           int count, 
-                                           struct ompi_datatype_t *datatype);
-
-int mca_fcoll_static_file_read_all_end (mca_io_ompio_file_t *fh, 
-                                         void *buf, 
-                                         ompi_status_public_t * status);
 
 int mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh, 
                                       void *buf, 
@@ -68,14 +60,6 @@ int mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
                                       struct ompi_datatype_t *datatype, 
                                       ompi_status_public_t * status);
 
-int mca_fcoll_static_file_write_all_begin (mca_io_ompio_file_t *fh, 
-                                            void *buf, 
-                                            int count, 
-                                            struct ompi_datatype_t *datatype);
-
-int mca_fcoll_static_file_write_all_end (mca_io_ompio_file_t *fh, 
-                                          void *buf, 
-                                          ompi_status_public_t * status);
 
 END_C_DECLS
 
