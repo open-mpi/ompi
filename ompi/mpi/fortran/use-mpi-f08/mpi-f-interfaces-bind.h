@@ -2402,6 +2402,25 @@ subroutine ompi_win_create_dynamic_f(info,comm,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_create_dynamic_f
 
+subroutine ompi_win_attach_f(win,base,size,ierror) &
+   BIND(C, name="ompi_win_attach_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
+   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_attach_f
+
+subroutine ompi_win_detach_f(win,base,ierror) &
+   BIND(C, name="ompi_win_detach_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
+   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_detach_f
+
 subroutine ompi_win_flush_f(rank,win,ierror) &
    BIND(C, name="ompi_win_flush_f")
    implicit none

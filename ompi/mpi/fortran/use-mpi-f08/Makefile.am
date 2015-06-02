@@ -338,6 +338,7 @@ mpi_api_files = \
         waitsome_f08.F90 \
         win_allocate_f08.F90 \
         win_allocate_shared_f08.F90 \
+        win_attach_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
         win_create_dynamic_f08.F90 \
@@ -345,6 +346,7 @@ mpi_api_files = \
         win_create_f08.F90 \
         win_create_keyval_f08.F90 \
         win_delete_attr_f08.F90 \
+        win_detach_f08.F90 \
         win_fence_f08.F90 \
         win_flush_f08.F90 \
         win_flush_all_f08.F90 \

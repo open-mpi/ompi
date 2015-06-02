@@ -350,6 +350,7 @@
 #define ompi_win_allocate_cptr_f pompi_win_allocate_cptr_f
 #define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
 #define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
+#define ompi_win_attach_f pompi_win_attach_f
 #define ompi_win_call_errhandler_f pompi_win_call_errhandler_f
 #define ompi_win_complete_f pompi_win_complete_f
 #define ompi_win_create_f pompi_win_create_f
@@ -357,6 +358,7 @@
 #define ompi_win_create_errhandler_f pompi_win_create_errhandler_f
 #define ompi_win_create_keyval_f pompi_win_create_keyval_f
 #define ompi_win_delete_attr_f pompi_win_delete_attr_f
+#define ompi_win_detach_f pompi_win_detach_f
 #define ompi_win_fence_f pompi_win_fence_f
 #define ompi_win_flush_f pompi_win_flush_f
 #define ompi_win_flush_all_f pompi_win_flush_all_f

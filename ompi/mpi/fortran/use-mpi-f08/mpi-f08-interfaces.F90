@@ -3232,6 +3232,37 @@ subroutine MPI_Win_create_dynamic_f08(info,comm,win,ierror)
 end subroutine MPI_Win_create_dynamic_f08
 end interface  MPI_Win_create_dynamic
 
+interface  MPI_Win_attach
+subroutine MPI_Win_attach_f08(win,base,size,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !$PRAGMA IGNORE_TKR base
+   !DIR$ IGNORE_TKR base
+   !IBM* IGNORE_TKR base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
+   TYPE(MPI_Win), INTENT(OUT) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Win_attach_f08
+end interface  MPI_Win_attach
+
+interface  MPI_Win_detach
+subroutine MPI_Win_detach_f08(win,base,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !$PRAGMA IGNORE_TKR base
+   !DIR$ IGNORE_TKR base
+   !IBM* IGNORE_TKR base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   TYPE(MPI_Win), INTENT(OUT) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Win_detach_f08
+end interface  MPI_Win_detach
+
 interface  MPI_Win_fence
 subroutine MPI_Win_fence_f08(assert,win,ierror)
    use :: mpi_f08_types, only : MPI_Win
