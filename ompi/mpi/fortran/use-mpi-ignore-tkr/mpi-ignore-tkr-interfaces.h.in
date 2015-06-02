@@ -9,6 +9,8 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -7428,6 +7430,33 @@ subroutine PMPI_Win_create(base, size, disp_unit, info, comm, &
   integer, intent(out) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_create
+
+end interface
+
+
+interface MPI_Win_create_dynamic
+
+subroutine MPI_Win_create_dynamic(info, comm, &
+        win, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_create_dynamic
+
+end interface
+
+interface PMPI_Win_create_dynamic
+
+subroutine PMPI_Win_create_dynamic(info, comm, &
+        win, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_create_dynamic
 
 end interface
 

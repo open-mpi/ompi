@@ -410,6 +410,7 @@ PN2(void, MPI_Win_allocate_shared_cptr, mpi_win_allocate_shared_cptr, MPI_WIN_AL
 PN2(void, MPI_Win_call_errhandler, mpi_win_call_errhandler, MPI_WIN_CALL_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Win_complete, mpi_win_complete, MPI_WIN_COMPLETE, (MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_create, mpi_win_create, MPI_WIN_CREATE, (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr));
+PN2(void, MPI_Win_create_dynamic, mpi_win_create_dynamic, MPI_WIN_CREATE_DYNAMIC, (MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_create_errhandler, mpi_win_create_errhandler, MPI_WIN_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Win_create_keyval, mpi_win_create_keyval, MPI_WIN_CREATE_KEYVAL, (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Win_delete_attr, mpi_win_delete_attr, MPI_WIN_DELETE_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr));

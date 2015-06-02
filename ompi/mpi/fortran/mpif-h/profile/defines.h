@@ -353,6 +353,7 @@
 #define ompi_win_call_errhandler_f pompi_win_call_errhandler_f
 #define ompi_win_complete_f pompi_win_complete_f
 #define ompi_win_create_f pompi_win_create_f
+#define ompi_win_create_dynamic_f pompi_win_create_dynamic_f
 #define ompi_win_create_errhandler_f pompi_win_create_errhandler_f
 #define ompi_win_create_keyval_f pompi_win_create_keyval_f
 #define ompi_win_delete_attr_f pompi_win_delete_attr_f

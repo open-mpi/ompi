@@ -340,6 +340,7 @@ mpi_api_files = \
         win_allocate_shared_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
+        win_create_dynamic_f08.F90 \
         win_create_errhandler_f08.F90 \
         win_create_f08.F90 \
         win_create_keyval_f08.F90 \
