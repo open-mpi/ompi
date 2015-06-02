@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +65,22 @@ public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
 
 private native long createWin(
         Buffer base, int size, int dispUnit, long info, long comm)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_WIN_CREATE_DYNAMIC}.
+ * @param info     info object
+ * @param comm     communicator
+ * @throws MPIException 
+ */
+public Win(Info info, Comm comm)
+    throws MPIException
+{
+    handle = createWinDynamic(info.handle, comm.handle);
+}
+
+private native long createWinDynamic(
+        long info, long comm)
         throws MPIException;
 
 private int getBaseType(Datatype orgType, Datatype targetType)

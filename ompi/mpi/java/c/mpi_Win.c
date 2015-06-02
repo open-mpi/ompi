@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,18 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_createWin(
     MPI_Win win;
 
     int rc = MPI_Win_create(base, (MPI_Aint)size, dispUnit,
+                            (MPI_Info)info, (MPI_Comm)comm, &win);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)win;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_create_dynamicWin(
+        jlong info, jlong comm)
+{
+    MPI_Win win;
+
+    int rc = MPI_Win_create_dynamic(
                             (MPI_Info)info, (MPI_Comm)comm, &win);
 
     ompi_java_exceptionCheck(env, rc);
