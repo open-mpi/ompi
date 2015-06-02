@@ -2452,6 +2452,14 @@ subroutine ompi_win_get_group_f(win,group,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_get_group_f
 
+subroutine ompi_win_get_info_f(comm,info,ierror) &
+   BIND(C, name="ompi_win_get_info_f")
+   implicit none
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_get_info_f
+
 subroutine ompi_win_lock_f(lock_type,rank,assert,win,ierror) &
    BIND(C, name="ompi_win_lock_f")
    implicit none
@@ -2476,6 +2484,14 @@ subroutine ompi_win_post_f(group,assert,win,ierror) &
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_post_f
+
+subroutine ompi_win_set_info_f(comm,info,ierror) &
+   BIND(C, name="ompi_win_set_info_f")
+   implicit none
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_set_info_f
 
 subroutine ompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
       ierror) BIND(C, name="ompi_win_shared_query_f")

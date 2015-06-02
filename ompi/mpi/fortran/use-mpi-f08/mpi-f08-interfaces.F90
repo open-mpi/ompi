@@ -2180,6 +2180,16 @@ subroutine MPI_Win_get_attr_f08(win,win_keyval,attribute_val,flag,ierror)
 end subroutine MPI_Win_get_attr_f08
 end interface  MPI_Win_get_attr
 
+interface  MPI_Win_get_info
+subroutine MPI_Win_get_info_f08(win,info,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_Info
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Info), INTENT(OUT) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Win_get_info_f08
+end interface  MPI_Win_get_info
+
 interface  MPI_Win_get_name
 subroutine MPI_Win_get_name_f08(win,win_name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_MAX_OBJECT_NAME
@@ -2201,6 +2211,16 @@ subroutine MPI_Win_set_attr_f08(win,win_keyval,attribute_val,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_set_attr_f08
 end interface  MPI_Win_set_attr
+
+interface  MPI_Win_set_info
+subroutine MPI_Win_set_info_f08(win,info,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_Info
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Info), INTENT(IN) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Win_set_info_f08
+end interface  MPI_Win_set_info
 
 interface  MPI_Win_set_name
 subroutine MPI_Win_set_name_f08(win,win_name,ierror)
