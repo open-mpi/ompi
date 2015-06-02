@@ -320,6 +320,7 @@ linked_files = \
         pwin_allocate_shared_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
+        pwin_create_dynamic_f.c \
         pwin_create_errhandler_f.c \
         pwin_create_f.c \
         pwin_create_keyval_f.c \

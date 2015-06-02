@@ -7,6 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -2368,6 +2370,15 @@ subroutine ompi_win_create_f(base,size,disp_unit,info,comm,win,ierror) &
    INTEGER, INTENT(OUT) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_create_f
+
+subroutine ompi_win_create_dynamic_f(info,comm,win,ierror) &
+   BIND(C, name="ompi_win_create_dynamic_f")
+   implicit none
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_create_dynamic_f
 
 subroutine ompi_win_flush_f(rank,win,ierror) &
    BIND(C, name="ompi_win_flush_f")
