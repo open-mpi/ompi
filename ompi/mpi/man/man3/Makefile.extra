@@ -349,6 +349,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Waitall.3 \
         mpi/man/man3/MPI_Waitany.3 \
         mpi/man/man3/MPI_Waitsome.3 \
+        mpi/man/man3/MPI_Win_attach.3 \
         mpi/man/man3/MPI_Win_c2f.3 \
         mpi/man/man3/MPI_Win_call_errhandler.3 \
         mpi/man/man3/MPI_Win_complete.3 \
@@ -357,6 +358,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_create_errhandler.3 \
         mpi/man/man3/MPI_Win_create_keyval.3 \
         mpi/man/man3/MPI_Win_delete_attr.3 \
+        mpi/man/man3/MPI_Win_detach.3 \
         mpi/man/man3/MPI_Win_f2c.3 \
         mpi/man/man3/MPI_Win_fence.3 \
         mpi/man/man3/MPI_Win_flush.3 \
