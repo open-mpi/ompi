@@ -98,6 +98,51 @@ private int getBaseType(Datatype orgType, Datatype targetType)
 }
 
 /**
+ * Java binding of {@code MPI_WIN_ATTACH}.
+ * @param assertion program assertion
+ */
+public void attach(Buffer base, int size) throws MPIException
+{
+    MPI.check();
+    if(!base.isDirect())
+        throw new IllegalArgumentException("The buffer must be direct.");
+
+    int baseSize;
+
+    if(base instanceof ByteBuffer)
+        baseSize = 1;
+    else if(base instanceof CharBuffer || base instanceof ShortBuffer)
+        baseSize = 2;
+    else if(base instanceof IntBuffer || base instanceof FloatBuffer)
+        baseSize = 4;
+    else if(base instanceof LongBuffer || base instanceof DoubleBuffer)
+        baseSize = 8;
+    else
+        throw new AssertionError();
+
+    int sizeBytes = size * baseSize,
+
+    attach(handle, base, size);
+}
+
+private native void attach(long win, Buffer base, int size) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_WIN_DETACH}.
+ * @param assertion program assertion
+ */
+public void detach(Buffer base) throws MPIException
+{
+    MPI.check();
+    if(!base.isDirect())
+        throw new IllegalArgumentException("The buffer must be direct.");
+
+    detach(handle, base);
+}
+
+private native void detach(long win, Buffer base) throws MPIException;
+
+/**
  * Java binding of the MPI operation {@code MPI_GET_GROUP}.
  * @return group of processes which share access to the window
  * @throws MPIException
