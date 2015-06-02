@@ -367,12 +367,14 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_get_attr.3 \
         mpi/man/man3/MPI_Win_get_errhandler.3 \
         mpi/man/man3/MPI_Win_get_group.3 \
+        mpi/man/man3/MPI_Win_get_info.3 \
         mpi/man/man3/MPI_Win_get_name.3 \
         mpi/man/man3/MPI_Win_lock.3 \
         mpi/man/man3/MPI_Win_lock_all.3 \
         mpi/man/man3/MPI_Win_post.3 \
         mpi/man/man3/MPI_Win_set_attr.3 \
         mpi/man/man3/MPI_Win_set_errhandler.3 \
+        mpi/man/man3/MPI_Win_set_info.3 \
         mpi/man/man3/MPI_Win_set_name.3 \
         mpi/man/man3/MPI_Win_start.3 \
         mpi/man/man3/MPI_Win_sync.3 \
