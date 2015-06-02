@@ -39,7 +39,7 @@
 #include "ompi_config.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "ompi/mca/mca.h"
-#include "ompi/mca/pml/pml.h" /* for send_mode enum */
+#include "ompi/mca/pml/pml_constants.h" /* for send_mode enum */
 #include "ompi/request/request.h"
 
 BEGIN_C_DECLS
@@ -425,22 +425,24 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 #define MCA_MTL_BASE_VERSION_2_0_0 \
     OMPI_MCA_BASE_VERSION_2_1_0("mtl", 2, 0, 0)
 
+OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
+
 /*
  * macro for doing direct call / call through struct
  */
 #if MCA_ompi_mtl_DIRECT_CALL
 
-#include MCA_ompi_mtl_DIRECT_CALL_HEADER
 
 #define OMPI_MTL_CALL_STAMP(a, b) ompi_mtl_ ## a ## _ ## b
 #define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a,b)
 #define OMPI_MTL_CALL(a) OMPI_MTL_CALL_EXPANDER(MCA_ompi_mtl_DIRECT_CALL_COMPONENT, a)
 
+#include MCA_ompi_mtl_DIRECT_CALL_HEADER
+
 #else
 #define OMPI_MTL_CALL(a) ompi_mtl->mtl_ ## a
 #endif
 
-OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
 
 END_C_DECLS
 #endif
