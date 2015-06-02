@@ -356,12 +356,14 @@ mpi_api_files = \
         win_get_attr_f08.F90 \
         win_get_errhandler_f08.F90 \
         win_get_group_f08.F90 \
+        win_get_info_f08.F90 \
         win_get_name_f08.F90 \
         win_lock_f08.F90 \
         win_lock_all_f08.F90 \
         win_post_f08.F90 \
         win_set_attr_f08.F90 \
         win_set_errhandler_f08.F90 \
+        win_set_info_f08.F90 \
         win_set_name_f08.F90 \
         win_shared_query_f08.F90 \
         win_start_f08.F90 \

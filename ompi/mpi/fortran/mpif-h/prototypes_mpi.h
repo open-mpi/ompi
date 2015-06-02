@@ -424,12 +424,14 @@ PN2(void, MPI_Win_free_keyval, mpi_win_free_keyval, MPI_WIN_FREE_KEYVAL, (MPI_Fi
 PN2(void, MPI_Win_get_attr, mpi_win_get_attr, MPI_WIN_GET_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPI_Win_get_errhandler, mpi_win_get_errhandler, MPI_WIN_GET_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Win_get_group, mpi_win_get_group, MPI_WIN_GET_GROUP, (MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr));
+PN2(void, MPI_Win_get_info, mpi_win_get_info, MPI_WIN_GET_INFO, (MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Win_get_name, mpi_win_get_name, MPI_WIN_GET_NAME, (MPI_Fint *win, char *win_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Win_lock, mpi_win_lock, MPI_WIN_LOCK, (MPI_Fint *lock_type, MPI_Fint *rank, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_lock_all, mpi_win_lock_all, MPI_WIN_LOCK_ALL, (MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_post, mpi_win_post, MPI_WIN_POST, (MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_set_attr, mpi_win_set_attr, MPI_WIN_SET_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr));
 PN2(void, MPI_Win_set_errhandler, mpi_win_set_errhandler, MPI_WIN_SET_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr));
+PN2(void, MPI_Win_set_info, mpi_win_set_info, MPI_WIN_SET_INFO, (MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Win_set_name, mpi_win_set_name, MPI_WIN_SET_NAME, (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Win_shared_query, mpi_win_shared_query, MPI_WIN_SHARED_QUERY, (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size, MPI_Fint *disp_unit, char *baseptr, MPI_Fint *ierr));
 PN2(void, MPI_Win_shared_query_cptr, mpi_win_shared_query_cptr, MPI_WIN_SHARED_QUERY_CPTR, (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size, MPI_Fint *disp_unit, char *baseptr, MPI_Fint *ierr));
