@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,5 +47,15 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = win->w_osc_module->osc_get_info(win, info_used);
+
+    if (OMPI_SUCCESS == ret && *info_used) {
+        /* set standard info keys based on what the OSC module is using */
+        if (win->w_flags & OMPI_WIN_NO_LOCKS) {
+            ompi_info_set (*info_used, "no_locks", "true");
+        } else {
+            ompi_info_set (*info_used, "no_locks", "false");
+        }
+    }
+
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }
