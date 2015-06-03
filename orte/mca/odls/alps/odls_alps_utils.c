@@ -55,6 +55,8 @@ int orte_odls_alps_get_rdma_creds(void)
     char env_buffer[1024];
     static int already_got_creds = 0;
 
+    foo;
+
     /*
      * If we already put the GNI RDMA credentials into orte_launch_environ,
      * no need to do anything.
