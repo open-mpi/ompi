@@ -107,8 +107,8 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
     ompi_communicator_t *comm = fca_module->comm;
     fca_comm_new_spec_t spec = {0,};
     int info_size, all_info_size;
-    void *all_info, *my_info;
-    int *rcounts, *displs;
+    void *all_info = NULL, *my_info = NULL;
+    int *rcounts = NULL, *displs = NULL;
     int i, rc, ret, comm_size = ompi_comm_size(fca_module->comm);
 
     /* call fca_get_rank_info() on node managers only*/
@@ -604,7 +604,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_base_module_t *module;
     int size = ompi_comm_size(comm);
-    int local_peers;
+    int local_peers = -1;
     mca_coll_fca_module_t *fca_module;
 
     *priority = 0;

@@ -135,7 +135,7 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
         var_id = mca_base_var_find("oshmem", "spml", NULL, NULL);
         mca_base_var_get_value(var_id, &default_spml, NULL, NULL);
 
-        if( (NULL == default_spml || NULL == default_spml[0] ||
+        if( (NULL == default_spml[0] ||
              0 == strlen(default_spml[0])) || (default_spml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_spml_base_spml, strdup("ikrit"));
             opal_pointer_array_add(&mca_spml_base_spml, strdup("yoda"));

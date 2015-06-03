@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -391,24 +391,27 @@ static int oshmem_mkey_recv_cb(void)
             MEMHEAP_ERROR("not enough memory");
             ORTE_ERROR_LOG(0);
             return n;
-        }
-        memcpy(tmp_buf, (void*)&r->buf, size);
-        msg = OBJ_NEW(opal_buffer_t);
-        if (NULL == msg) {
-            MEMHEAP_ERROR("not enough memory");
-            ORTE_ERROR_LOG(0);
-            return n;
-        }
-        opal_dss.load(msg, (void*)tmp_buf, size);
+        } else {
+            memcpy(tmp_buf, (void*)&r->buf, size);
+            msg = OBJ_NEW(opal_buffer_t);
+            if (NULL == msg) {
+                MEMHEAP_ERROR("not enough memory");
+                ORTE_ERROR_LOG(0);
+		        free(tmp_buf);
+                return n;
+            }
+            opal_dss.load(msg, (void*)tmp_buf, size);
 
-        /*
-         * send reply before posting the receive request again to limit the recursion size to
-         * number of receive requests.
-         * send can call opal_progress which calls this function again. If recv req is started
-         * stack size will be proportional to number of job ranks.
-         */
-        do_recv(status.MPI_SOURCE, msg);
-        OBJ_RELEASE(msg);
+           /*
+            * send reply before posting the receive request again to limit the recursion size to
+            * number of receive requests.
+            * send can call opal_progress which calls this function again. If recv req is started
+            * stack size will be proportional to number of job ranks.
+            */
+            do_recv(status.MPI_SOURCE, msg);
+            OBJ_RELEASE(msg);
+            free(tmp_buf);
+        }
 
         rc = MPI_Start(&r->recv_req);
         if (MPI_SUCCESS != rc) {
@@ -422,6 +425,7 @@ static int oshmem_mkey_recv_cb(void)
         r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
         assert(r);
     }
+
     return 1;  
 }
 
@@ -558,13 +562,15 @@ void mca_memheap_modex_recv_all(void)
     int i;
     int j;
     int nprocs, my_pe;
-    opal_buffer_t *msg;
-    void *send_buffer;
-    char *rcv_buffer;
-    void *dummy_buffer;
+    opal_buffer_t *msg = NULL;
+    void *send_buffer = NULL;
+    char *rcv_buffer = NULL;
+    void *dummy_buffer = NULL;
     int size, dummy_size;
-    int *rcv_size, *rcv_n_transports, *rcv_offsets;
-    int rc;
+    int *rcv_size = NULL;
+    int *rcv_n_transports = NULL;
+    int *rcv_offsets = NULL;
+    int rc = OSHMEM_SUCCESS;
 
     if (!mca_memheap_base_key_exchange) {
         oshmem_shmem_barrier();
@@ -580,30 +586,30 @@ void mca_memheap_modex_recv_all(void)
     rcv_size = (int *)malloc(nprocs * sizeof(int));
     if (NULL == rcv_size) {
         MEMHEAP_ERROR("failed to get rcv_size buffer");
-        oshmem_shmem_abort(-1);
-        return;
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit_fatal;
     }
 
     rcv_offsets = (int *)malloc(nprocs * sizeof(int));
     if (NULL == rcv_offsets) {
         MEMHEAP_ERROR("failed to get rcv_offsets buffer");
-        oshmem_shmem_abort(-1);
-        return;
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit_fatal;
     }
 
     rcv_n_transports = (int *)malloc(nprocs * sizeof(int));
     if (NULL == rcv_offsets) {
         MEMHEAP_ERROR("failed to get rcv_offsets buffer");
-        oshmem_shmem_abort(-1);
-        return;
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit_fatal;
     }
 
     /* serialize our own mkeys */
     msg = OBJ_NEW(opal_buffer_t);
     if (NULL == msg) {
         MEMHEAP_ERROR("failed to get msg buffer");
-        oshmem_shmem_abort(-1);
-        return;
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit_fatal;
     }
 
     for (j = 0; j < memheap_map->n_segments; j++) {
@@ -625,13 +631,13 @@ void mca_memheap_modex_recv_all(void)
     rc = oshmem_shmem_allgather(&memheap_map->num_transports, rcv_n_transports, sizeof(int));
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgather failed");
-        oshmem_shmem_abort(-1);
+        goto exit_fatal;
     }
 
     rc = oshmem_shmem_allgather(&size, rcv_size, sizeof(int));
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgather failed");
-        oshmem_shmem_abort(-1);
+        goto exit_fatal;
     }
 
     /* calculating offsets (displacements) for allgatherv */
@@ -644,13 +650,14 @@ void mca_memheap_modex_recv_all(void)
     rcv_buffer = malloc(rcv_offsets[nprocs - 1] + rcv_size[nprocs - 1]);
     if (NULL == rcv_buffer) {
         MEMHEAP_ERROR("failed to allocate recieve buffer");
-        oshmem_shmem_abort(-1);
+        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit_fatal;
     }
 
     rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, size, rcv_size, rcv_offsets);
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgatherv failed");
-        oshmem_shmem_abort(-1);
+        goto exit_fatal;
     }
 
     /* deserialize mkeys */
@@ -682,12 +689,21 @@ void mca_memheap_modex_recv_all(void)
     }
 
     OPAL_THREAD_UNLOCK(&memheap_oob.lck);
+
+exit_fatal:
     free(rcv_size);
     free(rcv_offsets);
     free(rcv_n_transports);
     free(send_buffer);
     free(rcv_buffer);
-    OBJ_RELEASE(msg);
+    if (msg) {
+        OBJ_RELEASE(msg);
+    }
+
+    /* This function requires abort in any error case */
+    if (OSHMEM_SUCCESS != rc) {
+        oshmem_shmem_abort(rc);
+    }
 }
 
 static inline void* va2rva(void* va,
