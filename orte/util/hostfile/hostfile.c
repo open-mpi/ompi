@@ -157,7 +157,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         if (1 == cnt) {
             node_name = strdup(argv[0]);
         } else if (2 == cnt) {
-            username = strdup(argv[0]);
+            username = argv[0];
             node_name = strdup(argv[1]);
         } else {
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
@@ -196,6 +196,8 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                     orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
                 }
                 opal_list_append(exclude, &node->super);
+            } else {
+                free(node_name);
             }
             return ORTE_SUCCESS;
         }
@@ -262,7 +264,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         if (1 == cnt) {
             node_name = strdup(argv[0]);
         } else if (2 == cnt) {
-            username = strdup(argv[0]);
+            username = argv[0];
             node_name = strdup(argv[1]);
         } else {
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
@@ -299,9 +301,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         hostfile_parse_error(token);
         return ORTE_ERROR;
     }
-    if (NULL != username) {
-        free(username);
-    }
+    free(username);
     
     while (!orte_util_hostfile_done) {
         token = orte_util_hostfile_lex();
