@@ -157,6 +157,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
         if (!found) {
             node = OBJ_NEW(orte_node_t);
             if (NULL == node) {
+                opal_argv_free(mapped_nodes);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             node->name = strdup(ndname);
