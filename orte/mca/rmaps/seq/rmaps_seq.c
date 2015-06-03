@@ -103,7 +103,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts, *hstname, *sep, *eptr;
+    char *hosts, *sep, *eptr;
     FILE *fp;
 #if OPAL_HAVE_HWLOC
     opal_hwloc_resource_type_t rtype;
@@ -160,6 +160,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     /* if there is a default hostfile, go and get its ordered list of nodes */
     OBJ_CONSTRUCT(&default_seq_list, opal_list_t);
     if (NULL != orte_default_hostfile) {
+        char *hstname;
         /* open the file */
         fp = fopen(orte_default_hostfile, "r");
         if (NULL == fp) {
@@ -169,6 +170,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
         while (NULL != (hstname = orte_getline(fp))) {
             if (0 == strlen(hstname)) {
+                free(hstname);
                 /* blank line - ignore */
                 continue;
             }
@@ -184,7 +186,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 *(eptr+1) = 0;
                 sq->cpuset = strdup(sep);
             }
-            sq->hostname = strdup(hstname);
+            sq->hostname = hstname;
             opal_list_append(&default_seq_list, &sq->super);
         }
         fclose(fp);
@@ -246,6 +248,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             OBJ_DESTRUCT(&node_list);
             seq_list = &sq_list;
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
+            char *hstname;
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:seq: using hostfile %s nodes on app %s", hosts, app->app);
             OBJ_CONSTRUCT(&sq_list, opal_list_t);
