@@ -408,6 +408,9 @@ int orte_daemon(int argc, char *argv[])
                                    true, orte_process_info.nodename,
                                    orte_daemon_cores);
                     ret = ORTE_ERR_NOT_SUPPORTED;
+                    hwloc_bitmap_free(ours);
+                    hwloc_bitmap_free(pucpus);
+                    hwloc_bitmap_free(res);
                     goto DONE;
                 }
                 hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
