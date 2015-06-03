@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
     int ret = 0;
     bool acted = false;
     bool want_all = false;
-    char **app_env = NULL, **global_env = NULL;
     int i;
     opal_cmd_line_t *info_cmd_line;
     opal_pointer_array_t mca_types;
@@ -174,12 +173,6 @@ int main(int argc, char *argv[])
 
     /* All done */
 
-    if (NULL != app_env) {
-        opal_argv_free(app_env);
-    }
-    if (NULL != global_env) {
-        opal_argv_free(global_env);
-    }
     oshmem_info_close_components();
     OBJ_RELEASE(info_cmd_line);
     OBJ_DESTRUCT(&mca_types);

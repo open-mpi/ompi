@@ -226,7 +226,7 @@ verbs_runtime_query(mca_base_module_t **module,
     }
 
 out:
-    if (device) {
+    {
         if (0 < (i = opal_value_array_get_size(&device->ib_mr_array))) {
             struct ibv_mr** array;
             struct ibv_mr* ib_mr = NULL;

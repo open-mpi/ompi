@@ -680,6 +680,7 @@ static int shmem_lock_wait_for_ticket(void *lock,
     uint64_t temp = 0;
 
     do {
+        /* coverity[suspicious_sizeof] */
         shmem_int_get(&remote_turn, lock_turn, 1, server_pe);
     } while (remote_turn != ticket);
 

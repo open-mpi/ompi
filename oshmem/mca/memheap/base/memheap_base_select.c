@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -55,6 +55,8 @@ int mca_memheap_base_select()
 
     context = _memheap_create();
     if (!context) {
+        opal_argv_free(include);
+        opal_argv_free(exclude);
         return OSHMEM_ERROR;
     }
 
@@ -119,9 +121,10 @@ int mca_memheap_base_select()
                 opal_list_remove_item(&oshmem_memheap_base_framework.framework_components, &cli->super);
                 mca_base_component_close((mca_base_component_t *) component,
                                          oshmem_memheap_base_framework.framework_output);
+            } else {
+                /* Calculate memheap size in case it was not set during component initialization */
+                module->memheap_size = context->user_size;
             }
-            /* Calculate memheap size in case it was not set during component initialization */
-            module->memheap_size = context->user_size;
         }
 
         /* Init max priority component */

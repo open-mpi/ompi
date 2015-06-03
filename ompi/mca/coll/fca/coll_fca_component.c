@@ -1437,7 +1437,7 @@ static int fca_open(void)
     }
 
     /* initialize hash table */
-    if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
+    if(mca_coll_fca_component.fca_enable_hash) {
         int i = 0;
         mca_coll_fca_component.fca_hash = malloc(mca_coll_fca_component.fca_hash_size * sizeof(opal_list_t *));
         for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
@@ -1461,7 +1461,7 @@ static int fca_close(void)
     }
 
     
-    if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
+    if(mca_coll_fca_component.fca_enable_hash) {
         int i = 0;
         mca_coll_fca_c_cache_item_t *item;
         for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {

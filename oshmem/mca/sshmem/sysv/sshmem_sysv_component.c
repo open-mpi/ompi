@@ -173,7 +173,7 @@ sysv_runtime_query(mca_base_module_t **module,
     }
 
   out:
-    if ((char *)-1 != addr) {
+    if (addr && ((char *)-1 != addr)) {
         shmdt(addr);
     }
     return ret;

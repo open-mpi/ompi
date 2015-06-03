@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -342,7 +342,6 @@ OBJ_CLASS_INSTANCE( mxm_peer_t,
 int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
-    opal_list_item_t *item;
     int my_rank = oshmem_my_proc_id();
 
     oshmem_shmem_barrier();
@@ -352,7 +351,7 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     }
 #endif
 
-    while (NULL != (item = opal_list_remove_first(&mca_spml_ikrit.active_peers))) {
+    while (NULL != opal_list_remove_first(&mca_spml_ikrit.active_peers)) {
     };
     OBJ_DESTRUCT(&mca_spml_ikrit.active_peers);
 
@@ -428,11 +427,13 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 #if MXM_API < MXM_VERSION(2,0)
     if (OSHMEM_SUCCESS
             != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_SELF)) {
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
     if (OSHMEM_SUCCESS
             != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_RDMA)) {
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
 #else
     if (mca_spml_ikrit.hw_rdma_channel) {
@@ -440,7 +441,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         if (MXM_OK != err) {
             orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                     mxm_error_string(err));
-            return OSHMEM_ERROR;
+            rc = OSHMEM_ERROR;
+            goto bail;
         }
         oshmem_shmem_allgather(&my_ep_info, ep_hw_rdma_info,
                 sizeof(spml_ikrit_mxm_ep_conn_info_t));
@@ -449,7 +451,8 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     if (MXM_OK != err) {
         orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
-        return OSHMEM_ERROR;
+        rc = OSHMEM_ERROR;
+        goto bail;
     }
 #endif
     oshmem_shmem_allgather(&my_ep_info, ep_info,
@@ -526,12 +529,12 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         mxm_conn_ctx_set(conn_reqs[i].conn, mca_spml_ikrit.mxm_peers[i]);
     }
 
-    if (ep_info)
-        free(ep_info);
-    if (conn_reqs)
-        free(conn_reqs);
+    free(conn_reqs);
 #endif
+    free(ep_info);
+    free(ep_hw_rdma_info);
 
+    oshmem_shmem_barrier();
 #if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_connect) {
         /* Need a barrier to ensure remote peers already created connection */
@@ -559,13 +562,12 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     SPML_VERBOSE(50, "*** ADDED PROCS ***");
     return OSHMEM_SUCCESS;
 
-    bail:
-    #if MXM_API < MXM_VERSION(2,0)
-        if (conn_reqs)
-            free(conn_reqs);
-        if (ep_info)
-            free(ep_info);
-    #endif
+bail:
+#if MXM_API < MXM_VERSION(2,0)
+    free(conn_reqs);
+#endif
+    free(ep_info);
+    free(ep_hw_rdma_info);
     SPML_ERROR("add procs FAILED rc=%d", rc);
 
     return rc;
@@ -643,10 +645,6 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
             }
 #endif
             break;
-
-        default:
-            SPML_ERROR("unsupported PTL: %d", i);
-            goto error_out;
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
@@ -695,6 +693,8 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
             break;
         }
     }
+    free(mkeys);
+
     return OSHMEM_SUCCESS;
 
 }
@@ -1363,6 +1363,7 @@ int mca_spml_ikrit_fence(void)
 /* blocking receive */
 int mca_spml_ikrit_recv(void* buf, size_t size, int src)
 {
+    mxm_error_t ret = MXM_OK;
     mxm_recv_req_t req;
     char dummy_buf[1];
 
@@ -1386,9 +1387,12 @@ int mca_spml_ikrit_recv(void* buf, size_t size, int src)
     req.base.data.buffer.length = size == 0 ? sizeof(dummy_buf) : size;
     req.base.data.buffer.memh = NULL;
 
-    mxm_req_recv(&req);
+    ret = mxm_req_recv(&req);
+    if (MXM_OK != ret) {
+        return OSHMEM_ERROR;
+    }
     mca_spml_irkit_req_wait(&req.base);
-    if (req.base.error != MXM_OK) {
+    if (MXM_OK != req.base.error) {
         return OSHMEM_ERROR;
     }
     SPML_VERBOSE(100,
