@@ -1510,7 +1510,6 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != tmp_env) {
                 opal_argv_free(tmp_env);
             }
-            opal_argv_free(argv);
             if (made_app) {
                 app->idx = app_num;
                 ++app_num;
@@ -1518,6 +1517,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
                 ++jdata->num_apps;
             }
         }
+        opal_argv_free(argv);
     } while (!feof(fp));
     fclose(fp);
 
