@@ -16,6 +16,8 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -735,12 +737,14 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &naliases, 1, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
+                opal_argv_free(aliases);
                 goto DONE;
             }
             for (ni=0; ni < naliases; ni++) {
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &aliases[ni], 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(buffer);
+                    opal_argv_free(aliases);
                     goto DONE;
                 }
             }
