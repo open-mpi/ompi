@@ -2577,6 +2577,15 @@ btl_openib_component_init(int *num_btl_modules,
         opal_leave_pinned_pipeline = 0;
     }
 
+#if OPAL_CUDA_SUPPORT
+    if (mca_btl_openib_component.cuda_want_gdr && (0 == opal_leave_pinned)) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "CUDA_gdr_and_nopinned", true,
+                       opal_process_info.nodename);
+        goto no_btls;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
+
     index = mca_base_var_find("ompi", "btl", "openib", "max_inline_data");
     if (index >= 0) {
         if (OPAL_SUCCESS == mca_base_var_get_value(index, NULL, &source, NULL)) {
