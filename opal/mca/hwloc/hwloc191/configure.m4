@@ -13,7 +13,7 @@
 #
 # Priority
 #
-AC_DEFUN([MCA_opal_hwloc_hwloc191_PRIORITY], [90])
+AC_DEFUN([MCA_opal_hwloc_hwloc191_PRIORITY], [10])
 
 #
 # Force this component to compile in static-only mode
