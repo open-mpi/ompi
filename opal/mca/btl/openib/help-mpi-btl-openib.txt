@@ -692,3 +692,11 @@ You cannot have fork support and CUDA GPU Direct RDMA support on at the
 same time.  Please disable one of them.  Deactivating the openib BTL.
 
   Local host:              %s
+#
+[CUDA_gdr_and_nopinned]
+You requested to run with CUDA GPU Direct RDMA support but also with
+"leave pinned" turned off. This will result in very poor performance
+with CUDA GPU Direct RDMA. Either disable GPU Direct RDMA support or
+enable "leave pinned" support. Deactivating the openib BTL.
+
+  Local host:              %s
