@@ -267,6 +267,12 @@ static void proc_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
+        /* get the job object */
+    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
+        /* must already be complete */
+        goto cleanup;
+    }
+
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
         /* if it is our own connection, ignore it */
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, proc)) {
@@ -358,12 +364,6 @@ static void proc_errors(int fd, short args, void *cbdata)
             }
         }
         /* if not, then we can continue */
-        goto cleanup;
-    }
-
-    /* get the job object */
-    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        /* must already be complete */
         goto cleanup;
     }
 
