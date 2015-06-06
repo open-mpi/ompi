@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
@@ -547,15 +547,16 @@ static int mca_btl_tcp_component_create_instances(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* calculate the number of kernel indexes (number of physical NICs) */
+    /* calculate the number of kernel indexes (number of IP interfaces) */
     {
         int j;
 
-        /* initialize array to 0. Assumption: 0 isn't a valid kernel index */
+        /* initialize array to 0. Assumption: 0 isn't a valid kernel
+           index */
         memset (kindexes, 0, sizeof(int) * if_count);
 
-        /* assign the corresponding kernel indexes for all opal_list indexes
-         * (loop over all addresses)
+        /* assign the corresponding kernel indexes for all opal_list
+         * indexes (loop over all addresses)
          */
         for(if_index = opal_ifbegin(); if_index >= 0; if_index = opal_ifnext(if_index)){
             int index = opal_ifindextokindex (if_index);
@@ -867,11 +868,11 @@ static int mca_btl_tcp_component_exchange(void)
                      index = opal_ifnext(index)) {
                  struct sockaddr_storage my_ss;
 
-                 /* look if the address belongs to this (enabled) NIC.
-                  * If not, go to next address
+                 /* Look if the module's address belongs to this
+                  * kernel IP interface.  If not, go to next address.
                   */
                  if (opal_ifindextokindex (index) !=
-                         mca_btl_tcp_component.tcp_btls[i]->tcp_ifkindex) {
+                     mca_btl_tcp_component.tcp_btls[i]->tcp_ifkindex) {
                      continue;
                  }
 
