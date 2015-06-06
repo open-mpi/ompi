@@ -77,7 +77,6 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
 
 /* this function doesn't depend on sockaddr_h */
