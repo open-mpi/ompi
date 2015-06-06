@@ -161,10 +161,8 @@ opal_net_init(void)
 
             sscanf( arg, "%u.%u.%u.%u/%u", &a, &b, &c, &d, &bits );
 
-            if( (a > 255) || (b > 255) || (c > 255) || (d > 255) || (bits > 32) ) {
-                /* TODO: A reminder to change this to OPAL SOS once this framework
-                 * get added to the trunk.
-                 */
+            if( (a > 255) || (b > 255) || (c > 255) ||
+                (d > 255) || (bits > 32) ) {
                 if (0 == found_bad) {
                     opal_show_help("help-opal-util.txt", 
                                    "malformed net_private_ipv4",
