@@ -14,6 +14,7 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -557,6 +558,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                         weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
                     }
                     best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
+                    continue;
                 }
             }
 
@@ -584,6 +586,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
                 }
                 best_addr[i][j] = peer_interfaces[j]->ipv6_endpoint_addr;
+                continue;
             } 
 
         } /* for each peer interface */
