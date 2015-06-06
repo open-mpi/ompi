@@ -527,19 +527,18 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                NULL != peer_interfaces[j]->ipv4_address) {
 
                 /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)
-                     && !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address))
-                    || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address)
-                        && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address))
-                    || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)
-                        && !opal_ifislocal(proc_hostname))) {
+                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address) &&
+                     !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address)) ||
+                    (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address) &&
+                     !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)) ||
+                    (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address) &&
+                     !opal_ifislocal(proc_hostname))) {
 
                     /* No connection is possible on these interfaces */
 
                     /*  check for RFC1918 */
-                } else if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address)
-                          && opal_net_addr_isipv4public((struct sockaddr*) 
-                                                        peer_interfaces[j]->ipv4_address)) {
+                } else if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address) &&
+                          opal_net_addr_isipv4public((struct sockaddr*) peer_interfaces[j]->ipv4_address)) {
                     if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
                                             (struct sockaddr*) peer_interfaces[j]->ipv4_address,
                                             local_interfaces[i]->ipv4_netmask)) {
@@ -569,12 +568,12 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                NULL != peer_interfaces[j]->ipv6_address) {
 
                 /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)
-                     && !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address))
-                    || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address)
-                        && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address))
-                    || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)
-                        && !opal_ifislocal(proc_hostname))) {
+                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address) &&
+                     !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address)) ||
+                    (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address) &&
+                     !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)) ||
+                    (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address) &&
+                     !opal_ifislocal(proc_hostname))) {
 
                     /* No connection is possible on these interfaces */
 
