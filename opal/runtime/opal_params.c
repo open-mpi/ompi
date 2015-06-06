@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -174,7 +174,7 @@ int opal_register_params(void)
        - 172.16.0.0/12
        - 192.168.0.0/16
        
-       RFC3330 also mentiones
+       RFC3330 also mentions
        - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
     */
     opal_net_private_ipv4 = "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16";
