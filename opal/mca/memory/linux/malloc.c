@@ -1,6 +1,8 @@
 /********************** BEGIN OMPI CHANGES *****************************/
 /*
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Additional copyrights may follow.
  */
@@ -5008,9 +5010,9 @@ _int_icalloc(av, n_elements, elem_size, chunks)
 mstate av; size_t n_elements; size_t elem_size; Void_t* chunks[];
 #endif
 {
-  size_t sz = elem_size; /* serves as 1-element array */
+  size_t sz[1] = {elem_size};
   /* opts arg of 3 means all elements are same size, and should be cleared */
-  return iALLOc(av, n_elements, &sz, 3, chunks);
+  return iALLOc(av, n_elements, sz, 3, chunks);
 }
 
 /*
