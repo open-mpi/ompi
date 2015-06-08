@@ -67,6 +67,8 @@ mpi.lo: mpi-f90-cptr-interfaces.F90
 
 libmpi_usempi_la_SOURCES = \
      mpi.F90 \
+     mpi_aint_add_f90.f90 \
+     mpi_aint_diff_f90.f90 \
      mpi_comm_spawn_multiple_f90.f90 \
      mpi_testall_f90.f90 \
      mpi_testsome_f90.f90 \

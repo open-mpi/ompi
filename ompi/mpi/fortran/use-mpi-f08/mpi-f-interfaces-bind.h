@@ -1787,6 +1787,24 @@ function  ompi_wtime_f() &
    DOUBLE PRECISION :: ompi_wtime_f
 end function  ompi_wtime_f
 
+function  ompi_aint_add_f(base,diff) &
+   BIND(C, name="ompi_aint_add_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: diff
+   INTEGER(MPI_ADDRESS_KIND) :: ompi_aint_add_f
+end function  ompi_aint_add_f
+
+function  ompi_aint_diff_f(addr1,addr2) &
+   BIND(C, name="ompi_aint_diff_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr1
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr2
+   INTEGER(MPI_ADDRESS_KIND) :: ompi_aint_diff_f
+end function  ompi_aint_diff_f
+
 subroutine ompi_abort_f(comm,errorcode,ierror) &
    BIND(C, name="ompi_abort_f")
    implicit none

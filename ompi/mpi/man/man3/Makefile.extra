@@ -19,6 +19,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Add_error_code.3 \
         mpi/man/man3/MPI_Add_error_string.3 \
         mpi/man/man3/MPI_Address.3 \
+	mpi/man/man3/MPI_Aint_add.3 \
+	mpi/man/man3/MPI_Aint_diff.3 \
         mpi/man/man3/MPI_Allgather.3 \
         mpi/man/man3/MPI_Iallgather.3 \
         mpi/man/man3/MPI_Allgatherv.3 \
