@@ -117,15 +117,10 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
            Create it if it doesn't exist. */
         ret = mkdir(tmp, mode);
         if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) {
-            if (0 > ret && EEXIST != errno) {
-                opal_output(0, "opal_os_dirpath_create: "
-                               "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
-                        tmp, path, errno, strerror(errno));
-            } else {
-                opal_output(0, "opal_os_dirpath_create: "
-                               "Error: Unable to stat the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
-                        tmp, path, errno, strerror(errno));
-            }
+            opal_output(0,
+                        "opal_os_dirpath_create: "
+                        "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
+                        tmp, path, ret);
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
