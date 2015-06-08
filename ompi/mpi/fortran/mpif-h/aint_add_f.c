@@ -30,35 +30,35 @@
  * manually.
  */
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
-#pragma weak PMPI_WTIME = ompi_wtime_f
-#pragma weak pmpi_wtime = ompi_wtime_f
-#pragma weak pmpi_wtime_ = ompi_wtime_f
-#pragma weak pmpi_wtime__ = ompi_wtime_f
+#pragma weak PMPI_AINT_ADD = ompi_aint_add_f
+#pragma weak pmpi_aint_add = ompi_aint_add_f
+#pragma weak pmpi_aint_add_ = ompi_aint_add_f
+#pragma weak pmpi_aint_add__ = ompi_aint_add_f
 
-#pragma weak PMPI_Wtime_f = ompi_wtime_f
-#pragma weak PMPI_Wtime_f08 = ompi_wtime_f
+#pragma weak PMPI_Aint_add_f = ompi_aint_add_f
+#pragma weak PMPI_Aint_add_f08 = ompi_aint_add_f
 #elif OMPI_PROFILE_LAYER
-double PMPI_WTIME(void) { return pompi_wtime_f(); }
-double pmpi_wtime(void) { return pompi_wtime_f(); }
-double pmpi_wtime_(void) { return pompi_wtime_f(); }
-double pmpi_wtime__(void) { return pompi_wtime_f(); }
+MPI_Aint PMPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WTIME = ompi_wtime_f
-#pragma weak mpi_wtime = ompi_wtime_f
-#pragma weak mpi_wtime_ = ompi_wtime_f
-#pragma weak mpi_wtime__ = ompi_wtime_f
+#pragma weak MPI_AINT_ADD = ompi_aint_add_f
+#pragma weak mpi_aint_add = ompi_aint_add_f
+#pragma weak mpi_aint_add_ = ompi_aint_add_f
+#pragma weak mpi_aint_add__ = ompi_aint_add_f
 
-#pragma weak MPI_Wtime_f = ompi_wtime_f
-#pragma weak MPI_Wtime_f08 = ompi_wtime_f
+#pragma weak MPI_Aint_add_f = ompi_aint_add_f
+#pragma weak MPI_Aint_add_f08 = ompi_aint_add_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
-double MPI_WTIME(void) { return ompi_wtime_f(); }
-double mpi_wtime(void) { return ompi_wtime_f(); }
-double mpi_wtime_(void) { return ompi_wtime_f(); }
-double mpi_wtime__(void) { return ompi_wtime_f(); }
+MPI_Aint MPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
 #endif
 
 
@@ -66,7 +66,7 @@ double mpi_wtime__(void) { return ompi_wtime_f(); }
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-double ompi_wtime_f(void)
+MPI_Aint ompi_aint_add_f(MPI_Aint *base, MPI_Aint *diff)
 {
-    return MPI_Wtime();
+    return MPI_Aint_add (*base, *diff);
 }

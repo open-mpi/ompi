@@ -58,6 +58,8 @@ linked_files = \
         padd_error_code_f.c \
         padd_error_string_f.c \
         paddress_f.c \
+        paint_add_f.c \
+        paint_diff_f.c \
         pallgather_f.c \
         pallgatherv_f.c \
         palloc_mem_f.c \

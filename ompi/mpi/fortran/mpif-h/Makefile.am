@@ -144,6 +144,8 @@ libmpi_mpifh_la_SOURCES += \
         add_error_code_f.c \
         add_error_string_f.c \
         address_f.c \
+        aint_add_f.c \
+        aint_diff_f.c \
         allgather_f.c \
         allgatherv_f.c \
         alloc_mem_f.c \

@@ -2430,6 +2430,26 @@ function  PMPI_Wtime_f08( ) BIND(C,name="PMPI_Wtime")
 end function  PMPI_Wtime_f08
 end interface PMPI_Wtime
 
+interface PMPI_Aint_add
+function  PMPI_Aint_add_f08(base,diff)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: base
+   INTEGER(MPI_ADDRESS_KIND) :: diff
+   INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_add_f08
+end function PMPI_Aint_add_f08
+end interface PMPI_Aint_add
+
+interface PMPI_Aint_diff
+function  PMPI_Aint_diff_f08(addr1,addr2)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: addr1
+   INTEGER(MPI_ADDRESS_KIND) :: addr2
+   INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_diff_f08
+end function PMPI_Aint_diff_f08
+end interface PMPI_Aint_diff
+
 interface  PMPI_Abort
 subroutine PMPI_Abort_f08(comm,errorcode,ierror)
    use :: mpi_f08_types, only : MPI_Comm
