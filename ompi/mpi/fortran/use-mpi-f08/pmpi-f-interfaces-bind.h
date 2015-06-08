@@ -1615,6 +1615,24 @@ end subroutine pompi_topo_test_f
 !   DOUBLE PRECISION :: MPI_Wtime_f
 !end function  MPI_Wtime_f
 
+function  pompi_aint_add_f(base,diff) &
+   BIND(C, name="pompi_aint_add_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: diff
+   INTEGER(MPI_ADDRESS_KIND) :: pompi_aint_add_f
+end function  pompi_aint_add_f
+
+function  pompi_aint_diff_f(addr1,addr2) &
+   BIND(C, name="pompi_aint_diff_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr1
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr2
+   INTEGER(MPI_ADDRESS_KIND) :: pompi_aint_diff_f
+end function  pompi_aint_diff_f
+
 subroutine pompi_abort_f(comm,errorcode,ierror) &
    BIND(C, name="pompi_abort_f")
    implicit none

@@ -29,6 +29,8 @@
 #define ompi_add_error_code_f pompi_add_error_code_f
 #define ompi_add_error_string_f pompi_add_error_string_f
 #define ompi_address_f pompi_address_f
+#define ompi_aint_add_f pompi_aint_add_f
+#define ompi_aint_diff_f pompi_aint_diff_f
 #define ompi_allgather_f pompi_allgather_f
 #define ompi_allgatherv_f pompi_allgatherv_f
 #define ompi_alloc_mem_f pompi_alloc_mem_f
