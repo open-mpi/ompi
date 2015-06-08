@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -346,39 +348,24 @@ bool opal_bitmap_are_different(opal_bitmap_t *left, opal_bitmap_t *right)
 char * opal_bitmap_get_string(opal_bitmap_t *bitmap)
 {
     int i;
-    char *tmp_str = NULL;
     char *bitmap_str = NULL;
-    char cur_char = ' ';
 
     if( NULL == bitmap) {
         return NULL;
     }
 
+    bitmap_str = malloc(bitmap->array_size * SIZE_OF_BASE_TYPE + 1);
+    if (NULL == bitmap_str) {
+        return NULL;
+    }
+    bitmap_str[bitmap->array_size * SIZE_OF_BASE_TYPE] = '\0';
+
     for( i = 0; i < (bitmap->array_size * SIZE_OF_BASE_TYPE); ++i) {
         if( opal_bitmap_is_set_bit(bitmap, i) ) {
-            cur_char = 'X';
+            bitmap_str[i] = 'X';
         } else {
-            cur_char = '_';
+            bitmap_str[i] = '_';
         }
-
-        if( NULL == bitmap_str ) {
-            asprintf(&tmp_str, "%c", cur_char);
-        } else {
-            asprintf(&tmp_str, "%s%c", bitmap_str, cur_char);
-        }
-
-        if( NULL != bitmap_str ) {
-            free(bitmap_str);
-            bitmap_str = NULL;
-        }
-        bitmap_str = strdup(tmp_str);
-        free(tmp_str);
-        tmp_str = NULL;
-    }
-
-    if( NULL != tmp_str ) {
-        free(tmp_str);
-        tmp_str = NULL;
     }
 
     return bitmap_str;
