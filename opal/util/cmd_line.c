@@ -12,6 +12,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -514,7 +516,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     char *start, *desc, *ptr;
     opal_list_item_t *item;
     cmd_line_option_t *option, **sorted;
-    bool filled;
 
     /* Thread serialization */
 
@@ -546,10 +547,10 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     for (j = 0; j < opal_list_get_size(&cmd->lcl_options); ++j) {
         option = sorted[j];
         if (NULL != option->clo_description) {
+            bool filled = false;
             
             /* Build up the output line */
 
-            filled = false;
             memset(line, 0, sizeof(line));
             if ('\0' != option->clo_short_name) {
                 line[0] = '-';
@@ -573,7 +574,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 }
                 strncat(line, "--", sizeof(line) - 1);
                 strncat(line, option->clo_long_name, sizeof(line) - 1);
-                filled = true;
             }
                    strncat(line, " ", sizeof(line) - 1);
             for (i = 0; (int)i < option->clo_num_params; ++i) {
