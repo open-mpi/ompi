@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,11 +21,15 @@
 
 #include "opal_config.h"
 
+#include <errno.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include <stdlib.h>
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -108,16 +114,15 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
 
         /* Now that we finally have the name to check, check it.
            Create it if it doesn't exist. */
-        if (0 != (ret = stat(tmp, &buf)) ) {
-            if (0 != (ret = mkdir(tmp, mode) && 0 != stat(tmp, &buf))) { 
-                opal_output(0,
-                            "opal_os_dirpath_create: "
-                            "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
-                            tmp, path, ret);
-                opal_argv_free(parts);
-                free(tmp);
-                return OPAL_ERROR;
-            }
+        ret = mkdir(tmp, mode);
+        if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) { 
+            opal_output(0,
+                        "opal_os_dirpath_create: "
+                        "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
+                        tmp, path, ret);
+            opal_argv_free(parts);
+            free(tmp);
+            return OPAL_ERROR;
         }
     }
 
