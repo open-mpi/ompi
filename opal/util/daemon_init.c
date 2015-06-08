@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,8 +57,11 @@ int opal_daemon_init(char *working_dir)
 
     /* connect input to /dev/null */
     fd = open("/dev/null", O_RDONLY);
-    if(fd > STDIN_FILENO) {
-        dup2(fd, STDIN_FILENO);
+    if (0 > fd) {
+        return OPAL_ERR_FATAL;
+    }
+    dup2(fd, STDIN_FILENO);
+    if(fd != STDIN_FILENO) {
         close(fd);
     }
 
