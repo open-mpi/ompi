@@ -358,7 +358,7 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
     const int max_len = 256;
     /* NTH: as long as max_len remains small (256 bytes) there is no need
      * to allocate line on the heap */
-    char line[max_len];
+    char line[256];
     int line_len = 0, value_len;
     char *local_value = NULL;
     bool end_of_line = false;
@@ -399,7 +399,7 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
         return OPAL_ERROR;
     }
 
-    tmp = '\0';
+    *tmp = '\0';
 
     *token = strdup (line);
     local_value = strdup (tmp + 1);
