@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -481,7 +483,7 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     (*argv)[i] = NULL;
 
     /* adjust the argv array */
-    tmp = (char**)realloc(*argv, sizeof(char**) * (i + 1));
+    tmp = (char**)realloc(*argv, sizeof(char*) * (i + 1));
     if (NULL != tmp) *argv = tmp;
 
     /* adjust the argc */
