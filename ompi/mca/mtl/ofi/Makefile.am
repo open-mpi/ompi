@@ -11,7 +11,7 @@
 
 EXTRA_DIST = post_configure.sh
 
-AM_CPPFLAGS = $(opal_common_libfabric_CPPFLAGS)
+AM_CPPFLAGS = $(ompi_mtl_ofi_CPPFLAGS)
 
 dist_ompidata_DATA = help-mtl-ofi.txt
 
@@ -41,9 +41,9 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
 mca_mtl_ofi_la_LDFLAGS = \
-        $(opal_common_libfabric_LDFLAGS) \
+        $(ompi_mtl_ofi_LDFLAGS) \
         -module -avoid-version
-mca_mtl_ofi_la_LIBADD = $(opal_common_libfabric_LIBADD)
+mca_mtl_ofi_la_LIBADD = $(ompi_mtl_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
