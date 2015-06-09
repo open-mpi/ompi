@@ -182,7 +182,7 @@ ompi_mtl_ofi_send_error_callback(struct fi_cq_err_entry *error,
                                  ompi_mtl_ofi_request_t *ofi_req)
 {
     switch(error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             ofi_req->status.MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         default:
@@ -525,7 +525,7 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         case FI_ECANCELED:
@@ -641,7 +641,7 @@ ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         case FI_ECANCELED:
