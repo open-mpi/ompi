@@ -318,24 +318,29 @@ linked_files = \
         pfetch_and_op_f.c \
         pwin_allocate_f.c \
         pwin_allocate_shared_f.c \
+        pwin_attach_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
+        pwin_create_dynamic_f.c \
         pwin_create_errhandler_f.c \
         pwin_create_f.c \
         pwin_create_keyval_f.c \
         pwin_delete_attr_f.c \
+        pwin_detach_f.c \
         pwin_fence_f.c \
         pwin_free_f.c \
         pwin_free_keyval_f.c \
         pwin_get_attr_f.c \
         pwin_get_errhandler_f.c \
         pwin_get_group_f.c \
+        pwin_get_info_f.c \
         pwin_get_name_f.c \
         pwin_lock_f.c \
         pwin_lock_all_f.c \
         pwin_post_f.c \
         pwin_set_attr_f.c \
         pwin_set_errhandler_f.c \
+        pwin_set_info_f.c \
         pwin_set_name_f.c \
         pwin_shared_query_f.c \
         pwin_start_f.c \

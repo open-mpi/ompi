@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -446,33 +446,39 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
     int rc;
     opal_buffer_t *buffer;
-    char *scheme, *host, *filename, *hostname;
+    char *scheme, *host=NULL, *filename=NULL;
     orte_process_name_t daemon;
     bool found;
     orte_vpid_t v;
     opal_list_t myvals;
     opal_value_t *kv;
 
-    opal_output(0, "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
+                        "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         goto complete;
     }
-    opal_output(0, "%s GOT SCHEME", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
+                        "%s GOT SCHEME", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     if (0 != strcmp(scheme, "file")) {
         /* not yet supported */
         orte_show_help("orte_dfs_help.txt", "unsupported-filesystem",
                        true, dfs->uri);
+        free(scheme);
         goto complete;
     }
+    free(scheme);
 
     /* dissect the uri to extract host and filename/path */
     if (NULL == (filename = opal_filename_from_uri(dfs->uri, &host))) {
         goto complete;
     }
-    opal_output(0, "%s GOT FILENAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filename);
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
+                        "%s GOT FILENAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filename);
     if (NULL == host) {
         host = strdup(orte_process_info.nodename);
     }
@@ -481,6 +487,7 @@ static void process_opens(int fd, short args, void *cbdata)
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     found = false;
     for (v=0; v < orte_process_info.num_daemons; v++) {
+        char *hostname;
         daemon.vpid = v;
         /* fetch the hostname where this daemon is located */
         OBJ_CONSTRUCT(&myvals, opal_list_t);
@@ -492,9 +499,10 @@ static void process_opens(int fd, short args, void *cbdata)
             goto complete;
         }
         kv = (opal_value_t*)opal_list_get_first(&myvals);
-        hostname = strdup(kv->data.string);
+        hostname = kv->data.string;
         OPAL_LIST_DESTRUCT(&myvals);
-        opal_output(0, "%s GOT HOST %s HOSTNAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host, hostname);
+        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
+                            "%s GOT HOST %s HOSTNAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host, hostname);
         if (0 == strcmp(host, hostname)) {
             found = true;
             break;
@@ -551,12 +559,20 @@ static void process_opens(int fd, short args, void *cbdata)
         goto complete;
     }
     /* don't release it */
+    free(host);
+    free(filename);
     return;
 
  complete:
     /* we get here if an error occurred - execute any
      * pending callback so the proc doesn't hang
      */
+    if (NULL != host) {
+        free(host);
+    }
+    if (NULL != filename) {
+        free(filename);
+    }
     if (NULL != dfs->open_cbfunc) {
         dfs->open_cbfunc(-1, dfs->cbdata);
     }

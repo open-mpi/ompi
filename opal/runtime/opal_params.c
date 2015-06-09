@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -174,7 +174,7 @@ int opal_register_params(void)
        - 172.16.0.0/12
        - 192.168.0.0/16
        
-       RFC3330 also mentiones
+       RFC3330 also mentions
        - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
     */
     opal_net_private_ipv4 = "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16";
@@ -198,11 +198,25 @@ int opal_register_params(void)
         return ret;
     }
 
+    ret = mca_base_var_register("opal", "opal", NULL, "built_with_cuda_support",
+                                "Whether CUDA GPU buffer support is built into library or not",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_CONSTANT,
+                                &opal_built_with_cuda_support);
+    if (0 > ret) {
+        return ret;
+    }
+
+    /* Current default is to enable CUDA support if it is built into library */
+    opal_cuda_support = opal_built_with_cuda_support;
     ret = mca_base_var_register ("opal", "opal", NULL, "cuda_support",
                                  "Whether CUDA GPU buffer support is enabled or not",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                  &opal_cuda_support);
+    if (0 > ret) {
+        return ret;
+    }
 
     /* Leave pinned parameter */
     opal_leave_pinned = -1;

@@ -11,8 +11,7 @@
 #ifndef OMPI_MTL_OFI_REQUEST_H
 #define OMPI_MTL_OFI_REQUEST_H
 
-#include "opal/datatype/opal_convertor.h"
-#include "ompi/mca/mtl/mtl.h"
+#include "mtl_ofi.h"
 
 #define TO_OFI_REQ(_ptr_ctx) \
     container_of((_ptr_ctx), struct ompi_mtl_ofi_request_t, ctx)

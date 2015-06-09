@@ -80,4 +80,5 @@ static void save_value(const char *name, const char *value)
 
     fv->mbvfv_value = value ? strdup(value) : NULL;
     fv->mbvfv_file  = file_being_read;
+    fv->mbvfv_lineno = opal_util_keyval_parse_lineno;
 }

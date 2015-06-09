@@ -26,10 +26,9 @@
 
 /************************************************************************/
 
-/* v1.9 and beyond */
+/* v2.0 and beyond */
 
-#if (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 9) || \
-    (OPAL_MAJOR_VERSION >= 2)
+#if (OPAL_MAJOR_VERSION >= 2)
 
 #include "opal/util/proc.h"
 
@@ -70,7 +69,7 @@ const char *usnic_compat_proc_name_print(opal_process_name_t *pname)
 
 /************************************************************************/
 
-/* v1.7 and v1.8 */
+/* v1.7, v1.8, and v1.10 (there was no v1.9) */
 
 #elif (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 7)
 

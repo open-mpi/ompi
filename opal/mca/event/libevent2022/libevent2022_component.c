@@ -125,7 +125,7 @@ static int libevent2022_register (void)
     const struct eventop** _eventop = eventops;
     char available_eventops[1024] = "none";
     char *help_msg = NULL;
-    int ret, len = 1024;
+    int ret;
 
     /* Retrieve the upper level specified event system, if any.
      * Default to select() on OS X and poll() everywhere else because
@@ -153,17 +153,15 @@ static int libevent2022_register (void)
      */
 
     if (NULL != (*_eventop)) {
-        available_eventops[0] = '\0';
-    }
+        const int len = sizeof (available_eventops);
+        int cur_len = snprintf (available_eventops, len, "%s", (*(_eventop++))->name);
 
-    while( NULL != (*_eventop) ) {
-        if( available_eventops[0] != '\0' ) {
-            (void) strncat (available_eventops, ", ", len);
+        for (int i = 1 ; eventops[i] && cur_len < len ; ++i) {
+            cur_len += snprintf (available_eventops + cur_len, len - cur_len, ", %s",
+                                 eventops[i]->name);
         }
-        (void) strncat (available_eventops, (*_eventop)->name,
-                        len);
-        _eventop++;  /* go to the next available eventop */
-        len = 1024 - strlen(available_eventops);
+        /* ensure the available_eventops string is always NULL-terminated  */
+        available_eventops[len - 1] = '\0';
     }
 
 #ifdef __APPLE__

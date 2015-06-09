@@ -12,7 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,6 +75,7 @@
 
 #include "mpi.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errcode-internal.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
@@ -126,11 +128,6 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    char *env = getenv("OMPI_ATTACH");
-    if (NULL != env && 0 < atoi(env)) {
-        volatile int _dbg = 1;
-        while (_dbg) poll(NULL, 0, 1);
-    }
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
     if(libmpi == NULL)
@@ -300,7 +297,10 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         jstring jc = (*env)->NewStringUTF(env, sargs[i]);
         (*env)->SetObjectArrayElement(env, value, i, jc);
         (*env)->DeleteLocalRef(env, jc);
+        free (sargs[i]);
     }
+
+    free (sargs);
 
     findClasses(env);
     initFreeList();
@@ -528,8 +528,11 @@ static void* getBuffer(JNIEnv *env, ompi_java_buffer_t **item, int size)
         opal_free_list_item_t *freeListItem;
         freeListItem = opal_free_list_get (&ompi_java_buffers);
 
-        ompi_java_exceptionCheck(env, NULL == freeListItem ? OMPI_ERROR :
-                                 OMPI_SUCCESS);
+        ompi_java_exceptionCheck(env, NULL == freeListItem ? MPI_ERR_NO_MEM :
+                                 MPI_SUCCESS);
+        if (NULL == freeListItem) {
+            return NULL;
+        }
 
         *item = (ompi_java_buffer_t*)freeListItem;
         return (*item)->buffer;
@@ -1046,6 +1049,14 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
+    if (rc < 0) {
+        /* handle ompi error code */
+        rc = ompi_errcode_get_mpi_code (rc);
+        /* ompi_mpi_errcode_get_class CAN NOT handle negative error codes.
+         * all Open MPI MPI error codes should be > 0. */
+        assert (rc >= 0);
+    }
+
     if(MPI_SUCCESS == rc)
     {
         return JNI_FALSE;

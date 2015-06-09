@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -72,9 +72,9 @@
 /**
  * Set socket buffering
  */
-
 static void set_keepalive(int sd)
 {
+#if defined(SO_KEEPALIVE)
     int option;
     socklen_t optlen;
         
@@ -145,6 +145,7 @@ static void set_keepalive(int sd)
                             opal_socket_errno);
     }
 #endif  // TCP_KEEPCNT
+#endif //SO_KEEPALIVE
 }
 
 void orte_oob_tcp_set_socket_options(int sd)
@@ -181,11 +182,10 @@ void orte_oob_tcp_set_socket_options(int sd)
                             opal_socket_errno);
     }
 #endif
-#if defined(SO_KEEPALIVE)
+
     if (0 < mca_oob_tcp_component.keepalive_time) {
         set_keepalive(sd);
     }
-#endif  // SO_KEEPALIVE
 }
 
 mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(const orte_process_name_t *name)

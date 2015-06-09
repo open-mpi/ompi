@@ -15,7 +15,6 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
@@ -38,6 +37,7 @@
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_request.h"
 #include "mtl_ofi_endpoint.h"
+#include "mtl_ofi_compat.h"
 
 BEGIN_C_DECLS
 
@@ -312,7 +312,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                                 __FILE__, __LINE__, ret_length);
             return ompi_mtl_ofi_get_error(ret);
         }
-        
+
         ofi_req->event_callback(NULL,ofi_req);
     } else {
         ret_length = fi_tsend(ompi_mtl_ofi.ep,

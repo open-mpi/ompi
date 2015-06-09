@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,7 +89,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         size_t packed_size, max_data;
         uint32_t iov_count;
         ompi_status_public_t recv_status;
-        ompi_proc_t* proc = ompi_comm_peer_lookup(comm,dest);
+        ompi_proc_t* proc = ompi_comm_peer_lookup(comm,source);
         if(proc == NULL) {
             rc = MPI_ERR_RANK;
             OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

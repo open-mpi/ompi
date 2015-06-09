@@ -9,6 +9,8 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -1459,6 +1461,29 @@ subroutine PMPI_Comm_set_errhandler(comm, errhandler, ierror)
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierror
 end subroutine PMPI_Comm_set_errhandler
+
+end interface
+
+
+interface MPI_Comm_set_info
+
+subroutine MPI_Comm_set_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_set_info
+
+end interface
+
+interface PMPI_Comm_set_info
+
+subroutine PMPI_Comm_set_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_set_info
 
 end interface
 
@@ -7389,6 +7414,85 @@ end subroutine PMPI_Win_create
 end interface
 
 
+interface MPI_Win_create_dynamic
+
+subroutine MPI_Win_create_dynamic(info, comm, &
+        win, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_create_dynamic
+
+end interface
+
+interface PMPI_Win_create_dynamic
+
+subroutine PMPI_Win_create_dynamic(info, comm, &
+        win, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_create_dynamic
+
+end interface
+
+
+interface MPI_Win_attach
+
+subroutine MPI_Win_attach(win, base, size, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_attach
+
+end interface
+
+interface PMPI_Win_attach
+
+subroutine PMPI_Win_attach(win, base, size, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_attach
+
+end interface
+
+
+interface MPI_Win_detach
+
+subroutine MPI_Win_detach(win, base, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_detach
+
+end interface
+
+interface PMPI_Win_detach
+
+subroutine PMPI_Win_detach(win, base, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_detach
+
+end interface
+
+
 interface MPI_Win_create_errhandler
 
 subroutine MPI_Win_create_errhandler(function, errhandler, ierror)
@@ -7661,6 +7765,29 @@ end subroutine PMPI_Win_get_group
 end interface
 
 
+interface MPI_Win_get_info
+
+subroutine MPI_Win_get_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_get_info
+
+end interface
+
+interface PMPI_Win_get_info
+
+subroutine PMPI_Win_get_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_get_info
+
+end interface
+
+
 interface MPI_Win_get_name
 
 subroutine MPI_Win_get_name(win, win_name, resultlen, ierror)
@@ -7774,6 +7901,29 @@ subroutine PMPI_Win_set_errhandler(win, errhandler, ierror)
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_set_errhandler
+
+end interface
+
+
+interface MPI_Win_set_info
+
+subroutine MPI_Win_set_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_set_info
+
+end interface
+
+interface PMPI_Win_set_info
+
+subroutine PMPI_Win_set_info(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_set_info
 
 end interface
 

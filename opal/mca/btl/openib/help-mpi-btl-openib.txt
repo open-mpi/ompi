@@ -365,7 +365,8 @@ Per-peer receive queues require between 2 and 5 parameters:
   1. Buffer size in bytes (mandatory)
   2. Number of buffers (mandatory)
   3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
-  4. Credit window size (optional; defaults to (low_watermark / 2))
+  4. Credit window size (optional; defaults to (low_watermark / 2),
+     must be > 0)
   5. Number of buffers reserved for credit messages (optional;
      defaults to (num_buffers*2-1)/credit_window)
 
@@ -689,5 +690,13 @@ out how to get an OFED stack with that support.
 [no_fork_with_gdr]
 You cannot have fork support and CUDA GPU Direct RDMA support on at the
 same time.  Please disable one of them.  Deactivating the openib BTL.
+
+  Local host:              %s
+#
+[CUDA_gdr_and_nopinned]
+You requested to run with CUDA GPU Direct RDMA support but also with
+"leave pinned" turned off. This will result in very poor performance
+with CUDA GPU Direct RDMA. Either disable GPU Direct RDMA support or
+enable "leave pinned" support. Deactivating the openib BTL.
 
   Local host:              %s

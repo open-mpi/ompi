@@ -189,10 +189,10 @@ int ompi_attr_hash_init(opal_hash_table_t **hash)
     *hash = OBJ_NEW(opal_hash_table_t);
     if (NULL == *hash) {
         fprintf(stderr, "Error while creating the local attribute list\n");
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     if (OMPI_SUCCESS != opal_hash_table_init(*hash, ATTR_HASH_SIZE)) {
-        return MPI_ERR_SYSRESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
   
     return MPI_SUCCESS;

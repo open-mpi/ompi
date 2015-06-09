@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -201,6 +203,27 @@ COPY_TYPE( float_16, long double, 1 )
 #define copy_float_16 NULL
 #endif
 
+#if HAVE_FLOAT__COMPLEX
+COPY_TYPE ( float_complex, float _Complex, 1)
+#else
+/* #error No basic type for copy function for opal_datatype_float_complex found */
+#define copy_float_complex NULL
+#endif
+
+#if HAVE_DOUBLE__COMPLEX
+COPY_TYPE ( double_complex, double _Complex, 1)
+#else
+/* #error No basic type for copy function for opal_datatype_double_complex found */
+#define copy_double_complex NULL
+#endif
+
+#if HAVE_LONG_DOUBLE__COMPLEX
+COPY_TYPE ( long_double_complex, long double _Complex, 1)
+#else
+/* #error No basic type for copy function for opal_datatype_long_double_complex found */
+#define copy_long_double_complex NULL
+#endif
+
 #if SIZEOF_BOOL == SIZEOF_CHAR
 COPY_TYPE (bool, char, 1)
 #elif SIZEOF_BOOL == SIZEOF_SHORT
@@ -238,6 +261,9 @@ conversion_fct_t opal_datatype_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
     (conversion_fct_t)copy_float_8,              /* OPAL_DATATYPE_FLOAT8       */
     (conversion_fct_t)copy_float_12,             /* OPAL_DATATYPE_FLOAT12       */
     (conversion_fct_t)copy_float_16,             /* OPAL_DATATYPE_FLOAT16      */
+    (conversion_fct_t)copy_float_complex,        /* OPAL_DATATYPE_FLOAT_COMPLEX */
+    (conversion_fct_t)copy_double_complex,       /* OPAL_DATATYPE_DOUBLE_COMPLEX */
+    (conversion_fct_t)copy_long_double_complex,  /* OPAL_DATATYPE_LONG_DOUBLE_COMPLEX */
     (conversion_fct_t)copy_bool,                 /* OPAL_DATATYPE_BOOL         */
     (conversion_fct_t)copy_wchar,                /* OPAL_DATATYPE_WCHAR        */
     (conversion_fct_t)NULL                       /* OPAL_DATATYPE_UNAVAILABLE  */

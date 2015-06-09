@@ -73,8 +73,6 @@ extern const char *var_type_names[];
 extern const size_t var_type_sizes[];
 extern bool mca_base_var_initialized;
 
-extern mca_base_var_enum_t mca_base_var_enum_bool;
-
 /**
  * \internal
  *
@@ -90,6 +88,8 @@ struct mca_base_var_file_value_t {
     char *mbvfv_value;
     /** File it came from */
     char *mbvfv_file;
+    /** Line it came from */
+    int mbvfv_lineno;
 };
 
 /**

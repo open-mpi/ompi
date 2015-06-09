@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -226,21 +227,34 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
     opal_common_verbs_device_item_t *di;
     opal_common_verbs_port_item_t *pi;
     int rc;
-    uint32_t i, j;
+    uint32_t j;
     opal_list_t *port_list = NULL;
-    opal_list_item_t *item;
     bool want;
+
+    /* Sanity check the include/exclude params */
+    if (NULL != if_include && NULL != if_exclude) {
+        return NULL;
+    }
+
+    /* Query all the IBV devices on the machine.  Use an ompi
+       compatibility function, because how to get this list changed
+       over the history of the IBV API. */
+    devices = opal_ibv_get_device_list(&num_devs);
+    if (0 == num_devs) {
+        opal_output_verbose(5, stream, "no verbs interfaces found");
+        return NULL;
+    }
+
+    opal_output_verbose(5, stream, "found %d verbs interface%s",
+                        num_devs, (num_devs != 1) ? "s" : "");
 
     /* Allocate a list to fill */
     port_list = OBJ_NEW(opal_list_t);
     if (NULL == port_list) {
-        goto err_free_argv;
+        return NULL;
     }
 
-    /* Sanity check the include/exclude params */
-    if (NULL != if_include && NULL != if_exclude) {
-        return port_list;
-    } else if (NULL != if_include) {
+    if (NULL != if_include) {
         opal_output_verbose(5, stream, "finding verbs interfaces, including %s", 
                             if_include);
         if_include_list = opal_argv_split(if_include, ',');
@@ -252,22 +266,10 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
         if_sanity_list = opal_argv_copy(if_exclude_list);
     }
 
-    /* Query all the IBV devices on the machine.  Use an ompi
-       compatibility function, because how to get this list changed
-       over the history of the IBV API. */
-    devices = opal_ibv_get_device_list(&num_devs);
-    if (0 == num_devs) {
-        opal_output_verbose(5, stream, "no verbs interfaces found");
-        goto err_free_argv;
-    } else {
-        opal_output_verbose(5, stream, "found %d verbs interface%s", 
-                            num_devs, (num_devs != 1) ? "s" : "");
-    }
-
     /* Now loop through all the devices.  Get the attributes for each
        port on each device to see if they match our selection
        criteria. */
-    for (i = 0; (int32_t) i < num_devs; ++i) {
+    for (int32_t i = 0; (int32_t) i < num_devs; ++i) {
         /* See if this device is on the include/exclude sanity check
            list.  If it is, remove it from the sanity check list
            (i.e., we should end up with an empty list at the end if
@@ -481,27 +483,23 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
         opal_argv_free(if_sanity_list);
     }
 
+    opal_argv_free(if_include_list);
+    opal_argv_free(if_exclude_list);
+
     /* All done! */
     opal_ibv_free_device_list(devices);
     return port_list;
 
  err_free_port_list:
-    for (item = opal_list_remove_first(port_list);
-         item != NULL; 
-         item = opal_list_remove_first(port_list)) {
-        OBJ_RELEASE(item);
-    }
+    OPAL_LIST_RELEASE(port_list);
     opal_ibv_free_device_list(devices);
 
- err_free_argv:
     if (NULL != if_sanity_list) {
         opal_argv_free(if_sanity_list);
-        if_sanity_list = NULL;
     }
-    opal_argv_free(if_include_list);
-    if_include_list = NULL;
-    opal_argv_free(if_exclude_list);
-    if_exclude_list = NULL;
 
-    return port_list;
+    opal_argv_free(if_include_list);
+    opal_argv_free(if_exclude_list);
+
+    return NULL;
 }

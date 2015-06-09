@@ -240,8 +240,8 @@ static int btl_openib_component_close(void)
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
-	mca_btl_openib_async_cmd_t async_command;
-	async_command.a_cmd = OPENIB_ASYNC_THREAD_EXIT;
+	mca_btl_openib_async_cmd_t async_command = {.a_cmd = OPENIB_ASYNC_THREAD_EXIT,
+                                                    .fd = -1, .qp = NULL};
         if (write(mca_btl_openib_component.async_pipe[1], &async_command,
                   sizeof(mca_btl_openib_async_cmd_t)) < 0) {
             BTL_ERROR(("Failed to communicate with async event thread"));
@@ -948,9 +948,9 @@ static void device_destruct(mca_btl_openib_device_t *device)
     /* signaling to async_tread to stop poll for this device */
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
-	mca_btl_openib_async_cmd_t async_command;
-	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_REMOVE;
-	async_command.fd = device->ib_dev_context->async_fd;
+	mca_btl_openib_async_cmd_t async_command = {.a_cmd = OPENIB_ASYNC_CMD_FD_REMOVE,
+                                                    .fd = device->ib_dev_context->async_fd,
+                                                    .qp = NULL};
         if (write(mca_btl_openib_component.async_pipe[1], &async_command,
                     sizeof(mca_btl_openib_async_cmd_t)) < 0){
             BTL_ERROR(("Failed to write to pipe"));
@@ -1223,7 +1223,7 @@ static int setup_qps(void)
     int num_xrc_qps = 0, num_pp_qps = 0, num_srq_qps = 0, qp = 0;
     uint32_t max_qp_size, max_size_needed;
     int32_t min_freelist_size = 0;
-    int smallest_pp_qp = 0, ret = OPAL_ERROR;
+    int smallest_pp_qp = INT_MAX, ret = OPAL_ERROR;
 
     queues = opal_argv_split(mca_btl_openib_component.receive_queues, ':');
     if (0 == opal_argv_count(queues)) {
@@ -1264,6 +1264,8 @@ static int setup_qps(void)
         }
         qp++;
     }
+
+#if HAVE_XRC
     /* Current XRC implementation can't used with other QP types - PP
        and SRQ */
     if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
@@ -1282,6 +1284,8 @@ static int setup_qps(void)
         ret = OPAL_ERR_BAD_PARAM;
         goto error;
     }
+#endif
+
     mca_btl_openib_component.num_pp_qps = num_pp_qps;
     mca_btl_openib_component.num_srq_qps = num_srq_qps;
     mca_btl_openib_component.num_xrc_qps = num_xrc_qps;
@@ -1318,6 +1322,15 @@ static int setup_qps(void)
             /* by default set rd_low to be 3/4 of rd_num */
             rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
             rd_win = atoi_param(P(4), (rd_num - rd_low) * 2);
+
+            if (0 >= rd_win) {
+                opal_show_help("help-mpi-btl-openib.txt",
+                               "invalid pp qp specification", true,
+                               opal_process_info.nodename, queues[qp]);
+                ret = OPAL_ERR_BAD_PARAM;
+                goto error;
+            }
+
             rd_rsv = atoi_param(P(5), (rd_num * 2) / rd_win);
 
             BTL_VERBOSE(("pp: rd_num is %d rd_low is %d rd_win %d rd_rsv %d",
@@ -1437,7 +1450,11 @@ static int setup_qps(void)
     }
 
     mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
-    mca_btl_openib_component.credits_qp = smallest_pp_qp;
+    if (mca_btl_openib_component.num_qps > smallest_pp_qp) {
+        mca_btl_openib_component.credits_qp = smallest_pp_qp;
+    } else {
+        mca_btl_openib_component.credits_qp = mca_btl_openib_component.num_qps - 1;
+    }
 
     ret = OPAL_SUCCESS;
 error:
@@ -1453,22 +1470,32 @@ error:
 }
 
 /* read a single integer from a linux module parameters file */
-static uint64_t read_module_param(char *file, uint64_t value)
+static uint64_t read_module_param(char *file, uint64_t value, uint64_t max)
 {
     int fd = open(file, O_RDONLY);
     char buffer[64];
     uint64_t ret;
+    int rc;
 
     if (0 > fd) {
         return value;
     }
 
-    read (fd, buffer, 64);
+    rc = read (fd, buffer, 64);
 
     close (fd);
 
+    if (0 == rc) {
+        return value;
+    }
+
     errno = 0;
     ret = strtoull(buffer, NULL, 10);
+
+    if (ret > max) {
+        /* NTH: probably should report a bogus value */
+        ret = max;
+    }
 
     return (0 == errno) ? ret : value;
 }
@@ -1517,8 +1544,8 @@ static uint64_t calculate_max_reg (const char *device_name)
 
     } else if (!strncmp(device_name, "mlx4", 4)) {
         if (0 == stat("/sys/module/mlx4_core/parameters/log_num_mtt", &statinfo)) {
-            mtts_per_seg = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1);
-            num_mtt = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_num_mtt", 20);
+            mtts_per_seg = 1ull << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
+            num_mtt = 1ull << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1, 63);
             if (1 == num_mtt) {
                 /* NTH: is 19 a minimum? when log_num_mtt is set to 0 use 19 */
                 num_mtt = 1 << 19;
@@ -1530,9 +1557,9 @@ static uint64_t calculate_max_reg (const char *device_name)
 
     } else if (!strncmp(device_name, "mthca", 5)) {
         if (0 == stat("/sys/module/ib_mthca/parameters/num_mtt", &statinfo)) {
-            mtts_per_seg = 1 << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1);
-            num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20);
-            reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0);
+            mtts_per_seg = 1ull << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1, 63);
+            num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20, (uint64_t) -1);
+            reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0, (uint64_t) -1);
 
             max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
         } else {
@@ -2477,7 +2504,6 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_module_t * openib_btl;
     mca_btl_base_selected_module_t* ib_selected;
     opal_list_item_t* item;
-    unsigned short seedv[3];
     mca_btl_openib_frag_init_data_t *init_data;
     struct dev_distance *dev_sorted;
     float distance;
@@ -2517,11 +2543,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    seedv[0] = OPAL_PROC_MY_NAME.vpid;
-    seedv[1] = opal_timer_base_get_cycles();
-    seedv[2] = opal_timer_base_get_cycles();
-    seed48(seedv);
-
     /* Read in INI files with device-specific parameters */
     if (OPAL_SUCCESS != (ret = opal_btl_openib_ini_init())) {
         goto no_btls;
@@ -2555,6 +2576,15 @@ btl_openib_component_init(int *num_btl_modules,
         opal_leave_pinned = 0;
         opal_leave_pinned_pipeline = 0;
     }
+
+#if OPAL_CUDA_SUPPORT
+    if (mca_btl_openib_component.cuda_want_gdr && (0 == opal_leave_pinned)) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "CUDA_gdr_and_nopinned", true,
+                       opal_process_info.nodename);
+        goto no_btls;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
 
     index = mca_base_var_find("ompi", "btl", "openib", "max_inline_data");
     if (index >= 0) {
@@ -2970,6 +3000,7 @@ static int progress_no_credits_pending_frags(mca_btl_base_endpoint_t *ep)
                       ep->qps[qp].u.pp_qp.sd_credits > 0 ||
                       !BTL_OPENIB_QP_TYPE_PP(qp)); --len) {
                 frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[pri]);
+                assert (NULL != frag);
 
                 /* If _endpoint_post_send() fails because of
                    RESOURCE_BUSY, then the frag was re-added to the
@@ -3326,19 +3357,25 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
 static void
 progress_pending_frags_wqe(mca_btl_base_endpoint_t *ep, const int qpn)
 {
-    int i;
+    int ret;
     opal_list_item_t *frag;
     mca_btl_openib_qp_t *qp = ep->qps[qpn].qp;
 
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
-    for(i = 0; i < 2; i++) {
+    for(int i = 0; i < 2; i++) {
        while(qp->sd_wqe > 0) {
             mca_btl_base_endpoint_t *tmp_ep;
             frag = opal_list_remove_first(&ep->qps[qpn].no_wqe_pending_frags[i]);
             if(NULL == frag)
                 break;
             tmp_ep = to_com_frag(frag)->endpoint;
-            mca_btl_openib_endpoint_post_send(tmp_ep, to_send_frag(frag));
+            ret = mca_btl_openib_endpoint_post_send(tmp_ep, to_send_frag(frag));
+            if (OPAL_SUCCESS != ret) {
+                /* NTH: this handles retrying if we are out of credits but other errors are not
+                 * handled (maybe abort?). */
+                opal_list_prepend (&ep->qps[qpn].no_wqe_pending_frags[i], (opal_list_item_t *) frag);
+                break;
+            }
        }
     }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
@@ -3388,10 +3425,20 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
      * to. For send fragments "order" contains QP idx the fragment was send
      * through */
     qp = des->order;
+
+    if (IBV_WC_RECV == wc->opcode && (wc->wc_flags & IBV_WC_WITH_IMM)) {
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        wc->imm_data = ntohl(wc->imm_data);
+#endif
+        frag->endpoint = (mca_btl_openib_endpoint_t*)
+            opal_pointer_array_get_item(device->endpoints, wc->imm_data);
+    }
+
     endpoint = frag->endpoint;
 
-    if(endpoint)
-        openib_btl = endpoint->endpoint_btl;
+    assert (NULL != endpoint);
+
+    openib_btl = endpoint->endpoint_btl;
 
     if(wc->status != IBV_WC_SUCCESS) {
         OPAL_OUTPUT((-1, "Got WC: ERROR"));
@@ -3412,6 +3459,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
                                get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
                                OPAL_SUCCESS);
+            /* fall through */
         case IBV_WC_RDMA_WRITE:
             if (MCA_BTL_OPENIB_FRAG_SEND_USER == openib_frag_type(des)) {
                 mca_btl_openib_put_frag_t *put_frag = to_put_frag(des);
@@ -3476,16 +3524,6 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %" PRIx64,
                          wc->qp_num, wc->src_qp, wc->wr_id));
 
-#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-            wc->imm_data = ntohl(wc->imm_data);
-#endif
-            if(wc->wc_flags & IBV_WC_WITH_IMM) {
-                endpoint = (mca_btl_openib_endpoint_t*)
-                    opal_pointer_array_get_item(device->endpoints, wc->imm_data);
-                frag->endpoint = endpoint;
-                openib_btl = endpoint->endpoint_btl;
-            }
-
             /* Process a RECV */
             if(btl_openib_handle_incoming(openib_btl, endpoint, to_recv_frag(frag),
                         wc->byte_len) != OPAL_SUCCESS) {
@@ -3515,7 +3553,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     return;
 
 error:
-    if(endpoint && endpoint->endpoint_proc && endpoint->endpoint_proc->proc_opal)
+    if(endpoint->endpoint_proc && endpoint->endpoint_proc->proc_opal)
         remote_proc = endpoint->endpoint_proc->proc_opal;
 
     /* For iWARP, the TCP connection is tied to the QP once the QP is

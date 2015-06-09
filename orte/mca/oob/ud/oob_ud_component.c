@@ -341,16 +341,12 @@ static int mca_oob_ud_component_startup(void)
         return ORTE_ERROR;
     }
 
-    devices = ibv_get_device_list (&num_devices);
-    if (NULL == devices) {
-        orte_show_help("help-oob-ud.txt", "no-devices-error", true,
-                       strerror(errno),
-                       orte_process_info.nodename);
-        return ORTE_ERROR;
-    }
-
     /* If there are no devices, it is not an error; we just won't use
        this component. */
+    devices = ibv_get_device_list (&num_devices);
+    if (NULL == devices) {
+        return ORTE_ERR_NOT_FOUND;
+    }
     if (0 == num_devices) {
         ibv_free_device_list(devices);
         return ORTE_ERR_NOT_FOUND;

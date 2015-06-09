@@ -20,6 +20,7 @@
 #include "opal/types.h"
 
 #include "opal_stdint.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -104,7 +105,6 @@ static char *pmix_kvs_name = NULL;
 static int *pmix_lranks = NULL;
 static opal_process_name_t pmix_pname;
 static uint32_t pmix_jobid = -1;
-
 
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
@@ -316,7 +316,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     int rc, cnt;
     int32_t i;
     int *all_lens = NULL;
-    opal_value_t *kp;
+    opal_value_t *kp, kvn;
     opal_buffer_t *send_buffer = NULL;
     opal_buffer_t *buf = NULL;
     void *sbuf_ptr;
@@ -330,6 +330,9 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     int32_t rcv_nbytes_tot;
     bytes_and_rank_t s_bytes_and_rank;
     bytes_and_rank_t *r_bytes_and_ranks = NULL;
+    opal_hwloc_locality_t locality;
+    opal_list_t vals;
+    char *cpuset = NULL;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray executing fence on %u procs cache_global %p cache_local %p",
@@ -447,10 +450,90 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray kvs_fence complete",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+#if OPAL_HAVE_HWLOC
+    /* fetch my cpuset */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS == (rc = opal_dstore.fetch(opal_dstore_internal, &pmix_pname,
+                                                OPAL_DSTORE_CPUSET, &vals))) {
+        kp = (opal_value_t*)opal_list_get_first(&vals);
+        cpuset = strdup(kp->data.string);
+    } else {
+        cpuset = NULL;
+    }
+    OPAL_LIST_DESTRUCT(&vals);
+#endif
+
+    /* we only need to set locality for each local rank as "not found"
+     * equates to "non-local" */
+    for (i=0; i < pmix_nlranks; i++) {
+        id.vpid = pmix_lranks[i];
+        id.jobid = pmix_jobid;
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s checking out if %s is local to me",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                OPAL_NAME_PRINT(id));
+        /* fetch cpuset for this vpid */
+#if OPAL_HAVE_HWLOC
+        OBJ_CONSTRUCT(&vals, opal_list_t);
+        if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, &pmix_pname,
+                                                    OPAL_DSTORE_CPUSET, &vals))) {
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s cpuset for local proc %s not found",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                OPAL_NAME_PRINT(id));
+            OPAL_LIST_DESTRUCT(&vals);
+            /* even though the cpuset wasn't found, we at least know it is
+             * on the same node with us */
+            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+        } else {
+            kp = (opal_value_t*)opal_list_get_first(&vals);
+            if (NULL == kp->data.string) {
+                /* if we share a node, but we don't know anything more, then
+                 * mark us as on the node as this is all we know
+                 */
+                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            } else {
+                /* determine relative location on our node */
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 cpuset,
+                                                                 kp->data.string);
+            }
+            OPAL_LIST_DESTRUCT(&vals);
+        }
+#else
+        /* all we know is we share a node */
+        locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+#endif
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray proc %s locality %s",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                             OPAL_NAME_PRINT(id),
+                             opal_hwloc_base_print_locality(locality)));
+
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = locality;
+        (void)opal_dstore.store(opal_dstore_internal, &id, &kvn);
+        OBJ_DESTRUCT(&kvn);
+    }
+
 fn_exit:
-    if (all_lens != NULL) free(all_lens);
-    if (rcv_buff != NULL) free(rcv_buff);
-    if (r_bytes_and_ranks != NULL) free(r_bytes_and_ranks);
+#if OPAL_HAVE_HWLOC
+    if (NULL != cpuset) {
+        free(cpuset);
+    }
+#endif
+    if (all_lens != NULL) {
+        free(all_lens);
+    }
+    if (rcv_buff != NULL) {
+        free(rcv_buff);
+    }
+    if (r_bytes_and_ranks != NULL) {
+        free(r_bytes_and_ranks);
+    }
     return rc;
 }
 

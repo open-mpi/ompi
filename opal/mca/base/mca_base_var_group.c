@@ -144,6 +144,40 @@ static int group_find_by_name (const char *full_name, int *index, bool invalidok
     return OPAL_ERR_NOT_FOUND;
 }
 
+static bool compare_strings (const char *str1, const char *str2) {
+    if ((NULL != str1 && 0 == strcmp (str1, "*")) ||
+        (NULL == str1 && NULL == str2)) {
+        return true;
+    }
+
+    if (NULL != str1 && NULL != str2) {
+        return 0 == strcmp (str1, str2);
+    }
+
+    return false;
+}
+
+static int group_find_linear (const char *project_name, const char *framework_name,
+                              const char *component_name, bool invalidok)
+{
+    for (int i = 0 ; i < mca_base_var_group_count ; ++i) {
+        mca_base_var_group_t *group;
+
+        int rc = mca_base_var_group_get_internal (i, &group, invalidok);
+        if (OPAL_SUCCESS != rc) {
+            continue;
+        }
+
+        if (compare_strings (project_name, group->group_project) &&
+            compare_strings (framework_name, group->group_framework) &&
+            compare_strings (component_name, group->group_component)) {
+            return i;
+        }
+    }
+
+    return OPAL_ERR_NOT_FOUND;
+}
+
 static int group_find (const char *project_name, const char *framework_name,
                        const char *component_name, bool invalidok)
 {
@@ -154,8 +188,11 @@ static int group_find (const char *project_name, const char *framework_name,
         return OPAL_ERR_NOT_FOUND;
     }
 
-    /* TODO -- deal with the project name correctly (including the wildcard '*') */
-    project_name = NULL;
+    /* check for wildcards */
+    if ((project_name && '*' == project_name[0]) || (framework_name && '*' == framework_name[0]) ||
+        (component_name && '*' == component_name[0])) {
+        return group_find_linear (project_name, framework_name, component_name, invalidok);
+    }
 
     ret = mca_base_var_generate_full_name4(project_name, framework_name, component_name,
                                            NULL, &full_name);
@@ -179,11 +216,6 @@ static int group_register (const char *project_name, const char *framework_name,
     if (NULL == project_name && NULL == framework_name && NULL == component_name) {
         /* don't create a group with no name (maybe we should create a generic group?) */
         return -1;
-    }
-
-    /* XXX -- remove this once the project name is available in the component structure */
-    if (framework_name || component_name) {
-        project_name = NULL;
     }
 
     group_id = group_find (project_name, framework_name, component_name, true);

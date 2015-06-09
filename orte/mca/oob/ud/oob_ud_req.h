@@ -71,6 +71,8 @@ struct mca_oob_ud_msg_hdr_t {
 
     orte_process_name_t msg_origin;
     orte_process_name_t msg_target;
+    int                 msg_channel;
+    int                 msg_seq_num;
 
     uint64_t msg_id;
 

@@ -13,6 +13,8 @@
  *                         reserved. 
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +24,7 @@
 
 #include "opal_config.h"
 
+#include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -77,7 +80,6 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
 
 /* this function doesn't depend on sockaddr_h */
@@ -162,10 +164,8 @@ opal_net_init(void)
 
             sscanf( arg, "%u.%u.%u.%u/%u", &a, &b, &c, &d, &bits );
 
-            if( (a > 255) || (b > 255) || (c > 255) || (d > 255) || (bits > 32) ) {
-                /* TODO: A reminder to change this to OPAL SOS once this framework
-                 * get added to the trunk.
-                 */
+            if( (a > 255) || (b > 255) || (c > 255) ||
+                (d > 255) || (bits > 32) ) {
                 if (0 == found_bad) {
                     opal_show_help("help-opal-util.txt", 
                                    "malformed net_private_ipv4",

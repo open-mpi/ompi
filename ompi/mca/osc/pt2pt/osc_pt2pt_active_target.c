@@ -12,6 +12,8 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -274,7 +276,6 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
     int i;
     int *ranks = NULL;
     ompi_group_t *group;
-    int my_rank = ompi_comm_rank (module->comm);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete entering..."));
@@ -307,7 +308,8 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
        At the same time, clean out the outgoing count for the next
        round. */
     for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
-        if (my_rank == ranks[i]) {
+        ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, ranks[i]);
+        if (ompi_proc_local() == proc) {
             /* shortcut for self */
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_pt2pt_complete self complete"));
             module->num_complete_msgs++;
@@ -316,7 +318,12 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
         complete_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+        complete_req.padding[0] = 0;
+        complete_req.padding[1] = 0;
+#endif
         complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
+        osc_pt2pt_hton(&complete_req, proc);
 
         peer = module->peers + ranks[i];
 
@@ -388,7 +395,6 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
     int ret = OMPI_SUCCESS;
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_osc_pt2pt_header_post_t post_req;
-    int my_rank = ompi_comm_rank(module->comm);
 
     /* can't check for all access epoch here due to fence */
     if (module->pw_group) {
@@ -430,17 +436,19 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
     /* send a hello counter to everyone in group */
     for (int i = 0 ; i < ompi_group_size(module->pw_group) ; ++i) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Sending post message to rank %d", ranks[i]));
+        ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, ranks[i]);
 
         /* shortcut for self */
-        if (my_rank == ranks[i]) {
+        if (ompi_proc_local() == proc) {
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_pt2pt_complete self post"));
-            osc_pt2pt_incoming_post (module, my_rank);
+            osc_pt2pt_incoming_post (module, ompi_comm_rank(module->comm));
             continue;
         }
 
         post_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_POST;
         post_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
         post_req.windx = ompi_comm_get_cid(module->comm);
+        osc_pt2pt_hton(&post_req, proc);
 
         /* we don't want to send any data, since we're the exposure
            epoch only, so use an unbuffered send */

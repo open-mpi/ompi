@@ -393,24 +393,29 @@ libmpi_mpifh_la_SOURCES += \
         fetch_and_op_f.c \
         win_allocate_f.c \
         win_allocate_shared_f.c \
+        win_attach_f.c \
         win_call_errhandler_f.c \
         win_complete_f.c \
+        win_create_dynamic_f.c \
         win_create_errhandler_f.c \
         win_create_f.c \
         win_create_keyval_f.c \
         win_delete_attr_f.c \
+        win_detach_f.c \
         win_fence_f.c \
         win_free_f.c \
         win_free_keyval_f.c \
         win_get_attr_f.c \
         win_get_errhandler_f.c \
         win_get_group_f.c \
+        win_get_info_f.c \
         win_get_name_f.c \
         win_lock_f.c \
         win_lock_all_f.c \
         win_post_f.c \
         win_set_attr_f.c \
         win_set_errhandler_f.c \
+        win_set_info_f.c \
         win_set_name_f.c \
         win_shared_query_f.c \
         win_start_f.c \

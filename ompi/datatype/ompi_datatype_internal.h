@@ -7,6 +7,8 @@
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -544,7 +546,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #endif
 
 
-#ifdef HAVE_LONG_LONG
+#if HAVE_LONG_LONG
 #if SIZEOF_LONG_LONG == 4
 #define OMPI_DATATYPE_INITIALIZER_LONG_LONG           OPAL_DATATYPE_INITIALIZER_INT4
 #define OMPI_DATATYPE_INITIALIZER_UNSIGNED_LONG_LONG  OPAL_DATATYPE_INITIALIZER_UINT4
@@ -583,7 +585,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 #endif
 
 
-#ifdef HAVE_LONG_DOUBLE
+#if HAVE_LONG_DOUBLE
 #if SIZEOF_LONG_DOUBLE == 4
 #define OMPI_DATATYPE_INITIALIZER_LONG_DOUBLE         OPAL_DATATYPE_INITIALIZER_FLOAT4
 #elif SIZEOF_LONG_DOUBLE == 8

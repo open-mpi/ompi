@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,6 +9,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -33,9 +36,9 @@ bool opal_crs_base_do_not_select = false;
 
 int opal_crs_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
     opal_crs_base_component_t *best_component = NULL;
     opal_crs_base_module_t *best_module = NULL;
+    int ret;
 
     if( !opal_cr_is_enabled ) {
         opal_output_verbose(10, opal_crs_base_framework.framework_output,
@@ -57,22 +60,19 @@ int opal_crs_base_select(void)
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
-        exit_status = OPAL_ERROR;
-        goto cleanup;
+        return OPAL_ERROR;
     }
+
+    /* best_module and best_component should not be NULL here */
 
     /* Save the winner */
     opal_crs_base_selected_component = *best_component;
     opal_crs = *best_module;
 
     /* Initialize the winner */
-    if (NULL != best_module) {
-        if (OPAL_SUCCESS != (ret = opal_crs.crs_init()) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
+    if (OPAL_SUCCESS != (ret = opal_crs.crs_init()) ) {
+        return ret;
     }
 
- cleanup:
-    return exit_status;
+    return OPAL_SUCCESS;
 }

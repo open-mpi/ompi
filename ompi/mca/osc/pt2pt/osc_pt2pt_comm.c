@@ -12,6 +12,8 @@
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -403,6 +405,7 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
 
         if (!is_long_msg) {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_PUT;
+            osc_pt2pt_hton(header, proc);
 
             osc_pt2pt_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
                                     origin_dt);
@@ -414,8 +417,8 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
             }
         } else {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_PUT_LONG;
-
             header->tag = tag;
+            osc_pt2pt_hton(header, proc);
 
             /* increase the outgoing signal count */
             ompi_osc_signal_outgoing (module, target, 1);
@@ -580,6 +583,7 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
 
         if (!is_long_msg) {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_ACC;
+            osc_pt2pt_hton(header, proc);
 
             osc_pt2pt_copy_for_send (ptr, payload_len, origin_addr, proc,
                                     origin_count, origin_dt);
@@ -591,8 +595,8 @@ ompi_osc_pt2pt_accumulate_w_req (void *origin_addr, int origin_count,
             }
         } else {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG;
-
             header->tag = tag;
+            osc_pt2pt_hton(header, proc);
 
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                                  "acc: starting long accumulate with tag %d", tag));
@@ -708,6 +712,7 @@ int ompi_osc_pt2pt_compare_and_swap (void *origin_addr, void *compare_addr,
     header->len = frag_len;
     header->displacement = target_disp;
     header->tag = tag;
+    osc_pt2pt_hton(header, proc);
     ptr += sizeof(ompi_osc_pt2pt_header_cswap_t);
 
     ret = ompi_datatype_get_pack_description(dt, &packed_ddt);
@@ -880,6 +885,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     header->count = target_count;
     header->displacement = target_disp;
     header->tag = tag;
+    OSC_PT2PT_HTON(header, module, target);
     ptr += sizeof(ompi_osc_pt2pt_header_get_t);
 
     do {
@@ -1115,6 +1121,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
     header->displacement = target_disp;
     header->op = op->o_f_to_c_index;
     header->tag = tag;
+
     ptr = (char *)(header + 1);
 
     do {
@@ -1151,6 +1158,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
 
         if (!is_long_msg) {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC;
+            osc_pt2pt_hton(header, proc);
 
             if (&ompi_mpi_op_no_op.op != op) {
                 osc_pt2pt_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
@@ -1158,6 +1166,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (void *origin_addr, int origin_count
             }
         } else {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG;
+            osc_pt2pt_hton(header, proc);
 
             ret = ompi_osc_pt2pt_isend_w_cb (origin_addr, origin_count, origin_datatype, target_rank,
                                             tag, module->comm, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);

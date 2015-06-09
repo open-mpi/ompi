@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -11,9 +11,6 @@
 #ifndef OMPI_MTL_OFI_ENDPOINT_H
 #define OMPI_MTL_OFI_ENDPOINT_H
 
-#include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
-#include "ompi/mca/mtl/mtl.h"
 #include "mtl_ofi.h"
 
 BEGIN_C_DECLS

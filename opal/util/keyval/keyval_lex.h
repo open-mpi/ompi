@@ -42,6 +42,7 @@ extern FILE *opal_util_keyval_yyin;
 extern bool opal_util_keyval_parse_done;
 extern char *opal_util_keyval_yytext;
 extern int opal_util_keyval_yynewlines;
+extern int opal_util_keyval_yylineno;
 
 /*
  * Make lex-generated files not issue compiler warnings
@@ -53,7 +54,7 @@ extern int opal_util_keyval_yynewlines;
 #define YY_NO_UNPUT 1
 #define YY_SKIP_YYWRAP 1
 
-enum {
+enum opal_keyval_parse_state_t {
     OPAL_UTIL_KEYVAL_PARSE_DONE,
     OPAL_UTIL_KEYVAL_PARSE_ERROR,
 
@@ -67,5 +68,6 @@ enum {
 
     OPAL_UTIL_KEYVAL_PARSE_MAX
 };
+typedef enum opal_keyval_parse_state_t opal_keyval_parse_state_t;
 
 #endif

@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,8 +20,8 @@
  * $HEADER$
  */
 
-#ifndef _MCA_OOB_USOCK_LISTENER_H_
-#define _MCA_OOB_USOCK_LISTENER_H_
+#ifndef ORTE_LISTENER_H
+#define ORTE_LISTENER_H
 
 #include "orte_config.h"
 
@@ -35,18 +35,32 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
 
+/* callback prototype */
+typedef void (*orte_listener_callback_fn_t)(int sd, short args, void *cbdata);
+
 /*
  * Data structure for accepting connections.
  */
-struct mca_oob_usock_listener_t {
-    opal_object_t super;
-    bool ev_active;
-    opal_event_t event;
+typedef struct orte_listener_t {
+    opal_list_item_t item;
     int sd;
-};
-typedef struct mca_oob_usock_listener_t mca_oob_usock_listener_t;
-OBJ_CLASS_DECLARATION(mca_oob_usock_listener_t);
+    opal_event_base_t *evbase;
+    orte_listener_callback_fn_t handler;
+} orte_listener_t;
+OBJ_CLASS_DECLARATION(orte_listener_t);
 
-ORTE_MODULE_DECLSPEC int orte_oob_usock_start_listening(void);
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    int fd;
+    struct sockaddr_storage addr;
+} orte_pending_connection_t;
+OBJ_CLASS_DECLARATION(orte_pending_connection_t);
 
-#endif /* _MCA_OOB_USOCK_LISTENER_H_ */
+ORTE_DECLSPEC int orte_start_listening(void);
+ORTE_DECLSPEC void orte_stop_listening(void);
+ORTE_DECLSPEC int orte_register_listener(struct sockaddr* address, opal_socklen_t addrlen,
+                                         opal_event_base_t *evbase,
+                                         orte_listener_callback_fn_t handler);
+
+#endif /* ORTE_LISTENER_H */

@@ -488,6 +488,8 @@ AC_DEFUN([_OPAL_COMMON_LIBFABRIC_EMBEDDED_PROVIDER_PSM],[
     AC_CHECK_HEADER([psm.h], [], [opal_common_libfabric_psm_happy=0])
     AC_CHECK_LIB([psm_infinipath], [psm_init], [],
                  [opal_common_libfabric_psm_happy=0])
+    AS_IF([test x"$opal_common_libfabric_psm_happy" = x"1"],
+          [AC_CHECK_TYPE([psm_epconn_t], [], [opal_common_libfabric_psm_happy=0], [[#include <psm.h>]])])
 
     AC_DEFINE_UNQUOTED([HAVE_PSM], [$opal_common_libfabric_psm_happy],
           [libfabric: whether to build the PSM provider or not])

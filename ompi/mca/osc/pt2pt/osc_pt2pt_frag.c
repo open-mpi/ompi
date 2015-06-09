@@ -59,6 +59,7 @@ static int frag_send (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_frag_t *fr
                          "osc pt2pt: frag_send called to %d, frag = %p, count = %d",
                          frag->target, (void *) frag, count));
 
+    OSC_PT2PT_HTON(frag->header, module, frag->target);
     return ompi_osc_pt2pt_isend_w_cb (frag->buffer, count, MPI_BYTE, frag->target, OSC_PT2PT_FRAG_TAG,
                                      module->comm, frag_send_cb, frag);
 }

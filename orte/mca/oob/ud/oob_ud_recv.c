@@ -492,6 +492,8 @@ int mca_oob_ud_recv_match_send (mca_oob_ud_port_t *port, mca_oob_ud_peer_t *peer
     req->req_origin       = msg_hdr->msg_origin;
     req->req_target       = msg_hdr->msg_target;
     req->req_rem_data_len = msg_hdr->msg_data.req.data_len;
+    req->req_channel      = msg_hdr->msg_channel;
+    req->req_seq_num      = msg_hdr->msg_seq_num;
 
     do {
         rc = mca_oob_ud_recv_alloc (req);

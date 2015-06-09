@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -105,6 +105,8 @@ static int reg_string(const char* param_name,
 {
     int index;
 
+    assert (NULL != storage);
+
     /* The MCA variable system will not change this pointer */
     *storage = (char *) default_value;
     index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
@@ -117,7 +119,7 @@ static int reg_string(const char* param_name,
                                              MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == storage || 0 == strlen(*storage))) {
+    if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == *storage || 0 == strlen(*storage))) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OPAL_ERR_BAD_PARAM;
@@ -707,11 +709,11 @@ int btl_openib_register_mca_params(void)
                   32, &mca_btl_openib_component.use_memalign,
                   REGINT_GE_ZERO));
 
-    mca_btl_openib_component.memalign_threshold = mca_btl_openib_component.eager_limit;
+    mca_btl_openib_component.memalign_threshold = mca_btl_openib_module.super.btl_eager_limit;
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "memalign_threshold",
                                           "Allocating memory more than btl_openib_memalign_threshhold"
-                                          "bytes will automatically be algined to the value of btl_openib_memalign bytes."
+                                          "bytes will automatically be aligned to the value of btl_openib_memalign bytes."
                                           "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,

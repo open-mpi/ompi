@@ -337,12 +337,15 @@ mpi_api_files = \
         waitsome_f08.F90 \
         win_allocate_f08.F90 \
         win_allocate_shared_f08.F90 \
+        win_attach_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
+        win_create_dynamic_f08.F90 \
         win_create_errhandler_f08.F90 \
         win_create_f08.F90 \
         win_create_keyval_f08.F90 \
         win_delete_attr_f08.F90 \
+        win_detach_f08.F90 \
         win_fence_f08.F90 \
         win_flush_f08.F90 \
         win_flush_all_f08.F90 \
@@ -353,12 +356,14 @@ mpi_api_files = \
         win_get_attr_f08.F90 \
         win_get_errhandler_f08.F90 \
         win_get_group_f08.F90 \
+        win_get_info_f08.F90 \
         win_get_name_f08.F90 \
         win_lock_f08.F90 \
         win_lock_all_f08.F90 \
         win_post_f08.F90 \
         win_set_attr_f08.F90 \
         win_set_errhandler_f08.F90 \
+        win_set_info_f08.F90 \
         win_set_name_f08.F90 \
         win_shared_query_f08.F90 \
         win_start_f08.F90 \

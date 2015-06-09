@@ -31,13 +31,10 @@ local_sources = \
 	pml_cm_cancel.c \
 	pml_cm_component.c \
 	pml_cm_component.h \
-	pml_cm_probe.c \
-	pml_cm_recv.c \
 	pml_cm_recvreq.h \
 	pml_cm_recvreq.c \
 	pml_cm_request.h \
 	pml_cm_request.c \
-	pml_cm_send.c \
 	pml_cm_sendreq.h \
 	pml_cm_sendreq.c \
 	pml_cm_start.c

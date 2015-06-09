@@ -49,7 +49,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 {
     
     size_t max_data = 0;
-    int i = 0;
+    int i;
     int num_groups = 0;
     contg *contg_groups;
 
@@ -95,7 +95,12 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     for( i = 0; i < fh->f_size; i++){
        contg_groups[i].procs_in_contg_group = (int*)calloc (1,fh->f_size * sizeof(int));
        if(NULL == contg_groups[i].procs_in_contg_group){
+          int j;
           opal_output (1, "OUT OF MEMORY\n");
+          for(j=0; j<i; j++) {
+              free(contg_groups[j].procs_in_contg_group);
+          }
+          free(contg_groups);
           return OMPI_ERR_OUT_OF_RESOURCE;
        }
     }
@@ -103,6 +108,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
                                                           &num_groups,
                                                           contg_groups)){
        opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
+       free(contg_groups);
        return OMPI_ERROR;
     }
     if( !( (fh->f_comm->c_flags & OMPI_COMM_CART) &&
@@ -111,7 +117,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
                                                  num_groups,
                                                  contg_groups);
     }
-
+ 
 
     return OMPI_SUCCESS;
 }

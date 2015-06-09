@@ -613,13 +613,13 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     opal_progress_event_users_decrement();
 
     if(MCA_BTL_XRC_ENABLED) {
-        while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
-            ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
-            ep = (mca_btl_openib_endpoint_t *)ep_item;
-            if (OPAL_SUCCESS !=
-                opal_btl_openib_connect_base_start(endpoint->endpoint_local_cpc,
-                                                   ep)) {
-                BTL_ERROR(("Failed to connect pending endpoint\n"));
+        if (master) {
+            while (NULL != (ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep))) {
+                ep = (mca_btl_openib_endpoint_t *)ep_item;
+                if (OPAL_SUCCESS !=
+                    opal_btl_openib_connect_base_start(endpoint->endpoint_local_cpc, ep)) {
+                    BTL_ERROR(("Failed to connect pending endpoint\n"));
+                }
             }
         }
         OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
@@ -689,7 +689,7 @@ static void mca_btl_openib_endpoint_credits(
 
     /* we don't acquire a WQE for credit message - so decrement.
      * Note: doing it for QP used for credit management */
-    qp_get_wqe(ep, des->order);
+    (void) qp_get_wqe(ep, des->order);
 
     if(check_send_credits(ep, qp) || check_eager_rdma_credits(ep))
         mca_btl_openib_endpoint_send_credits(ep, qp);

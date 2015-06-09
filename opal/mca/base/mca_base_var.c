@@ -131,7 +131,7 @@ static const char *info_lvl_strings[] = {
 static int fixup_files(char **file_list, char * path, bool rel_path_search, char sep);
 static int read_files (char *file_list, opal_list_t *file_values, char sep);
 static int mca_base_var_cache_files (bool rel_path_search);
-static int var_set_initial (mca_base_var_t *var);
+static int var_set_initial (mca_base_var_t *var, mca_base_var_t *original);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
 
@@ -147,6 +147,21 @@ static void fv_constructor (mca_base_var_file_value_t *p);
 static void fv_destructor (mca_base_var_file_value_t *p);
 OBJ_CLASS_INSTANCE(mca_base_var_file_value_t, opal_list_item_t,
                    fv_constructor, fv_destructor);
+
+static const char *mca_base_var_source_file (const mca_base_var_t *var)
+{
+    mca_base_var_file_value_t *fv = (mca_base_var_file_value_t *) var->mbv_file_value;
+
+    if (NULL != var->mbv_source_file) {
+        return var->mbv_source_file;
+    }
+
+    if (fv) {
+        return fv->mbvfv_file;
+    }
+
+    return NULL;
+}
 
 /*
  * Generate a full name from three names
@@ -309,41 +324,46 @@ int mca_base_var_init(void)
 
 static void process_env_list(char *env_list, char ***argv, char sep)
 {
-    int i;
     char** tokens;
-    char* ptr;
-    char* param, *value;
+    char *ptr, *value;
+
     tokens = opal_argv_split(env_list, (int)sep);
-    if (NULL != tokens) {
-        for (i = 0; NULL != tokens[i]; i++) {
-            if (NULL == (ptr = strchr(tokens[i], '='))) {
-                value = getenv(tokens[i]);
-                if (NULL != value) {
-                    if (NULL != strchr(value, '=')) {
-                        param = strdup(value);
-                        value = strchr(param, '=');
-                        *value = '\0';
-                        value++;
-                        opal_setenv(param, value, true, argv);
-                        free(param);
-                    } else {
-                        opal_setenv(tokens[i], value, true, argv);
-                    }
-                } else {
-                    opal_show_help("help-mca-var.txt", "incorrect-env-list-param",
-                            true, tokens[i], env_list);
-                }
-            } else {
-                param = strdup(tokens[i]);
-                value = strchr(param, '=');
-                *value = '\0';
-                value++;
-                opal_setenv(param, value, true, argv);
-                free(param);
-            }
-        }
-        opal_argv_free(tokens);
+    if (NULL == tokens) {
+        return;
     }
+
+    for (int i = 0 ; NULL != tokens[i] ; ++i) {
+        if (NULL == (ptr = strchr(tokens[i], '='))) {
+            value = getenv(tokens[i]);
+            if (NULL == value) {
+                opal_show_help("help-mca-var.txt", "incorrect-env-list-param",
+                               true, tokens[i], env_list);
+                break;
+            }
+
+            /* duplicate the value to silence tainted string coverity issue */
+            value = strdup (value);
+            if (NULL == value) {
+                /* out of memory */
+                break;
+            }
+
+            if (NULL != (ptr = strchr(value, '='))) {
+                *ptr = '\0';
+                opal_setenv(value, ptr + 1, true, argv);
+            } else {
+                opal_setenv(tokens[i], value, true, argv);
+            }
+
+            free (value);
+        } else {
+            *ptr = '\0';
+            opal_setenv(tokens[i], ptr + 1, true, argv);
+            /* NTH: don't bother resetting ptr to = since the string will not be used again */
+        }
+    }
+
+    opal_argv_free(tokens);
 }
 
 int mca_base_var_process_env_list(char ***argv)
@@ -577,7 +597,7 @@ int mca_base_var_get_value (int vari, const void *value,
     }
 
     if (NULL != source_file) {
-        *source_file = var->mbv_source_file;
+        *source_file = mca_base_var_source_file (var);
     }
 
     return OPAL_SUCCESS;
@@ -794,6 +814,7 @@ int mca_base_var_set_value (int vari, const void *value, size_t size, mca_base_v
     var->mbv_source = source;
 
     if (MCA_BASE_VAR_SOURCE_FILE == source && NULL != source_file) {
+        var->mbv_file_value = NULL;
         var->mbv_source_file = append_filename_to_list(source_file);
     }
 
@@ -1051,7 +1072,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
             asprintf (&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
-                      var->mbv_source_file);
+                      mca_base_var_source_file (var));
             break;
         case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
             asprintf (&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
@@ -1159,6 +1180,7 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search, char
     char **search_path = NULL;
     char * tmp_file = NULL;
     char **argv = NULL;
+    char *rel_path;
     int mode = R_OK; /* The file exists, and we can read it */
     int count, i, argc = 0;
 
@@ -1166,82 +1188,63 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search, char
     files = opal_argv_split(*file_list, sep);
     count = opal_argv_count(files);
 
+    rel_path = force_agg_path ? force_agg_path : cwd;
+
     /* Read in reverse order, so we can preserve the original ordering */
     for (i = 0 ; i < count; ++i) {
-        /* Absolute paths preserved */
-        if ( opal_path_is_absolute(files[i]) ) {
-            if( NULL == (tmp_file = opal_path_access(files[i], NULL, mode)) ) {
-                opal_show_help("help-mca-var.txt", "missing-param-file",
-                               true, getpid(), files[i], path);
-                exit_status = OPAL_ERROR;
-                goto cleanup;
-            } else {
-                opal_argv_append(&argc, &argv, files[i]);
-            }
+        char *msg_path = path;
+        if (opal_path_is_absolute(files[i])) {
+            /* Absolute paths preserved */
+            tmp_file = opal_path_access(files[i], NULL, mode);
+        } else if (!rel_path_search && NULL != strchr(files[i], OPAL_PATH_SEP[0])) {
+            /* Resolve all relative paths:
+             *  - If filename contains a "/" (e.g., "./foo" or "foo/bar")
+             *    - look for it relative to cwd
+             *    - if exists, use it
+             *    - ow warn/error
+             */
+            msg_path = rel_path;
+            tmp_file = opal_path_access(files[i], rel_path, mode);
+        } else {
+            /* Resolve all relative paths:
+             * - Use path resolution
+             *    - if found and readable, use it
+             *    - otherwise, warn/error
+             */
+            tmp_file = opal_path_find (files[i], search_path, mode, NULL);
         }
-        /* Resolve all relative paths:
-         *  - If filename contains a "/" (e.g., "./foo" or "foo/bar")
-         *    - look for it relative to cwd
-         *    - if exists, use it
-         *    - ow warn/error
-         */
-        else if (!rel_path_search && NULL != strchr(files[i], OPAL_PATH_SEP[0]) ) {
-            if( NULL != force_agg_path ) {
-                tmp_file = opal_path_access(files[i], force_agg_path, mode);
-            }
-            else {
-                tmp_file = opal_path_access(files[i], cwd, mode);
-            }
 
-            if( NULL == tmp_file ) {
-                opal_show_help("help-mca-var.txt", "missing-param-file",
-                               true, getpid(), files[i], cwd);
-                exit_status = OPAL_ERROR;
-                goto cleanup;
-            }
-            else {
-                opal_argv_append(&argc, &argv, tmp_file);
-            }
+        if (NULL == tmp_file) {
+            opal_show_help("help-mca-var.txt", "missing-param-file",
+                           true, getpid(), files[i], msg_path);
+            exit_status = OPAL_ERROR;
+            break;
         }
-        /* Resolve all relative paths:
-         * - Use path resolution
-         *    - if found and readable, use it
-         *    - otherwise, warn/error
-         */
-        else {
-            if( NULL != (tmp_file = opal_path_find(files[i], search_path, mode, NULL)) ) {
-                opal_argv_append(&argc, &argv, tmp_file);
-            }
-            else {
-                opal_show_help("help-mca-var.txt", "missing-param-file",
-                               true, getpid(), files[i], path);
-                exit_status = OPAL_ERROR;
-                goto cleanup;
-            }
-        }
+
+        opal_argv_append(&argc, &argv, tmp_file);
+
         free(tmp_file);
+        tmp_file = NULL;
     }
 
-    tmp_file = NULL;
+    if (OPAL_SUCCESS == exit_status) {
+        free(*file_list);
+        *file_list = opal_argv_join(argv, sep);
+    }
 
-    free(*file_list);
-    *file_list = opal_argv_join(argv, sep);
-
- cleanup:
     if( NULL != files ) {
         opal_argv_free(files);
         files = NULL;
     }
+
     if( NULL != argv ) {
         opal_argv_free(argv);
         argv = NULL;
     }
+
     if( NULL != search_path ) {
         opal_argv_free(search_path);
         search_path = NULL;
-    }
-    if( NULL != tmp_file ) {
-        free(tmp_file);
     }
 
     return exit_status;
@@ -1250,35 +1253,24 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search, char
 static int read_files(char *file_list, opal_list_t *file_values, char sep)
 {
     char **tmp = opal_argv_split(file_list, sep);
-    int i, count, ret;
+    int i, count;
 
     if (!tmp) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    if (mca_base_var_file_list) {
-        count = opal_argv_count (mca_base_var_file_list);
-        ret = opal_argv_insert (&mca_base_var_file_list, count, tmp);
-        if (OPAL_SUCCESS != ret) {
-            return ret;
-        }
-
-        opal_argv_free (tmp);
-    } else {
-        mca_base_var_file_list = tmp;
-    }
-
-    count = opal_argv_count(mca_base_var_file_list);
+    count = opal_argv_count(tmp);
 
     /* Iterate through all the files passed in -- read them in reverse
        order so that we preserve unix/shell path-like semantics (i.e.,
        the entries farthest to the left get precedence) */
 
     for (i = count - 1; i >= 0; --i) {
-        mca_base_parse_paramfile(mca_base_var_file_list[i], file_values);
+        char *file_name = append_filename_to_list (tmp[i]);
+        mca_base_parse_paramfile(file_name, file_values);
     }
-    opal_argv_free(mca_base_var_file_list);
-    mca_base_var_file_list = NULL;
+
+    opal_argv_free (tmp);
 
     mca_base_internal_env_store();
 
@@ -1296,7 +1288,7 @@ static int register_variable (const char *project_name, const char *framework_na
 {
     int ret, var_index, group_index, tmp;
     mca_base_var_group_t *group;
-    mca_base_var_t *var;
+    mca_base_var_t *var, *original = NULL;
 
     /* Developer error. Storage can not be NULL and type must exist */
     assert (((flags & MCA_BASE_VAR_FLAG_SYNONYM) || NULL != storage) && type >= 0 && type < MCA_BASE_VAR_TYPE_MAX);
@@ -1343,6 +1335,16 @@ static int register_variable (const char *project_name, const char *framework_na
         assert((flags & MCA_BASE_VAR_FLAG_SYNONYM) && synonym_for >= 0);
     }
 #endif
+
+    if (flags & MCA_BASE_VAR_FLAG_SYNONYM) {
+        original = opal_pointer_array_get_item (&mca_base_vars, synonym_for);
+        if (NULL == original) {
+            /* Attempting to create a synonym for a non-existent variable. probably a
+             * developer error. */
+            assert (NULL != original);
+            return OPAL_ERR_NOT_FOUND;
+        }
+    }
 
     /* There are data holes in the var struct */
     OPAL_DEBUG_ZERO(var);
@@ -1489,23 +1491,22 @@ static int register_variable (const char *project_name, const char *framework_na
 
     var->mbv_enumerator = enumerator;
 
-    if (flags & MCA_BASE_VAR_FLAG_SYNONYM) {
-        mca_base_var_t *original = opal_pointer_array_get_item (&mca_base_vars, synonym_for);
-
-        opal_value_array_append_item(&original->mbv_synonyms, &var_index);
-    } else {
+    if (!original) {
         var->mbv_storage = storage;
 
         /* make a copy of the default string value */
         if ((MCA_BASE_VAR_TYPE_STRING == type || MCA_BASE_VAR_TYPE_VERSION_STRING == type) && NULL != ((char **)storage)[0]) {
             ((char **)storage)[0] = strdup (((char **)storage)[0]);
         }
+    } else {
+        /* synonym variable */
+        opal_value_array_append_item(&original->mbv_synonyms, &var_index);
     }
 
     /* go ahead and mark this variable as valid */
     var->mbv_flags |= MCA_BASE_VAR_FLAG_VALID;
 
-    ret = var_set_initial (var);
+    ret = var_set_initial (var, original);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
@@ -1618,7 +1619,7 @@ static int var_get_env (mca_base_var_t *var, const char *name, char **source, ch
 /*
  * Lookup a param in the environment
  */
-static int var_set_from_env (mca_base_var_t *var)
+static int var_set_from_env (mca_base_var_t *var, mca_base_var_t *original)
 {
     const char *var_full_name = var->mbv_full_name;
     const char *var_long_name = var->mbv_long_name;
@@ -1626,17 +1627,6 @@ static int var_set_from_env (mca_base_var_t *var)
     bool is_synonym = VAR_IS_SYNONYM(var[0]);
     char *source_env, *value_env;
     int ret;
-
-    if (is_synonym) {
-        ret = var_get (var->mbv_synonym_for, &var, true);
-        if (OPAL_SUCCESS != ret) {
-            return OPAL_ERROR;
-        }
-
-        if (var->mbv_source >= MCA_BASE_VAR_SOURCE_ENV) {
-            return OPAL_SUCCESS;
-        }
-    }
 
     ret = var_get_env (var, var_long_name, &source_env, &value_env);
     if (OPAL_SUCCESS != ret) {
@@ -1649,14 +1639,14 @@ static int var_set_from_env (mca_base_var_t *var)
 
     /* we found an environment variable but this variable is default-only. print
        a warning. */
-    if (VAR_IS_DEFAULT_ONLY(var[0])) {
+    if (VAR_IS_DEFAULT_ONLY(original[0])) {
         opal_show_help("help-mca-var.txt", "default-only-param-set",
                        true, var_full_name);
 
         return OPAL_ERR_NOT_FOUND;
     }
 
-    if (MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) {
+    if (MCA_BASE_VAR_SOURCE_OVERRIDE == original->mbv_source) {
         if (!mca_base_var_suppress_override_warning) {
             opal_show_help("help-mca-var.txt", "overridden-param-set",
                            true, var_full_name);
@@ -1665,15 +1655,15 @@ static int var_set_from_env (mca_base_var_t *var)
         return OPAL_ERR_NOT_FOUND;
     }
 
-    var->mbv_source = MCA_BASE_VAR_SOURCE_ENV;
+    original->mbv_source = MCA_BASE_VAR_SOURCE_ENV;
 
     if (NULL != source_env) {
         if (0 == strncasecmp (source_env, "file:", 5)) {
-            var->mbv_source_file = append_filename_to_list(source_env + 5);
+            original->mbv_source_file = append_filename_to_list(source_env + 5);
             if (0 == strcmp (var->mbv_source_file, mca_base_var_override_file)) {
-                var->mbv_source = MCA_BASE_VAR_SOURCE_OVERRIDE;
+                original->mbv_source = MCA_BASE_VAR_SOURCE_OVERRIDE;
             } else {
-                var->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
+                original->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
             }
         } else if (0 == strcasecmp (source_env, "command")) {
             var->mbv_source = MCA_BASE_VAR_SOURCE_COMMAND_LINE;
@@ -1699,7 +1689,7 @@ static int var_set_from_env (mca_base_var_t *var)
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
             opal_show_help("help-mca-var.txt", "deprecated-mca-file",
-                           true, var_full_name, var->mbv_source_file,
+                           true, var_full_name, mca_base_var_source_file (var),
                            new_variable);
             break;
 
@@ -1711,31 +1701,19 @@ static int var_set_from_env (mca_base_var_t *var)
         }
     }
 
-    return var_set_from_string (var, value_env);
+    return var_set_from_string (original, value_env);
 }
 
 /*
  * Lookup a param in the files
  */
-static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
+static int var_set_from_file (mca_base_var_t *var, mca_base_var_t *original, opal_list_t *file_values)
 {
     const char *var_full_name = var->mbv_full_name;
     const char *var_long_name = var->mbv_long_name;
     bool deprecated = VAR_IS_DEPRECATED(var[0]);
     bool is_synonym = VAR_IS_SYNONYM(var[0]);
     mca_base_var_file_value_t *fv;
-    int ret;
-
-    if (is_synonym) {
-        ret = var_get (var->mbv_synonym_for, &var, true);
-        if (OPAL_SUCCESS != ret) {
-            return OPAL_ERROR;
-        }
-
-        if (var->mbv_source >= MCA_BASE_VAR_SOURCE_FILE) {
-            return OPAL_SUCCESS;
-        }
-    }
 
     /* Scan through the list of values read in from files and try to
        find a match.  If we do, cache it on the param (for future
@@ -1755,7 +1733,7 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
             return OPAL_ERR_NOT_FOUND;
         }
 
-        if (MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY & var->mbv_flags) {
+        if (MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY & original->mbv_flags) {
             opal_show_help("help-mca-var.txt", "environment-only-param",
                            true, var_full_name, fv->mbvfv_value,
                            fv->mbvfv_file);
@@ -1763,7 +1741,7 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
             return OPAL_ERR_NOT_FOUND;
         }
 
-        if (MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) {
+        if (MCA_BASE_VAR_SOURCE_OVERRIDE == original->mbv_source) {
             if (!mca_base_var_suppress_override_warning) {
                 opal_show_help("help-mca-var.txt", "overridden-param-set",
                                true, var_full_name);
@@ -1776,7 +1754,7 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
             const char *new_variable = "None (going away)";
 
             if (is_synonym) {
-                new_variable = var->mbv_full_name;
+                new_variable = original->mbv_full_name;
             }
 
             opal_show_help("help-mca-var.txt", "deprecated-mca-file",
@@ -1784,16 +1762,14 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
                            new_variable);
         }
 
-        if (NULL != fv->mbvfv_file) {
-            var->mbv_source_file = fv->mbvfv_file;
-            if (NULL == var->mbv_source_file) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
+        original->mbv_file_value = (void *) fv;
+        original->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
+        if (is_synonym) {
+            var->mbv_file_value = (void *) fv;
+            var->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
         }
 
-        var->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
-
-        return var_set_from_string (var, fv->mbvfv_value);
+        return var_set_from_string (original, fv->mbvfv_value);
     }
 
     return OPAL_ERR_NOT_FOUND;
@@ -1802,33 +1778,41 @@ static int var_set_from_file (mca_base_var_t *var, opal_list_t *file_values)
 /*
  * Lookup the initial value for a parameter
  */
-static int var_set_initial (mca_base_var_t *var)
+static int var_set_initial (mca_base_var_t *var, mca_base_var_t *original)
 {
     int ret;
 
-    var->mbv_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+    if (original) {
+        /* synonym */
+        var->mbv_source = original->mbv_source;
+        var->mbv_file_value = original->mbv_file_value;
+        var->mbv_source_file = original->mbv_source_file;
+    } else {
+        var->mbv_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+        original = var;
+    }
 
     /* Check all the places that the param may be hiding, in priority
        order. If the default only flag is set the user will get a
        warning if they try to set a value from the environment or a
        file. */
-    ret = var_set_from_file (var, &mca_base_var_override_values);
+    ret = var_set_from_file (var, original, &mca_base_var_override_values);
     if (OPAL_SUCCESS == ret) {
         var->mbv_flags = ~MCA_BASE_VAR_FLAG_SETTABLE & (var->mbv_flags | MCA_BASE_VAR_FLAG_OVERRIDE);
         var->mbv_source = MCA_BASE_VAR_SOURCE_OVERRIDE;
     }
 
-    ret = var_set_from_env (var);
+    ret = var_set_from_env (var, original);
     if (OPAL_ERR_NOT_FOUND != ret) {
         return ret;
     }
 
-    ret = var_set_from_file (var, &mca_base_envar_file_values);
+    ret = var_set_from_file (var, original, &mca_base_envar_file_values);
     if (OPAL_ERR_NOT_FOUND != ret) {
         return ret;
     }
 
-    ret = var_set_from_file (var, &mca_base_var_file_values);
+    ret = var_set_from_file (var, original, &mca_base_var_file_values);
     if (OPAL_ERR_NOT_FOUND != ret) {
         return ret;
     }
@@ -1916,7 +1900,15 @@ static char *source_name(mca_base_var_t *var)
     char *ret;
 
     if (MCA_BASE_VAR_SOURCE_FILE == var->mbv_source || MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) {
-        int rc = asprintf(&ret, "file (%s)", var->mbv_source_file);
+        struct mca_base_var_file_value_t *fv = var->mbv_file_value;
+        int rc;
+
+        if (fv) {
+            rc = asprintf(&ret, "file (%s:%d)", fv->mbvfv_file, fv->mbvfv_lineno);
+        } else {
+            rc = asprintf(&ret, "file (%s)", var->mbv_source_file);
+        }
+
         /* some compilers will warn if the return code of asprintf is not checked (even if it is cast to void) */
         if (0 > rc) {
             return NULL;
