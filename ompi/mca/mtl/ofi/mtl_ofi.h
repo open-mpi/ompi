@@ -148,7 +148,7 @@ ompi_mtl_ofi_send_error_callback(struct fi_cq_err_entry *error,
                                  ompi_mtl_ofi_request_t *ofi_req)
 {
     switch(error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             ofi_req->status.MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         default:
@@ -492,7 +492,7 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
 
     /* FIXME: This could be done on a single line... */
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         default:
@@ -606,7 +606,7 @@ ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
 
     /* FIXME: This could be done on a single line... */
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         default:
