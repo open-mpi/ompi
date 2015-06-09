@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -97,6 +97,13 @@ portals4_init_interface(void)
                             __FILE__, __LINE__, ret);
         goto error;
     }
+    if (ompi_mtl_portals4.recv_idx != REQ_RECV_TABLE_ID) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, ompi_mtl_portals4.recv_idx);
+        goto error;
+    }
+
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_ONLY_USE_ONCE |
                      PTL_PT_ONLY_TRUNCATE,
@@ -107,6 +114,12 @@ portals4_init_interface(void)
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
+        goto error;
+    }
+    if (ompi_mtl_portals4.read_idx != REQ_READ_TABLE_ID) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, ompi_mtl_portals4.read_idx);
         goto error;
     }
 
