@@ -568,7 +568,7 @@ static inline int osc_pt2pt_accumulate_buffer (void *target, void *source, size_
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->super.proc_arch != ompi_proc_local()->super.proc_arch) {
+    if (proc->proc_arch != ompi_proc_local()->proc_arch) {
         ompi_datatype_t *primitive_datatype = NULL;
         uint32_t primitive_count;
         size_t buflen;
