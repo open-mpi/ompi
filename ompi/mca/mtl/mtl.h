@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +39,7 @@
 #include "ompi_config.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "opal/mca/mca.h"
-#include "ompi/mca/pml/pml.h" /* for send_mode enum */
+#include "ompi/mca/pml/pml_constants.h" /* for send_mode enum */
 #include "ompi/request/request.h"
 
 BEGIN_C_DECLS
@@ -58,7 +61,7 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *
  * Initialization routine for MTL component.  This function should
  * allocate resources for communication and try to do all local setup.
- * It should not attempt to contract it's peers, as that should be
+ * It should not attempt to contact it's peers, as that should be
  * done at add_procs time.  Contact information should be published
  * during this initialization function.  It will be made available
  * during add_procs().
@@ -423,22 +426,24 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
   MCA_BASE_VERSION_2_0_0, \
   "mtl", 2, 0, 0
 
+OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
+
 /*
  * macro for doing direct call / call through struct
  */
 #if MCA_ompi_mtl_DIRECT_CALL
 
-#include MCA_ompi_mtl_DIRECT_CALL_HEADER
 
 #define OMPI_MTL_CALL_STAMP(a, b) ompi_mtl_ ## a ## _ ## b
 #define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a,b)
 #define OMPI_MTL_CALL(a) OMPI_MTL_CALL_EXPANDER(MCA_ompi_mtl_DIRECT_CALL_COMPONENT, a)
 
+#include MCA_ompi_mtl_DIRECT_CALL_HEADER
+
 #else
 #define OMPI_MTL_CALL(a) ompi_mtl->mtl_ ## a
 #endif
 
-OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
 
 END_C_DECLS
 #endif

@@ -84,6 +84,7 @@ do {                                                                           \
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define MCA_PML_CM_THIN_RECV_REQUEST_INIT( request,                     \
                                            ompi_proc,                   \
                                            comm,                        \
@@ -114,7 +115,35 @@ do {                                                                    \
                                   0,                                    \
                                   &(request)->req_base.req_convertor ); \
 } while(0)
+#else
+#define MCA_PML_CM_THIN_RECV_REQUEST_INIT( request,                     \
+                                           ompi_proc,                   \
+                                           comm,                        \
+                                           src,                         \
+                                           datatype,                    \
+                                           addr,                        \
+                                           count )                      \
+do {                                                                    \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, false);            \
+    (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
+    (request)->req_base.req_pml_complete = false;                       \
+    (request)->req_base.req_free_called = false;                        \
+    request->req_base.req_comm = comm;                                  \
+    request->req_base.req_datatype = datatype;                          \
+    OBJ_RETAIN(comm);                                                   \
+    OBJ_RETAIN(datatype);                                               \
+                                                                        \
+    opal_convertor_copy_and_prepare_for_recv(                           \
+        ompi_mpi_local_convertor,                                       \
+        &(datatype->super),                                             \
+        count,                                                          \
+        addr,                                                           \
+        0,                                                              \
+        &(request)->req_base.req_convertor );                           \
+} while(0)
+#endif
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define MCA_PML_CM_HVY_RECV_REQUEST_INIT( request,                      \
                                           ompi_proc,                    \
                                           comm,                         \
@@ -151,7 +180,39 @@ do {                                                                    \
                                   0,                                    \
                                   &(request)->req_base.req_convertor ); \
  } while(0)
-
+#else
+#define MCA_PML_CM_HVY_RECV_REQUEST_INIT( request,                      \
+                                          ompi_proc,                    \
+                                          comm,                         \
+                                          tag,                          \
+                                          src,                          \
+                                          datatype,                     \
+                                          addr,                         \
+                                          count,                        \
+                                          persistent)                   \
+do {                                                                    \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
+    (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
+    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
+    (request)->req_base.req_free_called = false;                        \
+    request->req_base.req_comm = comm;                                  \
+    request->req_base.req_datatype = datatype;                          \
+    request->req_tag = tag;                                             \
+    request->req_peer = src;                                            \
+    request->req_addr = addr;                                           \
+    request->req_count = count;                                         \
+    OBJ_RETAIN(comm);                                                   \
+    OBJ_RETAIN(datatype);                                               \
+                                                                        \
+    opal_convertor_copy_and_prepare_for_recv(                           \
+        ompi_mpi_local_convertor,                                       \
+        &(datatype->super),                                             \
+        count,                                                          \
+        addr,                                                           \
+        0,                                                              \
+        &(request)->req_base.req_convertor );                           \
+ } while(0)
+#endif
 
 /**
  * Start an initialized request.
