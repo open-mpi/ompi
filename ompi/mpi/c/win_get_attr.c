@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,17 +64,6 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
 
     ret = ompi_attr_get_c(win->w_keyhash, win_keyval, 
                           (void**)attribute_val, flag);
-
-    /* MPI-2 Section 6.2.2 says that for MPI_WIN_BASE, base will be a
-       pointer to the window in C/C++ and an integer representation of
-       the base address in Fortran.  The only rational way to do this
-       is to store a pointer to the pointer in C (so that the
-       attribute code will do the right thing in Fortran) and
-       dereference the C attribute here so that it's right for C as
-       well. */
-    if (win_keyval == MPI_WIN_BASE) {
-        *((void**) attribute_val) = *((void**) attribute_val);
-    }
 
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
 }
