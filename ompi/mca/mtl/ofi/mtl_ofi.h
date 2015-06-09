@@ -524,10 +524,12 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
-    /* FIXME: This could be done on a single line... */
     switch (error->err) {
         case FI_EMSGSIZE:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
+            break;
+        case FI_ECANCELED:
+            status->_cancelled = true;
             break;
         default:
             status->MPI_ERROR = MPI_ERR_INTERN;
@@ -638,10 +640,12 @@ ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
-    /* FIXME: This could be done on a single line... */
     switch (error->err) {
         case FI_EMSGSIZE:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
+            break;
+        case FI_ECANCELED:
+            status->_cancelled = true;
             break;
         default:
             status->MPI_ERROR = MPI_ERR_INTERN;
@@ -944,10 +948,16 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
                 ret = fi_cancel((fid_t)ompi_mtl_ofi.ep, &ofi_req->ctx);
                 if (0 == ret) {
                     /**
-                     * The request was successfully cancelled.
+                     * Wait for the request to be cancelled.
                      */
-                    ofi_req->super.ompi_req->req_status._cancelled = true;
-                    ofi_req->super.completion_callback(&ofi_req->super);
+                    while (!ofi_req->super.ompi_req->req_status._cancelled) {
+                        opal_progress();
+                    }
+                } else {
+                    /**
+                     * Could not cancel the request.
+                     */
+                    ofi_req->super.ompi_req->req_status._cancelled = false;
                 }
             }
             break;
