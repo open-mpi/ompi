@@ -32,6 +32,8 @@
 #include <alloca.h>
 #endif  /* HAVE_ALLOCA_H */
 
+mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
+
 int mca_pml_ob1_isend_init(void *buf,
                            size_t count,
                            ompi_datatype_t * datatype,
@@ -181,8 +183,7 @@ int mca_pml_ob1_send(void *buf,
     ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    mca_pml_ob1_send_request_t *sendreq =
-        alloca(mca_pml_base_send_requests.fl_frag_size);
+    mca_pml_ob1_send_request_t *sendreq = mca_pml_ob1_sendreq;
     int16_t seqn;
     int rc;
 
@@ -206,12 +207,24 @@ int mca_pml_ob1_send(void *buf,
 
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_comm->procs[dst].send_sequence, 1);
 
+    /**
+     * The immediate send will not have a request, so they are
+     * intracable from the point of view of any debugger attached to
+     * the parallel application.
+     */
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
         rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
                                       endpoint, comm);
         if (OPAL_LIKELY(0 <= rc)) {
             return OMPI_SUCCESS;
         }
+    }
+
+    if( NULL == sendreq ) {
+        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+        if (NULL == sendreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        mca_pml_ob1_sendreq = sendreq;
     }
 
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
