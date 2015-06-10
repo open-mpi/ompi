@@ -402,13 +402,13 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
     *tmp = '\0';
 
     *token = strdup (line);
+    if (NULL == *token) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     local_value = strdup (tmp + 1);
-
-    if (NULL == *token || NULL == local_value) {
-        if (local_value) {
-            free (local_value);
-        }
-
+    if (NULL == local_value) {
+        free(*token);
+        *token = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -439,6 +439,7 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
             exit_status = OPAL_ERR_OUT_OF_RESOURCE;
             break;
         }
+        local_value = tmp;
 
         strcat (local_value, line);
     }
