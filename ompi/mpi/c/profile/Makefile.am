@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -46,7 +46,7 @@ endif
 
 headers = defines.h
 
-nodist_libmpi_c_pmpi_la_SOURCES = \
+libmpi_c_pmpi_la_SOURCES = \
         pabort.c \
         padd_error_class.c \
         padd_error_code.c \
@@ -371,7 +371,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_wait.c
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
-nodist_libmpi_c_pmpi_la_SOURCES += \
+libmpi_c_pmpi_la_SOURCES += \
         pfile_c2f.c \
         pfile_call_errhandler.c \
         pfile_close.c \
@@ -432,25 +432,12 @@ nodist_libmpi_c_pmpi_la_SOURCES += \
         pregister_datarep.c
 endif
 
-#
-# Sym link in the sources from the real MPI directory
-#
-$(nodist_libmpi_c_pmpi_la_SOURCES):
-	$(OMPI_V_LN_S) if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '2-'` ; \
-		$(LN_S) $(top_srcdir)/ompi/mpi/c/$$pname $@ ; \
-	fi
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
-
-# These files were created by targets above
-
-MAINTAINERCLEANFILES = $(nodist_libmpi_c_pmpi_la_SOURCES)
 
 # Don't want these targets in here
 

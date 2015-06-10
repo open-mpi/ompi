@@ -1,0 +1,1 @@
+../get_library_version.c

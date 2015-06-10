@@ -1,0 +1,1 @@
+../file_get_amode.c
