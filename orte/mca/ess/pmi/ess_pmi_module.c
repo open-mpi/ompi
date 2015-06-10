@@ -67,7 +67,6 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
-#include "orte/mca/grpcomm/pmi/grpcomm_pmi.h"
 
 static int rte_init(void);
 static int rte_finalize(void);
@@ -278,7 +277,7 @@ static int rte_init(void)
             goto error;
         }
 
-        ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &k, &procs);
+        ranks = mca_common_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &k, &procs);
         free(pmapping);
 
         if (NULL == ranks) {

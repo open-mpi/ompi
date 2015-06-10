@@ -169,7 +169,7 @@ static int modex(orte_grpcomm_collective_t *coll)
             return ORTE_ERROR;
         }
 
-        local_ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
+        local_ranks = mca_common_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
         if (NULL == local_ranks) {
             opal_output(0, "%s could not get PMI_process_mapping",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

@@ -48,3 +48,9 @@ OPAL_DECLSPEC char* opal_errmgr_base_pmi_error(int pmi_err);
 
 bool mca_common_pmi_rank(int *rank);
 bool mca_common_pmi_size(int *size);
+
+
+#if WANT_PMI2_SUPPORT
+OPAL_DECLSPEC int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
+                                              int *node, int *nlrs);
+#endif
