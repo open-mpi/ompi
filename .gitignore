@@ -477,9 +477,6 @@ oshmem/include/oshmem/version.h
 
 oshmem/mca/sshmem/base/static-components.h
 
-oshmem/shmem/c/profile/p*.c
-oshmem/shmem/c/profile/*.c
-
 oshmem/shmem/fortran/libshmem_fortran.la
 oshmem/shmem/fortran/profile/pshmem_*_f.c
 oshmem/shmem/fortran/profile/pshpdeallc_f.c

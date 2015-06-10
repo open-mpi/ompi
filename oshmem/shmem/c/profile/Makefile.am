@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,8 +28,7 @@ endif
 
 headers = defines.h
 
-
-OSHMEM_API_SOURCES = \
+liboshmem_c_pshmem_la_SOURCES = \
 	pshmem_init.c \
 	pshmem_finalize.c \
 	pshmem_free.c \
@@ -69,28 +68,12 @@ OSHMEM_API_SOURCES = \
 	pshmem_set_lock.c \
 	pshmem_test_lock.c
 
-nodist_liboshmem_c_pshmem_la_SOURCES = \
-	$(OSHMEM_API_SOURCES)
-
-#
-# Sym link in the sources from the real OSHMEM directory
-#
-$(nodist_liboshmem_c_pshmem_la_SOURCES):
-	$(OMPI_V_LN_S) if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '2-'` ; \
-		$(LN_S) $(top_srcdir)/oshmem/shmem/c/$$pname $@ ; \
-	fi
-
 if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
 oshmemdir = $(oshmemincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
 endif
-
-# These files were created by targets above
-
-MAINTAINERCLEANFILES = $(nodist_liboshmem_c_pshmem_la_SOURCES)
 
 # Don't want these targets in here
 
