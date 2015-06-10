@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,6 +271,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     total_bytes = (size_t) long_total_bytes;
     
     if ( 0 == total_bytes ) {
+        free(aggregator_list);
 	return OMPI_SUCCESS;
     }
     
@@ -1011,6 +1014,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     
     if ( NULL == srt_off ){
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
+        free(tmp_len);
 	goto exit;
     }
     
@@ -1018,6 +1022,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     
     if ( NULL == srt_len ) {
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
+        free(tmp_len);
+        free(srt_off);
 	goto exit;
     }
     
@@ -1031,9 +1037,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
             others_req[i].lens[k] = tmp_len[i];
         }
     
-    if ( NULL != tmp_len ){
-	free(tmp_len); 
-    }
+    free(tmp_len); 
     
     *hole = 0;
     if (off != srt_off[0]){
@@ -1054,12 +1058,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     }
     
     
-    if ( NULL != srt_off ){
-	free(srt_off);
-    }
-    if ( NULL != srt_len ){
-	free(srt_len);
-    }
+    free(srt_off);
+    free(srt_len);
     
     if (nprocs_recv){
 	if (*hole){
