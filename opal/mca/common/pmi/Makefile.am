@@ -40,5 +40,8 @@ endif
 lib_LTLIBRARIES = $(component_install)
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_common_pmi_la_SOURCES = common_pmi.h common_pmi.c
+if WANT_PMI2_SUPPORT
+libmca_common_pmi_la_SOURCES += pmi2_pmap_parser.c
+endif
 libmca_common_pmi_la_LDFLAGS = $(common_pmi_LDFLAGS) -version-info $(libmca_opal_common_pmi_so_version)
 libmca_common_pmi_la_LIBADD = $(common_pmi_LIBS)
