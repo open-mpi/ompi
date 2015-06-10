@@ -149,6 +149,7 @@ mca_pml_cm_recv(void *addr,
     mca_mtl_request_t *req_mtl =
             alloca(sizeof(mca_mtl_request_t) + ompi_mtl->mtl_request_size);
 
+    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
     req_mtl->ompi_req = &req.req_ompi;
     req_mtl->completion_callback = mca_pml_cm_recv_fast_completion;
 
@@ -192,6 +193,7 @@ mca_pml_cm_recv(void *addr,
                               &convertor,
                               req_mtl));
     if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) {
+	OBJ_DESTRUCT(&convertor);
         return ret;
     }
 
@@ -201,7 +203,7 @@ mca_pml_cm_recv(void *addr,
         *status = req.req_ompi.req_status;
     }
     ret = req.req_ompi.req_status.MPI_ERROR;
-
+    OBJ_DESTRUCT(&convertor);
     return ret;
 }
 
@@ -340,7 +342,7 @@ mca_pml_cm_send(void *buf,
         ompi_request_free( (ompi_request_t**)&sendreq );
     } else { 
         opal_convertor_t convertor;
-
+	OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 	if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) {
 		
@@ -368,6 +370,7 @@ mca_pml_cm_send(void *buf,
                                  tag,  
                                  &convertor,
                                  sendmode));
+	OBJ_DESTRUCT(&convertor);
     }
     
     return ret;
