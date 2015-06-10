@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,7 +169,7 @@ mca_pml_cm_recv(void *addr,
     }
 
     opal_convertor_copy_and_prepare_for_recv(
-	ompi_proc->super.proc_convertor,
+	ompi_proc->proc_convertor,
 		&(datatype->super),
 		count,
 		addr,
