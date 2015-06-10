@@ -67,6 +67,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
+#include "orte/mca/grpcomm/pmi/grpcomm_pmi.h"
 
 static int rte_init(void);
 static int rte_finalize(void);
@@ -270,39 +271,15 @@ static int rte_init(void)
     {
         /* get our local proc info to find our local rank */
         char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found, sid, nodes, k;
-        orte_vpid_t n;
-        char *p;
+        int found, k;
         ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
         if (!found || PMI_SUCCESS != ret) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
             error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
             goto error;
         }
 
-        i = 0; n = 0; procs = 0;
-        if (NULL != (p = strstr(pmapping, "(vector"))) {
-            while (NULL != (p = strstr(p+1, ",("))) {
-                if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &procs)) {
-                    for (k = 0; k < nodes; k++) {
-                        if ((ORTE_PROC_MY_NAME->vpid >= n) &&
-                            (ORTE_PROC_MY_NAME->vpid < (n + procs))) {
-                            break;
-                        }
-                        n += procs;
-                    }
-                } else {
-                    procs = 0;
-                }
-            }
-        }
+        ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &k, &procs);
         free(pmapping);
-
-        if (0 < procs) {
-            ranks = (int*)malloc(procs * sizeof(int));
-            for (i=0; i < procs; i++) {
-                ranks[i] = n + i;
-            }
-        }
 
         if (NULL == ranks) {
             error = "could not get PMI_process_mapping";
