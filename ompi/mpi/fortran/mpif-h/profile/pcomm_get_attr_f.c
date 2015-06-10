@@ -1,0 +1,1 @@
+../comm_get_attr_f.c
