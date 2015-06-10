@@ -872,23 +872,21 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [], [enable_osx_builtin_atomics="yes"])
 
     opal_cv_asm_builtin="BUILTIN_NO"
-    if test "$enable_osx_builtin_atomics" = "yes" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_builtin_atomics" = "yes" ; then
+       AC_MSG_CHECKING([for builtin atomic support])
+       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"
+                                 AC_MSG_RESULT([yes])],
+                                [AC_MSG_RESULT([no])])
+       AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
+                 [Whether C compiler supports GCC style inline assembly])
+       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_osx_builtin_atomics" = "yes" ; then
        AC_MSG_CHECKING([for OSX atomic support])
        AC_CHECK_HEADER([libkern/OSAtomic.h],
                        [opal_cv_asm_builtin="BUILTIN_OSX"
                         AC_MSG_RESULT([yes])],
                        [AC_MSG_RESULT([no])])
-    fi
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_builtin_atomics" = "yes" ; then
-       AC_MSG_CHECKING([for builtin atomic support])
-       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"
-                                 AC_MSG_RESULT([yes])],
-                                [AC_MSG_RESULT([no])])AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-         [Whether C compiler supports GCC style inline assembly])
-       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
-    elif test "$enable_osx_builtin_atomics" = "yes" ; then
-	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
-	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
     else
        opal_cv_asm_builtin="BUILTIN_NO"
     fi
