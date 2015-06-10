@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -45,7 +45,7 @@ endif
 
 headers = defines.h
 
-nodist_libmpi_pmpit_la_SOURCES = \
+libmpi_pmpit_la_SOURCES = \
 	pcategory_changed.c \
 	pcategory_get_categories.c \
 	pcategory_get_cvars.c \
@@ -78,25 +78,12 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	ppvar_stop.c \
 	ppvar_write.c
 
-#
-# Sym link in the sources from the real MPI directory
-#
-$(nodist_libmpi_pmpit_la_SOURCES):
-	$(OMPI_V_LN_S) if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '2-'` ; \
-		$(LN_S) $(top_srcdir)/ompi/mpi/tool/$$pname $@ ; \
-	fi
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
-
-# These files were created by targets above
-
-MAINTAINERCLEANFILES = $(nodist_libmpi_pmpit_la_SOURCES)
 
 # Don't want these targets in here
 
