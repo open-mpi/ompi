@@ -24,6 +24,7 @@
 
 #include "opal/util/argv.h"
 
+#include "orte/util/attr.h"
 #include "orte/mca/notifier/base/base.h"
 
 
