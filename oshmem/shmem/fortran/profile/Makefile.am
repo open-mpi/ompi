@@ -26,7 +26,7 @@ headers = prototypes_pshmem.h \
 	pbindings.h \
 	defines.h
 
-nodist_liboshmem_fortran_pshmem_la_SOURCES = \
+liboshmem_fortran_pshmem_la_SOURCES = \
 	pstart_pes_f.c \
 	pnum_pes_f.c \
 	pmy_pe_f.c \
@@ -118,25 +118,12 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_quiet_f.c \
 	pshmem_fence_f.c
 
-#
-# Sym link in the sources from the real OSHMEM directory
-#
-$(nodist_liboshmem_fortran_pshmem_la_SOURCES):
-	$(OMPI_V_LN_S) if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '2-'` ; \
-		$(LN_S) $(top_srcdir)/oshmem/shmem/fortran/$$pname $@ ; \
-	fi
-
 if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
 oshmemdir = $(oshmemincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
 endif
-
-# These files were created by targets above
-
-MAINTAINERCLEANFILES = $(nodist_liboshmem_fortran_pshmem_la_SOURCES)
 
 # Don't want these targets in here
 

@@ -1,0 +1,1 @@
+../shmem_min_to_all_f.c

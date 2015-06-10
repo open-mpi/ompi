@@ -477,15 +477,6 @@ oshmem/include/oshmem/version.h
 
 oshmem/mca/sshmem/base/static-components.h
 
-oshmem/shmem/fortran/libshmem_fortran.la
-oshmem/shmem/fortran/profile/pshmem_*_f.c
-oshmem/shmem/fortran/profile/pshpdeallc_f.c
-oshmem/shmem/fortran/profile/pshpclmove_f.c
-oshmem/shmem/fortran/profile/pmy_pe_f.c
-oshmem/shmem/fortran/profile/pshpalloc_f.c
-oshmem/shmem/fortran/profile/pnum_pes_f.c
-oshmem/shmem/fortran/profile/pstart_pes_f.c
-
 oshmem/shmem/java/java/shmem.jar
 oshmem/shmem/java/java/doc
 oshmem/shmem/java/java/shmem_Constant.h
