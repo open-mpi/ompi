@@ -148,7 +148,6 @@ ompi/include/mpif-io-constants.h
 ompi/include/mpif-constants.h
 ompi/include/mpif-io-handles.h
 ompi/include/mpif-sizeof.h
-ompi/include/mpi_portable_platform.h
 ompi/include/ompi/version.h
 ompi/include/ompi/frameworks.h
 
