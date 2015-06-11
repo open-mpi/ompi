@@ -40,6 +40,7 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
 
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
     if (convertor->pDesc && 
+	!(convertor->flags & CONVERTOR_COMPLETED) &&
 	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
 						  convertor->count)) {
 	    *freeAfter = false;
