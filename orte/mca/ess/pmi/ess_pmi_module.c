@@ -266,45 +266,10 @@ static int rte_init(void)
         goto error;
     }
 
-#if WANT_PMI2_SUPPORT
-    {
-        /* get our local proc info to find our local rank */
-        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found, k;
-        ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-        if (!found || PMI_SUCCESS != ret) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-            error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
-            goto error;
-        }
-
-        ranks = mca_common_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &k, &procs);
-        free(pmapping);
-
-        if (NULL == ranks) {
-            error = "could not get PMI_process_mapping";
-            goto error;
-        }
-    }
-#else
-    /* get our local proc info to find our local rank */
-    if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&procs))) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_clique_size");
-        error = "could not get PMI clique size";
+    if (NULL == (ranks = mca_common_pmi_local_ranks(ORTE_PROC_MY_NAME->vpid, &procs))) {
+        error = "could not get local ranks";
         goto error;
     }
-    /* now get the specific ranks */
-    ranks = (int*)calloc(procs, sizeof(int));
-    if (NULL == ranks) {
-        error = "could not get memory for local ranks";
-        ret = ORTE_ERR_OUT_OF_RESOURCE;
-        goto error;
-    }
-    if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, procs))) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_clique_ranks");
-        error = "could not get clique ranks";
-        goto error;
-    }
-#endif
     /* store the number of local peers - remember, we want the number
      * of peers that share the node WITH ME, so we have to subtract
      * ourselves from that number
