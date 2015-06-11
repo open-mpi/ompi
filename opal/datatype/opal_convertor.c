@@ -495,6 +495,8 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
          * completed. With this flag set the pack and unpack functions  \
          * will not do anything.                                        \
          */                                                             \
+        convertor->pDesc      = (opal_datatype_t*)datatype;             \
+        convertor->count      = count;                                  \
         if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
             convertor->flags |= OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;  \
             convertor->local_size = convertor->remote_size = 0;         \
@@ -503,13 +505,11 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         /* Compute the local in advance */                              \
         convertor->local_size = count * datatype->size;                 \
         convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
-        convertor->count      = count;                                  \
                                                                         \
         /* Grab the datatype part of the flags */                       \
         convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
         convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
         convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
-        convertor->pDesc      = (opal_datatype_t*)datatype;             \
         convertor->bConverted = 0;                                      \
         /* By default consider the optimized description */             \
         convertor->use_desc = &(datatype->opt_desc);                    \
