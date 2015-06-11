@@ -156,51 +156,12 @@ static int modex(orte_grpcomm_collective_t *coll)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* discover the local ranks */
-#if WANT_PMI2_SUPPORT
-    {
-        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found;
-        int my_node;
-
-        rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-        if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-            opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            return ORTE_ERROR;
-        }
-
-        local_ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
-        if (NULL == local_ranks) {
-            opal_output(0, "%s could not get PMI_process_mapping",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            return ORTE_ERROR;
-        }
-
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                "%s: pmapping: %s my_node=%d lr_count=%d\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmapping, my_node, local_rank_count));
-       
-        free(pmapping);
+    if (NULL == (local_ranks = mca_common_pmi_local_ranks(ORTE_PROC_MY_NAME->vpid,
+                                                          &local_rank_count))) {
+        opal_output(0, "%s could not get local ranks",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return ORTE_ERROR;
     }
-#else
-    rc = PMI_Get_clique_size (&local_rank_count);
-    if (PMI_SUCCESS != rc) {
-	ORTE_ERROR_LOG(ORTE_ERROR);
-	return ORTE_ERROR;
-    }
-
-    local_ranks = calloc (local_rank_count, sizeof (int));
-    if (NULL == local_ranks) {
-	ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    rc = PMI_Get_clique_ranks (local_ranks, local_rank_count);
-    if (PMI_SUCCESS != rc) {
-	ORTE_ERROR_LOG(ORTE_ERROR);
-	return ORTE_ERROR;
-    }
-#endif
 
 
     /* our RTE data was constructed and pushed in the ESS pmi component */
