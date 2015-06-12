@@ -208,6 +208,14 @@ extern int mca_pml_ob1_start( size_t count,
 
 extern int mca_pml_ob1_ft_event( int state );
 
+/**
+ * We will use these requests to hold on a traditionally allocated
+ * requests in order to allow the parallel debugger full access to the
+ * message queues (instead of allocating the requests on the stack).
+ */
+extern struct mca_pml_ob1_recv_request_t *mca_pml_ob1_recvreq;
+extern struct mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq;
+
 END_C_DECLS
 
 struct mca_pml_ob1_pckt_pending_t {
