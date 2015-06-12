@@ -94,15 +94,21 @@ int mca_pml_ob1_recv(void *addr,
                      struct ompi_communicator_t *comm,
                      ompi_status_public_t * status)
 {
-    mca_pml_ob1_recv_request_t *recvreq = mca_pml_ob1_recvreq;
+    mca_pml_ob1_recv_request_t *recvreq = NULL;
     int rc;
 
-    if( NULL == recvreq ) {
-        MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
-        if (NULL == recvreq)
-            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        mca_pml_ob1_recvreq = recvreq;
-    }
+#if !OPAL_ENABLE_MULTI_THREADS
+    recvreq = mca_pml_ob1_recvreq;
+    if( OPAL_UNLIKELY(NULL == recvreq) )
+#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+        {
+            MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
+            if (NULL == recvreq)
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+#if !OPAL_ENABLE_MULTI_THREADS
+            mca_pml_ob1_recvreq = recvreq;
+#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+        }
     OBJ_CONSTRUCT(recvreq, mca_pml_ob1_recv_request_t);
 
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,

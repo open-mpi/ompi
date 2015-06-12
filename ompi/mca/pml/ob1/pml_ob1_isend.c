@@ -183,7 +183,7 @@ int mca_pml_ob1_send(void *buf,
     ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    mca_pml_ob1_send_request_t *sendreq = mca_pml_ob1_sendreq;
+    mca_pml_ob1_send_request_t *sendreq = NULL;
     int16_t seqn;
     int rc;
 
@@ -220,13 +220,18 @@ int mca_pml_ob1_send(void *buf,
         }
     }
 
-    if( NULL == sendreq ) {
-        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-        if (NULL == sendreq)
-            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        mca_pml_ob1_sendreq = sendreq;
-    }
-
+#if !OPAL_ENABLE_MULTI_THREADS
+    sendreq = mca_pml_ob1_sendreq;
+    if( OPAL_UNLIKELY(NULL == sendreq) )
+#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+        {
+            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+            if (NULL == sendreq)
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+#if !OPAL_ENABLE_MULTI_THREADS
+            mca_pml_ob1_sendreq = sendreq;
+#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+        }
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
