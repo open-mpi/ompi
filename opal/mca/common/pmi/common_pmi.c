@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/util/show_help.h"
+#include "opal/util/error.h"
 #include "common_pmi.h"
 
 static int mca_common_pmi_init_count = 0;
@@ -193,7 +194,7 @@ int *mca_common_pmi_local_ranks(int my_rank, int *local_rank_count) {
         return NULL;
     }
 
-    rc = PMI_Get_clique_ranks (local_ranks, local_rank_count);
+    rc = PMI_Get_clique_ranks (local_ranks, *local_rank_count);
     if (PMI_SUCCESS != rc) {
         OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
         return NULL;
