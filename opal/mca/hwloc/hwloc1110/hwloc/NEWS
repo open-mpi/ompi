@@ -71,6 +71,8 @@ Version 1.11.0
     - Do not drop instruction caches and I/O devices from the output anymore.
   + Fix lstopo path in hwloc-gather-topology after install.
 * Misc
+  + Fix hwloc/cudart.h for machines with multiple PCI domains,
+    thanks to Imre Kerr for reporting the problem.
   + Fix PCI Bridge-specific depth attribute.
   + Fix hwloc_bitmap_intersect() for two infinite bitmaps.
   + Improve the performance of object insertion by cpuset for large

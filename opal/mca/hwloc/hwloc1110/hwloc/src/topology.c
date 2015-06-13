@@ -2599,7 +2599,7 @@ next_noncpubackend:
       && strcmp(topology->backends->component->name, "xml")) {
     char *value;
     /* add a hwlocVersion */
-    hwloc_obj_add_info(topology->levels[0][0], "hwlocVersion", VERSION);
+    hwloc_obj_add_info(topology->levels[0][0], "hwlocVersion", HWLOC_VERSION);
     /* add a ProcessName */
     value = hwloc_progname(topology);
     if (value) {

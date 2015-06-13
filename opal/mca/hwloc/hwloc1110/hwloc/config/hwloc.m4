@@ -9,7 +9,7 @@ dnl Copyright © 2004-2012 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright © 2004-2008 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
-dnl Copyright © 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright © 2006-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright © 2012  Blue Brain Project, BBP/EPFL. All rights reserved.
 dnl Copyright © 2012       Oracle and/or its affiliates.  All rights reserved.
 dnl See COPYING in top-level directory.
@@ -80,11 +80,11 @@ EOF])
 
     # Get the version of hwloc that we are installing
     AC_MSG_CHECKING([for hwloc version])
-    HWLOC_VERSION="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION`"
+    HWLOC_VERSION="`$HWLOC_top_srcdir/config/hwloc_get_version.sh $HWLOC_top_srcdir/VERSION`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
     fi
-    HWLOC_RELEASE_DATE="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --release-date`"
+    HWLOC_RELEASE_DATE="`$HWLOC_top_srcdir/config/hwloc_get_version.sh $HWLOC_top_srcdir/VERSION --release-date`"
     AC_SUBST(HWLOC_VERSION)
     AC_DEFINE_UNQUOTED([HWLOC_VERSION], ["$HWLOC_VERSION"],
                        [The library version, always available, even in embedded mode, contrary to VERSION])
