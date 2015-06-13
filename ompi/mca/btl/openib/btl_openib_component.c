@@ -163,15 +163,19 @@ mca_btl_openib_component_t mca_btl_openib_component = {
 /* This is a memory allocator hook. The purpose of this is to make
  * every malloc aligned since this speeds up IB HCA work.
  * There two basic cases here:
- * 1. Memory manager for Open MPI is enabled. Then memalign below will be
- * overridden by __memalign_hook which is set to opal_memory_linux_memalign_hook.
- * Thus, _malloc_hook is going to use opal_memory_linux_memalign_hook.
+ *
+ * 1. Memory manager for Open MPI is enabled. Then memalign below will
+ * be overridden by __memalign_hook which is set to
+ * opal_memory_linux_memalign_hook.  Thus, _malloc_hook is going to
+ * use opal_memory_linux_memalign_hook.
+ *
  * 2. No memory manager support. The memalign below is just regular glibc
  * memalign which will be called through __malloc_hook instead of malloc.
  */
 static void *btl_openib_malloc_hook(size_t sz, const void* caller)
 {
-    if (sz < mca_btl_openib_component.memalign_threshold) {
+    if (sz < mca_btl_openib_component.memalign_threshold &&
+        malloc_hook_set) {
         return mca_btl_openib_component.previous_malloc_hook(sz, caller);
     } else {
         return memalign(mca_btl_openib_component.use_memalign, sz);
@@ -290,6 +294,7 @@ static int btl_openib_component_close(void)
        then _close() (which won't set the hook) */
     if (malloc_hook_set) {
         __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
+        malloc_hook_set = false;
     }
 #endif
 
@@ -2462,12 +2467,14 @@ btl_openib_component_init(int *num_btl_modules,
 
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     /* If we got this far, then setup the memory alloc hook (because
-       we're most likely going to be using this component). The hook is to be set up
-       as early as possible in this function since we want most of the allocated resources
-       be aligned.*/
-    if (mca_btl_openib_component.use_memalign > 0) {
+       we're most likely going to be using this component). The hook
+       is to be set up as early as possible in this function since we
+       want most of the allocated resources be aligned.*/
+    if (mca_btl_openib_component.use_memalign > 0 &&
+        (opal_mem_hooks_support_level() &
+            (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT)) != 0) {
         mca_btl_openib_component.previous_malloc_hook = __malloc_hook;
-        __malloc_hook = btl_openib_malloc_hook; 
+        __malloc_hook = btl_openib_malloc_hook;
         malloc_hook_set = true;
     }
 #endif
@@ -2904,6 +2911,7 @@ btl_openib_component_init(int *num_btl_modules,
     /*Unset malloc hook since the component won't start*/
     if (malloc_hook_set) {
         __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
+        malloc_hook_set = false;
     }
 #endif
     return NULL;
