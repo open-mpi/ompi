@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -709,7 +709,8 @@ int btl_openib_register_mca_params(void)
                   32, &mca_btl_openib_component.use_memalign,
                   REGINT_GE_ZERO));
 
-    mca_btl_openib_component.memalign_threshold = mca_btl_openib_component.eager_limit;
+    mca_btl_openib_component.memalign_threshold =
+        mca_btl_openib_module.super.btl_eager_limit;
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "memalign_threshold",
                                           "Allocating memory more than btl_openib_memalign_threshhold"
