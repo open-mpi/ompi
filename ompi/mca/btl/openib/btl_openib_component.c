@@ -2465,7 +2465,9 @@ btl_openib_component_init(int *num_btl_modules,
        we're most likely going to be using this component). The hook is to be set up
        as early as possible in this function since we want most of the allocated resources
        be aligned.*/
-    if (mca_btl_openib_component.use_memalign > 0) {
+    if (mca_btl_openib_component.use_memalign > 0 &&
+        (opal_mem_hooks_support_level() &
+            (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT)) != 0) {
         mca_btl_openib_component.previous_malloc_hook = __malloc_hook;
         __malloc_hook = btl_openib_malloc_hook; 
         malloc_hook_set = true;
