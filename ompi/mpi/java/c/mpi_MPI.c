@@ -80,9 +80,9 @@
 #include "mpi_MPI.h"
 #include "mpiJava.h"
 
-ompi_java_globals_t ompi_java;
+ompi_java_globals_t ompi_java = {0};
 int ompi_mpi_java_eager = 65536;
-opal_free_list_t ompi_java_buffers;
+opal_free_list_t ompi_java_buffers = {0};
 static void *libmpi = NULL;
 
 static void bufferConstructor(ompi_java_buffer_t *item)
