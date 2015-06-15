@@ -394,7 +394,9 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
 static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 {
     mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
+#endif
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
     mca_btl_base_descriptor_t *ctl;
     mca_pml_ob1_rdma_hdr_t *hdr;
