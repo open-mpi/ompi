@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -49,7 +49,11 @@ endif
 headers = \
     defines.h
 
-linked_files = \
+#
+# The library itself
+#
+libmpi_mpifh_pmpi_la_SOURCES = \
+        psizeof_f.f90 \
         pabort_f.c \
         padd_error_class_f.c \
         padd_error_code_f.c \
@@ -356,7 +360,7 @@ linked_files = \
 
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
-linked_files += \
+libmpi_mpifh_pmpi_la_SOURCES += \
         pfile_call_errhandler_f.c \
         pfile_close_f.c \
         pfile_create_errhandler_f.c \
@@ -415,15 +419,6 @@ linked_files += \
         pregister_datarep_f.c
 endif
 
-#
-# Sym link in the sources from the real MPI directory
-#
-$(linked_files):
-	$(OMPI_V_LN_S) if test ! -r $@ ; then \
-	    pname=`echo $@ | cut -b '2-'` ; \
-	    $(LN_S) $(top_srcdir)/ompi/mpi/fortran/mpif-h/$$pname $@ ; \
-	fi
-
 # psizeof_f.f90 is generated based on some results from configure tests.
 CLEANFILES += psizeof_f.f90
 sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
@@ -437,23 +432,12 @@ psizeof_f.f90:
 	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
-#
-# The library itself
-#
-nodist_libmpi_mpifh_pmpi_la_SOURCES = \
-        psizeof_f.f90 \
-        $(linked_files)
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
-
-# These files were created by targets above
-
-MAINTAINERCLEANFILES = $(nodist_libmpi_mpifh_pmpi_la_SOURCES)
 
 # Don't want these targets in here
 

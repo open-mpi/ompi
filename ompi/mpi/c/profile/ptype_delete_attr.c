@@ -1,0 +1,1 @@
+../type_delete_attr.c

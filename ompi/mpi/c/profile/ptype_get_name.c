@@ -1,0 +1,1 @@
+../type_get_name.c

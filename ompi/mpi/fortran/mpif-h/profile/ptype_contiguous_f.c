@@ -1,0 +1,1 @@
+../type_contiguous_f.c

@@ -1,0 +1,1 @@
+../type_get_attr_f.c

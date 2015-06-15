@@ -1,0 +1,1 @@
+../shmem_xor_to_all_f.c

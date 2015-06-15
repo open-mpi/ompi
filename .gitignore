@@ -43,7 +43,6 @@
 Makefile
 Makefile.in
 static-components.h
-*\\#
 config.cache
 aclocal.m4
 autom4te.cache
@@ -148,17 +147,10 @@ ompi/include/mpif-io-constants.h
 ompi/include/mpif-constants.h
 ompi/include/mpif-io-handles.h
 ompi/include/mpif-sizeof.h
-ompi/include/mpi_portable_platform.h
 ompi/include/ompi/version.h
 ompi/include/ompi/frameworks.h
 
-ompi/mca/coll/basic/coll-basic-version.h*
-ompi/mca/coll/demo/config
-ompi/mca/coll/demo/coll_demo_config.h*
-ompi/mca/coll/demo/coll-demo-version.h*
 ompi/mca/coll/ml/coll_ml_lex.c
-ompi/mca/coll/self/coll-self-version.h*
-ompi/mca/coll/sm/coll-sm-version.h*
 
 ompi/mca/crcp/ompi_crcp.7
 
@@ -188,14 +180,11 @@ ompi/mca/rte/orte/mpirun.1
 
 ompi/mca/sharedfp/addproc/mca_sharedfp_addproc_control
 
-ompi/mpi/c/profile/p*.c
-
 ompi/mpi/fortran/configure-fortran-output.h
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
-ompi/mpi/fortran/mpif-h/profile/p*.c
 ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
 
 ompi/mpi/fortran/use-mpi-f08/constants.h
@@ -220,8 +209,6 @@ ompi/mpi/java/java/doc
 ompi/mpi/man/man3/MPI*.3
 ompi/mpi/man/man3/OpenMPI.3
 ompi/mpi/man/man3/.dir-stamp
-
-ompi/mpi/tool/profile/*.c
 
 ompi/mpiext/affinity/c/OMPI_Affinity_str.3
 ompi/mpiext/affinity/c/example
@@ -477,23 +464,10 @@ orte/util/hostfile/hostfile_lex.c
 orte/util/hostfile/orte_hosts.7
 
 oshmem/include/shmem.h
-oshmem/include/shmem_portable_platform.h
 oshmem/include/oshmem/frameworks.h
 oshmem/include/oshmem/version.h
 
 oshmem/mca/sshmem/base/static-components.h
-
-oshmem/shmem/c/profile/p*.c
-oshmem/shmem/c/profile/*.c
-
-oshmem/shmem/fortran/libshmem_fortran.la
-oshmem/shmem/fortran/profile/pshmem_*_f.c
-oshmem/shmem/fortran/profile/pshpdeallc_f.c
-oshmem/shmem/fortran/profile/pshpclmove_f.c
-oshmem/shmem/fortran/profile/pmy_pe_f.c
-oshmem/shmem/fortran/profile/pshpalloc_f.c
-oshmem/shmem/fortran/profile/pnum_pes_f.c
-oshmem/shmem/fortran/profile/pstart_pes_f.c
 
 oshmem/shmem/java/java/shmem.jar
 oshmem/shmem/java/java/doc
