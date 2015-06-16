@@ -117,6 +117,66 @@ do {                                                                    \
 #endif
 
 #if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+#define MCA_PML_CM_HVY_SEND_REQUEST_INIT_COMMON(req_send,               \
+                                            ompi_proc,                  \
+                                            comm,                       \
+                                            tag,                        \
+                                            datatype,                   \
+                                            sendmode,                   \
+                                            buf,                        \
+                                            count)                      \
+{                                                                       \
+    OBJ_RETAIN(comm);                                                   \
+    OBJ_RETAIN(datatype);                                               \
+    (req_send)->req_base.req_comm = comm;                               \
+    (req_send)->req_base.req_datatype = datatype;                       \
+    opal_convertor_copy_and_prepare_for_send(                           \
+                                             ompi_proc->super.proc_convertor, \
+                                             &(datatype->super),        \
+                                             count,                     \
+                                             buf,                       \
+                                             0,                         \
+                                             &(req_send)->req_base.req_convertor ); \
+    (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
+    (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
+        comm->c_my_rank;                                                \
+    (req_send)->req_base.req_ompi.req_status.MPI_TAG = tag;             \
+    (req_send)->req_base.req_ompi.req_status._ucount = count;           \
+    (req_send)->req_send_mode = sendmode;                               \
+    (req_send)->req_base.req_free_called = false;                       \
+}
+#else
+#define MCA_PML_CM_HVY_SEND_REQUEST_INIT_COMMON(req_send,               \
+                                            ompi_proc,                  \
+                                            comm,                       \
+                                            tag,                        \
+                                            datatype,                   \
+                                            sendmode,                   \
+                                            buf,                        \
+                                            count)                      \
+{                                                                       \
+    OBJ_RETAIN(comm);                                                   \
+    OBJ_RETAIN(datatype);                                               \
+    (req_send)->req_base.req_comm = comm;                               \
+    (req_send)->req_base.req_datatype = datatype;                       \
+    opal_convertor_copy_and_prepare_for_send(                           \
+        ompi_mpi_local_convertor,                                       \
+        &(datatype->super),                                             \
+        count,                                                          \
+        buf,                                                            \
+        0,                                                              \
+        &(req_send)->req_base.req_convertor );                          \
+    (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
+    (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
+        comm->c_my_rank;                                                \
+    (req_send)->req_base.req_ompi.req_status.MPI_TAG = tag;             \
+    (req_send)->req_base.req_ompi.req_status._ucount = count;           \
+    (req_send)->req_send_mode = sendmode;                               \
+    (req_send)->req_base.req_free_called = false;                       \
+}
+#endif
+
+#if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 #define MCA_PML_CM_SEND_REQUEST_INIT_COMMON(req_send,                   \
                                             ompi_proc,                  \
                                             comm,                       \
@@ -210,7 +270,7 @@ do {                                                                    \
         sendreq->req_peer = dst;                                        \
         sendreq->req_addr = buf;                                        \
         sendreq->req_count = count;                                     \
-        MCA_PML_CM_SEND_REQUEST_INIT_COMMON( (&sendreq->req_send),      \
+        MCA_PML_CM_HVY_SEND_REQUEST_INIT_COMMON( (&sendreq->req_send),  \
                                              ompi_proc,                 \
                                              comm,                      \
                                              tag,                       \
