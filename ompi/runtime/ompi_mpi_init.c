@@ -436,7 +436,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
-    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing) {
         gettimeofday(&ompistart, NULL);
     }
 
