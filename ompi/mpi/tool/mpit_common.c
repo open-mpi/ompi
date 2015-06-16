@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -80,6 +80,11 @@ int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype
 
 int ompit_opal_to_mpit_error (int rc)
 {
+    if (rc >= 0) {
+        /* Already an MPI error (always >= 0) */
+        return rc;
+    }
+
     switch (rc) {
     case OPAL_SUCCESS:
         return MPI_SUCCESS;
