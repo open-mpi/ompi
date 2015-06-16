@@ -70,79 +70,47 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     # workaround, just disqualify ourselves if the OPAL version seems too old.
     # In the longer term we should be doing something else, like versioning
     # OPAL and OPAL separately.
-    btl_usnic_happy=yes
+    opal_btl_usnic_happy=yes
     AS_IF([test "$OPAL_MAJOR_VERSION" -eq "1" && \
            test "$OPAL_MINOR_VERSION" -lt "7"],
           [AC_MSG_NOTICE([OPAL version appears to be too old, disabling the usnic BTL])
-           btl_usnic_happy=no])
+           opal_btl_usnic_happy=no])
 
     # We only want to build on 64 bit Linux.
-    AS_IF([test "$btl_usnic_happy" = "yes"],
+    AS_IF([test "$opal_btl_usnic_happy" = "yes"],
           [AC_CHECK_SIZEOF([void *])
            AC_MSG_CHECKING([for 64 bit Linux])
            case $host_os in
                *linux*)
                    AS_IF([test $ac_cv_sizeof_void_p -eq 8],
                          [],
-                         [btl_usnic_happy=no])
+                         [opal_btl_usnic_happy=no])
                    ;;
                *)
-                   btl_usnic_happy=no
+                   opal_btl_usnic_happy=no
                    ;;
            esac
-           AC_MSG_RESULT([$btl_usnic_happy])
+           AC_MSG_RESULT([$opal_btl_usnic_happy])
           ])
 
-    # The usnic BTL requires libfabric support.  libfabric should
-    # already have been configured, so just see if it was happy.
-    AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([if libfabric support is available])
-           AS_IF([test $opal_common_libfabric_happy -eq 1],
-                 [AC_MSG_RESULT([yes])],
-                 [AC_MSG_RESULT([no])
-                  btl_usnic_happy=no])
-          ])
+    # The usnic BTL requires libfabric support.
+    AS_IF([test "$opal_btl_usnic_happy" = "yes"],
+          [OPAL_CHECK_LIBFABRIC([opal_btl_usnic],
+              [opal_btl_usnic_happy=yes],
+              [opal_btl_usnic_happy=no])])
 
-    # Are we building embedded or external libfabric?  (this is really
-    # just for output / user info purposes)
-    AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_MSG_CHECKING([if building embedded or external libfabric])
-           AS_IF([test $opal_common_libfabric_build_embedded -eq 1],
-                 [AC_MSG_RESULT([embedded])],
-                 [AC_MSG_RESULT([external])])
-          ])
-
-    AH_TEMPLATE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
-                [Path by which to include fi_ext_usnic.h])
-
-    # If we're building the embedded libfabric, see if
-    # it contains usnic support.
-    AS_IF([test "$btl_usnic_happy" = "yes" && \
-           test $opal_common_libfabric_build_embedded -eq 1],
-          [AC_MSG_CHECKING([if embedded libfabric has usnic support])
-           AS_IF([test $opal_common_libfabric_usnic_happy -eq 1],
-                 [AC_MSG_RESULT([yes])
-                  AC_DEFINE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
-                            ["fi_ext_usnic.h"])],
-                 [AC_MSG_RESULT([no])
-                  btl_usnic_happy=no])
-          ])
-
-
-    # If we're building external libfabric, see if it has fi_ext_usnic.h
-    AS_IF([test "$btl_usnic_happy" = "yes" && \
-           test $opal_common_libfabric_build_embedded -eq 0],
+    # Make sure we can find the libfabric usnic extensions header
+    AS_IF([test "$opal_btl_usnic_happy" = "yes" ],
           [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$opal_btl_usnic_CPPFLAGS $CPPFLAGS"
            AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
-                            [AC_DEFINE([OPAL_BTL_USNIC_FI_EXT_USNIC_H],
-                                       ["rdma/fi_ext_usnic.h"])],
-                            [btl_usnic_happy=no])
+                            [],
+                            [opal_btl_usnic_happy=no])
            CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
           ])
 
     # All done
-    AS_IF([test "$btl_usnic_happy" = "yes"],
+    AS_IF([test "$opal_btl_usnic_happy" = "yes"],
           [$1],
           [AS_IF([test "$with_usnic" = "yes"],
                  [AC_MSG_WARN([--with-usnic was specified, but Cisco usNIC support cannot be built])
