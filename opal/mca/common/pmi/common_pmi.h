@@ -48,3 +48,21 @@ OPAL_DECLSPEC char* opal_errmgr_base_pmi_error(int pmi_err);
 
 bool mca_common_pmi_rank(int *rank);
 bool mca_common_pmi_size(int *size);
+
+
+#if WANT_PMI2_SUPPORT
+OPAL_DECLSPEC int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
+                                              int *node, int *nlrs);
+#endif
+
+
+/**
+ * mca_common_pmi_local_ranks:
+ *
+ * @param my_rank
+ * @param local_rank_count set to the number of local ranks returned
+ *
+ * @retval array that contains ranks local to my_rank or NULL
+ * on failure. Array must be freed by the caller.
+ */
+OPAL_DECLSPEC int *mca_common_pmi_local_ranks (int my_rank, int *local_rank_count);

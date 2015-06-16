@@ -17,10 +17,6 @@ sources = \
 	grpcomm_pmi_module.c \
 	grpcomm_pmi_component.c
 
-if WANT_PMI2_SUPPORT
-sources += pmi2_pmap_parser.c
-endif
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).

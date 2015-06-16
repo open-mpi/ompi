@@ -13,11 +13,7 @@
 #ifdef STANDALONE_TEST
 #define WANT_PMI2_SUPPORT 1
 #else
-#include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
-
-#include "grpcomm_pmi.h"
+#include "common_pmi.h"
 #endif
 
 /**
@@ -134,8 +130,8 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
  * @return array that contains ranks local to my_rank or NULL
  * on failure. Array must be freed by the caller. 
  */ 
-int *orte_grpcomm_pmi2_parse_pmap(char *pmap, int my_rank,
-                                  int *node, int *nlrs)
+int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
+                                int *node, int *nlrs)
 {
     char *p;
 
@@ -182,7 +178,7 @@ int main(int argc, char **argv)
 
     if (argc == 3) {
         me = atoi(argv[1]);
-        lrs = orte_grpcomm_pmi2_parse_pmap(argv[2], me, &node, &n);
+        lrs = mca_common_pmi2_parse_pmap(argv[2], me, &node, &n);
         if (NULL == lrs) {
             printf("can not parse pmap\n");
             exit(1);
@@ -194,7 +190,7 @@ int main(int argc, char **argv)
 
     pmap = "(vector,(0,2,2))";
     me = 1;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 2);
     assert(memcmp(lrs, a1, 2) == 0);
@@ -203,7 +199,7 @@ int main(int argc, char **argv)
 
     pmap = "(vector,(0,2,2))";
     me = 2;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 2);
     assert(memcmp(lrs, a2, 2) == 0);
@@ -213,7 +209,7 @@ int main(int argc, char **argv)
     /* cyclic distro which skips node 0 */
     pmap = "(vector,(1,2,1),(1,2,1))";
     me = 0;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 2);
     assert(memcmp(lrs, a3, n) == 0);
@@ -221,7 +217,7 @@ int main(int argc, char **argv)
 
     pmap = "(vector,(1,2,1),(1,2,1))";
     me = 3;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 2);
     assert(memcmp(lrs, a4, n) == 0);
@@ -229,7 +225,7 @@ int main(int argc, char **argv)
 
     pmap = "(vector,(0,4,4),(0,1,2),(1,3,1))";
     me = 3;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 6);
     assert(memcmp(lrs, a5, n) == 0);
@@ -237,7 +233,7 @@ int main(int argc, char **argv)
 
     pmap = "(vector,(0,4,4),(0,1,2),(1,3,1))";
     me = 10;
-    lrs = orte_grpcomm_pmi2_parse_pmap(pmap, me, &node, &n);
+    lrs = mca_common_pmi2_parse_pmap(pmap, me, &node, &n);
     assert(lrs);
     assert(n == 5);
     assert(memcmp(lrs, a6, n) == 0);
