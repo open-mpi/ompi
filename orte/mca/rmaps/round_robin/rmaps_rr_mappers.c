@@ -496,6 +496,15 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             if (0 == nobjs) {
                 continue;
             }
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: found %u %s objects on node %s",
+                                nobjs, hwloc_obj_type_string(target), node->name);
+
+            /* if this is a comm_spawn situation, start with the object
+             * where the parent left off and increment */
+            if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
+                start = (jdata->bkmark_obj + 1) % nobjs;
+            }
             /* compute the number of procs to go on this node */
             nprocs = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
             if (nprocs < 1) {

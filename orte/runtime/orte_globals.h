@@ -422,6 +422,9 @@ typedef struct {
      * indicates the node where we stopped
      */
     orte_node_t *bookmark;
+    /* if we are binding, bookmark the index of the
+     * last object we bound to */
+    unsigned int bkmark_obj;
     /* state of the overall job */
     orte_job_state_t state;
     /* some procs in this job are being restarted */
