@@ -717,6 +717,7 @@ static void orte_job_construct(orte_job_t* job)
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
     job->map = NULL;
     job->bookmark = NULL;
+    job->bkmark_obj = 0;
     job->state = ORTE_JOB_STATE_UNDEF;
     job->restart = false;
 
