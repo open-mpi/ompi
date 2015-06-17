@@ -1373,7 +1373,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     iov.iov_len = max_data;
     iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*) ptr + reserve );
-    rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    (void) opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
     /* If the convertor is copying the data asynchronously, then record an event
