@@ -2509,11 +2509,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* Init CPC components */
-    if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
-        goto no_btls;
-    }
-
     /* If we are using ptmalloc2 and there are no posix threads
        available, this will cause memory corruption.  Refuse to run.
        Right now, ptmalloc2 is the only memory manager that we have on
@@ -2776,6 +2771,12 @@ btl_openib_component_init(int *num_btl_modules,
                            "no active ports found", true, 
                            ompi_process_info.nodename);
         }
+        goto no_btls;
+    }
+
+    /* Now that we know we have devices and ports that we want to use,
+       init CPC components */
+    if (OPAL_SUCCESS != (ret = opal_btl_openib_connect_base_init())) {
         goto no_btls;
     }
 
