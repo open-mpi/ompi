@@ -218,7 +218,9 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         } else {
             jdata->bookmark = parent->bookmark;
         }
-
+        /* provide the parent's last object */
+        jdata->bkmark_obj = parent->bkmark_obj;
+        
         /* launch it */
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive calling spawn",
