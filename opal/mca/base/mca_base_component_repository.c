@@ -262,6 +262,7 @@ int mca_base_component_repository_get_components (mca_base_framework_t *framewor
     return OPAL_ERR_NOT_FOUND;
 }
 
+#if OPAL_HAVE_DL_SUPPORT
 static void mca_base_component_repository_release_internal (mca_base_component_repository_item_t *ri) {
     int group_id;
 
@@ -277,6 +278,7 @@ static void mca_base_component_repository_release_internal (mca_base_component_r
         ri->ri_dlhandle = NULL;
     }
 }
+#endif
 
 void mca_base_component_repository_release(const mca_base_component_t *component)
 {
