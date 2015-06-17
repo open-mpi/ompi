@@ -95,7 +95,8 @@ mca_btl_usnic_la_LIBADD = $(opal_btl_usnic_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
-libmca_btl_usnic_la_LDFLAGS= -module -avoid-version $(opal_btl_usnic_LDFLAGS)
+libmca_btl_usnic_la_LDFLAGS = -module -avoid-version $(opal_btl_usnic_LDFLAGS)
+libmca_btl_usnic_la_LIBADD  =  $(opal_btl_usnic_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
 usnic_btl_run_tests_CPPFLAGS = \
