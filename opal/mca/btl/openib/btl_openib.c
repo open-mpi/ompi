@@ -1355,7 +1355,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     uint32_t iov_count = 1;
     size_t max_data = *size;
     void *ptr;
-    int rc;
 
     assert(MCA_BTL_NO_ORDER == order);
 
