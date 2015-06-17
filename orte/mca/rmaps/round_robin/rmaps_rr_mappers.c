@@ -496,6 +496,11 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             if (0 == nobjs) {
                 continue;
             }
+            /* if this is a comm_spawn situation, start with the object
+             * where the parent left off and increment */
+            if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
+                start = (jdata->bkmark_obj + 1) % nobjs;
+            }
             /* compute the number of procs to go on this node */
             nprocs = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
             if (nprocs < 1) {
@@ -553,6 +558,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     nprocs_mapped++;
                     nmapped++;
                     proc->locale = obj;
+                    jdata->bkmark_obj = i;
                 }
             } while (nmapped < nprocs && nprocs_mapped < (int)app->num_procs);
             add_one = true;
