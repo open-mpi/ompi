@@ -12,7 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+#                         reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
  # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,7 +35,9 @@ SUBDIRS += \
         tools/orte-top \
         tools/orte-info \
         tools/orte-migrate \
-        tools/orte-server
+        tools/orte-server \
+        tools/orte-dvm \
+        tools/orte-submit
 
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
@@ -47,5 +50,7 @@ DIST_SUBDIRS += \
         tools/orte-top \
         tools/orte-info \
         tools/orte-migrate \
-        tools/orte-server
+        tools/orte-server \
+        tools/orte-dvm \
+        tools/orte-submit
 

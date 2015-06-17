@@ -496,6 +496,10 @@ orte/test/system/opal-evpri-test
 orte/test/system/evpri-test2
 orte/test/system/mapper
 orte/test/system/reducer
+orte/tools/orte-dvm/orte-dvm
+orte/tools/orte-dvm/orte-dvm.1
+orte/tools/orte-submit/orte-submit
+orte/tools/orte-submit/orte-submit.1
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1
 orte/tools/orte-checkpoint/ompi-checkpoint.1
