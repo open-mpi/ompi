@@ -1,5 +1,6 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,7 +32,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_sshmem_verbs_la_SOURCES = $(sources)
 mca_sshmem_verbs_la_LDFLAGS = -module -avoid-version $(oshmem_verbs_LDFLAGS)
 mca_sshmem_verbs_la_LIBADD  = $(oshmem_verbs_LIBS) \
-    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/verbs/lib@OPAL_LIB_PREFIX@mca_common_verbs.la
+    $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sshmem_verbs_la_SOURCES =$(sources)
