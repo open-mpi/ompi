@@ -66,6 +66,12 @@ included in the vX.Y.Z section and be denoted as:
 - Fixed trivial typo in MPI_Neighbor_allgather manpage
 - Fixed tree-spawn support for sh and ksh shells
 - Several data type fixes
+- Fixed IPv6 support bug
+- Cleaned up an unlikely build issue
+- Fixed PMI2 process map parsing for cyclic mappings
+- Fixed memalign threshold in openib BTL
+- Fixed debugger access to message queues for blocking send/recv
+
 
 
 1.8.5
