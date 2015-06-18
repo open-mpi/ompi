@@ -176,6 +176,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                     mca_pmix_native_component.send_ev_active = false;
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
+                    opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
                     return;
                 }
             }
@@ -208,6 +209,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                     mca_pmix_native_component.send_ev_active = false;
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
+                    opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
                     return;
                 }
             }
@@ -239,6 +241,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
             opal_event_del(&mca_pmix_native_component.send_event);
             mca_pmix_native_component.send_ev_active = false;
         }
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         break;
     }
 }
@@ -356,6 +359,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             opal_event_del(&mca_pmix_native_component.recv_event);
             mca_pmix_native_component.recv_ev_active = false;
+            opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
             return;
         }
         break;
@@ -372,6 +376,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             if (NULL == mca_pmix_native_component.recv_msg) {
                 opal_output(0, "%s usock_recv_handler: unable to allocate recv message\n",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                opal_pmix_base_errhandler(OPAL_ERR_OUT_OF_RESOURCE);  // report the error upstream
                 return;
             }
             /* start by reading the header */
@@ -416,6 +421,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                                     "%s usock:recv:handler error reading bytes - closing connection",
                                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+                opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
                 return;
             }
         }
@@ -447,6 +453,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                 opal_event_del(&mca_pmix_native_component.recv_event);
                 mca_pmix_native_component.recv_ev_active = false;
                 CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+                opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
                 return;
             }
         }
@@ -456,6 +463,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
                     mca_pmix_native_component.state);
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         break;
     }
 }
@@ -689,6 +697,7 @@ static void usock_complete_connect(void)
                     opal_socket_errno);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         return;
     }
 
@@ -705,6 +714,7 @@ static void usock_complete_connect(void)
                             so_error);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         return;
     } else if (so_error != 0) {
         /* No need to worry about the return code here - we return regardless
@@ -717,6 +727,7 @@ static void usock_complete_connect(void)
                             so_error);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         return;
     }
 
@@ -739,6 +750,7 @@ static void usock_complete_connect(void)
                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
     }
 }
 

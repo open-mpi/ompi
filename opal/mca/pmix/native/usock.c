@@ -191,6 +191,7 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
     /* we get here if no matching recv was found - this is an error */
     opal_output(0, "%s UNEXPECTED MESSAGE",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+    opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
     OBJ_RELEASE(msg);
 }
 
@@ -222,7 +223,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                             "usock_peer_try_connect: attempting to connect to server on socket %d",
                             mca_pmix_native_component.sd);
         /* try to connect */
-        if (connect(mca_pmix_native_component.sd, &mca_pmix_native_component.address, addrlen) < 0) {
+        if (connect(mca_pmix_native_component.sd, (struct sockaddr*)&mca_pmix_native_component.address, addrlen) < 0) {
             if (opal_socket_errno == ETIMEDOUT) {
                 /* The server may be too busy to accept new connections */
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
@@ -255,6 +256,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
         if (0 <= mca_pmix_native_component.sd) {
             CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
         }
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         return;
     }
 
@@ -312,6 +314,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                     opal_strerror(rc), rc);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);  // report the error upstream
         return;
     }
 }
