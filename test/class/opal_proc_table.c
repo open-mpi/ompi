@@ -66,6 +66,7 @@ char *perm_keys[] = {
     NULL
 };
 
+#if 0
 /*
  * This data specifically knows about the April'2014 version of hash tables.
  * It inserts some keys.
@@ -82,6 +83,7 @@ static char* remove_keys[] = {
     "2", "AbcdeFJ",		/* remove B (...AbcdeF...J...) then expected traversal */
     NULL			/* end removals and expectations */
 };
+#endif
 
 typedef union {
     opal_process_name_t uvalue;
@@ -195,8 +197,8 @@ static void test_ptable(opal_proc_table_t *table)
             fprintf(error_out, "*** FAILED opal_proc_table_get_next_key (%d) ***\n", j/3);
         }
 
-        if (key.jobid != atoi(num_keys[j]) ||
-            key.vpid != atoi(num_keys[j+1]) ||
+        if (key.jobid != (opal_jobid_t)atoi(num_keys[j]) ||
+            key.vpid != (opal_vpid_t)atoi(num_keys[j+1]) ||
             0 != strcmp(num_keys[j+2], v)) {
                 fprintf(error_out, "*** FAILED at %d, expected ((%s,%s),%s) got ((%d,%d),%s)\n", j/3,
                         num_keys[j], num_keys[j+1], num_keys[j+2],

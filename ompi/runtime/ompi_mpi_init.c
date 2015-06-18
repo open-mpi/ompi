@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -89,8 +89,7 @@
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "ompi/mca/dpm/base/base.h"
-#include "ompi/mca/pubsub/base/base.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -298,6 +297,19 @@ _process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2
     return ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, o1, o2);
 }
 
+static int _convert_string_to_process_name(opal_process_name_t *name,
+                                           const char* name_string)
+{
+    return ompi_rte_convert_string_to_process_name(name, name_string);
+}
+
+static int _convert_process_name_to_string(char** name_string,
+                                          const opal_process_name_t *name)
+{
+    return ompi_rte_convert_process_name_to_string(name_string, name);
+}
+
+
 void ompi_mpi_thread_level(int requested, int *provided)
 {
     /**
@@ -386,6 +398,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Convince OPAL to use our naming scheme */
     opal_process_name_print = _process_name_print_for_opal;
     opal_compare_proc = _process_name_compare;
+    opal_convert_string_to_process_name = _convert_string_to_process_name;
+    opal_convert_process_name_to_string = _convert_process_name_to_string;
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
@@ -492,7 +506,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
 #if OMPI_ENABLE_THREAD_MULTIPLE
     /* add this bitflag to the modex */
-    OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND_STRING(ret, OPAL_PMIX_GLOBAL,
                            "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
     if (OPAL_SUCCESS != ret) {
         error = "ompi_mpi_init: modex send thread level";
@@ -608,9 +622,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
      * in our job, so no proc array is passed. If a barrier is required,
-     * the "fence" function will perform it internally
+     * the "modex" function will perform it internally
      */
-    OPAL_FENCE(NULL, 0, NULL, NULL);
+    OPAL_MODEX(NULL, 1);
 
     OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
 
@@ -792,23 +806,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Setup the publish/subscribe (PUBSUB) framework */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pubsub_base_framework, 0))) {
-        error = "mca_pubsub_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = ompi_pubsub_base_select())) {
-        error = "ompi_pubsub_base_select() failed";
-        goto error;
-    }
-
-    /* Setup the dynamic process management (DPM) framework */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_dpm_base_framework, 0))) {
-        error = "ompi_dpm_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = ompi_dpm_base_select())) {
-        error = "ompi_dpm_base_select() failed";
+    /* Setup the dynamic process management (DPM) subsystem */
+    if (OMPI_SUCCESS != (ret = ompi_dpm_init())) {
+        error = "ompi_dpm_init() failed";
         goto error;
     }
 
@@ -843,8 +843,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Check whether we have been spawned or not.  We introduce that
        at the very end, since we need collectives, datatypes, ptls
        etc. up and running here.... */
-    if (OMPI_SUCCESS != (ret = ompi_dpm.dyn_init())) {
-        error = "ompi_comm_dyn_init() failed";
+    if (OMPI_SUCCESS != (ret = ompi_dpm_dyn_init())) {
+        error = "ompi_dpm_dyn_init() failed";
         goto error;
     }
 

@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,9 +40,10 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -85,8 +86,14 @@ static int rte_init(void)
     uint64_t unique_key[2];
     char *string_key;
     char *rmluri;
-    opal_value_t *kv, kvn;
-    opal_list_t vals;
+    opal_value_t *kv;
+    char *val;
+    size_t sz;
+    int u32, *u32ptr;
+    uint16_t u16, *u16ptr;
+    char **peers, **cpusets, *mycpuset;
+    opal_process_name_t name;
+    size_t i;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -95,51 +102,41 @@ static int rte_init(void)
     }
 
     /* we don't have to call pmix.init because the pmix select did it */
+    u32ptr = &u32;
+    u16ptr = &u16;
 
     /****   THE FOLLOWING ARE REQUIRED VALUES   ***/
-    /* get our jobid from PMI */
-    if (!opal_pmix.get_attr(PMIX_JOBID, &kv)) {
-        error = "getting jobid";
-        ret = ORTE_ERR_NOT_FOUND;
-        goto error;
-    }
-    ORTE_PROC_MY_NAME->jobid = kv->data.uint32;
-    OBJ_RELEASE(kv);
-
-    /* get our global rank from PMI */
-    if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
-        error = "getting rank";
-        ret = ORTE_ERR_NOT_FOUND;
-        goto error;
-    }
-    ORTE_PROC_MY_NAME->vpid = kv->data.uint32;
-    OBJ_RELEASE(kv);
+    /* pmix.init set our process name down in the OPAL layer,
+     * so carry it forward here */
+    ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
+    ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
 
     /* get our local rank from PMI */
-    if (!opal_pmix.get_attr(PMIX_LOCAL_RANK, &kv)) {
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
+                          ORTE_PROC_MY_NAME, &u16ptr, OPAL_UINT16);
+    if (OPAL_SUCCESS != ret) {
         error = "getting local rank";
-        ret = ORTE_ERR_NOT_FOUND;
         goto error;
     }
-    orte_process_info.my_local_rank = (orte_local_rank_t)kv->data.uint16;
-    OBJ_RELEASE(kv);
+    orte_process_info.my_local_rank = u16;
 
     /* get our node rank from PMI */
-    if (!opal_pmix.get_attr(PMIX_NODE_RANK, &kv)) {
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_NODE_RANK,
+                          ORTE_PROC_MY_NAME, &u16ptr, OPAL_UINT16);
+    if (OPAL_SUCCESS != ret) {
         error = "getting node rank";
-        ret = ORTE_ERR_NOT_FOUND;
         goto error;
     }
-    orte_process_info.my_node_rank = (orte_local_rank_t)kv->data.uint16;
+    orte_process_info.my_node_rank = u16;
 
     /* get universe size */
-    if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_UNIV_SIZE,
+                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS != ret) {
         error = "getting univ size";
-        ret = ORTE_ERR_NOT_FOUND;
         goto error;
     }
-    orte_process_info.num_procs = kv->data.uint32;
-    OBJ_RELEASE(kv);
+    orte_process_info.num_procs = u32;
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
@@ -156,18 +153,20 @@ static int rte_init(void)
 
 
     /* get our app number from PMI - ok if not found */
-    if (opal_pmix.get_attr(PMIX_APPNUM, &kv)) {
-        orte_process_info.app_num = kv->data.uint32;
-        OBJ_RELEASE(kv);
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_APPNUM,
+                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS == ret) {
+        orte_process_info.app_num = u32;
     } else {
         orte_process_info.app_num = 0;
     }
 
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
-    if (opal_pmix.get_attr(PMIX_LOCAL_SIZE, &kv)) {
-        orte_process_info.num_local_peers = kv->data.uint32 - 1;  // want number besides ourselves
-        OBJ_RELEASE(kv);
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_SIZE,
+                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS == ret) {
+        orte_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
     } else {
         orte_process_info.num_local_peers = 0;
     }
@@ -191,12 +190,193 @@ static int rte_init(void)
     }
 
 #if OPAL_HAVE_HWLOC
-    /* if it wasn't passed down to us, get the topology */
-    if (NULL == opal_hwloc_topology) {
+    /* retrieve our topology */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
+                          ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        /* load the topology */
+        if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
+            ret = OPAL_ERROR;
+            free(val);
+            error = "setting topology";
+            goto error;
+        }
+        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
+            ret = OPAL_ERROR;
+            free(val);
+            hwloc_topology_destroy(opal_hwloc_topology);
+            error = "setting topology";
+            goto error;
+        }
+        /* since we are loading this from an external source, we have to
+         * explicitly set a flag so hwloc sets things up correctly
+         */
+        if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
+                                         (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                                          HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                          HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
+            ret = OPAL_ERROR;
+            hwloc_topology_destroy(opal_hwloc_topology);
+            free(val);
+            error = "setting topology";
+            goto error;
+        }
+        /* now load the topology */
+        if (0 != hwloc_topology_load(opal_hwloc_topology)) {
+            ret = OPAL_ERROR;
+            hwloc_topology_destroy(opal_hwloc_topology);
+            free(val);
+            error = "setting topology";
+            goto error;
+        }
+        free(val);
+    } else {
+        /* it wasn't passed down to us, so go get it */
         if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
             error = "topology discovery";
             goto error;
         }
+        /* push it into the PMIx database in case someone
+         * tries to retrieve it so we avoid an attempt to
+         * get it again */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
+        kv->type = OPAL_STRING;
+        if (0 != (ret = hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &kv->data.string, &u32))) {
+            error = "topology export";
+            goto error;
+        }
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, kv))) {
+            error = "topology store";
+            goto error;
+        }
+        OBJ_RELEASE(kv);
+    }
+
+    /* get our local peers */
+    if (0 < orte_process_info.num_local_peers) {
+        /* retrieve the local peers */
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS, NULL, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            peers = opal_argv_split(val, ',');
+            free(val);
+            /* and their cpusets */
+            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_CPUSETS, NULL, &val, OPAL_STRING);
+            if (OPAL_SUCCESS == ret && NULL != val) {
+                cpusets = opal_argv_split(val, ':');
+                free(val);
+                if (opal_argv_count(peers) != opal_argv_count(cpusets)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    opal_argv_free(peers);
+                    opal_argv_free(cpusets);
+                    error = "mismatch #local peers and #cpusets";
+                    goto error;
+                }
+            } else {
+                cpusets = NULL;
+            }
+        } else {
+            peers = NULL;
+            cpusets = NULL;
+        }
+    } else {
+        peers = NULL;
+        cpusets = NULL;
+    }
+
+    /* get our cpuset */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_CPUSET, ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+    if (OPAL_SUCCESS != ret || NULL == val) {
+        /* if we don't have a cpuset, or it is NULL, then we declare our local
+         * peers to be on the same node and everyone else to be non-local */
+        mycpuset = NULL;
+    } else {
+        mycpuset = val;
+    }
+
+    /* set the locality */
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (sz=0; sz < orte_process_info.num_procs; sz++) {
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_LOCALITY);
+        kv->type = OPAL_UINT16;
+        name.vpid = sz;
+        if (NULL == peers) {
+            /* nobody is local to us */
+            u16 = OPAL_PROC_NON_LOCAL;
+        } else {
+            for (i=0; NULL != peers[i]; i++) {
+                if (sz == strtoul(peers[i], NULL, 10)) {
+                    break;
+                }
+            }
+            if (NULL == peers[i]) {
+                /* not a local peer */
+                u16 = OPAL_PROC_NON_LOCAL;
+            } else if (NULL == mycpuset || NULL == cpusets || NULL == cpusets[i]) {
+                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            } else if (NULL != cpusets && NULL != cpusets[i]) {
+                u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                            mycpuset, cpusets[i]);
+            } else {
+                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            }
+        }
+        kv->data.uint16 = u16;
+        ret = opal_pmix.store_local(&name, kv);
+        if (OPAL_SUCCESS != ret) {
+            error = "local store of locality";
+            goto error;
+        }
+        OBJ_RELEASE(kv);
+    }
+#else
+    /* get our local peers */
+    if (0 < orte_process_info.num_local_peers) {
+        /* retrieve the local peers */
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS, NULL, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            peers = opal_argv_split(val, ',');
+            free(val);
+        } else {
+            peers = NULL;
+        }
+    } else {
+        peers = NULL;
+    }
+    /* set the locality */
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (sz=0; sz < orte_process_info.num_procs; sz++) {
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_LOCALITY);
+        kv->type = OPAL_UINT16;
+        name.vpid = sz;
+        if (NULL == peers) {
+                /* nobody is local to us */
+            u16 = OPAL_PROC_NON_LOCAL;
+        } else {
+            for (i=0; NULL != peers[i]; i++) {
+                if (sz == strtoul(peers[i], NULL, 10)) {
+                    break;
+                }
+            }
+            if (NULL == peers[i]) {
+                /* not a local peer */
+                u16 = OPAL_PROC_NON_LOCAL;
+            } else {
+                /* all we can say is they are on the same node */
+                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            }
+        }
+            /* store this data internally - not to be pushed outside of
+             * ourselves as it only has meaning relative to us */
+        ret = opal_pmix.store_local(&name, kv);
+        if (OPAL_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            error = "pmix store local";
+            goto error;
+        }
+        OBJ_RELEASE(kv);
     }
 #endif
 
@@ -231,73 +411,21 @@ static int rte_init(void)
     /***  PUSH DATA FOR OTHERS TO FIND   ***/
 
     /* push our RML URI in case others need to talk directly to us */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_URI, &vals)) {
-        /* not already recorded, so construct the RTE string */
-        rmluri = orte_rml.get_contact_info();
-        /* push it out for others to use - this will also put it in the dstore */
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_URI);
-        kvn.type = OPAL_STRING;
-        kvn.data.string = strdup(rmluri);
-        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-            error = "db store uri";
-            OBJ_DESTRUCT(&kvn);
-            goto error;
-        }
-        OBJ_DESTRUCT(&kvn);
-        free(rmluri);
-    }
-    OPAL_LIST_DESTRUCT(&vals);
-
-    /* push our hostname so others can find us, if they need to */
-    OBJ_CONSTRUCT(&kvn, opal_value_t);
-    kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
-    kvn.type = OPAL_STRING;
-    kvn.data.string = strdup(orte_process_info.nodename);
-    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-        error = "db store hostname";
-        OBJ_DESTRUCT(&kvn);
+    rmluri = orte_rml.get_contact_info();
+    /* push it out for others to use */
+    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_PROC_URI, rmluri, OPAL_STRING);
+    if (ORTE_SUCCESS != ret) {
+        error = "pmix put uri";
         goto error;
     }
-    OBJ_DESTRUCT(&kvn);
+    free(rmluri);
 
-    /* if our local rank was not provided by the system, then
-     * push our local rank so others can access it */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_LOCALRANK, &vals)) {
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
-        kvn.type = OPAL_UINT16;
-        kvn.data.uint16 = orte_process_info.my_local_rank;
-        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-            error = "db store local rank";
-            OBJ_DESTRUCT(&kvn);
-            goto error;
-        }
-        OBJ_DESTRUCT(&kvn);
+    /* push our hostname so others can find us, if they need to */
+    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_HOSTNAME, orte_process_info.nodename, OPAL_STRING);
+    if (ORTE_SUCCESS != ret) {
+        error = "db store hostname";
+        goto error;
     }
-    OPAL_LIST_DESTRUCT(&vals);
-
-    /* if our node rank was not provided by the system, then
-     * push our node rank so others can access it */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_NODERANK, &vals)) {
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_NODERANK);
-        kvn.type = OPAL_UINT16;
-        kvn.data.uint16 = orte_process_info.my_node_rank;
-        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-            error = "db store node rank";
-            OBJ_DESTRUCT(&kvn);
-            goto error;
-        }
-        OBJ_DESTRUCT(&kvn);
-    }
-    OPAL_LIST_DESTRUCT(&vals);
 
     /* if we are an ORTE app - and not an MPI app - then
      * we need to exchange our connection info here.
@@ -340,16 +468,17 @@ static int rte_finalize(void)
     if (added_app_ctx) {
         unsetenv("OMPI_APP_CTX_NUM_PROCS");
     }
-    /* use the default app procedure to finish */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
 
     /* mark us as finalized */
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();
         (void) mca_base_framework_close(&opal_pmix_base_framework);
+    }
+
+    /* use the default app procedure to finish */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
 
     return ORTE_SUCCESS;
@@ -367,7 +496,7 @@ static void rte_abort(int status, bool report)
     /* PMI doesn't like NULL messages, but our interface
      * doesn't provide one - so rig one up here
      */
-    opal_pmix.abort(status, "N/A");
+    opal_pmix.abort(status, "N/A", NULL);
 
     /* provide a little delay for the PMIx thread to
      * get the info out */

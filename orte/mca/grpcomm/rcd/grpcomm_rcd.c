@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -178,7 +178,7 @@ static void rcd_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t dista
         return;
     }
 
-   while(distance < coll->ndmns) {
+   while (distance < coll->ndmns) {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
              "%s grpcomm:coll:recdub process distance %u",
               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
@@ -310,52 +310,18 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
     return;
 }
 
-static int rcd_finalize_coll(orte_grpcomm_coll_t *coll, int ret) {
-    opal_buffer_t *reply;
-    int rc;
-    orte_job_t *jdata;
-    uint64_t nprocs;
-
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+static int rcd_finalize_coll(orte_grpcomm_coll_t *coll, int ret)
+{
+   OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:coll:recdub declared collective complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* pack the number of procs involved in the collective
-     * so the recipients can unpack any collected data */
-    if (1 == coll->sig->sz) {
-        /* get the job object for this entry */
-        if (NULL == (jdata = orte_get_job_data_object(coll->sig->signature[0].jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            return ORTE_ERROR;
-        }
-        nprocs = jdata->num_procs;
-    } else {
-        nprocs = coll->sig->sz;
-    }
-
-    reply = OBJ_NEW(opal_buffer_t);
-    if (NULL == reply) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_UINT64))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(reply);
-        return rc;
-    }
-
-    /* transfer the collected bucket */
-    opal_dss.copy_payload(reply, &coll->bucket);
-
     /* execute the callback */
     if (NULL != coll->cbfunc) {
-        coll->cbfunc(ret, reply, coll->cbdata);
+        coll->cbfunc(ret, &coll->bucket, coll->cbdata);
     }
 
     opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
-
-    OBJ_RELEASE(reply);
 
     OBJ_RELEASE(coll);
 

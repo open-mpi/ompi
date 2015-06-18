@@ -2,6 +2,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,15 +22,13 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/dstore/dstore.h"
 
 #include "opal/mca/sec/base/base.h"
 #include "sec_munge.h"
 
 static int init(void);
 static void finalize(void);
-static int get_my_cred(int dstorehandle,
-                       opal_process_name_t *my_id,
+static int get_my_cred(opal_process_name_t *my_id,
                        opal_sec_cred_t *cred);
 static int authenticate(opal_sec_cred_t *cred);
 
@@ -75,8 +74,7 @@ static void finalize(void)
     }
 }
 
-static int get_my_cred(int dstorehandle,
-                       opal_process_name_t *my_id,
+static int get_my_cred(opal_process_name_t *my_id,
                        opal_sec_cred_t *cred)
 {
     int rc;
