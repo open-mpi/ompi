@@ -20,6 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 /*
@@ -236,7 +237,7 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
     /* disconnect all dynamic communicators */
-    ompi_dpm.dyn_finalize();
+    ompi_dpm_dyn_finalize();
 
     /* Free the attributes on comm world. This is not done in the
      * destructor as we delete attributes in ompi_comm_free (which

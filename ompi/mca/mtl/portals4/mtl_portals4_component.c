@@ -313,7 +313,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND(ret, OPAL_PMIX_GLOBAL,
                     &mca_mtl_portals4_component.mtl_version,
                     &id, sizeof(id));
     if (OMPI_SUCCESS != ret) {

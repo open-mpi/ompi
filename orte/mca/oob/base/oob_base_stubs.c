@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +15,7 @@
 #include "orte/constants.h"
 
 #include "opal/util/output.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -40,7 +40,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     bool msg_sent;
     mca_oob_base_component_t *component;
     bool reachable;
-    opal_list_t myvals;
     opal_value_t *kv;
 
     /* done with this. release it now */
@@ -64,10 +63,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
          * so check there next - if it is, the peer object will be added
          * to our hash table
          */
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &msg->dst,
-                                              OPAL_DSTORE_URI, &myvals)) {
-            kv = (opal_value_t*)opal_list_get_first(&myvals);
+	if (OPAL_SUCCESS == opal_pmix.get(&msg->dst, OPAL_PMIX_PROC_URI, &kv)) {
             if (NULL != kv) {
                 process_uri(kv->data.string);
                 if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
@@ -77,17 +73,14 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                     ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
                     msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                     ORTE_RML_SEND_COMPLETE(msg);
-                    OPAL_LIST_DESTRUCT(&myvals);
                     return;
                 }
             } else {
                 ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
-                OPAL_LIST_DESTRUCT(&myvals);
                 return;
             }
-            OPAL_LIST_DESTRUCT(&myvals);
         } else {
             /* even though we don't know about this peer yet, we still might
              * be able to get to it via routing, so ask each component if

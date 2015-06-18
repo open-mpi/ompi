@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -109,7 +110,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
         if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
                variable to the children. */
-            if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
+            if (OMPI_SUCCESS != (rc = ompi_dpm_open_port (port_name))) {
                 goto error;
             }
         } else if (1 < ompi_comm_size(comm)) {
@@ -117,7 +118,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs,
+        if (OMPI_SUCCESS != (rc = ompi_dpm_spawn (1, &command, &argv, &maxprocs,
                                                   &info, port_name))) {
             goto error;
         }
@@ -126,7 +127,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     if (non_mpi) {
         newcomp = MPI_COMM_NULL;
     } else {
-        rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
+        rc = ompi_dpm_connect_accept (comm, root, port_name, send_first, &newcomp);
     }
 
 error:
@@ -134,7 +135,7 @@ error:
 
     /* close the port */
     if (rank == root && !non_mpi) {
-        ompi_dpm.close_port(port_name);
+        ompi_dpm_close_port(port_name);
     }
 
     /* set error codes */

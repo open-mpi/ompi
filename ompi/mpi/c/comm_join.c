@@ -38,7 +38,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -59,7 +59,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     int rc;
     uint32_t len, rlen, llen, lrlen;
     int send_first=0;
-    char *rport;
     ompi_process_name_t rname, tmp_name;
 
     ompi_communicator_t *newcomp;
@@ -75,12 +74,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     }
 
     OPAL_CR_ENTER_LIBRARY();
-
-    /* open a port using the specified tag */
-    if (OMPI_SUCCESS != (rc = ompi_dpm.open_port(port_name, OMPI_COMM_JOIN_TAG))) {
-        OPAL_CR_EXIT_LIBRARY();
-        return rc;
-    }
 
     /* send my process name */
     tmp_name = *OMPI_PROC_MY_NAME;
@@ -107,34 +100,30 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         send_first = true;
     }
 
-    /* sendrecv port-name through the socket connection.
-       Need to determine somehow how to avoid a potential deadlock
-       here. */
-    llen   = (uint32_t)(strlen(port_name)+1);
-    len    = htonl(llen);
-
-    ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
-    ompi_socket_recv (fd, (char *) &rlen, sizeof(uint32_t));
-
-    lrlen  = ntohl(rlen);
-    rport = (char *) malloc (lrlen);
-    if ( NULL == rport ) {
-        *intercomm = MPI_COMM_NULL;
-        OPAL_CR_EXIT_LIBRARY();
-        return MPI_ERR_INTERN;
-    }
-
     /* Assumption: socket_send should not block, even if the socket
        is not configured to be non-blocking, because the message length are
        so short. */
-    ompi_socket_send (fd, port_name, llen);
-    ompi_socket_recv (fd, rport, lrlen);
 
-    /* use the port we received to connect/accept */
-    rc = ompi_dpm.connect_accept (MPI_COMM_SELF, 0, rport, send_first, &newcomp);
+    /* we will only use the send_first proc's port name,
+     * so pass it to the recv_first participant */
+    if (send_first) {
+        /* open a port */
+        if (OMPI_SUCCESS != (rc = ompi_dpm_open_port(port_name))) {
+            OPAL_CR_EXIT_LIBRARY();
+            return rc;
+        }
+        llen   = (uint32_t)(strlen(port_name)+1);
+        len    = htonl(llen);
+        ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
+        ompi_socket_send (fd, port_name, llen);
+    } else {
+        ompi_socket_recv (fd, (char *) &rlen, sizeof(uint32_t));
+        lrlen  = ntohl(rlen);
+        ompi_socket_recv (fd, port_name, lrlen);
+    }
 
-
-    free ( rport );
+    /* use the port to connect/accept */
+    rc = ompi_dpm_connect_accept (MPI_COMM_SELF, 0, port_name, send_first, &newcomp);
 
     *intercomm = newcomp;
     OMPI_ERRHANDLER_RETURN (rc, MPI_COMM_SELF, rc, FUNC_NAME);

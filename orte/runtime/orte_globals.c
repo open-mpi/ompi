@@ -31,8 +31,8 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_hash_table.h"
@@ -466,8 +466,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
     char *hostname;
-    opal_list_t myvals;
-    opal_value_t *kv;
+    int rc;
 
     /* don't bother error logging any not-found situations
      * as the layer above us will have something to say
@@ -484,18 +483,10 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the data from the modex db */
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != opal_dstore.fetch(opal_dstore_internal, proc,
-                                          OPAL_DSTORE_HOSTNAME,
-                                          &myvals)) {
-        OPAL_LIST_DESTRUCT(&myvals);
-        return NULL;
-    }
-    kv = (opal_value_t*)opal_list_get_first(&myvals);
-    hostname = kv->data.string;
-    /* protect the data */
-    kv->data.string = NULL;
-    OPAL_LIST_DESTRUCT(&myvals);
+    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_HOSTNAME,
+                          (opal_process_name_t*)proc,
+                          &hostname, OPAL_STRING);
+
     /* user is responsible for releasing the data */
     return hostname;
 }
@@ -503,10 +494,8 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
 orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
-    orte_node_rank_t noderank;
+    orte_node_rank_t *noderank, nd;
     int rc;
-    opal_list_t myvals;
-    opal_value_t *kv;
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
@@ -518,18 +507,13 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the value from the modex db */
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, proc,
-                                                OPAL_DSTORE_NODERANK,
-                                                &myvals))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_LIST_DESTRUCT(&myvals);
-        return ORTE_NODE_RANK_INVALID;
-    }
-    kv = (opal_value_t*)opal_list_get_first(&myvals);
-    noderank = kv->data.uint16;
-    OPAL_LIST_DESTRUCT(&myvals);
-    return noderank;
+    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_NODE_RANK,
+                          (opal_process_name_t*)proc,
+                          &noderank, ORTE_NODE_RANK);
+
+    nd = *noderank;
+    free(noderank);
+    return nd;
 }
 
 orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job)

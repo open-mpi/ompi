@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -32,7 +32,7 @@
 #include <errno.h>
 
 #include "opal/util/output.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -56,7 +56,6 @@ int orte_ess_base_proc_binding(void)
     int ret;
     char *error=NULL;
     hwloc_cpuset_t mycpus;
-    opal_value_t kv;
 
     /* Determine if we were pre-bound or not */
     if (NULL != getenv(OPAL_MCA_PREFIX"orte_bound_at_launch")) {
@@ -296,18 +295,8 @@ int orte_ess_base_proc_binding(void)
     hwloc_bitmap_free(mycpus);
     /* push our cpuset so others can calculate our locality */
     if (NULL != orte_process_info.cpuset) {
-         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_CPUSET);
-        kv.type = OPAL_STRING;
-        kv.data.string = strdup(orte_process_info.cpuset);
-        if (OPAL_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&kv);
-            goto error;
-        }
-        /* and store a copy locally */
-        (void)opal_dstore.store(opal_dstore_internal, ORTE_PROC_MY_NAME, &kv);
-        OBJ_DESTRUCT(&kv);
+        OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_CPUSET,
+                              orte_process_info.cpuset, OPAL_STRING);
     }
     return ORTE_SUCCESS;
 
