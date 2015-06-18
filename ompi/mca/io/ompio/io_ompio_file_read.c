@@ -459,12 +459,12 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fp=NULL;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    fp = &data->fh_ompio;
+    fp = &data->ompio_fh;
+
+    ompio_io_ompio_file_get_position (fp, &prev_offset );
+    ompi_io_ompio_set_explicit_offset (fp, offset);
+
     if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
 	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh, 
 						 buf, 
@@ -480,7 +480,7 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     }
 
 
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
 
@@ -619,8 +619,10 @@ int mca_io_ompio_file_read_all_begin (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_file_t *fp;
+    mca_io_ompio_data_t *data;
 
-    fp = (mca_io_ompio_file_t *) &fh->f_io_selected_data->fh_ompio;
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
     if ( true == fp->f_split_coll_in_use ) {
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
 	return MPI_ERR_OTHER;
@@ -637,9 +639,11 @@ int mca_io_ompio_file_read_all_end (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_file_t *fp;
+    mca_io_ompio_data_t *data;
 
-    fp = (mca_io_ompio_file_t *) &fh->f_io_selected_data->fh_ompio;
-    ret = ompi_mpi_wait ( &fp->f_split_coll_req, status );
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+    ret = ompi_request_wait ( &fp->f_split_coll_req, status );
 
     /* remove the flag again */
     fp->f_split_coll_in_use = false;
@@ -656,7 +660,7 @@ int mca_io_ompio_file_read_at_all_begin (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_read_at_all_begin ( &data->fh_ompio,  offset, buf, count, datatype );
+    ret = ompio_io_ompio_file_read_at_all_begin ( &data->ompio_fh,  offset, buf, count, datatype );
     return ret;
 }
 
@@ -672,7 +676,7 @@ int ompio_io_ompio_file_read_at_all_begin (mca_io_ompio_file_t *fh,
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
 	return MPI_ERR_REQUEST;
     }
-    ret = mca_io_ompio_file_iread_at_all ( fh, offset, buf, count, datatype, &fh->f_split_coll_req );
+    ret = mca_io_ompio_file_iread_at_all ( fh->f_fh, offset, buf, count, datatype, &fh->f_split_coll_req );
     fh->f_split_coll_in_use = true;
     return ret;
 }
@@ -685,7 +689,7 @@ int mca_io_ompio_file_read_at_all_end (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_read_at_all_end ( &data->fh_ompio, but, status );
+    ret = ompio_io_ompio_file_read_at_all_end ( &data->ompio_fh, buf, status );
     return ret;
 }
 
@@ -694,9 +698,9 @@ int ompio_io_ompio_file_read_at_all_end (mca_io_ompio_file_t *ompio_fh,
 					 ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    ret = ompi_mpi_wait ( &ompio_fh->f_split_coll_req, status );
+    ret = ompi_request_wait ( &ompio_fh->f_split_coll_req, status );
 
     /* remove the flag again */
-    fp->f_split_coll_in_use = false;
+    ompio_fh->f_split_coll_in_use = false;
     return ret;
 }

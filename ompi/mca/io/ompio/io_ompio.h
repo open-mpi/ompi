@@ -788,6 +788,18 @@ int mca_io_ompio_file_read_all (struct ompi_file_t *fh,
                                 int count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t *status);
+int mca_io_ompio_file_iread_all (ompi_file_t *fh,
+				void *buf,
+				int count,
+				struct ompi_datatype_t *datatype,
+				 ompi_request_t **request);
+int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
+				    OMPI_MPI_OFFSET_TYPE offset,
+				    void *buf,
+				    int count,
+				    struct ompi_datatype_t *datatype,
+				    ompi_request_t **request);
+
 int mca_io_ompio_file_write (struct ompi_file_t *fh,
                              void *buf,
                              int count,
@@ -798,6 +810,17 @@ int mca_io_ompio_file_write_all (struct ompi_file_t *fh,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t *status);
+int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
+				  void *buf,
+				  int count,
+				  struct ompi_datatype_t *datatype,
+				  ompi_request_t **request);
+int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
+				     OMPI_MPI_OFFSET_TYPE offset,
+				     void *buf,
+				     int count,
+				     struct ompi_datatype_t *datatype,
+				     ompi_request_t **request);
 int mca_io_ompio_file_iread (struct ompi_file_t *fh,
                              void *buf,
                              int count,

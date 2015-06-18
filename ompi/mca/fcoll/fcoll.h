@@ -144,14 +144,6 @@ typedef bool (*mca_fcoll_base_module_progress_fn_t)
 typedef void (*mca_fcoll_base_module_request_free_fn_t)
 ( struct mca_fcoll_request_t *request);
 
-
-typedef bool (*mca_fcoll_base_module_progress_fn_t)
-( struct mca_fcoll_request_t *request);
-
-typedef void (*mca_fcoll_base_module_request_free_fn_t)
-( struct mca_fcoll_request_t *request);
-
-
 /*
  * ***********************************************************************
  * ***************************  module structure *************************

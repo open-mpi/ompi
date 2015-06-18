@@ -122,8 +122,8 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompi_io_ompio_set_file_defaults (ompio_fh);
     ompio_fh->f_filename = filename;
 
-    ompio_fh->f_split_coll_req = NULL;
-    ompio_fh->f_split_in_use   = false;
+    ompio_fh->f_split_coll_req    = NULL;
+    ompio_fh->f_split_coll_in_use = false;
 
     /*Initialize the print_queues queues here!*/
     coll_write_time = (print_queue *) malloc (sizeof(print_queue));

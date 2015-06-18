@@ -570,12 +570,13 @@ int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fp=NULL;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    fp = &data->fh_ompio;
+    fp = &data->ompio_fh;
+    ompio_io_ompio_file_get_position (fp, &prev_offset );
+
+    ompi_io_ompio_set_explicit_offset (fp, offset);
+
     if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
 	ret = fp->f_fcoll->fcoll_file_iwrite_all (&data->ompio_fh, 
 						  buf, 
@@ -591,7 +592,7 @@ int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
     }
 
 
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
 
