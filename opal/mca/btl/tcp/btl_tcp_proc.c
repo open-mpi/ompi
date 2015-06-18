@@ -351,12 +351,19 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                                &local_interfaces[local_kindex_to_index[kindex]]->ipv4_netmask, 
                                sizeof(int));
             break;
+#if OPAL_ENABLE_IPV6
         case AF_INET6:
             /* if AF is disabled, skip it completely */
             if (6 == mca_btl_tcp_component.tcp_disable_family) {
                 continue;
             }
-
+            if (mca_btl_tcp_component.tcp6_ignore_link_local) {
+                struct sockaddr_in6 * sin6 = (struct sockaddr_in6 *)&local_addr;
+                if (IN6_IS_ADDR_LINKLOCAL(&(sin6->sin6_addr))) {
+                    continue;
+                }
+            }
+            
             local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
                 = (struct sockaddr_storage*) malloc(sizeof(local_addr));
             memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address, 
@@ -365,6 +372,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                                &local_interfaces[local_kindex_to_index[kindex]]->ipv6_netmask, 
                                sizeof(int));
             break;
+#endif
         default:
             opal_output(0, "unknown address family for tcp: %d\n",
                         local_addr.ss_family);
