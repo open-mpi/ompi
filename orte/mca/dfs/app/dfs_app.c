@@ -27,7 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -504,9 +504,9 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     char *scheme, *host, *filename;
     orte_process_name_t daemon;
-    opal_list_t myvals;
-    opal_value_t *kv;
-
+    opal_list_t lt;
+    opal_namelist_t *nm;
+    
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -553,17 +553,15 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s looking for daemon on host %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
-    OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                ORTE_NAME_WILDCARD,
-                                                host, &myvals))) {
+    OBJ_CONSTRUCT(&lt, opal_list_t);
+    if (ORTE_SUCCESS != (rc = opal_pmix.resolve_peers(host, daemon.jobid, &lt))) {
         ORTE_ERROR_LOG(rc);
-        OPAL_LIST_DESTRUCT(&myvals);
+        OBJ_DESTRUCT(&lt);
         goto complete;
     }
-    kv = (opal_value_t*)opal_list_get_first(&myvals);
-    daemon.vpid = kv->data.uint32;
-    OPAL_LIST_DESTRUCT(&myvals);
+    nm = (opal_namelist_t*)opal_list_get_first(&lt);
+    daemon.vpid = nm->name.vpid;
+    OPAL_LIST_DESTRUCT(&lt);
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s file %s on host %s daemon %s",

@@ -35,11 +35,11 @@
 #endif
 
 #include "opal/dss/dss.h"
-#include "opal/mca/dstore/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/arch.h"
 #include "opal/util/os_path.h"
@@ -359,6 +359,14 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_routed_base_select";
         goto error;
     }
+    /* setup the routed info - the selected routed component
+     * will know what to do.
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed.init_routes";
+        goto error;
+    }
 
     /*
      * Group communications
@@ -530,6 +538,19 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
+    /* setup the PMIx framework - ensure it skips all non-PMIx components */
+    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         ORTE_ERROR_LOG(ret);
@@ -664,6 +685,7 @@ int orte_ess_base_orted_finalize(void)
 
     /* shutdown the pmix server */
     pmix_server_finalize();
+    (void) mca_base_framework_close(&opal_pmix_base_framework);
 
     /* close frameworks */
     (void) mca_base_framework_close(&orte_schizo_base_framework);
@@ -685,9 +707,9 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
-    (void) mca_base_framework_close(&opal_dstore_base_framework);
-
-    /* cleanup any lingering session directories */
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
     return ORTE_SUCCESS;

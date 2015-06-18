@@ -41,7 +41,8 @@ OPAL_DECLSPEC int opal_value_load(opal_value_t *kv,
                                   void *data, opal_data_type_t type);
 OPAL_DECLSPEC int opal_value_unload(opal_value_t *kv,
                                     void **data, opal_data_type_t type);
-
+OPAL_DECLSPEC int opal_value_xfer(opal_value_t *dest,
+                                  opal_value_t *src);
 /**
  * Top-level interface function to pack one or more values into a
  * buffer.

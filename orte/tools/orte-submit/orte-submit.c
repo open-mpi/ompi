@@ -1016,7 +1016,7 @@ static int create_app(int argc, char* argv[],
     app->env = opal_argv_copy(*app_env);
     if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(myglobals.personality,
                                                     myglobals.path,
-                                                    &cmd_line, NULL,
+                                                    &cmd_line,
                                                     environ, &app->env))) {
         goto cleanup;
     }

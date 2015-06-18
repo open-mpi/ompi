@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,55 +13,35 @@
 
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
-
-#include "ompi/mca/dpm/dpm.h"
-#include "ompi/mca/pubsub/pubsub.h"
+#include "opal/mca/pmix/pmix.h"
+#include "ompi/dpm/dpm.h"
 
 int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
 {
     int rc;
-    opal_buffer_t *buffer;
     char *port;
-    ompi_process_name_t el_proc;
-    char *hnp_uri, *rml_uri;
-    ompi_rml_tag_t el_tag;
-    char name[MPI_MAX_PORT_NAME];
     int rank;
     vprotocol_pessimist_clock_t connect_info[2];
+    opal_list_t results;
+    opal_pmix_pdata_t *pdat;
 
-    snprintf(name, MPI_MAX_PORT_NAME, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
-    port = ompi_pubsub.lookup(name, MPI_INFO_NULL);
-    if(NULL == port)
-    {
+    OBJ_CONSTRUCT(&results, opal_list_t);
+    pdat = OBJ_NEW(opal_pmix_pdata_t);
+    asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
+    opal_list_append(&results, &pdat->super);
+
+    rc = opal_pmix.lookup(&results, NULL);
+    if (OPAL_SUCCESS != rc ||
+        OPAL_STRING != pdat->value.type ||
+        NULL == pdat->value.data.string) {
+        OPAL_LIST_DESTRUCT(&results);
         return OMPI_ERR_NOT_FOUND;
     }
+    port = strdup(pdat->value.data.string);
+    OPAL_LIST_DESTRUCT(&results);
     V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
 
-    /* separate the string into the HNP and RML URI and tag */
-    if (OMPI_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
-        OMPI_ERROR_LOG(rc);
-        return rc;
-    }
-    /* extract the originating proc's name */
-    if (OMPI_SUCCESS != (rc = ompi_rte_parse_uris(rml_uri, &el_proc, NULL))) {
-        OMPI_ERROR_LOG(rc);
-        free(rml_uri); free(hnp_uri);
-        return rc;
-    }
-    /* make sure we can route rml messages to the destination */
-    if (OMPI_SUCCESS != (rc = ompi_dpm.route_to_port(hnp_uri, &el_proc))) {
-        OMPI_ERROR_LOG(rc);
-        free(rml_uri); free(hnp_uri);
-        return rc;
-    }
-    free(rml_uri); free(hnp_uri);
-
-    /* Send an rml message to tell the remote end to wake up and jump into
-     * connect/accept */
-    buffer = OBJ_NEW(opal_buffer_t);
-    ompi_rte_send_buffer_nb(&el_proc, buffer, el_tag+1, NULL, NULL);
-
-    rc = ompi_dpm.connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
+    rc = ompi_dpm_connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
     if(OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
     }
@@ -86,7 +67,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
 
 int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm)
 {
-    ompi_dpm.disconnect(el_comm);
+    ompi_dpm_disconnect(el_comm);
     return OMPI_SUCCESS;
 }
 

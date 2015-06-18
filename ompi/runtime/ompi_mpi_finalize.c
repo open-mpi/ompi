@@ -16,7 +16,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -78,8 +78,7 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/runtime/params.h"
-#include "ompi/mca/dpm/base/base.h"
-#include "ompi/mca/pubsub/base/base.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -343,13 +342,8 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    /* finalize the pubsub functions */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
-        return ret;
-    }
-
-    /* finalize the DPM framework */
-    if ( OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_dpm_base_framework))) {
+    /* finalize the DPM subsystem */
+    if ( OMPI_SUCCESS != (ret = ompi_dpm_finalize())) {
         return ret;
     }
 

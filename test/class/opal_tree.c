@@ -234,6 +234,8 @@ int main(int argc, char **argv)
 	    int32_t size1, size2;
 
 	    /* compare new with original serialization */
+        serial_tree->unpack_ptr = serial_tree->base_ptr;
+        serial2_tree->unpack_ptr = serial2_tree->unpack_ptr;
 	    opal_dss.unload(serial_tree, &payload1, &size1);
 	    opal_dss.unload(serial2_tree, &payload2, &size2);
 	    if (size1 == size2) {

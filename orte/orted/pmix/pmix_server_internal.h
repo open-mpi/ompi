@@ -38,186 +38,152 @@
 #endif
 
 #include "opal/types.h"
+#include "opal/class/opal_hotel.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/proc.h"
 
-BEGIN_C_DECLS
+#include "orte/mca/grpcomm/base/base.h"
 
-/**
- * the state of the connection
- */
-typedef enum {
-    PMIX_SERVER_UNCONNECTED,
-    PMIX_SERVER_CLOSED,
-    PMIX_SERVER_RESOLVE,
-    PMIX_SERVER_CONNECTING,
-    PMIX_SERVER_CONNECT_ACK,
-    PMIX_SERVER_CONNECTED,
-    PMIX_SERVER_FAILED,
-    PMIX_SERVER_ACCEPTING
-} pmix_server_state_t;
+ BEGIN_C_DECLS
 
-/* define a command type for client-server communications */
-typedef uint8_t pmix_cmd_t;
-#define PMIX_CMD_T OPAL_UINT8
+/* object for tracking requests so we can
+ * correctly route the eventual reply */
+ typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    int timeout;
+    int room_num;
+    int remote_room_num;
+    orte_process_name_t proxy;
+    opal_process_name_t target;
+    orte_job_t *jdata;
+    opal_buffer_t msg;
+    opal_pmix_op_cbfunc_t opcbfunc;
+    opal_pmix_modex_cbfunc_t mdxcbfunc;
+    opal_pmix_spawn_cbfunc_t spcbfunc;
+    opal_pmix_lookup_cbfunc_t lkcbfunc;
+    void *cbdata;
+} pmix_server_req_t;
+OBJ_CLASS_DECLARATION(pmix_server_req_t);
 
-/* define some commands */
-#define PMIX_ABORT_CMD        1
-#define PMIX_FENCE_CMD        2
-#define PMIX_FENCENB_CMD      3
-#define PMIX_PUT_CMD          4
-#define PMIX_GET_CMD          5
-#define PMIX_GETNB_CMD        6
-#define PMIX_FINALIZE_CMD     7
-#define PMIX_GETATTR_CMD      8
-
-/* define some message types */
-#define PMIX_USOCK_IDENT  1
-#define PMIX_USOCK_USER   2
-
-/* header for pmix client-server msgs - must
- * match that in opal/mca/pmix/native! */
-typedef struct {
-    opal_process_name_t id;
-    uint8_t type;
-    uint32_t tag;
-    size_t nbytes;
-} pmix_server_hdr_t;
-
-/* usock structure for sending a message */
-typedef struct {
-    opal_list_item_t super;
-    pmix_server_hdr_t hdr;
-    opal_buffer_t *data;
-    bool hdr_sent;
-    char *sdptr;
-    size_t sdbytes;
-} pmix_server_send_t;
-OBJ_CLASS_DECLARATION(pmix_server_send_t);
-
-/* usock structure for recving a message */
-typedef struct {
-    opal_list_item_t super;
-    pmix_server_hdr_t hdr;
-    bool hdr_recvd;
-    char *data;
-    char *rdptr;
-    size_t rdbytes;
-} pmix_server_recv_t;
-OBJ_CLASS_DECLARATION(pmix_server_recv_t);
-
-/* object for tracking peers - each peer can have multiple
- * connections. This can occur if the initial app executes
- * a fork/exec, and the child initiates its own connection
- * back to the PMIx server. Thus, the trackers are "indexed"
- * by the socket, not the process name */
+/* object for thread-shifting server operations */
 typedef struct {
     opal_object_t super;
-    int sd;
-    orte_process_name_t name;
-    char *auth_method;         // method used by peer to authenticate
-    int retries;                  // number of times we have tried to connect to this address
-    pmix_server_state_t state;
-    opal_event_t op_event;      // used for connecting and operations other than read/write
-    opal_event_t send_event;    /**< registration with event thread for send events */
-    bool send_ev_active;
-    opal_event_t recv_event;    /**< registration with event thread for recv events */
-    bool recv_ev_active;
-    opal_event_t timer_event;   /**< timer for retrying connection failures */
-    bool timer_ev_active;
-    opal_list_t send_queue;      /**< list of messages to send */
-    pmix_server_send_t *send_msg; /**< current send in progress */
-    pmix_server_recv_t *recv_msg; /**< current recv in progress */
-} pmix_server_peer_t;
-OBJ_CLASS_DECLARATION(pmix_server_peer_t);
+    opal_event_t ev;
+    opal_list_t *procs;
+    opal_list_t *info;
+    opal_pmix_op_cbfunc_t cbfunc;
+    void *cbdata;
+} orte_pmix_server_op_caddy_t;
+OBJ_CLASS_DECLARATION(orte_pmix_server_op_caddy_t);
 
-/* object for tracking remote modex requests so we can
- * correctly route the eventual reply */
 typedef struct {
-    opal_list_item_t super;
-    pmix_server_peer_t *peer;
-    orte_proc_t *proxy;
-    opal_process_name_t target;
-    uint32_t tag;
-} pmix_server_dmx_req_t;
-OBJ_CLASS_DECLARATION(pmix_server_dmx_req_t);
+    opal_object_t super;
+    orte_grpcomm_signature_t *sig;
+    opal_pmix_modex_cbfunc_t cbfunc;
+    void *cbdata;
+} orte_pmix_mdx_caddy_t;
+OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
 
-/* queue a message to be sent by one of our procs - must
- * provide the following params:
- *
- * p - the peer object of the process
- * t - tag to be sent to
- * b - buffer to be sent
- */
-#define PMIX_SERVER_QUEUE_SEND(p, t, b)                                 \
-    do {                                                                \
-        pmix_server_send_t *msg;                                        \
-        opal_output_verbose(2, pmix_server_output,                      \
-                            "%s:[%s:%d] queue send to %s",              \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&(p)->name));               \
-        msg = OBJ_NEW(pmix_server_send_t);                              \
-        /* setup the header */                                          \
-        msg->hdr.id = OPAL_PROC_MY_NAME;                                \
-        msg->hdr.type = PMIX_USOCK_USER;                                \
-        msg->hdr.tag = (t);                                             \
-        msg->hdr.nbytes = (b)->bytes_used;                              \
-        /* point to the buffer */                                       \
-        msg->data = (b);                                                \
-        /* start the send with the header */                            \
-        msg->sdptr = (char*)&msg->hdr;                                  \
-        msg->sdbytes = sizeof(pmix_server_hdr_t);                     \
-        /* if there is no message on-deck, put this one there */        \
-        if (NULL == (p)->send_msg) {                                    \
-            (p)->send_msg = msg;                                        \
-        } else {                                                        \
-            /* add it to the queue */                                   \
-            opal_list_append(&(p)->send_queue, &msg->super);            \
-        }                                                               \
-        /* ensure the send event is active */                           \
-        if (!(p)->send_ev_active) {                                     \
-            opal_event_add(&(p)->send_event, 0);                        \
-            (p)->send_ev_active = true;                                 \
-        }                                                               \
-    }while(0);
+#define ORTE_DMX_REQ(p, cf, ocf, ocd)                    \
+do {                                                     \
+    pmix_server_req_t *_req;                             \
+    _req = OBJ_NEW(pmix_server_req_t);                   \
+    _req->target = (p);                                  \
+    _req->mdxcbfunc = (ocf);                             \
+    _req->cbdata = (ocd);                                \
+    opal_event_set(orte_event_base, &(_req->ev),         \
+                   -1, OPAL_EV_WRITE, (cf), _req);       \
+    opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+    opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
+} while(0);
 
-#define CLOSE_THE_SOCKET(socket)    \
-    do {                            \
-        shutdown(socket, 2);        \
-        close(socket);              \
-    } while(0)
+#define ORTE_SPN_REQ(j, cf, ocf, ocd)                    \
+do {                                                     \
+    pmix_server_req_t *_req;                             \
+    _req = OBJ_NEW(pmix_server_req_t);                   \
+    _req->jdata = (j);                                   \
+    _req->spcbfunc = (ocf);                              \
+    _req->cbdata = (ocd);                                \
+    opal_event_set(orte_event_base, &(_req->ev),         \
+                   -1, OPAL_EV_WRITE, (cf), _req);       \
+    opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+    opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
+} while(0);
 
-/* expose shared functions */
-extern void pmix_server_send_handler(int fd, short args, void *cbdata);
-extern void pmix_server_recv_handler(int fd, short args, void *cbdata);
-extern int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
-                                             int sd, pmix_server_hdr_t *dhdr);
-extern void pmix_server_recv_handler(int sd, short flags, void *cbdata);
-extern void pmix_server_peer_connected(pmix_server_peer_t* peer);
-extern int pmix_server_send_connect_ack(pmix_server_peer_t* peer);
-extern int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
-                                        pmix_server_hdr_t *dhdr);
-extern void pmix_server_peer_event_init(pmix_server_peer_t* peer);
-extern char* pmix_server_state_print(pmix_server_state_t state);
-extern pmix_server_peer_t* pmix_server_peer_lookup(int sd);
-extern void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg);
-extern int pack_segment_info(opal_process_name_t id, opal_buffer_t *reply);
+#define ORTE_PMIX_OPERATION(p, i, fn, cf, cb)               \
+do {                                                        \
+    orte_pmix_server_op_caddy_t *_cd;                       \
+    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
+    _cd->procs = (p);                                       \
+    _cd->info = (i);                                        \
+    _cd->cbfunc = (cf);                                     \
+    _cd->cbdata = (cb);                                     \
+    opal_event_set(orte_event_base, &(_cd->ev), -1,         \
+                   OPAL_EV_WRITE, (fn), _cd);               \
+    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
+} while(0);
 
-extern int pmix_server_fetch_proc_map(opal_buffer_t *reply,
-                                      orte_job_t *jdata,
-                                      orte_proc_t *proc);
-extern void pmix_server_process_message(pmix_server_peer_t *peer);
+
+/* define the server module functions */
+extern int pmix_server_client_connected_fn(opal_process_name_t *proc, void* server_object);
+extern int pmix_server_client_finalized_fn(opal_process_name_t *proc, void* server_object,
+                                           opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_abort_fn(opal_process_name_t *proc, void *server_object,
+                                int status, const char msg[],
+                                opal_list_t *procs_to_abort,
+                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_fencenb_fn(opal_list_t *procs, opal_list_t *info,
+                                  char *data, size_t ndata,
+                                  opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_dmodex_req_fn(opal_process_name_t *proc, opal_list_t *info,
+                                     opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_publish_fn(opal_process_name_t *proc,
+                                  opal_list_t *info,
+                                  opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
+                                 opal_list_t *info,
+                                 opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
+                                    opal_list_t *info,
+                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_spawn_fn(opal_process_name_t *requestor,
+                                opal_list_t *job_info, opal_list_t *apps,
+                                opal_pmix_spawn_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_connect_fn(opal_list_t *procs, opal_list_t *info,
+                                  opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
+                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+extern int pmix_server_register_events_fn(opal_list_t *info,
+                                          opal_pmix_op_cbfunc_t cbfunc,
+                                          void *cbdata);
+
+/* declare the RML recv functions for responses */
+extern void pmix_server_launch_resp(int status, orte_process_name_t* sender,
+                                    opal_buffer_t *buffer,
+                                    orte_rml_tag_t tg, void *cbdata);
+
+extern void pmix_server_keyval_client(int status, orte_process_name_t* sender,
+                                      opal_buffer_t *buffer,
+                                      orte_rml_tag_t tg, void *cbdata);
 
 /* exposed shared variables */
-extern bool pmix_server_distribute_data;
-extern opal_hash_table_t *pmix_server_peers;
-extern int pmix_server_verbosity;
-extern int pmix_server_output;
-extern int pmix_server_local_handle, pmix_server_remote_handle, pmix_server_global_handle;
-extern opal_list_t pmix_server_pending_dmx_reqs;
+typedef struct {
+    bool initialized;
+    int verbosity;
+    int output;
+    opal_hotel_t reqs;
+    int num_rooms;
+    int timeout;
+    char *server_uri;
+    bool wait_for_server;
+    orte_process_name_t server;
+} pmix_server_globals_t;
+
+extern pmix_server_globals_t orte_pmix_server_globals;
 
 END_C_DECLS
 

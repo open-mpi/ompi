@@ -53,7 +53,6 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
@@ -390,7 +389,6 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
-                                                         opal_dstore_internal,
                                                          ORTE_PROC_MY_NAME,
                                                          &cred, &credsize))) {
         ORTE_ERROR_LOG(rc);
@@ -1032,14 +1030,14 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
                                         "%s connect ack received error %s from %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         strerror(opal_socket_errno),
-                                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
+                                        ORTE_NAME_PRINT(&(peer->name)));
                     return false;
                 } else {
                     opal_output(0,
                                 "%s tcp_peer_recv_blocking: "
                                 "recv() failed for %s: %s (%d)\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
+                                ORTE_NAME_PRINT(&(peer->name)),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
                     peer->state = MCA_OOB_TCP_FAILED;

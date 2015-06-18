@@ -80,12 +80,10 @@ typedef void (*opal_sec_base_module_finalize_fn_t)(void);
  * Function returns OPAL_SUCCESS if a credential was assigned, or an error
  * code indicating why it failed
  */
-typedef int (*opal_sec_base_module_get_my_cred_fn_t)(int dstorehandle,
-                                                     opal_process_name_t *my_id,
+typedef int (*opal_sec_base_module_get_my_cred_fn_t)(opal_process_name_t *my_id,
                                                      opal_sec_cred_t *cred);
 
 typedef int (*opal_sec_API_module_get_my_cred_fn_t)(char *method,
-                                                    int dstorehandle,
                                                     opal_process_name_t *my_id,
                                                     char **payload, size_t *size);
 /*

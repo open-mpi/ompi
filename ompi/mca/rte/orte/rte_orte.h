@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -50,6 +50,8 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_PROC_MY_NAME ORTE_PROC_MY_NAME
 #define OMPI_NAME_PRINT(a) ORTE_NAME_PRINT((const orte_process_name_t*)a)
 #define ompi_rte_compare_name_fields(a, b, c) orte_util_compare_name_fields(a, (const orte_process_name_t*)(b), (const orte_process_name_t*)(c))
+#define ompi_rte_convert_string_to_process_name(a,b) orte_util_convert_string_to_process_name(a,b)
+#define ompi_rte_convert_process_name_to_string(a,b) orte_util_convert_process_name_to_string(a,b)
 #define OMPI_NAME_WILDCARD  ORTE_NAME_WILDCARD
 #define OMPI_NODE_RANK_INVALID ORTE_NODE_RANK_INVALID
 #define OMPI_LOCAL_RANK_INVALID ORTE_LOCAL_RANK_INVALID
@@ -94,27 +96,6 @@ typedef orte_error_t ompi_rte_error_report_t;
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-#define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
-#define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
-#define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK
-
-/* Communications */
-typedef orte_rml_tag_t ompi_rml_tag_t;
-#define ompi_rte_send_buffer_nb(a, b, c, d, e) orte_rml.send_buffer_nb(a, b, c, d, e)
-#define ompi_rte_recv_buffer_nb(a, b, c, d, e) orte_rml.recv_buffer_nb(a, b, c, d, e)
-#define ompi_rte_recv_cancel(a, b) orte_rml.recv_cancel(a, b)
-#define ompi_rte_parse_uris(a, b, c) orte_rml_base_parse_uris(a, b, c)
-#define ompi_rte_send_cbfunc orte_rml_send_callback
-
-/* Communication tags */
-/* carry over the INVALID def */
-#define OMPI_RML_TAG_INVALID ORTE_RML_TAG_INVALID
-/* define a starting point to avoid conflicts */
-#define OMPI_RML_TAG_BASE    ORTE_RML_TAG_MAX
-
-#define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
-#define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
-
 typedef struct {
     ompi_rte_component_t super;
     opal_mutex_t lock;
@@ -135,8 +116,6 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
     return (orte_process_name_t *)name;
 }
 #endif
-
-#define ompi_direct_modex_cutoff orte_direct_modex_cutoff
 
 END_C_DECLS
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -1349,7 +1350,7 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
      * NOTE: we may alter that latter part as hwloc's ability to
      * sense multi-cu, multi-cluster systems grows
      */
-    locality = OPAL_PROC_ON_NODE;
+    locality = OPAL_PROC_ON_NODE | OPAL_PROC_ON_HOST | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER;
 
     /* if either cpuset is NULL, then that isn't bound */
     if (NULL == cpuset1 || NULL == cpuset2) {
@@ -1397,25 +1398,25 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
                 shared = true;
                 switch(obj->type) {
                 case HWLOC_OBJ_NODE:
-                    locality = OPAL_PROC_ON_NUMA;
+                    locality |= OPAL_PROC_ON_NUMA;
                     break;
                 case HWLOC_OBJ_SOCKET:
-                    locality = OPAL_PROC_ON_SOCKET;
+                    locality |= OPAL_PROC_ON_SOCKET;
                     break;
                 case HWLOC_OBJ_CACHE:
                     if (3 == obj->attr->cache.depth) {
-                        locality = OPAL_PROC_ON_L3CACHE;
+                        locality |= OPAL_PROC_ON_L3CACHE;
                     } else if (2 == obj->attr->cache.depth) {
-                        locality = OPAL_PROC_ON_L2CACHE;
+                        locality |= OPAL_PROC_ON_L2CACHE;
                     } else {
-                        locality = OPAL_PROC_ON_L1CACHE;
+                        locality |= OPAL_PROC_ON_L1CACHE;
                     }
                     break;
                 case HWLOC_OBJ_CORE:
-                    locality = OPAL_PROC_ON_CORE;
+                    locality |= OPAL_PROC_ON_CORE;
                     break;
                 case HWLOC_OBJ_PU:
-                    locality = OPAL_PROC_ON_HWTHREAD;
+                    locality |= OPAL_PROC_ON_HWTHREAD;
                     break;
                 default:
                     /* just ignore it */

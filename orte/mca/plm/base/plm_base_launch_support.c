@@ -592,6 +592,9 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_process_name_t name;
     orte_timer_t *timer=NULL;
+    int ret;
+    opal_buffer_t *answer;
+    int room, *rmptr;
 
     /* convenience */
     jdata = caddy->jdata;
@@ -632,13 +635,78 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
         return;
     }
 
+    /* if this isn't a dynamic spawn, just cleanup */
+    if (ORTE_JOBID_INVALID == jdata->originator.jobid) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:base:launch job %s is not a dynamic spawn",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid)));
+        goto cleanup;
+    }
+    /* if it was a dynamic spawn, and it isn't an MPI job, then
+     * it won't register and we need to send the response now.
+     * Otherwise, it is an MPI job and we should wait for it
+     * to register */
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL)) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:base:launch job %s is not MPI",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid)));
+        goto cleanup;
+    }
+    /* prep the response */
+    rc = ORTE_SUCCESS;
+    answer = OBJ_NEW(opal_buffer_t);
+    /* pack the status */
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &rc, 1, OPAL_INT32))) {
+        ORTE_ERROR_LOG(ret);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jdata->jobid, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(ret);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+    /* pack the room number */
+    rmptr = &room;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(ret);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                         "%s plm:base:launch sending dyn release of job %s to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid),
+                         ORTE_NAME_PRINT(&jdata->originator)));
+    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
+                                           ORTE_RML_TAG_LAUNCH_RESP,
+                                           orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(answer);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+ cleanup:
+    /* need to init_after_spawn for debuggers */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
+
     /* cleanup */
     OBJ_RELEASE(caddy);
 }
 
 void orte_plm_base_registered(int fd, short args, void *cbdata)
 {
-    int ret;
+    int ret, room, *rmptr;
     int32_t rc;
     orte_job_t *jdata;
     opal_buffer_t *answer;
@@ -688,13 +756,23 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
+    /* pack the room number */
+    rmptr = &room;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(ret);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:launch sending dyn release of job %s to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
     if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
-                                           ORTE_RML_TAG_PLM_PROXY,
+                                           ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(answer);
