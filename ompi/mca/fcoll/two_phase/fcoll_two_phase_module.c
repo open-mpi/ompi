@@ -36,19 +36,9 @@ static mca_fcoll_base_module_1_0_0_t two_phase =  {
     mca_fcoll_two_phase_module_init,
     mca_fcoll_two_phase_module_finalize,
     mca_fcoll_two_phase_file_read_all,
-<<<<<<< HEAD
     NULL, /* iread_all */
     mca_fcoll_two_phase_file_write_all,
     NULL, /* iwrite_all */
-=======
-    NULL,
-    mca_fcoll_two_phase_file_read_all_begin,
-    mca_fcoll_two_phase_file_read_all_end,
-    mca_fcoll_two_phase_file_write_all,
-    NULL,
-    mca_fcoll_two_phase_file_write_all_begin,
-    mca_fcoll_two_phase_file_write_all_end,
->>>>>>> ff02f765b276ffd0dfd12ba50e85e70fa3db7aca
     NULL, /* progress */
     NULL  /* request_free */
 };

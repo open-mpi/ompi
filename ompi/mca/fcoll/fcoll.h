@@ -118,16 +118,6 @@ typedef int (*mca_fcoll_base_module_file_read_all_fn_t)
  ompi_status_public_t *status);
 
 typedef int (*mca_fcoll_base_module_file_iread_all_fn_t)
-<<<<<<< HEAD
-=======
-(struct mca_io_ompio_file_t *fh,
- void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_request_t **request);
-
-typedef int (*mca_fcoll_base_module_file_read_all_begin_fn_t)
->>>>>>> ff02f765b276ffd0dfd12ba50e85e70fa3db7aca
 (struct mca_io_ompio_file_t *fh,
  void *buf,
  int count,
@@ -142,16 +132,6 @@ typedef int (*mca_fcoll_base_module_file_write_all_fn_t)
  ompi_status_public_t *status);
 
 typedef int (*mca_fcoll_base_module_file_iwrite_all_fn_t)
-<<<<<<< HEAD
-=======
-(struct mca_io_ompio_file_t *fh,
- void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_request_t **request);
-
-typedef int (*mca_fcoll_base_module_file_write_all_begin_fn_t)
->>>>>>> ff02f765b276ffd0dfd12ba50e85e70fa3db7aca
 (struct mca_io_ompio_file_t *fh,
  void *buf,
  int count,
@@ -189,17 +169,8 @@ struct mca_fcoll_base_module_1_0_0_t {
     /* FCOLL function pointers */
     mca_fcoll_base_module_file_read_all_fn_t           fcoll_file_read_all;
     mca_fcoll_base_module_file_iread_all_fn_t          fcoll_file_iread_all;
-<<<<<<< HEAD
     mca_fcoll_base_module_file_write_all_fn_t          fcoll_file_write_all;
     mca_fcoll_base_module_file_iwrite_all_fn_t         fcoll_file_iwrite_all;
-=======
-    mca_fcoll_base_module_file_read_all_begin_fn_t     fcoll_file_read_all_begin;
-    mca_fcoll_base_module_file_read_all_end_fn_t       fcoll_file_read_all_end;
-    mca_fcoll_base_module_file_write_all_fn_t          fcoll_file_write_all;
-    mca_fcoll_base_module_file_iwrite_all_fn_t         fcoll_file_iwrite_all;
-    mca_fcoll_base_module_file_write_all_begin_fn_t    fcoll_file_write_all_begin;
-    mca_fcoll_base_module_file_write_all_end_fn_t      fcoll_file_write_all_end;
->>>>>>> ff02f765b276ffd0dfd12ba50e85e70fa3db7aca
     mca_fcoll_base_module_progress_fn_t                fcoll_progress;
     mca_fcoll_base_module_request_free_fn_t            fcoll_request_free;
     

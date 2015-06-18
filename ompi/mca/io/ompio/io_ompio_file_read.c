@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -379,6 +379,36 @@ int mca_io_ompio_file_read_all (ompi_file_t *fh,
     return ret;
 }
 
+int mca_io_ompio_file_iread_all (ompi_file_t *fh,
+				void *buf,
+				int count,
+				struct ompi_datatype_t *datatype,
+				ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data=NULL;
+    mca_io_ompio_file_t *fp=NULL;
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
+	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh, 
+						 buf, 
+						 count, 
+						 datatype,
+						 request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking 
+	   collective I/O operations. WE fake it with 
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
+    }
+
+    return ret;
+}
+
 
 int mca_io_ompio_file_read_at_all (ompi_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE offset,
@@ -418,6 +448,41 @@ int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
     return ret;
 }
 
+int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
+				    OMPI_MPI_OFFSET_TYPE offset,
+				    void *buf,
+				    int count,
+				    struct ompi_datatype_t *datatype,
+				    ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fp=NULL;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
+
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->fh_ompio;
+    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
+	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh, 
+						 buf, 
+						 count, 
+						 datatype,
+						 request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking 
+	   collective I/O operations. WE fake it with 
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
+    }
+
+
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    return ret;
+}
 
 /* Infrastructure for shared file pointer operations 
 ** (individual and ordered)*/
@@ -553,10 +618,15 @@ int mca_io_ompio_file_read_all_begin (ompi_file_t *fh,
 				      struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fp;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    fp = (mca_io_ompio_file_t *) &fh->f_io_selected_data->fh_ompio;
+    if ( true == fp->f_split_coll_in_use ) {
+	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+	return MPI_ERR_OTHER;
+    }
+    ret = mca_io_ompio_file_iread_all ( fh, buf, count, datatype, &fp->f_split_coll_req );
+    fp->f_split_coll_in_use = true;
 
     return ret;
 }
@@ -566,10 +636,13 @@ int mca_io_ompio_file_read_all_end (ompi_file_t *fh,
 				    ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fp;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = (mca_io_ompio_file_t *) &fh->f_io_selected_data->fh_ompio;
+    ret = ompi_mpi_wait ( &fp->f_split_coll_req, status );
 
+    /* remove the flag again */
+    fp->f_split_coll_in_use = false;
     return ret;
 }
 
@@ -583,7 +656,7 @@ int mca_io_ompio_file_read_at_all_begin (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    ret = ompio_io_ompio_file_read_at_all_begin ( &data->fh_ompio,  offset, buf, count, datatype );
     return ret;
 }
 
@@ -594,17 +667,13 @@ int ompio_io_ompio_file_read_at_all_begin (mca_io_ompio_file_t *fh,
 					   struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-    /* It is OK to reset the position already here, althgouth 
-    ** the operation might still be pending/ongoing, since
-    ** the entire array of <offset, length, memaddress> have 
-    ** already been constructed in the file_read_all_begin operation
-    */
-
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    if ( true == fh->f_split_coll_in_use ) {
+	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+	return MPI_ERR_REQUEST;
+    }
+    ret = mca_io_ompio_file_iread_at_all ( fh, offset, buf, count, datatype, &fh->f_split_coll_req );
+    fh->f_split_coll_in_use = true;
     return ret;
 }
 
@@ -616,7 +685,7 @@ int mca_io_ompio_file_read_at_all_end (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    ret = ompio_io_ompio_file_read_at_all_end ( &data->fh_ompio, but, status );
     return ret;
 }
 
@@ -625,7 +694,9 @@ int ompio_io_ompio_file_read_at_all_end (mca_io_ompio_file_t *ompio_fh,
 					 ompi_status_public_t * status)
 {
     int ret = OMPI_SUCCESS;
+    ret = ompi_mpi_wait ( &ompio_fh->f_split_coll_req, status );
 
-
+    /* remove the flag again */
+    fp->f_split_coll_in_use = false;
     return ret;
 }

@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -507,6 +507,36 @@ int mca_io_ompio_file_write_at_all (ompi_file_t *fh,
     return ret;
 }
 
+int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
+				  void *buf,
+				  int count,
+				  struct ompi_datatype_t *datatype,
+				  ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data=NULL;
+    mca_io_ompio_file_t *fp=NULL;
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
+	ret = fp->f_fcoll->fcoll_file_iwrite_all (&data->ompio_fh, 
+						  buf, 
+						  count, 
+						  datatype,
+						  request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking 
+	   collective I/O operations. WE fake it with 
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iwrite ( fp, buf, count, datatype, request );
+    }
+
+    return ret;
+}
+
 int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,
@@ -524,6 +554,42 @@ int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
                                              count,
                                              datatype,
                                              status);
+
+    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    return ret;
+}
+
+int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
+				     OMPI_MPI_OFFSET_TYPE offset,
+				     void *buf,
+				     int count,
+				     struct ompi_datatype_t *datatype,
+				     ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fp=NULL;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+    ompio_io_ompio_file_get_position (fh, &prev_offset );
+
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->fh_ompio;
+    if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
+	ret = fp->f_fcoll->fcoll_file_iwrite_all (&data->ompio_fh, 
+						  buf, 
+						  count, 
+						  datatype,
+						  request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking 
+	   collective I/O operations. WE fake it with 
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iwrite ( fp, buf, count, datatype, request );
+    }
+
 
     ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
