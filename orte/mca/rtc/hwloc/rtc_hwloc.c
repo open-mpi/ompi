@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,12 +77,12 @@ static void set(orte_job_t *jobdat,
 
     if (NULL == jobdat || NULL == child) {
         /* nothing for us to do */
-            opal_output_verbose(2, orte_rtc_base_framework.framework_output,
-                                "%s hwloc:set jobdat %s child %s - nothing to do",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == jobdat) ? "NULL" : ORTE_JOBID_PRINT(jobdat->jobid),
-                                (NULL == child) ? "NULL" : ORTE_NAME_PRINT(&child->name));
-            return;
+        opal_output_verbose(2, orte_rtc_base_framework.framework_output,
+                            "%s hwloc:set jobdat %s child %s - nothing to do",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == jobdat) ? "NULL" : ORTE_JOBID_PRINT(jobdat->jobid),
+                            (NULL == child) ? "NULL" : ORTE_NAME_PRINT(&child->name));
+        return;
     }
 
     context = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, child->app_idx);
@@ -102,9 +102,43 @@ static void set(orte_job_t *jobdat,
             }
             sum = (opal_hwloc_topo_data_t*)root->userdata;
             /* bind this proc to all available processors */
-            hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
+            rc = hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
+            /* if we got an error and this wasn't a default binding policy, then report it */
+            if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
+                char *tmp = NULL;
+                if (errno == ENOSYS) {
+                    msg = "hwloc indicates cpu binding not supported";
+                } else if (errno == EXDEV) {
+                    msg = "hwloc indicates cpu binding cannot be enforced";
+                } else {
+                    asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
+                             opal_strerror(rc), sum->available);
+                }
+                if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
+                    /* If binding is required, send an error up the pipe (which exits
+                       -- it doesn't return). */
+                    orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
+                                                       "binding generic error",
+                                                       orte_process_info.nodename, context->app, msg, 
+                                                       __FILE__, __LINE__);
+                } else {
+                    orte_rtc_base_send_warn_show_help(write_fd,
+                                                      "help-orte-odls-default.txt", "not bound",
+                                                      orte_process_info.nodename, context->app, msg,
+                                                      __FILE__, __LINE__);
+                    if (NULL != tmp) {
+                        free(tmp);
+                        free(msg);
+                    }
+                    return;
+                }
+                if (NULL != tmp) {
+                    free(tmp);
+                    free(msg);
+                }
+            }
         }
-        if (opal_hwloc_report_bindings) {
+        if (0 == rc && opal_hwloc_report_bindings) {
             opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
             /* avoid reporting it twice */
             (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
