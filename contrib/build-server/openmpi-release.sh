@@ -26,7 +26,6 @@ export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 # load the modules configuration
 . /etc/profile.d/modules.sh
 module use ~/modules
-module load sowing
 
 # move to the directory
 # Loop making them
