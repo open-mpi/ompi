@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,13 +50,13 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 /*
  * Flags
  */
-#define OMPIO_CONTIGUOUS_MEMORY 0x00000001
-#define OMPIO_UNIFORM_FVIEW     0x00000002
-#define OMPIO_FILE_IS_OPEN      0x00000004
-#define OMPIO_FILE_VIEW_IS_SET  0x00000008
-#define OMPIO_CONTIGUOUS_FVIEW  0x00000010
-#define OMPIO_AGGREGATOR_IS_SET 0x00000020
-#define OMPIO_SHAREDFP_IS_SET   0x00000040
+#define OMPIO_CONTIGUOUS_MEMORY      0x00000001
+#define OMPIO_UNIFORM_FVIEW          0x00000002
+#define OMPIO_FILE_IS_OPEN           0x00000004
+#define OMPIO_FILE_VIEW_IS_SET       0x00000008
+#define OMPIO_CONTIGUOUS_FVIEW       0x00000010
+#define OMPIO_AGGREGATOR_IS_SET      0x00000020
+#define OMPIO_SHAREDFP_IS_SET        0x00000040
 #define QUEUESIZE 2048
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -297,7 +297,8 @@ struct mca_io_ompio_file_t {
     size_t                 f_cc_size;
     int                    f_bytes_per_agg;
     enum ompio_fs_type     f_fstype;
-
+    ompi_request_t        *f_split_coll_req;
+    bool                   f_split_coll_in_use;
     /* Place for selected sharedfp module to hang it's data.
        Note: Neither f_sharedfp nor f_sharedfp_component seemed appropriate for this.
     */
@@ -350,7 +351,8 @@ struct mca_io_ompio_file_t {
     int *f_init_procs_in_group;
 
     int f_final_num_aggrs;
-
+    
+    /* internal ompio functions required by fbtl and fcoll */
     mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;
     mca_io_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
 
@@ -786,6 +788,18 @@ int mca_io_ompio_file_read_all (struct ompi_file_t *fh,
                                 int count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t *status);
+int mca_io_ompio_file_iread_all (ompi_file_t *fh,
+				void *buf,
+				int count,
+				struct ompi_datatype_t *datatype,
+				 ompi_request_t **request);
+int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
+				    OMPI_MPI_OFFSET_TYPE offset,
+				    void *buf,
+				    int count,
+				    struct ompi_datatype_t *datatype,
+				    ompi_request_t **request);
+
 int mca_io_ompio_file_write (struct ompi_file_t *fh,
                              void *buf,
                              int count,
@@ -796,6 +810,17 @@ int mca_io_ompio_file_write_all (struct ompi_file_t *fh,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t *status);
+int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
+				  void *buf,
+				  int count,
+				  struct ompi_datatype_t *datatype,
+				  ompi_request_t **request);
+int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
+				     OMPI_MPI_OFFSET_TYPE offset,
+				     void *buf,
+				     int count,
+				     struct ompi_datatype_t *datatype,
+				     ompi_request_t **request);
 int mca_io_ompio_file_iread (struct ompi_file_t *fh,
                              void *buf,
                              int count,

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,11 +36,11 @@ static mca_fcoll_base_module_1_0_0_t static_t =  {
     mca_fcoll_static_module_init,
     mca_fcoll_static_module_finalize,
     mca_fcoll_static_file_read_all,
-    mca_fcoll_static_file_read_all_begin,
-    mca_fcoll_static_file_read_all_end,
+    NULL, /* iread_all */
     mca_fcoll_static_file_write_all,
-    mca_fcoll_static_file_write_all_begin,
-    mca_fcoll_static_file_write_all_end
+    NULL, /* iwrite_all */
+    NULL, /* progress */
+    NULL  /* request_free */
 };
 
 int

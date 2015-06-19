@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -27,10 +27,12 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
 struct mca_io_ompio_file_t;
+struct mca_fcoll_request_t;
 
 /*
  * Macro for use in components that are of type coll
@@ -115,16 +117,12 @@ typedef int (*mca_fcoll_base_module_file_read_all_fn_t)
  struct ompi_datatype_t *datatype,
  ompi_status_public_t *status);
 
-typedef int (*mca_fcoll_base_module_file_read_all_begin_fn_t)
+typedef int (*mca_fcoll_base_module_file_iread_all_fn_t)
 (struct mca_io_ompio_file_t *fh,
  void *buf,
  int count,
- struct ompi_datatype_t *datatype);
-
-typedef int (*mca_fcoll_base_module_file_read_all_end_fn_t)
-(struct mca_io_ompio_file_t *fh,
- void *buf,
- ompi_status_public_t *status);
+ struct ompi_datatype_t *datatype,
+ ompi_request_t **request);
 
 typedef int (*mca_fcoll_base_module_file_write_all_fn_t)
 (struct mca_io_ompio_file_t *fh,
@@ -133,16 +131,18 @@ typedef int (*mca_fcoll_base_module_file_write_all_fn_t)
  struct ompi_datatype_t *datatype,
  ompi_status_public_t *status);
 
-typedef int (*mca_fcoll_base_module_file_write_all_begin_fn_t)
+typedef int (*mca_fcoll_base_module_file_iwrite_all_fn_t)
 (struct mca_io_ompio_file_t *fh,
  void *buf,
  int count,
- struct ompi_datatype_t *datatype);
+ struct ompi_datatype_t *datatype,
+ ompi_request_t **request);
 
-typedef int (*mca_fcoll_base_module_file_write_all_end_fn_t)
-(struct mca_io_ompio_file_t *fh,
- void *buf,
- ompi_status_public_t *status);
+typedef bool (*mca_fcoll_base_module_progress_fn_t)
+( struct mca_fcoll_request_t *request);
+
+typedef void (*mca_fcoll_base_module_request_free_fn_t)
+( struct mca_fcoll_request_t *request);
 
 /*
  * ***********************************************************************
@@ -160,11 +160,12 @@ struct mca_fcoll_base_module_1_0_0_t {
     
     /* FCOLL function pointers */
     mca_fcoll_base_module_file_read_all_fn_t           fcoll_file_read_all;
-    mca_fcoll_base_module_file_read_all_begin_fn_t     fcoll_file_read_all_begin;
-    mca_fcoll_base_module_file_read_all_end_fn_t       fcoll_file_read_all_end;
+    mca_fcoll_base_module_file_iread_all_fn_t          fcoll_file_iread_all;
     mca_fcoll_base_module_file_write_all_fn_t          fcoll_file_write_all;
-    mca_fcoll_base_module_file_write_all_begin_fn_t    fcoll_file_write_all_begin;
-    mca_fcoll_base_module_file_write_all_end_fn_t      fcoll_file_write_all_end;
+    mca_fcoll_base_module_file_iwrite_all_fn_t         fcoll_file_iwrite_all;
+    mca_fcoll_base_module_progress_fn_t                fcoll_progress;
+    mca_fcoll_base_module_request_free_fn_t            fcoll_request_free;
+    
 };
 typedef struct mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_1_0_0_t;
 typedef mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_t;
