@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -63,6 +64,29 @@ static void opal_mutex_construct(opal_mutex_t *m)
 #endif
 }
 
+static void opal_recursive_mutex_construct(opal_recursive_mutex_t *m)
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+
+    /* there is no benefit to setting the error check attribute for
+     * recursive mutexes */
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    pthread_mutex_init(&m->m_lock_pthread, &attr);
+    pthread_mutexattr_destroy(&attr);
+
+#if OPAL_ENABLE_DEBUG
+    m->m_lock_debug = 0;
+    m->m_lock_file = NULL;
+    m->m_lock_line = 0;
+#endif /* OPAL_ENABLE_DEBUG */
+
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    opal_atomic_init( &m->m_lock_atomic, OPAL_ATOMIC_UNLOCKED );
+#endif
+}
+
 static void opal_mutex_destruct(opal_mutex_t *m)
 {
     pthread_mutex_destroy(&m->m_lock_pthread);
@@ -71,4 +95,9 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 OBJ_CLASS_INSTANCE(opal_mutex_t,
                    opal_object_t,
                    opal_mutex_construct,
+                   opal_mutex_destruct);
+
+OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
+                   opal_object_t,
+                   opal_recursive_mutex_construct,
                    opal_mutex_destruct);

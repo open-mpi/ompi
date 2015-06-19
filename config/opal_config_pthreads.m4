@@ -648,6 +648,19 @@ AC_MSG_RESULT([$result])
 AC_DEFINE_UNQUOTED([OPAL_HAVE_PTHREAD_MUTEX_ERRORCHECK], [$defval],
             [If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK])
 
+
+# check for recursive mutex support
+AC_MSG_CHECKING([for PTHREAD_MUTEX_RECURSIVE])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[#include <pthread.h>]],
+        [[pthread_mutexattr_settype(NULL, PTHREAD_MUTEX_RECURSIVE);]])],
+    [result="yes" defval=1], [result="no" defval=0])
+AC_MSG_RESULT([$result])
+AC_DEFINE_UNQUOTED([OPAL_HAVE_PTHREAD_MUTEX_RECURSIVE], [$defval],
+            [If PTHREADS implementation supports PTHREAD_MUTEX_RECURSIVE])
+
+
 CFLAGS="$orig_CFLAGS"
 FCFLAGS="$orig_FCFLAGS"
 CXXFLAGS="$orig_CXXFLAGS"

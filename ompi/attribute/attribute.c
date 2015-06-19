@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -414,7 +415,7 @@ static unsigned int int_pos = 12345;
  * approach. However, this lock is released before a user provided callback is
  * triggered and acquired right after, allowing for recursive behaviors.
  */
-static opal_mutex_t attribute_lock;
+static opal_recursive_mutex_t attribute_lock;
 
 
 /*
@@ -497,7 +498,7 @@ int ompi_attr_init(void)
         }
     }
 
-    OBJ_CONSTRUCT(&attribute_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&attribute_lock, opal_recursive_mutex_t);
 
     if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {
