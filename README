@@ -1395,6 +1395,12 @@ Note that this definition encompasses several things:
   * mpirun / oshrun command line options
   * MCA parameter names / values / meanings
 
+However, this definition only applies when the same version of Open
+MPI is used with all instances of the runtime and MPI / OSHMEM
+processes in a single MPI job.  If the versions are not exactly the
+same everywhere, Open MPI is not guaranteed to work properly in any
+scenario.
+
 Software Version Number
 -----------------------
 
@@ -1425,6 +1431,8 @@ format.  Each of the three numbers has a specific meaning:
     if there is a release that only contains bug fixes and no other
     user-observable changes or new features, only the third integer
     will be increased (e.g., from v4.3.0 to v4.3.1).
+
+The "A.B.C" version number may optionally be followed by a Quantifier:
 
   * Quantifier: Open MPI version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
