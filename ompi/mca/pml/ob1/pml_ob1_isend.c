@@ -220,17 +220,17 @@ int mca_pml_ob1_send(const void *buf,
         }
     }
 
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
     sendreq = mca_pml_ob1_sendreq;
     if( OPAL_UNLIKELY(NULL == sendreq) )
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         {
             MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
             if (NULL == sendreq)
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
             mca_pml_ob1_sendreq = sendreq;
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         }
     OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
