@@ -253,9 +253,6 @@ static void ompi_group_construct(ompi_group_t *new_group)
 
     /* default the sparse values for groups */
     new_group->grp_parent_group_ptr = NULL;
-
-    /* return */
-    return;
 }
 
 
@@ -298,9 +295,6 @@ static void ompi_group_destruct(ompi_group_t *group)
         opal_pointer_array_set_item(&ompi_group_f_to_c_table,
                                     group->grp_f_to_c_index, NULL);
     }
-
-    /* return */
-    return;
 }
 
 

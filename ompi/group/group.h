@@ -252,8 +252,6 @@ int ompi_group_free (ompi_group_t **group);
 /**
  * Functions to handle process pointers for sparse group formats
  */
-OMPI_DECLSPEC ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank);
-
 int ompi_group_translate_ranks_sporadic ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
                                  ompi_group_t *group2,
@@ -325,48 +323,78 @@ int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks );
 int ompi_group_minloc (int list[], int length);
 
 /**
+ * @brief Helper function for retreiving the proc of a group member in a dense group
+ *
+ * This function exists to handle the translation of sentinel group members to real
+ * ompi_proc_t's. If a sentinel value is found and allocate is true then this function
+ * looks for an existing ompi_proc_t using ompi_proc_for_name which will allocate a
+ * ompi_proc_t if one does not exist. If allocate is false then sentinel values translate
+ * to NULL.
+ */
+static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, const int peer_id, const bool allocate)
+{
+#if OPAL_ENABLE_DEBUG
+    if (peer_id >= group->grp_proc_count) {
+        opal_output(0, "ompi_group_dense_lookup: invalid peer index (%d)", peer_id);
+        return (struct ompi_proc_t *) NULL;
+    }
+#endif
+
+    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
+        if (!allocate) {
+            return NULL;
+        }
+
+        /* replace sentinel value with an actual ompi_proc_t */
+        group->grp_proc_pointers[peer_id] =
+            (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) group->grp_proc_pointers[peer_id]));
+        OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
+    }
+
+    return group->grp_proc_pointers[peer_id];
+}
+
+/*
+ * This is the function that iterates through the sparse groups to the dense group
+ * to reach the process pointer
+ */
+static inline ompi_proc_t *ompi_group_get_proc_ptr (ompi_group_t *group, int rank, const bool allocate)
+{
+#if OMPI_GROUP_SPARSE
+    do {
+        if (OMPI_GROUP_IS_DENSE(group)) {
+            return ompi_group_dense_lookup (group, peer_id, allocate);
+        }
+        int ranks1 = rank;
+        ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
+        group = group->grp_parent_group_ptr;
+    } while (1);
+#else
+    return ompi_group_dense_lookup (group, rank, allocate);
+#endif
+}
+
+/**
+ * @brief Get the raw proc pointer from the group
+ *
+ * This function will either return a ompi_proc_t if one exists (either stored in the group
+ * or cached in the proc hash table) or a sentinel value representing the proc. This
+ * differs from ompi_group_get_proc_ptr() which returns the ompi_proc_t or NULL.
+ */
+ompi_proc_t *ompi_group_get_proc_ptr_raw (ompi_group_t *group, int rank);
+
+/**
  * Inline function to check if sparse groups are enabled and return the direct access
  * to the proc pointer, otherwise the lookup function
  */
 static inline struct ompi_proc_t* ompi_group_peer_lookup(ompi_group_t *group, int peer_id)
 {
-#if OPAL_ENABLE_DEBUG
-    if (peer_id >= group->grp_proc_count) {
-        opal_output(0, "ompi_group_lookup_peer: invalid peer index (%d)", peer_id);
-        return (struct ompi_proc_t *) NULL;
-    }
-#endif
-#if OMPI_GROUP_SPARSE
-    return ompi_group_get_proc_ptr (group, peer_id);
-#else
-    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
-        intptr_t sentinel = -(intptr_t) group->grp_proc_pointers[peer_id];
-        /* replace sentinel value with an actual ompi_proc_t */
-        group->grp_proc_pointers[peer_id] =
-            (ompi_proc_t *) ompi_proc_for_name (*((opal_process_name_t *) &sentinel));
-        OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
-    }
-    return group->grp_proc_pointers[peer_id];
-#endif
+    return ompi_group_get_proc_ptr (group, peer_id, true);
 }
 
 static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t *group, int peer_id)
 {
-#if OPAL_ENABLE_DEBUG
-    if (peer_id >= group->grp_proc_count) {
-        opal_output(0, "ompi_group_peer_lookup_existing: invalid peer index (%d)", peer_id);
-        return (struct ompi_proc_t *) NULL;
-    }
-#endif
-#if OMPI_GROUP_SPARSE
-    return ompi_group_get_proc_ptr (group, peer_id);
-#else
-    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
-        return NULL;
-    }
-
-    return group->grp_proc_pointers[peer_id];
-#endif
+    return ompi_group_get_proc_ptr (group, peer_id, false);
 }
 
 bool ompi_group_have_remote_peers (ompi_group_t *group);
