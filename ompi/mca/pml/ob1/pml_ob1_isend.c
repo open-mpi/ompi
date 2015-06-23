@@ -28,9 +28,6 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#endif  /* HAVE_ALLOCA_H */
 
 mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
 
@@ -232,7 +229,6 @@ int mca_pml_ob1_send(void *buf,
             mca_pml_ob1_sendreq = sendreq;
 #endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         }
-    OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
@@ -252,9 +248,13 @@ int mca_pml_ob1_send(void *buf,
         ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
 
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
-        MCA_PML_BASE_SEND_REQUEST_FINI(&sendreq->req_send);
     }
-    OBJ_DESTRUCT(sendreq);
+
+#if OMPI_ENABLE_THREAD_MULTIPLE
+    MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
+#else
+    mca_pml_ob1_send_request_fini (sendreq);
+#endif
 
     return rc;
 }

@@ -128,16 +128,21 @@ do {                                                                \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
+static inline void mca_pml_ob1_recv_request_fini (mca_pml_ob1_recv_request_t *recvreq)
+{
+    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
+    if ((recvreq)->local_handle) {
+        mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
+        recvreq->local_handle = NULL;
+    }
+}
+
 /*
  *  Free the PML receive request
  */
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
-        MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        if ((recvreq)->local_handle) {                                  \
-            mca_bml_base_deregister_mem ((recvreq)->rdma_bml, (recvreq)->local_handle); \
-            (recvreq)->local_handle = NULL;                             \
-        }                                                               \
+        mca_pml_ob1_recv_request_fini (recvreq);                        \
         opal_free_list_return (&mca_pml_base_recv_requests,             \
                                (opal_free_list_item_t*)(recvreq));      \
     }
