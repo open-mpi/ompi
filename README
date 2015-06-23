@@ -1380,13 +1380,12 @@ NOTE: The version numbering conventions were changed with the release
 Backwards Compatibility
 -----------------------
 
-Open MPI version Y is backwards compatible with Open MPI version X
+Open MPI version vY is backwards compatible with Open MPI version vX
 (where Y>X) if users can:
 
-  * Compile an MPI/OSHMEM application with version X, mpirun/oshrun it
-    with version Y, and get the same user-observable behavior.
-  * Invoke ompi_info with the same CLI options in versions X and Y and
-    get the same user-observable behavior.
+  * Users can compile a correct MPI / OSHMEM program with vX
+  * Run it with the same CLI options and MCA parameters using vX or vY
+  * The job executes correctly
 
 Note that this definition encompasses several things:
 
