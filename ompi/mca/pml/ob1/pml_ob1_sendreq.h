@@ -213,16 +213,27 @@ do {                                                                            
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
 } while(0)
 
+static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *sendreq)
+{
+    /*  Let the base handle the reference counts */
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));
+#if 0
+    if (sendreq->rdma_frag) {
+        MCA_PML_OB1_RDMA_FRAG_RETURN (sendreq->rdma_frag);
+        sendreq->rdma_frag = NULL;
+    }
+#endif
+}
+
 /*
  * Release resources associated with a request
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
     do {                                                                \
-    /*  Let the base handle the reference counts */                     \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
-    OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,                 \
-                           (ompi_free_list_item_t*)sendreq);            \
+        mca_pml_ob1_send_request_fini (sendreq);                        \
+        OMPI_FREE_LIST_RETURN_MT ( &mca_pml_base_send_requests,         \
+                                 (ompi_free_list_item_t*)sendreq);      \
     } while(0)
 
 
