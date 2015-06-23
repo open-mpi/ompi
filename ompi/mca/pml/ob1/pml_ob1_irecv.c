@@ -97,17 +97,17 @@ int mca_pml_ob1_recv(void *addr,
     mca_pml_ob1_recv_request_t *recvreq = NULL;
     int rc;
 
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
     recvreq = mca_pml_ob1_recvreq;
     if( OPAL_UNLIKELY(NULL == recvreq) )
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         {
             MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
             if (NULL == recvreq)
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
             mca_pml_ob1_recvreq = recvreq;
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         }
     OBJ_CONSTRUCT(recvreq, mca_pml_ob1_recv_request_t);
 
