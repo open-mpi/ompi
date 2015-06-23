@@ -109,12 +109,13 @@ int ompi_comm_init(void)
 
     for (size_t i = 0 ; i < size ; ++i) {
         opal_process_name_t name = {.vpid = i, .jobid = OMPI_PROC_MY_NAME->jobid};
+        /* look for existing ompi_proc_t that matches this name */
         group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_lookup (name);
         if (NULL == group->grp_proc_pointers[i]) {
             /* set sentinel value */
-            group->grp_proc_pointers[i] = (ompi_proc_t *)(-*((intptr_t *) &name));
+            group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_name_to_sentinel (name);
         } else {
-            OBJ_RETAIN (ompi_proc_local_proc);
+            OBJ_RETAIN (group->grp_proc_pointers[i]);
         }
     }
 
