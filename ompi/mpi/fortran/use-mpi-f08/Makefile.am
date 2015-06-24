@@ -92,6 +92,8 @@ mpi_api_files = \
         add_error_class_f08.F90 \
         add_error_code_f08.F90 \
         add_error_string_f08.F90 \
+        aint_add_f08.F90 \
+        aint_diff_f08.F90 \
         allgather_f08.F90 \
         allgatherv_f08.F90 \
         alloc_mem_f08.F90 \
@@ -444,6 +446,8 @@ pmpi_api_files = \
         profile/padd_error_class_f08.F90 \
         profile/padd_error_code_f08.F90 \
         profile/padd_error_string_f08.F90 \
+        profile/paint_add_f08.F90 \
+        profile/paint_diff_f08.F90 \
         profile/pallgather_f08.F90 \
         profile/pallgatherv_f08.F90 \
         profile/palloc_mem_f08.F90 \
