@@ -146,6 +146,8 @@ General notes
 Compiler Notes
 --------------
 
+- Open MPI requires a C99-capable compiler to build.
+
 - Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran
   compiler from a different vendor) has been successfully employed by
