@@ -26,12 +26,8 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #if defined(VERBOSE)
 #include "opal/util/output.h"

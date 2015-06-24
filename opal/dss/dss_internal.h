@@ -36,12 +36,10 @@
 #include "opal/dss/dss.h"
 #include "opal/util/proc.h"
 
-#ifdef HAVE_STRING_H
-#    if !defined(STDC_HEADERS) && HAVE_MEMORY_H
-#        include <memory.h>
-#    endif
-#    include <string.h>
+#if !defined(STDC_HEADERS) && HAVE_MEMORY_H
+#    include <memory.h>
 #endif
+#include <string.h>
 
 BEGIN_C_DECLS
 

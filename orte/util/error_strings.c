@@ -29,9 +29,7 @@
 #ifdef HAVE_SYS_SIGNAL_H
 #include <sys/signal.h>
 #else
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 #endif
 
 #include "orte/mca/plm/plm_types.h"

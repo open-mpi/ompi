@@ -31,9 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#if HAVE_TIME_H
 #include <time.h>
-#endif
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif

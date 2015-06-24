@@ -25,10 +25,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include "opal/prefetch.h"
 #include "opal/util/arch.h"

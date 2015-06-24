@@ -48,9 +48,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif  /* HAVE_TIME_H */
 
 #include "opal/mca/event/event.h"
 #include "opal/util/net.h"

@@ -37,9 +37,7 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"

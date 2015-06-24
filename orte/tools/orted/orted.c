@@ -22,9 +22,7 @@
 #include "orte_config.h"
 
 #include <stdlib.h>
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

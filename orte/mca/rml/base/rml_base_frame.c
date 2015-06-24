@@ -17,9 +17,7 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/dss/dss.h"
 #include "orte/mca/mca.h"

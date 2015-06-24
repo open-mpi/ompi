@@ -36,12 +36,8 @@
 
 #include "ompi_config.h"
 
-#if defined(HAVE_STRING_H)
 #include <string.h>
-#endif  /* defined(HAVE_STRING_H) */
-#if defined(HAVE_STDLIB_H)
 #include <stdlib.h>
-#endif  /* defined(HAVE_STDLIB_H) */
 
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "mpihandles_interface.h"

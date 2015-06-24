@@ -22,12 +22,8 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 
 #include "opal/class/opal_pointer_array.h"
 

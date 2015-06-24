@@ -9,9 +9,7 @@
 
 #include "ad_xfs.h"
 #include <sys/ioctl.h>
-#ifdef HAVE_STDDEF_H
 #include <stddef.h>
-#endif
 
 #ifndef HAVE_LSEEK64
 #define lseek64 lseek

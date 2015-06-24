@@ -71,12 +71,8 @@
 #ifdef HAVE_NO_C_CONST
 #define const
 #endif
-#if defined(HAVE_STRING_H)
 #include <string.h>
-#endif  /* defined(HAVE_STRING_H) */
-#if defined(HAVE_STDLIB_H)
 #include <stdlib.h>
-#endif  /* defined(HAVE_STDLIB_H) */
 
 /* Notice to developers!!!!
  * The following include files with _dbg.h suffixes contains definitions 

@@ -21,9 +21,7 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -36,9 +34,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/alfg.h"

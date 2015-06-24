@@ -17,9 +17,7 @@
 #if defined(HAVE_UNISTD_H)
 #include <unistd.h>
 #endif
-#if defined(HAVE_STRING_H)
 #include <string.h>
-#endif
 
 int pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;

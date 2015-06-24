@@ -11,9 +11,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal_stdint.h"
 #include "opal/dss/dss_types.h"

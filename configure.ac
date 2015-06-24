@@ -592,18 +592,17 @@ AC_CACHE_SAVE
 opal_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
-    dlfcn.h execinfo.h err.h fcntl.h grp.h inttypes.h libgen.h \
+    dlfcn.h execinfo.h err.h fcntl.h grp.h libgen.h \
     libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
-    poll.h pthread.h pty.h pwd.h sched.h stdint.h stddef.h \
-    stdlib.h string.h strings.h stropts.h sys/fcntl.h sys/ipc.h sys/shm.h \
+    poll.h pthread.h pty.h pwd.h sched.h \
+    strings.h stropts.h sys/fcntl.h sys/ipc.h sys/shm.h \
     sys/ioctl.h sys/mman.h sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
-    stdarg.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
+    sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/un.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
-    ifaddrs.h crt_externs.h regex.h signal.h \
-    mntent.h paths.h \
-    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h])
+    termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
+    ifaddrs.h crt_externs.h regex.h mntent.h paths.h \
+    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h db.h ndbm.h])
 
 AC_CHECK_HEADERS([sys/mount.h], [], [],
 [AC_INCLUDES_DEFAULT
