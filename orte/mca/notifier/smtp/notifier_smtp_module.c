@@ -27,15 +27,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"

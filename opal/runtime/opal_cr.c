@@ -30,9 +30,7 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -46,9 +44,7 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/util/opal_environ.h"

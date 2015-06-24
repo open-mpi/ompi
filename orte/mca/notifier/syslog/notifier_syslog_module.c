@@ -28,9 +28,7 @@
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 
 #include "opal/util/show_help.h"
 

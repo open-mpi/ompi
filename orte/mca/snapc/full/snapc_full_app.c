@@ -30,12 +30,8 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"

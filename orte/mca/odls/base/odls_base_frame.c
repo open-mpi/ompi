@@ -26,9 +26,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/class/opal_ring_buffer.h"
 #include "orte/mca/mca.h"

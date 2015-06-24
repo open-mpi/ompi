@@ -28,9 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"

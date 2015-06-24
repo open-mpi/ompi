@@ -26,9 +26,7 @@
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 int opal_util_keyval_parse_lineno = 0;
 

@@ -24,9 +24,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif

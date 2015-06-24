@@ -68,9 +68,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -95,15 +93,11 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif

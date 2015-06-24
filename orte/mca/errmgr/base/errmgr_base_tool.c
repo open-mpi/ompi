@@ -14,9 +14,7 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
