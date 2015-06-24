@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -21,7 +21,7 @@
 #endif
 
 
-int MPI_T_pvar_get_index (const char *name, int *pvar_index)
+int MPI_T_pvar_get_index (const char *name, int var_class, int *pvar_index)
 {
     int ret;
 
@@ -34,8 +34,11 @@ int MPI_T_pvar_get_index (const char *name, int *pvar_index)
     }
 
     mpit_lock ();
-    ret = mca_base_pvar_find_by_name (name, pvar_index);
+    ret = mca_base_pvar_find_by_name (name, var_class, pvar_index);
     mpit_unlock ();
+    if (OPAL_SUCCESS != ret) {
+        return MPI_T_ERR_INVALID_NAME;
+    }
 
-    return ompit_opal_to_mpit_error (ret);
+    return MPI_SUCCESS;
 }

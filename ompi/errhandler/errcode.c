@@ -114,6 +114,7 @@ static ompi_mpi_errcode_t ompi_err_rma_attach;
 static ompi_mpi_errcode_t ompi_err_rma_flavor;
 static ompi_mpi_errcode_t ompi_err_rma_shared;
 static ompi_mpi_errcode_t ompi_t_err_invalid;
+static ompi_mpi_errcode_t ompi_t_err_invalid_name;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -214,6 +215,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
     CONSTRUCT_ERRCODE( ompi_err_rma_shared, MPI_ERR_RMA_SHARED, "MPI_ERR_RMA_SHARED: Memory cannot be shared" );
     CONSTRUCT_ERRCODE( ompi_t_err_invalid, MPI_T_ERR_INVALID, "MPI_T_ERR_INVALID: Invalid use of the interface or bad parameter value(s)" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_name, MPI_T_ERR_INVALID_NAME, "MPI_T_ERR_INVALID_NAME: The variable or category name is invalid" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -309,6 +311,7 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_flavor);
     OBJ_DESTRUCT(&ompi_err_rma_shared);
     OBJ_DESTRUCT(&ompi_t_err_invalid);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_name);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;
