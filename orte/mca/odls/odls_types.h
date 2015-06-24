@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,6 +73,7 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_SPAWN_JOB_CMD           (orte_daemon_cmd_flag_t) 17
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 18
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 19
+#define ORTE_DAEMON_HALT_DVM_CMD            (orte_daemon_cmd_flag_t) 20
 
 /* request proc resource usage */
 #define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22

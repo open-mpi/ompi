@@ -1,0 +1,193 @@
+.\” -*- nroff -*-
+.\" Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\” Copyright (c) 2015      Intel, Inc. All rights reserved
+.\" $COPYRIGHT$
+.\"
+.\" Man page for ORTE's orte-dvm command
+.\"
+.\" .TH name     section center-footer   left-footer  center-header
+.TH ORTE-DVM 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.\" **************************
+.\"    Name Section
+.\" **************************
+.SH NAME
+.
+orte-dvm, ompi_dvm \- Establish a Distributed Virtual Machine (DVM).
+
+.B Note:
+\fIorte-dvm\fP and \fIompi-dvm\fP are synonyms for each
+other.  Using either of the names will produce the same behavior.
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.PP
+.B orte-dvm
+[ options ]
+.P
+
+Invoking \fIorte-dvm\fP via an absolute path
+name is equivalent to specifying the \fI--prefix\fP option with a
+\fI<dir>\fR value equivalent to the directory where \fIorte-dvm\fR
+resides, minus its last subdirectory.  For example:
+
+    \fB%\fP /usr/local/bin/orte-dvm ...
+
+is equivalent to
+
+    \fB%\fP orte-dvm --prefix /usr/local
+
+.
+.\" **************************
+.\"    Quick Summary Section
+.\" **************************
+.SH QUICK SUMMARY
+.
+\fIorte-dvm\fP will establish a DVM that can be used to execute subsequent
+applications. Use of \fIorte-dvm\fP can be advantageous, for example, when you want to
+execute a number of short-lived tasks. In such cases, the time required to start
+the ORTE DVM can be a significant fraction of the time to execute the
+overall application. Thus, creating a persistent DVM can speed the overall
+execution. In addition, a persistent DVM will support executing multiple parallel
+applications while maintaining separation between their respective cores.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.\"
+.\" Start options listing
+.\"    Indent 10 characters from start of first column to start of second column
+.
+.TP
+.B -h\fR,\fP --help
+Display help for this command
+.
+.
+.TP
+.B -V\fR,\fP --version
+Print version number.  If no other arguments are given, this will also
+cause orte-dvm to exit.
+.
+.
+.P
+Use one of the following options to specify which hosts (nodes) of the cluster to use
+for the DVM.
+.
+.
+.TP
+.B -H\fR,\fP -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
+List of hosts for the DVM.
+.
+.
+.TP
+.B
+-hostfile\fR,\fP --hostfile \fR<hostfile>\fP
+Provide a hostfile to use.
+.
+.
+.TP
+.B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
+Synonym for \fI-hostfile\fP.
+.
+.
+.TP
+.B --prefix \fR<dir>\fP
+Prefix directory that will be used to set the \fIPATH\fR and
+\fILD_LIBRARY_PATH\fR on the remote node before invoking the ORTE daemon.
+.
+.
+..P
+Setting MCA parameters:
+.
+.
+.TP
+.B -gmca\fR,\fP --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -mca\fR,\fP --mca <key> <value>
+Send arguments to various MCA modules.  See the "MCA" section, below.
+.
+.
+.
+.
+.TP
+.B -report-uri\fR,\fP --report-uri <channel>
+Print out orte-dvm's URI during startup. The channel must be either a '-' to indicate that
+the URI is to be output to stdout, a '+' to indicate that the URI is to be output to stderr,
+or a filename to which the URI is to be written.
+.
+.
+.P
+The following options are useful for developers; they are not generally
+useful to most ORTE and/or MPI users:
+.
+.TP
+.B -d\fR,\fP --debug-devel
+Enable debugging of the ORTE layer.
+.
+.
+.TP
+.B --debug-daemons-file
+Enable debugging of the ORTE daemons in the DVM, storing
+output in files.
+.
+.
+.P
+There may be other options listed with \fIorte-dvm --help\fP.
+.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+\fIorte-dvm\fP starts a Distributed Virtual Machine (DVM) by launching
+a daemon on each node of the allocation, as modified or specified by
+the \fI-host\fP and \fI-hostfile\fP options. Applications can subsequently
+be executed using the \fIorte-submit\fP command.
+.
+The DVM remains in operation until receiving the \fIorte-submit -terminate\fP
+command.
+.
+.
+.
+.SS Specifying Host Nodes
+.
+Host nodes can be identified on the \fIorte-dvm\fP command line with the \fI-host\fP
+option or in a hostfile.
+.
+.PP
+For example,
+.
+.TP 4
+orte-dvm -H aa,aa,bb ./a.out
+launches two processes on node aa and one on bb.
+.
+.PP
+Or, consider the hostfile
+.
+
+   \fB%\fP cat myhostfile
+   aa slots=2
+   bb slots=2
+   cc slots=2
+
+.
+.PP
+Here, we list both the host names (aa, bb, and cc) but also how many "slots"
+there are for each.  Slots indicate how many processes can potentially execute
+on a node.  For best performance, the number of slots may be chosen to be the
+number of cores on the node or the number of processor sockets.  If the hostfile
+does not provide slots information, a default of 1 is assumed.
+When running under resource managers (e.g., SLURM, Torque, etc.),
+Open MPI will obtain both the hostnames and the number of slots directly
+from the resource manger.
+.
+.
